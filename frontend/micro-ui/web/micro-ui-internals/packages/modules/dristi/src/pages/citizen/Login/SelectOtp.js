@@ -101,7 +101,7 @@ const SelectOtp = ({
             {t("CS_RESEND_OTP")}
           </p>
         )}
-        {!error && <CardLabelError>{t("CS_INVALID_OTP")}</CardLabelError>}
+        {error && <CardLabelError>{error}</CardLabelError>}
       </Fragment>
     );
   }
@@ -141,7 +141,7 @@ const SelectOtp = ({
             </span>
           </p>
         </div>
-        {!error && <CardLabelError>{t("CS_INVALID_OTP")}</CardLabelError>}
+        {error && <CardLabelError>{error}</CardLabelError>}
       </FormStep>
     </Modal>
   );
