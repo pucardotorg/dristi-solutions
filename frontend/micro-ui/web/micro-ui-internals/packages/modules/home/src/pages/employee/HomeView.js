@@ -39,8 +39,10 @@ const HomeView = () => {
   const [onRowClickData, setOnRowClickData] = useState({ url: "", params: [] });
   const [taskType, setTaskType] = useState({ code: "case", name: "Case" });
   const roles = useMemo(() => Digit.UserService.getUser()?.info?.roles, [Digit.UserService]);
+  const isCourtRoomRole = useMemo(() => roles?.some((role) => role?.code === "COURT_ADMIN"), [roles]);
+  const isNyayMitra = roles.some((role) => role.code === "NYAY_MITRA_ROLE");
   const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
-  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const userInfo = Digit?.UserService?.getUser()?.info;
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const { data: individualData, isLoading, isFetching } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
@@ -237,6 +239,25 @@ const HomeView = () => {
   if (isUserLoggedIn && !individualId && userInfoType === "citizen") {
     history.push(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
   }
+
+  if (isNyayMitra) {
+    history.push(`/${window?.contextPath}/employee`);
+  }
+
+  const data = [
+    {
+      logo: <InboxIcon />,
+      title: "REVIEW_SUMMON_NOTICE_WARRANTS_TEXT",
+      pendingAction: 40,
+      actionLink: "orders/Summons&Notice",
+    },
+    {
+      logo: <DocumentIcon />,
+      title: "VIEW_ISSUED_ORDERS",
+      pendingAction: 11,
+      actionLink: "",
+    },
+  ];
 
   return (
     <div className="home-view-hearing-container">

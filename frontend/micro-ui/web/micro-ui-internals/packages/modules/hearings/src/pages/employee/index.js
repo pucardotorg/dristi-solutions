@@ -23,11 +23,13 @@ import InsideHearing from "./InsideHearing";
 import ViewCase from "./ViewCase";
 import MonthlyCalendar from "./CalendarView";
 import { DataProvider } from "../../components/DataContext";
+import { useHistory } from "react-router-domn";
+
 const bredCrumbStyle = { maxWidth: "min-content" };
 const ProjectBreadCrumb = ({ location }) => {
   const { t } = useTranslation();
-  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
-  const userType = useMemo(() => (userInfo.type === "CITIZEN" ? "citizen" : "employee"), [userInfo.type]);
+  const userInfo = window?.Digit?.UserService?.getUser?.()?.info;
+  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const crumbs = [
     {
       path: `/${window?.contextPath}/${userType}/home/home-pending-task`,
@@ -35,8 +37,8 @@ const ProjectBreadCrumb = ({ location }) => {
       show: true,
     },
     {
-      path: `/${window?.contextPath}/employee`,
-      content: t(location.pathname.split("/").pop()),
+      path: `/${window?.contextPath}/${userType}`,
+      content: t(location.pathname.split("/").filter(Boolean).pop()),
       show: true,
     },
   ];
@@ -44,6 +46,18 @@ const ProjectBreadCrumb = ({ location }) => {
 };
 
 const App = ({ path, stateCode, userType, tenants }) => {
+  const history = useHistory();
+  const Digit = useMemo(() => window?.Digit || {}, []);
+  const userInfo = Digit?.UserService?.getUser()?.info;
+  const hasCitizenRoute = useMemo(() => path?.includes(`/${window?.contextPath}/citizen`), [path]);
+  const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
+
+  if (isCitizen && !hasCitizenRoute && Boolean(userInfo)) {
+    history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
+  } else if (!isCitizen && hasCitizenRoute && Boolean(userInfo)) {
+    history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
+  }
+
   return (
     <Switch>
       <AppContainer className="ground-container">

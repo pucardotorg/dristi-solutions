@@ -18,7 +18,7 @@ const Inbox = ({ tenants, parentRoute }) => {
   const { t } = useTranslation();
   Digit.SessionStorage.set("ENGAGEMENT_TENANTS", tenants);
   const tenantId = Digit.ULBService.getCurrentTenantId();
-  let isMobile = window.Digit.Utils.browser.isMobile();
+  const roles = Digit.UserService.getUser()?.info?.roles;
   const history = useHistory();
   const urlParams = new URLSearchParams(window.location.search);
   const type = urlParams.get("type") || "advocate";
@@ -35,6 +35,11 @@ const Inbox = ({ tenants, parentRoute }) => {
     userType: defaultType,
     ulb: tenants?.find((tenant) => tenant?.code === tenantId),
   });
+  const hasApprovalRoles = ["ADVOCATE_APPROVER", "ADVOCATE_CLERK_APPROVER"].every((requiredRole) => roles.some((role) => role.code === requiredRole));
+
+  if (!hasApprovalRoles) {
+    history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
+  }
 
   return (
     <React.Fragment>
