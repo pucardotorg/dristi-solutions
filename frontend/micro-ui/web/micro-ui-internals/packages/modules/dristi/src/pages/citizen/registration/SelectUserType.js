@@ -118,17 +118,17 @@ const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRe
           username: Digit.UserService.getUser()?.info?.userName,
           roles: userType?.clientDetails?.selectUserType?.role
             ? [
-              {
-                code: "CITIZEN",
-                name: "Citizen",
-                tenantId: tenantId,
-              },
-              ...userType?.clientDetails?.selectUserType?.role?.map((role) => ({
-                code: role,
-                name: role,
-                tenantId: tenantId,
-              })),
-            ]
+                {
+                  code: "CITIZEN",
+                  name: "Citizen",
+                  tenantId: tenantId,
+                },
+                ...(userType?.clientDetails?.selectUserType?.role?.map((role) => ({
+                  code: role,
+                  name: role,
+                  tenantId: tenantId,
+                })) || []),
+              ]
             : [
               {
                 code: "CITIZEN",
