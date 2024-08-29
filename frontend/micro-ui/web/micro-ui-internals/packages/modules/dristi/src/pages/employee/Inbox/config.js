@@ -8,7 +8,7 @@ export const newconfigAdvocate = {
     requestBody: {
       inbox: {
         processSearchCriteria: {
-          businessService: ["user-registration-advocate"],
+          businessService: ["advocate"],
           moduleName: "Advocate services",
         },
         moduleSearchCriteria: {},
@@ -109,7 +109,7 @@ export const newconfigClerk = {
     requestBody: {
       inbox: {
         processSearchCriteria: {
-          businessService: ["user-registration-advocate-clerk"],
+          businessService: ["advocateclerk"],
           moduleName: "Advocate Clerk Service",
         },
         moduleSearchCriteria: {},

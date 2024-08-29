@@ -2,13 +2,13 @@ export const paymentInboxConfig = {
   label: "ES_COMMON_INBOX",
   type: "inbox",
   apiDetails: {
-    serviceName: "/case/v1/_search",
+    serviceName: "/case/case/v1/_search",
     requestParam: {},
     requestBody: {
       criteria: [
         {
           defaultValues: true,
-          status: ["PAYMENT_PENDING"],
+          status: "PAYMENT_PENDING",
           filingNumber: "",
         },
       ],
@@ -30,7 +30,7 @@ export const paymentInboxConfig = {
         defaultValues: {
           filingNumber: "",
           isActive: false,
-          stage: [],
+          stage: "",
         },
         fields: [
           {
@@ -108,11 +108,7 @@ export const paymentInboxConfig = {
             label: "Stage",
             jsonPath: "substage",
           },
-          // {
-          //   label: "Amount Due",
-          //   jsonPath: "amountDue",
-          //   additionalCustomization: true,
-          // },
+
           {
             label: "Action",
             jsonPath: "id",

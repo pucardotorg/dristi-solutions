@@ -2,13 +2,13 @@ export const scrutinyInboxConfig = {
   label: "ES_COMMON_INBOX",
   type: "inbox",
   apiDetails: {
-    serviceName: "/case/v1/_search",
+    serviceName: "/case/case/v1/_search",
     requestParam: {},
     requestBody: {
       criteria: [
         {
           defaultValues: true,
-          status: ["UNDER_SCRUTINY"],
+          status: "UNDER_SCRUTINY",
           filingNumber: "",
         },
       ],

@@ -49,28 +49,26 @@ function EFilingPaymentResponse({ t, setShowModal, header, subHeader, submitModa
   const caseId = location.state.state.caseId;
 
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${fileStoreId}`;
-  const commonProps = {
-    whichSvg: "tick",
-    headerStyles: { fontSize: "32px" },
-    style: { minWidth: "100%", marginTop: "10px" },
-  };
-
-  const bannerProps = isSuccess
-    ? {
-        ...commonProps,
-        successful: true,
-        message: t(submitModalInfo?.header),
-      }
-    : {
-        ...commonProps,
-        successful: false,
-        message: t("CS_PAYMENT_FAILED"),
-      };
-
   return (
     <div className=" user-registration">
       <div className="e-filing-payment" style={{ minHeight: "100%", height: "100%" }}>
-        <Banner {...bannerProps} />
+        {isSuccess ? (
+          <Banner
+            whichSvg={"tick"}
+            successful={true}
+            message={t(submitModalInfo?.header)}
+            headerStyles={{ fontSize: "32px" }}
+            style={{ minWidth: "100%", marginTop: "10px" }}
+          ></Banner>
+        ) : (
+          <Banner
+            whichSvg={"tick"}
+            successful={false}
+            message={t("CS_PAYMENT_FAILED")}
+            headerStyles={{ fontSize: "32px" }}
+            style={{ minWidth: "100%", marginTop: "10px" }}
+          ></Banner>
+        )}
         {submitModalInfo?.subHeader && isSuccess && <CardLabel className={"e-filing-card-label"}>{t(submitModalInfo?.subHeader)}</CardLabel>}
         {receiptData ? (
           <CustomCopyTextDiv

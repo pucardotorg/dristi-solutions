@@ -1,10 +1,17 @@
 import React from "react";
 import Modal from "../../../dristi/src/components/Modal";
+import CustomSubmitModal from "../../../dristi/src/pages/citizen/FileCase/admission/CustomSubmitModal";
 import { FileDownloadIcon } from "../../../dristi/src/icons/svgIndex";
 import CustomCopyTextDiv from "../../../dristi/src/components/CustomCopyTextDiv";
 import { Banner, CardLabel } from "@egovernments/digit-ui-react-components";
+import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
-function OrderSucessModal({ order, t, handleDownloadOrders, handleClose, actionSaveLabel }) {
+function OrderSucessModal({ order, t, setShowSuccessModal }) {
+  const history = useHistory();
+  const searchParams = new URLSearchParams(history.location.search);
+  searchParams.set("caseId", history.location.state.caseId);
+  searchParams.set("tab", history.location.state.tab);
+
   const getFormattedDate = () => {
     const currentDate = new Date();
     const year = String(currentDate.getFullYear()).slice(-2);
@@ -17,23 +24,33 @@ function OrderSucessModal({ order, t, handleDownloadOrders, handleClose, actionS
     subHeader: "CS_ORDER_CREATED_SUBTEXT",
     caseInfo: [
       {
-        key: t("ORDER_ISSUE_DATE"),
+        key: "ORDER_ISSUE_DATE",
         value: getFormattedDate(),
         copyData: false,
       },
       {
-        key: `${t("ORDER_ID")} : ${t("ORDER_TYPE_" + order?.orderType)}`,
-        value: order?.orderNumber,
+        key: `${t("ORDER_ID")}:${t(order?.orderType)}`,
+        value: order?.id,
         copyData: true,
       },
     ],
+  };
+
+  const handleDownloadOrders = () => {
+    // setShowSuccessModal(false);
+    // history.push(`/${window.contextPath}/employee/dristi/home/view-case?${searchParams.toString()}`, { from: "orderSuccessModal" });
+  };
+
+  const handleClose = () => {
+    setShowSuccessModal(false);
+    history.push(`/${window.contextPath}/employee/dristi/home/view-case?${searchParams.toString()}`, { from: "orderSuccessModal" });
   };
 
   return (
     <Modal
       actionCancelLabel={t("DOWNLOAD_ORDER")}
       actionCancelOnSubmit={handleDownloadOrders}
-      actionSaveLabel={actionSaveLabel}
+      actionSaveLabel={t("CS_COMMON_CLOSE")}
       actionSaveOnSubmit={handleClose}
       className={"orders-success-modal"}
       cancelButtonBody={<FileDownloadIcon></FileDownloadIcon>}

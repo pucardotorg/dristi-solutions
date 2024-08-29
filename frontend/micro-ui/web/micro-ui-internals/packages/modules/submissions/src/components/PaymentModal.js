@@ -16,11 +16,10 @@ const customNoteConfig = {
   },
 };
 
-function PaymentModal({ t, handleClosePaymentModal, handleSkipPayment, handleMakePayment, tenantId, consumerCode, paymentLoader }) {
+function PaymentModal({ t, handleClosePaymentModal, handleSkipPayment, handleMakePayment }) {
   const Heading = (props) => {
     return <h1 className="heading-m">{props.label}</h1>;
   };
-  const totalAmount = 2;
 
   const CloseBtn = (props) => {
     return (
@@ -29,39 +28,38 @@ function PaymentModal({ t, handleClosePaymentModal, handleSkipPayment, handleMak
       </div>
     );
   };
-
   return (
     <Modal
-      popupStyles={{
-        height: "300px",
-      }}
       headerBarMain={<Heading label={t("SUBMISSION_APPLICATION_PAYMENT")} />}
       headerBarEnd={<CloseBtn onClick={handleClosePaymentModal} />}
       actionCancelLabel={t("SKIP")}
       actionCancelOnSubmit={() => handleSkipPayment()}
       actionSaveLabel={t("CS_MAKE_PAYMENT")}
       actionSaveOnSubmit={() => {
-        handleMakePayment(totalAmount);
+        handleMakePayment();
       }}
-      isDisabled={paymentLoader}
       className={"submission-payment-modal"}
     >
-      <div className="submission-payment-modal-body-main" style={{ maxHeight: "180px" }}>
+      <div className="submission-payment-modal-body-main">
         <div className="note-div">
           <SelectCustomNote t={t} config={customNoteConfig}></SelectCustomNote>
         </div>
         <div className="submission-payment-modal-amount-div">
           <div className="amount-div">
             <div className="keys-div">
+              <h2> {t("AMOUNT_DUE")}</h2>
               <h2> {t("COURT_FEES")}</h2>
+              <h2> {t("ADVOCATE_FEES")}</h2>
             </div>
             <div className="values-div">
-              <h2> {`Rs ${totalAmount}`}</h2>
+              <h2> {"Rs 600"}</h2>
+              <h2> {"Rs 400"}</h2>
+              <h2> {"Rs 1000"}</h2>
             </div>
           </div>
           <div className="total-amount-div">
             <h1>{t("TOTAL_FEES")}</h1>
-            <h2>{`Rs ${totalAmount}`}</h2>
+            <h2>{"Rs 2000"}</h2>
           </div>
         </div>
       </div>

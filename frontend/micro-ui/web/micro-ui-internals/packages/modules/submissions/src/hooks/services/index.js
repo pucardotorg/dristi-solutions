@@ -26,20 +26,4 @@ export const submissionService = {
       data,
       params,
     }),
-  customApiService: (url, data, params, useCache = false, userService = true) =>
-    Request({
-      url: url,
-      useCache,
-      userService,
-      data,
-      params,
-    }),
-  getPendingTaskService: (data, params) =>
-    Request({
-      url: Urls.application.getPendingTaskFields,
-      useCache: false,
-      userService: true,
-      data,
-      params,
-    }),
 };

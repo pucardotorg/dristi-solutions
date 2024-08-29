@@ -29,23 +29,21 @@ function ScheduleAdmission({
   handleClickDate,
   disabled = true,
   isCaseAdmitted = false,
-  isSubmitBarDisabled = false,
-  caseAdmittedSubmit = () => {},
 }) {
-  // const getNextNDates = (n) => {
-  //   const today = new Date();
-  //   const datesArray = [];
+  const getNextNDates = (n) => {
+    const today = new Date();
+    const datesArray = [];
 
-  //   for (let i = 1; i <= n; i++) {
-  //     const nextDate = new Date(today);
-  //     nextDate.setDate(today.getDate() + i);
-  //     datesArray.push(formatDateInMonth(nextDate));
-  //   }
+    for (let i = 1; i <= n; i++) {
+      const nextDate = new Date(today);
+      nextDate.setDate(today.getDate() + i);
+      datesArray.push(formatDateInMonth(nextDate));
+    }
 
-  //   return datesArray;
-  // };
+    return datesArray;
+  };
 
-  const [nextFiveDates, setNextFiveDates] = useState([]);
+  const nextFourDates = getNextNDates(5);
   const [showErrorToast, setShowErrorToast] = useState(false);
   const closeToast = () => {
     setShowErrorToast(false);
@@ -62,7 +60,7 @@ function ScheduleAdmission({
     if (!scheduleHearingParams?.date && !modalInfo?.showCustomDate) {
       setShowErrorToast(true);
     } else {
-      isCaseAdmitted ? caseAdmittedSubmit(scheduleHearingParams) : setModalInfo({ ...modalInfo, page: 1 });
+      setModalInfo({ ...modalInfo, page: 1 });
     }
   };
 
@@ -144,51 +142,6 @@ function ScheduleAdmission({
     options: hearingTypeOptions,
   };
 
-  function dateToEpoch(date) {
-    return Math.floor(new Date(date).getTime());
-  }
-
-  const { data: dateResponse } = window?.Digit.Hooks.dristi.useJudgeAvailabilityDates(
-    {
-      SearchCriteria: {
-        tenantId: Digit.ULBService.getCurrentTenantId(),
-        fromDate: dateToEpoch(new Date(new Date().setDate(new Date().getDate() + 1))),
-      },
-    },
-    {},
-    "",
-    true
-  );
-
-  const convertAvailableDatesToDateObjects = (availableDates) => {
-    return availableDates.map((dateInfo) => ({
-      ...dateInfo,
-      date: new Date(dateInfo.date / 1),
-    }));
-  };
-
-  const getNextNDates = (n, availableDates) => {
-    const datesArray = [];
-
-    for (let i = 0; i < n; i++) {
-      if (i < availableDates.length) {
-        const dateObject = availableDates[i].date;
-        datesArray.push(formatDateInMonth(dateObject));
-      } else {
-        break;
-      }
-    }
-    return datesArray;
-  };
-
-  useEffect(() => {
-    if (dateResponse?.AvailableDates) {
-      const availableDatesWithDateObjects = convertAvailableDatesToDateObjects(dateResponse.AvailableDates);
-      const nextDates = getNextNDates(5, availableDatesWithDateObjects);
-      setNextFiveDates(nextDates);
-    }
-  }, [dateResponse]);
-
   return (
     <div className="schedule-admission-main">
       {selectedChip && <CustomCaseInfoDiv t={t} data={submitModalInfo?.shortCaseInfo} style={{ marginTop: "24px" }} />}
@@ -220,7 +173,7 @@ function ScheduleAdmission({
         <div>
           <CardText>{t("CS_SELECT_DATE")}</CardText>
           <CustomChooseDate
-            data={nextFiveDates}
+            data={nextFourDates}
             selectedChip={selectedChip}
             handleClick={handleClickDate}
             scheduleHearingParams={scheduleHearingParams}
@@ -257,8 +210,7 @@ function ScheduleAdmission({
           variation="primary"
           onSubmit={handleSubmit}
           className="primary-label-btn select-participant-submit"
-          disabled={isSubmitBarDisabled}
-          label={isCaseAdmitted ? t("GENERATE_ORDERS_LINK") : selectedChip ? t("CS_COMMON_CONTINUE") : t("CS_SELECT_PARTICIPANT")}
+          label={selectedChip ? t("CS_COMMON_CONTINUE") : t("CS_SELECT_PARTICIPANT")}
         ></SubmitBar>
       </div>
 

@@ -1,94 +1,30 @@
 import { CloseSvg, InfoCard } from "@egovernments/digit-ui-components";
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState } from "react";
 import Modal from "../../../dristi/src/components/Modal";
 import { Button } from "@egovernments/digit-ui-react-components";
 import { FileUploadIcon } from "../../../dristi/src/icons/svgIndex";
-import useESign from "../hooks/orders/useESign";
-import { Urls } from "../hooks/services/Urls";
-import useDocumentUpload from "../hooks/orders/useDocumentUpload";
-import { getFilestoreId } from "@egovernments/digit-ui-module-dristi/src/Utils/fileStoreUtil";
 
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
-const CloseBtn = (props) => {
-  return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-      <CloseSvg />
-    </div>
-  );
-};
-
-function OrderSignatureModal({ t, order, handleIssueOrder, handleGoBackSignatureModal, saveOnsubmitLabel, setSignedDocumentUploadID }) {
+function OrderSignatureModal({ t, order, handleIssueOrder, handleGoBackSignatureModal }) {
   const [isSigned, setIsSigned] = useState(false);
-  const { handleEsign, checkSignStatus } = useESign();
-  const fileStoreIdESign = getFilestoreId();
-  const [formData, setFormData] = useState({}); // storing the file upload data
-  const [openUploadSignatureModal, setOpenUploadSignatureModal] = useState(false);
-  const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
-  const [fileStoreId, setFileStoreId] = useState("c162c182-103f-463e-99b6-18654ed7a5b1"); // have to set the uploaded fileStoreID
-  const [pageModule, setPageModule] = useState("en");
-  const tenantId = window?.Digit.ULBService.getCurrentTenantId();
-  const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${fileStoreId}`;
-  const { uploadDocuments } = useDocumentUpload();
-  const name = "Signature";
-  const uploadModalConfig = useMemo(() => {
-    return {
-      key: "uploadSignature",
-      populators: {
-        inputs: [
-          {
-            name: name,
-            documentHeader: "Signature",
-            type: "DragDropComponent",
-            uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
-            maxFileSize: 5,
-            maxFileErrorMessage: "CS_FILE_LIMIT_5_MB",
-            fileTypes: ["JPG", "PNG", "JPEG"],
-            isMultipleUpload: false,
-          },
-        ],
-        validation: {},
-      },
-    };
-  }, [name]);
-
-  const onSelect = (key, value) => {
-    if (value === null) {
-      setFormData({});
-    } else {
-      setFormData((prevData) => ({
-        ...prevData,
-        [key]: value,
-      }));
-    }
+  const Heading = (props) => {
+    return <h1 className="heading-m">{props.label}</h1>;
   };
 
-  // check the data from upload
-  useEffect(() => {
-    const upload = async () => {
-      if (formData?.uploadSignature?.Signature?.length > 0) {
-        const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
-        setSignedDocumentUploadID(uploadedFileId?.[0]?.fileStoreId);
-        setIsSigned(true);
-      }
-    };
+  const CloseBtn = (props) => {
+    return (
+      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
+        <CloseSvg />
+      </div>
+    );
+  };
 
-    upload();
-  }, [formData]);
-
-  useEffect(() => {
-    checkSignStatus(name, formData, uploadModalConfig, onSelect, setIsSigned);
-  }, [checkSignStatus]);
-
-  return !openUploadSignatureModal ? (
+  return (
     <Modal
       headerBarMain={<Heading label={t("ADD_SIGNATURE")} />}
       headerBarEnd={<CloseBtn onClick={handleGoBackSignatureModal} />}
       actionCancelLabel={t("CS_COMMON_BACK")}
       actionCancelOnSubmit={handleGoBackSignatureModal}
-      actionSaveLabel={t(saveOnsubmitLabel)}
+      actionSaveLabel={t("ISSUE_ORDER")}
       isDisabled={!isSigned}
       actionSaveOnSubmit={() => {
         handleIssueOrder();
@@ -117,8 +53,7 @@ function OrderSignatureModal({ t, order, handleIssueOrder, handleGoBackSignature
                 label={t("CS_ESIGN")}
                 onButtonClick={() => {
                   // setOpenAadharModal(true);
-                  // setIsSigned(true);
-                  handleEsign(name, pageModule, fileStoreIdESign);
+                  setIsSigned(true);
                 }}
                 className={"aadhar-sign-in"}
                 labelClassName={"aadhar-sign-in"}
@@ -128,8 +63,7 @@ function OrderSignatureModal({ t, order, handleIssueOrder, handleGoBackSignature
                 label={t("UPLOAD_DIGITAL_SIGN_CERTI")}
                 onButtonClick={() => {
                   // setOpenUploadSignatureModal(true);
-                  // setIsSigned(true);
-                  setOpenUploadSignatureModal(true);
+                  setIsSigned(true);
                 }}
                 className={"upload-signature"}
                 labelClassName={"upload-signature-label"}
@@ -137,9 +71,9 @@ function OrderSignatureModal({ t, order, handleIssueOrder, handleGoBackSignature
             </div>
             <div className="donwload-submission">
               <h2>{t("WANT_TO_DOWNLOAD")}</h2>
-              <a href={uri} target="_blank" rel="noreferrer" style={{ color: "#007E7E", cursor: "pointer", textDecoration: "underline" }}>
-                {t("CLICK_HERE")}
-              </a>
+              <span>
+                <a href="">{t("CLICK_HERE")}</a>
+              </span>
             </div>
           </div>
         ) : (
@@ -150,16 +84,6 @@ function OrderSignatureModal({ t, order, handleIssueOrder, handleGoBackSignature
         )}
       </div>
     </Modal>
-  ) : (
-    <UploadSignatureModal
-      t={t}
-      key={name}
-      name={name}
-      setOpenUploadSignatureModal={setOpenUploadSignatureModal}
-      onSelect={onSelect}
-      config={uploadModalConfig}
-      formData={formData}
-    />
   );
 }
 

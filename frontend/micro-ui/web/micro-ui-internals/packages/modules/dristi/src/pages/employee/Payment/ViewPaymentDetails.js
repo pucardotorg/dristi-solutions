@@ -5,7 +5,6 @@ import { useHistory } from "react-router-dom";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
 import { useToast } from "../../../components/Toast/useToast";
 import { DRISTIService } from "../../../services";
-import { Urls } from "../../../hooks";
 
 const paymentOption = [
   {
@@ -79,7 +78,7 @@ const ViewPaymentDetails = ({ location, match }) => {
     {
       tenantId: tenantId,
       consumerCode: caseDetails?.filingNumber,
-      businessService: "case-default",
+      businessService: "case",
     },
     {
       enabled: Boolean(tenantId && caseDetails?.filingNumber),
@@ -103,6 +102,7 @@ const ViewPaymentDetails = ({ location, match }) => {
     }
   }, [caseDetails]);
 
+  
   const { data: calculationResponse, isLoading: isPaymentLoading } = Digit.Hooks.dristi.usePaymentCalculator(
     {
       EFillingCalculationCriteria: [
@@ -147,8 +147,8 @@ const ViewPaymentDetails = ({ location, match }) => {
         {
           tenantId,
           consumerCode: caseDetails?.filingNumber,
-          consumerType: "case-default",
-          businessService: "case-default",
+          consumerType: "case",
+          businessService: "case",
           taxPeriodFrom: Date.now().toString(),
           taxPeriodTo: Date.now().toString(),
           demandDetails: [
@@ -168,10 +168,7 @@ const ViewPaymentDetails = ({ location, match }) => {
 
   const onSubmitCase = async () => {
     setIsDisabled(true);
-    const regenerateBill = await DRISTIService.callFetchBill(
-      {},
-      { consumerCode: caseDetails?.filingNumber, tenantId, businessService: "case-default" }
-    );
+    const regenerateBill = await DRISTIService.callFetchBill({}, { consumerCode: caseDetails?.filingNumber, tenantId, businessService: "case" });
     const billFetched = regenerateBill?.Bill ? regenerateBill?.Bill[0] : {};
     if (!Object.keys(bill || regenerateBill || {}).length) {
       toast.error(t("CS_BILL_NOT_AVAILABLE"));
@@ -183,7 +180,7 @@ const ViewPaymentDetails = ({ location, match }) => {
         Payment: {
           paymentDetails: [
             {
-              businessService: "case-default",
+              businessService: "case",
               billId: billFetched.id,
               totalDue: billFetched.totalAmount,
               totalAmountPaid: billFetched.totalAmount,
@@ -197,20 +194,6 @@ const ViewPaymentDetails = ({ location, match }) => {
           totalAmountPaid: totalAmount,
           instrumentNumber: additionDetails,
           instrumentDate: new Date().getTime(),
-        },
-      });
-      await DRISTIService.customApiService(Urls.dristi.pendingTask, {
-        pendingTask: {
-          name: "Pending Payment",
-          entityType: "case-default",
-          referenceId: `MANUAL_${caseDetails?.filingNumber}`,
-          status: "PAYMENT_PENDING",
-          cnrNumber: null,
-          filingNumber: caseDetails?.filingNumber,
-          isCompleted: true,
-          stateSla: null,
-          additionalDetails: {},
-          tenantId,
         },
       });
       history.push(`/${window?.contextPath}/employee/dristi/pending-payment-inbox/response`, {
@@ -238,15 +221,12 @@ const ViewPaymentDetails = ({ location, match }) => {
             showTable: true,
             showCopytext: true,
           },
-          amount: totalAmount,
           fileStoreId: "c162c182-103f-463e-99b6-18654ed7a5b1",
         },
       });
       setIsDisabled(false);
     } catch (err) {
-      history.push(`/${window?.contextPath}/employee/dristi/pending-payment-inbox/response`, {
-        state: { success: false, amount: totalAmount },
-      });
+      history.push(`/${window?.contextPath}/employee/dristi/pending-payment-inbox/response`, { state: { success: false } });
       setIsDisabled(false);
     }
   };

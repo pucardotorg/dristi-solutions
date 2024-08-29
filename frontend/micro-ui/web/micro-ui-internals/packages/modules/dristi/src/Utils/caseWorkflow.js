@@ -12,7 +12,6 @@ export const CaseWorkflowState = {
   COMPLETED: "COMPLETED",
   ABATED: "ABATED",
   REJECTED: "REJECTED",
-  ADMISSION_HEARING_SCHEDULED: "ADMISSION_HEARING_SCHEDULED",
 };
 
 export const CaseWorkflowAction = {

@@ -6,12 +6,8 @@
     justify-content: space-between;
     margin-bottom: 20px;
     .header {
-      font-family: Roboto;
       font-size: 32px;
-      font-weight: 700;
-      line-height: 37.5px;
-      text-align: left;
-      color: #231f20;
+      font-weight: 600;
     }
     .button-field {
       display: flex;
@@ -24,13 +20,6 @@
       }
     }
   }
-}
-
-.home-header-wrapper {
-  display: flex;
-  width: 100%;
-  flex-direction: column;
-  gap: 24px;
 }
 
 .digit-dropdown-select-wrap {

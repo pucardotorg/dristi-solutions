@@ -1,19 +1,14 @@
-import { Button, CloseSvg, InboxSearchComposer, Loader } from "@egovernments/digit-ui-react-components";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
+import React, { useContext, useMemo, useState } from "react";
 import Modal from "../../../dristi/src/components/Modal";
+import { Button, CloseSvg, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
+import { useTranslation } from "react-i18next";
+import { DataContext } from "./DataContext";
 import { preHearingConfig } from "../configs/PreHearingConfig";
-import { hearingService } from "../hooks/services";
-import { ReschedulingPurpose } from "../pages/employee/ReschedulingPurpose";
-import { formatDate } from "../utils";
 
-function PreHearingModal({ onCancel, hearingData, courtData, individualId, userType }) {
+function PreHearingModal({ onCancel, hearings }) {
   const { t } = useTranslation();
-  const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
-  const [totalCount, setTotalCount] = useState(null);
-  const [purposeModalOpen, setPurposeModalOpen] = useState(false);
-  const [purposeModalData, setPurposeModalData] = useState({});
-  const [rescheduleAll, setRescheduleAll] = useState(false);
+  const { hearingData } = useContext(DataContext);
+  const [config, setConfig] = useState(preHearingConfig);
 
   const Heading = (props) => {
     return <h1 className="heading-m">{props.label}</h1>;
@@ -27,64 +22,15 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
     );
   };
 
-  const openRescheduleModal = (caseDetails) => {
-    setPurposeModalData(caseDetails);
-    setPurposeModalOpen(true);
-  };
-
   const updatedConfig = useMemo(() => {
     const configCopy = structuredClone(preHearingConfig);
     configCopy.apiDetails.requestParam = {
       ...configCopy.apiDetails.requestParam,
-      fromDate: hearingData.fromDate,
-      toDate: hearingData.toDate,
-      slot: hearingData.slot,
+      fromDate: hearingData.hearingDate,
+      hearingSlot: hearingData.hearingSlot,
     };
-    configCopy.additionalDetails = {
-      attendeeIndividualId: userType === "citizen" && individualId,
-    };
-    configCopy.sections.searchResult.uiConfig.columns = [
-      ...configCopy.sections.searchResult.uiConfig.columns.map((column) => {
-        return column.label === "Actions"
-          ? {
-              ...column,
-              openRescheduleDialog: openRescheduleModal,
-            }
-          : column;
-      }),
-    ];
-    return configCopy;
-  }, [hearingData.fromDate, hearingData.toDate, hearingData.slot, userType, individualId]);
-
-  const getTotalCount = useCallback(
-    async function () {
-      const response = await hearingService
-        .searchHearings(
-          {
-            criteria: {
-              ...updatedConfig?.apiDetails?.requestBody?.criteria?.[0],
-              tenantId,
-              fromDate: hearingData.fromDate,
-              toDate: hearingData.toDate,
-              slot: hearingData.slot,
-              attendeeIndividualId: individualId,
-            },
-          },
-          {
-            tenantId: tenantId,
-          }
-        )
-        .catch(() => {
-          return {};
-        });
-      setTotalCount(response?.TotalCount);
-    },
-    [updatedConfig, tenantId]
-  );
-
-  useEffect(() => {
-    getTotalCount();
-  }, [updatedConfig, tenantId]);
+    setConfig(configCopy);
+  }, [preHearingConfig, hearingData?.hearingDate, hearingData?.hearingSlot]);
 
   const popUpStyle = {
     width: "70%",
@@ -93,22 +39,9 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
   };
 
   const onRescheduleAllClick = () => {
-    setRescheduleAll(true);
-    openRescheduleModal(hearingData);
+    const contextPath = window?.contextPath || "";
+    window.location.href = `/${contextPath}/employee/hearings/reschedule-hearing`;
   };
-
-  const closeFunc = () => {
-    setPurposeModalOpen(false);
-    setPurposeModalData({});
-  };
-
-  if (!totalCount && totalCount !== 0) {
-    return null;
-  }
-
-  if (userType === "citizen" && !individualId) {
-    return <Loader />;
-  }
 
   return (
     <Modal
@@ -116,34 +49,29 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
       actionCancelOnSubmit={onCancel}
       actionSaveLabel={t("Reschedule All Hearings")}
       formId="modal-action"
-      headerBarMain={<Heading label={`${t("TOTAL_HEARINGS")} (${hearingData.count})`} />}
+      headerBarMain={<Heading label={t("Admission Hearings (34)")} />}
       className="pre-hearings"
       popupStyles={popUpStyle}
       popupModuleActionBarStyles={{
         display: "none",
       }}
     >
-      <div style={{ minHeight: "80vh" }}>
-        <InboxSearchComposer configs={updatedConfig} />
+      <div style={{ marginTop: "2rem" }}>
+        <InboxSearchComposer configs={config} />
       </div>
       <div
         style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "1rem 0 0 0", borderTop: "1px solid lightgray" }}
       >
         <div>
-          <strong>{formatDate(new Date(hearingData.fromDate))}</strong>, {hearingData.slot}
+          <strong>24 May, 2024</strong>, 10:00 - 12:00 pm
         </div>
-        {Digit.UserService.getType() === "employee" && (
-          <Button
-            className="border-none dristi-font-bold"
-            onButtonClick={onRescheduleAllClick}
-            label={t("RESCHEDULE_ALL_HEARINGS")}
-            variation={"secondary"}
-          />
-        )}
+        <Button
+          className="border-none dristi-font-bold"
+          onButtonClick={onRescheduleAllClick}
+          label="Reschedule All Hearings"
+          variation={"secondary"}
+        />
       </div>
-      {purposeModalOpen && (
-        <ReschedulingPurpose rescheduleAll={rescheduleAll} courtData={courtData} closeFunc={closeFunc} caseDetails={purposeModalData} />
-      )}
     </Modal>
   );
 }

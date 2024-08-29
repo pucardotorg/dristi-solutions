@@ -53,7 +53,6 @@ function AdvocateNameDetails({ t, config, onSelect, formData = {}, errors, regis
 
   const individualId = useMemo(() => data?.Individual?.[0]?.individualId, [data?.Individual]);
   const userType = useMemo(() => data?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value, [data?.Individual]);
-
   const { data: searchData, isLoading: isSearchLoading } = window?.Digit.Hooks.dristi.useGetAdvocateClerk(
     {
       criteria: [{ individualId }],
@@ -61,8 +60,8 @@ function AdvocateNameDetails({ t, config, onSelect, formData = {}, errors, regis
     },
     { tenantId },
     moduleCode,
-    Boolean(isUserLoggedIn && individualId && userType === "ADVOCATE"),
-    "/advocate/advocate/v1/_search"
+    Boolean(isUserLoggedIn && individualId && userType !== "LITIGANT"),
+    userType === "ADVOCATE" ? "/advocate/advocate/v1/_search" : "/advocate/clerk/v1/_search"
   );
 
   const userTypeDetail = useMemo(() => {
@@ -70,19 +69,18 @@ function AdvocateNameDetails({ t, config, onSelect, formData = {}, errors, regis
   }, [userType]);
 
   const searchResult = useMemo(() => {
-    return userType === "ADVOCATE" && searchData?.[`${userTypeDetail?.apiDetails?.requestKey}s`]?.[0]?.responseList;
-  }, [searchData, userTypeDetail?.apiDetails?.requestKey, userType]);
+    return searchData?.[`${userTypeDetail?.apiDetails?.requestKey}s`]?.[0]?.responseList;
+  }, [searchData, userTypeDetail?.apiDetails?.requestKey]);
 
   const isApprovalPending = useMemo(() => {
     return (
-      userType === "ADVOCATE" &&
+      userType !== "LITIGANT" &&
       Array.isArray(searchResult) &&
       searchResult?.length > 0 &&
       searchResult?.[0]?.isActive === false &&
       searchResult?.[0]?.status !== "INACTIVE"
     );
   }, [searchResult, userType]);
-  console.debug(userType, isApprovalPending, searchData, searchResult);
 
   useEffect(() => {
     const isPending = isApprovalPending;

@@ -1,110 +1,72 @@
-const defaultSearchValues = {
-  stage: "",
-  type: {
-    type: "NIA S138",
-  },
-  caseNameOrId: "",
-  sortCaseListByStartDate: "",
-};
-
-export const subStageOptions = [
-  { stage: ["Filing"] },
-  { stage: ["Cognizance"] },
-  { stage: ["Inquiry"] },
-  { stage: ["Appearance"] },
-  { stage: ["Framing of charges"] },
-  { stage: ["Evidence"] },
-  { stage: ["Arguments"] },
-  { stage: ["Judgment"] },
-  { stage: ["Post-Judgement"] },
-];
-
 export const preHearingConfig = {
   label: "ES_COMMON_HEARING",
-  type: "search",
+  type: "inbox",
   customHookName: "hearings.usePreHearingModalData",
   apiDetails: {
-    serviceName: "/hearing/v1/search",
-    requestParam: {
-      tenantId: Digit.ULBService.getCurrentTenantId(),
-    },
+    serviceName: "/case/case/v1/_search",
+    requestParam: {},
     requestBody: {
-      criteria: {},
+      tenantId: Digit.ULBService.getCurrentTenantId(),
+      criteria: [
+        {
+          status: "CASE_ADMITTED",
+          pagination: { limit: 5, offSet: 0 },
+        },
+      ],
+      inbox: {
+        moduleSearchCriteria: {},
+        limit: 5,
+        offset: 0,
+      },
     },
     minParametersForSearchForm: 0,
     masterName: "commonUiConfig",
     moduleName: "PreHearingsConfig",
-    searchFormJsonPath: "requestBody.criteria",
-    filterFormJsonPath: "requestBody.criteria",
-    tableFormJsonPath: "requestBody.criteria",
+    searchFormJsonPath: "requestBody.inbox.moduleSearchCriteria",
+    filterFormJsonPath: "requestBody.Criteria",
+    tableFormJsonPath: "requestParam",
   },
   sections: {
-    search: {
+    filter: {
       uiConfig: {
-        formClassName: "inbox-filter",
-        primaryLabel: "ES_COMMON_SEARCH",
-        secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
-        minReqFields: 0,
-        defaultValues: defaultSearchValues,
-        searchWrapperStyles: {
-          marginLeft: "auto",
-        },
         fields: [
           {
-            type: "component",
-            component: "CustomSortComponent",
+            type: "locationdropdown",
             isMandatory: false,
             disable: false,
-            name: "Newest",
-            key: "sortCaseListByStartDate",
-            sortBy: "startTime",
-            ascText: "First",
-            descText: "Last",
-            showAdditionalText: true,
-            showIcon: true,
-            icon: "UpDownArrowIcon",
-            populators: {},
-          },
-          {
-            label: "Type",
-            isMandatory: false,
-            key: "type",
-            type: "dropdown",
             populators: {
-              styles: { width: "150px" },
-              name: "type",
-              error: "Required",
-              optionsKey: "type",
-              options: [
-                {
-                  type: "NIA S138",
-                },
-                {
-                  type: "CIA S138",
-                },
-              ],
+              name: "ward",
+              type: "ward",
+              optionsKey: "i18nKey",
+              defaultText: "Type",
+              selectedText: "COMMON_SELECTED",
+              allowMultiSelect: true,
             },
           },
           {
-            label: "Stage",
+            type: "locationdropdown",
             isMandatory: false,
-            key: "stage",
-            type: "dropdown",
+            disable: false,
             populators: {
-              styles: { width: "150px" },
-              name: "stage",
-              error: "Required",
-              optionsKey: "stage",
-              options: subStageOptions,
+              name: "ward",
+              type: "ward",
+              optionsKey: "i18nKey",
+              defaultText: "Stage",
+              selectedText: "COMMON_SELECTED",
+              allowMultiSelect: true,
             },
           },
           {
-            label: "Search Case Name or ID",
-            isMandatory: false,
-            key: "caseNameOrId",
             type: "text",
+            isMandatory: false,
+            disable: false,
             populators: {
-              name: "caseNameOrId",
+              name: "ward",
+              type: "ward",
+              optionsKey: "i18nKey",
+              defaultText: "Stage",
+              selectedText: "COMMON_SELECTED",
+              allowMultiSelect: true,
             },
           },
         ],
@@ -113,15 +75,16 @@ export const preHearingConfig = {
     },
     searchResult: {
       tenantId: Digit.ULBService.getCurrentTenantId(),
+      label: "",
       uiConfig: {
         columns: [
           {
             label: "Case Name",
-            jsonPath: "caseName",
+            jsonPath: "caseTitle",
           },
           {
             label: "Stage",
-            jsonPath: "subStage",
+            jsonPath: "stage",
           },
           {
             label: "Case Type",
@@ -133,12 +96,12 @@ export const preHearingConfig = {
           },
           {
             label: "Actions",
-            jsonPath: "",
+            jsonPath: "caseDescription",
             additionalCustomization: true,
           },
         ],
         enableColumnSort: true,
-        resultsJsonPath: "items",
+        resultsJsonPath: "caseResponse.criteria[0].responseList",
       },
       show: true,
     },

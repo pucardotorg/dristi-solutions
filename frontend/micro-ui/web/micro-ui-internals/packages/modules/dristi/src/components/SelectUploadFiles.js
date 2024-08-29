@@ -117,19 +117,6 @@ function SelectUploadFiles({ t, config, formData = {}, onSelect, errors, setErro
   const handleChange = (file, input, index = Infinity) => {
     let currentValue = (formData && formData[config.key] && formData[config.key][input.name]) || [];
     currentValue.splice(index, 1, file);
-    currentValue = currentValue.map((item) => {
-      if (item?.name) {
-        const fileNameParts = item?.name.split(".");
-        const extension = fileNameParts.pop().toLowerCase();
-        const fileNameWithoutExtension = fileNameParts.join(".");
-        return new File([item], `${fileNameWithoutExtension}.${extension}`, {
-          type: item?.type,
-          lastModified: item?.lastModified,
-        });
-      } else {
-        return item;
-      }
-    });
     const maxFileSize = input?.maxFileSize * 1024 * 1024;
     if (file.size > maxFileSize) {
       onSelect(config.key, { ...formData[config.key], [input?.name]: currentValue }, { shouldValidate: false });
@@ -237,7 +224,7 @@ function SelectUploadFiles({ t, config, formData = {}, onSelect, errors, setErro
                 <div className="drag-drop-heading">
                   <h2 className="card-label">{t(input?.documentHeader)}</h2>
                   {input?.isOptional && <h3>{t(input?.isOptional)}</h3>}
-                  <CustomErrorTooltip message={t(input?.infoTooltipMessage)} showTooltip={Boolean(input?.infoTooltipMessage)} icon />
+                  <CustomErrorTooltip message={t(input?.infoTooltipMessage)} showTooltip={Boolean(input?.infoTooltipMessage)} />
                 </div>
                 {<p>{t(input?.documentSubText)}</p>}
               </div>

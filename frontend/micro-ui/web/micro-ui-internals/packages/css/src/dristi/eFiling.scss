@@ -471,14 +471,6 @@
 .prayer-and-sworm {
   margin-bottom: 80px;
 
-  .jk-digit-secondary-btn.previous-button {
-      h2 {
-        font-size: inherit;
-        font-weight: inherit !important;
-        font-family: inherit;
-        color: #007e7e;
-      }
-    }
   .custom-sub-header {
     font-family: Roboto;
     font-size: 16px;
@@ -974,10 +966,6 @@
               &.preverrorside {
                 background-color: #ecf3fd;
                 border-left: 2px #4d83cf solid;
-              }
-              &.system-error-class {
-                background-color: #fdf1de;
-                border-left: 2px #9e400a solid;
               }
             }
 

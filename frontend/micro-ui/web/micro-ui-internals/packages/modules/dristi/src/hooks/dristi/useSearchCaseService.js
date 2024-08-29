@@ -5,10 +5,7 @@ function useSearchCaseService(reqData, params, moduleCode, caseId, enabled) {
   const client = useQueryClient();
   const { isLoading, data, isFetching, refetch, error } = useQuery(
     `GET_CASE_DETAILS_${moduleCode}_${caseId}`,
-    () =>
-      DRISTIService.searchCaseService(reqData, params)
-        .then((data) => data)
-        .catch(() => ({})),
+    () => DRISTIService.searchCaseService(reqData, params),
     {
       cacheTime: 0,
       enabled: Boolean(enabled),

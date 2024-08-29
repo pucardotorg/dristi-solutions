@@ -28,7 +28,6 @@ function SelectCustomNote({ t, config, onClick = () => {} }) {
             {String(t(input?.linkText))}
           </span>
         )}
-        {input?.children}
       </div>
     );
   });

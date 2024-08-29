@@ -1,13 +1,12 @@
 import { CloseSvg } from "@egovernments/digit-ui-components";
 import React, { useEffect, useMemo, useState } from "react";
 import Modal from "../../../dristi/src/components/Modal";
-import { getFilestoreId } from "@egovernments/digit-ui-module-dristi/src/Utils/fileStoreUtil";
-function OrderReviewModal({ setShowReviewModal, t, order, setShowsignatureModal, showActions = true }) {
+function OrderReviewModal({ setShowReviewModal, t, order, setShowsignatureModal, handleSaveDraft, showActions = true }) {
   const [fileStoreId, setFileStoreID] = useState(null);
   const [fileName, setFileName] = useState();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
-  const filestoreId = "c4fef888-6d43-404f-8d37-63cae7651619";
+  const MultiUploadWrapper = Digit?.ComponentRegistryService?.getComponent("MultiUploadWrapper");
 
   const Heading = (props) => {
     return <h1 className="heading-m">{props.label}</h1>;
@@ -21,12 +20,12 @@ function OrderReviewModal({ setShowReviewModal, t, order, setShowsignatureModal,
     );
   };
 
-  useEffect(() => {
-    const onDocumentUpload = async (fileData, filename) => {
-      const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", fileData, tenantId);
-      return { file: fileUploadRes?.data, fileType: fileData.type, filename };
-    };
+  const onDocumentUpload = async (fileData, filename) => {
+    const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", fileData, tenantId);
+    return { file: fileUploadRes?.data, fileType: fileData.type, filename };
+  };
 
+  useEffect(() => {
     if (order?.filesData) {
       const numberOfFiles = order?.filesData.length;
       let finalDocumentData = [];
@@ -46,7 +45,7 @@ function OrderReviewModal({ setShowReviewModal, t, order, setShowsignatureModal,
         });
       }
     }
-  }, [order, tenantId]);
+  }, [order]);
 
   const showDocument = useMemo(() => {
     return (
@@ -62,11 +61,11 @@ function OrderReviewModal({ setShowReviewModal, t, order, setShowsignatureModal,
           maxWidth: "100%",
         }}
       >
-        {fileStoreId || filestoreId ? (
+        {fileStoreId ? (
           <DocViewerWrapper
             docWidth={"calc(80vw* 62/ 100)"}
             docHeight={"60vh"}
-            fileStoreId={fileStoreId || filestoreId}
+            fileStoreId={fileStoreId}
             tenantId={tenantId}
             displayFilename={fileName}
           />
@@ -75,12 +74,14 @@ function OrderReviewModal({ setShowReviewModal, t, order, setShowsignatureModal,
         )}
       </div>
     );
-  }, [fileName, fileStoreId, t, tenantId]);
+  }, [fileStoreId]);
 
   return (
     <Modal
       headerBarMain={<Heading label={t("REVIEW_ORDERS_HEADING")} />}
       headerBarEnd={<CloseBtn onClick={() => setShowReviewModal(false)} />}
+      actionCancelLabel={showActions && t("SAVE_DRAFT")}
+      actionCancelOnSubmit={showActions && handleSaveDraft}
       actionSaveLabel={showActions && t("ADD_SIGNATURE")}
       actionSaveOnSubmit={() => {
         if (showActions) {

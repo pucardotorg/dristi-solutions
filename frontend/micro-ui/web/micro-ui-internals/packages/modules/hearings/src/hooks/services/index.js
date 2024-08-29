@@ -2,18 +2,9 @@ import { Request } from "@egovernments/digit-ui-libraries";
 import { Urls } from "./Urls";
 
 export const hearingService = {
-  updateHearingTranscript: (data, params) => {
+  updateHearing: (data, params) => {
     return Request({
-      url: Urls.hearing.hearingUpdateTranscript,
-      useCache: false,
-      userService: false,
-      data,
-      params,
-    });
-  },
-  updateHearings: (data, params) => {
-    return Request({
-      url: Urls.hearing.updateHearings,
+      url: Urls.hearing.hearingUpdate,
       useCache: false,
       userService: false,
       data,
@@ -29,31 +20,4 @@ export const hearingService = {
       params,
     });
   },
-  startHearing: ({ hearing }, params) => {
-    return Request({
-      url: Urls.hearing.updateHearings,
-      useCache: false,
-      userService: false,
-      data: { hearing: { ...hearing, workflow: { action: "START" } } },
-      params,
-    });
-  },
-  customApiService: (url, data, params, useCache = false, userService = true) =>
-    Request({
-      url: url,
-      useCache: useCache,
-      userService: true,
-      data,
-      params,
-    }),
-
-  generateWitnessDepostionDownload: (data, params) =>
-    Request({
-      url: Urls.hearing.downloadWitnesspdf,
-      useCache: false,
-      userService: false,
-      data,
-      params,
-      userDownload: true,
-    }),
 };

@@ -30,10 +30,8 @@ import {
   chequeDateValidation,
   chequeDetailFileValidation,
   complainantValidation,
-  debtLiabilityValidation,
   delayApplicationValidation,
   demandNoticeFileValidation,
-  getAllAssignees,
   prayerAndSwornValidation,
   respondentValidation,
   showDemandNoticeModal,
@@ -44,9 +42,6 @@ import {
 } from "./EfilingValidationUtils";
 import _, { isEqual, isMatch } from "lodash";
 import CorrectionsSubmitModal from "../../../components/CorrectionsSubmitModal";
-import { Urls } from "../../../hooks";
-import useGetStatuteSection from "../../../hooks/dristi/useGetStatuteSection";
-import useCasePdfGeneration from "../../../hooks/dristi/useCasePdfGeneration";
 const OutlinedInfoIcon = () => (
   <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: "absolute", right: -22, top: 0 }}>
     <g clip-path="url(#clip0_7603_50401)">
@@ -121,12 +116,6 @@ const getTotalCountFromSideMenuConfig = (sideMenuConfig, selected) => {
   return countObj;
 };
 
-const stateSla = {
-  PAYMENT_PENDING: 2,
-};
-
-const dayInMillisecond = 24 * 3600 * 1000;
-
 function EFilingCases({ path }) {
   const [params, setParmas] = useState({});
   const { t } = useTranslation();
@@ -135,7 +124,6 @@ function EFilingCases({ path }) {
   const [showErrorToast, setShowErrorToast] = useState(false);
   const [isDisabled, setIsDisabled] = useState(false);
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
-  const todayDate = new Date().getTime();
 
   const setFormErrors = useRef(null);
   const resetFormData = useRef(null);
@@ -163,21 +151,6 @@ function EFilingCases({ path }) {
   const [prevSelected, setPrevSelected] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const homepagePath = "/digit-ui/citizen/dristi/home";
-
-  const { data: casePdf, isPdfLoading, refetch: refetchCasePDfGeneration } = useCasePdfGeneration(
-    {
-      criteria: [
-        {
-          caseId: caseId,
-        },
-      ],
-      tenantId,
-    },
-    {},
-    "dristi",
-    caseId,
-    false
-  );
 
   const [{ showSuccessToast, successMsg }, setSuccessToast] = useState({
     showSuccessToast: false,
@@ -320,9 +293,6 @@ function EFilingCases({ path }) {
     }),
     [caseData]
   );
-
-  const prevCaseDetails = useMemo(() => structuredClone(caseDetails), [caseDetails]);
-
   const scrutinyObj = useMemo(() => {
     return caseDetails?.additionalDetails?.scrutiny?.data || {};
   }, [caseDetails]);
@@ -426,8 +396,6 @@ function EFilingCases({ path }) {
   const isCaseReAssigned = useMemo(() => state === CaseWorkflowState.CASE_RE_ASSIGNED, [state]);
   const isDisableAllFieldsMode = !(state === CaseWorkflowState.CASE_RE_ASSIGNED || state === CaseWorkflowState.DRAFT_IN_PROGRESS);
   const isDraftInProgress = state === CaseWorkflowState.DRAFT_IN_PROGRESS;
-  const { data: courtRoomDetails, isLoading: isCourtIdsLoading } = useGetStatuteSection("common-masters", [{ name: "Court_Rooms" }]);
-  const courtRooms = useMemo(() => courtRoomDetails?.Court_Rooms || [], [courtRoomDetails]);
 
   useEffect(() => {
     setParentOpen(sideMenuConfig.findIndex((parent) => parent.children.some((child) => child.key === selected)));
@@ -914,8 +882,6 @@ function EFilingCases({ path }) {
                           isDisabled: input?.shouldBeEnabled ? false : true,
                         };
                       }
-
-                      // 225 Inquiry Affidavit Validation in respondent details
                       if (selected === "respondentDetails") {
                         if (
                           Array.isArray(data?.addressDetails) &&
@@ -932,8 +898,8 @@ function EFilingCases({ path }) {
                               body?.key === "inquiryAffidavitFileUpload"
                           )
                         ) {
-                          // delete input.isOptional;
-                          body.isMandatory = false;
+                          delete input.isOptional;
+                          body.isMandatory = true;
                           return {
                             ...input,
                             hideDocument: false,
@@ -943,7 +909,7 @@ function EFilingCases({ path }) {
                           return {
                             ...input,
                             isOptional: "CS_IS_OPTIONAL",
-                            hideDocument: false,
+                            hideDocument: true,
                           };
                         } else {
                           return {
@@ -1139,11 +1105,6 @@ function EFilingCases({ path }) {
   //   setConfirmDeleteModal(true);
   //   setFormdata(newArray);
   // };
-
-  const handleSkip = () => {
-    setShowConfirmOptionalModal(false);
-  };
-
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues, index, currentDisplayIndex) => {
     if (formData.advocateBarRegNumberWithName?.[0] && !formData.advocateBarRegNumberWithName[0].modified) {
       setValue("advocateBarRegNumberWithName", [
@@ -1395,23 +1356,6 @@ function EFilingCases({ path }) {
       formdata
         .filter((data) => data.isenabled)
         .some((data) =>
-          debtLiabilityValidation({
-            formData: data?.data,
-            t,
-            caseDetails,
-            selected,
-            setShowErrorToast,
-            toast,
-            setFormErrors: setFormErrors.current,
-          })
-        )
-    ) {
-      return;
-    }
-    if (
-      formdata
-        .filter((data) => data.isenabled)
-        .some((data) =>
           delayApplicationValidation({
             formData: data?.data,
             t,
@@ -1466,29 +1410,12 @@ function EFilingCases({ path }) {
       return setOpenConfirmCorrectionModal(true);
     }
 
-    if (selected === "reviewCaseFile") {
-      await refetchCasePDfGeneration();
-    }
     if (selected === "addSignature" && isDraftInProgress) {
-      if (courtRooms?.length === 1) {
-        onSubmitCase({ court: courtRooms[0] });
-        return;
-      } else {
-        setOpenConfirmCourtModal(true);
-      }
+      setOpenConfirmCourtModal(true);
     } else {
-      let res;
-      if (selected === "reviewCaseFile") {
-        setIsDisabled(true);
-        res = await refetchCasePDfGeneration();
-        // if (res?.data?.cases?.[0]?.documents?.[0]?.fileStore) {
-        //   localStorage.setItem("fileStoreId", res?.data?.cases?.[0]?.documents?.[0]?.fileStore);
-        // }
-      }
       updateCaseDetails({
         isCompleted: true,
         caseDetails: isCaseReAssigned && errorCaseDetails ? errorCaseDetails : caseDetails,
-        prevCaseDetails: prevCaseDetails,
         formdata,
         pageConfig,
         selected,
@@ -1497,7 +1424,6 @@ function EFilingCases({ path }) {
         setFormDataValue: setFormDataValue.current,
         action,
         setErrorCaseDetails,
-        ...(res && { fileStoreId: res?.data?.cases?.[0]?.documents?.[0]?.fileStore }),
       })
         .then(() => {
           if (resetFormData.current) {
@@ -1529,17 +1455,7 @@ function EFilingCases({ path }) {
 
   const onSaveDraft = (props) => {
     setParmas({ ...params, [pageConfig.key]: formdata });
-    updateCaseDetails({
-      caseDetails,
-      prevCaseDetails: prevCaseDetails,
-      formdata,
-      setFormDataValue: setFormDataValue.current,
-      pageConfig,
-      selected,
-      setIsDisabled,
-      tenantId,
-      setErrorCaseDetails,
-    })
+    updateCaseDetails({ caseDetails, formdata, pageConfig, selected, setIsDisabled, tenantId, setErrorCaseDetails })
       .then(() => {
         refetchCaseData().then(() => {
           const caseData = caseDetails?.additionalDetails?.[nextSelected]?.formdata ||
@@ -1591,9 +1507,7 @@ function EFilingCases({ path }) {
     updateCaseDetails({
       isCompleted: isDrafted,
       caseDetails: isCaseReAssigned && errorCaseDetails ? errorCaseDetails : caseDetails,
-      prevCaseDetails: prevCaseDetails,
       formdata,
-      setFormDataValue: setFormDataValue.current,
       pageConfig,
       selected,
       setIsDisabled,
@@ -1621,18 +1535,10 @@ function EFilingCases({ path }) {
 
   const onSubmitCase = async (data) => {
     setOpenConfirmCourtModal(false);
-    const assignees = getAllAssignees(caseDetails);
-    const fileStoreId = localStorage.getItem("fileStoreId");
     await DRISTIService.caseUpdateService(
       {
         cases: {
           ...caseDetails,
-          ...(fileStoreId && {
-            additionalDetails: {
-              ...caseDetails?.additionalDetails,
-              signedCaseDocument: fileStoreId,
-            },
-          }),
           caseTitle:
             (caseDetails?.additionalDetails?.complainantDetails?.formdata?.[0]?.data?.firstName &&
               `${caseDetails?.additionalDetails?.complainantDetails?.formdata?.[0]?.data?.firstName} ${
@@ -1641,6 +1547,7 @@ function EFilingCases({ path }) {
                 caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.respondentLastName || ""
               }`) ||
             caseDetails?.caseTitle,
+          filingDate: formatDate(new Date()),
           courtId: data?.court?.code,
           workflow: {
             ...caseDetails?.workflow,
@@ -1650,26 +1557,10 @@ function EFilingCases({ path }) {
         tenantId,
       },
       tenantId
-    ).then(() => {
-      DRISTIService.customApiService(Urls.dristi.pendingTask, {
-        pendingTask: {
-          name: "Pending Payment",
-          entityType: "case-default",
-          referenceId: `MANUAL_${caseDetails?.filingNumber}`,
-          status: "PAYMENT_PENDING",
-          assignedTo: [...assignees?.map((uuid) => ({ uuid }))],
-          assignedRole: ["CASE_CREATOR"],
-          cnrNumber: null,
-          filingNumber: caseDetails?.filingNumber,
-          isCompleted: false,
-          stateSla: stateSla.PAYMENT_PENDING * dayInMillisecond + todayDate,
-          additionalDetails: {},
-          tenantId,
-        },
-      });
-    });
+    );
     setPrevSelected(selected);
     history.push(`${path}/e-filing-payment?caseId=${caseId}`);
+    localStorage.removeItem("signStatus");
   };
 
   const getFormClassName = useCallback(() => {
@@ -1695,7 +1586,7 @@ function EFilingCases({ path }) {
   };
 
   const [isOpen, setIsOpen] = useState(false);
-  if (isLoading || isGetAllCasesLoading || isCourtIdsLoading) {
+  if (isLoading || isGetAllCasesLoading) {
     return <Loader />;
   }
 
@@ -1964,6 +1855,7 @@ function EFilingCases({ path }) {
                     cases: {
                       ...caseDetails,
                       litigants: !caseDetails?.litigants ? [] : caseDetails?.litigants,
+                      filingDate: formatDate(new Date()),
                       workflow: {
                         ...caseDetails?.workflow,
                         action: "DELETE_DRAFT",
@@ -2014,6 +1906,7 @@ function EFilingCases({ path }) {
                     cases: {
                       ...caseDetails,
                       litigants: !caseDetails?.litigants ? [] : caseDetails?.litigants,
+                      filingDate: formatDate(new Date()),
                       workflow: {
                         ...caseDetails?.workflow,
                         action: "SAVE_DRAFT",
@@ -2042,7 +1935,7 @@ function EFilingCases({ path }) {
               headerBarMain={<Heading label={t("TIPS_FOR_STRONGER_CASE")} />}
               headerBarEnd={<CloseBtn onClick={() => setShowConfirmOptionalModal(false)} />}
               actionCancelLabel={t("SKIP_AND_CONTINUE")}
-              actionCancelOnSubmit={handleSkip}
+              actionCancelOnSubmit={() => setShowConfirmOptionalModal(false)}
               actionSaveLabel={t("FILL_NOW")}
               children={optionalFieldsRemainingText(optionalFieldsLeftTotalCount)}
               actionSaveOnSubmit={() => takeUserToRemainingOptionalFieldsPage()}

@@ -10,8 +10,6 @@ import SelectParticipant from "./SelectParticipant";
 import CustomCalendar from "../../../components/CustomCalendar";
 import { WhiteRightArrow } from "../../../icons/svgIndex";
 import { formatDateInMonth } from "../../../Utils";
-import { DRISTIService } from "../../../services";
-import ScheduleHearing from "./ScheduleHearingModal";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -55,9 +53,6 @@ function AdmissionActionModal({
   disabled,
   filingNumber,
   isCaseAdmitted = false,
-  caseAdmittedSubmit = () => {},
-  caseAdmitLoader,
-  caseDetails,
 }) {
   const history = useHistory();
   const [showErrorToast, setShowErrorToast] = useState(false);
@@ -85,9 +80,7 @@ function AdmissionActionModal({
     });
   }, [t]);
 
-  const [scheduleHearingParams, setScheduleHearingParam] = useState(!isCaseAdmitted ? { purpose: t("ADMISSION") } : {});
-  const isGenerateOrderDisabled = useMemo(() => Boolean(!scheduleHearingParams?.purpose || !scheduleHearingParams?.date), [scheduleHearingParams]);
-  console.log("first", scheduleHearingParams, isGenerateOrderDisabled);
+  const [scheduleHearingParams, setScheduleHearingParam] = useState({ purpose: "Admission Purpose" });
 
   const onSubmit = (props, wordLimit) => {
     const words = props?.commentForLitigant?.trim()?.split(/\s+/);
@@ -121,7 +114,7 @@ function AdmissionActionModal({
   const [selectedChip, setSelectedChip] = React.useState(null);
 
   const setPurposeValue = (value, input) => {
-    setScheduleHearingParam({ ...scheduleHearingParams, purpose: isCaseAdmitted ? value : value.code });
+    setScheduleHearingParam({ ...scheduleHearingParams, purpose: value.code });
   };
 
   const showCustomDateModal = () => {
@@ -139,40 +132,6 @@ function AdmissionActionModal({
       ...scheduleHearingParams,
       date: newSelectedChip,
     });
-  };
-
-  const handleCloseCustomDate = () => {
-    setModalInfo({ ...modalInfo, page: 0, showDate: false, showCustomDate: false });
-    setScheduleHearingParam({
-      ...scheduleHearingParams,
-      date: "",
-    });
-  };
-
-  const handleNextCase = () => {
-    DRISTIService.searchCaseService(
-      {
-        criteria: [
-          {
-            status: ["PENDING_ADMISSION"],
-          },
-        ],
-        tenantId,
-      },
-      {}
-    )
-      .then((res) => {
-        if (res?.criteria?.[0]?.responseList?.[0]?.id) {
-          history.push(
-            `/${window?.contextPath}/employee/dristi/admission?filingNumber=${res?.criteria?.[0]?.responseList?.[0]?.filingNumber}&caseId=${res?.criteria?.[0]?.responseList?.[0]?.id}`
-          );
-        } else {
-          history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
-        }
-      })
-      .catch(() => {
-        history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
-      });
   };
 
   return (
@@ -211,7 +170,6 @@ function AdmissionActionModal({
           headerBarMain={<Heading label={t(stepItems[1].headModal)} />}
           actionSaveLabel={t(stepItems[1]?.submitText)}
           headerBarEnd={<CloseBtn onClick={() => setShowModal(false)} />}
-          isDisabled={caseAdmitLoader}
           actionSaveOnSubmit={(props) => handleAdmitCase(props)}
         >
           <CardText>{t(stepItems[1]?.text)}</CardText>
@@ -241,8 +199,6 @@ function AdmissionActionModal({
             handleClickDate={handleClickDate}
             disabled={disabled}
             isCaseAdmitted={isCaseAdmitted}
-            isSubmitBarDisabled={isGenerateOrderDisabled}
-            caseAdmittedSubmit={caseAdmittedSubmit}
           />
         </Modal>
       )}
@@ -273,7 +229,7 @@ function AdmissionActionModal({
       {modalInfo?.showDate && (
         <Modal
           headerBarMain={<Heading label={t(stepItems[3].headModal)} />}
-          headerBarEnd={<CloseBtn onClick={handleCloseCustomDate} />}
+          headerBarEnd={<CloseBtn onClick={() => setModalInfo({ ...modalInfo, page: 0, showDate: false, showCustomDate: false })} />}
           // actionSaveLabel={t("CS_COMMON_CONFIRM")}
           hideSubmit={true}
           popmoduleClassName={"custom-date-selector-modal"}
@@ -282,7 +238,6 @@ function AdmissionActionModal({
         >
           <CustomCalendar
             config={stepItems[3]}
-            minDate={new Date()}
             t={t}
             onCalendarConfirm={onCalendarConfirm}
             handleSelect={handleSelect}
@@ -301,14 +256,13 @@ function AdmissionActionModal({
           }
           actionCancelLabel={t(submitModalInfo?.backButtonText)}
           actionCancelOnSubmit={() => {
-            history.push(`/${window?.contextPath}/employee`);
+            history.push(`/employee`);
           }}
           actionSaveOnSubmit={() => {
             if (submitModalInfo?.nextButtonText === "SCHEDULE_NEXT_HEARING") {
-              // handleScheduleNextHearing();
-              setModalInfo({ page: 3, type: "schedule" });
+              handleScheduleNextHearing();
             } else {
-              handleNextCase();
+              history.push(`/employee`);
             }
           }}
           className="case-types"
@@ -316,28 +270,6 @@ function AdmissionActionModal({
         >
           <CustomSubmitModal submitModalInfo={submitModalInfo} t={t} />
         </Modal>
-      )}
-      {modalInfo?.page == 3 && modalInfo?.type === "schedule" && (
-        <ScheduleHearing
-          config={stepItems[2]}
-          t={t}
-          setShowModal={setShowModal}
-          setModalInfo={setModalInfo}
-          modalInfo={modalInfo}
-          selectedChip={selectedChip}
-          setSelectedChip={setSelectedChip}
-          showCustomDateModal={showCustomDateModal}
-          setPurposeValue={setPurposeValue}
-          scheduleHearingParams={scheduleHearingParams}
-          setScheduleHearingParam={setScheduleHearingParam}
-          submitModalInfo={submitModalInfo}
-          handleClickDate={handleClickDate}
-          disabled={disabled}
-          isCaseAdmitted={isCaseAdmitted}
-          isSubmitBarDisabled={isGenerateOrderDisabled}
-          caseAdmittedSubmit={caseAdmittedSubmit}
-          oldCaseDetails={caseDetails}
-        />
       )}
     </React.Fragment>
   );

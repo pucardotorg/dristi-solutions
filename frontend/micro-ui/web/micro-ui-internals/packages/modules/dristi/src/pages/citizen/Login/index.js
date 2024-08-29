@@ -57,7 +57,7 @@ const Login = ({ stateCode }) => {
   const [error, setError] = useState(null);
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
-  const [otpError, setOtpError] = useState(false);
+  const [isOtpValid, setIsOtpValid] = useState(true);
   const [tokens, setTokens] = useState(null);
   const [params, setParmas] = useState({});
   const [errorTO, setErrorTO] = useState(null);
@@ -88,7 +88,7 @@ const Login = ({ stateCode }) => {
     if (!user) {
       return;
     }
-    localStorage.setItem("citizen.userRequestObject", user);
+    Digit.SessionStorage.set("citizen.userRequestObject", user);
     Digit.UserService.setUser(user);
     if (params.isRememberMe) {
       localStorage.setItem("refresh-token", user?.refresh_token);
@@ -133,7 +133,7 @@ const Login = ({ stateCode }) => {
   };
 
   const selectMobileNumber = async (mobileNumber) => {
-    setOtpError(false);
+    setIsOtpValid(true);
     setCanSubmitNo(false);
     setParmas({ ...params, ...mobileNumber });
     const data = {
@@ -144,7 +144,7 @@ const Login = ({ stateCode }) => {
     const [res, err] = await sendOtp({ otp: { ...data, ...TYPE_LOGIN } });
     if (!err) {
       setCanSubmitNo(true);
-      setOtpError(false);
+      setIsOtpValid(true);
       setState((prev) => ({
         ...prev,
         showOtpModal: true,
@@ -162,7 +162,7 @@ const Login = ({ stateCode }) => {
     try {
       setParmas({ ...params, otp: "" });
 
-      setOtpError(false);
+      setIsOtpValid(true);
       setCanSubmitOtp(false);
       const { mobileNumber, otp, name } = params;
       if (isUserRegistered) {
@@ -213,7 +213,7 @@ const Login = ({ stateCode }) => {
       }
     } catch (err) {
       setCanSubmitOtp(true);
-      setOtpError(err?.response?.data?.error_description === "Account locked" ? t("MAX_RETRIES_EXCEEDED") : t("CS_INVALID_OTP"));
+      setIsOtpValid(false);
       setParmas((prev) => ({
         ...prev,
         otp: "",
@@ -222,7 +222,7 @@ const Login = ({ stateCode }) => {
   };
 
   const resendOtp = async () => {
-    setOtpError(false);
+    setIsOtpValid(true);
     setParmas({ ...params, otp: "" });
     const { mobileNumber } = params;
     const data = {
@@ -269,7 +269,7 @@ const Login = ({ stateCode }) => {
               onResend={resendOtp}
               onSelect={selectOtp}
               otp={params.otp}
-              error={otpError}
+              error={isOtpValid}
               canSubmit={canSubmitOtp}
               params={params}
               setParams={setParmas}

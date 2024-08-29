@@ -76,14 +76,6 @@ export const DRISTIService = {
       data,
       params,
     }),
-  generateCasePdf: (data, params) =>
-    Request({
-      url: Urls.dristi.casePfGeneration,
-      useCache: false,
-      userService: false,
-      data,
-      params,
-    }),
   updateEvidence: (data, params) =>
     Request({
       url: Urls.dristi.evidenceUpdate,
@@ -114,15 +106,6 @@ export const DRISTIService = {
       useCache: false,
       userService: false,
       data,
-      params,
-    });
-  },
-  startHearing: ({ hearing }, params) => {
-    return Request({
-      url: Urls.dristi.updateHearings,
-      useCache: false,
-      userService: false,
-      data: { hearing: { ...hearing, workflow: { action: "START" } } },
       params,
     });
   },
@@ -167,30 +150,6 @@ export const DRISTIService = {
       url: Urls.dristi.demandCreate,
       useCache: false,
       userService: false,
-      data,
-      params,
-    }),
-  customApiService: (url, data, params, useCache = false, userService = true) =>
-    Request({
-      url: url,
-      useCache: useCache,
-      userService: true,
-      data,
-      params,
-    }),
-  addWitness: (data, params) =>
-    Request({
-      url: Urls.case.addWitness,
-      useCache: false,
-      userService: false,
-      data,
-      params,
-    }),
-  getPendingTaskService: (data, params) =>
-    Request({
-      url: Urls.dristi.getPendingTaskFields,
-      useCache: false,
-      userService: true,
       data,
       params,
     }),
@@ -251,37 +210,4 @@ export const DRISTIService = {
       data,
       params,
     }),
-  sendDocuemntForOCR: (data, params) =>
-    Request({
-      url: Urls.dristi.sendOCR,
-      useCache: false,
-      userService: true,
-      data,
-      params,
-    }),
-  getOCRData: (data, params) =>
-    Request({
-      url: Urls.dristi.receiveOCR,
-      useCache: false,
-      userService: true,
-      data,
-      params,
-    }),
-  getTaskDocuments: (data, params) =>
-    Request({
-      url: Urls.dristi.taskDocuments,
-      useCache: false,
-      userService: true,
-      data,
-      params,
-    }),
-  judgeAvailabilityDates: (data, params) => {
-    return Request({
-      url: Urls.dristi.judgeAvailabilityDates,
-      useCache: false,
-      userService: false,
-      data,
-      params,
-    });
-  },
 };

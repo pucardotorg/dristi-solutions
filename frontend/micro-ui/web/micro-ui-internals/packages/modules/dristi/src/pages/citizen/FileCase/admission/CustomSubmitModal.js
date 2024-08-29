@@ -36,17 +36,14 @@ const mockSubmitModalInfo = {
 
 function CustomSubmitModal({ t, setShowModal, header, subHeader, submitModalInfo = mockSubmitModalInfo }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        textAlign: "center",
-        padding: "20px", // Add padding if needed to make the content visually centered within the modal
-      }}
-    >
-      <Banner whichSvg={"tick"} successful={true} message={submitModalInfo?.header} headerStyles={{ fontSize: "32px" }} />
+    <div>
+      <Banner
+        whichSvg={"tick"}
+        successful={true}
+        message={submitModalInfo?.header}
+        headerStyles={{ fontSize: "32px" }}
+        style={{ minWidth: "100%", marginTop: "10px" }}
+      ></Banner>
       {submitModalInfo?.subHeader && <CardLabel>{t(submitModalInfo?.subHeader)}</CardLabel>}
       {submitModalInfo?.showTable && <CustomCaseInfoDiv data={submitModalInfo?.caseInfo} t={t} />}
       {submitModalInfo?.showCopytext && <CustomCopyTextDiv data={submitModalInfo?.caseInfo} />}

@@ -16,8 +16,6 @@ import ImageModal from "./ImageModal";
 import useSearchCaseService from "../hooks/dristi/useSearchCaseService";
 import { CaseWorkflowState } from "../Utils/caseWorkflow";
 import ReactTooltip from "react-tooltip";
-import { efilingDocumentTypeAndKeyMapping, ocrErrorLocations } from "../pages/citizen/FileCase/Config/efilingDocumentKeyAndTypeMapping";
-import { isEqual } from "lodash";
 
 const extractValue = (data, key) => {
   if (!key.includes(".")) {
@@ -45,15 +43,11 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
   const urlParams = new URLSearchParams(window.location.search);
   const caseId = urlParams.get("caseId");
   const [scrutinyError, setScrutinyError] = useState("");
-  const [systemError, setSystemError] = useState("");
   const [showImageModal, setShowImageModal] = useState({ openModal: false, imageInfo: {} });
   const popupAnchor = useRef();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
-  const [formDataLoad, setFormDataLoad] = useState(true);
-  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
-  const isCitizen = useMemo(() => (userInfo?.type === "CITIZEN" ? true : false), [userInfo]);
 
-  const { isLoading, data: caseData } = useSearchCaseService(
+  const { data: caseData } = useSearchCaseService(
     {
       criteria: [
         {
@@ -74,28 +68,6 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
     }),
     [caseData]
   );
-
-  const { isLoading: isOCRDataLoading, data: ocrData } = Digit.Hooks.dristi.useGetOCRData(
-    {
-      filingNumber: caseDetails?.filingNumber,
-      tenantId: tenantId,
-    },
-    {},
-    Boolean(caseDetails?.filingNumber) && !isCitizen
-  );
-
-  const { ocrDataList, groupedByDocumentType } = useMemo(() => {
-    const groupedByDocumentType = ocrData?.reduce((acc, current) => {
-      const docType = current.documentType;
-      if (!acc[docType]) {
-        acc[docType] = [];
-      }
-      acc[docType].push(current);
-      return acc;
-    }, {});
-
-    return { ocrDataList: ocrData, groupedByDocumentType: groupedByDocumentType };
-  }, [ocrData]);
 
   const state = useMemo(() => caseDetails?.status, [caseDetails]);
 
@@ -131,16 +103,8 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
     }
     const { name = null, configKey = null, index = null, fieldName = null } = popupInfo;
     return fieldName
-      ? formData?.[configKey]?.[name]?.form?.[index]?.[fieldName]?.FSOError || formData?.[configKey]?.[name]?.form?.[index]?.[fieldName]?.systemError
+      ? formData?.[configKey]?.[name]?.form?.[index]?.[fieldName]?.FSOError
       : formData?.[configKey]?.[name]?.scrutinyMessage?.FSOError || "";
-  }, [formData, popupInfo]);
-
-  const systemDefaultError = useMemo(() => {
-    if (!popupInfo) {
-      return "";
-    }
-    const { name = null, configKey = null, index = null, fieldName = null } = popupInfo;
-    return fieldName ? formData?.[configKey]?.[name]?.form?.[index]?.[fieldName]?.systemError : "";
   }, [formData, popupInfo]);
 
   useEffect(() => {
@@ -158,9 +122,7 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
           return res;
         }, {}),
       });
-    } else {
-      if (!isEqual(formData[configkey]?.[input], value)) onSelect(configkey, { ...formData[configkey], [input]: value });
-    }
+    } else onSelect(configkey, { ...formData[configkey], [input]: value });
   }
 
   const Icon = ({ icon }) => {
@@ -219,13 +181,11 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
 
   const handleClosePopup = () => {
     setScrutinyError("");
-    setSystemError("");
     setValue("scrutinyMessage", null, "popupInfo");
   };
 
   const handleCloseImageModal = () => {
     setScrutinyError("");
-    setSystemError("");
     setValue("scrutinyMessage", null, "imagePopupInfo");
   };
 
@@ -253,18 +213,17 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
     }
     setDeletePopup(false);
     setScrutinyError("");
-    setSystemError("");
     setValue(config.key, currentMessage, name);
     setValue("scrutinyMessage", null, "popupInfo");
   };
 
-  const handleAddError = (popupInfoData, message, type) => {
-    const trimmedError = message ? message : scrutinyError.trim();
+  const handleAddError = () => {
+    const trimmedError = scrutinyError.trim();
 
-    const { name, configKey, index, fieldName, inputlist, fileName } = popupInfoData ? popupInfoData : popupInfo;
-    let fieldObj = { [fieldName]: { [type ? type : "FSOError"]: trimmedError } };
+    const { name, configKey, index, fieldName, inputlist, fileName } = popupInfo;
+    let fieldObj = { [fieldName]: { FSOError: trimmedError } };
     inputlist.forEach((key) => {
-      fieldObj[key] = { [type ? type : "FSOError"]: trimmedError, fileName };
+      fieldObj[key] = { FSOError: trimmedError, fileName };
     });
     let currentMessage =
       formData && formData[configKey] && formData[config.key]?.[name]
@@ -273,120 +232,18 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
             scrutinyMessage: "",
             form: inputs.find((item) => item.name === name)?.data?.map(() => ({})),
           };
-
-    if (currentMessage?.form) {
-      if (index == null) {
-        currentMessage.scrutinyMessage = { [type ? type : "FSOError"]: trimmedError, fileName };
-      } else {
-        currentMessage.form[index] = {
-          ...(currentMessage?.form?.[index] || {}),
-          ...fieldObj,
-        };
-      }
-      setValue(config.key, currentMessage, name);
-      setValue("scrutinyMessage", { popupInfo: null, imagePopupInfo: null }, ["popupInfo", "imagePopupInfo"]);
-      setScrutinyError("");
-      setSystemError("");
+    if (index == null) {
+      currentMessage.scrutinyMessage = { FSOError: trimmedError, fileName };
+    } else {
+      currentMessage.form[index] = {
+        ...(currentMessage?.form?.[index] || {}),
+        ...fieldObj,
+      };
     }
+    setValue(config.key, currentMessage, name);
+    setValue("scrutinyMessage", { popupInfo: null, imagePopupInfo: null }, ["popupInfo", "imagePopupInfo"]);
+    setScrutinyError("");
   };
-
-  const updateObject = (formData, update, message) => {
-    if (update?.configKey in formData) {
-      handleAddError(update, message, "systemError");
-    }
-  };
-
-  useEffect(() => {
-    console.log("formData :>> ", formData);
-    console.log("groupedByDocumentType :>> ", groupedByDocumentType);
-    if (
-      "litigentDetails" in formData &&
-      "additionalDetails" in formData &&
-      "caseSpecificDetails" in formData &&
-      "scrutinyMessage" in formData &&
-      formDataLoad &&
-      ocrDataList &&
-      ocrDataList?.length > 0 &&
-      groupedByDocumentType
-    ) {
-      setFormDataLoad(false);
-      if (groupedByDocumentType?.LEGAL_NOTICE || groupedByDocumentType?.CHEQUE_RETURN_MEMO)
-        onSelect("caseSpecificDetails", {
-          ...formData["caseSpecificDetails"],
-          ...(groupedByDocumentType?.LEGAL_NOTICE && {
-            demandNoticeDetails: {
-              form: [
-                {
-                  image: {
-                    systemError: groupedByDocumentType?.LEGAL_NOTICE?.[0]?.message,
-                    fileName: "LEGAL_DEMAND_NOTICE",
-                  },
-                  "legalDemandNoticeFileUpload.document": {
-                    systemError: groupedByDocumentType?.LEGAL_NOTICE?.[0]?.message,
-                    fileName: "LEGAL_DEMAND_NOTICE",
-                  },
-                },
-              ],
-            },
-          }),
-          ...(groupedByDocumentType?.CHEQUE_RETURN_MEMO && {
-            chequeDetails: {
-              form: [
-                {
-                  image: {
-                    systemError: groupedByDocumentType?.CHEQUE_RETURN_MEMO?.[0]?.message,
-                    fileName: "CS_CHEQUE_RETURN_MEMO",
-                  },
-                  "returnMemoFileUpload.document": {
-                    systemError: groupedByDocumentType?.CHEQUE_RETURN_MEMO?.[0]?.message,
-                    fileName: "CS_CHEQUE_RETURN_MEMO",
-                  },
-                },
-              ],
-            },
-          }),
-        });
-      if (groupedByDocumentType?.COMPLAINT_MEMO)
-        onSelect("additionalDetails", {
-          ...formData["additionalDetails"],
-          prayerSwornStatement: {
-            form: [
-              ...groupedByDocumentType?.COMPLAINT_MEMO?.map((data) => {
-                return {
-                  image: {
-                    systemError: data?.message,
-                    fileName: "ATTACHED_DOCUMENT",
-                  },
-                  "memorandumOfComplaint.document": {
-                    systemError: data?.message,
-                    fileName: "ATTACHED_DOCUMENT",
-                  },
-                };
-              }),
-            ],
-          },
-        });
-      if (groupedByDocumentType?.AFFIDAVIT)
-        onSelect("litigentDetails", {
-          ...formData["litigentDetails"],
-          respondentDetails: {
-            form: [
-              {
-                image: {
-                  systemError: groupedByDocumentType?.AFFIDAVIT?.[0]?.message,
-                  fileName: "Affidavit documents",
-                },
-                "inquiryAffidavitFileUpload.document": {
-                  systemError: groupedByDocumentType?.AFFIDAVIT?.[0]?.message,
-                  fileName: "Affidavit documents",
-                },
-              },
-            ],
-          },
-        });
-    }
-  }, [ocrDataList, formData, formDataLoad, groupedByDocumentType]);
-
   let showFlagIcon = isScrutiny ? true : false;
   return (
     <div className="accordion-wrapper" onClick={() => {}}>
@@ -540,21 +397,9 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
                 }}
               />
               <Button
-                label={
-                  !defaultError
-                    ? t("CS_MARK_ERROR")
-                    : systemDefaultError
-                    ? t("CS_CONFIRM_ERROR")
-                    : defaultError === scrutinyError
-                    ? t("CS_COMMON_CANCEL")
-                    : t("CS_COMMON_UPDATE")
-                }
+                label={!defaultError ? t("CS_MARK_ERROR") : defaultError === scrutinyError ? t("CS_COMMON_CANCEL") : t("CS_COMMON_UPDATE")}
                 isDisabled={!scrutinyError?.trim()}
                 onButtonClick={() => {
-                  if (systemDefaultError) {
-                    handleAddError();
-                    return;
-                  }
                   if (defaultError === scrutinyError) {
                     handleClosePopup();
                   } else {

@@ -3,29 +3,8 @@ import React from "react";
 import _ from "lodash";
 import { Button } from "@egovernments/digit-ui-react-components";
 import OverlayDropdown from "../components/custom_dropdown";
-import { formatDateDifference } from "../../../orders/src/utils";
-import { formatDate } from "../../../cases/src/utils";
 
 const customColumnStyle = { whiteSpace: "nowrap" };
-
-const handleTaskDetails = (taskDetails) => {
-  try {
-    // Try parsing the taskDetails string
-    const parsed = JSON.parse(taskDetails);
-
-    // Check if the result is a string (indicating it's a double-escaped JSON)
-    if (typeof parsed === "string") {
-      // Attempt to parse it again as JSON
-      return JSON.parse(parsed);
-    }
-
-    // Return the parsed object if it's already a valid JSON object
-    return parsed;
-  } catch (error) {
-    console.error("Failed to parse taskDetails:", error);
-    return null;
-  }
-};
 
 const handleNavigate = (path) => {
   console.log("Funvtion called ");
@@ -35,41 +14,6 @@ const handleNavigate = (path) => {
 };
 
 export const UICustomizations = {
-  EpostTrackingUiConfig: {
-    preProcess: (requestCriteria, additionalDetails) => {
-      const ePostTrackerSearchCriteria = {
-        ...requestCriteria?.body?.ePostTrackerSearchCriteria,
-        processNumber: requestCriteria?.state?.searchForm?.processNumber ? requestCriteria?.state?.searchForm?.processNumber : "",
-        deliveryStatusList: requestCriteria?.state?.searchForm?.deliveryStatusList?.selected
-          ? [requestCriteria?.state?.searchForm?.deliveryStatusList?.selected]
-          : requestCriteria?.body?.ePostTrackerSearchCriteria.deliveryStatusList,
-        pagination: {
-          sortBy: requestCriteria?.state?.searchForm?.pagination?.sortBy
-            ? requestCriteria?.state?.searchForm?.pagination?.sortBy
-            : requestCriteria?.body?.ePostTrackerSearchCriteria?.pagination?.sortBy,
-          orderBy: requestCriteria?.state?.searchForm?.pagination?.order
-            ? requestCriteria?.state?.searchForm?.pagination?.order
-            : requestCriteria?.body?.ePostTrackerSearchCriteria?.pagination?.orderBy,
-        },
-      };
-      return {
-        ...requestCriteria,
-        body: {
-          ...requestCriteria?.body,
-          ePostTrackerSearchCriteria,
-          processNumber: "",
-          deliveryStatusList: {},
-          pagination: {
-            sortBy: "",
-            order: "",
-          },
-        },
-        config: {
-          ...requestCriteria?.config,
-        },
-      };
-    },
-  },
   SearchHearingsConfig: {
     customValidationCheck: (data) => {
       const { createdFrom, createdTo } = data;
@@ -136,7 +80,6 @@ export const UICustomizations = {
       const { createdFrom, createdTo } = data;
       if ((createdFrom === "" && createdTo !== "") || (createdFrom !== "" && createdTo === ""))
         return { warning: true, label: "ES_COMMON_ENTER_DATE_RANGE" };
-      else if (!data?.filingNumber?.trim() && !data?.caseType?.trim()) return { label: "PlEASE_APPLY_FILTER_CASE_ID", error: true };
       return false;
     },
     preProcess: (requestCriteria, additionalDetails) => {
@@ -180,19 +123,10 @@ export const UICustomizations = {
       const today = new Date();
       const formattedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
       switch (key) {
-        case "Draft Name":
-        case "Case Name":
-          return (
-            <span className="case-name-on-hover">
-              {row?.caseTitle ? (row?.caseTitle?.trim().endsWith("vs") ? `${row?.caseTitle} _______` : row?.caseTitle) : t("CASE_UNTITLED")}
-            </span>
-          );
         case "Case Type":
           return <span>NIA S138</span>;
         case "Stage":
           return t(row?.status);
-        case "Filing Date":
-          return <span>{formatDate(new Date(value))}</span>;
         case "Last Edited":
           const createdAt = new Date(value);
           const formattedCreatedAt = new Date(createdAt.getFullYear(), createdAt.getMonth(), createdAt.getDate());
@@ -268,14 +202,14 @@ export const UICustomizations = {
       switch (key) {
         case "Case Type":
           return <span>NIA S138</span>;
-        case "Scrutiny Status":
-          return t(row?.status === "UNDER_SCRUTINY" ? "IN_PROGRESS" : "NOT_STARTED");
+        case "Stage":
+          return t(row?.status);
         case "Days Since Filing":
           const createdAt = new Date(value);
           const formattedCreatedAt = new Date(createdAt.getFullYear(), createdAt.getMonth(), createdAt.getDate());
           const differenceInTime = formattedToday.getTime() - formattedCreatedAt.getTime();
           const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
-          return <span style={{ color: differenceInDays > 2 && "#9E400A", fontWeight: differenceInDays > 2 ? 500 : 400 }}>{differenceInDays}</span>;
+          return <span style={{ color: differenceInDays > 30 && "#9E400A", fontWeight: differenceInDays > 30 ? 500 : 400 }}>{differenceInDays}</span>;
         default:
           return t("ES_COMMON_NA");
       }
@@ -314,9 +248,6 @@ export const UICustomizations = {
             [additionalDetails.sortBy]: undefined,
             sortBy: undefined,
           }),
-          ...(requestCriteria?.state?.searchForm?.outcome && {
-            outcome: [requestCriteria?.state?.searchForm?.outcome],
-          }),
           pagination: {
             limit: requestCriteria?.state?.tableForm?.limit,
             offSet: requestCriteria?.state?.tableForm?.offset,
@@ -345,8 +276,6 @@ export const UICustomizations = {
       switch (key) {
         case "Case Type":
           return <span>NIA S138</span>;
-        case "Filing Date":
-          return <span>{formatDate(new Date(value))}</span>;
         case "Stage":
           return t(row?.status);
         default:
@@ -367,57 +296,72 @@ export const UICustomizations = {
       }
     },
   },
-  reviewSummonWarrantNotice: {
-    preProcess: (requestCriteria, additionalDetails) => {
-      const filterList = Object.keys(requestCriteria.state.searchForm)
-        ?.map((key) => {
-          if (requestCriteria.state.searchForm[key]) return { [key]: requestCriteria.state.searchForm[key] };
-        })
-        ?.filter((filter) => filter)
-        .reduce(
-          (fieldObj, item) => ({
-            ...fieldObj,
-            ...item,
-          }),
-          {}
-        );
-      const tenantId = window?.Digit.ULBService.getStateId();
-      return {
-        ...requestCriteria,
-        body: {
-          ...requestCriteria.body,
-          criteria: {
-            ...requestCriteria.body.criteria,
-            ...filterList,
-            ...(filterList?.orderType ? { orderType: [filterList?.orderType] } : { orderType: [] }),
-          },
-          tenantId,
-          pagination: {
-            limit: requestCriteria?.state?.tableForm?.limit,
-            offSet: requestCriteria?.state?.tableForm?.offset,
-          },
-        },
-        config: {
-          ...requestCriteria?.config,
-          select: (data) => {
-            return { ...data, list: data?.list?.filter((order) => order.taskType) };
-          },
-        },
-      };
+  ViewHearingsConfig: {
+    customValidationCheck: (data) => {
+      //checking both to and from date are present
+      const { createdFrom, createdTo } = data;
+      if ((createdFrom === "" && createdTo !== "") || (createdFrom !== "" && createdTo === ""))
+        return { warning: true, label: "ES_COMMON_ENTER_DATE_RANGE" };
+
+      return false;
+    },
+    preProcess: (data) => {
+      return data;
     },
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
-      const caseDetails = handleTaskDetails(row?.taskDetails);
+      console.log(key, value);
       switch (key) {
-        case "Case Name & ID":
-          return `${row?.caseName}, ${value}`;
-        case "Status":
-          return t(value); // document status
-        case "Issued":
-          return `${formatDateDifference(value)} days ago`;
-        case "Delivery Channel":
-          return caseDetails?.deliveryChannels?.channelName || "N/A";
+        case "MASTERS_WAGESEEKER_ID":
+          return (
+            <span className="link">
+              <Link to={`/${window.contextPath}/employee/masters/view-wageseeker?tenantId=${row?.tenantId}&individualId=${value}`}>
+                {String(value ? (column.translate ? t(column.prefix ? `${column.prefix}${value}` : value) : value) : t("ES_COMMON_NA"))}
+              </Link>
+            </span>
+          );
+
+        case "Actions":
+          return (
+            <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+              <Button variation={"secondary"} label={"Start"} onButtonClick={() => handleNavigate("/employee/hearings/inside-hearing")}></Button>,
+              <OverlayDropdown style={{ position: "absolute" }} />
+            </div>
+          );
+
+        case "MASTERS_SOCIAL_CATEGORY":
+          return value ? <span style={customColumnStyle}>{String(t(`MASTERS_${value}`))}</span> : t("ES_COMMON_NA");
+
+        case "CORE_COMMON_PROFILE_CITY":
+          return value ? <span style={customColumnStyle}>{String(t(Digit.Utils.locale.getCityLocale(value)))}</span> : t("ES_COMMON_NA");
+
+        case "MASTERS_WARD":
+          return value ? (
+            <span style={customColumnStyle}>{String(t(Digit.Utils.locale.getMohallaLocale(value, row?.tenantId)))}</span>
+          ) : (
+            t("ES_COMMON_NA")
+          );
+
+        case "MASTERS_LOCALITY":
+          return value ? (
+            <span style={customColumnStyle}>{String(t(Digit.Utils.locale.getMohallaLocale(value, row?.tenantId)))}</span>
+          ) : (
+            t("ES_COMMON_NA")
+          );
         default:
           return t("ES_COMMON_NA");
+      }
+    },
+    MobileDetailsOnClick: (row, tenantId) => {
+      let link;
+      Object.keys(row).map((key) => {
+        if (key === "MASTERS_WAGESEEKER_ID")
+          link = `/${window.contextPath}/employee/masters/view-wageseeker?tenantId=${tenantId}&wageseekerId=${row[key]}`;
+      });
+      return link;
+    },
+    additionalValidations: (type, data, keys) => {
+      if (type === "date") {
+        return data[keys.start] && data[keys.end] ? () => new Date(data[keys.start]).getTime() <= new Date(data[keys.end]).getTime() : true;
       }
     },
   },

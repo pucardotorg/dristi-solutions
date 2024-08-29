@@ -54,11 +54,11 @@ const Modal = ({
           >
             {actionCancelLabel ? (
               <ButtonSelector
-                textStyles={{ margin: "0px", color: "#007E7E" }}
+                textStyles={{ margin: "0px", color: "red" }}
                 theme="border"
                 label={actionCancelLabel}
                 onSubmit={actionCancelOnSubmit}
-                style={{ border: "1px solid #007E7E", backgroundColor: "white" }}
+                style={{ border: "1px solid red" }}
                 ButtonBody={cancelButtonBody}
               />
             ) : (

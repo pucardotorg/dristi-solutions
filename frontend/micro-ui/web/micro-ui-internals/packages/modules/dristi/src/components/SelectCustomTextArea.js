@@ -8,7 +8,7 @@ function SelectCustomTextArea({ t, config, formData = {}, onSelect, errors }) {
       config?.populators?.inputs || [
         {
           textAreaHeader: "custom note",
-          textAreaSubHeader: "please provide some more details.", 
+          textAreaSubHeader: "please provide some more details.",
           isOptional: false,
         },
       ],
@@ -62,13 +62,13 @@ function SelectCustomTextArea({ t, config, formData = {}, onSelect, errors }) {
       <div className="custom-text-area-main-div" style={input?.style}>
         <div className="custom-text-area-header-div">
           {input.textAreaHeader && (
-            <h1 className={`custom-text-area-header ${input?.headerClassName}`} style={{ margin: "0px 0px 8px", ...input.textAreaStyle }}>
+            <h1 className={`custom-text-area-header ${input?.headerClassName}`} style={{ margin: "0px" }}>
               {t(input?.textAreaHeader)}
             </h1>
           )}
           {!config?.disableScrutinyHeader && (
             <span>
-              <p className={`custom-sub-header ${input?.subHeaderClassName}`} style={{ margin: "0px 0px 8px" }}>
+              <p className={`custom-sub-header ${input?.subHeaderClassName}`} style={{ margin: "0px" }}>
                 {`${t(input?.textAreaSubHeader)}`}
                 {input?.isOptional && <span style={{ color: "#77787B" }}>&nbsp;(optional)</span>}
               </p>
@@ -81,7 +81,7 @@ function SelectCustomTextArea({ t, config, formData = {}, onSelect, errors }) {
             handleChange(data, input);
           }}
           rows={5}
-          // maxLength={400}
+          maxLength={400}
           className={`custom-textarea-style${errors[config.key] ? " alert-error-border" : ""}`}
           placeholder={t(input?.placeholder)}
           disabled={config.disable}

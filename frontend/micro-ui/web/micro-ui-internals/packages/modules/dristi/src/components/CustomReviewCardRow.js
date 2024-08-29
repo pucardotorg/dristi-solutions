@@ -172,9 +172,7 @@ const CustomReviewCardRow = ({
                   ? textValue.length > 0
                     ? textValue.map((text, index) => <div key={index}>{text || t("CS_NOT_AVAILABLE")}</div>)
                     : t("CS_NOT_AVAILABLE")
-                  : textValue && typeof textValue === "object"
-                  ? textValue?.text || ""
-                  : textValue || (dependentOnValue && textDependentValue) || t("CS_NOT_AVAILABLE")}
+                  : textValue || dependentOnValue && textDependentValue || t("CS_NOT_AVAILABLE")}
               </div>
               {showFlagIcon && (
                 <div
@@ -340,7 +338,6 @@ const CustomReviewCardRow = ({
         );
       case "image":
         let FSOErrors = [];
-        let systemErrors = [];
         let valuesAvailable = [];
         if (typeof dataError === "object") {
           value?.forEach((val) => {
@@ -349,17 +346,9 @@ const CustomReviewCardRow = ({
             }
           });
         }
-        if (typeof dataError === "object") {
-          value?.forEach((val) => {
-            if (dataError?.[val]?.systemError) {
-              systemErrors.push(dataError?.[val]);
-            }
-          });
-        }
         bgclassname =
           isScrutiny && FSOErrors?.length > 0 ? (JSON.stringify(dataError) === JSON.stringify(prevDataError) ? "preverror" : "error") : "";
-        bgclassname =
-          FSOErrors?.length > 0 && isCaseReAssigned ? "preverrorside" : isScrutiny && systemErrors?.length > 0 ? "system-error-class" : bgclassname;
+        bgclassname = FSOErrors?.length > 0 && isCaseReAssigned ? "preverrorside" : bgclassname;
         if (isPrevScrutiny && !disableScrutiny) {
           showFlagIcon = prevDataError?.[type]?.FSOError;
         }
@@ -519,39 +508,6 @@ const CustomReviewCardRow = ({
                   </div>
                 );
               })}
-            {!(FSOErrors?.length > 0) &&
-              systemErrors?.length > 0 &&
-              isScrutiny &&
-              systemErrors.map((error, ind) => {
-                return (
-                  <div
-                    style={{
-                      width: "fit-content",
-                    }}
-                    className="scrutiny-error input"
-                    key={ind}
-                  >
-                    {bgclassname === "preverror" ? (
-                      <span style={{ color: "#4d83cf", fontWeight: 300 }}>{t("CS_PREVIOUS_ERROR")}</span>
-                    ) : (
-                      <h4
-                        style={{
-                          margin: "0px",
-                          fontFamily: "Roboto",
-                          fontSize: "14px",
-                          fontWeight: 500,
-                          lineHeight: "20px",
-                          textAlign: "left",
-                          color: "#9E400A",
-                        }}
-                      >
-                        Potential Error:
-                      </h4>
-                    )}
-                    {`${error.fileName ? t(error.fileName) + " : " : ""}${error.systemError}`}
-                  </div>
-                );
-              })}
           </div>
         );
       case "address":
@@ -560,24 +516,18 @@ const CustomReviewCardRow = ({
         if (Array.isArray(addressDetails)) {
           address = addressDetails.map(({ addressDetails }) => {
             return {
-              address:
-                typeof addressDetails === "string"
-                  ? addressDetails
-                  : `${addressDetails?.locality || ""}, ${addressDetails?.city || ""}, ${addressDetails?.district || ""}, ${
-                      addressDetails?.state || ""
-                    } - ${addressDetails?.pincode || ""}`,
+              address: `${addressDetails?.locality || ""}, ${addressDetails?.city || ""}, ${addressDetails?.district || ""}, ${
+                addressDetails?.state || ""
+              } - ${addressDetails?.pincode || ""}`,
               coordinates: addressDetails?.coordinates,
             };
           });
         } else {
           address = [
             {
-              address:
-                typeof addressDetails === "string"
-                  ? addressDetails
-                  : `${addressDetails?.locality || ""}, ${addressDetails?.city || ""}, ${addressDetails?.district || ""}, ${
-                      addressDetails?.state || ""
-                    } - ${addressDetails?.pincode || ""}`,
+              address: `${addressDetails?.locality || ""}, ${addressDetails?.city || ""}, ${addressDetails?.district || ""}, ${
+                addressDetails?.state || ""
+              } - ${addressDetails?.pincode || ""}`,
               coordinates: addressDetails?.coordinates,
             },
           ];
@@ -680,30 +630,28 @@ const CustomReviewCardRow = ({
         );
     }
   }, [
-    isScrutiny,
-    disableScrutiny,
-    isPrevScrutiny,
-    dataError,
-    isCaseReAssigned,
-    type,
-    prevDataError,
-    value,
-    titleIndex,
-    titleHeading,
-    t,
     badgeType,
-    data,
-    dataIndex,
-    textDependentOn,
-    label,
-    textDependentValue,
-    isJudge,
-    handleOpenPopup,
     configKey,
-    name,
-    tenantId,
+    data,
+    dataError,
+    dataIndex,
     handleImageClick,
+    handleOpenPopup,
+    isPrevScrutiny,
+    isScrutiny,
+    isJudge,
+    label,
+    name,
+    prevDataError,
     setShowImageModal,
+    t,
+    tenantId,
+    titleHeading,
+    titleIndex,
+    type,
+    value,
+    disableScrutiny,
+    isCaseReAssigned,
   ]);
 
   return renderCard;

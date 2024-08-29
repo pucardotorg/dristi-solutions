@@ -12,7 +12,7 @@ import { CustomArrowDownIcon, FlagIcon } from "../../../icons/svgIndex";
 import { DRISTIService } from "../../../services";
 import { formatDate } from "../../citizen/FileCase/CaseType";
 import { reviewCaseFileFormConfig } from "../../citizen/FileCase/Config/reviewcasefileconfig";
-import { getAllAssignees } from "../../citizen/FileCase/EfilingValidationUtils";
+
 function ViewCaseFile({ t, inViewCase = false }) {
   const history = useHistory();
   const roles = Digit.UserService.getUser()?.info?.roles;
@@ -214,10 +214,10 @@ function ViewCaseFile({ t, inViewCase = false }) {
         cases: {
           ...newcasedetails,
           linkedCases: caseDetails?.linkedCases ? caseDetails?.linkedCases : [],
+          filingDate: formatDate(new Date()),
           workflow: {
             ...caseDetails?.workflow,
             action,
-            ...(action === CaseWorkflowAction.SEND_BACK && { assignes: [caseDetails.auditDetails.createdBy] }),
           },
         },
         tenantId,
@@ -240,54 +240,12 @@ function ViewCaseFile({ t, inViewCase = false }) {
     // Write isAdmission condition here
   };
   const handleNextCase = () => {
-    DRISTIService.searchCaseService(
-      {
-        criteria: [
-          {
-            status: ["UNDER_SCRUTINY"],
-          },
-        ],
-        tenantId,
-      },
-      {}
-    )
-      .then((res) => {
-        if (res?.criteria?.[0]?.responseList?.[0]?.id) {
-          history.push(`/${window?.contextPath}/employee/dristi/case?caseId=${res?.criteria?.[0]?.responseList?.[0]?.id}`);
-        } else {
-          history.push("/digit-ui/employee/dristi/cases");
-        }
-        setActionModal(false);
-      })
-      .catch(() => {
-        setActionModal(false);
-        history.push("/digit-ui/employee/dristi/cases");
-      });
+    setActionModal(false);
+    history.push("/digit-ui/employee/dristi/cases");
   };
   const handleAllocationJudge = () => {
-    DRISTIService.searchCaseService(
-      {
-        criteria: [
-          {
-            status: ["UNDER_SCRUTINY"],
-          },
-        ],
-        tenantId,
-      },
-      {}
-    )
-      .then((res) => {
-        if (res?.criteria?.[0]?.responseList?.[0]?.id) {
-          history.push(`/${window?.contextPath}/employee/dristi/case?caseId=${res?.criteria?.[0]?.responseList?.[0]?.id}`);
-        } else {
-          history.push("/digit-ui/employee/dristi/cases");
-        }
-        setActionModal(false);
-      })
-      .catch(() => {
-        setActionModal(false);
-        history.push("/digit-ui/employee/dristi/cases");
-      });
+    setActionModal(false);
+    history.push("/digit-ui/employee/dristi/cases");
   };
   const handleCloseSucessModal = () => {
     setActionModal(false);
@@ -321,9 +279,9 @@ function ViewCaseFile({ t, inViewCase = false }) {
   if (isLoading) {
     return <Loader />;
   }
-  // if (isScrutiny && state !== CaseWorkflowState.UNDER_SCRUTINY) {
-  //   history.push("/digit-ui/employee/dristi/cases");
-  // }
+  if (isScrutiny && state !== CaseWorkflowState.UNDER_SCRUTINY) {
+    history.push("/digit-ui/employee/dristi/cases");
+  }
   const sidebar = ["litigentDetails", "caseSpecificDetails", "additionalDetails"];
   const labels = {
     litigentDetails: "CS_LITIGENT_DETAILS",
@@ -351,7 +309,7 @@ function ViewCaseFile({ t, inViewCase = false }) {
     },
     {
       key: "SUBMITTED_ON",
-      value: formatDate(new Date(caseDetails?.filingDate)),
+      value: caseDetails?.filingDate,
     },
   ];
 
@@ -568,6 +526,44 @@ function ViewCaseFile({ t, inViewCase = false }) {
             />
           )}
         </div>
+        {actionModal == "sendCaseBack" && (
+          <SendCaseBackModal
+            actionCancelLabel={"CS_COMMON_BACK"}
+            actionSaveLabel={"CS_COMMON_CONFIRM"}
+            t={t}
+            totalErrors={totalErrors?.total || 0}
+            onCancel={handleCloseModal}
+            onSubmit={handleSendCaseBack}
+            heading={"CS_SEND_CASE_BACK_FOR_CORRECTION"}
+            type="sendCaseBack"
+          />
+        )}
+        {actionModal == "sendCaseBackPotential" && (
+          <SendCaseBackModal
+            actionCancelLabel={"CS_NO_REGISTER_CASE"}
+            actionSaveLabel={"CS_COMMON_CONFIRM"}
+            t={t}
+            totalErrors={totalErrors?.total || 0}
+            handleCloseModal={handleCloseModal}
+            onCancel={handlePotentialConfirm}
+            onSubmit={handleSendCaseBack}
+            heading={"CS_SEND_CASE_BACK_FOR_CORRECTION"}
+            type="sendCaseBackPotential"
+          />
+        )}
+        {actionModal == "caseRegisterPotential" && (
+          <SendCaseBackModal
+            actionCancelLabel={"CS_SEE_POTENTIAL_ERRORS"}
+            actionSaveLabel={"CS_DELETE_ERRORS_REGISTER"}
+            t={t}
+            totalErrors={totalErrors?.total || 0}
+            onCancel={handleCloseModal}
+            onSubmit={handleSendCaseBack}
+            heading={"CS_SEND_CASE_BACK_FOR_CORRECTION"}
+            type="sendCaseBackPotential"
+          />
+        )}
+
         {actionModal === "caseSendBackSuccess" && (
           <SuccessModal
             header={"Vaibhav"}
@@ -578,11 +574,21 @@ function ViewCaseFile({ t, inViewCase = false }) {
             onCancel={handleCloseSucessModal}
             onSubmit={handleNextCase}
             type={"caseSendBackSuccess"}
-            data={{
-              caseId: caseDetails?.filingNumber,
-              caseName: newCaseName !== "" ? newCaseName : caseDetails?.caseTitle,
-              errorsMarked: totalErrors.total,
-            }}
+            data={{ caseId: "KA92327392232", caseName: "Complainant vs. Respondent", errorsMarked: totalErrors.total }}
+          />
+        )}
+
+        {actionModal === "caseRegisterSuccess" && (
+          <SuccessModal
+            header={"Vaibhav"}
+            t={t}
+            actionCancelLabel={"CS_COMMON_CLOSE"}
+            actionSaveLabel={"CS_ALLOCATE_JUDGE"}
+            bannerMessage={"CS_CASE_REGISTERED_SUCCESS"}
+            onCancel={handleCloseSucessModal}
+            onSubmit={handleAllocationJudge}
+            type={"caseRegisterSuccess"}
+            data={{ caseId: "KA92327392232", caseName: "Complainant vs. Respondent", errorsMarked: totalErrors.total }}
           />
         )}
       </div>

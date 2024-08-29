@@ -1,5 +1,4 @@
-import { InfoBannerIcon } from "@egovernments/digit-ui-components";
-import { CustomArrowDownIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
+import { CustomArrowUpIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import React, { useState } from "react";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 // import { CustomArrowDownIcon, CustomArrowUpIcon } from "../icons/svgIndex";
@@ -12,7 +11,7 @@ function PendingTaskAccordion({
   totalCount,
   handleGoToPage,
   selected,
-  accordionHeader = "COMPLETE_THIS_WEEK",
+  accordionHeader = "Complete this week",
   accordionKey = "accordion",
   isHighlighted = false,
   isAccordionOpen = false,
@@ -24,17 +23,9 @@ function PendingTaskAccordion({
     setIsOpen(!isOpen);
   };
 
-  const redirectPendingTaskUrl = async (url, isCustomFunction = () => {}, params = {}) => {
-    if (isCustomFunction) {
-      await url(params);
-    } else {
-      history.push(url, {
-        state: {
-          params: params,
-        },
-      });
-      setCheck(!check);
-    }
+  const redirectPendingTaskUrl = (url) => {
+    history.push(url);
+    setCheck(!check);
   };
 
   return (
@@ -52,19 +43,8 @@ function PendingTaskAccordion({
             fontWeight: "700",
             lineHeight: "18.75px",
             textAlign: "left",
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
           }}
-          className="accordion-header"
-        >
-          {isHighlighted && (
-            <span>
-              <InfoBannerIcon fill="#9E400A" />
-            </span>
-          )}
-          <span>{`${t(accordionHeader)}${totalCount ? ` (${totalCount})` : ""}`}</span>
-        </span>
+        >{`${t(accordionHeader)}${totalCount ? ` (${totalCount})` : ""}`}</span>
         <div
           className="icon"
           style={{
@@ -72,7 +52,7 @@ function PendingTaskAccordion({
           }}
         >
           <span className="reverse-arrow" style={{ cursor: "pointer" }} onClick={handleAccordionClick}>
-            <CustomArrowDownIcon />
+            <CustomArrowUpIcon />
           </span>
         </div>
       </div>
@@ -86,7 +66,7 @@ function PendingTaskAccordion({
               className={`task-item ${item?.due === "Due today" && "due-today"}`}
               key={item?.filingNumber}
               style={{ cursor: "pointer" }}
-              onClick={() => redirectPendingTaskUrl(item?.redirectUrl, item?.isCustomFunction, item?.params)}
+              onClick={() => redirectPendingTaskUrl(item?.redirectUrl)}
             >
               <input type="checkbox" value={check} />
               <div className="task-details" style={{ display: "flex", flexDirection: "column", gap: 8, marginLeft: 8 }}>
@@ -94,8 +74,7 @@ function PendingTaskAccordion({
                   {item?.actionName} : {item?.caseTitle}
                 </span>
                 <span className="task-info">
-                  {item?.caseType} - {item?.filingNumber} -{" "}
-                  <span style={{ ...(item?.dueDateColor && { color: item?.dueDateColor }) }}>{item?.due}</span>
+                  {item?.caseType} - {item?.filingNumber} - {item?.due}
                 </span>
               </div>
             </div>

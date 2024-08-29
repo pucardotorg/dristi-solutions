@@ -44,28 +44,3 @@ export const updateCustomConfigs = () => {
 };
 
 export default {};
-
-export const formatDateDifference = (previousDate) => {
-  const currentDate = new Date();
-  let previousDateObj;
-
-  if (typeof previousDate === "string" && previousDate.includes("-")) {
-    const [day, month, year] = previousDate.split("-");
-    previousDateObj = new Date(year, month - 1, day);
-  } else {
-    previousDateObj = new Date(Number(previousDate));
-  }
-
-  const timeDifference = currentDate - previousDateObj;
-  const dayDifference = Math.floor(timeDifference / (1000 * 60 * 60 * 24));
-
-  return dayDifference;
-};
-
-export const formatDate = (date) => {
-  console.log(date, "lll");
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-  return `${day}-${month}-${year}`;
-};

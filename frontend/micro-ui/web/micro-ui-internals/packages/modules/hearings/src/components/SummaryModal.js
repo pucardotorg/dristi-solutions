@@ -1,9 +1,9 @@
-import { TextArea } from "@egovernments/digit-ui-components";
+import React, { useEffect, useState } from "react";
 import { CardText, Modal } from "@egovernments/digit-ui-react-components";
-import React, { useEffect, useMemo, useState } from "react";
+import { TextArea } from "@egovernments/digit-ui-components";
 import { useTranslation } from "react-i18next";
-import useGetHearings from "../hooks/hearings/useGetHearings";
-import { useHistory } from "react-router-dom";
+
+const fieldStyle = { marginRight: 0 };
 
 const Heading = (props) => {
   return (
@@ -72,112 +72,24 @@ const CloseBtn = (props) => {
   );
 };
 
-const SummaryModal = ({
-  handleConfirmationModal,
-  hearingId,
-  hearing,
-  onSaveSummary,
-  onCancel,
-  transcript,
-  setTranscript,
-  isEndHearing,
-  disableTextArea,
-}) => {
+const SummaryModal = ({ handleConfirmationModal, hearingId }) => {
   const { t } = useTranslation();
-  const [caseDetails, setCaseDetails] = useState();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
-  const OrderWorkflowAction = Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {};
-  const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
-  const history = useHistory();
-  const userInfo = Digit.UserService.getUser()?.info;
-  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const [transcript, setTranscript] = useState("");
 
-  const reqBody = {
-    hearing: { tenantId },
-    criteria: {
-      tenantID: tenantId,
-      hearingId: hearingId,
-    },
-  };
-
-  const { data: latestText } = useGetHearings(reqBody, { applicationNumber: "", cnrNumber: "", hearingId }, hearingId, true);
+  const { data: latestText } = Digit.Hooks.hearings.useGetHearings(
+    { hearing: { tenantId } },
+    { applicationNumber: "", cnrNumber: "", hearingId },
+    "dristi",
+    true
+  );
 
   useEffect(() => {
-    // await refetch();
     if (latestText && latestText?.HearingList?.[0]?.transcript?.[0]) {
       const hearingData = latestText?.HearingList?.[0];
-      // setTranscript(hearingData.transcript[0] || "");
+      setTranscript(hearingData.transcript[0]);
     }
-  }, [latestText, setTranscript]);
-
-  const onGenerateOrder = () => {
-    const requestBody = {
-      order: {
-        createdDate: new Date().getTime(),
-        tenantId: Digit.ULBService.getCurrentTenantId(),
-        filingNumber: caseDetails?.filingNumber,
-        cnrNumber: caseDetails?.cnrNumber,
-        statuteSection: {
-          tenantId: Digit.ULBService.getCurrentTenantId(),
-        },
-        orderType: "OTHERS",
-        status: "",
-        isActive: true,
-        workflow: {
-          action: OrderWorkflowAction.SAVE_DRAFT,
-          comments: "Creating order",
-          assignes: null,
-          rating: null,
-          documents: [{}],
-        },
-        documents: [],
-        additionalDetails: {
-          formdata: {
-            orderType: {
-              type: "OTHERS",
-              isactive: true,
-              code: "OTHERS",
-              name: "ORDER_TYPE_OTHERS",
-            },
-            transcriptSummary: transcript,
-          },
-        },
-      },
-    };
-    ordersService
-      .createOrder(requestBody, { tenantId: Digit.ULBService.getCurrentTenantId() })
-      .then((res) => {
-        history.push(
-          `/${window.contextPath}/${userType}/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`
-        );
-      })
-      .catch((err) => {
-        console.error(err);
-      });
-  };
-
-  useEffect(() => {
-    getCaseDetails();
-  }, []);
-
-  const getCaseDetails = async () => {
-    try {
-      const response = await window?.Digit?.DRISTIService.searchCaseService(
-        {
-          criteria: [
-            {
-              filingNumber: hearing?.filingNumber[0],
-            },
-          ],
-          tenantId,
-        },
-        {}
-      );
-      setCaseDetails(response?.criteria[0]?.responseList[0]);
-    } catch (error) {
-      console.log("error fetching case details", error);
-    }
-  };
+  }, [latestText, hearingId]);
 
   return (
     <div>
@@ -214,16 +126,10 @@ const SummaryModal = ({
         }}
         headerBarMain={<Heading label={t("Confirm Hearing Transcript/ Summary")} />}
         headerBarEnd={<CloseBtn onClick={handleConfirmationModal} />}
-        actionSaveLabel={<BackBtn text={hearing?.hearingType === "JUDGEMENT" && isEndHearing ? "Generate Order" : t("Set Next Hearing Date")} />}
+        actionSaveLabel={<BackBtn text={t("Set Next Hearing Date")} />}
         actionCancelLabel={t("Back")}
-        actionSaveOnSubmit={() => {
-          hearing?.hearingType === "JUDGEMENT" && isEndHearing ? onGenerateOrder() : onSaveSummary(transcript);
-        }} // pass the handler of next modal
-        actionCancelOnSubmit={() => {
-          onCancel();
-        }}
+        actionSaveOnSubmit={() => alert("clicked")} // pass the handler of next modal
         formId="modal-action"
-        isDisabled={!transcript}
       >
         <div style={{ height: "308px", padding: "5px 24px 16px 24px", width: "100%" }}>
           <div style={{ height: "80px", backgroundColor: "#ECF3FD", borderRadius: "4px" }}>
@@ -241,8 +147,6 @@ const SummaryModal = ({
               <TextArea
                 style={{ padding: "10px", width: "100%", minHeight: "100%", fontWeight: 400, fontSize: "16px", color: "#3D3C3C" }}
                 value={transcript}
-                onChange={(e) => setTranscript(e.target.value)}
-                disabled={disableTextArea}
               />
             </div>
           </CardText>

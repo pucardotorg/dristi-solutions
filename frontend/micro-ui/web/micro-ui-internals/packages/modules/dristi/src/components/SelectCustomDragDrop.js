@@ -24,7 +24,7 @@ const DragDropJSX = ({ t, currentValue, error }) => {
           <div>
             <FileUploadIcon />
           </div>
-          <h3>{t("CS_COMMON_CHOOSE_FILE")}</h3>
+          <h3>Upload</h3>
         </div>
       </div>
       {error && <span className="alert-error">{t(error.msg || "CORE_REQUIRED_FIELD_ERROR")}</span>}
@@ -80,28 +80,15 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
     // }
     if (file?.fileStore) return null;
     const maxFileSize = input?.maxFileSize * 1024 * 1024;
-    return file.size > maxFileSize ? `${t("CS_YOUR_FILE_EXCEEDED_THE")} ${input?.maxFileSize}${t("CS_COMMON_LIMIT_MB")}` : null;
+    return file.size > maxFileSize ? t(input?.maxFileErrorMessage) : null;
   };
 
   const handleChange = (file, input, index = Infinity) => {
     let currentValue = (formData && formData[config.key] && formData[config.key][input.name]) || [];
     currentValue.splice(index, 1, file);
-    currentValue = currentValue.map((item) => {
-      if (item?.name) {
-        const fileNameParts = item?.name.split(".");
-        const extension = fileNameParts.pop().toLowerCase();
-        const fileNameWithoutExtension = fileNameParts.join(".");
-        return new File([item], `${fileNameWithoutExtension}.${extension}`, {
-          type: item?.type,
-          lastModified: item?.lastModified,
-        });
-      } else {
-        return item;
-      }
-    });
     const maxFileSize = input?.maxFileSize * 1024 * 1024;
     if (file.size > maxFileSize) {
-      setError(config.key, { message: `${t("CS_YOUR_FILE_EXCEEDED_THE")} ${input?.maxFileSize}${t("CS_COMMON_LIMIT_MB")}` });
+      setError(config.key, { message: t(input?.maxFileErrorMessage) });
     }
     setValue(currentValue, input?.name, file.size > maxFileSize);
   };
@@ -128,12 +115,12 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
           <div className="drag-drop-visible-main">
             <div className="drag-drop-heading-main">
               {!config?.disableScrutinyHeader && (
-                <div className="drag-drop-heading" style={{ marginLeft: 0 }}>
+                <div className="drag-drop-heading">
                   <h1 className="card-label custom-document-header" style={input?.documentHeaderStyle}>
                     {t(input?.documentHeader)}
                   </h1>
                   {input?.isOptional && <span style={{ color: "#77787B" }}>&nbsp;{`${t(input?.isOptional)}`}</span>}
-                  <CustomErrorTooltip message={t(input?.documentHeader)} showTooltip={Boolean(input?.infoTooltipMessage)} icon />
+                  <CustomErrorTooltip message={t(input?.documentHeader)} showTooltip={Boolean(input?.infoTooltipMessage)} />
                 </div>
               )}
               {input.documentSubText && <p className="custom-document-sub-header">{t(input.documentSubText)}</p>}
@@ -160,35 +147,14 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
                   handleChange(data, input);
                 }}
                 name="file"
-                types={
-                  input?.fileTypes.includes("JPG") && !input?.fileTypes.includes("JPEG")
-                    ? [...input?.fileTypes, "JPEG"]
-                    : input?.fileTypes.includes("JPEG") && !input?.fileTypes.includes("JPG")
-                    ? [...input?.fileTypes, "JPG"]
-                    : input?.fileTypes
-                }
+                types={input?.fileTypes}
                 children={<DragDropJSX t={t} currentValue={currentValue} error={errors?.[config.key]} />}
                 key={input?.name}
                 onTypeError={() => {
                   toast.error(t("CS_INVALID_FILE_TYPE"));
                 }}
               />
-              <div className="upload-guidelines-div">
-                {input?.fileTypes && input?.maxFileSize ? (
-                  <p>
-                    {`${t("CS_COMMON_CHOOSE_FILE")} ${
-                      input?.fileTypes.length > 1
-                        ? `${input?.fileTypes
-                            .slice(0, -1)
-                            .map((type) => `.${type.toLowerCase()}`)
-                            .join(", ")} ${t("CS_COMMON_OR")} .${input?.fileTypes[input?.fileTypes.length - 1].toLowerCase()}`
-                        : `.${input?.fileTypes[0].toLowerCase()}`
-                    }. ${t("CS_MAX_UPLOAD")} ${input.maxFileSize}MB`}
-                  </p>
-                ) : (
-                  <p>{input.uploadGuidelines}</p>
-                )}
-              </div>
+              <div className="upload-guidelines-div">{input.uploadGuidelines && <p>{t(input.uploadGuidelines)}</p>}</div>
             </div>
             {input.downloadTemplateText && input.downloadTemplateLink && (
               <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: "20px" }}>

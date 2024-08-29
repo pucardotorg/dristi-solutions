@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import Modal from "./Modal";
 import { CheckBox, CloseSvg, TextArea } from "@egovernments/digit-ui-react-components";
 
-function ConfirmSubmissionAction({ t, type, setShowConfirmationModal, handleAction, disableCheckBox }) {
-  const [generateOrder, setGenerateOrder] = useState(true);
+function ConfirmSubmissionAction({ t, type, setShowConfirmationModal, handleAction }) {
+  const [generateOrder, setGenerateOrder] = useState(false);
   const CloseBtn = (props) => {
     return (
       <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
@@ -39,29 +39,24 @@ function ConfirmSubmissionAction({ t, type, setShowConfirmationModal, handleActi
         />
       }
       headerBarMain={<Heading label={header} />}
-      actionCancelLabel={t("CS_COMMON_BACK")}
+      actionCancelLabel={"CS_COMMON_BACK"}
       actionSaveLabel={actionSaveLabel}
       actionCancelOnSubmit={() => {
         setShowConfirmationModal(null);
       }}
       actionSaveOnSubmit={() => {
-        handleAction(generateOrder, type);
+        handleAction(generateOrder);
       }}
     >
       <div>
         <div style={{ marginTop: 10 }}>{t("REJECT_ACCEPT_SUBMISSION_TEXT")}</div>
-        {!generateOrder && type === "reject" && <h1 style={{ margin: "10px 0px 3px 0px" }}>{t("PURPOSE_OF_REJECTION")}</h1>}
-        {!generateOrder && type === "reject" && (
-          <TextArea style={{ marginTop: "0px" }} placeholder={t("TYPE_HERE_PLACEHOLDER")} name={t("PURPOSE_OF_REJECTION")} />
-        )}
+        {!generateOrder && type === "reject" && <TextArea name={t("PURPOSE_OF_REJECTION")} />}
         <div>
           <CheckBox
             onChange={() => {
               setGenerateOrder((prev) => !prev);
             }}
             label={checkBoxLabel}
-            checked={generateOrder}
-            disable={disableCheckBox}
           />
         </div>
       </div>

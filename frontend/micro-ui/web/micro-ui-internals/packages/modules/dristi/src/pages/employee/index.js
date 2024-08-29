@@ -1,9 +1,8 @@
 import { BackButton, HelpOutlineIcon, PrivateRoute, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useMemo } from "react";
+import React from "react";
 import { useTranslation } from "react-i18next";
 import { Switch } from "react-router-dom";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
-import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import Breadcrumb from "../../components/BreadCrumb";
 import { useToast } from "../../components/Toast/useToast";
 import AdmittedCases from "./AdmittedCases/AdmittedCase";
@@ -15,20 +14,14 @@ import CaseFileAdmission from "./admission/CaseFileAdmission";
 import Home from "./home";
 import ViewCaseFile from "./scrutiny/ViewCaseFile";
 
-const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileStoreId }) => {
+const EmployeeApp = ({ path, url, userType, tenants, parentRoute }) => {
   const { t } = useTranslation();
   const location = useLocation();
-  const history = useHistory();
   const { toastMessage, toastType, closeToast } = useToast();
   const Inbox = window?.Digit?.ComponentRegistryService?.getComponent("Inbox");
   const hideHomeCrumb = [`${path}/cases`];
   const roles = window?.Digit.UserService.getUser()?.info?.roles;
   const isJudge = roles.some((role) => role.code === "CASE_APPROVER");
-  const token = window.localStorage.getItem("token");
-  const isUserLoggedIn = Boolean(token);
-  const eSignWindowObject = localStorage.getItem("eSignWindowObject");
-  const retrievedObject = JSON.parse(eSignWindowObject);
-
   const employeeCrumbs = [
     {
       path: `/digit-ui/employee`,
@@ -61,29 +54,16 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
       isLast: true,
     },
     {
-      path: `${path}/registration-requests/details`,
+      path: ``,
       content: t("ES_APPLICATION_DETAILS"),
       show: location.pathname.includes("/registration-requests/details"),
       isLast: true,
     },
   ];
-  const showBreadCrumbs = useMemo(() => location.pathname.includes("/pending-payment-inbox") || location.pathname.includes("/view-case") || true, [
-    location.pathname,
-  ]);
-  if (result) {
-    localStorage.setItem("isSignSuccess", result);
-  }
-  if (fileStoreId) {
-    localStorage.setItem("fileStoreId", fileStoreId);
-  }
-  if (isUserLoggedIn && retrievedObject) {
-    history.push(`${retrievedObject?.path}${retrievedObject?.param}`);
-    localStorage.removeItem("eSignWindowObject");
-  }
   return (
     <Switch>
       <React.Fragment>
-        <div className="ground-container dristi-employee-main">
+        <div className="ground-container">
           {!location.pathname.endsWith("/registration-requests") &&
             !location.pathname.includes("/pending-payment-inbox") &&
             !location.pathname.includes("/case") &&
@@ -100,7 +80,9 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
                 )}
               </div>
             )}
-          {showBreadCrumbs && <Breadcrumb crumbs={employeeCrumbs} breadcrumbStyle={{ paddingLeft: 20 }}></Breadcrumb>}
+          {(location.pathname.includes("/pending-payment-inbox") || location.pathname.includes("/view-case")) && (
+            <Breadcrumb crumbs={employeeCrumbs} breadcrumbStyle={{ paddingLeft: 20 }}></Breadcrumb>
+          )}
           <PrivateRoute exact path={`${path}/registration-requests`} component={Inbox} />
           <PrivateRoute exact path={`${path}/registration-requests/details`} component={(props) => <ApplicationDetails {...props} />} />
           <PrivateRoute exact path={`${path}/pending-payment-inbox`} component={PaymentInbox} />

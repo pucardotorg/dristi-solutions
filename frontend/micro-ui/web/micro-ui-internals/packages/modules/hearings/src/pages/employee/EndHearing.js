@@ -1,10 +1,11 @@
-import { CardText, Modal } from "@egovernments/digit-ui-react-components";
+import { CardText, Modal, CloseSvg } from "@egovernments/digit-ui-react-components";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
-import NextHearingModal from "../../components/NextHearingModal";
-import SummaryModal from "../../components/SummaryModal";
 import { hearingService } from "../../hooks/services";
+import SummaryModal from "../../components/SummaryModal";
+
+const fieldStyle = { marginRight: 0 };
 
 const Heading = (props) => {
   return (
@@ -41,42 +42,30 @@ const CloseBtn = (props) => {
   );
 };
 
-const EndHearing = ({ handleEndHearingModal, hearingId, updateTranscript, hearing, transcriptText, disableTextArea, setTranscriptText }) => {
+const EndHearing = ({ handleEndHearingModal, hearingId, hearing }) => {
   const { t } = useTranslation();
-  const [stepper, setStepper] = useState(1);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
-  const [transcript, setTranscript] = useState(transcriptText);
-  const history = useHistory();
+  const [openConfirmationModal, setOpenConfirmationModal] = useState(false);
 
-  const handleNavigate = (path) => {
-    const contextPath = window?.contextPath || "";
-    history.push(`/${contextPath}${path}`);
-  };
-
-  const endHearing = async (updatedTranscriptText) => {
+  const updateHearing = async () => {
     try {
-      const updatedHearing = structuredClone(hearing);
-      updatedHearing.transcript[0] = updatedTranscriptText;
-      updatedHearing.workflow = updatedHearing.workflow || {};
-      updatedHearing.workflow.action = "CLOSE";
-      const response = await hearingService.updateHearings(
-        { tenantId, hearing: updatedHearing, hearingType: "", status: "" },
-        { applicationNumber: "", cnrNumber: "" }
-      );
-      setTranscriptText(updatedTranscriptText);
-      return response;
+      await hearingService.updateHearing({ tenantId, hearing, hearingType: "", status: "" }, { applicationNumber: "", cnrNumber: "" });
     } catch (error) {
-      console.error("Error Ending hearing:", error);
+      console.error("Error updating hearing:", error);
     }
   };
 
   const handleConfirmationModal = () => {
-    handleEndHearingModal();
+    updateHearing();
+    setOpenConfirmationModal(!openConfirmationModal);
+    if (openConfirmationModal === true) {
+      handleEndHearingModal();
+    }
   };
 
   return (
     <div>
-      {stepper === 1 && (
+      {!openConfirmationModal ? (
         <Modal
           popupStyles={{
             height: "222px",
@@ -107,48 +96,20 @@ const EndHearing = ({ handleEndHearingModal, hearingId, updateTranscript, hearin
             height: "40px",
             padding: " 8px 24px 8px 24px",
           }}
-          headerBarMain={<Heading label={t("CONFIRM_END_HEARING")} />}
+          headerBarMain={<Heading label={t("Are you sure you wish to end this hearing?")} />}
           headerBarEnd={<CloseBtn onClick={handleEndHearingModal} />}
-          actionSaveLabel={t("END_HEARING")}
-          actionSaveOnSubmit={() => {
-            setStepper(stepper + 1);
-          }}
+          actionSaveLabel={t("End Hearing")}
+          actionSaveOnSubmit={handleConfirmationModal}
           formId="modal-action"
         >
           <div style={{ height: "70px", padding: "5px 24px 16px 24px" }}>
-            <CardText style={{ color: "#3D3C3C", fontSize: "16px", fontWeight: 400, lineHeight: "18.75px" }}>{t("END_HEARING_DISCLAIMER")}</CardText>
+            <CardText style={{ color: "#3D3C3C", fontSize: "16px", fontWeight: 400, lineHeight: "18.75px" }}>
+              {t("This action cannot be reversed. All parties will be removed from this hearing.") + " "}
+            </CardText>
           </div>
         </Modal>
-      )}
-      {stepper === 2 && (
-        <SummaryModal
-          transcript={transcript}
-          setTranscript={setTranscript}
-          handleConfirmationModal={handleConfirmationModal}
-          hearingId={hearingId}
-          hearing={hearing}
-          isEndHearing={true}
-          disableTextArea={disableTextArea}
-          onSaveSummary={(updatedTranscriptText) => {
-            endHearing(updatedTranscriptText).then(() => {
-              setStepper((stepper) => stepper + 1);
-            });
-          }}
-          onCancel={() => {
-            setTranscript(transcriptText);
-            setStepper((stepper) => stepper - 1);
-          }}
-        />
-      )}
-      {stepper === 3 && (
-        <NextHearingModal
-          transcript={transcript}
-          hearingId={hearingId}
-          hearing={hearing}
-          stepper={stepper}
-          setStepper={setStepper}
-          handleConfirmationModal={handleConfirmationModal}
-        />
+      ) : (
+        <SummaryModal handleConfirmationModal={handleConfirmationModal} hearingId={hearingId} />
       )}
     </div>
   );

@@ -4,20 +4,18 @@ import { useTranslation } from "react-i18next";
 import useGetSubmissions from "../../../hooks/dristi/useGetSubmissions";
 import { CustomArrowOut } from "../../../icons/svgIndex";
 import EvidenceModal from "./EvidenceModal";
-import { useGetPendingTask } from "../../../../../home/src/hooks/useGetPendingTask";
-import { useHistory } from "react-router-dom";
 
-const SubmissionReview = ({ caseData, setUpdateCounter, openSubmissionsViewModal }) => {
+const SubmissionReview = ({ caseData, setUpdateCounter }) => {
   const { t } = useTranslation();
   const filingNumber = caseData.filingNumber;
+  const cnr = caseData.cnrNumber;
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [show, setShow] = useState(false);
   const [documentSubmission, setDocumentSubmission] = useState();
   const [comment, setComment] = useState("");
-  const userInfo = Digit.UserService.getUser()?.info;
-  const userRoles = userInfo?.roles.map((role) => role.code);
-  const { caseId } = Digit.Hooks.useQueryParams();
-  const history = useHistory();
+  const user = localStorage.getItem("user-info");
+  const userRoles = JSON.parse(user).roles.map((role) => role.code);
+
   const getDate = (value) => {
     const date = new Date(value);
     const day = date.getDate().toString().padStart(2, "0");
@@ -28,72 +26,35 @@ const SubmissionReview = ({ caseData, setUpdateCounter, openSubmissionsViewModal
   };
 
   const docSetFunc = (application) => {
-    const defaultObj = {
-      status: application?.status,
-      details: {
-        applicationType: application?.applicationType,
-        applicationSentOn: getDate(parseInt(application?.auditDetails.createdTime)),
-        sender: application?.createdBy,
-        additionalDetails: application?.additionalDetails,
-        applicationId: application?.id,
-        auditDetails: application?.auditDetails,
-      },
-      applicationContent: null,
-      comments: application?.comment ? application?.comment : [],
-      applicationList: application,
-    };
     const docObj = application?.documents?.map((doc) => {
       return {
-        status: application?.status,
+        status: application.workflow.action,
         details: {
-          applicationType: application?.applicationType,
-          applicationSentOn: getDate(parseInt(application?.auditDetails.createdTime)),
-          sender: application?.createdBy,
-          additionalDetails: application?.additionalDetails,
-          applicationId: application?.id,
-          auditDetails: application?.auditDetails,
+          applicationType: application.applicationType,
+          applicationSentOn: getDate(parseInt(application.auditDetails.createdTime)),
+          sender: application.createdBy,
+          additionalDetails: application.additionalDetails,
+          applicationId: application.id,
+          auditDetails: application.auditDetails,
         },
         applicationContent: {
-          tenantId: application?.tenantId,
+          tenantId: application.tenantId,
           fileStoreId: doc.fileStore,
           id: doc.id,
           documentType: doc.documentType,
           documentUid: doc.documentUid,
           additionalDetails: doc.additionalDetails,
         },
-        comments: application?.comment ? application?.comment : [],
+        comments: [],
         applicationList: application,
       };
-    }) || [defaultObj];
-    // const docObj = application?.documents?.map((doc) => {
-    //   return {
-    //     status: application.workflow.action,
-    //     details: {
-    //       applicationType: application.applicationType,
-    //       applicationSentOn: getDate(parseInt(application.auditDetails.createdTime)),
-    //       sender: application.createdBy,
-    //       additionalDetails: application.additionalDetails,
-    //       applicationId: application.id,
-    //       auditDetails: application.auditDetails,
-    //     },
-    //     applicationContent: {
-    //       tenantId: application.tenantId,
-    //       fileStoreId: doc.fileStore,
-    //       id: doc.id,
-    //       documentType: doc.documentType,
-    //       documentUid: doc.documentUid,
-    //       additionalDetails: doc.additionalDetails,
-    //     },
-    //     comments: [],
-    //     applicationList: application,
-    //   };
-    // });
+    });
     setDocumentSubmission(docObj);
-    // console.log(docObj);
+    console.log(docObj);
     setShow(true);
   };
 
-  const { data: applicationRes } = useGetSubmissions(
+  const { data: applicationRes, refetch: refetchApplicationData, isLoading: isApplicationLoading } = useGetSubmissions(
     {
       criteria: {
         filingNumber: filingNumber,
@@ -101,85 +62,11 @@ const SubmissionReview = ({ caseData, setUpdateCounter, openSubmissionsViewModal
       },
     },
     {},
-    filingNumber,
-    filingNumber
+    cnr + filingNumber,
+    true
   );
 
-  const { data: pendingTaskDetails = [] } = useGetPendingTask({
-    data: {
-      SearchCriteria: {
-        tenantId,
-        moduleName: "Pending Tasks Service",
-        moduleSearchCriteria: {
-          entityType: "application-order-submission-feedback",
-          filingNumber: filingNumber,
-          isCompleted: false,
-          assignedTo: userInfo?.uuid,
-        },
-        limit: 10000,
-        offset: 0,
-      },
-    },
-    params: { tenantId },
-    key: "With",
-    config: { enable: true },
-  });
-  const { data: pendingTaskDetailsWithout = [] } = useGetPendingTask({
-    data: {
-      SearchCriteria: {
-        tenantId,
-        moduleName: "Pending Tasks Service",
-        moduleSearchCriteria: {
-          entityType: "application-order-submission-default",
-          filingNumber: filingNumber,
-          isCompleted: false,
-          assignedTo: userInfo?.uuid,
-        },
-        limit: 10000,
-        offset: 0,
-      },
-    },
-    params: { tenantId },
-    key: "Without",
-    config: { enable: true },
-  });
-
-  let applicationsPending = [];
-  if (pendingTaskDetails && pendingTaskDetailsWithout) {
-    applicationsPending = [
-      pendingTaskDetails.data?.map((app) =>
-        app.fields.reduce(
-          (fieldObj, item) =>
-            item.key === "name"
-              ? {
-                  ...fieldObj,
-                  applicationType: item.value,
-                }
-              : {
-                  ...fieldObj,
-                  [item.key]: item.value,
-                },
-          {}
-        )
-      ),
-      pendingTaskDetailsWithout.data?.map((app) =>
-        app.fields.reduce(
-          (fieldObj, item) => ({
-            ...fieldObj,
-            [item.key]: item.value,
-          }),
-          {}
-        )
-      ),
-    ].flat(Infinity);
-
-    // console.log(applicationsPending);
-  }
-  const applicationListToShow = userRoles.includes("CITIZEN")
-    ? applicationsPending
-    : applicationRes?.applicationList?.filter((application) => application.status === "PENDINGREVIEW");
-
-  // console.log(applicationListToShow);
+  console.log(applicationRes);
 
   return (
     <React.Fragment>
@@ -189,84 +76,71 @@ const SubmissionReview = ({ caseData, setUpdateCounter, openSubmissionsViewModal
           marginTop: "10px",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div
-            style={{
-              fontWeight: 700,
-              fontSize: "24px",
-              lineHeight: "28.8px",
-              color: "#231F20",
-            }}
-          >
-            {userRoles.includes("CITIZEN") ? t("PENDING_SUBMISSIONS_HEADER") : t("REVIEW_SUBMISSIONS_HEADER")} ({applicationListToShow?.length})
-          </div>
-          <div
-            onClick={() => openSubmissionsViewModal(applicationListToShow, docSetFunc)}
-            style={{ cursor: "pointer", fontWeight: 500, fontSize: "16px", lineHeight: "20px", color: "#0A5757" }}
-          >
-            {t("VIEW_ALL_LINK")}
-          </div>
+        <div
+          style={{
+            fontWeight: 700,
+            fontSize: "24px",
+            lineHeight: "28.8px",
+            color: "#231F20",
+          }}
+        >
+          Submissions To Review ({applicationRes?.applicationList?.filter((application) => application.workflow.action === "PENDINGREVIEW").length})
         </div>
         <div style={{ display: "flex", gap: "16px", marginTop: "10px" }}>
-          {applicationListToShow?.slice(0, 5).map((app) => (
-            <div
-              style={{
-                padding: "12px 16px",
-                borderRadius: "4px",
-                width: "300px",
-                cursor: "pointer",
-                background: "#ECF3FD66",
-              }}
-              onClick={() => {
-                userRoles.includes("CITIZEN")
-                  ? history.push(
-                      `/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${app.referenceId.split("_").pop()}`
-                    )
-                  : docSetFunc(app);
-              }}
-            >
-              <div style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
-                <div
-                  style={{
-                    fontWeight: 700,
-                    fontSize: "16px",
-                    lineHeight: "18.75px",
-                    color: "#101828",
-                  }}
-                >
-                  {t(app?.applicationType || app?.name)}
-                </div>
-                <CustomArrowOut />
-              </div>
+          {applicationRes?.applicationList
+            ?.filter((application) => application.workflow.action === "PENDINGREVIEW")
+            .slice(0, 5)
+            .map((app) => (
               <div
                 style={{
-                  fontWeight: 600,
-                  fontSize: "14px",
-                  lineHeight: "20px",
-                  color: "#101828",
-                  marginTop: "12px",
+                  padding: "12px 16px",
+                  borderRadius: "4px",
+                  width: "300px",
+                  cursor: "pointer",
+                  background: "#ECF3FD66",
                 }}
+                onClick={() => docSetFunc(app)}
               >
-                Date:
-                <span
+                <div style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
+                  <div
+                    style={{
+                      fontWeight: 700,
+                      fontSize: "16px",
+                      lineHeight: "18.75px",
+                      color: "#101828",
+                    }}
+                  >
+                    {app?.applicationType?.charAt(0).toUpperCase()}
+                    {app?.applicationType?.slice(1).toLowerCase()}
+                  </div>
+                  <CustomArrowOut />
+                </div>
+                <div
                   style={{
-                    fontWeight: 500,
+                    fontWeight: 600,
                     fontSize: "14px",
                     lineHeight: "20px",
-                    marginLeft: "2px",
+                    color: "#101828",
+                    marginTop: "12px",
                   }}
                 >
-                  {app?.stateSla
-                    ? new Date(app?.stateSla).toLocaleDateString("en-in", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })
-                    : "N/A"}
-                </span>
+                  Date:
+                  <span
+                    style={{
+                      fontWeight: 500,
+                      fontSize: "14px",
+                      lineHeight: "20px",
+                    }}
+                  >
+                    {new Date(app?.auditDetails?.createdTime).toLocaleDateString("en-in", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </span>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
         </div>
       </Card>
       {show && (
@@ -280,7 +154,6 @@ const SubmissionReview = ({ caseData, setUpdateCounter, openSubmissionsViewModal
           modalType={"Submissions"}
           setUpdateCounter={setUpdateCounter}
           caseData={caseData}
-          caseId={caseId}
         />
       )}
     </React.Fragment>

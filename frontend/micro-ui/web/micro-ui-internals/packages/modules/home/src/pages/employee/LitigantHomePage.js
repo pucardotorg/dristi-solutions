@@ -435,34 +435,22 @@ const subtextStyle = {
   lineHeight: "18.75px",
   textAlign: "center",
 };
-const containerJoinFileCaseStyle = {
-  height: "40vh",
-  margin: 0,
-  width: "100%",
-  border: "1px solid #e8e8e8",
-  borderRadius: "8px",
-};
-const LitigantHomePage = ({ isApprovalPending }) => {
+const LitigantHomePage = () => {
   const userName = Digit.SessionStorage.get("User");
   const { t } = useTranslation();
   const today = new Date();
   const history = useHistory();
   const curHr = today.getHours();
-  const userType = Digit.UserService.getType();
   const [callRefetch, SetCallRefetch] = useState(false);
   const refreshInbox = () => {
     SetCallRefetch(true);
-    history.push(`/${window?.contextPath}/${userType}/home/home-pending-task`);
   };
-  if (isApprovalPending) {
-    history.push(`/${window?.contextPath}/${userType}/dristi/home`);
-  }
   return (
-    <div className="upcoming-hearing-container" style={{ width: "100%", padding: 40 }}>
-      <div className="header" style={{ fontSize: "30px" }}>
+    <div className="response-main" style={{ width: "100%", padding: 40 }}>
+      <div className="header">
         {curHr < 12 ? "Good Morning" : curHr < 18 ? "Good Afternoon" : "Good Evening"}, <span className="userName">{userName?.info?.name}</span>
       </div>
-      <div className="header sub-text" style={{ marginTop: "40px", fontSize: "30px" }}>
+      <div className="header sub-text" style={{ marginTop: "40px" }}>
         {t("What are you planning to do today?")}
       </div>
       <div
@@ -476,7 +464,7 @@ const LitigantHomePage = ({ isApprovalPending }) => {
           gap: "20px",
         }}
       >
-        <div className="container" style={containerJoinFileCaseStyle}>
+        <div className="container" style={{ height: "40vh", margin: 0 }}>
           <div
             className="litigant-file-case"
             style={{
@@ -491,9 +479,7 @@ const LitigantHomePage = ({ isApprovalPending }) => {
           >
             <FileNewCaseIcon />
             <React.Fragment>
-              <span className="header userName" style={{ fontSize: "30px" }}>
-                {t("CS_JOIN_NEW_CASE")}
-              </span>
+              <span className="header userName">{t("CS_JOIN_NEW_CASE")}</span>
               <span className="subtext" style={subtextStyle}>
                 {t("CS_JOIN_NEW_CASE_SUBTEXT_1")}
               </span>
@@ -512,7 +498,7 @@ const LitigantHomePage = ({ isApprovalPending }) => {
           </div>
         </div>
 
-        <div className="container" style={containerJoinFileCaseStyle}>
+        <div className="container" style={{ height: "40vh", margin: 0 }}>
           <div
             className="litigant-join-case"
             style={{
@@ -527,11 +513,12 @@ const LitigantHomePage = ({ isApprovalPending }) => {
           >
             <JoinOngoingCaseIcon />
             <React.Fragment>
-              <span className="header userName" style={{ fontSize: "30px" }}>
-                {t("CS_JOIN_ONGOING_CASE")}
-              </span>
+              <span className="header userName">{t("CS_JOIN_ONGOING_CASE")}</span>
               <span className="subtext" style={subtextStyle}>
                 {t("CS_JOIN_ONGOING_CASE_SUBTEXT_1")}
+              </span>
+              <span className="subtext" style={subtextStyle}>
+                {t("CS_JOIN_ONGOING_CASE_SUBTEXT_2")}
               </span>
             </React.Fragment>
             <JoinCaseHome refreshInbox={refreshInbox} t={t} />

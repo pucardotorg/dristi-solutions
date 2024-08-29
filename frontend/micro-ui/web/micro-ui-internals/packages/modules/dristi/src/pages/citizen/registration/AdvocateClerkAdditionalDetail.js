@@ -187,7 +187,7 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
                     getUserDetails(refreshToken).then((res) => {
                       const { ResponseInfo, UserRequest: info, ...tokens } = res;
                       const user = { info, ...tokens };
-                      localStorage.setItem("citizen.userRequestObject", user);
+                      window?.Digit.SessionStorage.set("citizen.userRequestObject", user);
                       window?.Digit.UserService.setUser(user);
                       setCitizenDetail(user?.info, user?.access_token, window?.Digit.ULBService.getStateId());
                       history.push(`/${window?.contextPath}/citizen/dristi/home`);
@@ -274,7 +274,7 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
                 getUserDetails(refreshToken).then((res) => {
                   const { ResponseInfo, UserRequest: info, ...tokens } = res;
                   const user = { info, ...tokens };
-                  localStorage.setItem("citizen.userRequestObject", user);
+                  window?.Digit.SessionStorage.set("citizen.userRequestObject", user);
                   window?.Digit.UserService.setUser(user);
                   setCitizenDetail(user?.info, user?.access_token, window?.Digit.ULBService.getStateId());
                   history.push(`/${window?.contextPath}/citizen/dristi/home`);

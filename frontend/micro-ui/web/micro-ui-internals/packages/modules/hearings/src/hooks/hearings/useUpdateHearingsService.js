@@ -1,10 +1,10 @@
-import { useQuery } from "react-query";
+import { useQuery, useQueryClient } from "react-query";
 import { hearingService } from "../services";
 
 function useUpdateHearingsService(data, params, keys, enabled) {
   const { isLoading, data: hearingResponse, isFetching, refetch, error } = useQuery(
     `GET_HEARING_${keys}`,
-    () => hearingService.updateHearingTranscript(data, params),
+    () => hearingService.updateHearing(data, params),
     {
       cacheTime: 0,
       enabled: Boolean(enabled),

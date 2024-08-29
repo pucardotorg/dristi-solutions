@@ -1,5 +1,5 @@
 import { Loader } from "@egovernments/digit-ui-react-components";
-import React, { useMemo } from "react";
+import React from "react";
 import { useRouteMatch } from "react-router-dom";
 import AddressComponent from "./components/AddressComponent";
 import SelectComponents from "./components/SelectComponents";
@@ -48,54 +48,26 @@ import CustomErrorTooltip from "./components/CustomErrorTooltip";
 import Button from "./components/Button";
 import MultiUploadWrapper from "./components/MultiUploadWrapper";
 import CustomCopyTextDiv from "./components/CustomCopyTextDiv";
-import { DRISTIService } from "./services";
-import CustomChooseDate from "./components/CustomChooseDate";
-import CustomCalendar from "./components/CustomCalendar";
-import UploadSignatureModal from "./components/UploadSignatureModal";
-import CommentComponent from "./components/CommentComponent";
-import { RightArrow } from "./icons/svgIndex";
-import useBillSearch from "./hooks/dristi/useBillSearch";
-import SelectTranscriptTextArea from "./components/SelectTranscriptTextArea";
 
 export const DRISTIModule = ({ stateCode, userType, tenants }) => {
-  const Digit = useMemo(() => window?.Digit || {}, []);
   const { path } = useRouteMatch();
   const history = useHistory();
-  const moduleCode = ["DRISTI", "CASE", "ORDERS", "SUBMISSIONS"];
+  const moduleCode = ["DRISTI", "CASE"];
   const tenantID = tenants?.[0]?.code?.split(".")?.[0];
   const language = Digit.StoreData.getCurrentLanguage();
   const { isLoading } = Digit.Services.useStore({ stateCode, moduleCode, language });
-  const userInfo = useMemo(() => Digit?.UserService?.getUser()?.info, [Digit]);
-  const hasCitizenRoute = useMemo(() => path?.includes(`/${window?.contextPath}/citizen`), [path]);
-  const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
-
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   if (isLoading) {
     return <Loader />;
   }
-
-  if (isCitizen && !hasCitizenRoute && Boolean(userInfo)) {
-    history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
-  } else if (!isCitizen && hasCitizenRoute && Boolean(userInfo)) {
-    history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
-  }
-
   Digit.SessionStorage.set("DRISTI_TENANTS", tenants);
   const urlParams = new URLSearchParams(window.location.search);
   const result = urlParams.get("result");
-  const fileStoreId = urlParams.get("filestoreId");
-  console.log(result, fileStoreId, "result");
+  console.log(result, "result");
   if (userType === "citizen" && userInfo?.type !== "EMPLOYEE") {
     return (
       <ToastProvider>
-        <CitizenApp
-          path={path}
-          stateCode={stateCode}
-          userType={userType}
-          tenants={tenants}
-          tenantId={tenantID}
-          result={result}
-          fileStoreId={fileStoreId}
-        />
+        <CitizenApp path={path} stateCode={stateCode} userType={userType} tenants={tenants} tenantId={tenantID} result={result} />
       </ToastProvider>
     );
   }
@@ -104,7 +76,7 @@ export const DRISTIModule = ({ stateCode, userType, tenants }) => {
   }
   return (
     <ToastProvider>
-      <EmployeeApp path={path} stateCode={stateCode} userType={userType} tenants={tenants} result={result} fileStoreId={fileStoreId}></EmployeeApp>
+      <EmployeeApp path={path} stateCode={stateCode} userType={userType} tenants={tenants}></EmployeeApp>
     </ToastProvider>
   );
 };
@@ -142,7 +114,6 @@ const componentsToRegister = {
   AdvocateNameDetails,
   CustomRadioInfoComponent,
   Modal,
-  CommentComponent,
   CustomCaseInfoDiv,
   CustomErrorTooltip,
   CustomSortComponent,
@@ -152,13 +123,6 @@ const componentsToRegister = {
   Button,
   CustomCopyTextDiv,
   SelectCustomNote,
-  UploadSignatureModal,
-  DRISTIService,
-  CustomChooseDate,
-  CustomCalendar,
-  RightArrow,
-  useBillSearch,
-  SelectTranscriptTextArea,
 };
 
 const overrideHooks = () => {

@@ -3,9 +3,8 @@ import { Calendar } from "react-date-range";
 import { CalendarLeftArrow, CalendarRightArrow } from "../icons/svgIndex";
 import { Button, CardHeader } from "@egovernments/digit-ui-react-components";
 
-function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCustomDate, tenantId, minDate, maxDate }) {
+function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCustomDate, tenantId }) {
   const [currentMonth, setCurrentMonth] = useState(new Date()); // State to track the current month
-  const [selectedDate, setSelectedDate] = useState(new Date()); // State to track the current month
   const { data: hearingResponse, refetch: refetch } = Digit.Hooks.hearings.useGetHearings(
     { criteria: { tenantId }, tenantId },
     { applicationNumber: "", cnrNumber: "", tenantId },
@@ -46,12 +45,6 @@ function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCu
     return Object.values(hearingCounts).reduce((sum, value) => sum + value, 0);
   }, [hearingCounts]);
 
-  const selectedDateHearingCount = useMemo(() => {
-    const dateStr = selectedDate.toLocaleDateString("en-CA");
-    const hearingCount = hearingCounts[dateStr] || 0;
-    return hearingCount;
-  }, [hearingCounts, selectedDate]);
-
   const renderCustomDay = (date) => {
     const dateStr = date.toLocaleDateString("en-CA");
     const hearingCount = hearingCounts[dateStr] || 0;
@@ -59,20 +52,7 @@ function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCu
       <div>
         <span className="rdrDayNumber">{date.getDate()}</span>
         {hearingCount > 0 && (
-          <div
-            style={{
-              fontSize: "8px",
-              color: "#931847",
-              marginTop: "2px",
-              top: 18,
-              right: 2,
-              position: "absolute",
-              width: "100%",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
+          <div style={{ fontSize: "8px", color: "#931847", marginTop: "2px" }}>
             {hearingCount} {t("HEARINGS")}
           </div>
         )}
@@ -96,18 +76,17 @@ function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCu
     );
   };
 
+  const minDate = new Date();
+  const maxDate = new Date(2025, 11, 31);
+
   return (
     <div>
       <div>
         <Calendar
           date={selectedCustomDate}
-          minDate={minDate && minDate}
-          maxDate={maxDate ? maxDate : new Date(2080, 11, 31)}
-          onChange={(date) => {
-            handleSelect(date);
-            setSelectedDate(date);
-          }}
+          onChange={handleSelect}
           // minDate={minDate}
+          maxDate={maxDate}
           dayContentRenderer={renderCustomDay}
           navigatorRenderer={navigatorRenderer}
           onShownDateChange={(date) => {
@@ -118,7 +97,7 @@ function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCu
       {config?.showBottomBar && (
         <div className="calendar-bottom-div">
           <CardHeader>
-            {selectedDateHearingCount} {t(config?.label)}
+            {monthlyCount} {t(config?.label)}
           </CardHeader>
           <Button variation="primary" onButtonClick={() => onCalendarConfirm()} label={t(config?.buttonText)}></Button>
         </div>

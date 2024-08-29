@@ -33,7 +33,7 @@ const SelectOtp = ({
 
   const handleKeyDown = (e) => {
     e.stopPropagation();
-    if (e.key === "Enter" && otp?.length === 6 && canSubmit) {
+    if (e.key === "Enter") {
       onSelect();
     }
   };
@@ -69,11 +69,7 @@ const SelectOtp = ({
     });
   };
   const Heading = (props) => {
-    return (
-      <h1 style={{ display: "flex", alignItems: "center", justifyContent: "flex-start" }} className="heading-m">
-        {props.label}
-      </h1>
-    );
+    return <h1 className="heading-m">{props.label}</h1>;
   };
   const CloseBtn = (props) => {
     return (
@@ -105,7 +101,7 @@ const SelectOtp = ({
             {t("CS_RESEND_OTP")}
           </p>
         )}
-        {error && <CardLabelError>{error}</CardLabelError>}
+        {!error && <CardLabelError>{t("CS_INVALID_OTP")}</CardLabelError>}
       </Fragment>
     );
   }
@@ -124,9 +120,7 @@ const SelectOtp = ({
       headerBarMain={
         <React.Fragment>
           <Heading label={isAdhaar ? t("Verify_Otp_Aadhaar") : t("Verify_Otp_MOBILE")} />
-          <CardText>
-            {isAdhaar ? t("ENTER_OTP_TO_THE_REGISTERED_AADHAR_NO") : `${cardText}${mobileNumber ? " +91****" + mobileNumber.slice(-4) : ""}`}
-          </CardText>
+          <CardText>{`${cardText}${mobileNumber ? " +91****" + mobileNumber.slice(-4) : ""}`}</CardText>
         </React.Fragment>
       }
       className={"otp-modal-class"}
@@ -147,7 +141,7 @@ const SelectOtp = ({
             </span>
           </p>
         </div>
-        {error && <CardLabelError>{error}</CardLabelError>}
+        {!error && <CardLabelError>{t("CS_INVALID_OTP")}</CardLabelError>}
       </FormStep>
     </Modal>
   );
