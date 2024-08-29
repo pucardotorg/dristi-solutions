@@ -10,6 +10,7 @@ const useESign = () => {
       try {
         const newSignStatuses = [...parsedObj, { name: name, isSigned: true }];
         localStorage.setItem("signStatus", JSON.stringify(newSignStatuses));
+        localStorage.setItem("isSignSuccess", "success");
 
         const eSignResponse = await Digit.DRISTIService.eSignService({
           ESignParameter: {
@@ -74,18 +75,18 @@ const useESign = () => {
       }
     };
 
-    const isSignSuccess = localStorage.getItem("isSignSuccess");
-    const storedESignObj = localStorage.getItem("signStatus");
-    const parsedESignObj = JSON.parse(storedESignObj);
+    const isSignSuccess = useMemo(() => localStorage.getItem("isSignSuccess"), []);
+    const storedESignObj = useMemo(() => localStorage.getItem("signStatus"), []);
+    const parsedESignObj = JSON.parse(storedESignObj || "{}");
 
     if (isSignSuccess) {
       const matchedSignStatus = parsedESignObj?.find((obj) => obj.name === name && obj.isSigned === true);
       if (isSignSuccess === "success" && matchedSignStatus) {
         setValue({ aadharsignature: name }, ["aadharsignature"]);
         setIsSigned(true);
+        console.log("true");
       }
 
-      localStorage.removeItem("signStatus");
       localStorage.removeItem("name");
       localStorage.removeItem("isSignSuccess");
       localStorage.removeItem("signStatus");
@@ -93,9 +94,9 @@ const useESign = () => {
   };
 
   const checkJoinACaseESignStatus = (setIsSignedAdvocate, setIsSignedParty) => {
-    const isSignSuccess = localStorage.getItem("isSignSuccess");
-    const storedESignObj = localStorage.getItem("signStatus");
-    const parsedESignObj = JSON.parse(storedESignObj);
+    const isSignSuccess = useMemo(() => localStorage.getItem("isSignSuccess"), []);
+    const storedESignObj = useMemo(() => localStorage.getItem("signStatus"), []);
+    const parsedESignObj = JSON.parse(storedESignObj || "{}");
 
     if (isSignSuccess) {
       if (isSignSuccess === "success") {
