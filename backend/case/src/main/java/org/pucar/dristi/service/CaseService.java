@@ -45,9 +45,11 @@ public class CaseService {
 
     private BillingUtil billingUtil;
 
+    private NotificationService notificationService;
+
 
     @Autowired
-    public CaseService(CaseRegistrationValidator validator, CaseRegistrationEnrichment enrichmentUtil, CaseRepository caseRepository, WorkflowService workflowService, Configuration config, Producer producer, BillingUtil billingUtil) {
+    public CaseService(CaseRegistrationValidator validator, CaseRegistrationEnrichment enrichmentUtil, CaseRepository caseRepository, WorkflowService workflowService, Configuration config, Producer producer, BillingUtil billingUtil, NotificationService notificationService) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.caseRepository = caseRepository;
@@ -55,6 +57,7 @@ public class CaseService {
         this.config = config;
         this.producer = producer;
         this.billingUtil = billingUtil;
+        this.notificationService = notificationService;
     }
 
     @Autowired
@@ -69,6 +72,7 @@ public class CaseService {
             enrichmentUtil.enrichCaseRegistrationOnCreate(body);
 
             workflowService.updateWorkflowStatus(body);
+
 
             producer.push(config.getCaseCreateTopic(), body);
             return body.getCases();
@@ -107,16 +111,21 @@ public class CaseService {
 
             // Enrich application upon update
             enrichmentUtil.enrichCaseApplicationUponUpdate(caseRequest);
-
+            String statusBefore = caseRequest.getCases().getStatus();
             workflowService.updateWorkflowStatus(caseRequest);
 
-            if (CREATE_DEMAND_STATUS.equals(caseRequest.getCases().getStatus())) {
-                billingUtil.createDemand(caseRequest);
-            }
             if (CASE_ADMIT_STATUS.equals(caseRequest.getCases().getStatus())) {
                 enrichmentUtil.enrichAccessCode(caseRequest);
                 enrichmentUtil.enrichCaseNumberAndCNRNumber(caseRequest);
                 enrichmentUtil.enrichRegistrationDate(caseRequest);
+            }
+
+            if(config.getIsSMSEnabled()) {
+                String notificationStatus = getNotificationStatus(caseRequest.getCases().getWorkflow().getAction(),statusBefore);
+                if(notificationStatus != null) {
+                    notificationService.sendNotification(caseRequest.getRequestInfo(), caseRequest.getCases(), notificationStatus, caseRequest.getCases().getAuditdetails().getCreatedBy());
+                }
+
             }
 
             producer.push(config.getCaseUpdateTopic(), caseRequest);
@@ -130,6 +139,29 @@ public class CaseService {
             throw new CustomException(UPDATE_CASE_ERR, "Exception occurred while updating case: " + e.getMessage());
         }
 
+    }
+
+    private String getNotificationStatus(String action, String statusBefore) {
+        return switch (action.toUpperCase()) {
+            case "SUBMIT_CASE" -> CASE_SUBMISSION;
+            case "MAKE_PAYMENT" -> CASE_FILED;
+            case "VALIDATE" -> SCRUTINY_COMPLETE_CASE_REGISTERED;
+            case "SEND_BACK" -> {
+                if (statusBefore == null) {
+                    yield null;
+                } else {
+                    yield switch (statusBefore) {
+                        case "UNDER_SCRUTINY" ->  EFILING_ERRORS;
+                        case "PENDING_ADMISSION" -> ERRORS_IDENTIFIED_CASE_FILE;
+                        default -> null;
+                    };
+                }
+            }
+            case "SCHEDULE_ADMISSION_HEARING" -> ADMISSION_HEARING_SCHEDULED;
+            case "ADMIT" -> CASE_ADMITTED;
+            case "REJECT" -> HEARING_REJECTED;
+            default -> null;
+        };
     }
 
     public List<CaseExists> existCases(CaseExistsRequest caseExistsRequest) {
