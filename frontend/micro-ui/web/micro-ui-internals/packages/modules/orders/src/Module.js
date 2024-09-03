@@ -13,6 +13,7 @@ import CustomInfo from "./components/CustomInfo";
 import SummonsOrderComponent from "./components/SummonsOrderComponent";
 import ReIssueSummonsModal from "./components/ReIssueSummonsModal";
 import PaymentForSummonModal from "./pages/employee/PaymentForSummonModal";
+import PaymentForSummonModalSMSAndEmail from "./pages/employee/PaymentForSummonModalSMSAndEmail";
 
 export const OrdersModule = ({ stateCode, userType, tenants }) => {
   const { path } = useRouteMatch();
@@ -43,6 +44,7 @@ const componentsToRegister = {
   SummonsOrderComponent,
   ReIssueSummonsModal,
   PaymentForSummonModal,
+  PaymentForSummonModalSMSAndEmail,
 };
 
 export const initOrdersComponents = () => {

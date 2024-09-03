@@ -7,11 +7,23 @@ import { useToast } from "../../../components/Toast/useToast";
 import { DRISTIService } from "../../../services";
 import { Urls } from "../../../hooks";
 
-const paymentCalculation = [
-  { key: "Amount Due", value: 600, currency: "Rs" },
-  { key: "Court Fees", value: 400, currency: "Rs" },
-  { key: "Advocate Fees", value: 1000, currency: "Rs" },
-  { key: "Total Fees", value: 2000, currency: "Rs", isTotalFee: true },
+const paymentOption = [
+  {
+    code: "CASH",
+    i18nKey: "Cash",
+  },
+  {
+    code: "CHEQUE",
+    i18nKey: "Cheque",
+  },
+  {
+    code: "DD",
+    i18nKey: "Demand Draft",
+  },
+  {
+    code: "STAMP",
+    i18nKey: "Stamp",
+  },
 ];
 
 const paymentOptionConfig = {
@@ -78,12 +90,94 @@ const ViewPaymentDetails = ({ location, match }) => {
     }
   );
 
+  const chequeDetails = useMemo(() => {
+    const debtLiability = caseDetails?.caseDetails?.debtLiabilityDetails?.formdata?.[0]?.data;
+    if (debtLiability?.liabilityType?.code === "PARTIAL_LIABILITY") {
+      return {
+        totalAmount: debtLiability?.totalAmount,
+      };
+    } else {
+      const chequeData = caseDetails?.caseDetails?.chequeDetails?.formdata || [];
+      const totalAmount = chequeData.reduce((sum, item) => {
+        return sum + parseFloat(item.data.chequeAmount);
+      }, 0);
+      return {
+        totalAmount: totalAmount.toString(),
+      };
+    }
+  }, [caseDetails]);
+
+  const { data: calculationResponse, isLoading: isPaymentLoading } = Digit.Hooks.dristi.usePaymentCalculator(
+    {
+      EFillingCalculationCriteria: [
+        {
+          checkAmount: chequeDetails?.totalAmount,
+          numberOfApplication: 1,
+          tenantId: tenantId,
+          caseId: caseId,
+        },
+      ],
+    },
+    {},
+    "dristi",
+    Boolean(chequeDetails?.totalAmount && chequeDetails.totalAmount !== "0")
+  );
+  const totalAmount = useMemo(() => {
+    const totalAmount = calculationResponse?.Calculation?.[0]?.totalAmount || 0;
+    return parseFloat(totalAmount).toFixed(2);
+  }, [calculationResponse?.Calculation]);
+  const paymentCalculation = useMemo(() => {
+    const breakdown = calculationResponse?.Calculation?.[0]?.breakDown || [];
+    const updatedCalculation = breakdown.map((item) => ({
+      key: item?.type,
+      value: item?.amount,
+      currency: "Rs",
+    }));
+
+    updatedCalculation.push({
+      key: "Total amount",
+      value: totalAmount,
+      currency: "Rs",
+      isTotalFee: true,
+    });
+
+    return updatedCalculation;
+  }, [calculationResponse?.Calculation]);
   const payerName = useMemo(() => caseDetails?.additionalDetails?.payerName, [caseDetails?.additionalDetails?.payerName]);
   const bill = paymentDetails?.Bill ? paymentDetails?.Bill[0] : {};
+  const { data: demandResponse, isLoading: demandCreateLoading } = Digit.Hooks.dristi.useCreateDemand(
+    {
+      Demands: [
+        {
+          tenantId,
+          consumerCode: caseDetails?.filingNumber,
+          consumerType: "case-default",
+          businessService: "case-default",
+          taxPeriodFrom: Date.now().toString(),
+          taxPeriodTo: Date.now().toString(),
+          demandDetails: [
+            {
+              taxHeadMasterCode: "CASE_ADVANCE_CARRYFORWARD",
+              taxAmount: 4,
+              collectionAmount: 0,
+            },
+          ],
+        },
+      ],
+    },
+    {},
+    "dristi",
+    Boolean(paymentDetails?.Bill?.length === 0 && caseDetails?.filingNumber)
+  );
 
   const onSubmitCase = async () => {
     setIsDisabled(true);
-    if (!Object.keys(bill || {}).length) {
+    const regenerateBill = await DRISTIService.callFetchBill(
+      {},
+      { consumerCode: caseDetails?.filingNumber, tenantId, businessService: "case-default" }
+    );
+    const billFetched = regenerateBill?.Bill ? regenerateBill?.Bill[0] : {};
+    if (!Object.keys(bill || regenerateBill || {}).length) {
       toast.error(t("CS_BILL_NOT_AVAILABLE"));
       history.push(`/${window?.contextPath}/employee/dristi/pending-payment-inbox`);
       return;
@@ -94,9 +188,9 @@ const ViewPaymentDetails = ({ location, match }) => {
           paymentDetails: [
             {
               businessService: "case-default",
-              billId: bill.id,
-              totalDue: bill?.totalAmount,
-              totalAmountPaid: bill?.totalAmount || 2000,
+              billId: billFetched.id,
+              totalDue: billFetched.totalAmount,
+              totalAmountPaid: billFetched.totalAmount,
             },
           ],
           tenantId,
@@ -104,7 +198,7 @@ const ViewPaymentDetails = ({ location, match }) => {
           paidBy: "PAY_BY_OWNER",
           mobileNumber: caseDetails?.additionalDetails?.payerMobileNo || "",
           payerName: payer || payerName,
-          totalAmountPaid: 2000,
+          totalAmountPaid: totalAmount,
           instrumentNumber: additionDetails,
           instrumentDate: new Date().getTime(),
         },
@@ -148,16 +242,20 @@ const ViewPaymentDetails = ({ location, match }) => {
             showTable: true,
             showCopytext: true,
           },
+          amount: totalAmount,
+          fileStoreId: "c162c182-103f-463e-99b6-18654ed7a5b1",
         },
       });
       setIsDisabled(false);
     } catch (err) {
-      history.push(`/${window?.contextPath}/employee/dristi/pending-payment-inbox/response`, { state: { success: false } });
+      history.push(`/${window?.contextPath}/employee/dristi/pending-payment-inbox/response`, {
+        state: { success: false, amount: totalAmount },
+      });
       setIsDisabled(false);
     }
   };
 
-  if (isCaseSearchLoading || isFetchBillLoading) {
+  if (isCaseSearchLoading || isFetchBillLoading || isPaymentLoading || demandCreateLoading) {
     return <Loader />;
   }
   return (
@@ -167,7 +265,7 @@ const ViewPaymentDetails = ({ location, match }) => {
           <div className="header">{t("CS_RECORD_PAYMENT_HEADER_TEXT")}</div>
           <div className="sub-header">{t("CS_RECORD_PAYMENT_SUBHEADER_TEXT")}</div>
         </div>
-        <div className="payment-calculator-wrapper">
+        <div className="payment-calculator-wrapper" style={{ maxHeight: "400px" }}>
           {paymentCalculation.map((item) => (
             <div
               style={{
@@ -180,14 +278,14 @@ const ViewPaymentDetails = ({ location, match }) => {
             >
               <span>{item.key}</span>
               <span>
-                {item.currency} {item.value}
+                {item.currency} {parseFloat(item.value).toFixed(2)}
               </span>
             </div>
           ))}
         </div>
-        <div style={{ marginTop: 40 }}>
+        <div style={{ marginTop: 40, marginBottom: "150px" }}>
           <div className="payment-case-name">{`${t("CS_CASE_ID")}: ${caseDetails?.filingNumber}`}</div>
-          <div className="payment-case-detail-wrapper" style={{ maxHeight: 400 }}>
+          <div className="payment-case-detail-wrapper" style={{ maxHeight: "350px" }}>
             <LabelFieldPair>
               <CardLabel>{`${t("CORE_COMMON_PAYER")}`}</CardLabel>
               <TextInput

@@ -698,6 +698,7 @@
 
 .info-link-wrapper {
   width: 25%;
+  align-items: end;
 }
 
 .info-row-wrapper {
@@ -731,11 +732,16 @@
 }
 
 .review-summon-order {
-  position: absolute;
-  right: 24px;
+  margin: 0px;
+  font-family: Roboto;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 18.75px;
+  text-align: left;
   color: #3d3c3c;
+  text-decoration: underline;
+  cursor: pointer;
 }
-
 .popup-module.request-processing-info-modal {
   .header-wrap {
     height: 35px;

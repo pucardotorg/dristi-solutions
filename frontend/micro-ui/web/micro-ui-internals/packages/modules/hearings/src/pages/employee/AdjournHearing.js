@@ -7,13 +7,13 @@ import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { hearingService } from "../../hooks/services";
 import { useTranslation } from "react-i18next";
 
-const AdjournHearing = ({ hearing, updateTranscript }) => {
+const AdjournHearing = ({ hearing, updateTranscript, transcriptText, setAdjournHearing, disableTextArea, setTranscriptText }) => {
   const { hearingId } = Digit.Hooks.useQueryParams();
   const [disable, setDisable] = useState(true);
   const [stepper, setStepper] = useState(1);
   const { t } = useTranslation();
   const [reasonFormData, setReasonFormData] = useState({});
-  const [transcript, setTranscript] = useState(hearing.transcript[0]);
+  const [transcript, setTranscript] = useState(transcriptText);
 
   const history = useHistory();
 
@@ -68,7 +68,7 @@ const AdjournHearing = ({ hearing, updateTranscript }) => {
   ];
 
   const handleConfirmationModal = () => {
-    handleNavigate(`/employee/hearings/inside-hearing?hearingId=${hearingId}`);
+    setAdjournHearing(false);
   };
 
   const Close = () => (
@@ -109,10 +109,12 @@ const AdjournHearing = ({ hearing, updateTranscript }) => {
           reason: reasonFormData.reason.code,
         },
       };
-      return await hearingService.updateHearings(
+      const response = await hearingService.updateHearings(
         { tenantId: Digit.ULBService.getCurrentTenantId(), hearing: updatedHearing, hearingType: "", status: "" },
         { applicationNumber: "", cnrNumber: "" }
       );
+      setTranscriptText(updatedTranscriptText);
+      return response;
     } catch (error) {
       console.error("Error Ending hearing:", error);
     }
@@ -129,7 +131,7 @@ const AdjournHearing = ({ hearing, updateTranscript }) => {
           headerBarMain={<Heading label={t("ARE_SURE_ADJOURN_HEARING")} />}
           headerBarEnd={
             <h1 style={{ padding: "5px 5x 5x 5x" }}>
-              <CloseBtn onClick={() => handleNavigate(`/employee/hearings/inside-hearing?hearingId=${hearingId}`)} />
+              <CloseBtn onClick={handleConfirmationModal} />
             </h1>
           }
           actionSaveLabel={t("ADJOURN_HEARING")}
@@ -167,20 +169,29 @@ const AdjournHearing = ({ hearing, updateTranscript }) => {
           transcript={transcript}
           setTranscript={setTranscript}
           handleConfirmationModal={handleConfirmationModal}
+          hearing={hearing}
           hearingId={hearingId}
+          disableTextArea={disableTextArea}
           onSaveSummary={(updatedTranscriptText) => {
             adjournHearing(updatedTranscriptText).then(() => {
               setStepper((stepper) => stepper + 1);
             });
           }}
           onCancel={() => {
-            setTranscript(hearing.transcript[0]);
+            setTranscript(transcriptText);
             setStepper((stepper) => stepper - 1);
           }}
         />
       )}
       {stepper === 3 && (
-        <NextHearingModal transcript={transcript} hearingId={hearingId} hearing={hearing} stepper={stepper} setStepper={setStepper} />
+        <NextHearingModal
+          transcript={transcript}
+          hearingId={hearingId}
+          hearing={hearing}
+          stepper={stepper}
+          setStepper={setStepper}
+          handleConfirmationModal={handleConfirmationModal}
+        />
       )}
     </div>
   );

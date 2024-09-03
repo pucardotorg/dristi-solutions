@@ -340,11 +340,55 @@ export const pendingTaskOrderActions = {
       ],
     },
   },
+  PAYMENT_PENDING_SMS: {
+    actorName: ["JUDGE"],
+    actionName: "Show Summon-Warrant Status",
+    redirectDetails: {
+      url: "/home/home-pending-task/sms-payment-modal",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "orderNumber", value: "referenceId" },
+      ],
+    },
+  },
+  PAYMENT_PENDING_EMAIL: {
+    actorName: ["JUDGE"],
+    actionName: "Show Summon-Warrant Status",
+    redirectDetails: {
+      url: "/home/home-pending-task/email-payment-modal",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "orderNumber", value: "referenceId" },
+      ],
+    },
+  },
+  RESCHEDULE_HEARING: {
+    actorName: ["JUDGE"],
+    actionName: "Schedule admission hearing",
+    redirectDetails: {
+      url: "/home/home-pending-task/home-set-next-hearing",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "hearingId", value: "referenceId" },
+      ],
+    },
+  },
   PAYMENT_PENDING_FOR_WARRANT: {
     actorName: ["JUDGE"],
     actionName: "Show Warrant Payment Status",
     redirectDetails: {
       url: "/home/home-pending-task/e-filing-payment-breakdown",
+    },
+  },
+  "RE-ISSUE_SUMMON": {
+    actorName: ["JUDGE"],
+    redirectDetails: {
+      url: "/home/home-pending-task/reissue-summons-modal",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "cnrNumber", value: "cnrNumber" },
+        { key: "hearingId", value: "referenceId" },
+      ],
     },
   },
 };

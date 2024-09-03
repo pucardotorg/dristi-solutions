@@ -114,7 +114,6 @@
 @import "./components/loaderWithGap.scss";
 
 /* @import "./dristi"; */
-@import "./dristi/components/termsCondition.scss";
 @import "./dristi/components/customDragDrop.scss";
 @import "./dristi/components/delayApplication.scss";
 @import "./dristi/components/chequeDetails.scss";
@@ -144,6 +143,7 @@
 @import "./pages/employee/homehearing.scss";
 @import "./cases/pages/employeee/joinCaseHome.scss";
 @import "./orders/reviewsummons.scss";
+@import "./orders/documentPrintComponent.scss";
 @import "./orders/paymentstatus.scss";
 @import "./hearings/pages/employee/SummonsNWarrantsModal.scss";
 @import "./hearings/pages/employee/AdjournHearing.scss";

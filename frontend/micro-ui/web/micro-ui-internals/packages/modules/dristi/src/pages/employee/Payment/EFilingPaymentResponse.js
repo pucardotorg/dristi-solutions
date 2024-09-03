@@ -46,13 +46,13 @@ function EFilingPaymentResponse() {
           <SelectCustomNote t={t} config={customNoteConfig} />
         )}
         <div className="button-field" style={{ width: "100%", marginTop: 16 }}>
-          <Button
+          {/* <Button
             variation={"secondary"}
             className={"secondary-button-selector"}
             label={t("CS_PRINT_RECEIPT")}
             labelClassName={"secondary-label-selector"}
             onButtonClick={() => {}}
-          />
+          /> */}
           <Button
             className={"tertiary-button-selector"}
             label={t("CS_GO_TO_HOME")}
@@ -60,6 +60,7 @@ function EFilingPaymentResponse() {
             onButtonClick={() => {
               history.push(`/${window?.contextPath}/employee/dristi/pending-payment-inbox`);
             }}
+            style={{ width: "100%" }}
           />
         </div>
       </div>

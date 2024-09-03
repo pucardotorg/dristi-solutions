@@ -9,5 +9,17 @@ export const Urls = {
     createHearings: "/hearing/v1/create",
     updateHearings: "/hearing/v1/update",
     getPendingTaskFields: "/inbox/v2/_getFields",
+    searchTasks: "/task/v1/search",
+  },
+  FileFetchById: "/filestore/v1/files/id",
+  Epost: {
+    EpostUpdate: "/epost-tracker/epost/v1/_updateEPost",
+  },
+  Scheduler: {
+    reschedule: "/scheduler/hearing/v1/_reschedule",
+  },
+  Task: {
+    uploadDoc: "/task/v1/uploadDocument",
+    updateTask: "/task/v1/update",
   },
 };

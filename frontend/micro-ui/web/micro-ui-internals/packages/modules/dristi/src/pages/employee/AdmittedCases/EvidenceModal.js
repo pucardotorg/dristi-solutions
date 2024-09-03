@@ -1,5 +1,5 @@
 import { CloseSvg, TextInput } from "@egovernments/digit-ui-react-components";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import CommentComponent from "../../../components/CommentComponent";
@@ -13,6 +13,8 @@ import { DRISTIService } from "../../../services";
 import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../../Utils/submissionWorkflow";
 import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
 import DocViewerWrapper from "../docViewerWrapper";
+import SelectCustomDocUpload from "../../../components/SelectCustomDocUpload";
+import ESignSignatureModal from "../../../components/ESignSignatureModal";
 
 const stateSla = {
   DRAFT_IN_PROGRESS: 2,
@@ -40,6 +42,13 @@ const EvidenceModal = ({ caseData, documentSubmission = [], setShow, userRoles, 
   const isLitigent = useMemo(() => !userInfo?.roles?.some((role) => ["ADVOCATE_ROLE", "ADVOCATE_CLERK"].includes(role?.code)), [userInfo?.roles]);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const todayDate = new Date().getTime();
+  const [formData, setFormData] = useState({});
+  const [showFileIcon, setShowFileIcon] = useState(false);
+
+  const setData = (data) => {
+    setFormData(data);
+  };
+
   const CloseBtn = (props) => {
     return (
       <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
@@ -56,7 +65,7 @@ const EvidenceModal = ({ caseData, documentSubmission = [], setShow, userRoles, 
     );
   };
   const respondingUuids = useMemo(() => {
-    return documentSubmission?.[0]?.details?.additionalDetails?.respondingParty?.map((party) => party?.uuid.map((uuid) => uuid)).flat() || [];
+    return documentSubmission?.[0]?.details?.additionalDetails?.respondingParty?.map((party) => party?.uuid?.map((uuid) => uuid))?.flat() || [];
   }, [documentSubmission]);
 
   const showSubmit = useMemo(() => {
@@ -605,6 +614,7 @@ const EvidenceModal = ({ caseData, documentSubmission = [], setShow, userRoles, 
   const handleSubmitComment = async (newComment) => {
     if (modalType === "Submissions") {
       await submitCommentApplication(newComment);
+      setShowFileIcon(false);
     } else {
       await submitCommentEvidence(newComment);
     }
@@ -636,6 +646,64 @@ const EvidenceModal = ({ caseData, documentSubmission = [], setShow, userRoles, 
         counterUpdate();
       } catch (error) {}
     }
+  };
+
+  const documentUploaderConfig = useMemo(
+    () => [
+      {
+        body: [
+          {
+            type: "component",
+            component: "SelectUserTypeComponent",
+            key: "SelectUserTypeComponent",
+            withoutLabel: true,
+            populators: {
+              inputs: [
+                {
+                  label: "Document Type",
+                  type: "dropdown",
+                  name: "selectIdType",
+                  optionsKey: "name",
+                  error: "CORE_REQUIRED_FIELD_ERROR",
+                  validation: {},
+                  isMandatory: true,
+                  disableMandatoryFieldFor: ["aadharNumber"],
+                  disableFormValidation: false,
+                  options: [
+                    {
+                      code: "EVIDENCE",
+                      name: "Evidence",
+                    },
+                  ],
+                  optionsCustomStyle: {
+                    top: "40px",
+                  },
+                },
+                {
+                  label: "Upload Document",
+                  type: "documentUpload",
+                  name: "doc",
+                  validation: {},
+                  allowedFileTypes: /(.*?)(png|jpg|pdf)$/i,
+                  isMandatory: true,
+                  disableMandatoryFieldFor: ["aadharNumber"],
+                  errorMessage: "CUSTOM_DOCUMENT_ERROR_MSG",
+                  disableFormValidation: false,
+                },
+              ],
+              validation: {},
+            },
+          },
+        ],
+      },
+    ],
+    []
+  );
+
+  const onDocumentUpload = async (fileData, filename, tenantId) => {
+    if (fileData?.fileStore) return fileData;
+    const fileUploadRes = await window?.Digit.UploadServices.Filestorage("DRISTI", fileData, tenantId);
+    return { file: fileUploadRes?.data, fileType: fileData.type, filename };
   };
 
   return (
@@ -744,71 +812,106 @@ const EvidenceModal = ({ caseData, documentSubmission = [], setShow, userRoles, 
                   modalType === "Documents") && (
                   <div className="comment-send">
                     <div className="comment-input-wrapper">
-                      <TextInput
-                        placeholder={"Type here..."}
-                        value={currentComment}
-                        onChange={(e) => {
-                          setCurrentComment(e.target.value);
-                        }}
-                      />
-                      <div
-                        className="send-comment-btn"
-                        onClick={() => {
-                          if (currentComment !== "") {
-                            const newComment =
-                              modalType === "Submissions"
-                                ? {
-                                    tenantId,
+                      <div style={{ display: "flex" }}>
+                        <TextInput
+                          placeholder={"Type here..."}
+                          value={currentComment}
+                          onChange={(e) => {
+                            setCurrentComment(e.target.value);
+                          }}
+                        />
+                        <div
+                          className="send-comment-btn"
+                          onClick={async () => {
+                            if (currentComment !== "") {
+                              let newComment =
+                                modalType === "Submissions"
+                                  ? {
+                                      tenantId,
+                                      comment: [
+                                        {
+                                          tenantId,
+                                          comment: currentComment,
+                                          individualId: "",
+                                          commentDocumentId: "",
+                                          commentDocumentName: "",
+                                          additionalDetails: {
+                                            author: user,
+                                            timestamp: new Date(Date.now()).toLocaleDateString("en-in", {
+                                              year: "2-digit",
+                                              month: "short",
+                                              day: "2-digit",
+                                              hour: "2-digit",
+                                              minute: "2-digit",
+                                              hour12: true,
+                                            }),
+                                          },
+                                        },
+                                      ],
+                                      applicationNumber: documentSubmission?.[0]?.applicationList?.applicationNumber,
+                                    }
+                                  : {
+                                      tenantId,
+                                      comment: [
+                                        {
+                                          tenantId,
+                                          comment: currentComment,
+                                          individualId: "",
+                                          commentDocumentId: "",
+                                          commentDocumentName: "",
+                                          artifactId: documentSubmission?.[0]?.artifactList?.id,
+                                          additionalDetails: {
+                                            author: user,
+                                            timestamp: new Date(Date.now()).toLocaleDateString("en-in", {
+                                              year: "2-digit",
+                                              month: "short",
+                                              day: "2-digit",
+                                              hour: "2-digit",
+                                              minute: "2-digit",
+                                              hour12: true,
+                                            }),
+                                          },
+                                        },
+                                      ],
+                                      artifactNumber: documentSubmission?.[0]?.artifactList?.artifactNumber,
+                                    };
+                              if (formData) {
+                                if (formData?.SelectUserTypeComponent?.doc?.length > 0) {
+                                  newComment = {
+                                    ...newComment,
                                     comment: [
                                       {
-                                        tenantId,
-                                        comment: currentComment,
-                                        individualId: "",
+                                        ...newComment.comment[0],
                                         additionalDetails: {
-                                          author: user,
-                                          timestamp: new Date(Date.now()).toLocaleDateString("en-in", {
-                                            year: "2-digit",
-                                            month: "short",
-                                            day: "2-digit",
-                                            hour: "2-digit",
-                                            minute: "2-digit",
-                                            hour12: true,
-                                          }),
+                                          ...newComment.comment[0].additionalDetails,
+                                          commentDocumentId: formData?.SelectUserTypeComponent?.doc?.[0]?.[1]?.fileStoreId?.fileStoreId,
+                                          commentDocumentName: documentUploaderConfig?.[0]?.body?.[0]?.populators?.inputs?.[0]?.options?.[0]?.code,
                                         },
                                       },
                                     ],
-                                    applicationNumber: documentSubmission?.[0]?.applicationList?.applicationNumber,
-                                  }
-                                : {
-                                    tenantId,
-                                    comment: [
-                                      {
-                                        tenantId,
-                                        comment: currentComment,
-                                        individualId: "",
-                                        artifactId: documentSubmission?.[0]?.artifactList?.id,
-                                        additionalDetails: {
-                                          author: user,
-                                          timestamp: new Date(Date.now()).toLocaleDateString("en-in", {
-                                            year: "2-digit",
-                                            month: "short",
-                                            day: "2-digit",
-                                            hour: "2-digit",
-                                            minute: "2-digit",
-                                            hour12: true,
-                                          }),
-                                        },
-                                      },
-                                    ],
-                                    artifactNumber: documentSubmission?.[0]?.artifactList?.artifactNumber,
                                   };
-                            setComments((prev) => [...prev, ...newComment.comment]);
-                            setCurrentComment("");
-                            handleSubmitComment(newComment);
-                          }
-                        }}
-                      >
-                        <RightArrow />
+                                }
+                              }
+                              setComments((prev) => [...prev, ...newComment.comment]);
+                              setCurrentComment("");
+                              setFormData({});
+                              handleSubmitComment(newComment);
+                            }
+                          }}
+                        >
+                          <RightArrow />
+                        </div>
+                      </div>
+                      <div style={{ display: "flex" }}>
+                        <SelectCustomDocUpload
+                          t={t}
+                          formUploadData={formData}
+                          config={[documentUploaderConfig?.[0]]}
+                          setData={setData}
+                          documentSubmission={documentSubmission}
+                          showDocument={showFileIcon}
+                          setShowDocument={setShowFileIcon}
+                        />
                       </div>
                     </div>
                   </div>

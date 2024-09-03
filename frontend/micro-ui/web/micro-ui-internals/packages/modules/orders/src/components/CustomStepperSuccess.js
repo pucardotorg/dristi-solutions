@@ -1,15 +1,18 @@
 import CustomCopyTextDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCopyTextDiv";
 import { Banner, Button, DownloadIcon } from "@egovernments/digit-ui-react-components";
+import { FileIcon, PrintIcon } from "@egovernments/digit-ui-react-components";
 import React from "react";
-import DocumentPrintComponent from "./DocumentPrintComponent";
+import { Urls } from "../hooks/services/Urls";
 
-const CustomStepperSuccess = ({ closeButtonAction, t, submissionData, documents }) => {
+const CustomStepperSuccess = ({ closeButtonAction, submitButtonAction, t, submissionData, documents, deliveryChannel }) => {
+  const tenantId = window?.Digit.ULBService.getCurrentTenantId();
+  const fileStore = localStorage.getItem("SignedFileStoreID");
   return (
     <div className="custom-stepper-modal-success" style={{ padding: "0px 20px" }}>
       <Banner
         whichSvg={"tick"}
         successful={true}
-        message={t("You have successfully sent summons via email")}
+        message={t(`You have successfully sent summons via ${deliveryChannel}`)}
         headerStyles={{ fontSize: "32px" }}
         style={{ minWidth: "100%", marginTop: "32px", marginBottom: "20px" }}
       ></Banner>
@@ -22,7 +25,27 @@ const CustomStepperSuccess = ({ closeButtonAction, t, submissionData, documents 
         tableDataClassName={"e-filing-table-data-style"}
         tableValueClassName={"e-filing-table-value-style"}
       />
-      <DocumentPrintComponent documents={documents} />
+      <div className="print-documents-box-div">
+        <div className="print-documents-box-text">
+          <FileIcon />
+          <div style={{ marginLeft: "0.5rem" }}>Summons Document</div>
+        </div>
+        <button className="print-button" disabled={!fileStore}>
+          <PrintIcon />
+          {fileStore ? (
+            <a
+              href={`${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${fileStore}`}
+              target="_blank"
+              rel="noreferrer"
+              style={{ marginLeft: "0.5rem", color: "#007E7E" }}
+            >
+              Print
+            </a>
+          ) : (
+            <span style={{ marginLeft: "0.5rem", color: "grey" }}>Print</span>
+          )}
+        </button>
+      </div>
       <div className="action-button-success">
         <Button
           className={"selector-button-border"}
@@ -31,14 +54,16 @@ const CustomStepperSuccess = ({ closeButtonAction, t, submissionData, documents 
           onButtonClick={() => {
             // closeModal();
             // refreshInbox();
-            if (documents) closeButtonAction();
+            // if (documents) closeButtonAction();
+            closeButtonAction();
           }}
         />
         <Button
           className={"selector-button-primary"}
           label={t(documents ? "Mark as sent" : "Close")}
           onButtonClick={() => {
-            if (!documents) closeButtonAction();
+            // if (!documents) closeButtonAction();
+            submitButtonAction();
           }}
         >
           {/* <RightArrow /> */}

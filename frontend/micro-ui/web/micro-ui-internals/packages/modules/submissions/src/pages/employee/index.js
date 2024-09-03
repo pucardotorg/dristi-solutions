@@ -49,7 +49,7 @@ const App = ({ path, stateCode, userType, tenants }) => {
           <ProjectBreadCrumb location={window.location} />
         </React.Fragment>
         <PrivateRoute path={`${path}/submissions-response`} component={() => <SubmissionsResponse></SubmissionsResponse>} />
-        <PrivateRoute path={`${path}/submissions-create`} component={() => <SubmissionsCreate />} />
+        <PrivateRoute path={`${path}/submissions-create`} component={() => <SubmissionsCreate path={path} />} />
         <PrivateRoute path={`${path}/submissions-search`} component={() => <SubmissionsSearch></SubmissionsSearch>} />
       </AppContainer>
     </Switch>

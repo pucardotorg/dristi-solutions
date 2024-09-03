@@ -6,13 +6,32 @@ import { InfoCard } from "@egovernments/digit-ui-components";
 import ApplicationInfoComponent from "../../components/ApplicationInfoComponent";
 import DocumentModal from "../../components/DocumentModal";
 import { formatDate } from "../../../../hearings/src/utils";
+import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
+import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
+import { ordersService } from "../../hooks/services";
+import { Urls } from "../../hooks/services/Urls";
+import { useEffect } from "react";
+import { paymentType } from "../../utils/paymentType";
 
 const modeOptions = [
   { label: "E-Post (3-5 days)", value: "e-post" },
   { label: "Registered Post (10-15 days)", value: "registered-post" },
 ];
 
-const PaymentForSummonComponent = ({ infos, links, feeOptions, orderDate }) => {
+const mockSubmitModalInfo = {
+  header: "CS_HEADER_FOR_SUMMON_POST",
+  subHeader: "CS_SUBHEADER_TEXT_FOR_Summon_POST",
+  caseInfo: [
+    {
+      key: "Case Number",
+      value: "FSM-2019-04-23-898898",
+    },
+  ],
+  isArrow: false,
+  showTable: true,
+};
+
+const PaymentForSummonComponent = ({ infos, links, feeOptions, orderDate, paymentLoader }) => {
   const { t } = useTranslation();
   const CustomErrorTooltip = window?.Digit?.ComponentRegistryService?.getComponent("CustomErrorTooltip");
 
@@ -62,6 +81,7 @@ const PaymentForSummonComponent = ({ infos, links, feeOptions, orderDate }) => {
           selectedOption={selectedOption}
           optionsKey={"label"}
           onSelect={(value) => setSelectedOption(value)}
+          disabled={paymentLoader}
         />
       </LabelFieldPair>
       {selectedOption?.value && (
@@ -74,7 +94,7 @@ const PaymentForSummonComponent = ({ infos, links, feeOptions, orderDate }) => {
                 {index === 0 ? (
                   t(action?.action)
                 ) : action?.action !== "offline-process" ? (
-                  <Button label={t(action.action)} onClick={action.onClick} />
+                  <Button label={t(action.action)} onButtonClick={action.onClick} isDisabled={paymentLoader} />
                 ) : (
                   <p className="offline-process-text">
                     This is an offline process. <span className="learn-more-text">Learn More</span>
@@ -89,10 +109,11 @@ const PaymentForSummonComponent = ({ infos, links, feeOptions, orderDate }) => {
   );
 };
 
-const PaymentForSummonModal = () => {
+const PaymentForSummonModal = ({ path }) => {
   const history = useHistory();
   const { filingNumber, orderNumber } = Digit.Hooks.useQueryParams();
   const tenantId = Digit.ULBService.getCurrentTenantId();
+  const [caseId, setCaseId] = useState();
 
   const { data: caseData } = Digit.Hooks.dristi.useSearchCaseService(
     {
@@ -109,8 +130,32 @@ const PaymentForSummonModal = () => {
     Boolean(filingNumber)
   );
 
-  console.log("caseData :>> ", caseData);
+  useEffect(() => {
+    if (caseData) {
+      const id = caseData?.criteria?.[0]?.responseList?.[0]?.id;
+      if (id) {
+        console.log(id, "id");
+        setCaseId(id); // Set the caseId in state
+      } else {
+        console.error("caseId is undefined or not available");
+      }
+    }
+  }, [caseData]);
 
+  const caseDetails = useMemo(() => {
+    return caseData?.criteria?.[0]?.responseList?.[0];
+  }, [caseData]);
+
+  const onViewOrderClick = () => {
+    console.log(caseId, "caseID");
+    history.push(
+      `/${window.contextPath}/citizen/dristi/home/view-case?caseId=${caseData?.criteria?.[0]?.responseList?.[0]?.id}&filingNumber=${filingNumber}&tab=Orders`
+    );
+  };
+
+  console.log("caseData :>> ", caseData?.criteria?.[0]?.responseList?.[0]?.id);
+  const todayDate = new Date().getTime();
+  const dayInMillisecond = 24 * 3600 * 1000;
   const { data: orderData, isloading: isOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
     { tenantId, criteria: { orderNumber: orderNumber } },
     { tenantId },
@@ -132,35 +177,223 @@ const PaymentForSummonModal = () => {
     Boolean(orderData?.list?.[0]?.hearingNumber)
   );
 
+  const { data: tasksData } = Digit.Hooks.hearings.useGetTaskList(
+    {
+      criteria: {
+        tenantId: tenantId,
+        filingNumber: filingNumber,
+      },
+    },
+    {},
+    filingNumber,
+    Boolean(filingNumber)
+  );
+
+  const filteredTasks = useMemo(() => {
+    if (!tasksData || !tasksData.list) return [];
+
+    const tasksWithMatchingOrderId = tasksData.list.filter((task) => task.orderId === orderData?.list?.[0]?.id);
+
+    const tasksWithPostChannel = tasksWithMatchingOrderId.filter((task) => {
+      try {
+        const taskDetails = task?.taskDetails;
+        return taskDetails?.deliveryChannels?.channelName === "Post";
+      } catch (error) {
+        console.error("Error parsing taskDetails JSON:", error);
+        return false;
+      }
+    });
+
+    return tasksWithPostChannel;
+  }, [tasksData, orderData]);
+
+  console.log("taskData", filteredTasks);
+
   console.log("hearingsData :>> ", hearingsData);
 
   console.log("orderData :>> ", orderData);
 
-  const onPayOnline = () => {};
+  const { fetchBill, openPaymentPortal, paymentLoader, showPaymentModal, setShowPaymentModal, billPaymentStatus } = usePaymentProcess({
+    tenantId,
+    consumerCode: filteredTasks?.[0]?.taskNumber,
+    service: paymentType.TASK_SUMMON,
+    caseDetails,
+    totalAmount: "4",
+  });
 
-  const feeOptions = {
-    "e-post": [
-      {
-        label: "Fee Type",
-        amount: "Amount",
-        action: "Actions",
-      },
-      { label: "Court Fees", amount: 5, action: "Pay Online", onClick: () => onPayOnline("courtFees") },
-      { label: "Delivery Partner Fee", amount: 520, action: "Pay Online", onClick: () => onPayOnline("deliveryFee") },
-    ],
-    "registered-post": [
-      {
-        label: "Fee Type",
-        amount: "Amount",
-        action: "Actions",
-      },
-      { label: "Court Fees", amount: 520, action: "Pay Online", onClick: () => onPayOnline("courtFees") },
-      { label: "Delivery Partner Fee", amount: 120, action: "offline-process", onClick: () => onPayOnline("deliveryFee") },
-    ],
+  const { data: billResponse, isLoading: isBillLoading } = Digit.Hooks.dristi.useBillSearch(
+    {},
+    { tenantId, consumerCode: filteredTasks?.[0]?.taskNumber, service: paymentType.TASK_SUMMON },
+    "dristi",
+    Boolean(filteredTasks?.[0]?.taskNumber)
+  );
+
+  const onPayOnline = async () => {
+    console.log("clikc");
+    try {
+      if (billResponse?.Bill?.length === 0) {
+        await DRISTIService.createDemand({
+          Demands: [
+            {
+              tenantId,
+              consumerCode: filteredTasks?.[0]?.taskNumber,
+              consumerType: paymentType.TASK_SUMMON,
+              businessService: paymentType.TASK_SUMMON,
+              taxPeriodFrom: Date.now().toString(),
+              taxPeriodTo: Date.now().toString(),
+              demandDetails: [
+                {
+                  taxHeadMasterCode: paymentType.TASK_SUMMON_ADVANCE_CARRYFORWARD,
+                  taxAmount: 4,
+                  collectionAmount: 0,
+                },
+              ],
+            },
+          ],
+        });
+      }
+      const bill = await fetchBill(filteredTasks?.[0]?.taskNumber, tenantId, paymentType.TASK_SUMMON);
+      if (bill?.Bill?.length) {
+        const billPaymentStatus = await openPaymentPortal(bill);
+        console.log(billPaymentStatus);
+        if (billPaymentStatus === true) {
+          console.log("YAAAYYYYY");
+          const fileStoreId = await DRISTIService.fetchBillFileStoreId({}, { billId: bill?.Bill?.[0]?.id, tenantId });
+
+          await Promise.all([
+            ordersService.customApiService(Urls.orders.pendingTask, {
+              pendingTask: {
+                name: "Show Summon-Warrant Status",
+                entityType: paymentType.ORDER_MANAGELIFECYCLE,
+                referenceId: hearingsData?.HearingList?.[0]?.hearingId,
+                status: paymentType.SUMMON_WARRANT_STATUS,
+                assignedTo: [],
+                assignedRole: ["JUDGE_ROLE"],
+                cnrNumber: filteredTasks?.[0]?.cnrNumber,
+                filingNumber: filingNumber,
+                isCompleted: false,
+                stateSla: 3 * dayInMillisecond + todayDate,
+                additionalDetails: {
+                  hearingId: hearingsData?.list?.[0]?.hearingId,
+                },
+                tenantId,
+              },
+            }),
+            ordersService.customApiService(Urls.orders.pendingTask, {
+              pendingTask: {
+                name: `MAKE_PAYMENT_FOR_SUMMONS_POST`,
+                entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
+                referenceId: `MANUAL_Post_${orderNumber}`,
+                status: paymentType.PAYMENT_PENDING_POST,
+                assignedTo: [],
+                assignedRole: [],
+                cnrNumber: filteredTasks?.[0]?.cnrNumber,
+                filingNumber: filingNumber,
+                isCompleted: true,
+                stateSla: "",
+                additionalDetails: {},
+                tenantId,
+              },
+            }),
+          ]);
+
+          fileStoreId &&
+            history.push(`/${window?.contextPath}/citizen/home/post-payment-screen`, {
+              state: {
+                success: true,
+                receiptData: {
+                  ...mockSubmitModalInfo,
+                  caseInfo: [
+                    {
+                      key: "Case Name & ID",
+                      value: caseDetails?.caseTitle + "," + caseDetails?.filingNumber,
+                      copyData: false,
+                    },
+                    {
+                      key: "ORDER ID",
+                      value: orderData?.list?.[0]?.orderNumber,
+                      copyData: false,
+                    },
+                    {
+                      key: "Transaction ID",
+                      value: filteredTasks?.[0]?.taskNumber,
+                      copyData: true,
+                    },
+                  ],
+                  isArrow: false,
+                  showTable: true,
+                  showCopytext: true,
+                },
+                fileStoreId: fileStoreId?.Document?.fileStore,
+              },
+            });
+        } else {
+          console.log("NAAAYYYYY");
+          history.push(`/${window?.contextPath}/citizen/home/post-payment-screen`, {
+            state: {
+              success: false,
+              receiptData: {
+                ...mockSubmitModalInfo,
+                caseInfo: [
+                  {
+                    key: "Case Name & ID",
+                    value: caseDetails?.caseTitle + "," + caseDetails?.filingNumber,
+                    copyData: false,
+                  },
+                  {
+                    key: "ORDER ID",
+                    value: orderData?.list?.[0]?.orderNumber,
+                    copyData: false,
+                  },
+                  {
+                    key: "Transaction ID",
+                    value: filteredTasks?.[0]?.taskNumber,
+                    copyData: true,
+                  },
+                ],
+                isArrow: false,
+                showTable: true,
+                showCopytext: true,
+              },
+              caseId: caseDetails?.filingNumber,
+            },
+          });
+        }
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
 
+  const feeOptions = useMemo(() => {
+    const taskAmount = filteredTasks?.[0]?.amount?.amount || 0;
+
+    return {
+      "e-post": [
+        {
+          label: "Fee Type",
+          amount: "Amount",
+          action: "Actions",
+        },
+        { label: "Court Fees", amount: taskAmount, action: "Pay Online", onClick: onPayOnline },
+        { label: "Delivery Partner Fee", amount: taskAmount, action: "offline-process", onClick: onPayOnline },
+      ],
+      "registered-post": [
+        {
+          label: "Fee Type",
+          amount: "Amount",
+          action: "Actions",
+        },
+        { label: "Court Fees", amount: taskAmount, action: "Pay Online", onClick: onPayOnline },
+        { label: "Delivery Partner Fee", amount: taskAmount, action: "offline-process", onClick: onPayOnline },
+      ],
+    };
+  }, [filteredTasks, onPayOnline]);
+
   const handleClose = () => {
-    history.goBack();
+    if (paymentLoader === false) {
+      history.goBack();
+    }
   };
 
   const infos = useMemo(() => {
@@ -182,20 +415,17 @@ const PaymentForSummonModal = () => {
   }, [hearingsData?.HearingList]);
 
   const links = useMemo(() => {
-    return [
-      {
-        text: "View order",
-        link: "",
-      },
-    ];
-  }, []);
+    return [{ text: "View order", link: "", onClick: onViewOrderClick }];
+  }, [caseData]);
 
   const paymentForSummonModalConfig = useMemo(() => {
     return {
       handleClose: handleClose,
       heading: { label: "Payment for Summon via post" },
       isStepperModal: false,
-      modalBody: <PaymentForSummonComponent infos={infos} links={links} feeOptions={feeOptions} orderDate={orderDate} />,
+      modalBody: (
+        <PaymentForSummonComponent infos={infos} links={links} feeOptions={feeOptions} orderDate={orderDate} paymentLoader={paymentLoader} />
+      ),
     };
   }, [feeOptions, infos, links]);
 

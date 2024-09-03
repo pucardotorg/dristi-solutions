@@ -6,8 +6,8 @@ import { loginSteps } from "./config";
 import SelectMobileNumber from "./SelectMobileNumber";
 import SelectOtp from "./SelectOtp";
 
-const TYPE_REGISTER = { type: "register" };
-const TYPE_LOGIN = { type: "login" };
+const TYPE_REGISTER = { type: "REGISTER" };
+const TYPE_LOGIN = { type: "LOGIN" };
 const DEFAULT_USER = "digit-user";
 
 /* set citizen details to enable backward compatiable */

@@ -41,11 +41,11 @@ const CloseBtn = (props) => {
   );
 };
 
-const EndHearing = ({ handleEndHearingModal, hearingId, updateTranscript, hearing }) => {
+const EndHearing = ({ handleEndHearingModal, hearingId, updateTranscript, hearing, transcriptText, disableTextArea, setTranscriptText }) => {
   const { t } = useTranslation();
   const [stepper, setStepper] = useState(1);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
-  const [transcript, setTranscript] = useState("");
+  const [transcript, setTranscript] = useState(transcriptText);
   const history = useHistory();
 
   const handleNavigate = (path) => {
@@ -59,17 +59,19 @@ const EndHearing = ({ handleEndHearingModal, hearingId, updateTranscript, hearin
       updatedHearing.transcript[0] = updatedTranscriptText;
       updatedHearing.workflow = updatedHearing.workflow || {};
       updatedHearing.workflow.action = "CLOSE";
-      return await hearingService.updateHearings(
+      const response = await hearingService.updateHearings(
         { tenantId, hearing: updatedHearing, hearingType: "", status: "" },
         { applicationNumber: "", cnrNumber: "" }
       );
+      setTranscriptText(updatedTranscriptText);
+      return response;
     } catch (error) {
       console.error("Error Ending hearing:", error);
     }
   };
 
   const handleConfirmationModal = () => {
-    handleNavigate(`/employee/hearings/inside-hearing?hearingId=${hearingId}`);
+    handleEndHearingModal();
   };
 
   return (
@@ -113,7 +115,7 @@ const EndHearing = ({ handleEndHearingModal, hearingId, updateTranscript, hearin
           }}
           formId="modal-action"
         >
-          <div style={{ height: "70px" }}>
+          <div style={{ height: "70px", padding: "5px 24px 16px 24px" }}>
             <CardText style={{ color: "#3D3C3C", fontSize: "16px", fontWeight: 400, lineHeight: "18.75px" }}>{t("END_HEARING_DISCLAIMER")}</CardText>
           </div>
         </Modal>
@@ -124,19 +126,29 @@ const EndHearing = ({ handleEndHearingModal, hearingId, updateTranscript, hearin
           setTranscript={setTranscript}
           handleConfirmationModal={handleConfirmationModal}
           hearingId={hearingId}
+          hearing={hearing}
+          isEndHearing={true}
+          disableTextArea={disableTextArea}
           onSaveSummary={(updatedTranscriptText) => {
             endHearing(updatedTranscriptText).then(() => {
               setStepper((stepper) => stepper + 1);
             });
           }}
           onCancel={() => {
-            setTranscript(hearing.transcript[0]);
+            setTranscript(transcriptText);
             setStepper((stepper) => stepper - 1);
           }}
         />
       )}
       {stepper === 3 && (
-        <NextHearingModal transcript={transcript} hearingId={hearingId} hearing={hearing} stepper={stepper} setStepper={setStepper} />
+        <NextHearingModal
+          transcript={transcript}
+          hearingId={hearingId}
+          hearing={hearing}
+          stepper={stepper}
+          setStepper={setStepper}
+          handleConfirmationModal={handleConfirmationModal}
+        />
       )}
     </div>
   );

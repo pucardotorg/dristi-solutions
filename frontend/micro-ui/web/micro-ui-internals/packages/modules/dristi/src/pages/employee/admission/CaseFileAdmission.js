@@ -175,7 +175,7 @@ function CaseFileAdmission({ t, path }) {
       shortCaseInfo: [
         {
           key: "CASE_NUMBER",
-          value: caseDetails?.caseNumber,
+          value: caseDetails?.filingNumber,
         },
         {
           key: "COURT_NAME",
@@ -562,6 +562,7 @@ function CaseFileAdmission({ t, path }) {
                   tenantId={tenantId}
                   handleScheduleNextHearing={handleScheduleNextHearing}
                   caseAdmitLoader={caseAdmitLoader}
+                  caseDetails={caseDetails}
                 ></AdmissionActionModal>
               )}
             </div>

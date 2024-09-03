@@ -38,29 +38,20 @@ function CustomSubmitModal({ t, setShowModal, header, subHeader, submitModalInfo
   const CustomCaseInfoDivCustom = window?.Digit?.ComponentRegistryService?.getComponent("CustomCaseInfoDiv");
 
   return (
-    <div className="custom-submit-modal">
-      <Banner
-        whichSvg={"tick"}
-        successful={true}
-        message={submitModalInfo?.header}
-        headerStyles={{ fontSize: "32px" }}
-        style={{ minWidth: "100%", marginTop: "10px" }}
-      ></Banner>
-      {submitModalInfo?.subHeader && <CardLabel className={"success-card-label"}>{t(submitModalInfo?.subHeader)}</CardLabel>}
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        textAlign: "center",
+        padding: "20px", // Add padding if needed to make the content visually centered within the modal
+      }}
+    >
+      <Banner whichSvg={"tick"} successful={true} message={submitModalInfo?.header} headerStyles={{ fontSize: "32px" }} />
+      {submitModalInfo?.subHeader && <CardLabel>{t(submitModalInfo?.subHeader)}</CardLabel>}
       {submitModalInfo?.showTable && <CustomCaseInfoDiv data={submitModalInfo?.caseInfo} t={t} />}
-      {submitModalInfo?.showCopytext && (
-        <CustomCaseInfoDivCustom
-          children={
-            <CustomCopyTextDiv
-              t={t}
-              valueStyle={{ margin: "8px 0px", fontWeight: 700 }}
-              data={submitModalInfo?.caseInfo}
-              tableDataClassName={"e-filing-table-data-style"}
-              tableValueClassName={"e-filing-table-value-style"}
-            />
-          }
-        />
-      )}
+      {submitModalInfo?.showCopytext && <CustomCopyTextDiv data={submitModalInfo?.caseInfo} />}
     </div>
   );
 }

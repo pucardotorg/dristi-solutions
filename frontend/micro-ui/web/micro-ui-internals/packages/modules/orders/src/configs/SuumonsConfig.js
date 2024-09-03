@@ -1,7 +1,6 @@
 const defaultSearchValues = {
   taskType: "",
-  status: "",
-  taskNumber: "",
+  searchText: "",
 };
 
 export const SummonsTabsConfig = {
@@ -13,7 +12,7 @@ export const SummonsTabsConfig = {
       label: "Pending",
       type: "search",
       apiDetails: {
-        serviceName: "/task/v1/search",
+        serviceName: "/task/v1/table/search",
         requestParam: {
           tenantId: Digit.ULBService.getCurrentTenantId(),
           limit: 10,
@@ -21,7 +20,9 @@ export const SummonsTabsConfig = {
         },
         requestBody: {
           apiOperation: "SEARCH",
-          criteria: {},
+          criteria: {
+            completeStatus: ["ISSUESUMMON"], // have to do changes
+          },
         },
         masterName: "commonUiConfig",
         moduleName: "reviewSummonWarrantNotice",
@@ -54,12 +55,12 @@ export const SummonsTabsConfig = {
               {
                 label: "Order Type",
                 isMandatory: false,
-                key: "taskType",
+                key: "orderType",
                 type: "dropdown",
                 disable: false,
                 populators: {
-                  name: "taskType",
-                  options: ["Summon", "Warrant"],
+                  name: "orderType",
+                  options: ["SUMMONS", "WARRANT"],
                   optionsCustomStyle: {
                     overflowX: "hidden",
                   },
@@ -72,12 +73,12 @@ export const SummonsTabsConfig = {
               {
                 label: "E-Sign Status",
                 isMandatory: false,
-                key: "status",
+                key: "applicationStatus",
                 type: "dropdown",
                 disable: false,
                 populators: {
-                  name: "status",
-                  options: ["Signed", "Sign Pending", "Sent", "Delivered", "Not Delivered"],
+                  name: "applicationStatus",
+                  options: ["SIGNED", "SIGN_PENDING"],
                   optionsCustomStyle: {
                     overflowX: "hidden",
                   },
@@ -91,10 +92,10 @@ export const SummonsTabsConfig = {
                 label: "Seach E-process or Case ID",
                 isMandatory: false,
                 type: "text",
-                key: "taskNumber",
+                key: "searchText", // seach text
                 disable: false,
                 populators: {
-                  name: "taskNumber",
+                  name: "searchText",
                 },
               },
             ],
@@ -112,11 +113,12 @@ export const SummonsTabsConfig = {
               },
               {
                 label: "Status",
-                jsonPath: "status",
+                jsonPath: "documentStatus",
               },
               {
                 label: "Case Name & ID",
                 jsonPath: "filingNumber",
+                additionalCustomization: true,
               },
               {
                 label: "Order Type",
@@ -124,7 +126,8 @@ export const SummonsTabsConfig = {
               },
               {
                 label: "Delivery Channel",
-                jsonPath: "deliveryChannel",
+                jsonPath: "taskDetails",
+                additionalCustomization: true,
               },
               {
                 label: "Issued",
@@ -146,12 +149,14 @@ export const SummonsTabsConfig = {
       label: "Sent",
       type: "search",
       apiDetails: {
-        serviceName: "/task/v1/search",
+        serviceName: "/task/v1/table/search",
         requestParam: {
           tenantId: Digit.ULBService.getCurrentTenantId(),
         },
         requestBody: {
-          criteria: {},
+          criteria: {
+            completeStatus: ["SUMMONSERVED", "COMPLETED"],
+          },
         },
         masterName: "commonUiConfig",
         moduleName: "reviewSummonWarrantNotice",
@@ -184,12 +189,12 @@ export const SummonsTabsConfig = {
               {
                 label: "Order Type",
                 isMandatory: false,
-                key: "taskType",
+                key: "orderType",
                 type: "dropdown",
                 disable: false,
                 populators: {
-                  name: "taskType",
-                  options: ["Summon", "Warrant"],
+                  name: "orderType",
+                  options: ["SUMMONS", "WARRANT"],
                   optionsCustomStyle: {
                     overflowX: "hidden",
                   },
@@ -200,14 +205,15 @@ export const SummonsTabsConfig = {
                 },
               },
               {
-                label: "E-Sign Status",
+                label: "Summon Status",
                 isMandatory: false,
-                key: "status",
+                key: "applicationStatus",
                 type: "dropdown",
                 disable: false,
                 populators: {
+                  name: "applicationStatus",
                   name: "status",
-                  options: ["Signed", "Sign Pending", "Sent", "Delivered", "Not Delivered"],
+                  options: ["DELIVERED", "NOT_DELIVERED"],
                   optionsCustomStyle: {
                     overflowX: "hidden",
                   },
@@ -221,10 +227,10 @@ export const SummonsTabsConfig = {
                 label: "Seach E-process or Case ID",
                 isMandatory: false,
                 type: "text",
-                key: "taskNumber",
+                key: "searchText", // seach text
                 disable: false,
                 populators: {
-                  name: "taskNumber",
+                  name: "searchText",
                 },
               },
             ],
@@ -247,6 +253,7 @@ export const SummonsTabsConfig = {
               {
                 label: "Case Name & ID",
                 jsonPath: "filingNumber",
+                additionalCustomization: true,
               },
               {
                 label: "Order Type",
@@ -254,7 +261,8 @@ export const SummonsTabsConfig = {
               },
               {
                 label: "Delivery Channel",
-                jsonPath: "deliveryChannel",
+                jsonPath: "taskDetails",
+                additionalCustomization: true,
               },
               {
                 label: "Issued",

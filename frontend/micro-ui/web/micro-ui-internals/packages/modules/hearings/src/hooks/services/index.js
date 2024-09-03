@@ -46,4 +46,14 @@ export const hearingService = {
       data,
       params,
     }),
+
+  generateWitnessDepostionDownload: (data, params) =>
+    Request({
+      url: Urls.hearing.downloadWitnesspdf,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+      userDownload: true,
+    }),
 };

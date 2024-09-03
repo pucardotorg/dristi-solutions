@@ -12,6 +12,29 @@ export const CaseWorkflowState = {
   PENDING_ADMISSION: "PENDING_ADMISSION",
 };
 
+export const subStageOptions = [
+  "Filing",
+  "Cognizance",
+  "Inquiry",
+  "Appearance",
+  "Framing of charges",
+  "Evidence",
+  "Arguments",
+  "Judgment",
+  "Post-Judgement",
+];
+export const outcomesOptions = [
+  "Withdrawn",
+  "Settled",
+  "Transferred",
+  "Dismissed",
+  "Allowed",
+  "Partly allowed",
+  "Convicted",
+  "Partly convicted",
+  "Abated",
+];
+
 export const userTypeOptions = [
   {
     code: "LITIGANT",
@@ -407,6 +430,20 @@ export const TabLitigantSearchConfig = {
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
+                  },
+                },
+              },
+              {
+                label: "Case ID",
+                type: "text",
+                isMandatory: false,
+                disable: false,
+                populators: {
+                  name: "filingNumber",
+                  error: "BR_PATTERN_ERR_MSG",
+                  validation: {
+                    pattern: {},
+                    minlength: 2,
                   },
                 },
               },

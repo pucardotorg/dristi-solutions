@@ -1,5 +1,5 @@
 import { TextArea } from "@egovernments/digit-ui-components";
-import { ActionBar, CardLabel, Dropdown, LabelFieldPair, Button, Loader } from "@egovernments/digit-ui-react-components";
+import { ActionBar, CardLabel, Dropdown, LabelFieldPair, Button } from "@egovernments/digit-ui-react-components";
 import debounce from "lodash/debounce";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -11,7 +11,12 @@ import EndHearing from "./EndHearing";
 import EvidenceHearingHeader from "./EvidenceHeader";
 import HearingSideCard from "./HearingSideCard";
 import MarkAttendance from "./MarkAttendance";
+import WitnessModal from "../../components/WitnessModal";
+import { hearingService } from "../../hooks/services";
+import useGetHearingLink from "../../hooks/hearings/useGetHearingLink";
+import isEmpty from "lodash/isEmpty";
 
+import TranscriptComponent from "./Transcription";
 const SECOND = 1000;
 
 const InsideHearingMainPage = () => {
@@ -32,6 +37,8 @@ const InsideHearingMainPage = () => {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const { hearingId } = Digit.Hooks.useQueryParams();
   const [filingNumber, setFilingNumber] = useState("");
+  const [witnessModalOpen, setWitnessModalOpen] = useState(false);
+  const [signedDocumentUploadID, setSignedDocumentUploadID] = useState("");
   const { t } = useTranslation();
 
   const onCancel = () => {
@@ -55,10 +62,14 @@ const InsideHearingMainPage = () => {
     return userRoles.some((role) => role.code === userRole);
   };
 
+  const disableTextArea = !userHasRole("EMPLOYEE");
   // if (!userHasRole("HEARING_VIEWER")) {
   //   history.push(`/${window.contextPath}/${userType}/home/home-pending-task`);
   // }
 
+  const { data: hearingLink } = useGetHearingLink();
+  const hearingVcLink = hearingLink?.[0];
+  const refetchTime = disableTextArea ? 10 * SECOND : "";
   const reqBody = {
     hearing: { tenantId },
     criteria: {
@@ -66,12 +77,12 @@ const InsideHearingMainPage = () => {
       hearingId: hearingId,
     },
   };
-  const { data: hearingsData, refetch: refetchHearing, isLoading: isHearingLoading } = Digit.Hooks.hearings.useGetHearings(
+  const { data: hearingsData, refetch: refetchHearing } = Digit.Hooks.hearings.useGetHearings(
     reqBody,
     { applicationNumber: "", cnrNumber: "", hearingId },
     "dristi",
-    !!userHasRole("HEARING_VIEWER"),
-    10 * SECOND
+    true,
+    refetchTime
   );
 
   const { mutateAsync: _updateTranscriptRequest } = Digit.Hooks.useCustomAPIMutationHook({
@@ -83,9 +94,19 @@ const InsideHearingMainPage = () => {
     },
   });
 
-  const updateTranscriptRequest = useMemo(() => debounce(_updateTranscriptRequest, 1000), [_updateTranscriptRequest]);
+  const updateTranscriptRequest = useMemo(
+    () =>
+      debounce(
+        (...args) =>
+          _updateTranscriptRequest(...args).then((res) => {
+            setHearing(res.hearing);
+          }),
+        1000
+      ),
+    [_updateTranscriptRequest]
+  );
 
-  const { data: caseDataResponse, refetch: refetchCase, isLoading: isCaseLoading } = Digit.Hooks.dristi.useSearchCaseService(
+  const { data: caseDataResponse, refetch: refetchCase } = Digit.Hooks.dristi.useSearchCaseService(
     {
       criteria: [
         {
@@ -106,7 +127,7 @@ const InsideHearingMainPage = () => {
       // hearing data with particular id will always give array of one object
       if (hearingData) {
         setHearing(hearingData);
-        setTranscriptText(hearingData?.transcript[0]);
+        setTranscriptText(hearingData?.transcript[0] || "");
         setFilingNumber(hearingData?.filingNumber[0]);
       }
     }
@@ -123,11 +144,13 @@ const InsideHearingMainPage = () => {
           value: witness.data.uuid,
         }))
       );
-      const selectedWitness = responseList?.additionalDetails?.witnessDetails?.formdata?.[0]?.data || {};
-      setSelectedWitness(selectedWitness);
-      setWitnessDepositionText(hearing?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitness.uuid)?.deposition);
+      const selectedWitnessDefault = responseList?.additionalDetails?.witnessDetails?.formdata?.[0]?.data || {};
+      setSelectedWitness(selectedWitnessDefault);
+      setWitnessDepositionText(
+        hearing?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitnessDefault.uuid)?.deposition
+      );
     }
-  }, [caseDataResponse, hearing]);
+  }, [caseDataResponse]);
 
   const handleModal = () => {
     setIsOpen(!isOpen);
@@ -166,12 +189,30 @@ const InsideHearingMainPage = () => {
     }
   };
 
-  const isDepositionSaved = Boolean(
-    hearing?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitness.uuid)?.deposition
-  );
+  const updateAPICall = (newText) => {
+    const newHearingUpdated = structuredClone(hearing);
+    newHearingUpdated.transcript[0] = newText;
+    if (userHasRole("EMPLOYEE") && !disableTextArea) {
+      updateTranscriptRequest({ body: { hearing: newHearingUpdated } });
+    }
+  };
+
+  useEffect(() => {
+    if (hearingsData) {
+      const hearingData = hearingsData?.HearingList?.[0];
+      if (hearingData && transcriptText !== hearingData?.transcript[0] && !disableTextArea) {
+        updateAPICall(transcriptText);
+      }
+    }
+  }, [transcriptText, setTranscriptText]);
+
+  const isDepositionSaved = useMemo(() => {
+    return hearing?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitness.uuid)?.deposition.length;
+  }, [selectedWitness, hearing]);
 
   const saveWitnessDeposition = () => {
     const updatedHearing = structuredClone(hearing);
+    setWitnessModalOpen(true);
     updatedHearing.additionalDetails = updatedHearing.additionalDetails || {};
     updatedHearing.additionalDetails.witnessDepositions = updatedHearing.additionalDetails.witnessDepositions || [];
     if (isDepositionSaved) {
@@ -188,10 +229,10 @@ const InsideHearingMainPage = () => {
 
   const handleDropdownChange = (selectedWitnessOption) => {
     const selectedUUID = selectedWitnessOption.value;
-    const selectedWitness = additionalDetails?.witnessDetails?.formdata?.find((w) => w.data.uuid === selectedUUID)?.data || {};
-    setSelectedWitness(selectedWitness);
+    const selectedWitnessDeposition = additionalDetails?.witnessDetails?.formdata?.find((w) => w.data.uuid === selectedUUID)?.data || {};
+    setSelectedWitness(selectedWitnessDeposition);
     setWitnessDepositionText(
-      hearing?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitness.uuid)?.deposition || ""
+      hearing?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitnessDeposition.uuid)?.deposition || ""
     );
   };
 
@@ -203,14 +244,47 @@ const InsideHearingMainPage = () => {
     history.push(`/${window.contextPath}/${userType}/home/home-pending-task`);
   };
 
-  const attendanceCount = useMemo(() => hearing?.attendees?.filter((attendee) => attendee.wasPresent).length || 0, [hearing]);
+  const handleClose = () => {
+    setWitnessModalOpen(false);
+  };
 
-  if (isCaseLoading || isHearingLoading) {
-    return <Loader />;
-  }
+  const handleProceed = async () => {
+    try {
+      const documents = Array.isArray(hearing?.documents) ? hearing.documents : [];
+      const documentsFile =
+        signedDocumentUploadID !== ""
+          ? {
+              documentType: "SIGNED",
+              fileStore: signedDocumentUploadID,
+            }
+          : null;
+
+      const reqBody = {
+        hearing: {
+          ...hearing,
+          documents: documentsFile ? [...documents, documentsFile] : documents,
+        },
+      };
+
+      const updateWitness = await hearingService.customApiService(
+        Urls.hearing.uploadWitnesspdf,
+        { tenantId: tenantId, hearing: reqBody?.hearing, hearingType: "", status: "" },
+        { applicationNumber: "", cnrNumber: "" }
+      );
+      setWitnessModalOpen(false);
+    } catch (error) {
+      console.error("Error updating witness:", error);
+    }
+  };
+
+  const attendanceCount = useMemo(() => hearing?.attendees?.filter((attendee) => attendee.wasPresent).length || 0, [hearing]);
+  const [isRecording, setIsRecording] = useState(false);
+  const IsSelectedWitness = useMemo(() => {
+    return !isEmpty(selectedWitness);
+  }, [selectedWitness]);
 
   return (
-    <div className="admitted-case" style={{ display: "flex", height: "100vh" }}>
+    <div className="admitted-case" style={{ display: "flex" }}>
       <div className="left-side" style={{ padding: "24px 40px" }}>
         <React.Fragment>
           <EvidenceHearingHeader
@@ -220,6 +294,7 @@ const InsideHearingMainPage = () => {
             activeTab={activeTab}
             filingNumber={filingNumber}
             onAddParty={onClickAddWitness}
+            hearingLink={hearingVcLink}
           ></EvidenceHearingHeader>
         </React.Fragment>
         {activeTab === "Witness Deposition" && (
@@ -232,6 +307,14 @@ const InsideHearingMainPage = () => {
                 select={handleDropdownChange}
                 freeze={true}
                 disable={false}
+                selected={
+                  IsSelectedWitness
+                    ? {
+                        label: `${selectedWitness.firstName} ${selectedWitness.lastName}`,
+                        value: selectedWitness.uuid,
+                      }
+                    : {}
+                }
                 style={{ width: "100%", height: "40px", fontSize: "16px" }}
               />
             </LabelFieldPair>
@@ -259,19 +342,63 @@ const InsideHearingMainPage = () => {
         <div style={{ padding: "40px, 40px", gap: "16px" }}>
           <div style={{ gap: "16px", border: "1px solid", marginTop: "2px" }}>
             {userHasRole("EMPLOYEE") ? (
-              <TextArea
-                ref={textAreaRef}
-                style={{ width: "100%", minHeight: "40vh" }}
-                value={activeTab === "Witness Deposition" ? witnessDepositionText || "" : transcriptText || ""}
-                onChange={handleChange}
-                disabled={activeTab === "Witness Deposition" && isDepositionSaved}
-              />
+              <React.Fragment>
+                {activeTab === "Witness Deposition" && (
+                  <React.Fragment>
+                    <TextArea
+                      ref={textAreaRef}
+                      style={{ width: "100%", minHeight: "40vh" }}
+                      value={IsSelectedWitness ? witnessDepositionText || "" : ""}
+                      onChange={handleChange}
+                      disabled={isDepositionSaved || disableTextArea || !IsSelectedWitness}
+                    />
+                    {!disableTextArea && IsSelectedWitness && !isDepositionSaved && (
+                      <TranscriptComponent
+                        setWitnessDepositionText={setWitnessDepositionText}
+                        isRecording={isRecording}
+                        setIsRecording={setIsRecording}
+                        activeTab={activeTab}
+                      ></TranscriptComponent>
+                    )}
+                  </React.Fragment>
+                )}
+                {activeTab !== "Witness Deposition" && (
+                  <React.Fragment>
+                    <TextArea
+                      ref={textAreaRef}
+                      style={{ width: "100%", minHeight: "40vh" }}
+                      value={transcriptText || ""}
+                      onChange={handleChange}
+                      disabled={disableTextArea}
+                    />
+                    {!disableTextArea && (
+                      <TranscriptComponent
+                        setTranscriptText={setTranscriptText}
+                        isRecording={isRecording}
+                        setIsRecording={setIsRecording}
+                        activeTab={activeTab}
+                      ></TranscriptComponent>
+                    )}
+                  </React.Fragment>
+                )}
+              </React.Fragment>
             ) : (
-              <TextArea
-                style={{ width: "100%", minHeight: "40vh", cursor: "default", backgroundColor: "#E8E8E8", color: "#3D3C3C" }}
-                value={activeTab === "Witness Deposition" ? witnessDepositionText || "" : transcriptText || ""}
-                disabled
-              />
+              <React.Fragment>
+                {activeTab === "Witness Deposition" && (
+                  <TextArea
+                    style={{ width: "100%", minHeight: "40vh", cursor: "default", backgroundColor: "#E8E8E8", color: "#3D3C3C" }}
+                    value={IsSelectedWitness ? witnessDepositionText || "" : ""}
+                    disabled
+                  />
+                )}
+                {activeTab !== "Witness Deposition" && (
+                  <TextArea
+                    style={{ width: "100%", minHeight: "40vh", cursor: "default", backgroundColor: "#E8E8E8", color: "#3D3C3C" }}
+                    value={transcriptText || ""}
+                    disabled
+                  />
+                )}
+              </React.Fragment>
             )}
           </div>
         </div>
@@ -291,7 +418,16 @@ const InsideHearingMainPage = () => {
       </div>
       <div className="right-side" style={{ borderLeft: "1px solid lightgray" }}>
         <HearingSideCard hearingId={hearingId} caseId={caseData?.criteria?.[0]?.responseList?.[0]?.id} filingNumber={filingNumber}></HearingSideCard>
-        {adjournHearing && <AdjournHearing hearing={hearing} updateTranscript={_updateTranscriptRequest} tenantID={tenantId} />}
+        {adjournHearing && (
+          <AdjournHearing
+            hearing={hearing}
+            updateTranscript={_updateTranscriptRequest}
+            transcriptText={transcriptText}
+            setAdjournHearing={setAdjournHearing}
+            disableTextArea={disableTextArea}
+            setTranscriptText={setTranscriptText}
+          />
+        )}
       </div>
       <ActionBar>
         <div
@@ -307,8 +443,8 @@ const InsideHearingMainPage = () => {
               gap: "16px",
             }}
           >
-            <Button
-              label={t("ATTENDANCE_CHIP")}
+            {/* <Button
+              label={"ATTENDANCE_CHIP"}
               style={{ boxShadow: "none", backgroundColor: "#ECF3FD", borderRadius: "4px", border: "none", padding: "10px" }}
               textStyles={{
                 fontFamily: "Roboto",
@@ -332,8 +468,8 @@ const InsideHearingMainPage = () => {
               >
                 {`${attendanceCount}`}
               </h2>
-            </Button>
-            {userHasRole("EMPLOYEE") && (
+            </Button> */}
+            {/* {userHasRole("EMPLOYEE") && (
               <Button
                 label={t("MARK_ATTENDANCE")}
                 variation={"teritiary"}
@@ -348,7 +484,7 @@ const InsideHearingMainPage = () => {
                   color: "#007E7E",
                 }}
               />
-            )}
+            )} */}
           </div>
           {userHasRole("EMPLOYEE") ? (
             <div
@@ -417,7 +553,24 @@ const InsideHearingMainPage = () => {
           ></AddParty>
         )}
       </div>
-      {endHearingModalOpen && <EndHearing handleEndHearingModal={handleEndHearingModal} hearingId={hearingId} hearing={hearing} />}
+      {witnessModalOpen && (
+        <WitnessModal
+          handleClose={handleClose}
+          hearingId={hearingId}
+          setSignedDocumentUploadID={setSignedDocumentUploadID}
+          handleProceed={handleProceed}
+        />
+      )}
+      {endHearingModalOpen && (
+        <EndHearing
+          handleEndHearingModal={handleEndHearingModal}
+          hearingId={hearingId}
+          hearing={hearing}
+          transcriptText={transcriptText}
+          disableTextArea={disableTextArea}
+          setTranscriptText={setTranscriptText}
+        />
+      )}
     </div>
   );
 };

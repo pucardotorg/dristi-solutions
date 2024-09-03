@@ -28,7 +28,11 @@ function PendingTaskAccordion({
     if (isCustomFunction) {
       await url(params);
     } else {
-      history.push(url);
+      history.push(url, {
+        state: {
+          params: params,
+        },
+      });
       setCheck(!check);
     }
   };

@@ -569,19 +569,16 @@ export const configsOrderMandatorySubmissions = [
     body: [
       {
         type: "component",
-        component: "SelectCustomTextArea",
+        component: "SelectTranscriptTextArea",
         key: "additionalComments",
-        isMandatory: false,
         populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "ADDITIONAL_COMMENTS",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              isOptional: true,
-              type: "TextAreaComponent",
-            },
-          ],
+          input: {
+            name: "text",
+            textAreaSubHeader: "ADDITIONAL_COMMENTS",
+            type: "TranscriptionTextAreaComponent",
+            placeholder: "TYPE_HERE_PLACEHOLDER",
+            isOptional: true,
+          },
           validation: {
             customValidationFn: {
               moduleName: "dristiOrders",
@@ -1755,6 +1752,7 @@ export const configsAssignNewHearingDate = [
         isMandatory: true,
         key: "newHearingDate",
         type: "date",
+        disable: true,
         labelChildren: "OutlinedInfoIcon",
         tooltipValue: "ONLY_CURRENT_AND_FUTURE_DATES_ARE_ALLOWED",
         populators: {
@@ -3039,8 +3037,8 @@ export const configsCreateOrderWarrant = [
           error: "CORE_REQUIRED_FIELD_ERROR",
           options: [
             {
-              code: "Warrant_Type_1",
-              name: "Warrant_Type_1",
+              code: "Arrest",
+              name: "arrest",
             },
           ],
         },
@@ -3558,19 +3556,17 @@ export const configsJudgement = [
     body: [
       {
         type: "component",
-        component: "SelectCustomTextArea",
+        component: "SelectTranscriptTextArea",
         key: "sentence",
         schemaKeyPath: "caseDetails.sentence",
         isMandatory: true,
         populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "SENTENCE",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-            },
-          ],
+          input: {
+            name: "text",
+            textAreaSubHeader: "SENTENCE",
+            placeholder: "TYPE_HERE_PLACEHOLDER",
+            type: "TranscriptionTextAreaComponent",
+          },
           validation: {
             customValidationFn: {
               moduleName: "dristiOrders",

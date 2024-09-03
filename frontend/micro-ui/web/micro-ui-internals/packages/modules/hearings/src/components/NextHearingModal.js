@@ -41,7 +41,7 @@ const DateCard = ({ date, isSelected, onClick }) => (
   </div>
 );
 
-const NextHearingModal = ({ hearingId, hearing, stepper, setStepper, transcript }) => {
+const NextHearingModal = ({ hearingId, hearing, stepper, setStepper, transcript, handleConfirmationModal }) => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [isCustomDateSelected, setIsCustomDateSelected] = useState(false);
   const [isCalendarModalOpen, setIsCalendarModalOpen] = useState(false);
@@ -53,6 +53,7 @@ const NextHearingModal = ({ hearingId, hearing, stepper, setStepper, transcript 
   const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const [nextFiveDates, setNextFiveDates] = useState([]);
 
   const history = useHistory();
 
@@ -79,8 +80,8 @@ const NextHearingModal = ({ hearingId, hearing, stepper, setStepper, transcript 
     }
   };
 
-  const { data: datesResponse, refetch: refetchGetAvailableDates } = useGetAvailableDates(true);
-  const Dates = useMemo(() => datesResponse || [], [datesResponse]);
+  // const { data: datesResponse, refetch: refetchGetAvailableDates } = useGetAvailableDates(true);
+  // const Dates = useMemo(() => datesResponse || [], [datesResponse]);
 
   const { data: MdmsCourtList, isLoading: loading } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
@@ -104,7 +105,7 @@ const NextHearingModal = ({ hearingId, hearing, stepper, setStepper, transcript 
   const closeSetDate = () => {
     handleNavigate(`/employee/hearings/inside-hearing?hearingId=${hearingId}`);
   };
-
+  const [error, setError] = useState(null);
   const onGenerateOrder = () => {
     const requestBody = {
       order: {
@@ -156,12 +157,58 @@ const NextHearingModal = ({ hearingId, hearing, stepper, setStepper, transcript 
     setStepper(stepper - 1);
   };
 
+  function dateToEpoch(date) {
+    //This is in milliseconds
+    return Math.floor(new Date(date).getTime());
+  }
+
+  const { data: dateResponse } = window?.Digit.Hooks.dristi.useJudgeAvailabilityDates(
+    {
+      SearchCriteria: {
+        tenantId: Digit.ULBService.getCurrentTenantId(),
+        fromDate: dateToEpoch(new Date(new Date().setDate(new Date().getDate() + 1))),
+      },
+    },
+    {},
+    "",
+    true
+  );
+
+  const convertAvailableDatesToDateObjects = (availableDates) => {
+    return availableDates.map((dateInfo) => ({
+      ...dateInfo,
+      date: new Date(dateInfo.date / 1),
+    }));
+  };
+
+  const getNextNDates = (n, availableDates) => {
+    const datesArray = [];
+    const options = { day: "numeric", month: "long", year: "numeric" };
+    for (let i = 0; i < n; i++) {
+      if (i < availableDates.length) {
+        const dateObject = availableDates[i].date;
+        datesArray.push(dateObject.toLocaleDateString("en-GB", options));
+      } else {
+        break;
+      }
+    }
+    return datesArray;
+  };
+
+  useEffect(() => {
+    if (dateResponse?.AvailableDates) {
+      const availableDatesWithDateObjects = convertAvailableDatesToDateObjects(dateResponse.AvailableDates);
+      const nextDates = getNextNDates(5, availableDatesWithDateObjects);
+      setNextFiveDates(nextDates);
+    }
+  }, [dateResponse]);
+
   return (
     <div>
       <Modal
         headerBarMain={<Heading label={"Set Next Hearing Date"} />}
-        headerBarEnd={<CloseBtn onClick={() => handleNavigate(`/employee/hearings/inside-hearing?hearingId=${hearingId}`)} />}
-        onClose={closeSetDate}
+        headerBarEnd={<CloseBtn onClick={handleConfirmationModal} />}
+        onClose={handleConfirmationModal}
         actionSaveLabel="Generate Order"
         actionSaveOnSubmit={onGenerateOrder}
         actionCancelLabel="Back"
@@ -174,7 +221,7 @@ const NextHearingModal = ({ hearingId, hearing, stepper, setStepper, transcript 
           <div className="case-card">
             <div className="case-details">
               Case Number:
-              <div> {caseDetails?.caseNumber} </div>
+              <div> {caseDetails?.filingNumber} </div>
             </div>
             <div className="case-details">
               Court Name:
@@ -189,7 +236,7 @@ const NextHearingModal = ({ hearingId, hearing, stepper, setStepper, transcript 
         <div style={{ margin: "10px" }}>Select a Date</div>
         <Card>
           <div className="case-card">
-            {Dates.map((date, index) => (
+            {nextFiveDates.map((date, index) => (
               <DateCard key={index} date={date} isSelected={selectedDate === date} onClick={() => setSelectedDate(date)} />
             ))}
           </div>
@@ -234,29 +281,36 @@ const NextHearingModal = ({ hearingId, hearing, stepper, setStepper, transcript 
           hideSubmit={true}
           popmoduleClassName={"custom-date-selector-modal"}
         >
-          <CustomCalendar
-            config={{
-              headModal: "CS_SELECT_CUSTOM_DATE",
-              label: "CS_HEARINGS_SCHEDULED",
-              showBottomBar: true,
-              buttonText: "CS_COMMON_CONFIRM",
-            }}
-            t={t}
-            minDate={new Date()}
-            onCalendarConfirm={(date) => {
-              // setScheduleHearingParam({ ...scheduleHearingParams, date: formatDateInMonth(date) });
-              // setSelectedCustomDate(date);
-              setSelectedDate(selectedCustomDate);
-              setIsCustomDateSelected(true);
-              setIsCalendarModalOpen(false);
-            }}
-            handleSelect={(date) => {
-              // setScheduleHearingParam({ ...scheduleHearingParams, date: formatDateInMonth(date) });
-              setSelectedCustomDate(date);
-            }}
-            selectedCustomDate={selectedCustomDate}
-            tenantId={tenantId}
-          />
+          <div>
+            <CustomCalendar
+              config={{
+                headModal: "CS_SELECT_CUSTOM_DATE",
+                label: "CS_HEARINGS_SCHEDULED",
+                showBottomBar: true,
+                buttonText: "CS_COMMON_CONFIRM",
+              }}
+              t={t}
+              onCalendarConfirm={(date) => {
+                // setScheduleHearingParam({ ...scheduleHearingParams, date: formatDateInMonth(date) });
+                // setSelectedCustomDate(date);
+                setSelectedDate(selectedCustomDate);
+                setIsCustomDateSelected(true);
+                setIsCalendarModalOpen(false);
+              }}
+              handleSelect={(date) => {
+                // setScheduleHearingParam({ ...scheduleHearingParams, date: formatDateInMonth(date) });
+                if (date <= new Date()) {
+                  setError("The date chosen must be a future date");
+                } else {
+                  setError(null);
+                  setSelectedCustomDate(date);
+                }
+              }}
+              selectedCustomDate={selectedCustomDate}
+              tenantId={tenantId}
+            />
+            {error && <span style={{ color: "red" }}>{error}</span>}
+          </div>
         </Modal>
       )}
     </div>

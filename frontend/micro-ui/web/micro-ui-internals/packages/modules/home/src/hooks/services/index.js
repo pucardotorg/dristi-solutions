@@ -6,6 +6,8 @@ export const Urls = {
   orderCreate: "/order/v1/create",
   pendingTask: "/analytics/pending_task/v1/create",
   orderSearch: "/order/v1/search",
+  getSearchReschedule: "/scheduler/hearing/v1/reschedule/_search",
+  submitOptOutDates: "/scheduler/hearing/v1/_opt-out",
 };
 export const HomeService = {
   getPendingTaskService: (data, params) =>
@@ -24,4 +26,13 @@ export const HomeService = {
       data,
       params,
     }),
+  searchReschedule: (data, params) => {
+    return Request({
+      url: Urls.getSearchReschedule,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    });
+  },
 };

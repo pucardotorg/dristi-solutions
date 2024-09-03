@@ -15,9 +15,9 @@ const Heading = ({ heading }) => {
     </div>
   );
 };
-const DocumentModal = ({ config }) => {
+const DocumentModal = ({ config, setShow, currentStep }) => {
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(currentStep || 0);
   // const [isDisabled, setIsDisabled] = useState(false);
 
   const isDisabled = useMemo(() => {
@@ -26,15 +26,16 @@ const DocumentModal = ({ config }) => {
   }, [config?.isDisabled, config?.isStepperModal, config?.steps, step]);
 
   const actionSaveOnSubmit = () => {
-    if (config?.isStepperModal && config?.steps[step]?.actionCancelOnSubmit) {
-      config?.steps[step]?.actionCancelOnSubmit();
+    if (config?.isStepperModal && config?.steps[step]?.actionSaveOnSubmit) {
+      config?.steps[step]?.actionSaveOnSubmit();
     } else if (config?.actionSaveOnSubmit) config?.actionSaveOnSubmit();
-    if (step + 1 <= config?.steps?.length) setStep(step + 1);
+    if (step + 1 < config?.steps?.length) setStep(step + 1);
   };
 
   const actionCancelOnSubmit = () => {
-    if (config?.isStepperModal && config?.steps[step]?.actionCancelOnSubmit) {
-      config?.steps[step]?.actionCancelOnSubmit();
+    if (config?.isStepperModal) {
+      if (config?.steps[step]?.actionCancelType === "SKIP") setStep(step + 1);
+      else if (config?.steps[step]?.actionCancelOnSubmit) config?.steps[step]?.actionCancelOnSubmit();
     } else if (config?.actionCancelOnSubmit) config?.actionCancelOnSubmit();
     if (step - 1 >= 0) setStep(step - 1);
   };

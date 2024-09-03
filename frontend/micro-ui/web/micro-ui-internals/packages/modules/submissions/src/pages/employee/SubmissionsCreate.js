@@ -28,6 +28,7 @@ import { orderTypes } from "../../utils/orderTypes";
 import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../../../dristi/src/Utils/submissionWorkflow";
 import { Urls } from "../../hooks/services/Urls";
 import { getAdvocates } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/EfilingValidationUtils";
+import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 
@@ -38,7 +39,7 @@ const stateSla = {
   MAKE_PAYMENT_SUBMISSION: 2 * 24 * 3600 * 1000,
 };
 
-const SubmissionsCreate = () => {
+const SubmissionsCreate = ({ path }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const { t } = useTranslation();
   const history = useHistory();
@@ -46,7 +47,6 @@ const SubmissionsCreate = () => {
   const [formdata, setFormdata] = useState({});
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showsignatureModal, setShowsignatureModal] = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [makePaymentLabel, setMakePaymentLabel] = useState(false);
   const [loader, setLoader] = useState(false);
@@ -54,6 +54,9 @@ const SubmissionsCreate = () => {
   const applicationTypeParam = useMemo(() => applicationTypeUrl, [applicationTypeUrl]);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const isCitizen = useMemo(() => userInfo?.type === "CITIZEN", [userInfo]);
+  const [signedDoucumentUploadedID, setSignedDocumentUploadID] = useState("");
+  const [paymentStatus, setPaymentStatus] = useState();
+  const scenario = "applicationSubmission";
   const hasSubmissionRole = useMemo(
     () =>
       ["SUBMISSION_CREATOR", "SUBMISSION_RESPONDER"].reduce((result, current) => {
@@ -525,14 +528,27 @@ const SubmissionsCreate = () => {
 
   const updateSubmission = async (action) => {
     try {
+      const localStorageID = localStorage.getItem("fileStoreId");
+      const documents = Array.isArray(applicationDetails?.documents) ? applicationDetails.documents : [];
+      const documentsFile =
+        signedDoucumentUploadedID !== "" || localStorageID
+          ? {
+              documentType: "SIGNED",
+              fileStore: signedDoucumentUploadedID || localStorageID,
+            }
+          : null;
+
+      localStorage.removeItem("fileStoreId");
       const reqBody = {
         application: {
           ...applicationDetails,
+          documents: documentsFile ? [...documents, documentsFile] : documents,
           workflow: { ...applicationDetails?.workflow, documents: [{}], action },
           tenantId,
         },
         tenantId,
       };
+
       await submissionService.updateApplication(reqBody, { tenantId });
       if (isCitizen) {
         await createPendingTask({ name: t("ESIGN_THE_SUBMISSION"), status: "ESIGN_THE_SUBMISSION", isCompleted: true });
@@ -597,7 +613,9 @@ const SubmissionsCreate = () => {
   };
 
   const handleBack = () => {
-    history.replace(`/digit-ui/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`);
+    if (!paymentLoader) {
+      history.replace(`/digit-ui/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`);
+    }
   };
 
   const handleAddSignature = () => {
@@ -614,31 +632,93 @@ const SubmissionsCreate = () => {
     setMakePaymentLabel(true);
     setShowPaymentModal(false);
     setShowSuccessModal(true);
-  };
 
-  const handleMakePayment = async () => {
-    setMakePaymentLabel(false);
-    setShowPaymentModal(false);
-    setShowSuccessModal(true);
-    await updateSubmission(SubmissionWorkflowAction.PAY);
-    applicationType === "PRODUCTION_DOCUMENTS" &&
-      orderNumber &&
-      createPendingTask({
-        refId: `${userInfo?.uuid}_${orderNumber}`,
-        isCompleted: true,
-        status: "Completed",
-      });
-    if (isCitizen) {
-      createPendingTask({ name: t("MAKE_PAYMENT_SUBMISSION"), status: "MAKE_PAYMENT_SUBMISSION", isCompleted: true });
-    } else {
-      createPendingTask({
-        name: t("MAKE_PAYMENT_SUBMISSION"),
-        status: "MAKE_PAYMENT_SUBMISSION",
-        isCompleted: true,
-        isAssignedRole: true,
-        assignedRole: ["SUBMISSION_CREATOR", "SUBMISSION_RESPONDER"],
-      });
-      await updateSubmission(SubmissionWorkflowAction.APPROVE);
+    if (!paymentLoader) {
+      setMakePaymentLabel(true);
+      setShowPaymentModal(false);
+      setShowSuccessModal(true);
+    }
+  };
+  let entityType = "application-voluntary-submission";
+  let taxHeadMasterCode = "ASYNC_VOLUNTARY_SUNMISSION_ADVANCE_CARRYFORWARD";
+  if (orderNumber) {
+    entityType =
+      orderDetails?.additionalDetails?.formdata?.isResponseRequired?.code === "Yes"
+        ? "application-order-submission-feedback"
+        : "application-order-submission-default";
+
+    taxHeadMasterCode =
+      orderDetails?.additionalDetails?.formdata?.isResponseRequired?.code === "Yes"
+        ? "ASYNC_SUBMISSION_RESPONSE_ADVANCE_CARRYFORWARD"
+        : "ASYNC_ORDER_SUBMISSION_ADVANCE_CARRYFORWARD";
+  }
+
+  const { fetchBill, openPaymentPortal, paymentLoader, showPaymentModal, setShowPaymentModal, billPaymentStatus } = usePaymentProcess({
+    tenantId,
+    consumerCode: applicationDetails?.applicationNumber,
+    service: entityType,
+    path,
+    caseDetails,
+    totalAmount: "4",
+    scenario,
+  });
+  const { data: billResponse, isLoading: isBillLoading } = Digit.Hooks.dristi.useBillSearch(
+    {},
+    { tenantId, consumerCode: applicationDetails?.applicationNumber, service: entityType },
+    "dristi",
+    Boolean(applicationDetails?.applicationNumber)
+  );
+
+  const handleMakePayment = async (totalAmount) => {
+    try {
+      if (billResponse?.Bill?.length === 0) {
+        await DRISTIService.createDemand({
+          Demands: [
+            {
+              tenantId,
+              consumerCode: applicationDetails?.applicationNumber,
+              consumerType: entityType,
+              businessService: entityType,
+              taxPeriodFrom: Date.now().toString(),
+              taxPeriodTo: Date.now().toString(),
+              demandDetails: [
+                {
+                  taxHeadMasterCode: taxHeadMasterCode,
+                  taxAmount: 4,
+                  collectionAmount: 0,
+                },
+              ],
+            },
+          ],
+        });
+      }
+      const bill = await fetchBill(applicationDetails?.applicationNumber, tenantId, entityType);
+      if (bill?.Bill?.length) {
+        const billPaymentStatus = await openPaymentPortal(bill);
+        setPaymentStatus(billPaymentStatus);
+        await applicationRefetch();
+        console.log(billPaymentStatus);
+        if (billPaymentStatus === true) {
+          setMakePaymentLabel(false);
+          setShowPaymentModal(false);
+          setShowSuccessModal(true);
+          await updateSubmission(SubmissionWorkflowAction.PAY);
+          applicationType === "PRODUCTION_DOCUMENTS" &&
+            orderNumber &&
+            createPendingTask({
+              refId: `${userInfo?.uuid}_${orderNumber}`,
+              isCompleted: true,
+              status: "Completed",
+            });
+          createPendingTask({ name: t("MAKE_PAYMENT_SUBMISSION"), status: "MAKE_PAYMENT_SUBMISSION", isCompleted: true });
+        } else {
+          setMakePaymentLabel(true);
+          setShowPaymentModal(false);
+          setShowSuccessModal(true);
+        }
+      }
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -683,10 +763,24 @@ const SubmissionsCreate = () => {
         />
       )}
       {showsignatureModal && (
-        <SubmissionSignatureModal t={t} handleProceed={handleAddSignature} handleCloseSignaturePopup={handleCloseSignaturePopup} />
+        <SubmissionSignatureModal
+          t={t}
+          handleProceed={handleAddSignature}
+          handleCloseSignaturePopup={handleCloseSignaturePopup}
+          setSignedDocumentUploadID={setSignedDocumentUploadID}
+        />
       )}
       {showPaymentModal && (
-        <PaymentModal t={t} handleClosePaymentModal={handleBack} handleSkipPayment={handleSkipPayment} handleMakePayment={handleMakePayment} />
+        <PaymentModal
+          t={t}
+          handleClosePaymentModal={handleBack}
+          handleSkipPayment={handleSkipPayment}
+          handleMakePayment={handleMakePayment}
+          tenantId={tenantId}
+          consumerCode={applicationDetails?.applicationNumber}
+          paymentLoader={paymentLoader}
+          entityType={entityType}
+        />
       )}
       {showSuccessModal && (
         <SuccessModal
@@ -698,6 +792,7 @@ const SubmissionsCreate = () => {
           applicationNumber={applicationNumber}
           createdDate={applicationDetails?.createdDate}
           makePayment={makePaymentLabel}
+          paymentStatus={paymentStatus}
         />
       )}
     </div>

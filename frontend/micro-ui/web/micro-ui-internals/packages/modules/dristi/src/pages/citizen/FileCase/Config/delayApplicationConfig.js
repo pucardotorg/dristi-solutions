@@ -38,20 +38,34 @@ const delayApplicationFormConfig = [
   {
     dependentKey: { delayCondonationType: ["showForm"] },
     body: [
+      // {
+      //   type: "component",
+      //   component: "SelectCustomTextArea",
+      //   key: "delayApplicationReason",
+      //   withoutLabel: true,
+      //   populators: {
+      //     inputs: [
+      //       {
+      //         name: "reasonForDelay",
+      //         textAreaHeader: "CS_TEXTAREA_HEADER_DELAY_REASON",
+      //         type: "TextAreaComponent",
+      //         headerClassName: "text-area-header",
+      //       },
+      //     ],
+      //   },
+      // },
       {
         type: "component",
-        component: "SelectCustomTextArea",
+        component: "SelectTranscriptTextArea",
         key: "delayApplicationReason",
         withoutLabel: true,
         populators: {
-          inputs: [
-            {
-              name: "reasonForDelay",
-              textAreaHeader: "CS_TEXTAREA_HEADER_DELAY_REASON",
-              type: "TextAreaComponent",
-              headerClassName: "text-area-header",
-            },
-          ],
+          input: {
+            name: "reasonForDelay",
+            textAreaHeader: "CS_TEXTAREA_HEADER_DELAY_REASON",
+            type: "TranscriptionTextAreaComponent",
+            headerClassName: "text-area-header",
+          },
         },
       },
     ],

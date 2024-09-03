@@ -1,10 +1,11 @@
-import React, { useMemo, useState } from "react";
-import { Button, CardText, CustomDropdown, SubmitBar, TextInput, Toast, Modal, Loader } from "@egovernments/digit-ui-react-components";
+import React, { useEffect, useMemo, useState } from "react";
+import { Button, CardText, CustomDropdown, SubmitBar, TextInput, Toast, Modal, Loader, Banner } from "@egovernments/digit-ui-react-components";
 import { formatDateInMonth } from "../../utils";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import useSearchCaseService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSearchCaseService";
 import { HomeService, Urls } from "../../hooks/services";
+import { InfoCard } from "@egovernments/digit-ui-components";
 
 const hearingTypeOptions = [
   {
@@ -153,18 +154,51 @@ function ScheduleHearing({
     return datesArray;
   };
 
-  const nextFourDates = getNextNDates(5);
+  const getSuggestedDates = (dateResponse) => {
+    if (dateResponse?.Hearings?.[0]?.suggestedDates) {
+      return dateResponse.Hearings[0].suggestedDates;
+    }
+    return [];
+  };
+
+  const extractUnitValue = (OptOutLimit) => {
+    const configArray = OptOutLimit?.["SCHEDULER-CONFIG"]?.config;
+    if (Array.isArray(configArray)) {
+      const configItem = configArray.find((item) => item.identifier === "OPT_OUT_SELECTION_LIMIT");
+      return configItem ? configItem.unit : null;
+    }
+
+    return null;
+  };
+
+  const fetchBasicUserInfo = async () => {
+    const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+    const individualData = await window?.Digit.DRISTIService.searchIndividualUser(
+      {
+        Individual: {
+          userUuid: [userInfo?.uuid],
+        },
+      },
+      { tenantId, limit: 1000, offset: 0 },
+      "",
+      userInfo
+    );
+    return individualData?.Individual?.[0];
+  };
+
+  const { filingNumber, status } = Digit.Hooks.useQueryParams();
   const [modalInfo, setModalInfo] = useState(null);
-  const [selectedChip, setSelectedChip] = React.useState(null);
+  const [selectedChip, setSelectedChip] = React.useState(status === "OPTOUT" ? [] : null);
   const [showErrorToast, setShowErrorToast] = useState(false);
   const [scheduleHearingParams, setScheduleHearingParam] = useState({ purpose: "Admission Purpose" });
   const [selectedCustomDate, setSelectedCustomDate] = useState(new Date());
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
+  const [sucessOptOut, setSucessOptOut] = useState(false);
+  const [OptOutLimitValue, setOptOutLimitValue] = useState(null);
 
   const CustomCaseInfoDiv = Digit.ComponentRegistryService.getComponent("CustomCaseInfoDiv") || <React.Fragment></React.Fragment>;
   const CustomChooseDate = Digit.ComponentRegistryService.getComponent("CustomChooseDate") || <React.Fragment></React.Fragment>;
   const CustomCalendar = Digit.ComponentRegistryService.getComponent("CustomCalendar") || <React.Fragment></React.Fragment>;
-  const { filingNumber, status } = Digit.Hooks.useQueryParams();
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const OrderWorkflowAction = Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {};
@@ -201,6 +235,50 @@ function ScheduleHearing({
   const caseDetails = useMemo(() => caseData?.criteria[0]?.responseList[0], [caseData]);
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber, [caseDetails]);
 
+  const { data: applicationData } = Digit.Hooks.submissions.useSearchSubmissionService(
+    {
+      criteria: {
+        filingNumber: filingNumber,
+        tenantId: tenantId,
+        applicationType: "RE_SCHEDULE",
+        status: "COMPLETED",
+      },
+      tenantId,
+    },
+    {},
+    "",
+    true
+  );
+
+  const { data: dateResponse } = Digit.Hooks.home.useSearchReschedule(
+    applicationData
+      ? {
+          SearchCriteria: {
+            tenantId: Digit.ULBService.getCurrentTenantId(),
+            rescheduledRequestId: [applicationData.applicationList[0]?.applicationNumber],
+          },
+        }
+      : null,
+    { limit: 5, offset: 0 },
+    "",
+    !!applicationData
+  );
+
+  const nextFourDates = status === "OPTOUT" ? getSuggestedDates(dateResponse) : getNextNDates(5);
+
+  const { data: OptOutLimit, isLoading: loading } = Digit.Hooks.useCustomMDMS(
+    Digit.ULBService.getStateId(),
+    "SCHEDULER-CONFIG",
+    [
+      {
+        name: "config",
+      },
+    ],
+    {
+      cacheTime: 0,
+    }
+  );
+
   const closeToast = () => {
     setShowErrorToast(false);
   };
@@ -208,14 +286,28 @@ function ScheduleHearing({
   const setPurposeValue = (value, input) => {
     setScheduleHearingParam({ ...scheduleHearingParams, purpose: isCaseAdmitted ? value : value.code });
   };
-
+  console.log("STATUS", status);
   const handleClickDate = (label) => {
-    const newSelectedChip = selectedChip === label ? null : label;
-    setSelectedChip(newSelectedChip);
-    setScheduleHearingParam({
-      ...scheduleHearingParams,
-      date: newSelectedChip,
-    });
+    if (status === "OPTOUT") {
+      const newSelectedChip = selectedChip.includes(label) ? null : label;
+      setSelectedChip((prevSelectedChip) => {
+        if (newSelectedChip === null) {
+          return prevSelectedChip.filter((chip) => chip !== label);
+        }
+        if (prevSelectedChip.length >= OptOutLimitValue) {
+          return prevSelectedChip;
+        }
+
+        return [...prevSelectedChip, newSelectedChip];
+      });
+    } else {
+      const newSelectedChip = selectedChip === label ? null : label;
+      setSelectedChip(newSelectedChip);
+      setScheduleHearingParam({
+        ...scheduleHearingParams,
+        date: newSelectedChip,
+      });
+    }
   };
 
   const showCustomDateModal = () => {
@@ -236,45 +328,47 @@ function ScheduleHearing({
     history.push(`/${window?.contextPath}/${userInfoType}/home/home-pending-task`, { taskType: { code: "case-default", name: "Case" } });
   };
 
-  const handleSubmit = (data) => {
-    const dateArr = data.date.split(" ").map((date, i) => (i === 0 ? date.slice(0, date.length - 2) : date));
-    const date = new Date(dateArr.join(" "));
-    const reqBody = {
-      order: {
-        createdDate: new Date().getTime(),
-        tenantId,
-        cnrNumber,
-        filingNumber: filingNumber,
-        statuteSection: {
+  const handleSubmit = async (data) => {
+    if (status !== "OPTOUT") {
+      const dateArr = data.date.split(" ").map((date, i) => (i === 0 ? date.slice(0, date.length - 2) : date));
+      const date = new Date(dateArr.join(" "));
+      console.log(dateArr, " DATE ARRAYE");
+      const reqBody = {
+        order: {
+          createdDate: new Date().getTime(),
           tenantId,
-        },
-        orderType: "SCHEDULE_OF_HEARING_DATE",
-        status: "",
-        isActive: true,
-        workflow: {
-          action: OrderWorkflowAction.SAVE_DRAFT,
-          comments: "Creating order",
-          assignes: null,
-          rating: null,
-          documents: [{}],
-        },
-        documents: [],
-        additionalDetails: {
-          formdata: {
-            hearingDate: `${dateArr[2]}-${date.getMonth() < 9 ? `0${date.getMonth() + 1}` : date.getMonth() + 1}-${
-              dateArr[0] < 9 ? `0${dateArr[0]}` : dateArr[0]
-            }`,
-            hearingPurpose: data.purpose,
-            orderType: {
-              code: "SCHEDULE_OF_HEARING_DATE",
-              type: "SCHEDULE_OF_HEARING_DATE",
-              name: "ORDER_TYPE_SCHEDULE_OF_HEARING_DATE",
+          cnrNumber,
+          filingNumber: filingNumber,
+          statuteSection: {
+            tenantId,
+          },
+          orderType: "SCHEDULE_OF_HEARING_DATE",
+          status: "",
+          isActive: true,
+          workflow: {
+            action: OrderWorkflowAction.SAVE_DRAFT,
+            comments: "Creating order",
+            assignes: null,
+            rating: null,
+            documents: [{}],
+          },
+          documents: [],
+          additionalDetails: {
+            formdata: {
+              hearingDate: `${dateArr[2]}-${date.getMonth() < 9 ? `0${date.getMonth() + 1}` : date.getMonth() + 1}-${
+                dateArr[0] < 9 ? `0${dateArr[0]}` : dateArr[0]
+              }`,
+              hearingPurpose: data.purpose,
+              orderType: {
+                code: "SCHEDULE_OF_HEARING_DATE",
+                type: "SCHEDULE_OF_HEARING_DATE",
+                name: "ORDER_TYPE_SCHEDULE_OF_HEARING_DATE",
+              },
             },
           },
         },
-      },
-    };
-    if (status !== "OPTOUT") {
+      };
+
       setIsSubmitDisabled(true);
       HomeService.customApiService(Urls.orderCreate, reqBody, { tenantId })
         .then(async (res) => {
@@ -301,9 +395,53 @@ function ScheduleHearing({
           console.log("err", err);
         });
     } else if (status && status === "OPTOUT") {
-      handleClose();
+      const individualId = await fetchBasicUserInfo();
+      setIsSubmitDisabled(true);
+      HomeService.customApiService(
+        Urls.submitOptOutDates,
+        {
+          OptOut: {
+            tenantId: tenantId,
+            individualId: individualId?.individualId,
+            caseId: filingNumber,
+            rescheduleRequestId: applicationData?.applicationList[0]?.applicationNumber,
+            judgeId: "super",
+            optOutDates: selectedChip,
+          },
+        },
+        {}
+      )
+        .then(async () => {
+          const individualId = await fetchBasicUserInfo();
+          await HomeService.customApiService(Urls.pendingTask, {
+            pendingTask: {
+              name: "Completed",
+              entityType: "order-default",
+              referenceId: `MANUAL_${individualId?.userUuid}_${applicationData?.applicationList[0]?.additionalDetails?.hearingId}`,
+              status: "DRAFT_IN_PROGRESS",
+              assignedTo: [],
+              assignedRole: [],
+              cnrNumber: cnrNumber,
+              filingNumber: filingNumber,
+              isCompleted: true,
+              stateSla: null,
+              additionalDetails: {},
+              tenantId,
+            },
+          });
+          setIsSubmitDisabled(false);
+          setSucessOptOut(true);
+        })
+        .catch((err) => {
+          setIsSubmitDisabled(false);
+          console.log("err", err);
+        });
     }
   };
+
+  useEffect(() => {
+    if (OptOutLimit) setOptOutLimitValue(extractUnitValue(OptOutLimit));
+  }, [OptOutLimit]);
 
   if (isLoading) {
     return <Loader />;
@@ -311,7 +449,7 @@ function ScheduleHearing({
 
   return (
     <Modal
-      headerBarMain={<Heading label={t(config.headModal)} />}
+      headerBarMain={<Heading label={status === "OPTOUT" ? "Select Opt-out Dates" : t(config.headModal)} />}
       headerBarEnd={<CloseBtn onClick={handleClose} />}
       hideSubmit={true}
       popupStyles={{
@@ -322,6 +460,23 @@ function ScheduleHearing({
       <div className="schedule-admission-main">
         {shortCaseInfo && <CustomCaseInfoDiv t={t} data={shortCaseInfo} style={{ marginTop: "24px" }} />}
 
+        {status === "OPTOUT" && Array.isArray(selectedChip) && selectedChip.length > 0 && (
+          <InfoCard
+            className="payment-status-info-card"
+            headerWrapperClassName="payment-status-info-header"
+            populators={{
+              name: "infocard",
+            }}
+            variant="default"
+            text={"The date for the next hearing will be decided based on the selections made below."}
+            label={"Please Note"}
+            style={{ marginTop: "1.5rem" }}
+            textStyle={{
+              color: "#3D3C3C",
+              margin: "0.5rem 0",
+            }}
+          />
+        )}
         {config.label && <CardText className="card-label-smaller">{t(config.label)}</CardText>}
         {!isCaseAdmitted ? (
           showPurposeOfHearing ? (
@@ -350,40 +505,44 @@ function ScheduleHearing({
         )}
         {!modalInfo?.showCustomDate && (
           <div>
-            <CardText>{t("CS_SELECT_DATE")}</CardText>
+            <CardText>{status === "OPTOUT" ? `Select upto ${OptOutLimitValue} dates that do not work for you` : t("CS_SELECT_DATE")}</CardText>
             <CustomChooseDate
               data={nextFourDates}
               selectedChip={selectedChip}
               handleClick={handleClickDate}
               scheduleHearingParams={scheduleHearingParams}
+              isSelectMulti={status === "OPTOUT" ? true : false}
             />
           </div>
         )}
-
-        {modalInfo?.showCustomDate ? (
-          <h3>
-            {scheduleHearingParams?.date}{" "}
-            <span style={{ color: "#007E7E", fontWeight: "500" }} onClick={() => showCustomDateModal()}>
-              {String(t("SELECT_ANOTHER_DATE"))}
+        {status !== "OPTOUT" &&
+          (modalInfo?.showCustomDate ? (
+            <h3>
+              {scheduleHearingParams?.date}{" "}
+              <span style={{ color: "#007E7E", fontWeight: "500" }} onClick={() => showCustomDateModal()}>
+                {String(t("SELECT_ANOTHER_DATE"))}
+              </span>
+            </h3>
+          ) : (
+            <span className="select-custom-dates-main">
+              <h3>{t("DATE_DONT_WORK")}</h3>
+              <span className="select-custom-dates-child" onClick={() => showCustomDateModal()}>
+                {String(t("CS_SELECT_CUSTOM_DATE"))}
+              </span>
             </span>
-          </h3>
-        ) : (
-          <span className="select-custom-dates-main">
-            <h3>{t("DATE_DONT_WORK")}</h3>
-            <span className="select-custom-dates-child" onClick={() => showCustomDateModal()}>
-              {String(t("CS_SELECT_CUSTOM_DATE"))}
-            </span>
-          </span>
-        )}
-
+          ))}
         <div className="action-button-schedule-admission">
           <Button variation="secondary" onButtonClick={handleClose} className="primary-label-btn back-from-schedule" label={"Close"}></Button>
           <SubmitBar
             variation="primary"
             onSubmit={() => handleSubmit(scheduleHearingParams)}
             className="primary-label-btn select-participant-submit"
-            label={t("GENERATE_ORDERS_LINK")}
-            disabled={!scheduleHearingParams?.date || isSubmitDisabled}
+            label={status === "OPTOUT" ? "Done" : t("GENERATE_ORDERS_LINK")}
+            disabled={
+              (status === "OPTOUT" && Array.isArray(selectedChip) && selectedChip.length === 0) ||
+              (status !== "OPTOUT" && !scheduleHearingParams?.date) ||
+              isSubmitDisabled
+            }
           ></SubmitBar>
         </div>
 
@@ -404,6 +563,42 @@ function ScheduleHearing({
               selectedCustomDate={selectedCustomDate}
               tenantId={tenantId}
             />
+          </Modal>
+        )}
+
+        {sucessOptOut && (
+          <Modal
+            actionCancelLabel={"Close"}
+            actionCancelOnSubmit={handleClose}
+            actionSaveLabel={"Next Pending Task"}
+            actionSaveOnSubmit={handleClose}
+            formId="modal-action"
+            className="case-types"
+          >
+            <div style={{ padding: 20 }}>
+              <Banner
+                whichSvg={"tick"}
+                successful={true}
+                message={"You have successfully selected your opt-out dates."}
+                headerStyles={{ fontSize: "32px" }}
+                style={{ minWidth: "100%", marginTop: "10px" }}
+              ></Banner>
+              <InfoCard
+                className="payment-status-info-card"
+                headerWrapperClassName="payment-status-info-header"
+                populators={{
+                  name: "infocard",
+                }}
+                variant="default"
+                text={"The date for the next hearing will be decided once all parties have selected their opt-out dates."}
+                label={"Please Note"}
+                style={{ marginTop: "1.5rem" }}
+                textStyle={{
+                  color: "#3D3C3C",
+                  margin: "0.5rem 0",
+                }}
+              />
+            </div>
           </Modal>
         )}
       </div>

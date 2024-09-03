@@ -60,7 +60,7 @@ const HearingSideCard = ({ hearingId, caseId, filingNumber }) => {
             iconFill={"#1C1B1F"}
             onClick={() => handleNavigate("dristi/home/view-case", { tab: "Submissions" })}
           />
-          <Button
+          {/* <Button
             label={"Case History"}
             variation={"default"}
             style={{
@@ -82,7 +82,7 @@ const HearingSideCard = ({ hearingId, caseId, filingNumber }) => {
             icon={"History"}
             iconFill={"#1C1B1F"}
             onClick={() => handleNavigate("dristi/home/view-case", { tab: "History" })}
-          />
+          /> */}
           <Button
             label={"Parties"}
             variation={"default"}

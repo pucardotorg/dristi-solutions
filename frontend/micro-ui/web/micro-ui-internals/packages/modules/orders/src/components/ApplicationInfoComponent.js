@@ -1,12 +1,11 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router-dom/cjs/react-router-dom.min";
 
 const ApplicationInfoComponent = ({ infos, links }) => {
   const { t } = useTranslation();
   return (
     <React.Fragment>
-      <div className="application-info">
+      <div className="application-info" style={{ width: "616px" }}>
         <div className={`info-row-wrapper ${links && links?.length > 0 ? "with-link" : ""}`}>
           {infos &&
             infos?.map((info, index) => (
@@ -21,12 +20,19 @@ const ApplicationInfoComponent = ({ infos, links }) => {
             ))}
         </div>
         <div className="info-link-wrapper">
-          {links &&
+          {/* {links &&
             links?.map((link, index) => (
-              <Link key={index} className="review-summon-order" to={{ pathname: link?.link }}>
+              <h3
+                key={index}
+                className="review-summon-order"
+                onClick={() => {
+                  if (link?.onClick) link.onClick();
+                  else return;
+                }}
+              >
                 {link?.text}
-              </Link>
-            ))}
+              </h3>
+            ))} */}
         </div>
       </div>
     </React.Fragment>

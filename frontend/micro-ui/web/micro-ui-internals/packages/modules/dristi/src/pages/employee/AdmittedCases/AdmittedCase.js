@@ -19,6 +19,7 @@ import ViewAllOrderDrafts from "./ViewAllOrderDrafts";
 import PublishedOrderModal from "./PublishedOrderModal";
 import ViewAllSubmissions from "./ViewAllSubmissions";
 import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
+import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 
 const defaultSearchValues = {};
 
@@ -29,7 +30,7 @@ const AdmittedCases = () => {
   const caseId = urlParams.get("caseId");
   const roles = Digit.UserService.getUser()?.info?.roles;
   const isFSO = roles.some((role) => role.code === "FSO_ROLE");
-  const activeTab = isFSO ? "Complaint" : urlParams.get("tab") || "Overview";
+  const activeTab = isFSO ? "Complaints" : urlParams.get("tab") || "Overview";
   const filingNumber = urlParams.get("filingNumber");
   const [show, setShow] = useState(false);
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
@@ -50,6 +51,7 @@ const AdmittedCases = () => {
   const OrderReviewModal = Digit.ComponentRegistryService.getComponent("OrderReviewModal") || {};
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
+  const { downloadPdf } = useDownloadCasePdf();
   const { data: caseData, isLoading } = useSearchCaseService(
     {
       criteria: [
@@ -460,9 +462,7 @@ const AdmittedCases = () => {
   const [showScheduleHearingModal, setShowScheduleHearingModal] = useState(false);
 
   const isTabDisabled = useMemo(() => {
-    return isFSO
-      ? true
-      : caseDetails?.status !== "CASE_ADMITTED" && caseDetails?.status !== "ADMISSION_HEARING_SCHEDULED";
+    return isFSO ? true : caseDetails?.status !== "CASE_ADMITTED" && caseDetails?.status !== "ADMISSION_HEARING_SCHEDULED";
   }, [caseDetails?.status, config?.label, isFSO]);
 
   useEffect(() => {
@@ -492,6 +492,14 @@ const AdmittedCases = () => {
   useEffect(() => {
     // Set default values when component mounts
     setDefaultValues(defaultSearchValues);
+    const isSignSuccess = localStorage.getItem("esignProcess");
+    const doc = JSON.parse(localStorage.getItem("docSubmission"));
+    if (isSignSuccess) {
+      if (doc) {
+        setDocumentSubmission(doc);
+      }
+      setShow(true);
+    }
   }, []);
 
   const onTabChange = (n) => {
@@ -734,7 +742,13 @@ const AdmittedCases = () => {
             <div className="sub-details-text">Code: {caseData?.criteria[0].responseList[0]?.accessCode}</div>
           </div>
           <div className="make-submission-action" style={{ display: "flex", gap: 20, justifyContent: "space-between", alignItems: "center" }}>
-            {isCitizen && <Button variation={"outlined"} label={t("DOWNLOAD_CASE_FILE")} />}
+            {isCitizen && (
+              <Button
+                variation={"outlined"}
+                label={t("DOWNLOAD_CASE_FILE")}
+                onButtonClick={() => downloadPdf(tenantId, caseDetails?.additionalDetails?.signedCaseDocument)}
+              />
+            )}
             {showMakeSubmission && <Button label={t("MAKE_SUBMISSION")} onButtonClick={handleMakeSubmission} />}
           </div>
           {showTakeAction && (
@@ -768,7 +782,9 @@ const AdmittedCases = () => {
                       {showOtherMenu && (
                         <Menu
                           options={[t("DOWNLOAD_CASE_FILE")]}
-                          // onSelect={() => {}}
+                          onSelect={() => {
+                            downloadPdf(tenantId, caseDetails?.additionalDetails?.signedCaseDocument);
+                          }}
                         ></Menu>
                       )}
                     </div>

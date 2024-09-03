@@ -5,27 +5,27 @@ import ApplicationInfoComponent from "./ApplicationInfoComponent";
 
 const DocumentViewerWithComment = ({ infos, links, documents, showCommentSection, comments, showAddNewComment, onAddComment }) => {
   const { t } = useTranslation();
-  const DocViewerWrapper = window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
+  const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
 
   return (
     <div className="document-viewer-with-comment">
       <div className={`application-details ${!showCommentSection && "without-comment"}`}>
         <React.Fragment>
-          <ApplicationInfoComponent infos={infos} links={links} />
+          {infos && <ApplicationInfoComponent infos={infos} links={links} />}
           {documents &&
             documents?.map((docs, index) => (
               <React.Fragment>
                 {docs && (
                   <div className="application-view" key={index}>
                     <DocViewerWrapper
-                      key={docs.fileStoreId}
-                      fileStoreId={docs.fileStoreId}
-                      displayFilename={docs.fileName}
+                      key={docs.fileStore}
+                      fileStoreId={docs.fileStore}
+                      // displayFilename={docs.fileName}
                       tenantId={Digit.ULBService.getCurrentTenantId()}
                       docWidth="100%"
                       docHeight="unset"
                       showDownloadOption={false}
-                      documentName={docs.fileName}
+                      // documentName={docs.fileName}
                     />
                   </div>
                 )}

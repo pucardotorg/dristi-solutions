@@ -5,7 +5,7 @@ import CustomStepperSuccess from "./CustomStepperSuccess";
 import AddSignatureComponent from "./AddSignatureComponent";
 import UpdateDeliveryStatusComponent from "./UpdateDeliveryStatusComponent";
 
-const ReviewDocumentModal = ({ handleClose }) => {
+const ReviewDocumentModal = ({ handleClose, setOpenSigned, setShowsignatureModal, showActions = true }) => {
   const { t } = useTranslation();
 
   const [isSigned, setIsSigned] = useState(false);
@@ -80,5 +80,4 @@ const ReviewDocumentModal = ({ handleClose }) => {
 
   return <DocumentModal config={config} />;
 };
-
 export default ReviewDocumentModal;

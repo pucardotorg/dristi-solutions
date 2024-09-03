@@ -1,7 +1,11 @@
-import { Banner, CardLabel } from "@egovernments/digit-ui-react-components";
-import React, { useMemo } from "react";
-import { useTranslation } from "react-i18next";
+import { Banner, Card, CardLabel, CardText, CloseSvg, Modal, TextArea } from "@egovernments/digit-ui-react-components";
+import React, { useMemo, useState } from "react";
+import Button from "@egovernments/digit-ui-module-dristi/src/components/Button";
 import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
+import CustomCopyTextDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCopyTextDiv";
+import SelectCustomNote from "@egovernments/digit-ui-module-dristi/src/components/SelectCustomNote";
+import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
+import { useTranslation } from "react-i18next";
 
 const customNoteConfig = {
   populators: {
@@ -24,28 +28,52 @@ const mockSubmitModalInfo = {
   showTable: true,
 };
 
-function EFilingPaymentRes({ setShowModal, header, subHeader, submitModalInfo = mockSubmitModalInfo, amount = 2000 }) {
+const CloseBtn = (props) => {
+  return (
+    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
+      <CloseSvg />
+    </div>
+  );
+};
+
+const Heading = (props) => {
+  return <h1 className="heading-m">{props.label}</h1>;
+};
+
+function EFilingPaymentResponse({ setShowModal, header, subHeader, submitModalInfo = mockSubmitModalInfo, amount = 2000, path }) {
   const history = useHistory();
   const location = useLocation();
-  const { t } = useTranslation();
   const receiptData = location.state.state.receiptData;
-  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
-  const Button = window?.Digit?.ComponentRegistryService?.getComponent("Button");
-  const CustomCopyTextDiv = window?.Digit?.ComponentRegistryService?.getComponent("CustomCopyTextDiv");
-  const SelectCustomNote = window?.Digit?.ComponentRegistryService?.getComponent("SelectCustomNote");
+  const isSuccess = location.state.state.success;
+  const fileStoreId = location.state.state.fileStoreId;
+  const tenantId = Digit.ULBService.getCurrentTenantId();
+  const caseId = location.state.state.caseId;
+  const { t } = useTranslation();
 
-  const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${fileStoreId}`;
+  const commonProps = {
+    whichSvg: "tick",
+    headerStyles: { fontSize: "32px" },
+    style: { minWidth: "100%", marginTop: "10px" },
+  };
+
+  const bannerProps = isSuccess
+    ? {
+        ...commonProps,
+        successful: true,
+        message: t(submitModalInfo?.header),
+      }
+    : {
+        ...commonProps,
+        successful: false,
+        message: t("CS_PAYMENT_FAILED"),
+      };
+
   return (
     <div className=" user-registration">
       <div className="e-filing-payment" style={{ minHeight: "100%", height: "100%" }}>
-        <Banner
-          whichSvg={"tick"}
-          successful={true}
-          message={t(submitModalInfo?.header)}
-          headerStyles={{ fontSize: "32px" }}
-          style={{ minWidth: "100%", marginTop: "10px" }}
-        ></Banner>
-        {submitModalInfo?.subHeader && <CardLabel className={"e-filing-card-label"}>{t(submitModalInfo?.subHeader)}</CardLabel>}
+        <Banner {...bannerProps} />
+        {submitModalInfo?.subHeader && isSuccess && <CardLabel className={"e-filing-card-label"}>{t(submitModalInfo?.subHeader)}</CardLabel>}
         {receiptData ? (
           <CustomCopyTextDiv
             t={t}
@@ -59,19 +87,47 @@ function EFilingPaymentRes({ setShowModal, header, subHeader, submitModalInfo = 
           <SelectCustomNote t={t} config={customNoteConfig} />
         )}
         <div className="button-field" style={{ width: "100%", marginTop: 16 }}>
-          <Button
-            variation={"secondary"}
-            className={"secondary-button-selector"}
-            label={t("CS_PRINT_RECEIPT")}
-            labelClassName={"secondary-label-selector"}
-            onButtonClick={() => {}}
-          />
+          {!fileStoreId && caseId ? (
+            <Button
+              variation={"secondary"}
+              className={"secondary-button-selector"}
+              label={t("Retry Payment")}
+              labelClassName={"secondary-label-selector"}
+              onButtonClick={() => {
+                history.push(`${path}/e-filing-payment?caseId=${caseId}`);
+              }}
+            />
+          ) : (
+            <a
+              href={uri}
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                display: "flex",
+                color: "#505A5F",
+                textDecoration: "none",
+                // width: 250,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              <Button
+                variation={"secondary"}
+                className={"secondary-button-selector"}
+                label={t("CS_PRINT_RECEIPT")}
+                labelClassName={"secondary-label-selector"}
+                onButtonClick={() => {}}
+              />
+            </a>
+          )}
+
           <Button
             className={"tertiary-button-selector"}
             label={t("CS_GO_TO_HOME")}
             labelClassName={"tertiary-label-selector"}
             onButtonClick={() => {
-              history.push(`/${window?.contextPath}/${userInfoType}/home/home-pending-task`);
+              history.push(`/${window?.contextPath}/citizen/dristi/home`);
             }}
           />
         </div>
@@ -80,4 +136,4 @@ function EFilingPaymentRes({ setShowModal, header, subHeader, submitModalInfo = 
   );
 }
 
-export default EFilingPaymentRes;
+export default EFilingPaymentResponse;

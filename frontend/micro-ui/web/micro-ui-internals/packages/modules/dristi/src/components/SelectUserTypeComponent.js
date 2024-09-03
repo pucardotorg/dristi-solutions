@@ -81,10 +81,18 @@ const SelectUserTypeComponent = ({ t, config, onSelect, formData = {}, errors, f
     }
     numberOfFiles > 0
       ? onDocumentUpload(filesData[0][1]?.file, filesData[0][0]).then((document) => {
+          const newFileStoreId = document.file?.files?.[0]?.fileStoreId;
+
+          // Update filesData with the new fileStoreId
+          filesData[0][1].fileStoreId = {
+            fileStoreId: newFileStoreId,
+          };
           setFileName(filesData[0][0]);
 
           setFileStoreID(document.file?.files?.[0]?.fileStoreId);
           setShowDoc(true);
+          // Set the updated filesData after setting the fileStoreId
+          setValue(filesData, input.name, input);
         })
       : setShowDoc(false);
     setValue(numberOfFiles > 0 ? filesData : [], input.name, input);

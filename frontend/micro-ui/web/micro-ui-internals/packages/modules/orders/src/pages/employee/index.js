@@ -7,6 +7,7 @@ import OrdersCreate from "./OrdersCreate";
 import OrdersHome from "./OrdersHome";
 import GenerateOrders from "./GenerateOrders";
 import PaymentStatus from "../../components/PaymentStatus";
+import EpostTrackingPage from "./E-PostTracking";
 import PaymentForSummonModal from "./PaymentForSummonModal";
 import ReviewSummonsNoticeAndWarrant from "./ReviewSummonsNoticeAndWarrant";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
@@ -61,6 +62,7 @@ const App = ({ path, stateCode, userType, tenants }) => {
         <PrivateRoute path={`${path}/Summons&Notice`} component={() => <ReviewSummonsNoticeAndWarrant />} />
         <PrivateRoute path={`${path}/payment-screen`} component={() => <PaymentStatus />} />
         <PrivateRoute path={`${path}/payment-modal`} component={() => <PaymentForSummonModal />} />
+        <PrivateRoute path={`${path}/tracking`} component={() => <EpostTrackingPage />} />
       </AppContainer>
     </Switch>
   );

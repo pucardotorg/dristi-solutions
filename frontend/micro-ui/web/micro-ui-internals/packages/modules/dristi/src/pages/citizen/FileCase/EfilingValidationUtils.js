@@ -3,6 +3,7 @@ import { getUserDetails } from "../../../hooks/useGetAccessToken";
 import { DRISTIService } from "../../../services";
 import { userTypeOptions } from "../registration/config";
 import { formatDate } from "./CaseType";
+import { efilingDocumentKeyAndTypeMapping } from "./Config/efilingDocumentKeyAndTypeMapping";
 
 export const showDemandNoticeModal = ({
   selected,
@@ -785,11 +786,8 @@ export const chequeDateValidation = ({ selected, formData, setError, clearErrors
 
 export const delayApplicationValidation = ({ t, formData, selected, setShowErrorToast, setErrorMsg, toast, setFormErrors }) => {
   if (selected === "delayApplications") {
-    if (
-      formData?.delayCondonationType?.code === "NO" &&
-      (!formData?.condonationFileUpload || (formData?.condonationFileUpload && !formData?.condonationFileUpload?.document.length > 0))
-    ) {
-      setFormErrors("condonationFileUpload", { type: "required" });
+    if (formData?.delayCondonationType?.code === "NO" && !formData?.delayApplicationReason?.reasonForDelay?.length > 0) {
+      setFormErrors("delayApplicationReason", { type: "required" });
       toast.error(t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"));
       return true;
     }
@@ -959,6 +957,19 @@ const onDocumentUpload = async (fileData, filename, tenantId) => {
   return { file: fileUploadRes?.data, fileType: fileData.type, filename };
 };
 
+const sendDocumentForOcr = async (key, fileStoreId, filingNumber, tenantId, document) => {
+  if ((efilingDocumentKeyAndTypeMapping[key] && document?.type === "image/jpeg") || document?.type === "application/pdf")
+    await window?.Digit?.DRISTIService.sendDocuemntForOCR(
+      {
+        documentType: efilingDocumentKeyAndTypeMapping[key],
+        fileStoreId: fileStoreId,
+        filingNumber: filingNumber,
+        tenantId: tenantId,
+      },
+      {}
+    );
+};
+
 export const getAllAssignees = (caseDetails, getAdvocates = true, getLitigent = true) => {
   if (Array.isArray(caseDetails?.representatives || []) && caseDetails?.representatives?.length > 0) {
     return caseDetails?.representatives
@@ -1028,6 +1039,9 @@ const documentUploadHandler = async (document, index, prevCaseDetails, data, pag
       documentName: uploadedData.filename || document?.documentName,
       fileName: pageConfig?.selectDocumentName?.[key],
     };
+    if (uploadedData.file?.files?.[0]?.fileStoreId && efilingDocumentKeyAndTypeMapping[key]) {
+      sendDocumentForOcr(key, uploadedData.file?.files?.[0]?.fileStoreId, prevCaseDetails?.filingNumber, tenantId, document);
+    }
     if (oldBouncedChequeFileUpload !== undefined) {
       const xTemp = prevCaseDetails?.documents?.filter((doc) => doc.fileStore === oldBouncedChequeFileUpload?.document?.[index]?.fileStore)?.[0];
       tempDocList.push({
@@ -1086,6 +1100,7 @@ export const updateCaseDetails = async ({
   pageConfig,
   setFormDataValue,
   action = "SAVE_DRAFT",
+  fileStoreId,
   setErrorCaseDetails = () => {},
 }) => {
   const data = {};
@@ -1369,6 +1384,35 @@ export const updateCaseDetails = async ({
             documentData.inquiryAffidavitFileUpload = {};
             documentData.inquiryAffidavitFileUpload.document = await Promise.all(
               data?.data?.inquiryAffidavitFileUpload?.document?.map(async (document) => {
+                if (document) {
+                  const uploadedData = await onDocumentUpload(document, document.name, tenantId);
+                  if (uploadedData.file?.files?.[0]?.fileStoreId && efilingDocumentKeyAndTypeMapping["inquiryAffidavitFileUpload"]) {
+                    sendDocumentForOcr(
+                      "inquiryAffidavitFileUpload",
+                      uploadedData.file?.files?.[0]?.fileStoreId,
+                      prevCaseDetails?.filingNumber,
+                      tenantId,
+                      document
+                    );
+                  }
+                  return {
+                    documentType: uploadedData.fileType || document?.documentType,
+                    fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
+                    documentName: uploadedData.filename || document?.documentName,
+                    fileName: "Affidavit documents",
+                  };
+                }
+              })
+            );
+          }
+          if (
+            data?.data?.companyDetailsUpload?.document &&
+            Array.isArray(data?.data?.companyDetailsUpload?.document) &&
+            data?.data?.companyDetailsUpload?.document.length > 0
+          ) {
+            documentData.companyDetailsUpload = {};
+            documentData.companyDetailsUpload.document = await Promise.all(
+              data?.data?.companyDetailsUpload?.document?.map(async (document) => {
                 if (document) {
                   const uploadedData = await onDocumentUpload(document, document.name, tenantId);
                   return {
@@ -1877,6 +1921,15 @@ export const updateCaseDetails = async ({
               data?.data?.vakalatnamaFileUpload?.document?.map(async (document) => {
                 if (document) {
                   const uploadedData = await onDocumentUpload(document, document.name, tenantId);
+                  if (uploadedData.file?.files?.[0]?.fileStoreId && efilingDocumentKeyAndTypeMapping["vakalatnamaFileUpload"]) {
+                    sendDocumentForOcr(
+                      "vakalatnamaFileUpload",
+                      uploadedData.file?.files?.[0]?.fileStoreId,
+                      prevCaseDetails?.filingNumber,
+                      tenantId,
+                      document
+                    );
+                  }
                   return {
                     documentType: uploadedData.fileType || document?.documentType,
                     fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
@@ -1971,6 +2024,7 @@ export const updateCaseDetails = async ({
         formdata: formdata,
         isCompleted: isCompleted === "PAGE_CHANGE" ? caseDetails.caseDetails?.[selected]?.isCompleted : isCompleted,
       },
+      ...(fileStoreId && { signedCaseDocument: fileStoreId }),
     };
   }
   const caseTitle =

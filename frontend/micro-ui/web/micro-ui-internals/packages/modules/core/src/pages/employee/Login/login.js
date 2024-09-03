@@ -54,7 +54,14 @@ const Login = ({ config: propsConfig, t, isDisabled }) => {
     if (user?.info?.roles && user?.info?.roles?.length > 0 && user?.info?.roles?.every((e) => e.code === "STADMIN")) {
       redirectPath = `/${window?.contextPath}/employee/dss/landing/home`;
     }
-
+    const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+    const userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
+    function hasPostManagerRole() {
+      return userInfo.roles.some((userRole) => userRole.name === "POST_MANAGER");
+    }
+    if (hasPostManagerRole()) {
+      redirectPath = `/${window?.contextPath}/${userType}/orders/tracking`;
+    }
     history.replace(redirectPath);
   }, [user]);
 

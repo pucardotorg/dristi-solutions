@@ -95,14 +95,14 @@ function PublishedOrderModal({ t, order, handleDownload, handleRequestLabel, han
         </div>
         {showSubmissionButtons && (
           <div style={{ display: "flex", width: "50%", gap: "20px", justifyContent: "end" }}>
-            <Button
+            {/* <Button
               variation="secondary"
               onButtonClick={() => {
                 handleRequestLabel(order.orderNumber);
               }}
               className="primary-label-btn"
               label={t("EXTENSION_REQUEST_LABEL")}
-            ></Button>
+            ></Button> */}
             <SubmitBar
               variation="primary"
               onSubmit={() => {

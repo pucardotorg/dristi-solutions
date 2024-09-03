@@ -12,6 +12,7 @@ import LitigantHomePage from "./LitigantHomePage";
 import { TabLitigantSearchConfig } from "../../configs/LitigantHomeConfig";
 import ReviewCard from "../../components/ReviewCard";
 import { InboxIcon, DocumentIcon } from "../../../homeIcon";
+import { Link } from "react-router-dom";
 import _ from "lodash";
 
 const defaultSearchValues = {
@@ -45,6 +46,7 @@ const HomeView = () => {
   const [caseType, setCaseType] = useState(state?.caseType || {});
 
   const roles = useMemo(() => Digit.UserService.getUser()?.info?.roles, [Digit.UserService]);
+  const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
   const isCourtRoomRole = useMemo(() => roles?.some((role) => role?.code === "COURT_ADMIN"), [roles]);
   const isNyayMitra = roles.some((role) => role.code === "NYAY_MITRA_ROLE");
   const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
@@ -306,6 +308,11 @@ const HomeView = () => {
           <div className="left-side">
             <div className="home-header-wrapper">
               <UpcomingHearings handleNavigate={handleNavigate} attendeeIndividualId={individualId} userInfoType={userInfoType} t={t} />
+              {isJudge && (
+                <div className="hearingCard" style={{ backgroundColor: "#ECF3FD" }}>
+                  <Link to={`/${window.contextPath}/employee/home/dashboard`}> Open Dashboard </Link>
+                </div>
+              )}
               {isCourtRoomRole && <ReviewCard data={data} userInfoType={userInfoType} />}
             </div>
             <div className="content-wrapper">

@@ -88,6 +88,7 @@
   }
 }
 
+.custom-modal-stepper-non-doc,
 .add-signature-modal {
   &.popup-module {
     .popup-module-main {
@@ -193,7 +194,7 @@
 
       .popup-module-action-bar {
         .selector-button-border {
-          width: 84px;
+          width: fit-content;
           height: 40px;
           padding: 8px 24px 8px 24px;
           border: 1px solid #007e7e !important;

@@ -1,11 +1,13 @@
 import { CloseSvg } from "@egovernments/digit-ui-components";
 import React, { useEffect, useMemo, useState } from "react";
 import Modal from "../../../dristi/src/components/Modal";
+import { getFilestoreId } from "@egovernments/digit-ui-module-dristi/src/Utils/fileStoreUtil";
 function OrderReviewModal({ setShowReviewModal, t, order, setShowsignatureModal, showActions = true }) {
   const [fileStoreId, setFileStoreID] = useState(null);
   const [fileName, setFileName] = useState();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
+  const filestoreId = "c4fef888-6d43-404f-8d37-63cae7651619";
 
   const Heading = (props) => {
     return <h1 className="heading-m">{props.label}</h1>;
@@ -60,11 +62,11 @@ function OrderReviewModal({ setShowReviewModal, t, order, setShowsignatureModal,
           maxWidth: "100%",
         }}
       >
-        {fileStoreId ? (
+        {fileStoreId || filestoreId ? (
           <DocViewerWrapper
             docWidth={"calc(80vw* 62/ 100)"}
             docHeight={"60vh"}
-            fileStoreId={fileStoreId}
+            fileStoreId={fileStoreId || filestoreId}
             tenantId={tenantId}
             displayFilename={fileName}
           />

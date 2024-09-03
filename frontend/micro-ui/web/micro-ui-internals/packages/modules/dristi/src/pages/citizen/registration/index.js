@@ -15,7 +15,7 @@ import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import UploadIdType from "./UploadIdType";
 import TermsCondition from "./TermsCondition";
 
-const TYPE_REGISTER = { type: "register" };
+const TYPE_REGISTER = { type: "REGISTER" };
 const setCitizenDetail = (userObject, token, tenantId) => {
   let locale = JSON.parse(sessionStorage.getItem("Digit.initData"))?.value?.selectedLanguage;
   localStorage.setItem("Citizen.tenant-id", tenantId);

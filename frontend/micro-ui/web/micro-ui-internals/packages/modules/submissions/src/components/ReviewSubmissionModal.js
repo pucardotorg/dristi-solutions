@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Modal from "../../../dristi/src/components/Modal";
 import { CloseSvg } from "@egovernments/digit-ui-components";
 
@@ -27,6 +27,16 @@ function ReviewSubmissionModal({
 }) {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
+
+  useEffect(() => {
+    const isSignSuccess = localStorage.getItem("esignProcess");
+    if (isSignSuccess) {
+      setShowReviewModal(false);
+      setShowsignatureModal(true);
+      localStorage.removeItem("esignProcess");
+    }
+  }, []);
+
   return (
     <Modal
       headerBarMain={<Heading label={t("REVIEW_SUBMISSION_APPLICATION_HEADING")} />}

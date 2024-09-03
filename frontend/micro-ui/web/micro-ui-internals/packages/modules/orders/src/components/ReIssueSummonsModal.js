@@ -90,7 +90,22 @@ function ReIssueSummonsModal() {
       },
     };
     const res = await ordersService.createOrder(reqbody, { tenantId });
-
+    await ordersService.customApiService(Urls.orders.pendingTask, {
+      pendingTask: {
+        name: "Completed",
+        entityType: "order-default",
+        referenceId: `MANUAL_${hearingId}`,
+        status: "DRAFT_IN_PROGRESS",
+        assignedTo: [],
+        assignedRole: [],
+        cnrNumber: cnrNumber,
+        filingNumber: filingNumber,
+        isCompleted: true,
+        stateSla: null,
+        additionalDetails: {},
+        tenantId,
+      },
+    });
     ordersService.customApiService(Urls.orders.pendingTask, {
       pendingTask: {
         name: t("ORDERS_DRAFT_IN_PROGRESS"),

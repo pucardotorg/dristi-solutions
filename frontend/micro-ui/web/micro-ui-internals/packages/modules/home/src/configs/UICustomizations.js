@@ -8,6 +8,25 @@ import { formatDate } from "../../../cases/src/utils";
 
 const customColumnStyle = { whiteSpace: "nowrap" };
 
+const handleTaskDetails = (taskDetails) => {
+  try {
+    // Try parsing the taskDetails string
+    const parsed = JSON.parse(taskDetails);
+
+    // Check if the result is a string (indicating it's a double-escaped JSON)
+    if (typeof parsed === "string") {
+      // Attempt to parse it again as JSON
+      return JSON.parse(parsed);
+    }
+
+    // Return the parsed object if it's already a valid JSON object
+    return parsed;
+  } catch (error) {
+    console.error("Failed to parse taskDetails:", error);
+    return null;
+  }
+};
+
 const handleNavigate = (path) => {
   console.log("Funvtion called ");
   const contextPath = window?.contextPath || "";
@@ -16,6 +35,41 @@ const handleNavigate = (path) => {
 };
 
 export const UICustomizations = {
+  EpostTrackingUiConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const ePostTrackerSearchCriteria = {
+        ...requestCriteria?.body?.ePostTrackerSearchCriteria,
+        processNumber: requestCriteria?.state?.searchForm?.processNumber ? requestCriteria?.state?.searchForm?.processNumber : "",
+        deliveryStatusList: requestCriteria?.state?.searchForm?.deliveryStatusList?.selected
+          ? [requestCriteria?.state?.searchForm?.deliveryStatusList?.selected]
+          : requestCriteria?.body?.ePostTrackerSearchCriteria.deliveryStatusList,
+        pagination: {
+          sortBy: requestCriteria?.state?.searchForm?.pagination?.sortBy
+            ? requestCriteria?.state?.searchForm?.pagination?.sortBy
+            : requestCriteria?.body?.ePostTrackerSearchCriteria?.pagination?.sortBy,
+          orderBy: requestCriteria?.state?.searchForm?.pagination?.order
+            ? requestCriteria?.state?.searchForm?.pagination?.order
+            : requestCriteria?.body?.ePostTrackerSearchCriteria?.pagination?.orderBy,
+        },
+      };
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria?.body,
+          ePostTrackerSearchCriteria,
+          processNumber: "",
+          deliveryStatusList: {},
+          pagination: {
+            sortBy: "",
+            order: "",
+          },
+        },
+        config: {
+          ...requestCriteria?.config,
+        },
+      };
+    },
+  },
   SearchHearingsConfig: {
     customValidationCheck: (data) => {
       const { createdFrom, createdTo } = data;
@@ -358,6 +412,7 @@ export const UICustomizations = {
           criteria: {
             ...requestCriteria.body.criteria,
             ...filterList,
+            ...(filterList?.orderType ? { orderType: [filterList?.orderType] } : { orderType: [] }),
           },
           tenantId,
           pagination: {
@@ -368,19 +423,22 @@ export const UICustomizations = {
         config: {
           ...requestCriteria?.config,
           select: (data) => {
-            return { ...data, list: data.list?.filter((order) => order.taskType) };
+            return { ...data, list: data?.list?.filter((order) => order.taskType) };
           },
         },
       };
     },
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
+      const caseDetails = handleTaskDetails(row?.taskDetails);
       switch (key) {
         case "Case Name & ID":
-          return t(value);
+          return `${row?.caseName}, ${value}`;
         case "Status":
-          return t(value);
+          return t(value); // document status
         case "Issued":
           return `${formatDateDifference(value)} days ago`;
+        case "Delivery Channel":
+          return caseDetails?.deliveryChannels?.channelName || "N/A";
         default:
           return t("ES_COMMON_NA");
       }

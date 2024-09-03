@@ -569,94 +569,94 @@ export const TabSearchconfig = {
         },
       },
     },
-    {
-      label: "History",
-      type: "search",
-      apiDetails: {
-        serviceName: "/casemanagement/casemanager/case/v1/_history",
-        requestParam: {
-          tenantId: Digit.ULBService.getCurrentTenantId(),
-        },
-        requestBody: {
-          criteria: {
-            tenantId: Digit.ULBService.getCurrentTenantId(),
-          },
-        },
-        masterName: "commonUiConfig",
-        moduleName: "HistoryConfig",
-        minParametersForSearchForm: 0,
-        tableFormJsonPath: "requestParam",
-        filterFormJsonPath: "requestBody.Individual",
-        searchFormJsonPath: "requestBody.Individual",
-      },
-      sections: {
-        // search: {
-        //   uiConfig: {
-        //     formClassName: "custom-both-clear-search",
-        //     primaryLabel: "ES_COMMON_SEARCH",
-        //     secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
-        //     minReqFields: 0,
-        //     defaultValues: defaultSearchValues,
-        //     fields: [
-        //       // {
-        //       //   label: "Stage",
-        //       //   isMandatory: false,
-        //       //   key: "stage",
-        //       //   type: "dropdown",
-        //       //   populators: {
-        //       //     name: "stage",
-        //       //     optionsKey: "value",
-        //       //     mdmsConfig: {
-        //       //       masterName: "Stage",
-        //       //       moduleName: "case",
-        //       //       // localePrefix: "SUBMISSION_TYPE",
-        //       //     },
-        //       //   },
-        //       // },
-        //       {
-        //         label: "Owner",
-        //         isMandatory: false,
-        //         key: "owner",
-        //         type: "dropdown",
-        //         populators: {
-        //           name: "owner",
-        //         },
-        //       },
-        //     ],
-        //   },
-        //   show: false,
-        // },
-        searchResult: {
-          tenantId: Digit.ULBService.getCurrentTenantId(),
-          uiConfig: {
-            columns: [
-              {
-                label: "Instance",
-                jsonPath: "instance",
-                additionalCustomization: true,
-              },
-              {
-                label: "Date",
-                jsonPath: "date",
-                additionalCustomization: true,
-              },
-              // {
-              //   label: "Stage",
-              //   jsonPath: "stage",
-              // },
-              {
-                label: "Status",
-                jsonPath: "status",
-                additionalCustomization: true,
-              },
-            ],
-            enableColumnSort: true,
-            resultsJsonPath: "history",
-          },
-          show: true,
-        },
-      },
-    },
+    // {
+    //   label: "History",
+    //   type: "search",
+    //   apiDetails: {
+    //     serviceName: "/casemanagement/casemanager/case/v1/_history",
+    //     requestParam: {
+    //       tenantId: Digit.ULBService.getCurrentTenantId(),
+    //     },
+    //     requestBody: {
+    //       criteria: {
+    //         tenantId: Digit.ULBService.getCurrentTenantId(),
+    //       },
+    //     },
+    //     masterName: "commonUiConfig",
+    //     moduleName: "HistoryConfig",
+    //     minParametersForSearchForm: 0,
+    //     tableFormJsonPath: "requestParam",
+    //     filterFormJsonPath: "requestBody.Individual",
+    //     searchFormJsonPath: "requestBody.Individual",
+    //   },
+    //   sections: {
+    //     // search: {
+    //     //   uiConfig: {
+    //     //     formClassName: "custom-both-clear-search",
+    //     //     primaryLabel: "ES_COMMON_SEARCH",
+    //     //     secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
+    //     //     minReqFields: 0,
+    //     //     defaultValues: defaultSearchValues,
+    //     //     fields: [
+    //     //       // {
+    //     //       //   label: "Stage",
+    //     //       //   isMandatory: false,
+    //     //       //   key: "stage",
+    //     //       //   type: "dropdown",
+    //     //       //   populators: {
+    //     //       //     name: "stage",
+    //     //       //     optionsKey: "value",
+    //     //       //     mdmsConfig: {
+    //     //       //       masterName: "Stage",
+    //     //       //       moduleName: "case",
+    //     //       //       // localePrefix: "SUBMISSION_TYPE",
+    //     //       //     },
+    //     //       //   },
+    //     //       // },
+    //     //       {
+    //     //         label: "Owner",
+    //     //         isMandatory: false,
+    //     //         key: "owner",
+    //     //         type: "dropdown",
+    //     //         populators: {
+    //     //           name: "owner",
+    //     //         },
+    //     //       },
+    //     //     ],
+    //     //   },
+    //     //   show: false,
+    //     // },
+    //     searchResult: {
+    //       tenantId: Digit.ULBService.getCurrentTenantId(),
+    //       uiConfig: {
+    //         columns: [
+    //           {
+    //             label: "Instance",
+    //             jsonPath: "instance",
+    //             additionalCustomization: true,
+    //           },
+    //           {
+    //             label: "Date",
+    //             jsonPath: "date",
+    //             additionalCustomization: true,
+    //           },
+    //           // {
+    //           //   label: "Stage",
+    //           //   jsonPath: "stage",
+    //           // },
+    //           {
+    //             label: "Status",
+    //             jsonPath: "status",
+    //             additionalCustomization: true,
+    //           },
+    //         ],
+    //         enableColumnSort: true,
+    //         resultsJsonPath: "history",
+    //       },
+    //       show: true,
+    //     },
+    //   },
+    // },
     {
       label: "Parties",
       type: "search",

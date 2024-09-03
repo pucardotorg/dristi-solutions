@@ -4,6 +4,30 @@ const defaultSearchValues = {
   substage: "",
 };
 
+export const subStageOptions = [
+  "Filing",
+  "Cognizance",
+  "Inquiry",
+  "Appearance",
+  "Framing of charges",
+  "Evidence",
+  "Arguments",
+  "Judgment",
+  "Post-Judgement",
+];
+
+export const outcomesOptions = [
+  "Withdrawn",
+  "Settled",
+  "Transferred",
+  "Dismissed",
+  "Allowed",
+  "Partly allowed",
+  "Convicted",
+  "Partly convicted",
+  "Abated",
+];
+
 export const userTypeOptions = [
   {
     code: "LITIGANT",

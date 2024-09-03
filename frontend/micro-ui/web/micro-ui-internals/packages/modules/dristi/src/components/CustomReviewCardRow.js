@@ -340,6 +340,7 @@ const CustomReviewCardRow = ({
         );
       case "image":
         let FSOErrors = [];
+        let systemErrors = [];
         let valuesAvailable = [];
         if (typeof dataError === "object") {
           value?.forEach((val) => {
@@ -348,9 +349,17 @@ const CustomReviewCardRow = ({
             }
           });
         }
+        if (typeof dataError === "object") {
+          value?.forEach((val) => {
+            if (dataError?.[val]?.systemError) {
+              systemErrors.push(dataError?.[val]);
+            }
+          });
+        }
         bgclassname =
           isScrutiny && FSOErrors?.length > 0 ? (JSON.stringify(dataError) === JSON.stringify(prevDataError) ? "preverror" : "error") : "";
-        bgclassname = FSOErrors?.length > 0 && isCaseReAssigned ? "preverrorside" : bgclassname;
+        bgclassname =
+          FSOErrors?.length > 0 && isCaseReAssigned ? "preverrorside" : isScrutiny && systemErrors?.length > 0 ? "system-error-class" : bgclassname;
         if (isPrevScrutiny && !disableScrutiny) {
           showFlagIcon = prevDataError?.[type]?.FSOError;
         }
@@ -507,6 +516,39 @@ const CustomReviewCardRow = ({
                       <FlagIcon isError={true} />
                     )}
                     {`${error.fileName ? t(error.fileName) + " : " : ""}${error.FSOError}`}
+                  </div>
+                );
+              })}
+            {!(FSOErrors?.length > 0) &&
+              systemErrors?.length > 0 &&
+              isScrutiny &&
+              systemErrors.map((error, ind) => {
+                return (
+                  <div
+                    style={{
+                      width: "fit-content",
+                    }}
+                    className="scrutiny-error input"
+                    key={ind}
+                  >
+                    {bgclassname === "preverror" ? (
+                      <span style={{ color: "#4d83cf", fontWeight: 300 }}>{t("CS_PREVIOUS_ERROR")}</span>
+                    ) : (
+                      <h4
+                        style={{
+                          margin: "0px",
+                          fontFamily: "Roboto",
+                          fontSize: "14px",
+                          fontWeight: 500,
+                          lineHeight: "20px",
+                          textAlign: "left",
+                          color: "#9E400A",
+                        }}
+                      >
+                        Potential Error:
+                      </h4>
+                    )}
+                    {`${error.fileName ? t(error.fileName) + " : " : ""}${error.systemError}`}
                   </div>
                 );
               })}

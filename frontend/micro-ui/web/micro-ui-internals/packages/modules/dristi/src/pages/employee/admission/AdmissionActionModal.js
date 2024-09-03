@@ -11,6 +11,7 @@ import CustomCalendar from "../../../components/CustomCalendar";
 import { WhiteRightArrow } from "../../../icons/svgIndex";
 import { formatDateInMonth } from "../../../Utils";
 import { DRISTIService } from "../../../services";
+import ScheduleHearing from "./ScheduleHearingModal";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -56,7 +57,7 @@ function AdmissionActionModal({
   isCaseAdmitted = false,
   caseAdmittedSubmit = () => {},
   caseAdmitLoader,
-  scheduleHearing = false,
+  caseDetails,
 }) {
   const history = useHistory();
   const [showErrorToast, setShowErrorToast] = useState(false);
@@ -163,7 +164,7 @@ function AdmissionActionModal({
       .then((res) => {
         if (res?.criteria?.[0]?.responseList?.[0]?.id) {
           history.push(
-            `/${window?.contextPath}/employee/dristi/admission?filingNumber=${res?.criteria?.[0]?.responseList?.[0]?.filingNumber}caseId=${res?.criteria?.[0]?.responseList?.[0]?.id}`
+            `/${window?.contextPath}/employee/dristi/admission?filingNumber=${res?.criteria?.[0]?.responseList?.[0]?.filingNumber}&caseId=${res?.criteria?.[0]?.responseList?.[0]?.id}`
           );
         } else {
           history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
@@ -304,7 +305,8 @@ function AdmissionActionModal({
           }}
           actionSaveOnSubmit={() => {
             if (submitModalInfo?.nextButtonText === "SCHEDULE_NEXT_HEARING") {
-              handleScheduleNextHearing();
+              // handleScheduleNextHearing();
+              setModalInfo({ page: 3, type: "schedule" });
             } else {
               handleNextCase();
             }
@@ -314,6 +316,28 @@ function AdmissionActionModal({
         >
           <CustomSubmitModal submitModalInfo={submitModalInfo} t={t} />
         </Modal>
+      )}
+      {modalInfo?.page == 3 && modalInfo?.type === "schedule" && (
+        <ScheduleHearing
+          config={stepItems[2]}
+          t={t}
+          setShowModal={setShowModal}
+          setModalInfo={setModalInfo}
+          modalInfo={modalInfo}
+          selectedChip={selectedChip}
+          setSelectedChip={setSelectedChip}
+          showCustomDateModal={showCustomDateModal}
+          setPurposeValue={setPurposeValue}
+          scheduleHearingParams={scheduleHearingParams}
+          setScheduleHearingParam={setScheduleHearingParam}
+          submitModalInfo={submitModalInfo}
+          handleClickDate={handleClickDate}
+          disabled={disabled}
+          isCaseAdmitted={isCaseAdmitted}
+          isSubmitBarDisabled={isGenerateOrderDisabled}
+          caseAdmittedSubmit={caseAdmittedSubmit}
+          oldCaseDetails={caseDetails}
+        />
       )}
     </React.Fragment>
   );

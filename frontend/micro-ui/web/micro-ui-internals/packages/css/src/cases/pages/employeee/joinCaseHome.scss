@@ -34,11 +34,6 @@
       max-width: 100%;
     }
   }
-  .horizontal-line {
-    border-bottom: 1px #0000001a solid;
-    width: 100%;
-    margin: 0px;
-  }
   h3.sure-text {
     margin: 0px;
     font-family: Roboto;
@@ -48,6 +43,12 @@
     text-align: left;
     color: #0b0c0c;
   }
+}
+
+.horizontal-line {
+  border-bottom: 1px #0000001a solid;
+  width: 100%;
+  margin: 0px;
 }
 
 .case-number-input {
