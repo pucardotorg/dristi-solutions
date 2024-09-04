@@ -20,15 +20,15 @@ const CloseBtn = (props) => {
   );
 };
 
-function OrderSignatureModal(
+function OrderSignatureModal({
   t,
   order,
   handleIssueOrder,
   handleGoBackSignatureModal,
   saveOnsubmitLabel,
   setSignedDocumentUploadID,
-  orderPdfFileStoreID
-) {
+  orderPdfFileStoreID,
+}) {
   const [isSigned, setIsSigned] = useState(false);
   const { handleEsign, checkSignStatus } = useESign();
   const fileStoreIdESign = orderPdfFileStoreID || getFilestoreId();

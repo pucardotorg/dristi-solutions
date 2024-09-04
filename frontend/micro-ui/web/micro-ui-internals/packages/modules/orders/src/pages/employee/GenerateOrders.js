@@ -726,7 +726,7 @@ const GenerateOrders = () => {
     }
     if (orderType === "SUMMONS") {
       if (hearingDetails?.startTime) {
-        updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
+        updatedFormdata.date = formatDate(new Date(hearingDetails?.startTime));
       }
       if (currentOrder?.additionalDetails?.selectedParty && currentOrder?.additionalDetails?.selectedParty?.uuid) {
         updatedFormdata.SummonsOrder = {
@@ -1565,12 +1565,14 @@ const GenerateOrders = () => {
         ? [{}]
         : currentOrder?.additionalDetails?.formdata?.namesOfPartiesRequired?.filter((data) => data?.partyType === "respondent");
       const promiseList = summonsArray?.map((data) =>
-        createOrder(
+        ordersService.createOrder(
           {
-            ...orderbody,
-            additionalDetails: {
-              ...orderbody?.additionalDetails,
-              selectedParty: data,
+            order: {
+              ...orderbody,
+              additionalDetails: {
+                ...orderbody?.additionalDetails,
+                selectedParty: data,
+              },
             },
           },
           { tenantId }

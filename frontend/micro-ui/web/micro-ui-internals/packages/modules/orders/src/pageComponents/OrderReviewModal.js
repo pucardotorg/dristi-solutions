@@ -12,7 +12,7 @@ const OrderPreviewOrderTypeMap = {
   SUMMONS: "summons-issue",
   INITIATING_RESCHEDULING_OF_HEARING_DATE: "accept-reschedule-request",
   OTHERS: "order-generic",
-  REFERRAL_CASE_TO_ADR: "adr-case-referral",
+  REFERRAL_CASE_TO_ADR: "order-generic",
   EXTENSION_OF_DOCUMENT_SUBMISSION_DATE: "order-generic",
   SCHEDULING_NEXT_HEARING: "reschedule-request-judge",
   RESCHEDULE_OF_HEARING_DATE: "new-hearing-date-after-rescheduling",
@@ -28,6 +28,11 @@ const OrderPreviewOrderTypeMap = {
   REJECT_VOLUNTARY_SUBMISSIONS: "order-reject-voluntary",
   JUDGEMENT: "order-generic",
   SECTION_202_CRPC: "order-generic",
+};
+
+const onDocumentUpload = async (fileData, filename) => {
+  const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", fileData, Digit.ULBService.getCurrentTenantId());
+  return { file: fileUploadRes?.data, fileType: fileData.type, filename };
 };
 
 function OrderReviewModal({ setShowReviewModal, t, order, setShowsignatureModal, showActions = true, setOrderPdfFileStoreID }) {
@@ -85,11 +90,6 @@ function OrderReviewModal({ setShowReviewModal, t, order, setShowsignatureModal,
   };
 
   useEffect(() => {
-    const onDocumentUpload = async (fileData, filename) => {
-      const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", fileData, tenantId);
-      return { file: fileUploadRes?.data, fileType: fileData.type, filename };
-    };
-
     if (order?.filesData) {
       const numberOfFiles = order?.filesData.length;
       let finalDocumentData = [];
