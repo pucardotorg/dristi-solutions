@@ -5,13 +5,13 @@ import { Urls } from "../hooks/services/Urls";
 import { FileUploadIcon } from "../../../dristi/src/icons/svgIndex";
 import { getFilestoreId } from "@egovernments/digit-ui-module-dristi/src/Utils/fileStoreUtil";
 
-function SubmissionSignatureModal({ t, handleProceed, handleCloseSignaturePopup, setSignedDocumentUploadID }) {
+function SubmissionSignatureModal({ t, handleProceed, handleCloseSignaturePopup, setSignedDocumentUploadID, applicationPdfFileStoreId }) {
   const [isSigned, setIsSigned] = useState(false);
   const { handleEsign, checkSignStatus } = Digit.Hooks.orders.useESign();
-  const fileStoreIdESign = getFilestoreId();
+  const fileStoreIdESign = applicationPdfFileStoreId || getFilestoreId();
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const [formData, setFormData] = useState({}); // storing the file upload data
-  const [fileStoreId, setFileStoreId] = useState("c162c182-103f-463e-99b6-18654ed7a5b1"); // have to set the uploaded fileStoreID
+  const [fileStoreId, setFileStoreId] = useState(applicationPdfFileStoreId || "c162c182-103f-463e-99b6-18654ed7a5b1"); // have to set the uploaded fileStoreID
   const [pageModule, setPageModule] = useState("ci");
   const [openUploadSignatureModal, setOpenUploadSignatureModal] = useState(false);
 
@@ -32,7 +32,7 @@ function SubmissionSignatureModal({ t, handleProceed, handleCloseSignaturePopup,
             uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
             maxFileSize: 5,
             maxFileErrorMessage: "CS_FILE_LIMIT_5_MB",
-            fileTypes: ["JPG", "PNG", "JPEG"],
+            fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
             isMultipleUpload: false,
           },
         ],

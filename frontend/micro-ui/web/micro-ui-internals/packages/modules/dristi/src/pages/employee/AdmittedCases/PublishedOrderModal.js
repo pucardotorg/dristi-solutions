@@ -21,6 +21,8 @@ function PublishedOrderModal({ t, order, handleDownload, handleRequestLabel, han
     );
   };
 
+  const signedOrder = useMemo(() => order?.documents?.filter((item) => item?.documentType == "SIGNED")[0], [order]);
+
   useEffect(() => {
     const onDocumentUpload = async (fileData, filename) => {
       const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", fileData, tenantId);
@@ -62,11 +64,11 @@ function PublishedOrderModal({ t, order, handleDownload, handleRequestLabel, han
           maxWidth: "100%",
         }}
       >
-        {fileStoreId ? (
+        {signedOrder ? (
           <DocViewerWrapper
             docWidth={"calc(80vw* 62/ 100)"}
             docHeight={"60vh"}
-            fileStoreId={fileStoreId}
+            fileStoreId={signedOrder?.fileStore}
             tenantId={tenantId}
             displayFilename={fileName}
           />
@@ -95,14 +97,14 @@ function PublishedOrderModal({ t, order, handleDownload, handleRequestLabel, han
         </div>
         {showSubmissionButtons && (
           <div style={{ display: "flex", width: "50%", gap: "20px", justifyContent: "end" }}>
-            {/* <Button
+            <Button
               variation="secondary"
               onButtonClick={() => {
                 handleRequestLabel(order.orderNumber);
               }}
               className="primary-label-btn"
               label={t("EXTENSION_REQUEST_LABEL")}
-            ></Button> */}
+            />
             <SubmitBar
               variation="primary"
               onSubmit={() => {
