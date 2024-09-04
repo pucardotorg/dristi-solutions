@@ -692,7 +692,7 @@ const GenerateOrders = () => {
       updatedFormdata.caseNumber = caseDetails?.courtCaseNumber;
       updatedFormdata.nameOfCourt = courtRooms.find((room) => room.code === caseDetails?.courtId)?.name;
       updatedFormdata.addressRespondant = generateAddress(
-        caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.addressDetails?.map((data) => data?.addressDetails)[0]
+        caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.addressDetails?.map((data) => data?.addressDetails)?.[0] || {}
       );
       updatedFormdata.dateChequeReturnMemo = formatDate(new Date(caseDetails?.caseDetails?.chequeDetails?.formdata?.[0]?.data?.depositDate));
       updatedFormdata.dateFiling = formatDate(new Date(caseDetails?.filingDate));
