@@ -145,6 +145,7 @@ const GenerateOrders = () => {
   const [signedDoucumentUploadedID, setSignedDocumentUploadID] = useState("");
   const [newHearingNumber, setNewHearingNumber] = useState(null);
   const [createdSummon, setCreatedSummon] = useState(null);
+  const [orderPdfFileStoreID, setOrderPdfFileStoreID] = useState(null);
   const history = useHistory();
   const todayDate = new Date().getTime();
   const setFormErrors = useRef(null);
