@@ -148,13 +148,13 @@ async function applicationRescheduleRequest(req, res, qrCode) {
     const onBehalfOfLitigent = courtCase?.litigants?.find(
       (item) => item.additionalDetails.uuid === onBehalfOfuuid
     );
-    const partyType = onBehalfOfLitigent?.partyType
-      ?.toLowerCase()
-      ?.includes("complainant")
-      ? "COMPLAINANT"
-      : !isCitizen
-      ? "COURT"
-      : "ACCUSED";
+    let partyType = "COURT";
+    if (onBehalfOfLitigent?.partyType?.toLowerCase()?.includes("complainant")) {
+      partyType = "COMPLAINANT";
+    }
+    if (onBehalfOfLitigent?.partyType?.toLowerCase()?.includes("respondent")) {
+      partyType = "ACCUSED";
+    }
 
     // Handle QR code if enabled
     let base64Url = "";
