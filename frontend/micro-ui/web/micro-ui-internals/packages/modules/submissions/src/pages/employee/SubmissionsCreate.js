@@ -779,6 +779,7 @@ const SubmissionsCreate = ({ path }) => {
           handleProceed={handleAddSignature}
           handleCloseSignaturePopup={handleCloseSignaturePopup}
           setSignedDocumentUploadID={setSignedDocumentUploadID}
+          applicationPdfFileStoreId={applicationPdfFileStoreId}
         />
       )}
       {showPaymentModal && (
