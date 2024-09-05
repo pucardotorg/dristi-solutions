@@ -235,7 +235,7 @@ async function applicationGeneric(req, res, qrCode) {
       application?.applicationDetails?.additionalComments || "";
     const applicationName =
       application?.applicationDetails?.applicationTitle ||
-      applicationNameMap[application?.aas] ||
+      applicationNameMap[application?.applicationType] ||
       "General Application";
     const data = {
       Data: [
