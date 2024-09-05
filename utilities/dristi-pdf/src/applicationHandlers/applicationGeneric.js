@@ -7,6 +7,7 @@ const {
   search_sunbirdrc_credential_service,
   search_application,
   create_pdf,
+  search_advocate,
 } = require("../api");
 const { renderError } = require("../utils/renderError");
 const { getAdvocates } = require("./getAdvocates");
@@ -123,6 +124,22 @@ async function applicationGeneric(req, res, qrCode) {
     if (!application) {
       return renderError(res, "Application not found", 404);
     }
+
+    let barRegistrationNumber = "";
+    const advocateIndividualId =
+      application?.applicationDetails?.advocateIndividualId;
+    if (advocateIndividualId) {
+      const resAdvocate = await handleApiCall(
+        () => search_advocate(tenantId, advocateIndividualId, requestInfo),
+        "Failed to query Advocate Details"
+      );
+      const advocateData = resAdvocate?.data?.advocates?.[0];
+      const advocateDetails = advocateData?.responseList?.find(
+        (item) => item.isActive === true
+      );
+      barRegistrationNumber = advocateDetails?.barRegistrationNumber || "";
+    }
+
     const onBehalfOfuuid = application?.onBehalfOf?.[0];
     const advocate = allAdvocates?.[onBehalfOfuuid]?.[0]?.additionalDetails
       ?.advocateName
@@ -242,7 +259,7 @@ async function applicationGeneric(req, res, qrCode) {
           prayerOptional: " asdasd ",
           advocateSignature: "Advocate Signature",
           advocateName: advocateName,
-          barRegistrationNumber: "",
+          barRegistrationNumber,
           documentSubmissionName: "documents",
           documentId: "documents",
           day: day + ordinalSuffix,

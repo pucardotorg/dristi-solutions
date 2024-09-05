@@ -201,6 +201,7 @@ module.exports = {
     order: process.env.DRISTI_ORDER_HOST || "http://localhost:8092",
     hrms: process.env.EGOV_HRMS_HOST || "http://localhost:8082",
     individual: process.env.EGOV_INDIVIDUAL_HOST || "http://localhost:8085",
+    advocate: process.env.DRISTI_ADVOCATE_HOST || "http://localhost:8086",
     hearing: process.env.DRISTI_HEARING_HOST || "http://localhost:8093",
     sunbirdrc_credential_service:
       process.env.EGOV_SUNBIRDRC_CREDENTIAL_HOST || "http://localhost:8095",
@@ -219,6 +220,7 @@ module.exports = {
     application_search: "/application/v1/search",
     hrms_search: "/egov-hrms/employees/_search",
     individual_search: "/individual/v1/_search",
+    advocate_search: "/advocate/advocate/v1/_search",
     mdms_search: "/egov-mdms-service/v2/_search",
     sunbirdrc_credential_service_search:
       "/sunbirdrc-credential-service/qrcode/_get",
