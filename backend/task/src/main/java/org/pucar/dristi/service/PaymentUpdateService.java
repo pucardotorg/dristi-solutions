@@ -2,7 +2,9 @@ package org.pucar.dristi.service;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
+import net.minidev.json.JSONArray;
 import org.egov.common.contract.models.RequestInfoWrapper;
 import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
@@ -12,6 +14,7 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.repository.TaskRepository;
+import org.pucar.dristi.util.MdmsUtil;
 import org.pucar.dristi.util.WorkflowUtil;
 import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,8 +24,10 @@ import org.springframework.util.CollectionUtils;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -31,24 +36,22 @@ import static org.pucar.dristi.config.ServiceConstants.*;
 public class PaymentUpdateService {
 
     private final WorkflowUtil workflowUtil;
-
-    private ObjectMapper mapper;
-
+    private final ObjectMapper mapper;
     private final TaskRepository repository;
-
-    private Producer producer;
-
-    private Configuration config;
+    private final Producer producer;
+    private final Configuration config;
+    private final MdmsUtil mdmsUtil;
 
     private ServiceRequestRepository serviceRequestRepository;
 
     @Autowired
-    public PaymentUpdateService(WorkflowUtil workflowUtil, ObjectMapper mapper, TaskRepository repository, Producer producer, Configuration config, ServiceRequestRepository serviceRequestRepository) {
+    public PaymentUpdateService(WorkflowUtil workflowUtil, ObjectMapper mapper, TaskRepository repository, Producer producer, Configuration config, MdmsUtil mdmsUtil, ServiceRequestRepository serviceRequestRepository) {
         this.workflowUtil = workflowUtil;
         this.mapper = mapper;
         this.repository = repository;
         this.producer = producer;
         this.config = config;
+        this.mdmsUtil = mdmsUtil;
         this.serviceRequestRepository = serviceRequestRepository;
     }
 
@@ -81,40 +84,56 @@ public class PaymentUpdateService {
             if (!bill.getStatus().equals(Bill.StatusEnum.PAID)) {
                 return;
             }
+            String consumerCode = bill.getConsumerCode();
+            String businessService = bill.getBusinessService();
+            String[] consumerCodeSplitArray = consumerCode.split("_", 2);
+            String taskNumber = consumerCodeSplitArray[0];
+            String suffix = consumerCodeSplitArray[1];
 
-            String taskNumber = bill.getConsumerCode();
-            String suffixToCheck = null;
-            String suffixToReplace = null;
+            JSONArray paymentType = mdmsUtil.fetchMdmsData(requestInfo, tenantId, PAYMENT_MODULE_NAME, List.of(PAYMENT_TYPE_MASTER_NAME))
+                    .get(PAYMENT_MODULE_NAME).get(PAYMENT_TYPE_MASTER_NAME);
 
+            String filterString = String.format(FILTER_PAYMENT_TYPE, suffix, businessService);
 
-            if (taskNumber.endsWith(config.getSummonsEpostFeesSufix())) {
-                suffixToCheck = config.getSummonsEpostFeesSufix();
-                suffixToReplace = config.getSummonsCourtFeesSufix();
-            } else if (taskNumber.endsWith(config.getSummonsCourtFeesSufix())) {
-                suffixToCheck = config.getSummonsCourtFeesSufix();
-                suffixToReplace = config.getSummonsEpostFeesSufix();
-            }
+            JSONArray paymentMaster = JsonPath.read(paymentType, filterString);
+            List<String> deliveryChannels = JsonPath.read(paymentMaster, "$..deliveryChannel");
 
-            if (suffixToCheck != null) {
-                String taskNumberWithoutSuffix = removeSuffix(taskNumber, suffixToCheck);
-                String newTaskNumber = taskNumberWithoutSuffix + suffixToReplace;
+            //todo:handle error
+            String filterStringDeliveryChannel = String.format(FILTER_PAYMENT_TYPE_DELIVERY_CHANNEL, deliveryChannels.get(0), businessService);
 
-                BillResponse billResponse = getBill(requestInfo, bill.getTenantId(), newTaskNumber);
-                Bill updatedBill = billResponse.getBill().get(0);
+            JSONArray paymentMasterWithDeliveryChannel = JsonPath.read(paymentType, filterStringDeliveryChannel);
 
-                if (updatedBill.getStatus().equals(Bill.StatusEnum.PAID)) {
-                    updatePaymentSuccessWorkflow(requestInfo, tenantId, taskNumberWithoutSuffix);
+            int numberOfDeliveryChannels = paymentMasterWithDeliveryChannel.size();
+
+            if (numberOfDeliveryChannels > 1) {
+
+                List<String> suffixes = JsonPath.read(paymentMasterWithDeliveryChannel, "$..suffix");
+                Set<String> consumerCodeSet = new HashSet<>();
+                for (String element : suffixes) {
+                    if (!element.equalsIgnoreCase(suffix)) {
+                        String newConsumerCode = taskNumber + "_" + element;
+                        consumerCodeSet.add(newConsumerCode);
+                    }
+                }
+                BillResponse billResponse = getBill(requestInfo, bill.getTenantId(), consumerCodeSet);
+                List<Bill> partsBill = billResponse.getBill();
+                boolean canUpdateWorkflow = true;
+                for (Bill element : partsBill) {
+                    if (!element.getStatus().equals(Bill.StatusEnum.PAID)) {
+                        canUpdateWorkflow = false;
+                        break;
+                    }
+                }
+                if (canUpdateWorkflow) {
+                    updatePaymentSuccessWorkflow(requestInfo, tenantId, taskNumber);
                 }
             } else {
                 updatePaymentSuccessWorkflow(requestInfo, tenantId, taskNumber);
             }
+
         } catch (Exception e) {
             log.error("Error updating workflow for task payment: {}", e.getMessage(), e);
         }
-    }
-    private String removeSuffix(String taskNumber, String suffix) {
-        return taskNumber.substring(0, taskNumber.length() - suffix.length());
-
     }
 
     private void updatePaymentSuccessWorkflow(RequestInfo requestInfo, String tenantId, String taskNumber) {
@@ -122,7 +141,7 @@ public class PaymentUpdateService {
                 .taskNumber(taskNumber)
                 .build();
 
-        List<Task> tasks = repository.getTasks(criteria ,null);
+        List<Task> tasks = repository.getTasks(criteria, null);
 
         if (CollectionUtils.isEmpty(tasks)) {
             throw new CustomException("INVALID_RECEIPT", "No Tasks found for the consumerCode " + criteria.getTaskNumber());
@@ -150,8 +169,8 @@ public class PaymentUpdateService {
         }
     }
 
-    public BillResponse getBill(RequestInfo requestInfo, String tenantId, String taskNumber) {
-        String uri = buildSearchBillURI(tenantId, taskNumber, config.getTaskBusinessService());
+    public BillResponse getBill(RequestInfo requestInfo, String tenantId, Set<String> consumerCodes) {
+        String uri = buildSearchBillURI(tenantId, consumerCodes, config.getTaskBusinessService());
 
         org.egov.common.contract.models.RequestInfoWrapper requestInfoWrapper = RequestInfoWrapper.builder().requestInfo(requestInfo).build();
 
@@ -160,17 +179,20 @@ public class PaymentUpdateService {
         return mapper.convertValue(response, BillResponse.class);
     }
 
-    private String buildSearchBillURI(String tenantId, String applicationNumber, String businessService) {
+    private String buildSearchBillURI(String tenantId, Set<String> consumerCode, String businessService) {
         try {
             String encodedTenantId = URLEncoder.encode(tenantId, StandardCharsets.UTF_8);
-            String encodedApplicationNumber = URLEncoder.encode(applicationNumber, StandardCharsets.UTF_8);
             String encodedBusinessService = URLEncoder.encode(businessService, StandardCharsets.UTF_8);
+
+            // Convert Set to String
+            String consumerCodeStr = String.join(",", consumerCode);
+            String encodedConsumerCode = URLEncoder.encode(consumerCodeStr, StandardCharsets.UTF_8);
 
             return URI.create(String.format("%s%s?tenantId=%s&consumerCode=%s&service=%s",
                     config.getBillingServiceHost(),
                     config.getSearchBillEndpoint(),
                     encodedTenantId,
-                    encodedApplicationNumber,
+                    encodedConsumerCode,
                     encodedBusinessService)).toString();
         } catch (Exception e) {
             log.error("Error occurred when creating bill uri with search params", e);
