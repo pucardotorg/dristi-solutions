@@ -86,26 +86,6 @@ const SubmissionsCreate = ({ path }) => {
   const userTypeCitizen = useMemo(() => individualData?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value, [
     individualData?.Individual,
   ]);
-  const { data: advocateData, isLoading: isSearchLoading } = window?.Digit.Hooks.dristi.useGetAdvocateClerk(
-    {
-      criteria: [{ individualId }],
-      tenantId,
-    },
-    { tenantId },
-    `Advocate-Clerk-data${individualId}`,
-    Boolean(isUserLoggedIn && individualId && userTypeCitizen === "ADVOCATE"),
-    "/advocate/advocate/v1/_search"
-  );
-
-  const userTypeDetail = useMemo(() => {
-    return userTypeOptions.find((item) => item.code === userTypeCitizen) || {};
-  }, [userTypeCitizen]);
-
-  const advocateDetails = useMemo(() => {
-    return advocateData?.[`${userTypeDetail?.apiDetails?.requestKey}s`]?.[0]?.responseList?.filter((item) => item?.status === "ACTIVE")?.[0] || {};
-  }, [advocateData, userTypeDetail?.apiDetails?.requestKey, userType]);
-
-  const advocateId = useMemo(() => advocateDetails?.id || "", [advocateDetails]);
 
   const submissionType = useMemo(() => {
     return formdata?.submissionType?.code;
@@ -511,7 +491,9 @@ const SubmissionsCreate = ({ path }) => {
       } catch (error) {
         console.log(error);
       }
-      applicationSchema["advocateId"] = advocateId;
+      if (userTypeCitizen === "ADVOCATE") {
+        applicationSchema["advocateIndividualId"] = individualId;
+      }
 
       const applicationReqBody = {
         tenantId,
