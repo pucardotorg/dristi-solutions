@@ -71,6 +71,7 @@ function PublishedOrderModal({ t, order, handleDownload, handleRequestLabel, han
             fileStoreId={signedOrder?.fileStore}
             tenantId={tenantId}
             displayFilename={fileName}
+            showDownloadOption={false}
           />
         ) : (
           <h2>{t("PREVIEW_DOC_NOT_AVAILABLE")}</h2>
@@ -92,7 +93,12 @@ function PublishedOrderModal({ t, order, handleDownload, handleRequestLabel, han
     >
       {showDocument}
       <div style={{ marginTop: "65%", display: "flex", width: "100%", justifyContent: "space-between", alignItems: "center" }}>
-        <div onClick={handleDownload} style={{ fontWeight: 700, fontSize: "16px", lineHeight: "18.75px", color: "#007E7E", cursor: "pointer" }}>
+        <div
+          onClick={() => {
+            handleDownload(signedOrder?.fileStore);
+          }}
+          style={{ fontWeight: 700, fontSize: "16px", lineHeight: "18.75px", color: "#007E7E", cursor: "pointer" }}
+        >
           {t("DOWNLOAD_ORDER_LINK")}
         </div>
         {showSubmissionButtons && (
