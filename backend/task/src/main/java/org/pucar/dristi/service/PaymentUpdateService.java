@@ -103,9 +103,9 @@ public class PaymentUpdateService {
 
             JSONArray paymentMasterWithDeliveryChannel = JsonPath.read(paymentType, filterStringDeliveryChannel);
 
-            int numberOfDeliveryChannels = paymentMasterWithDeliveryChannel.size();
+            int paymentCountForDeliveryChannel = paymentMasterWithDeliveryChannel.size();
 
-            if (numberOfDeliveryChannels > 1) {
+            if (paymentCountForDeliveryChannel > 1) {
 
                 List<String> suffixes = JsonPath.read(paymentMasterWithDeliveryChannel, "$..suffix");
                 Set<String> consumerCodeSet = new HashSet<>();
