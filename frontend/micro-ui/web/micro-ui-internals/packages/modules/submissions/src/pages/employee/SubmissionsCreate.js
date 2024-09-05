@@ -29,6 +29,7 @@ import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../../../d
 import { Urls } from "../../hooks/services/Urls";
 import { getAdvocates } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/EfilingValidationUtils";
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
+import { userTypeOptions } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/registration/config";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 
@@ -58,6 +59,8 @@ const SubmissionsCreate = ({ path }) => {
   const [applicationPdfFileStoreId, setApplicationPdfFileStoreId] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState();
   const scenario = "applicationSubmission";
+  const token = window.localStorage.getItem("token");
+  const isUserLoggedIn = Boolean(token);
   const hasSubmissionRole = useMemo(
     () =>
       ["SUBMISSION_CREATOR", "SUBMISSION_RESPONDER"].reduce((result, current) => {
@@ -80,6 +83,29 @@ const SubmissionsCreate = ({ path }) => {
     userInfo?.uuid
   );
   const individualId = useMemo(() => individualData?.Individual?.[0]?.individualId, [individualData]);
+  const userTypeCitizen = useMemo(() => individualData?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value, [
+    individualData?.Individual,
+  ]);
+  const { data: advocateData, isLoading: isSearchLoading } = window?.Digit.Hooks.dristi.useGetAdvocateClerk(
+    {
+      criteria: [{ individualId }],
+      tenantId,
+    },
+    { tenantId },
+    `Advocate-Clerk-data${individualId}`,
+    Boolean(isUserLoggedIn && individualId && userTypeCitizen === "ADVOCATE"),
+    "/advocate/advocate/v1/_search"
+  );
+
+  const userTypeDetail = useMemo(() => {
+    return userTypeOptions.find((item) => item.code === userTypeCitizen) || {};
+  }, [userTypeCitizen]);
+
+  const advocateDetails = useMemo(() => {
+    return advocateData?.[`${userTypeDetail?.apiDetails?.requestKey}s`]?.[0]?.responseList?.filter((item) => item?.status === "ACTIVE")?.[0] || {};
+  }, [advocateData, userTypeDetail?.apiDetails?.requestKey, userType]);
+
+  const advocateId = useMemo(() => advocateDetails?.id || "", [advocateDetails]);
 
   const submissionType = useMemo(() => {
     return formdata?.submissionType?.code;
@@ -485,6 +511,7 @@ const SubmissionsCreate = ({ path }) => {
       } catch (error) {
         console.log(error);
       }
+      applicationSchema["advocateId"] = advocateId;
 
       const applicationReqBody = {
         tenantId,
