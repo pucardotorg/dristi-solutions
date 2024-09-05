@@ -29,6 +29,7 @@ import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../../../d
 import { Urls } from "../../hooks/services/Urls";
 import { getAdvocates } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/EfilingValidationUtils";
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
+import { getSuffixByBusinessCode, getTaxPeriodByBusinessService } from "../../utils";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 
@@ -79,6 +80,28 @@ const SubmissionsCreate = ({ path }) => {
     userInfo?.uuid
   );
   const individualId = useMemo(() => individualData?.Individual?.[0]?.individualId, [individualData]);
+
+  const { data: paymentTypeData, isLoading: isPaymentTypeLoading } = Digit.Hooks.useCustomMDMS(
+    Digit.ULBService.getStateId(),
+    "payment",
+    [{ name: "paymentType" }],
+    {
+      select: (data) => {
+        return data?.payment?.paymentType || [];
+      },
+    }
+  );
+
+  const { data: taxPeriodData, isLoading: taxPeriodLoading } = Digit.Hooks.useCustomMDMS(
+    Digit.ULBService.getStateId(),
+    "BillingService",
+    [{ name: "TaxPeriod" }],
+    {
+      select: (data) => {
+        return data?.BillingService?.TaxPeriod || [];
+      },
+    }
+  );
 
   const submissionType = useMemo(() => {
     return formdata?.submissionType?.code;
@@ -671,16 +694,18 @@ const SubmissionsCreate = ({ path }) => {
 
   const handleMakePayment = async (totalAmount) => {
     try {
+      const suffix = getSuffixByBusinessCode(paymentTypeData, entityType);
       if (billResponse?.Bill?.length === 0) {
+        const taxPeriod = getTaxPeriodByBusinessService(taxPeriodData, "case-default");
         await DRISTIService.createDemand({
           Demands: [
             {
               tenantId,
-              consumerCode: applicationDetails?.applicationNumber,
+              consumerCode: applicationDetails?.applicationNumber + `_${suffix}`,
               consumerType: entityType,
               businessService: entityType,
-              taxPeriodFrom: Date.now().toString(),
-              taxPeriodTo: Date.now().toString(),
+              taxPeriodFrom: taxPeriod?.fromDate,
+              taxPeriodTo: taxPeriod?.toDate,
               demandDetails: [
                 {
                   taxHeadMasterCode: taxHeadMasterCode,
@@ -692,7 +717,7 @@ const SubmissionsCreate = ({ path }) => {
           ],
         });
       }
-      const bill = await fetchBill(applicationDetails?.applicationNumber, tenantId, entityType);
+      const bill = await fetchBill(applicationDetails?.applicationNumber + `_${suffix}`, tenantId, entityType);
       if (bill?.Bill?.length) {
         const billPaymentStatus = await openPaymentPortal(bill);
         setPaymentStatus(billPaymentStatus);
