@@ -696,7 +696,7 @@ const SubmissionsCreate = ({ path }) => {
     try {
       const suffix = getSuffixByBusinessCode(paymentTypeData, entityType);
       if (billResponse?.Bill?.length === 0) {
-        const taxPeriod = getTaxPeriodByBusinessService(taxPeriodData, "case-default");
+        const taxPeriod = getTaxPeriodByBusinessService(taxPeriodData, entityType);
         await DRISTIService.createDemand({
           Demands: [
             {
