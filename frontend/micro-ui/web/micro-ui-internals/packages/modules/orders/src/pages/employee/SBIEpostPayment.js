@@ -178,7 +178,7 @@ const SBIEpostPayment = () => {
         const inputDataField = document.createElement("input");
         inputDataField.type = "hidden";
         inputDataField.name = "EncryptTrans";
-        inputDataField.value = `<%=${encryptedString}%>`;
+        inputDataField.value = { encryptedString };
         form.appendChild(inputDataField);
 
         const inputHeadersField = document.createElement("input");
@@ -186,7 +186,7 @@ const SBIEpostPayment = () => {
         inputHeadersField.name = "merchIdVal";
         inputHeadersField.value = merchantId;
         form.appendChild(inputHeadersField);
-
+        console.log(form, "ll");
         popup.document.body.appendChild(form);
         form.submit();
         setPaymentLoader(true);
