@@ -243,7 +243,7 @@ export const UICustomizations = {
           return { text: text || "" };
         },
       },
-      bailDocuments: {
+      applicationDocuments: {
         formToSchema: (obj) => {
           return (
             obj?.submissionDocuments?.map((item) => ({

@@ -449,7 +449,7 @@ const SubmissionsCreate = ({ path }) => {
       if (formdata?.submissionDocuments?.documents?.length > 0) {
         documentsList = [...documentsList, ...formdata?.submissionDocuments?.documents];
       }
-      const bailDocuments =
+      const applicationDocuments =
         formdata?.additionalDetails?.submissionDocuments?.submissionDocuments?.map((item) => ({
           fileType: item?.document?.documentType,
           fileStore: item?.document?.fileStore,
@@ -459,7 +459,7 @@ const SubmissionsCreate = ({ path }) => {
       let documents = [];
       let file = null;
       let evidenceReqBody = {};
-      const uploadedDocumentList = [...(documentres || []), ...bailDocuments];
+      const uploadedDocumentList = [...(documentres || []), ...applicationDocuments];
       uploadedDocumentList.forEach((res) => {
         file = {
           documentType: res?.fileType,
