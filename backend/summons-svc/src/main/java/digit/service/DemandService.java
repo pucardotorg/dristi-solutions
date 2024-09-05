@@ -1,5 +1,6 @@
 package digit.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.config.Configuration;
 import digit.repository.ServiceRequestRepository;
@@ -14,6 +15,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import com.jayway.jsonpath.JsonPath;
 
 import java.math.BigDecimal;
 import java.net.URI;
@@ -164,10 +166,11 @@ public class DemandService {
         List<Demand> demandList = new ArrayList<>();
         String channelName = ChannelName.fromString(task.getTaskDetails().getDeliveryChannel().getChannelName()).name();
         String taskNumber = task.getTaskNumber();
+        Map<String, String> paymentTypeData = getPaymentType(mdmsData,channelName);
         for (DemandDetail detail : demandDetailList) {
             String taxHeadMasterCode = detail.getTaxHeadMasterCode();
             String paymentType = masterCodePayemntTyprMap.get(taxHeadMasterCode);
-            String paymentTypeSuffix = getPaymentType(mdmsData,paymentType,channelName);
+            String paymentTypeSuffix = paymentTypeData.get(paymentType);
             String consumerCode = taskNumber + "_" + paymentTypeSuffix;
             demandList.add(createDemandObject(Collections.singletonList(detail), tenantId, consumerCode));
         }
@@ -201,15 +204,22 @@ public class DemandService {
         }
         return Collections.emptyMap();
     }
-    private String getPaymentType(Map<String, Map<String, JSONArray>> mdmsData, String paymentType, String channelName) {
+    private Map<String, String> getPaymentType(Map<String, Map<String, JSONArray>> mdmsData, String channelName) {
         if (mdmsData != null && mdmsData.containsKey("payment") && mdmsData.get(config.getPaymentBusinessServiceName()).containsKey(PAYMENTTYPE)) {
             JSONArray masterCode = mdmsData.get(config.getPaymentBusinessServiceName()).get(PAYMENTTYPE);
-            for (Object masterCodeObj : masterCode) {
-                Map<String, Object> subType = (Map<String, Object>) masterCodeObj;
-                if (paymentType.equalsIgnoreCase((String) subType.get("paymentType")) && channelName.equalsIgnoreCase((String) subType.get("deliveryChannel"))) {
-                    return (String) subType.get("suffix");
-                }
+
+            String filterStringDeliveryChannel = String.format(FILTER_PAYMENT_TYPE_DELIVERY_CHANNEL, channelName, config.getTaskBusinessService());
+
+            JSONArray paymentTypeData = JsonPath.read(masterCode, filterStringDeliveryChannel);
+            Map<String, String> result = new HashMap<>();
+            for (Object data : paymentTypeData) {
+                    JsonNode jsonNode = mapper.convertValue(data, JsonNode.class);
+                    String suffix = jsonNode.get("suffix").asText();
+                    String paymentType = jsonNode.get("paymentType").asText();
+                    result.put(paymentType, suffix);
+
             }
+            return result;
         }
         return null;
     }
