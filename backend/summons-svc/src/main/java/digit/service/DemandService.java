@@ -45,6 +45,13 @@ public class DemandService {
         this.mdmsUtil = mdmsUtil;
         this.taskUtil = taskUtil;
     }
+    public final Map<String, String> masterCodePayemntTyprMap= new HashMap<String,String>(){
+        {
+            put("TASK_SUMMON_ADVANCE_CARRYFORWARD_COURT_FEES", "Summons Post Court Fee");
+            put("TASK_SUMMON_ADVANCE_CARRYFORWARD_I_POST", "Summons Post Process Fee");
+            put("TASK_SUMMON_ADVANCE_CARRYFORWARD_GST", "Summons Post Process Fee");
+        }
+    };
 
     public BillResponse fetchPaymentDetailsAndGenerateDemandAndBill(TaskRequest taskRequest) {
         Task task = taskRequest.getTask();
@@ -87,7 +94,7 @@ public class DemandService {
         );
         for (Calculation calculation : calculations) {
             List<DemandDetail> demandDetailList = createDemandDetails(calculation, task, mdmsData);
-            demands.addAll(createDemandList(task, demandDetailList, calculation.getTenantId()));
+            demands.addAll(createDemandList(task, demandDetailList, calculation.getTenantId(), mdmsData));
         }
         callBillServiceAndCreateDemand(requestInfo, demands);
     }
@@ -153,18 +160,15 @@ public class DemandService {
         repository.fetchResult(url, demandRequest);
     }
 
-    private List<Demand> createDemandList(Task task, List<DemandDetail> demandDetailList, String tenantId) {
+    private List<Demand> createDemandList(Task task, List<DemandDetail> demandDetailList, String tenantId, Map<String, Map<String, JSONArray>> mdmsData) {
         List<Demand> demandList = new ArrayList<>();
-        String consumerCode = task.getTaskNumber();
         String channelName = ChannelName.fromString(task.getTaskDetails().getDeliveryChannel().getChannelName()).name();
-
+        String taskNumber = task.getTaskNumber();
         for (DemandDetail detail : demandDetailList) {
             String taxHeadMasterCode = detail.getTaxHeadMasterCode();
-            if (taxHeadMasterCode.equalsIgnoreCase(config.getTaskTaxHeadCourtMasterCode()) && channelName.equals("POST")) {
-                consumerCode += "_COURT";
-            } else if (taxHeadMasterCode.equalsIgnoreCase(config.getTaskTaxHeadEPostMasterCode()) && channelName.equals("POST")) {
-                consumerCode += "_EPOST";
-            }
+            String paymentType = masterCodePayemntTyprMap.get(taxHeadMasterCode);
+            String paymentTypeSuffix = getPaymentType(mdmsData,paymentType,channelName);
+            String consumerCode = taskNumber + "_" + paymentTypeSuffix;
             demandList.add(createDemandObject(Collections.singletonList(detail), tenantId, consumerCode));
         }
 
@@ -197,10 +201,23 @@ public class DemandService {
         }
         return Collections.emptyMap();
     }
+    private String getPaymentType(Map<String, Map<String, JSONArray>> mdmsData, String paymentType, String channelName) {
+        if (mdmsData != null && mdmsData.containsKey("payment") && mdmsData.get(config.getPaymentBusinessServiceName()).containsKey(PAYMENTTYPE)) {
+            JSONArray masterCode = mdmsData.get(config.getPaymentBusinessServiceName()).get(PAYMENTTYPE);
+            for (Object masterCodeObj : masterCode) {
+                Map<String, Object> subType = (Map<String, Object>) masterCodeObj;
+                if (paymentType.equalsIgnoreCase((String) subType.get("paymentType")) && channelName.equalsIgnoreCase((String) subType.get("deliveryChannel"))) {
+                    return (String) subType.get("suffix");
+                }
+            }
+        }
+        return null;
+    }
 
     private List<String> createMasterDetails() {
         List<String> masterList = new ArrayList<>();
         masterList.add(PAYMENTMASTERCODE);
+        masterList.add(PAYMENTTYPE);
         return masterList;
     }
 

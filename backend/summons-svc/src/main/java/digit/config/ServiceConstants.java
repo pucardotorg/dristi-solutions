@@ -53,5 +53,7 @@ public class ServiceConstants {
 
     public static final String PAYMENTMASTERCODE = "PaymentMasterCode";
 
+    public static final String PAYMENTTYPE = "paymentType";
+
 
 }
