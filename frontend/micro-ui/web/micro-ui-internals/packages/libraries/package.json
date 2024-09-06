@@ -36,8 +36,7 @@
     "react-query": "3.6.1",
     "react-redux": "7.2.8",
     "react-router-dom": "5.3.0",
-    "redux": "4.1.2",
-    "xlsx": "0.17.5"
+    "redux": "4.1.2"
   },
   "author": "JaganKumar <jagan.kumar@egov.org.in>",
   "keywords": [
