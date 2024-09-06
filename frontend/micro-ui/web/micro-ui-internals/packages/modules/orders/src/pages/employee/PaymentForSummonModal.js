@@ -275,7 +275,7 @@ const PaymentForSummonModal = ({ path }) => {
 
       const updatedTask = {
         ...filteredTasks?.[0], // Keep all the existing properties
-        taskType: "SUMMON", // Change the taskType to SUMMON
+        taskType: "SUMMONS", // Change the taskType to SUMMON
         workflow: {
           // Add the workflow object with the desired action
           action: "MAKE PAYMENT",
