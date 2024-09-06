@@ -817,9 +817,9 @@ export const UICustomizations = {
           label: "View transcript",
           id: "view_transcript",
           hide: false,
-          disabled: true,
-          action: (history) => {
-            alert("Not Yet Implemented");
+          disabled: false,
+          action: (history, column, row) => {
+            column.clickFunc(row);
           },
         },
         {
@@ -977,6 +977,8 @@ export const UICustomizations = {
         return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
       case "userName":
         return /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,}$/i;
+      case "address":
+        return /^[^\$\"<>?\\\\~`!@$%^()={}\[\]*:;“”‘’]{2,256}$/i;
       default:
         return;
     }

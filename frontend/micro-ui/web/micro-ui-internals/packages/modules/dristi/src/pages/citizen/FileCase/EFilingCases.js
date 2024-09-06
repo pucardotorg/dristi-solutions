@@ -1466,9 +1466,6 @@ function EFilingCases({ path }) {
       return setOpenConfirmCorrectionModal(true);
     }
 
-    if (selected === "reviewCaseFile") {
-      await refetchCasePDfGeneration();
-    }
     if (selected === "addSignature" && isDraftInProgress) {
       if (courtRooms?.length === 1) {
         onSubmitCase({ court: courtRooms[0] });
@@ -1701,9 +1698,9 @@ function EFilingCases({ path }) {
 
   const caseType = {
     cateogry: "Criminal",
-    act: "Negotiable Instrument Act",
+    act: "Negotiable Instruments Act",
     section: "138",
-    courtName: "Kollam S 138 Special Court",
+    courtName: "Kollam S-138 Special Court",
   };
 
   const takeUserToRemainingMandatoryFieldsPage = () => {
