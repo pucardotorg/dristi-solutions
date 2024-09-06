@@ -259,7 +259,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       // const fileStoreId = await DRISTIService.fetchBillFileStoreId({}, { billId: bill?.Bill?.[0]?.id, tenantId });
       const updatedTask = {
         ...filteredTasks?.[0],
-        taskType: "SUMMON",
+        taskType: "SUMMONS",
         workflow: {
           action: "MAKE PAYMENT",
         },
