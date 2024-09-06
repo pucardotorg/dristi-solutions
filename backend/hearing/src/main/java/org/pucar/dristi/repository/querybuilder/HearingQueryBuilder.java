@@ -80,16 +80,12 @@ public class HearingQueryBuilder {
         }
     }
     public String addOrderByQuery(String query, Pagination pagination) {
-        if (isPaginationInvalid(pagination) || pagination.getSortBy().contains(";")) {
+        if (pagination == null || pagination.getSortBy() == null || pagination.getOrder() == null) {
             return query + DEFAULT_ORDERBY_CLAUSE;
         } else {
             query = query + ORDERBY_CLAUSE;
         }
         return query.replace("{orderBy}", pagination.getSortBy()).replace("{sortingOrder}", pagination.getOrder().name());
-    }
-
-    private static boolean isPaginationInvalid(Pagination pagination) {
-        return pagination == null || pagination.getSortBy() == null || pagination.getOrder() == null;
     }
 
     public String getDocumentSearchQuery(List<String> ids, List<Object> preparedStmtList, List<Integer> preparedStmtArgListDoc) {
