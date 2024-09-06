@@ -282,49 +282,52 @@ const PaymentForSummonModal = ({ path }) => {
         },
       };
 
-      await Promise.all([
-        ordersService.customApiService(Urls.orders.pendingTask, {
-          pendingTask: {
-            name: "Show Summon-Warrant Status",
-            entityType: paymentType.ORDER_MANAGELIFECYCLE,
-            referenceId: hearingsData?.HearingList?.[0]?.hearingId,
-            status: paymentType.SUMMON_WARRANT_STATUS,
-            assignedTo: [],
-            assignedRole: ["JUDGE_ROLE"],
-            cnrNumber: filteredTasks?.[0]?.cnrNumber,
-            filingNumber: filingNumber,
-            isCompleted: false,
-            stateSla: 3 * dayInMillisecond + todayDate,
-            additionalDetails: {
-              hearingId: hearingsData?.list?.[0]?.hearingId,
-            },
-            tenantId,
-          },
-        }),
-        ordersService.customApiService(Urls.orders.pendingTask, {
-          pendingTask: {
-            name: `MAKE_PAYMENT_FOR_SUMMONS_POST`,
-            entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
-            referenceId: `MANUAL_Post_${orderNumber}`,
-            status: paymentType.PAYMENT_PENDING_POST,
-            assignedTo: [],
-            assignedRole: [],
-            cnrNumber: filteredTasks?.[0]?.cnrNumber,
-            filingNumber: filingNumber,
-            isCompleted: true,
-            stateSla: "",
-            additionalDetails: {},
-            tenantId,
-          },
-        }),
-        taskService.updateTask(
+      await taskService
+        .updateTask(
           {
             task: updatedTask,
             tenantId: tenantId,
           },
           {}
-        ),
-      ]);
+        )
+        .then(() => {
+          return Promise.all([
+            ordersService.customApiService(Urls.orders.pendingTask, {
+              pendingTask: {
+                name: "Show Summon-Warrant Status",
+                entityType: paymentType.ORDER_MANAGELIFECYCLE,
+                referenceId: hearingsData?.HearingList?.[0]?.hearingId,
+                status: paymentType.SUMMON_WARRANT_STATUS,
+                assignedTo: [],
+                assignedRole: ["JUDGE_ROLE"],
+                cnrNumber: filteredTasks?.[0]?.cnrNumber,
+                filingNumber: filingNumber,
+                isCompleted: false,
+                stateSla: 3 * dayInMillisecond + todayDate,
+                additionalDetails: {
+                  hearingId: hearingsData?.list?.[0]?.hearingId,
+                },
+                tenantId,
+              },
+            }),
+            ordersService.customApiService(Urls.orders.pendingTask, {
+              pendingTask: {
+                name: `MAKE_PAYMENT_FOR_SUMMONS_POST`,
+                entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
+                referenceId: `MANUAL_Post_${orderNumber}`,
+                status: paymentType.PAYMENT_PENDING_POST,
+                assignedTo: [],
+                assignedRole: [],
+                cnrNumber: filteredTasks?.[0]?.cnrNumber,
+                filingNumber: filingNumber,
+                isCompleted: true,
+                stateSla: "",
+                additionalDetails: {},
+                tenantId,
+              },
+            }),
+          ]);
+        });
 
       // fileStoreId &&
       history.push(`/${window?.contextPath}/citizen/home/post-payment-screen`, {

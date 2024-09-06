@@ -264,33 +264,33 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
           action: "MAKE PAYMENT",
         },
       };
-      await Promise.all([
-        ordersService.customApiService(Urls.orders.pendingTask, {
-          pendingTask: {
-            name: `MAKE_PAYMENT_FOR_SUMMONS_POST`,
-            entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
-            referenceId: `MANUAL_${referenceId}_${orderNumber}`,
-            status: status,
-            assignedTo: [],
-            assignedRole: [],
-            cnrNumber: filteredTasks?.[0]?.cnrNumber,
-            filingNumber: filingNumber,
-            isCompleted: true,
-            stateSla: "",
-            additionalDetails: {},
-            tenantId,
-          },
-        }),
 
-        taskService.updateTask(
+      await taskService
+        .updateTask(
           {
             task: updatedTask,
             tenantId: tenantId,
           },
           {}
-        ),
-      ]);
-
+        )
+        .then(() => {
+          return ordersService.customApiService(Urls.orders.pendingTask, {
+            pendingTask: {
+              name: `MAKE_PAYMENT_FOR_SUMMONS_POST`,
+              entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
+              referenceId: `MANUAL_${referenceId}_${orderNumber}`,
+              status: status,
+              assignedTo: [],
+              assignedRole: [],
+              cnrNumber: filteredTasks?.[0]?.cnrNumber,
+              filingNumber: filingNumber,
+              isCompleted: true,
+              stateSla: "",
+              additionalDetails: {},
+              tenantId,
+            },
+          });
+        });
       // fileStoreId &&
       history.push(`/${window?.contextPath}/citizen/home/post-payment-screen`, {
         state: {
