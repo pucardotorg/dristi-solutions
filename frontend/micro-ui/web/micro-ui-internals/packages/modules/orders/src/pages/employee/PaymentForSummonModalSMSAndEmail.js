@@ -188,6 +188,10 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     return tasksWithRequiredChannel;
   }, [tasksData, orderData]);
 
+  const suffix = useMemo(() => {
+    return channelId === "sms" ? "SMS_COURT" : channelId === "email" ? "EMAIL_COURT" : "";
+  }, [filteredTasks]);
+
   console.log("taskData", filteredTasks);
 
   console.log("hearingsData :>> ", hearingsData);
@@ -220,8 +224,6 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
   );
 
   const referenceId = channelId === "sms" ? "SMS" : channelId === "email" ? "E-mail" : "";
-
-  const suffix = channelId === "sms" ? "SMS_COURT" : channelId === "email" ? "EMAIL_COURT" : "";
 
   const onPayOnline = async () => {
     console.log("clikc");
