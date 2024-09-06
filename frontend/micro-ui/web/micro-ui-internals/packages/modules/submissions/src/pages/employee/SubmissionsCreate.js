@@ -450,7 +450,7 @@ const SubmissionsCreate = ({ path }) => {
         documentsList = [...documentsList, ...formdata?.submissionDocuments?.documents];
       }
       const applicationDocuments =
-        formdata?.additionalDetails?.submissionDocuments?.submissionDocuments?.map((item) => ({
+        formdata?.submissionDocuments?.submissionDocuments?.map((item) => ({
           fileType: item?.document?.documentType,
           fileStore: item?.document?.fileStore,
           additionalDetails: item?.document?.additionalDetails,
