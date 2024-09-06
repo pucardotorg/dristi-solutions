@@ -61,6 +61,7 @@ const SubmissionsCreate = ({ path }) => {
   const scenario = "applicationSubmission";
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
+  const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
   const hasSubmissionRole = useMemo(
     () =>
       ["SUBMISSION_CREATOR", "SUBMISSION_RESPONDER"].reduce((result, current) => {
@@ -741,6 +742,7 @@ const SubmissionsCreate = ({ path }) => {
   };
 
   const handleDownloadSubmission = () => {
+    downloadPdf(tenantId, applicationDetails?.documents?.filter((doc) => doc?.documentType === "SIGNED")?.[0]?.fileStore);
     // history.push(`/digit-ui/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`);
   };
   if (!filingNumber) {

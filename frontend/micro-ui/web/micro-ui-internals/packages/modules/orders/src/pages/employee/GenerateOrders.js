@@ -152,6 +152,7 @@ const GenerateOrders = () => {
   const [currentFormData, setCurrentFormData] = useState(null);
   const roles = Digit.UserService.getUser()?.info?.roles;
   const canESign = roles?.some((role) => role.code === "ORDER_ESIGN");
+  const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
   const setSelectedOrder = (orderIndex) => {
     _setSelectedOrder(orderIndex);
   };
@@ -908,8 +909,6 @@ const GenerateOrders = () => {
               fileStore: signedDoucumentUploadedID || localStorageID,
             }
           : null;
-
-      localStorage.removeItem("fileStoreId");
       let orderSchema = {};
       try {
         orderSchema = Digit.Customizations.dristiOrders.OrderFormSchemaUtils.formToSchema(order.additionalDetails.formdata, modifiedFormConfig);
@@ -1743,6 +1742,8 @@ const GenerateOrders = () => {
     setSelectedOrder(index);
   };
   const handleDownloadOrders = () => {
+    const fileStoreId = localStorage.getItem("fileStoreId");
+    downloadPdf(tenantId, signedDoucumentUploadedID || fileStoreId);
     // setShowSuccessModal(false);
     // history.push(`/${window.contextPath}/employee/dristi/home/view-case?tab=${"Orders"}&caseId=${caseDetails?.id}&filingNumber=${filingNumber}`, {
     //   from: "orderSuccessModal",
@@ -1802,6 +1803,7 @@ const GenerateOrders = () => {
       history.push(`/${window.contextPath}/employee/dristi/home/view-case?tab=${"Orders"}&caseId=${caseDetails?.id}&filingNumber=${filingNumber}`, {
         from: "orderSuccessModal",
       });
+      localStorage.removeItem("fileStoreId");
       setShowSuccessModal(false);
       return;
     }
