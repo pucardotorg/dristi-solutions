@@ -464,8 +464,8 @@ const SubmissionsCreate = ({ path }) => {
       uploadedDocumentList.forEach((res) => {
         file = {
           documentType: res?.fileType,
-          fileStore: res?.file?.files?.[0]?.fileStoreId,
-          additionalDetails: { name: res?.filename },
+          fileStore: res?.fileStore || res?.file?.files?.[0]?.fileStoreId,
+          additionalDetails: { name: res?.filename || res?.additionalDetails?.name },
         };
         documents.push(file);
         evidenceReqBody = {
