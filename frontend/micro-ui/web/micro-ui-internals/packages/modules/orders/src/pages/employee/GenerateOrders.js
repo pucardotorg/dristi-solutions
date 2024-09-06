@@ -70,10 +70,6 @@ const configKeys = {
   JUDGEMENT: configsJudgement,
 };
 
-const OrderTypeToTaskType = {
-  SUMMONS: "SUMMON",
-};
-
 function applyMultiSelectDropdownFix(setValue, formData, keys) {
   keys.forEach((key) => {
     if (formData[key] && Array.isArray(formData[key]) && formData[key].length === 0) {
@@ -1268,7 +1264,6 @@ const GenerateOrders = () => {
   };
 
   const createTask = async (orderType, caseDetails, orderDetails) => {
-    const taskType = OrderTypeToTaskType[orderType] || orderType;
     let payload = {};
     const { litigants } = caseDetails;
     const complainantIndividualId = litigants?.find((item) => item?.partyType === "complainant.primary")?.individualId;
@@ -1319,8 +1314,8 @@ const GenerateOrders = () => {
       locality: address,
     };
     const courtDetails = courtRoomData?.Court_Rooms?.find((data) => data?.code === caseDetails?.courtId);
-    switch (taskType) {
-      case OrderTypeToTaskType["SUMMONS"]:
+    switch (orderType) {
+      case "SUMMONS":
         payload = {
           summonDetails: {
             issueDate: orderData?.auditDetails?.lastModifiedTime,
@@ -1485,7 +1480,7 @@ const GenerateOrders = () => {
             taskDetails: payload,
             workflow: {
               action: "CREATE",
-              comments: taskType,
+              comments: orderType,
               documents: [
                 {
                   documentType: null,
@@ -1501,7 +1496,7 @@ const GenerateOrders = () => {
             orderId: orderData?.id,
             filingNumber,
             cnrNumber,
-            taskType: taskType,
+            taskType: orderType,
             status: "INPROGRESS",
             tenantId,
             amount: {
@@ -1519,7 +1514,7 @@ const GenerateOrders = () => {
           taskDetails: payload,
           workflow: {
             action: "CREATE",
-            comments: taskType,
+            comments: orderType,
             documents: [
               {
                 documentType: null,
@@ -1535,7 +1530,7 @@ const GenerateOrders = () => {
           orderId: orderData?.id,
           filingNumber,
           cnrNumber,
-          taskType: taskType,
+          taskType: orderType,
           status: "INPROGRESS",
           tenantId,
           amount: {
