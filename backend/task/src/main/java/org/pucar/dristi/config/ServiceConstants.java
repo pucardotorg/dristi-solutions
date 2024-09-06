@@ -74,5 +74,9 @@ public class ServiceConstants {
 
     public static final String FILTER_PAYMENT_TYPE_DELIVERY_CHANNEL = "$[?(@.deliveryChannel == '%s' && @.businessService[?(@.businessCode == '%s')])]";
 
+    public static final String MAKE_PAYMENT = "MAKE PAYMENT";
+
+    public static final String TASK_UPDATOR = "TASK_UPDATOR";
+
 
 }
