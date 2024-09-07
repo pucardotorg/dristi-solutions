@@ -18,6 +18,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.Collections;
 
+import static org.pucar.dristi.config.ServiceConstants.FILE_STORE_UTILITY_EXCEPTION;
+
 
 @Component
 @Slf4j
@@ -70,7 +72,7 @@ public class FileStoreUtil {
             ByteArrayResource byteArrayResource = new ByteArrayResource(payInSlipBytes) {
                 @Override
                 public String getFilename() {
-                    return "file.pdf"; // Provide a filename
+                    return "file.pdf";
                 }
             };
 
@@ -90,7 +92,7 @@ public class FileStoreUtil {
             return extractDocumentFromResponse(responseEntity);
         } catch (Exception e) {
             log.error("Error while saving document to file store: {}", e.getMessage(), e);
-            throw new CustomException("FILE_STORE_SERVICE_ERROR", "Error occurred when getting saving document in File Store");
+            throw new CustomException(FILE_STORE_UTILITY_EXCEPTION, "Error occurred when getting saving document in File Store");
         }
     }
 
@@ -115,6 +117,7 @@ public class FileStoreUtil {
             log.info("File Store Details: {}", document);
             return document;
         } else {
+            log.error("Failed to get valid file store id from File Store Service Response");
             throw new CustomException("INVALID_FILE_STORE_RESPONSE", "Failed to get valid file store id from file store service");
         }
     }

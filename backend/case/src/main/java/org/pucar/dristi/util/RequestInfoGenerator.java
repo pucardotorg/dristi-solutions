@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
+import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
@@ -17,6 +18,8 @@ import org.springframework.web.client.RestTemplate;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.pucar.dristi.config.ServiceConstants.FILE_STORE_UTILITY_EXCEPTION;
 
 @Component
 @Slf4j
@@ -77,14 +80,11 @@ public class RequestInfoGenerator {
             );
 
             String responseBody = responseEntity.getBody();
-            log.info("Response data: {}", responseBody);
-
-            // Parse response
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode jsonResponse = mapper.readTree(responseBody);
+            JsonNode jsonResponse = objectMapper.readTree(responseBody);
 
             String accessToken = jsonResponse.get("access_token").asText();
             JsonNode userInfo = jsonResponse.get("UserRequest");
+
             User user = objectMapper.treeToValue(userInfo, User.class);
 
             Map<String, Object> requestInfo = new HashMap<>();
@@ -92,10 +92,11 @@ public class RequestInfoGenerator {
             requestInfo.put("authToken", accessToken);
             requestInfo.put("userInfo", user);
 
-            return mapper.convertValue(requestInfo, RequestInfo.class);
+            return objectMapper.convertValue(requestInfo, RequestInfo.class);
 
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            log.error("Error generating User request info", e);
+            throw new RuntimeException("Error generating User request info");
         }
     }
 }

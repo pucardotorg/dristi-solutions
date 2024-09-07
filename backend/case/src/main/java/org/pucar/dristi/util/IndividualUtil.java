@@ -57,32 +57,28 @@ public class IndividualUtil {
     }
 
     public List<Individual> getIndividualByIndividualId(IndividualSearchRequest individualRequest, StringBuilder uri) {
+        List<Individual> individuals = new ArrayList<>();
         try {
             Object responseMap = serviceRequestRepository.fetchResult(uri, individualRequest);
             if (responseMap != null) {
-                Gson gson = new Gson();
-                String jsonString = gson.toJson(responseMap);
+                String jsonString = objectMapper.writeValueAsString(responseMap);
                 log.info("Response :: {}", jsonString);
                 JsonNode rootNode = objectMapper.readTree(jsonString);
 
                 JsonNode individualNode = rootNode.path("Individual");
 
-                List<Individual> individuals = new ArrayList<>();
                 if (individualNode.isArray()) {
                     for (JsonNode node : individualNode) {
                         Individual individual = objectMapper.treeToValue(node, Individual.class);
                         individuals.add(individual);
                     }
                 }
-                return individuals;
             }
-            return null;
-        } catch (CustomException e) {
-            log.error("Custom Exception occurred in Individual Utility :: {}", e.getMessage());
-            throw e;
         } catch (Exception e) {
-            log.error("Error in individual utility service: " + e.getMessage());
+            log.error("Error occurred in individual utility", e);
             throw new CustomException(INDIVIDUAL_UTILITY_EXCEPTION, "Error in individual utility service: " + e.getMessage());
         }
+
+        return individuals;
     }
 }

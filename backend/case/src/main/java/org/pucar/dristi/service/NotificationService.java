@@ -51,18 +51,7 @@ public class NotificationService {
                 log.info("SMS content has not been configured for this case");
                 return;
             }
-            if(notificationStatus.equalsIgnoreCase(PAYMENT_PENDING)){
-                pushNotification(courtCase, message, individuals,config.getSmsNotificationPaymentPendingTemplateId());
-            }
-            else if(notificationStatus.equalsIgnoreCase(ESIGN_PENDING)){
-                pushNotification(courtCase, message, individuals,config.getSmsNotificationEsignPendingTemplateId());
-            }
-            else if(notificationStatus.equalsIgnoreCase(ADVOCATE_ESIGN_PENDING)){
-                pushNotification(courtCase, message, individuals,config.getSmsNotificationAdvocateEsignPendingTemplateId());
-            }
-            else {
-                pushNotification(courtCase, message, individuals,config.getSmsNotificationTemplateId());
-            }
+            pushNotificationBasedOnNotificationStatus(courtCase, notificationStatus, message, individuals.get(0));
 
         } catch (Exception e){
             log.error("Error in Sending Message To Notification Service: " , e);
@@ -70,39 +59,54 @@ public class NotificationService {
 
     }
 
-    private void pushNotification(CourtCase courtCase, String message, List<Individual> individuals, String templateId) {
-
-           //get individual name, id, mobileNumber
-            log.info("get case e filing number, id, cnr");
-            Map<String, String> smsDetails = getDetailsForSMS(courtCase, individuals);
-
-            log.info("build Message");
-            message = buildMessage(smsDetails, message);
-            SMSRequest smsRequest = SMSRequest.builder()
-                    .mobileNumber(smsDetails.get("mobileNumber"))
-                    .tenantId(smsDetails.get("tenantId"))
-                    .templateId(templateId)
-                    .contentType("TEXT")
-                    .category("NOTIFICATION")
-                    .locale(NOTIFICATION_ENG_LOCALE_CODE)
-                    .expiryTime(System.currentTimeMillis() + 60 * 60 * 1000)
-                    .message(message).build();
-            log.info("push message");
-            producer.push(config.getSmsNotificationTopic(), smsRequest);
-
+    private void pushNotificationBasedOnNotificationStatus(CourtCase courtCase, String notificationStatus, String message, Individual individual) {
+        if(notificationStatus.equalsIgnoreCase(PAYMENT_PENDING)){
+            pushNotification(courtCase, message, individual, config.getSmsNotificationPaymentPendingTemplateId());
+        }
+        else if(notificationStatus.equalsIgnoreCase(ESIGN_PENDING)){
+            pushNotification(courtCase, message, individual, config.getSmsNotificationEsignPendingTemplateId());
+        }
+        else if(notificationStatus.equalsIgnoreCase(ADVOCATE_ESIGN_PENDING)){
+            pushNotification(courtCase, message, individual, config.getSmsNotificationAdvocateEsignPendingTemplateId());
+        }
+        else {
+            pushNotification(courtCase, message, individual, config.getSmsNotificationTemplateId());
+        }
     }
 
-    private Map<String, String> getDetailsForSMS(CourtCase courtCase, List<Individual> individuals) {
-        Map<String, String> smsDetails = new HashMap<>();
-            smsDetails.put("caseId", courtCase.getCaseNumber());
-            smsDetails.put("efilingNumber", courtCase.getFilingNumber());
-            smsDetails.put("cnr", courtCase.getCnrNumber());
-            smsDetails.put("date", "");
-            smsDetails.put("link", "");
-            smsDetails.put("tenantId", courtCase.getTenantId().split("\\.")[0]);
-            smsDetails.put("mobileNumber", individuals.get(0).getMobileNumber());
-            return smsDetails;
+    private void pushNotification(CourtCase courtCase, String message, Individual individual, String templateId) {
+       //get individual name, id, mobileNumber
+        log.info("get case e filing number, id, cnr");
+        Map<String, String> smsDetails = getDetailsForSMS(courtCase, individual);
 
+        log.info("building Notification Request for case filing number {}", courtCase.getFilingNumber());
+        message = buildMessage(smsDetails, message);
+        SMSRequest smsRequest = SMSRequest.builder()
+                .mobileNumber(smsDetails.get("mobileNumber"))
+                .tenantId(smsDetails.get("tenantId"))
+                .templateId(templateId)
+                .contentType("TEXT")
+                .category("NOTIFICATION")
+                .locale(NOTIFICATION_ENG_LOCALE_CODE)
+                .expiryTime(System.currentTimeMillis() + 60 * 60 * 1000)
+                .message(message).build();
+        log.info("push message {}", smsRequest);
+
+        producer.push(config.getSmsNotificationTopic(), smsRequest);
+    }
+
+    private Map<String, String> getDetailsForSMS(CourtCase courtCase, Individual individual) {
+        Map<String, String> smsDetails = new HashMap<>();
+
+        smsDetails.put("caseId", courtCase.getCaseNumber());
+        smsDetails.put("efilingNumber", courtCase.getFilingNumber());
+        smsDetails.put("cnr", courtCase.getCnrNumber());
+        smsDetails.put("date", "");
+        smsDetails.put("link", "");
+        smsDetails.put("tenantId", courtCase.getTenantId().split("\\.")[0]);
+        smsDetails.put("mobileNumber", individual.getMobileNumber());
+
+        return smsDetails;
     }
 
 
@@ -119,6 +123,9 @@ public class NotificationService {
         String rootTenantId = courtCase.getTenantId().split("\\.")[0];
         Map<String, Map<String, String>> localizedMessageMap = getLocalisedMessages(requestInfo, rootTenantId,
                 NOTIFICATION_ENG_LOCALE_CODE, NOTIFICATION_MODULE_CODE);
+        if (localizedMessageMap.isEmpty()) {
+            return null;
+        }
         return localizedMessageMap.get(NOTIFICATION_ENG_LOCALE_CODE + "|" + rootTenantId).get(msgCode);
     }
 

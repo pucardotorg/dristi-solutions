@@ -90,6 +90,7 @@ public class ServiceConstants {
 
 	public static final String INDIVIDUAL_UTILITY_EXCEPTION = "INDIVIDUAL_UTILITY_EXCEPTION";
 	public static final String CASE_PDF_UTILITY_EXCEPTION = "CASE_PDF_UTILITY_EXCEPTION";
+	public static final String FILE_STORE_UTILITY_EXCEPTION = "FILE_STORE_UTILITY_EXCEPTION";
 
 	public static final String SAVE_DRAFT_CASE_WORKFLOW_ACTION = "SAVE_DRAFT";
 	public static final String SUBMIT_CASE_WORKFLOW_ACTION = "SUBMIT_CASE";

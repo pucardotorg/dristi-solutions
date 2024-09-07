@@ -25,15 +25,23 @@ public class CasePdfUtil {
     }
 
     public ByteArrayResource generateCasePdf(CaseRequest caseRequest, StringBuilder uri) {
+        log.info("Starting PDF generation for case filing Number: {}", caseRequest.getCases().getFilingNumber());
         try {
             HttpEntity<CaseRequest> requestEntity = new HttpEntity<>(caseRequest);
 
             ResponseEntity<ByteArrayResource> responseEntity = restTemplate.postForEntity(uri.toString(),
                     requestEntity, ByteArrayResource.class);
 
-            return responseEntity.getBody();
+            ByteArrayResource pdfResource = responseEntity.getBody();
+            if (pdfResource == null) {
+                log.warn("No PDF data received for case filing Number: {}", caseRequest.getCases().getFilingNumber());
+                throw new CustomException(CASE_PDF_UTILITY_EXCEPTION, "Failed to generate PDF, no data received.");
+            }
+
+            log.info("PDF generation successful for case filing Number: {}", caseRequest.getCases().getFilingNumber());
+            return pdfResource;
         } catch (Exception e) {
-            log.error("Error generating PDF for case {}: {}", caseRequest, e.getMessage());
+            log.error("Error generating PDF for case filing Number {}", caseRequest.getCases().getFilingNumber(), e);
             throw new CustomException(CASE_PDF_UTILITY_EXCEPTION, "Error generating PDF for case: " + e.getMessage());
         }
     }

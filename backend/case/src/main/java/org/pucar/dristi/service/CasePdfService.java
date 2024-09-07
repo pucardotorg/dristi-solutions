@@ -51,6 +51,8 @@ public class CasePdfService {
     }
 
     public CourtCase generatePdf(CaseSearchRequest body) {
+        log.info("Received Generate Pdf for case search criteria: {}", body);
+
         try {
             caseRepository.getCases(body.getCriteria(), body.getRequestInfo());
             CourtCase courtCase = body.getCriteria().get(0).getResponseList().get(0);
@@ -86,8 +88,8 @@ public class CasePdfService {
 
             return courtCase;
         } catch (Exception e) {
-            log.error("Error generating PDF for case, {}", e.getMessage());
-            throw new CustomException(CASE_PDF_SERVICE_EXCEPTION, "Error generating PDF for case " + e.getMessage());
+            log.error("Error generating PDF for case", e);
+            throw new CustomException(CASE_PDF_SERVICE_EXCEPTION, "Error generating PDF for case");
         }
     }
 }
