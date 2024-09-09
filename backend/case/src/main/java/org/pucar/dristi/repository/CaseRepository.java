@@ -1,5 +1,6 @@
 package org.pucar.dristi.repository;
 
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,7 @@ import org.pucar.dristi.web.models.LinkedCase;
 import org.pucar.dristi.web.models.Party;
 import org.pucar.dristi.web.models.StatuteSection;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -81,6 +83,39 @@ public class CaseRepository {
         this.statuteSectionRowMapper = statuteSectionRowMapper;
         this.representativeRowMapper = representativeRowMapper;
         this.representingRowMapper = representingRowMapper;
+    }
+
+    public Map<String, Object> searchSeqNum(String tenantId, String courtId) {
+        String selectQuery = "SELECT cnr_seq_num, created_time FROM dristi_cnr_master WHERE tenant_id = ? AND court_id = ? ORDER BY created_time DESC LIMIT 1";
+        List<Object> preparedStmtList = new ArrayList<>();
+        preparedStmtList.add(tenantId);
+        preparedStmtList.add(courtId);
+
+        List<Integer> preparedStmtArgList = new ArrayList<>();
+        preparedStmtArgList.add(Types.VARCHAR);
+        preparedStmtArgList.add(Types.VARCHAR);
+        try {
+            // Execute the query to fetch the last inserted cnr_seq_num
+            return jdbcTemplate.queryForMap(selectQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray());
+        } catch (EmptyResultDataAccessException e) {
+            // Handle the case when the table is empty
+            System.out.println("No record found.");
+            return null;
+        }
+    }
+
+    public void insertSeqNum(UUID id, String tenantId, String courtId, String cnrSeqNum, String userId) {
+        String insertQuery = "INSERT INTO dristi_cnr_master (id, tenant_id, court_id, cnr_seq_num, created_time, created_by) VALUES (?, ?, ?, ?, ?, ?)";
+
+        // Execute the insert query using jdbcTemplate's update method
+        int rowsAffected = jdbcTemplate.update(insertQuery, id, tenantId, courtId, Integer.parseInt(cnrSeqNum), System.currentTimeMillis(), userId);
+
+        // You can log or return the result if needed
+        if (rowsAffected > 0) {
+            System.out.println("Insert successful. Rows affected: " + rowsAffected);
+        } else {
+            System.out.println("Insert failed.");
+        }
     }
 
     public List<CaseCriteria> getCases(List<CaseCriteria> searchCriteria, RequestInfo requestInfo) {

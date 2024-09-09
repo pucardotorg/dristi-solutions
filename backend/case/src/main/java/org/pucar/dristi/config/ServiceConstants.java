@@ -41,6 +41,7 @@ public class ServiceConstants {
 	public static final String USER = "user";
 	public static final String RESPONDENT_PRIMARY = "respondent.primary";
 	public static final String COMPLAINANT_PRIMARY = "complainant.primary";
+	public static final String ZONE_ID = "Asia/Kolkata";
 
     public static final String CASE_CREATE_EXCEPTION = "CASE_CREATE_EXCEPTION";
 
@@ -102,6 +103,7 @@ public class ServiceConstants {
 	public static final String STATE = "KL";
 	public static final String DISTRICT = "JL";
 	public static final String ESTABLISHMENT_CODE = "01";
+	public static final String COURTID="KLKM52";
 
 	//error logs constants
 	public static final String JOIN_CASE_INVALID_REQUEST = "Invalid request for joining a case";
