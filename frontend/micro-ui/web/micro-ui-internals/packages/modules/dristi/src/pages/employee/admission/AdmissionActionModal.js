@@ -1,5 +1,5 @@
 import { CardText, Modal, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
 
 import { modalConfig } from "../../citizen/FileCase/Config/admissionActionConfig";
@@ -178,7 +178,7 @@ function AdmissionActionModal({
 
   return (
     <React.Fragment>
-      {modalInfo?.page == 0 && modalInfo?.type === "sendCaseBack" && (
+      {modalInfo?.page === 0 && modalInfo?.type === "sendCaseBack" && (
         <Modal
           headerBarMain={<Heading label={t(stepItems[0].headModal)} />}
           headerBarEnd={<CloseBtn onClick={() => setShowModal(false)} />}
@@ -207,7 +207,7 @@ function AdmissionActionModal({
           {showErrorToast && <Toast error={true} label={t(label)} isDleteBtn={true} onClose={closeToast} />}
         </Modal>
       )}
-      {modalInfo?.page == 0 && modalInfo?.type === "admitCase" && (
+      {modalInfo?.page === 0 && modalInfo?.type === "admitCase" && (
         <Modal
           headerBarMain={<Heading label={t(stepItems[1].headModal)} />}
           actionSaveLabel={t(stepItems[1]?.submitText)}
@@ -219,7 +219,7 @@ function AdmissionActionModal({
         </Modal>
       )}
 
-      {modalInfo?.page == 0 && modalInfo?.type === "schedule" && (
+      {modalInfo?.page === 0 && modalInfo?.type === "schedule" && (
         <Modal
           headerBarMain={<Heading label={scheduleHearing ? t("CS_SCHEDULE_HEARING") : t(stepItems[2].headModal)} />}
           headerBarEnd={<CloseBtn onClick={() => setShowModal(false)} />}
@@ -247,7 +247,7 @@ function AdmissionActionModal({
           />
         </Modal>
       )}
-      {modalInfo?.page == 1 && modalInfo?.type === "schedule" && (
+      {modalInfo?.page === 1 && modalInfo?.type === "schedule" && (
         <Modal
           headerBarMain={<Heading label={t(stepItems[2].headModal)} />}
           headerBarEnd={<CloseBtn onClick={() => setShowModal(false)} />}
@@ -339,6 +339,31 @@ function AdmissionActionModal({
           caseAdmittedSubmit={caseAdmittedSubmit}
           oldCaseDetails={caseDetails}
         />
+      )}
+      {modalInfo?.page === 4 && (
+        <Modal
+          actionSaveLabel={
+            <div>
+              {t(submitModalInfo?.nextButtonText)}
+              {submitModalInfo?.isArrow && <WhiteRightArrow />}
+            </div>
+          }
+          actionCancelLabel={t(submitModalInfo?.backButtonText)}
+          actionCancelOnSubmit={() => {
+            history.push(`/${window?.contextPath}/employee`);
+          }}
+          actionSaveOnSubmit={() => {
+            if (submitModalInfo?.nextButtonText === "SCHEDULE_NEXT_HEARING") {
+              handleScheduleNextHearing();
+            } else {
+              handleNextCase();
+            }
+          }}
+          className="case-types"
+          formId="modal-action"
+        >
+          <CustomSubmitModal submitModalInfo={submitModalInfo} t={t} />
+        </Modal>
       )}
     </React.Fragment>
   );

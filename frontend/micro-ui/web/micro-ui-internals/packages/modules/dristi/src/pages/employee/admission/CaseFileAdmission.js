@@ -11,6 +11,7 @@ import { OrderTypes, OrderWorkflowAction } from "../../../Utils/orderWorkflow";
 import { formatDate } from "../../citizen/FileCase/CaseType";
 import {
   admitCaseSubmitConfig,
+  registerCaseConfig,   
   scheduleCaseSubmitConfig,
   selectParticipantConfig,
   sendBackCase,
@@ -24,6 +25,21 @@ import { documentTypeMapping } from "../../citizen/FileCase/Config";
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
 };
+
+const casePrimaryActions = [
+  { action: "REGISTER", label: "CS_REGISTER" },
+  { action: "ADMIT", label: "CS_ADMIT_CASE" },
+  { action: "SCHEDULE_ADMISSION_HEARING", label: "CS_SCHEDULE_ADMISSION_HEARING" },
+];
+const caseSecondaryActions = [
+  { action: "SEND_BACK", label: "SEND_BACK_FOR_CORRECTION" },
+  { action: "REJECT", label: "CS_CASE_REJECT" },
+];
+const caseTertiaryActions = [
+  { action: "ISSUE_ORDER", label: "CS_CASE_ISSUE_ORDER" },
+  { action: "RESPOND", label: "CS_CASE_RESPOND" },
+];
+
 function CaseFileAdmission({ t, path }) {
   const [isDisabled, setIsDisabled] = useState(false);
   const history = useHistory();
@@ -41,6 +57,7 @@ function CaseFileAdmission({ t, path }) {
   const [updatedCaseDetails, setUpdatedCaseDetails] = useState({});
   const roles = Digit.UserService.getUser()?.info?.roles;
   const isCaseApprover = roles.some((role) => role.code === "CASE_APPROVER");
+  const moduleCode = "DRISTI";
   const { data: caseFetchResponse, isLoading } = useSearchCaseService(
     {
       criteria: [
@@ -56,6 +73,33 @@ function CaseFileAdmission({ t, path }) {
     Boolean(caseId)
   );
   const caseDetails = useMemo(() => caseFetchResponse?.criteria?.[0]?.responseList?.[0] || null, [caseFetchResponse]);
+
+  const { isLoading: isWorkFlowLoading, data: workFlowDetails } = window?.Digit.Hooks.useWorkflowDetails({
+    tenantId,
+    id: caseDetails?.filingNumber,
+    moduleCode,
+    config: {
+      enabled: Boolean(caseDetails?.filingNumber && tenantId),
+      cacheTime: 0,
+    },
+  });
+
+  const nextActions = useMemo(() => workFlowDetails?.nextActions || [{}], [workFlowDetails]);
+
+  const primaryAction = useMemo(
+    () => casePrimaryActions?.find((action) => nextActions?.some((data) => data.action === action?.action)) || { action: "", label: "" },
+    [nextActions]
+  );
+  const secondaryAction = useMemo(
+    () => caseSecondaryActions?.find((action) => nextActions?.some((data) => data.action === action?.action)) || { action: "", label: "" },
+    [nextActions]
+  );
+  const tertiaryAction = useMemo(
+    () => caseTertiaryActions?.find((action) => nextActions?.some((data) => data.action === action?.action)) || { action: "", label: "" },
+    [nextActions]
+  );
+
+  console.log(workFlowDetails, nextActions);
 
   const formConfig = useMemo(() => {
     if (!caseDetails) return null;
@@ -161,12 +205,20 @@ function CaseFileAdmission({ t, path }) {
       });
     }
   };
-  const onSubmit = () => {
-    setSubmitModalInfo({ ...admitCaseSubmitConfig, caseInfo: caseInfo });
+  const onSubmit = async () => {
+    switch (primaryAction.action) {
+      case "REGISTER":
+        handleRegisterCase();
+        break;
 
-    setModalInfo({ type: "admitCase", page: "0" });
-    setShowModal(true);
+      default:
+        setSubmitModalInfo({ ...admitCaseSubmitConfig, caseInfo: caseInfo });
+        setModalInfo({ type: "admitCase", page: 0 });
+        setShowModal(true);
+        break;
+    }
   };
+
   const onSaveDraft = () => {
     setShowModal(true);
     setSubmitModalInfo({
@@ -187,7 +239,7 @@ function CaseFileAdmission({ t, path }) {
         },
       ],
     });
-    setModalInfo({ type: "schedule", page: "0" });
+    setModalInfo({ type: "schedule", page: 0 });
   };
   const onSendBack = () => {
     setSubmitModalInfo({
@@ -195,7 +247,7 @@ function CaseFileAdmission({ t, path }) {
       caseInfo: [{ key: "CASE_FILE_NUMBER", value: caseDetails?.filingNumber }],
     });
     setShowModal(true);
-    setModalInfo({ type: "sendCaseBack", page: "0" });
+    setModalInfo({ type: "sendCaseBack", page: 0 });
   };
 
   const closeToast = () => {
@@ -224,6 +276,30 @@ function CaseFileAdmission({ t, path }) {
   };
 
   const handleAdmitCase = async () => {
+    setCaseADmitLoader(true);
+    updateCaseDetails("ADMIT", formdata).then((res) => {
+      setModalInfo({ ...modalInfo, page: 1 });
+      setCaseADmitLoader(false);
+      DRISTIService.customApiService(Urls.dristi.pendingTask, {
+        pendingTask: {
+          name: "Schedule Hearing",
+          entityType: "case-default",
+          referenceId: `MANUAL_${caseDetails?.filingNumber}`,
+          status: "SCHEDULE_HEARING",
+          assignedTo: [],
+          assignedRole: ["JUDGE_ROLE"],
+          cnrNumber: updatedCaseDetails?.cnrNumber,
+          filingNumber: caseDetails?.filingNumber,
+          isCompleted: false,
+          stateSla: todayDate + stateSla.SCHEDULE_HEARING,
+          additionalDetails: {},
+          tenantId,
+        },
+      });
+    });
+  };
+
+  const handleRegisterCase = async () => {
     setCaseADmitLoader(true);
     const individualId = await fetchBasicUserInfo();
     let documentList = [];
@@ -320,15 +396,18 @@ function CaseFileAdmission({ t, path }) {
         })
     );
 
-    updateCaseDetails("ADMIT", formdata).then((res) => {
+    updateCaseDetails("REGISTER", formdata).then((res) => {
       setModalInfo({ ...modalInfo, page: 1 });
       setCaseADmitLoader(false);
+      setSubmitModalInfo({ ...registerCaseConfig, caseInfo: caseInfo });
+      setModalInfo({ ...modalInfo, page: 4 });
+      setShowModal(true);
       DRISTIService.customApiService(Urls.dristi.pendingTask, {
         pendingTask: {
-          name: "Schedule Hearing",
+          name: "Schedule Admission Hearing",
           entityType: "case-default",
           referenceId: `MANUAL_${caseDetails?.filingNumber}`,
-          status: "SCHEDULE_HEARING",
+          status: "PENDING_ADMISSION_HEARING",
           assignedTo: [],
           assignedRole: ["JUDGE_ROLE"],
           cnrNumber: updatedCaseDetails?.cnrNumber,
@@ -341,6 +420,7 @@ function CaseFileAdmission({ t, path }) {
       });
     });
   };
+
   const scheduleHearing = async ({ purpose, participant, date }) => {
     return DRISTIService.createHearings(
       {
@@ -481,9 +561,10 @@ function CaseFileAdmission({ t, path }) {
     return <Redirect to="/" />;
   }
 
-  if (isLoading) {
+  if (isLoading || isWorkFlowLoading) {
     return <Loader />;
   }
+
   return (
     <div className={"case-and-admission"}>
       <div className="view-case-file">
@@ -512,17 +593,12 @@ function CaseFileAdmission({ t, path }) {
               </div>
               <CustomCaseInfoDiv t={t} data={caseInfo} style={{ margin: "24px 0px" }} />
               <FormComposerV2
-                label={isCaseApprover ? t("CS_ADMIT_CASE") : undefined}
+                label={isCaseApprover ? t(primaryAction?.label || "") : undefined}
                 config={formConfig}
                 onSubmit={onSubmit}
                 // defaultValues={}
                 onSecondayActionClick={
-                  caseDetails?.status === CaseWorkflowState.ADMISSION_HEARING_SCHEDULED
-                    ? () =>
-                        history.push(
-                          `/digit-ui/employee/dristi/home/view-case?caseId=${caseId}&filingNumber=${caseDetails?.filingNumber}&tab=Hearings`
-                        )
-                    : onSaveDraft
+                  caseDetails?.status === CaseWorkflowState.ADMISSION_HEARING_SCHEDULED ? t("HEARING_IS_SCHEDULED") : t(tertiaryAction.label || "")
                 }
                 defaultValues={{}}
                 onFormValueChange={onFormValueChange}
@@ -536,9 +612,9 @@ function CaseFileAdmission({ t, path }) {
                 }
                 showSecondaryLabel={true}
                 actionClassName={"case-file-admission-action-bar"}
-                showSkip={caseDetails?.status !== CaseWorkflowState.ADMISSION_HEARING_SCHEDULED}
+                showSkip={secondaryAction?.label}
                 onSkip={onSendBack}
-                skiplabel={t("SEND_BACK_FOR_CORRECTION")}
+                skiplabel={t(secondaryAction?.label || "")}
                 noBreakLine
                 submitIcon={<RightArrow />}
                 skipStyle={{ position: "fixed", left: "20px", bottom: "18px", color: "#007E7E", fontWeight: "700" }}

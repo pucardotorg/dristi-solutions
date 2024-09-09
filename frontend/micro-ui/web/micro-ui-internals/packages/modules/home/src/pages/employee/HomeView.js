@@ -253,7 +253,16 @@ const HomeView = () => {
       });
       history.push(`/${window?.contextPath}/${userInfoType}${onRowClickData?.url}?${searchParams.toString()}`);
     } else {
-      const statusArray = ["CASE_ADMITTED", "ADMISSION_HEARING_SCHEDULED", "PAYMENT_PENDING", "UNDER_SCRUTINY", "PENDING_ADMISSION"];
+      const statusArray = [
+        "PENDING_REGISTRATION",
+        "CASE_ADMITTED",
+        "ADMISSION_HEARING_SCHEDULED",
+        "PENDING_PAYMENT",
+        "UNDER_SCRUTINY",
+        "PENDING_ADMISSION",
+        "PENDING_E-SIGN",
+        "PENDING_ADMISSION_HEARING",
+      ];
       if (statusArray.includes(row?.original?.status)) {
         if (row?.original?.status === "CASE_ADMITTED") {
           history.push(
@@ -263,6 +272,13 @@ const HomeView = () => {
           history.push(
             `/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${row?.original?.id}&filingNumber=${row?.original?.filingNumber}&tab=Complaint`
           );
+        } else if (row?.original?.status === "PENDING_REGISTRATION") {
+          history.push(
+            `/${window?.contextPath}/${userInfoType}/dristi/admission?caseId=${row?.original?.id}&filingNumber=${row?.original?.filingNumber}`
+          );
+        } else if (row?.original?.status === "PENDING_E-SIGN") {
+          history.push(`/${window?.contextPath}/${userInfoType}/dristi/home/file-case/case?caseId=${row?.original?.id}&selected=addSignature`);
+        
         } else {
           history.push(
             `/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${row?.original?.id}&filingNumber=${row?.original?.filingNumber}&tab=Complaint`

@@ -87,3 +87,12 @@ export const sendBackCase = {
   isArrow: true,
   showCopytext: true,
 };
+
+export const registerCaseConfig = {
+  header: "CS_REGISTER_SUCCESS",
+  subHeader: "CASE_UPDATES_NOTICE_ISSUED",
+  backButtonText: "BACK_TO_HOME",
+  nextButtonText: "CS_SCHEDULE_ADMISSION_HEARING",
+  isArrow: false,
+  showTable: true,
+};

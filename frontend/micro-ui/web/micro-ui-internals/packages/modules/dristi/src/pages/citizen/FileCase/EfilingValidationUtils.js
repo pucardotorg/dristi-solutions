@@ -2043,7 +2043,7 @@ export const updateCaseDetails = async ({
         workflow: {
           ...caseDetails?.workflow,
           action: action,
-          ...(action === "SUBMIT_CASE" && {
+          ...(action === "E-SIGN" && {
             assignees,
           }),
         },
