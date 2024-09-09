@@ -8,6 +8,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.pucar.dristi.config.Configuration;
+import org.pucar.dristi.repository.CaseSummaryRepository;
 import org.pucar.dristi.repository.ElasticSearchRepository;
 import org.pucar.dristi.util.jsonmapper.*;
 import org.pucar.dristi.web.models.*;
@@ -33,13 +34,14 @@ public class CaseManagerService {
 	private final TaskMapper taskMapper;
 	private final ApplicationMapper applicationMapper;
 	private final ArtifactMapper artifactMapper;
+	private final CaseSummaryRepository caseSummaryRepository;
 
 	@Autowired
 	public CaseManagerService(ElasticSearchRepository esRepository, Configuration configuration,
-							  CourtCaseMapper courtCaseMapper, HearingMapper hearingMapper,
-							  WitnessMapper witnessMapper, OrderMapper orderMapper,
-							  TaskMapper taskMapper, ApplicationMapper applicationMapper,
-							  ArtifactMapper artifactMapper) {
+                              CourtCaseMapper courtCaseMapper, HearingMapper hearingMapper,
+                              WitnessMapper witnessMapper, OrderMapper orderMapper,
+                              TaskMapper taskMapper, ApplicationMapper applicationMapper,
+                              ArtifactMapper artifactMapper, CaseSummaryRepository caseSummaryRepository) {
 		this.esRepository = esRepository;
 		this.configuration = configuration;
 		this.courtCaseMapper = courtCaseMapper;
@@ -49,7 +51,8 @@ public class CaseManagerService {
 		this.taskMapper = taskMapper;
 		this.applicationMapper = applicationMapper;
 		this.artifactMapper = artifactMapper;
-	}
+        this.caseSummaryRepository = caseSummaryRepository;
+    }
 
 	public List<CaseFile> getCaseFiles(CaseRequest caseRequest) {
 		List<CaseFile> caseFileList = new ArrayList<>();
@@ -174,4 +177,14 @@ public class CaseManagerService {
 			throw new CustomException("JSON_ARRAY_CONSTRUCTION_ERR", e.getMessage());
 		}
 	}
+
+	public List<CaseSummary> getCaseSummary(CaseRequest caseRequest) {
+		try {
+            return caseSummaryRepository.getCaseSummary(caseRequest);
+		}
+		catch (Exception e) {
+			log.error("Error building case summaries using filing number: {}", caseRequest.getFilingNumber(), e);
+			throw new CustomException("CASE_SUMMARY_ERROR", "Error building case summary" + e.getMessage());
+		}
+    }
 }

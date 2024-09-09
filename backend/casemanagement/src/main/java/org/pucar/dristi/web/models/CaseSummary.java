@@ -63,7 +63,7 @@ public class CaseSummary {
 	@JsonProperty("filingDate")
 
 	@Valid
-	private LocalDate filingDate = null;
+	private Long filingDate = null;
 
 	@JsonProperty("registrationDate")
 	@NotNull
