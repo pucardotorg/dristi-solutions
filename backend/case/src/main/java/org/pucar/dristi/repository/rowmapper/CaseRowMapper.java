@@ -18,7 +18,10 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.tracer.model.CustomException;
 import org.postgresql.util.PGobject;
+import org.pucar.dristi.web.models.AdvocateMapping;
 import org.pucar.dristi.web.models.CourtCase;
+import org.pucar.dristi.web.models.Party;
+import org.pucar.dristi.web.models.StatuteSection;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Component;
 
@@ -37,25 +40,25 @@ public class CaseRowMapper implements ResultSetExtractor<List<CourtCase>> {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             while (rs.next()) {
-                String uuid = rs.getString("id");
+                String uuid = rs.getString("case_id");
                 CourtCase courtCase = caseMap.get(uuid);
 
                 if (courtCase == null) {
-                    Long lastModifiedTime = rs.getLong("lastmodifiedtime");
+                    Long lastModifiedTime = rs.getLong("case_lastmodifiedtime");
                     if (rs.wasNull()) {
                         lastModifiedTime = null;
                     }
 
 
                     AuditDetails auditdetails = AuditDetails.builder()
-                            .createdBy(rs.getString("createdby"))
-                            .createdTime(rs.getLong("createdtime"))
-                            .lastModifiedBy(rs.getString("lastmodifiedby"))
+                            .createdBy(rs.getString("case_createdby"))
+                            .createdTime(rs.getLong("case_createdtime"))
+                            .lastModifiedBy(rs.getString("case_lastmodifiedby"))
                             .lastModifiedTime(lastModifiedTime)
                             .build();
                     courtCase = CourtCase.builder()
-                            .id(UUID.fromString(rs.getString("id")))
-                            .tenantId(rs.getString("tenantid"))
+                            .id(UUID.fromString(rs.getString("case_id")))
+                            .tenantId(rs.getString("case_tenantid"))
                             .resolutionMechanism(rs.getString("resolutionmechanism"))
                             .caseTitle(rs.getString("casetitle"))
                             .caseDescription(rs.getString("casedescription"))
@@ -64,31 +67,30 @@ public class CaseRowMapper implements ResultSetExtractor<List<CourtCase>> {
                             .cnrNumber(rs.getString("cnrnumber"))
                             .courtCaseNumber(rs.getString("courtcaseNumber"))
                             .accessCode(rs.getString("accesscode"))
-                            .outcome(rs.getString("outcome"))
                             .courtId(rs.getString("courtid"))
                             .benchId(rs.getString("benchid"))
-                            .judgeId(rs.getString("judgeid"))
-                            .stage(rs.getString("stage"))
-                            .isActive(rs.getBoolean("isactive"))
-                            .substage(rs.getString("substage"))
-                            .filingDate(rs.getLong("filingdate"))
-                            .judgementDate(rs.getLong("judgementdate"))
-                            .registrationDate(rs.getLong("registrationdate"))
                             .caseCategory(rs.getString("casecategory"))
                             .natureOfPleading(rs.getString("natureofpleading"))
                             .status(rs.getString("status"))
                             .remarks(rs.getString("remarks"))
+                            .isActive(rs.getBoolean("case_isactive"))
                             .auditdetails(auditdetails)
+                            .judgeId(rs.getString("judgeid"))
+                            .stage(rs.getString("stage"))
+                            .substage(rs.getString("substage"))
+                            .filingDate(rs.getLong("filingdate"))
+                            .registrationDate(rs.getLong("registrationdate"))
+                            .judgementDate(rs.getLong("judgementdate"))
+                            .outcome(rs.getString("outcome"))
                             .build();
                 }
 
-                PGobject pgObject = (PGobject) rs.getObject("additionalDetails");
+                PGobject pgObject = (PGobject) rs.getObject("case_additionaldetails");
                 if (pgObject != null)
                     courtCase.setAdditionalDetails(objectMapper.readTree(pgObject.getValue()));
                 PGobject caseDetailsObject = (PGobject) rs.getObject("casedetails");
                 if (caseDetailsObject != null)
                     courtCase.setCaseDetails(objectMapper.readTree(caseDetailsObject.getValue()));
-
                 caseMap.put(uuid, courtCase);
             }
         } catch (CustomException e) {

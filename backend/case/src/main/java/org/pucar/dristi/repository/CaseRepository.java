@@ -93,16 +93,12 @@ public class CaseRepository {
                 List<Object> preparedStmtListDoc = new ArrayList<>();
 
                 List<Integer> preparedStmtArgList = new ArrayList<>();
-
                 String casesQuery = "";
-                casesQuery = queryBuilder.getCasesSearchQuery(caseCriteria, preparedStmtList, preparedStmtArgList, requestInfo);
+                casesQuery = queryBuilder.getCasesSearchQuery( caseCriteria, preparedStmtList, preparedStmtArgList, requestInfo);
+                casesQuery = queryBuilder.addPaginatedWhere(casesQuery);
                 casesQuery = queryBuilder.addOrderByQuery(casesQuery, caseCriteria.getPagination());
                 log.info("Final case query :: {}", casesQuery);
-                if (caseCriteria.getPagination() != null) {
-                    Integer totalRecords = getTotalCount(casesQuery, preparedStmtList);
-                    caseCriteria.getPagination().setTotalCount(Double.valueOf(totalRecords));
-                    casesQuery = queryBuilder.addPaginationQuery(casesQuery, preparedStmtList, caseCriteria.getPagination(),preparedStmtArgList);
-                }
+
                 if(preparedStmtList.size()!=preparedStmtArgList.size()){
                     log.info("Arg size :: {}, and ArgType size :: {}", preparedStmtList.size(),preparedStmtArgList.size());
                     throw new CustomException(CASE_SEARCH_QUERY_EXCEPTION, "Arg and ArgType size mismatch ");
