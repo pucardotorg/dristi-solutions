@@ -256,17 +256,13 @@ function ScheduleHearing({
     {
       SearchCriteria: {
         tenantId: Digit.ULBService.getCurrentTenantId(),
-        ...(applicationData?.applicationList?.length > 0
-          ? { rescheduledRequestId: [applicationData.applicationList[0]?.applicationNumber] }
-          : {
-              hearingBookingId: referenceId,
-              status: "ACTIVE",
-            }),
+        hearingBookingId: referenceId,
+        status: "ACTIVE",
       },
     },
-    { limit: 5, offset: 0 },
+    { limit: 1, offset: 0 },
     "",
-    !!applicationData
+    !!referenceId
   );
 
   const nextFourDates = status === "OPTOUT" ? getSuggestedDates(dateResponse) : getNextNDates(5);
