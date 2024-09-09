@@ -89,6 +89,13 @@ export const formatDate = (date) => {
   return `${day}-${month}-${year}`;
 };
 
+export const getMDMSObj = (mdmsdata = [], codekey, code) => {
+  if (!code || !mdmsdata || mdmsdata?.length == 0) {
+    return {};
+  }
+  return mdmsdata?.find((item) => item[codekey] == code) || {};
+};
+
 export const getSuffixByBusinessCode = (paymentType = [], businessCode) => {
   return paymentType?.find((data) => data?.businessService?.some((businessService) => businessService?.businessCode === businessCode))?.suffix || "";
 };
