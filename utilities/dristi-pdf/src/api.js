@@ -175,9 +175,7 @@ async function search_advocate(tenantId, individualId, requestinfo) {
       params,
     });
   } catch (error) {
-    logger.error(
-      `Error in ${config.paths.individual_search}: ${error.message}`
-    );
+    logger.error(`Error in ${config.paths.advocate_search}: ${error.message}`);
     throw error;
   }
 }

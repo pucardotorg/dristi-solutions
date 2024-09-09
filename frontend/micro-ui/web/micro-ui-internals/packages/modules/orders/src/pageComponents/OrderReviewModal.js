@@ -31,8 +31,13 @@ const OrderPreviewOrderTypeMap = {
 };
 
 const onDocumentUpload = async (fileData, filename) => {
-  const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", fileData, Digit.ULBService.getCurrentTenantId());
-  return { file: fileUploadRes?.data, fileType: fileData.type, filename };
+  try {
+    const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", fileData, Digit.ULBService.getCurrentTenantId());
+    return { file: fileUploadRes?.data, fileType: fileData.type, filename };
+  } catch (error) {
+    console.error("Failed to upload document:", error);
+    throw error; // or handle error appropriately
+  }
 };
 
 function OrderReviewModal({ setShowReviewModal, t, order, setShowsignatureModal, showActions = true, setOrderPdfFileStoreID }) {
@@ -73,6 +78,9 @@ function OrderReviewModal({ setShowReviewModal, t, order, setShowsignatureModal,
         },
         responseType: "blob",
       }).then((res) => ({ file: res.data, fileName: res.headers["content-disposition"]?.split("filename=")[1] }));
+    },
+    onError: (error) => {
+      console.error("Failed to fetch order preview PDF:", error);
     },
     enabled: !!order?.id && !!order?.cnrNumber && !!orderPreviewKey,
   });
@@ -158,7 +166,9 @@ function OrderReviewModal({ setShowReviewModal, t, order, setShowsignatureModal,
                 setOrderPdfFileStoreID(fileStoreId);
               }
             })
-            .catch((e) => {})
+            .catch((e) => {
+              console.error("Failed to upload document:", e);
+            })
             .finally(() => {
               setShowsignatureModal(true);
               setShowReviewModal(false);
