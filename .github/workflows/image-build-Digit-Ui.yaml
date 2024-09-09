@@ -1,21 +1,21 @@
 name: Digit-UI Image Build workflow
 on:
   push:
-    branches:
-      - develop
-    paths:
-      - 'frontend/micro-ui/**'
-  pull_request:
-    branches:
-      - develop
-    paths:
-      - 'frontend/micro-ui/**'
+  #   branches:
+  #     - develop
+  #   paths:
+  #     - 'frontend/micro-ui/**'
+  # pull_request:
+  #   branches:
+  #     - develop
+  #   paths:
+  #     - 'frontend/micro-ui/**'
   workflow_dispatch:
   workflow_call:
 
 jobs:
   docker_image-build:
-    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    # if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -30,8 +30,8 @@ jobs:
 
       - name: Build and Push Docker image for digit-ui
         run: |
-          docker build  -t pucarsolutionsdev.azurecr.io/digit-ui:v1.0.0-${{ github.sha }} -f  web/docker/Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/digit-ui:v1.0.0-${{ github.sha }}
+          docker build  -t pucarsolutionsdev.azurecr.io/digit-ui:v1.0.0-7beb066666a177161fde82ac474e5dc80e56db33 -f  web/docker/Dockerfile .
+          docker push pucarsolutionsdev.azurecr.io/digit-ui:v1.0.0-7beb066666a177161fde82ac474e5dc80e56db33
         working-directory: frontend/micro-ui
 
   Workflow_Trigger:
