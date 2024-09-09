@@ -58,7 +58,7 @@ public class EpostUtil {
     }
 
     private String getFileStore(TaskRequest request) {
-        if(request.getTask().getDocuments() == null || request.getTask().getDocuments().get(0).getFileStore() == null){
+        if(request.getTask().getDocuments() == null || request.getTask().getDocuments().isEmpty() || request.getTask().getDocuments().get(0).getFileStore() == null){
             return null;
         }
         return request.getTask().getDocuments().get(0).getFileStore();
