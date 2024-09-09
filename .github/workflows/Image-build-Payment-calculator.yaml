@@ -34,7 +34,7 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: mvn -B -f backend/payment-calculator-svc/pom.xml package org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=solutions_payment-calculator-svc -Dsonar.organization=solutions -Dsonar.host.url=https://sonarcloud.io/ -Dsonar.qualitygate.wait=true
 
-      - name: Dependecy check
+      - name: Dependency check
         uses: dependency-check/Dependency-Check_Action@main
         env:
           JAVA_HOME: /opt/jdk
