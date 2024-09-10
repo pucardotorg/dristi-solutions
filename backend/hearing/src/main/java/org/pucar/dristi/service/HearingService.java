@@ -178,4 +178,33 @@ public class HearingService {
             throw new CustomException(HEARING_UPDATE_TIME_EXCEPTION, "Error occurred while updating hearing start and end time: " + e.getMessage());
         }
     }
+
+    public Hearing uploadWitnessDeposition(HearingRequest hearingRequest) {
+
+        try {
+
+            // Validate whether the application that is being requested for update indeed exists
+            Hearing hearing = validator.validateHearingExistence(hearingRequest.getRequestInfo(), hearingRequest.getHearing());
+
+            // Updating Hearing request
+
+            hearing.setDocuments(hearingRequest.getHearing().getDocuments());
+            hearingRequest.setHearing(hearing);
+
+            // Enrich application upon update
+            enrichmentUtil.enrichHearingApplicationUponUpdate(hearingRequest);
+
+            producer.push(config.getHearingUpdateTopic(), hearingRequest);
+
+            return hearingRequest.getHearing();
+
+        } catch (CustomException e) {
+            log.error("Custom Exception occurred while uploading witness deposition pdf");
+            throw e;
+        } catch (Exception e) {
+            log.error("Error occurred while uploading witness deposition pdf");
+            throw new CustomException(WITNESS_DEPOSITION_UPDATE_EXCEPTION, "Error occurred while uploading witness deposition pdf: " + e.getMessage());
+        }
+
+    }
 }
