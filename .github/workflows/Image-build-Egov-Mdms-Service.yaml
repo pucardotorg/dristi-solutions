@@ -2,12 +2,12 @@ name: Mdms-Service Image Build workflow
 on:
   push:
     branches:
-      - develop
+      - uat-backend
     paths:
       - 'common/egov-mdms-service/**'
   pull_request:
     branches:
-      - develop
+      - uat-backend
     paths:
       - 'common/egov-mdms-service/**'
   workflow_dispatch:
@@ -15,7 +15,7 @@ on:
 
 jobs:
   docker_image-build:
-    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/uat-backend' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -40,7 +40,7 @@ jobs:
         working-directory: common/egov-mdms-service/src/main/resources/db
 
   Workflow_Trigger:
-    if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/uat-backend' && github.event_name == 'push'
     runs-on: ubuntu-latest
     needs: docker_image-build
     steps:
