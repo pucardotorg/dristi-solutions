@@ -45,12 +45,12 @@ public class PendingTaskUtilTest {
     public void testCreatePendingTask() {
         ReScheduleHearing reScheduleHearing = new ReScheduleHearing();
         reScheduleHearing.setTenantId("tenantId");
-        reScheduleHearing.setRescheduledRequestId("rescheduledRequestId");
+        reScheduleHearing.setHearingBookingId("rescheduledRequestId");
         reScheduleHearing.setCaseId("caseId");
 
         PendingTask pendingTask = pendingTaskUtil.createPendingTask(reScheduleHearing);
 
-        assertEquals("MANUAL_"+reScheduleHearing.getRescheduledRequestId(), pendingTask.getReferenceId());
+        assertEquals("MANUAL_"+reScheduleHearing.getHearingBookingId(), pendingTask.getReferenceId());
         assertEquals(reScheduleHearing.getCaseId(), pendingTask.getFilingNumber());
     }
 
