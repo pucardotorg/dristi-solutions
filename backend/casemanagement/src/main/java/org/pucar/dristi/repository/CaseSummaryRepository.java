@@ -15,8 +15,8 @@ import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+
+import static org.pucar.dristi.config.ServiceConstants.*;
 
 @Slf4j
 @Repository
@@ -52,7 +52,7 @@ public class CaseSummaryRepository {
             }
             if (preparedStmtList.size() != preparedStmtArgList.size()) {
                 log.info("Arg size :: {}, and ArgType size :: {}", preparedStmtList.size(), preparedStmtArgList.size());
-                throw new CustomException("CASE_SUMMARY_QUERY_EXCEPTION", "Arg and ArgType size mismatch");
+                throw new CustomException(CASE_SUMMARY_QUERY_EXCEPTION, ARGS_MISMATCH);
             }
 
             List<CaseSummary> list = jdbcTemplate.query(caseSummaryQuery, preparedStmtList.toArray(),preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(),rowMapper);
@@ -67,8 +67,8 @@ public class CaseSummaryRepository {
             setStatuteAndSections(caseSummaryList,caseId);
             return caseSummaryList;
         } catch (Exception e) {
-            log.error("Error occurred while fetching case summary {}", e.getMessage());
-            throw new CustomException("CASE_SUMMARY_QUERY_EXCEPTION", "Error occurred while fetching case summary");
+            log.error(CASE_SUMMARY_FETCH_ERROR, e);
+            throw new CustomException(CASE_SUMMARY_QUERY_EXCEPTION, CASE_SUMMARY_FETCH_ERROR);
         }
     }
 

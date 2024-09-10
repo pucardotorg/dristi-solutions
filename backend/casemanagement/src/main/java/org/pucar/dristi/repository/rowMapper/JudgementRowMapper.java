@@ -1,12 +1,16 @@
 package org.pucar.dristi.repository.rowMapper;
 
 import lombok.extern.slf4j.Slf4j;
+import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.web.models.Order;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Component;
 
 import java.sql.ResultSet;
 import java.util.*;
+
+import static org.pucar.dristi.config.ServiceConstants.JUDGEMENT_RESULT_SET_EXCEPTION;
+import static org.pucar.dristi.config.ServiceConstants.ROW_MAPPER_EXCEPTION;
 
 @Component
 @Slf4j
@@ -39,7 +43,7 @@ public class JudgementRowMapper implements ResultSetExtractor<List<Order>> {
         }
         catch (Exception e) {
             log.error("Error while mapping judgement row: {}", e.getMessage());
-            throw new RuntimeException(e);
+            throw new CustomException(ROW_MAPPER_EXCEPTION,JUDGEMENT_RESULT_SET_EXCEPTION + e.getMessage());
         }
     }
 

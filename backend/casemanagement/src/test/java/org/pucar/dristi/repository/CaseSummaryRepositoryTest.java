@@ -1,5 +1,6 @@
 package org.pucar.dristi.repository;
 
+import org.egov.tracer.model.CustomException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -7,8 +8,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.pucar.dristi.repository.queryBuilder.CaseManagerQueryBuilder;
 import org.pucar.dristi.repository.rowMapper.CaseSummaryRowMapper;
+import org.pucar.dristi.repository.rowMapper.JudgementRowMapper;
 import org.pucar.dristi.web.models.CaseRequest;
 import org.pucar.dristi.web.models.CaseSummary;
+import org.pucar.dristi.web.models.Order;
 import org.pucar.dristi.web.models.Pagination;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -31,6 +34,9 @@ class CaseSummaryRepositoryTest {
     @Mock
     private CaseSummaryRowMapper rowMapper;
 
+    @Mock
+    private JudgementRowMapper judgementRowMapper;
+
     @InjectMocks
     private CaseSummaryRepository caseSummaryRepository;
 
@@ -38,12 +44,14 @@ class CaseSummaryRepositoryTest {
     void getCaseSummary_successWithPagination() {
         // Arrange
         CaseRequest caseRequest = new CaseRequest();
+        caseRequest.setFilingNumber("12345");
         caseRequest.setPagination(new Pagination());
 
         String query = "SELECT * FROM case_summary";
-        List<Object> preparedStmtList = new ArrayList<>();
-        List<Integer> preparedStmtArgList = new ArrayList<>();
+        String judgementQuery = "SELECT * FROM judgement";
         List<CaseSummary> expectedSummaryList = new ArrayList<>();
+        List<Order> orders = new ArrayList<>();
+        orders.add(mock(Order.class));
 
         when(queryBuilder.getCaseSummaryQuery(any(CaseRequest.class), anyList(), anyList())).thenReturn(query);
         when(queryBuilder.addOrderByQuery(eq(query), any(Pagination.class))).thenReturn(query);
@@ -53,7 +61,9 @@ class CaseSummaryRepositoryTest {
                 .thenReturn(query);
         when(queryBuilder.getTotalCountQuery(anyString())).thenReturn("SELECT count(*) FROM case_summary");
         when(jdbcTemplate.queryForObject(anyString(), eq(Integer.class), any(Object[].class))).thenReturn(100);
-
+        when(queryBuilder.getJudgementQuery("12345", new ArrayList<>(), new ArrayList<>())).thenReturn("SELECT * FROM judgement");
+        when(jdbcTemplate.query("SELECT * FROM judgement", new Object[]{}, new int[]{}, judgementRowMapper))
+                .thenReturn(orders);
         // Act
         List<CaseSummary> result = caseSummaryRepository.getCaseSummary(caseRequest);
 
@@ -73,8 +83,6 @@ class CaseSummaryRepositoryTest {
         // Arrange
         CaseRequest caseRequest = new CaseRequest();
         String query = "SELECT * FROM case_summary";
-        List<Object> preparedStmtList = new ArrayList<>();
-        List<Integer> preparedStmtArgList = new ArrayList<>();
         List<CaseSummary> expectedSummaryList = new ArrayList<>();
 
         when(queryBuilder.getCaseSummaryQuery(any(CaseRequest.class), anyList(), anyList())).thenReturn(query);
@@ -93,28 +101,22 @@ class CaseSummaryRepositoryTest {
         verify(jdbcTemplate, times(1)).query(anyString(), any(Object[].class), any(int[].class), any(CaseSummaryRowMapper.class));
     }
 
-//    @Test
-//    void getCaseSummary_errorFetchingCaseSummary_logsError() {
-//        // Arrange
-//        CaseRequest caseRequest = new CaseRequest();
-//        String query = "SELECT * FROM case_summary";
-//        List<Object> preparedStmtList = new ArrayList<>();
-//        List<Integer> preparedStmtArgList = new ArrayList<>();
-//
-//        when(queryBuilder.getCaseSummaryQuery(any(CaseRequest.class), anyList(), anyList())).thenReturn(query);
-//        when(queryBuilder.addOrderByQuery(eq(query), isNull())).thenReturn(query);
-//        when(jdbcTemplate.query(anyString(), any(Object[].class), any(int[].class), any(CaseSummaryRowMapper.class)))
-//                .thenThrow(new RuntimeException("Database error"));
-//
-//        // Act
-//        List<CaseSummary> result = caseSummaryRepository.getCaseSummary(caseRequest);
-//
-//        // Assert
-//        assertNull(result);
-//        verify(queryBuilder, times(1)).getCaseSummaryQuery(any(CaseRequest.class), anyList(), anyList());
-//        verify(queryBuilder, times(1)).addOrderByQuery(eq(query), isNull());
-//        verify(jdbcTemplate, times(1)).query(anyString(), any(Object[].class), any(int[].class), any(CaseSummaryRowMapper.class));
-//    }
+    @Test
+    void getCaseSummary_errorFetchingCaseSummary_logsError() {
+        // Arrange
+        CaseRequest caseRequest = new CaseRequest();
+        String query = "SELECT * FROM case_summary";
+
+        when(queryBuilder.getCaseSummaryQuery(any(CaseRequest.class), anyList(), anyList())).thenReturn(query);
+        when(queryBuilder.addOrderByQuery(eq(query), isNull())).thenReturn(query);
+        when(jdbcTemplate.query(anyString(), any(Object[].class), any(int[].class), any(CaseSummaryRowMapper.class)))
+                .thenThrow(new RuntimeException("Error occurred while fetching case summary"));
+
+        assertThrows(RuntimeException.class, () -> {
+            // Act
+            caseSummaryRepository.getCaseSummary(caseRequest);
+        });
+        }
 
     @Test
     void getTotalCountCaseSummary_success() {
@@ -134,4 +136,21 @@ class CaseSummaryRepositoryTest {
         verify(queryBuilder, times(1)).getTotalCountQuery(eq(baseQuery));
         verify(jdbcTemplate, times(1)).queryForObject(anyString(), eq(Integer.class), any(Object[].class));
     }
+
+    @Test
+    void setJudgement_throwsException_logsError() {
+        // Arrange
+        CaseRequest caseRequest = new CaseRequest();
+        caseRequest.setFilingNumber("12345");
+
+        String judgementQuery = "SELECT * FROM judgement";
+
+        when(queryBuilder.getJudgementQuery(anyString(), anyList(), anyList())).thenReturn(judgementQuery);
+        when(jdbcTemplate.query(anyString(), any(Object[].class), any(int[].class), any(JudgementRowMapper.class)))
+                .thenThrow(new RuntimeException("Error occurred while fetching judgement"));
+
+        // Act & Assert
+        assertThrows(CustomException.class, () -> caseSummaryRepository.getCaseSummary(caseRequest));
+    }
+
 }

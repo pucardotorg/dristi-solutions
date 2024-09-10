@@ -74,4 +74,18 @@ public class ServiceConstants {
     //JSON Path
     public static final String ES_HITS_PATH = "$.hits.hits.*._source";
 
+    public static final String CASE_SUMMARY_ERROR = "CASE_SUMMARY_ERROR";
+
+    public static final String CASE_SUMMARY_ERROR_MESSAGE = "Error building case summary : ";
+
+    public static final String CASE_SUMMARY_QUERY_EXCEPTION = "CASE_SUMMARY_QUERY_EXCEPTION";
+    public static final String ARGS_MISMATCH = "Arg and ArgType size mismatch";
+    public static final String CASE_SUMMARY_FETCH_ERROR = "Error occurred while fetching case summary";
+
+    // row mapper exceptions
+    public static final String ROW_MAPPER_EXCEPTION = "ROW_MAPPER_EXCEPTION";
+    public static final String CASE_SUMMARY_RESULT_SET_EXCEPTION = "Exception occurred while processing CaseSummary ResultSet: ";
+    public static final String JUDGEMENT_RESULT_SET_EXCEPTION = "Exception occurred while processing Judgement ResultSet: ";
+    public static final String STATUTE_SECTION_RESULT_SET_EXCEPTION = "Exception occurred while processing StatuteSection ResultSet: ";
+
 }

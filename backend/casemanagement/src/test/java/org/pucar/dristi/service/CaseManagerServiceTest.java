@@ -2,22 +2,24 @@ package org.pucar.dristi.service;
 
 import org.egov.tracer.model.CustomException;
 import org.json.JSONArray;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.CaseSummaryRepository;
 import org.pucar.dristi.repository.ElasticSearchRepository;
-import org.pucar.dristi.util.jsonmapper.*;
 import org.pucar.dristi.web.models.*;
 import java.util.List;
 import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.pucar.dristi.config.ServiceConstants.CASE_SUMMARY_ERROR;
+import static org.pucar.dristi.config.ServiceConstants.CASE_SUMMARY_ERROR_MESSAGE;
 
+@ExtendWith(MockitoExtension.class)
 class CaseManagerServiceTest {
 
     @Mock
@@ -25,29 +27,10 @@ class CaseManagerServiceTest {
     @Mock
     private Configuration configuration;
     @Mock
-    private CourtCaseMapper courtCaseMapper;
-    @Mock
-    private HearingMapper hearingMapper;
-    @Mock
-    private WitnessMapper witnessMapper;
-    @Mock
-    private OrderMapper orderMapper;
-    @Mock
-    private TaskMapper taskMapper;
-    @Mock
-    private ApplicationMapper applicationMapper;
-    @Mock
-    private ArtifactMapper artifactMapper;
-    @Mock
     private CaseSummaryRepository caseSummaryRepository;
 
     @InjectMocks
     private CaseManagerService caseManagerService;
-
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-    }
 
     @Test
     void testRetrieveDocuments_success() {
@@ -113,6 +96,7 @@ class CaseManagerServiceTest {
     void testGetCaseSummary_success() {
         // Arrange
         CaseRequest caseRequest = new CaseRequest();
+        caseRequest.setCaseNumber("123");
         List<CaseSummary> mockSummary = new ArrayList<>();
         when(caseSummaryRepository.getCaseSummary(caseRequest)).thenReturn(mockSummary);
 
@@ -128,11 +112,25 @@ class CaseManagerServiceTest {
     void testGetCaseSummary_exceptionHandling() {
         // Arrange
         CaseRequest caseRequest = new CaseRequest();
-        when(caseSummaryRepository.getCaseSummary(caseRequest)).thenThrow(new RuntimeException("Mocked Exception"));
+        caseRequest.setCaseNumber("123");
+        when(caseSummaryRepository.getCaseSummary(caseRequest)).thenThrow(new CustomException(CASE_SUMMARY_ERROR,CASE_SUMMARY_ERROR_MESSAGE));
 
         // Act & Assert
         CustomException exception = assertThrows(CustomException.class, () -> caseManagerService.getCaseSummary(caseRequest));
-        assertEquals("CASE_SUMMARY_ERROR", exception.getCode());
+        assertEquals(CASE_SUMMARY_ERROR, exception.getCode());
+    }
+
+    @Test
+    void testGetCaseSummary_Empty() {
+        // Arrange
+        CaseRequest caseRequest = new CaseRequest();
+        List<CaseSummary> mockSummary = new ArrayList<>();
+
+        // Act
+        List<CaseSummary> caseSummaries = caseManagerService.getCaseSummary(caseRequest);
+
+        // Assert
+        assertEquals(caseSummaries,new ArrayList<>());
     }
 }
 

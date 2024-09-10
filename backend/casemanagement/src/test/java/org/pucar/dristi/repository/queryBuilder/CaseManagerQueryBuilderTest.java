@@ -23,31 +23,30 @@ class CaseManagerQueryBuilderTest {
         caseManagerQueryBuilder = new CaseManagerQueryBuilder();
     }
 
-//    @Test
-//    void testGetCaseSummaryQuery_withCriteria() {
-//        // Arrange
-//        CaseRequest caseRequest = new CaseRequest();
-//        caseRequest.setCaseId("123");
-//        caseRequest.setFilingNumber("456");
-//        caseRequest.setCaseNumber("789");
-//        caseRequest.setTenantId("tenant123");
-//
-//        List<Object> preparedStmtList = new ArrayList<>();
-//        List<Integer> preparedStmtArgList = new ArrayList<>();
-//
-//        // Act
-//        String query = caseManagerQueryBuilder.getCaseSummaryQuery(caseRequest, preparedStmtList, preparedStmtArgList);
-//
-//        // Assert
-//        assertTrue(query.contains("cs.id = ?"));
-//        assertTrue(query.contains("cs.filingNumber = ?"));
-//        assertTrue(query.contains("cs.caseNumber = ?"));
-//        assertTrue(query.contains("cs.tenantId = ?"));
-//        assertEquals(4, preparedStmtList.size());
-//        assertEquals(4, preparedStmtArgList.size());
-//        assertEquals("123", preparedStmtList.get(0));
-//        assertEquals(Types.VARCHAR, preparedStmtArgList.get(0));
-//    }
+    @Test
+    void testGetCaseSummaryQuery_withCriteria() {
+        // Arrange
+        CaseRequest caseRequest = new CaseRequest();
+        caseRequest.setCaseId("123");
+        caseRequest.setFilingNumber("456");
+        caseRequest.setCaseNumber("789");
+        caseRequest.setTenantId("tenant123");
+
+        List<Object> preparedStmtList = new ArrayList<>();
+        List<Integer> preparedStmtArgList = new ArrayList<>();
+
+        // Act
+        String query = caseManagerQueryBuilder.getCaseSummaryQuery(caseRequest, preparedStmtList, preparedStmtArgList);
+
+        // Assert
+        assertTrue(query.contains("cs.id = ?"));
+        assertTrue(query.contains("cs.casenumber = ?"));
+        assertTrue(query.contains("cs.tenantid = ?"));
+        assertEquals(4, preparedStmtList.size());
+        assertEquals(4, preparedStmtArgList.size());
+        assertEquals("123", preparedStmtList.get(0));
+        assertEquals(Types.VARCHAR, preparedStmtArgList.get(0));
+    }
 
     @Test
     void testGetCaseSummaryQuery_noCriteria() {
@@ -165,7 +164,41 @@ class CaseManagerQueryBuilderTest {
         assertNotEquals(query.toString(),"WHERE cs.id = ?");
         assertTrue(preparedStmtList.isEmpty());
         assertTrue(preparedStmtArgList.isEmpty());
-        assertEquals(true, result); // Criteria still remains true
+        assertTrue(result); // Criteria still remains true
+    }
+
+    @Test
+    void testGetJudgementQuery() {
+        // Arrange
+        List<Object> preparedStmtList = new ArrayList<>();
+        List<Integer> preparedStmtArgList = new ArrayList<>();
+        String filingNumber = "123";
+
+        // Act
+        String result = caseManagerQueryBuilder.getJudgementQuery(filingNumber, preparedStmtList, preparedStmtArgList);
+
+        // Assert
+        assertTrue(result.contains("dos.filingnumber = ?"));
+        assertEquals(1, preparedStmtList.size());
+        assertEquals("123", preparedStmtList.get(0));
+        assertEquals(Types.VARCHAR, preparedStmtArgList.get(0));
+    }
+
+    @Test
+    void testGetStatuteSectionQuery() {
+        // Arrange
+        List<Object> preparedStmtList = new ArrayList<>();
+        List<Integer> preparedStmtArgList = new ArrayList<>();
+        String caseId = "123";
+
+        // Act
+        String result = caseManagerQueryBuilder.getStatuteSectionQuery(caseId, preparedStmtList, preparedStmtArgList);
+
+        // Assert
+        assertTrue(result.contains("ss.case_id = ?"));
+        assertEquals(1, preparedStmtList.size());
+        assertEquals("123", preparedStmtList.get(0));
+        assertEquals(Types.VARCHAR, preparedStmtArgList.get(0));
     }
 }
 

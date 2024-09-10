@@ -83,7 +83,11 @@ public class CasemanagerApiController {
     public ResponseEntity<CaseSummaryResponse> casemanagerCaseV1SummaryPost(@Parameter(in = ParameterIn.DEFAULT, description = "Details for the new court case + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody CaseRequest body) {
         List<CaseSummary> caseSummaries = caseManagerService.getCaseSummary(body);
         RequestInfo requestInfo = body.getRequestInfo();
-        CaseSummaryResponse caseSummaryResponse = CaseSummaryResponse.builder().criteria(caseSummaries).requestInfo(requestInfo).build();
+        int totalCount = caseSummaries.size();
+        if (body.getPagination() != null) {
+            totalCount = body.getPagination().getTotalCount().intValue();
+        }
+        CaseSummaryResponse caseSummaryResponse = CaseSummaryResponse.builder().criteria(caseSummaries).totalCount(totalCount).requestInfo(requestInfo).build();
         return new ResponseEntity<>(caseSummaryResponse, HttpStatus.OK);
     }
 

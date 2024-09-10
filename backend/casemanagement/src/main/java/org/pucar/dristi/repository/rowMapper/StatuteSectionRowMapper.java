@@ -6,6 +6,7 @@ import org.egov.common.contract.models.AuditDetails;
 import org.egov.tracer.model.CustomException;
 import org.postgresql.util.PGobject;
 import org.pucar.dristi.web.models.StatuteSection;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Component;
@@ -14,9 +15,19 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
+import static org.pucar.dristi.config.ServiceConstants.ROW_MAPPER_EXCEPTION;
+import static org.pucar.dristi.config.ServiceConstants.STATUTE_SECTION_RESULT_SET_EXCEPTION;
+
 @Component
 @Slf4j
 public class StatuteSectionRowMapper implements ResultSetExtractor<List<StatuteSection>> {
+
+    private final ObjectMapper objectMapper;
+
+    @Autowired
+    public StatuteSectionRowMapper(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
 
     public List<String> stringToList(String str){
         List<String> list = new ArrayList<>();
@@ -31,11 +42,10 @@ public class StatuteSectionRowMapper implements ResultSetExtractor<List<StatuteS
     }
 
     @Override
-    public List<StatuteSection> extractData(ResultSet rs) throws SQLException, DataAccessException {
+    public List<StatuteSection> extractData(ResultSet rs) throws DataAccessException {
         List<StatuteSection> statuteSectionMap = new ArrayList<>();
 
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
             while (rs.next()) {
                 String id = rs.getString("case_id");
                 UUID uuid = UUID.fromString(id!=null ? id : "00000000-0000-0000-0000-000000000000");
@@ -65,8 +75,8 @@ public class StatuteSectionRowMapper implements ResultSetExtractor<List<StatuteS
             }
             return statuteSectionMap;
         } catch (Exception e) {
-            log.error("Error occurred while processing Case ResultSet :: {}", e.toString());
-            throw new CustomException("ROW_MAPPER_EXCEPTION", "Exception occurred while processing Case ResultSet: " + e.getMessage());
+            log.error("Error while mapping statute section row: {}", e.getMessage());
+            throw new CustomException(ROW_MAPPER_EXCEPTION, STATUTE_SECTION_RESULT_SET_EXCEPTION + e.getMessage());
         }
     }
 }

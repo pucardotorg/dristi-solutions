@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 import java.sql.Types;
 import java.util.List;
 
+import static org.pucar.dristi.config.ServiceConstants.CASE_SUMMARY_QUERY_EXCEPTION;
+
 @Component
 @Slf4j
 public class CaseManagerQueryBuilder {
@@ -43,7 +45,7 @@ public class CaseManagerQueryBuilder {
             return query.toString();
         } catch (Exception e) {
             log.error("Error occurred while building case summary query {}", e.getMessage());
-            throw new CustomException("CASE_SUMMARY_QUERY_EXCEPTION", "Error occurred while building the case summary query: " + e.getMessage());
+            throw new CustomException(CASE_SUMMARY_QUERY_EXCEPTION, "Error occurred while building the case summary query: " + e.getMessage());
         }
     }
 

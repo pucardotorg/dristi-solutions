@@ -180,11 +180,17 @@ public class CaseManagerService {
 
 	public List<CaseSummary> getCaseSummary(CaseRequest caseRequest) {
 		try {
-            return caseSummaryRepository.getCaseSummary(caseRequest);
+			if (caseRequest.getCaseId() == null && caseRequest.getFilingNumber() == null
+					&& caseRequest.getCaseNumber() == null && caseRequest.getTenantId() == null) {
+				return new ArrayList<>();
+			}
+			else {
+				return caseSummaryRepository.getCaseSummary(caseRequest);
+			}
 		}
 		catch (Exception e) {
-			log.error("Error building case summaries using filing number: {}", caseRequest.getFilingNumber(), e);
-			throw new CustomException("CASE_SUMMARY_ERROR", "Error building case summary" + e.getMessage());
+			log.error(CASE_SUMMARY_ERROR_MESSAGE, e);
+			throw new CustomException(CASE_SUMMARY_ERROR, CASE_SUMMARY_ERROR_MESSAGE + e.getMessage());
 		}
     }
 }

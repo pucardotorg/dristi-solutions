@@ -31,6 +31,9 @@ public class CaseSummaryResponse {
 	@Valid
 	private List<CaseSummary> criteria = null;
 
+	@JsonProperty("totalCount")
+	private Integer totalCount = null;
+
 
 	public CaseSummaryResponse addCriteriaItem(CaseSummary criteriaItem) {
 		if (this.criteria == null) {
