@@ -59,7 +59,7 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         continue-on-error: true
         run: |
-          snyk test --all-projects --sarif --debug > backend/snyk-backend.sarif
+          snyk test --all-projects --sarif --debug > snyk-backend.sarif
         working-directory: backend
 
       - name: Upload SARIF results for Maven Backend
@@ -73,7 +73,7 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         continue-on-error: true
         run: |
-          snyk test --all-projects --sarif --debug > common/snyk-common.sarif
+          snyk test --all-projects --sarif --debug > snyk-common.sarif
         working-directory: common
 
       - name: Upload SARIF results for Maven Common
@@ -87,7 +87,7 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         continue-on-error: true
         run: |
-          snyk test --all-projects --sarif --debug > frontend/snyk-frontend.sarif
+          snyk test --all-projects --sarif --debug > snyk-frontend.sarif
         working-directory: frontend
 
       - name: Upload SARIF results for Frontend
