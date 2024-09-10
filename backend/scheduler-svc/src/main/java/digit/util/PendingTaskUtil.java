@@ -42,7 +42,7 @@ public class PendingTaskUtil {
         PendingTask pendingTask = new PendingTask();
         pendingTask.setEntityType(configuration.getOrderEntityType());
         pendingTask.setName(PENDING_TASK_NAME);
-        pendingTask.setReferenceId("MANUAL_"+reScheduleHearing.getRescheduledRequestId());
+        pendingTask.setReferenceId("MANUAL_"+reScheduleHearing.getHearingBookingId());
         pendingTask.setStatus(PENDING_TASK_STATUS);
         pendingTask.setFilingNumber(reScheduleHearing.getCaseId());
         pendingTask.setAssignedRole(List.of("JUDGE_ROLE"));
