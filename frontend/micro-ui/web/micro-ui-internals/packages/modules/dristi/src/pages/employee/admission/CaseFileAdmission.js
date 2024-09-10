@@ -11,7 +11,7 @@ import { OrderTypes, OrderWorkflowAction } from "../../../Utils/orderWorkflow";
 import { formatDate } from "../../citizen/FileCase/CaseType";
 import {
   admitCaseSubmitConfig,
-  registerCaseConfig,   
+  registerCaseConfig,
   scheduleCaseSubmitConfig,
   selectParticipantConfig,
   sendBackCase,
@@ -57,7 +57,7 @@ function CaseFileAdmission({ t, path }) {
   const [updatedCaseDetails, setUpdatedCaseDetails] = useState({});
   const roles = Digit.UserService.getUser()?.info?.roles;
   const isCaseApprover = roles.some((role) => role.code === "CASE_APPROVER");
-  const moduleCode = "DRISTI";
+  const moduleCode = "case-default";
   const { data: caseFetchResponse, isLoading } = useSearchCaseService(
     {
       criteria: [
@@ -74,7 +74,7 @@ function CaseFileAdmission({ t, path }) {
   );
   const caseDetails = useMemo(() => caseFetchResponse?.criteria?.[0]?.responseList?.[0] || null, [caseFetchResponse]);
 
-  const { isLoading: isWorkFlowLoading, data: workFlowDetails } = window?.Digit.Hooks.useWorkflowDetails({
+  const { isLoading: isWorkFlowLoading, data: workFlowDetails } = window?.Digit.Hooks.useWorkflowDetailsV2({
     tenantId,
     id: caseDetails?.filingNumber,
     moduleCode,
@@ -83,7 +83,7 @@ function CaseFileAdmission({ t, path }) {
       cacheTime: 0,
     },
   });
-
+  console.log("workFlowDetails", workFlowDetails);
   const nextActions = useMemo(() => workFlowDetails?.nextActions || [{}], [workFlowDetails]);
 
   const primaryAction = useMemo(
@@ -608,9 +608,11 @@ function CaseFileAdmission({ t, path }) {
                 secondaryLabel={
                   caseDetails?.status === CaseWorkflowState.ADMISSION_HEARING_SCHEDULED
                     ? t("HEARING_IS_SCHEDULED")
-                    : t("CS_SCHEDULE_ADMISSION_HEARING")
+                    : tertiaryAction?.action
+                    ? t(tertiaryAction?.label)
+                    : ""
                 }
-                showSecondaryLabel={true}
+                showSecondaryLabel={Boolean(tertiaryAction?.action)}
                 actionClassName={"case-file-admission-action-bar"}
                 showSkip={secondaryAction?.label}
                 onSkip={onSendBack}
