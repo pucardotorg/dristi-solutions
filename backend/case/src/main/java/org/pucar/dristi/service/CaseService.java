@@ -114,9 +114,13 @@ public class CaseService {
                 billingUtil.createDemand(caseRequest);
             }
             if (CASE_ADMIT_STATUS.equals(caseRequest.getCases().getStatus())) {
-                enrichmentUtil.enrichAccessCode(caseRequest);
-                enrichmentUtil.enrichCaseNumberAndCNRNumber(caseRequest);
+                enrichmentUtil.enrichCaseNumberAndCourtCaseNumber(caseRequest);
                 enrichmentUtil.enrichRegistrationDate(caseRequest);
+            }
+
+            if (PENDING_ADMISSION_HEARING_STATUS.equals(caseRequest.getCases().getStatus())) {
+                enrichmentUtil.enrichAccessCode(caseRequest);
+                enrichmentUtil.enrichCNRNumber(caseRequest);
             }
 
             producer.push(config.getCaseUpdateTopic(), caseRequest);
