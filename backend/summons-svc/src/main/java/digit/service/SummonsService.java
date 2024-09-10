@@ -22,8 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static digit.config.ServiceConstants.SUMMON;
-import static digit.config.ServiceConstants.WARRANT;
+import static digit.config.ServiceConstants.*;
 
 @Service
 @Slf4j
@@ -125,15 +124,15 @@ public class SummonsService {
         Workflow workflow = null;
         if (task.getTaskType().equalsIgnoreCase(SUMMON)) {
             if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.DELIVERED)) {
-                workflow = Workflow.builder().action("SERVE").build();
+                workflow = Workflow.builder().action(SERVE).build();
             } else {
-                workflow = Workflow.builder().action("REISSUE").build();
+                workflow = Workflow.builder().action(REISSUE).build();
             }
         } else if (task.getTaskType().equalsIgnoreCase(WARRANT)) {
             if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.EXECUTED)) {
-                workflow = Workflow.builder().action("DELIVERED").build();
+                workflow = Workflow.builder().action(DELIVERED).build();
             } else {
-                workflow = Workflow.builder().action("NOT DELIVERED").build();
+                workflow = Workflow.builder().action(NOT_DELIVERED).build();
             }
         }
         task.setWorkflow(workflow);

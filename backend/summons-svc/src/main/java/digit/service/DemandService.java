@@ -263,8 +263,8 @@ public class DemandService {
 
         Task task = request.getTask();
         Workflow workflow = null;
-        if (request.getTask().getStatus().equalsIgnoreCase("PAYMENT_PENDING")) {
-            workflow = Workflow.builder().action("MAKE PAYMENT").build();
+        if (request.getTask().getStatus().equalsIgnoreCase(PAYMENT_PENDING)) {
+            workflow = Workflow.builder().action(MAKE_PAYMENT).build();
         }
 
         task.setWorkflow(workflow);
