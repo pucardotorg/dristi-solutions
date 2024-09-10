@@ -54,18 +54,44 @@ jobs:
 
         # Runs Snyk Code (SAST) analysis and uploads result into GitHub.
         # Use || true to not fail the pipeline
-      - name: Snyk Code test
+      - name: Snyk Test for Maven Backend
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         continue-on-error: true
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         run: |
-          snyk test --all-projects --sarif --debug > snyk-results.sarif
+          snyk test --all-projects --sarif --debug > backend/snyk-backend.sarif
         working-directory: backend
-        # Runs Snyk Open Source (SCA) analysis and uploads result to Snyk.
-      - name: Upload result to GitHub Code Scanning
+
+      - name: Upload SARIF results for Maven Backend
         uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: backend/snyk-backend.sarif
+          category: 'maven-backend'
+
+      - name: Snyk Test for Maven Common
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          sarif_file: backend/snyk-results.sarif
+        continue-on-error: true
+        run: |
+          snyk test --all-projects --sarif --debug > common/snyk-common.sarif
+        working-directory: common
 
+      - name: Upload SARIF results for Maven Common
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: common/snyk-common.sarif
+          category: 'maven-common'
+
+      - name: Snyk Test for Frontend
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        continue-on-error: true
+        run: |
+          snyk test --all-projects --sarif --debug > frontend/snyk-frontend.sarif
+        working-directory: frontend
+
+      - name: Upload SARIF results for Frontend
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: frontend/snyk-frontend.sarif
+          category: 'frontend'
