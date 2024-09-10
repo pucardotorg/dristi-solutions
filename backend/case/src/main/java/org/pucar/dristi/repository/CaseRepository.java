@@ -5,21 +5,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import io.swagger.models.auth.In;
 import org.egov.common.contract.models.Document;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.repository.querybuilder.CaseQueryBuilder;
-import org.pucar.dristi.repository.rowmapper.CaseRowMapper;
-import org.pucar.dristi.repository.rowmapper.DocumentRowMapper;
-import org.pucar.dristi.repository.rowmapper.LinkedCaseDocumentRowMapper;
-import org.pucar.dristi.repository.rowmapper.LinkedCaseRowMapper;
-import org.pucar.dristi.repository.rowmapper.LitigantDocumentRowMapper;
-import org.pucar.dristi.repository.rowmapper.LitigantRowMapper;
-import org.pucar.dristi.repository.rowmapper.RepresentativeRowMapper;
-import org.pucar.dristi.repository.rowmapper.RepresentingDocumentRowMapper;
-import org.pucar.dristi.repository.rowmapper.RepresentingRowMapper;
-import org.pucar.dristi.repository.rowmapper.RepresentiveDocumentRowMapper;
-import org.pucar.dristi.repository.rowmapper.StatuteSectionRowMapper;
+import org.pucar.dristi.repository.rowmapper.*;
 import org.pucar.dristi.web.models.AdvocateMapping;
 import org.pucar.dristi.web.models.CaseCriteria;
 import org.pucar.dristi.web.models.CaseExists;
@@ -46,6 +37,8 @@ public class CaseRepository {
 
     private CaseRowMapper rowMapper;
 
+    private CaseRowMapperV2 rowMapperV2;
+
     private DocumentRowMapper caseDocumentRowMapper;
 
     private LinkedCaseDocumentRowMapper linkedCaseDocumentRowMapper;
@@ -67,10 +60,11 @@ public class CaseRepository {
     private RepresentingRowMapper representingRowMapper;
 
     @Autowired
-    public CaseRepository(CaseQueryBuilder queryBuilder, JdbcTemplate jdbcTemplate, CaseRowMapper rowMapper, DocumentRowMapper caseDocumentRowMapper, LinkedCaseDocumentRowMapper linkedCaseDocumentRowMapper, LitigantDocumentRowMapper litigantDocumentRowMapper, RepresentiveDocumentRowMapper representativeDocumentRowMapper, RepresentingDocumentRowMapper representingDocumentRowMapper, LinkedCaseRowMapper linkedCaseRowMapper, LitigantRowMapper litigantRowMapper, StatuteSectionRowMapper statuteSectionRowMapper, RepresentativeRowMapper representativeRowMapper, RepresentingRowMapper representingRowMapper) {
+    public CaseRepository(CaseQueryBuilder queryBuilder, JdbcTemplate jdbcTemplate, CaseRowMapper rowMapper, CaseRowMapperV2 rowMapperV2, DocumentRowMapper caseDocumentRowMapper, LinkedCaseDocumentRowMapper linkedCaseDocumentRowMapper, LitigantDocumentRowMapper litigantDocumentRowMapper, RepresentiveDocumentRowMapper representativeDocumentRowMapper, RepresentingDocumentRowMapper representingDocumentRowMapper, LinkedCaseRowMapper linkedCaseRowMapper, LitigantRowMapper litigantRowMapper, StatuteSectionRowMapper statuteSectionRowMapper, RepresentativeRowMapper representativeRowMapper, RepresentingRowMapper representingRowMapper) {
         this.queryBuilder = queryBuilder;
         this.jdbcTemplate = jdbcTemplate;
         this.rowMapper = rowMapper;
+        this.rowMapperV2 = rowMapperV2;
         this.caseDocumentRowMapper = caseDocumentRowMapper;
         this.linkedCaseDocumentRowMapper = linkedCaseDocumentRowMapper;
         this.litigantDocumentRowMapper = litigantDocumentRowMapper;
@@ -435,5 +429,56 @@ public class CaseRepository {
         String countQuery = queryBuilder.getTotalCountQuery(baseQuery);
         log.info("Final count query :: {}", countQuery);
         return jdbcTemplate.queryForObject(countQuery, preparedStmtList.toArray(), Integer.class);
+    }
+
+
+    public List<CaseCriteria> getCasesV2(List<CaseCriteria> criteria, RequestInfo requestInfo){
+        try {
+            for(CaseCriteria caseCriteria : criteria){
+                List<Object> preparedStmtList = new ArrayList<>();
+                List<Integer> preparedStmtArgList = new ArrayList<>();
+                List<Object> preparedStmtListDoc = new ArrayList<>();
+                String withClauseQuery = "";
+                String caseQuery = "";
+                caseQuery = queryBuilder.getCasesSearchQueryV2(caseCriteria, preparedStmtList, preparedStmtArgList, requestInfo);
+                String countQuery = queryBuilder.getCountQueryV2(caseQuery);
+                Integer casesCount = jdbcTemplate.queryForObject(countQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), Integer.class);
+                caseQuery = queryBuilder.addPaginatedQuery(caseQuery);
+                withClauseQuery = queryBuilder.getWithClauseQuery(caseCriteria, preparedStmtList, preparedStmtArgList, requestInfo);
+                withClauseQuery += caseQuery;
+                log.info("Final case query :: {}", withClauseQuery);
+
+                if(preparedStmtList.size()!=preparedStmtArgList.size()){
+                    log.info("Arg size :: {}, and ArgType size :: {}", preparedStmtList.size(),preparedStmtArgList.size());
+                    throw new CustomException(CASE_SEARCH_QUERY_EXCEPTION, "Arg and ArgType size mismatch ");
+                }
+                List<CourtCase> list = jdbcTemplate.query(withClauseQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray() ,rowMapperV2);
+                if (list != null) {
+                    caseCriteria.setResponseList(list);
+                    log.info("Case list size :: {}", list.size());
+                }
+
+                if (caseCriteria.getDefaultFields() != null && caseCriteria.getDefaultFields()) {
+                    continue;
+                }
+
+                List<String> ids = new ArrayList<>();
+
+                for (CourtCase courtCase : caseCriteria.getResponseList()) {
+                    ids.add(courtCase.getId().toString());
+                }
+                if (ids.isEmpty()) {
+                    caseCriteria.setResponseList(new ArrayList<>());
+                    continue;
+                }
+                enrichCaseCriteria(caseCriteria,ids,preparedStmtListDoc);
+            }
+            return criteria;
+        } catch (CustomException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error while fetching case application list :: {}", e.toString());
+            throw new CustomException(SEARCH_CASE_ERR, "Exception while fetching case application list: " + e.getMessage());
+        }
     }
 }

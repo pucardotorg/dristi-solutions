@@ -128,6 +128,16 @@ public class CaseApiController {
         return new ResponseEntity<>(witnessResponse, HttpStatus.OK);
     }
 
+    @PostMapping(value = "/v2/_search")
+    public ResponseEntity<CaseListResponse> caseV2SearchPost (
+            @Parameter(in = ParameterIn.DEFAULT, description = "Search criteria + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody CaseSearchRequest body){
+
+        caseService.searchCasesV2(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
+        CaseListResponse caseResponse = CaseListResponse.builder().criteria(body.getCriteria()).responseInfo(responseInfo).build();
+        return new ResponseEntity<>(caseResponse, HttpStatus.OK);
     }
+
+}
 
 

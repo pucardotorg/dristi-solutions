@@ -98,6 +98,23 @@ public class CaseService {
         }
     }
 
+    public void searchCasesV2(CaseSearchRequest caseSearchRequests) {
+
+        try {
+            // Fetch applications from database according to the given search criteria
+            caseRepository.getCasesV2(caseSearchRequests.getCriteria(), caseSearchRequests.getRequestInfo());
+
+            // If no applications are found matching the given criteria, return an empty list
+            for (CaseCriteria searchCriteria : caseSearchRequests.getCriteria()) {
+                searchCriteria.getResponseList().forEach(cases -> cases.setWorkflow(workflowService.getWorkflowFromProcessInstance(workflowService.getCurrentWorkflow(caseSearchRequests.getRequestInfo(), cases.getTenantId(), cases.getFilingNumber()))));
+            }
+        } catch (CustomException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error while fetching to search results :: {}", e.toString());
+            throw new CustomException(SEARCH_CASE_ERR, e.getMessage());
+        }
+    }
     public CourtCase updateCase(CaseRequest caseRequest) {
 
         try {
