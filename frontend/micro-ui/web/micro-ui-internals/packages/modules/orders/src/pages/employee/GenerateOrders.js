@@ -1075,7 +1075,7 @@ const GenerateOrders = () => {
       if (Array.isArray(order?.additionalDetails?.formdata?.SummonsOrder?.selectedChannels)) {
         entityType = "order-default";
         const promises = order?.additionalDetails?.formdata?.SummonsOrder?.selectedChannels?.map(async (channel) => {
-          if (channel?.type === "Post" || channel.type === "SMS" || channel.type === "E-mail") {
+          if (channel?.type === "Post") {
             return ordersService.customApiService(Urls.orders.pendingTask, {
               pendingTask: {
                 name: t(`MAKE_PAYMENT_FOR_SUMMONS_${channelTypeEnum?.[channel?.type]?.code}`),
@@ -1094,7 +1094,7 @@ const GenerateOrders = () => {
             });
           }
 
-          return null;
+          return [];
         });
         return await Promise.all(promises);
       }
