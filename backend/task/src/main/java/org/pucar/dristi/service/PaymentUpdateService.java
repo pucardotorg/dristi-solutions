@@ -147,14 +147,14 @@ public class PaymentUpdateService {
             throw new CustomException("INVALID_RECEIPT", "No Tasks found for the consumerCode " + criteria.getTaskNumber());
         }
 
-        Role role = Role.builder().code("TASK_UPDATOR").tenantId(tenantId).build();
+        Role role = Role.builder().code(TASK_UPDATOR).tenantId(tenantId).build();
         requestInfo.getUserInfo().getRoles().add(role);
 
         for (Task task : tasks) {
             log.info("Updating pending payment status for task: {}", task);
             if (task.getTaskType().equals(SUMMON)) {
                 Workflow workflow = new Workflow();
-                workflow.setAction("MAKE PAYMENT");
+                workflow.setAction(MAKE_PAYMENT);
                 task.setWorkflow(workflow);
                 String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, task.getTaskNumber(),
                         config.getTaskSummonBusinessServiceName(), workflow, config.getTaskSummonBusinessName());
