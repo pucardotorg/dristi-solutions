@@ -40,10 +40,10 @@ const convertToDateInputFormat = (dateInput) => {
     if (!isNaN(day) && !isNaN(month) && !isNaN(year) && day.length === 2 && month.length === 2 && year.length === 4) {
       date = new Date(`${year}-${month}-${day}`);
     } else {
-      throw new Error("Invalid date format");
+      console.error("Invalid date format");
     }
   } else {
-    throw new Error("Invalid input type or format");
+    console.error("Invalid input type or format");
   }
 
   const day = String(date.getDate()).padStart(2, "0");
