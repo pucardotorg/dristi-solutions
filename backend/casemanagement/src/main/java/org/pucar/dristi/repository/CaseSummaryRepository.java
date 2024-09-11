@@ -25,15 +25,11 @@ public class CaseSummaryRepository {
     private final CaseManagerQueryBuilder queryBuilder;
     private final JdbcTemplate jdbcTemplate;
     private final CaseSummaryRowMapper rowMapper;
-    private final JudgementRowMapper judgementRowMapper;
-    private final StatuteSectionRowMapper statuteSectionRowMapper;
 
-    public CaseSummaryRepository(CaseManagerQueryBuilder queryBuilder, JdbcTemplate jdbcTemplate, CaseSummaryRowMapper rowMapper, JudgementRowMapper judgementRowMapper, StatuteSectionRowMapper statuteSectionRowMapper) {
+    public CaseSummaryRepository(CaseManagerQueryBuilder queryBuilder, JdbcTemplate jdbcTemplate, CaseSummaryRowMapper rowMapper) {
         this.queryBuilder = queryBuilder;
         this.jdbcTemplate = jdbcTemplate;
         this.rowMapper = rowMapper;
-        this.judgementRowMapper = judgementRowMapper;
-        this.statuteSectionRowMapper = statuteSectionRowMapper;
     }
 
     public List<CaseSummary> getCaseSummary(CaseRequest caseRequest) {
@@ -61,10 +57,6 @@ public class CaseSummaryRepository {
                 caseSummaryList.addAll(list);
             }
 
-            String filingNumber = caseRequest.getFilingNumber();
-            setJudgement(caseSummaryList,filingNumber);
-            String caseId = caseRequest.getCaseId();
-            setStatuteAndSections(caseSummaryList,caseId);
             return caseSummaryList;
         } catch (Exception e) {
             log.error(CASE_SUMMARY_FETCH_ERROR, e);
@@ -76,32 +68,5 @@ public class CaseSummaryRepository {
         String countQuery = queryBuilder.getTotalCountQuery(baseQuery);
         log.info("Final count query :: {}", countQuery);
         return jdbcTemplate.queryForObject(countQuery, Integer.class, preparedStmtList.toArray());
-    }
-
-    private void setJudgement(List<CaseSummary> caseSummaryList, String filingNumber) {
-        List<Object> preparedStmtList = new ArrayList<>();
-        List<Integer> preparedStmtArgList = new ArrayList<>();
-        String judgementQuery = queryBuilder.getJudgementQuery(filingNumber, preparedStmtList, preparedStmtArgList);
-        log.info("Final judgement query: {}", judgementQuery);
-        List<Order> orderList = jdbcTemplate.query(judgementQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(),judgementRowMapper);
-        log.info("Judgement list :: {}", orderList);
-        if (orderList != null) {
-            caseSummaryList.forEach(caseSummary -> {
-                caseSummary.setJudgement(orderList.get(0));
-            });
-        }
-    }
-
-    private void setStatuteAndSections(List<CaseSummary> caseSummaryList,String caseId) {
-        List<Object> preparedStmtList = new ArrayList<>();
-        List<Integer> preparedStmtArgList = new ArrayList<>();
-        String statuteSectionQuery = queryBuilder.getStatuteSectionQuery(caseId, preparedStmtList, preparedStmtArgList);
-        log.info("Final statute section query: {}", statuteSectionQuery);
-        List<StatuteSection> statuteSectionMap = jdbcTemplate.query(statuteSectionQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(),statuteSectionRowMapper);
-        if (statuteSectionMap != null) {
-            caseSummaryList.forEach(caseSummary -> {
-                caseSummary.setStatutesAndSections(statuteSectionMap);
-            });
-        }
     }
 }

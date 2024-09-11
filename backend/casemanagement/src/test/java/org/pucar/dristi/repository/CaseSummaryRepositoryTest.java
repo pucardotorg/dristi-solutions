@@ -48,7 +48,6 @@ class CaseSummaryRepositoryTest {
         caseRequest.setPagination(new Pagination());
 
         String query = "SELECT * FROM case_summary";
-        String judgementQuery = "SELECT * FROM judgement";
         List<CaseSummary> expectedSummaryList = new ArrayList<>();
         List<Order> orders = new ArrayList<>();
         orders.add(mock(Order.class));
@@ -61,9 +60,6 @@ class CaseSummaryRepositoryTest {
                 .thenReturn(query);
         when(queryBuilder.getTotalCountQuery(anyString())).thenReturn("SELECT count(*) FROM case_summary");
         when(jdbcTemplate.queryForObject(anyString(), eq(Integer.class), any(Object[].class))).thenReturn(100);
-        when(queryBuilder.getJudgementQuery("12345", new ArrayList<>(), new ArrayList<>())).thenReturn("SELECT * FROM judgement");
-        when(jdbcTemplate.query("SELECT * FROM judgement", new Object[]{}, new int[]{}, judgementRowMapper))
-                .thenReturn(orders);
         // Act
         List<CaseSummary> result = caseSummaryRepository.getCaseSummary(caseRequest);
 

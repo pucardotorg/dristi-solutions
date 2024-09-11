@@ -15,7 +15,46 @@ import static org.pucar.dristi.config.ServiceConstants.CASE_SUMMARY_QUERY_EXCEPT
 @Slf4j
 public class CaseManagerQueryBuilder {
 
-    private static final String CASE_SUMMARY_QUERY = "SELECT cs.resolutionmechanism as resolutionmechanism, cs.casetitle as casetitle, cs.casedescription as casedescription , cs.filingnumber as filingnumber, cs.courtcasenumber as courtcasenumber, cs.cnrnumber as cnrnumber, cs.filingdate as filingdate, cs.registrationdate as registrationdate , cs.casedetails as casedetails, cs.casecategory as casecategory, cs.status as status, cs.remarks as remarks";
+    private static final String CASE_SUMMARY_QUERY = "SELECT cs.resolutionmechanism as resolutionmechanism," +
+            " cs.casetitle as casetitle," +
+            " cs.casedescription as casedescription," +
+            " cs.filingnumber as filingnumber," +
+            " cs.courtcasenumber as courtcasenumber," +
+            " cs.cnrnumber as cnrnumber," +
+            " cs.filingdate as filingdate," +
+            " cs.registrationdate as registrationdate," +
+            " cs.casedetails as casedetails," +
+            " cs.casecategory as casecategory," +
+            " cs.status as status," +
+            " cs.remarks as remarks," +
+            " dos.id as orderid," +
+            " dos.tenantid as tenantid," +
+            " dos.cnrnumber as ordercnrnumber," +
+            " dos.applicationnumber as applicationnumber," +
+            " dos.hearingnumber as hearingnumber," +
+            " dos.ordernumber as ordernumber," +
+            " dos.linkedordernumber as linkedordernumber," +
+            " dos.createddate as createddate, dos.issuedby as issuedby," +
+            " dos.ordertype as ordertype," +
+            " dos.orderCategory as orderCategory," +
+            " dos.status as orderstatus," +
+            " dos.comments as comments," +
+            " dos.isActive as isActive," +
+            " dos.additionalDetails as additionalDetails, " +
+            " ss.id as statue_id," +
+            " ss.tenantid as statue_tenantid," +
+            "ss.statutes as statutes," +
+            " ss.sections as sections," +
+            " ss.subsections as subsections," +
+            " ss.additionalDetails as statute_additionalDetails," +
+            " ss.case_id as case_id," +
+            " ss.createdby as createdby," +
+            " ss.createdtime as createdtime," +
+            " ss.lastmodifiedby as lastmodifiedby," +
+            " ss.lastmodifiedtime as lastmodifiedtime" +
+            " FROM dristi_cases cs" +
+            " LEFT JOIN dristi_orders dos ON cs.filingnumber = dos.filingnumber" +
+            " LEFT JOIN dristi_case_statutes_and_sections ss ON cs.id = ss.case_id";
 
     private static final String FROM_CASE_SUMMARY_TABLE = " FROM dristi_cases cs";
 
@@ -36,7 +75,6 @@ public class CaseManagerQueryBuilder {
     public String getCaseSummaryQuery(CaseRequest caseRequest, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         try {
             StringBuilder query = new StringBuilder(CASE_SUMMARY_QUERY);
-            query.append(FROM_CASE_SUMMARY_TABLE);
             boolean firstCriteria = true; // To check if it's the first criteria
             firstCriteria = addCriteria(caseRequest.getCaseId(), query, firstCriteria, " cs.id = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addCriteria(caseRequest.getFilingNumber(), query, firstCriteria, " cs.filingnumber = ?", preparedStmtList, preparedStmtArgList);
