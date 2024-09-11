@@ -145,6 +145,7 @@ public class OptOutProcessorTest {
         return OptOut.builder()
                 .optoutDates(Collections.singletonList(1625126400000L))
                 .rescheduleRequestId("test-reschedule-id")
+                .individualId("test-individual-id")
                 .build();
     }
 
