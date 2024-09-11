@@ -101,13 +101,13 @@ public class OptOutProcessor {
         List<Long> suggestedDates = reScheduleHearing.getSuggestedDates();
         List<Long> availableDates = reScheduleHearing.getAvailableDates()==null?new ArrayList<>():reScheduleHearing.getAvailableDates();
         Set<Long> suggestedDatesSet = availableDates.isEmpty() ? new HashSet<>(suggestedDates) : new HashSet<>(availableDates);
-        reScheduleHearing.setAvailableDates(new ArrayList<>(suggestedDatesSet));
 
         List<OptOut> optOuts = optOutService.search(searchRequest, null, null);
         int optOutAlreadyMade = optOuts.size();
         optoutDates.forEach(suggestedDatesSet::remove);
+        reScheduleHearing.setAvailableDates(new ArrayList<>(suggestedDatesSet));
 
-        boolean isOptOutSaved = optOuts.stream().anyMatch(optOut1 -> optOut1.getRescheduleRequestId().equals(optOut.getRescheduleRequestId()));
+        boolean isOptOutSaved = optOuts.stream().anyMatch(optOut1 -> optOut1.getIndividualId().equals(optOut.getIndividualId()));
 
         return (totalOptOutCanBeMade - optOutAlreadyMade == 0 && isOptOutSaved) || (totalOptOutCanBeMade - optOutAlreadyMade == 1 && !isOptOutSaved);
     }
