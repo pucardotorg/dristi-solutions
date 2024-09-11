@@ -61,6 +61,7 @@ public class OptOutProcessor {
                             .build()).build();
 
             List<OptOut> optOuts = optOutService.search(searchRequest, null, null);
+            boolean isLastOptOut = isOptOutSaved(optOut,optOuts);
             int optOutAlreadyMade = optOuts.size();
             List<ReScheduleHearing> reScheduleRequest = repository.getReScheduleRequest(ReScheduleHearingReqSearchCriteria.builder()
                     .rescheduledRequestId(Collections.singletonList(rescheduleRequestId)).build(), null, null);
@@ -74,10 +75,13 @@ public class OptOutProcessor {
 
             optoutDates.forEach(suggestedDatesSet::remove);
 
+            log.info("RescheduleHearingId for which opt out is made: {}", reScheduleHearing.getRescheduledRequestId());
+            log.info("HearingBookingId for which opt out is made: {}", reScheduleHearing.getHearingBookingId());
             // todo: audit details part
             reScheduleHearing.setAvailableDates(new ArrayList<>(suggestedDatesSet));
-            if (totalOptOutCanBeMade - optOutAlreadyMade == 0) { // second condition is for lag if this data is already persisted into the db,it should be second only
-
+            if ((isLastOptOut && totalOptOutCanBeMade - optOutAlreadyMade == 0) || (!isLastOptOut && totalOptOutCanBeMade - optOutAlreadyMade == 1)) {
+                // second condition is for lag if this data is already persisted into the db,it should be second only
+                log.info("this is the last opt out, need to close the request. open the pending task for judge");
                 // this is last opt out, need to close the request. open the pending task for judge
                 PendingTask pendingTask = pendingTaskUtil.createPendingTask(reScheduleHearing);
                 PendingTaskRequest request = PendingTaskRequest.builder()
@@ -102,6 +106,10 @@ public class OptOutProcessor {
             log.info("operation = checkAndScheduleHearingForOptOut, result = FAILURE, message = {}", e.getMessage());
 
         }
+    }
+
+    private boolean isOptOutSaved(OptOut optOut,List<OptOut> optOuts) {
+        return optOuts.stream().anyMatch(optOut1 -> optOut1.equals(optOut));
     }
 
     public void unblockJudgeCalendarForSuggestedDays(ReScheduleHearing reScheduleHearing ) {
