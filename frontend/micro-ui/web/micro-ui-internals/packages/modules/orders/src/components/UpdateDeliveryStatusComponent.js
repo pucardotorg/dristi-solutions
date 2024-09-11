@@ -1,28 +1,7 @@
 import { CardLabel, Dropdown, LabelFieldPair, TextInput } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useState } from "react";
 import ApplicationInfoComponent from "./ApplicationInfoComponent";
-
-const convertToDateInputFormat = (dateInput) => {
-  let date;
-
-  if (typeof dateInput === "number") {
-    date = new Date(dateInput);
-  } else if (typeof dateInput === "string" && dateInput.includes("-")) {
-    const [day, month, year] = dateInput.split("-");
-    if (!isNaN(day) && !isNaN(month) && !isNaN(year) && day.length === 2 && month.length === 2 && year.length === 4) {
-      date = new Date(`${year}-${month}-${day}`);
-    } else {
-      console.error("Invalid date format");
-    }
-  } else {
-    console.error("Invalid input type or format");
-  }
-
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-  return `${year}-${month}-${day}`;
-};
+import { convertToDateInputFormat } from "../utils/index";
 
 const convertToDisplayFormat = (dateStr) => {
   const [year, month, day] = dateStr.split("-");
@@ -62,7 +41,7 @@ const UpdateDeliveryStatusComponent = ({ t, infos, links, handleSubmitButtonDisa
         <LabelFieldPair className="case-label-field-pair">
           <CardLabel className="case-input-label">{`${t("Update Delivery Date")}`}</CardLabel>
           <TextInput
-            value={date}
+            value={date.replace(/(\d{2})-(\d{2})-(\d{4})/, "$3-$2-$1")}
             type={"date"}
             name={"delivery-date"}
             onChange={(e) => {
