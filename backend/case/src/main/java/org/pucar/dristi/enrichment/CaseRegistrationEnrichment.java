@@ -42,9 +42,6 @@ public class CaseRegistrationEnrichment {
     public void enrichCaseRegistrationOnCreate(CaseRequest caseRequest) {
         try {
             CourtCase courtCase = caseRequest.getCases();
-
-//            List<String> courtCaseRegistrationFillingNumberIdList = idgenUtil.getIdList(caseRequest.getRequestInfo(), courtCase.getTenantId(), config.getCaseFilingNumberCp(), null, 1);
-//            log.info("Court Case Registration Filling Number cp Id List :: {}", courtCaseRegistrationFillingNumberIdList);
             AuditDetails auditDetails = AuditDetails.builder().createdBy(caseRequest.getRequestInfo().getUserInfo().getUuid()).createdTime(caseUtil.getCurrentTimeMil()).lastModifiedBy(caseRequest.getRequestInfo().getUserInfo().getUuid()).lastModifiedTime(caseUtil.getCurrentTimeMil()).build();
             courtCase.setAuditdetails(auditDetails);
 
