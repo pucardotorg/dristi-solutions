@@ -2,10 +2,7 @@ package org.pucar.dristi.enrichment;
 
 
 import static org.pucar.dristi.config.ServiceConstants.ACCESSCODE_LENGTH;
-import static org.pucar.dristi.config.ServiceConstants.DISTRICT;
 import static org.pucar.dristi.config.ServiceConstants.ENRICHMENT_EXCEPTION;
-import static org.pucar.dristi.config.ServiceConstants.ESTABLISHMENT_CODE;
-import static org.pucar.dristi.config.ServiceConstants.STATE;
 
 import java.util.List;
 import java.util.UUID;
