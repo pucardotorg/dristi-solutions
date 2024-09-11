@@ -9,6 +9,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
+import static org.pucar.dristi.config.ServiceConstants.CMP_NUMBER;
+import static org.pucar.dristi.config.ServiceConstants.FILING_NUMBER;
+
 @Service
 @Slf4j
 public class SequenceInsertService {
@@ -20,8 +23,10 @@ public class SequenceInsertService {
     @Scheduled(cron = "0 0 0 31 12 *")
     @Transactional
     public void insertNewYearSequence() {
-        String newSeqNum = "000000";
-        caseRepository.insertSeqNum(UUID.randomUUID(), "", "", newSeqNum, "");
+        String newSeqNum = "0";
+        caseRepository.insertCNRSeqNum(UUID.randomUUID(), "", "", newSeqNum, "");
+        caseRepository.insertCaseSeqNum(UUID.randomUUID(), "", newSeqNum, FILING_NUMBER, "");
+        caseRepository.insertCaseSeqNum(UUID.randomUUID(), "", newSeqNum, CMP_NUMBER, "");
         log.info("Inserted sequence 0 for the new year.");
     }
 }

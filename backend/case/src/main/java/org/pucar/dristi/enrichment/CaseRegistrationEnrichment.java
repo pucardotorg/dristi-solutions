@@ -1,9 +1,6 @@
 package org.pucar.dristi.enrichment;
 
 
-import static org.pucar.dristi.config.ServiceConstants.ACCESSCODE_LENGTH;
-import static org.pucar.dristi.config.ServiceConstants.ENRICHMENT_EXCEPTION;
-
 import java.util.List;
 import java.util.UUID;
 
@@ -25,6 +22,8 @@ import org.springframework.stereotype.Component;
 
 import lombok.extern.slf4j.Slf4j;
 
+import static org.pucar.dristi.config.ServiceConstants.*;
+
 @Component
 @Slf4j
 public class CaseRegistrationEnrichment {
@@ -44,15 +43,15 @@ public class CaseRegistrationEnrichment {
         try {
             CourtCase courtCase = caseRequest.getCases();
 
-            List<String> courtCaseRegistrationFillingNumberIdList = idgenUtil.getIdList(caseRequest.getRequestInfo(), courtCase.getTenantId(), config.getCaseFilingNumberCp(), null, 1);
-            log.info("Court Case Registration Filling Number cp Id List :: {}", courtCaseRegistrationFillingNumberIdList);
+//            List<String> courtCaseRegistrationFillingNumberIdList = idgenUtil.getIdList(caseRequest.getRequestInfo(), courtCase.getTenantId(), config.getCaseFilingNumberCp(), null, 1);
+//            log.info("Court Case Registration Filling Number cp Id List :: {}", courtCaseRegistrationFillingNumberIdList);
             AuditDetails auditDetails = AuditDetails.builder().createdBy(caseRequest.getRequestInfo().getUserInfo().getUuid()).createdTime(caseUtil.getCurrentTimeMil()).lastModifiedBy(caseRequest.getRequestInfo().getUserInfo().getUuid()).lastModifiedTime(caseUtil.getCurrentTimeMil()).build();
             courtCase.setAuditdetails(auditDetails);
 
             courtCase.setId(UUID.randomUUID());
             enrichCaseRegistrationUponCreateAndUpdate(courtCase, auditDetails);
 
-            courtCase.setFilingNumber(courtCaseRegistrationFillingNumberIdList.get(0));
+            courtCase.setFilingNumber(caseUtil.generateFilingNumber(caseRequest.getCases().getTenantId(), caseRequest.getRequestInfo().getUserInfo().getUuid(), FILING_NUMBER));
 
 
         } catch (Exception e) {
@@ -243,9 +242,10 @@ public class CaseRegistrationEnrichment {
         }
     }
 
-    public void enrichCNRNumber(CaseRequest caseRequest) {
+    public void enrichCNRAndCMPNumber(CaseRequest caseRequest) {
         try {
             caseRequest.getCases().setCnrNumber(caseUtil.generateCNRNumber(caseRequest.getCases().getTenantId(), caseRequest.getRequestInfo().getUserInfo().getUuid()));
+            caseRequest.getCases().setCmpNumber(caseUtil.generateCMPNumber(caseRequest.getCases().getTenantId(), caseRequest.getRequestInfo().getUserInfo().getUuid(), CMP_NUMBER));
         } catch (Exception e) {
             log.error("Error enriching cnr number: {}", e.toString());
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in case enrichment service while enriching cnr number: " + e.getMessage());

@@ -104,6 +104,10 @@ public class ServiceConstants {
 	public static final String CASE_ADMIT_STATUS = "CASE_ADMITTED";
 	public static final int ACCESSCODE_LENGTH = 6;
 	public static final String COURTID="KLKM52";
+	public static final String STATE="KL";
+	public static final String CMP="CMP";
+	public static final String FILING_NUMBER="FILING_NUMBER";
+	public static final String CMP_NUMBER="CMP_NUMBER";
 
 	//error logs constants
 	public static final String JOIN_CASE_INVALID_REQUEST = "Invalid request for joining a case";

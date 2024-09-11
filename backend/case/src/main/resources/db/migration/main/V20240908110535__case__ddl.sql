@@ -22,11 +22,11 @@ CREATE TABLE dristi_case_numbering(
     seq_num_lable varchar(64) NOT NULL,
     case_seq_num integer DEFAULT 1,
     created_by varchar(64) NOT NULL,
-    last_modified_by varchar(64) NOT NULL,
-    created_time int8 NULL,
+    last_modified_by varchar(64) NULL,
+    created_time int8 NOT NULL,
     last_modified_time int8 NULL
    -- CONSTRAINT fk_case_numbering_case
      --   FOREIGN KEY(case_id)
        -- REFERENCES dristi_cases(id)
         --REFERENCES dristi_cases(cnrNumber)
-        );
+    );

@@ -86,8 +86,13 @@ public class CaseRepository {
         this.representingRowMapper = representingRowMapper;
     }
 
-    public String searchSeqNum(String tenantId, String courtId) {
-        String selectQuery = "SELECT cnr_seq_num, created_time FROM dristi_cnr_master WHERE tenant_id = ? AND court_id = ? ORDER BY created_time DESC LIMIT 1";
+    String selectCNRSeqQuery = "SELECT cnr_seq_num FROM dristi_cnr_master WHERE tenant_id = ? AND court_id = ? ORDER BY created_time DESC LIMIT 1";
+    String insertCNRSeqQuery = "INSERT INTO dristi_cnr_master (id, tenant_id, court_id, cnr_seq_num, created_time, created_by) VALUES (?, ?, ?, ?, ?, ?)";
+
+    String selectCaseSeqQuery = "SELECT case_seq_num FROM dristi_case_numbering WHERE tenant_id = ? AND seq_num_lable = ? ORDER BY created_time DESC LIMIT 1";
+    String insertCaseSeqQuery = "INSERT INTO dristi_case_numbering (id, tenant_id, case_seq_num, seq_num_lable, created_time, created_by) VALUES (?, ?, ?, ?, ?, ?)";
+
+    public String searchCNRSeqNum(String tenantId, String courtId) {
         List<Object> preparedStmtList = new ArrayList<>();
         preparedStmtList.add(tenantId);
         preparedStmtList.add(courtId);
@@ -97,20 +102,18 @@ public class CaseRepository {
         preparedStmtArgList.add(Types.VARCHAR);
         try {
             // Execute the query to fetch the last inserted cnr_seq_num
-            return jdbcTemplate.queryForObject(selectQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), String.class);
+            return jdbcTemplate.queryForObject(selectCNRSeqQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), String.class);
         } catch (EmptyResultDataAccessException e) {
             // Handle the case when the table is empty
-            log.info("No record found.");
+            log.info("No record found");
             return null;
         }
     }
 
     @Transactional
-    public void insertSeqNum(UUID id, String tenantId, String courtId, String cnrSeqNum, String userId) {
-        String insertQuery = "INSERT INTO dristi_cnr_master (id, tenant_id, court_id, cnr_seq_num, created_time, created_by) VALUES (?, ?, ?, ?, ?, ?)";
-
+    public void insertCNRSeqNum(UUID id, String tenantId, String courtId, String cnrSeqNum, String userId) {
         // Execute the insert query using jdbcTemplate's update method
-        int rowsAffected = jdbcTemplate.update(insertQuery, id, tenantId, courtId, Integer.parseInt(cnrSeqNum), System.currentTimeMillis(), userId);
+        int rowsAffected = jdbcTemplate.update(insertCNRSeqQuery, id, tenantId, courtId, Integer.parseInt(cnrSeqNum), System.currentTimeMillis(), userId);
 
         // You can log or return the result if needed
         if (rowsAffected > 0) {
@@ -120,10 +123,39 @@ public class CaseRepository {
         }
     }
 
-    public List<CaseCriteria> getCases(List<CaseCriteria> searchCriteria, RequestInfo requestInfo) {
+    public String searchCaseSeqNum(String tenantId,String seqLabel) {
+        List<Object> preparedStmtList = new ArrayList<>();
+        preparedStmtList.add(tenantId);
+        preparedStmtList.add(seqLabel);
 
+        List<Integer> preparedStmtArgList = new ArrayList<>();
+        preparedStmtArgList.add(Types.VARCHAR);
+        preparedStmtArgList.add(Types.VARCHAR);
         try {
+            // Execute the query to fetch the last inserted cnr_seq_num
+            return jdbcTemplate.queryForObject(selectCaseSeqQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), String.class);
+        } catch (EmptyResultDataAccessException e) {
+            // Handle the case when the table is empty
+            log.info("No record found.");
+            return null;
+        }
+    }
 
+    @Transactional
+    public void insertCaseSeqNum(UUID id, String tenantId, String seqNum,  String seqLabel, String userId) {
+        // Execute the insert query using jdbcTemplate's update method
+        int rowsAffected = jdbcTemplate.update(insertCaseSeqQuery, id, tenantId, Integer.parseInt(seqNum), seqLabel,System.currentTimeMillis(), userId);
+
+        // You can log or return the result if needed
+        if (rowsAffected > 0) {
+            log.info("Insert successful . Rows affected: {}", rowsAffected);
+        } else {
+            log.info("Insertion failed.");
+        }
+    }
+
+    public List<CaseCriteria> getCases(List<CaseCriteria> searchCriteria, RequestInfo requestInfo) {
+        try {
             for (CaseCriteria caseCriteria : searchCriteria) {
 
                 List<Object> preparedStmtList = new ArrayList<>();

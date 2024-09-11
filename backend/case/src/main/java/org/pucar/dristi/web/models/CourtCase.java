@@ -122,6 +122,9 @@ public class CourtCase {
 	//@Size(min = 2, max = 64)
 	private String natureOfPleading = null;
 
+	@JsonProperty("cmpNumber")
+	private String cmpNumber = null;
+
 	@JsonProperty("statutesAndSections")
 	//@NotNull
 	@Valid

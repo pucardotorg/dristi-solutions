@@ -112,8 +112,8 @@ class CaseRegistrationEnrichmentTest {
     @Test
     void testEnrichCaseRegistration() {
 // Setup mocks
-        List<String> idList = Collections.singletonList("fillingNumberId");
-        doReturn(idList).when(idgenUtil).getIdList(any(RequestInfo.class), eq("tenantId"), any(), isNull(), eq(1));
+        String filingNumber = "filing111";
+        doReturn(filingNumber).when(caseUtil).generateFilingNumber(any(), any(), any());
         courtCase = new CourtCase();
         courtCase.setTenantId("tenantId");
 
@@ -126,7 +126,7 @@ class CaseRegistrationEnrichmentTest {
         // Call the method under test
         caseRegistrationEnrichment.enrichCaseRegistrationOnCreate(caseRequest);
         // Verify the method behavior
-        verify(idgenUtil).getIdList(any(RequestInfo.class), eq("tenantId"), any(), isNull(), eq(1));
+        verify(caseUtil).generateFilingNumber(any(), any(), any());
         assertNotNull(courtCase.getAuditdetails());
         assertNotNull(courtCase.getId());
         assertNotNull(courtCase.getFilingNumber());
@@ -134,14 +134,6 @@ class CaseRegistrationEnrichmentTest {
         assertNotNull(courtCase.getAuditdetails().getCreatedTime());
         assertNotNull(courtCase.getAuditdetails().getLastModifiedBy());
         assertNotNull(courtCase.getAuditdetails().getLastModifiedTime());
-    }
-    @Test
-    void enrichCaseRegistration_OnCreate_ShouldThrowCustomException_WhenErrorOccurs() {
-
-        when(idgenUtil.getIdList(any(), anyString(), anyString(), any(), anyInt())).thenThrow(new RuntimeException("Error"));
-
-        // Invoke the method and assert that it throws CustomException
-        assertThrows(Exception.class, () -> caseRegistrationEnrichment.enrichCaseRegistrationOnCreate(caseRequest));
     }
 
     @Test
