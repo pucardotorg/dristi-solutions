@@ -107,7 +107,7 @@ public class OptOutProcessor {
         int optOutAlreadyMade = optOuts.size();
         optoutDates.forEach(suggestedDatesSet::remove);
 
-        boolean isOptOutSaved = optOuts.stream().anyMatch(optOut1 -> optOut1.equals(optOut));
+        boolean isOptOutSaved = optOuts.stream().anyMatch(optOut1 -> optOut1.getRescheduleRequestId().equals(optOut.getRescheduleRequestId()));
 
         return (totalOptOutCanBeMade - optOutAlreadyMade == 0 && isOptOutSaved) || (totalOptOutCanBeMade - optOutAlreadyMade == 1 && !isOptOutSaved);
     }
