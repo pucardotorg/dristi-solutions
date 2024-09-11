@@ -112,7 +112,7 @@ public class CaseServiceTest {
     @Test
     public void testVerifyJoinCaseRequest_CaseDoesNotExist() {
         // Mock the CaseRepository to return an empty list
-        when(caseRepository.getApplications(anyList(), any(RequestInfo.class))).thenReturn(Collections.singletonList(new CaseCriteria()));
+        when(caseRepository.getCases(anyList(), any(RequestInfo.class))).thenReturn(Collections.singletonList(new CaseCriteria()));
         joinCaseRequest.setCaseFilingNumber("12345");
         joinCaseRequest.setAccessCode("validAccessCode");
         assertThrows(CustomException.class, () -> {
@@ -134,7 +134,7 @@ public class CaseServiceTest {
         courtCase.setRepresentatives(Collections.singletonList(representative));
         CaseCriteria caseCriteria = new CaseCriteria();
         caseCriteria.setResponseList(Collections.singletonList(courtCase));
-        lenient().when(caseRepository.getApplications(anyList(), any(RequestInfo.class))).thenReturn(Collections.singletonList(caseCriteria));
+        lenient().when(caseRepository.getCases(anyList(), any(RequestInfo.class))).thenReturn(Collections.singletonList(caseCriteria));
         assertThrows(CustomException.class, () -> {
             caseService.verifyJoinCaseRequest(joinCaseRequest);
         });
@@ -155,7 +155,7 @@ public class CaseServiceTest {
 
         CaseCriteria caseCriteria = new CaseCriteria();
         caseCriteria.setResponseList(Collections.singletonList(courtCase));
-        when(caseRepository.getApplications(anyList(), any(RequestInfo.class))).thenReturn(Collections.singletonList(caseCriteria));
+        when(caseRepository.getCases(anyList(), any(RequestInfo.class))).thenReturn(Collections.singletonList(caseCriteria));
 
         joinCaseRequest.setRequestInfo(requestInfo);
         joinCaseRequest.setCaseFilingNumber("12345");
@@ -188,7 +188,7 @@ public class CaseServiceTest {
         caseCriteria.setResponseList(Collections.singletonList(courtCase));
 
 
-        when(caseRepository.getApplications(anyList(), any())).thenReturn(existingApplications);
+        when(caseRepository.getCases(anyList(), any())).thenReturn(existingApplications);
 
         requestInfo.setUserInfo(new User());
         joinCaseRequest.setRequestInfo(requestInfo);
@@ -221,7 +221,7 @@ public class CaseServiceTest {
 
         CaseCriteria caseCriteria = new CaseCriteria();
         caseCriteria.setResponseList(Collections.singletonList(courtCase));
-        when(caseRepository.getApplications(anyList(),any(RequestInfo.class))).thenReturn(Collections.singletonList(caseCriteria));
+        when(caseRepository.getCases(anyList(),any(RequestInfo.class))).thenReturn(Collections.singletonList(caseCriteria));
 
         joinCaseRequest.setRequestInfo(requestInfo);
         joinCaseRequest.setCaseFilingNumber("12345");
@@ -254,7 +254,7 @@ public class CaseServiceTest {
         caseCriteria.setResponseList(Collections.singletonList(courtCase));
         List<CaseCriteria> existingApplications = Collections.singletonList(caseCriteria);
 
-        when(caseRepository.getApplications(anyList(), any())).thenReturn(existingApplications);
+        when(caseRepository.getCases(anyList(), any())).thenReturn(existingApplications);
         when(config.getUpdateRepresentativeJoinCaseTopic()).thenReturn("update-topic");
         when(validator.canRepresentativeJoinCase(joinCaseRequest)).thenReturn(true);
 
@@ -288,7 +288,7 @@ public class CaseServiceTest {
         courtCase.setStatus(CASE_ADMIT_STATUS);
         CaseCriteria caseCriteria = new CaseCriteria();
         caseCriteria.setResponseList(Collections.singletonList(courtCase));
-        when(caseRepository.getApplications(anyList(),any(RequestInfo.class))).thenReturn(Collections.singletonList(caseCriteria));
+        when(caseRepository.getCases(anyList(),any(RequestInfo.class))).thenReturn(Collections.singletonList(caseCriteria));
         joinCaseRequest.setRequestInfo(requestInfo);
         joinCaseRequest.setCaseFilingNumber("12345");
         joinCaseRequest.setAccessCode("validAccessCode");
@@ -327,7 +327,7 @@ public class CaseServiceTest {
         courtCase.setAccessCode("validAccessCode");
         List<CaseCriteria> existingApplications = List.of(CaseCriteria.builder().responseList(List.of(courtCase)).build());
 
-        when(caseRepository.getApplications(anyList(), any())).thenReturn(existingApplications);
+        when(caseRepository.getCases(anyList(), any())).thenReturn(existingApplications);
 
         AdvocateMapping representative = new AdvocateMapping();
         representative.setAdvocateId("advocate-1");
@@ -353,35 +353,35 @@ public class CaseServiceTest {
     void testSearchCases() {
         // Set up mock responses
         List<CaseCriteria> mockCases = new ArrayList<>(); // Assume filled with test data
-        when(caseRepository.getApplications(any(), any())).thenReturn(mockCases);
+        when(caseRepository.getCases(any(), any())).thenReturn(mockCases);
 
         // Call the method under test
         caseService.searchCases(caseSearchRequest);
 
-        verify(caseRepository, times(1)).getApplications(any(), any());
+        verify(caseRepository, times(1)).getCases(any(), any());
     }
 
     @Test
     void testSearchCases2() {
         // Set up mock responses
-        when(caseRepository.getApplications(any(), any())).thenReturn(List.of(CaseCriteria.builder().filingNumber("filNo").courtCaseNumber("123").build()));
+        when(caseRepository.getCases(any(), any())).thenReturn(List.of(CaseCriteria.builder().filingNumber("filNo").courtCaseNumber("123").build()));
 
         // Call the method under test
         caseService.searchCases(caseSearchRequest);
 
-        verify(caseRepository, times(1)).getApplications(any(), any());
+        verify(caseRepository, times(1)).getCases(any(), any());
     }
 
     @Test
     void testSearchCases_CustomException() {
-        when(caseRepository.getApplications(any(), any())).thenThrow(CustomException.class);
+        when(caseRepository.getCases(any(), any())).thenThrow(CustomException.class);
 
         assertThrows(CustomException.class, () -> caseService.searchCases(caseSearchRequest));
     }
 
     @Test
     void testSearchCases_Exception() {
-        when(caseRepository.getApplications(any(), any())).thenThrow(new RuntimeException());
+        when(caseRepository.getCases(any(), any())).thenThrow(new RuntimeException());
 
         assertThrows(Exception.class, () -> caseService.searchCases(caseSearchRequest));
     }
@@ -543,7 +543,7 @@ public class CaseServiceTest {
     @Test
     void testSearchCases_EmptyResult() {
         CaseSearchRequest searchRequest = new CaseSearchRequest(); // Setup search request
-        when(caseRepository.getApplications(any(), any())).thenReturn(Arrays.asList());
+        when(caseRepository.getCases(any(), any())).thenReturn(Arrays.asList());
 
         caseService.searchCases(searchRequest);
     }

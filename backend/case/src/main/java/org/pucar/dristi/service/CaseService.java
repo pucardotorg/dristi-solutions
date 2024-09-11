@@ -85,7 +85,7 @@ public class CaseService {
 
         try {
             // Fetch applications from database according to the given search criteria
-            caseRepository.getApplications(caseSearchRequests.getCriteria(), caseSearchRequests.getRequestInfo());
+            caseRepository.getCases(caseSearchRequests.getCriteria(), caseSearchRequests.getRequestInfo());
 
             // If no applications are found matching the given criteria, return an empty list
 
@@ -122,12 +122,16 @@ public class CaseService {
                 billingUtil.createDemand(caseRequest);
             }
             if (CASE_ADMIT_STATUS.equals(caseRequest.getCases().getStatus())) {
-                enrichmentUtil.enrichAccessCode(caseRequest);
-                enrichmentUtil.enrichCaseNumberAndCNRNumber(caseRequest);
+                enrichmentUtil.enrichCaseNumberAndCourtCaseNumber(caseRequest);
                 enrichmentUtil.enrichRegistrationDate(caseRequest);
             }
             log.info("Encrypting: {}",caseRequest);
             caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), "CourtCase", CourtCase.class));
+
+            if (PENDING_ADMISSION_HEARING_STATUS.equals(caseRequest.getCases().getStatus())) {
+                enrichmentUtil.enrichAccessCode(caseRequest);
+                enrichmentUtil.enrichCNRNumber(caseRequest);
+            }
 
             producer.push(config.getCaseUpdateTopic(), caseRequest);
 
@@ -237,7 +241,7 @@ public class CaseService {
     public JoinCaseResponse verifyJoinCaseRequest(JoinCaseRequest joinCaseRequest) {
         try {
             String filingNumber = joinCaseRequest.getCaseFilingNumber();
-            List<CaseCriteria> existingApplications = caseRepository.getApplications(Collections.singletonList(CaseCriteria.builder().filingNumber(filingNumber).build()), joinCaseRequest.getRequestInfo());
+            List<CaseCriteria> existingApplications = caseRepository.getCases(Collections.singletonList(CaseCriteria.builder().filingNumber(filingNumber).build()), joinCaseRequest.getRequestInfo());
             log.info("Existing application list :: {}", existingApplications.size());
             CourtCase courtCase = validateAccessCodeAndReturnCourtCase(joinCaseRequest, existingApplications);
             UUID caseId = courtCase.getId();
