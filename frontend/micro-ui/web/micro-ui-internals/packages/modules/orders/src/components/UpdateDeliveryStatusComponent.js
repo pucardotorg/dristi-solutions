@@ -2,8 +2,25 @@ import { CardLabel, Dropdown, LabelFieldPair, TextInput } from "@egovernments/di
 import React, { useEffect, useState } from "react";
 import ApplicationInfoComponent from "./ApplicationInfoComponent";
 
-const convertToDateInputFormat = (dateStr) => {
-  const [day, month, year] = dateStr.split("-");
+const convertToDateInputFormat = (dateInput) => {
+  let date;
+
+  if (typeof dateInput === "number") {
+    date = new Date(dateInput);
+  } else if (typeof dateInput === "string" && dateInput.includes("-")) {
+    const [day, month, year] = dateInput.split("-");
+    if (!isNaN(day) && !isNaN(month) && !isNaN(year) && day.length === 2 && month.length === 2 && year.length === 4) {
+      date = new Date(`${year}-${month}-${day}`);
+    } else {
+      throw new Error("Invalid date format");
+    }
+  } else {
+    throw new Error("Invalid input type or format");
+  }
+
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
   return `${year}-${month}-${day}`;
 };
 

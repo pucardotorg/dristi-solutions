@@ -30,6 +30,28 @@ const handleTaskDetails = (taskDetails) => {
   }
 };
 
+const convertToDateInputFormat = (dateInput) => {
+  let date;
+
+  if (typeof dateInput === "number") {
+    date = new Date(dateInput);
+  } else if (typeof dateInput === "string" && dateInput.includes("-")) {
+    const [day, month, year] = dateInput.split("-");
+    if (!isNaN(day) && !isNaN(month) && !isNaN(year) && day.length === 2 && month.length === 2 && year.length === 4) {
+      date = new Date(`${year}-${month}-${day}`);
+    } else {
+      throw new Error("Invalid date format");
+    }
+  } else {
+    throw new Error("Invalid input type or format");
+  }
+
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day}-${month}-${year}`;
+};
+
 const ReviewSummonsNoticeAndWarrant = () => {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
@@ -254,7 +276,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       const caseDetails = handleTaskDetails(rowData?.taskDetails);
       return [
         { key: "Issued to", value: caseDetails?.respondentDetails?.name },
-        { key: "Issued Date", value: rowData?.createdDate },
+        { key: "Issued Date", value: convertToDateInputFormat(rowData?.createdDate) },
         // { key: "Next Hearing Date", value: nextHearingDate?.startTime ? formatDate(nextHearingDate?.startTime) : "N/A" },
         { key: "Amount Paid", value: `Rs. ${caseDetails?.deliveryChannels?.fees || 100}` },
         { key: "Channel Details", value: caseDetails?.deliveryChannels?.channelName },
