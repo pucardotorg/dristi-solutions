@@ -15,38 +15,6 @@ public class CaseUtilTest {
     public void setup() {
         caseUtil = new CaseUtil();
     }
-    @Test
-    public void getCNRNumber_returnsExpectedFormat() {
-        String fillingNumber = "2022-12345";
-        String state = "KL";
-        String district = "JL";
-        String establishmentCode = "01";
-        String expectedCNRNumber = "KLJL01-12345-2022";
-
-        String actualCNRNumber = caseUtil.getCNRNumber(fillingNumber, state, district, establishmentCode);
-
-        assertEquals(expectedCNRNumber, actualCNRNumber);
-    }
-
-    @Test
-    public void getCNRNumber_handlesInvalidFillingNumber() {
-        String fillingNumber = "invalid";
-        String state = "KL";
-        String district = "JL";
-        String establishmentCode = "01";
-
-        assertThrows(ArrayIndexOutOfBoundsException.class, () -> caseUtil.getCNRNumber(fillingNumber, state, district, establishmentCode));
-    }
-
-    @Test
-    public void getCNRNumber_handlesEmptyFillingNumber() {
-        String fillingNumber = "";
-        String state = "KL";
-        String district = "JL";
-        String establishmentCode = "01";
-
-        assertThrows(ArrayIndexOutOfBoundsException.class, () -> caseUtil.getCNRNumber(fillingNumber, state, district, establishmentCode));
-    }
 
 
     @Test

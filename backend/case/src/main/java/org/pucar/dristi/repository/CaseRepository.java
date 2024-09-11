@@ -34,6 +34,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -85,7 +86,7 @@ public class CaseRepository {
         this.representingRowMapper = representingRowMapper;
     }
 
-    public Map<String, Object> searchSeqNum(String tenantId, String courtId) {
+    public String searchSeqNum(String tenantId, String courtId) {
         String selectQuery = "SELECT cnr_seq_num, created_time FROM dristi_cnr_master WHERE tenant_id = ? AND court_id = ? ORDER BY created_time DESC LIMIT 1";
         List<Object> preparedStmtList = new ArrayList<>();
         preparedStmtList.add(tenantId);
@@ -96,14 +97,15 @@ public class CaseRepository {
         preparedStmtArgList.add(Types.VARCHAR);
         try {
             // Execute the query to fetch the last inserted cnr_seq_num
-            return jdbcTemplate.queryForMap(selectQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray());
+            return jdbcTemplate.queryForObject(selectQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), String.class);
         } catch (EmptyResultDataAccessException e) {
             // Handle the case when the table is empty
-            System.out.println("No record found.");
+            log.info("No record found.");
             return null;
         }
     }
 
+    @Transactional
     public void insertSeqNum(UUID id, String tenantId, String courtId, String cnrSeqNum, String userId) {
         String insertQuery = "INSERT INTO dristi_cnr_master (id, tenant_id, court_id, cnr_seq_num, created_time, created_by) VALUES (?, ?, ?, ?, ?, ?)";
 
@@ -112,9 +114,9 @@ public class CaseRepository {
 
         // You can log or return the result if needed
         if (rowsAffected > 0) {
-            System.out.println("Insert successful. Rows affected: " + rowsAffected);
+            log.info("Insert successful. Rows affected: {}", rowsAffected);
         } else {
-            System.out.println("Insert failed.");
+            log.info("Insert failed.");
         }
     }
 
