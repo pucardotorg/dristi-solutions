@@ -460,7 +460,7 @@ const GenerateOrders = () => {
 
   const isHearingAlreadyScheduled = useMemo(() => {
     const isPresent = hearingsData?.HearingList.some((hearing) => {
-      return !(hearing?.status === "COMPLETED" || hearing?.status === "ABATED");
+      return !(hearing?.status === "COMPLETED" || hearing?.status === "ABATED" || hearing?.status === "OPTOUT");
     });
     return isPresent;
   }, [hearingsData]);
@@ -1769,7 +1769,7 @@ const GenerateOrders = () => {
   };
 
   const handleReviewOrderClick = () => {
-    if (orderType === "SCHEDULE_OF_HEARING_DATE" && isHearingAlreadyScheduled) {
+    if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(orderType) && isHearingAlreadyScheduled) {
       setShowErrorToast({
         label: t("HEARING_IS_ALREADY_SCHEDULED_FOR_THIS_CASE"),
         error: true,
