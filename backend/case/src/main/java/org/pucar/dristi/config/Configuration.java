@@ -226,4 +226,6 @@ public class Configuration {
 	@Value("${user.oauth.url}")
 	private String userOauthUrl;
 
+	@Value("${spring.redis.timeout}")
+	private Long redisTimeout;
 }

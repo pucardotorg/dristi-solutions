@@ -137,4 +137,6 @@ public class ServiceConstants {
 	public static final String ADVOCATE_ESIGN_PENDING= "ADVOCATE_ESIGN_PENDING";
 
 	public static final String PAYMENT_PENDING= "PAYMENT_PENDING";
+
+	public static final String CACHE_KEY_PREFIX = "kl:";
 }
