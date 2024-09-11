@@ -2,8 +2,8 @@
   "BusinessServices": [
     {
       "tenantId": "kl",
-      "business": "application",
-      "businessService": "application-default",
+      "business": "submission",
+      "businessService": "submission-default",
       "businessServiceSla": 259200000,
       "states": [
         {
@@ -19,7 +19,7 @@
               "action": "CREATE",
               "nextState": "PENDING_REVIEW",
               "roles": [
-                "APPLICATION_CREATOR"
+                "SUBMISSION_CREATOR"
               ]
             }
           ]
@@ -37,21 +37,22 @@
               "action": "REQUEST_RESPONSE",
               "nextState": "PENDING_RESPONSE_APPROVAL",
               "roles": [
-                "APPLICATION_RESPONDER"
+                "SUBMISSION_RESPONDER"
               ]
             },
             {
               "action": "DELETE",
               "nextState": "DELETED",
               "roles": [
-                "APPLICATION_DELETE"
+                "SUBMISSION_DELETE"
               ]
             },
             {
               "action": "ABANDON",
               "nextState": "ABATED",
               "roles": [
-                "WORKFLOW_ABANDON"
+                "SYSTEM",
+                "SYSTEM_ADMIN"
               ]
             }
           ]
@@ -69,28 +70,29 @@
               "action": "APPROVE",
               "nextState": "PENDING_RESPONSE",
               "roles": [
-                "APPLICATION_APPROVER"
+                "SUBMISSION_APPROVER"
               ]
             },
             {
               "action": "DELETE",
               "nextState": "DELETED",
               "roles": [
-                "APPLICATION_DELETE"
+                "SUBMISSION_DELETE"
               ]
             },
             {
               "action": "REJECT",
               "nextState": "PENDING_REVIEW",
               "roles": [
-                "APPLICATION_APPROVER"
+                "SUBMISSION_APPROVER"
               ]
             },
             {
               "action": "ABANDON",
               "nextState": "ABATED",
               "roles": [
-                "WORKFLOW_ABANDON"
+                "SYSTEM",
+                "SYSTEM_ADMIN"
               ]
             }
           ]
@@ -108,6 +110,8 @@
               "action": "RESPOND",
               "nextState": "RESPONSE_SUBMITTED",
               "roles": [
+                "SUBMISSION_RESPONDER",
+                "SYSTEM",
                 "SYSTEM_ADMIN"
               ]
             },
@@ -115,14 +119,14 @@
               "action": "DELETE",
               "nextState": "DELETED",
               "roles": [
-                "APPLICATION_DELETE"
+                "SUBMISSION_DELETE"
               ]
             },
             {
               "action": "ABANDON",
               "nextState": "ABATED",
               "roles": [
-                "WORKFLOW_ABANDON",
+                "SYSTEM",
                 "SYSTEM_ADMIN"
               ]
             }
@@ -141,28 +145,29 @@
               "action": "APPROVE",
               "nextState": "CLOSED",
               "roles": [
-                "APPLICATION_APPROVER"
+                "SUBMISSION_APPROVER"
               ]
             },
             {
               "action": "DELETE",
               "nextState": "DELETED",
               "roles": [
-                "APPLICATION_DELETE"
+                "SUBMISSION_DELETE"
               ]
             },
             {
               "action": "REJECT",
               "nextState": "REJECTED",
               "roles": [
-                "APPLICATION_APPROVER"
+                "SUBMISSION_APPROVER"
               ]
             },
             {
               "action": "ABANDON",
               "nextState": "ABATED",
               "roles": [
-                "WORKFLOW_ABANDON"
+                "SYSTEM",
+                "SYSTEM_ADMIN"
               ]
             }
           ]

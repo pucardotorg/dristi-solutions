@@ -19,7 +19,9 @@
               "action": "CREATE",
               "nextState": "IN_PROGRESS",
               "roles": [
-                "TASK_CREATOR"
+                "TASK_CREATOR",
+                "SYSTEM",
+                "SYSTEM_ADMIN"
               ]
             }
           ]
@@ -44,7 +46,8 @@
               "action": "ABANDON",
               "nextState": "ABATED",
               "roles": [
-                "WORKFLOW_ABANDON"
+                "SYSTEM",
+                "SYSTEM_ADMIN"
               ]
             }
           ]

@@ -37,7 +37,9 @@
               "action": "DELIVERED",
               "nextState": "EXECUTED",
               "roles": [
-                "TASK_UPDATOR"
+                "TASK_EDITOR",
+                "SYSTEM",
+                "SYSTEM_ADMIN"
               ]
             },
             {
