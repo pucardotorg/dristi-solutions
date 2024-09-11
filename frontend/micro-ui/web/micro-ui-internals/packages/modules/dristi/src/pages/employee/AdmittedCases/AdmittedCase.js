@@ -1134,8 +1134,10 @@ const AdmittedCases = () => {
     }, duration);
   };
 
-  const handleDownload = () => {
-    setShowOrderReviewModal(false);
+  const handleDownload = (filestoreId) => {
+    if (filestoreId) {
+      downloadPdf(tenantId, filestoreId);
+    }
   };
   const handleOrdersTab = () => {
     if (history.location?.state?.orderObj) {
