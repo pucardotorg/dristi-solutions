@@ -12,6 +12,7 @@ import { formatDate } from "../../citizen/FileCase/CaseType";
 import {
   admitCaseSubmitConfig,
   registerCaseConfig,
+  scheduleCaseAdmissionConfig,
   scheduleCaseSubmitConfig,
   selectParticipantConfig,
   sendBackCase,
@@ -210,7 +211,29 @@ function CaseFileAdmission({ t, path }) {
       case "REGISTER":
         handleRegisterCase();
         break;
-
+      case "SCHEDULE_ADMISSION_HEARING":
+        debugger;
+        setShowModal(true);
+        setSubmitModalInfo({
+          ...scheduleCaseSubmitConfig,
+          caseInfo: [...caseInfo],
+          shortCaseInfo: [
+            {
+              key: "CASE_NUMBER",
+              value: caseDetails?.filingNumber,
+            },
+            {
+              key: "COURT_NAME",
+              value: t(`COMMON_MASTERS_COURT_R00M_${caseDetails?.courtId}`),
+            },
+            {
+              key: "CASE_TYPE",
+              value: "NIA S138",
+            },
+          ],
+        });
+        setModalInfo({ type: "schedule", page: 0 });
+        break;
       default:
         setSubmitModalInfo({ ...admitCaseSubmitConfig, caseInfo: caseInfo });
         setModalInfo({ type: "admitCase", page: 0 });
@@ -402,22 +425,6 @@ function CaseFileAdmission({ t, path }) {
       setSubmitModalInfo({ ...registerCaseConfig, caseInfo: caseInfo });
       setModalInfo({ ...modalInfo, page: 4 });
       setShowModal(true);
-      DRISTIService.customApiService(Urls.dristi.pendingTask, {
-        pendingTask: {
-          name: "Schedule Admission Hearing",
-          entityType: "case-default",
-          referenceId: `MANUAL_${caseDetails?.filingNumber}`,
-          status: "PENDING_ADMISSION_HEARING",
-          assignedTo: [],
-          assignedRole: ["JUDGE_ROLE"],
-          cnrNumber: updatedCaseDetails?.cnrNumber,
-          filingNumber: caseDetails?.filingNumber,
-          isCompleted: false,
-          stateSla: todayDate + stateSla.SCHEDULE_HEARING,
-          additionalDetails: {},
-          tenantId,
-        },
-      });
     });
   };
 
@@ -461,17 +468,20 @@ function CaseFileAdmission({ t, path }) {
   };
 
   const handleScheduleCase = async (props) => {
+    const hearingData = await scheduleHearing({ purpose: "ADMISSION", date: props.date, participant: props.participant });
     setSubmitModalInfo({
-      ...scheduleCaseSubmitConfig,
+      ...scheduleCaseAdmissionConfig,
       caseInfo: [
         ...caseInfo,
         {
-          key: "CS_NEXT_HEARING",
+          key: "CS_ISSUE_NOTICE",
           value: props.date,
+        },
+        {
+          hearingNumber: hearingData?.hearing?.hearingNumber,
         },
       ],
     });
-    await scheduleHearing({ purpose: "ADMISSION", date: props.date, participant: props.participant });
     updateCaseDetails("SCHEDULE_ADMISSION_HEARING", props).then((res) => {
       setModalInfo({ ...modalInfo, page: 2 });
     });
@@ -597,20 +607,14 @@ function CaseFileAdmission({ t, path }) {
                 config={formConfig}
                 onSubmit={onSubmit}
                 // defaultValues={}
-                onSecondayActionClick={
-                  caseDetails?.status === CaseWorkflowState.ADMISSION_HEARING_SCHEDULED ? t("HEARING_IS_SCHEDULED") : t(tertiaryAction.label || "")
-                }
+                onSecondayActionClick={onSaveDraft}
                 defaultValues={{}}
                 onFormValueChange={onFormValueChange}
                 cardStyle={{ minWidth: "100%" }}
                 isDisabled={isDisabled}
                 cardClassName={`e-filing-card-form-style review-case-file`}
                 secondaryLabel={
-                  caseDetails?.status === CaseWorkflowState.ADMISSION_HEARING_SCHEDULED
-                    ? t("HEARING_IS_SCHEDULED")
-                    : tertiaryAction?.action
-                    ? t(tertiaryAction?.label)
-                    : ""
+                  caseDetails?.status === CaseWorkflowState.ADMISSION_HEARING_SCHEDULED ? t("HEARING_IS_SCHEDULED") : t(tertiaryAction.label || "")
                 }
                 showSecondaryLabel={Boolean(tertiaryAction?.action)}
                 actionClassName={"case-file-admission-action-bar"}

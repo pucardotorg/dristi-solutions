@@ -1416,7 +1416,6 @@ const GenerateOrders = () => {
             title: caseDetails?.caseTitle,
             year: new Date(caseDetails).getFullYear(),
             hearingDate: new Date(orderData?.additionalDetails?.formdata?.date || "").getTime(),
-            judgeName: "",
             courtName: courtDetails?.name,
             courtAddress: courtDetails?.address,
             courtPhone: courtDetails?.phone,
@@ -1435,7 +1434,7 @@ const GenerateOrders = () => {
         break;
       case "NOTICE":
         payload = {
-          summonDetails: {
+          noticeDetails: {
             issueDate: orderData?.auditDetails?.lastModifiedTime,
             caseFilingDate: caseDetails?.filingDate,
           },
@@ -1455,7 +1454,6 @@ const GenerateOrders = () => {
             title: caseDetails?.caseTitle,
             year: new Date(caseDetails).getFullYear(),
             hearingDate: new Date(orderData?.additionalDetails?.formdata?.date || "").getTime(),
-            judgeName: "",
             courtName: courtDetails?.name,
             courtAddress: courtDetails?.address,
             courtPhone: courtDetails?.phone,
@@ -1910,7 +1908,7 @@ const GenerateOrders = () => {
       if (orderType === "SCHEDULE_OF_HEARING_DATE") {
         closeManualPendingTask(filingNumber);
         if (currentOrder?.additionalDetails?.formdata?.hearingPurpose?.code === "ADMISSION" && !isCaseAdmitted) {
-          updateCaseDetails("ADMIT");
+          updateCaseDetails("SCHEDULE_ADMISSION_HEARING");
         }
       }
       closeManualPendingTask(currentOrder?.orderNumber);

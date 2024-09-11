@@ -27,6 +27,7 @@ import { DRISTIService } from "../../../services";
 import { Urls } from "../../../hooks";
 import {
   admitCaseSubmitConfig,
+  scheduleCaseAdmissionConfig,
   scheduleCaseSubmitConfig,
   selectParticipantConfig,
   sendBackCase,
@@ -43,15 +44,13 @@ const casePrimaryActions = [
   { action: "REGISTER", label: "CS_REGISTER" },
   { action: "ADMIT", label: "CS_ADMIT_CASE" },
   { action: "SCHEDULE_ADMISSION_HEARING", label: "CS_SCHEDULE_ADMISSION_HEARING" },
+  { action: "ISSUE_ORDER", label: "CS_CASE_ISSUE_ORDER" },
 ];
 const caseSecondaryActions = [
   { action: "SEND_BACK", label: "SEND_BACK_FOR_CORRECTION" },
   { action: "REJECT", label: "CS_CASE_REJECT" },
 ];
-const caseTertiaryActions = [
-  { action: "ISSUE_ORDER", label: "CS_CASE_ISSUE_ORDER" },
-  { action: "RESPOND", label: "CS_CASE_RESPOND" },
-];
+const caseTertiaryActions = [{ action: "RESPOND", label: "CS_CASE_RESPOND" }];
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -92,6 +91,7 @@ const AdmittedCases = () => {
   const [modalInfo, setModalInfo] = useState(null);
   const [submitModalInfo, setSubmitModalInfo] = useState(null);
   const [caseAdmitLoader, setCaseAdmitLoader] = useState(false);
+  const [createAdmissionOrder, setCreateAdmissionOrder] = useState(false);
   const [updatedCaseDetails, setUpdatedCaseDetails] = useState({});
   const [showDismissCaseConfirmation, setShowDismissCaseConfirmation] = useState(false);
   const history = useHistory();
@@ -125,7 +125,7 @@ const AdmittedCases = () => {
   const { isLoading: isWorkFlowLoading, data: workFlowDetails } = window?.Digit.Hooks.useWorkflowDetails({
     tenantId,
     id: caseDetails?.filingNumber,
-    moduleCode: "DRISTI",
+    moduleCode: "case-default",
     config: {
       enabled: Boolean(caseDetails?.filingNumber && tenantId),
       cacheTime: 0,
@@ -561,7 +561,9 @@ const AdmittedCases = () => {
       ? true
       : caseDetails?.status !== "CASE_ADMITTED" &&
           caseDetails?.status !== "ADMISSION_HEARING_SCHEDULED" &&
-          caseDetails?.status !== "PENDING_ADMISSION_HEARING";
+          caseDetails?.status !== "PENDING_ADMISSION_HEARING" &&
+          caseDetails?.status !== "PENDING_NOTICE" &&
+          caseDetails?.status !== "PENDING_RESPONSE";
   }, [caseDetails?.status, config?.label, isFSO]);
 
   const isCaseAdmitted = useMemo(() => {
@@ -617,6 +619,50 @@ const AdmittedCases = () => {
     return `${day}-${month}-${year}`;
   };
 
+  const handleIssueNotice = async (hearingDate, hearingNumber) => {
+    try {
+      const orderBody = {
+        createdDate: new Date().getTime(),
+        tenantId,
+        cnrNumber: caseDetails?.cnrNumber,
+        filingNumber,
+        statuteSection: {
+          tenantId,
+        },
+        orderType: "NOTICE",
+        status: "",
+        isActive: true,
+        workflow: {
+          action: OrderWorkflowAction.SAVE_DRAFT,
+          comments: "Creating order",
+          assignes: null,
+          rating: null,
+          documents: [{}],
+        },
+        documents: [],
+        ...(hearingNumber && { hearingNumber }),
+        additionalDetails: {
+          formdata: {
+            orderType: {
+              code: "NOTICE",
+              type: "NOTICE",
+              name: "ORDER_TYPE_NOTICE",
+            },
+            hearingDate,
+          },
+        },
+      };
+      DRISTIService.customApiService(Urls.dristi.ordersCreate, orderBody, { tenantId })
+        .then((res) => {
+          history.push(`/digit-ui/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`, {
+            caseId: caseDetails?.id,
+            tab: "Orders",
+          });
+        })
+        .catch();
+    } catch (error) {}
+  };
+
   const caseInfo = [
     {
       key: "CASE_NUMBER",
@@ -643,28 +689,6 @@ const AdmittedCases = () => {
   const updateCaseDetails = async (action, data = {}) => {
     let respondentDetails = caseDetails?.additionalDetails?.respondentDetails;
     let witnessDetails = caseDetails?.additionalDetails?.witnessDetails;
-    if (action === "ADMIT") {
-      respondentDetails = {
-        ...caseDetails?.additionalDetails?.respondentDetails,
-        formdata: caseDetails?.additionalDetails?.respondentDetails?.formdata?.map((data) => ({
-          ...data,
-          data: {
-            ...data?.data,
-            uuid: generateUUID(),
-          },
-        })),
-      };
-      witnessDetails = {
-        ...caseDetails?.additionalDetails?.witnessDetails,
-        formdata: caseDetails?.additionalDetails?.witnessDetails?.formdata?.map((data) => ({
-          ...data,
-          data: {
-            ...data?.data,
-            uuid: generateUUID(),
-          },
-        })),
-      };
-    }
     const newcasedetails = {
       ...caseDetails,
       additionalDetails: { ...caseDetails.additionalDetails, respondentDetails, witnessDetails, judge: data },
@@ -759,17 +783,20 @@ const AdmittedCases = () => {
   };
 
   const handleScheduleCase = async (props) => {
+    const hearingData = await scheduleHearing({ purpose: "ADMISSION", date: props.date, participant: props.participant });
     setSubmitModalInfo({
-      ...scheduleCaseSubmitConfig,
+      ...scheduleCaseAdmissionConfig,
       caseInfo: [
         ...caseInfo,
         {
-          key: "CS_NEXT_HEARING",
+          key: "CS_ISSUE_NOTICE",
           value: props.date,
+        },
+        {
+          hearingNumber: hearingData?.hearing?.hearingNumber,
         },
       ],
     });
-    await scheduleHearing({ purpose: "ADMISSION", date: props.date, participant: props.participant });
     updateCaseDetails("SCHEDULE_ADMISSION_HEARING", props).then((res) => {
       setModalInfo({ ...modalInfo, page: 2 });
       DRISTIService.customApiService(Urls.dristi.pendingTask, {
@@ -866,7 +893,7 @@ const AdmittedCases = () => {
   const updatedConfig = caseDetails && updateConfigWithCaseDetails(selectParticipantConfig, caseDetails);
 
   const onSendBack = () => {
-    switch (primaryAction.action) {
+    switch (secondaryAction.action) {
       case "SEND_BACK":
         setSubmitModalInfo({
           ...sendBackCase,
@@ -877,6 +904,7 @@ const AdmittedCases = () => {
         break;
 
       case "REJECT":
+        debugger;
         setShowDismissCaseConfirmation(true);
         break;
 
@@ -890,15 +918,76 @@ const AdmittedCases = () => {
     switch (primaryAction.action) {
       case "REGISTER":
         break;
-
+      case "ADMIT":
+        if (caseDetails?.status === "ADMISSION_HEARING_SCHEDULED") {
+          const { HearingList = [] } = await Digit.HearingService.searchHearings({
+            hearing: { tenantId },
+            criteria: {
+              tenantID: tenantId,
+              filingNumber: filingNumber,
+            },
+          });
+          const { startTime: hearingDate, hearingId: hearingNumber } = HearingList?.find(
+            (list) => list?.hearingType === "ADMISSION" && list?.status === "SCHEDULED"
+          );
+          const {
+            list: [orderData],
+          } = await Digit.ordersService.searchOrder({
+            tenantId,
+            criteria: { filingNumber, applicationNumber: "", cnrNumber, status: OrderWorkflowState.DRAFT_IN_PROGRESS, hearingNumber: hearingNumber },
+            pagination: { limit: 1, offset: 0 },
+          });
+          if (orderData?.orderType === "NOTICE") {
+            history.push(`/digit-ui/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${orderData.orderNumber}`, {
+              caseId: caseId,
+              tab: "Orders",
+            });
+            updateCaseDetails("ADMIT");
+          } else {
+            handleIssueNotice(hearingDate, hearingNumber);
+            await updateCaseDetails("ADMIT");
+          }
+        } else {
+          setSubmitModalInfo({ ...admitCaseSubmitConfig, caseInfo: caseInfo });
+          setModalInfo({ type: "admitCase", page: 0 });
+          setShowModal(true);
+        }
+        break;
+      case "ISSUE_ORDER":
+        const { HearingList = [] } = await Digit.HearingService.searchHearings({
+          hearing: { tenantId },
+          criteria: {
+            tenantID: tenantId,
+            filingNumber: filingNumber,
+          },
+        });
+        const { startTime: hearingDate, hearingId: hearingNumber } = HearingList?.find(
+          (list) => list?.hearingType === "ADMISSION" && list?.status === "SCHEDULED"
+        );
+        const {
+          list: [orderData],
+        } = await Digit.ordersService.searchOrder({
+          tenantId,
+          criteria: { filingNumber, applicationNumber: "", cnrNumber, status: OrderWorkflowState.DRAFT_IN_PROGRESS, hearingNumber: hearingNumber },
+          pagination: { limit: 1, offset: 0 },
+        });
+        if (orderData?.orderType === "NOTICE") {
+          history.push(`/digit-ui/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${orderData.orderNumber}`, {
+            caseId: caseId,
+            tab: "Orders",
+          });
+          updateCaseDetails("ADMIT");
+        } else {
+          handleIssueNotice(hearingDate, hearingNumber);
+          await updateCaseDetails("ADMIT");
+        }
+        break;
       case "SCHEDULE_ADMISSION_HEARING":
         setShowScheduleHearingModal(true);
+        setCreateAdmissionOrder(true);
         break;
 
       default:
-        setSubmitModalInfo({ ...admitCaseSubmitConfig, caseInfo: caseInfo });
-        setModalInfo({ type: "admitCase", page: 0 });
-        setShowModal(true);
         break;
     }
   };
@@ -1095,25 +1184,23 @@ const AdmittedCases = () => {
     };
     ordersService
       .createOrder(reqBody, { tenantId })
-      .then((res) => {
-        if (caseDetails?.status === "PENDING_ADMISSION_HEARING") {
-          DRISTIService.customApiService(Urls.dristi.pendingTask, {
-            pendingTask: {
-              name: "Draft in Progress fro Admission Hearing Order",
-              entityType: "case-default",
-              referenceId: `MANUAL_${res.order.orderNumber}`,
-              status: "DRAFT_IN_PROGRESS",
-              assignedTo: [],
-              assignedRole: ["JUDGE_ROLE"],
-              cnrNumber: updatedCaseDetails?.cnrNumber,
-              filingNumber: caseDetails?.filingNumber,
-              isCompleted: true,
-              stateSla: todayDate + stateSla.SCHEDULE_HEARING,
-              additionalDetails: {},
-              tenantId,
-            },
-          });
-        }
+      .then(async (res) => {
+        await DRISTIService.customApiService(Urls.dristi.pendingTask, {
+          pendingTask: {
+            name: `Draft in Progress for ${t(data.purpose?.code)} Hearing Order`,
+            entityType: "order-default",
+            referenceId: `MANUAL_${res.order.orderNumber}`,
+            status: "DRAFT_IN_PROGRESS",
+            assignedTo: [],
+            assignedRole: ["JUDGE_ROLE"],
+            cnrNumber: updatedCaseDetails?.cnrNumber,
+            filingNumber: caseDetails?.filingNumber,
+            isCompleted: false,
+            stateSla: todayDate + stateSla.SCHEDULE_HEARING,
+            additionalDetails: {},
+            tenantId,
+          },
+        });
         history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
       })
       .catch((err) => {});
@@ -1373,6 +1460,7 @@ const AdmittedCases = () => {
           setShowModal={setShowScheduleHearingModal}
           caseAdmittedSubmit={caseAdmittedSubmit}
           isCaseAdmitted={isCaseAdmitted}
+          createAdmissionOrder={createAdmissionOrder}
         />
       )}
 
@@ -1389,7 +1477,7 @@ const AdmittedCases = () => {
       {toast && toastDetails && (
         <Toast error={toastDetails?.isError} label={t(toastDetails?.message)} onClose={() => setToast(false)} style={{ maxWidth: "670px" }} />
       )}
-      {(primaryAction || secondaryAction || tertiaryAction) && (
+      {(primaryAction.action || secondaryAction.action || tertiaryAction.action) && (
         <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
           <div style={{ width: "fit-content", display: "flex", gap: 20 }}>
             {tertiaryAction.action && (
@@ -1401,7 +1489,13 @@ const AdmittedCases = () => {
             <Button
               className="previous-button"
               variation="secondary"
-              style={{ border: "none", marginLeft: 0 }}
+              style={{
+                border: "none",
+                marginLeft: 0,
+                fontSize: 16,
+                fontWeight: 700,
+                color: secondaryAction.action === "REJECT" && "#BB2C2F",
+              }}
               label={t(secondaryAction.label)}
               onButtonClick={onSendBack}
             />
@@ -1429,7 +1523,13 @@ const AdmittedCases = () => {
       {showDismissCaseConfirmation && (
         <Modal
           headerBarMain={<Heading label={t("DISMISS_CASE_CONFIRMATION")} />}
-          headerBarEnd={<CloseBtn onClick={() => {}} />}
+          headerBarEnd={
+            <CloseBtn
+              onClick={() => {
+                setShowDismissCaseConfirmation(false);
+              }}
+            />
+          }
           actionSaveLabel={t("CS_DISMISS")}
           children={<div style={{ margin: "16px 0px" }}>{t("DISMISS_CASE_CONFIRMATION_TEXT")}</div>}
           actionSaveOnSubmit={() => {}}

@@ -112,7 +112,15 @@ export const TabJudgeSearchConfig = {
           criteria: [
             {
               stage: ["Pre-Trial", "Trial", "Post-Trial"],
-              status: ["PENDING_REGISTRATION", "PENDING_ADMISSION", "ADMISSION_HEARING_SCHEDULED", "CASE_ADMITTED", "PENDING_ADMISSION_HEARING"],
+              status: [
+                "PENDING_REGISTRATION",
+                "PENDING_ADMISSION",
+                "ADMISSION_HEARING_SCHEDULED",
+                "CASE_ADMITTED",
+                "PENDING_ADMISSION_HEARING",
+                "PENDING_NOTICE",
+                "PENDING_RESPONSE",
+              ],
             },
           ],
         },
@@ -237,7 +245,15 @@ export const TabJudgeSearchConfig = {
           criteria: [
             {
               stage: ["Trial"],
-              status: ["PENDING_REGISTRATION", "PENDING_ADMISSION", "ADMISSION_HEARING_SCHEDULED", "CASE_ADMITTED", "PENDING_ADMISSION_HEARING"],
+              status: [
+                "PENDING_REGISTRATION",
+                "PENDING_ADMISSION",
+                "ADMISSION_HEARING_SCHEDULED",
+                "CASE_ADMITTED",
+                "PENDING_ADMISSION_HEARING",
+                "PENDING_NOTICE",
+                "PENDING_RESPONSE",
+              ],
             },
           ],
         },
@@ -362,7 +378,14 @@ export const TabJudgeSearchConfig = {
           criteria: [
             {
               stage: ["Pre-Trial"],
-              status: ["PENDING_REGISTRATION", "PENDING_ADMISSION", "ADMISSION_HEARING_SCHEDULED", "PENDING_ADMISSION_HEARING"],
+              status: [
+                "PENDING_REGISTRATION",
+                "PENDING_ADMISSION",
+                "ADMISSION_HEARING_SCHEDULED",
+                "PENDING_ADMISSION_HEARING",
+                "PENDING_NOTICE",
+                "PENDING_RESPONSE",
+              ],
             },
           ],
         },
