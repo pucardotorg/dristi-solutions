@@ -460,7 +460,7 @@ const GenerateOrders = () => {
 
   const isHearingAlreadyScheduled = useMemo(() => {
     const isPresent = hearingsData?.HearingList.some((hearing) => {
-      return !(hearing?.status === "COMPLETED" || hearing?.status === "ABATED" || hearing?.status === "OPTOUT");
+      return !(hearing?.status === "COMPLETED" || hearing?.status === "ABATED");
     });
     return isPresent;
   }, [hearingsData]);
