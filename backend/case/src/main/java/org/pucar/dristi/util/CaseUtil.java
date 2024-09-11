@@ -41,7 +41,7 @@ public class CaseUtil {
     }
 
     public String generateCNRNumber(String tenantId, String userID) {
-        //Searching last inserted cnr_seq_number
+        //Searching last inserted cnr seq number
         String seqNum = caseRepository.searchCNRSeqNum(tenantId, COURTID);
         String newSqNum;
 
@@ -51,7 +51,7 @@ public class CaseUtil {
             newSqNum = "000001";
             caseRepository.insertCNRSeqNum(UUID.randomUUID(), tenantId, COURTID, newSqNum, userID);
         }else {
-            //Incrementing the existing cnr_seq_number by 1 and inserting the 6 digit padded seq in the table
+            //Incrementing the existing cnr seq number by 1 and inserting the 6 digit padded seq in the table
             log.info("Incrementing the existing seq number and inserting in the table");
             newSqNum = String.valueOf(Integer.parseInt(seqNum) + 1);
             newSqNum = String.format("%06d", Integer.parseInt(newSqNum));
@@ -61,18 +61,18 @@ public class CaseUtil {
     }
 
     public String generateFilingNumber(String tenantId, String userID, String seqLabel) {
-        //Searching last inserted cnr_seq_number
+        //Searching last inserted filing seq number
         String seqNum = caseRepository.searchCaseSeqNum(tenantId, seqLabel);
         String newSqNum;
 
-        //setting cnr_seq_number to 000001 if no sequence number is present in the table
+        //setting filing number seq to 000001 if no sequence number is present in the table
         if(seqNum == null){
             log.info("Inserting 000001 for 1st entry in the table.");
             newSqNum = "000001";
             caseRepository.insertCaseSeqNum(UUID.randomUUID(), tenantId, newSqNum, userID,seqLabel);
         }else {
-            //Incrementing the existing cnr_seq_number by 1 and inserting the 6 digit padded seq in the table
-            log.info("Incrementing the existing seq number and inserting in the table.");
+            //Incrementing the existing filing seq by 1 and inserting the 6 digit padded seq in the table
+            log.info("Incrementing the existing filing seq number and inserting in the table.");
             newSqNum = String.valueOf(Integer.parseInt(seqNum) + 1);
             newSqNum = String.format("%06d", Integer.parseInt(newSqNum));
             caseRepository.insertCaseSeqNum(UUID.randomUUID(), tenantId, newSqNum, userID,seqLabel);
@@ -81,17 +81,16 @@ public class CaseUtil {
     }
 
     public String generateCMPNumber(String tenantId, String userID, String seqLabel) {
-        //Searching last inserted cnr_seq_number
+        //Searching last inserted cmp seq num
         String seqNum = caseRepository.searchCaseSeqNum(tenantId, seqLabel);
         String newSqNum;
 
-        //setting cnr_seq_number to 000001 if no sequence number is present in the table
+        //setting cmp seq number to 1 if no sequence number is present in the table
         if(seqNum == null){
             log.info("Inserting 1 for 1st entry in the table.");
             newSqNum = "1";
             caseRepository.insertCaseSeqNum(UUID.randomUUID(), tenantId, newSqNum, userID,seqLabel);
         }else {
-            //Incrementing the existing cnr_seq_number by 1 and inserting the 6 digit padded seq in the table
             log.info("Incrementing the existing cmp seq number and inserting in the table.");
             newSqNum = String.valueOf(Integer.parseInt(seqNum) + 1);
             caseRepository.insertCaseSeqNum(UUID.randomUUID(), tenantId, newSqNum, userID,seqLabel);
