@@ -438,21 +438,23 @@ public class CaseRepository {
                 List<Object> preparedStmtList = new ArrayList<>();
                 List<Integer> preparedStmtArgList = new ArrayList<>();
                 List<Object> preparedStmtListDoc = new ArrayList<>();
-                String withClauseQuery = "";
-                String caseQuery = "";
-                caseQuery = queryBuilder.getCasesSearchQueryV2(caseCriteria, preparedStmtList, preparedStmtArgList, requestInfo);
-                String countQuery = queryBuilder.getCountQueryV2(caseQuery);
-                Integer casesCount = jdbcTemplate.queryForObject(countQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), Integer.class);
-                caseQuery = queryBuilder.addPaginatedQuery(caseQuery);
-                withClauseQuery = queryBuilder.getWithClauseQuery(caseCriteria, preparedStmtList, preparedStmtArgList, requestInfo);
-                withClauseQuery += caseQuery;
-                log.info("Final case query :: {}", withClauseQuery);
 
+                String caseCriteriaQuery = queryBuilder.getCaseCriteriaQuery(caseCriteria, preparedStmtList, preparedStmtArgList, requestInfo);
+                if(caseCriteria.getPagination() != null){
+                    String countQuery = queryBuilder.getCountQueryV2(caseCriteriaQuery);
+                    Integer casesCount = jdbcTemplate.queryForObject(countQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), Integer.class);
+                    caseCriteria.getPagination().setTotalCount(Double.valueOf(casesCount));
+                }
+
+                String caseQuery = "";
+                caseQuery = queryBuilder.getCasesSearchQueryV2(caseCriteriaQuery, caseCriteria, preparedStmtList, preparedStmtArgList);
+
+                log.info("Final case query :: {}", caseQuery);
                 if(preparedStmtList.size()!=preparedStmtArgList.size()){
                     log.info("Arg size :: {}, and ArgType size :: {}", preparedStmtList.size(),preparedStmtArgList.size());
                     throw new CustomException(CASE_SEARCH_QUERY_EXCEPTION, "Arg and ArgType size mismatch ");
                 }
-                List<CourtCase> list = jdbcTemplate.query(withClauseQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray() ,rowMapperV2);
+                List<CourtCase> list = jdbcTemplate.query(caseQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray() ,rowMapperV2);
                 if (list != null) {
                     caseCriteria.setResponseList(list);
                     log.info("Case list size :: {}", list.size());

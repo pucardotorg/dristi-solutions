@@ -27,8 +27,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class CaseQueryBuilder {
 
-    private static final String SELECT_CLAUSE = " SELECT id FROM dristi_cases ORDER BY createdtime DESC ";
+    private static final String SELECT_CLAUSE = " SELECT id FROM dristi_cases dc ";
     private static final String WITH_CLAUSE = " WITH PaginatedCases AS ({selectQuery}) ";
+    private static final String COUNT_QUERY = " SELECT COUNT(*) FROM dristi_cases dc ";
     private String CASE_QUERY = "SELECT \n" +
             "    dc.id AS case_id,\n" +
             "    dc.tenantid AS case_tenantid,\n" +
@@ -100,7 +101,7 @@ public class CaseQueryBuilder {
             "    public.dristi_case_statutes_and_sections dcss ON dc.id = dcss.case_id\n" +
             "LEFT JOIN \n" +
             "    public.dristi_witness dw ON dc.id = dw.caseid ";
-    private static final String PAGINATED_QUERY =" AND dc.id IN (SELECT id FROM PaginatedCases) ORDER BY dc.status";
+    private static final String PAGINATED_QUERY =" WHERE dc.id IN (SELECT id FROM PaginatedCases) ORDER BY dc.status";
 
     private static final String BASE_CASE_QUERY = " SELECT cases.id as id, cases.tenantid as tenantid, cases.casenumber as casenumber, cases.resolutionmechanism as resolutionmechanism, cases.casetitle as casetitle, cases.casedescription as casedescription, " +
             "cases.filingnumber as filingnumber, cases.casenumber as casenumber, cases.accesscode as accesscode, cases.courtcasenumber as courtcasenumber, cases.cnrNumber as cnrNumber, " +
@@ -534,13 +535,13 @@ public class CaseQueryBuilder {
         return pagination == null || pagination.getSortBy()==null || pagination.getOrder() == null;
     }
 
-    public String getCountQueryV2(String caseQuery) {
-        return TOTAL_COUNT_QUERY.replace("{baseQuery}", caseQuery);
+    public String getCountQueryV2(String caseCriteriaQuery) {
+        return COUNT_QUERY + caseCriteriaQuery;
     }
 
-    public String getCasesSearchQueryV2(CaseCriteria criteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList, RequestInfo requestInfo) {
+    public String getCaseCriteriaQuery(CaseCriteria criteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList, RequestInfo requestInfo) {
         try {
-            StringBuilder query = new StringBuilder(CASE_QUERY);
+            StringBuilder query = new StringBuilder();
             boolean firstCriteria = true;
 
             if(criteria != null){
@@ -594,5 +595,30 @@ public class CaseQueryBuilder {
             query.append(" LIMIT ? OFFSET ? ");
         }
         return WITH_CLAUSE.replace("{selectQuery}", query.toString());
+    }
+
+    public String getCasesSearchQueryV2(String caseCriteriaQuery, CaseCriteria criteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+        String selectQuery = SELECT_CLAUSE + caseCriteriaQuery;
+        selectQuery = addPaginationV2(selectQuery, criteria.getPagination(), preparedStmtList, preparedStmtArgList);
+        String withClauseQuery = WITH_CLAUSE.replace("{selectQuery}", selectQuery);
+        return withClauseQuery + CASE_QUERY + PAGINATED_QUERY;
+    }
+
+    public String addPaginationV2(String query, Pagination pagination, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+        if(pagination != null){
+            preparedStmtList.add(pagination.getLimit());
+            preparedStmtArgList.add(Types.DOUBLE);
+
+            preparedStmtList.add(pagination.getOffSet());
+            preparedStmtArgList.add(Types.DOUBLE);
+        } else {
+            preparedStmtList.add(50);
+            preparedStmtArgList.add(Types.DOUBLE);
+
+            preparedStmtList.add(0);
+            preparedStmtArgList.add(Types.DOUBLE);
+        }
+        return query + " LIMIT ? OFFSET ?";
+
     }
 }
