@@ -121,7 +121,7 @@ async function applicationCheckout(req, res, qrCode) {
     if (!application) {
       return renderError(res, "Application not found", 404);
     }
-    console.debug(application);
+    
     const onBehalfOfuuid = application?.onBehalfOf?.[0];
     const advocate = allAdvocates[onBehalfOfuuid]?.[0]?.additionalDetails
       ?.advocateName

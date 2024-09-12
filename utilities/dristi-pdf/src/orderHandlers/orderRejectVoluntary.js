@@ -146,7 +146,7 @@ async function orderRejectVoluntary(req, res, qrCode) {
       }
       base64Url = imgTag.attr("src");
     }
-    console.debug(order);
+    
     // Prepare data for PDF generation
     const data = {
       Data: [

@@ -48,9 +48,9 @@ function OrderReviewModal({ setShowReviewModal, t, order, setShowsignatureModal,
   const filestoreId = "c4fef888-6d43-404f-8d37-63cae7651619";
 
   let orderPreviewKey = order?.orderType;
-  if (order?.additionalDetails?.applicationStatus === "APPROVED") {
+  if (order?.additionalDetails?.applicationStatus === "APPROVED" && order?.orderType === "BAIL") {
     orderPreviewKey = "BAIL_APPROVED";
-  } else if (order?.additionalDetails?.applicationStatus === "Rejected") {
+  } else if (order?.additionalDetails?.applicationStatus === "Rejected" && order?.orderType === "BAIL") {
     orderPreviewKey = "BAIL_REJECT";
   }
   orderPreviewKey = OrderPreviewOrderTypeMap[orderPreviewKey] || OrderPreviewOrderTypeMap[order?.orderType];
@@ -158,7 +158,7 @@ function OrderReviewModal({ setShowReviewModal, t, order, setShowsignatureModal,
       actionSaveOnSubmit={() => {
         if (showActions) {
           const pdfFile = new File([orderPreviewPdf], orderPreviewFileName, { type: "application/pdf" });
-          console.debug(pdfFile, orderPreviewFileName);
+          
           onDocumentUpload(pdfFile, pdfFile.name)
             .then((document) => {
               const fileStoreId = document.file?.files?.[0]?.fileStoreId;
