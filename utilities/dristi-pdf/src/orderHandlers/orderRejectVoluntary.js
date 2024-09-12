@@ -153,7 +153,7 @@ async function orderRejectVoluntary(req, res, qrCode) {
         {
           courtName: mdmsCourtRoom.name,
           caseName: courtCase.caseTitle,
-          caseNumber: courtCase.cnrNumber,
+          caseNumber: courtCase.caseNumbercaseNumber,
           orderName: order.orderNumber,
           submissionType: "Application",
           submissionDate: new Date(application?.createdDate),
