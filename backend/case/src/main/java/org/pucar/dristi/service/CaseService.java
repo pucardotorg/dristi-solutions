@@ -114,8 +114,11 @@ public class CaseService {
                 billingUtil.createDemand(caseRequest);
             }
             if (CASE_ADMIT_STATUS.equals(caseRequest.getCases().getStatus())) {
-                enrichmentUtil.enrichCaseNumberAndCourtCaseNumber(caseRequest);
+                enrichmentUtil.enrichCaseNumber(caseRequest);
                 enrichmentUtil.enrichRegistrationDate(caseRequest);
+            }
+            if (CASE_ADMIT_STATUS.equals(caseRequest.getCases().getStatus()) || PENDING_NOTICE.equals(caseRequest.getCases().getStatus())) {
+                enrichmentUtil.enrichCourtCaseNumber(caseRequest);
             }
 
             if (PENDING_ADMISSION_HEARING_STATUS.equals(caseRequest.getCases().getStatus())) {

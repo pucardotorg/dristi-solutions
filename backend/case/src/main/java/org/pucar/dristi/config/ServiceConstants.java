@@ -136,6 +136,7 @@ public class ServiceConstants {
 	public static final BigDecimal TAX_AMOUNT = BigDecimal.valueOf(4.00);
 
 	public static final String ESIGN_PENDING= "ESIGN_PENDING";
+	public static final String PENDING_NOTICE= "PENDING_NOTICE";
 
 	public static final String ADVOCATE_ESIGN_PENDING= "ADVOCATE_ESIGN_PENDING";
 

@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
+import org.pucar.dristi.util.AdvocateUtil;
 import org.pucar.dristi.util.IdgenUtil;
 import org.pucar.dristi.web.models.Advocate;
 import org.pucar.dristi.web.models.AdvocateRequest;
@@ -20,12 +21,14 @@ import static org.pucar.dristi.config.ServiceConstants.ENRICHMENT_EXCEPTION;
 public class AdvocateRegistrationEnrichment {
 
     private final IdgenUtil idgenUtil;
+    private final AdvocateUtil advocateUtil;
     private final Configuration configuration;
 
     @Autowired
-    public AdvocateRegistrationEnrichment(IdgenUtil idgenUtil, Configuration configuration) {
+    public AdvocateRegistrationEnrichment(IdgenUtil idgenUtil, Configuration configuration, AdvocateUtil advocateUtil) {
         this.idgenUtil = idgenUtil;
         this.configuration = configuration;
+        this.advocateUtil = advocateUtil;
     }
 
 
@@ -36,8 +39,6 @@ public class AdvocateRegistrationEnrichment {
      */
     public void enrichAdvocateRegistration(AdvocateRequest advocateRequest) {
         try {
-            List<String> advocateApplicationNumbers = idgenUtil.getIdList(advocateRequest.getRequestInfo(), advocateRequest.getRequestInfo().getUserInfo().getTenantId(), configuration.getAdvApplicationNumberConfig(), null, 1);
-            log.info("Advocate Application Number :: {}",advocateApplicationNumbers);
             Advocate advocate =  advocateRequest.getAdvocate();
             AuditDetails auditDetails = AuditDetails.builder().createdBy(advocateRequest.getRequestInfo().getUserInfo().getUuid()).createdTime(System.currentTimeMillis()).lastModifiedBy(advocateRequest.getRequestInfo().getUserInfo().getUuid()).lastModifiedTime(System.currentTimeMillis()).build();
             advocate.setAuditDetails(auditDetails);
@@ -45,7 +46,7 @@ public class AdvocateRegistrationEnrichment {
             //setting false unless the application is approved
             advocate.setIsActive(false);
             //setting generated application number
-            advocate.setApplicationNumber(advocateApplicationNumbers.get(0));
+            advocate.setApplicationNumber(advocateUtil.generateAdvocateApplicationNumber());
             if (advocate.getDocuments() != null) {
                 advocate.getDocuments().forEach(document -> document.setId(String.valueOf(UUID.randomUUID())));
             }

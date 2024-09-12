@@ -67,7 +67,7 @@ public class CaseUtil {
 
         //setting filing number seq to 000001 if no sequence number is present in the table
         if(seqNum == null){
-            log.info("Inserting 000001 for 1st entry in the table.");
+            log.info("Inserting 000001 for 1st entry in the table for filing number.");
             newSqNum = "000001";
             caseRepository.insertCaseSeqNum(UUID.randomUUID(), tenantId, newSqNum, userID,seqLabel);
         }else {
@@ -87,11 +87,29 @@ public class CaseUtil {
 
         //setting cmp seq number to 1 if no sequence number is present in the table
         if(seqNum == null){
-            log.info("Inserting 1 for 1st entry in the table.");
+            log.info("Inserting 1 for 1st entry in the table for cmp number.");
             newSqNum = "1";
             caseRepository.insertCaseSeqNum(UUID.randomUUID(), tenantId, newSqNum, userID,seqLabel);
         }else {
             log.info("Incrementing the existing cmp seq number and inserting in the table.");
+            newSqNum = String.valueOf(Integer.parseInt(seqNum) + 1);
+            caseRepository.insertCaseSeqNum(UUID.randomUUID(), tenantId, newSqNum, userID,seqLabel);
+        }
+        return CMP + "/" + newSqNum + "/" + LocalDate.now().getYear();
+    }
+
+    public String generateCourtCaseNumber(String tenantId, String userID, String seqLabel) {
+        //Searching last inserted cmp seq num
+        String seqNum = caseRepository.searchCaseSeqNum(tenantId, seqLabel);
+        String newSqNum;
+
+        //setting cmp seq number to 1 if no sequence number is present in the table
+        if(seqNum == null){
+            log.info("Inserting 1 for 1st entry in the table for court case number.");
+            newSqNum = "1";
+            caseRepository.insertCaseSeqNum(UUID.randomUUID(), tenantId, newSqNum, userID,seqLabel);
+        }else {
+            log.info("Incrementing the existing court case seq number and inserting in the table.");
             newSqNum = String.valueOf(Integer.parseInt(seqNum) + 1);
             caseRepository.insertCaseSeqNum(UUID.randomUUID(), tenantId, newSqNum, userID,seqLabel);
         }
