@@ -83,7 +83,7 @@ public class CredentialService {
             String entityModuleName = requestPayload.path("module").asText();
 
             JsonNode mdmsModuleObject = mdmsSchemaService.getModuleDetailsFromMdmsData(entityModuleName);
-
+            log.info("module details from mdms {} ", mdmsModuleObject);
             //get did, schemaId, uuid and jsonpath details from the mdms object
             String entityDid= getDidFromModuleObject(mdmsModuleObject);
             String entitySchemaId=getSchemaIdFromModuleObject(mdmsModuleObject);
@@ -102,6 +102,7 @@ public class CredentialService {
                 String status = jsonNode.get("status").asText();
                 if(status.equals("REVOKED")){
                     String credentialIdUuidData=generateCredentials(uuid, entityDid, entitySchemaId,payloadFromJsonPath,credentialContext,expiryDate);
+                    log.info("credential uuid data {} ", credentialIdUuidData);
                     if(credentialIdUuidData!=null){
                         producer.push(updateVcidTopic, credentialIdUuidData);
                     }
@@ -112,6 +113,7 @@ public class CredentialService {
             }
             else{
                 String credentialIdUuidData=generateCredentials(uuid, entityDid, entitySchemaId,payloadFromJsonPath,credentialContext,expiryDate);
+                log.info("credential uuid data {} ", credentialIdUuidData);
                 if (credentialIdUuidData!=null){
                     producer.push("save-vcid", credentialIdUuidData);
                 }
