@@ -99,7 +99,7 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
 
   const state = useMemo(() => caseDetails?.status, [caseDetails]);
 
-  const isCaseReAssigned = useMemo(() => state === CaseWorkflowState.CASE_RE_ASSIGNED, [state]);
+  const isCaseReAssigned = useMemo(() => state === CaseWorkflowState.CASE_REASSIGNED, [state]);
   const isDraftInProgress = state === CaseWorkflowState.DRAFT_IN_PROGRESS;
 
   const popupInfo = useMemo(() => {

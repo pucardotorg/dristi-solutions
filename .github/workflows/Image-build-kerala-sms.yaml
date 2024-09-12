@@ -1,25 +1,22 @@
-name: Etreasury Svc Image Build workflow
+name: kerala-sms workflow
 on:
   push:
     branches:
       - dpg-qa-deployment
     paths:
-      - 'backend/treasury-backend/**'
+      - 'backend/kerala-sms/**'
   pull_request:
     branches:
       - dpg-qa-deployment
     paths:
-      - 'backend/treasury-backend/**'
+      - 'backend/kerala-sms/**'
   workflow_dispatch:
-  workflow_call:
-
 jobs:
   docker_image-build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-
       - name: Setup Docker
         uses: docker/setup-buildx-action@v1
       - name: Set up JDK 17
@@ -28,29 +25,20 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: maven
-      - name: Build and analyze for SBI-svc
+      - name: Build and analyze for Kerala-Sms
         env:
           GITHUB_TOKEN: ${{ secrets.GHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn -B -f treasury-backend/pom.xml package org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=solutions_etreasury -Dsonar.organization=solutions -Dsonar.host.url=https://sonarcloud.io/
+        run: mvn -B -f sbi-backend/pom.xml package org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=solutions_kerala_sms -Dsonar.organization=solutions -Dsonar.host.url=https://sonarcloud.io/
 
       # Login to Azure Container Registry
       - name: Login to Azure Container Registry
-        if: github.ref == 'refs/heads/dpg-qa-deployment' && github.event_name == 'push'
         run: docker login -u pucarsolutionsdev -p ${{ secrets.ACR_PASSWORD }} pucarsolutionsdev.azurecr.io
-
-      - name: Build and Push Docker image for etreasury-svc
+      - name: Build and Push Docker image for etreasury
         if: github.ref == 'refs/heads/dpg-qa-deployment' && github.event_name == 'push'
         run: |
-          docker build --build-arg WORK_DIR="backend/treasury-backend" -t pucarsolutionsdev.azurecr.io/etreasury:v1.0.0-${{ github.sha }} -f build/maven/Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/etreasury:v1.0.0-${{ github.sha }}
-
-      - name: Build and Push Docker image for etreasury-db
-        if: github.ref == 'refs/heads/dpg-qa-deployment' && github.event_name == 'push'
-        run: |
-          docker build -t pucarsolutionsdev.azurecr.io/etreasury_db:v1.0.0-${{ github.sha }}  .
-          docker push pucarsolutionsdev.azurecr.io/etreasury_db:v1.0.0-${{ github.sha }}
-        working-directory: backend/treasury-backend/src/main/resources/db
+          docker build --build-arg WORK_DIR="backend/kerala-sms" -t pucarsolutionsdev.azurecr.io/kerala-sms:v1.0.0-${{ github.sha }} -f build/maven/Dockerfile .
+          docker push pucarsolutionsdev.azurecr.io/kerala-sms:v1.0.0-${{ github.sha }}
 
   Workflow_Trigger:
     if: github.ref == 'refs/heads/dpg-qa-deployment' && github.event_name == 'push'

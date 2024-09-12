@@ -5,7 +5,7 @@ import { TabJudgeSearchConfig } from "./JudgeHomeConfig";
 import { TabLitigantSearchConfig } from "./LitigantHomeConfig";
 
 export const CaseWorkflowState = {
-  CASE_RE_ASSIGNED: "CASE_RE_ASSIGNED",
+  CASE_REASSIGNED: "CASE_REASSIGNED",
   DRAFT_IN_PROGRESS: "DRAFT_IN_PROGRESS",
   UNDER_SCRUTINY: "UNDER_SCRUTINY",
   CASE_ADMITTED: "CASE_ADMITTED",
@@ -186,7 +186,7 @@ export const rolesToConfigMapping = [
     onRowClickRoute: {
       dependentUrl: "/dristi/home/file-case/case",
       urlDependentOn: "status",
-      urlDependentValue: ["DRAFT_IN_PROGRESS", "CASE_RE_ASSIGNED"],
+      urlDependentValue: ["DRAFT_IN_PROGRESS", "CASE_REASSIGNED"],
       params: [{ key: "caseId", value: "id" }],
     },
   },
@@ -204,7 +204,7 @@ export const taskTypes = [
   { code: "artifact-default", name: "Evidence" },
 ];
 export const pendingTaskCaseActions = {
-  PAYMENT_PENDING: {
+  PENDING_PAYMENT: {
     actorName: ["LITIGANT/ADVOCATE"],
     actionName: "Make Payment",
     redirectDetails: {
@@ -219,7 +219,7 @@ export const pendingTaskCaseActions = {
       params: [{ key: "caseId", value: "id" }],
     },
   },
-  CASE_RE_ASSIGNED: {
+  CASE_REASSIGNED: {
     actorName: ["LITIGANT/ADVOCATE"],
     actionName: "Case Sent Back for Edit",
     redirectDetails: {
@@ -266,6 +266,28 @@ export const pendingTaskCaseActions = {
     redirectDetails: {
       url: "/home/home-pending-task/home-schedule-hearing",
       params: [{ key: "filingNumber", value: "filingNumber" }],
+    },
+  },
+  PENDING_REGISTRATION: {
+    actorName: ["JUDGE"],
+    actionName: "Register the Case",
+    redirectDetails: {
+      url: "/dristi/admission",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "caseId", value: "id" },
+      ],
+    },
+  },
+  PENDING_ADMISSION_HEARING: {
+    actorName: ["JUDGE"],
+    actionName: "Register the Case",
+    redirectDetails: {
+      url: "/dristi/admission",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "caseId", value: "id" },
+      ],
     },
   },
 };
