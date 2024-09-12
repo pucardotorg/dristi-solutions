@@ -260,38 +260,7 @@ paths:
                 $ref: >-
                   https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes
 
-  /case/v1/_cmpNumber:
-    post:
-      tags:
-        - Case
-      summary: API to get next valid number from case
-      description: |
-        A case has multiple different types of numbers like filing number, CMP number, CNR number and CC/ST number. Each of these has its own format, its own sequencing and its uniqueness range. All of these numbers are owned by the Case Registry. 
-        
-        There is a need for applications raised against a case use the same CMP numbering series that the case uses and hence this API is to get the next valid CMP number. 
-        
-        NOTE-- If more entities like order, hearing or if other sequences like that of CNR or CC/ST number need to be shared as well, then, it would be worthwhile to make a separate registry and service for Numbers. 
 
-      requestBody:
-        content:
-          '*/*':
-            schema:
-              $ref: '#/components/schemas/CaseCMPRequest'
-        required: true
-      responses:
-        '200':
-          description: ResponseInfo with cases matching the search criteria. Empty array is returned in case no cases match the search criteria.
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/CaseCMPResponse'
-        '400':
-          description: Search failed
-          content:
-            '*/*':
-              schema:
-                $ref: >-
-                  https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes
 
   /case/witness/v1/_create:
     post:
@@ -1036,7 +1005,6 @@ components:
           $ref: >-
             https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo
         criteria:
-          items:
             $ref: '#/components/schemas/CaseSearchCriteria'
 
     CaseSearchResponse:
@@ -1048,8 +1016,9 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CourtCase'
-          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Pagination
         pagination:
+          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Pagination
+
 
     CaseExistsRequest:
       type: object
@@ -1079,31 +1048,6 @@ components:
           $ref: >-
             https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Pagination
 
-    CaseCMPRequest:
-      type: object
-      properties:
-        RequestInfo:
-          $ref: >-
-            https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo
-        criteria:
-            $ref: '#/components/schemas/CaseCMPRequestCriteria'
-
-    CaseCMPResponse:
-      type: object
-      properties:
-        ResponseInfo:
-          $ref: >-
-            https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo
-        cmpNumber:
-          type: string
-
-    CaseCMPRequestCriteria:
-      type: object
-      properties:
-        tenantId:
-          type: string
-        caseId:
-          type: string
 
     JoinCaseRequest:
       type: object
