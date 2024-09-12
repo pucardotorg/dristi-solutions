@@ -21,28 +21,8 @@ public class ServiceConstants {
 	public static final String SUCCESSFUL = "successful";
 	public static final String FAILED = "failed";
 
-	public static final String URL = "url";
-	public static final String URL_SHORTENING_ERROR_CODE = "URL_SHORTENING_ERROR";
-	public static final String URL_SHORTENING_ERROR_MESSAGE = "Unable to shorten url: ";
-
-	public static final String DOB_FORMAT_Y_M_D = "yyyy-MM-dd";
-	public static final String DOB_FORMAT_D_M_Y = "dd/MM/yyyy";
-	public static final String ILLEGAL_ARGUMENT_EXCEPTION_CODE = "IllegalArgumentException";
-	public static final String OBJECTMAPPER_UNABLE_TO_CONVERT = "ObjectMapper not able to convertValue in userCall";
-	public static final String DOB_FORMAT_D_M_Y_H_M_S = "dd-MM-yyyy HH:mm:ss";
-	public static final String CREATED_DATE = "createdDate";
-	public static final String LAST_MODIFIED_DATE = "lastModifiedDate";
-	public static final String DOB = "dob";
-	public static final String PWD_EXPIRY_DATE = "pwdExpiryDate";
-	public static final String INVALID_DATE_FORMAT_CODE = "INVALID_DATE_FORMAT";
-	public static final String INVALID_DATE_FORMAT_MESSAGE = "Failed to parse date format in user";
-	public static final String CITIZEN_UPPER = "CITIZEN";
-	public static final String CITIZEN_LOWER = "Citizen";
-	public static final String USER = "user";
 	public static final String RESPONDENT_PRIMARY = "respondent.primary";
 	public static final String COMPLAINANT_PRIMARY = "complainant.primary";
-
-    public static final String CASE_CREATE_EXCEPTION = "CASE_CREATE_EXCEPTION";
 
 	public static final String PARSING_ERROR = "PARSING ERROR";
 	public static final String FAILED_TO_PARSE_BUSINESS_SERVICE_SEARCH = "Failed to parse response of workflow business service search";
@@ -122,12 +102,5 @@ public class ServiceConstants {
 	public static final String ADVOCATE_ROLE = "ADVOCATE_ROLE";
 
 	public static final String EMPLOYEE = "EMPLOYEE";
-
 	//	Models for encryption decryption in MDMS
-	public static final String COURT_CASE_ENCRYPT = "CourtCase";
-	public static final String CASE_DECRYPT_SELF = "CaseDecryptSelf";
-	public static final String CASE_DECRYPT_OTHER = "CaseDecryptOther";
-	public static final String ENCRYPTION_SERVICE_ERROR = "Error occurred while calling Encryption Service";
-
-	public static final String PURPOSE = "purpose";
 }

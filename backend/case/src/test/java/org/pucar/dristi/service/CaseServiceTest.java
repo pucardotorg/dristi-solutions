@@ -692,7 +692,6 @@ public class CaseServiceTest {
 
         when(caseRepository.checkCaseExists(anyList())).thenReturn(caseExistsList);
         when(config.getAdditionalJoinCaseTopic()).thenReturn("topic");
-        when(encryptionDecryptionUtil.encryptObject(any(), any(), any())).thenReturn(caseObj);
         AddWitnessResponse response = caseService.addWitness(addWitnessRequest);
 
         verify(producer, times(1)).push(eq("topic"), eq(addWitnessRequest));
