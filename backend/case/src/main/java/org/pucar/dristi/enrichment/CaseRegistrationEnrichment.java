@@ -48,6 +48,7 @@ public class CaseRegistrationEnrichment {
             courtCase.setId(UUID.randomUUID());
             enrichCaseRegistrationUponCreateAndUpdate(courtCase, auditDetails);
 
+            //TODO: Atul: all sequence number should use SEQ prefix - SEQ_FILING_NUMBER
             courtCase.setFilingNumber(caseUtil.generateFilingNumber(caseRequest.getCases().getTenantId(), caseRequest.getRequestInfo().getUserInfo().getUuid(), FILING_NUMBER));
 
 
@@ -240,7 +241,7 @@ public class CaseRegistrationEnrichment {
 
     public void enrichCourtCaseNumber(CaseRequest caseRequest) {
         try {
-            caseRequest.getCases().setCourtCaseNumber(caseUtil.get(0));
+            caseRequest.getCases().setCourtCaseNumber(caseUtil.generateCourtCaseNumber(caseRequest.getCases().getTenantId(), caseRequest.getRequestInfo().getUserInfo().getUuid(), CCST_NUMBER));
         } catch (Exception e) {
             log.error("Error enriching court case number: {}", e.toString());
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in case enrichment service while enriching court case number: " + e.getMessage());
