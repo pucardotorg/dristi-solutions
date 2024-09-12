@@ -121,6 +121,12 @@ const getTotalCountFromSideMenuConfig = (sideMenuConfig, selected) => {
   return countObj;
 };
 
+const extractCodeFromErrorMsg = (error) => {
+  const statusCodeMatch = error?.message.match(/status code (\d+)/);
+  const statusCode = statusCodeMatch ? parseInt(statusCodeMatch[1], 10) : null;
+  return statusCode;
+};
+
 const stateSla = {
   PAYMENT_PENDING: 2,
 };
@@ -1516,9 +1522,15 @@ function EFilingCases({ path }) {
             history.push(`?caseId=${caseId}&selected=${nextSelected}`);
           });
         })
-        .catch(() => {
-          setPrevSelected(selected);
-          history.push(`?caseId=${caseId}&selected=${nextSelected}`);
+        .catch((error) => {
+          // setPrevSelected(selected);
+          // history.push(`?caseId=${caseId}&selected=${nextSelected}`);
+
+          if (extractCodeFromErrorMsg(error) === 413) {
+            toast.error("FILE_LIMIT_EXCEEDS");
+          } else {
+            toast.error("SOMETHING_WENT_WRONG");
+          }
           setIsDisabled(false);
         });
     }
@@ -1545,11 +1557,16 @@ function EFilingCases({ path }) {
           setIsDisabled(false);
         });
       })
-      .catch(() => {
-        setIsDisabled(false);
-      })
-      .finally(() => {
+      .then(() => {
         toast.success(t("CS_SUCCESSFULLY_SAVED_DRAFT"));
+      })
+      .catch((error) => {
+        if (extractCodeFromErrorMsg(error) === 413) {
+          toast.error("FILE_LIMIT_EXCEEDS");
+        } else {
+          toast.error("SOMETHING_WENT_WRONG");
+        }
+        setIsDisabled(false);
       });
   };
 
