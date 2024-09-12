@@ -1146,6 +1146,10 @@ const AdmittedCases = () => {
     setShowScheduleHearingModal(true);
   };
 
+  const handleActionModal = () => {
+    updateCaseDetails("REJECT");
+  };
+
   const caseAdmittedSubmit = (data) => {
     const dateArr = data.date.split(" ").map((date, i) => (i === 0 ? date.slice(0, date.length - 2) : date));
     const date = new Date(dateArr.join(" "));
@@ -1532,7 +1536,9 @@ const AdmittedCases = () => {
           }
           actionSaveLabel={t("CS_DISMISS")}
           children={<div style={{ margin: "16px 0px" }}>{t("DISMISS_CASE_CONFIRMATION_TEXT")}</div>}
-          actionSaveOnSubmit={() => {}}
+          actionSaveOnSubmit={() => {
+            handleActionModal();
+          }}
         ></Modal>
       )}
     </div>

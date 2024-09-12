@@ -22,6 +22,7 @@ import { getAllAssignees } from "../../citizen/FileCase/EfilingValidationUtils";
 import AdmissionActionModal from "./AdmissionActionModal";
 import { generateUUID } from "../../../Utils";
 import { documentTypeMapping } from "../../citizen/FileCase/Config";
+import ScheduleHearing from "../AdmittedCases/ScheduleHearing";
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
@@ -56,9 +57,14 @@ function CaseFileAdmission({ t, path }) {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [caseAdmitLoader, setCaseADmitLoader] = useState(false);
   const [updatedCaseDetails, setUpdatedCaseDetails] = useState({});
+  const [createAdmissionOrder, setCreateAdmissionOrder] = useState(false);
+  const [showScheduleHearingModal, setShowScheduleHearingModal] = useState(false);
+  const [updateCounter, setUpdateCounter] = useState(0);
   const roles = Digit.UserService.getUser()?.info?.roles;
   const isCaseApprover = roles.some((role) => role.code === "CASE_APPROVER");
   const moduleCode = "case-default";
+  const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
+
   const { data: caseFetchResponse, isLoading } = useSearchCaseService(
     {
       criteria: [
@@ -199,6 +205,57 @@ function CaseFileAdmission({ t, path }) {
       value: formatDate(new Date(caseDetails?.filingDate)),
     },
   ];
+
+  const litigants = useMemo(() => (caseDetails?.litigants?.length > 0 ? caseDetails?.litigants : []), [caseDetails]);
+  const finalLitigantsData = useMemo(
+    () =>
+      litigants.map((litigant) => {
+        return {
+          ...litigant,
+          name: litigant.additionalDetails?.fullName,
+        };
+      }),
+    [litigants]
+  );
+
+  const reps = useMemo(() => (caseDetails?.representatives?.length > 0 ? caseDetails?.representatives : []), [caseDetails]);
+  const finalRepresentativesData = useMemo(
+    () =>
+      reps.map((rep) => {
+        return {
+          ...rep,
+          name: rep.additionalDetails?.advocateName,
+          partyType: `Advocate (for ${rep.representing.map((client) => client?.additionalDetails?.fullName).join(", ")})`,
+        };
+      }),
+    [reps]
+  );
+
+  const statue = useMemo(
+    () =>
+      caseDetails?.statutesAndSections[0]?.sections[0]
+        ? `${caseDetails?.statutesAndSections[0]?.sections[0]
+            ?.split(" ")
+            ?.map((splitString) => splitString.charAt(0))
+            ?.join("")} S${caseDetails?.statutesAndSections[0]?.subsections[0]}`
+        : "",
+    [caseDetails?.statutesAndSections]
+  );
+
+  const caseRelatedData = useMemo(
+    () => ({
+      caseId,
+      filingNumber: caseDetails?.filingNumber,
+      cnrNumber: updatedCaseDetails?.cnrNumber,
+      title: caseDetails?.caseTitle || "",
+      stage: caseDetails?.stage,
+      parties: [...finalLitigantsData, ...finalRepresentativesData],
+      case: caseDetails,
+      statue: statue,
+    }),
+    [caseDetails, caseId, finalLitigantsData, finalRepresentativesData, statue, updatedCaseDetails]
+  );
+
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     if (JSON.stringify(formData) !== JSON.stringify(formdata.data)) {
       setFormdata((prev) => {
@@ -210,9 +267,9 @@ function CaseFileAdmission({ t, path }) {
     switch (primaryAction.action) {
       case "REGISTER":
         handleRegisterCase();
+        setCreateAdmissionOrder(true);
         break;
       case "SCHEDULE_ADMISSION_HEARING":
-        debugger;
         setShowModal(true);
         setSubmitModalInfo({
           ...scheduleCaseSubmitConfig,
@@ -263,6 +320,7 @@ function CaseFileAdmission({ t, path }) {
       ],
     });
     setModalInfo({ type: "schedule", page: 0 });
+    setCreateAdmissionOrder(true);
   };
   const onSendBack = () => {
     setSubmitModalInfo({
@@ -420,7 +478,6 @@ function CaseFileAdmission({ t, path }) {
     );
 
     updateCaseDetails("REGISTER", formdata).then((res) => {
-      setModalInfo({ ...modalInfo, page: 1 });
       setCaseADmitLoader(false);
       setSubmitModalInfo({ ...registerCaseConfig, caseInfo: caseInfo });
       setModalInfo({ ...modalInfo, page: 4 });
@@ -567,6 +624,68 @@ function CaseFileAdmission({ t, path }) {
     additionalDetails: "CS_ADDITIONAL_DETAILS",
   };
 
+  const caseAdmittedSubmit = (data) => {
+    const dateArr = data.date.split(" ").map((date, i) => (i === 0 ? date.slice(0, date.length - 2) : date));
+    const date = new Date(dateArr.join(" "));
+    const reqBody = {
+      order: {
+        createdDate: new Date().getTime(),
+        tenantId,
+        cnrNumber: updatedCaseDetails?.cnrNumber,
+        filingNumber: caseDetails?.filingNumber,
+        statuteSection: {
+          tenantId,
+        },
+        orderType: "SCHEDULE_OF_HEARING_DATE",
+        status: "",
+        isActive: true,
+        workflow: {
+          action: OrderWorkflowAction.SAVE_DRAFT,
+          comments: "Creating order",
+          assignes: null,
+          rating: null,
+          documents: [{}],
+        },
+        documents: [],
+        additionalDetails: {
+          formdata: {
+            hearingDate: formatDate(date).split("-").reverse().join("-"),
+            hearingPurpose: data.purpose,
+            orderType: {
+              code: "SCHEDULE_OF_HEARING_DATE",
+              type: "SCHEDULE_OF_HEARING_DATE",
+              name: "ORDER_TYPE_SCHEDULE_OF_HEARING_DATE",
+            },
+          },
+        },
+      },
+    };
+    ordersService
+      .createOrder(reqBody, { tenantId })
+      .then(async (res) => {
+        await DRISTIService.customApiService(Urls.dristi.pendingTask, {
+          pendingTask: {
+            name: `Draft in Progress for ${t(data.purpose?.code)} Hearing Order`,
+            entityType: "order-default",
+            referenceId: `MANUAL_${res.order.orderNumber}`,
+            status: "DRAFT_IN_PROGRESS",
+            assignedTo: [],
+            assignedRole: ["JUDGE_ROLE"],
+            cnrNumber: updatedCaseDetails?.cnrNumber,
+            filingNumber: caseDetails?.filingNumber,
+            isCompleted: false,
+            stateSla: todayDate + stateSla.SCHEDULE_HEARING,
+            additionalDetails: {},
+            tenantId,
+          },
+        });
+        history.push(
+          `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`
+        );
+      })
+      .catch((err) => {});
+  };
+
   if (!caseId || (caseDetails && caseDetails?.status === CaseWorkflowState.CASE_ADMITTED)) {
     return <Redirect to="/" />;
   }
@@ -628,6 +747,18 @@ function CaseFileAdmission({ t, path }) {
               {showErrorToast && (
                 <Toast error={true} label={t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS")} isDleteBtn={true} onClose={closeToast} />
               )}
+              {showScheduleHearingModal && (
+                <ScheduleHearing
+                  setUpdateCounter={setUpdateCounter}
+                  showToast={() => {}}
+                  tenantId={tenantId}
+                  caseData={caseRelatedData}
+                  setShowModal={setShowScheduleHearingModal}
+                  caseAdmittedSubmit={caseAdmittedSubmit}
+                  isCaseAdmitted={false}
+                  createAdmissionOrder={createAdmissionOrder}
+                />
+              )}
               {showModal && (
                 <AdmissionActionModal
                   t={t}
@@ -645,6 +776,8 @@ function CaseFileAdmission({ t, path }) {
                   handleScheduleNextHearing={handleScheduleNextHearing}
                   caseAdmitLoader={caseAdmitLoader}
                   caseDetails={caseDetails}
+                  caseAdmittedSubmit={caseAdmittedSubmit}
+                  createAdmissionOrder={createAdmissionOrder}
                 ></AdmissionActionModal>
               )}
             </div>
