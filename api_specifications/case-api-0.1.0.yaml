@@ -60,7 +60,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/CaseResponse'
         '400':
-          description: Case group updation failed
+          description: Case group update failed
           content:
             '*/*':
               schema:
@@ -76,6 +76,8 @@ paths:
         This API is for summary search and will only return the public fields for a case. While the API will check the authentication token, it is only to ensure that it is being called from an authenticated source. The individualId from the token will not be used for the case search.
         
         TenantId and at least one of caseId or Filing or CNR number is mandatory. If nothing is specified, the API will fail. It will return zero cases if no matching case is found or at most one case.
+        
+        The response will be a union (logical OR) of all the parameters sent in for the search. The API will also de-duplicate the responses before sharing the result back. 
         
         The typical usage scenario is where a person is request case details for a case he/she is not related to, i.e neither is a party nor has any required authorization (RBAC), for example, when trying to join a case.
 
@@ -111,6 +113,8 @@ paths:
         
         TenantId and at least one of caseId or Filing or CNR number is mandatory. If nothing is specified, the API will fail. It will return zero cases if no matching case is found or at most one case.
         
+        The response will be a union (logical OR) of all the parameters sent in for the search. The API will also de-duplicate the responses before sharing the result back. 
+        
         This will typically be used by a person who is either a party to the case (litigant, advocate, judge) or has authorized (RBAC) access (clerk, scrutiny officer) etc. A typical use case is getting a list of "My Case" for a person's home screen
 
       requestBody:
@@ -141,6 +145,19 @@ paths:
       tags:
         - Case
       summary: Search for cases
+      description:  |
+        This API deals with getting detailed information about a case, it will be access controlled. The basic premise will be that all validations are mandatory based on the logged in person’s individualID/authentication token, and this should not be sent as input parameter (as then a person can login and then request details by passing anyone else’s ID). In addition, search will always include tenancy as a parameter. Case details will be visible using the following logic.
+  
+        Authorised roles to view case details are as follows. These roles will be allowed to invoke the above API. The individualId should have any one of these roles, along with additional validations as mentioned below.
+
+              CASE_APPROVER-- Mostly assigned to the Judge who will look at the case detail and approve and later will preside over the case, and hence will be assigned to the case (via courtId and judgeId fields). Hence while this role is authorised, additional things to check will be that the person with this role is an Employee and also is assigned to the case as the Judge.
+              CASE_REVIEWER-- Mostly assigned to the scrutiny officer. A person with this role, is not expected to be party to the case, hence this role will grant direct access to any case for review. The access can be additionally controlled by tenancy.
+              CASE_EDITOR-- Mostly assigned to bench clerk and also complainant and the representing advocate. The validation will need to check that the person having this role is either a bench clerk i.e. an employee or if citizen, then is party to the case as either a complainant or representing advocate or respondent or their representing advocate or advocate clerk.
+
+              Note-- CASE_CREATOR-- Litigants and Advocates can create a case. Once created, they will become party to the case and hence for search, they will need to be party to the case to be able to search. CASE_CREATOR will not be a role authorised to invoke this API.
+  
+        The response will be a union (logical OR) of all the parameters sent in for the search. The API will also de-duplicate the responses before sharing the result back.
+
       requestBody:
         description: Search criteria + RequestInfo meta data.
         content:
@@ -190,11 +207,11 @@ paths:
                 $ref: >-
                   https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes
 
-  /case/v1/_verify:
+  /case/v1/_joincase:
     post:
       tags:
         - Case
-      summary: verify the litigants or representatives who want to join a existing case
+      summary: litigants or representatives who want to join a existing case will use this API
       requestBody:
         description: Details for litigants and representatives to be added to the case + RequestInfo meta data.
         content:
@@ -230,7 +247,7 @@ paths:
         required: true
       responses:
         '200':
-          description: ReponseInfo with cases matching the search criteria. Empty array is returned in case no cases match the search criteria.
+          description: ResponseInfo with cases matching the search criteria. Empty array is returned in case no cases match the search criteria.
           content:
             '*/*':
               schema:
@@ -242,32 +259,40 @@ paths:
               schema:
                 $ref: >-
                   https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes
-  /case/v1/add/witness:
+
+  /case/v1/_cmpNumber:
     post:
       tags:
         - Case
-      summary: add witness details for case
+      summary: API to get next valid number from case
+      description: |
+        A case has multiple different types of numbers like filing number, CMP number, CNR number and CC/ST number. Each of these has its own format, its own sequencing and its uniqueness range. All of these numbers are owned by the Case Registry. 
+        
+        There is a need for applications raised against a case use the same CMP numbering series that the case uses and hence this API is to get the next valid CMP number. 
+        
+        NOTE-- If more entities like order, hearing or if other sequences like that of CNR or CC/ST number need to be shared as well, then, it would be worthwhile to make a separate registry and service for Numbers. 
+
       requestBody:
-        description: Details for adding witness details in the court case + RequestInfo meta data.
         content:
           '*/*':
             schema:
-              $ref: '#/components/schemas/AddWitnessRequest'
+              $ref: '#/components/schemas/CaseCMPRequest'
         required: true
       responses:
         '200':
-          description: ResponseInfo with added witness details
+          description: ResponseInfo with cases matching the search criteria. Empty array is returned in case no cases match the search criteria.
           content:
             '*/*':
               schema:
-                $ref: '#/components/schemas/AddWitnessResponse'
+                $ref: '#/components/schemas/CaseCMPResponse'
         '400':
-          description: Failed to add witness details to the case
+          description: Search failed
           content:
             '*/*':
               schema:
                 $ref: >-
                   https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes
+
   /case/witness/v1/_create:
     post:
       tags:
@@ -284,7 +309,7 @@ paths:
         required: true
       responses:
         '201':
-          description: ReponseInfo with witness mapping created successfully
+          description: ResponseInfo with witness mapping created successfully
           content:
             '*/*':
               schema:
@@ -312,7 +337,7 @@ paths:
         required: true
       responses:
         '201':
-          description: ReponseInfo with witness update successfully executed
+          description: ResponseInfo with witness update successfully executed
           content:
             '*/*':
               schema:
@@ -341,7 +366,7 @@ paths:
         required: true
       responses:
         '201':
-          description: ReponseInfo with witness search results, if any. Empty array if no witnesses matching the search criteria are found.
+          description: ResponseInfo with witness search results, if any. Empty array if no witnesses matching the search criteria are found.
           content:
             '*/*':
               schema:
@@ -570,7 +595,7 @@ components:
           description: >-
             This field is meant to hold any extra information to be stored as
             part of this entity.
-        auditdetails:
+        auditDetails:
           $ref: >-
             https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails
     LinkedCase:
@@ -603,7 +628,7 @@ components:
           description: >-
             This field is meant to hold any extra information to be stored as
             part of this entity.
-        auditdetails:
+        auditDetails:
           $ref: >-
             https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails
 
@@ -691,7 +716,7 @@ components:
         partyType:
           type: string
           description: >-
-            This field holds imformation about type of party (name spaced Master
+            This field holds information about type of party (name spaced Master
             Data).
           example:
             - complainant.primary
@@ -881,6 +906,7 @@ components:
         - outcome
         - litigants
         - representatives
+        - judge
       properties:
         tenantId:
           type: string
@@ -921,6 +947,8 @@ components:
           description: The advocate/representative representing the party in this case. This is not the individualID, rather the ID given to the advocate when they register in the system.
           items:
             $ref: '#/components/schemas/RepresentativeSummary'
+        judge:
+          $ref: '#/components/schemas/Judge'
 
     PartySummary:
       type: object
@@ -973,52 +1001,17 @@ components:
             - primary
             - support
 
-
-
-
-    Witness:
+    Judge:
       type: object
-      required: [individualId]
-      oneOf:
-        - required:
-            - cnrNumber
-            - filingNumber
       properties:
         id:
           type: string
-          description: Autogenerated id of the witness. It is the primary key.
-          format: uuid
-          minLength: 36
-          maxLength: 36
-          readOnly: true
-        filingNumber:
+        name:
           type: string
-          description: The case filing for which this individual is a witness.
-        cnrNumber:
+        designation:
           type: string
-        witnessIdentifier:
-          type: string
-          description: A field to store a formatted or court assigned number to a witness in a case. Optional field.
-        individualId:
-          type: string
-          description: The individual identifier of the citizen who's a witness in the case
-        remarks:
-          type: string
-          description: Field to describe relevance of witness to the case and other info.
-          minLength: 10
-          maxLength: 5000
-        isActive:
-          type: boolean
-          description: Field to soft delete. False indicates the record is not active. True indicates it is active. Search implementation should ensure inactive fields are not returned.
-          default: true
-        auditDetails:
-          $ref: >-
-            https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails
-        additionalDetails:
-          type: object
-          description: >-
-            Any extra fields that are not captured as first class fields can be
-            stored here as key/value pairs. Implementation specific.
+
+
 
     CaseRequest:
       type: object
@@ -1086,30 +1079,31 @@ components:
           $ref: >-
             https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Pagination
 
-    AddWitnessRequest:
+    CaseCMPRequest:
       type: object
       properties:
         RequestInfo:
           $ref: >-
             https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo
-        caseFilingNumber:
-          type: string
-        additionalDetails:
-          type: object
-          description: >-
-            Any extra fields that are not captured as first class fields can be
-            stored here as key/value pairs. Implementation specific.
-        auditDetails:
-          $ref: >-
-            https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails
-    AddWitnessResponse:
+        criteria:
+            $ref: '#/components/schemas/CaseCMPRequestCriteria'
+
+    CaseCMPResponse:
       type: object
       properties:
         ResponseInfo:
           $ref: >-
             https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo
-        addWitnessRequest:
-          $ref: '#/components/schemas/AddWitnessRequest'
+        cmpNumber:
+          type: string
+
+    CaseCMPRequestCriteria:
+      type: object
+      properties:
+        tenantId:
+          type: string
+        caseId:
+          type: string
 
     JoinCaseRequest:
       type: object
@@ -1145,16 +1139,6 @@ components:
         litigantId:
           type: string
           description: individual ID of the person trying to join as a litigant. if an advocate is trying to join, then this will be ID of the person the advocate will be representing
-
-
-      CaseCodeResponse:
-        type: object
-        properties:
-          ResponseInfo:
-            $ref: >-
-              https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo
-          joinCaseRequest:
-            $ref: '#/components/schemas/JoinCaseRequest'
 
     CaseExists:
       type: object
@@ -1204,16 +1188,7 @@ components:
 
 
 
-    WitnessSearchCriteria:
-      type: object
-      properties:
-        caseId:
-          type: string
-        individualId:
-          type: string
-        includeInactive:
-          type: boolean
-          default: false
+
 
     WitnessRequest:
       type: object
@@ -1248,3 +1223,57 @@ components:
           items:
             $ref: '#/components/schemas/WitnessSearchCriteria'
 
+    WitnessSearchCriteria:
+      type: object
+      properties:
+        caseId:
+          type: string
+        individualId:
+          type: string
+        includeInactive:
+          type: boolean
+          default: false
+
+    Witness:
+      type: object
+      required: [ individualId ]
+      oneOf:
+        - required:
+            - cnrNumber
+            - filingNumber
+      properties:
+        id:
+          type: string
+          description: Autogenerated id of the witness. It is the primary key.
+          format: uuid
+          minLength: 36
+          maxLength: 36
+          readOnly: true
+        filingNumber:
+          type: string
+          description: The case filing for which this individual is a witness.
+        cnrNumber:
+          type: string
+        witnessIdentifier:
+          type: string
+          description: A field to store a formatted or court assigned number to a witness in a case. Optional field.
+        individualId:
+          type: string
+          description: The individual identifier of the citizen who's a witness in the case
+        remarks:
+          type: string
+          description: Field to describe relevance of witness to the case and other info.
+          minLength: 10
+          maxLength: 5000
+        isActive:
+          type: boolean
+          description: Field to soft delete. False indicates the record is not active. True indicates it is active. Search implementation should ensure inactive fields are not returned.
+          default: true
+        auditDetails:
+          $ref: >-
+            https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails
+        additionalDetails:
+          type: object
+          description: >-
+            Any extra fields that are not captured as first class fields can be
+            stored here as key/value pairs. Implementation specific.
