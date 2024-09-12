@@ -16,7 +16,7 @@
           "isStateUpdatable": true,
           "actions": [
             {
-              "action": "TYPE_DEPOSITION",
+              "action": "SUBMIT_EVIDENCE",
               "nextState": "PENDING_SIGNATURE",
               "roles": [
                 "EVIDENCE_CREATOR"
