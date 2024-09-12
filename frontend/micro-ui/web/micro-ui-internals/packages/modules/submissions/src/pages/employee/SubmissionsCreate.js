@@ -29,6 +29,7 @@ import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../../../d
 import { Urls } from "../../hooks/services/Urls";
 import { getAdvocates } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/EfilingValidationUtils";
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
+import { getSuffixByBusinessCode, getTaxPeriodByBusinessService } from "../../utils";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 
@@ -55,8 +56,12 @@ const SubmissionsCreate = ({ path }) => {
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const isCitizen = useMemo(() => userInfo?.type === "CITIZEN", [userInfo]);
   const [signedDoucumentUploadedID, setSignedDocumentUploadID] = useState("");
+  const [applicationPdfFileStoreId, setApplicationPdfFileStoreId] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState();
   const scenario = "applicationSubmission";
+  const token = window.localStorage.getItem("token");
+  const isUserLoggedIn = Boolean(token);
+  const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
   const hasSubmissionRole = useMemo(
     () =>
       ["SUBMISSION_CREATOR", "SUBMISSION_RESPONDER"].reduce((result, current) => {
@@ -79,6 +84,31 @@ const SubmissionsCreate = ({ path }) => {
     userInfo?.uuid
   );
   const individualId = useMemo(() => individualData?.Individual?.[0]?.individualId, [individualData]);
+  const userTypeCitizen = useMemo(() => individualData?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value, [
+    individualData?.Individual,
+  ]);
+
+  const { data: paymentTypeData, isLoading: isPaymentTypeLoading } = Digit.Hooks.useCustomMDMS(
+    Digit.ULBService.getStateId(),
+    "payment",
+    [{ name: "paymentType" }],
+    {
+      select: (data) => {
+        return data?.payment?.paymentType || [];
+      },
+    }
+  );
+
+  const { data: taxPeriodData, isLoading: taxPeriodLoading } = Digit.Hooks.useCustomMDMS(
+    Digit.ULBService.getStateId(),
+    "BillingService",
+    [{ name: "TaxPeriod" }],
+    {
+      select: (data) => {
+        return data?.BillingService?.TaxPeriod || [];
+      },
+    }
+  );
 
   const submissionType = useMemo(() => {
     return formdata?.submissionType?.code;
@@ -442,8 +472,8 @@ const SubmissionsCreate = ({ path }) => {
       if (formdata?.submissionDocuments?.documents?.length > 0) {
         documentsList = [...documentsList, ...formdata?.submissionDocuments?.documents];
       }
-      const bailDocuments =
-        formdata?.additionalDetails?.submissionDocuments?.submissionDocuments?.map((item) => ({
+      const applicationDocuments =
+        formdata?.submissionDocuments?.submissionDocuments?.map((item) => ({
           fileType: item?.document?.documentType,
           fileStore: item?.document?.fileStore,
           additionalDetails: item?.document?.additionalDetails,
@@ -452,12 +482,12 @@ const SubmissionsCreate = ({ path }) => {
       let documents = [];
       let file = null;
       let evidenceReqBody = {};
-      const uploadedDocumentList = [...(documentres || []), ...bailDocuments];
+      const uploadedDocumentList = [...(documentres || []), ...applicationDocuments];
       uploadedDocumentList.forEach((res) => {
         file = {
           documentType: res?.fileType,
-          fileStore: res?.file?.files?.[0]?.fileStoreId,
-          additionalDetails: { name: res?.filename },
+          fileStore: res?.fileStore || res?.file?.files?.[0]?.fileStoreId,
+          additionalDetails: { name: res?.filename || res?.additionalDetails?.name },
         };
         documents.push(file);
         evidenceReqBody = {
@@ -478,9 +508,20 @@ const SubmissionsCreate = ({ path }) => {
         DRISTIService.createEvidence(evidenceReqBody);
       });
 
+      let applicationSchema = {};
+      try {
+        applicationSchema = Digit.Customizations.dristiOrders.ApplicationFormSchemaUtils.formToSchema(formdata, modifiedFormConfig);
+      } catch (error) {
+        console.log(error);
+      }
+      if (userTypeCitizen === "ADVOCATE") {
+        applicationSchema["advocateIndividualId"] = individualId;
+      }
+
       const applicationReqBody = {
         tenantId,
         application: {
+          ...applicationSchema,
           tenantId,
           filingNumber,
           cnrNumber: caseDetails?.cnrNumber,
@@ -671,58 +712,61 @@ const SubmissionsCreate = ({ path }) => {
 
   const handleMakePayment = async (totalAmount) => {
     try {
-      //   if (billResponse?.Bill?.length === 0) {
-      //     await DRISTIService.createDemand({
-      //       Demands: [
-      //         {
-      //           tenantId,
-      //           consumerCode: applicationDetails?.applicationNumber,
-      //           consumerType: entityType,
-      //           businessService: entityType,
-      //           taxPeriodFrom: Date.now().toString(),
-      //           taxPeriodTo: Date.now().toString(),
-      //           demandDetails: [
-      //             {
-      //               taxHeadMasterCode: taxHeadMasterCode,
-      //               taxAmount: 4,
-      //               collectionAmount: 0,
-      //             },
-      //           ],
-      //         },
-      //       ],
-      //     });
-      //   }
-      //   const bill = await fetchBill(applicationDetails?.applicationNumber, tenantId, entityType);
-      //   if (bill?.Bill?.length) {
-      //     const billPaymentStatus = await openPaymentPortal(bill);
-      //     setPaymentStatus(billPaymentStatus);
-      //     await applicationRefetch();
-      //     console.log(billPaymentStatus);
-      //     if (billPaymentStatus === true) {
-      setMakePaymentLabel(false);
-      setShowPaymentModal(false);
-      setShowSuccessModal(true);
-      await updateSubmission(SubmissionWorkflowAction.PAY);
-      applicationType === "PRODUCTION_DOCUMENTS" &&
-        orderNumber &&
-        createPendingTask({
-          refId: `${userInfo?.uuid}_${orderNumber}`,
-          isCompleted: true,
-          status: "Completed",
+      const suffix = getSuffixByBusinessCode(paymentTypeData, entityType);
+      if (billResponse?.Bill?.length === 0) {
+        const taxPeriod = getTaxPeriodByBusinessService(taxPeriodData, entityType);
+        await DRISTIService.createDemand({
+          Demands: [
+            {
+              tenantId,
+              consumerCode: applicationDetails?.applicationNumber + `_${suffix}`,
+              consumerType: entityType,
+              businessService: entityType,
+              taxPeriodFrom: taxPeriod?.fromDate,
+              taxPeriodTo: taxPeriod?.toDate,
+              demandDetails: [
+                {
+                  taxHeadMasterCode: taxHeadMasterCode,
+                  taxAmount: 4,
+                  collectionAmount: 0,
+                },
+              ],
+            },
+          ],
         });
-      createPendingTask({ name: t("MAKE_PAYMENT_SUBMISSION"), status: "MAKE_PAYMENT_SUBMISSION", isCompleted: true });
-      //   } else {
-      //     setMakePaymentLabel(true);
-      //     setShowPaymentModal(false);
-      //     setShowSuccessModal(true);
-      //   }
-      // }
+      }
+      const bill = await fetchBill(applicationDetails?.applicationNumber + `_${suffix}`, tenantId, entityType);
+      if (bill?.Bill?.length) {
+        const billPaymentStatus = await openPaymentPortal(bill);
+        setPaymentStatus(billPaymentStatus);
+        await applicationRefetch();
+        console.log(billPaymentStatus);
+        if (billPaymentStatus === true) {
+          setMakePaymentLabel(false);
+          setShowPaymentModal(false);
+          setShowSuccessModal(true);
+          await updateSubmission(SubmissionWorkflowAction.PAY);
+          applicationType === "PRODUCTION_DOCUMENTS" &&
+            orderNumber &&
+            createPendingTask({
+              refId: `${userInfo?.uuid}_${orderNumber}`,
+              isCompleted: true,
+              status: "Completed",
+            });
+          createPendingTask({ name: t("MAKE_PAYMENT_SUBMISSION"), status: "MAKE_PAYMENT_SUBMISSION", isCompleted: true });
+        } else {
+          setMakePaymentLabel(true);
+          setShowPaymentModal(false);
+          setShowSuccessModal(true);
+        }
+      }
     } catch (error) {
       console.error(error);
     }
   };
 
   const handleDownloadSubmission = () => {
+    downloadPdf(tenantId, applicationDetails?.documents?.filter((doc) => doc?.documentType === "SIGNED")?.[0]?.fileStore);
     // history.push(`/digit-ui/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`);
   };
   if (!filingNumber) {
@@ -754,12 +798,14 @@ const SubmissionsCreate = ({ path }) => {
         <ReviewSubmissionModal
           t={t}
           applicationType={applicationDetails?.applicationType}
+          application={applicationDetails}
           submissionDate={applicationDetails?.createdDate}
           sender={caseDetails?.additionalDetails?.payerName}
           setShowReviewModal={setShowReviewModal}
           setShowsignatureModal={setShowsignatureModal}
           handleBack={handleBack}
           documents={applicationDetails?.documents || []}
+          setApplicationPdfFileStoreId={setApplicationPdfFileStoreId}
         />
       )}
       {showsignatureModal && (
@@ -768,6 +814,7 @@ const SubmissionsCreate = ({ path }) => {
           handleProceed={handleAddSignature}
           handleCloseSignaturePopup={handleCloseSignaturePopup}
           setSignedDocumentUploadID={setSignedDocumentUploadID}
+          applicationPdfFileStoreId={applicationPdfFileStoreId}
         />
       )}
       {showPaymentModal && (
