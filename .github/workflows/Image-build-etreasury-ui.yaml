@@ -1,15 +1,15 @@
-name: Transformer Image Build workflow
+name: SBI Svc Image Build workflow
 on:
   push:
     branches:
       - dpg-qa-deployment
     paths:
-      - 'backend/transformer/**'
+      - 'backend/treasury-webpage/**'
   pull_request:
     branches:
       - dpg-qa-deployment
     paths:
-      - 'backend/transformer/**'
+      - 'backend/treasury-webpage/**'
   workflow_dispatch:
   workflow_call:
 
@@ -22,30 +22,17 @@ jobs:
 
       - name: Setup Docker
         uses: docker/setup-buildx-action@v1
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: maven
-      - name: Build and analyze for transformer
-        env:
-          GITHUB_TOKEN: ${{ secrets.GHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn -B -f backend/transformer/pom.xml package org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=solutions_transformer -Dsonar.organization=solutions -Dsonar.host.url=https://sonarcloud.io/
 
       # Login to Azure Container Registry
       - name: Login to Azure Container Registry
         if: github.ref == 'refs/heads/dpg-qa-deployment' && github.event_name == 'push'
         run: docker login -u pucarsolutionsdev -p ${{ secrets.ACR_PASSWORD }} pucarsolutionsdev.azurecr.io
 
-      - name: Build and Push Docker image for transformer
-        if: github.ref == 'refs/heads/dpg-qa-deployment' && github.event_name == 'push'
+      - name: Build and Push Docker image for etreasury-webpage
         run: |
-          docker build --build-arg WORK_DIR="backend/transformer" -t pucarsolutionsdev.azurecr.io/pucar_transformer:v1.0.0-${{ github.sha }} -f build/maven/Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/pucar_transformer:v1.0.0-${{ github.sha }}
-
-
+          docker build  -t pucarsolutionsdev.azurecr.io/epayments:v1.0.0-${{ github.sha }} -f Dockerfile .
+          docker push pucarsolutionsdev.azurecr.io/epayments:v1.0.0-${{ github.sha }}
+        working-directory: backend/treasury-webpage
   Workflow_Trigger:
     if: github.ref == 'refs/heads/dpg-qa-deployment' && github.event_name == 'push'
     runs-on: ubuntu-latest
