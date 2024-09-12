@@ -4,6 +4,8 @@ import static org.pucar.dristi.config.ServiceConstants.*;
 import static org.pucar.dristi.enrichment.CaseRegistrationEnrichment.enrichLitigantsOnCreateAndUpdate;
 import static org.pucar.dristi.enrichment.CaseRegistrationEnrichment.enrichRepresentativesOnCreateAndUpdate;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
@@ -21,10 +23,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 
 @Service
@@ -45,9 +44,13 @@ public class CaseService {
 
     private BillingUtil billingUtil;
 
+    private CacheService cacheService;
+
+    private ObjectMapper objectMapper;
+
 
     @Autowired
-    public CaseService(CaseRegistrationValidator validator, CaseRegistrationEnrichment enrichmentUtil, CaseRepository caseRepository, WorkflowService workflowService, Configuration config, Producer producer, BillingUtil billingUtil) {
+    public CaseService(CaseRegistrationValidator validator, CaseRegistrationEnrichment enrichmentUtil, CaseRepository caseRepository, WorkflowService workflowService, Configuration config, Producer producer, BillingUtil billingUtil, CacheService cacheService, ObjectMapper objectMapper) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.caseRepository = caseRepository;
@@ -55,6 +58,8 @@ public class CaseService {
         this.config = config;
         this.producer = producer;
         this.billingUtil = billingUtil;
+        this.cacheService = cacheService;
+        this.objectMapper = objectMapper;
     }
 
     @Autowired
@@ -70,6 +75,8 @@ public class CaseService {
 
             workflowService.updateWorkflowStatus(body);
 
+            cacheService.save(body.getCases().getTenantId() + ":" + body.getCases().getId().toString(), body.getCases());
+
             producer.push(config.getCaseCreateTopic(), body);
             return body.getCases();
         } catch (CustomException e) {
@@ -84,12 +91,29 @@ public class CaseService {
 
         try {
             // Fetch applications from database according to the given search criteria
-            caseRepository.getCases(caseSearchRequests.getCriteria(), caseSearchRequests.getRequestInfo());
 
-            // If no applications are found matching the given criteria, return an empty list
-            for (CaseCriteria searchCriteria : caseSearchRequests.getCriteria()) {
-                searchCriteria.getResponseList().forEach(cases -> cases.setWorkflow(workflowService.getWorkflowFromProcessInstance(workflowService.getCurrentWorkflow(caseSearchRequests.getRequestInfo(), cases.getTenantId(), cases.getFilingNumber()))));
+            List<CaseCriteria> caseCriteriaList = caseSearchRequests.getCriteria();
+
+            List<CaseCriteria> caseCriteriaInRedis = new ArrayList<>();
+
+            for (CaseCriteria criteria : caseCriteriaList) {
+                CourtCase courtCase = null;
+                if (!criteria.getDefaultFields() && criteria.getCaseId() != null) {
+                     courtCase  = searchRedisCache(caseSearchRequests.getRequestInfo(), criteria);
+                }
+                if(courtCase != null){
+                    criteria.setResponseList(Collections.singletonList(courtCase));
+                    caseCriteriaInRedis.add(criteria);
+                }
             }
+
+            if (!caseCriteriaInRedis.isEmpty()) {
+                caseCriteriaList.removeAll(caseCriteriaInRedis);
+            }
+            List<CaseCriteria> casesList = caseRepository.getCases(caseSearchRequests.getCriteria(), caseSearchRequests.getRequestInfo());
+            saveInRedisCache(casesList, caseSearchRequests.getRequestInfo());
+
+            casesList.addAll(caseCriteriaInRedis);
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
@@ -122,6 +146,8 @@ public class CaseService {
                 enrichmentUtil.enrichAccessCode(caseRequest);
                 enrichmentUtil.enrichCNRNumber(caseRequest);
             }
+
+            cacheService.save(caseRequest.getCases().getTenantId() + ":" + caseRequest.getCases().getId(), caseRequest.getCases());
 
             producer.push(config.getCaseUpdateTopic(), caseRequest);
 
@@ -372,5 +398,34 @@ public class CaseService {
             throw new CustomException(VALIDATION_ERR, "Invalid access code");
         }
         return courtCase;
+    }
+
+    private String getRedisKey(RequestInfo requestInfo, String caseId) {
+        return requestInfo.getUserInfo().getTenantId() + ":" + caseId;
+    }
+
+    public CourtCase searchRedisCache(RequestInfo requestInfo, CaseCriteria criteria) {
+        try {
+            Object value = cacheService.findById( getRedisKey(requestInfo, criteria.getCaseId()));
+            if(value != null){
+                String caseObject = objectMapper.writeValueAsString(value);
+                return objectMapper.readValue(caseObject, CourtCase.class);
+            } else {
+                return null;
+            }
+        } catch (JsonProcessingException e) {
+            log.error("Error occurred while searching case in redis cache :: {}", e.toString());
+            throw new CustomException(SEARCH_CASE_ERR, e.getMessage());
+        }
+    }
+
+    public void saveInRedisCache(List<CaseCriteria> casesList, RequestInfo requestInfo) {
+        for(CaseCriteria criteria : casesList){
+            if(criteria.getResponseList() != null && !criteria.getResponseList().isEmpty()){
+                for(CourtCase courtCase : criteria.getResponseList()){
+                    cacheService.save(requestInfo.getUserInfo().getTenantId() + ":" + courtCase.getId().toString(), courtCase);
+                }
+            }
+        }
     }
 }

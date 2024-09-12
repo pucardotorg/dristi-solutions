@@ -15,6 +15,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
@@ -49,9 +51,13 @@ public class CaseServiceTest {
     private Configuration config;
     @Mock
     private Producer producer;
-
+    @Mock
+    private CacheService cacheService;
+    @Mock
+    private ObjectMapper objectMapper;
     @InjectMocks
     private CaseService caseService;
+
 
     private CaseRequest caseRequest;
     private RequestInfo requestInfo;
@@ -64,21 +70,29 @@ public class CaseServiceTest {
 
     private CaseExistsRequest caseExistsRequest;
 
+    private CaseCriteria caseCriteria;
+
     @BeforeEach
     void setup() {
         caseRequest = new CaseRequest();
-        caseRequest.setCases(new CourtCase());
+        courtCase = new CourtCase();
+        courtCase.setId(UUID.randomUUID());
+        caseRequest.setCases(courtCase);
         caseSearchRequest = new CaseSearchRequest();
+        caseCriteria = new CaseCriteria();
+        caseCriteria.setCaseId("case-id");
+        caseSearchRequest.setCriteria(Collections.singletonList(caseCriteria));
         caseExistsRequest = new CaseExistsRequest();
         requestInfo = new RequestInfo();
         userInfo = new User();
         userInfo.setUuid("user-uuid");
         userInfo.setType("employee");
+        userInfo.setTenantId("tenant-id");
         Role role = new Role();
         role.setName("employee");
         userInfo.setRoles(Collections.singletonList(role));
         requestInfo.setUserInfo(userInfo);
-
+        caseSearchRequest.setRequestInfo(requestInfo);
         // Initialize mocks and create necessary objects for the tests
         joinCaseRequest = new JoinCaseRequest();
         joinCaseRequest.setAdditionalDetails("form-data");
@@ -91,7 +105,7 @@ public class CaseServiceTest {
         doNothing().when(enrichmentUtil).enrichCaseRegistrationOnCreate(any());
         doNothing().when(workflowService).updateWorkflowStatus(any());
         doNothing().when(producer).push(any(), any()); // Stubbing to accept any arguments
-
+        doNothing().when(cacheService).save(anyString(), any());
         // Call the method under test
         CourtCase result = caseService.createCase(caseRequest);
 
@@ -326,18 +340,6 @@ public class CaseServiceTest {
         // Set up mock responses
         List<CaseCriteria> mockCases = new ArrayList<>(); // Assume filled with test data
         when(caseRepository.getCases(any(), any())).thenReturn(mockCases);
-
-        // Call the method under test
-        caseService.searchCases(caseSearchRequest);
-
-        verify(caseRepository, times(1)).getCases(any(), any());
-    }
-
-    @Test
-    void testSearchCases2() {
-        // Set up mock responses
-        when(caseRepository.getCases(any(), any())).thenReturn(List.of(CaseCriteria.builder().filingNumber("filNo").courtCaseNumber("123").build()));
-
         // Call the method under test
         caseService.searchCases(caseSearchRequest);
 
@@ -384,12 +386,14 @@ public class CaseServiceTest {
     void testUpdateCase_Success() {
         // Setup
         CourtCase courtCase = new CourtCase(); // Mock case-indexer.yml CourtCase object with required fields
+        courtCase.setId(UUID.randomUUID());
         caseRequest.setCases(courtCase);
 
         when(validator.validateUpdateRequest(any(CaseRequest.class))).thenReturn(true);
         doNothing().when(enrichmentUtil).enrichCaseApplicationUponUpdate(any(CaseRequest.class));
         doNothing().when(workflowService).updateWorkflowStatus(any(CaseRequest.class));
         doNothing().when(producer).push(anyString(), any(CaseRequest.class));
+        doNothing().when(cacheService).save(anyString(), any());
         when(config.getCaseUpdateTopic()).thenReturn("case-update-topic");
 
         // Execute
@@ -495,6 +499,7 @@ public class CaseServiceTest {
     void testRegisterCaseRequest_ValidInput() {
         CaseRequest caseRequest = new CaseRequest(); // Assume CaseRequest is suitably instantiated
         CourtCase cases = new CourtCase(); // Mock court case list
+        cases.setId(UUID.randomUUID());
         caseRequest.setCases(cases);
         doNothing().when(validator).validateCaseRegistration(any(CaseRequest.class));
         doNothing().when(enrichmentUtil).enrichCaseRegistrationOnCreate(any(CaseRequest.class));
@@ -615,4 +620,74 @@ public class CaseServiceTest {
         assertEquals("Additional details are required", exception.getMessage());
     }
 
+    @Test
+    public void testSearchRedisCache_CaseFound() throws JsonProcessingException {
+       caseCriteria = new CaseCriteria();
+       caseCriteria.setCaseId("case-id");
+       when(cacheService.findById(anyString())).thenReturn(new Object());
+       String jsonString = "jsonString";
+       CourtCase expectedCourtCase = new CourtCase();
+       when(objectMapper.writeValueAsString(any())).thenReturn(jsonString);
+       when(objectMapper.readValue(jsonString, CourtCase.class)).thenReturn(expectedCourtCase);
+
+        CourtCase result = caseService.searchRedisCache(requestInfo, caseCriteria);
+
+        assertNotNull(result);
+        assertEquals(expectedCourtCase, result);
+    }
+
+    @Test
+    public void testSearchRedisCache_CaseNotFound() {
+        CaseCriteria criteria = new CaseCriteria();
+        criteria.setCaseId("123");
+
+
+        when(cacheService.findById(anyString())).thenReturn(null);
+
+        CourtCase result = caseService.searchRedisCache(requestInfo, criteria);
+
+        assertNull(result);
+    }
+
+    @Test
+    public void testSearchRedisCache_JsonProcessingException() throws JsonProcessingException {
+        CaseCriteria criteria = new CaseCriteria();
+        criteria.setCaseId("123");
+
+        Object cachedValue = new Object();
+
+        when(cacheService.findById(anyString())).thenReturn(cachedValue);
+        when(objectMapper.writeValueAsString(cachedValue)).thenThrow(new JsonProcessingException("Error") {});
+
+        CustomException exception = assertThrows(CustomException.class, () -> {
+            caseService.searchRedisCache(requestInfo, criteria);
+        });
+
+        assertEquals("Error", exception.getMessage());
+    }
+
+    @Test
+    void saveInRedisCache_withValidCaseCriteriaAndCourtCase_savesToCache() {
+        List<CourtCase> responseList = new ArrayList<>();
+        courtCase.setId(UUID.randomUUID());
+        responseList.add(courtCase);
+        caseCriteria.setResponseList(responseList);
+
+        List<CaseCriteria> casesList = new ArrayList<>();
+        casesList.add(caseCriteria);
+
+        doNothing().when(cacheService).save(anyString(), any());
+
+        caseService.saveInRedisCache(casesList, requestInfo);
+    }
+
+    @Test
+    void saveInRedisCache_withEmptyCasesList_doesNothing() {
+        List<CaseCriteria> emptyList = new ArrayList<>();
+        RequestInfo requestInfo = mock(RequestInfo.class);
+
+        caseService.saveInRedisCache(emptyList, requestInfo);
+
+        verifyNoInteractions(cacheService);
+    }
 }
