@@ -140,7 +140,7 @@ function ReviewSubmissionModal({
     >
       <div className="review-submission-appl-body-main">
         <div className="application-details">
-          <div className="application-info" style={{ flexWrap: "wrap" }}>
+          <div className="application-info">
             <div className="info-row">
               <div className="info-key">
                 <h3>{t("APPLICATION_TYPE")}</h3>
