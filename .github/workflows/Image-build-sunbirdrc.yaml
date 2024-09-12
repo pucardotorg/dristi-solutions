@@ -4,12 +4,12 @@ on:
     branches:
       - develop
     paths:
-      - 'common/sunbirdrc-credential-service/**'
+      - "backend/sunbirdrc-credential-service/**"
   pull_request:
     branches:
       - develop
     paths:
-      - 'common/sunbirdrc-credential-service/**'
+      - "backend/sunbirdrc-credential-service/**"
   workflow_dispatch:
   workflow_call:
 
@@ -30,14 +30,14 @@ jobs:
 
       - name: Build and Push Docker image for sunbirdrc-credential-service
         run: |
-          docker build --build-arg WORK_DIR="common/sunbirdrc-credential-service" -t pucarsolutionsdev.azurecr.io/sunbirdrc-credential-service:v1.0.0-${{ github.sha }} -f build/maven/Dockerfile .
+          docker build --build-arg WORK_DIR="backend/advocate" -t pucarsolutionsdev.azurecr.io/sunbirdrc-credential-service:v1.0.0-${{ github.sha }} -f build/maven/Dockerfile .
           docker push pucarsolutionsdev.azurecr.io/sunbirdrc-credential-service:v1.0.0-${{ github.sha }}
 
       - name: Build and Push Docker image for Advocate_DB
         run: |
           docker build  -t pucarsolutionsdev.azurecr.io/sunbirdrc-credential-service-db:v1.0.0-${{ github.sha }} -f  Dockerfile .
           docker push pucarsolutionsdev.azurecr.io/sunbirdrc-credential-service-db:v1.0.0-${{ github.sha }}
-        working-directory: common/sunbirdrc-credential-service/src/main/resources/db
+        working-directory: backend/sunbirdrc-credential-service/src/main/resources/db
 
   Workflow_Trigger:
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
@@ -51,4 +51,3 @@ jobs:
           -H "Authorization: token ${{ secrets.GHUB_TOKEN }}" \
           https://api.github.com/repos/pucardotorg/pucar-Devops/actions/workflows/solutions-dev.yaml/dispatches \
           -d '{"ref":"Solutions-Pipeline"}'
-
