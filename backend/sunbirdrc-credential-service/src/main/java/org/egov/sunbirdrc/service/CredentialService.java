@@ -206,6 +206,8 @@ public class CredentialService {
 
 
     public String generateCredentials(String uuid, String did, String schemaId, JsonNode credentialPayload,JsonNode credentialContext,String expiryDate) {
+        log.info("generateCredentials called with uuid: {}, did: {}, schemaId: {}, credentialPayload: {}, credentialContext: {}, expiryDate: {}",
+                uuid, did, schemaId, credentialPayload, credentialContext, expiryDate);
         if (did == null || schemaId == null || uuid == null) {
             throw new IllegalArgumentException("Did, schemaId, and uuid cannot be null");
         }
@@ -232,6 +234,8 @@ public class CredentialService {
                     "    \"credentialSchemaVersion\": \"1.0.0\"\n" +
                     "}";
 
+            log.info("Request body for external service: {}", requestBody);
+
             // Create the request entity
             HttpEntity<String> requestEntity = new HttpEntity<>(requestBody, headers);
             // Make the HTTP POST request
@@ -239,10 +243,13 @@ public class CredentialService {
             fetchCredentialUrl.append(credentialHost).append(credentialPath);
             //fetchCredentialUrl.append("https://unified-dev.digit.org/credentials-service/credentials/issue");
             Object credentialResponse = serviceRequestRepository.fetchResult(fetchCredentialUrl, requestEntity);
+            log.info("Response from external service: {}", credentialResponse);
             credentialIdUuidMapper.setVcid(getIdFromResponse(credentialResponse));
             credentialIdUuidMapper.setEntityid(uuid);
             credentialIdUuidMapper.setCreatedBy(did);
-            return objectMapper.writeValueAsString(credentialIdUuidMapper);
+            String result = objectMapper.writeValueAsString(credentialIdUuidMapper);
+            log.info("Final result: {}", result);
+            return result;
         } catch (JsonProcessingException e) {
             log.error("Exception occurred while processing JSON: " + e.getMessage());
             return null;

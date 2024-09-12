@@ -19,7 +19,7 @@ public class Consumer {
 
     @KafkaListener(topics = {"create-vc","recreate-vc"})
     public void createVc(String message, ConsumerRecord<String, String> record) {
-        log.info("listening to the topic {} ", message);
+        log.info("received message {} ", message);
             credentialService.processPayloadAndPersistCredential(message,record.topic());
     }
 
