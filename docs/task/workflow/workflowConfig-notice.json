@@ -37,7 +37,7 @@
               "action": "MAKE_PAYMENT",
               "nextState": "ISSUE_NOTICE",
               "roles": [
-                "TASK_EDITOR",
+                "TASK_CREATOR",
                 "SYSTEM",
                 "SYSTEM_ADMIN"
               ]

@@ -112,7 +112,8 @@
               "action": "ABANDON",
               "nextState": "ABATED",
               "roles": [
-                "WORKFLOW_ABANDON"
+                "SYSTEM",
+                "SYSTEM_ADMIN"
               ]
             }
           ]

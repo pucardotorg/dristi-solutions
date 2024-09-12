@@ -72,7 +72,9 @@
               "action": "RESPOND",
               "nextState": "COMPLETED",
               "roles": [
-                "SUBMISSION_RESPONDER",
+                "SUBMISSION_EDITOR",
+                "SYSTEM",
+                "SYSTEM_ADMIN",
                 "AUTO_ESCALATE"
               ]
             },

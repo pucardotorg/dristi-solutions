@@ -37,14 +37,15 @@
               "action": "E-SIGN",
               "nextState": "PENDING_APPROVAL",
               "roles": [
-                "DEPOSITION_ESIGN"
+                "EVIDENCE_CREATOR"
               ]
             },
             {
               "action": "ABANDON",
               "nextState": "ABATED",
               "roles": [
-                "WORKFLOW_ABANDON"
+                "SYSTEM",
+                "SYSTEM_ADMIN"
               ]
             }
           ]
@@ -62,14 +63,15 @@
               "action": "E-SIGN",
               "nextState": "PUBLISHED",
               "roles": [
-                "DEPOSITION_PUBLISHER"
+                "EVIDENCE_APPROVER"
               ]
             },
             {
               "action": "ABANDON",
               "nextState": "ABATED",
               "roles": [
-                "WORKFLOW_ABANDON"
+                "SYSTEM",
+                "SYSTEM_ADMIN"
               ]
             }
           ]
