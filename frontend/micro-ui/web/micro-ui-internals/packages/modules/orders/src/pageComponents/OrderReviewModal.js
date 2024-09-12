@@ -14,7 +14,7 @@ const OrderPreviewOrderTypeMap = {
   OTHERS: "order-generic",
   REFERRAL_CASE_TO_ADR: "order-generic",
   EXTENSION_OF_DOCUMENT_SUBMISSION_DATE: "order-generic",
-  SCHEDULING_NEXT_HEARING: "reschedule-request-judge",
+  SCHEDULING_NEXT_HEARING: "schedule-hearing-date",
   RESCHEDULE_OF_HEARING_DATE: "new-hearing-date-after-rescheduling",
   REJECTION_RESCHEDULE_REQUEST: "order-for-rejection-rescheduling-request",
   ASSIGNING_NEW_HEARING_DATE: "order-generic",
