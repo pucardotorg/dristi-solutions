@@ -22,7 +22,7 @@ const paymentFailedNoteConfig = {
   populators: {
     inputs: [
       {
-        infoHeader: "PLEASE NOTE",
+        infoHeader: "PLEASE_NOTE",
         infoText: "PAYMENT_FAILED",
         showTooltip: true,
       },
