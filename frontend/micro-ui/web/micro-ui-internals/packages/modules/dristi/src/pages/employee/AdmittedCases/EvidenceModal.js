@@ -520,6 +520,31 @@ const EvidenceModal = ({ caseData, documentSubmission = [], setShow, userRoles, 
       return acceptedApplicationTypes.includes(applicationType);
     }
   }, [documentSubmission, showConfirmationModal?.type]);
+
+  const showDocument = useMemo(() => {
+    return (
+      <React.Fragment>
+        {documentSubmission?.map((docSubmission, index) => (
+          <React.Fragment>
+            {docSubmission.applicationContent && (
+              <div className="application-view">
+                <DocViewerWrapper
+                  key={docSubmission.applicationContent.fileStoreId}
+                  fileStoreId={docSubmission.applicationContent.fileStoreId}
+                  displayFilename={docSubmission.applicationContent.fileName}
+                  tenantId={docSubmission.applicationContent.tenantId}
+                  docWidth={"calc(80vw* 62/ 100)"}
+                  docHeight={"60vh"}
+                  showDownloadOption={false}
+                  documentName={docSubmission.applicationContent.fileName}
+                />
+              </div>
+            )}
+          </React.Fragment>
+        ))}
+      </React.Fragment>
+    );
+  }, [documentSubmission]);
   const handleApplicationAction = async (generateOrder, type) => {
     try {
       const orderType = getOrderTypes(documentSubmission?.[0]?.applicationList?.applicationType, type);
@@ -777,24 +802,7 @@ const EvidenceModal = ({ caseData, documentSubmission = [], setShow, userRoles, 
                       <h3>N/A</h3>
                     </div>
                   </div>
-                  {documentSubmission?.map((docSubmission, index) => (
-                    <React.Fragment>
-                      {docSubmission.applicationContent && (
-                        <div className="application-view">
-                          <DocViewerWrapper
-                            key={docSubmission.applicationContent.fileStoreId}
-                            fileStoreId={docSubmission.applicationContent.fileStoreId}
-                            displayFilename={docSubmission.applicationContent.fileName}
-                            tenantId={docSubmission.applicationContent.tenantId}
-                            docWidth="100%"
-                            docHeight="unset"
-                            showDownloadOption={false}
-                            documentName={docSubmission.applicationContent.fileName}
-                          />
-                        </div>
-                      )}
-                    </React.Fragment>
-                  ))}
+                  {showDocument}
                 </div>
               </div>
             </div>
