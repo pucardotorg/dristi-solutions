@@ -197,8 +197,8 @@ async function applicationProductionOfDocuments(req, res, qrCode) {
       "November",
       "December",
     ];
-    const documentList =
-      application?.applicationDetails?.applicationDocuments || [];
+    const documentList = application?.applicationDetails
+      ?.applicationDocuments || [{ documentType: "" }];
     const currentDate = new Date();
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
     const day = currentDate.getDate();
