@@ -767,8 +767,8 @@ const EvidenceModal = ({ caseData, documentSubmission = [], setShow, userRoles, 
         >
           <div className="evidence-modal-main">
             <div className={"application-details"}>
-              <div>
-                <div className="application-info">
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <div className="application-info" style={{ display: "flex", flexDirection: "column" }}>
                   <div className="info-row">
                     <div className="info-key">
                       <h3>{t("APPLICATION_TYPE")}</h3>
@@ -802,8 +802,8 @@ const EvidenceModal = ({ caseData, documentSubmission = [], setShow, userRoles, 
                       <h3>N/A</h3>
                     </div>
                   </div>
-                  {showDocument}
                 </div>
+                <div style={{ display: "flex", flexDirection: "column" }}>{showDocument}</div>
               </div>
             </div>
             {(userRoles.includes("SUBMISSION_RESPONDER") || userRoles.includes("JUDGE_ROLE")) && (
