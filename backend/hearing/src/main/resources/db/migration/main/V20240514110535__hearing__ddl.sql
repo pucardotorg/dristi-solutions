@@ -29,5 +29,6 @@ CREATE TABLE dristi_hearing_document (
     documentUid VARCHAR(64),
     documentType VARCHAR(64),
     hearingId VARCHAR(64) NOT NULL,
-    additionalDetails JSONB
+    additionalDetails JSONB,
+    CONSTRAINT fk_hearing_document_hearing_id FOREIGN KEY (hearingId) REFERENCES dristi_hearing(id)
 );
