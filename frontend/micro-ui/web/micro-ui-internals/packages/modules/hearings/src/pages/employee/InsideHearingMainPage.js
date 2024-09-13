@@ -140,7 +140,7 @@ const InsideHearingMainPage = () => {
       setAdditionalDetails(responseList?.additionalDetails);
       setOptions(
         responseList?.additionalDetails?.witnessDetails?.formdata?.map((witness) => ({
-          label: `${witness?.data?.firstName || ""} ${witness?.data?.lastName || ""}`,
+          label: [witness?.data?.firstName, witness?.data?.lastName].filter(Boolean).join(" "),
           value: witness?.data?.uuid,
         }))
       );
@@ -311,7 +311,7 @@ const InsideHearingMainPage = () => {
                 selected={
                   IsSelectedWitness
                     ? {
-                        label: `${selectedWitness?.firstName || ""} ${selectedWitness?.lastName || ""}`,
+                        label: [selectedWitness?.firstName, selectedWitness?.lastName].filter(Boolean).join(" "),
                         value: selectedWitness?.uuid,
                       }
                     : {}
