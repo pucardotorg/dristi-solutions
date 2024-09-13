@@ -21,5 +21,6 @@ CREATE TABLE dristi_document (
                              documentType varchar(64) NULL,
                              advocateId varchar(64)  NULL,
                              clerk_id varchar(64)  NULL,
-                             additionalDetails JSONB NULL
+                             additionalDetails JSONB NULL,
+                             CONSTRAINT fk_document_advocate_id FOREIGN KEY (advocateId) REFERENCES dristi_advocate(id)
 );
