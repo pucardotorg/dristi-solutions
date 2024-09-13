@@ -107,14 +107,15 @@ public class ServiceConstants {
 	public static final String STATE="KL";
 	public static final String CMP="CMP";
 
-	//TODO: Atul. Added for CCST number
+	//TODO: Atul. Added for CC number
 	public static final String CCNumberPrefix = "CC";
+	//TODO: Atul. Added for ST number
 	public static final String STNumberPrefix = "ST";
 	public static final String FILING_NUMBER="FILING_NUMBER";
 	public static final String CMP_NUMBER="CMP_NUMBER";
 
 	//TODO: Atul. Added for CC/ST Number
-	public static final String CCST_NUMBER ="CCST_NUMBER";
+	public static final String SEQ_CCST_NUMBER ="SEQ_CCST_NUMBER";
 
 	//error logs constants
 	public static final String JOIN_CASE_INVALID_REQUEST = "Invalid request for joining a case";

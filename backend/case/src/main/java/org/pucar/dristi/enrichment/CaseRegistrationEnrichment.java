@@ -241,7 +241,7 @@ public class CaseRegistrationEnrichment {
 
     public void enrichCourtCaseNumber(CaseRequest caseRequest) {
         try {
-            caseRequest.getCases().setCourtCaseNumber(caseUtil.generateCourtCaseNumber(caseRequest.getCases().getTenantId(), caseRequest.getRequestInfo().getUserInfo().getUuid(), CCST_NUMBER));
+            caseRequest.getCases().setCourtCaseNumber(caseUtil.generateCourtCaseNumber(caseRequest.getCases().getTenantId(), caseRequest.getRequestInfo().getUserInfo().getUuid(), SEQ_CCST_NUMBER));
         } catch (Exception e) {
             log.error("Error enriching court case number: {}", e.toString());
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in case enrichment service while enriching court case number: " + e.getMessage());
@@ -251,6 +251,7 @@ public class CaseRegistrationEnrichment {
     public void enrichCNRAndCMPNumber(CaseRequest caseRequest) {
         try {
             caseRequest.getCases().setCnrNumber(caseUtil.generateCNRNumber(caseRequest.getCases().getTenantId(), caseRequest.getRequestInfo().getUserInfo().getUuid()));
+            //TODO: Atul: all sequence number should use SEQ prefix - SEQ_CMP_NUMBER
             caseRequest.getCases().setCmpNumber(caseUtil.generateCMPNumber(caseRequest.getCases().getTenantId(), caseRequest.getRequestInfo().getUserInfo().getUuid(), CMP_NUMBER));
         } catch (Exception e) {
             log.error("Error enriching cnr number: {}", e.toString());

@@ -40,6 +40,7 @@ public class CaseUtil {
         return System.currentTimeMillis();
     }
 
+    //TODO: Atul. Add format details as specified for filing number
     public String generateCNRNumber(String tenantId, String userID) {
         //Searching last inserted cnr seq number
         //TODO: Atul. The courtID is the field from the case - Case.CourtID and not a hard coded value inside this method
@@ -63,12 +64,13 @@ public class CaseUtil {
         return COURTID + newSqNum + LocalDate.now().getYear();
     }
 
+    //TODO: Atul start - include the following comment
+    //Filing Number format - [STATE]-[XXXXXX]-[cy:YYYY] where STATE comes from the TenantID
+    //      XXXXXX is a 6 digit padded sequence number and YYYY is calendar year in YYYY format
+    //      Eg. for Kerala, Kollam, ON Courts, state is KL. The number will be KL-000001-2024
+    //TODO: Atul end
     public String generateFilingNumber(String tenantId, String userID, String seqLabel) {
-        //TODO: Atul start - include the following comment
-        //Filing Number format - [STATE]-[XXXXXX]-[cy:YYYY] where STATE comes from the TenantID
-        //      XXXXXX is a 6 digit padded sequence number and YYYY is calendar year in YYYY format
-        //      Eg. for Kerala, Kollam, ON Courts, state is KL. The number will be KL-000001-2024
-        //TODO: Atul end
+
         //Searching last inserted filing seq number
         String seqNum = caseRepository.searchCaseSeqNum(tenantId, seqLabel);
         String newSqNum;
@@ -96,6 +98,7 @@ public class CaseUtil {
         return STATE + "-" + newSqNum + "-" + LocalDate.now().getYear();
     }
 
+    //TODO: Atul. Add format details as specified for filing number
     public String generateCMPNumber(String tenantId, String userID, String seqLabel) {
         //Searching last inserted cmp seq num
         //TODO: Atul. This number is specific to a state-district-establishment i.e. the courtID. Need to search using that and not tenantId
@@ -119,6 +122,7 @@ public class CaseUtil {
         return CMP + "/" + newSqNum + "/" + LocalDate.now().getYear();
     }
 
+    //TODO: Atul. Add format details as specified for filing number
     public String generateCourtCaseNumber(String tenantId, String userID, String seqLabel) {
         //Searching last inserted cmp seq num
         //TODO: Atul. This number is specific to a state-district-establishment i.e. the courtID. Need to search using that and not tenantId
