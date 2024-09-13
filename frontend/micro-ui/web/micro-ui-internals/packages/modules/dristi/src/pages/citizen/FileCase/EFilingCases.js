@@ -322,6 +322,33 @@ function EFilingCases({ path }) {
     [caseData]
   );
 
+  //recursive function which will extract the key which ends with 'FileUpload', 'swornStatement' from the case details
+  const findFileUploads = (obj, documentList = []) => {
+    Object.entries(obj).forEach(([key, value]) => {
+      if ((key.endsWith("FileUpload") || key.endsWith("swornStatement")) && typeof value === "object") {
+        if (value) {
+          documentList.push({
+            documentType: value?.document[0]?.documentType,
+            fileStore: value?.document[0]?.fileStore,
+            additionalDetails: {
+              fileName: value?.document[0]?.fileName,
+              documentName: value?.document[0]?.documentName,
+              key: key,
+            },
+          });
+        }
+      } else if (typeof value === "object" && value !== null) {
+        findFileUploads(value, documentList);
+      }
+    });
+    return documentList;
+  };
+
+  //stores all the documents
+  const documentList = useMemo(() => {
+    return findFileUploads(caseDetails);
+  }, [caseDetails]);
+
   const prevCaseDetails = useMemo(() => structuredClone(caseDetails), [caseDetails]);
 
   const scrutinyObj = useMemo(() => {
