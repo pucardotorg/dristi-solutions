@@ -754,7 +754,7 @@ const GenerateOrders = () => {
     }
     if (orderType === "SUMMONS") {
       if (hearingDetails?.startTime) {
-        updatedFormdata.date = formatDate(new Date(hearingDetails?.startTime));
+        updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
       }
       if (currentOrder?.additionalDetails?.selectedParty && currentOrder?.additionalDetails?.selectedParty?.uuid) {
         updatedFormdata.SummonsOrder = {
@@ -908,7 +908,12 @@ const GenerateOrders = () => {
             : {
                 ...item,
                 comments:
-                  formData?.comments?.text || formData?.additionalComments?.text || formData?.otherDetails?.text || formData?.sentence?.text || "",
+                  formData?.comments?.text ||
+                  formData?.additionalComments?.text ||
+                  formData?.otherDetails?.text ||
+                  formData?.sentence?.text ||
+                  formData?.briefSummary ||
+                  "",
                 orderType: formData?.orderType?.code,
                 additionalDetails: { ...item?.additionalDetails, formdata: updatedFormData },
               };
@@ -1062,7 +1067,7 @@ const GenerateOrders = () => {
           pendingTask: {
             name,
             entityType,
-            referenceId: `MANUAL_${assignee?.uuid}_${order?.hearingNumber}`,
+            referenceId: `MANUAL_${assignee?.uuid}_${order?.orderNumber}`,
             status,
             assignedTo: [assignee],
             assignedRole,
@@ -1674,7 +1679,7 @@ const GenerateOrders = () => {
         });
       }
       if (orderType === "INITIATING_RESCHEDULING_OF_HEARING_DATE") {
-        const dateObject = new Date(applicationDetails?.additionalDetails?.formdata?.initialHearingDate);
+        const dateObject = new Date(applicationDetails?.additionalDetails?.formdata?.changedHearingDate);
         let date = dateObject && dateObject?.getTime();
         if (isNaN(date)) {
           date = Date.now();
@@ -1682,7 +1687,7 @@ const GenerateOrders = () => {
         const requesterId = "";
         const comments = currentOrder?.comments || "";
         const hearingBookingId = currentOrder?.hearingNumber;
-        const rescheduledRequestId = currentOrder?.additionalDetails?.formdata?.refApplicationId || `NO_APPLICATION_ID_${hearingBookingId}`;
+        const rescheduledRequestId = currentOrder?.orderNumber;
         await handleUpdateHearing({
           action: HearingWorkflowAction.RESCHEDULE,
           startTime: Date.parse(currentOrder?.additionalDetails?.formdata?.newHearingDate),
@@ -1779,7 +1784,7 @@ const GenerateOrders = () => {
   };
 
   const handleReviewOrderClick = () => {
-    if (orderType === "SCHEDULE_OF_HEARING_DATE" && isHearingAlreadyScheduled) {
+    if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(orderType) && isHearingAlreadyScheduled) {
       setShowErrorToast({
         label: t("HEARING_IS_ALREADY_SCHEDULED_FOR_THIS_CASE"),
         error: true,
