@@ -30,7 +30,8 @@ CREATE TABLE dristi_evidence_document (
     documentUid varchar(64)  NULL ,
     documentType varchar(64) NULL,
     artifactId varchar(64)  NULL,
-    additionalDetails JSONB NULL
+    additionalDetails JSONB NULL,
+    CONSTRAINT fk_evidence_document_artifact_id FOREIGN KEY (artifactId) REFERENCES dristi_evidence_artifact(id)
 );
 CREATE TABLE dristi_evidence_comment (
     id VARCHAR(64) NOT NULL PRIMARY KEY,
@@ -43,7 +44,8 @@ CREATE TABLE dristi_evidence_comment (
     createdBy varchar(64) NULL,
     lastModifiedBy varchar(64) NULL,
     createdTime int8 NULL,
-    lastModifiedTime int8 NULL
+    lastModifiedTime int8 NULL,
+    CONSTRAINT fk_evidence_comment_artifact_id FOREIGN KEY (artifactId) REFERENCES dristi_evidence_artifact(id)
 );
 
 CREATE SEQUENCE SEQ_DRISTI_ARTIFACT
