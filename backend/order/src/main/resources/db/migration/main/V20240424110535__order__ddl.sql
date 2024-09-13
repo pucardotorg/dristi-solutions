@@ -26,7 +26,8 @@ CREATE TABLE dristi_order_document (
                               documentUid varchar(64)  NULL ,
                               documentType varchar(64) NULL,
                               order_id varchar(64)  NULL,
-                              additionalDetails JSONB NULL
+                              additionalDetails JSONB NULL,
+                              CONSTRAINT fk_order_document_order_id FOREIGN KEY (order_id) REFERENCES dristi_orders(id)
 );
 
 CREATE TABLE dristi_order_statute_section (
@@ -42,7 +43,8 @@ CREATE TABLE dristi_order_statute_section (
                               createdBy varchar(64) NULL,
                               lastModifiedBy varchar(64) NULL,
                               createdTime int8 NULL,
-                              lastModifiedTime int8 NULL
+                              lastModifiedTime int8 NULL,
+                              CONSTRAINT fk_order_statute_section_order_id FOREIGN KEY (order_id) REFERENCES dristi_orders(id)
 );
 
 CREATE SEQUENCE seq_dristi_order
