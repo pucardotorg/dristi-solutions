@@ -26,7 +26,8 @@ CREATE TABLE dristi_task_document (
                               documentUid varchar(64)  NULL ,
                               documentType varchar(64) NULL,
                               task_id varchar(64)  NULL,
-                              additionalDetails JSONB NULL
+                              additionalDetails JSONB NULL,
+                              CONSTRAINT fk_task_document_task_id FOREIGN KEY (task_id) REFERENCES dristi_task(id)
 );
 
 CREATE TABLE dristi_task_amount (
@@ -36,7 +37,8 @@ CREATE TABLE dristi_task_amount (
                               paymentRefNumber varchar(64) NULL,
                               task_id varchar(64)  NULL,
                               status varchar(64)  NULL,
-                              additionalDetails JSONB NULL
+                              additionalDetails JSONB NULL,
+                              CONSTRAINT fk_task_amount_task_id FOREIGN KEY (task_id) REFERENCES dristi_task(id)
 );
 
 CREATE SEQUENCE seq_dristi_task
