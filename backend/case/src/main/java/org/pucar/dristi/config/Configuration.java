@@ -228,4 +228,14 @@ public class Configuration {
 
 	@Value("${spring.redis.timeout}")
 	private Long redisTimeout;
+
+	//	Models for encryption decryption in MDMS
+	@Value("${egov.enc.mdms.security.policy.court.case}")
+	private String courtCaseEncrypt;
+
+	@Value("${egov.enc.mdms.security.policy.case.decrypt.self}")
+	private String caseDecryptSelf;
+
+	@Value("${egov.enc.mdms.security.policy.court.decrypt.other}")
+	private String caseDecryptOther;
 }
