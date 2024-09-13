@@ -1,10 +1,10 @@
 name: Scheduler Image Build workflow
 on:
   push:
-    branches:
-      - develop
-    paths:
-      - 'backend/scheduler-svc/**'
+    # branches:
+    #   - develop
+    # paths:
+    #   - 'backend/scheduler-svc/**'
   pull_request:
     branches:
       - develop
@@ -28,11 +28,11 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: maven
-      - name: Build and analyze for scheduler-svc
-        env:
-          GITHUB_TOKEN: ${{ secrets.GHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn -B -f backend/scheduler-svc/pom.xml package org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=solutions_scheduler_svc -Dsonar.organization=solutions -Dsonar.host.url=https://sonarcloud.io/
+      # - name: Build and analyze for scheduler-svc
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GHUB_TOKEN }}
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      #   run: mvn -B -f backend/scheduler-svc/pom.xml package org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=solutions_scheduler_svc -Dsonar.organization=solutions -Dsonar.host.url=https://sonarcloud.io/
       - name: Dependency check
         uses: dependency-check/Dependency-Check_Action@main
         env:
