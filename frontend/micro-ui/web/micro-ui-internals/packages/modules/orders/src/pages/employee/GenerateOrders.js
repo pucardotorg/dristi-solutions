@@ -1148,7 +1148,7 @@ const GenerateOrders = () => {
           if (channel?.type === "Post" || channel.type === "SMS" || channel.type === "E-mail") {
             return ordersService.customApiService(Urls.orders.pendingTask, {
               pendingTask: {
-                name: t(`MAKE_PAYMENT_FOR_SUMMONS_${channelTypeEnum?.[channel?.type]?.code}`),
+                name: t(`MAKE_PAYMENT_FOR_NOTICE_${channelTypeEnum?.[channel?.type]?.code}`),
                 entityType,
                 referenceId: `MANUAL_${channel.type}_${currentOrder?.orderNumber}`,
                 status: `PAYMENT_PENDING_${channelTypeEnum?.[channel?.type]?.code}`,
@@ -1728,6 +1728,11 @@ const GenerateOrders = () => {
   };
 
   const updateCaseDetails = async (action) => {
+    const assignee = [...(respondents?.map((data) => data?.uuid[0]) || [])];
+    const advocateUuid =
+      Object.keys(allAdvocates)
+        .filter((data) => assignee.includes(allAdvocates?.[data]?.[0]))
+        ?.flat() || [];
     return DRISTIService.caseUpdateService(
       {
         cases: {
@@ -1736,6 +1741,7 @@ const GenerateOrders = () => {
           workflow: {
             ...caseDetails?.workflow,
             action,
+            ...(action === "ISSUE_ORDER" && { assignes: [...assignee, ...advocateUuid] }),
           },
         },
         tenantId,
@@ -1780,20 +1786,24 @@ const GenerateOrders = () => {
       const summonsArray = currentOrder?.additionalDetails?.isReIssueNotice
         ? [{}]
         : currentOrder?.additionalDetails?.formdata?.namesOfPartiesRequired?.filter((data) => data?.partyType === "respondent");
-      const promiseList = summonsArray?.map((data) =>
-        ordersService.createOrder(
-          {
-            order: {
-              ...orderbody,
-              additionalDetails: {
-                ...orderbody?.additionalDetails,
-                selectedParty: data,
+      const promiseList = summonsArray
+        ?.map((data) =>
+          ordersService.createOrder(
+            {
+              order: {
+                ...orderbody,
+                additionalDetails: {
+                  ...orderbody?.additionalDetails,
+                  selectedParty: data,
+                },
               },
             },
-          },
-          { tenantId }
+            { tenantId }
+          )
         )
-      );
+        .then(() => {
+          updateCaseDetails("ADMIT");
+        });
       const resList = await Promise.all(promiseList);
       setCreatedNotice(resList[0]?.order?.orderNumber);
       await Promise.all(

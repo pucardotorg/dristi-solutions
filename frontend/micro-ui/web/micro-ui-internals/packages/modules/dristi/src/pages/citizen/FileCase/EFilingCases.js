@@ -425,6 +425,7 @@ function EFilingCases({ path }) {
   const state = useMemo(() => caseDetails?.status, [caseDetails]);
 
   const isCaseReAssigned = useMemo(() => state === CaseWorkflowState.CASE_REASSIGNED, [state]);
+  const isPendingReESign = useMemo(() => state === CaseWorkflowState.PENDING_RE_E_SIGN, [state]);
   const isPendingESign = useMemo(() => state === CaseWorkflowState.PENDING_E_SIGN, [state]);
   const isDisableAllFieldsMode = !(
     state === CaseWorkflowState.CASE_REASSIGNED ||
@@ -1469,7 +1470,7 @@ function EFilingCases({ path }) {
     ) {
       return;
     }
-    if (selected === "addSignature" && isCaseReAssigned && !openConfirmCorrectionModal) {
+    if (selected === "reviewCaseFile" && isCaseReAssigned && !openConfirmCorrectionModal) {
       return setOpenConfirmCorrectionModal(true);
     }
 
@@ -1477,9 +1478,9 @@ function EFilingCases({ path }) {
       return setShowReviewConfirmationModal(true);
     }
 
-    if (selected === "addSignature" && isPendingESign) {
+    if (selected === "addSignature" && (isPendingESign || isPendingReESign)) {
       if (courtRooms?.length === 1) {
-        onSubmitCase({ court: courtRooms[0] });
+        onSubmitCase({ court: courtRooms[0], action: isPendingReESign ? CaseWorkflowAction.PENDING_RE_E_SIGN : CaseWorkflowAction.E_SIGN });
         return;
       } else {
         setOpenConfirmCourtModal(true);
@@ -1566,7 +1567,7 @@ function EFilingCases({ path }) {
 
   const onErrorCorrectionSubmit = () => {
     setOpenConfirmCorrectionModal(false);
-    onSubmit(CaseWorkflowAction.EDIT_CASE);
+    onSubmit(CaseWorkflowAction.PENDING_RE_E_SIGN);
   };
 
   const handlePageChange = (key, isConfirm) => {
@@ -1652,7 +1653,7 @@ function EFilingCases({ path }) {
           courtId: data?.court?.code,
           workflow: {
             ...caseDetails?.workflow,
-            action: "E-SIGN",
+            action: data?.action || "E-SIGN",
           },
         },
         tenantId,
@@ -2123,11 +2124,15 @@ function EFilingCases({ path }) {
                   }}
                 />
               }
+              actionCancelLabel={t("CS_BACK")}
               actionSaveLabel={t("CS_E_SIGN")}
               children={<div style={{ margin: "16px 0px" }}>{t("SUBMIT_CASE_CONFIRMATION_TEXT")}</div>}
               actionSaveOnSubmit={async () => {
                 setShowReviewConfirmationModal(false);
                 await onSubmit("SUBMIT_CASE");
+              }}
+              actionCancelOnSubmit={async () => {
+                setShowReviewConfirmationModal(false);
               }}
             ></Modal>
           )}
