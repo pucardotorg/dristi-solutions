@@ -186,6 +186,8 @@ module.exports = {
       "order-initiate-reschedule-qr",
     order_initiate_reschedule:
       process.env.ORDER_INITIATE_RESCHEDULE || "order-initiate-reschedule",
+    order_notice: process.env.ORDER_NOTICE || "order-notice",
+    order_notice_qr: process.env.ORDER_NOTICE_QR || "order-notice-qr",
   },
 
   app: {
