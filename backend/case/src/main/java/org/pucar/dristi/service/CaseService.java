@@ -1,11 +1,11 @@
 package org.pucar.dristi.service;
 
-import static org.pucar.dristi.config.ServiceConstants.*;
-import static org.pucar.dristi.enrichment.CaseRegistrationEnrichment.enrichLitigantsOnCreateAndUpdate;
-import static org.pucar.dristi.enrichment.CaseRegistrationEnrichment.enrichRepresentativesOnCreateAndUpdate;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
@@ -16,41 +16,46 @@ import org.pucar.dristi.enrichment.CaseRegistrationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.CaseRepository;
 import org.pucar.dristi.util.BillingUtil;
+import org.pucar.dristi.util.EncryptionDecryptionUtil;
 import org.pucar.dristi.validators.CaseRegistrationValidator;
 import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
+
+import static org.pucar.dristi.config.ServiceConstants.*;
+import static org.pucar.dristi.enrichment.CaseRegistrationEnrichment.enrichLitigantsOnCreateAndUpdate;
+import static org.pucar.dristi.enrichment.CaseRegistrationEnrichment.enrichRepresentativesOnCreateAndUpdate;
 
 
 @Service
 @Slf4j
 public class CaseService {
 
-    private CaseRegistrationValidator validator;
-
-    private CaseRegistrationEnrichment enrichmentUtil;
-
-    private CaseRepository caseRepository;
-
-    private WorkflowService workflowService;
-
-    private Configuration config;
-
-    private Producer producer;
-
-    private BillingUtil billingUtil;
-
-    private CacheService cacheService;
-
-    private ObjectMapper objectMapper;
+    private final CaseRegistrationValidator validator;
+    private final CaseRegistrationEnrichment enrichmentUtil;
+    private final CaseRepository caseRepository;
+    private final WorkflowService workflowService;
+    private final Configuration config;
+    private final Producer producer;
+    private final BillingUtil billingUtil;
+    private final EncryptionDecryptionUtil encryptionDecryptionUtil;
+    private final ObjectMapper objectMapper;
+    private final CacheService cacheService;
 
 
     @Autowired
-    public CaseService(CaseRegistrationValidator validator, CaseRegistrationEnrichment enrichmentUtil, CaseRepository caseRepository, WorkflowService workflowService, Configuration config, Producer producer, BillingUtil billingUtil, CacheService cacheService, ObjectMapper objectMapper) {
+    public CaseService(@Lazy CaseRegistrationValidator validator,
+                       CaseRegistrationEnrichment enrichmentUtil,
+                       CaseRepository caseRepository,
+                       WorkflowService workflowService,
+                       Configuration config,
+                       Producer producer,
+                       BillingUtil billingUtil,
+                       EncryptionDecryptionUtil encryptionDecryptionUtil,
+                       ObjectMapper objectMapper, CacheService cacheService) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.caseRepository = caseRepository;
@@ -58,14 +63,11 @@ public class CaseService {
         this.config = config;
         this.producer = producer;
         this.billingUtil = billingUtil;
-        this.cacheService = cacheService;
+        this.encryptionDecryptionUtil = encryptionDecryptionUtil;
         this.objectMapper = objectMapper;
+        this.cacheService = cacheService;
     }
 
-    @Autowired
-    public void setValidator(@Lazy CaseRegistrationValidator validator) {
-        this.validator = validator;
-    }
 
     public CourtCase createCase(CaseRequest body) {
         try {
@@ -75,10 +77,16 @@ public class CaseService {
 
             workflowService.updateWorkflowStatus(body);
 
+            body.setCases(encryptionDecryptionUtil.encryptObject(body.getCases(), config.getCourtCaseEncrypt(), CourtCase.class));
+
             cacheService.save(body.getCases().getTenantId() + ":" + body.getCases().getId().toString(), body.getCases());
 
             producer.push(config.getCaseCreateTopic(), body);
-            return body.getCases();
+
+            CourtCase cases = encryptionDecryptionUtil.decryptObject(body.getCases(), config.getCaseDecryptSelf(), CourtCase.class, body.getRequestInfo());
+            cases.setAccessCode(null);
+
+            return cases;
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
@@ -91,7 +99,6 @@ public class CaseService {
 
         try {
             // Fetch applications from database according to the given search criteria
-
             List<CaseCriteria> caseCriteriaList = caseSearchRequests.getCriteria();
 
             List<CaseCriteria> caseCriteriaInRedis = new ArrayList<>();
@@ -99,9 +106,9 @@ public class CaseService {
             for (CaseCriteria criteria : caseCriteriaList) {
                 CourtCase courtCase = null;
                 if (!criteria.getDefaultFields() && criteria.getCaseId() != null) {
-                     courtCase  = searchRedisCache(caseSearchRequests.getRequestInfo(), criteria);
+                    courtCase = searchRedisCache(caseSearchRequests.getRequestInfo(), criteria);
                 }
-                if(courtCase != null){
+                if (courtCase != null) {
                     criteria.setResponseList(Collections.singletonList(courtCase));
                     caseCriteriaInRedis.add(criteria);
                 }
@@ -114,6 +121,15 @@ public class CaseService {
             saveInRedisCache(casesList, caseSearchRequests.getRequestInfo());
 
             casesList.addAll(caseCriteriaInRedis);
+
+            casesList.forEach(caseCriteria -> {
+                List<CourtCase> decryptedCourtCases = new ArrayList<>();
+                caseCriteria.getResponseList().forEach(cases -> {
+                    decryptedCourtCases.add(encryptionDecryptionUtil.decryptObject(cases, CASE_DECRYPT_SELF, CourtCase.class, caseSearchRequests.getRequestInfo()));
+                });
+                caseCriteria.setResponseList(decryptedCourtCases);
+            });
+
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
@@ -134,10 +150,8 @@ public class CaseService {
 
             workflowService.updateWorkflowStatus(caseRequest);
 
-            if (CREATE_DEMAND_STATUS.equals(caseRequest.getCases().getStatus())) {
-                billingUtil.createDemand(caseRequest);
-            }
             if (CASE_ADMIT_STATUS.equals(caseRequest.getCases().getStatus())) {
+                enrichmentUtil.enrichAccessCode(caseRequest);
                 enrichmentUtil.enrichCaseNumberAndCourtCaseNumber(caseRequest);
                 enrichmentUtil.enrichRegistrationDate(caseRequest);
             }
@@ -147,11 +161,17 @@ public class CaseService {
                 enrichmentUtil.enrichCNRNumber(caseRequest);
             }
 
+            log.info("Encrypting: {}", caseRequest);
+            caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), "CourtCase", CourtCase.class));
             cacheService.save(caseRequest.getCases().getTenantId() + ":" + caseRequest.getCases().getId(), caseRequest.getCases());
 
             producer.push(config.getCaseUpdateTopic(), caseRequest);
 
-            return caseRequest.getCases();
+            CourtCase cases = encryptionDecryptionUtil.decryptObject(caseRequest.getCases(), null, CourtCase.class, caseRequest.getRequestInfo());
+            cases.setAccessCode(null);
+
+            return cases;
+
 
         } catch (CustomException e) {
             throw e;
@@ -208,7 +228,7 @@ public class CaseService {
 
     }
 
-    private void verifyAndEnrichLitigant(JoinCaseRequest joinCaseRequest, CourtCase caseObj, AuditDetails auditDetails) {
+    private void verifyAndEnrichLitigant(JoinCaseRequest joinCaseRequest, CourtCase courtCase,CourtCase caseObj, AuditDetails auditDetails) {
         log.info("enriching litigants");
         enrichLitigantsOnCreateAndUpdate(caseObj, auditDetails);
 
@@ -216,12 +236,22 @@ public class CaseService {
         producer.push(config.getLitigantJoinCaseTopic(), joinCaseRequest.getLitigant());
 
         if (joinCaseRequest.getAdditionalDetails() != null) {
+
+            caseObj.setAdditionalDetails(editRespondantDetails(joinCaseRequest.getAdditionalDetails(),courtCase.getAdditionalDetails(),joinCaseRequest.getLitigant().getIndividualId()));
+            caseObj = encryptionDecryptionUtil.encryptObject(caseObj, config.getCourtCaseEncrypt(), CourtCase.class);
+            joinCaseRequest.setAdditionalDetails(caseObj.getAdditionalDetails());
+
             log.info("Pushing additional details for litigant:: {}", joinCaseRequest.getAdditionalDetails());
             producer.push(config.getAdditionalJoinCaseTopic(), joinCaseRequest);
+            caseObj.setAuditdetails(courtCase.getAuditdetails());
+            caseObj = encryptionDecryptionUtil.decryptObject(caseObj, config.getCaseDecryptSelf(),CourtCase.class,joinCaseRequest.getRequestInfo());
+            joinCaseRequest.setAdditionalDetails(caseObj.getAdditionalDetails());
+
         }
     }
 
-    private void verifyAndEnrichRepresentative(JoinCaseRequest joinCaseRequest, CourtCase caseObj, AuditDetails auditDetails) {
+    private void verifyAndEnrichRepresentative(JoinCaseRequest joinCaseRequest, CourtCase courtCase, CourtCase caseObj, AuditDetails auditDetails) {
+        log.info("enriching representatives");
         log.info("enriching representatives");
         enrichRepresentativesOnCreateAndUpdate(caseObj, auditDetails);
 
@@ -229,8 +259,14 @@ public class CaseService {
         producer.push(config.getRepresentativeJoinCaseTopic(), joinCaseRequest.getRepresentative());
 
         if (joinCaseRequest.getAdditionalDetails() != null) {
+            caseObj.setAdditionalDetails(editAdvocateDetails(joinCaseRequest.getAdditionalDetails(),courtCase.getAdditionalDetails()));
+            caseObj = encryptionDecryptionUtil.encryptObject(caseObj, config.getCourtCaseEncrypt(), CourtCase.class);
+            joinCaseRequest.setAdditionalDetails(caseObj.getAdditionalDetails());
             log.info("Pushing additional details :: {}", joinCaseRequest.getAdditionalDetails());
             producer.push(config.getAdditionalJoinCaseTopic(), joinCaseRequest);
+            caseObj.setAuditdetails(courtCase.getAuditdetails());
+            caseObj = encryptionDecryptionUtil.decryptObject(caseObj, config.getCaseDecryptSelf(),CourtCase.class,joinCaseRequest.getRequestInfo());
+            joinCaseRequest.setAdditionalDetails(caseObj.getAdditionalDetails());
         }
     }
 
@@ -302,11 +338,10 @@ public class CaseService {
             }
 
             caseObj.setRepresentatives(Collections.singletonList(joinCaseRequest.getRepresentative()));
-            verifyAndEnrichRepresentative(joinCaseRequest, caseObj, auditDetails);
-        }
+            verifyAndEnrichRepresentative(joinCaseRequest, courtCase, caseObj, auditDetails);        }
     }
 
-    private  void advocatePartOfCaseHandler(List<String> advocateIds , JoinCaseRequest joinCaseRequest, CourtCase courtCase, AuditDetails auditDetails){
+    private void advocatePartOfCaseHandler(List<String> advocateIds, JoinCaseRequest joinCaseRequest, CourtCase courtCase, AuditDetails auditDetails) {
         if (!advocateIds.isEmpty() && joinCaseRequest.getRepresentative().getAdvocateId() != null &&
                 advocateIds.contains(joinCaseRequest.getRepresentative().getAdvocateId())) {
 
@@ -374,11 +409,11 @@ public class CaseService {
                 throw new CustomException(VALIDATION_ERR, "Litigant is already a part of the given case");
             }
             caseObj.setLitigants(Collections.singletonList(joinCaseRequest.getLitigant()));
-            verifyAndEnrichLitigant(joinCaseRequest, caseObj, auditDetails);
+            verifyAndEnrichLitigant(joinCaseRequest, courtCase, caseObj, auditDetails);
         }
     }
 
-    private static @NotNull CourtCase validateAccessCodeAndReturnCourtCase(JoinCaseRequest joinCaseRequest, List<CaseCriteria> existingApplications) {
+    private @NotNull CourtCase validateAccessCodeAndReturnCourtCase(JoinCaseRequest joinCaseRequest, List<CaseCriteria> existingApplications) {
         if (existingApplications.isEmpty()) {
             throw new CustomException(CASE_EXIST_ERR, "Case does not exist");
         }
@@ -387,7 +422,7 @@ public class CaseService {
             throw new CustomException(CASE_EXIST_ERR, "Case does not exist");
         }
 
-        CourtCase courtCase = courtCaseList.get(0);
+        CourtCase courtCase = encryptionDecryptionUtil.decryptObject(courtCaseList.get(0), config.getCaseDecryptSelf(), CourtCase.class,joinCaseRequest.getRequestInfo());
 
         if (courtCase.getAccessCode() == null || courtCase.getAccessCode().isEmpty()) {
             throw new CustomException(VALIDATION_ERR, "Access code not generated");
@@ -406,8 +441,8 @@ public class CaseService {
 
     public CourtCase searchRedisCache(RequestInfo requestInfo, CaseCriteria criteria) {
         try {
-            Object value = cacheService.findById( getRedisKey(requestInfo, criteria.getCaseId()));
-            if(value != null){
+            Object value = cacheService.findById(getRedisKey(requestInfo, criteria.getCaseId()));
+            if (value != null) {
                 String caseObject = objectMapper.writeValueAsString(value);
                 return objectMapper.readValue(caseObject, CourtCase.class);
             } else {
@@ -420,12 +455,81 @@ public class CaseService {
     }
 
     public void saveInRedisCache(List<CaseCriteria> casesList, RequestInfo requestInfo) {
-        for(CaseCriteria criteria : casesList){
-            if(criteria.getResponseList() != null && !criteria.getResponseList().isEmpty()){
-                for(CourtCase courtCase : criteria.getResponseList()){
+        for (CaseCriteria criteria : casesList) {
+            if (criteria.getResponseList() != null && !criteria.getResponseList().isEmpty()) {
+                for (CourtCase courtCase : criteria.getResponseList()) {
                     cacheService.save(requestInfo.getUserInfo().getTenantId() + ":" + courtCase.getId().toString(), courtCase);
                 }
             }
         }
+    }
+
+
+    private void setOrRemoveField(ObjectNode sourceNode, ObjectNode targetNode, String fieldName) {
+        if (sourceNode.has(fieldName)) {
+            targetNode.set(fieldName, sourceNode.get(fieldName));
+        } else {
+            targetNode.remove(fieldName);
+        }
+    }
+
+    private Object editAdvocateDetails(Object additionalDetails1, Object additionalDetails2) {
+        // Convert the Objects to ObjectNodes for easier manipulation
+        ObjectNode details1Node = objectMapper.convertValue(additionalDetails1, ObjectNode.class);
+        ObjectNode details2Node = objectMapper.convertValue(additionalDetails2, ObjectNode.class);
+
+        // Replace the specified field in additionalDetails2 with the value from additionalDetails1
+        if (details1Node.has("advocateDetails")) {
+            details2Node.set("advocateDetails", details1Node.get("advocateDetails"));
+        } else {
+            throw new CustomException(VALIDATION_ERR, "advocateDetails not found in additionalDetails object.");
+        }
+
+        // Convert the updated ObjectNode back to its original form
+        return objectMapper.convertValue(details2Node, additionalDetails2.getClass());
+    }
+
+
+    private Object editRespondantDetails(Object additionalDetails1, Object additionalDetails2, String individualId) {
+        // Convert the Objects to ObjectNodes for easier manipulation
+        ObjectNode details1Node = objectMapper.convertValue(additionalDetails1, ObjectNode.class);
+        ObjectNode details2Node = objectMapper.convertValue(additionalDetails2, ObjectNode.class);
+
+        // Check if respondentDetails exists in both details1Node and details2Node
+        if (details1Node.has("respondentDetails") && details2Node.has("respondentDetails")) {
+            ObjectNode respondentDetails1 = (ObjectNode) details1Node.get("respondentDetails");
+            ObjectNode respondentDetails2 = (ObjectNode) details2Node.get("respondentDetails");
+
+            // Check if formdata exists and is an array in both respondentDetails
+            if (respondentDetails1.has("formdata") && respondentDetails1.get("formdata").isArray()
+                    && respondentDetails2.has("formdata") && respondentDetails2.get("formdata").isArray()) {
+                ArrayNode formData1 = (ArrayNode) respondentDetails1.get("formdata");
+                ArrayNode formData2 = (ArrayNode) respondentDetails2.get("formdata");
+
+                // Iterate over formData in respondentDetails1 to find matching individualId and copy fields
+                for (int i = 0; i < formData1.size(); i++) {
+                    ObjectNode dataNode1 = (ObjectNode) formData1.get(i).path("data");
+                    ObjectNode dataNode2 = (ObjectNode) formData2.get(i).path("data");
+                    if(dataNode1.has("respondentVerification")){
+                        JsonNode individualDetails1 = dataNode1.path("respondentVerification").path("individualDetails");
+                        if (individualDetails1.has("individualId") && individualId.equals(individualDetails1.get("individualId").asText())) {
+                            // Set or remove fields in dataNode2 based on dataNode1
+                            setOrRemoveField(dataNode1, dataNode2, "respondentLastName");
+                            setOrRemoveField(dataNode1, dataNode2, "respondentFirstName");
+                            setOrRemoveField(dataNode1, dataNode2, "respondentMiddleName");
+                            setOrRemoveField(dataNode1, dataNode2, "respondentVerification");
+                            break;
+                        }
+                    }
+                }
+            } else {
+                throw new CustomException(VALIDATION_ERR, "formdata is not found or is not an array in one of the respondentDetails objects.");
+            }
+        } else {
+            throw new CustomException(VALIDATION_ERR, "respondentDetails not found in one of the additional details objects.");
+        }
+
+        // Convert the updated ObjectNode back to its original form
+        return objectMapper.convertValue(details2Node, additionalDetails2.getClass());
     }
 }
