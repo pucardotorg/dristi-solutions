@@ -351,6 +351,17 @@ export const pendingTaskOrderActions = {
       ],
     },
   },
+  NOTICE_STATUS: {
+    actorName: ["JUDGE"],
+    actionName: "Show Notice Status",
+    redirectDetails: {
+      url: "/home/home-pending-task/summons-warrants-modal",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "hearingId", value: "referenceId" },
+      ],
+    },
+  },
   PAYMENT_PENDING_POST: {
     actorName: ["JUDGE"],
     actionName: "Show Summon-Warrant Status",
@@ -403,6 +414,17 @@ export const pendingTaskOrderActions = {
     },
   },
   "RE-ISSUE_SUMMON": {
+    actorName: ["JUDGE"],
+    redirectDetails: {
+      url: "/home/home-pending-task/reissue-summons-modal",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "cnrNumber", value: "cnrNumber" },
+        { key: "hearingId", value: "referenceId" },
+      ],
+    },
+  },
+  "RE-ISSUE_NOTICE": {
     actorName: ["JUDGE"],
     redirectDetails: {
       url: "/home/home-pending-task/reissue-summons-modal",

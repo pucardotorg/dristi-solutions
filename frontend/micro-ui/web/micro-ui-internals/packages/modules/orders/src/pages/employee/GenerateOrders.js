@@ -168,7 +168,7 @@ const GenerateOrders = () => {
   ]);
   const courtRooms = useMemo(() => courtRoomDetails?.Court_Rooms || [], [courtRoomDetails]);
 
-  const { data: caseData, isLoading: isCaseDetailsLoading } = Digit.Hooks.dristi.useSearchCaseService(
+  const { data: caseData, isLoading: isCaseDetailsLoading, reftech: refetchCaseData } = Digit.Hooks.dristi.useSearchCaseService(
     {
       criteria: [
         {
@@ -1148,7 +1148,7 @@ const GenerateOrders = () => {
           if (channel?.type === "Post" || channel.type === "SMS" || channel.type === "E-mail") {
             return ordersService.customApiService(Urls.orders.pendingTask, {
               pendingTask: {
-                name: t(`MAKE_PAYMENT_FOR_SUMMONS_${channelTypeEnum?.[channel?.type]?.code}`),
+                name: t(`MAKE_PAYMENT_FOR_NOTICE_${channelTypeEnum?.[channel?.type]?.code}`),
                 entityType,
                 referenceId: `MANUAL_${channel.type}_${currentOrder?.orderNumber}`,
                 status: `PAYMENT_PENDING_${channelTypeEnum?.[channel?.type]?.code}`,
@@ -1192,8 +1192,8 @@ const GenerateOrders = () => {
       if (order?.orderType === "SCHEDULE_OF_HEARING_DATE" && refId && !isCaseAdmitted) {
         referenceId = refId;
         create = true;
-        status = "CREATE_SUMMONS_ORDER";
-        name = t("CREATE_ORDERS_FOR_SUMMONS");
+        status = "CREATE_NOTICE_ORDER";
+        name = t("CREATE_ORDERS_FOR_NOTICE");
         entityType = "order-default";
         additionalDetails = { ...additionalDetails, orderType: "NOTICE", hearingID: order?.hearingNumber };
       }
@@ -1728,7 +1728,12 @@ const GenerateOrders = () => {
   };
 
   const updateCaseDetails = async (action) => {
-    return DRISTIService.caseUpdateService(
+    const assignee = [...(respondents?.map((data) => data?.uuid[0]) || [])];
+    const advocateUuid =
+      Object.keys(allAdvocates)
+        .filter((data) => assignee.includes(allAdvocates?.[data]?.[0]))
+        ?.flat() || [];
+    return await DRISTIService.caseUpdateService(
       {
         cases: {
           ...caseDetails,
@@ -1736,6 +1741,7 @@ const GenerateOrders = () => {
           workflow: {
             ...caseDetails?.workflow,
             action,
+            ...(action === "ISSUE_ORDER" && { assignes: [...assignee, ...advocateUuid] }),
           },
         },
         tenantId,
@@ -1780,20 +1786,24 @@ const GenerateOrders = () => {
       const summonsArray = currentOrder?.additionalDetails?.isReIssueNotice
         ? [{}]
         : currentOrder?.additionalDetails?.formdata?.namesOfPartiesRequired?.filter((data) => data?.partyType === "respondent");
-      const promiseList = summonsArray?.map((data) =>
-        ordersService.createOrder(
-          {
-            order: {
-              ...orderbody,
-              additionalDetails: {
-                ...orderbody?.additionalDetails,
-                selectedParty: data,
+      const promiseList = summonsArray
+        ?.map((data) =>
+          ordersService.createOrder(
+            {
+              order: {
+                ...orderbody,
+                additionalDetails: {
+                  ...orderbody?.additionalDetails,
+                  selectedParty: data,
+                },
               },
             },
-          },
-          { tenantId }
+            { tenantId }
+          )
         )
-      );
+        .then(() => {
+          updateCaseDetails("ADMIT");
+        });
       const resList = await Promise.all(promiseList);
       setCreatedNotice(resList[0]?.order?.orderNumber);
       await Promise.all(
@@ -1917,7 +1927,15 @@ const GenerateOrders = () => {
       }
       if (orderType === "NOTICE") {
         closeManualPendingTask(currentOrder?.hearingNumber || hearingDetails?.hearingId);
-        updateCaseDetails("ISSUE_ORDER");
+        if (caseDetails?.status === "ADMISSION_HEARING_SCHEDULED") {
+          updateCaseDetails("ADMIT").then(() => {
+            refetchCaseData().then(() => {
+              updateCaseDetails("ISSUE_ORDER");
+            });
+          });
+        } else {
+          updateCaseDetails("ISSUE_ORDER");
+        }
       }
       createTask(orderType, caseDetails, orderResponse);
       setLoader(false);

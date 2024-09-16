@@ -15,7 +15,7 @@ import { paymentType } from "../../utils/paymentType";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { taskService } from "../../hooks/services";
 
-const mockSubmitModalInfo = {
+const submitModalInfo = {
   header: "CS_HEADER_FOR_SUMMON_POST",
   subHeader: "CS_SUBHEADER_TEXT_FOR_Summon_POST",
   caseInfo: [
@@ -28,7 +28,7 @@ const mockSubmitModalInfo = {
   showTable: true,
 };
 
-const PaymentForSummonComponent = ({ infos, links, feeOptions, orderDate, paymentLoader, channelId, formattedChannelId }) => {
+const PaymentForSummonComponent = ({ infos, links, feeOptions, orderDate, paymentLoader, channelId, formattedChannelId, isCaseAdmitted }) => {
   const { t } = useTranslation();
   const CustomErrorTooltip = window?.Digit?.ComponentRegistryService?.getComponent("CustomErrorTooltip");
   console.log(channelId, "channelId");
@@ -53,7 +53,9 @@ const PaymentForSummonComponent = ({ infos, links, feeOptions, orderDate, paymen
 
   return (
     <div className="payment-for-summon">
-      <p style={{ marginTop: "0px", marginBottom: "0px" }}>Make a payment in order to send the following Summons via {formattedChannelId}.</p>
+      <p style={{ marginTop: "0px", marginBottom: "0px" }}>
+        Make a payment in order to send the following {isCaseAdmitted ? "Summons" : "Notice"} via {formattedChannelId}.
+      </p>
       <ApplicationInfoComponent infos={infos} links={links} />
       {channelId && feeOptions[channelId]?.length > 0 && (
         <div className="summon-payment-action-table">
@@ -125,6 +127,20 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
   const caseDetails = useMemo(() => {
     return caseData?.criteria?.[0]?.responseList?.[0];
   }, [caseData]);
+
+  const isCaseAdmitted = useMemo(() => caseDetails?.status === "CASE_ADMITTED", [caseDetails]);
+
+  const mockSubmitModalInfo = useMemo(
+    () =>
+      isCaseAdmitted
+        ? submitModalInfo
+        : {
+            ...submitModalInfo,
+            header: "CS_HEADER_FOR_NOTICE_POST",
+            subHeader: "CS_SUBHEADER_TEXT_FOR_NOTICE_POST",
+          },
+    [isCaseAdmitted]
+  );
 
   const onViewOrderClick = () => {
     console.log(caseId, "caseID");
@@ -202,7 +218,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
   const { fetchBill, openPaymentPortal, paymentLoader, showPaymentModal, setShowPaymentModal, billPaymentStatus } = usePaymentProcess({
     tenantId,
     consumerCode: `${filteredTasks?.[0]?.taskNumber}_${suffix}`,
-    service: paymentType.TASK_SUMMON,
+    service: isCaseAdmitted ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE,
     caseDetails,
     totalAmount: "4",
   });
@@ -219,7 +235,11 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
 
   const { data: billResponse, isLoading: isBillLoading } = Digit.Hooks.dristi.useBillSearch(
     {},
-    { tenantId, consumerCode: `${filteredTasks?.[0]?.taskNumber}_${suffix}`, service: paymentType.TASK_SUMMON },
+    {
+      tenantId,
+      consumerCode: `${filteredTasks?.[0]?.taskNumber}_${suffix}`,
+      service: isCaseAdmitted ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE,
+    },
     "dristi",
     Boolean(filteredTasks?.[0]?.taskNumber)
   );
@@ -259,7 +279,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       // const fileStoreId = await DRISTIService.fetchBillFileStoreId({}, { billId: bill?.Bill?.[0]?.id, tenantId });
       const updatedTask = {
         ...filteredTasks?.[0],
-        taskType: "SUMMONS",
+        taskType: isCaseAdmitted ? "SUMMONS" : "NOTICE",
         workflow: {
           action: "MAKE PAYMENT",
         },
@@ -276,7 +296,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
         .then(() => {
           return ordersService.customApiService(Urls.orders.pendingTask, {
             pendingTask: {
-              name: `MAKE_PAYMENT_FOR_SUMMONS_POST`,
+              name: isCaseAdmitted ? `MAKE_PAYMENT_FOR_SUMMONS_POST` : `MAKE_PAYMENT_FOR_NOTICE_POST`,
               entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
               referenceId: `MANUAL_${referenceId}_${orderNumber}`,
               status: status,
@@ -389,7 +409,9 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
   };
 
   const infos = useMemo(() => {
-    const name = `${orderData?.list?.[0]?.additionalDetails?.formdata?.SummonsOrder?.party?.data?.firstName} ${orderData?.list?.[0]?.additionalDetails?.formdata?.SummonsOrder?.party?.data?.lastName}`;
+    const name = `${orderData?.list?.[0]?.additionalDetails?.formdata?.[isCaseAdmitted ? "SummonsOrder" : "noticeOrder"]?.party?.data?.firstName} ${
+      orderData?.list?.[0]?.additionalDetails?.formdata?.[isCaseAdmitted ? "SummonsOrder" : "noticeOrder"]?.party?.data?.lastName
+    }`;
 
     const task = filteredTasks?.[0];
     const taskDetails = task?.taskDetails;
@@ -426,7 +448,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
 
     return {
       handleClose: handleClose,
-      heading: { label: `Payment for Summon via ${formattedChannelId}` },
+      heading: { label: `Payment for ${isCaseAdmitted ? "Summon" : "Notice"} via ${formattedChannelId}` },
       isStepperModal: false,
       modalBody: (
         <PaymentForSummonComponent
@@ -437,6 +459,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
           paymentLoader={paymentLoader}
           channelId={channelId}
           formattedChannelId={formattedChannelId}
+          isCaseAdmitted={isCaseAdmitted}
         />
       ),
     };
