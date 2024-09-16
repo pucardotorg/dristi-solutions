@@ -36,5 +36,10 @@ public class CaseRequest {
 
 	private String caseNumber = null;
 
+	@JsonProperty("tenantId")
+	private String tenantId = null;
 
+	@JsonProperty("pagination")
+	@Valid
+	private Pagination pagination = null;
 }
