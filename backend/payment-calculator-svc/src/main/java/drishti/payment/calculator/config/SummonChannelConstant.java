@@ -8,8 +8,11 @@ import lombok.extern.slf4j.Slf4j;
 @NoArgsConstructor
 public class SummonChannelConstant {
 
-    public static final String POST = "drishti.payment.calculator.service.IPostFeesCalculation";
+    public static final String EPOST = "drishti.payment.calculator.service.EPostSummonFeesCalculation";
+    public static final String POLICE = "drishti.payment.calculator.service.EPoliceSummonFeesCalculation";
 
-    public static final String POLICE = "drishti.payment.calculator.service.EPoliceFeesCalculation";
+    public static final String ICOPS = "";
+    public static final String EMAIL = "";
+    public static final String SMS = "";
 
 }

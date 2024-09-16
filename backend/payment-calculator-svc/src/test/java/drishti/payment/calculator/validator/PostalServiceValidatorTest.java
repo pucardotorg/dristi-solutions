@@ -1,7 +1,5 @@
 package drishti.payment.calculator.validator;
 
-import drishti.payment.calculator.web.models.PostalService;
-import drishti.payment.calculator.web.models.PostalServiceRequest;
 import org.egov.tracer.model.CustomException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

@@ -1,7 +1,6 @@
 package drishti.payment.calculator.repository.rowmapper;
 
 import digit.models.coremodels.AuditDetails;
-import drishti.payment.calculator.web.models.PostalService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

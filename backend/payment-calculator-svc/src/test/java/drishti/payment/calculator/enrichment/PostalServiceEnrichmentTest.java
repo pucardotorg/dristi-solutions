@@ -1,8 +1,6 @@
 package drishti.payment.calculator.enrichment;
 
 import digit.models.coremodels.AuditDetails;
-import drishti.payment.calculator.web.models.PostalServiceRequest;
-import drishti.payment.calculator.web.models.PostalService;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.junit.jupiter.api.BeforeEach;

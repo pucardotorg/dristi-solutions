@@ -5,12 +5,7 @@ package drishti.payment.calculator.web.controllers;
 import static org.mockito.Mockito.*;
 import static org.assertj.core.api.Assertions.*;
 
-import drishti.payment.calculator.service.PostalPinService;
 import drishti.payment.calculator.util.ResponseInfoFactory;
-import drishti.payment.calculator.web.models.PostalService;
-import drishti.payment.calculator.web.models.PostalServiceRequest;
-import drishti.payment.calculator.web.models.PostalServiceResponse;
-import drishti.payment.calculator.web.models.PostalServiceSearchRequest;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.response.ResponseInfo;
 import org.junit.jupiter.api.BeforeEach;

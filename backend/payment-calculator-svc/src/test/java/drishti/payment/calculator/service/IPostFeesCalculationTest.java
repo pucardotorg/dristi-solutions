@@ -1,7 +1,6 @@
 package drishti.payment.calculator.service;
 
-import drishti.payment.calculator.repository.PostalServiceRepository;
-import drishti.payment.calculator.util.IPostUtil;
+import drishti.payment.calculator.util.EPostUtil;
 import drishti.payment.calculator.web.models.*;
 import org.egov.common.contract.request.RequestInfo;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,20 +15,19 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class IPostFeesCalculationTest {
+public class EPostFeesCalculationTest {
 
     @Mock
-    private IPostUtil iPostUtil;
+    private EPostUtil ePostUtil;
 
-    @Mock
-    private PostalServiceRepository repository;
+
 
     @InjectMocks
-    private IPostFeesCalculation iPostFeesCalculation;
+    private EPostFeesCalculation iPostFeesCalculation;
 
     private RequestInfo requestInfo;
     private SummonCalculationCriteria criteria;
-    private IPostConfigParams iPostFeesDefaultData;
+    private EPostConfigParams iPostFeesDefaultData;
     private PostalServiceSearchCriteria searchCriteria;
     private List<PostalService> postalServices;
     private SpeedPost speedPost;
@@ -43,7 +41,7 @@ public class IPostFeesCalculationTest {
         requestInfo = new RequestInfo();
         criteria = SummonCalculationCriteria.builder().tenantId("tenant1").receiverPincode("123456").summonId("summon1").build();
 
-        iPostFeesDefaultData = IPostConfigParams.builder()
+        iPostFeesDefaultData = EPostConfigParams.builder()
                 .courtFee(100.0)
                 .envelopeChargeIncludingGst(10.0)
                 .gstPercentage(0.18)
@@ -68,7 +66,7 @@ public class IPostFeesCalculationTest {
 
     @Test
     void testCalculatePayment() {
-        when(iPostUtil.getIPostFeesDefaultData(any(RequestInfo.class), anyString())).thenReturn(iPostFeesDefaultData);
+        when(ePostUtil.getIPostFeesDefaultData(any(RequestInfo.class), anyString())).thenReturn(iPostFeesDefaultData);
         when(repository.getPostalService(any(PostalServiceSearchCriteria.class))).thenReturn(postalServices);
 
         Calculation result = iPostFeesCalculation.calculatePayment(requestInfo, criteria);
@@ -77,7 +75,7 @@ public class IPostFeesCalculationTest {
         assertEquals("summon1", result.getApplicationId());
         assertEquals("tenant1", result.getTenantId());
 
-        verify(iPostUtil, times(1)).getIPostFeesDefaultData(any(RequestInfo.class), anyString());
+        verify(ePostUtil, times(1)).getIPostFeesDefaultData(any(RequestInfo.class), anyString());
         verify(repository, times(1)).getPostalService(any(PostalServiceSearchCriteria.class));
     }
 

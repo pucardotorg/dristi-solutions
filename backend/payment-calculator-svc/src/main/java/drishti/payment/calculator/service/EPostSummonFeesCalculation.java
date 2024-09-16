@@ -1,7 +1,7 @@
 package drishti.payment.calculator.service;
 
-import drishti.payment.calculator.repository.PostalServiceRepository;
-import drishti.payment.calculator.util.IPostUtil;
+import drishti.payment.calculator.repository.PostalHubRepository;
+import drishti.payment.calculator.util.EPostUtil;
 import drishti.payment.calculator.web.models.*;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
@@ -9,19 +9,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 @Service
-public class IPostFeesCalculation implements SummonPayment {
+public class EPostSummonFeesCalculation implements SummonPayment {
 
-    private final IPostUtil iPostUtil;
-
-    private final PostalServiceRepository  repository;
+    private final EPostUtil ePostUtil;
+    private final PostalHubRepository repository;
 
     @Autowired
-    public IPostFeesCalculation(IPostUtil iPostUtil, PostalServiceRepository repository) {
-        this.iPostUtil = iPostUtil;
+    public EPostSummonFeesCalculation(EPostUtil ePostUtil, PostalHubRepository repository) {
+        this.ePostUtil = ePostUtil;
         this.repository = repository;
     }
 
@@ -29,20 +29,20 @@ public class IPostFeesCalculation implements SummonPayment {
     public Calculation calculatePayment(RequestInfo requestInfo, SummonCalculationCriteria criteria) {
 
 
-        IPostConfigParams iPostFeesDefaultData = iPostUtil.getIPostFeesDefaultData(requestInfo, criteria.getTenantId());
+        EPostConfigParams ePostConfigParams = ePostUtil.getIPostFeesDefaultData(requestInfo, criteria.getTenantId());
 
-        PostalServiceSearchCriteria searchCriteria = PostalServiceSearchCriteria.builder().pincode(criteria.getReceiverPincode()).build();
-        List<PostalService> postalServices = repository.getPostalService(searchCriteria);
-        if(postalServices.isEmpty()){
-            throw new CustomException("POSTAL_SERVICE_NOT_FOUND", "Pincode not found for speed post fee calculation");
+        HubSearchCriteria searchCriteria = HubSearchCriteria.builder().pincode(Collections.singletonList(criteria.getReceiverPincode())).build();
+        List<PostalHub> postalHub = repository.getPostalHub(searchCriteria);
+        if(postalHub.isEmpty()){
+            throw new CustomException("POSTAL_HUB_NOT_FOUND", "Pincode not found for speed post fee calculation");
         }
-        Double distance = postalServices.get(0).getDistanceKM();
-        Double iPostFeeWithoutGST = calculateTotalIPostFee(2, distance, iPostFeesDefaultData);
 
-        Double courtFees = calculateCourtFees(iPostFeesDefaultData);
+        Double iPostFeeWithoutGST = calculateTotalEPostFee(2, 50.0, ePostConfigParams);
 
-        Double envelopeFee = iPostFeesDefaultData.getEnvelopeChargeIncludingGst();
-        Double gstPercentage = iPostFeesDefaultData.getGstPercentage();
+        Double courtFees = calculateCourtFees(ePostConfigParams);
+
+        Double envelopeFee = ePostConfigParams.getEnvelopeChargeIncludingGst();
+        Double gstPercentage = ePostConfigParams.getGstPercentage();
 
         Double gstFee = iPostFeeWithoutGST * gstPercentage;
 
@@ -71,12 +71,12 @@ public class IPostFeesCalculation implements SummonPayment {
                 .build();
     }
 
-    private Double calculateCourtFees(IPostConfigParams iPostFeesDefaultData) {
+    private Double calculateCourtFees(EPostConfigParams iPostFeesDefaultData) {
         return iPostFeesDefaultData.getCourtFee() + iPostFeesDefaultData.getCourtFee();
     }
 
     // Method to calculate I-Post fee without GST
-    private Double calculateTotalIPostFee(Integer numberOfPages, Double distance, IPostConfigParams configParams) {
+    private Double calculateTotalEPostFee(Integer numberOfPages, Double distance, EPostConfigParams configParams) {
         Double weightPerPage = configParams.getPageWeight();
         Double printingFeePerPage = configParams.getPrintingFeePerPage();
         Double businessFee = configParams.getBusinessFee();
@@ -126,6 +126,8 @@ public class IPostFeesCalculation implements SummonPayment {
         for (DistanceRange range : distanceMap.values()) {
             Double lowerBound = range.getMinDistance();
             Double upperBound = range.getMaxDistance();
+
+            //TODO: use classification to filter, add classification code in mdms
             if (distance >= lowerBound && distance <= upperBound) {
                 return range;
             }
