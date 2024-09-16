@@ -5,6 +5,7 @@ import ReactTooltip from "react-tooltip";
 import { Header, FormComposerV2, Toast } from "@egovernments/digit-ui-react-components";
 import {
   applicationTypeConfig,
+  configCheckout,
   configRejectSubmission,
   configsAssignDateToRescheduledHearing,
   configsAssignNewHearingDate,
@@ -22,6 +23,7 @@ import {
   configsOrderSubmissionExtension,
   configsOrderTranferToADR,
   configsOthers,
+  configsRejectCheckout,
   configsRejectRescheduleHeadingDate,
   configsRescheduleHearingDate,
   configsScheduleHearingDate,
@@ -56,6 +58,8 @@ const configKeys = {
   SCHEDULE_OF_HEARING_DATE: configsScheduleHearingDate,
   SCHEDULING_NEXT_HEARING: configsScheduleNextHearingDate,
   RESCHEDULE_OF_HEARING_DATE: configsRescheduleHearingDate,
+  CHECKOUT_ACCEPTANCE: configCheckout,
+  CHECKOUT_REJECT: configsRejectCheckout,
   REJECTION_RESCHEDULE_REQUEST: configsRejectRescheduleHeadingDate,
   INITIATING_RESCHEDULING_OF_HEARING_DATE: configsInitiateRescheduleHearingDate,
   ASSIGNING_DATE_RESCHEDULED_HEARING: configsAssignDateToRescheduledHearing,
@@ -120,6 +124,8 @@ const stateSlaMap = {
   APPROVE_VOLUNTARY_SUBMISSIONS: 3,
   REJECT_VOLUNTARY_SUBMISSIONS: 3,
   JUDGEMENT: 3,
+  CHECKOUT_ACCEPTANCE: 1,
+  CHECKOUT_REJECT: 1,
 };
 
 const channelTypeEnum = {
@@ -384,7 +390,7 @@ const GenerateOrders = () => {
       setShowsignatureModal(true);
       localStorage.removeItem("esignProcess");
     }
-  }, [defaultIndex, selectedOrder]);
+  }, [defaultIndex]);
 
   const currentOrder = useMemo(() => formList?.[selectedOrder], [formList, selectedOrder]);
   const orderType = useMemo(() => currentOrder?.orderType || {}, [currentOrder]);
@@ -829,6 +835,8 @@ const GenerateOrders = () => {
         "REJECTION_RESCHEDULE_REQUEST",
         "APPROVAL_RESCHEDULE_REQUEST",
         "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+        "CHECKOUT_ACCEPTANCE",
+        "CHECKOUT_REJECT",
       ].includes(orderType)
     ) {
       updatedFormdata.originalHearingDate =
@@ -1885,6 +1893,13 @@ const GenerateOrders = () => {
         setNewHearingNumber(newhearingId);
       }
       if (orderType === "RESCHEDULE_OF_HEARING_DATE") {
+        await handleUpdateHearing({
+          action: HearingWorkflowAction.BULK_RESCHEDULE,
+          startTime: Date.parse(currentOrder?.additionalDetails?.formdata?.newHearingDate),
+          endTime: Date.parse(currentOrder?.additionalDetails?.formdata?.newHearingDate),
+        });
+      }
+      if (orderType === "CHECKOUT_ACCEPTANCE") {
         await handleUpdateHearing({
           action: HearingWorkflowAction.BULK_RESCHEDULE,
           startTime: Date.parse(currentOrder?.additionalDetails?.formdata?.newHearingDate),
