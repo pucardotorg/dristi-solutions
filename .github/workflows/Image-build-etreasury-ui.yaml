@@ -4,12 +4,12 @@ on:
     branches:
       - dpg-qa-deployment
     paths:
-      - 'backend/treasury-webpage/**'
+      - "backend/treasury-webpage/**"
   pull_request:
     branches:
       - dpg-qa-deployment
     paths:
-      - 'backend/treasury-webpage/**'
+      - "backend/treasury-webpage/**"
   workflow_dispatch:
   workflow_call:
 

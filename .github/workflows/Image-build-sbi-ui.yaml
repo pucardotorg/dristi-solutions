@@ -4,12 +4,12 @@ on:
     branches:
       - dpg-qa-deployment
     paths:
-      - 'backend/sbi-webpage/**'
+      - "backend/sbi-webpage/**"
   pull_request:
     branches:
       - dpg-qa-deployment
     paths:
-      - 'backend/sbi-webpage//**'
+      - "backend/sbi-webpage//**"
   workflow_dispatch:
   workflow_call:
 
