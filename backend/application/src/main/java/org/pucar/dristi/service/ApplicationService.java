@@ -1,6 +1,7 @@
 package org.pucar.dristi.service;
 
 
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.tracer.model.CustomException;
@@ -146,6 +147,21 @@ public class ApplicationService {
         catch (Exception e){
             log.error("Error while adding comments {}", e.toString());
             throw new CustomException(COMMENT_ADD_ERR, e.getMessage());
+        }
+    }
+
+    public Application createApplicationNoWorkflowUpdate(@Valid ApplicationRequest body) {
+
+        try {
+            validator.validateApplication(body);
+            enrichmentUtil.enrichApplication(body);
+            validator.validateOrderDetails(body);
+            body.getApplication().setStatus(COMPLETED); // to avoid extra
+            producer.push(config.getApplicationCreateTopic(), body);
+            return body.getApplication();
+        } catch (Exception e) {
+            log.error("Error occurred while creating application without workflow {}", e.getMessage());
+            throw new CustomException(CREATE_APPLICATION_ERR, e.getMessage());
         }
     }
 }

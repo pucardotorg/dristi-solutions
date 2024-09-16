@@ -79,4 +79,11 @@ public class ApplicationApiController{
                     return new ResponseEntity<>(applicationAddCommentResponse, HttpStatus.OK);
     }
 
+    @RequestMapping(value="/v1/create/noworkflow", method = RequestMethod.POST)
+    public ResponseEntity<ApplicationResponse> applicationV1CreateNoWorkflow(@Parameter(in = ParameterIn.DEFAULT, description = "Details for the new application + RequestInfo meta data.", required=true, schema=@Schema()) @Valid @RequestBody ApplicationRequest body) {
+        Application application = applicationService.createApplicationNoWorkflowUpdate(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
+        ApplicationResponse applicationResponse = ApplicationResponse.builder().application(application).responseInfo(responseInfo).build();
+        return new ResponseEntity<>(applicationResponse, HttpStatus.OK);
+    }
 }
