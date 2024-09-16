@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Header, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
-import { SummonsTabsConfig } from "../../configs/SuumonsConfig";
+import { NoticesTabsConfig, SummonsTabsConfig } from "../../configs/SuumonsConfig";
 import { useTranslation } from "react-i18next";
 import DocumentModal from "../../components/DocumentModal";
 import PrintAndSendDocumentComponent from "../../components/Print&SendDocuments";
@@ -96,6 +96,21 @@ const ReviewSummonsNoticeAndWarrant = () => {
     Boolean(tasksData)
   );
 
+  const orderType = useMemo(() => orderData?.list[0]?.orderType, [orderData]);
+
+  useEffect(() => {
+    if (orderType === "NOTICE") {
+      setConfig(NoticesTabsConfig?.NoticesTabsConfig?.[0]);
+      setTabData(
+        NoticesTabsConfig?.NoticesTabsConfig?.map((configItem, index) => ({
+          key: index,
+          label: configItem.label,
+          active: index === 0 ? true : false,
+        }))
+      );
+    }
+  }, [orderType]);
+
   const handleSubmitButtonDisable = (disable) => {
     console.log("disable :>> ", disable);
     setIsDisabled(disable);
@@ -149,10 +164,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
         if (selectedDelievery?.key === "NOT_DELIVERED") {
           ordersService.customApiService(Urls.orders.pendingTask, {
             pendingTask: {
-              name: "Re-issue Summon",
+              name: `Re-issue ${orderType === "NOTICE" ? "Notice" : "Summon"}`,
               entityType: "order-default",
               referenceId: `MANUAL_${orderData?.list[0]?.hearingNumber}`,
-              status: "RE-ISSUE_SUMMON",
+              status: `RE-ISSUE_${orderType === "NOTICE" ? "NOTICE" : "SUMMON"}`,
               assignedTo: [],
               assignedRole: ["JUDGE_ROLE"],
               cnrNumber: tasksData?.list[0]?.cnrNumber,
@@ -195,7 +210,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const onTabChange = (n) => {
     setTabData((prev) => prev.map((i, c) => ({ ...i, active: c === n ? true : false }))); //setting tab enable which is being clicked
-    setConfig(SummonsTabsConfig?.SummonsTabsConfig?.[n]); // as per tab number filtering the config
+    setConfig(orderType === "NOTICE" ? NoticesTabsConfig?.NoticesTabsConfig?.[n] : SummonsTabsConfig?.SummonsTabsConfig?.[n]); // as per tab number filtering the config
   };
 
   function findNextHearings(objectsList) {
@@ -269,7 +284,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const documents = useMemo(() => {
     if (rowData?.documents)
       return rowData?.documents?.map((document) => {
-        return { ...document, fileName: "Summons Document" };
+        return { ...document, fileName: `${orderType === "NOTICE" ? "Notice" : "Summon"}s Document` };
       });
   }, [rowData]);
 
@@ -314,7 +329,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const unsignedModalConfig = useMemo(() => {
     return {
       handleClose: handleClose,
-      heading: { label: "Review Document: Summons Document" },
+      heading: { label: `Review Document: ${orderType === "NOTICE" ? "Notice" : "Summon"}s Document` },
       actionSaveLabel: "E-sign",
       isStepperModal: true,
       actionSaveOnSubmit: () => {},
@@ -430,7 +445,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   return (
     <div className="review-summon-warrant">
       <div className="header-wraper">
-        <Header>{t("REVIEW_SUMMON_NOTICE_WARRANTS_TEXT")}</Header>
+        <Header>{t(orderType === "NOTICE" ? "REVIEW_NOTICE_TEXT" : "REVIEW_SUMMON_NOTICE_WARRANTS_TEXT")}</Header>
       </div>
 
       <div className="inbox-search-wrapper pucar-home home-view">
