@@ -69,6 +69,9 @@ public class PaymentUpdateService {
                 if (paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskSummonBusinessServiceName())) {
                     updateWorkflowForCasePayment(requestInfo, tenantId, paymentDetail);
                 }
+                else if (paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskNoticeBusinessServiceName())) {
+                    updateWorkflowForCasePayment(requestInfo, tenantId, paymentDetail);
+                }
             }
         } catch (Exception e) {
             log.error("KAFKA_PROCESS_ERROR:", e);
@@ -163,6 +166,20 @@ public class PaymentUpdateService {
                 TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                 if (ISSUESUMMON.equalsIgnoreCase(status))
                     producer.push(config.getTaskIssueSummonTopic(), taskRequest);
+
+                producer.push(config.getTaskUpdateTopic(), taskRequest);
+            }
+            else if (task.getTaskType().equals(NOTICE)) {
+                Workflow workflow = new Workflow();
+                workflow.setAction("MAKE PAYMENT");
+                task.setWorkflow(workflow);
+                String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, task.getTaskNumber(),
+                        config.getTaskNoticeBusinessServiceName(), workflow, config.getTaskNoticeBusinessName());
+                task.setStatus(status);
+
+                TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
+//                if (ISSUESUMMON.equalsIgnoreCase(status))
+//                    producer.push(config.getTaskIssueSummonTopic(), taskRequest);
 
                 producer.push(config.getTaskUpdateTopic(), taskRequest);
             }

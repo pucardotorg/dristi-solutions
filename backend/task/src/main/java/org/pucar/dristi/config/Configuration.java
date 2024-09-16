@@ -116,6 +116,12 @@ public class Configuration {
     @Value("${egov.workflow.task.warrant.business.service.name}")
     private String taskWarrantBusinessServiceName;
 
+    @Value("${egov.workflow.task.notice.business.name}")
+    private String taskNoticeBusinessName;
+
+    @Value("${egov.workflow.task.notice.business.service.name}")
+    private String taskNoticeBusinessServiceName;
+
     @Value("${egov.idgen.taskNumber}")
     private String taskNumber;
 
