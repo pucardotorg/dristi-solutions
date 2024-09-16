@@ -1523,13 +1523,10 @@ function EFilingCases({ path }) {
           });
         })
         .catch((error) => {
-          // setPrevSelected(selected);
-          // history.push(`?caseId=${caseId}&selected=${nextSelected}`);
-
           if (extractCodeFromErrorMsg(error) === 413) {
-            toast.error("FILE_LIMIT_EXCEEDS");
+            toast.error(t("FAILED_TO_UPLOAD_FILE"));
           } else {
-            toast.error("SOMETHING_WENT_WRONG");
+            toast.error(t("SOMETHING_WENT_WRONG"));
           }
           setIsDisabled(false);
         });
@@ -1562,9 +1559,9 @@ function EFilingCases({ path }) {
       })
       .catch((error) => {
         if (extractCodeFromErrorMsg(error) === 413) {
-          toast.error("FILE_LIMIT_EXCEEDS");
+          toast.error(t("FAILED_TO_UPLOAD_FILE"));
         } else {
-          toast.error("SOMETHING_WENT_WRONG");
+          toast.error(t("SOMETHING_WENT_WRONG"));
         }
         setIsDisabled(false);
       });
