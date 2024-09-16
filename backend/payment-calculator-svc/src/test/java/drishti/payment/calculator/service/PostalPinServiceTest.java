@@ -1,14 +1,7 @@
 package drishti.payment.calculator.service;
 
 import drishti.payment.calculator.config.Configuration;
-import drishti.payment.calculator.enrichment.PostalServiceEnrichment;
 import drishti.payment.calculator.kafka.Producer;
-import drishti.payment.calculator.repository.PostalServiceRepository;
-import drishti.payment.calculator.validator.PostalServiceValidator;
-import drishti.payment.calculator.web.models.PostalService;
-import drishti.payment.calculator.web.models.PostalServiceRequest;
-import drishti.payment.calculator.web.models.PostalServiceSearchRequest;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

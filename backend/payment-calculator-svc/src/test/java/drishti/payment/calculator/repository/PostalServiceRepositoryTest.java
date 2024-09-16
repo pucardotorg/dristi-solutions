@@ -1,9 +1,5 @@
 package drishti.payment.calculator.repository;
 
-import drishti.payment.calculator.repository.querybuilder.PostalServiceQueryBuilder;
-import drishti.payment.calculator.repository.rowmapper.PostalServiceRowMapper;
-import drishti.payment.calculator.web.models.PostalService;
-import drishti.payment.calculator.web.models.PostalServiceSearchCriteria;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
