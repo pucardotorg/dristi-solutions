@@ -997,26 +997,32 @@ const AdmittedCases = () => {
   };
 
   const onSaveDraft = () => {
-    setShowModal(true);
-    setSubmitModalInfo({
-      ...scheduleCaseSubmitConfig,
-      caseInfo: [...caseInfo],
-      shortCaseInfo: [
-        {
-          key: "CASE_NUMBER",
-          value: caseDetails?.caseNumber,
-        },
-        {
-          key: "COURT_NAME",
-          value: t(`COMMON_MASTERS_COURT_R00M_${caseDetails?.courtId}`),
-        },
-        {
-          key: "CASE_TYPE",
-          value: "NIA S138",
-        },
-      ],
-    });
-    setModalInfo({ type: "schedule", page: 0 });
+    if ([CaseWorkflowState.ADMISSION_HEARING_SCHEDULED, CaseWorkflowState.PENDING_NOTICE].includes(caseDetails?.status)) {
+      history.push(
+        `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${caseDetails?.filingNumber}&tab=Hearings`
+      );
+    } else {
+      setShowModal(true);
+      setSubmitModalInfo({
+        ...scheduleCaseSubmitConfig,
+        caseInfo: [...caseInfo],
+        shortCaseInfo: [
+          {
+            key: "CASE_NUMBER",
+            value: caseDetails?.caseNumber,
+          },
+          {
+            key: "COURT_NAME",
+            value: t(`COMMON_MASTERS_COURT_R00M_${caseDetails?.courtId}`),
+          },
+          {
+            key: "CASE_TYPE",
+            value: "NIA S138",
+          },
+        ],
+      });
+      setModalInfo({ type: "schedule", page: 0 });
+    }
   };
 
   const handleMakeSubmission = () => {
@@ -1232,6 +1238,15 @@ const AdmittedCases = () => {
             t("REFER_TO_ADR"),
           ],
     [t, userRoles, isCitizen]
+  );
+
+  const showActionBar = useMemo(
+    () =>
+      primaryAction.action ||
+      secondaryAction.action ||
+      tertiaryAction.action ||
+      [CaseWorkflowState.ADMISSION_HEARING_SCHEDULED, CaseWorkflowState.PENDING_NOTICE].includes(caseDetails?.status),
+    [caseDetails, primaryAction.action, secondaryAction.action, tertiaryAction.action]
   );
 
   if (isLoading || isWorkFlowLoading) {
@@ -1485,11 +1500,20 @@ const AdmittedCases = () => {
       {toast && toastDetails && (
         <Toast error={toastDetails?.isError} label={t(toastDetails?.message)} onClose={() => setToast(false)} style={{ maxWidth: "670px" }} />
       )}
-      {(primaryAction.action || secondaryAction.action || tertiaryAction.action) && (
+      {showActionBar && (
         <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
           <div style={{ width: "fit-content", display: "flex", gap: 20 }}>
             {tertiaryAction.action && (
-              <Button className="previous-button" variation="secondary" label={t(tertiaryAction.label)} onButtonClick={onSaveDraft} />
+              <Button
+                className="previous-button"
+                variation="secondary"
+                label={
+                  [CaseWorkflowState.ADMISSION_HEARING_SCHEDULED, CaseWorkflowState.PENDING_NOTICE].includes(caseDetails?.status)
+                    ? t("HEARING_IS_SCHEDULED")
+                    : t(tertiaryAction.label)
+                }
+                onButtonClick={onSaveDraft}
+              />
             )}
             {primaryAction.action && <SubmitBar label={t(primaryAction?.label)} submit="submit" disabled={""} onSubmit={onSubmit} />}
           </div>

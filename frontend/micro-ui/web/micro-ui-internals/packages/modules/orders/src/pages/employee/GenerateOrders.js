@@ -168,7 +168,7 @@ const GenerateOrders = () => {
   ]);
   const courtRooms = useMemo(() => courtRoomDetails?.Court_Rooms || [], [courtRoomDetails]);
 
-  const { data: caseData, isLoading: isCaseDetailsLoading } = Digit.Hooks.dristi.useSearchCaseService(
+  const { data: caseData, isLoading: isCaseDetailsLoading, reftech: refetchCaseData } = Digit.Hooks.dristi.useSearchCaseService(
     {
       criteria: [
         {
@@ -1192,8 +1192,8 @@ const GenerateOrders = () => {
       if (order?.orderType === "SCHEDULE_OF_HEARING_DATE" && refId && !isCaseAdmitted) {
         referenceId = refId;
         create = true;
-        status = "CREATE_SUMMONS_ORDER";
-        name = t("CREATE_ORDERS_FOR_SUMMONS");
+        status = "CREATE_NOTICE_ORDER";
+        name = t("CREATE_ORDERS_FOR_NOTICE");
         entityType = "order-default";
         additionalDetails = { ...additionalDetails, orderType: "NOTICE", hearingID: order?.hearingNumber };
       }
@@ -1733,7 +1733,7 @@ const GenerateOrders = () => {
       Object.keys(allAdvocates)
         .filter((data) => assignee.includes(allAdvocates?.[data]?.[0]))
         ?.flat() || [];
-    return DRISTIService.caseUpdateService(
+    return await DRISTIService.caseUpdateService(
       {
         cases: {
           ...caseDetails,
@@ -1927,7 +1927,15 @@ const GenerateOrders = () => {
       }
       if (orderType === "NOTICE") {
         closeManualPendingTask(currentOrder?.hearingNumber || hearingDetails?.hearingId);
-        updateCaseDetails("ISSUE_ORDER");
+        if (caseDetails?.status === "ADMISSION_HEARING_SCHEDULED") {
+          updateCaseDetails("ADMIT").then(() => {
+            refetchCaseData().then(() => {
+              updateCaseDetails("ISSUE_ORDER");
+            });
+          });
+        } else {
+          updateCaseDetails("ISSUE_ORDER");
+        }
       }
       createTask(orderType, caseDetails, orderResponse);
       setLoader(false);
