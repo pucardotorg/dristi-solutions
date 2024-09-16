@@ -1356,8 +1356,8 @@ const GenerateOrders = () => {
     );
 
     const orderData = orderDetails?.order;
-    const orderFormData = orderDetails?.order?.additionalDetails?.formdata?.SummonsOrder?.party?.data;
-    const selectedChannel = orderData?.additionalDetails?.formdata?.SummonsOrder?.selectedChannels;
+    const orderFormData = orderDetails?.order?.additionalDetails?.formdata?.[orderType === "NOTICE" ? "noticeOrder" : "SummonsOrder"]?.party?.data;
+    const selectedChannel = orderData?.additionalDetails?.formdata?.[orderType === "NOTICE" ? "noticeOrder" : "SummonsOrder"]?.selectedChannels;
     const respondentAddress = orderFormData?.addressDetails
       ? orderFormData?.addressDetails?.map((data) => ({ ...data?.addressDetails }))
       : caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.addressDetails?.map((data) => data?.addressDetails);
@@ -1786,9 +1786,9 @@ const GenerateOrders = () => {
       const summonsArray = currentOrder?.additionalDetails?.isReIssueNotice
         ? [{}]
         : currentOrder?.additionalDetails?.formdata?.namesOfPartiesRequired?.filter((data) => data?.partyType === "respondent");
-      const promiseList = summonsArray
-        ?.map((data) =>
-          ordersService.createOrder(
+      const promiseList = summonsArray?.map((data) =>
+        ordersService
+          .createOrder(
             {
               order: {
                 ...orderbody,
@@ -1800,10 +1800,11 @@ const GenerateOrders = () => {
             },
             { tenantId }
           )
-        )
-        .then(() => {
-          updateCaseDetails("ADMIT");
-        });
+          .then(() => {
+            updateCaseDetails("ADMIT");
+          })
+      );
+
       const resList = await Promise.all(promiseList);
       setCreatedNotice(resList[0]?.order?.orderNumber);
       await Promise.all(
