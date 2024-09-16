@@ -1,15 +1,15 @@
-name: Payment Calculator Image Build workflow
+name: OCR-svc Image Build workflow
 on:
   push:
     branches:
       - develop
     paths:
-      - 'backend/payment-calculator-svc/**'
+      - 'backend/ocr-service/**'
   pull_request:
     branches:
       - develop
     paths:
-      - 'backend/payment-calculator-svc/**'
+      - 'backend/ocr-service/**'
   workflow_dispatch:
   workflow_call:
 permissions:
@@ -36,37 +36,37 @@ jobs:
           JAVA_HOME: /opt/jdk
         id: Depcheck
         with:
-          project: 'payment-calculator-svc'
-          path: 'backend/payment-calculator-svc'
+          project: 'ocr-service'
+          path: 'backend/ocr-service'
           format: 'SARIF'
       - name: Upload SARIF result to GitHub
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: reports/dependency-check-report.sarif
         if: always()
-      - name: Build and analyze for payment-calculator-svc
+      - name: Build and analyze for scheduler-svc
         env:
           GITHUB_TOKEN: ${{ secrets.GHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn -B -f backend/payment-calculator-svc/pom.xml package org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=solutions_payment-calculator-svc -Dsonar.organization=solutions -Dsonar.host.url=https://sonarcloud.io/ -Dsonar.qualitygate.wait=true
+        run: mvn -B -f backend/ocr-service/pom.xml package org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=solutions_scheduler_svc -Dsonar.organization=solutions -Dsonar.host.url=https://sonarcloud.io/
 
       # Login to Azure Container Registry
       - name: Login to Azure Container Registry
         if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
         run: docker login -u pucarsolutionsdev -p ${{ secrets.ACR_PASSWORD }} pucarsolutionsdev.azurecr.io
 
-      - name: Build and Push Docker image for Payment-calculator-svc
+      - name: Build and Push Docker image for Scheduler-svc
         if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
         run: |
-          docker build --build-arg WORK_DIR="backend/payment-calculator-svc" -t pucarsolutionsdev.azurecr.io/payment-calculator-svc:v1.0.0-${{ github.sha }} -f build/maven/Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/payment-calculator-svc:v1.0.0-${{ github.sha }}
+          docker build --build-arg WORK_DIR="backend/ocr-service" -t ucarsolutionsdev.azurecr.io/pucar_ocr_svc:v1.0.0-${{ github.sha }} -f build/maven/Dockerfile .
+          docker push ucarsolutionsdev.azurecr.io/pucar_ocr_svc:v1.0.0-${{ github.sha }}
 
-      - name: Build and Push Docker image for Payment-calculator-svc_DB
+      - name: Build and Push Docker image for scheduler-svc_DB
         if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
         run: |
-          docker build  -t pucarsolutionsdev.azurecr.io/payment-calculator-svc_db:v1.0.0-${{ github.sha }} -f  Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/payment-calculator-svc_db:v1.0.0-${{ github.sha }}
-        working-directory: backend/payment-calculator-svc/src/main/resources/db
+          docker build  -t pucarsolutionsdev.azurecr.io/pucar_ocr_svc_db:v1.0.0-${{ github.sha }} -f  Dockerfile .
+          docker push pucarsolutionsdev.azurecr.io/pucar_ocr_svc_db:v1.0.0-${{ github.sha }}
+        working-directory: backend/ocr-service/src/main/resources/db
 
   Workflow_Trigger:
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
