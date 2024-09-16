@@ -7,3 +7,4 @@ CREATE INDEX IF NOT EXISTS idx_dristi_hearing_individual_id ON dristi_hearing US
 CREATE INDEX IF NOT EXISTS idx_drist_hearing_start_time ON dristi_hearing (startTime);
 
 CREATE INDEX IF NOT EXISTS idx_dristi_hearing_document_hearing_id ON dristi_hearing_document (hearingId);
+CREATE INDEX IF NOT EXISTS idx_dristi_hearing_document_filestore_id ON dristi_hearing_document (fileStore);
