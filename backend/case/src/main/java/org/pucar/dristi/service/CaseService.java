@@ -409,7 +409,7 @@ public class CaseService {
                 throw new CustomException(VALIDATION_ERR, "Litigant is already a part of the given case");
             }
             caseObj.setLitigants(Collections.singletonList(joinCaseRequest.getLitigant()));
-            verifyAndEnrichRepresentative(joinCaseRequest, courtCase, caseObj, auditDetails);
+            verifyAndEnrichLitigant(joinCaseRequest, courtCase, caseObj, auditDetails);
         }
     }
 
