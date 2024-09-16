@@ -17,7 +17,10 @@ CREATE INDEX IF NOT EXISTS idx_dristi_case_statutes_and_sections_case_id ON dris
 CREATE INDEX IF NOT EXISTS idx_dristi_case_statutes_and_sections_statutes ON dristi_case_statutes_and_sections(statutes);
 
 CREATE INDEX IF NOT EXISTS idx_dristi_case_litigants_case_id ON dristi_case_litigants(case_id);
+CREATE INDEX IF NOT EXISTS idx_dristi_case_litigants_individual_id ON dristi_case_litigants(individualId);
 
-CREATE INDEX IF NOT EXISTS idx_dristi_case_representatives_case_id ON dristi_case_representatives (case_id);
+
+CREATE INDEX IF NOT EXISTS idx_dristi_case_representatives_case_id ON dristi_case_representatives(case_id);
+CREATE INDEX IF NOT EXISTS idx_dristi_case_representatives_advocate_id ON dristi_case_representatives (advocateId);
 
 CREATE INDEX IF NOT EXISTS idx_dristi_case_representing_representative_id ON dristi_case_representing(representative_id);
