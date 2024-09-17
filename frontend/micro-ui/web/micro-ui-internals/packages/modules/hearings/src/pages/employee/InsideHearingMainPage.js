@@ -163,7 +163,7 @@ const InsideHearingMainPage = () => {
     } else {
       setTranscriptText(newText);
 
-      if (Object.keys(hearing)?.length === 0) {
+      if (Object.keys(hearing || {}).length === 0) {
         console.warn("Hearing object is empty");
         return hearing;
       }
@@ -211,7 +211,7 @@ const InsideHearingMainPage = () => {
   }, [selectedWitness, hearing]);
 
   const saveWitnessDeposition = () => {
-    const updatedHearing = structuredClone(hearing);
+    const updatedHearing = structuredClone(hearing || {});
     setWitnessModalOpen(true);
     updatedHearing.additionalDetails = updatedHearing?.additionalDetails || {};
     updatedHearing.additionalDetails.witnessDepositions = updatedHearing?.additionalDetails?.witnessDepositions || [];
@@ -223,7 +223,9 @@ const InsideHearingMainPage = () => {
       deposition: witnessDepositionText,
     });
     _updateTranscriptRequest({ body: { hearing: updatedHearing } }).then((res) => {
-      setHearing(res?.hearing);
+      if (res?.hearing) {
+        setHearing(res.hearing);
+      }
     });
   };
 
@@ -277,7 +279,7 @@ const InsideHearingMainPage = () => {
     }
   };
 
-  const attendanceCount = useMemo(() => hearing?.attendees?.filter((attendee) => attendee.wasPresent)?.length || 0, [hearing]);
+  const attendanceCount = useMemo(() => hearing?.attendees?.filter((attendee) => attendee.wasPresent).length || 0, [hearing]);
   const [isRecording, setIsRecording] = useState(false);
   const IsSelectedWitness = useMemo(() => {
     return !isEmpty(selectedWitness);
