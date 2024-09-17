@@ -1,5 +1,7 @@
 package digit.util;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.JsonPath;
 import digit.config.Configuration;
 import digit.web.models.VcEntityCriteria;
 import digit.web.models.VcEntityOrderSearchRequest;
@@ -23,9 +25,12 @@ public class OrderUtil {
 
     private final Configuration configuration;
 
-    public OrderUtil(RestTemplate restTemplate, Configuration configuration) {
+    private final ObjectMapper objectMapper;
+
+    public OrderUtil(RestTemplate restTemplate, Configuration configuration, ObjectMapper objectMapper) {
         this.restTemplate = restTemplate;
         this.configuration = configuration;
+        this.objectMapper = objectMapper;
     }
 
     public String fetchSignedFileStore(String referenceId, String tenantId, RequestInfo requestInfo)  {
@@ -67,9 +72,15 @@ public class OrderUtil {
         } catch (Exception e) {
             throw new CustomException("ORDER_SEARCH_ERR", "Error while fetching the order details: " + e.getMessage());
         }
+        String filestoreId = null;
+        try {
+            String responseBodyString = objectMapper.writeValueAsString(response.getBody());
+            log.info("Response from the order search: " + responseBodyString);
+            filestoreId = JsonPath.parse(responseBodyString).read("$.list[0].documents[0].fileStore", String.class);
+        } catch (Exception e) {
+            throw new CustomException("JSON_PARSING_ERROR", "Error while extracting cnr number from the order response");
+        }
 
-        // TODO - get file store id of signed file
-
-        return null;
+        return filestoreId;
     }
 }

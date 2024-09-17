@@ -43,16 +43,18 @@ public class CaseManagementUtil {
             uri.append(config.getPdfServiceHost())
                     .append(config.getBffServiceVCEndpoint());
 
+            String referenceId = taskRequest.getTask().getId().toString();
+            String tenantId = taskRequest.getTask().getTenantId();
+            String filestoreId = orderUtil.fetchSignedFileStore(referenceId, tenantId, taskRequest.getRequestInfo());
             VcCredentialRequest credentialRequest = VcCredentialRequest.builder()
                     .requestInfo(taskRequest.getRequestInfo())
-                    .tenantId(taskRequest.getTask().getTenantId())
+                    .tenantId(tenantId)
                     .moduleName(moduleName)
-                    .referenceId(taskRequest.getTask().getId().toString())
-                    .fileStoreId(null)
+                    .referenceId(referenceId)
+                    .fileStoreId(filestoreId)
                     .build();
 
-            // TODO add orders util get order object and get signed file store from order id
-            //  and add it here in vc credential request file fileStoreId
+
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
