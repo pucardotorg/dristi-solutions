@@ -364,6 +364,10 @@ function ViewCaseFile({ t, inViewCase = false }) {
     );
   };
 
+  if (caseDetails?.status !== "UNDER_SCRUTINY" && isScrutiny) {
+    history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
+  }
+
   const Heading = (props) => {
     return <h1 className="heading-m">{props.label}</h1>;
   };
@@ -553,7 +557,7 @@ function ViewCaseFile({ t, inViewCase = false }) {
 
           {actionModal === "caseRegisterSuccess" && (
             <SuccessModal
-              header={"Vaibhav"}
+              header={t("SUCCESS")}
               t={t}
               actionCancelLabel={"CS_COMMON_CLOSE"}
               actionSaveLabel={"CS_ALLOCATE_JUDGE"}
@@ -571,7 +575,7 @@ function ViewCaseFile({ t, inViewCase = false }) {
         </div>
         {actionModal === "caseSendBackSuccess" && (
           <SuccessModal
-            header={"Vaibhav"}
+            header={t("SUCCESS")}
             t={t}
             actionCancelLabel={"BACK_TO_HOME"}
             actionSaveLabel={"NEXT_CASE"}

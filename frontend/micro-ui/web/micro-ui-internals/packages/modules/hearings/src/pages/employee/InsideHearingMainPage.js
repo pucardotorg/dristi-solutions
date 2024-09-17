@@ -77,7 +77,7 @@ const InsideHearingMainPage = () => {
       hearingId: hearingId,
     },
   };
-  const { data: hearingsData, refetch: refetchHearing } = Digit.Hooks.hearings.useGetHearings(
+  const { data: hearingsData, refetch: refetchHearing = () => {} } = Digit.Hooks.hearings.useGetHearings(
     reqBody,
     { applicationNumber: "", cnrNumber: "", hearingId },
     "dristi",
@@ -302,6 +302,7 @@ const InsideHearingMainPage = () => {
             <LabelFieldPair className="case-label-field-pair">
               <CardLabel className="case-input-label">{`Select Witness`}</CardLabel>
               <Dropdown
+                t={t}
                 option={options}
                 optionKey={"label"}
                 select={handleDropdownChange}
@@ -443,8 +444,8 @@ const InsideHearingMainPage = () => {
               gap: "16px",
             }}
           >
-            {/* <Button
-              label={"ATTENDANCE_CHIP"}
+            <Button
+              label={t("ATTENDANCE_CHIP")}
               style={{ boxShadow: "none", backgroundColor: "#ECF3FD", borderRadius: "4px", border: "none", padding: "10px" }}
               textStyles={{
                 fontFamily: "Roboto",
@@ -468,8 +469,8 @@ const InsideHearingMainPage = () => {
               >
                 {`${attendanceCount}`}
               </h2>
-            </Button> */}
-            {/* {userHasRole("EMPLOYEE") && (
+            </Button>
+            {userHasRole("EMPLOYEE") && (
               <Button
                 label={t("MARK_ATTENDANCE")}
                 variation={"teritiary"}
@@ -484,7 +485,7 @@ const InsideHearingMainPage = () => {
                   color: "#007E7E",
                 }}
               />
-            )} */}
+            )}
           </div>
           {userHasRole("EMPLOYEE") ? (
             <div

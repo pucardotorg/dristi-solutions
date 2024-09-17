@@ -1,15 +1,15 @@
-name: SBI Svc Image Build workflow
+name: Etreasury Ui Image Build workflow
 on:
   push:
     branches:
       - dpg-qa-deployment
     paths:
-      - 'backend/treasury-webpage/**'
+      - "backend/treasury-webpage/**"
   pull_request:
     branches:
       - dpg-qa-deployment
     paths:
-      - 'backend/treasury-webpage/**'
+      - "backend/treasury-webpage/**"
   workflow_dispatch:
   workflow_call:
 

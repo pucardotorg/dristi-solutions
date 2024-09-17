@@ -134,6 +134,50 @@ function CaseFileAdmission({ t, path }) {
     ];
   }, [caseDetails]);
 
+  const handleIssueNotice = async (hearingDate, hearingNumber) => {
+    try {
+      const orderBody = {
+        createdDate: new Date().getTime(),
+        tenantId,
+        cnrNumber: caseDetails?.cnrNumber,
+        filingNumber: caseDetails?.filingNumber,
+        statuteSection: {
+          tenantId,
+        },
+        orderType: "NOTICE",
+        status: "",
+        isActive: true,
+        workflow: {
+          action: OrderWorkflowAction.SAVE_DRAFT,
+          comments: "Creating order",
+          assignes: null,
+          rating: null,
+          documents: [{}],
+        },
+        documents: [],
+        ...(hearingNumber && { hearingNumber }),
+        additionalDetails: {
+          formdata: {
+            orderType: {
+              code: "NOTICE",
+              type: "NOTICE",
+              name: "ORDER_TYPE_NOTICE",
+            },
+            hearingDate,
+          },
+        },
+      };
+      DRISTIService.customApiService(Urls.dristi.ordersCreate, orderBody, { tenantId })
+        .then((res) => {
+          history.push(`/digit-ui/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`, {
+            caseId: caseDetails?.id,
+            tab: "Orders",
+          });
+        })
+        .catch();
+    } catch (error) {}
+  };
+
   const updateCaseDetails = async (action, data = {}) => {
     let respondentDetails = caseDetails?.additionalDetails?.respondentDetails;
     let witnessDetails = caseDetails?.additionalDetails?.witnessDetails;
@@ -269,6 +313,48 @@ function CaseFileAdmission({ t, path }) {
         handleRegisterCase();
         setCreateAdmissionOrder(true);
         break;
+      case "ADMIT":
+        if (caseDetails?.status === "ADMISSION_HEARING_SCHEDULED") {
+          const { HearingList = [] } = await Digit.HearingService.searchHearings({
+            hearing: { tenantId },
+            criteria: {
+              tenantID: tenantId,
+              filingNumber: caseDetails?.filingNumber,
+            },
+          });
+          const { startTime: hearingDate, hearingId: hearingNumber } = HearingList?.find(
+            (list) => list?.hearingType === "ADMISSION" && list?.status === "SCHEDULED"
+          );
+          const {
+            list: [orderData],
+          } = await Digit.ordersService.searchOrder({
+            tenantId,
+            criteria: {
+              filingNumber: caseDetails?.filingNumber,
+              applicationNumber: "",
+              cnrNumber: caseDetails?.cnrNumber,
+              status: "DRAFT_IN_PROGRESS",
+              hearingNumber: hearingNumber,
+            },
+            pagination: { limit: 1, offset: 0 },
+          });
+          if (orderData?.orderType === "NOTICE") {
+            history.push(`/digit-ui/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${orderData.orderNumber}`, {
+              caseId: caseId,
+              tab: "Orders",
+            });
+            updateCaseDetails("ADMIT");
+          } else {
+            handleIssueNotice(hearingDate, hearingNumber);
+            await updateCaseDetails("ADMIT");
+          }
+        } else {
+          setSubmitModalInfo({ ...admitCaseSubmitConfig, caseInfo: caseInfo });
+          setModalInfo({ type: "admitCase", page: 0 });
+          setShowModal(true);
+        }
+        break;
+
       case "SCHEDULE_ADMISSION_HEARING":
         setShowModal(true);
         setSubmitModalInfo({

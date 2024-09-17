@@ -5,6 +5,7 @@ import ReactTooltip from "react-tooltip";
 import { Header, FormComposerV2, Toast } from "@egovernments/digit-ui-react-components";
 import {
   applicationTypeConfig,
+  configCheckout,
   configRejectSubmission,
   configsAssignDateToRescheduledHearing,
   configsAssignNewHearingDate,
@@ -22,6 +23,7 @@ import {
   configsOrderSubmissionExtension,
   configsOrderTranferToADR,
   configsOthers,
+  configsRejectCheckout,
   configsRejectRescheduleHeadingDate,
   configsRescheduleHearingDate,
   configsScheduleHearingDate,
@@ -56,6 +58,8 @@ const configKeys = {
   SCHEDULE_OF_HEARING_DATE: configsScheduleHearingDate,
   SCHEDULING_NEXT_HEARING: configsScheduleNextHearingDate,
   RESCHEDULE_OF_HEARING_DATE: configsRescheduleHearingDate,
+  CHECKOUT_ACCEPTANCE: configCheckout,
+  CHECKOUT_REJECT: configsRejectCheckout,
   REJECTION_RESCHEDULE_REQUEST: configsRejectRescheduleHeadingDate,
   INITIATING_RESCHEDULING_OF_HEARING_DATE: configsInitiateRescheduleHearingDate,
   ASSIGNING_DATE_RESCHEDULED_HEARING: configsAssignDateToRescheduledHearing,
@@ -120,6 +124,8 @@ const stateSlaMap = {
   APPROVE_VOLUNTARY_SUBMISSIONS: 3,
   REJECT_VOLUNTARY_SUBMISSIONS: 3,
   JUDGEMENT: 3,
+  CHECKOUT_ACCEPTANCE: 1,
+  CHECKOUT_REJECT: 1,
 };
 
 const channelTypeEnum = {
@@ -150,12 +156,14 @@ const GenerateOrders = () => {
   const [newHearingNumber, setNewHearingNumber] = useState(null);
   const [createdSummon, setCreatedSummon] = useState(null);
   const [createdNotice, setCreatedNotice] = useState(null);
+  const [orderPdfFileStoreID, setOrderPdfFileStoreID] = useState(null);
   const history = useHistory();
   const todayDate = new Date().getTime();
   const setFormErrors = useRef(null);
   const [currentFormData, setCurrentFormData] = useState(null);
   const roles = Digit.UserService.getUser()?.info?.roles;
   const canESign = roles?.some((role) => role.code === "ORDER_ESIGN");
+  const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
   const setSelectedOrder = (orderIndex) => {
     _setSelectedOrder(orderIndex);
   };
@@ -382,7 +390,7 @@ const GenerateOrders = () => {
       setShowsignatureModal(true);
       localStorage.removeItem("esignProcess");
     }
-  }, [defaultIndex, selectedOrder]);
+  }, [defaultIndex]);
 
   const currentOrder = useMemo(() => formList?.[selectedOrder], [formList, selectedOrder]);
   const orderType = useMemo(() => currentOrder?.orderType || {}, [currentOrder]);
@@ -760,7 +768,7 @@ const GenerateOrders = () => {
     }
     if (orderType === "SUMMONS") {
       if (hearingDetails?.startTime) {
-        updatedFormdata.date = formatDate(new Date(hearingDetails?.startTime));
+        updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
       }
       if (currentOrder?.additionalDetails?.selectedParty && currentOrder?.additionalDetails?.selectedParty?.uuid) {
         updatedFormdata.SummonsOrder = {
@@ -770,17 +778,17 @@ const GenerateOrders = () => {
               ...item,
               data: {
                 ...item.data,
-                firstName: item.data.respondentFirstName,
-                lastName: item.data.respondentLastName,
-                address: item.data.addressDetails.map((address) => ({
-                  locality: address.addressDetails.locality,
+                firstName: item?.data?.respondentFirstName,
+                lastName: item?.data?.respondentLastName,
+                address: item?.data?.addressDetails.map((address) => ({
+                  locality: address?.addressDetails?.locality,
                   city: address.addressDetails.city,
-                  district: address.addressDetails.district,
-                  pincode: address.addressDetails.pincode,
+                  district: address?.addressDetails?.district,
+                  pincode: address?.addressDetails?.pincode,
                 })),
                 partyType: "Respondent",
-                phone_numbers: item.data.phonenumbers?.mobileNumber || [],
-                email: item.data.emails?.emailId,
+                phone_numbers: item?.data?.phonenumbers?.mobileNumber || [],
+                email: item?.data?.emails?.emailId,
               },
             }))?.[0],
           selectedChannels: currentOrder?.additionalDetails?.formdata?.SummonsOrder?.selectedChannels,
@@ -827,6 +835,8 @@ const GenerateOrders = () => {
         "REJECTION_RESCHEDULE_REQUEST",
         "APPROVAL_RESCHEDULE_REQUEST",
         "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+        "CHECKOUT_ACCEPTANCE",
+        "CHECKOUT_REJECT",
       ].includes(orderType)
     ) {
       updatedFormdata.originalHearingDate =
@@ -943,7 +953,12 @@ const GenerateOrders = () => {
             : {
                 ...item,
                 comments:
-                  formData?.comments?.text || formData?.additionalComments?.text || formData?.otherDetails?.text || formData?.sentence?.text || "",
+                  formData?.comments?.text ||
+                  formData?.additionalComments?.text ||
+                  formData?.otherDetails?.text ||
+                  formData?.sentence?.text ||
+                  formData?.briefSummary ||
+                  "",
                 orderType: formData?.orderType?.code,
                 additionalDetails: { ...item?.additionalDetails, formdata: updatedFormData },
               };
@@ -972,9 +987,12 @@ const GenerateOrders = () => {
               fileStore: signedDoucumentUploadedID || localStorageID,
             }
           : null;
-
-      localStorage.removeItem("fileStoreId");
-      const orderSchema = {};
+      let orderSchema = {};
+      try {
+        orderSchema = Digit.Customizations.dristiOrders.OrderFormSchemaUtils.formToSchema(order.additionalDetails.formdata, modifiedFormConfig);
+      } catch (error) {
+        console.log(error);
+      }
 
       return await ordersService.updateOrder(
         {
@@ -994,8 +1012,12 @@ const GenerateOrders = () => {
 
   const createOrder = async (order) => {
     try {
-      // const orderSchema = Digit.Customizations.dristiOrders.OrderFormSchemaUtils.formToSchema(order.additionalDetails.formdata, modifiedFormConfig);
-      const orderSchema = {};
+      let orderSchema = {};
+      try {
+        orderSchema = Digit.Customizations.dristiOrders.OrderFormSchemaUtils.formToSchema(order.additionalDetails.formdata, modifiedFormConfig);
+      } catch (error) {
+        console.log(error);
+      }
       // const formOrder = await Digit.Customizations.dristiOrders.OrderFormSchemaUtils.schemaToForm(orderDetails, modifiedFormConfig);
 
       return await ordersService.createOrder(
@@ -1007,7 +1029,9 @@ const GenerateOrders = () => {
         },
         { tenantId }
       );
-    } catch (error) {}
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const handleAddOrder = () => {
@@ -1088,7 +1112,7 @@ const GenerateOrders = () => {
           pendingTask: {
             name,
             entityType,
-            referenceId: `MANUAL_${assignee?.uuid}_${order?.hearingNumber}`,
+            referenceId: `MANUAL_${assignee?.uuid}_${order?.orderNumber}`,
             status,
             assignedTo: [assignee],
             assignedRole,
@@ -1356,8 +1380,9 @@ const GenerateOrders = () => {
     );
 
     const orderData = orderDetails?.order;
-    const orderFormData = orderDetails?.order?.additionalDetails?.formdata?.SummonsOrder?.party?.data;
-    const selectedChannel = orderData?.additionalDetails?.formdata?.SummonsOrder?.selectedChannels;
+    const orderFormData = orderDetails?.order?.additionalDetails?.formdata?.[orderType === "NOTICE" ? "noticeOrder" : "SummonsOrder"]?.party?.data;
+    const selectedChannel = orderData?.additionalDetails?.formdata?.[orderType === "NOTICE" ? "noticeOrder" : "SummonsOrder"]?.selectedChannels;
+    const noticeType = orderData?.additionalDetails?.formdata?.noticeType?.type;
     const respondentAddress = orderFormData?.addressDetails
       ? orderFormData?.addressDetails?.map((data) => ({ ...data?.addressDetails }))
       : caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.addressDetails?.map((data) => data?.addressDetails);
@@ -1437,6 +1462,7 @@ const GenerateOrders = () => {
           noticeDetails: {
             issueDate: orderData?.auditDetails?.lastModifiedTime,
             caseFilingDate: caseDetails?.filingDate,
+            noticeType,
           },
           respondentDetails: {
             name: respondentName,
@@ -1786,9 +1812,9 @@ const GenerateOrders = () => {
       const summonsArray = currentOrder?.additionalDetails?.isReIssueNotice
         ? [{}]
         : currentOrder?.additionalDetails?.formdata?.namesOfPartiesRequired?.filter((data) => data?.partyType === "respondent");
-      const promiseList = summonsArray
-        ?.map((data) =>
-          ordersService.createOrder(
+      const promiseList = summonsArray?.map((data) =>
+        ordersService
+          .createOrder(
             {
               order: {
                 ...orderbody,
@@ -1800,10 +1826,11 @@ const GenerateOrders = () => {
             },
             { tenantId }
           )
-        )
-        .then(() => {
-          updateCaseDetails("ADMIT");
-        });
+          .then(() => {
+            updateCaseDetails("ADMIT");
+          })
+      );
+
       const resList = await Promise.all(promiseList);
       setCreatedNotice(resList[0]?.order?.orderNumber);
       await Promise.all(
@@ -1872,8 +1899,15 @@ const GenerateOrders = () => {
           endTime: Date.parse(currentOrder?.additionalDetails?.formdata?.newHearingDate),
         });
       }
+      if (orderType === "CHECKOUT_ACCEPTANCE") {
+        await handleUpdateHearing({
+          action: HearingWorkflowAction.BULK_RESCHEDULE,
+          startTime: Date.parse(currentOrder?.additionalDetails?.formdata?.newHearingDate),
+          endTime: Date.parse(currentOrder?.additionalDetails?.formdata?.newHearingDate),
+        });
+      }
       if (orderType === "INITIATING_RESCHEDULING_OF_HEARING_DATE") {
-        const dateObject = new Date(applicationDetails?.additionalDetails?.formdata?.initialHearingDate);
+        const dateObject = new Date(applicationDetails?.additionalDetails?.formdata?.changedHearingDate);
         let date = dateObject && dateObject?.getTime();
         if (isNaN(date)) {
           date = Date.now();
@@ -1881,7 +1915,7 @@ const GenerateOrders = () => {
         const requesterId = "";
         const comments = currentOrder?.comments || "";
         const hearingBookingId = currentOrder?.hearingNumber;
-        const rescheduledRequestId = currentOrder?.additionalDetails?.formdata?.refApplicationId || `NO_APPLICATION_ID_${hearingBookingId}`;
+        const rescheduledRequestId = currentOrder?.orderNumber;
         await handleUpdateHearing({
           action: HearingWorkflowAction.RESCHEDULE,
           startTime: Date.parse(currentOrder?.additionalDetails?.formdata?.newHearingDate),
@@ -1941,7 +1975,7 @@ const GenerateOrders = () => {
       setLoader(false);
       setShowSuccessModal(true);
     } catch (error) {
-      showErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
+      setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
       setLoader(false);
     }
   };
@@ -1992,6 +2026,8 @@ const GenerateOrders = () => {
     setSelectedOrder(index);
   };
   const handleDownloadOrders = () => {
+    const fileStoreId = localStorage.getItem("fileStoreId");
+    downloadPdf(tenantId, signedDoucumentUploadedID || fileStoreId);
     // setShowSuccessModal(false);
     // history.push(`/${window.contextPath}/employee/dristi/home/view-case?tab=${"Orders"}&caseId=${caseDetails?.id}&filingNumber=${filingNumber}`, {
     //   from: "orderSuccessModal",
@@ -1999,7 +2035,7 @@ const GenerateOrders = () => {
   };
 
   const handleReviewOrderClick = () => {
-    if (orderType === "SCHEDULE_OF_HEARING_DATE" && isHearingAlreadyScheduled) {
+    if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(orderType) && isHearingAlreadyScheduled) {
       setShowErrorToast({
         label: t("HEARING_IS_ALREADY_SCHEDULED_FOR_THIS_CASE"),
         error: true,
@@ -2054,6 +2090,7 @@ const GenerateOrders = () => {
       history.push(`/${window.contextPath}/employee/dristi/home/view-case?tab=${"Orders"}&caseId=${caseDetails?.id}&filingNumber=${filingNumber}`, {
         from: "orderSuccessModal",
       });
+      localStorage.removeItem("fileStoreId");
       setShowSuccessModal(false);
       return;
     }
@@ -2152,6 +2189,7 @@ const GenerateOrders = () => {
           order={currentOrder}
           setShowReviewModal={setShowReviewModal}
           setShowsignatureModal={setShowsignatureModal}
+          setOrderPdfFileStoreID={setOrderPdfFileStoreID}
           showActions={canESign}
         />
       )}
@@ -2162,6 +2200,7 @@ const GenerateOrders = () => {
           handleIssueOrder={handleIssueOrder}
           handleGoBackSignatureModal={handleGoBackSignatureModal}
           setSignedDocumentUploadID={setSignedDocumentUploadID}
+          orderPdfFileStoreID={orderPdfFileStoreID}
           saveOnsubmitLabel={"ISSUE_ORDER"}
         />
       )}

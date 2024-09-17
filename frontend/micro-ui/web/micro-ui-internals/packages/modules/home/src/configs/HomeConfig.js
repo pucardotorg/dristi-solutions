@@ -466,6 +466,17 @@ export const pendingTaskVoluntarySubmissionActions = {
       ],
     },
   },
+  PENDINGESIGN: {
+    actorName: ["LITIGANT/ADVOCATE"],
+    actionName: "Esign the Submission",
+    redirectDetails: {
+      url: "/submissions/submissions-create",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "applicationNumber", value: "referenceId" },
+      ],
+    },
+  },
   PENDINGREVIEW: {
     actorName: ["JUDGE"],
     actionName: "Review the submission",
