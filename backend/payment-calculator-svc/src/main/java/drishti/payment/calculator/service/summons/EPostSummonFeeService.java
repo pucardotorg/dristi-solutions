@@ -1,27 +1,26 @@
-package drishti.payment.calculator.service;
+package drishti.payment.calculator.service.summons;
 
 import drishti.payment.calculator.repository.PostalHubRepository;
-import drishti.payment.calculator.util.EPostUtil;
+import drishti.payment.calculator.service.SummonPayment;
+import drishti.payment.calculator.util.SummonUtil;
 import drishti.payment.calculator.web.models.*;
+import drishti.payment.calculator.web.models.enums.Classification;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
-public class EPostSummonFeesCalculation implements SummonPayment {
+public class EPostSummonFeeService implements SummonPayment {
 
-    private final EPostUtil ePostUtil;
+    private final SummonUtil summonUtil;
     private final PostalHubRepository repository;
 
     @Autowired
-    public EPostSummonFeesCalculation(EPostUtil ePostUtil, PostalHubRepository repository) {
-        this.ePostUtil = ePostUtil;
+    public EPostSummonFeeService(SummonUtil summonUtil, PostalHubRepository repository) {
+        this.summonUtil = summonUtil;
         this.repository = repository;
     }
 
@@ -29,40 +28,26 @@ public class EPostSummonFeesCalculation implements SummonPayment {
     public Calculation calculatePayment(RequestInfo requestInfo, SummonCalculationCriteria criteria) {
 
 
-        EPostConfigParams ePostConfigParams = ePostUtil.getIPostFeesDefaultData(requestInfo, criteria.getTenantId());
+        EPostConfigParams ePostConfigParams = summonUtil.getIPostFeesDefaultData(requestInfo, criteria.getTenantId());
 
         HubSearchCriteria searchCriteria = HubSearchCriteria.builder().pincode(Collections.singletonList(criteria.getReceiverPincode())).build();
         List<PostalHub> postalHub = repository.getPostalHub(searchCriteria);
-        if(postalHub.isEmpty()){
+        if (postalHub.isEmpty()) {
             throw new CustomException("POSTAL_HUB_NOT_FOUND", "Pincode not found for speed post fee calculation");
         }
 
-        Double iPostFeeWithoutGST = calculateTotalEPostFee(2, 50.0, ePostConfigParams);
+        Classification classification = postalHub.get(0).getClassification();
+        Double iPostFeeWithoutGST = calculateTotalEPostFee(2, classification, ePostConfigParams);
 
-        Double courtFees = calculateCourtFees(ePostConfigParams);
-
+        Double courtFees = summonUtil.calculateCourtFees(ePostConfigParams);
         Double envelopeFee = ePostConfigParams.getEnvelopeChargeIncludingGst();
         Double gstPercentage = ePostConfigParams.getGstPercentage();
-
         Double gstFee = iPostFeeWithoutGST * gstPercentage;
 
-        List<BreakDown> breakDowns = new ArrayList<>();
+        List<BreakDown> breakDowns= getFeeBreakdown(courtFees,gstFee,iPostFeeWithoutGST + envelopeFee);
 
-        BreakDown courtFee = BreakDown.builder()
-                .type("COURT_FEES")
-                .amount(courtFees).build();
-        breakDowns.add(courtFee);
-        BreakDown gst = BreakDown.builder()
-                .type("GST")
-                .amount(gstFee).build();
-        breakDowns.add(gst);
+        double totalAmount = iPostFeeWithoutGST + (gstPercentage * iPostFeeWithoutGST) + courtFees + envelopeFee;
 
-        BreakDown ipost = BreakDown.builder()
-                .type("I_POST")
-                .amount(iPostFeeWithoutGST + envelopeFee).build();
-        breakDowns.add(ipost);
-
-        double totalAmount = iPostFeeWithoutGST + gstPercentage * iPostFeeWithoutGST + courtFees + envelopeFee;
         return Calculation.builder()
                 .applicationId(criteria.getSummonId())
                 .totalAmount(Math.round(totalAmount * 100.0) / 100.0)
@@ -71,27 +56,22 @@ public class EPostSummonFeesCalculation implements SummonPayment {
                 .build();
     }
 
-    private Double calculateCourtFees(EPostConfigParams iPostFeesDefaultData) {
-        return iPostFeesDefaultData.getCourtFee() + iPostFeesDefaultData.getCourtFee();
-    }
+
 
     // Method to calculate I-Post fee without GST
-    private Double calculateTotalEPostFee(Integer numberOfPages, Double distance, EPostConfigParams configParams) {
+    private Double calculateTotalEPostFee(Integer numberOfPages, Classification classification, EPostConfigParams configParams) {
+
         Double weightPerPage = configParams.getPageWeight();
         Double printingFeePerPage = configParams.getPrintingFeePerPage();
         Double businessFee = configParams.getBusinessFee();
 
         SpeedPost speedPost = configParams.getSpeedPost();
-
         // Total Weight in grams
         Double totalWeight = numberOfPages * weightPerPage;
-
         // Total Printing Fee
         Double totalPrintingFee = numberOfPages * printingFeePerPage;
-
         // Speed Post Fee
-        Double speedPostFee = getSpeedPostFee(totalWeight, distance, speedPost);
-
+        Double speedPostFee = getSpeedPostFee(totalWeight, classification, speedPost);
         // Total Fee before GST
         return totalWeight + totalPrintingFee + speedPostFee + businessFee;
     }
@@ -102,7 +82,17 @@ public class EPostSummonFeesCalculation implements SummonPayment {
         WeightRange weightRange = getWeightRange(weight, speedPost.getWeightRanges());
 
         assert weightRange != null;
-        DistanceRange distanceRange = calculateDistanceRange(distance, weightRange);
+        Range distanceRange = calculateDistanceRange(distance, weightRange);
+
+        assert distanceRange != null;
+        return distanceRange.getFee();
+    }
+
+    public Double getSpeedPostFee(Double weight, Classification classification, SpeedPost speedPost) {
+        WeightRange weightRange = getWeightRange(weight, speedPost.getWeightRanges());
+
+        assert weightRange != null;
+        Range distanceRange = calculateDistanceRange(classification, weightRange);
 
         assert distanceRange != null;
         return distanceRange.getFee();
@@ -121,13 +111,12 @@ public class EPostSummonFeesCalculation implements SummonPayment {
     }
 
     // Method to calculate distance range based on distance
-    private DistanceRange calculateDistanceRange(Double distance, WeightRange weightRange) {
-        Map<String, DistanceRange> distanceMap = weightRange.getDistanceRanges();
-        for (DistanceRange range : distanceMap.values()) {
-            Double lowerBound = range.getMinDistance();
-            Double upperBound = range.getMaxDistance();
+    private Range calculateDistanceRange(Double distance, WeightRange weightRange) {
+        Map<String, Range> distanceMap = weightRange.getDistanceRanges();
+        for (Range range : distanceMap.values()) {
+            Double lowerBound = range.getMin();
+            Double upperBound = range.getMax();
 
-            //TODO: use classification to filter, add classification code in mdms
             if (distance >= lowerBound && distance <= upperBound) {
                 return range;
             }
@@ -135,6 +124,29 @@ public class EPostSummonFeesCalculation implements SummonPayment {
 
         return null; // Invalid distance range
     }
+
+    private Range calculateDistanceRange(Classification classification, WeightRange weightRange) {
+        Map<String, Range> distanceMap = weightRange.getDistanceRanges();
+        for (Range range : distanceMap.values()) {
+            if (classification.equals(Classification.fromValue(range.getClassificationCode()))) {
+                return range;
+            }
+        }
+
+        return null; // Invalid distance range
+    }
+
+
+    public List<BreakDown> getFeeBreakdown(double courtFee, double gst, double postFee) {
+        List<BreakDown> feeBreakdowns = new ArrayList<>();
+
+        feeBreakdowns.add(new BreakDown("COURT_FEES", courtFee, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown("GST", gst, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown("E_POST", postFee, new HashMap<>()));
+
+        return feeBreakdowns;
+    }
+
 
 
 }

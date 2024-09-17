@@ -10,10 +10,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class DistanceRange {
+public class Range {
 
-    private Double minDistance;
-    private Double maxDistance;
-    private String distanceUnit;
+    private Double min;
+    private Double max;
+    private String Unit;
+    private String classificationCode;
     private Double fee;
 }
