@@ -2,10 +2,8 @@ const cheerio = require("cheerio");
 const config = require("../config");
 const {
   search_case,
-  search_order,
   search_mdms,
   search_hrms,
-  search_individual_uuid,
   search_sunbirdrc_credential_service,
   search_application,
   create_pdf,
@@ -29,7 +27,7 @@ function getOrdinalSuffix(day) {
   }
 }
 
-async function applicationSubmissionExtension(req, res, qrCode) {
+async function applicationProductionOfDocuments(req, res, qrCode) {
   const cnrNumber = req.query.cnrNumber;
   const applicationNumber = req.query.applicationNumber;
   const tenantId = req.query.tenantId;
@@ -71,15 +69,15 @@ async function applicationSubmissionExtension(req, res, qrCode) {
     );
     const courtCase = resCase?.data?.criteria[0]?.responseList[0];
     if (!courtCase) {
-      renderError(res, "Court case not found", 404);
+      return renderError(res, "Court case not found", 404);
     }
-
+    const allAdvocates = getAdvocates(courtCase);
     // Search for HRMS details
-    const resHrms = await handleApiCall(
-      () => search_hrms(tenantId, "JUDGE", courtCase.courtId, requestInfo),
-      "Failed to query HRMS service"
-    );
-    const employee = resHrms?.data?.Employees[0];
+    // const resHrms = await handleApiCall(
+    //   () => search_hrms(tenantId, "JUDGE", courtCase.courtId, requestInfo),
+    //   "Failed to query HRMS service"
+    // );
+    // const employee = resHrms?.data?.Employees[0];
     // if (!employee) {
     //   renderError(res, "Employee not found", 404);
     // }
@@ -97,7 +95,7 @@ async function applicationSubmissionExtension(req, res, qrCode) {
     );
     const mdmsCourtRoom = resMdms?.data?.mdms[0]?.data;
     if (!mdmsCourtRoom) {
-      renderError(res, "Court room MDMS master not found", 404);
+      return renderError(res, "Court room MDMS master not found", 404);
     }
 
     // Search for MDMS designation details
@@ -123,22 +121,8 @@ async function applicationSubmissionExtension(req, res, qrCode) {
     );
     const application = resApplication?.data?.applicationList[0];
     if (!application) {
-      renderError(res, "Application not found", 404);
+      return renderError(res, "Application not found", 404);
     }
-
-    const refOrderNumber = application?.additionalDetails?.formdata?.refOrderId;
-    const resOrder = await handleApiCall(
-      () => search_order(tenantId, refOrderNumber, requestInfo, true),
-      "Failed to query order service"
-    );
-
-    const order = resOrder?.data?.list[0];
-    if (!order) {
-      renderError(res, "Order not found", 404);
-    }
-
-    const documentSubmissionName = order?.orderDetails?.documentName || "";
-    const documentId = order?.orderDetails?.documentType?.value | "";
 
     let barRegistrationNumber = "";
     const advocateIndividualId =
@@ -156,18 +140,12 @@ async function applicationSubmissionExtension(req, res, qrCode) {
     }
 
     const onBehalfOfuuid = application?.onBehalfOf?.[0];
-    const allAdvocates = getAdvocates(courtCase);
     const advocate = allAdvocates[onBehalfOfuuid]?.[0]?.additionalDetails
       ?.advocateName
       ? allAdvocates[onBehalfOfuuid]?.[0]
       : {};
     const advocateName = advocate?.additionalDetails?.advocateName || "";
     const partyName = application?.additionalDetails?.onBehalOfName || "";
-    const additionalComments =
-      application?.applicationDetails?.additionalComments || "";
-    const reasonForApplication =
-      application?.applicationDetails?.reasonForApplication || "";
-
     // Handle QR code if enabled
     let base64Url = "";
     if (qrCode === "true") {
@@ -219,30 +197,19 @@ async function applicationSubmissionExtension(req, res, qrCode) {
       "November",
       "December",
     ];
-
+    const documentList = application?.applicationDetails
+      ?.applicationDocuments || [{ documentType: "" }];
     const currentDate = new Date();
-
+    const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
     const day = currentDate.getDate();
     const month = months[currentDate.getMonth()];
     const year = currentDate.getFullYear();
 
     const ordinalSuffix = getOrdinalSuffix(day);
-    console.debug(application);
-    const originalSubmissionDate = application?.applicationDetails
-      ?.originalSubmissionDate
-      ? formatDate(
-          new Date(application?.applicationDetails?.originalSubmissionDate),
-          "DD-MM-YYY"
-        )
-      : "";
-    const requestedExtensionDate = application?.applicationDetails
-      ?.requestedExtensionDate
-      ? formatDate(
-          new Date(application?.applicationDetails?.requestedExtensionDate),
-          "DD-MM-YYY"
-        )
-      : "";
-    const benefitOfExtension = application?.benefitOfExtension;
+    const reasonForApplication =
+      application?.applicationDetails?.reasonForApplication || "";
+    const additionalComments =
+      application?.applicationDetails?.additionalComments || "";
     const data = {
       Data: [
         {
@@ -251,23 +218,23 @@ async function applicationSubmissionExtension(req, res, qrCode) {
           caseNumber: courtCase.caseNumber,
           caseYear: caseYear,
           caseName: courtCase.caseTitle,
-          judgeName: "John Doe",
-          courtDesignation: "High Court",
-          addressOfTheCourt: mdmsCourtRoom.address,
-          date: currentDate,
+          judgeName: "John Doe", // FIXME: employee.user.name
+          courtDesignation: "HIGHT COURRT", //FIXME: mdmsDesignation.name,
+          addressOfTheCourt: "Kerala", //FIXME: mdmsCourtRoom.address,
+          date: formattedToday,
           partyName: partyName,
+          complainantName: partyName, //FIXME: REMOVE it from both pdf configs and here,
+          additionalComments,
+          reasonForApplication,
+          prayerOptional: "",
+          advocateSignature: "Advocate_Signature", //FIXME: It should also come from the application
           advocateName: advocateName,
-          documentSubmissionName,
-          documentId,
-          originalSubmissionDate: originalSubmissionDate,
-          requestedSubmissionDate: requestedExtensionDate,
-          extensionReason: reasonForApplication,
+          nameOfDocument: "Aadhar card", //FIXME: It should come from the application, currently there is not field present inside of it
+          documentList,
+          barRegistrationNumber,
           day: day + ordinalSuffix,
           month: month,
           year: year,
-          additionalComments: benefitOfExtension || additionalComments,
-          advocateSignature: "Advocate Signature",
-          barRegistrationNumber,
           qrCodeUrl: base64Url,
         },
       ],
@@ -276,11 +243,11 @@ async function applicationSubmissionExtension(req, res, qrCode) {
     // Generate the PDF
     const pdfKey =
       qrCode === "true"
-        ? config.pdf.application_submission_extension_qr
-        : config.pdf.application_submission_extension;
+        ? config.pdf.application_production_documents_qr
+        : config.pdf.application_production_documents;
     const pdfResponse = await handleApiCall(
       () => create_pdf(tenantId, pdfKey, data, req.body),
-      "Failed to generate PDF of APPLICATION FOR EXTENSION OF SUBMISSION DEADLINE"
+      "Failed to generate PDF of Application for production of documents"
     );
     const filename = `${pdfKey}_${new Date().getTime()}`;
     res.writeHead(200, {
@@ -298,11 +265,11 @@ async function applicationSubmissionExtension(req, res, qrCode) {
   } catch (ex) {
     return renderError(
       res,
-      "Failed to generate pdf of APPLICATION FOR EXTENSION OF SUBMISSION DEADLINE",
+      "Failed to query details of APPLICATION FOR PRODCUTION OF DOCUMENTS",
       500,
       ex
     );
   }
 }
 
-module.exports = applicationSubmissionExtension;
+module.exports = applicationProductionOfDocuments;

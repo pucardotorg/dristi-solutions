@@ -7,11 +7,12 @@ const {
   search_hrms,
   search_sunbirdrc_credential_service,
   create_pdf,
+  search_application,
 } = require("../api");
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 
-async function mandatoryAsyncSubmissionsResponses(req, res, qrCode) {
+async function orderRejectCheckout(req, res, qrCode) {
   const cnrNumber = req.query.cnrNumber;
   const orderId = req.query.orderId;
   const entityId = req.query.entityId;
@@ -56,13 +57,12 @@ async function mandatoryAsyncSubmissionsResponses(req, res, qrCode) {
       renderError(res, "Court case not found", 404);
     }
 
-    // FIXME: Commenting out HRMS calls is it not impl in solution
     // Search for HRMS details
-    // const resHrms = await handleApiCall(
-    //     () => search_hrms(tenantId, "JUDGE", courtCase.courtId, requestInfo),
-    //     "Failed to query HRMS service"
-    // );
-    // const employee = resHrms?.data?.Employees[0];
+    const resHrms = await handleApiCall(
+      () => search_hrms(tenantId, "JUDGE", courtCase.courtId, requestInfo),
+      "Failed to query HRMS service"
+    );
+    const employee = resHrms?.data?.Employees[0];
     // if (!employee) {
     //     renderError(res, "Employee not found", 404);
     // }
@@ -83,13 +83,18 @@ async function mandatoryAsyncSubmissionsResponses(req, res, qrCode) {
       renderError(res, "Court room MDMS master not found", 404);
     }
 
-    // FIXME: Commenting out MDMS court establishment calls is it not impl in solution
     // Search for MDMS court establishment details
-    // const resMdms1 = await handleApiCall(
-    //     () => search_mdms(mdmsCourtRoom.courtEstablishmentId, "case.CourtEstablishment", tenantId, requestInfo),
-    //     "Failed to query MDMS service for court establishment"
-    // );
-    // const mdmsCourtEstablishment = resMdms1?.data?.mdms[0]?.data;
+    const resMdms1 = await handleApiCall(
+      () =>
+        search_mdms(
+          mdmsCourtRoom.courtEstablishmentId,
+          "case.CourtEstablishment",
+          tenantId,
+          requestInfo
+        ),
+      "Failed to query MDMS service for court establishment"
+    );
+    const mdmsCourtEstablishment = resMdms1?.data?.mdms[0]?.data;
     // if (!mdmsCourtEstablishment) {
     //     renderError(res, "Court establishment MDMS master not found", 404);
     // }
@@ -100,9 +105,23 @@ async function mandatoryAsyncSubmissionsResponses(req, res, qrCode) {
       "Failed to query order service"
     );
     const order = resOrder?.data?.list[0];
-    if (!order) {
-      renderError(res, "Order not found", 404);
+    // if (!order) {
+    //   renderError(res, "Order not found", 404);
+    // }
+    const resApplication = await handleApiCall(
+      () =>
+        search_application(
+          tenantId,
+          order?.additionalDetails?.formdata?.refApplicationId,
+          requestInfo
+        ),
+      "Failed to query application service"
+    );
+    const application = resApplication?.data?.applicationList[0];
+    if (!application) {
+      return renderError(res, "Application not found", 404);
     }
+    const partyName = application?.additionalDetails?.onBehalOfName || "";
 
     // Handle QR code if enabled
     let base64Url = "";
@@ -129,53 +148,17 @@ async function mandatoryAsyncSubmissionsResponses(req, res, qrCode) {
       base64Url = imgTag.attr("src");
     }
 
-    let year;
-    if (typeof courtCase.filingDate === "string") {
-      year = courtCase.filingDate.slice(-4);
-    } else if (courtCase.filingDate instanceof Date) {
-      year = courtCase.filingDate.getFullYear();
-    } else if (typeof courtCase.filingDate === "number") {
-      // Assuming the number is in milliseconds (epoch time)
-      year = new Date(courtCase.filingDate).getFullYear();
-    } else {
-      return renderError(res, "Invalid filingDate format", 500);
-    }
-    const months = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ];
     const currentDate = new Date();
-    const day = currentDate.getDate();
-    const month = months[currentDate.getMonth()];
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
-    const ifResponse = order?.orderDetails?.isResponseRequired ? "Yes" : "No";
-    const documentList = order?.orderDetails?.documentType?.value || "";
-    const partiesToRespond =
-      order?.orderDetails?.partyDetails?.partiesToRespond || [];
-    const partyToMakeSubmission =
-      order?.orderDetails?.partyDetails?.partyToMakeSubmission || [];
-    const evidenceSubmissionDeadline = order?.orderDetails?.dates
-      ?.submissionDeadlineDate
+    const submissionDate = formatDate(
+      new Date(application?.createdDate),
+      "DD-MM-YYYY"
+    );
+    const reasonForRescheduling =
+      application?.applicationDetails?.reasonForApplication;
+    const originalHearingDate = order.orderDetails?.originalHearingDate
       ? formatDate(
-          new Date(order?.orderDetails?.dates?.submissionDeadlineDate),
-          "DD-MM-YYYY"
-        )
-      : "";
-
-    const responseSubmissionDeadline = order?.orderDetails?.dates
-      ?.responseDeadlineDate
-      ? formatDate(
-          new Date(order?.orderDetails?.dates?.responseDeadlineDate),
+          new Date(order.orderDetails?.originalHearingDate),
           "DD-MM-YYYY"
         )
       : "";
@@ -184,25 +167,24 @@ async function mandatoryAsyncSubmissionsResponses(req, res, qrCode) {
       Data: [
         {
           courtName: mdmsCourtRoom.name,
-          caseNumber: courtCase.caseNumber,
-          year: year,
           caseName: courtCase.caseTitle,
-          parties: partyToMakeSubmission?.join(", "),
-          documentList: documentList,
-          evidenceSubmissionDeadline,
-          ifResponse,
-          responseSubmissionDeadline,
-          additionalComments: order?.comments || "",
+          caseNumber: courtCase.caseNumber,
+          orderName: order.orderNumber,
+          submissionType: "Application",
+          submissionDate,
+          date: formattedToday,
           Date: formattedToday,
-          Month: month,
-          Year: year,
+          partyName,
+          reasonForRescheduling,
+          originalHearingDate,
+          applicationId: application?.applicationNumber,
+          content: order?.comments || "",
+          additionalDetails: order?.comments || "",
+          additionalComments: order?.comments || "",
           judgeSignature: "Judge Signature",
-          designation: "Judge designation",
+          judgeName: "John Doe",
           courtSeal: "Court Seal",
           qrCodeUrl: base64Url,
-          place: "Kollam", // FIXME: mdmsCourtEstablishment.boundaryName,
-          state: "Kerala", //FIXME: mdmsCourtEstablishment.rootBoundaryName,
-          judgeName: "John Watt", // FIXME: employee.user.name,
         },
       ],
     };
@@ -210,12 +192,13 @@ async function mandatoryAsyncSubmissionsResponses(req, res, qrCode) {
     // Generate the PDF
     const pdfKey =
       qrCode === "true"
-        ? config.pdf.mandatory_async_submissions_responses_qr
-        : config.pdf.mandatory_async_submissions_responses;
+        ? config.pdf.order_reject_checkout_qr
+        : config.pdf.order_reject_checkout;
     const pdfResponse = await handleApiCall(
       () => create_pdf(tenantId, pdfKey, data, req.body),
-      "Failed to generate PDF of order for Mandatory Async Submissions and Responses"
+      "Failed to generate PDF of acceptance of checkout request"
     );
+
     const filename = `${pdfKey}_${new Date().getTime()}`;
     res.writeHead(200, {
       "Content-Type": "application/pdf",
@@ -230,14 +213,13 @@ async function mandatoryAsyncSubmissionsResponses(req, res, qrCode) {
         return renderError(res, "Failed to send PDF response", 500, err);
       });
   } catch (ex) {
-    console.log(ex);
     return renderError(
       res,
-      "Failed to generate PDF for order for mandatory async submission",
+      "Failed to generated PDF of Rejection of Checkout Request",
       500,
       ex
     );
   }
 }
 
-module.exports = mandatoryAsyncSubmissionsResponses;
+module.exports = orderRejectCheckout;
