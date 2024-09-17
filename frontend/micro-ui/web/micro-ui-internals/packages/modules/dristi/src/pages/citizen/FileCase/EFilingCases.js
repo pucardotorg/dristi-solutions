@@ -1287,11 +1287,24 @@ function EFilingCases({ path }) {
             const currentChildArray = fieldsArray[i];
             let count = 0;
             for (let j = 0; j < currentChildArray.length; j++) {
-              const value = extractValue(currentIndexData?.data, currentChildArray[j]);
-              const isValueEmpty = isEmptyValue(value);
-              if (isValueEmpty) {
-                count++;
+              if (typeof currentChildArray === "object") {
+                if (currentIndexData?.data?.[currentChildArray[j]?.dependentOn]?.[currentChildArray[j]?.dependentOnKey] === true) {
+                  const value = extractValue(currentIndexData?.data, currentChildArray[j]?.field);
+                  const isValueEmpty = isEmptyValue(value);
+                  if (isValueEmpty) {
+                    count++;
+                  }
+                }
+              } else {
+                const value = extractValue(currentIndexData?.data, currentChildArray[j]);
+                const isValueEmpty = isEmptyValue(value);
+                if (isValueEmpty) {
+                  count++;
+                }
               }
+            }
+            if (count === 1 && typeof currentChildArray[0] === "object") {
+              totalOptionalLeft++;
             }
             if (count === 2) {
               totalMandatoryLeft++;

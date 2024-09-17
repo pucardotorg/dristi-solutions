@@ -767,9 +767,12 @@ export const chequeDateValidation = ({ selected, formData, setError, clearErrors
 
 export const delayApplicationValidation = ({ t, formData, selected, setShowErrorToast, setErrorMsg, toast, setFormErrors }) => {
   if (selected === "delayApplications") {
-    if (formData?.delayCondonationType?.code === "NO" && !formData?.delayApplicationReason?.reasonForDelay?.length > 0) {
-      setFormErrors("delayApplicationReason", { type: "required" });
-      toast.error(t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"));
+    if (
+      formData?.delayCondonationType?.code === "NO" &&
+      !formData?.delayApplicationReason?.reasonForDelay?.length > 0 &&
+      !formData?.condonationFileUpload?.document.length > 0
+    ) {
+      toast.error(t("CS_EITHER_ONE_MANDATORY"));
       return true;
     }
   } else {
