@@ -163,7 +163,7 @@ const InsideHearingMainPage = () => {
     } else {
       setTranscriptText(newText);
 
-      if (Object.keys(hearing || {}).length === 0) {
+      if (!hearing || Object.keys(hearing).length === 0) {
         console.warn("Hearing object is empty");
         return hearing;
       }
@@ -211,10 +211,11 @@ const InsideHearingMainPage = () => {
   }, [selectedWitness, hearing]);
 
   const saveWitnessDeposition = () => {
+    if (!hearing) return;
     const updatedHearing = structuredClone(hearing || {});
     setWitnessModalOpen(true);
-    updatedHearing.additionalDetails = updatedHearing?.additionalDetails || {};
-    updatedHearing.additionalDetails.witnessDepositions = updatedHearing?.additionalDetails?.witnessDepositions || [];
+    updatedHearing.additionalDetails = updatedHearing.additionalDetails || {};
+    updatedHearing.additionalDetails.witnessDepositions = updatedHearing.additionalDetails.witnessDepositions || [];
     if (isDepositionSaved) {
       return;
     }

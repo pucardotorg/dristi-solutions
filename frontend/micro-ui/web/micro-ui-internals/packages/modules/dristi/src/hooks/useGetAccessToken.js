@@ -46,7 +46,7 @@ export const getUserDetails = async (refreshToken, mobNumber = null) => {
 export function useGetAccessToken(key, shouldRefreshToken) {
   useEffect(() => {
     const refreshToken = window.localStorage.getItem(key);
-    if (refreshToken && typeof shouldRefreshToken === "boolean" && shouldRefreshToken) {
+    if (refreshToken && shouldRefreshToken) {
       getUserDetails(refreshToken).then((res) => {
         const { ResponseInfo, UserRequest: info, ...tokens } = res;
         const user = { info, ...tokens };
