@@ -27,7 +27,7 @@ const CustomStepperSuccess = ({
         headerStyles={{ fontSize: "32px" }}
         style={{ minWidth: "100%", marginTop: "32px", marginBottom: "20px" }}
       ></Banner>
-      {<p> {bannerSubText ? t(bannerSubText) : ""}</p>}
+      {bannerSubText ? <p>{t(bannerSubText)}</p> : ""}
       {submissionData && (
         <CustomCopyTextDiv
           t={t}

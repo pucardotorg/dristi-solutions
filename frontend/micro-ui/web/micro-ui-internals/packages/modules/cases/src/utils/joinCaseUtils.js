@@ -1,4 +1,6 @@
 import { userTypeOptions } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/registration/config";
+import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
+import { CASEService } from "../hooks/services";
 
 const TYPE_REGISTER = { type: "register" };
 const TYPE_LOGIN = { type: "login" };
@@ -109,6 +111,7 @@ export const createRespondentIndividualUser = async (data, documentData, tenantI
             "SUBMISSION_RESPONDER",
             "SUBMISSION_DELETE",
             "TASK_VIEWER",
+            "CASE_RESPONDER",
           ]?.map((role) => ({
             code: role,
             name: role,
@@ -147,4 +150,31 @@ export const createRespondentIndividualUser = async (data, documentData, tenantI
   //   await getUserDetails(refreshToken, data?.complainantVerification?.userDetails?.mobileNumber);
   // }
   return response;
+};
+
+export const updateCaseDetails = async (caseDetails, tenantId, action) => {
+  return DRISTIService.caseUpdateService(
+    {
+      cases: {
+        ...caseDetails,
+        linkedCases: caseDetails?.linkedCases ? caseDetails?.linkedCases : [],
+        workflow: {
+          ...caseDetails?.workflow,
+          action,
+        },
+      },
+      tenantId,
+    },
+    tenantId
+  );
+};
+
+export const submitJoinCase = async (data) => {
+  let res;
+  try {
+    res = await CASEService.joinCaseService(data, {});
+    return [res, undefined];
+  } catch (err) {
+    return [res, err];
+  }
 };

@@ -211,6 +211,10 @@ export const pendingTaskCaseActions = {
       url: "/home/home-pending-task/e-filing-payment-breakdown",
     },
   },
+  PENDING_RESPONSE: {
+    actorName: ["LITIGANT/ADVOCATE"],
+    actionName: "Pending Response",
+  },
   UNDER_SCRUTINY: {
     actorName: ["FSO"],
     actionName: "Case Filed and ready for FSO to review",

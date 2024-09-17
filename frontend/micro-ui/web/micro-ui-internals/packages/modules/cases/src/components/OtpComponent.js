@@ -15,10 +15,6 @@ const OtpComponent = ({
 }) => {
   const [timeLeft, setTimeLeft] = useState(otpEnterTime);
 
-  useEffect(() => {
-    console.log("otp :>> ", otp);
-  }, [otp]);
-
   useInterval(
     () => {
       setTimeLeft(timeLeft - 1);
