@@ -152,7 +152,7 @@ public class PaymentUpdateService {
 
         for (Task task : tasks) {
             log.info("Updating pending payment status for task: {}", task);
-            if (task.getTaskType().equals(SUMMON) || task.getTaskType().equals(NOTICE)) {
+            if (task.getTaskType().equals(SUMMON)) {
                 Workflow workflow = new Workflow();
                 workflow.setAction("MAKE PAYMENT");
                 task.setWorkflow(workflow);
@@ -164,6 +164,17 @@ public class PaymentUpdateService {
                 if (ISSUESUMMON.equalsIgnoreCase(status))
                     producer.push(config.getTaskIssueSummonTopic(), taskRequest);
 
+                producer.push(config.getTaskUpdateTopic(), taskRequest);
+            }
+            else if (task.getTaskType().equals(NOTICE)) {
+                Workflow workflow = new Workflow();
+                workflow.setAction("MAKE_PAYMENT");
+                task.setWorkflow(workflow);
+                String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, task.getTaskNumber(),
+                        config.getTaskNoticeBusinessServiceName(), workflow, config.getTaskNoticeBusinessName());
+                task.setStatus(status);
+
+                TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                 producer.push(config.getTaskUpdateTopic(), taskRequest);
             }
         }
