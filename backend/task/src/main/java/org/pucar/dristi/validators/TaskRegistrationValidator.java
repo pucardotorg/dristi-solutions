@@ -69,6 +69,9 @@ public class TaskRegistrationValidator {
                 .taskNumber(task.getTaskNumber()).build();
 
         List<Task> tasks = repository.getTasks(taskCriteria, null);
+        if (tasks == null) {
+            throw new CustomException(UPLOAD_TASK_DOCUMENT_ERROR, "Tasks list is null");
+        }
 
         return tasks.stream()
                 .findFirst()
