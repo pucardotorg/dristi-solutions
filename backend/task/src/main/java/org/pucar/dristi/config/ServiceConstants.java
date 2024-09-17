@@ -76,5 +76,7 @@ public class ServiceConstants {
 
     public static final String FILTER_PAYMENT_TYPE_DELIVERY_CHANNEL = "$[?(@.deliveryChannel == '%s' && @.businessService[?(@.businessCode == '%s')])]";
 
+    public static final String UPLOAD_TASK_DOCUMENT_ERROR = "UPLOAD_TASK_DOCUMENT_ERROR";
+
 
 }
