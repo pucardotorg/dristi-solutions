@@ -37,4 +37,7 @@ public class IdRequest {
 	@JsonProperty("count")
 	private Integer count;
 
+	@JsonProperty("isSequencePadded")
+	private Boolean isSequencePadded;
+
 }
