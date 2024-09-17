@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class IPostUtilTest {
+public class EPostUtilTest {
 
     @Mock
     private MdmsUtil mdmsUtil;
@@ -30,11 +30,11 @@ public class IPostUtilTest {
     @Mock
     private ObjectMapper objectMapper;
 
-    private EPostUtil ePostUtil;
+    private SummonUtil ePostUtil;
 
     @BeforeEach
     void setUp() {
-        ePostUtil = new EPostUtil(mdmsUtil, objectMapper);
+        ePostUtil = new SummonUtil(mdmsUtil, objectMapper);
     }
 
     @Test

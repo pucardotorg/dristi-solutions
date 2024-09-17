@@ -14,19 +14,19 @@ import static drishti.payment.calculator.config.ServiceConstants.I_POST_MASTER;
 import static drishti.payment.calculator.config.ServiceConstants.SUMMON_MODULE;
 
 @Component
-public class EPostUtil {
+public class SummonUtil {
+
     private final MdmsUtil mdmsUtil;
 
     private final ObjectMapper objectMapper;
 
     @Autowired
-    public EPostUtil(MdmsUtil mdmsUtil, ObjectMapper objectMapper) {
+    public SummonUtil(MdmsUtil mdmsUtil, ObjectMapper objectMapper) {
         this.mdmsUtil = mdmsUtil;
         this.objectMapper = objectMapper;
     }
 
     public EPostConfigParams getIPostFeesDefaultData(RequestInfo requestInfo, String tenantId) {
-
 
         Map<String, Map<String, JSONArray>> response = mdmsUtil.fetchMdmsData(requestInfo, tenantId, SUMMON_MODULE, Collections.singletonList(I_POST_MASTER));
         JSONArray array = response.get(SUMMON_MODULE).get(I_POST_MASTER);
@@ -34,5 +34,9 @@ public class EPostUtil {
 
         return objectMapper.convertValue(object, EPostConfigParams.class);
         //todo :add other methods
+    }
+
+    public Double calculateCourtFees(EPostConfigParams ePostFeesDefaultData) {
+        return ePostFeesDefaultData.getCourtFee() + ePostFeesDefaultData.getApplicationFee();
     }
 }
