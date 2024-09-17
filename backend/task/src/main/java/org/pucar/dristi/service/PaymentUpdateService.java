@@ -66,7 +66,7 @@ public class PaymentUpdateService {
             String tenantId = paymentRequest.getPayment().getTenantId();
 
             for (PaymentDetail paymentDetail : paymentDetails) {
-                if (paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskSummonBusinessServiceName())) {
+                if (paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskSummonBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskNoticeBusinessServiceName())) {
                     updateWorkflowForCasePayment(requestInfo, tenantId, paymentDetail);
                 }
             }
@@ -152,7 +152,7 @@ public class PaymentUpdateService {
 
         for (Task task : tasks) {
             log.info("Updating pending payment status for task: {}", task);
-            if (task.getTaskType().equals(SUMMON)) {
+            if (task.getTaskType().equals(SUMMON) || task.getTaskType().equals(NOTICE)) {
                 Workflow workflow = new Workflow();
                 workflow.setAction("MAKE PAYMENT");
                 task.setWorkflow(workflow);
