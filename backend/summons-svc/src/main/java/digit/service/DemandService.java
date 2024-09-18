@@ -53,6 +53,9 @@ public class DemandService {
     public BillResponse fetchPaymentDetailsAndGenerateDemandAndBill(TaskRequest taskRequest) {
         Task task = taskRequest.getTask();
         List<Calculation> calculationList = generatePaymentDetails(taskRequest.getRequestInfo(), task);
+        if(calculationList == null || calculationList.isEmpty()){
+            throw new CustomException(PAYMENT_CALCULATOR_ERROR, "Getting empty or null data from payment-calculator");
+        }
         Set<String> consumerCodeList = generateDemands(taskRequest.getRequestInfo(), calculationList, task);
         return getBillWithMultipleConsumerCode(taskRequest.getRequestInfo(), consumerCodeList, task);
 
