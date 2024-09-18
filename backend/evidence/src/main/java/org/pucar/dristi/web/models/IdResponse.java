@@ -13,6 +13,7 @@ import lombok.*;
 @ToString
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class IdResponse {
 
 	private String id;

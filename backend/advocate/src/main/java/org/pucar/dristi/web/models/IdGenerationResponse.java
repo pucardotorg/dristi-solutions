@@ -1,6 +1,7 @@
 package org.pucar.dristi.web.models;
 
 import lombok.*;
+import org.egov.common.contract.response.ResponseInfo;
 
 import java.util.List;
 
@@ -15,6 +16,7 @@ import java.util.List;
 @ToString
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class IdGenerationResponse {
 
 	private ResponseInfo responseInfo;

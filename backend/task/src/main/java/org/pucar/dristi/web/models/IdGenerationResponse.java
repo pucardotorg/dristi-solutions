@@ -1,6 +1,7 @@
 package org.pucar.dristi.web.models;
 
 import lombok.*;
+import org.egov.common.contract.response.ResponseInfo;
 
 import java.util.List;
 
