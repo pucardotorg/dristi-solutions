@@ -2703,11 +2703,14 @@ export const configsIssueNotice = [
       {
         type: "date",
         label: "Date for Hearing",
+        key: "dateForHearing",
+        schemaKeyPath: "orderDetails.hearingDate",
+        transformer: "date",
         labelChildren: "OutlinedInfoIcon",
         isMandatory: true,
         disable: true,
         populators: {
-          name: "date",
+          name: "dateForHearing",
           validation: {
             max: {
               patternType: "date",
@@ -2740,6 +2743,8 @@ export const configsIssueNotice = [
         type: "component",
         component: "SummonsOrderComponent",
         key: "noticeOrder",
+        schemaKeyPath: "orderDetails.respondentName",
+        transformer: "summonsOrderPartyName",
         label: "Party to Summon",
         populators: {
           inputs: [
