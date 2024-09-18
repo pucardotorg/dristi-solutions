@@ -1,43 +1,59 @@
 import React from "react";
 import { useEffect, useState, useMemo, useRef } from "react";
 
-const TranscriptComponent = ({ setTranscriptText, isRecording, setIsRecording, activeTab, setWitnessDepositionText }) => {
-  const [context, setContext] = useState(null);
-  const [globalStream, setGlobalStream] = useState(null);
-  const [processor, setProcessor] = useState(null);
-  const endTimeRef = useRef([0, 0, 0]);
-  const [transcription, setTranscription] = useState("");
-  const [webSocketStatus, setWebSocketStatus] = useState("Not Connected");
-  const [transcriptionUrl, setTranscriptionUrl] = useState("");
-  const [sendOriginal, setSendOriginal] = useState("");
+const TranscriptComponent = ({
+  setTranscriptText,
+  isTranscriptRecording,
+  setIsTranscriptRecording,
+  activeTab,
+  setWitnessDepositionText,
+  isWitnessRecording,
+  setIsWitnessRecording,
+  globalStream,
+  setGlobalStream,
+  processor,
+  setProcessor,
+  context,
+  setContext,
+  websocket,
+  webSocketStatus,
+  setWebSocketStatus,
+}) => {
+  // const endTimeRef = useRef([0, 0, 0]);
+  // const [transcription, setTranscription] = useState("");
+  // const [transcriptionUrl, setTranscriptionUrl] = useState("");
+  // const [sendOriginal, setSendOriginal] = useState("");
   const [clientId, setClientId] = useState(null);
-  const [currentPosition, setCurrentPosition] = useState(0);
+  // const [currentPosition, setCurrentPosition] = useState(0);
   const [selectedLanguage, setSelectedLanguage] = useState("english");
   const [selectedAsrModel, setSelectedAsrModel] = useState("bhashini");
-  const [websocket, setWebsocket] = useState(null);
   const inputSourceRef = useRef("mic");
   const [roomId, setRoomId] = useState(null);
-  const [audioUrl, setAudioUrl] = useState("");
+  // const [audioUrl, setAudioUrl] = useState("");
   const [isConnected, setIsConnected] = useState(false);
 
   const bufferSize = 4096;
 
   useEffect(() => {
-    initWebSocket();
-  }, []);
+    if (websocket) initWebSocket();
+  }, [websocket]);
 
-  const joinRoom = () => {
-    console.log(websocket, "websocket join room", WebSocket.OPEN);
-    if (websocket && websocket.readyState === WebSocket.OPEN) {
-      const message = {
-        type: "joined_room",
-        room_id: roomId,
-      };
-      console.log(websocket, message, "websocket join room success");
+  // const joinRoom = () => {
+  //   console.log(websocket, "websocket join room", WebSocket.OPEN);
+  //   if (websocket && websocket.readyState === WebSocket.OPEN) {
+  //     const message = {
+  //       type: "joined_room",
+  //       room_id: roomId,
+  //     };
+  //     console.log(websocket, message, "websocket join room success");
 
-      websocket.send(JSON.stringify(message));
-    }
-  };
+  //     websocket.send(JSON.stringify(message));
+  //   }
+  // };
+
+  useEffect(() => {
+    stopRecording();
+  }, [activeTab]);
 
   const createRoom = () => {
     console.log(websocket, "websocket create room");
@@ -51,26 +67,16 @@ const TranscriptComponent = ({ setTranscriptText, isRecording, setIsRecording, a
   };
 
   const initWebSocket = () => {
-    const websocketAddress = "wss://dristi-kerala-dev.pucar.org/transcription";
-
-    if (!websocketAddress) {
-      console.log("WebSocket address is required.");
-      return;
-    }
-
-    const ws = new WebSocket(websocketAddress);
-
-    ws.onopen = () => {
+    websocket.onopen = () => {
       console.log("WebSocket connection established");
       setWebSocketStatus("Connected");
     };
 
-    ws.onclose = (event) => {
+    websocket.onclose = (event) => {
       console.log("WebSocket connection closed", event);
       setWebSocketStatus("Not Connected");
     };
-
-    ws.onmessage = (event) => {
+    websocket.onmessage = (event) => {
       const data = JSON.parse(event.data);
       if (data.type === "joined_room" || data.type === "refresh_transcription") {
         handleRoomJoined(data);
@@ -78,44 +84,48 @@ const TranscriptComponent = ({ setTranscriptText, isRecording, setIsRecording, a
         updateTranscription(data);
       }
     };
-
-    setWebsocket(ws);
   };
 
   const handleRoomJoined = (data) => {
     setClientId(data.client_id);
     setRoomId(data.room_id);
-    setTranscriptionUrl(data.transcript_url);
-    setAudioUrl(data.audio_url);
+    // setTranscriptionUrl(data.transcript_url);
+    // setAudioUrl(data.audio_url);
   };
 
   const updateTranscription = (transcriptData) => {
-    if (transcriptData.words && transcriptData.words.length > 0) {
-      const newTranscription = transcriptData.words
-        .map((wordData) => {
-          const probability = wordData.probability;
-          let color = "black";
-          if (probability > 0.9) color = "green";
-          else if (probability > 0.6) color = "orange";
-          else color = "red";
-          return `<span style="color: ${color}">${wordData.word} </span>`;
-        })
-        .join("");
-      setTranscription((prev) => prev + " " + newTranscription);
-    } else {
-      setTranscription((prev) => prev + " " + transcriptData.text);
-    }
+    // if (transcriptData.words && transcriptData.words.length > 0) {
+    //   const newTranscription = transcriptData.words
+    //     .map((wordData) => {
+    //       const probability = wordData.probability;
+    //       let color = "black";
+    //       if (probability > 0.9) color = "green";
+    //       else if (probability > 0.6) color = "orange";
+    //       else color = "red";
+    //       return `<span style="color: ${color}">${wordData.word} </span>`;
+    //     })
+    //     .join("");
+    //   setTranscription((prev) => prev + " " + newTranscription);
+    // } else {
+    //   setTranscription((prev) => prev + " " + transcriptData.text);
+    // }
     activeTab === "Witness Deposition"
-      ? setWitnessDepositionText((prev) => prev + " " + transcriptData.text)
-      : setTranscriptText((prev) => prev + " " + transcriptData.text);
-    setSendOriginal((prev) => prev + " " + transcriptData.text);
+      ? setWitnessDepositionText((prev) => (prev.length ? prev + " " + transcriptData.text : transcriptData.text))
+      : setTranscriptText((prev) => (prev.length ? prev + " " + transcriptData.text : transcriptData.text));
+    // setSendOriginal((prev) => prev + " " + transcriptData.text);
   };
   const startRecording = () => {
-    if (isRecording) {
-      return;
+    if (activeTab === "Witness Deposition") {
+      if (isWitnessRecording) {
+        return;
+      }
+      setIsWitnessRecording(true);
+    } else {
+      if (isTranscriptRecording) {
+        return;
+      }
+      setIsTranscriptRecording(true);
     }
-    setIsRecording(true);
-
     const inputSource = inputSourceRef.current.value;
     if (inputSource === "mic") {
       startMicRecording();
@@ -125,24 +135,25 @@ const TranscriptComponent = ({ setTranscriptText, isRecording, setIsRecording, a
   };
 
   const stopRecording = () => {
-    if (!isRecording) return;
-
-    setIsRecording(false);
-
+    if (activeTab === "Witness Deposition") {
+      setIsWitnessRecording(false);
+    } else {
+      setIsTranscriptRecording(false);
+    }
     if (globalStream) {
       globalStream.getTracks().forEach((track) => track.stop());
       setGlobalStream(null);
     }
     if (processor) {
-      setCurrentPosition(context.currentTime);
+      // setCurrentPosition(context.currentTime);
       processor.disconnect();
       setProcessor(null);
     }
     if (context) {
       context.close().then(() => setContext(null));
     }
-    const now = new Date();
-    endTimeRef.current = [now.getHours(), now.getMinutes(), now.getSeconds()];
+    // const now = new Date();
+    // endTimeRef.current = [now.getHours(), now.getMinutes(), now.getSeconds()];
   };
 
   const processAudio = (e, audioContext) => {
@@ -296,7 +307,7 @@ const TranscriptComponent = ({ setTranscriptText, isRecording, setIsRecording, a
           </svg>
         </div>
       )}
-      {isConnected && webSocketStatus === "Connected" && !isRecording && (
+      {isConnected && !(isTranscriptRecording || isWitnessRecording) && (
         <div style={{ textAlign: "right" }}>
           <button onClick={startRecording} title="Start Recording">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -320,7 +331,7 @@ const TranscriptComponent = ({ setTranscriptText, isRecording, setIsRecording, a
           </button>
         </div>
       )}
-      {isConnected && isRecording && (
+      {isConnected && (isWitnessRecording || isTranscriptRecording) && (
         <div style={{ textAlign: "right" }}>
           <button onClick={stopRecording} title="Stop Recording">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

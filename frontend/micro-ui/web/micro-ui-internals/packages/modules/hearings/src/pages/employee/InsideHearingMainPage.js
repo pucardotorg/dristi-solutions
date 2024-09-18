@@ -147,7 +147,7 @@ const InsideHearingMainPage = () => {
       const selectedWitnessDefault = responseList?.additionalDetails?.witnessDetails?.formdata?.[0]?.data || {};
       setSelectedWitness(selectedWitnessDefault);
       setWitnessDepositionText(
-        hearing?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitnessDefault.uuid)?.deposition
+        hearing?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitnessDefault.uuid)?.deposition || ""
       );
     }
   }, [caseDataResponse]);
@@ -281,10 +281,33 @@ const InsideHearingMainPage = () => {
   };
 
   const attendanceCount = useMemo(() => hearing?.attendees?.filter((attendee) => attendee.wasPresent).length || 0, [hearing]);
-  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscriptRecording, setIsTranscriptRecording] = useState(false);
+  const [isWitnessRecording, setIsWitnessRecording] = useState(false);
+  const [globalStream, setGlobalStream] = useState(null);
+  const [processor, setProcessor] = useState(null);
+  const [context, setContext] = useState(null);
+
+  const [websocket, setWebsocket] = useState(null);
+  const [webSocketStatus, setWebSocketStatus] = useState(null);
+
   const IsSelectedWitness = useMemo(() => {
     return !isEmpty(selectedWitness);
   }, [selectedWitness]);
+
+  useEffect(() => {
+    initWebSocket();
+  }, []);
+
+  const initWebSocket = () => {
+    const websocketAddress = "wss://dristi-kerala-dev.pucar.org/transcription";
+
+    if (!websocketAddress) {
+      console.log("WebSocket address is required.");
+      return;
+    }
+    const ws = new WebSocket(websocketAddress);
+    setWebsocket(ws);
+  };
 
   return (
     <div className="admitted-case" style={{ display: "flex" }}>
@@ -359,9 +382,18 @@ const InsideHearingMainPage = () => {
                     {!disableTextArea && IsSelectedWitness && !isDepositionSaved && (
                       <TranscriptComponent
                         setWitnessDepositionText={setWitnessDepositionText}
-                        isRecording={isRecording}
-                        setIsRecording={setIsRecording}
+                        isWitnessRecording={isWitnessRecording}
+                        setIsWitnessRecording={setIsWitnessRecording}
                         activeTab={activeTab}
+                        globalStream={globalStream}
+                        setGlobalStream={setGlobalStream}
+                        processor={processor}
+                        setProcessor={setProcessor}
+                        context={context}
+                        setContext={setContext}
+                        websocket={websocket}
+                        webSocketStatus={webSocketStatus}
+                        setWebSocketStatus={setWebSocketStatus}
                       ></TranscriptComponent>
                     )}
                   </React.Fragment>
@@ -378,9 +410,18 @@ const InsideHearingMainPage = () => {
                     {!disableTextArea && (
                       <TranscriptComponent
                         setTranscriptText={setTranscriptText}
-                        isRecording={isRecording}
-                        setIsRecording={setIsRecording}
+                        isTranscriptRecording={isTranscriptRecording}
+                        setIsTranscriptRecording={setIsTranscriptRecording}
                         activeTab={activeTab}
+                        globalStream={globalStream}
+                        setGlobalStream={setGlobalStream}
+                        processor={processor}
+                        setProcessor={setProcessor}
+                        context={context}
+                        setContext={setContext}
+                        websocket={websocket}
+                        webSocketStatus={webSocketStatus}
+                        setWebSocketStatus={setWebSocketStatus}
                       ></TranscriptComponent>
                     )}
                   </React.Fragment>
@@ -411,7 +452,7 @@ const InsideHearingMainPage = () => {
             <div>
               <Button
                 label={t("SAVE_WITNESS_DEPOSITION")}
-                isDisabled={isDepositionSaved}
+                isDisabled={isDepositionSaved || !IsSelectedWitness}
                 onButtonClick={() => {
                   saveWitnessDeposition();
                 }}
