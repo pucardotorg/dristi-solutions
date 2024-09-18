@@ -53,6 +53,8 @@ function Home() {
   );
 
   const [callRefetch, SetCallRefetch] = useState(false);
+  const [caseDetails, setCaseDetails] = useState(null);
+  const [selectedParty, setSelectedParty] = useState({});
 
   if (userType === "ADVOCATE" && searchData) {
     const advocateBarRegNumber = searchData?.advocates?.[0]?.responseList?.[0]?.barRegistrationNumber;
@@ -91,7 +93,7 @@ function Home() {
         <div className="header-class">
           <div className="header">{t("CS_YOUR_CASE")}</div>
           <div className="button-field" style={{ width: "50%" }}>
-            <JoinCaseHome refreshInbox={refreshInbox} />
+            <JoinCaseHome refreshInbox={refreshInbox} updateCase={setCaseDetails} updateSelectedParty={setSelectedParty} />
             <Button
               className={"tertiary-button-selector"}
               label={t("FILE_A_CASE")}

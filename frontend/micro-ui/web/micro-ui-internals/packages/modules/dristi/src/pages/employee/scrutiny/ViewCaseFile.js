@@ -324,11 +324,12 @@ function ViewCaseFile({ t, inViewCase = false }) {
   // if (isScrutiny && state !== CaseWorkflowState.UNDER_SCRUTINY) {
   //   history.push("/digit-ui/employee/dristi/cases");
   // }
-  const sidebar = ["litigentDetails", "caseSpecificDetails", "additionalDetails"];
+  const sidebar = ["litigentDetails", "caseSpecificDetails", "additionalDetails", "submissionFromAccused"];
   const labels = {
     litigentDetails: "CS_LITIGENT_DETAILS",
     caseSpecificDetails: "CS_CASE_SPECIFIC_DETAILS",
     additionalDetails: "CS_ADDITIONAL_DETAILS",
+    submissionFromAccused: "CS_SUBMISSSIONS_FROM_ACCUSED",
   };
   const checkList = [
     "CS_SPELLING_MISTAKES",

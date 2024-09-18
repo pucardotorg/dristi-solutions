@@ -362,6 +362,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
           hideSubmit: true,
           modalBody: (
             <CustomStepperSuccess
+              successMessage={t(`You have successfully sent summons via ${deliveryChannel}`)}
+              bannerSubText={t("Relevant party/ parties will be notified about the document(s) issued.")}
+              submitButtonText={t(documents ? "Mark as sent" : "Close")}
+              closeButtonText={t(documents ? "Close" : "Download Document")}
               closeButtonAction={handleClose}
               submitButtonAction={handleSubmit}
               t={t}

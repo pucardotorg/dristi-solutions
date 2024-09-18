@@ -33,6 +33,7 @@ import {
   sendBackCase,
 } from "../../citizen/FileCase/Config/admissionActionConfig";
 import Modal from "../../../components/Modal";
+import CustomCaseInfoDiv from "../../../components/CustomCaseInfoDiv";
 
 const defaultSearchValues = {};
 
@@ -153,11 +154,11 @@ const AdmittedCases = () => {
 
   const statue = useMemo(
     () =>
-      caseDetails?.statutesAndSections[0]?.sections[0]
-        ? `${caseDetails?.statutesAndSections[0]?.sections[0]
+      caseDetails?.statutesAndSections?.[0]?.sections?.[0]
+        ? `${caseDetails?.statutesAndSections?.[0]?.sections?.[0]
             ?.split(" ")
             ?.map((splitString) => splitString.charAt(0))
-            ?.join("")} S${caseDetails?.statutesAndSections[0]?.subsections[0]}`
+            ?.join("")} S${caseDetails?.statutesAndSections?.[0]?.subsections?.[0]}`
         : "",
     [caseDetails?.statutesAndSections]
   );
@@ -690,6 +691,35 @@ const AdmittedCases = () => {
     },
   ];
 
+  const caseBasicDetails = useMemo(() => {
+    return [
+      {
+        key: "Filing No.",
+        value: caseDetails?.filingNumber,
+      },
+      {
+        key: "Complaint / CMP No.",
+        value: "",
+      },
+      {
+        key: "CNR No.",
+        value: caseDetails?.cnrNumber,
+      },
+      {
+        key: "CCST No.",
+        value: "",
+      },
+      {
+        key: "Submitted on",
+        value: formatDate(new Date(caseDetails?.filingDate)),
+      },
+      {
+        key: "Registered on",
+        value: "",
+      },
+    ];
+  }, [caseDetails]);
+
   const updateCaseDetails = async (action, data = {}) => {
     let respondentDetails = caseDetails?.additionalDetails?.respondentDetails;
     let witnessDetails = caseDetails?.additionalDetails?.witnessDetails;
@@ -908,7 +938,6 @@ const AdmittedCases = () => {
         break;
 
       case "REJECT":
-        debugger;
         setShowDismissCaseConfirmation(true);
         break;
 
@@ -1336,6 +1365,7 @@ const AdmittedCases = () => {
             </div>
           )}
         </div>
+        <CustomCaseInfoDiv t={t} data={caseBasicDetails} column={6} />
         <div className="search-tabs-container">
           <div>
             {tabData?.map((i, num) => (
