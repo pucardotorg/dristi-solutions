@@ -420,112 +420,19 @@ export const reviewCaseFileFormConfig = [
         populators: {
           inputs: [
             {
-              key: "witnessDetails",
-              name: "witnessDetails",
-              label: "CS_WITNESS_DETAIL_HEADING",
+              key: "submissionFromAccused",
+              name: "submissionFromAccused",
+              label: "CS_SUBMISSSIONS_FROM_ACCUSED",
               icon: "WitnessDetailsIcon",
-              config: [
-                {
-                  type: "title",
-                  value: ["firstName", "lastName"],
-                },
-                {
-                  type: "phonenumber",
-                  label: "PHONE_NUMBER",
-                  value: "phonenumbers.mobileNumber",
-                },
-                {
-                  type: "text",
-                  label: "CS_EMAIL_ID",
-                  value: "emails.emailId",
-                },
-                {
-                  type: "address",
-                  label: "ADDRESS",
-                  value: "addressDetails",
-                },
-                {
-                  type: "text",
-                  label: "CS_TEXTAREA_WITNESS_ADDITIONAL_DETAIL",
-                  value: "witnessAdditionalDetails.text",
-                },
-              ],
-              data: {},
-            },
-            {
-              key: "prayerSwornStatement",
-              name: "prayerSwornStatement",
-              label: "CS_PRAYER_AND_SWORN_STATEMENT_HEADING",
-              icon: "PrayerSwornIcon",
               config: [
                 {
                   type: "infoBox",
                   value: "infoBoxData",
                 },
                 {
-                  type: "text",
-                  label: "CS_CASE_SETTLEMENT_CONDITION_SUBHEADER",
-                  value: "caseSettlementCondition.text",
-                },
-                {
-                  type: "text",
-                  label: "CS_MEMORANDUM_OF_COMPLAINT_HEADER",
-                  textDependentOn: "memorandumOfComplaint.document",
-                  textDependentValue: "Document Attached",
-                  value: "memorandumOfComplaint.text",
-                },
-                {
-                  type: "text",
-                  label: "CS_PRAYER_FOR_RELIEF_HEADER",
-                  textDependentOn: "prayerForRelief.document",
-                  textDependentValue: "Document Attached",
-                  value: "prayerForRelief.text",
-                },
-                {
-                  type: "text",
-                  label: "CS_SWORN_STATEMENT_HEADER",
-                  textDependentOn: "swornStatement.document",
-                  textDependentValue: "Document Attached",
-                  value: "swornStatement.text",
-                },
-                {
-                  type: "text",
-                  label: "CS_ADDITIONAL_DETAILS",
-                  value: "additionalDetails.text",
-                },
-                {
-                  type: "text",
-                  label: "CS_SWORN_PAGE_ADDITIONAL_ACTS_SECTIONS_HEADER",
-                  value: "additionalActsSections.text",
-                },
-                {
                   type: "image",
                   label: "CS_DOCUMENT",
-                  value: ["swornStatement.document", "memorandumOfComplaint.document", "prayerForRelief.document", "SelectUploadDocWithName"],
-                },
-              ],
-              data: {},
-            },
-            {
-              key: "advocateDetails",
-              name: "advocateDetails",
-              label: "CS_ADVOCATE_DETAILS",
-              icon: "AdvocateDetailsIcon",
-              disableScrutiny: true,
-              config: [
-                {
-                  type: "title",
-                  value: ["advocateName"],
-                },
-                {
-                  type: "text",
-                  label: "CS_BAR_REGISTRATION",
-                  value: "barRegistrationNumber",
-                },
-                {
-                  type: "image",
-                  label: "CS_VAKALAT_NAMA",
-                  value: ["vakalatnamaFileUpload.document"],
+                  value: ["vakalatnamaDocument", "responseDocuments"],
                 },
               ],
               data: {},

@@ -72,6 +72,9 @@ public class CourtCase {
 	//@Size(min = 2, max = 32)
 	private String cnrNumber = null;
 
+	@JsonProperty("cmpNumber")
+	private String cmpNumber = null;
+
 	@JsonProperty("accessCode")
 	private String accessCode = null;
 
