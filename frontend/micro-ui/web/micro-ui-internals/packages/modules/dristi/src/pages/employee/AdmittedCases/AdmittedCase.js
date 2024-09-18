@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch } from "react-router-dom";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
-import { CustomThreeDots } from "../../../icons/svgIndex";
+import { CustomThreeDots, InfoIconRed } from "../../../icons/svgIndex";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import ViewCaseFile from "../scrutiny/ViewCaseFile";
 import { TabSearchconfig } from "./AdmittedCasesConfig";
@@ -95,6 +95,7 @@ const AdmittedCases = () => {
   const [createAdmissionOrder, setCreateAdmissionOrder] = useState(false);
   const [updatedCaseDetails, setUpdatedCaseDetails] = useState({});
   const [showDismissCaseConfirmation, setShowDismissCaseConfirmation] = useState(false);
+  const [noticeFailureCount, setNoticeFailureCount] = useState(0);
   const history = useHistory();
   const isCitizen = userRoles.includes("CITIZEN");
   const OrderWorkflowAction = Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {};
@@ -118,7 +119,7 @@ const AdmittedCases = () => {
     caseId,
     caseId
   );
-  const caseDetails = useMemo(() => caseData?.criteria[0]?.responseList?.[0], [caseData]);
+  const caseDetails = useMemo(() => caseData?.criteria?.[0]?.responseList?.[0], [caseData]);
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber, [caseDetails]);
 
   const showTakeAction =
@@ -947,7 +948,6 @@ const AdmittedCases = () => {
   };
 
   const onSubmit = async () => {
-    console.log("fdfgdf", primaryAction.action);
     switch (primaryAction.action) {
       case "REGISTER":
         break;
@@ -976,8 +976,9 @@ const AdmittedCases = () => {
               tab: "Orders",
             });
             updateCaseDetails("ADMIT");
-          } else if (caseDetails?.status === "PENDING_NOTICE") {
+          } else {
             handleIssueNotice(hearingDate, hearingNumber);
+            await updateCaseDetails("ADMIT");
           }
         } else {
           setSubmitModalInfo({ ...admitCaseSubmitConfig, caseInfo: caseInfo });
@@ -1011,7 +1012,6 @@ const AdmittedCases = () => {
           updateCaseDetails("ADMIT");
         } else {
           handleIssueNotice(hearingDate, hearingNumber);
-          await updateCaseDetails("ADMIT");
         }
         break;
       case "SCHEDULE_ADMISSION_HEARING":
@@ -1188,6 +1188,9 @@ const AdmittedCases = () => {
 
   const openHearingModule = () => {
     setShowScheduleHearingModal(true);
+    if (!isCaseAdmitted) {
+      setCreateAdmissionOrder(true);
+    }
   };
 
   const handleActionModal = () => {
@@ -1370,6 +1373,25 @@ const AdmittedCases = () => {
             </div>
           )}
         </div>
+        {noticeFailureCount > 0 && (
+          <div className="notice-failed-notification">
+            <div className="notice-failed-icon">
+              <InfoIconRed />
+            </div>
+            <p className="notice-failed-text">
+              {`${t("NOTICE_FAILED")} ${noticeFailureCount} ${t("TIMES_VIEW_STATUS")} `}
+              <span
+                onClick={() => {
+                  history.push("/");
+                }}
+                className="click-here"
+              >
+                {t("NOTICE_CLICK_HERE")}
+              </span>
+            </p>
+          </div>
+        )}
+
         <CustomCaseInfoDiv t={t} data={caseBasicDetails} column={6} />
         <div className="search-tabs-container">
           <div>

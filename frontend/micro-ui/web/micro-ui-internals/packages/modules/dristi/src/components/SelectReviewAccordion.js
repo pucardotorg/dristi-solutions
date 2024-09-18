@@ -297,8 +297,6 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
   };
 
   useEffect(() => {
-    console.log("formData :>> ", formData);
-    console.log("groupedByDocumentType :>> ", groupedByDocumentType);
     if (
       "litigentDetails" in formData &&
       "additionalDetails" in formData &&

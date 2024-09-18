@@ -5,6 +5,7 @@ const {
   search_order,
   search_mdms,
   search_hrms,
+  search_hearing,
   search_sunbirdrc_credential_service,
   create_pdf,
 } = require("../api");
@@ -70,6 +71,15 @@ async function newHearingDateAfterReschedule(req, res, qrCode) {
       renderError(res, "Court case not found", 404);
     }
 
+    const resHearing = await handleApiCall(
+      () => search_hearing(tenantId, cnrNumber, requestInfo),
+      "Failed to query hearing service"
+    );
+    const hearing = resHearing?.data?.HearingList?.find(
+      (item) => item.status == "OPTOUT"
+    );
+    const originalHearingDate = formatDate(hearing?.startTime);
+
     // FIXME: Commenting out HRMS calls is it not impl in solution
     // Search for HRMS details
     // const resHrms = await handleApiCall(
@@ -132,12 +142,7 @@ async function newHearingDateAfterReschedule(req, res, qrCode) {
       base64Url = imgTag.attr("src");
     }
 
-    var stringDate;
-    try {
-      stringDate = formatDate(order.createdDate);
-    } catch (error) {
-      return renderError(res, "Cannot convert epoch time to date", 500, error);
-    }
+    const formattedToday = formatDate(Date.now());
     const newHearingDate = order?.orderDetails?.newHearingDate
       ? formatDate(order?.orderDetails?.newHearingDate)
       : "";
@@ -148,7 +153,8 @@ async function newHearingDateAfterReschedule(req, res, qrCode) {
           courtName: mdmsCourtRoom.name,
           caseName: courtCase.caseTitle,
           caseNumber: courtCase.caseNumber,
-          date: stringDate,
+          originalHearingDate,
+          date: formattedToday,
           newHearingDate,
           additionalComments: order.comments,
           judgeSignature: "Judge Signature",

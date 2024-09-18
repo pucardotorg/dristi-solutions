@@ -158,16 +158,30 @@ async function mandatoryAsyncSubmissionsResponses(req, res, qrCode) {
     const day = currentDate.getDate();
     const month = months[currentDate.getMonth()];
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
-    const ifResponse = order?.orderDetails?.isResponseRequired ? "Yes" : "No";
+    const ifResponse = order?.orderDetails?.isResponseRequired?.code
+      ? "Yes"
+      : "No";
     const documentList = order?.orderDetails?.documentType?.value || "";
     const partiesToRespond =
       order?.orderDetails?.partyDetails?.partiesToRespond || [];
     const partyToMakeSubmission =
       order?.orderDetails?.partyDetails?.partyToMakeSubmission || [];
-    const evidenceSubmissionDeadline =
-      order?.orderDetails?.dates?.submissionDeadlineDate || null;
-    const responseSubmissionDeadline =
-      order?.orderDetails?.dates?.responseDeadlineDate || null;
+    const evidenceSubmissionDeadline = order?.orderDetails?.dates
+      ?.submissionDeadlineDate
+      ? formatDate(
+          new Date(order?.orderDetails?.dates?.submissionDeadlineDate),
+          "DD-MM-YYYY"
+        )
+      : "";
+
+    const responseSubmissionDeadline = order?.orderDetails?.dates
+      ?.responseDeadlineDate
+      ? formatDate(
+          new Date(order?.orderDetails?.dates?.responseDeadlineDate),
+          "DD-MM-YYYY"
+        )
+      : "";
+
     const data = {
       Data: [
         {
@@ -177,13 +191,9 @@ async function mandatoryAsyncSubmissionsResponses(req, res, qrCode) {
           caseName: courtCase.caseTitle,
           parties: partyToMakeSubmission?.join(", "),
           documentList: documentList,
-          evidenceSubmissionDeadline: evidenceSubmissionDeadline
-            ? formatDate(new Date(evidenceSubmissionDeadline), "DD-MM-YYYY")
-            : "",
+          evidenceSubmissionDeadline,
           ifResponse,
-          responseSubmissionDeadline: responseSubmissionDeadline
-            ? formatDate(new Date(responseSubmissionDeadline), "DD-MM-YYYY")
-            : "",
+          responseSubmissionDeadline,
           additionalComments: order?.comments || "",
           Date: formattedToday,
           Month: month,
