@@ -121,7 +121,7 @@ async function orderAcceptCheckout(req, res, qrCode) {
     if (!application) {
       return renderError(res, "Application not found", 404);
     }
-    const partyName = application?.additionalDetails?.onBehalOfName || " ";
+    const partyName = application?.additionalDetails?.onBehalOfName;
 
     // Handle QR code if enabled
     let base64Url = "";
@@ -164,18 +164,18 @@ async function orderAcceptCheckout(req, res, qrCode) {
     const data = {
       Data: [
         {
-          courtName: mdmsCourtRoom.name,
-          caseName: courtCase.caseTitle,
-          caseNumber: courtCase.caseNumber,
-          orderName: order.orderNumber,
+          courtName: mdmsCourtRoom.name || " ",
+          caseName: courtCase.caseTitle || " ",
+          caseNumber: courtCase.caseNumber || " ",
+          orderName: order.orderNumber || " ",
           submissionType: "Application",
-          submissionDate,
-          date: formattedToday,
-          Date: formattedToday,
-          partyName,
-          reasonForRescheduling,
-          originalHearingDate,
-          applicationId: application?.applicationNumber,
+          submissionDate: submissionDate || " ",
+          date: formattedToday || " ",
+          Date: formattedToday || " ",
+          partyName: partyName || " ",
+          reasonForRescheduling: reasonForRescheduling || " ",
+          originalHearingDate: originalHearingDate || " ",
+          applicationId: application?.applicationNumber || " ",
           content: order?.comments || " ",
           additionalDetails: order?.comments || " ",
           additionalComments: order?.comments || " ",

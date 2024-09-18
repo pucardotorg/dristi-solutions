@@ -121,18 +121,18 @@ async function caseSettlementAcceptance(req, res, qrCode) {
         const data = {
             "Data": [
                 {
-                    "courtName": mdmsCourtRoom.name,
-                    "caseName": courtCase.caseTitle,
-                    "caseNumber": courtCase.caseNumber,
-                    "partyName": `${complaintIndividual.name.givenName} ${complaintIndividual.name.familyName}`,
-                    "otherPartyName": `${respondentIndividual.name.givenName} ${respondentIndividual.name.familyName}`,
-                    "date": order.createdDate,
+                    "courtName": mdmsCourtRoom.name || " ",
+                    "caseName": courtCase.caseTitle || " ",
+                    "caseNumber": courtCase.caseNumber || " ",
+                    "partyName": `${complaintIndividual.name.givenName} ${complaintIndividual.name.familyName}` || " ",
+                    "otherPartyName": `${respondentIndividual.name.givenName} ${respondentIndividual.name.familyName}` || " ",
+                    "date": order.createdDate || " ",
                     "settlementAgreementDate": "Settlement agreement date from UI",
                     "mechanism": "Mechanism from UI",
                     "implemented": "Implementation status from UI",
-                    "additionalComments": order.comments,
+                    "additionalComments": order.comments || " ",
                     "judgeSignature": "Judge Signature",
-                    "judgeName": employee.user.name,
+                    "judgeName": employee.user.name || " ",
                     "courtSeal": "Court Seal",
                     "qrCodeUrl": base64Url
                 }

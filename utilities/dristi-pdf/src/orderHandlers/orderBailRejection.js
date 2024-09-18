@@ -195,19 +195,19 @@ const orderBailRejection = async (req, res, qrCode) => {
     const data = {
       Data: [
         {
-          courtName: mdmsCourtRoom.name,
+          courtName: mdmsCourtRoom.name || " ",
           courtPlace: "Kochi",
           state: "Kerala",
-          caseNumber: courtCase?.caseNumber,
-          caseYear: caseYear,
-          applicantName: advocateName || partyName,
-          partyName,
-          dateOfApplication: applicationDate,
+          caseNumber: courtCase?.caseNumber || " ",
+          caseYear: caseYear || " ",
+          applicantName: advocateName || partyName || " ",
+          partyName: partyName || " ",
+          dateOfApplication: applicationDate || " ",
           briefSummaryOfBail: order?.comments || " ",
-          date: formattedToday,
+          date: formattedToday || " ",
           documentNameList: ["Addhar Card", "Pan Card", "Passport"],
           documentList,
-          bailType,
+          bailType: bailType || " ",
           conditionOfBail:
             "Don't go outside of the city without informing the court",
           judgeSignature: "Judge Signature",

@@ -141,11 +141,11 @@ async function orderGeneric(req, res, qrCode) {
       Data: [
         {
           courtName: "Keral High Court",
-          caseName: courtCase.caseTitle,
-          caseNumber: courtCase.caseNumber,
-          orderName: order.orderNumber,
-          date: formattedToday,
-          orderContent: order.comments,
+          caseName: courtCase.caseTitle || " ",
+          caseNumber: courtCase.caseNumber || " ",
+          orderName: order.orderNumber || " ",
+          date: formattedToday || " ",
+          orderContent: order.comments || " ",
           judgeSignature: "Judge Signature",
           judgeName: "Suresh Soren",
           courtSeal: "Court Seal",

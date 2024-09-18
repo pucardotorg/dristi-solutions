@@ -125,14 +125,14 @@ async function summonsIssue(req, res, qrCode) {
         const data = {
             "Data": [
                 {
-                    "courtName": mdmsCourtRoom.name,
-                    "caseNumber": courtCase.caseNumber,
-                    "year": year,
-                    "caseName": courtCase.caseTitle,
-                    "respondentName": order.orderDetails.respondentName,
-                    "date": order.createdDate,
-                    "hearingDate": hearing.startTime,
-                    "additionalComments": order.comments,
+                    "courtName": mdmsCourtRoom.name || " ",
+                    "caseNumber": courtCase.caseNumber || " ",
+                    "year": year || " ",
+                    "caseName": courtCase.caseTitle || " ",
+                    "respondentName": order.orderDetails.respondentName || " ",
+                    "date": order.createdDate || " ",
+                    "hearingDate": hearing.startTime || " ",
+                    "additionalComments": order.comments || " ",
                     "judgeSignature": "Judge Signature",
                     "courtSeal": "Court Seal",
                     "qrCodeUrl": base64Url,

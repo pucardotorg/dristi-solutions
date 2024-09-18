@@ -137,14 +137,14 @@ async function scheduleHearingDate(req, res, qrCode) {
         const data = {
             "Data": [
                 {
-                    "courtName": mdmsCourtRoom.name,
-                    "caseNumber": courtCase.caseNumber,
-                    "year": year,
-                    "caseName": courtCase.caseTitle,
-                    "date": stringDate,
-                    "dateOfNextHearing": new Date(order.orderDetails.hearingDate).toLocaleDateString("en-IN"),
-                    "partyNames": order.orderDetails.partyName.join(", "),
-                    "additionalComments": order.comments,
+                    "courtName": mdmsCourtRoom.name || " ",
+                    "caseNumber": courtCase.caseNumber || " ",
+                    "year": year || " ",
+                    "caseName": courtCase.caseTitle || " ",
+                    "date": stringDate || " ",
+                    "dateOfNextHearing": new Date(order.orderDetails.hearingDate).toLocaleDateString("en-IN") || " ",
+                    "partyNames": order.orderDetails.partyName.join(", ") || " ",
+                    "additionalComments": order.comments || " ",
                     "judgeSignature": "Judges Signature",
                     "courtSeal": "Court Seal",
                     "qrCodeUrl": base64Url,
