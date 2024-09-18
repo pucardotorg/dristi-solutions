@@ -1668,6 +1668,16 @@ function EFilingCases({ path }) {
     setPrevSelected(selected);
     history.push(`?caseId=${caseId}&selected=${key}`);
   };
+
+  const delayCondonation = useMemo(() => {
+    const today = new Date();
+    if (!caseDetails?.caseDetails?.["demandNoticeDetails"]?.formdata) {
+      return null;
+    }
+    const dateOfAccrual = new Date(caseDetails?.caseDetails["demandNoticeDetails"]?.formdata[0]?.data?.dateOfAccrual);
+    return today?.getTime() - dateOfAccrual?.getTime();
+  }, [caseDetails]);
+
   const chequeDetails = useMemo(() => {
     const debtLiability = caseDetails?.caseDetails?.debtLiabilityDetails?.formdata?.[0]?.data;
     if (debtLiability?.liabilityType?.code === "PARTIAL_LIABILITY") {
@@ -1716,7 +1726,7 @@ function EFilingCases({ path }) {
             numberOfApplication: 1,
             tenantId: tenantId,
             caseId: caseId,
-            delayCondonation: 0,
+            delayCondonation: delayCondonation,
           },
         ],
       },
