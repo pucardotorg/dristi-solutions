@@ -487,7 +487,7 @@ public class CaseService {
         }
 
         // Convert the updated ObjectNode back to its original form
-        return objectMapper.convertValue(details2Node, additionalDetails2.getClass());
+        return objectMapper.convertValue(details1Node, additionalDetails2.getClass());
     }
 
 
