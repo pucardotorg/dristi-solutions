@@ -948,7 +948,6 @@ const AdmittedCases = () => {
   };
 
   const onSubmit = async () => {
-    console.log("fdfgdf", primaryAction.action);
     switch (primaryAction.action) {
       case "REGISTER":
         break;
@@ -977,8 +976,9 @@ const AdmittedCases = () => {
               tab: "Orders",
             });
             updateCaseDetails("ADMIT");
-          } else if (caseDetails?.status === "PENDING_NOTICE") {
+          } else {
             handleIssueNotice(hearingDate, hearingNumber);
+            await updateCaseDetails("ADMIT");
           }
         } else {
           setSubmitModalInfo({ ...admitCaseSubmitConfig, caseInfo: caseInfo });
@@ -1012,7 +1012,6 @@ const AdmittedCases = () => {
           updateCaseDetails("ADMIT");
         } else {
           handleIssueNotice(hearingDate, hearingNumber);
-          await updateCaseDetails("ADMIT");
         }
         break;
       case "SCHEDULE_ADMISSION_HEARING":
@@ -1189,6 +1188,9 @@ const AdmittedCases = () => {
 
   const openHearingModule = () => {
     setShowScheduleHearingModal(true);
+    if (!isCaseAdmitted) {
+      setCreateAdmissionOrder(true);
+    }
   };
 
   const handleActionModal = () => {

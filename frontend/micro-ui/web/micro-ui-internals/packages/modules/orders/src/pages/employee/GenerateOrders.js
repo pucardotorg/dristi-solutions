@@ -2009,12 +2009,7 @@ const GenerateOrders = () => {
       isCaseAdmitted
     ) {
       return t("ISSUE_SUMMONS_BUTTON");
-    } else if (
-      (prevOrder?.orderType === "RESCHEDULE_OF_HEARING_DATE" ||
-        (currentOrder?.orderType === "SCHEDULE_OF_HEARING_DATE" &&
-          currentOrder?.additionalDetails?.formdata?.namesOfPartiesRequired?.some((data) => data?.partyType.includes("respondent")))) &&
-      !isCaseAdmitted
-    ) {
+    } else if ((prevOrder?.orderType === "RESCHEDULE_OF_HEARING_DATE" || currentOrder?.orderType === "SCHEDULE_OF_HEARING_DATE") && !isCaseAdmitted) {
       return t("ISSUE_NOTICE_BUTTON");
     }
     return t("CS_COMMON_CLOSE");
