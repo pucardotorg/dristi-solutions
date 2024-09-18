@@ -176,7 +176,7 @@ const GenerateOrders = () => {
   ]);
   const courtRooms = useMemo(() => courtRoomDetails?.Court_Rooms || [], [courtRoomDetails]);
 
-  const { data: caseData, isLoading: isCaseDetailsLoading, reftech: refetchCaseData } = Digit.Hooks.dristi.useSearchCaseService(
+  const { data: caseData, isLoading: isCaseDetailsLoading, refetch: refetchCaseData } = Digit.Hooks.dristi.useSearchCaseService(
     {
       criteria: [
         {
@@ -797,7 +797,7 @@ const GenerateOrders = () => {
     }
     if (orderType === "NOTICE") {
       if (hearingDetails?.startTime) {
-        updatedFormdata.date = formatDate(new Date(hearingDetails?.startTime));
+        updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
       }
       if (currentOrder?.additionalDetails?.selectedParty && currentOrder?.additionalDetails?.selectedParty?.uuid) {
         updatedFormdata.noticeOrder = {
@@ -1773,7 +1773,9 @@ const GenerateOrders = () => {
         tenantId,
       },
       tenantId
-    );
+    ).then(() => {
+      refetchCaseData();
+    });
   };
 
   const handleIssueNotice = async (hearingDate, hearingNumber) => {

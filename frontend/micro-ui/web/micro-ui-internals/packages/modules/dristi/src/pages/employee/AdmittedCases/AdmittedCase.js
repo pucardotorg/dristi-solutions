@@ -977,9 +977,8 @@ const AdmittedCases = () => {
               tab: "Orders",
             });
             updateCaseDetails("ADMIT");
-          } else {
+          } else if (caseDetails?.status === "PENDING_NOTICE") {
             handleIssueNotice(hearingDate, hearingNumber);
-            await updateCaseDetails("ADMIT");
           }
         } else {
           setSubmitModalInfo({ ...admitCaseSubmitConfig, caseInfo: caseInfo });
@@ -1027,7 +1026,11 @@ const AdmittedCases = () => {
   };
 
   const onSaveDraft = () => {
-    if ([CaseWorkflowState.ADMISSION_HEARING_SCHEDULED, CaseWorkflowState.PENDING_NOTICE].includes(caseDetails?.status)) {
+    if (
+      [CaseWorkflowState.ADMISSION_HEARING_SCHEDULED, CaseWorkflowState.PENDING_NOTICE, CaseWorkflowState.PENDING_RESPONSE].includes(
+        caseDetails?.status
+      )
+    ) {
       history.push(
         `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${caseDetails?.filingNumber}&tab=Hearings`
       );
@@ -1277,7 +1280,9 @@ const AdmittedCases = () => {
       primaryAction.action ||
       secondaryAction.action ||
       tertiaryAction.action ||
-      [CaseWorkflowState.ADMISSION_HEARING_SCHEDULED, CaseWorkflowState.PENDING_NOTICE].includes(caseDetails?.status),
+      [CaseWorkflowState.ADMISSION_HEARING_SCHEDULED, CaseWorkflowState.PENDING_NOTICE, CaseWorkflowState.PENDING_RESPONSE].includes(
+        caseDetails?.status
+      ),
     [caseDetails, primaryAction.action, secondaryAction.action, tertiaryAction.action]
   );
 
@@ -1555,12 +1560,17 @@ const AdmittedCases = () => {
       {showActionBar && (
         <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
           <div style={{ width: "fit-content", display: "flex", gap: 20 }}>
-            {tertiaryAction.action && (
+            {(tertiaryAction.action ||
+              [CaseWorkflowState.ADMISSION_HEARING_SCHEDULED, CaseWorkflowState.PENDING_NOTICE, CaseWorkflowState.PENDING_RESPONSE].includes(
+                caseDetails?.status
+              )) && (
               <Button
                 className="previous-button"
                 variation="secondary"
                 label={
-                  [CaseWorkflowState.ADMISSION_HEARING_SCHEDULED, CaseWorkflowState.PENDING_NOTICE].includes(caseDetails?.status)
+                  [CaseWorkflowState.ADMISSION_HEARING_SCHEDULED, CaseWorkflowState.PENDING_NOTICE, CaseWorkflowState.PENDING_RESPONSE].includes(
+                    caseDetails?.status
+                  )
                     ? t("HEARING_IS_SCHEDULED")
                     : t(tertiaryAction.label)
                 }
@@ -1615,6 +1625,10 @@ const AdmittedCases = () => {
             />
           }
           actionSaveLabel={t("CS_DISMISS")}
+          actionCancelLabel={t("CS_BACK")}
+          actionCancelOnSubmit={() => {
+            setShowDismissCaseConfirmation(false);
+          }}
           children={<div style={{ margin: "16px 0px" }}>{t("DISMISS_CASE_CONFIRMATION_TEXT")}</div>}
           actionSaveOnSubmit={() => {
             handleActionModal();
