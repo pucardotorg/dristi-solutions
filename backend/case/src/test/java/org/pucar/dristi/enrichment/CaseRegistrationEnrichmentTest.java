@@ -113,7 +113,7 @@ class CaseRegistrationEnrichmentTest {
     void testEnrichCaseRegistration() {
 // Setup mocks
         List<String> idList = Collections.singletonList("fillingNumberId");
-        doReturn(idList).when(idgenUtil).getIdList(any(RequestInfo.class), eq("tenantId"), any(), isNull(), eq(1));
+        doReturn(idList).when(idgenUtil).getIdList(any(RequestInfo.class), eq("tenantId"), any(), isNull(), eq(1),any());
         courtCase = new CourtCase();
         courtCase.setTenantId("tenantId");
 
@@ -126,7 +126,7 @@ class CaseRegistrationEnrichmentTest {
         // Call the method under test
         caseRegistrationEnrichment.enrichCaseRegistrationOnCreate(caseRequest);
         // Verify the method behavior
-        verify(idgenUtil).getIdList(any(RequestInfo.class), eq("tenantId"), any(), isNull(), eq(1));
+        verify(idgenUtil).getIdList(any(RequestInfo.class), eq("tenantId"), any(), isNull(), eq(1),any());
         assertNotNull(courtCase.getAuditdetails());
         assertNotNull(courtCase.getId());
         assertNotNull(courtCase.getFilingNumber());
@@ -138,7 +138,7 @@ class CaseRegistrationEnrichmentTest {
     @Test
     void enrichCaseRegistration_OnCreate_ShouldThrowCustomException_WhenErrorOccurs() {
 
-        when(idgenUtil.getIdList(any(), anyString(), anyString(), any(), anyInt())).thenThrow(new RuntimeException("Error"));
+        when(idgenUtil.getIdList(any(), anyString(), anyString(), any(), anyInt(),any())).thenThrow(new RuntimeException("Error"));
 
         // Invoke the method and assert that it throws CustomException
         assertThrows(Exception.class, () -> caseRegistrationEnrichment.enrichCaseRegistrationOnCreate(caseRequest));
@@ -230,10 +230,9 @@ class CaseRegistrationEnrichmentTest {
         CourtCase courtCase = new CourtCase();
         courtCase.setFilingNumber("2022-12345");
         caseRequest.setCases(courtCase);
-        when(idgenUtil.getIdList(any(), any(), any(), any(), any())).thenReturn(Collections.singletonList("12345"));
-        caseRegistrationEnrichment.enrichCaseNumberAndCourtCaseNumber(caseRequest);
+        when(idgenUtil.getIdList(any(), any(), any(), any(), any(),any())).thenReturn(Collections.singletonList("12345"));
+        caseRegistrationEnrichment.enrichCourtCaseNumber(caseRequest);
 
-        assertNotNull(caseRequest.getCases().getCaseNumber());
         assertNotNull(caseRequest.getCases().getCourtCaseNumber());
     }
 
@@ -241,7 +240,7 @@ class CaseRegistrationEnrichmentTest {
     void enrichCaseNumberAndCNRNumber_handlesException() {
         caseRequest.setCases(null);
 
-        assertThrows(CustomException.class, () -> caseRegistrationEnrichment.enrichCaseNumberAndCourtCaseNumber(caseRequest));
+        assertThrows(CustomException.class, () -> caseRegistrationEnrichment.enrichCourtCaseNumber(caseRequest));
     }
 
     @Test
