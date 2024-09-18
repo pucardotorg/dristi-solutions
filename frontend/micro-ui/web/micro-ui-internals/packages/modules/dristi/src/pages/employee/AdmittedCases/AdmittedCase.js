@@ -976,9 +976,8 @@ const AdmittedCases = () => {
               tab: "Orders",
             });
             updateCaseDetails("ADMIT");
-          } else {
+          } else if (caseDetails?.status === "PENDING_NOTICE") {
             handleIssueNotice(hearingDate, hearingNumber);
-            await updateCaseDetails("ADMIT");
           }
         } else {
           setSubmitModalInfo({ ...admitCaseSubmitConfig, caseInfo: caseInfo });

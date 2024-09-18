@@ -61,7 +61,13 @@ const DocumentModal = ({ config, setShow, currentStep }) => {
       actionCancelOnSubmit={actionCancelOnSubmit}
       formId="modal-action"
       headerBarMain={
-        config?.isStepperModal && config?.steps[step]?.type !== "success" ? <Heading heading={config?.steps[step]?.heading || config?.heading} /> : ""
+        config?.isStepperModal && config?.steps[step]?.type !== "success" ? (
+          <Heading heading={config?.steps[step]?.heading || config?.heading} />
+        ) : !config?.isStepperModal ? (
+          <Heading heading={config?.steps[step]?.heading || config?.heading} />
+        ) : (
+          ""
+        )
       }
       className={
         config?.isStepperModal
