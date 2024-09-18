@@ -19,17 +19,11 @@ const TranscriptComponent = ({
   webSocketStatus,
   setWebSocketStatus,
 }) => {
-  // const endTimeRef = useRef([0, 0, 0]);
-  // const [transcription, setTranscription] = useState("");
-  // const [transcriptionUrl, setTranscriptionUrl] = useState("");
-  // const [sendOriginal, setSendOriginal] = useState("");
   const [clientId, setClientId] = useState(null);
-  // const [currentPosition, setCurrentPosition] = useState(0);
   const [selectedLanguage, setSelectedLanguage] = useState("english");
   const [selectedAsrModel, setSelectedAsrModel] = useState("bhashini");
   const inputSourceRef = useRef("mic");
   const [roomId, setRoomId] = useState(null);
-  // const [audioUrl, setAudioUrl] = useState("");
   const [isConnected, setIsConnected] = useState(false);
 
   const bufferSize = 4096;
@@ -37,19 +31,6 @@ const TranscriptComponent = ({
   useEffect(() => {
     if (websocket) initWebSocket();
   }, [websocket]);
-
-  // const joinRoom = () => {
-  //   console.log(websocket, "websocket join room", WebSocket.OPEN);
-  //   if (websocket && websocket.readyState === WebSocket.OPEN) {
-  //     const message = {
-  //       type: "joined_room",
-  //       room_id: roomId,
-  //     };
-  //     console.log(websocket, message, "websocket join room success");
-
-  //     websocket.send(JSON.stringify(message));
-  //   }
-  // };
 
   useEffect(() => {
     stopRecording();
@@ -89,30 +70,12 @@ const TranscriptComponent = ({
   const handleRoomJoined = (data) => {
     setClientId(data.client_id);
     setRoomId(data.room_id);
-    // setTranscriptionUrl(data.transcript_url);
-    // setAudioUrl(data.audio_url);
   };
 
   const updateTranscription = (transcriptData) => {
-    // if (transcriptData.words && transcriptData.words.length > 0) {
-    //   const newTranscription = transcriptData.words
-    //     .map((wordData) => {
-    //       const probability = wordData.probability;
-    //       let color = "black";
-    //       if (probability > 0.9) color = "green";
-    //       else if (probability > 0.6) color = "orange";
-    //       else color = "red";
-    //       return `<span style="color: ${color}">${wordData.word} </span>`;
-    //     })
-    //     .join("");
-    //   setTranscription((prev) => prev + " " + newTranscription);
-    // } else {
-    //   setTranscription((prev) => prev + " " + transcriptData.text);
-    // }
     activeTab === "Witness Deposition"
       ? setWitnessDepositionText((prev) => (prev.length ? prev + " " + transcriptData.text : transcriptData.text))
       : setTranscriptText((prev) => (prev.length ? prev + " " + transcriptData.text : transcriptData.text));
-    // setSendOriginal((prev) => prev + " " + transcriptData.text);
   };
   const startRecording = () => {
     if (activeTab === "Witness Deposition") {
@@ -145,15 +108,12 @@ const TranscriptComponent = ({
       setGlobalStream(null);
     }
     if (processor) {
-      // setCurrentPosition(context.currentTime);
       processor.disconnect();
       setProcessor(null);
     }
     if (context) {
       context.close().then(() => setContext(null));
     }
-    // const now = new Date();
-    // endTimeRef.current = [now.getHours(), now.getMinutes(), now.getSeconds()];
   };
 
   const processAudio = (e, audioContext) => {
@@ -276,29 +236,6 @@ const TranscriptComponent = ({
 
       {!isConnected && (
         <div style={{ textAlign: "right" }}>
-          {/* <button
-            onClick={() => {
-              createRoom();
-              setIsConnected(true);
-            }}
-            title="Connect"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <g clip-path="url(#clip0_4370_85284)">
-                <path
-                  d="M12 2C10.34 2 9 3.34 9 5V7H15V5C15 3.34 13.66 2 12 2ZM5 8C3.34 8 2 9.34 2 11V13C2 14.66 3.34 16 5 16H7V8H5ZM19 8H17V16H19C20.66 16 22 14.66 22 13V11C22 9.34 20.66 8 19 8ZM11 18H13V20H11V18Z"
-                  fill="#3D3C3C"
-                />
-                <path d="M7 8L17 8" stroke="#3D3C3C" stroke-width="2" stroke-linecap="round" />
-                <path d="M12 16L12 20" stroke="#3D3C3C" stroke-width="2" stroke-linecap="round" />
-              </g>
-              <defs>
-                <clipPath id="clip0_4370_85284">
-                  <rect width="24" height="24" fill="white" />
-                </clipPath>
-              </defs>
-            </svg>
-          </button> */}
           <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid">
             <title>Loading...</title>
             <circle cx="50" cy="50" fill="none" stroke="#1d3f72" strokeWidth="10" r="35" strokeDasharray="164.93361431346415 56.97787143782138">
