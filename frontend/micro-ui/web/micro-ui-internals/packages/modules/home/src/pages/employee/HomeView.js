@@ -184,7 +184,14 @@ const HomeView = () => {
           if (data?.individualId === responsePendingTask?.individualId) {
             return {
               ...data,
-              documents: [responseDoc],
+              documents: [
+                {
+                  ...responseDoc,
+                  additionalDetails: {
+                    fileName: `Response (${data?.additionalDetails?.fullName})`,
+                  },
+                },
+              ],
             };
           } else return data;
         }),
