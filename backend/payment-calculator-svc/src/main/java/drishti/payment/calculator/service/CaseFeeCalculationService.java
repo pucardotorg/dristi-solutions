@@ -51,7 +51,7 @@ public class CaseFeeCalculationService {
 
             Double totalApplicationFee = criteria.getNumberOfApplication() * applicationFee;
             Double petitionFee = getPetitionFee(criteria.getCheckAmount(), petitionFeeRange);
-            Double delayFee = isDelayCondontionFeeApplicable(criteria.getDelayCondonation(), delayCondonationPeriod) ? delayCondonationFee : 0.0;
+            Double delayFee = isDelayCondonationFeeApplicable(criteria.getDelayCondonation(), delayCondonationPeriod) ? delayCondonationFee : 0.0;
 
             List<BreakDown> feeBreakdown = getFeeBreakdown(vakalathnamaFee, advocateWelfareFund, advocateClerkWelfareFund, totalApplicationFee, petitionFee,delayFee);
             Double totalCourtFee = vakalathnamaFee + advocateWelfareFund + advocateClerkWelfareFund + totalApplicationFee + petitionFee + delayFee;
@@ -97,7 +97,7 @@ public class CaseFeeCalculationService {
         return null; // Invalid check amount
     }
 
-    private Boolean isDelayCondontionFeeApplicable(Long delayDuration, Long stdDuration) {
+    private Boolean isDelayCondonationFeeApplicable(Long delayDuration, Long stdDuration) {
 
         return delayDuration > stdDuration;
 
