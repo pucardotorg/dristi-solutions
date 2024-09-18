@@ -1,17 +1,16 @@
 package drishti.payment.calculator.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import drishti.payment.calculator.web.models.BreakDown;
 import drishti.payment.calculator.web.models.EPostConfigParams;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 
-import static drishti.payment.calculator.config.ServiceConstants.I_POST_MASTER;
-import static drishti.payment.calculator.config.ServiceConstants.SUMMON_MODULE;
+import static drishti.payment.calculator.config.ServiceConstants.*;
 
 @Component
 public class SummonUtil {
@@ -38,5 +37,15 @@ public class SummonUtil {
 
     public Double calculateCourtFees(EPostConfigParams ePostFeesDefaultData) {
         return ePostFeesDefaultData.getCourtFee() + ePostFeesDefaultData.getApplicationFee();
+    }
+
+    public List<BreakDown> getFeeBreakdown(double courtFee, double gst, double postFee) {
+        List<BreakDown> feeBreakdowns = new ArrayList<>();
+
+        feeBreakdowns.add(new BreakDown(COURT_FEE, courtFee, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown(GST, gst, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown(E_POST, postFee, new HashMap<>()));
+
+        return feeBreakdowns;
     }
 }
