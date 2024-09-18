@@ -227,6 +227,17 @@ export const pendingTaskCaseActions = {
       params: [{ key: "caseId", value: "id" }],
     },
   },
+  "PENDING_E-SIGN": {
+    actorName: ["LITIGANT/ADVOCATE"],
+    actionName: "E-Sign Pending",
+    redirectDetails: {
+      url: "/dristi/home/file-case/case",
+      params: [
+        { key: "caseId", value: "id" },
+        { key: "selected", defaultValue: "addSignature" },
+      ],
+    },
+  },
   PENDING_ADMISSION: {
     actorName: ["JUDGE"],
     actionName: "Case Approved from Scrutiny",
