@@ -432,7 +432,8 @@ function EFilingCases({ path }) {
   const isDisableAllFieldsMode = !(
     state === CaseWorkflowState.CASE_REASSIGNED ||
     state === CaseWorkflowState.DRAFT_IN_PROGRESS ||
-    state === CaseWorkflowState.PENDING_E_SIGN
+    state === CaseWorkflowState.PENDING_E_SIGN ||
+    state === CaseWorkflowState.PENDING_RE_E_SIGN
   );
   const isDraftInProgress = state === CaseWorkflowState.DRAFT_IN_PROGRESS;
   const { data: courtRoomDetails, isLoading: isCourtIdsLoading } = useGetStatuteSection("common-masters", [{ name: "Court_Rooms" }]);
@@ -1561,10 +1562,10 @@ function EFilingCases({ path }) {
               (nextSelected === "witnessDetails" ? [{}] : [{ isenabled: true, data: {}, displayindex: 0 }]);
             setFormdata(caseData);
             setIsDisabled(false);
-            if (action === CaseWorkflowAction.EDIT_CASE) {
-              setCaseResubmitSuccess(true);
-              return;
-            }
+            // if (action === CaseWorkflowAction.EDIT_CASE) {
+            //   setCaseResubmitSuccess(true);
+            //   return;
+            // }
             setPrevSelected(selected);
             history.push(`?caseId=${caseId}&selected=${nextSelected}`);
           });
@@ -1608,7 +1609,7 @@ function EFilingCases({ path }) {
 
   const onErrorCorrectionSubmit = () => {
     setOpenConfirmCorrectionModal(false);
-    onSubmit(CaseWorkflowAction.PENDING_RE_E_SIGN);
+    onSubmit(CaseWorkflowAction.EDIT_CASE);
   };
 
   const handlePageChange = (key, isConfirm) => {
@@ -1808,6 +1809,8 @@ function EFilingCases({ path }) {
           },
         });
       }
+      setCaseResubmitSuccess(true);
+      return;
     });
 
     const calculationResponse = await callCreateDemandAndCalculation(caseDetails, tenantId, caseId);
