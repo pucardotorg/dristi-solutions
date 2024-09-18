@@ -137,10 +137,10 @@ async function applicationSubmissionExtension(req, res, qrCode) {
       renderError(res, "Order not found", 404);
     }
 
-    const documentSubmissionName = order?.orderDetails?.documentName || "";
-    const documentId = order?.orderDetails?.documentType?.value | "";
+    const documentSubmissionName = order?.orderDetails?.documentName || " ";
+    const documentId = order?.orderDetails?.documentType?.value | " ";
 
-    let barRegistrationNumber = "";
+    let barRegistrationNumber = " ";
     const advocateIndividualId =
       application?.applicationDetails?.advocateIndividualId;
     if (advocateIndividualId) {
@@ -152,7 +152,7 @@ async function applicationSubmissionExtension(req, res, qrCode) {
       const advocateDetails = advocateData?.responseList?.find(
         (item) => item.isActive === true
       );
-      barRegistrationNumber = advocateDetails?.barRegistrationNumber || "";
+      barRegistrationNumber = advocateDetails?.barRegistrationNumber || " ";
     }
 
     const onBehalfOfuuid = application?.onBehalfOf?.[0];
@@ -161,12 +161,12 @@ async function applicationSubmissionExtension(req, res, qrCode) {
       ?.advocateName
       ? allAdvocates[onBehalfOfuuid]?.[0]
       : {};
-    const advocateName = advocate?.additionalDetails?.advocateName || "";
-    const partyName = application?.additionalDetails?.onBehalOfName || "";
+    const advocateName = advocate?.additionalDetails?.advocateName || " ";
+    const partyName = application?.additionalDetails?.onBehalOfName || " ";
     const additionalComments =
-      application?.applicationDetails?.additionalComments || "";
+      application?.applicationDetails?.additionalComments || " ";
     const reasonForApplication =
-      application?.applicationDetails?.reasonForApplication || "";
+      application?.applicationDetails?.reasonForApplication || " ";
 
     // Handle QR code if enabled
     let base64Url = "";
@@ -227,21 +227,21 @@ async function applicationSubmissionExtension(req, res, qrCode) {
     const year = currentDate.getFullYear();
 
     const ordinalSuffix = getOrdinalSuffix(day);
-    console.debug(application);
+
     const originalSubmissionDate = application?.applicationDetails
       ?.originalSubmissionDate
       ? formatDate(
           new Date(application?.applicationDetails?.originalSubmissionDate),
           "DD-MM-YYY"
         )
-      : "";
+      : " ";
     const requestedExtensionDate = application?.applicationDetails
       ?.requestedExtensionDate
       ? formatDate(
           new Date(application?.applicationDetails?.requestedExtensionDate),
           "DD-MM-YYY"
         )
-      : "";
+      : " ";
     const benefitOfExtension = application?.benefitOfExtension;
     const data = {
       Data: [

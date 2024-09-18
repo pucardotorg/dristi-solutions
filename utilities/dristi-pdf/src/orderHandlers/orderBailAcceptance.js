@@ -110,15 +110,15 @@ const orderBailAcceptance = async (req, res, qrCode) => {
     }
 
     const documentList = application?.applicationDetails
-      ?.applicationDocuments || [{ documentType: "" }];
+      ?.applicationDocuments || [{ documentType: " " }];
     const allAdvocates = getAdvocates(courtCase);
     const onBehalfOfuuid = application?.onBehalfOf?.[0];
     const advocate = allAdvocates?.[onBehalfOfuuid]?.[0]?.additionalDetails
       ?.advocateName
       ? allAdvocates[onBehalfOfuuid]?.[0]
       : {};
-    const advocateName = advocate?.additionalDetails?.advocateName || "";
-    const partyName = application?.additionalDetails?.onBehalOfName || "";
+    const advocateName = advocate?.additionalDetails?.advocateName || " ";
+    const partyName = application?.additionalDetails?.onBehalOfName || " ";
     const applicationDate = formatDate(
       new Date(application?.createdDate),
       "DD-MM-YYYY"
@@ -202,7 +202,7 @@ const orderBailAcceptance = async (req, res, qrCode) => {
           applicantName: advocateName || partyName,
           partyName,
           dateOfApplication: applicationDate,
-          briefSummaryOfBail: order?.comments || "",
+          briefSummaryOfBail: order?.comments || " ",
           date: formattedToday,
           documentNameList: ["Addhar Card", "Pan Card", "Passport"],
           documentList,

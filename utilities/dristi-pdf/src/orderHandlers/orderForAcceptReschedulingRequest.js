@@ -93,7 +93,7 @@ const orderForAcceptReschedulingRequest = async (req, res, qrCode) => {
     if (!application) {
       return renderError(res, "Application not found", 404);
     }
-    const partyName = application?.additionalDetails?.onBehalOfName || "";
+    const partyName = application?.additionalDetails?.onBehalOfName || " ";
     // Handle QR code if enabled
     let base64Url = "";
     if (qrCode === "true") {

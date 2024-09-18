@@ -96,7 +96,7 @@ const applicationCaseTransfer = async (req, res, qrCode) => {
     if (!application) {
       return renderError(res, "Application not found", 404);
     }
-    let barRegistrationNumber = "";
+    let barRegistrationNumber = " ";
     const advocateIndividualId =
       application?.applicationDetails?.advocateIndividualId;
     if (advocateIndividualId) {
@@ -108,7 +108,7 @@ const applicationCaseTransfer = async (req, res, qrCode) => {
       const advocateDetails = advocateData?.responseList?.find(
         (item) => item.isActive === true
       );
-      barRegistrationNumber = advocateDetails?.barRegistrationNumber || "";
+      barRegistrationNumber = advocateDetails?.barRegistrationNumber || " ";
     }
 
     const onBehalfOfuuid = application?.onBehalfOf?.[0];
@@ -117,15 +117,15 @@ const applicationCaseTransfer = async (req, res, qrCode) => {
       ?.advocateName
       ? allAdvocates[onBehalfOfuuid]?.[0]
       : {};
-    const advocateName = advocate?.additionalDetails?.advocateName || "";
-    const partyName = application?.additionalDetails?.onBehalOfName || "";
+    const advocateName = advocate?.additionalDetails?.advocateName || " ";
+    const partyName = application?.additionalDetails?.onBehalOfName || " ";
     const additionalComments =
-      application?.applicationDetails?.additionalComments || "";
+      application?.applicationDetails?.additionalComments || " ";
     const grounds =
-      application?.applicationDetails?.groundsForSeekingTransfer || "";
+      application?.applicationDetails?.groundsForSeekingTransfer || " ";
     const selectRequestedCourt =
-      application?.applicationDetails?.selectRequestedCourt || "";
-    let base64Url = "";
+      application?.applicationDetails?.selectRequestedCourt || " ";
+    let base64Url = " ";
     if (qrCode === "true") {
       const resCredential = await handleApiCall(
         () =>
@@ -202,7 +202,7 @@ const applicationCaseTransfer = async (req, res, qrCode) => {
           partyName: partyName,
           additionalComments,
           grounds,
-          reliefSought: "",
+          reliefSought: " ",
           day: day + ordinalSuffix,
           month: month,
           year: year,

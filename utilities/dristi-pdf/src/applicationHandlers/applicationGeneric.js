@@ -72,7 +72,7 @@ async function applicationGeneric(req, res, qrCode) {
       return renderError(res, "Court case not found", 404);
     }
     const allAdvocates = getAdvocates(courtCase);
-    
+
     // Search for HRMS details
     // const resHrms = await handleApiCall(
     //   () => search_hrms(tenantId, "JUDGE", courtCase.courtId, requestInfo),
@@ -125,7 +125,7 @@ async function applicationGeneric(req, res, qrCode) {
       return renderError(res, "Application not found", 404);
     }
 
-    let barRegistrationNumber = "";
+    let barRegistrationNumber = " ";
     const advocateIndividualId =
       application?.applicationDetails?.advocateIndividualId;
     if (advocateIndividualId) {
@@ -137,7 +137,7 @@ async function applicationGeneric(req, res, qrCode) {
       const advocateDetails = advocateData?.responseList?.find(
         (item) => item.isActive === true
       );
-      barRegistrationNumber = advocateDetails?.barRegistrationNumber || "";
+      barRegistrationNumber = advocateDetails?.barRegistrationNumber || " ";
     }
 
     const onBehalfOfuuid = application?.onBehalfOf?.[0];
@@ -145,8 +145,8 @@ async function applicationGeneric(req, res, qrCode) {
       ?.advocateName
       ? allAdvocates[onBehalfOfuuid]?.[0]
       : {};
-    const advocateName = advocate?.additionalDetails?.advocateName || "";
-    const partyName = application?.additionalDetails?.onBehalOfName || "";
+    const advocateName = advocate?.additionalDetails?.advocateName || " ";
+    const partyName = application?.additionalDetails?.onBehalOfName || " ";
     const onBehalfOfLitigent = courtCase?.litigants?.find(
       (item) => item.additionalDetails.uuid === onBehalfOfuuid
     );
@@ -230,13 +230,14 @@ async function applicationGeneric(req, res, qrCode) {
 
     const ordinalSuffix = getOrdinalSuffix(day);
     const reasonForApplication =
-      application?.applicationDetails?.reasonForApplication || "";
+      application?.applicationDetails?.reasonForApplication || " ";
     const additionalComments =
-      application?.applicationDetails?.additionalComments || "";
+      application?.applicationDetails?.additionalComments || " ";
     const applicationName =
       application?.applicationDetails?.applicationTitle ||
       applicationNameMap[application?.applicationType] ||
       "General Application";
+    const prayer = " ";
     const data = {
       Data: [
         {
@@ -256,7 +257,7 @@ async function applicationGeneric(req, res, qrCode) {
           additionalComments,
           reasonForApplication,
           partyType,
-          prayerOptional: " asdasd ",
+          prayer,
           advocateSignature: "Advocate Signature",
           advocateName: advocateName,
           barRegistrationNumber,

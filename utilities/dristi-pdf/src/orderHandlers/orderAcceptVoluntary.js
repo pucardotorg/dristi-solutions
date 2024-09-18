@@ -121,7 +121,7 @@ async function orderAcceptVoluntary(req, res, qrCode) {
     if (!application) {
       return renderError(res, "Application not found", 404);
     }
-    const partyName = application?.additionalDetails?.onBehalOfName || "";
+    const partyName = application?.additionalDetails?.onBehalOfName || " ";
 
     // Handle QR code if enabled
     let base64Url = "";
@@ -175,9 +175,9 @@ async function orderAcceptVoluntary(req, res, qrCode) {
           Date: formattedToday,
           caseYear,
           partyName: partyName,
-          content: order?.comments || "",
+          content: order?.comments || " ",
           applicationNumber: application?.applicationNumber,
-          additionalDetails: order?.comments || "",
+          additionalDetails: order?.comments || " ",
           judgeSignature: "Judge Signature",
           judgeName: "John Doe",
           courtSeal: "Court Seal",

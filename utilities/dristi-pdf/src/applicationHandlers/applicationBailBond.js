@@ -102,7 +102,7 @@ const applicationBailBond = async (req, res, qrCode) => {
       applicationTitle = "APPLICATION FOR BAIL - In Person Surety";
       subjectText = "Application for Bail - In Person Surety";
     }
-    let barRegistrationNumber = "";
+    let barRegistrationNumber = " ";
     const advocateIndividualId =
       application?.applicationDetails?.advocateIndividualId;
     if (advocateIndividualId) {
@@ -114,7 +114,7 @@ const applicationBailBond = async (req, res, qrCode) => {
       const advocateDetails = advocateData?.responseList?.find(
         (item) => item.isActive === true
       );
-      barRegistrationNumber = advocateDetails?.barRegistrationNumber || "";
+      barRegistrationNumber = advocateDetails?.barRegistrationNumber || " ";
     }
 
     const onBehalfOfuuid = application?.onBehalfOf?.[0];
@@ -123,14 +123,14 @@ const applicationBailBond = async (req, res, qrCode) => {
       ?.advocateName
       ? allAdvocates[onBehalfOfuuid]?.[0]
       : {};
-    const advocateName = advocate?.additionalDetails?.advocateName || "";
-    const partyName = application?.additionalDetails?.onBehalOfName || "";
+    const advocateName = advocate?.additionalDetails?.advocateName || " ";
+    const partyName = application?.additionalDetails?.onBehalOfName || " ";
     const documentList = application?.applicationDetails
-      ?.applicationDocuments || [{ documentType: "" }];
+      ?.applicationDocuments || [{ documentType: " " }];
     const additionalComments =
-      application?.applicationDetails?.additionalComments || "";
+      application?.applicationDetails?.additionalComments || " ";
     const reasonForApplication =
-      application?.applicationDetails?.reasonForApplication || "";
+      application?.applicationDetails?.reasonForApplication || " ";
     // Handle QR code if enabled
     let base64Url = "";
     if (qrCode === "true") {

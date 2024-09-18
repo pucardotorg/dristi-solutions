@@ -107,16 +107,16 @@ const orderForRejectionReschedulingRequest = async (req, res, qrCode) => {
     if (!application) {
       return renderError(res, "Application not found", 404);
     }
-    const partyName = application?.additionalDetails?.onBehalOfName || "";
+    const partyName = application?.additionalDetails?.onBehalOfName || " ";
     const reasonForRescheduling =
-      application?.applicationDetails?.reasonForApplication || "";
+      application?.applicationDetails?.reasonForApplication || " ";
     const originalHearingDate = application?.applicationDetails
       ?.initialHearingDate
       ? formatDate(
           new Date(application?.applicationDetails?.initialHearingDate),
           "DD-MM-YYYY"
         )
-      : "";
+      : " ";
 
     // Handle QR code if enabled
     let base64Url = "";

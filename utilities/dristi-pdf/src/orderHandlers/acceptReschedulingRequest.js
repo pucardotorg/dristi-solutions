@@ -123,16 +123,16 @@ async function acceptReschedulingRequest(req, res, qrCode) {
     if (!application) {
       renderError(res, "Application not found", 404);
     }
-    const partyName = application?.additionalDetails?.onBehalOfName || "";
+    const partyName = application?.additionalDetails?.onBehalOfName || " ";
     const reasonForRescheduling =
-      application?.applicationDetails?.reasonForApplication || "";
+      application?.applicationDetails?.reasonForApplication || " ";
     const originalHearingDate = application?.applicationDetails
       ?.initialHearingDate
       ? formatDate(
           new Date(application?.applicationDetails?.initialHearingDate),
           "DD-MM-YYYY"
         )
-      : "";
+      : " ";
     // Search for individual details
     // const resIndividual = await handleApiCall(
     //     () => search_individual_uuid(tenantId, application.onBehalfOf[0], requestInfo),
@@ -183,7 +183,7 @@ async function acceptReschedulingRequest(req, res, qrCode) {
           caseNumber: courtCase.caseNumber,
           date: stringDate,
           partyNames: partyName,
-          applicationId: order.orderDetails?.refApplicationId || "",
+          applicationId: order.orderDetails?.refApplicationId || " ",
           reasonForRescheduling,
           originalHearingDate,
           additionalComments: order.comments,

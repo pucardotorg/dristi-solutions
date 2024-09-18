@@ -32,7 +32,7 @@ function formatDate(epochMillis) {
 
   // Ensure that the date is a valid Date object
   if (Number.isNaN(date.getTime())) {
-    return "";
+    return " ";
   }
 
   const day = String(date.getDate()).padStart(2, "0");
@@ -139,7 +139,7 @@ async function applicationRescheduleRequest(req, res, qrCode) {
       return renderError(res, "Application not found", 404);
     }
 
-    let barRegistrationNumber = "";
+    let barRegistrationNumber = " ";
     const advocateIndividualId =
       application?.applicationDetails?.advocateIndividualId;
     if (advocateIndividualId) {
@@ -151,7 +151,7 @@ async function applicationRescheduleRequest(req, res, qrCode) {
       const advocateDetails = advocateData?.responseList?.find(
         (item) => item.isActive === true
       );
-      barRegistrationNumber = advocateDetails?.barRegistrationNumber || "";
+      barRegistrationNumber = advocateDetails?.barRegistrationNumber || " ";
     }
 
     const onBehalfOfuuid = application?.onBehalfOf?.[0];
@@ -159,8 +159,8 @@ async function applicationRescheduleRequest(req, res, qrCode) {
       ?.advocateName
       ? allAdvocates[onBehalfOfuuid]?.[0]
       : {};
-    const advocateName = advocate?.additionalDetails?.advocateName || "";
-    const partyName = application?.additionalDetails?.onBehalOfName || "";
+    const advocateName = advocate?.additionalDetails?.advocateName || " ";
+    const partyName = application?.additionalDetails?.onBehalOfName || " ";
     const onBehalfOfLitigent = courtCase?.litigants?.find(
       (item) => item.additionalDetails.uuid === onBehalfOfuuid
     );
@@ -232,14 +232,14 @@ async function applicationRescheduleRequest(req, res, qrCode) {
 
     const ordinalSuffix = getOrdinalSuffix(day);
     const initialHearingDate =
-      formatDate(application?.applicationDetails?.initialHearingDate) || "";
+      formatDate(application?.applicationDetails?.initialHearingDate) || " ";
     const proposedHearingDate =
       formatDate(application?.applicationDetails?.newHearingScheduledDate) ||
-      "";
+      " ";
     const reasonForReschedule =
-      application?.applicationDetails?.reasonForApplication || "";
+      application?.applicationDetails?.reasonForApplication || " ";
     const additionalComments =
-      application?.applicationDetails?.additionalComments || "";
+      application?.applicationDetails?.additionalComments || " ";
     const data = {
       Data: [
         {

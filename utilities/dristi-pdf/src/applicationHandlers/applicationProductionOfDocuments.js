@@ -124,7 +124,7 @@ async function applicationProductionOfDocuments(req, res, qrCode) {
       return renderError(res, "Application not found", 404);
     }
 
-    let barRegistrationNumber = "";
+    let barRegistrationNumber = " ";
     const advocateIndividualId =
       application?.applicationDetails?.advocateIndividualId;
     if (advocateIndividualId) {
@@ -136,7 +136,7 @@ async function applicationProductionOfDocuments(req, res, qrCode) {
       const advocateDetails = advocateData?.responseList?.find(
         (item) => item.isActive === true
       );
-      barRegistrationNumber = advocateDetails?.barRegistrationNumber || "";
+      barRegistrationNumber = advocateDetails?.barRegistrationNumber || " ";
     }
 
     const onBehalfOfuuid = application?.onBehalfOf?.[0];
@@ -144,10 +144,10 @@ async function applicationProductionOfDocuments(req, res, qrCode) {
       ?.advocateName
       ? allAdvocates[onBehalfOfuuid]?.[0]
       : {};
-    const advocateName = advocate?.additionalDetails?.advocateName || "";
-    const partyName = application?.additionalDetails?.onBehalOfName || "";
+    const advocateName = advocate?.additionalDetails?.advocateName || " ";
+    const partyName = application?.additionalDetails?.onBehalOfName || " ";
     // Handle QR code if enabled
-    let base64Url = "";
+    let base64Url = " ";
     if (qrCode === "true") {
       const resCredential = await handleApiCall(
         () =>
@@ -198,7 +198,7 @@ async function applicationProductionOfDocuments(req, res, qrCode) {
       "December",
     ];
     const documentList = application?.applicationDetails
-      ?.applicationDocuments || [{ documentType: "" }];
+      ?.applicationDocuments || [{ documentType: " " }];
     const currentDate = new Date();
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
     const day = currentDate.getDate();
@@ -207,9 +207,9 @@ async function applicationProductionOfDocuments(req, res, qrCode) {
 
     const ordinalSuffix = getOrdinalSuffix(day);
     const reasonForApplication =
-      application?.applicationDetails?.reasonForApplication || "";
+      application?.applicationDetails?.reasonForApplication || " ";
     const additionalComments =
-      application?.applicationDetails?.additionalComments || "";
+      application?.applicationDetails?.additionalComments || " ";
     const data = {
       Data: [
         {
@@ -226,7 +226,7 @@ async function applicationProductionOfDocuments(req, res, qrCode) {
           complainantName: partyName, //FIXME: REMOVE it from both pdf configs and here,
           additionalComments,
           reasonForApplication,
-          prayerOptional: "",
+          prayerOptional: " ",
           advocateSignature: "Advocate_Signature", //FIXME: It should also come from the application
           advocateName: advocateName,
           nameOfDocument: "Aadhar card", //FIXME: It should come from the application, currently there is not field present inside of it

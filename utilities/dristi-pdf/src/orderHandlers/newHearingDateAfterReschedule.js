@@ -150,7 +150,7 @@ async function newHearingDateAfterReschedule(req, res, qrCode) {
     }
     const newHearingDate = order?.orderDetails?.newHearingDate
       ? formatDate(order?.orderDetails?.newHearingDate)
-      : "";
+      : " ";
 
     const data = {
       Data: [

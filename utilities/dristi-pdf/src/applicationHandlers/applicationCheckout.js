@@ -124,7 +124,7 @@ async function applicationCheckout(req, res, qrCode) {
       return renderError(res, "Application not found", 404);
     }
 
-    let barRegistrationNumber = "";
+    let barRegistrationNumber = " ";
     const advocateIndividualId =
       application?.applicationDetails?.advocateIndividualId;
     if (advocateIndividualId) {
@@ -136,7 +136,7 @@ async function applicationCheckout(req, res, qrCode) {
       const advocateDetails = advocateData?.responseList?.find(
         (item) => item.isActive === true
       );
-      barRegistrationNumber = advocateDetails?.barRegistrationNumber || "";
+      barRegistrationNumber = advocateDetails?.barRegistrationNumber || " ";
     }
 
     const onBehalfOfuuid = application?.onBehalfOf?.[0];
@@ -144,8 +144,8 @@ async function applicationCheckout(req, res, qrCode) {
       ?.advocateName
       ? allAdvocates[onBehalfOfuuid]?.[0]
       : {};
-    const advocateName = advocate?.additionalDetails?.advocateName || "";
-    const partyName = application?.additionalDetails?.onBehalOfName || "";
+    const advocateName = advocate?.additionalDetails?.advocateName || " ";
+    const partyName = application?.additionalDetails?.onBehalOfName || " ";
     const onBehalfOfLitigent = courtCase?.litigants?.find(
       (item) => item.additionalDetails.uuid === onBehalfOfuuid
     );
@@ -160,16 +160,16 @@ async function applicationCheckout(req, res, qrCode) {
       formatDate(
         new Date(application?.applicationDetails?.initialHearingDate),
         "DD-MM-YYYY"
-      ) || "";
+      ) || " ";
     const proposedHearingDate =
       formatDate(
         new Date(application?.applicationDetails?.newHearingScheduledDate),
         "DD-MM-YYYY"
-      ) || "";
+      ) || " ";
     const reasonForReschedule =
-      application?.applicationDetails?.reasonForApplication || "";
+      application?.applicationDetails?.reasonForApplication || " ";
     const additionalComments =
-      application?.applicationDetails?.additionalComments || "";
+      application?.applicationDetails?.additionalComments || " ";
 
     let base64Url = "";
     if (qrCode === "true") {
@@ -250,7 +250,7 @@ async function applicationCheckout(req, res, qrCode) {
           additionalComments,
           initialHearingDate,
           proposedHearingDate,
-          prayerOptional: "",
+          prayerOptional: " ",
           advocateSignature: "Advocate_Signature", //FIXME: It should also come from the application
           advocateName: advocateName,
           barRegistrationNumber,

@@ -159,7 +159,7 @@ async function mandatoryAsyncSubmissionsResponses(req, res, qrCode) {
     const month = months[currentDate.getMonth()];
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
     const ifResponse = order?.orderDetails?.isResponseRequired ? "Yes" : "No";
-    const documentList = order?.orderDetails?.documentType?.value || "";
+    const documentList = order?.orderDetails?.documentType?.value || " ";
     const partiesToRespond =
       order?.orderDetails?.partyDetails?.partiesToRespond || [];
     const partyToMakeSubmission =
@@ -170,7 +170,7 @@ async function mandatoryAsyncSubmissionsResponses(req, res, qrCode) {
           new Date(order?.orderDetails?.dates?.submissionDeadlineDate),
           "DD-MM-YYYY"
         )
-      : "";
+      : " ";
 
     const responseSubmissionDeadline = order?.orderDetails?.dates
       ?.responseDeadlineDate
@@ -178,7 +178,7 @@ async function mandatoryAsyncSubmissionsResponses(req, res, qrCode) {
           new Date(order?.orderDetails?.dates?.responseDeadlineDate),
           "DD-MM-YYYY"
         )
-      : "";
+      : " ";
 
     const data = {
       Data: [
@@ -192,7 +192,7 @@ async function mandatoryAsyncSubmissionsResponses(req, res, qrCode) {
           evidenceSubmissionDeadline,
           ifResponse,
           responseSubmissionDeadline,
-          additionalComments: order?.comments || "",
+          additionalComments: order?.comments || " ",
           Date: formattedToday,
           Month: month,
           Year: year,
