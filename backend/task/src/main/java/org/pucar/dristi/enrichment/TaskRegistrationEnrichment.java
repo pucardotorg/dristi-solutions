@@ -32,9 +32,30 @@ public class TaskRegistrationEnrichment {
     public void enrichTaskRegistration(TaskRequest taskRequest) {
         try {
             Task task = taskRequest.getTask();
+            String tenantId = task.getCnrNumber();
 
-            List<String> taskRegistrationIdList = idgenUtil.getIdList(taskRequest.getRequestInfo(), task.getTenantId(), config.getTaskNumber(), null, 1);
+            String idName = config.getTaskConfig();
+            String idFormat = config.getTaskFormat();
+
+            List<String> taskRegistrationIdList = idgenUtil.getIdList(taskRequest.getRequestInfo(), tenantId, idName, idFormat, 1,false);
             log.info("Task Registration Id List :: {}", taskRegistrationIdList);
+
+            idFormat = config.getSummonIdFormat();
+            List<String> taskRegistrationSummonIdList = idgenUtil.getIdList(taskRequest.getRequestInfo(), tenantId, idName, idFormat, 1,false);
+            log.info("Task Registration summon Id List :: {}", taskRegistrationIdList);
+            taskRequest.getTask().setTaskDetails("{ summonDetails : { summonId: {" + taskRegistrationSummonIdList.get(0) + "} }");
+
+            idFormat = config.getBailIdFormat();
+            List<String> taskRegistrationBailIdList = idgenUtil.getIdList(taskRequest.getRequestInfo(), tenantId, idName, idFormat, 1,false);
+            log.info("Task Registration bail Id List :: {}", taskRegistrationIdList);
+            taskRequest.getTask().setTaskDetails("{ bailId: {" + taskRegistrationBailIdList.get(0) + "} }");
+
+            idFormat = config.getWarrantIdFormat();
+            List<String> taskRegistrationWarrantIdList = idgenUtil.getIdList(taskRequest.getRequestInfo(), tenantId, idName, idFormat, 1,false);
+            log.info("Task Registration warrant Id List :: {}", taskRegistrationIdList);
+            taskRequest.getTask().setTaskDetails("{ warrantId: {" + taskRegistrationWarrantIdList.get(0) + "} }");
+
+
             AuditDetails auditDetails = AuditDetails.builder().createdBy(taskRequest.getRequestInfo().getUserInfo().getUuid()).createdTime(System.currentTimeMillis()).lastModifiedBy(taskRequest.getRequestInfo().getUserInfo().getUuid()).lastModifiedTime(System.currentTimeMillis()).build();
             task.setAuditDetails(auditDetails);
 

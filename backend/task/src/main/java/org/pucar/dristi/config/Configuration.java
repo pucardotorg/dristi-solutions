@@ -154,4 +154,20 @@ public class Configuration {
 
     @Value(("${task.business.service}"))
     private String taskBusinessService;
+
+    //Idgen
+    @Value("${egov.idgen.taskConfig}")
+    private String taskConfig;
+
+    @Value("${egov.idgen.taskFormat}")
+    private String taskFormat;
+
+    @Value("${egov.idgen.summonIdFormat}")
+    private String summonIdFormat;
+
+    @Value("${egov.idgen.bailIdFormat}")
+    private String bailIdFormat;
+
+    @Value("${egov.idgen.warrantIdFormat}")
+    private String warrantIdFormat;
 }

@@ -3,6 +3,7 @@ package org.pucar.dristi.enrichment;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.tracer.model.CustomException;
+import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.util.IdgenUtil;
 import org.pucar.dristi.web.models.Artifact;
 import org.pucar.dristi.web.models.Comment;
@@ -21,10 +22,12 @@ import static org.pucar.dristi.config.ServiceConstants.*;
 @Slf4j
 public class EvidenceEnrichment {
     private final IdgenUtil idgenUtil;
+    private Configuration configuration;
 
     @Autowired
-    public EvidenceEnrichment(IdgenUtil idgenUtil) {
+    public EvidenceEnrichment(IdgenUtil idgenUtil,Configuration configuration) {
         this.idgenUtil = idgenUtil;
+        this.configuration = configuration;
     }
 
     public void enrichEvidenceRegistration(EvidenceRequest evidenceRequest) {
@@ -34,7 +37,8 @@ public class EvidenceEnrichment {
                         evidenceRequest.getRequestInfo().getUserInfo().getTenantId(),
                         ARTIFACT_ID_NAME,
                         null,
-                        1
+                        1,
+                        false
                 );
 
                 AuditDetails auditDetails = AuditDetails.builder()
@@ -72,15 +76,15 @@ public class EvidenceEnrichment {
     private static final Map<String, String> artifactSourceMap = new HashMap<>();
 
     static {
-        artifactSourceMap.put("DOCUMENTARY_COMPLAINANT", "document.evidence_complainant");
-        artifactSourceMap.put("DOCUMENTARY_ACCUSED", "document.evidence_accused");
-        artifactSourceMap.put("DOCUMENTARY_COURT", "document.evidence_court");
-        artifactSourceMap.put("AFFIDAVIT_COMPLAINANT", "document.evidence_complainant");
-        artifactSourceMap.put("AFFIDAVIT_ACCUSED", "document.evidence_accused");
-        artifactSourceMap.put("AFFIDAVIT_COURT", "document.evidence_court");
-        artifactSourceMap.put("DEPOSITION_COMPLAINANT", "document.witness_complainant");
-        artifactSourceMap.put("DEPOSITION_ACCUSED", "document.witness_accused");
-        artifactSourceMap.put("DEPOSITION_COURT", "document.witness_court");
+        artifactSourceMap.put("DOCUMENTARY_COMPLAINANT", "case.evidence.prosecution.[TENANT_ID]");
+        artifactSourceMap.put("DOCUMENTARY_ACCUSED", "case.evidence.defence.[TENANT_ID]");
+        artifactSourceMap.put("DOCUMENTARY_COURT", "case.evidence.court.[TENANT_ID]");
+        artifactSourceMap.put("AFFIDAVIT_COMPLAINANT", "case.evidence.prosecution.[TENANT_ID]");
+        artifactSourceMap.put("AFFIDAVIT_ACCUSED", "case.evidence.defence.[TENANT_ID]");
+        artifactSourceMap.put("AFFIDAVIT_COURT", "case.evidence.court.[TENANT_ID]");
+        artifactSourceMap.put("DEPOSITION_COMPLAINANT", "case.evidence.prosecution.witness.[TENANT_ID]");
+        artifactSourceMap.put("DEPOSITION_ACCUSED", "case.evidence.defence.witness.[TENANT_ID]");
+        artifactSourceMap.put("DEPOSITION_COURT", "case.evidence.court.witness.[TENANT_ID]");
     }
 
     public String getIdgenByArtifactTypeAndSourceType(String artifactType, String sourceType) {
@@ -97,12 +101,14 @@ public class EvidenceEnrichment {
     public void enrichEvidenceNumber(EvidenceRequest evidenceRequest) {
         try {
             String idName = getIdgenByArtifactTypeAndSourceType(evidenceRequest.getArtifact().getArtifactType(), evidenceRequest.getArtifact().getSourceType());
+            String tenantId = evidenceRequest.getArtifact().getCnrNumber();
             List<String> evidenceNumberList = idgenUtil.getIdList(
                     evidenceRequest.getRequestInfo(),
-                    evidenceRequest.getRequestInfo().getUserInfo().getTenantId(),
+                    tenantId,
                     idName,
                     null,
-                    1
+                    1,
+                    false
             );
             evidenceRequest.getArtifact().setEvidenceNumber(evidenceNumberList.get(0));
             evidenceRequest.getArtifact().setIsEvidence(true);
