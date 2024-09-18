@@ -26,6 +26,8 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.pucar.dristi.config.ServiceConstants.TIME_ZONE;
+
 @Slf4j
 @Component
 public class SummonsOrderPdfUtil {
@@ -148,7 +150,7 @@ public class SummonsOrderPdfUtil {
     private String formatDateFromMillis(long millis) {
         try {
             ZonedDateTime dateTime = Instant.ofEpochMilli(millis)
-                    .atZone(ZoneId.of("Asia/Kolkata"));
+                    .atZone(ZoneId.of(TIME_ZONE));
 
             String day = String.valueOf(dateTime.getDayOfMonth());
 
