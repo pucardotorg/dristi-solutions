@@ -819,7 +819,11 @@ function CaseFileAdmission({ t, path }) {
                 isDisabled={isDisabled}
                 cardClassName={`e-filing-card-form-style review-case-file`}
                 secondaryLabel={
-                  caseDetails?.status === CaseWorkflowState.ADMISSION_HEARING_SCHEDULED ? t("HEARING_IS_SCHEDULED") : t(tertiaryAction.label || "")
+                  [CaseWorkflowState.ADMISSION_HEARING_SCHEDULED, CaseWorkflowState.PENDING_RESPONSE, CaseWorkflowState.PENDING_NOTICE].includes(
+                    caseDetails?.status
+                  )
+                    ? t("HEARING_IS_SCHEDULED")
+                    : t(tertiaryAction.label || "")
                 }
                 showSecondaryLabel={Boolean(tertiaryAction?.action)}
                 actionClassName={"case-file-admission-action-bar"}
