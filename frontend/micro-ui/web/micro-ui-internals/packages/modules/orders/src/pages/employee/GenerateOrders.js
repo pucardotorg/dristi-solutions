@@ -176,7 +176,7 @@ const GenerateOrders = () => {
   ]);
   const courtRooms = useMemo(() => courtRoomDetails?.Court_Rooms || [], [courtRoomDetails]);
 
-  const { data: caseData, isLoading: isCaseDetailsLoading, reftech: refetchCaseData } = Digit.Hooks.dristi.useSearchCaseService(
+  const { data: caseData, isLoading: isCaseDetailsLoading, refetch: refetchCaseData } = Digit.Hooks.dristi.useSearchCaseService(
     {
       criteria: [
         {
@@ -1773,7 +1773,9 @@ const GenerateOrders = () => {
         tenantId,
       },
       tenantId
-    );
+    ).then(() => {
+      refetchCaseData();
+    });
   };
 
   const handleIssueNotice = async (hearingDate, hearingNumber) => {

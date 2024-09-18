@@ -469,6 +469,7 @@ const HomeView = () => {
         "UNDER_SCRUTINY",
         "PENDING_ADMISSION",
         "PENDING_E-SIGN",
+        "PENDING_RE_E-SIGN",
         "PENDING_ADMISSION_HEARING",
         "PENDING_NOTICE",
         "PENDING_RESPONSE",
@@ -484,9 +485,13 @@ const HomeView = () => {
           );
         } else if (row?.original?.status === "PENDING_REGISTRATION") {
           history.push(
-            `/${window?.contextPath}/${userInfoType}/dristi/admission?caseId=${row?.original?.id}&filingNumber=${row?.original?.filingNumber}`
+            userInfoType === "employee"
+              ? `/${window?.contextPath}/${userInfoType}/dristi/admission?caseId=${row?.original?.id}&filingNumber=${row?.original?.filingNumber}`
+              : `/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${row?.original?.id}&filingNumber=${row?.original?.filingNumber}&tab=Complaint`
           );
         } else if (row?.original?.status === "PENDING_E-SIGN") {
+          history.push(`/${window?.contextPath}/${userInfoType}/dristi/home/file-case/case?caseId=${row?.original?.id}&selected=addSignature`);
+        } else if (row?.original?.status === "PENDING_RE_E-SIGN") {
           history.push(`/${window?.contextPath}/${userInfoType}/dristi/home/file-case/case?caseId=${row?.original?.id}&selected=addSignature`);
         } else {
           history.push(
