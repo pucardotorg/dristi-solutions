@@ -137,8 +137,8 @@ async function applicationSubmissionExtension(req, res, qrCode) {
       renderError(res, "Order not found", 404);
     }
 
-    const documentSubmissionName = order?.orderDetails?.documentName || " ";
-    const documentId = order?.orderDetails?.documentType?.value | " ";
+    const documentSubmissionName = order?.orderDetails?.documentName;
+    const documentId = order?.orderDetails?.documentType?.value;
 
     let barRegistrationNumber = " ";
     const advocateIndividualId =
@@ -152,7 +152,7 @@ async function applicationSubmissionExtension(req, res, qrCode) {
       const advocateDetails = advocateData?.responseList?.find(
         (item) => item.isActive === true
       );
-      barRegistrationNumber = advocateDetails?.barRegistrationNumber || " ";
+      barRegistrationNumber = advocateDetails?.barRegistrationNumber;
     }
 
     const onBehalfOfuuid = application?.onBehalfOf?.[0];
@@ -161,12 +161,12 @@ async function applicationSubmissionExtension(req, res, qrCode) {
       ?.advocateName
       ? allAdvocates[onBehalfOfuuid]?.[0]
       : {};
-    const advocateName = advocate?.additionalDetails?.advocateName || " ";
-    const partyName = application?.additionalDetails?.onBehalOfName || " ";
+    const advocateName = advocate?.additionalDetails?.advocateName;
+    const partyName = application?.additionalDetails?.onBehalOfName;
     const additionalComments =
-      application?.applicationDetails?.additionalComments || " ";
+      application?.applicationDetails?.additionalComments;
     const reasonForApplication =
-      application?.applicationDetails?.reasonForApplication || " ";
+      application?.applicationDetails?.reasonForApplication;
 
     // Handle QR code if enabled
     let base64Url = "";
@@ -246,28 +246,28 @@ async function applicationSubmissionExtension(req, res, qrCode) {
     const data = {
       Data: [
         {
-          courtComplex: mdmsCourtRoom.name,
+          courtComplex: mdmsCourtRoom.name || " ",
           caseType: "Negotiable Instruments Act 138 A",
-          caseNumber: courtCase.caseNumber,
-          caseYear: caseYear,
-          caseName: courtCase.caseTitle,
+          caseNumber: courtCase.caseNumber || " ",
+          caseYear: caseYear || " ",
+          caseName: courtCase.caseTitle || " ",
           judgeName: "John Doe",
           courtDesignation: "High Court",
-          addressOfTheCourt: mdmsCourtRoom.address,
-          date: currentDate,
-          partyName: partyName,
-          advocateName: advocateName,
-          documentSubmissionName,
-          documentId,
-          originalSubmissionDate: originalSubmissionDate,
-          requestedSubmissionDate: requestedExtensionDate,
-          extensionReason: reasonForApplication,
-          day: day + ordinalSuffix,
-          month: month,
-          year: year,
-          additionalComments: benefitOfExtension || additionalComments,
+          addressOfTheCourt: mdmsCourtRoom.address || " ",
+          date: currentDate || " ",
+          partyName: partyName || " ",
+          advocateName: advocateName || " ",
+          documentSubmissionName: documentSubmissionName || " ",
+          documentId: documentId || " ",
+          originalSubmissionDate: originalSubmissionDate || " ",
+          requestedSubmissionDate: requestedExtensionDate || " ",
+          extensionReason: reasonForApplication || " ",
+          day: day + ordinalSuffix || " ",
+          month: month || " ",
+          year: year || " ",
+          additionalComments: benefitOfExtension || additionalComments || " ",
           advocateSignature: "Advocate Signature",
-          barRegistrationNumber,
+          barRegistrationNumber: barRegistrationNumber || " ",
           qrCodeUrl: base64Url,
         },
       ],

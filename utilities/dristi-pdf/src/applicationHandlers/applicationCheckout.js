@@ -144,8 +144,8 @@ async function applicationCheckout(req, res, qrCode) {
       ?.advocateName
       ? allAdvocates[onBehalfOfuuid]?.[0]
       : {};
-    const advocateName = advocate?.additionalDetails?.advocateName || " ";
-    const partyName = application?.additionalDetails?.onBehalOfName || " ";
+    const advocateName = advocate?.additionalDetails?.advocateName;
+    const partyName = application?.additionalDetails?.onBehalOfName;
     const onBehalfOfLitigent = courtCase?.litigants?.find(
       (item) => item.additionalDetails.uuid === onBehalfOfuuid
     );
@@ -156,20 +156,18 @@ async function applicationCheckout(req, res, qrCode) {
       : !isCitizen
       ? "COURT"
       : "ACCUSED";
-    const initialHearingDate =
-      formatDate(
-        new Date(application?.applicationDetails?.initialHearingDate),
-        "DD-MM-YYYY"
-      ) || " ";
-    const proposedHearingDate =
-      formatDate(
-        new Date(application?.applicationDetails?.newHearingScheduledDate),
-        "DD-MM-YYYY"
-      ) || " ";
+    const initialHearingDate = formatDate(
+      new Date(application?.applicationDetails?.initialHearingDate),
+      "DD-MM-YYYY"
+    );
+    const proposedHearingDate = formatDate(
+      new Date(application?.applicationDetails?.newHearingScheduledDate),
+      "DD-MM-YYYY"
+    );
     const reasonForReschedule =
-      application?.applicationDetails?.reasonForApplication || " ";
+      application?.applicationDetails?.reasonForApplication;
     const additionalComments =
-      application?.applicationDetails?.additionalComments || " ";
+      application?.applicationDetails?.additionalComments;
 
     let base64Url = "";
     if (qrCode === "true") {
@@ -241,22 +239,22 @@ async function applicationCheckout(req, res, qrCode) {
           judgeName: "John Doe", // FIXME: employee.user.name
           courtDesignation: "HIGHT COURRT", //FIXME: mdmsDesignation.name,
           addressOfTheCourt: "Kerala", //FIXME: mdmsCourtRoom.address,
-          date: formattedToday,
-          partyName,
-          partyType: sourceType,
-          reasonForReschedule,
-          reasonForApplication: reasonForReschedule,
-          complainantName: partyName,
-          additionalComments,
-          initialHearingDate,
-          proposedHearingDate,
+          date: formattedToday || " ",
+          partyName: partyName || " ",
+          partyType: sourceType || " ",
+          reasonForReschedule: reasonForReschedule || " ",
+          reasonForApplication: reasonForReschedule || " ",
+          complainantName: partyName || " ",
+          additionalComments: additionalComments || " ",
+          initialHearingDate: initialHearingDate || " ",
+          proposedHearingDate: proposedHearingDate || " ",
           prayerOptional: " ",
           advocateSignature: "Advocate_Signature", //FIXME: It should also come from the application
-          advocateName: advocateName,
-          barRegistrationNumber,
-          day: day + ordinalSuffix,
-          month: month,
-          year: year,
+          advocateName: advocateName || " ",
+          barRegistrationNumber: barRegistrationNumber || " ",
+          day: day + ordinalSuffix || " ",
+          month: month || " ",
+          year: year || " ",
           qrCodeUrl: base64Url,
         },
       ],

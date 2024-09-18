@@ -108,7 +108,7 @@ const applicationCaseTransfer = async (req, res, qrCode) => {
       const advocateDetails = advocateData?.responseList?.find(
         (item) => item.isActive === true
       );
-      barRegistrationNumber = advocateDetails?.barRegistrationNumber || " ";
+      barRegistrationNumber = advocateDetails?.barRegistrationNumber;
     }
 
     const onBehalfOfuuid = application?.onBehalfOf?.[0];
@@ -117,14 +117,13 @@ const applicationCaseTransfer = async (req, res, qrCode) => {
       ?.advocateName
       ? allAdvocates[onBehalfOfuuid]?.[0]
       : {};
-    const advocateName = advocate?.additionalDetails?.advocateName || " ";
-    const partyName = application?.additionalDetails?.onBehalOfName || " ";
+    const advocateName = advocate?.additionalDetails?.advocateName;
+    const partyName = application?.additionalDetails?.onBehalOfName;
     const additionalComments =
-      application?.applicationDetails?.additionalComments || " ";
-    const grounds =
-      application?.applicationDetails?.groundsForSeekingTransfer || " ";
+      application?.applicationDetails?.additionalComments;
+    const grounds = application?.applicationDetails?.groundsForSeekingTransfer;
     const selectRequestedCourt =
-      application?.applicationDetails?.selectRequestedCourt || " ";
+      application?.applicationDetails?.selectRequestedCourt;
     let base64Url = " ";
     if (qrCode === "true") {
       const resCredential = await handleApiCall(
@@ -189,26 +188,26 @@ const applicationCaseTransfer = async (req, res, qrCode) => {
         {
           courtComplex: mdmsCourtRoom.name,
           caseType: "Negotiable Instruments Act 138 A",
-          caseNumber: courtCase.caseNumber,
-          caseYear: caseYear,
-          caseName: courtCase.caseTitle,
+          caseNumber: courtCase.caseNumber || " ",
+          caseYear: caseYear || " ",
+          caseName: courtCase.caseTitle || " ",
           caseNo: "87465464",
           originalCourt: "Suprem court of India", // FIXME:Take current court
-          newCourt: selectRequestedCourt,
+          newCourt: selectRequestedCourt || " ",
           judgeName: "John Doe", // FIXME: employee.user.name
           courtDesignation: "HIGHT COURRT", //FIXME: mdmsDesignation.name,
           addressOfTheCourt: "Kerala", //FIXME: mdmsCourtRoom.address,
-          date: formattedToday,
-          partyName: partyName,
-          additionalComments,
-          grounds,
+          date: formattedToday || " ",
+          partyName: partyName || " ",
+          additionalComments: additionalComments || " ",
+          grounds: grounds || " ",
           reliefSought: " ",
-          day: day + ordinalSuffix,
-          month: month,
-          year: year,
+          day: day + ordinalSuffix || " ",
+          month: month || " ",
+          year: year || " ",
           advocateSignature: "Advocate Signature",
-          advocateName,
-          barRegistrationNumber,
+          advocateName: advocateName || " ",
+          barRegistrationNumber: barRegistrationNumber || " ",
           qrCodeUrl: base64Url,
         },
       ],

@@ -123,9 +123,9 @@ async function acceptReschedulingRequest(req, res, qrCode) {
     if (!application) {
       renderError(res, "Application not found", 404);
     }
-    const partyName = application?.additionalDetails?.onBehalOfName || " ";
+    const partyName = application?.additionalDetails?.onBehalOfName;
     const reasonForRescheduling =
-      application?.applicationDetails?.reasonForApplication || " ";
+      application?.applicationDetails?.reasonForApplication;
     const originalHearingDate = application?.applicationDetails
       ?.initialHearingDate
       ? formatDate(
@@ -178,15 +178,15 @@ async function acceptReschedulingRequest(req, res, qrCode) {
     const data = {
       Data: [
         {
-          courtName: mdmsCourtRoom.name,
-          caseName: courtCase.caseTitle,
-          caseNumber: courtCase.caseNumber,
-          date: stringDate,
-          partyNames: partyName,
+          courtName: mdmsCourtRoom.name || " ",
+          caseName: courtCase.caseTitle || " ",
+          caseNumber: courtCase.caseNumber || " ",
+          date: stringDate || " ",
+          partyNames: partyName || " ",
           applicationId: order.orderDetails?.refApplicationId || " ",
-          reasonForRescheduling,
-          originalHearingDate,
-          additionalComments: order.comments,
+          reasonForRescheduling: reasonForRescheduling || " ",
+          originalHearingDate: originalHearingDate || " ",
+          additionalComments: order.comments || " ",
           judgeSignature: "Judge Signature",
           courtSeal: "Court Seal",
           qrCodeUrl: base64Url,

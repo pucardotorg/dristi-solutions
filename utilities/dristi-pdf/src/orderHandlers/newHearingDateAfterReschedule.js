@@ -155,13 +155,13 @@ async function newHearingDateAfterReschedule(req, res, qrCode) {
     const data = {
       Data: [
         {
-          courtName: mdmsCourtRoom.name,
-          caseName: courtCase.caseTitle,
-          caseNumber: courtCase.caseNumber,
-          originalHearingDate,
-          date: stringDate,
-          newHearingDate,
-          additionalComments: order.comments,
+          courtName: mdmsCourtRoom.name || " ",
+          caseName: courtCase.caseTitle || " ",
+          caseNumber: courtCase.caseNumber || " ",
+          originalHearingDate: originalHearingDate || " ",
+          date: stringDate || " ",
+          newHearingDate: newHearingDate || " ",
+          additionalComments: order.comments || " ",
           judgeSignature: "Judge Signature",
           judgeName: "JUDGE_NAME", // FIXME: employee.user.name,
           courtSeal: "Court Seal",

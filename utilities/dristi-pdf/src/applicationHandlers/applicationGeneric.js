@@ -145,8 +145,8 @@ async function applicationGeneric(req, res, qrCode) {
       ?.advocateName
       ? allAdvocates[onBehalfOfuuid]?.[0]
       : {};
-    const advocateName = advocate?.additionalDetails?.advocateName || " ";
-    const partyName = application?.additionalDetails?.onBehalOfName || " ";
+    const advocateName = advocate?.additionalDetails?.advocateName;
+    const partyName = application?.additionalDetails?.onBehalOfName;
     const onBehalfOfLitigent = courtCase?.litigants?.find(
       (item) => item.additionalDetails.uuid === onBehalfOfuuid
     );
@@ -230,42 +230,42 @@ async function applicationGeneric(req, res, qrCode) {
 
     const ordinalSuffix = getOrdinalSuffix(day);
     const reasonForApplication =
-      application?.applicationDetails?.reasonForApplication || " ";
+      application?.applicationDetails?.reasonForApplication;
     const additionalComments =
-      application?.applicationDetails?.additionalComments || " ";
+      application?.applicationDetails?.additionalComments;
     const applicationName =
       application?.applicationDetails?.applicationTitle ||
       applicationNameMap[application?.applicationType] ||
       "General Application";
-    const prayer = " ";
+    const prayer = "";
     const data = {
       Data: [
         {
-          courtComplex: mdmsCourtRoom.name,
+          courtComplex: mdmsCourtRoom.name || " ",
           caseType: "Negotiable Instruments Act 138 A",
-          caseNumber: courtCase.caseNumber,
-          caseYear: caseYear,
-          caseName: courtCase.caseTitle,
+          caseNumber: courtCase.caseNumber || " ",
+          caseYear: caseYear || " ",
+          caseName: courtCase.caseTitle || " ",
           judgeName: "John Doe", // FIXME: employee.user.name
           courtDesignation: "HIGHT COURRT", //FIXME: mdmsDesignation.name,
           addressOfTheCourt: "Kerala", //FIXME: mdmsCourtRoom.address,
-          date: formattedToday,
-          applicationName,
-          partyName: partyName,
+          date: formattedToday || " ",
+          applicationName: applicationName || " ",
+          partyName: partyName || " ",
           purposeOfApplication: "asdfasdf",
-          complainantName: partyName, //FIXME: REMOVE it from both pdf configs and here,
-          additionalComments,
-          reasonForApplication,
-          partyType,
-          prayer,
+          complainantName: partyName || " ", //FIXME: REMOVE it from both pdf configs and here,
+          additionalComments: additionalComments || " ",
+          reasonForApplication: reasonForApplication || " ",
+          partyType: partyType || " ",
+          prayer: prayer || " ",
           advocateSignature: "Advocate Signature",
-          advocateName: advocateName,
-          barRegistrationNumber,
+          advocateName: advocateName || " ",
+          barRegistrationNumber: barRegistrationNumber || " ",
           documentSubmissionName: "documents",
           documentId: "documents",
-          day: day + ordinalSuffix,
-          month: month,
-          year: year,
+          day: day + ordinalSuffix || " ",
+          month: month || " ",
+          year: year || " ",
           qrCodeUrl: base64Url,
         },
       ],

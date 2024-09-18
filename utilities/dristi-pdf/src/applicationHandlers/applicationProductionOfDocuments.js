@@ -144,10 +144,10 @@ async function applicationProductionOfDocuments(req, res, qrCode) {
       ?.advocateName
       ? allAdvocates[onBehalfOfuuid]?.[0]
       : {};
-    const advocateName = advocate?.additionalDetails?.advocateName || " ";
-    const partyName = application?.additionalDetails?.onBehalOfName || " ";
+    const advocateName = advocate?.additionalDetails?.advocateName;
+    const partyName = application?.additionalDetails?.onBehalOfName;
     // Handle QR code if enabled
-    let base64Url = " ";
+    let base64Url = "";
     if (qrCode === "true") {
       const resCredential = await handleApiCall(
         () =>
@@ -207,34 +207,34 @@ async function applicationProductionOfDocuments(req, res, qrCode) {
 
     const ordinalSuffix = getOrdinalSuffix(day);
     const reasonForApplication =
-      application?.applicationDetails?.reasonForApplication || " ";
+      application?.applicationDetails?.reasonForApplication;
     const additionalComments =
-      application?.applicationDetails?.additionalComments || " ";
+      application?.applicationDetails?.additionalComments;
     const data = {
       Data: [
         {
           courtComplex: mdmsCourtRoom.name,
           caseType: "Negotiable Instruments Act 138 A",
-          caseNumber: courtCase.caseNumber,
-          caseYear: caseYear,
-          caseName: courtCase.caseTitle,
+          caseNumber: courtCase.caseNumber || " ",
+          caseYear: caseYear || " ",
+          caseName: courtCase.caseTitle || " ",
           judgeName: "John Doe", // FIXME: employee.user.name
           courtDesignation: "HIGHT COURRT", //FIXME: mdmsDesignation.name,
           addressOfTheCourt: "Kerala", //FIXME: mdmsCourtRoom.address,
-          date: formattedToday,
-          partyName: partyName,
-          complainantName: partyName, //FIXME: REMOVE it from both pdf configs and here,
-          additionalComments,
-          reasonForApplication,
+          date: formattedToday || " ",
+          partyName: partyName || " ",
+          complainantName: partyName || " ", //FIXME: REMOVE it from both pdf configs and here,
+          additionalComments: additionalComments || " ",
+          reasonForApplication: reasonForApplication || " ",
           prayerOptional: " ",
           advocateSignature: "Advocate_Signature", //FIXME: It should also come from the application
-          advocateName: advocateName,
+          advocateName: advocateName || " ",
           nameOfDocument: "Aadhar card", //FIXME: It should come from the application, currently there is not field present inside of it
-          documentList,
-          barRegistrationNumber,
-          day: day + ordinalSuffix,
-          month: month,
-          year: year,
+          documentList: documentList,
+          barRegistrationNumber: barRegistrationNumber || " ",
+          day: day + ordinalSuffix || " ",
+          month: month || " ",
+          year: year || " ",
           qrCodeUrl: base64Url,
         },
       ],

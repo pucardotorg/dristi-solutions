@@ -123,14 +123,14 @@ const applicationBailBond = async (req, res, qrCode) => {
       ?.advocateName
       ? allAdvocates[onBehalfOfuuid]?.[0]
       : {};
-    const advocateName = advocate?.additionalDetails?.advocateName || " ";
-    const partyName = application?.additionalDetails?.onBehalOfName || " ";
+    const advocateName = advocate?.additionalDetails?.advocateName;
+    const partyName = application?.additionalDetails?.onBehalOfName;
     const documentList = application?.applicationDetails
       ?.applicationDocuments || [{ documentType: " " }];
     const additionalComments =
-      application?.applicationDetails?.additionalComments || " ";
+      application?.applicationDetails?.additionalComments;
     const reasonForApplication =
-      application?.applicationDetails?.reasonForApplication || " ";
+      application?.applicationDetails?.reasonForApplication;
     // Handle QR code if enabled
     let base64Url = "";
     if (qrCode === "true") {
@@ -194,28 +194,28 @@ const applicationBailBond = async (req, res, qrCode) => {
     const data = {
       Data: [
         {
-          courtComplex: mdmsCourtRoom.name,
+          courtComplex: mdmsCourtRoom.name || " ",
           caseType: "Negotiable Instruments Act 138 A",
-          caseNumber: courtCase.caseNumber,
-          caseYear: caseYear,
-          caseName: courtCase.caseTitle,
+          caseNumber: courtCase.caseNumber || " ",
+          caseYear: caseYear || " ",
+          caseName: courtCase.caseTitle || " ",
           judgeName: "John Doe", // FIXME: employee.user.name
           courtDesignation: "HIGHT COURRT", //FIXME: mdmsDesignation.name,
           addressOfTheCourt: "Kerala", //FIXME: mdmsCourtRoom.address,
-          date: formattedToday,
-          partyName: partyName,
-          applicationTitle,
-          subjectText,
-          statuteAndAct,
-          reasonForApplication,
-          documentList,
-          additionalComments,
-          day: day + ordinalSuffix,
-          month: month,
-          year: year,
+          date: formattedToday || " ",
+          partyName: partyName || " ",
+          applicationTitle: applicationTitle || " ",
+          subjectText: subjectText || " ",
+          statuteAndAct: statuteAndAct || " ",
+          reasonForApplication: reasonForApplication || " ",
+          documentList: documentList,
+          additionalComments: additionalComments || " ",
+          day: day + ordinalSuffix || " ",
+          month: month || " ",
+          year: year || " ",
           advocateSignature: "Advocate Signature",
-          advocateName,
-          barRegistrationNumber,
+          advocateName: advocateName || " ",
+          barRegistrationNumber: barRegistrationNumber || " ",
           qrCodeUrl: base64Url,
         },
       ],

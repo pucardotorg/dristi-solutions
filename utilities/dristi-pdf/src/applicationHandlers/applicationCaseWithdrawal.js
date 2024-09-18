@@ -118,12 +118,12 @@ const applicationCaseWithdrawal = async (req, res, qrCode) => {
       ?.advocateName
       ? allAdvocates[onBehalfOfuuid]?.[0]
       : {};
-    const advocateName = advocate?.additionalDetails?.advocateName || " ";
-    const partyName = application?.additionalDetails?.onBehalOfName || " ";
+    const advocateName = advocate?.additionalDetails?.advocateName;
+    const partyName = application?.additionalDetails?.onBehalOfName;
     const additionalComments =
-      application?.applicationDetails?.additionalComments || " ";
+      application?.applicationDetails?.additionalComments;
     const reasonForWithdrawal =
-      application?.applicationDetails?.benefitOfExtension || " ";
+      application?.applicationDetails?.benefitOfExtension;
 
     let partyType = "COURT";
     if (onBehalfOfLitigent?.partyType?.toLowerCase()?.includes("complainant")) {
@@ -174,23 +174,23 @@ const applicationCaseWithdrawal = async (req, res, qrCode) => {
     const data = {
       Data: [
         {
-          courtComplex: mdmsCourtRoom.name,
+          courtComplex: mdmsCourtRoom.name || " ",
           caseType: "Negotiable Instruments Act 138 A",
-          caseNumber: courtCase.caseNumber,
-          caseYear: caseYear,
-          caseName: courtCase.caseTitle,
+          caseNumber: courtCase.caseNumber || " ",
+          caseYear: caseYear || " ",
+          caseName: courtCase.caseTitle || " ",
           caseNo: "87465464",
           judgeName: "John Doe", // FIXME: employee.user.name
           courtDesignation: "HIGHT COURRT", //FIXME: mdmsDesignation.name,
           addressOfTheCourt: "Kerala", //FIXME: mdmsCourtRoom.address,
-          date: formattedToday,
-          partyName: partyName,
-          partyType,
-          additionalComments,
+          date: formattedToday || " ",
+          partyName: partyName || " ",
+          partyType: partyType || " ",
+          additionalComments: additionalComments || " ",
           advocateSignature: "Advocate Signature",
-          reasonForWithdrawal,
-          advocateName,
-          barRegistrationNumber,
+          reasonForWithdrawal: reasonForWithdrawal || " ",
+          advocateName: advocate || " ",
+          barRegistrationNumber: barRegistrationNumber || " ",
           qrCodeUrl: base64Url,
         },
       ],

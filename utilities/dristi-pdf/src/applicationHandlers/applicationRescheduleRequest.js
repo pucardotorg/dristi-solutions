@@ -159,8 +159,8 @@ async function applicationRescheduleRequest(req, res, qrCode) {
       ?.advocateName
       ? allAdvocates[onBehalfOfuuid]?.[0]
       : {};
-    const advocateName = advocate?.additionalDetails?.advocateName || " ";
-    const partyName = application?.additionalDetails?.onBehalOfName || " ";
+    const advocateName = advocate?.additionalDetails?.advocateName;
+    const partyName = application?.additionalDetails?.onBehalOfName;
     const onBehalfOfLitigent = courtCase?.litigants?.find(
       (item) => item.additionalDetails.uuid === onBehalfOfuuid
     );
@@ -231,39 +231,40 @@ async function applicationRescheduleRequest(req, res, qrCode) {
     const year = currentDate.getFullYear();
 
     const ordinalSuffix = getOrdinalSuffix(day);
-    const initialHearingDate =
-      formatDate(application?.applicationDetails?.initialHearingDate) || " ";
-    const proposedHearingDate =
-      formatDate(application?.applicationDetails?.newHearingScheduledDate) ||
-      " ";
+    const initialHearingDate = formatDate(
+      application?.applicationDetails?.initialHearingDate
+    );
+    const proposedHearingDate = formatDate(
+      application?.applicationDetails?.newHearingScheduledDate
+    );
     const reasonForReschedule =
-      application?.applicationDetails?.reasonForApplication || " ";
+      application?.applicationDetails?.reasonForApplication;
     const additionalComments =
-      application?.applicationDetails?.additionalComments || " ";
+      application?.applicationDetails?.additionalComments;
     const data = {
       Data: [
         {
-          courtComplex: mdmsCourtRoom.name,
+          courtComplex: mdmsCourtRoom.name || " ",
           caseType: "Negotiable Instruments Act 138 A",
-          caseNumber: courtCase.caseNumber,
-          caseYear: caseYear,
-          caseName: courtCase.caseTitle,
+          caseNumber: courtCase.caseNumber || " ",
+          caseYear: caseYear || " ",
+          caseName: courtCase.caseTitle || " ",
           judgeName: "John Doe", // FIXME: employee.user.name
           courtDesignation: "HIGHT COURRT", //FIXME: mdmsDesignation.name,
           addressOfTheCourt: "Kerala", //FIXME: mdmsCourtRoom.address,
-          date: formattedToday,
-          partyName: partyName,
-          partyType,
-          initialHearingDate,
-          reasonForReschedule,
-          proposedHearingDate,
-          additionalComments,
+          date: formattedToday || " ",
+          partyName: partyName || " ",
+          partyType: partyType || " ",
+          initialHearingDate: initialHearingDate || " ",
+          reasonForReschedule: reasonForReschedule || " ",
+          proposedHearingDate: proposedHearingDate || " ",
+          additionalComments: additionalComments || " ",
           advocateSignature: "Advocate Signature",
-          advocateName: advocateName,
-          barRegistrationNumber,
-          day: day + ordinalSuffix,
-          month: month,
-          year: year,
+          advocateName: advocateName || " ",
+          barRegistrationNumber: barRegistrationNumber || " ",
+          day: day + ordinalSuffix || " ",
+          month: month || " ",
+          year: year || " ",
           qrCodeUrl: base64Url,
         },
       ],
