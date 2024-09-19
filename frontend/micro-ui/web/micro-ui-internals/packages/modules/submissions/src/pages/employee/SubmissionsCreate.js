@@ -472,6 +472,9 @@ const SubmissionsCreate = ({ path }) => {
       if (formdata?.submissionDocuments?.documents?.length > 0) {
         documentsList = [...documentsList, ...formdata?.submissionDocuments?.documents];
       }
+      if (formdata?.othersDocument?.documents?.length > 0) {
+        documentsList = [...documentsList, ...formdata?.othersDocument?.documents];
+      }
       const applicationDocuments =
         formdata?.submissionDocuments?.submissionDocuments?.map((item) => ({
           fileType: item?.document?.documentType,
