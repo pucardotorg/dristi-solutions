@@ -127,8 +127,11 @@ public class Configuration {
     @Value("${task.module.code}")
     private String taskModuleCode;
 
-    @Value(("${task.business.service}"))
-    private String taskBusinessService;
+    @Value(("${task.summon.business.service}"))
+    private String taskSummonBusinessService;
+
+    @Value(("${task.notice.business.service}"))
+    private String taskNoticeBusinessService;
 
     //Payment Calculator Service
 

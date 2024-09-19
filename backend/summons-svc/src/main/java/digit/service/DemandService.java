@@ -48,26 +48,18 @@ public class DemandService {
         this.mdmsUtil = mdmsUtil;
         this.taskUtil = taskUtil;
     }
-    public final Map<String, String> masterCodePayemntTyprMap= new HashMap<String,String>(){
-        {
-            put("TASK_SUMMON_ADVANCE_CARRYFORWARD_COURT_FEES", "Summons Post Court Fee");
-            put("TASK_SUMMON_ADVANCE_CARRYFORWARD_I_POST", "Summons Post Process Fee");
-            put("TASK_SUMMON_ADVANCE_CARRYFORWARD_GST", "Summons Post Process Fee");
-        }
-    };
+    public final Map<String, String> masterCodePayemntTypeMap= new HashMap<String,String>();
 
     public BillResponse fetchPaymentDetailsAndGenerateDemandAndBill(TaskRequest taskRequest) {
         Task task = taskRequest.getTask();
-        String channelName = taskRequest.getTask().getTaskDetails().getDeliveryChannel().getChannelName();
-        if(channelName.equalsIgnoreCase("POST")) {
-            List<Calculation> calculationList = generatePaymentDetails(taskRequest.getRequestInfo(), task);
-            Set<String> consumerCodeList = generateDemands(taskRequest.getRequestInfo(), calculationList, task);
-            return getBillWithMultipleConsumerCode(taskRequest.getRequestInfo(), consumerCodeList, task);
+        String businessService = getBusinessService(task.getTaskType());
+        List<Calculation> calculationList = generatePaymentDetails(taskRequest.getRequestInfo(), task);
+        if(calculationList == null || calculationList.isEmpty()){
+            throw new CustomException(PAYMENT_CALCULATOR_ERROR, "Getting empty or null data from payment-calculator");
         }
-        else {
-            updateTaskStatus(taskRequest);
-            return null;
-        }
+        Set<String> consumerCodeList = generateDemands(taskRequest.getRequestInfo(), calculationList, task, businessService);
+        return getBillWithMultipleConsumerCode(taskRequest.getRequestInfo(), consumerCodeList, task, businessService);
+
     }
 
     public List<Calculation> generatePaymentDetails(RequestInfo requestInfo, Task task) {
@@ -90,24 +82,27 @@ public class DemandService {
         return calculationResponse.getCalculation();
     }
 
-    public Set<String> generateDemands(RequestInfo requestInfo, List<Calculation> calculations, Task task) {        List<Demand> demands = new ArrayList<>();
+    public Set<String> generateDemands(RequestInfo requestInfo, List<Calculation> calculations, Task task, String businessService) {
+        List<Demand> demands = new ArrayList<>();
         Map<String, Map<String, JSONArray>> mdmsData = mdmsUtil.fetchMdmsData(requestInfo,
-                config.getEgovStateTenantId(), config.getPaymentBusinessServiceName(), createMasterDetails()
+                config.getEgovStateTenantId(), businessService, createMasterDetails()
         );
         for (Calculation calculation : calculations) {
-            List<DemandDetail> demandDetailList = createDemandDetails(calculation, task, mdmsData);
-            demands.addAll(createDemandList(task, demandDetailList, calculation.getTenantId(), mdmsData));
+            List<DemandDetail> demandDetailList = createDemandDetails(calculation, task, mdmsData, businessService);
+            demands.addAll(createDemandList(task, demandDetailList, calculation.getTenantId(), mdmsData, businessService));
         }
         return callBillServiceAndCreateDemand(requestInfo, demands, task);
     }
 
-    private List<DemandDetail> createDemandDetails(Calculation calculation, Task task, Map<String, Map<String, JSONArray>> mdmsData) {
+    private List<DemandDetail> createDemandDetails(Calculation calculation, Task task, Map<String,
+            Map<String, JSONArray>> mdmsData, String businessService) {
         List<DemandDetail> demandDetailList = new ArrayList<>();
 
         if (config.isTest()) {
             demandDetailList.addAll(createTestDemandDetails(calculation.getTenantId(), task));
         } else {
-            Map<String, String> masterCodes = getTaxHeadMasterCodes(mdmsData, config.getTaskBusinessService());
+            String deliveryChannel = task.getTaskDetails().getDeliveryChannel().getChannelName();
+            Map<String, String> masterCodes = getTaxHeadMasterCodes(mdmsData, businessService, deliveryChannel);
             for (BreakDown breakDown : calculation.getBreakDown()) {
                 demandDetailList.add(createDemandDetail(calculation.getTenantId(), breakDown, masterCodes));
             }
@@ -167,42 +162,44 @@ public class DemandService {
         return consumerCode;
     }
 
-    private List<Demand> createDemandList(Task task, List<DemandDetail> demandDetailList, String tenantId, Map<String, Map<String, JSONArray>> mdmsData) {
+    private List<Demand> createDemandList(Task task, List<DemandDetail> demandDetailList, String tenantId, Map<String,
+            Map<String, JSONArray>> mdmsData, String businessService) {
         List<Demand> demandList = new ArrayList<>();
         String channelName = ChannelName.fromString(task.getTaskDetails().getDeliveryChannel().getChannelName()).name();
         String taskNumber = task.getTaskNumber();
-        Map<String, String> paymentTypeData = getPaymentType(mdmsData,channelName);
+        Map<String, String> paymentTypeData = getPaymentType(mdmsData, channelName, businessService);
         for (DemandDetail detail : demandDetailList) {
             String taxHeadMasterCode = detail.getTaxHeadMasterCode();
-            String paymentType = masterCodePayemntTyprMap.get(taxHeadMasterCode);
+            String paymentType = masterCodePayemntTypeMap.get(taxHeadMasterCode);
             String paymentTypeSuffix = paymentTypeData.get(paymentType);
             String consumerCode = taskNumber + "_" + paymentTypeSuffix;
-            demandList.add(createDemandObject(Collections.singletonList(detail), tenantId, consumerCode));
+            demandList.add(createDemandObject(Collections.singletonList(detail), tenantId, consumerCode, businessService));
         }
 
         return demandList;
     }
 
-    private Demand createDemandObject(List<DemandDetail> demandDetailList, String tenantId, String consumerCode) {
+    private Demand createDemandObject(List<DemandDetail> demandDetailList, String tenantId, String consumerCode, String businessService) {
         Demand demand = Demand.builder()
                 .tenantId(tenantId)
                 .consumerCode(consumerCode)
                 .consumerType(config.getTaxConsumerType())
-                .businessService(config.getTaskBusinessService())
+                .businessService(businessService)
                 .taxPeriodFrom(config.getTaxPeriodFrom()).taxPeriodTo(config.getTaxPeriodTo())
                 .demandDetails(demandDetailList)
                 .build();
         return demand;
     }
 
-    private Map<String, String> getTaxHeadMasterCodes(Map<String, Map<String, JSONArray>> mdmsData, String taskBusinessService) {
+    private Map<String, String> getTaxHeadMasterCodes(Map<String, Map<String, JSONArray>> mdmsData, String taskBusinessService, String deliveryChannel) {
         if (mdmsData != null && mdmsData.containsKey("payment") && mdmsData.get(config.getPaymentBusinessServiceName()).containsKey(PAYMENTMASTERCODE)) {
             JSONArray masterCode = mdmsData.get(config.getPaymentBusinessServiceName()).get(PAYMENTMASTERCODE);
             Map<String, String> result = new HashMap<>();
             for (Object masterCodeObj : masterCode) {
                 Map<String, String> subType = (Map<String, String>) masterCodeObj;
-                if (taskBusinessService.equals(subType.get("businessService"))) {
+                if (taskBusinessService.equals(subType.get("businessService")) && deliveryChannel.equalsIgnoreCase(subType.get("deliveryChannel"))) {
                     result.put(subType.get("type"), subType.get("masterCode"));
+                    masterCodePayemntTypeMap.put(subType.get("masterCode"), subType.get("paymentType"));
                 }
             }
             return result;
@@ -210,11 +207,11 @@ public class DemandService {
         return Collections.emptyMap();
     }
 
-    private Map<String, String> getPaymentType(Map<String, Map<String, JSONArray>> mdmsData, String channelName) {
+    private Map<String, String> getPaymentType(Map<String, Map<String, JSONArray>> mdmsData, String channelName, String businessService) {
         if (mdmsData != null && mdmsData.containsKey("payment") && mdmsData.get(config.getPaymentBusinessServiceName()).containsKey(PAYMENTTYPE)) {
             JSONArray masterCode = mdmsData.get(config.getPaymentBusinessServiceName()).get(PAYMENTTYPE);
 
-            String filterStringDeliveryChannel = String.format(FILTER_PAYMENT_TYPE_DELIVERY_CHANNEL, channelName, config.getTaskBusinessService());
+            String filterStringDeliveryChannel = String.format(FILTER_PAYMENT_TYPE_DELIVERY_CHANNEL, channelName, businessService);
 
             JSONArray paymentTypeData = JsonPath.read(masterCode, filterStringDeliveryChannel);
             Map<String, String> result = new HashMap<>();
@@ -223,7 +220,6 @@ public class DemandService {
                     String suffix = jsonNode.get("suffix").asText();
                     String paymentType = jsonNode.get("paymentType").asText();
                     result.put(paymentType, suffix);
-
             }
             return result;
         }
@@ -238,7 +234,8 @@ public class DemandService {
     }
 
     public BillResponse getBill(RequestInfo requestInfo, Task task) {
-        String uri = buildFetchBillURI(task.getTenantId(), Collections.singleton(task.getTaskNumber()), config.getTaskBusinessService());
+        String businessService = getBusinessService(task.getTaskType());
+        String uri = buildFetchBillURI(task.getTenantId(), Collections.singleton(task.getTaskNumber()), businessService);
 
         RequestInfoWrapper requestInfoWrapper = RequestInfoWrapper.builder().requestInfo(requestInfo).build();
         Object response = repository.fetchResult(new StringBuilder(uri), requestInfoWrapper);
@@ -246,8 +243,8 @@ public class DemandService {
         return mapper.convertValue(response, BillResponse.class);
     }
 
-    public BillResponse getBillWithMultipleConsumerCode(RequestInfo requestInfo, Set<String> consumerCodes, Task task) {
-        String uri = buildFetchBillURI(task.getTenantId(), consumerCodes, config.getTaskBusinessService());
+    public BillResponse getBillWithMultipleConsumerCode(RequestInfo requestInfo, Set<String> consumerCodes, Task task, String businessService) {
+        String uri = buildFetchBillURI(task.getTenantId(), consumerCodes, businessService);
 
         RequestInfoWrapper requestInfoWrapper = RequestInfoWrapper.builder().requestInfo(requestInfo).build();
         Object response = repository.fetchResult(new StringBuilder(uri), requestInfoWrapper);
@@ -275,17 +272,13 @@ public class DemandService {
         }
     }
 
-    public void updateTaskStatus(TaskRequest request) {
+    private String getBusinessService(String taskType) {
+        return switch (taskType.toUpperCase()) {
+            case "SUMMON" -> config.getTaskSummonBusinessService();
+            case "NOTICE" -> config.getTaskNoticeBusinessService();
+            default -> throw new IllegalArgumentException("Unsupported task type: " + taskType);
+        };
 
-        Task task = request.getTask();
-        Workflow workflow = null;
-        if (request.getTask().getStatus().equalsIgnoreCase("PAYMENT_PENDING")) {
-            workflow = Workflow.builder().action("MAKE PAYMENT").build();
-        }
-
-        task.setWorkflow(workflow);
-        TaskRequest taskRequest = TaskRequest.builder()
-                .requestInfo(request.getRequestInfo()).task(task).build();
-        taskUtil.callUpdateTask(taskRequest);
     }
+
 }
