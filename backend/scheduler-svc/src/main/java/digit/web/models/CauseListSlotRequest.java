@@ -1,5 +1,6 @@
 package digit.web.models;
 
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import lombok.*;
@@ -12,14 +13,14 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 @ToString
-public class CauseListRequest {
+public class CauseListSlotRequest {
 
     @JsonProperty("RequestInfo")
     @Valid
     private RequestInfo requestInfo = null;
 
-    @JsonProperty("CauseList")
+    @JsonProperty("SlotList")
     @Valid
-    private List<CauseList> causeLists = null;
+    private List<SlotList> slotLists = null;
 
 }

@@ -40,6 +40,9 @@ public class ScheduleHearingSearchCriteria {
     @JsonProperty("endDateTime")
     private Long endDateTime;
 
+    @JsonProperty("hearingDate")
+    private Long hearingDate;
+
     @JsonProperty("status")
     private List<String> status;
 

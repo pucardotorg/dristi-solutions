@@ -6,9 +6,11 @@ import digit.config.ServiceConstants;
 import digit.kafka.producer.Producer;
 import digit.repository.CauseListRepository;
 import digit.repository.HearingRepository;
+import digit.util.DateUtil;
 import digit.util.MdmsUtil;
 import digit.util.PdfServiceUtil;
 import digit.web.models.*;
+import digit.web.models.hearing.HearingSearchCriteria;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.request.RequestInfo;
@@ -24,6 +26,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -43,10 +46,12 @@ public class CauseListService {
 
     private ServiceConstants serviceConstants;
 
+    private DateUtil dateUtil;
+
     @Autowired
     public CauseListService(HearingRepository hearingRepository, CauseListRepository causeListRepository,
                             Producer producer, Configuration config, PdfServiceUtil pdfServiceUtil,
-                            MdmsUtil mdmsUtil, ServiceConstants serviceConstants) {
+                            MdmsUtil mdmsUtil, ServiceConstants serviceConstants, DateUtil dateUtil) {
         this.hearingRepository = hearingRepository;
         this.causeListRepository = causeListRepository;
         this.producer = producer;
@@ -54,27 +59,22 @@ public class CauseListService {
         this.pdfServiceUtil = pdfServiceUtil;
         this.mdmsUtil = mdmsUtil;
         this.serviceConstants = serviceConstants;
+        this.dateUtil = dateUtil;
     }
 
     public void updateCauseListForTomorrow() {
         log.info("operation = updateCauseListForTomorrow, result = IN_PROGRESS");
         List<CauseList> causeLists = new ArrayList<>();
-        //TODO get judges from db once tables are ready
-        List<String> judgeIds = new ArrayList<>();
-        judgeIds.add("judge001"); judgeIds.add("judge002"); judgeIds.add("judge003");
 
-        // Multi Thread processing: process 10 judges at a time
         ExecutorService executorService = Executors.newCachedThreadPool();
 
-        // Submit tasks for each judge
-        submitTasks(executorService, judgeIds, causeLists);
+        submitTasks(executorService, causeLists);
 
-        // Wait for all tasks to complete
         waitForTasksCompletion(executorService);
 
         if (!CollectionUtils.isEmpty(causeLists)) {
             CauseListResponse causeListResponse = CauseListResponse.builder()
-                    .responseInfo(ResponseInfo.builder().build()).causeList(causeLists).build();
+                    .responseInfo(ResponseInfo.builder().build()).causeLists(causeLists).build();
             producer.push(config.getCauseListInsertTopic(), causeListResponse);
         } else {
             log.info("No cause lists to be created");
@@ -82,56 +82,52 @@ public class CauseListService {
         log.info("operation = updateCauseListForTomorrow, result = SUCCESS");
     }
 
-    private void submitTasks(ExecutorService executorService, List<String> judgeIds, List<CauseList> causeLists) {
-        for (String judgeId : judgeIds) {
-            // Submit a task to the executor service for each judge
-            executorService.submit(() -> generateCauseListForJudge(judgeId, causeLists));
-        }
+    private void submitTasks(ExecutorService executorService, List<CauseList> causeLists) {
+            executorService.submit(() -> generateCauseList(causeLists));
     }
 
     private void waitForTasksCompletion(ExecutorService executorService) {
         executorService.shutdown();
         try {
-            // Wait until all tasks are completed or timeout occurs
-            executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+            boolean execute = executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
         } catch (InterruptedException e) {
             log.error("Error occurred while waiting for task completion: {}", e.getMessage());
             Thread.currentThread().interrupt();
         }
     }
 
-    private void generateCauseListForJudge(String judgeId, List<CauseList> causeLists) {
-        log.info("operation = generateCauseListForJudge, result = IN_PROGRESS, judgeId = {}", judgeId);
-        ScheduleHearingSearchCriteria searchCriteria =  ScheduleHearingSearchCriteria.builder()
-                .judgeId(judgeId)
-                .build();
-        List<ScheduleHearing> scheduleHearings = hearingRepository.getHearings(searchCriteria, null, null);
-        if (CollectionUtils.isEmpty(scheduleHearings)) {
-            log.info("No hearings scheduled tomorrow for judgeId = {}", judgeId);
+    private void generateCauseList(List<CauseList> causeLists) {
+        log.info("operation = generateCauseListForJudge, result = IN_PROGRESS");
+        HearingSearchCriteria searchCriteria = HearingSearchCriteria.builder()
+                .fromDate(LocalDate.now())
+                .toDate(LocalDate.now().plusDays(1)).build();
+        List<HearingCauseList> hearingCauseList =  hearingRepository.getHearingsFromHearingTable(searchCriteria);
+        if (CollectionUtils.isEmpty(hearingCauseList)) {
+            log.info("No hearings scheduled tomorrow ");
         } else {
-            log.info("No. of hearings scheduled tomorrow for judgeId = {} is {}", judgeId, scheduleHearings.size());
-            fillHearingTimesWithDataFromMdms(scheduleHearings);
-            generateCauseListFromHearings(scheduleHearings, causeLists);
+            log.info("No. of hearings scheduled tomorrow ");
+            fillHearingTimesWithDataFromMdms(hearingCauseList);
+            generateCauseListFromHearings(hearingCauseList, causeLists);
             if (!CollectionUtils.isEmpty(causeLists)) {
-                log.info("Generated {} CauseLists for judgeId {}", causeLists.size(), judgeId);
+                log.info("Generated slotLists ");
             }
-            log.info("operation = generateCauseListForJudge, result = SUCCESS, judgeId = {}", judgeId);
+            log.info("operation = generateCauseListForJudge, result = SUCCESS");
         }
     }
 
-    private void fillHearingTimesWithDataFromMdms(List<ScheduleHearing> scheduleHearings) {
-        log.info("operation = fillHearingTimesWithDataFromMdms, result = IN_PROGRESS, judgeId = {}", scheduleHearings.get(0).getJudgeId());
+    private void fillHearingTimesWithDataFromMdms(List<HearingCauseList> hearingslotLists) {
+        log.info("operation = fillHearingTimesWithDataFromMdms, result = IN_PROGRESS, judgeId = {}", hearingslotLists.get(0).getCourtId());
         List<MdmsHearing> mdmsHearings = getHearingDataFromMdms();
-//        for (ScheduleHearing scheduleHearing : scheduleHearings) {
-//            Optional<MdmsHearing> optionalHearing = mdmsHearings.stream().filter(a -> a.getHearingName()
-//                    .equalsIgnoreCase(scheduleHearing.getEventType().getValue())).findFirst();
-//            if (optionalHearing.isPresent() && (optionalHearing.get().getHearingTime() != null)) {
-//                scheduleHearing.setHearingTimeInMinutes(optionalHearing.get().getHearingTime());
-//                log.info("Minutes to be allotted {} for Schedule Hearing {}", scheduleHearing.getHearingTimeInMinutes(),
-//                        scheduleHearing.getHearingBookingId());
-//            }
-//        }
-        log.info("operation = fillHearingTimesWithDataFromMdms, result = SUCCESS, judgeId = {}", scheduleHearings.get(0).getJudgeId());
+        for (HearingCauseList hearingList : hearingslotLists) {
+            Optional<MdmsHearing> optionalHearing = mdmsHearings.stream().filter(a -> a.getHearingType()
+                    .equalsIgnoreCase(hearingList.getHearingType())).findFirst();
+            if (optionalHearing.isPresent() && (optionalHearing.get().getHearingTime() != null)) {
+                hearingList.setHearingTimeInMinutes(optionalHearing.get().getHearingTime().longValue());
+                log.info("Minutes to be allotted {} for Schedule Hearing {}", hearingList.getHearingTimeInMinutes(),
+                        hearingList.getCaseNumber());
+            }
+        }
+        log.info("operation = fillHearingTimesWithDataFromMdms, result = SUCCESS, judgeId = {}", hearingslotLists.get(0).getCourtId());
     }
 
     private List<MdmsHearing> getHearingDataFromMdms() {
@@ -152,54 +148,74 @@ public class CauseListService {
         return mdmsHearings;
     }
 
-    private void generateCauseListFromHearings(List<ScheduleHearing> scheduleHearings, List<CauseList> causeLists) {
-        log.info("operation = generateCauseListFromHearings, result = SUCCESS, judgeId = {}", scheduleHearings.get(0).getJudgeId());
+    private void generateCauseListFromHearings(List<HearingCauseList> scheduleHearings, List<CauseList> causeLists) {
+        log.info("operation = generateCauseListFromHearings, result = SUCCESS, judgeId = {}", scheduleHearings.get(0).getCourtId());
         List<MdmsSlot> mdmsSlotList = getSlottingDataFromMdms();
-//        scheduleHearings.sort(Comparator.comparing(ScheduleHearing::getEventType));
-        int currentSlotIndex = 0; // Track the current slot index
-        int accumulatedTime = 0; // Track accumulated hearing time within the slot
 
-        for (ScheduleHearing hearing : scheduleHearings) {
+        long currentSlotIndex = 0;
+        long accumulatedTime = 0;
+
+        for (HearingCauseList hearing : scheduleHearings) {
+            boolean isSlotAssigned = false;
+
             while (currentSlotIndex < mdmsSlotList.size()) {
-                MdmsSlot mdmsSlot = mdmsSlotList.get(currentSlotIndex);
-                int hearingTime = hearing.getHearingTimeInMinutes();
+                MdmsSlot mdmsSlot = mdmsSlotList.get((int) currentSlotIndex);
+                long hearingTime = hearing.getHearingTimeInMinutes();
 
                 if (accumulatedTime + hearingTime <= mdmsSlot.getSlotDuration()) {
                     CauseList causeList = getCauseListFromHearingAndSlot(hearing, mdmsSlot);
                     causeLists.add(causeList);
                     accumulatedTime += hearingTime;
-                    break; // Move to the next hearing
+                    isSlotAssigned = true;
+                    break;
                 } else {
-                    // Move to the next mdmsSlot
                     currentSlotIndex++;
-                    accumulatedTime = 0; // Reset accumulated time for the new mdmsSlot
+                    accumulatedTime = 0;
                 }
             }
 
-            if (currentSlotIndex == mdmsSlotList.size()) {
-                // Add remaining cases to the last slot
+            if (!isSlotAssigned) {
                 MdmsSlot lastMdmsSlot = mdmsSlotList.get(mdmsSlotList.size() - 1);
                 CauseList causeList = getCauseListFromHearingAndSlot(hearing, lastMdmsSlot);
                 causeLists.add(causeList);
             }
         }
-        log.info("operation = generateCauseListFromHearings, result = SUCCESS, judgeId = {}", scheduleHearings.get(0).getJudgeId());
+        log.info("operation = generateCauseListFromHearings, result = SUCCESS, judgeId = {}", scheduleHearings.get(0).getCourtId());
     }
 
-    private static CauseList getCauseListFromHearingAndSlot(ScheduleHearing hearing, MdmsSlot mdmsSlot) {
-        log.info("Added hearing {} to slot {}", hearing.getHearingBookingId(), mdmsSlot.getSlotName());
+
+    private static CauseList getCauseListFromHearingAndSlot(HearingCauseList hearing, MdmsSlot mdmsSlot) {
+        log.info("Added hearing {} to slot {}", hearing.getCaseNumber(), mdmsSlot.getSlotName());
         return CauseList.builder()
-                .judgeId(hearing.getJudgeId())
                 .courtId(hearing.getCourtId())
                 .tenantId(hearing.getTenantId())
                 .caseId(hearing.getCaseId())
-//                .typeOfHearing(hearing.getEventType().getValue())
+                .typeOfHearing(hearing.getHearingType())
                 .tentativeSlot(mdmsSlot.getSlotName())
-//                .caseDate(hearing.getDate().toString())
-                .caseTitle(hearing.getTitle())
+                .caseDate(hearing.getHearingDate())
+                .caseTitle(hearing.getCaseTitle())
                 .build();
     }
 
+    private List<SlotList> getSlotList(Map<String, String> hearingTypeSlotMap, List<CauseList> causeLists) {
+        List<SlotList> slotLists = new ArrayList<>();
+        for(Map.Entry<String, String> entry: hearingTypeSlotMap.entrySet()){
+            String hearingType = entry.getKey();
+            String slot = entry.getValue();
+
+            List<CauseList> tempCauseList = getFilteredCauseLists(causeLists, slot, hearingType);
+
+            if (!tempCauseList.isEmpty()) {
+                SlotList slotList = SlotList.builder()
+                        .hearingType(hearingType)
+                        .slots(slot)
+                        .causeLists(tempCauseList)
+                        .build();
+                slotLists.add(slotList);
+            }
+        }
+        return slotLists;
+    }
 
     private List<MdmsSlot> getSlottingDataFromMdms() {
         log.info("operation = getSlottingDataFromMdms, result = IN_PROGRESS");
@@ -235,9 +251,31 @@ public class CauseListService {
     public ByteArrayResource downloadCauseListForTomorrow(CauseListSearchRequest searchRequest) {
         log.info("operation = downloadCauseListForTomorrow, with searchRequest : {}", searchRequest.toString());
         List<CauseList> causeLists = getCauseListForTomorrow(searchRequest.getCauseListSearchCriteria());
-        CauseListRequest causeListRequest = CauseListRequest.builder()
-                .requestInfo(searchRequest.getRequestInfo()).causeList(causeLists).build();
-        return pdfServiceUtil.generatePdfFromPdfService(causeListRequest , searchRequest.getRequestInfo().getUserInfo().getTenantId(),
+        List<MdmsHearing> mdmsHearings = getHearingDataFromMdms();
+        List<MdmsSlot> mdmsSlots = getSlottingDataFromMdms();
+        Map<String, String> hearingTypeSlotMap = getSlotHearingTypeMap(mdmsHearings, mdmsSlots);
+        List<SlotList> slotLists = getSlotList(hearingTypeSlotMap, causeLists);
+
+        CauseListSlotRequest causeListSlotRequest = CauseListSlotRequest.builder()
+                .requestInfo(searchRequest.getRequestInfo())
+                .slotLists(slotLists).build();
+        return pdfServiceUtil.generatePdfFromPdfService(causeListSlotRequest , searchRequest.getRequestInfo().getUserInfo().getTenantId(),
                 config.getCauseListPdfTemplateKey());
+    }
+
+    private Map<String, String> getSlotHearingTypeMap(List<MdmsHearing> mdmsHearings, List<MdmsSlot> mdmsSlots) {
+        Map<String, String> hearingTypeSlotMap = new HashMap<>();
+        for (MdmsHearing mdmsHearing : mdmsHearings) {
+            for (MdmsSlot mdmsSlot : mdmsSlots) {
+                hearingTypeSlotMap.put(mdmsHearing.getHearingType(), mdmsSlot.getSlotName());
+            }
+        }
+        return hearingTypeSlotMap;
+    }
+
+    public List<CauseList> getFilteredCauseLists(List<CauseList> causeLists, String slot, String hearingType) {
+        return causeLists.stream()
+                .filter(causeList -> slot.equals(causeList.getTentativeSlot()) && hearingType.equals(causeList.getTypeOfHearing()))
+                .collect(Collectors.toList());
     }
 }

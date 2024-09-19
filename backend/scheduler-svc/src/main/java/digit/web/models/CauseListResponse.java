@@ -31,15 +31,6 @@ public class CauseListResponse {
 
     @JsonProperty("CauseList")
     @Valid
-    private List<CauseList> causeList = null;
-
-
-    public CauseListResponse addCauseListItem(CauseList causeListItem) {
-        if (this.causeList == null) {
-            this.causeList = new ArrayList<>();
-        }
-        this.causeList.add(causeListItem);
-        return this;
-    }
+    private List<CauseList> causeLists = null;
 
 }

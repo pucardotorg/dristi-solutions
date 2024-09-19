@@ -1,13 +1,16 @@
 package digit.repository.querybuilder;
 
 import digit.helper.QueryBuilderHelper;
+import digit.util.DateUtil;
 import digit.web.models.ScheduleHearingSearchCriteria;
+import digit.web.models.hearing.HearingSearchCriteria;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import java.sql.Types;
 import java.util.List;
 
 import static digit.config.ServiceConstants.BLOCKED;
@@ -23,8 +26,18 @@ public class HearingQueryBuilder {
     private final String ORDER_BY = " ORDER BY ";
     private final String GROUP_BY = " GROUP BY ";
     private final String LIMIT_OFFSET = " LIMIT ? OFFSET ?";
+
+    private final String BASE_HEARING_QUERY = "SELECT dh.hearingtype, dh.starttime, dc.casenumber, dc.courtid, dc.id as caseid, dc.casetitle, da.applicationnumber FROM dristi_hearing dh ";
+    private final String JOIN_CASE_QUERY = " JOIN dristi_cases dc ON EXISTS (SELECT 1 FROM jsonb_array_elements_text(dh.filingnumber) AS elem WHERE elem = dc.filingnumber) ";
+    private final String JOIN_REPRESENTATIVE_QUERY = " JOIN dristi_case_representatives dcr ON dcr.case_id = dc.id ";
+    private final String JOIN_APPLICATION_QUERY = " JOIN dristi_application da ON EXISTS (SELECT 1 FROM jsonb_array_elements_text(dh.applicationnumbers) AS elem WHERE elem = da.applicationnumber) ";
+
+
     @Autowired
     private QueryBuilderHelper queryBuilderHelper;
+
+    @Autowired
+    private DateUtil dateUtil;
 
     public String getHearingQuery(ScheduleHearingSearchCriteria scheduleHearingSearchCriteria, List<Object> preparedStmtList, Integer limit, Integer offset) {
 
@@ -146,5 +159,27 @@ public class HearingQueryBuilder {
         }
     }
 
+    public String getHearingsQuery(HearingSearchCriteria hearingSearchCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgsList) {
+        StringBuilder query = new StringBuilder(BASE_HEARING_QUERY);
+        query.append(JOIN_CASE_QUERY);
+//        query.append(JOIN_REPRESENTATIVE_QUERY);
+        query.append(JOIN_APPLICATION_QUERY);
+        if(!ObjectUtils.isEmpty(hearingSearchCriteria.getFromDate())){
+            Long fromDate = dateUtil.getEPochFromLocalDate(hearingSearchCriteria.getFromDate());
+            queryBuilderHelper.addClauseIfRequired(query, preparedStmtList);
+            query.append(" starttime >= ? ");
+            preparedStmtList.add(fromDate);
+            preparedStmtArgsList.add(Types.BIGINT);
+        }
 
+        if(!ObjectUtils.isEmpty(hearingSearchCriteria.getToDate())) {
+            Long toDate = dateUtil.getEPochFromLocalDate(hearingSearchCriteria.getToDate());
+            queryBuilderHelper.addClauseIfRequired(query, preparedStmtList);
+            query.append(" starttime <= ? ");
+            preparedStmtList.add(toDate);
+            preparedStmtArgsList.add(Types.BIGINT);
+        }
+
+        return query.toString();
+    }
 }
