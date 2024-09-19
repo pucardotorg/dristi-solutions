@@ -90,7 +90,7 @@ export const UICustomizations = {
       summonsOrderPartyName: {
         formToSchema: (value) => {
           try {
-            return value.party.data.firstName + " " + value.party.data.lastName;
+            return (value?.party?.data.firstName || "") + " " + (value.party.data.lastName || "");
           } catch (error) {
             console.error("Error in parsing party name", error);
             return;
