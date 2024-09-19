@@ -72,7 +72,7 @@ class IdGenerationServiceTest {
         ArrayList<IdRequest> idRequestList = new ArrayList<>();
         idRequestList.add(new IdRequest());
 
-        IdRequest idRequest = new IdRequest("Id Name", "42", "Format", 3);
+        IdRequest idRequest = new IdRequest("Id Name", "42", "Format", 3,true);
         idRequest.setFormat("\\[(.*?)\\]");
 
         ArrayList<IdRequest> idRequestList1 = new ArrayList<>();
@@ -96,7 +96,7 @@ class IdGenerationServiceTest {
         ArrayList<IdRequest> idRequestList = new ArrayList<>();
         idRequestList.add(new IdRequest());
 
-        IdRequest idRequest = new IdRequest("Id Name", null, "Format", 3);
+        IdRequest idRequest = new IdRequest("Id Name", null, "Format", 3,true);
         idRequest.setFormat("\\[(.*?)\\]");
 
         ArrayList<IdRequest> idRequestList1 = new ArrayList<>();
@@ -120,7 +120,7 @@ class IdGenerationServiceTest {
         ArrayList<IdRequest> idRequestList = new ArrayList<>();
         idRequestList.add(new IdRequest());
 
-        IdRequest idRequest = new IdRequest("Id Name", "42", "Format", null);
+        IdRequest idRequest = new IdRequest("Id Name", "42", "Format", null,true);
         idRequest.setFormat("\\[(.*?)\\]");
 
         ArrayList<IdRequest> idRequestList1 = new ArrayList<>();
@@ -144,7 +144,7 @@ class IdGenerationServiceTest {
         ArrayList<IdRequest> idRequestList = new ArrayList<>();
         idRequestList.add(new IdRequest());
 
-        IdRequest idRequest = new IdRequest(null, "42", "Format", 3);
+        IdRequest idRequest = new IdRequest(null, "42", "Format", 3,true);
         idRequest.setFormat("\\[(.*?)\\]");
 
         ArrayList<IdRequest> idRequestList1 = new ArrayList<>();
