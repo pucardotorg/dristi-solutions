@@ -269,11 +269,11 @@ const ReviewSummonsNoticeAndWarrant = () => {
     if (rowData?.taskDetails || nextHearingDate) {
       const caseDetails = handleTaskDetails(rowData?.taskDetails);
       return [
-        { key: "Issued to", value: caseDetails?.respondentDetails?.name },
-        { key: "Issued Date", value: convertToDateInputFormat(rowData?.createdDate) },
+        { key: "ISSUED_TO_TEXT", value: caseDetails?.respondentDetails?.name },
+        { key: "ISSUED_DATE_TEXT", value: convertToDateInputFormat(rowData?.createdDate) },
         // { key: "Next Hearing Date", value: nextHearingDate?.startTime ? formatDate(nextHearingDate?.startTime) : "N/A" },
-        { key: "Amount Paid", value: `Rs. ${caseDetails?.deliveryChannels?.fees || 100}` },
-        { key: "Channel Details", value: caseDetails?.deliveryChannels?.channelName },
+        { key: "AMOUNT_PAID_TEXT", value: `Rs. ${caseDetails?.deliveryChannels?.fees || 100}` },
+        { key: "CHANNEL_DETAILS_TEXT", value: caseDetails?.deliveryChannels?.channelName },
       ];
     }
   }, [rowData, nextHearingDate]);
@@ -330,8 +330,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const unsignedModalConfig = useMemo(() => {
     return {
       handleClose: handleClose,
-      heading: { label: `Review Document: ${orderType === "NOTICE" ? "Notice" : "Summon"}s Document` },
-      actionSaveLabel: "E-sign",
+      heading: { label: `${t("REVIEW_DOCUMENT_TEXT")} ${orderType === "NOTICE" ? "Notices" : "Summons"} ${t("DOCUMENT_TEXT")}` },
+      actionSaveLabel: t("E_SIGN_TEXT"),
       isStepperModal: true,
       actionSaveOnSubmit: () => {},
       steps: [
@@ -341,9 +341,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
           actionSaveOnSubmit: () => {},
         },
         {
-          heading: { label: "Add Signature (1)" },
-          actionSaveLabel: deliveryChannel === "Post" ? "Proceed to Send" : "Send Email",
-          actionCancelLabel: "Back",
+          heading: { label: t("ADD_SIGNATURE") },
+          actionSaveLabel: deliveryChannel === "Post" ? t("PROCEED_TO_SENT") : t("SEND_EMAIL_TEXT"),
+          actionCancelLabel: t("BACK"),
           modalBody: (
             <AddSignatureComponent
               t={t}
@@ -362,10 +362,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
           hideSubmit: true,
           modalBody: (
             <CustomStepperSuccess
-              successMessage={t(`You have successfully sent summons via ${deliveryChannel}`)}
-              bannerSubText={t("Relevant party/ parties will be notified about the document(s) issued.")}
-              submitButtonText={t(documents ? "Mark as sent" : "Close")}
-              closeButtonText={t(documents ? "Close" : "Download Document")}
+              successMessage={t(`${t("SENT_SUMMONS_VIA")} ${deliveryChannel}`)}
+              bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
+              submitButtonText={documents ? "MARK_AS_SENT" : "CS_CLOSE"}
+              closeButtonText={documents ? "CS_CLOSE" : "DOWNLOAD_DOCUMENT"}
               closeButtonAction={handleClose}
               submitButtonAction={handleSubmit}
               t={t}
@@ -382,8 +382,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const signedModalConfig = useMemo(() => {
     return {
       handleClose: () => setShowActionModal(false),
-      heading: { label: "Print & Send Documents" },
-      actionSaveLabel: "Mark As Sent",
+      heading: { label: t("PRINT_SEND_DOCUMENT") },
+      actionSaveLabel: t("MARK_AS_SENT"),
       isStepperModal: false,
       modalBody: (
         <PrintAndSendDocumentComponent infos={infos} documents={documents?.filter((docs) => docs.documentType === "SIGNED")} links={links} t={t} />
@@ -395,9 +395,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const sentModalConfig = useMemo(() => {
     return {
       handleClose: () => setShowActionModal(false),
-      heading: { label: "Print & Send Documents" },
-      actionSaveLabel: "Update Status",
-      actionCancelLabel: "View Document",
+      heading: { label: t("PRINT_SEND_DOCUMENT") },
+      actionSaveLabel: t("UPDATE_STATUS"),
+      actionCancelLabel: t("VIEW_DOCUMENT_TEXT"),
       isStepperModal: false,
       modalBody: (
         <UpdateDeliveryStatusComponent

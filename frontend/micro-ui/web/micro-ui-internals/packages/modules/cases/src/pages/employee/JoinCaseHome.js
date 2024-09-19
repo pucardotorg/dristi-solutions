@@ -2533,7 +2533,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
       steps: [
         {
           type: "document",
-          heading: { label: "Edit Respondent Details" },
+          heading: { label: t("EDIT_RESPONDENT") },
           modalBody: (
             <RegisterRespondentForm
               accusedRegisterFormData={accusedRegisterFormData}
@@ -2545,8 +2545,8 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
             return await registerRespondentFormAction();
           },
           async: true,
-          actionSaveLabel: "Verify with OTP",
-          actionCancelLabel: "Back",
+          actionSaveLabel: t("VERIFY_WITH_OTP"),
+          actionCancelLabel: t("BACK"),
           actionCancelOnSubmit: () => {
             setShow(true);
             setShowEditRespondentDetailsModal(false);
@@ -2567,9 +2567,9 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
               : true,
         },
         {
-          heading: { label: "Verify with OTP" },
-          actionSaveLabel: "Verify",
-          actionCancelLabel: "Back",
+          heading: { label: t("VERIFY_WITH_OTP_HEADER") },
+          actionSaveLabel: t("VERIFY_BUTTON_TEXT"),
+          actionCancelLabel: t("BACK"),
           modalBody: (
             <OtpComponent
               t={t}
@@ -2589,9 +2589,9 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
           isDisabled: otp?.length === 6 ? false : true,
         },
         !isAccusedRegistered && {
-          heading: { label: "ID Verification" },
-          actionSaveLabel: "Register Respondent",
-          actionCancelLabel: "Back",
+          heading: { label: t("ID_VERIFICATION_HEADER") },
+          actionSaveLabel: t("REGISTER_RESPONDENT"),
+          actionCancelLabel: t("BACK"),
           modalBody: (
             <UploadIdType
               config={uploadIdConfig}
@@ -2668,15 +2668,13 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
           hideSubmit: true,
           modalBody: (
             <CustomStepperSuccess
-              successMessage={
-                isAccusedRegistered ? "Accused mobile number is already registered" : "You have successfully verified respondent details!"
-              }
-              bannerSubText={"If you would like to made edits, you can make a submission requesting to edit the complaint."}
+              successMessage={isAccusedRegistered ? "ACCUSED_MOBILE_REGISTERED" : "RESPONDENT_DETAILS_VERIFIED"}
+              bannerSubText={"EDIT_REQUEST_FROM_COMPLAINANT"}
               submitButtonAction={() => {
                 setShowEditRespondentDetailsModal(false);
                 setShow(isAccusedRegistered ? false : true);
               }}
-              submitButtonText={"Next"}
+              submitButtonText={"NEXT"}
               t={t}
             />
           ),

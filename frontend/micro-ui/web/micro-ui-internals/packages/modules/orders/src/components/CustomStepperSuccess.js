@@ -67,7 +67,7 @@ const CustomStepperSuccess = ({
           {closeButtonAction && (
             <Button
               className={"selector-button-border"}
-              label={closeButtonText}
+              label={t(closeButtonText)}
               icon={documents ? undefined : <DownloadIcon />}
               onButtonClick={() => {
                 // closeModal();
@@ -80,7 +80,7 @@ const CustomStepperSuccess = ({
           {submitButtonAction && (
             <Button
               className={"selector-button-primary"}
-              label={submitButtonText}
+              label={t(submitButtonText)}
               onButtonClick={() => {
                 // if (!documents) closeButtonAction();
                 submitButtonAction();
