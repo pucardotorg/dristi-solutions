@@ -322,6 +322,7 @@ function EFilingCases({ path }) {
     [caseData]
   );
 
+  const [documentsObj, setDocumentsObj] = useState([]);
   //recursive function which will extract the key which ends with 'FileUpload', 'swornStatement' from the case details
   const findFileUploads = (obj, documentList = []) => {
     Object.entries(obj).forEach(([key, value]) => {
@@ -335,6 +336,7 @@ function EFilingCases({ path }) {
               documentName: value?.document[0]?.documentName,
               key: key,
             },
+            isActive: true,
           });
         }
       } else if (typeof value === "object" && value !== null) {
@@ -343,11 +345,52 @@ function EFilingCases({ path }) {
     });
     return documentList;
   };
+  useEffect(() => {
+    console.log("documents Object with history", documentsObj);
+  }, [documentsObj]);
 
   //stores all the documents
   const documentList = useMemo(() => {
     return findFileUploads(caseDetails);
   }, [caseDetails]);
+
+  useEffect(() => {
+    setDocumentsObj((prevDocuments) => {
+      //when no previously uploaded documents
+      if (!prevDocuments.length) {
+        return documentList;
+      }
+      //When deleted some uploaded documents
+      if (documentList.length < prevDocuments.filter((doc) => doc.isActive).length) {
+        const updatedObj = prevDocuments.map((doc) => {
+          if (documentList.some((newDoc) => newDoc.additionalDetails.key === doc.additionalDetails.key)) {
+            return doc;
+          }
+          //set isActive false for deleted documents
+          return { ...doc, isActive: false };
+        });
+        return updatedObj;
+      }
+
+      //when new documents uploaded
+      const newDocuments = documentList.filter(
+        (newDoc) => !prevDocuments.some((doc) => doc.additionalDetails.key === newDoc.additionalDetails.key && doc.fileStore === newDoc.fileStore)
+      );
+
+      const updatedDocuments = prevDocuments.map((doc) => {
+        // If the documentType matches, set the old document's isActive to false
+        const matchingDoc = newDocuments.find(
+          (newDoc) => newDoc.additionalDetails.key === doc.additionalDetails.key && newDoc.fileStore !== doc.fileStore
+        );
+        if (matchingDoc && matchingDoc.additionalDetails.key === doc.additionalDetails.key) {
+          return { ...doc, isActive: false }; // Mark the old document as inactive
+        }
+        return doc;
+      });
+      // Add the new documents with isActive: true
+      return [...updatedDocuments, ...newDocuments];
+    });
+  }, [documentList]);
 
   const prevCaseDetails = useMemo(() => structuredClone(caseDetails), [caseDetails]);
 
