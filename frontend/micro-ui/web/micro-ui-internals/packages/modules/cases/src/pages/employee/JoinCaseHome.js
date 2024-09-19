@@ -825,6 +825,7 @@ const JoinCaseHome = ({ refreshInbox }) => {
                       setRoleOfNewAdvocate(value);
                       setRepresentingYourself("");
                     }}
+                    optionsKey={"label"}
                     options={[
                       { label: t(JoinHomeLocalisation.PRIMARY_ADVOCATE), value: "PRIMARY_ADVOCATE" },
                       { label: t(JoinHomeLocalisation.SUPPORTING_ADVOCATE), value: "SUPPORTING_ADVOCATE" },
