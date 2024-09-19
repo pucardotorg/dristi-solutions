@@ -82,7 +82,7 @@ router.post(
         case "mandatory-async-submissions-responses":
           await mandatoryAsyncSubmissionsResponses(req, res, qrCode);
           break;
-        case "adr-case-referral":
+        case "order-referral-case-adr":
           await adrCaseReferral(req, res, qrCode);
           break;
         case "accept-adr-application":

@@ -64,9 +64,10 @@ module.exports = {
     case_settlement_rejection_qr:
       process.env.CASE_SETTLEMENT_REJECTION_QR ||
       "order-case-settlement-rejected-qr",
-    adr_case_referral: process.env.ADR_CASE_REFERRAL || "adr-case-referral",
+    adr_case_referral:
+      process.env.ADR_CASE_REFERRAL || "order-referral-case-adr",
     adr_case_referral_qr:
-      process.env.ADR_CASE_REFERRAL_QR || "adr-case-referral-qr",
+      process.env.ADR_CASE_REFERRAL_QR || "order-referral-case-adr-qr",
     mandatory_async_submissions_responses:
       process.env.MANDATORY_ASYNC_SUBMISSIONS_RESPONSES ||
       "mandatory-async-submissions-responses",
@@ -196,6 +197,11 @@ module.exports = {
       process.env.ORDER_ISSUE_WARRANT_QR || "order-issue-warrant-qr",
     order_issue_warrant:
       process.env.ORDER_ISSUE_WARRANT || "order-issue-warrant",
+    case_settlement_application:
+      process.env.CASE_SETTLEMENT_APPLICATION || "application-case-settlement",
+    case_settlement_application_qr:
+      process.env.CASE_SETTLEMENT_APPLICATION_QR ||
+      "application-case-settlement-qr",
   },
 
   app: {
