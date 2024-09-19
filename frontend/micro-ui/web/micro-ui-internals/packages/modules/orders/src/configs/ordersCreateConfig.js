@@ -2317,6 +2317,8 @@ export const configsCaseTransfer = [
         type: "component",
         component: "SelectCustomTextArea",
         key: "grounds",
+        schemaKeyPath: "orderDetails.grounds",
+        transformer: "customTextArea",
         isMandatory: true,
         populators: {
           inputs: [

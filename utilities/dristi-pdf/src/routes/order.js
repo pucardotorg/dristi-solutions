@@ -98,7 +98,7 @@ router.post(
         case "order-case-settlement-acceptance":
           await caseSettlementAcceptance(req, res, qrCode);
           break;
-        case "case-transfer":
+        case "order-case-transfer":
           await caseTransfer(req, res, qrCode);
           break;
         case "summons-issue":

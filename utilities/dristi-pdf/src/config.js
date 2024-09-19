@@ -51,8 +51,8 @@ module.exports = {
     order_reject_checkout_qr:
       process.env.ORDER_REJECT_CHECKOUT_QR ||
       "order-reject-checkout-request-qr",
-    case_transfer: process.env.CASE_TRANSFER || "case-transfer",
-    case_transfer_qr: process.env.CASE_TRANSFER_QR || "case-transfer-qr",
+    case_transfer: process.env.CASE_TRANSFER || "order-case-transfer",
+    case_transfer_qr: process.env.CASE_TRANSFER_QR || "order-case-transfer-qr",
     case_settlement_acceptance:
       process.env.CASE_SETTLEMENT_ACCEPTANCE ||
       "order-case-settlement-acceptance",

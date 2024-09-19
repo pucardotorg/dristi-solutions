@@ -179,8 +179,10 @@ async function adrCaseReferral(req, res, qrCode) {
       () => create_pdf(tenantId, pdfKey, data, req.body),
       "Failed to generate PDF of order for Referral of Case to ADR"
     );
+    const filename = `${pdfKey}_${new Date().getTime()}`;
     res.writeHead(200, {
-      "Content-Type": "application/json",
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename=${filename}.pdf`,
     });
     pdfResponse.data
       .pipe(res)
