@@ -108,6 +108,18 @@ async function adrCaseReferral(req, res, qrCode) {
       renderError(res, "Order not found", 404);
     }
 
+    const resADR = await handleApiCall(
+      () =>
+        search_mdms(
+          order?.orderDetails?.adrMode,
+          "Order.ADRMode",
+          tenantId,
+          requestInfo
+        ),
+      "Failed to query MDMS service for court room"
+    );
+    const adr = resADR?.data?.mdms[0]?.data;
+
     // Handle QR code if enabled
     let base64Url = "";
     if (qrCode === "true") {
@@ -148,7 +160,7 @@ async function adrCaseReferral(req, res, qrCode) {
     const currentDate = new Date();
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
     const additionalComments = order?.comments || "";
-    const modeOfAdr = order?.orderDetails?.adrMode || "";
+    const modeOfAdr = adr?.name || "";
 
     const data = {
       Data: [

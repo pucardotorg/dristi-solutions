@@ -8,6 +8,7 @@ const {
   search_sunbirdrc_credential_service,
   create_pdf,
   search_individual_uuid,
+  search_application,
 } = require("../api");
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
@@ -93,6 +94,20 @@ async function orderWithdrawalAccept(req, res, qrCode) {
       renderError(res, "Order not found", 404);
     }
 
+    const resApplication = await handleApiCall(
+      () =>
+        search_application(
+          tenantId,
+          order?.additionalDetails?.formdata?.refApplicationId,
+          requestInfo
+        ),
+      "Failed to query application service"
+    );
+    const application = resApplication?.data?.applicationList[0];
+    if (!application) {
+      return renderError(res, "Application not found", 404);
+    }
+
     // Filter litigants to find the respondent.primary
     const respondentParty = courtCase.litigants.find(
       (party) => party.partyType === "respondent.primary"
@@ -152,18 +167,12 @@ async function orderWithdrawalAccept(req, res, qrCode) {
     ]
       .filter(Boolean)
       .join(" ");
-    const dateOfSettlementAgreement = order.orderDetails.settlementDate
-      ? formatDate(new Date(order.orderDetails.settlementDate), "DD-MM-YYYY")
-      : "";
     const currentDate = new Date();
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
 
-    const specifyMechanism = order.orderDetails.settlementMechanism;
     const additionalComments = order?.comments || "";
-    const settlementStatus =
-      order.orderDetails.isSettlementImplemented === "ES_COMMON_YES"
-        ? "Yes"
-        : "No";
+    const summaryReasonForWithdrawal =
+      application?.applicationDetails?.reasonForWithdrawal || "";
     const data = {
       Data: [
         {
@@ -172,10 +181,9 @@ async function orderWithdrawalAccept(req, res, qrCode) {
           caseNumber: courtCase.caseNumber,
           partyName: partyName,
           date: formattedToday,
-          dateOfSettlementAgreement: dateOfSettlementAgreement,
-          specifyMechanism: specifyMechanism,
-          settlementStatus: settlementStatus,
+          dateOfMotion: formattedToday,
           additionalComments: additionalComments,
+          summaryReasonForWithdrawal: summaryReasonForWithdrawal,
           judgeSignature: "Judge Signature",
           judgeName: "John Doe",
           courtSeal: "Court Seal",

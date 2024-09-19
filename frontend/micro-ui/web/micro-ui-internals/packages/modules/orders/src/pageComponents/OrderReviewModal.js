@@ -25,7 +25,8 @@ const OrderPreviewOrderTypeMap = {
   BAIL_APPROVED: "order-bail-acceptance",
   BAIL_REJECT: "order-bail-rejection",
   WARRANT: "order-warrant",
-  WITHDRAWAL: "order-generic",
+  WITHDRAWAL_ACCEPT: "order-case-withdrawal-acceptance",
+  WITHDRAWAL_REJECT: "order-case-withdrawal-rejected",
   APPROVE_VOLUNTARY_SUBMISSIONS: "order-accept-voluntary",
   REJECT_VOLUNTARY_SUBMISSIONS: "order-reject-voluntary",
   JUDGEMENT: "order-generic",
@@ -61,6 +62,11 @@ function OrderReviewModal({ setShowReviewModal, t, order, setShowsignatureModal,
     orderPreviewKey = "SETTLEMENT_ACCEPT";
   } else if (order?.additionalDetails?.applicationStatus === t("REJECTED") && order?.orderType === "SETTLEMENT") {
     orderPreviewKey = "SETTLEMENT_REJECT";
+  }
+  if (order?.additionalDetails?.applicationStatus === t("APPROVED") && order?.orderType === "WITHDRAWAL") {
+    orderPreviewKey = "WITHDRAWAL_ACCEPT";
+  } else if (order?.additionalDetails?.applicationStatus === t("REJECTED") && order?.orderType === "WITHDRAWAL") {
+    orderPreviewKey = "WITHDRAWAL_REJECT";
   }
   orderPreviewKey = OrderPreviewOrderTypeMap[orderPreviewKey] || OrderPreviewOrderTypeMap[order?.orderType];
 

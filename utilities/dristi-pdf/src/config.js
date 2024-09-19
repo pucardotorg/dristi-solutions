@@ -203,6 +203,12 @@ module.exports = {
     order_case_withdrawal_acceptance:
       process.env.ORDER_CASE_WITHDRAWAL_ACCEPTANCE ||
       "order-case-withdrawal-acceptance",
+    order_case_withdrawal_rejected:
+      process.env.ORDER_CASE_WITHDRAWAL_REJECT ||
+      "order-case-withdrawal-rejected",
+    order_case_withdrawal_rejected_qr:
+      process.env.ORDER_CASE_WITHDRAWAL_REJECT ||
+      "order-case-withdrawal-rejected-qr",
     case_settlement_application:
       process.env.CASE_SETTLEMENT_APPLICATION || "application-case-settlement",
     case_settlement_application_qr:
