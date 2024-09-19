@@ -31,6 +31,8 @@ const orderAcceptCheckout = require("../orderHandlers/orderAcceptCheckout");
 const orderRejectCheckout = require("../orderHandlers/orderRejectCheckout");
 const orderNotice = require("../orderHandlers/orderNotice");
 const orderWarrant = require("../orderHandlers/orderWarrant");
+const orderForReferralCaseADR = require("../orderHandlers/orderForReferralCaseADR");
+
 function renderError(res, errorMessage, errorCode, errorObject) {
   if (errorCode == undefined) errorCode = 500;
   logger.error(
@@ -135,6 +137,8 @@ router.post(
         case "order-notice":
           await orderNotice(req, res, qrCode);
           break;
+        case "order-for-referral-case-adr":
+          await orderForReferralCaseADR(req, res, qrCode);
         case "order-warrant":
           await orderWarrant(req, res, qrCode);
           break;
