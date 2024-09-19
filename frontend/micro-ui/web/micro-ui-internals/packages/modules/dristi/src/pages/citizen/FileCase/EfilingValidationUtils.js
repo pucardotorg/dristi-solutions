@@ -249,7 +249,7 @@ export const checkNameValidation = ({ formData, setValue, selected, reset, index
     if (formData?.respondentFirstName || formData?.respondentMiddleName || formData?.respondentLastName) {
       const formDataCopy = structuredClone(formData);
       for (const key in formDataCopy) {
-        if (Object.hasOwnProperty.call(formDataCopy, key)) {
+        if (["respondentFirstName", "respondentMiddleName", "respondentLastName"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)) {
           const oldValue = formDataCopy[key];
           let value = oldValue;
           if (typeof value === "string") {

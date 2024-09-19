@@ -316,13 +316,13 @@ const HomeView = () => {
           hideSubmit: true,
           modalBody: (
             <CustomStepperSuccess
-              successMessage={"You have added your response to the complaint successfully"}
+              successMessage={"RESPONSE_SUCCESSFULLY"}
               submitButtonAction={async () => {
                 setShowSubmitResponseModal(false);
                 history.push(`/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${responsePendingTask?.caseId}`);
               }}
-              submitButtonText={"View Case File"}
-              closeButtonText={"Back to Home"}
+              submitButtonText={"VIEW_CASE_DETAILS"}
+              closeButtonText={"BACK_HOME"}
               closeButtonAction={() => {
                 setShowSubmitResponseModal(false);
               }}
