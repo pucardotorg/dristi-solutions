@@ -54,10 +54,11 @@ module.exports = {
     case_transfer: process.env.CASE_TRANSFER || "case-transfer",
     case_transfer_qr: process.env.CASE_TRANSFER_QR || "case-transfer-qr",
     case_settlement_acceptance:
-      process.env.CASE_SETTLEMENT_ACCEPTANCE || "case-settlement-acceptance",
+      process.env.CASE_SETTLEMENT_ACCEPTANCE ||
+      "order-case-settlement-acceptance",
     case_settlement_acceptance_qr:
       process.env.CASE_SETTLEMENT_ACCEPTANCE_QR ||
-      "case-settlement-acceptance-qr",
+      "order-case-settlement-acceptance-qr",
     case_settlement_rejection:
       process.env.CASE_SETTLEMENT_REJECTION || "case-settlement-rejection",
     case_settlement_rejection_qr:
