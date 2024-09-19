@@ -147,7 +147,7 @@ async function orderGeneric(req, res, qrCode) {
           date: formattedToday,
           orderContent: order.comments,
           judgeSignature: "Judge Signature",
-          judgeName: "Presiding Judge",
+          judgeName: "John Doe",
           courtSeal: "Court Seal",
           qrCodeUrl: base64Url,
         },
