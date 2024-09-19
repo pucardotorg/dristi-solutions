@@ -244,27 +244,27 @@ const PaymentForSummonModal = ({ path }) => {
   const onPayOnline = async () => {
     console.log("clikc");
     try {
-      // if (courtBillResponse?.Bill?.length === 0) {
-      //   await DRISTIService.createDemand({
-      //     Demands: [
-      //       {
-      //         tenantId,
-      //         consumerCode: `${filteredTasks?.[0]?.taskNumber}_POST_COURT`,
-      //         consumerType: paymentType.TASK_SUMMON,
-      //         businessService: paymentType.TASK_SUMMON,
-      //         taxPeriodFrom: Date.now().toString(),
-      //         taxPeriodTo: Date.now().toString(),
-      //         demandDetails: [
-      //           {
-      //             taxHeadMasterCode: paymentType.TASK_SUMMON_ADVANCE_CARRYFORWARD,
-      //             taxAmount: 4,
-      //             collectionAmount: 0,
-      //           },
-      //         ],
-      //       },
-      //     ],
-      //   });
-      // }
+      if (courtBillResponse?.Bill?.length === 0) {
+        await DRISTIService.createDemand({
+          Demands: [
+            {
+              tenantId,
+              consumerCode: `${filteredTasks?.[0]?.taskNumber}_POST_COURT`,
+              consumerType: paymentType.TASK_SUMMON,
+              businessService: paymentType.TASK_SUMMON,
+              taxPeriodFrom: Date.now().toString(),
+              taxPeriodTo: Date.now().toString(),
+              demandDetails: [
+                {
+                  taxHeadMasterCode: paymentType.TASK_SUMMON_ADVANCE_CARRYFORWARD,
+                  taxAmount: 4,
+                  collectionAmount: 0,
+                },
+              ],
+            },
+          ],
+        });
+      }
       // const bill = await fetchBill(`${filteredTasks?.[0]?.taskNumber}_POST_COURT`, tenantId, paymentType.TASK_SUMMON);
       // if (bill?.Bill?.length) {
       //   const billPaymentStatus = await openPaymentPortal(bill);
