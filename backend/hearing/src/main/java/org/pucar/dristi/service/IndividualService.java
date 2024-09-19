@@ -56,10 +56,7 @@ public class IndividualService {
             IndividualSearch individualSearch = new IndividualSearch();
             individualSearch.setUserUuid(uuids);
             individualSearchRequest.setIndividual(individualSearch);
-            StringBuilder uri = new StringBuilder(config.getIndividualHost()).append(config.getIndividualSearchEndpoint());
-            uri.append("?limit=").append(uuids.size()).append("&offset=0")
-                    .append("&tenantId=").append(requestInfo.getUserInfo().getTenantId())
-                    .append("&includeDeleted=true");
+            StringBuilder uri = buildIndividualSearchUri(requestInfo, uuids.size(), 0);
             List<Individual> individual = individualUtils.getIndividualByIndividualId(individualSearchRequest, uri);
             if (individual != null ) {
                 return individual;
@@ -72,5 +69,13 @@ public class IndividualService {
             log.error("Individuals not found");
             return Collections.emptyList();
         }
+    }
+    private StringBuilder buildIndividualSearchUri(RequestInfo requestInfo, int limit, int offset) {
+        return new StringBuilder(config.getIndividualHost())
+                .append(config.getIndividualSearchEndpoint())
+                .append("?limit=").append(limit)
+                .append("&offset=").append(offset)
+                .append("&tenantId=").append(requestInfo.getUserInfo().getTenantId())
+                .append("&includeDeleted=true");
     }
 }

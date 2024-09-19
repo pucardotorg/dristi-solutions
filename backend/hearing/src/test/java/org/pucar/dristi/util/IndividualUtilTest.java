@@ -128,7 +128,7 @@ class IndividualUtilTest {
               individualUtil.getIndividualByIndividualId(request, uri);
          });
 
-         assertFalse(thrown.getMessage().contains("Exception in individual utility service: Error"));
+        assertTrue(thrown.getMessage().contains("Error"));
          verify(serviceRequestRepository, times(1)).fetchResult(any(), any());
     }
 }
