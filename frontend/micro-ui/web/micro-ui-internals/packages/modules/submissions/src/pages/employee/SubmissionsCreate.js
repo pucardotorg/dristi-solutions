@@ -713,17 +713,17 @@ const SubmissionsCreate = ({ path }) => {
     }
   };
 
+  const suffix = useMemo(() => getSuffixByBusinessCode(paymentTypeData, entityType) || "APPL_FILING", [entityType, paymentTypeData]);
+
   const { fetchBill, openPaymentPortal, paymentLoader, showPaymentModal, setShowPaymentModal, billPaymentStatus } = usePaymentProcess({
     tenantId,
-    consumerCode: applicationDetails?.applicationNumber,
+    consumerCode: applicationDetails?.applicationNumber + `_${suffix}`,
     service: entityType,
     path,
     caseDetails,
     totalAmount: "4",
     scenario,
   });
-
-  const suffix = useMemo(() => getSuffixByBusinessCode(paymentTypeData, entityType) || "APPL_FILING", [entityType, paymentTypeData]);
 
   const { data: billResponse, isLoading: isBillLoading } = Digit.Hooks.dristi.useBillSearch(
     {},
@@ -771,9 +771,9 @@ const SubmissionsCreate = ({ path }) => {
           setShowSuccessModal(true);
           await updateSubmission(SubmissionWorkflowAction.PAY);
           applicationType === "PRODUCTION_DOCUMENTS" &&
-            orderNumber &&
+            (orderNumber || orderRefNumber) &&
             createPendingTask({
-              refId: `${userInfo?.uuid}_${orderNumber}`,
+              refId: `${userInfo?.uuid}_${orderNumber || orderRefNumber}`,
               isCompleted: true,
               status: "Completed",
             });
