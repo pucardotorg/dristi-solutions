@@ -161,7 +161,7 @@ async function caseSettlementAcceptance(req, res, qrCode) {
       }
       base64Url = imgTag.attr("src");
     }
-    console.debug(order);
+
     const partyName = [
       complaintIndividual.name.givenName,
       complaintIndividual.name.otherNames,

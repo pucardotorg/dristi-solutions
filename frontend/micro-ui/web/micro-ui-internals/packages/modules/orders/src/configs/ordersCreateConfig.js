@@ -2463,6 +2463,14 @@ export const configsCaseSettlement = [
         },
       },
       {
+        label: "APPLICATION_STATUS",
+        isMandatory: true,
+        key: "applicationStatus",
+        type: "text",
+        disable: true,
+        populators: { name: "applicationStatus" },
+      },
+      {
         label: "SETTLEMENT_AGREEMENT_DATE",
         isMandatory: true,
         key: "settlementAgreementDate",

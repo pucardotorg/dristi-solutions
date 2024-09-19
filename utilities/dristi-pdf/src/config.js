@@ -60,10 +60,10 @@ module.exports = {
       process.env.CASE_SETTLEMENT_ACCEPTANCE_QR ||
       "order-case-settlement-acceptance-qr",
     case_settlement_rejection:
-      process.env.CASE_SETTLEMENT_REJECTION || "case-settlement-rejection",
+      process.env.CASE_SETTLEMENT_REJECTION || "order-case-settlement-rejected",
     case_settlement_rejection_qr:
       process.env.CASE_SETTLEMENT_REJECTION_QR ||
-      "case-settlement-rejection-qr",
+      "order-case-settlement-rejected-qr",
     adr_case_referral: process.env.ADR_CASE_REFERRAL || "adr-case-referral",
     adr_case_referral_qr:
       process.env.ADR_CASE_REFERRAL_QR || "adr-case-referral-qr",

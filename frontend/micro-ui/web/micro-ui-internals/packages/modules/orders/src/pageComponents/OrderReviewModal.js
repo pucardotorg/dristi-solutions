@@ -19,7 +19,9 @@ const OrderPreviewOrderTypeMap = {
   REJECTION_RESCHEDULE_REQUEST: "order-for-rejection-rescheduling-request",
   ASSIGNING_NEW_HEARING_DATE: "order-generic",
   CASE_TRANSFER: "case-transfer",
-  SETTLEMENT: "case-settlement-acceptance",
+  SETTLEMENT: "order-case-settlement-acceptance",
+  SETTLEMENT_REJECT: "order-case-settlement-rejected",
+  SETTLEMENT_ACCEPT: "order-case-settlement-acceptance",
   BAIL_APPROVED: "order-bail-acceptance",
   BAIL_REJECT: "order-bail-rejection",
   WARRANT: "order-warrant",
@@ -50,10 +52,15 @@ function OrderReviewModal({ setShowReviewModal, t, order, setShowsignatureModal,
   const filestoreId = "9d23b127-c9e9-4fd1-9dc8-e2e762269046";
 
   let orderPreviewKey = order?.orderType;
-  if (order?.additionalDetails?.applicationStatus === "APPROVED" && order?.orderType === "BAIL") {
+  if (order?.additionalDetails?.applicationStatus === t("APPROVED") && order?.orderType === "BAIL") {
     orderPreviewKey = "BAIL_APPROVED";
-  } else if (order?.additionalDetails?.applicationStatus === "Rejected" && order?.orderType === "BAIL") {
+  } else if (order?.additionalDetails?.applicationStatus === t("REJECTED") && order?.orderType === "BAIL") {
     orderPreviewKey = "BAIL_REJECT";
+  }
+  if (order?.additionalDetails?.applicationStatus === t("APPROVED") && order?.orderType === "SETTLEMENT") {
+    orderPreviewKey = "SETTLEMENT_ACCEPT";
+  } else if (order?.additionalDetails?.applicationStatus === t("REJECTED") && order?.orderType === "SETTLEMENT") {
+    orderPreviewKey = "SETTLEMENT_REJECT";
   }
   orderPreviewKey = OrderPreviewOrderTypeMap[orderPreviewKey] || OrderPreviewOrderTypeMap[order?.orderType];
 

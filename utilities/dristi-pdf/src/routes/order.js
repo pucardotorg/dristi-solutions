@@ -92,7 +92,7 @@ router.post(
         case "reject-adr-application":
           await rejectAdrApplication(req, res, qrCode);
           break;
-        case "case-settlement-rejection":
+        case "order-case-settlement-rejected":
           await caseSettlementRejection(req, res, qrCode);
           break;
         case "order-case-settlement-acceptance":

@@ -478,7 +478,7 @@ const EvidenceModal = ({ caseData, documentSubmission = [], setShow, userRoles, 
       case "TRANSFER":
         return type === "reject" ? "REJECT_VOLUNTARY_SUBMISSIONS" : "CASE_TRANSFER";
       case "SETTLEMENT":
-        return type === "reject" ? "REJECT_VOLUNTARY_SUBMISSIONS" : "SETTLEMENT";
+        return "SETTLEMENT";
       case "BAIL_BOND":
         return "BAIL";
       case "SURETY":
