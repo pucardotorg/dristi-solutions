@@ -197,6 +197,12 @@ module.exports = {
       process.env.ORDER_ISSUE_WARRANT_QR || "order-issue-warrant-qr",
     order_issue_warrant:
       process.env.ORDER_ISSUE_WARRANT || "order-issue-warrant",
+    order_case_withdrawal_acceptance_qr:
+      process.env.ORDER_CASE_WITHDRAWAL_ACCEPTANCE_QR ||
+      "order-case-withdrawal-acceptance-qr",
+    order_case_withdrawal_acceptance:
+      process.env.ORDER_CASE_WITHDRAWAL_ACCEPTANCE ||
+      "order-case-withdrawal-acceptance",
     case_settlement_application:
       process.env.CASE_SETTLEMENT_APPLICATION || "application-case-settlement",
     case_settlement_application_qr:

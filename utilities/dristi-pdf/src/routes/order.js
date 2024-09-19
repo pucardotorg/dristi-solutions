@@ -31,6 +31,7 @@ const orderAcceptCheckout = require("../orderHandlers/orderAcceptCheckout");
 const orderRejectCheckout = require("../orderHandlers/orderRejectCheckout");
 const orderNotice = require("../orderHandlers/orderNotice");
 const orderWarrant = require("../orderHandlers/orderWarrant");
+const orderWithdrawalAccept = require("../orderHandlers/orderWithdrawalAccept");
 
 function renderError(res, errorMessage, errorCode, errorObject) {
   if (errorCode == undefined) errorCode = 500;
@@ -138,6 +139,9 @@ router.post(
           break;
         case "order-warrant":
           await orderWarrant(req, res, qrCode);
+          break;
+        case "order-case-withdrawal-acceptance":
+          await orderWithdrawalAccept(req, res, qrCode);
           break;
         default:
           await orderGeneric(req, res, qrCode);
