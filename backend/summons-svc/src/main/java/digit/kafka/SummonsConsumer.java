@@ -55,7 +55,7 @@ public class SummonsConsumer {
             }
 
             // Process for generating summons document
-            if (taskType.equalsIgnoreCase(SUMMON) || taskType.equalsIgnoreCase(WARRANT)) {
+            if (taskType.equalsIgnoreCase(SUMMON) || taskType.equalsIgnoreCase(WARRANT) || taskType.equalsIgnoreCase(NOTICE)) {
                 try {
                     log.info("Received message for uploading document {}", taskRequest.getTask());
                     summonsService.generateSummonsDocument(taskRequest);
