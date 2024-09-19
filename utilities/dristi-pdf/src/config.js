@@ -191,6 +191,10 @@ module.exports = {
       process.env.ORDER_INITIATE_RESCHEDULE || "order-initiate-reschedule",
     order_notice: process.env.ORDER_NOTICE || "order-notice",
     order_notice_qr: process.env.ORDER_NOTICE_QR || "order-notice-qr",
+    order_issue_warrant_qr:
+      process.env.ORDER_ISSUE_WARRANT_QR || "order-issue-warrant-qr",
+    order_issue_warrant:
+      process.env.ORDER_ISSUE_WARRANT || "order-issue-warrant",
   },
 
   app: {

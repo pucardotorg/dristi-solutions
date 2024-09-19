@@ -22,7 +22,7 @@ const OrderPreviewOrderTypeMap = {
   SETTLEMENT: "case-settlement-acceptance",
   BAIL_APPROVED: "order-bail-acceptance",
   BAIL_REJECT: "order-bail-rejection",
-  WARRANT: "order-generic",
+  WARRANT: "order-warrant",
   WITHDRAWAL: "order-generic",
   APPROVE_VOLUNTARY_SUBMISSIONS: "order-accept-voluntary",
   REJECT_VOLUNTARY_SUBMISSIONS: "order-reject-voluntary",

@@ -3242,6 +3242,8 @@ export const configsCreateOrderWarrant = [
         label: "DATE_OF_HEARING",
         isMandatory: true,
         key: "dateOfHearing",
+        schemaKeyPath: "orderDetails.hearingDate",
+        transformer: "date",
         type: "date",
         disable: true,
         populators: {
@@ -3254,6 +3256,7 @@ export const configsCreateOrderWarrant = [
         key: "warrantFor",
         type: "dropdown",
         label: "WARRANT_FOR_PARTY",
+        schemaKeyPath: "orderDetails.respondentName",
         disable: true,
         populators: {
           name: "warrantFor",
@@ -3265,19 +3268,20 @@ export const configsCreateOrderWarrant = [
         isMandatory: true,
         key: "warrantType",
         type: "dropdown",
+        schemaKeyPath: "orderDetails.warrantType",
+        transformer: "mdmsDropdown",
         label: "WARRANT_TYPE",
         disable: false,
         populators: {
           name: "warrantType",
-          optionsKey: "code",
+          optionsKey: "name",
           error: "CORE_REQUIRED_FIELD_ERROR",
           styles: { maxWidth: "100%" },
-          options: [
-            {
-              code: "Arrest",
-              name: "arrest",
-            },
-          ],
+          mdmsConfig: {
+            moduleName: "Order",
+            masterName: "WarrantType",
+            select: "(data) => {return data['Order'].WarrantType?.map((item) => {return item;});}",
+          },
         },
       },
       {
