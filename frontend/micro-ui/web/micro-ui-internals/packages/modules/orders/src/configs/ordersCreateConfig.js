@@ -3074,16 +3074,11 @@ export const configsBail = [
                 name: "documentType",
                 optionsKey: "name",
                 required: true,
-                options: [
-                  {
-                    code: "TAX_RECORDS",
-                    name: "TAX_RECORDS",
-                  },
-                  {
-                    code: "SALARY_RECIEPTS",
-                    name: "SALARY_RECIEPTS",
-                  },
-                ],
+                mdmsConfig: {
+                  moduleName: "Application",
+                  masterName: "DocumentType",
+                  select: "(data) => {return data['Application'].DocumentType?.map((item) => {return item;});}",
+                },
               },
             },
             {
