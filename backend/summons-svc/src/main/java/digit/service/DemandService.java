@@ -1,6 +1,5 @@
 package digit.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.config.Configuration;
 import digit.repository.ServiceRequestRepository;
@@ -10,7 +9,6 @@ import digit.web.models.*;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.models.RequestInfoWrapper;
-import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -97,11 +95,11 @@ public class DemandService {
     private List<DemandDetail> createDemandDetails(Calculation calculation, Task task, Map<String,
             Map<String, JSONArray>> mdmsData, String businessService) {
         List<DemandDetail> demandDetailList = new ArrayList<>();
-        String deliveryChannel = task.getTaskDetails().getDeliveryChannel().getChannelName();
+        String deliveryChannel = ChannelName.fromString(task.getTaskDetails().getDeliveryChannel().getChannelName()).name();
         Map<String, String> masterCodes = getTaxHeadMasterCodes(mdmsData, businessService, deliveryChannel);
 
         if (config.isTest()) {
-            demandDetailList.addAll(createTestDemandDetails(calculation.getTenantId(), task));
+            demandDetailList.addAll(createTestDemandDetails(calculation.getTenantId(), task, businessService));
         } else {
             for (BreakDown breakDown : calculation.getBreakDown()) {
                 demandDetailList.add(createDemandDetail(calculation.getTenantId(), breakDown, masterCodes));
@@ -110,7 +108,7 @@ public class DemandService {
         return demandDetailList;
     }
 
-    private List<DemandDetail> createTestDemandDetails(String tenantId, Task task) {
+    private List<DemandDetail> createTestDemandDetails(String tenantId, Task task, String businessService) {
         List<DemandDetail> demandDetailList = new ArrayList<>();
         String channelName = ChannelName.fromString(task.getTaskDetails().getDeliveryChannel().getChannelName()).name();
 
@@ -118,22 +116,23 @@ public class DemandService {
             DemandDetail courtDetail = DemandDetail.builder()
                     .tenantId(tenantId)
                     .taxAmount(BigDecimal.valueOf(4))
-                    .taxHeadMasterCode(config.getTaskTaxHeadCourtMasterCode())
+                    .taxHeadMasterCode(getTestCourtTaxHeadMasterCode(businessService))
                     .build();
 
             DemandDetail ePostDetail = DemandDetail.builder()
                     .tenantId(tenantId)
                     .taxAmount(BigDecimal.valueOf(4))
-                    .taxHeadMasterCode(config.getTaskTaxHeadEPostMasterCode())
+                    .taxHeadMasterCode(getTestPostTaxHeadMasterCode(businessService))
                     .build();
 
             demandDetailList.add(courtDetail);
             demandDetailList.add(ePostDetail);
-        } else {
+        }
+        else {
             DemandDetail basicDetail = DemandDetail.builder()
                     .tenantId(tenantId)
                     .taxAmount(BigDecimal.valueOf(4))
-                    .taxHeadMasterCode(config.getTaskTaxHeadMasterCode())
+                    .taxHeadMasterCode(getTestTaxHeadMasterCode(businessService))
                     .build();
 
             demandDetailList.add(basicDetail);
@@ -296,7 +295,30 @@ public class DemandService {
             case NOTICE -> config.getTaskNoticeBusinessService();
             default -> throw new IllegalArgumentException("Unsupported task type: " + taskType);
         };
+    }
 
+    private String getTestCourtTaxHeadMasterCode(String businessService) {
+        if (businessService.equalsIgnoreCase(config.getTaskNoticeBusinessService())) {
+            return config.getTaskNoticeTaxHeadCourtMasterCode();
+        } else {
+            return config.getTaskSummonTaxHeadCourtMasterCode();
+        }
+    }
+
+    private String getTestPostTaxHeadMasterCode(String businessService) {
+        if (businessService.equalsIgnoreCase(config.getTaskNoticeBusinessService())) {
+            return config.getTaskNoticeTaxHeadEPostMasterCode();
+        } else {
+            return config.getTaskSummonTaxHeadEPostMasterCode();
+        }
+    }
+
+    private String getTestTaxHeadMasterCode(String businessService) {
+        if (businessService.equalsIgnoreCase(config.getTaskNoticeBusinessService())) {
+            return config.getTaskNoticeTaxHeadMasterCode();
+        } else {
+            return config.getTaskSummonTaxHeadCourtMasterCode();
+        }
     }
 
 }

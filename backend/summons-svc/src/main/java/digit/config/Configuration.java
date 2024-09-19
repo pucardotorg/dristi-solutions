@@ -110,13 +110,22 @@ public class Configuration {
     private String fetchBillEndpoint;
 
     @Value("${task.taxhead.master.code}")
-    private String taskTaxHeadMasterCode;
+    private String taskSummonTaxHeadMasterCode;
 
     @Value("${task.taxhead.master.court.code}")
-    private String taskTaxHeadCourtMasterCode;
+    private String taskSummonTaxHeadCourtMasterCode;
 
     @Value("${task.taxhead.master.epost.code}")
-    private String taskTaxHeadEPostMasterCode;
+    private String taskSummonTaxHeadEPostMasterCode;
+
+    @Value("${task.notice.taxhead.master.code}")
+    private String taskNoticeTaxHeadMasterCode;
+
+    @Value("${task.notice.taxhead.master.court.code}")
+    private String taskNoticeTaxHeadCourtMasterCode;
+
+    @Value("${task.notice.taxhead.master.epost.code}")
+    private String taskNoticeTaxHeadEPostMasterCode;
 
     @Value("${egov.tax.period.to}")
     private Long taxPeriodTo;
