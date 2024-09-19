@@ -225,6 +225,7 @@ const SubmissionsCreate = ({ path }) => {
   );
 
   const orderRefNumber = useMemo(() => applicationData?.applicationList?.[0]?.additionalDetails?.formdata?.refOrderId, [applicationData]);
+  const referenceId = useMemo(() => applicationData?.applicationList?.[0]?.referenceId, [applicationData]);
 
   const { data: hearingsData } = Digit.Hooks.hearings.useGetHearings(
     {
@@ -296,7 +297,7 @@ const SubmissionsCreate = ({ path }) => {
 
   const { entityType, taxHeadMasterCode } = useMemo(() => {
     const isResponseRequired = orderDetails?.additionalDetails?.formdata?.responseInfo?.isResponseRequired?.code === true;
-    if (orderNumber || orderRefNumber) {
+    if ((orderNumber || orderRefNumber) && referenceId) {
       return {
         entityType: isResponseRequired ? "application-order-submission-feedback" : "application-order-submission-default",
         taxHeadMasterCode: isResponseRequired
@@ -308,7 +309,7 @@ const SubmissionsCreate = ({ path }) => {
       entityType: "application-voluntary-submission",
       taxHeadMasterCode: "APPLICATION_VOLUNTARY_SUBMISSION_ADVANCE_CARRY_FORWARD",
     };
-  }, [orderDetails, orderNumber, orderRefNumber]);
+  }, [orderDetails, orderNumber, orderRefNumber, referenceId]);
 
   const defaultFormValue = useMemo(() => {
     if (applicationDetails?.additionalDetails?.formdata) {
