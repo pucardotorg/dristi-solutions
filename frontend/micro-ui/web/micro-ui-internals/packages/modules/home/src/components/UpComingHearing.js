@@ -307,24 +307,10 @@ const UpcomingHearings = ({ t, userInfoType, ...props }) => {
   if (isLoading || isLoadingMonthly || isAdvocateLoading || isCaseLoading) {
     return <Loader />;
   }
-
-  if (!earliestHearingSlot) {
-    return (
-      <div className="upcoming-hearing-container">
-        <div className="header">
-          {curHr < 12 ? "Good Morning" : curHr < 18 ? "Good Afternoon" : "Good Evening"}, <span className="userName">{userName?.info?.name}</span>
-        </div>
-        <div className="hearingCard">
-          <div className="no-hearing">
-            <CalenderIcon />
-            <p>
-              {t("YOU_DONT_HAVE_ANY")} <span>{t("HEARING_SCHEDULED")}</span>
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const name = userName?.info?.name
+    .split(" ")
+    .filter((part) => part && part.toLowerCase() !== "null")
+    .join(" ");
 
   const hearingSearchParams = new URLSearchParams();
   hearingSearchParams.set("from-date", earliestHearingSlot?.slotStartTime);
@@ -335,19 +321,27 @@ const UpcomingHearings = ({ t, userInfoType, ...props }) => {
   return (
     <div className="upcoming-hearing-container">
       <div className="header">
-        {curHr < 12 ? "Good Morning" : curHr < 18 ? "Good Afternoon" : "Good Evening"}, <span className="userName">{userName?.info?.name}</span>
+        {curHr < 12 ? t("GOOD_MORNING") : curHr < 18 ? t("GOOD_AFTERNOON") : t("GOOD_EVENING")}, <span className="userName">{name}</span>
       </div>
       {!isFSO && (
         <div className="hearing-card-wrapper">
           <div className="hearingCard">
-            {hearingCount > 0 && (
-              <React.Fragment>
-                <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-                  <div className="hearingDate">
-                    <div className="dateText">{date.split(" ")[0]}</div>
-                    <div className="dateNumber">{date.split(" ")[1]}</div>
-                    <div className="dayText">{day}</div>
+            <React.Fragment>
+              <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+                <div className="hearingDate">
+                  <div className="dateText">{date.split(" ")[0]}</div>
+                  <div className="dateNumber">{date.split(" ")[1]}</div>
+                  <div className="dayText">{day}</div>
+                </div>
+                {!earliestHearingSlot && (
+                  <div className="no-hearing">
+                    <p>
+                      {t("YOU_DONT_HAVE_ANY")} <span>{t("HEARING_SCHEDULED")}</span>
+                    </p>
                   </div>
+                )}
+
+                {hearingCount > 0 && (
                   <div className="time-hearing-type">
                     <div className="timeText">
                       {formatTimeTo12Hour(earliestHearingSlot.slotStartString)} - {formatTimeTo12Hour(earliestHearingSlot.slotEndString)}
@@ -366,10 +360,10 @@ const UpcomingHearings = ({ t, userInfoType, ...props }) => {
                       </Link>
                     </div>
                   </div>
-                </div>
-                <Button className={"view-hearing-button"} label={t("VIEW_HEARINGS")} variation={"primary"} onClick={props.handleNavigate} />
-              </React.Fragment>
-            )}
+                )}
+              </div>
+              <Button className={"view-hearing-button"} label={t("VIEW_HEARINGS")} variation={"primary"} onClick={props.handleNavigate} />
+            </React.Fragment>
           </div>
           {ongoingMonthHearingCount > 0 && userInfoType === "citizen" && isAdvocate && (
             <div className="ongoing-month-hearing">

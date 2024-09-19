@@ -2,8 +2,8 @@
   "BusinessServices": [
     {
       "tenantId": "kl",
-      "business": "application",
-      "businessService": "application-order-submission-feedback",
+      "business": "submission",
+      "businessService": "submission-order-submission-feedback",
       "businessServiceSla": 345600000,
       "states": [
         {
@@ -17,7 +17,7 @@
           "actions": [
             {
               "action": "CREATE",
-              "nextState": "PENDING_SUBMISSION",
+              "nextState": "PENDING_E-SIGN",
               "roles": [
                 "SUBMISSION_CREATOR"
               ]
@@ -26,7 +26,7 @@
         },
         {
           "sla": 86400000,
-          "state": "PENDING_SUBMISSION",
+          "state": "PENDING_E-SIGN",
           "applicationStatus": "INWORKFLOW",
           "docUploadRequired": false,
           "isStartState": false,
@@ -37,21 +37,24 @@
               "action": "E-SIGN",
               "nextState": "PENDING_RESPONSE",
               "roles": [
-                "SUBMISSION_RESPONDER"
+                "SUBMISSION_CREATOR",
+                "SYSTEM",
+                "SYSTEM_ADMIN"
               ]
             },
             {
               "action": "DELETE",
               "nextState": "DELETED",
               "roles": [
-                "SUBMISSION_DELETE"
+                "SUBMISSION_CREATOR"
               ]
             },
             {
               "action": "ABANDON",
               "nextState": "ABATED",
               "roles": [
-                "WORKFLOW_ABANDON"
+                "SYSTEM",
+                "SYSTEM_ADMIN"
               ]
             }
           ]
@@ -69,7 +72,9 @@
               "action": "RESPOND",
               "nextState": "COMPLETED",
               "roles": [
-                "SUBMISSION_RESPONDER",
+                "SUBMISSION_EDITOR",
+                "SYSTEM",
+                "SYSTEM_ADMIN",
                 "AUTO_ESCALATE"
               ]
             },
@@ -77,14 +82,15 @@
               "action": "DELETE",
               "nextState": "DELETED",
               "roles": [
-                "SUBMISSION_DELETE"
+                "SUBMISSION_CREATOR"
               ]
             },
             {
               "action": "ABANDON",
               "nextState": "ABATED",
               "roles": [
-                "WORKFLOW_ABANDON"
+                "SYSTEM",
+                "SYSTEM_ADMIN"
               ]
             }
           ]

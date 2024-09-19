@@ -283,7 +283,7 @@ export const UICustomizations = {
       return link;
     },
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
-      const usertype = row?.ProcessInstance?.businessService === "advocateclerk" ? "clerk" : "advocate";
+      const usertype = row?.ProcessInstance?.businessService.includes("clerk") ? "clerk" : "advocate";
       const individualId = row?.businessObject?.individual?.individualId;
       const applicationNumber =
         row?.businessObject?.advocateDetails?.applicationNumber || row?.businessObject?.clerkDetails?.applicationNumber || row?.applicationNumber;
@@ -720,6 +720,7 @@ export const UICustomizations = {
                 order: {
                   createdDate: new Date().getTime(),
                   tenantId: row.tenantId,
+                  hearingNumber: row?.hearingId,
                   filingNumber: row.filingNumber[0],
                   cnrNumber: row.cnrNumbers[0],
                   statuteSection: {
@@ -797,7 +798,18 @@ export const UICustomizations = {
             label: "Request for Reschedule hearing",
             id: "reschedule",
             action: (history) => {
-              history.push(`/digit-ui/citizen/submissions/submissions-create?filingNumber=${row.filingNumber[0]}&hearingId=${row.hearingId}`);
+              history.push(
+                `/digit-ui/citizen/submissions/submissions-create?filingNumber=${row.filingNumber[0]}&hearingId=${row.hearingId}&applicationType=RE_SCHEDULE`
+              );
+            },
+          },
+          {
+            label: "Request for Checkout Request",
+            id: "reschedule",
+            action: (history) => {
+              history.push(
+                `/digit-ui/citizen/submissions/submissions-create?filingNumber=${row.filingNumber[0]}&hearingId=${row.hearingId}&applicationType=CHECKOUT_REQUEST`
+              );
             },
           },
           {

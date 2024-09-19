@@ -134,11 +134,14 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader, submitModalI
     "dristi",
     Boolean(chequeDetails?.totalAmount && chequeDetails.totalAmount !== "0")
   );
+
+  const suffix = useMemo(() => getSuffixByBusinessCode(paymentTypeData, "case-default"), [paymentTypeData]);
+
   const { data: billResponse, isLoading: isBillLoading } = Digit.Hooks.dristi.useBillSearch(
     {},
-    { tenantId, consumerCode: caseDetails?.filingNumber, service: "case-default" },
-    "dristi",
-    Boolean(caseDetails?.filingNumber)
+    { tenantId, consumerCode: caseDetails?.filingNumber + `_${suffix}`, service: "case-default" },
+    `dristi_${suffix}`,
+    Boolean(caseDetails?.filingNumber && suffix)
   );
 
   const totalAmount = useMemo(() => {
@@ -175,7 +178,6 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader, submitModalI
   });
   const onSubmitCase = async () => {
     try {
-      const suffix = getSuffixByBusinessCode(paymentTypeData, "case-default");
       if (billResponse?.Bill?.length === 0) {
         const taxPeriod = getTaxPeriodByBusinessService(taxPeriodData, "case-default");
         await DRISTIService.createDemand({
@@ -298,7 +300,20 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader, submitModalI
         isDisabled={paymentLoader}
         headerBarMain={<Heading label={t("CS_PAY_TO_FILE_CASE")} />}
       >
-        <div className="payment-due-wrapper" style={{ display: "flex", flexDirection: "column" }}>
+        <div className="payment-due-wrapper" style={{ maxHeight: "550px", display: "flex", flexDirection: "column", margin: "13px 0px" }}>
+          <InfoCard
+            variant={"default"}
+            label={t("CS_COMMON_NOTE")}
+            style={{ backgroundColor: "#ECF3FD", marginBottom: "8px" }}
+            additionalElements={[
+              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <span>{t("PLEASE_ALLOW_POPUP_PAYMENT")}</span>
+              </div>,
+            ]}
+            inline
+            textStyle={{}}
+            className={"adhaar-verification-info-card"}
+          />
           <div className="payment-due-text" style={{ fontSize: "18px" }}>
             {`${t("CS_DUE_PAYMENT")} `}
             <span style={{ fontWeight: 700 }}>Rs {totalAmount}/-.</span>

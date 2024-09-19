@@ -77,7 +77,7 @@ const InsideHearingMainPage = () => {
       hearingId: hearingId,
     },
   };
-  const { data: hearingsData, refetch: refetchHearing } = Digit.Hooks.hearings.useGetHearings(
+  const { data: hearingsData, refetch: refetchHearing = () => {} } = Digit.Hooks.hearings.useGetHearings(
     reqBody,
     { applicationNumber: "", cnrNumber: "", hearingId },
     "dristi",
@@ -140,14 +140,14 @@ const InsideHearingMainPage = () => {
       setAdditionalDetails(responseList?.additionalDetails);
       setOptions(
         responseList?.additionalDetails?.witnessDetails?.formdata?.map((witness) => ({
-          label: `${witness.data.firstName} ${witness.data.lastName}`,
+          label: [witness?.data?.firstName, witness?.data?.lastName].filter(Boolean).join(" "),
           value: witness.data.uuid,
         }))
       );
       const selectedWitnessDefault = responseList?.additionalDetails?.witnessDetails?.formdata?.[0]?.data || {};
       setSelectedWitness(selectedWitnessDefault);
       setWitnessDepositionText(
-        hearing?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitnessDefault.uuid)?.deposition
+        hearing?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitnessDefault?.uuid)?.deposition
       );
     }
   }, [caseDataResponse]);
@@ -163,7 +163,7 @@ const InsideHearingMainPage = () => {
     } else {
       setTranscriptText(newText);
 
-      if (Object.keys(hearing).length === 0) {
+      if (!hearing || Object.keys(hearing).length === 0) {
         console.warn("Hearing object is empty");
         return hearing;
       }
@@ -207,11 +207,12 @@ const InsideHearingMainPage = () => {
   }, [transcriptText, setTranscriptText]);
 
   const isDepositionSaved = useMemo(() => {
-    return hearing?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitness.uuid)?.deposition.length;
+    return Boolean(hearing?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitness.uuid)?.deposition);
   }, [selectedWitness, hearing]);
 
   const saveWitnessDeposition = () => {
-    const updatedHearing = structuredClone(hearing);
+    if (!hearing) return;
+    const updatedHearing = structuredClone(hearing || {});
     setWitnessModalOpen(true);
     updatedHearing.additionalDetails = updatedHearing.additionalDetails || {};
     updatedHearing.additionalDetails.witnessDepositions = updatedHearing.additionalDetails.witnessDepositions || [];
@@ -223,7 +224,9 @@ const InsideHearingMainPage = () => {
       deposition: witnessDepositionText,
     });
     _updateTranscriptRequest({ body: { hearing: updatedHearing } }).then((res) => {
-      setHearing(res.hearing);
+      if (res?.hearing) {
+        setHearing(res.hearing);
+      }
     });
   };
 
@@ -277,7 +280,7 @@ const InsideHearingMainPage = () => {
     }
   };
 
-  const attendanceCount = useMemo(() => hearing?.attendees?.filter((attendee) => attendee.wasPresent).length || 0, [hearing]);
+  const attendanceCount = useMemo(() => hearing?.attendees?.filter((attendee) => attendee.wasPresent)?.length || 0, [hearing]);
   const [isRecording, setIsRecording] = useState(false);
   const IsSelectedWitness = useMemo(() => {
     return !isEmpty(selectedWitness);
@@ -302,6 +305,7 @@ const InsideHearingMainPage = () => {
             <LabelFieldPair className="case-label-field-pair">
               <CardLabel className="case-input-label">{`Select Witness`}</CardLabel>
               <Dropdown
+                t={t}
                 option={options}
                 optionKey={"label"}
                 select={handleDropdownChange}
@@ -310,8 +314,8 @@ const InsideHearingMainPage = () => {
                 selected={
                   IsSelectedWitness
                     ? {
-                        label: `${selectedWitness.firstName} ${selectedWitness.lastName}`,
-                        value: selectedWitness.uuid,
+                        label: [selectedWitness?.firstName, selectedWitness?.lastName].filter(Boolean).join(" "),
+                        value: selectedWitness?.uuid,
                       }
                     : {}
                 }
@@ -443,8 +447,8 @@ const InsideHearingMainPage = () => {
               gap: "16px",
             }}
           >
-            {/* <Button
-              label={"ATTENDANCE_CHIP"}
+            <Button
+              label={t("ATTENDANCE_CHIP")}
               style={{ boxShadow: "none", backgroundColor: "#ECF3FD", borderRadius: "4px", border: "none", padding: "10px" }}
               textStyles={{
                 fontFamily: "Roboto",
@@ -468,8 +472,8 @@ const InsideHearingMainPage = () => {
               >
                 {`${attendanceCount}`}
               </h2>
-            </Button> */}
-            {/* {userHasRole("EMPLOYEE") && (
+            </Button>
+            {userHasRole("EMPLOYEE") && (
               <Button
                 label={t("MARK_ATTENDANCE")}
                 variation={"teritiary"}
@@ -484,7 +488,7 @@ const InsideHearingMainPage = () => {
                   color: "#007E7E",
                 }}
               />
-            )} */}
+            )}
           </div>
           {userHasRole("EMPLOYEE") ? (
             <div

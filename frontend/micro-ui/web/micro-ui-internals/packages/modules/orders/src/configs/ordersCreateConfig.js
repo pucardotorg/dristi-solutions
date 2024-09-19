@@ -519,7 +519,8 @@ export const configsOrderMandatorySubmissions = [
         label: "SUBMISSION_PARTY",
         isMandatory: true,
         key: "submissionParty",
-        schemaKeyPath: "partyDetails.partyToMakeSubmission",
+        schemaKeyPath: "orderDetails.partyDetails.partyToMakeSubmission",
+        transformer: "customDropdown",
         type: "dropdown",
         populators: {
           allowMultiSelect: true,
@@ -549,7 +550,7 @@ export const configsOrderMandatorySubmissions = [
         label: "SUBMISSION_DEADLINE",
         isMandatory: true,
         key: "submissionDeadline",
-        schemaKeyPath: "dates.submissionDeadlineDate",
+        schemaKeyPath: "orderDetails.dates.submissionDeadlineDate",
         transformer: "date",
         type: "date",
         labelChildren: "OutlinedInfoIcon",
@@ -601,8 +602,8 @@ export const configsOrderMandatorySubmissions = [
         key: "responseInfo",
         schemaKeyPath: {
           isResponseRequired: { value: "orderDetails.isResponseRequired" },
-          respondingParty: { value: "partyDetails.partiesToRespond", transformer: "customDropdown" },
-          responseDeadline: { value: "dates.responseDeadlineDate", transformer: "date" },
+          respondingParty: { value: "orderDetails.partyDetails.partiesToRespond", transformer: "customDropdown" },
+          responseDeadline: { value: "orderDetails.dates.responseDeadlineDate", transformer: "date" },
         },
         withoutLabel: true,
         populators: {
@@ -753,6 +754,7 @@ export const configsOrderSubmissionExtension = [
         label: "EXTENSION_DOCUMENT_NAME",
         isMandatory: false,
         key: "documentName",
+        schemaKeyPath: "orderDetails.documentName",
         disable: true,
         type: "text",
         populators: { name: "documentName" },
@@ -761,6 +763,7 @@ export const configsOrderSubmissionExtension = [
         label: "ADVOCATE_NAME",
         isMandatory: true,
         key: "advocateName",
+        schemaKeyPath: "orderDetails.advocateName",
         type: "text",
         populators: { name: "advocateName", hideInForm: true },
       },
@@ -768,6 +771,8 @@ export const configsOrderSubmissionExtension = [
         label: "APPLICATION_DATE",
         isMandatory: true,
         key: "applicationDate",
+        schemaKeyPath: "orderDetails.applicationDate",
+        transformer: "date",
         type: "date",
         populators: { name: "applicationDate", hideInForm: true },
       },
@@ -775,6 +780,8 @@ export const configsOrderSubmissionExtension = [
         label: "ORIGINAL_SUBMISSION_ORDER_DATE",
         isMandatory: false,
         key: "originalSubmissionOrderDate",
+        schemaKeyPath: "orderDetails.originalDocSubmissionDate",
+        transformer: "date",
         disable: true,
         type: "date",
         populators: {
@@ -785,6 +792,8 @@ export const configsOrderSubmissionExtension = [
         label: "ORIGINAL_DEADLINE",
         isMandatory: false,
         key: "originalDeadline",
+        schemaKeyPath: "orderDetails.originalDate",
+        transformer: "date",
         disable: true,
         type: "date",
         populators: {
@@ -1034,6 +1043,8 @@ export const configsScheduleHearingDate = [
         label: "HEARING_DATE",
         isMandatory: true,
         key: "hearingDate",
+        schemaKeyPath: "orderDetails.hearingDate",
+        transformer: "date",
         type: "date",
         labelChildren: "OutlinedInfoIcon",
         tooltipValue: "ONLY_CURRENT_AND_FUTURE_DATES_ARE_ALLOWED",
@@ -1179,6 +1190,8 @@ export const configsScheduleNextHearingDate = [
         label: "HEARING_PURPOSE",
         isMandatory: true,
         key: "hearingPurpose",
+        schemaKeyPath: "orderDetails.purposeOfHearing",
+        transformer: "mdmsDropdown",
         type: "dropdown",
         populators: {
           name: "hearingPurpose",
@@ -1198,6 +1211,8 @@ export const configsScheduleNextHearingDate = [
         label: "HEARING_DATE",
         isMandatory: true,
         key: "hearingDate",
+        schemaKeyPath: "orderDetails.hearingDate",
+        transformer: "date",
         type: "date",
         labelChildren: "OutlinedInfoIcon",
         tooltipValue: "ONLY_CURRENT_AND_FUTURE_DATES_ARE_ALLOWED",
@@ -1229,6 +1244,8 @@ export const configsScheduleNextHearingDate = [
       {
         label: "NAMES_OF_PARTIES_REQUIRED",
         isMandatory: true,
+        schemaKeyPath: "orderDetails.partyName",
+        transformer: "customDropdown",
         key: "namesOfPartiesRequired",
         type: "dropdown",
         populators: {
@@ -1339,6 +1356,62 @@ export const configsRejectRescheduleHeadingDate = [
         label: "ORIGINAL_HEARING_DATE",
         isMandatory: true,
         key: "originalHearingDate",
+        schemaKeyPath: "orderDetails.originalHearingDate",
+        transformer: "date",
+        disable: true,
+        type: "date",
+        populators: {
+          name: "originalHearingDate",
+        },
+      },
+    ],
+  },
+  {
+    body: [
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "comments",
+        isMandatory: false,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "COMMENTS",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              isOptional: true,
+              type: "TextAreaComponent",
+            },
+          ],
+          validation: {
+            customValidationFn: {
+              moduleName: "dristiOrders",
+              masterName: "alphaNumericValidation",
+            },
+          },
+        },
+      },
+    ],
+  },
+];
+
+export const configsRejectCheckout = [
+  {
+    body: [
+      {
+        label: "REF_APPLICATION_ID",
+        isMandatory: false,
+        key: "refApplicationId",
+        disable: true,
+        type: "text",
+        populators: { name: "refApplicationId" },
+      },
+      {
+        label: "ORIGINAL_HEARING_DATE",
+        isMandatory: true,
+        key: "originalHearingDate",
+        schemaKeyPath: "orderDetails.originalHearingDate",
+        transformer: "date",
         disable: true,
         type: "date",
         populators: {
@@ -1518,6 +1591,148 @@ export const configsRescheduleHearingDate = [
   },
 ];
 
+export const configCheckout = [
+  {
+    body: [
+      {
+        label: "REF_APPLICATION_ID",
+        isMandatory: false,
+        key: "refApplicationId",
+        schemaKeyPath: "orderDetails.refApplicationId",
+        disable: true,
+        type: "text",
+        populators: { name: "refApplicationId" },
+      },
+      {
+        label: "COURT_NAME",
+        isMandatory: true,
+        key: "courtName",
+        type: "text",
+        populators: { name: "courtName", hideInForm: true },
+      },
+      {
+        label: "CASE_NAME",
+        isMandatory: true,
+        key: "caseName",
+        type: "text",
+        populators: { name: "caseName", hideInForm: true },
+      },
+      {
+        label: "CNR_NUMBER",
+        isMandatory: true,
+        key: "cnrNumber",
+        type: "text",
+        populators: { name: "cnrNumber", hideInForm: true },
+      },
+      {
+        label: "DATE_OF_ORDER",
+        isMandatory: true,
+        key: "dateOfOrder",
+        type: "date",
+        populators: {
+          name: "dateOfOrder",
+          hideInForm: true,
+        },
+      },
+      {
+        label: "APPLICANT_NAME",
+        isMandatory: true,
+        key: "applicantName",
+        type: "text",
+        populators: { name: "applicantName", hideInForm: true },
+      },
+      {
+        label: "RESCHEDULING_REASON",
+        isMandatory: true,
+        key: "reschedulingReason",
+        type: "text",
+        populators: { name: "reschedulingReason", hideInForm: true },
+      },
+      {
+        label: "APPLICATION_STATUS",
+        isMandatory: true,
+        key: "applicationStatus",
+        type: "text",
+        disable: true,
+        populators: { name: "applicationStatus", hideInForm: true },
+      },
+      {
+        label: "ORIGINAL_HEARING_DATE",
+        isMandatory: false,
+        key: "originalHearingDate",
+        schemaKeyPath: "orderDetails.originalHearingDate",
+        transformer: "date",
+        disable: true,
+        type: "date",
+        populators: {
+          name: "originalHearingDate",
+        },
+      },
+      {
+        label: "NEW_HEARING_DATE",
+        isMandatory: true,
+        key: "newHearingDate",
+        schemaKeyPath: "orderDetails.hearingDate",
+        transformer: "date",
+        type: "date",
+        labelChildren: "OutlinedInfoIcon",
+        tooltipValue: "ONLY_CURRENT_AND_FUTURE_DATES_ARE_ALLOWED",
+        populators: {
+          name: "newHearingDate",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          validation: {
+            customValidationFn: {
+              moduleName: "dristiOrders",
+              masterName: "minTodayDateValidation",
+            },
+          },
+        },
+      },
+      {
+        label: "JUDGE_NAME",
+        isMandatory: true,
+        key: "judgeName",
+        type: "text",
+        populators: { name: "judgeName", hideInForm: true },
+      },
+      {
+        label: "JUDGE_DESIGNATION",
+        isMandatory: true,
+        key: "judgeDesignation",
+        type: "text",
+        populators: { name: "judgeDesignation", hideInForm: true },
+      },
+    ],
+  },
+  {
+    body: [
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "comments",
+        isMandatory: false,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "COMMENTS",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              isOptional: true,
+              type: "TextAreaComponent",
+            },
+          ],
+          validation: {
+            customValidationFn: {
+              moduleName: "dristiOrders",
+              masterName: "alphaNumericValidation",
+            },
+          },
+        },
+      },
+    ],
+  },
+];
+
 export const configsInitiateRescheduleHearingDate = [
   {
     body: [
@@ -1525,6 +1740,7 @@ export const configsInitiateRescheduleHearingDate = [
         label: "REF_APPLICATION_ID",
         isMandatory: false,
         key: "refApplicationId",
+        schemaKeyPath: "orderDetails.refApplicationId",
         disable: true,
         type: "text",
         populators: { name: "refApplicationId" },
@@ -1564,6 +1780,7 @@ export const configsInitiateRescheduleHearingDate = [
         label: "RESCHEDULING_REASON",
         isMandatory: true,
         key: "reschedulingReason",
+        schemaKeyPath: "orderDetails.rescheduleReason",
         type: "text",
         populators: { name: "reschedulingReason", hideInForm: true },
       },
@@ -1571,6 +1788,8 @@ export const configsInitiateRescheduleHearingDate = [
         label: "ORIGINAL_HEARING_DATE",
         isMandatory: false,
         key: "originalHearingDate",
+        schemaKeyPath: "orderDetails.originalHearingDate",
+        transformer: "date",
         disable: true,
         type: "date",
         populators: {
@@ -1661,6 +1880,8 @@ export const configsAssignDateToRescheduledHearing = [
         isMandatory: true,
         key: "newHearingDate",
         type: "date",
+        schemaKeyPath: "orderDetails.newHearingDate",
+        transformer: "date",
         labelChildren: "OutlinedInfoIcon",
         tooltipValue: "ONLY_CURRENT_AND_FUTURE_DATES_ARE_ALLOWED",
         populators: {
@@ -1758,6 +1979,8 @@ export const configsAssignNewHearingDate = [
         isMandatory: true,
         key: "newHearingDate",
         type: "date",
+        schemaKeyPath: "orderDetails.newHearingDate",
+        transformer: "date",
         disable: true,
         labelChildren: "OutlinedInfoIcon",
         tooltipValue: "ONLY_CURRENT_AND_FUTURE_DATES_ARE_ALLOWED",
@@ -2353,11 +2576,14 @@ export const configsIssueSummons = [
       {
         type: "date",
         label: "Date for Hearing",
+        key: "dateForHearing",
+        schemaKeyPath: "orderDetails.hearingDate",
+        transformer: "date",
         labelChildren: "OutlinedInfoIcon",
         isMandatory: true,
         disable: true,
         populators: {
-          name: "date",
+          name: "dateForHearing",
           validation: {
             max: {
               patternType: "date",
@@ -2372,6 +2598,8 @@ export const configsIssueSummons = [
         type: "component",
         component: "SummonsOrderComponent",
         key: "SummonsOrder",
+        schemaKeyPath: "orderDetails.respondentName",
+        transformer: "summonsOrderPartyName",
         label: "Party to Summon",
         populators: {
           inputs: [
@@ -3483,6 +3711,23 @@ export const configsJudgement = [
         populators: { name: "nameofComplainant" },
       },
       {
+        label: "DESCRIPTION_OF_COMPLAINANT",
+        isMandatory: false,
+        disable: false,
+        key: "descriptionOfComplainant",
+        type: "text",
+        populators: {
+          name: "descriptionOfComplainant",
+          error: "CS_ALPHANUMERIC_ALLOWED",
+          validation: {
+            customValidationFn: {
+              moduleName: "dristiOrders",
+              masterName: "alphaNumericInputTextValidation",
+            },
+          },
+        },
+      },
+      {
         label: "NAME_COMPLAINANT_ADVOCATE",
         isMandatory: false,
         key: "nameofComplainantAdvocate",
@@ -3566,17 +3811,19 @@ export const configsJudgement = [
     body: [
       {
         type: "component",
-        component: "SelectTranscriptTextArea",
+        component: "SelectCustomTextArea",
         key: "sentence",
         schemaKeyPath: "caseDetails.sentence",
         isMandatory: true,
         populators: {
-          input: {
-            name: "text",
-            textAreaSubHeader: "SENTENCE",
-            placeholder: "TYPE_HERE_PLACEHOLDER",
-            type: "TranscriptionTextAreaComponent",
-          },
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "SENTENCE",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+            },
+          ],
           validation: {
             customValidationFn: {
               moduleName: "dristiOrders",
@@ -3591,19 +3838,17 @@ export const configsJudgement = [
     body: [
       {
         type: "component",
-        component: "SelectCustomTextArea",
+        component: "SelectTranscriptTextArea",
         key: "content",
         schemaKeyPath: "caseDetails.content",
         isMandatory: true,
         populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "CONTENT",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-            },
-          ],
+          input: {
+            name: "text",
+            textAreaSubHeader: "CONTENT",
+            placeholder: "TYPE_HERE_PLACEHOLDER",
+            type: "TranscriptionTextAreaComponent",
+          },
           validation: {
             customValidationFn: {
               moduleName: "dristiOrders",

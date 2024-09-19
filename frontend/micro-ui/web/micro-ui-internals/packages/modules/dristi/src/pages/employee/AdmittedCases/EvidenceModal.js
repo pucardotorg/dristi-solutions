@@ -15,7 +15,7 @@ import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
 import DocViewerWrapper from "../docViewerWrapper";
 import SelectCustomDocUpload from "../../../components/SelectCustomDocUpload";
 import ESignSignatureModal from "../../../components/ESignSignatureModal";
-
+import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 const stateSla = {
   DRAFT_IN_PROGRESS: 2,
 };
@@ -44,7 +44,7 @@ const EvidenceModal = ({ caseData, documentSubmission = [], setShow, userRoles, 
   const todayDate = new Date().getTime();
   const [formData, setFormData] = useState({});
   const [showFileIcon, setShowFileIcon] = useState(false);
-
+  const { downloadPdf } = useDownloadCasePdf();
   const setData = (data) => {
     setFormData(data);
   };
@@ -485,6 +485,8 @@ const EvidenceModal = ({ caseData, documentSubmission = [], setShow, userRoles, 
         return "BAIL";
       case "EXTENSION_SUBMISSION_DEADLINE":
         return type === "reject" ? "REJECT_VOLUNTARY_SUBMISSIONS" : "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE";
+      case "CHECKOUT_REQUEST":
+        return type === "reject" ? "CHECKOUT_REJECT" : "CHECKOUT_ACCEPTANCE";
       default:
         return type === "reject" ? "REJECT_VOLUNTARY_SUBMISSIONS" : "APPROVE_VOLUNTARY_SUBMISSIONS";
     }
@@ -506,6 +508,8 @@ const EvidenceModal = ({ caseData, documentSubmission = [], setShow, userRoles, 
         return type === "reject" ? "REJECT_ORDER_VOLUNTARY_SUBMISSIONS" : "ORDER_FOR_BAIL";
       case "EXTENSION_SUBMISSION_DEADLINE":
         return type === "reject" ? "REJECT_ORDER_VOLUNTARY_SUBMISSIONS" : "APPROVAL_ORDER_EXTENSION_SUBMISSION_DEADLINE";
+      case "CHECKOUT_REQUEST":
+        return type === "reject" ? "REJECT_CHECKOUT_REQUEST" : "ACCEPT_CHECKOUT_REQUEST";
       default:
         return type === "reject" ? "REJECT_ORDER_VOLUNTARY_SUBMISSIONS" : "APPROVE_ORDER_VOLUNTARY_SUBMISSIONS";
     }
@@ -513,13 +517,47 @@ const EvidenceModal = ({ caseData, documentSubmission = [], setShow, userRoles, 
   const isMandatoryOrderCreation = useMemo(() => {
     const applicationType = documentSubmission?.[0]?.applicationList?.applicationType;
     const type = showConfirmationModal?.type;
-    const acceptedApplicationTypes = ["RE_SCHEDULE", "WITHDRAWAL", "TRANSFER", "SETTLEMENT", "BAIL_BOND", "SURETY", "EXTENSION_SUBMISSION_DEADLINE"];
+    const acceptedApplicationTypes = [
+      "RE_SCHEDULE",
+      "WITHDRAWAL",
+      "TRANSFER",
+      "SETTLEMENT",
+      "BAIL_BOND",
+      "SURETY",
+      "EXTENSION_SUBMISSION_DEADLINE",
+      "CHECKOUT_REQUEST",
+    ];
     if (type === "reject") {
       return false;
     } else {
       return acceptedApplicationTypes.includes(applicationType);
     }
   }, [documentSubmission, showConfirmationModal?.type]);
+
+  const showDocument = useMemo(() => {
+    return (
+      <React.Fragment>
+        {documentSubmission?.map((docSubmission, index) => (
+          <React.Fragment>
+            {docSubmission.applicationContent && (
+              <div className="application-view">
+                <DocViewerWrapper
+                  key={docSubmission.applicationContent.fileStoreId}
+                  fileStoreId={docSubmission.applicationContent.fileStoreId}
+                  displayFilename={docSubmission.applicationContent.fileName}
+                  tenantId={docSubmission.applicationContent.tenantId}
+                  docWidth={"calc(80vw* 62/ 100)"}
+                  docHeight={"60vh"}
+                  showDownloadOption={false}
+                  documentName={docSubmission.applicationContent.fileName}
+                />
+              </div>
+            )}
+          </React.Fragment>
+        ))}
+      </React.Fragment>
+    );
+  }, [documentSubmission]);
   const handleApplicationAction = async (generateOrder, type) => {
     try {
       const orderType = getOrderTypes(documentSubmission?.[0]?.applicationList?.applicationType, type);
@@ -558,7 +596,7 @@ const EvidenceModal = ({ caseData, documentSubmission = [], setShow, userRoles, 
               formdata,
               applicationStatus: type === "accept" ? t("APPROVED") : t("REJECTED"),
             },
-            ...(orderType === "INITIATING_RESCHEDULING_OF_HEARING_DATE" && {
+            ...(["INITIATING_RESCHEDULING_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE"].includes(orderType) && {
               hearingNumber: documentSubmission?.[0]?.applicationList?.additionalDetails?.hearingId,
             }),
             ...(linkedOrderNumber && { linkedOrderNumber }),
@@ -617,7 +655,16 @@ const EvidenceModal = ({ caseData, documentSubmission = [], setShow, userRoles, 
       await submitCommentEvidence(newComment);
     }
   };
+
+  const signedSubmission = useMemo(() => {
+    return documentSubmission?.filter((item) => item?.applicationContent?.documentType === "SIGNED")?.[0] || {};
+  }, [documentSubmission]);
+
   const actionSaveOnSubmit = async () => {
+    if (actionSaveLabel === t("DOWNLOAD_SUBMISSION") && signedSubmission?.applicationContent?.fileStoreId) {
+      downloadPdf(tenantId, signedSubmission?.applicationContent?.fileStoreId);
+      return;
+    }
     if (userType === "employee") {
       modalType === "Documents" ? setShowConfirmationModal({ type: "documents-confirmation" }) : setShowConfirmationModal({ type: "accept" });
     } else {
@@ -733,8 +780,8 @@ const EvidenceModal = ({ caseData, documentSubmission = [], setShow, userRoles, 
         >
           <div className="evidence-modal-main">
             <div className={"application-details"}>
-              <div>
-                <div className="application-info">
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <div className="application-info" style={{ display: "flex", flexDirection: "column" }}>
                   <div className="info-row">
                     <div className="info-key">
                       <h3>{t("APPLICATION_TYPE")}</h3>
@@ -768,25 +815,8 @@ const EvidenceModal = ({ caseData, documentSubmission = [], setShow, userRoles, 
                       <h3>N/A</h3>
                     </div>
                   </div>
-                  {documentSubmission?.map((docSubmission, index) => (
-                    <React.Fragment>
-                      {docSubmission.applicationContent && (
-                        <div className="application-view">
-                          <DocViewerWrapper
-                            key={docSubmission.applicationContent.fileStoreId}
-                            fileStoreId={docSubmission.applicationContent.fileStoreId}
-                            displayFilename={docSubmission.applicationContent.fileName}
-                            tenantId={docSubmission.applicationContent.tenantId}
-                            docWidth="100%"
-                            docHeight="unset"
-                            showDownloadOption={false}
-                            documentName={docSubmission.applicationContent.fileName}
-                          />
-                        </div>
-                      )}
-                    </React.Fragment>
-                  ))}
                 </div>
+                <div style={{ display: "flex", flexDirection: "column" }}>{showDocument}</div>
               </div>
             </div>
             {(userRoles.includes("SUBMISSION_RESPONDER") || userRoles.includes("JUDGE_ROLE")) && (
