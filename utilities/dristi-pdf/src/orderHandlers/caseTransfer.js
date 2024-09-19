@@ -200,7 +200,7 @@ async function caseTransfer(req, res, qrCode) {
           reasonForRejection: reasonForRejection, // missing in order Object
           additionalComments: additionalComments,
           judgeSignature: "Judge Signature",
-          judgeName: "Suresh Soren",
+          judgeName: "John Doe",
           courtSeal: "Court Seal",
           qrCodeUrl: base64Url,
         },

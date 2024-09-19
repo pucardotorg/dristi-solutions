@@ -175,7 +175,7 @@ async function adrCaseReferral(req, res, qrCode) {
           additionalComments: additionalComments,
           date: formattedToday,
           judgeSignature: "Judge Signature",
-          judgeName: "Suresh Soren",
+          judgeName: "John Doe",
           courtSeal: "Court Seal",
           qrCodeUrl: base64Url,
         },
