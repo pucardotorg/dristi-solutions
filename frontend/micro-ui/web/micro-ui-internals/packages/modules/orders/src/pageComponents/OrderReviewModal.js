@@ -12,7 +12,7 @@ const OrderPreviewOrderTypeMap = {
   SUMMONS: "summons-issue",
   INITIATING_RESCHEDULING_OF_HEARING_DATE: "accept-reschedule-request",
   OTHERS: "order-generic",
-  REFERRAL_CASE_TO_ADR: "order-for-referral-case-adr",
+  REFERRAL_CASE_TO_ADR: "adr-case-referral",
   EXTENSION_OF_DOCUMENT_SUBMISSION_DATE: "order-generic",
   SCHEDULING_NEXT_HEARING: "schedule-hearing-date",
   RESCHEDULE_OF_HEARING_DATE: "new-hearing-date-after-rescheduling",
