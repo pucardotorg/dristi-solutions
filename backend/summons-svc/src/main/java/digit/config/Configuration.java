@@ -35,6 +35,9 @@ public class Configuration {
     @Value("${non.bailable.warrant.pdf.template.key}")
     private String nonBailableWarrantPdfTemplateKey;
 
+    @Value("${task.notice.pdf.template.key}")
+    private String taskNoticePdfTemplateKey;
+
     @Value("${bailable.warrant.pdf.template.key}")
     private String bailableWarrantPdfTemplateKey;
 

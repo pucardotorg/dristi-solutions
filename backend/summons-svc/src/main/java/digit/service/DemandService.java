@@ -85,7 +85,7 @@ public class DemandService {
     public Set<String> generateDemands(RequestInfo requestInfo, List<Calculation> calculations, Task task, String businessService) {
         List<Demand> demands = new ArrayList<>();
         Map<String, Map<String, JSONArray>> mdmsData = mdmsUtil.fetchMdmsData(requestInfo,
-                config.getEgovStateTenantId(), businessService, createMasterDetails()
+                config.getEgovStateTenantId(), config.getPaymentBusinessServiceName(), createMasterDetails()
         );
         for (Calculation calculation : calculations) {
             List<DemandDetail> demandDetailList = createDemandDetails(calculation, task, mdmsData, businessService);
@@ -97,12 +97,12 @@ public class DemandService {
     private List<DemandDetail> createDemandDetails(Calculation calculation, Task task, Map<String,
             Map<String, JSONArray>> mdmsData, String businessService) {
         List<DemandDetail> demandDetailList = new ArrayList<>();
+        String deliveryChannel = task.getTaskDetails().getDeliveryChannel().getChannelName();
+        Map<String, String> masterCodes = getTaxHeadMasterCodes(mdmsData, businessService, deliveryChannel);
 
         if (config.isTest()) {
             demandDetailList.addAll(createTestDemandDetails(calculation.getTenantId(), task));
         } else {
-            String deliveryChannel = task.getTaskDetails().getDeliveryChannel().getChannelName();
-            Map<String, String> masterCodes = getTaxHeadMasterCodes(mdmsData, businessService, deliveryChannel);
             for (BreakDown breakDown : calculation.getBreakDown()) {
                 demandDetailList.add(createDemandDetail(calculation.getTenantId(), breakDown, masterCodes));
             }
@@ -114,7 +114,7 @@ public class DemandService {
         List<DemandDetail> demandDetailList = new ArrayList<>();
         String channelName = ChannelName.fromString(task.getTaskDetails().getDeliveryChannel().getChannelName()).name();
 
-        if (channelName.equals("POST")) {
+        if (channelName.equals("EPOST")) {
             DemandDetail courtDetail = DemandDetail.builder()
                     .tenantId(tenantId)
                     .taxAmount(BigDecimal.valueOf(4))
@@ -211,19 +211,37 @@ public class DemandService {
         if (mdmsData != null && mdmsData.containsKey("payment") && mdmsData.get(config.getPaymentBusinessServiceName()).containsKey(PAYMENTTYPE)) {
             JSONArray masterCode = mdmsData.get(config.getPaymentBusinessServiceName()).get(PAYMENTTYPE);
 
-            String filterStringDeliveryChannel = String.format(FILTER_PAYMENT_TYPE_DELIVERY_CHANNEL, channelName, businessService);
+            String filterStringDeliveryChannel = String.format(
+                    FILTER_PAYMENT_TYPE_DELIVERY_CHANNEL, channelName
+            );
 
             JSONArray paymentTypeData = JsonPath.read(masterCode, filterStringDeliveryChannel);
             Map<String, String> result = new HashMap<>();
-            for (Object data : paymentTypeData) {
-                    JsonNode jsonNode = mapper.convertValue(data, JsonNode.class);
-                    String suffix = jsonNode.get("suffix").asText();
-                    String paymentType = jsonNode.get("paymentType").asText();
+            for (Object masterCodeObj : paymentTypeData) {
+                Map<String, Object> subType = (Map<String, Object>) masterCodeObj;
+
+                if (isMatchingBusinessService(subType, businessService, channelName)) {
+                    String suffix = (String) subType.get("suffix");
+                    String paymentType = (String) subType.get("paymentType");
                     result.put(paymentType, suffix);
+                }
             }
             return result;
         }
         return null;
+    }
+
+
+    private boolean isMatchingBusinessService(Map<String, Object> subType, String taskBusinessService, String deliveryChannel) {
+        List<Map<String, Object>> businessServices = (List<Map<String, Object>>) subType.get("businessService");
+
+        for (Map<String, Object> service : businessServices) {
+            if (taskBusinessService.equals(service.get("businessCode"))
+                    && deliveryChannel.equalsIgnoreCase((String) subType.get("deliveryChannel"))) {
+                return true; // Found a match
+            }
+        }
+        return false; // No match found
     }
 
     private List<String> createMasterDetails() {
@@ -274,8 +292,8 @@ public class DemandService {
 
     private String getBusinessService(String taskType) {
         return switch (taskType.toUpperCase()) {
-            case "SUMMON" -> config.getTaskSummonBusinessService();
-            case "NOTICE" -> config.getTaskNoticeBusinessService();
+            case SUMMON -> config.getTaskSummonBusinessService();
+            case NOTICE -> config.getTaskNoticeBusinessService();
             default -> throw new IllegalArgumentException("Unsupported task type: " + taskType);
         };
 

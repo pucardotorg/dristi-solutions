@@ -187,11 +187,11 @@ class DemandServiceTest {
         Task task = mock(Task.class);
         BillResponse billResponse = mock(BillResponse.class);
 
-        when(task.getTaskType()).thenReturn("SUMMON");
+        when(task.getTaskType()).thenReturn("SUMMONS");
         when(task.getTenantId()).thenReturn("tenant1");
         when(task.getTaskNumber()).thenReturn("TN001");
         when(config.getBillingServiceHost()).thenReturn("http://billing");
-        when(config.getTaskSummonBusinessService()).thenReturn("SUMMON");
+        when(config.getTaskSummonBusinessService()).thenReturn("SUMMONS");
         when(config.getFetchBillEndpoint()).thenReturn("/fetch");
 
         when(repository.fetchResult(any(), any())).thenReturn(new Object());
