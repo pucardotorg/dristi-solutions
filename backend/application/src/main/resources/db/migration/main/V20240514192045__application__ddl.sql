@@ -27,7 +27,8 @@ CREATE TABLE dristi_application_document (
                               documentUid varchar(64)  NULL ,
                               documentType varchar(64) NULL,
                               application_id varchar(64)  NULL,
-                              additionalDetails JSONB NULL
+                              additionalDetails JSONB NULL,
+                              CONSTRAINT fk_application_document_application_id FOREIGN KEY (application_id) REFERENCES dristi_application(id)
 );
 
 CREATE TABLE dristi_application_statute_section (
@@ -43,7 +44,8 @@ CREATE TABLE dristi_application_statute_section (
                               createdBy varchar(64) NULL,
                               lastModifiedBy varchar(64) NULL,
                               createdTime int8 NULL,
-                              lastModifiedTime int8 NULL
+                              lastModifiedTime int8 NULL,
+                              CONSTRAINT fk_application_statute_section_application_id FOREIGN KEY (application_id) REFERENCES dristi_application(id)
 );
 
 CREATE SEQUENCE seq_dristi_application
