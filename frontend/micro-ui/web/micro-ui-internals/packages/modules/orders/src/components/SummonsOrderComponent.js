@@ -177,7 +177,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect }) => {
       ? {
           label:
             [formData[config.key]?.party?.data?.firstName, formData[config.key]?.party?.data?.lastName].filter(Boolean).join(" ") +
-            ` (${formData[config.key]?.party?.data?.partyType})`,
+            `${formData[config.key]?.party?.data?.partyType ? ` (${formData[config.key]?.party?.data?.partyType})` : ""}`,
           value: formData[config.key]?.party,
         }
       : null;
