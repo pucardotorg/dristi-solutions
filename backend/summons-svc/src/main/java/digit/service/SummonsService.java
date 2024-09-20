@@ -12,6 +12,7 @@ import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -61,13 +62,16 @@ public class SummonsService {
 
     public TaskResponse generateSummonsDocument(TaskRequest taskRequest) {
         String taskType = taskRequest.getTask().getTaskType();
-        String pdfTemplateKey = getPdfTemplateKey(taskType);
-        String moduleName = config.getBffServiceSummonsModule();
+        String pdfTemplateKey = getPdfTemplateKey(taskType, false);
+        //String moduleName = config.getBffServiceSummonsModule();
 
-        // generate credentials
-        caseManagementUtil.generateVcForTask(taskRequest, moduleName);
+        return generateDocumentAndUpdateTask(taskRequest, pdfTemplateKey, false);
+    }
 
-        String fileStoreId = caseManagementUtil.getFileStoreIdFromBffService(taskRequest, pdfTemplateKey, moduleName);
+    private TaskResponse generateDocumentAndUpdateTask(TaskRequest taskRequest, String pdfTemplateKey, boolean qrCode) {
+        ByteArrayResource byteArrayResource = pdfServiceUtil.generatePdfFromPdfService(taskRequest,
+                taskRequest.getTask().getTenantId(), pdfTemplateKey, qrCode);
+        String fileStoreId = fileStorageUtil.saveDocumentToFileStore(byteArrayResource);
 
         Document document = createDocument(fileStoreId);
         taskRequest.getTask().addDocumentsItem(document);
@@ -76,6 +80,12 @@ public class SummonsService {
     }
 
     public SummonsDelivery sendSummonsViaChannels(TaskRequest request) {
+
+        String taskType = request.getTask().getTaskType();
+        String pdfTemplateKey = getPdfTemplateKey(taskType, true);
+
+        generateDocumentAndUpdateTask(request, pdfTemplateKey, true);
+
         SummonsDelivery summonsDelivery = summonsDeliveryEnrichment.generateAndEnrichSummonsDelivery(request.getTask(), request.getRequestInfo());
 
         ChannelMessage channelMessage = externalChannelUtil.sendSummonsByDeliveryChannel(request, summonsDelivery);
@@ -143,11 +153,11 @@ public class SummonsService {
         taskUtil.callUpdateTask(taskRequest);
     }
 
-    private String getPdfTemplateKey(String taskType) {
+    private String getPdfTemplateKey(String taskType, boolean qrCode) {
         return switch (taskType) {
-            case SUMMON -> config.getSummonsPdfTemplateKey();
-            case WARRANT -> config.getNonBailableWarrantPdfTemplateKey();
-            case NOTICE -> config.getTaskNoticePdfTemplateKey();
+            case SUMMON -> qrCode ? config.getSummonsQrPdfTemplateKey() : config.getSummonsPdfTemplateKey();
+            case WARRANT -> qrCode ? config.getNonBailableWarrantQrPdfTemplateKey() : config.getNonBailableWarrantPdfTemplateKey();
+            case NOTICE -> qrCode ? config.getTaskNoticeQrPdfTemplateKey() : config.getTaskNoticePdfTemplateKey();
             default -> throw new CustomException("INVALID_TASK_TYPE", "Task Type must be valid. Provided: " + taskType);
         };
     }
