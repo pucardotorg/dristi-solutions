@@ -430,6 +430,7 @@ public class IdGenerationService {
         } catch (BadSqlGrammarException ex) {
             if (ex.getSQLException().getSQLState().equals("42P01")){
                 try{
+                    autoCreateNewSeqFlag=true;
                     if (sequenceList.isEmpty() && autoCreateNewSeqFlag && autoCreateNewSeq){
                         createSequenceInDb(sequenceName);
                         sequenceList = jdbcTemplate.queryForList(sequenceSql, new Object[]{count}, String.class);
