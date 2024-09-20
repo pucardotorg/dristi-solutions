@@ -109,8 +109,14 @@ public class Configuration {
     @Value("${egov.billingservice.fetch.bill}")
     private String fetchBillEndpoint;
 
-    @Value("${task.taxhead.master.code}")
-    private String taskSummonTaxHeadMasterCode;
+    @Value("${task.taxhead.master.police.code}")
+    private String taskSummonPoliceTaxHeadMasterCode;
+
+    @Value("${task.taxhead.master.email.code}")
+    private String taskSummonEmailTaxHeadMasterCode;
+
+    @Value("${task.taxhead.master.sms.code}")
+    private String taskSummonSmsTaxHeadMasterCode;
 
     @Value("${task.taxhead.master.court.code}")
     private String taskSummonTaxHeadCourtMasterCode;
@@ -118,8 +124,13 @@ public class Configuration {
     @Value("${task.taxhead.master.epost.code}")
     private String taskSummonTaxHeadEPostMasterCode;
 
-    @Value("${task.notice.taxhead.master.code}")
-    private String taskNoticeTaxHeadMasterCode;
+
+    @Value("${task.notice.taxhead.master.email.code}")
+    private String taskNoticeEmailTaxHeadMasterCode;
+
+    @Value("${task.notice.taxhead.master.sms.code}")
+    private String taskNoticeSmsTaxHeadMasterCode;
+
 
     @Value("${task.notice.taxhead.master.court.code}")
     private String taskNoticeTaxHeadCourtMasterCode;
