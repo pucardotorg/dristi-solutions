@@ -175,7 +175,9 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect }) => {
   const selectedParty = useMemo(() => {
     return formData[config.key]?.party != null
       ? {
-          label: [formData[config.key]?.party?.data?.firstName, formData[config.key]?.party?.data?.lastName].filter(Boolean).join(" "),
+          label:
+            [formData[config.key]?.party?.data?.firstName, formData[config.key]?.party?.data?.lastName].filter(Boolean).join(" ") +
+            ` (${formData[config.key]?.party?.data?.partyType})`,
           value: formData[config.key]?.party,
         }
       : null;
@@ -198,7 +200,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect }) => {
               <Dropdown
                 t={t}
                 option={userList.map((user) => ({
-                  label: [user.data.firstName, user.data.lastName].filter(Boolean).join(" "),
+                  label: [user.data.firstName, user.data.lastName].filter(Boolean).join(" ") + ` (${user.data.partyType})`,
                   value: user,
                 }))}
                 optionKey="label"
