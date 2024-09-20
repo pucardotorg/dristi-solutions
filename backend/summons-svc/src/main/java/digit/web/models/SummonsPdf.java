@@ -52,5 +52,5 @@ public class SummonsPdf  {
     private String complainantName;
 
     @JsonProperty("complainantAddress")
-    private Address complainantAddress;
+    private String complainantAddress;
 }

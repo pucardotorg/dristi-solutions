@@ -83,7 +83,7 @@ public class PdfServiceUtil {
                 .respondentName(task.getTaskDetails().getRespondentDetails().getName())
                 .respondentAddress(task.getTaskDetails().getRespondentDetails().getAddress().toString())
                 .complainantName(task.getTaskDetails().getComplainantDetails().getName())
-                .complainantAddress(task.getTaskDetails().getComplainantDetails().getAddress())
+                .complainantAddress(task.getTaskDetails().getComplainantDetails().getAddress().toString())
                 .build();
     }
 
