@@ -71,6 +71,9 @@ public class ApplicationService {
             validator.validateOrderDetails(applicationRequest);
             workflowService.updateWorkflowStatus(applicationRequest);
 
+            if(PENDINGSUBMISSION.equalsIgnoreCase(applicationRequest.getApplication().getStatus())){
+                application.setApplicationNumber(application.getCmpNumber());
+            }
             producer.push(config.getApplicationUpdateTopic(), applicationRequest);
 
             return applicationRequest.getApplication();
