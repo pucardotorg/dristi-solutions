@@ -40,19 +40,12 @@ const PaymentForSummonComponent = ({ infos, links, feeOptions, orderDate, paymen
 
   const getDateWithMonthName = (orderDate) => {
     let today = new Date();
-
-    // Add 15 days to today's date
     today.setDate(today.getDate() + 15);
-
-    // Array of month names
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
     let dd = String(today.getDate()).padStart(2, "0");
     let mm = monthNames[today.getMonth()];
     let yyyy = today.getFullYear();
-
     let formattedDate = `${dd} ${mm} ${yyyy}`;
-
     return formattedDate; // Output: formatted date 15 days from now with month name
   };
 
@@ -98,7 +91,7 @@ const PaymentForSummonComponent = ({ infos, links, feeOptions, orderDate, paymen
                   <Button label={t(action.action)} onButtonClick={action.onClick} isDisabled={paymentLoader} />
                 ) : (
                   <p className="offline-process-text">
-                    This is an offline process. <span className="learn-more-text">Learn More</span>
+                    {t("THIS_OFFLINE_TEXT")} <span className="learn-more-text">{t("LEARN_MORE")}</span>
                   </p>
                 )}
               </div>
