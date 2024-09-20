@@ -23,6 +23,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -47,7 +48,7 @@ public class CauseListService {
 
     private ServiceConstants serviceConstants;
 
-    private DateUtil dateUtil;
+    private static DateUtil dateUtil;
 
     @Autowired
     public CauseListService(HearingRepository hearingRepository, CauseListRepository causeListRepository,
@@ -153,11 +154,7 @@ public class CauseListService {
         log.info("operation = generateCauseListFromHearings, result = SUCCESS, judgeId = {}", scheduleHearings.get(0).getCourtId());
         List<MdmsSlot> mdmsSlotList = getSlottingDataFromMdms();
 
-//        long currentSlotIndex = 0;
-//        long accumulatedTime = 0;
-
         for (HearingCauseList hearing : scheduleHearings) {
-//            boolean isSlotAssigned = false;
             Long hearingTime = hearing.getHearingDate();
             CauseList causeList = null;
             if(hearingTime >= dateUtil.getEpochFromLocalDateTime(LocalDate.now().atStartOfDay().plusHours(10)) &&
@@ -174,32 +171,40 @@ public class CauseListService {
 
     private static CauseList getCauseListFromHearingAndSlot(HearingCauseList hearing, MdmsSlot mdmsSlot) {
         log.info("Added hearing {} to slot {}", hearing.getCaseNumber(), mdmsSlot.getSlotName());
+        LocalDateTime localDateTime = dateUtil.getLocalDateTimeFromEpoch(hearing.getHearingDate());
+        LocalDate localDate = localDateTime.toLocalDate();
+        String caseDate = localDate.toString();
         return CauseList.builder()
                 .courtId(hearing.getCourtId())
                 .tenantId(hearing.getTenantId())
                 .caseId(hearing.getCaseId())
                 .typeOfHearing(hearing.getHearingType())
-                .tentativeSlot(mdmsSlot.getSlotStartTime() + " - " + mdmsSlot.getSlotEndTime())
-                .caseDate(hearing.getHearingDate())
+                .tentativeSlot(mdmsSlot.getSlotName())
+                .caseDate(caseDate)
                 .caseTitle(hearing.getCaseTitle())
                 .applicationNumber(hearing.getApplicationNumber())
+                .caseNumber(hearing.getCaseNumber())
                 .build();
     }
 
-    private List<SlotList> getSlotList(Map<String, String> hearingTypeSlotMap, List<CauseList> causeLists) {
+    private List<SlotList> getSlotList(Map<String, String> hearingTypeSlotMap, List<CauseList> causeLists, List<MdmsHearing> mdmsHearings, List<MdmsSlot> mdmsSlots) {
         List<SlotList> slotLists = new ArrayList<>();
-        List<MdmsHearing> mdmsHearings = getHearingDataFromMdms();
         for(Map.Entry<String, String> entry: hearingTypeSlotMap.entrySet()){
             String hearingType = entry.getKey();
-            String slot = entry.getValue();
+            String slotName = entry.getValue();
             String hearingName = mdmsHearings.stream().filter(a -> a.getHearingType().equalsIgnoreCase(hearingType))
                     .findFirst().get().getHearingName();
-            List<CauseList> tempCauseList = getFilteredCauseLists(causeLists, slot, hearingType);
+            String slotStartTime = mdmsSlots.stream().filter(a -> a.getSlotName().equalsIgnoreCase(slotName)).findFirst().get().getSlotStartTime();
+            String slotEndTime = mdmsSlots.stream().filter(a -> a.getSlotName().equalsIgnoreCase(slotName)).findFirst().get().getSlotEndTime();
+            String slotTime = slotStartTime + " - " + slotEndTime;
+
+            List<CauseList> tempCauseList = getFilteredCauseLists(causeLists, slotName, hearingType);
 
             if (!tempCauseList.isEmpty()) {
                 SlotList slotList = SlotList.builder()
+                        .slotTime(slotTime)
+                        .slotName(slotName)
                         .hearingType(hearingName)
-                        .slots(slot)
                         .causeLists(tempCauseList)
                         .build();
                 slotLists.add(slotList);
@@ -247,7 +252,7 @@ public class CauseListService {
         List<SlotList> slotLists = new ArrayList<>();
         for(MdmsSlot mdmsSlot: mdmsSlots){
             Map<String, String> hearingTypeSlotMap = getSlotHearingTypeMap(mdmsHearings, mdmsSlot);
-            List<SlotList> tempSlotList = getSlotList(hearingTypeSlotMap, causeLists);
+            List<SlotList> tempSlotList = getSlotList(hearingTypeSlotMap, causeLists, mdmsHearings, mdmsSlots);
             slotLists.addAll(tempSlotList);
         }
 
@@ -261,7 +266,7 @@ public class CauseListService {
     private Map<String, String> getSlotHearingTypeMap(List<MdmsHearing> mdmsHearings, MdmsSlot mdmsSlot) {
         Map<String, String> hearingTypeSlotMap = new HashMap<>();
         for (MdmsHearing mdmsHearing : mdmsHearings) {
-                hearingTypeSlotMap.put(mdmsHearing.getHearingType(), mdmsSlot.getSlotStartTime() + " - " + mdmsSlot.getSlotEndTime());
+                hearingTypeSlotMap.put(mdmsHearing.getHearingType(), mdmsSlot.getSlotName());
         }
         return hearingTypeSlotMap;
     }

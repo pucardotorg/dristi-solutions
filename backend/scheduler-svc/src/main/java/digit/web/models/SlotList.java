@@ -14,13 +14,16 @@ import java.util.List;
 @Setter
 public class SlotList {
 
-    @JsonProperty("slots")
-    private String slots = null;
+    @JsonProperty("slotTime")
+    private String slotTime = null;
+
+    @JsonProperty("slotName")
+    private String slotName = null;
 
     @JsonProperty("hearingType")
     private String hearingType = null;
 
-    @JsonProperty("causeLists")
+    @JsonProperty("CauseList")
     private List<CauseList> causeLists = null;
 
 }

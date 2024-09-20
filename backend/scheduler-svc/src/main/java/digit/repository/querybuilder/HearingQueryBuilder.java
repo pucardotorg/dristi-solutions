@@ -31,7 +31,7 @@ public class HearingQueryBuilder {
     private final String JOIN_CASE_QUERY = " JOIN dristi_cases dc ON EXISTS (SELECT 1 FROM jsonb_array_elements_text(dh.filingnumber) AS elem WHERE elem = dc.filingnumber) ";
     private final String JOIN_REPRESENTATIVE_QUERY = " JOIN dristi_case_representatives dcr ON dcr.case_id = dc.id ";
     private final String JOIN_APPLICATION_QUERY = " JOIN dristi_application da ON EXISTS (SELECT 1 FROM jsonb_array_elements_text(dh.applicationnumbers) AS elem WHERE elem = da.applicationnumber) ";
-
+    private final String PENDINGAPPROVAL = "PENDINGAPPROVAL";
 
     @Autowired
     private QueryBuilderHelper queryBuilderHelper;
@@ -180,6 +180,11 @@ public class HearingQueryBuilder {
             preparedStmtArgsList.add(Types.BIGINT);
         }
 
+        queryBuilderHelper.addClauseIfRequired(query, preparedStmtList);
+        query.append(" da.status = ? ");
+        preparedStmtList.add(PENDINGAPPROVAL);
+        preparedStmtArgsList.add(Types.VARCHAR);
+        
         return query.toString();
     }
 }

@@ -46,10 +46,13 @@ public class CauseList {
     private String caseTitle = null;
 
     @JsonProperty("caseDate")
-    private Long caseDate = null;
+    private String caseDate = null;
 
     @JsonProperty("applicationNumber")
     private String applicationNumber = null;
+
+    @JsonProperty("caseNumber")
+    private String caseNumber = null;
 
     public CauseList addLitigantNamesItem(String litigantNamesItem) {
         if (this.litigantNames == null) {
