@@ -3,17 +3,17 @@ const config = require("../config");
 const {
   search_case,
   search_order,
-  search_hearing,
   search_mdms,
   search_hrms,
-  search_individual,
   search_sunbirdrc_credential_service,
   create_pdf,
+  search_individual_uuid,
+  search_application,
 } = require("../api");
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 
-async function summonsIssue(req, res, qrCode) {
+async function orderWithdrawalReject(req, res, qrCode) {
   const cnrNumber = req.query.cnrNumber;
   const orderId = req.query.orderId;
   const entityId = req.query.entityId;
@@ -58,13 +58,12 @@ async function summonsIssue(req, res, qrCode) {
       renderError(res, "Court case not found", 404);
     }
 
-    // FIXME: Commenting out HRMS calls is it not impl in solution
     // Search for HRMS details
-    // const resHrms = await handleApiCall(
-    //     () => search_hrms(tenantId, "JUDGE", courtCase.courtId, requestInfo),
-    //     "Failed to query HRMS service"
-    // );
-    // const employee = resHrms?.data?.Employees[0];
+    const resHrms = await handleApiCall(
+      () => search_hrms(tenantId, "JUDGE", courtCase.courtId, requestInfo),
+      "Failed to query HRMS service"
+    );
+    const employee = resHrms?.data?.Employees[0];
     // if (!employee) {
     //     renderError(res, "Employee not found", 404);
     // }
@@ -85,17 +84,6 @@ async function summonsIssue(req, res, qrCode) {
       renderError(res, "Court room MDMS master not found", 404);
     }
 
-    // FIXME: Commenting out MDMS calls is it not impl in solution
-    // Search for MDMS court establishment details
-    // const resMdms1 = await handleApiCall(
-    //     () => search_mdms(mdmsCourtRoom.courtEstablishmentId, "case.CourtEstablishment", tenantId, requestInfo),
-    //     "Failed to query MDMS service for court establishment"
-    // );
-    // const mdmsCourtEstablishment = resMdms1?.data?.mdms[0]?.data;
-    // if (!mdmsCourtEstablishment) {
-    //     renderError(res, "Court establishment MDMS master not found", 404);
-    // }
-
     // Search for order details
     const resOrder = await handleApiCall(
       () => search_order(tenantId, orderId, requestInfo),
@@ -106,15 +94,46 @@ async function summonsIssue(req, res, qrCode) {
       renderError(res, "Order not found", 404);
     }
 
-    // Search for hearing details
-    const resHearing = await handleApiCall(
-      () => search_hearing(tenantId, cnrNumber, requestInfo),
-      "Failed to query hearing service"
+    const resApplication = await handleApiCall(
+      () =>
+        search_application(
+          tenantId,
+          order?.additionalDetails?.formdata?.refApplicationId,
+          requestInfo
+        ),
+      "Failed to query application service"
     );
-    const hearing = resHearing?.data?.HearingList[0];
-    if (!hearing) {
-      renderError(res, "Hearing not found", 404);
+    const application = resApplication?.data?.applicationList[0];
+    if (!application) {
+      return renderError(res, "Application not found", 404);
     }
+
+    // Filter litigants to find the respondent.primary
+    const respondentParty = courtCase.litigants.find(
+      (party) => party.partyType === "respondent.primary"
+    );
+    if (!respondentParty) {
+      return renderError(
+        res,
+        "No party with partyType 'respondent.primary' found",
+        400
+      );
+    }
+
+    const behalfOfIndividual = await handleApiCall(
+      () =>
+        search_individual_uuid(
+          tenantId,
+          application.onBehalfOf[0],
+          requestInfo
+        ),
+      "Failed to query individual service using id"
+    );
+    const onbehalfOfIndividual = behalfOfIndividual?.data?.Individual[0];
+    if (!onbehalfOfIndividual) {
+      renderError(res, "Individual not found", 404);
+    }
+    // Search for individual details
 
     // Handle QR code if enabled
     let base64Url = "";
@@ -141,35 +160,34 @@ async function summonsIssue(req, res, qrCode) {
       base64Url = imgTag.attr("src");
     }
 
-    let year;
-    if (typeof courtCase.filingDate === "string") {
-      year = courtCase.filingDate.slice(-4);
-    } else if (courtCase.filingDate instanceof Date) {
-      year = courtCase.filingDate.getFullYear();
-    } else if (typeof courtCase.filingDate === "number") {
-      // Assuming the number is in milliseconds (epoch time)
-      year = new Date(courtCase.filingDate).getFullYear();
-    } else {
-      return renderError(res, "Invalid filingDate format", 500);
-    }
+    const partyName = [
+      onbehalfOfIndividual.name.givenName,
+      onbehalfOfIndividual.name.otherNames,
+      onbehalfOfIndividual.name.familyName,
+    ]
+      .filter(Boolean)
+      .join(" ");
+    const currentDate = new Date();
+    const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
 
+    const additionalComments = order?.comments || "";
+    const summaryReasonForWithdrawal =
+      application?.applicationDetails?.reasonForWithdrawal || "";
     const data = {
       Data: [
         {
           courtName: mdmsCourtRoom.name,
-          caseNumber: courtCase.caseNumber,
-          year: year,
           caseName: courtCase.caseTitle,
-          respondentName: order.orderDetails.respondentName,
-          date: Date.now(),
-          hearingDate: hearing.startTime,
-          additionalComments: order.comments,
+          caseNumber: courtCase.caseNumber,
+          partyName: partyName,
+          date: formattedToday,
+          dateOfMotion: formattedToday,
+          additionalComments: additionalComments,
+          summaryReasonForWithdrawal: summaryReasonForWithdrawal,
           judgeSignature: "Judge Signature",
+          judgeName: "John Doe",
           courtSeal: "Court Seal",
           qrCodeUrl: base64Url,
-          place: "Kollam", // FIXME: mdmsCourtEstablishment.boundaryName,
-          state: "Kerala", //FIXME: mdmsCourtEstablishment.rootBoundaryName,
-          judgeName: "John Doe", // FIXME: employee.user.name,
         },
       ],
     };
@@ -177,11 +195,11 @@ async function summonsIssue(req, res, qrCode) {
     // Generate the PDF
     const pdfKey =
       qrCode === "true"
-        ? config.pdf.summons_issue_qr
-        : config.pdf.summons_issue;
+        ? config.pdf.order_case_withdrawal_rejected_qr
+        : config.pdf.order_case_withdrawal_rejected;
     const pdfResponse = await handleApiCall(
       () => create_pdf(tenantId, pdfKey, data, req.body),
-      "Failed to generate PDF of order for Issue of Summons"
+      "Failed to generate PDF of order to Settle a Case - Acceptance"
     );
     const filename = `${pdfKey}_${new Date().getTime()}`;
     res.writeHead(200, {
@@ -199,11 +217,11 @@ async function summonsIssue(req, res, qrCode) {
   } catch (ex) {
     return renderError(
       res,
-      "Failed to query details of order for Issue of Summons",
+      "Failed to query details of order to Settle a Case - Acceptance",
       500,
       ex
     );
   }
 }
 
-module.exports = summonsIssue;
+module.exports = orderWithdrawalReject;

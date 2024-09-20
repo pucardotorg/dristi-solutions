@@ -82,7 +82,6 @@ const ViewPaymentDetails = ({ location, match }) => {
     const dateOfAccrual = new Date(caseDetails?.caseDetails["demandNoticeDetails"]?.formdata[0]?.data?.dateOfAccrual);
     return today?.getTime() - dateOfAccrual?.getTime();
   }, [caseDetails]);
-
   const chequeDetails = useMemo(() => {
     const debtLiability = caseDetails?.caseDetails?.debtLiabilityDetails?.formdata?.[0]?.data;
     if (debtLiability?.liabilityType?.code === "PARTIAL_LIABILITY") {
@@ -197,7 +196,7 @@ const ViewPaymentDetails = ({ location, match }) => {
         pendingTask: {
           name: "Pending Payment",
           entityType: businessService,
-          referenceId: `MANUAL_${caseDetails?.filingNumber}`,
+          referenceId: `MANUAL_${referenceId}`,
           status: "PENDING_PAYMENT",
           cnrNumber: null,
           filingNumber: caseDetails?.filingNumber,
