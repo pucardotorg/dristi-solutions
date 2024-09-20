@@ -13,6 +13,7 @@ const {
 } = require("../api");
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
+const { getAdvocates } = require("../applicationHandlers/getAdvocates");
 
 async function orderRejectExtension(req, res, qrCode) {
   const cnrNumber = req.query.cnrNumber;
@@ -180,7 +181,14 @@ async function orderRejectExtension(req, res, qrCode) {
     ]
       .filter(Boolean)
       .join(" ");
-    const applicantName = "Advocate Name" || partyName || "";
+    const onBehalfOfuuid = application.onBehalfOf[0];
+    const allAdvocates = getAdvocates(courtCase);
+    const advocate = allAdvocates[onBehalfOfuuid]?.[0]?.additionalDetails
+      ?.advocateName
+      ? allAdvocates[onBehalfOfuuid]?.[0]
+      : {};
+    const advocateName = advocate?.additionalDetails?.advocateName || "";
+    const applicantName = advocateName || partyName || "";
     const submissionDate = formatDate(
       new Date(application?.createdDate),
       "DD-MM-YYYY"

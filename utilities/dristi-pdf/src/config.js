@@ -268,6 +268,7 @@ module.exports = {
     mdms_search: "/egov-mdms-service/v2/_search",
     sunbirdrc_credential_service_search:
       "/sunbirdrc-credential-service/qrcode/_get",
+    message_search: "/localization/messages/v1/_search",
   },
 
   constraints: {

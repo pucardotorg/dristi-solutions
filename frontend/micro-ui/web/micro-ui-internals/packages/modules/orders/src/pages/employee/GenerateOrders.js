@@ -643,9 +643,10 @@ const GenerateOrders = () => {
         orderTypeForm = orderTypeForm?.map((section) => {
           return {
             ...section,
-            body: section.body.filter(
-              (field) => field.key !== "newSubmissionDate" && currentOrder?.additionalDetails?.applicationStatus === t("REJECTED")
-            ),
+            body: section.body.filter((field) => {
+              const isRejected = currentOrder?.additionalDetails?.applicationStatus === t("REJECTED");
+              return !(field.key === "newSubmissionDate" && isRejected);
+            }),
           };
         });
       }

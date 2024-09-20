@@ -34,6 +34,8 @@ const orderWarrant = require("../orderHandlers/orderWarrant");
 const orderWithdrawalAccept = require("../orderHandlers/orderWithdrawalAccept");
 const orderWithdrawalReject = require("../orderHandlers/orderWithdrawalReject");
 const orderSection202Crpc = require("../orderHandlers/orderSection202crpc");
+const orderAcceptExtension = require("../orderHandlers/orderAcceptExtension");
+const orderRejectExtension = require("../orderHandlers/orderRejectExtension");
 
 function renderError(res, errorMessage, errorCode, errorObject) {
   if (errorCode == undefined) errorCode = 500;
@@ -96,6 +98,12 @@ router.post(
           break;
         case "order-case-settlement-rejected":
           await caseSettlementRejection(req, res, qrCode);
+          break;
+        case "order-for-extension-deadline":
+          await orderAcceptExtension(req, res, qrCode);
+          break;
+        case "order-reject-application-submission-deadline":
+          await orderRejectExtension(req, res, qrCode);
           break;
         case "order-case-settlement-acceptance":
           await caseSettlementAcceptance(req, res, qrCode);
