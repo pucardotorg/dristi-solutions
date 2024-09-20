@@ -53,8 +53,8 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect }) => {
             pincode: address?.addressDetails?.pincode || "",
           })),
           partyType: "Respondent",
-          phone_numbers: item.data.phonenumbers?.mobileNumber || [],
-          email: item.data.emails?.emailId || [],
+          phone_numbers: item?.data?.phonenumbers?.mobileNumber || [],
+          email: item?.data?.emails?.emailId || [],
         },
       }));
       const updatedWitnessData = witnessData.map((item) => ({
