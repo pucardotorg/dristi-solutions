@@ -2340,6 +2340,7 @@ export const configsCaseTransfer = [
         schemaKeyPath: "orderDetails.grounds",
         transformer: "customTextArea",
         isMandatory: true,
+        disable: true,
         populators: {
           inputs: [
             {
@@ -2373,6 +2374,7 @@ export const configsCaseTransfer = [
         label: "CASE_TRANSFERRED_TO",
         isMandatory: true,
         key: "caseTransferredTo",
+        disable: true,
         type: "text",
         populators: {
           name: "caseTransferredTo",
