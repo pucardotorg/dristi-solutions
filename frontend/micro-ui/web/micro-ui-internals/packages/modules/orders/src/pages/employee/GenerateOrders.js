@@ -1438,7 +1438,7 @@ const GenerateOrders = () => {
             address: complainantAddress,
           },
           caseDetails: {
-            title: caseDetails?.caseTitle,
+            caseTitle: caseDetails?.caseTitle,
             year: new Date(caseDetails).getFullYear(),
             hearingDate: new Date(orderData?.additionalDetails?.formdata?.date || "").getTime(),
             courtName: courtDetails?.name,
@@ -1477,9 +1477,9 @@ const GenerateOrders = () => {
             address: complainantAddress,
           },
           caseDetails: {
-            title: caseDetails?.caseTitle,
+            caseTitle: caseDetails?.caseTitle,
             year: new Date(caseDetails).getFullYear(),
-            hearingDate: new Date(orderData?.additionalDetails?.formdata?.date || "").getTime(),
+            hearingDate: new Date(orderData?.additionalDetails?.formdata?.dateForHearing || "").getTime(),
             courtName: courtDetails?.name,
             courtAddress: courtDetails?.address,
             courtPhone: courtDetails?.phone,
@@ -1511,7 +1511,7 @@ const GenerateOrders = () => {
             gender: "",
           },
           caseDetails: {
-            title: caseDetails?.caseTitle,
+            caseTitle: caseDetails?.caseTitle,
             year: new Date(caseDetails).getFullYear(),
             hearingDate: new Date(orderData?.additionalDetails?.formData?.date || "").getTime(),
             judgeName: "",
