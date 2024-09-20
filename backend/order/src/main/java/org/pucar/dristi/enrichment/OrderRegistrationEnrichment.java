@@ -50,7 +50,8 @@ public class OrderRegistrationEnrichment {
                     });
                 }
 
-                orderRequest.getOrder().setOrderNumber(orderRegistrationIdList.get(0));
+                String orderNumber = orderRequest.getOrder().getCnrNumber()+"-"+orderRegistrationIdList.get(0);
+                orderRequest.getOrder().setOrderNumber(orderNumber);
                 orderRequest.getOrder().setCreatedDate(System.currentTimeMillis());
             }
 
