@@ -5,6 +5,7 @@ const {
   search_order,
   search_mdms,
   search_hrms,
+  search_individual,
   search_sunbirdrc_credential_service,
   create_pdf,
   search_individual_uuid,
@@ -13,7 +14,7 @@ const {
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 
-async function orderWithdrawalAccept(req, res, qrCode) {
+async function orderRejectExtension(req, res, qrCode) {
   const cnrNumber = req.query.cnrNumber;
   const orderId = req.query.orderId;
   const entityId = req.query.entityId;
@@ -107,6 +108,16 @@ async function orderWithdrawalAccept(req, res, qrCode) {
     if (!application) {
       return renderError(res, "Application not found", 404);
     }
+    const originalOrderNumber =
+      application.additionalDetails.formdata.refOrderId;
+    const resOriginalOrder = await handleApiCall(
+      () => search_order(tenantId, originalOrderNumber, requestInfo, true),
+      "Failed to query order service"
+    );
+    const originalOrder = resOrder?.data?.list[0];
+    if (!originalOrder) {
+      renderError(res, "Order not found", 404);
+    }
 
     const behalfOfIndividual = await handleApiCall(
       () =>
@@ -121,9 +132,7 @@ async function orderWithdrawalAccept(req, res, qrCode) {
     if (!onbehalfOfIndividual) {
       renderError(res, "Individual not found", 404);
     }
-    // Search for individual details
 
-    // Handle QR code if enabled
     let base64Url = "";
     if (qrCode === "true") {
       const resCredential = await handleApiCall(
@@ -148,6 +157,22 @@ async function orderWithdrawalAccept(req, res, qrCode) {
       base64Url = imgTag.attr("src");
     }
 
+    let caseYear;
+    if (typeof courtCase.filingDate === "string") {
+      caseYear = courtCase.filingDate.slice(-4);
+    } else if (courtCase.filingDate instanceof Date) {
+      caseYear = courtCase.filingDate.getFullYear();
+    } else if (typeof courtCase.filingDate === "number") {
+      // Assuming the number is in milliseconds (epoch time)
+      caseYear = new Date(courtCase.filingDate).getFullYear();
+    } else {
+      return renderError(res, "Invalid filingDate format", 500);
+    }
+
+    const currentDate = new Date();
+    const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
+    const additionalComments = order?.comments || "";
+    const originalSubmissionName = originalOrder.orderDetails.documentName;
     const partyName = [
       onbehalfOfIndividual.name.givenName,
       onbehalfOfIndividual.name.otherNames,
@@ -155,23 +180,48 @@ async function orderWithdrawalAccept(req, res, qrCode) {
     ]
       .filter(Boolean)
       .join(" ");
-    const currentDate = new Date();
-    const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
+    const applicantName = "Advocate Name" || partyName || "";
+    const submissionDate = formatDate(
+      new Date(application?.createdDate),
+      "DD-MM-YYYY"
+    );
+    const requestedDeadlineDate = order.orderDetails.proposedSubmissionDate
+      ? formatDate(
+          new Date(order.orderDetails.proposedSubmissionDate),
+          "DD-MM-YYY"
+        )
+      : "";
+    const newDealineDate = order.orderDetails.newSubmissionDate
+      ? formatDate(new Date(order.orderDetails.newSubmissionDate), "DD-MM-YYY")
+      : "";
+    const originalDeadlineDate = order.orderDetails.originalDocSubmissionDate
+      ? formatDate(
+          new Date(order.orderDetails.originalDocSubmissionDate),
+          "DD-MM-YYY"
+        )
+      : "";
+    const originalOrderDate = originalOrder.createdDate
+      ? formatDate(new Date(originalOrder.createdDate), "DD-MM-YYYY")
+      : "";
 
-    const additionalComments = order?.comments || "";
-    const summaryReasonForWithdrawal =
-      application?.applicationDetails?.reasonForWithdrawal || "";
     const data = {
       Data: [
         {
           courtName: mdmsCourtRoom.name,
           caseName: courtCase.caseTitle,
           caseNumber: courtCase.caseNumber,
-          partyName: partyName,
+          caseYear: caseYear,
+          orderId: originalOrderNumber,
+          orderDate: originalOrderDate,
           date: formattedToday,
-          dateOfMotion: formattedToday,
+          partyName: partyName,
+          applicantName: applicantName,
+          applicationFiledDate: submissionDate,
+          requestedDeadlineDate: requestedDeadlineDate,
+          originalDeadlineDate: originalDeadlineDate,
+          originalSubmissionName: originalSubmissionName,
+          newDealineDate: newDealineDate,
           additionalComments: additionalComments,
-          summaryReasonForWithdrawal: summaryReasonForWithdrawal,
           judgeSignature: "Judge Signature",
           judgeName: "John Doe",
           courtSeal: "Court Seal",
@@ -183,8 +233,8 @@ async function orderWithdrawalAccept(req, res, qrCode) {
     // Generate the PDF
     const pdfKey =
       qrCode === "true"
-        ? config.pdf.order_case_withdrawal_acceptance_qr
-        : config.pdf.order_case_withdrawal_acceptance;
+        ? config.pdf.order_reject_application_submission_deadline_qr
+        : config.pdf.order_reject_application_submission_deadline;
     const pdfResponse = await handleApiCall(
       () => create_pdf(tenantId, pdfKey, data, req.body),
       "Failed to generate PDF of order to Settle a Case - Acceptance"
@@ -212,4 +262,4 @@ async function orderWithdrawalAccept(req, res, qrCode) {
   }
 }
 
-module.exports = orderWithdrawalAccept;
+module.exports = orderRejectExtension;

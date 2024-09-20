@@ -639,6 +639,16 @@ const GenerateOrders = () => {
           };
         });
       }
+      if (orderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE") {
+        orderTypeForm = orderTypeForm?.map((section) => {
+          return {
+            ...section,
+            body: section.body.filter(
+              (field) => field.key !== "newSubmissionDate" && currentOrder?.additionalDetails?.applicationStatus === t("REJECTED")
+            ),
+          };
+        });
+      }
       newConfig = [...newConfig, ...orderTypeForm];
     }
     const updatedConfig = newConfig.map((config) => {

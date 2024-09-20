@@ -227,7 +227,7 @@ async function applicationSubmissionExtension(req, res, qrCode) {
     const year = currentDate.getFullYear();
 
     const ordinalSuffix = getOrdinalSuffix(day);
-    console.debug(application);
+
     const originalSubmissionDate = application?.applicationDetails
       ?.originalSubmissionDate
       ? formatDate(
