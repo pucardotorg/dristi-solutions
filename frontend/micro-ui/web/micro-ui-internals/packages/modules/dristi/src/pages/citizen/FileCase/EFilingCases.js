@@ -1696,7 +1696,6 @@ function EFilingCases({ path }) {
     const dateOfAccrual = new Date(caseDetails?.caseDetails["demandNoticeDetails"]?.formdata[0]?.data?.dateOfAccrual);
     return today?.getTime() - dateOfAccrual?.getTime();
   }, [caseDetails]);
-
   const chequeDetails = useMemo(() => {
     const debtLiability = caseDetails?.caseDetails?.debtLiabilityDetails?.formdata?.[0]?.data;
     if (debtLiability?.liabilityType?.code === "PARTIAL_LIABILITY") {
@@ -1768,6 +1767,7 @@ function EFilingCases({ path }) {
               taxHeadMasterCode: "CASE_ADVANCE_CARRYFORWARD",
               taxAmount: 4, // amount to be replaced with calculationResponse
               collectionAmount: 0,
+              delayCondonation: delayCondonation,
             },
           ],
         },

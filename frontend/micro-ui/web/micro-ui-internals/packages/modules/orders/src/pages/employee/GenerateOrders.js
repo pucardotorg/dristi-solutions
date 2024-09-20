@@ -750,12 +750,15 @@ const GenerateOrders = () => {
       updatedFormdata.submissionDocuments = applicationDetails?.additionalDetails?.formdata?.submissionDocuments;
       updatedFormdata.bailOf = applicationDetails?.additionalDetails?.onBehalOfName;
     }
+    if (orderType === "CASE_TRANSFER") {
+      updatedFormdata.caseTransferredTo = applicationDetails?.applicationDetails?.selectRequestedCourt;
+      updatedFormdata.grounds = { text: applicationDetails?.applicationDetails?.groundsForSeekingTransfer };
+    }
     if (orderType === "WITHDRAWAL") {
       if (applicationDetails?.applicationType === applicationTypes.WITHDRAWAL) {
         updatedFormdata.applicationOnBehalfOf = applicationDetails?.additionalDetails?.onBehalOfName;
         updatedFormdata.partyType = t(applicationDetails?.additionalDetails?.partyType);
         updatedFormdata.reasonForWithdrawal = t(applicationDetails?.additionalDetails?.formdata?.reasonForWithdrawal?.code);
-        updatedFormdata.applicationStatus = t(applicationDetails?.status);
       }
     }
     if (orderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE") {
@@ -812,12 +815,12 @@ const GenerateOrders = () => {
                 address: item.data.addressDetails.map((address) => ({
                   locality: address.addressDetails.locality,
                   city: address.addressDetails.city,
-                  district: address.addressDetails.district,
-                  pincode: address.addressDetails.pincode,
+                  district: address?.addressDetails?.district,
+                  pincode: address?.addressDetails?.pincode,
                 })),
                 partyType: "Respondent",
-                phone_numbers: item.data.phonenumbers?.mobileNumber || [],
-                email: item.data.emails?.emailId,
+                phone_numbers: item?.data?.phonenumbers?.mobileNumber || [],
+                email: item?.data?.emails?.emailId,
               },
             }))?.[0],
           selectedChannels: currentOrder?.additionalDetails?.formdata?.noticeOrder?.selectedChannels,

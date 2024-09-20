@@ -12,6 +12,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+import static drishti.payment.calculator.config.ServiceConstants.*;
+
 @Component
 public class PostalHubValidator {
 
@@ -26,7 +28,7 @@ public class PostalHubValidator {
     public void validateExistingPostalHubRequest(PostalHubRequest request) {
         request.getPostalHubs().forEach(hub -> {
             if (ObjectUtils.isEmpty(hub.getHubId()))
-                throw new CustomException("DK_PC_ID_ERR", "id is mandatory for updating postal hub");
+                throw new CustomException(DK_PC_ID_ERR, DK_PC_ID_ERR_MSG);
         });
     }
 
@@ -41,7 +43,7 @@ public class PostalHubValidator {
         List<PostalHub> postalHub = hubRepository.getPostalHub(hubSearchCriteria);
 
         if (!postalHub.isEmpty()) {
-            throw new CustomException("HUB_ALREADY_EXIST", "Hub already exist in DB");
+            throw new CustomException(HUB_ALREADY_EXIST, HUB_ALREADY_EXIST_MSG);
         }
     }
 

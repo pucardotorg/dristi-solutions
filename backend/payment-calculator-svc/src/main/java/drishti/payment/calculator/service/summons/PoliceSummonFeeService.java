@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import java.util.Collections;
 import java.util.HashMap;
 
+import static drishti.payment.calculator.config.ServiceConstants.COURT_FEE;
+
 @Service
 public class PoliceSummonFeeService implements SummonPayment {
 
@@ -33,6 +35,6 @@ public class PoliceSummonFeeService implements SummonPayment {
                 .applicationId(criteria.getSummonId())
                 .tenantId(criteria.getTenantId())
                 .totalAmount(courtFee)
-                .breakDown(Collections.singletonList(new BreakDown("COURT_FEE", courtFee, new HashMap<>()))).build();
+                .breakDown(Collections.singletonList(new BreakDown(COURT_FEE, courtFee, new HashMap<>()))).build();
     }
 }

@@ -8,7 +8,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.models.individual.Individual;
-import org.egov.common.models.individual.IndividualBulkResponse;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.web.models.IndividualSearchRequest;

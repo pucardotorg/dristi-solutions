@@ -17,5 +17,5 @@ public class CaseData {
     private CourtCase caseDetails = null;
 
     @JsonProperty("history")
-    private Object history =null;
+    private Object history = null;
 }

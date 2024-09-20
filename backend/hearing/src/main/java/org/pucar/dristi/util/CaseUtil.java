@@ -64,5 +64,4 @@ public class CaseUtil {
             throw new CustomException(ERROR_WHILE_FETCHING_FROM_CASE, e.getMessage());
         }
     }
-
 }

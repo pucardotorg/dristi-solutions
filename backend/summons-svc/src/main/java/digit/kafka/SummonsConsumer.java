@@ -45,7 +45,7 @@ public class SummonsConsumer {
             String status = taskRequest.getTask().getStatus();
 
             // Process for generating summons bill
-            if ((taskType.equalsIgnoreCase(SUMMON) || taskType.equalsIgnoreCase(NOTICE)) && "PAYMENT_PENDING".equalsIgnoreCase(status)) {
+            if ((taskType.equalsIgnoreCase(SUMMON) || taskType.equalsIgnoreCase(NOTICE)) && PAYMENT_PENDING.equalsIgnoreCase(status)) {
                 try {
                     log.info("Received message for bill creation {}", taskRequest.getTask());
                     demandService.fetchPaymentDetailsAndGenerateDemandAndBill(taskRequest);

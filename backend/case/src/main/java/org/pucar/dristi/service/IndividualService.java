@@ -44,27 +44,24 @@ public class IndividualService {
             uri.append("?limit=1").append("&offset=0").append("&tenantId=").append(requestInfo.getUserInfo().getTenantId()).append("&includeDeleted=true");
             Boolean isIndividualValid = individualUtils.individualCall(individualSearchRequest, uri);
             return isIndividualValid;
-        } catch(CustomException e){
+        } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error in search individual service :: {}",e.toString());
+            log.error("Error in search individual service :: {}", e.toString());
             throw new CustomException(INDIVIDUAL_SERVICE_EXCEPTION, "Error in search individual service" + e.getMessage());
         }
     }
 
-    public List<Individual> getIndividuals(RequestInfo requestInfo, List<String> uuids) {
+    public List<Individual> getIndividuals(RequestInfo requestInfo, List<String> uuids) throws CustomException {
         try {
             IndividualSearchRequest individualSearchRequest = new IndividualSearchRequest();
             individualSearchRequest.setRequestInfo(requestInfo);
             IndividualSearch individualSearch = new IndividualSearch();
             individualSearch.setUserUuid(uuids);
             individualSearchRequest.setIndividual(individualSearch);
-            StringBuilder uri = new StringBuilder(config.getIndividualHost()).append(config.getIndividualSearchEndpoint());
-            uri.append("?limit=").append(uuids.size()).append("&offset=0")
-                    .append("&tenantId=").append(requestInfo.getUserInfo().getTenantId())
-                    .append("&includeDeleted=true");
+            StringBuilder uri = buildIndividualSearchUri(requestInfo, uuids);
             List<Individual> individual = individualUtils.getIndividualByIndividualId(individualSearchRequest, uri);
-            if (individual != null ) {
+            if (individual != null) {
                 return individual;
             } else {
                 log.error("No individuals found");
@@ -77,24 +74,12 @@ public class IndividualService {
         }
     }
 
-    public String getIndividualId(RequestInfo requestInfo) {
-        try {
-            IndividualSearchRequest individualSearchRequest = new IndividualSearchRequest();
-            individualSearchRequest.setRequestInfo(requestInfo);
-            IndividualSearch individualSearch = new IndividualSearch();
-            log.info("UUID :: {}", requestInfo.getUserInfo().getUuid());
-            individualSearch.setUserUuid(Collections.singletonList(requestInfo.getUserInfo().getUuid()));
-            individualSearchRequest.setIndividual(individualSearch);
-
-            StringBuilder uri = new StringBuilder(config.getIndividualHost()).append(config.getIndividualSearchEndpoint());
-            uri.append("?limit=1").append("&offset=0").append("&tenantId=").append(requestInfo.getUserInfo().getTenantId()).append("&includeDeleted=true");
-            return individualUtils.getIndividualId(individualSearchRequest, uri);
-
-        } catch(CustomException e){
-            throw e;
-        } catch (Exception e) {
-            log.error("Error in search individual service :: {}",e);
-            throw new CustomException(INDIVIDUAL_SERVICE_EXCEPTION, "Error in search individual service" + e.getMessage());
-        }
+    private StringBuilder buildIndividualSearchUri(RequestInfo requestInfo, List<String> uuids) {
+        return new StringBuilder(config.getIndividualHost())
+                .append(config.getIndividualSearchEndpoint())
+                .append("?limit=").append(uuids.size())
+                .append("&offset=0")
+                .append("&tenantId=").append(requestInfo.getUserInfo().getTenantId())
+                .append("&includeDeleted=true");
     }
 }
