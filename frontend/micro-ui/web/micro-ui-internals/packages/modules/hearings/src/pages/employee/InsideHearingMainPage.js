@@ -550,7 +550,20 @@ const InsideHearingMainPage = () => {
               />
             </div>
           ) : (
-            <Button label={t("EXIT_HEARING")} variation={"primary"} onButtonClick={handleExitHearing} />
+            <Button
+              label={t("EXIT_HEARING")}
+              variation={"primary"}
+              onButtonClick={handleExitHearing}
+              style={{ boxShadow: "none", backgroundColor: "#007e7e", border: "none", padding: "10px", width: "166px" }}
+              textStyles={{
+                fontFamily: "Roboto",
+                fontSize: "16px",
+                fontWeight: 700,
+                lineHeight: "18.75px",
+                textAlign: "center",
+                color: "#ffffff",
+              }}
+            />
           )}
         </div>
       </ActionBar>
