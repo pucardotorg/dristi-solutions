@@ -99,37 +99,7 @@ public class CaseService {
 
         try {
             // Fetch applications from database according to the given search criteria
-            List<CaseCriteria> caseCriteriaList = caseSearchRequests.getCriteria();
-
-            List<CaseCriteria> caseCriteriaInRedis = new ArrayList<>();
-
-            for (CaseCriteria criteria : caseCriteriaList) {
-                CourtCase courtCase = null;
-                if (!criteria.getDefaultFields() && criteria.getCaseId() != null) {
-                    courtCase = searchRedisCache(caseSearchRequests.getRequestInfo(), criteria);
-                }
-                if (courtCase != null) {
-                    criteria.setResponseList(Collections.singletonList(courtCase));
-                    caseCriteriaInRedis.add(criteria);
-                }
-            }
-
-            if (!caseCriteriaInRedis.isEmpty()) {
-                caseCriteriaList.removeAll(caseCriteriaInRedis);
-            }
-            List<CaseCriteria> casesList = caseRepository.getCases(caseSearchRequests.getCriteria(), caseSearchRequests.getRequestInfo());
-            saveInRedisCache(casesList, caseSearchRequests.getRequestInfo());
-
-            casesList.addAll(caseCriteriaInRedis);
-
-            casesList.forEach(caseCriteria -> {
-                List<CourtCase> decryptedCourtCases = new ArrayList<>();
-                caseCriteria.getResponseList().forEach(cases -> {
-                    decryptedCourtCases.add(encryptionDecryptionUtil.decryptObject(cases, CASE_DECRYPT_SELF, CourtCase.class, caseSearchRequests.getRequestInfo()));
-                });
-                caseCriteria.setResponseList(decryptedCourtCases);
-            });
-
+            caseRepository.getCases(caseSearchRequests.getCriteria(), caseSearchRequests.getRequestInfo());
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {

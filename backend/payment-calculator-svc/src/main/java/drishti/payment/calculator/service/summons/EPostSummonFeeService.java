@@ -1,7 +1,9 @@
 package drishti.payment.calculator.service.summons;
 
+import drishti.payment.calculator.config.Configuration;
 import drishti.payment.calculator.repository.PostalHubRepository;
 import drishti.payment.calculator.service.SummonPayment;
+import drishti.payment.calculator.util.SpeedPostUtil;
 import drishti.payment.calculator.util.SummonUtil;
 import drishti.payment.calculator.web.models.*;
 import drishti.payment.calculator.web.models.enums.Classification;
@@ -10,18 +12,28 @@ import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+
+import static drishti.payment.calculator.config.ServiceConstants.POSTAL_HUB_NOT_FOUND;
+import static drishti.payment.calculator.config.ServiceConstants.POSTAL_HUB_NOT_FOUND_MSG;
 
 @Service
 public class EPostSummonFeeService implements SummonPayment {
 
     private final SummonUtil summonUtil;
     private final PostalHubRepository repository;
+    private final SpeedPostUtil speedPostUtil;
+    private final Configuration config;
 
     @Autowired
-    public EPostSummonFeeService(SummonUtil summonUtil, PostalHubRepository repository) {
+    public EPostSummonFeeService(SummonUtil summonUtil, PostalHubRepository repository, SpeedPostUtil speedPostUtil, Configuration config) {
         this.summonUtil = summonUtil;
         this.repository = repository;
+        this.speedPostUtil = speedPostUtil;
+        this.config = config;
     }
 
     @Override
@@ -33,20 +45,20 @@ public class EPostSummonFeeService implements SummonPayment {
         HubSearchCriteria searchCriteria = HubSearchCriteria.builder().pincode(Collections.singletonList(criteria.getReceiverPincode())).build();
         List<PostalHub> postalHub = repository.getPostalHub(searchCriteria);
         if (postalHub.isEmpty()) {
-            throw new CustomException("POSTAL_HUB_NOT_FOUND", "Pincode not found for speed post fee calculation");
+            throw new CustomException(POSTAL_HUB_NOT_FOUND, POSTAL_HUB_NOT_FOUND_MSG);
         }
 
         Classification classification = postalHub.get(0).getClassification();
-        Double iPostFeeWithoutGST = calculateTotalEPostFee(2, classification, ePostConfigParams);
+        Double ePostFeeWithoutGST = calculateEPostFee(config.getNumberOfPgOfSummon(), classification, ePostConfigParams);
 
         Double courtFees = summonUtil.calculateCourtFees(ePostConfigParams);
         Double envelopeFee = ePostConfigParams.getEnvelopeChargeIncludingGst();
         Double gstPercentage = ePostConfigParams.getGstPercentage();
-        Double gstFee = iPostFeeWithoutGST * gstPercentage;
+        Double gstFee = ePostFeeWithoutGST * gstPercentage;
 
-        List<BreakDown> breakDowns= getFeeBreakdown(courtFees,gstFee,iPostFeeWithoutGST + envelopeFee);
+        List<BreakDown> breakDowns = summonUtil.getFeeBreakdown(courtFees, gstFee, ePostFeeWithoutGST + envelopeFee);
 
-        double totalAmount = iPostFeeWithoutGST + (gstPercentage * iPostFeeWithoutGST) + courtFees + envelopeFee;
+        double totalAmount = ePostFeeWithoutGST + (gstPercentage * ePostFeeWithoutGST) + courtFees + envelopeFee;
 
         return Calculation.builder()
                 .applicationId(criteria.getSummonId())
@@ -56,10 +68,7 @@ public class EPostSummonFeeService implements SummonPayment {
                 .build();
     }
 
-
-
-    // Method to calculate I-Post fee without GST
-    private Double calculateTotalEPostFee(Integer numberOfPages, Classification classification, EPostConfigParams configParams) {
+    public Double calculateEPostFee(Integer numberOfPages, Classification classification, EPostConfigParams configParams) {
 
         Double weightPerPage = configParams.getPageWeight();
         Double printingFeePerPage = configParams.getPrintingFeePerPage();
@@ -71,81 +80,11 @@ public class EPostSummonFeeService implements SummonPayment {
         // Total Printing Fee
         Double totalPrintingFee = numberOfPages * printingFeePerPage;
         // Speed Post Fee
-        Double speedPostFee = getSpeedPostFee(totalWeight, classification, speedPost);
+        Double speedPostFee = speedPostUtil.getSpeedPostFee(totalWeight, classification, speedPost);
         // Total Fee before GST
-        return totalWeight + totalPrintingFee + speedPostFee + businessFee;
+        return totalPrintingFee + speedPostFee + businessFee;
     }
 
-
-    // Method to get speed post fee
-    public Double getSpeedPostFee(Double weight, Double distance, SpeedPost speedPost) {
-        WeightRange weightRange = getWeightRange(weight, speedPost.getWeightRanges());
-
-        assert weightRange != null;
-        Range distanceRange = calculateDistanceRange(distance, weightRange);
-
-        assert distanceRange != null;
-        return distanceRange.getFee();
-    }
-
-    public Double getSpeedPostFee(Double weight, Classification classification, SpeedPost speedPost) {
-        WeightRange weightRange = getWeightRange(weight, speedPost.getWeightRanges());
-
-        assert weightRange != null;
-        Range distanceRange = calculateDistanceRange(classification, weightRange);
-
-        assert distanceRange != null;
-        return distanceRange.getFee();
-    }
-
-    // Method to calculate weight range based on weight
-    private WeightRange getWeightRange(Double weight, List<WeightRange> weightRanges) {
-        for (WeightRange range : weightRanges) {
-            int lowerBound = range.getMinWeight();
-            int upperBound = range.getMaxWeight();
-            if (weight >= lowerBound && weight <= upperBound) {
-                return range;
-            }
-        }
-        return null; // Invalid weight range
-    }
-
-    // Method to calculate distance range based on distance
-    private Range calculateDistanceRange(Double distance, WeightRange weightRange) {
-        Map<String, Range> distanceMap = weightRange.getDistanceRanges();
-        for (Range range : distanceMap.values()) {
-            Double lowerBound = range.getMin();
-            Double upperBound = range.getMax();
-
-            if (distance >= lowerBound && distance <= upperBound) {
-                return range;
-            }
-        }
-
-        return null; // Invalid distance range
-    }
-
-    private Range calculateDistanceRange(Classification classification, WeightRange weightRange) {
-        Map<String, Range> distanceMap = weightRange.getDistanceRanges();
-        for (Range range : distanceMap.values()) {
-            if (classification.equals(Classification.fromValue(range.getClassificationCode()))) {
-                return range;
-            }
-        }
-
-        return null; // Invalid distance range
-    }
-
-
-    public List<BreakDown> getFeeBreakdown(double courtFee, double gst, double postFee) {
-        List<BreakDown> feeBreakdowns = new ArrayList<>();
-
-        feeBreakdowns.add(new BreakDown("COURT_FEES", courtFee, new HashMap<>()));
-        feeBreakdowns.add(new BreakDown("GST", gst, new HashMap<>()));
-        feeBreakdowns.add(new BreakDown("E_POST", postFee, new HashMap<>()));
-
-        return feeBreakdowns;
-    }
 
 
 

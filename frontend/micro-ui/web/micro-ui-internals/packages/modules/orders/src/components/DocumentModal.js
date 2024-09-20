@@ -64,7 +64,7 @@ const DocumentModal = ({ config, setShow, currentStep }) => {
         config?.isStepperModal && config?.steps[step]?.type !== "success" ? (
           <Heading heading={config?.steps[step]?.heading || config?.heading} />
         ) : !config?.isStepperModal ? (
-          <Heading heading={config?.steps[step]?.heading || config?.heading} />
+          <Heading heading={config?.heading} />
         ) : (
           ""
         )

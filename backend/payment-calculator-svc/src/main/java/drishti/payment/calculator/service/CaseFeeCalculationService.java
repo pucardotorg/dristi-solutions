@@ -13,14 +13,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static drishti.payment.calculator.config.ServiceConstants.*;
+
 @Service
 @Slf4j
-public class CaseFeesCalculationService {
+public class CaseFeeCalculationService {
 
     private final EFillingUtil eFillingUtil;
 
     @Autowired
-    public CaseFeesCalculationService(EFillingUtil eFillingUtil) {
+    public CaseFeeCalculationService(EFillingUtil eFillingUtil) {
         this.eFillingUtil = eFillingUtil;
 
     }
@@ -49,7 +51,7 @@ public class CaseFeesCalculationService {
 
             Double totalApplicationFee = criteria.getNumberOfApplication() * applicationFee;
             Double petitionFee = getPetitionFee(criteria.getCheckAmount(), petitionFeeRange);
-            Double delayFee = isDelayCondontionFeeApplicable(criteria.getDelayCondonation(), delayCondonationPeriod) ? delayCondonationFee : 0.0;
+            Double delayFee = isDelayCondonationFeeApplicable(criteria.getDelayCondonation(), delayCondonationPeriod) ? delayCondonationFee : 0.0;
 
             List<BreakDown> feeBreakdown = getFeeBreakdown(vakalathnamaFee, advocateWelfareFund, advocateClerkWelfareFund, totalApplicationFee, petitionFee,delayFee);
             Double totalCourtFee = vakalathnamaFee + advocateWelfareFund + advocateClerkWelfareFund + totalApplicationFee + petitionFee + delayFee;
@@ -70,12 +72,12 @@ public class CaseFeesCalculationService {
     public List<BreakDown> getFeeBreakdown(double vakalathnamaFee, double advocateWelfareFund, double advocateClerkWelfareFund, double totalApplicationFee, double petitionFee ,double condonationFee) {
         List<BreakDown> feeBreakdowns = new ArrayList<>();
 
-        feeBreakdowns.add(new BreakDown("Vakalathnama Fee", vakalathnamaFee, new HashMap<>()));
-        feeBreakdowns.add(new BreakDown("Advocate Welfare Fund", advocateWelfareFund, new HashMap<>()));
-        feeBreakdowns.add(new BreakDown("Advocate Clerk Welfare Fund", advocateClerkWelfareFund, new HashMap<>()));
-        feeBreakdowns.add(new BreakDown("Total Application Fee", totalApplicationFee, new HashMap<>()));
-        feeBreakdowns.add(new BreakDown("Petition Fee", petitionFee, new HashMap<>()));
-        feeBreakdowns.add(new BreakDown("Delay Condonation Application Fee", condonationFee, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown(VAKALATHNAMA_FEE, vakalathnamaFee, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown(ADVOCATE_WELFARE_FUND, advocateWelfareFund, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown(ADVOCATE_CLERK_WELFARE_FUND, advocateClerkWelfareFund, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown(TOTAL_APPLICATION_FEE, totalApplicationFee, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown(PETITION_FEE, petitionFee, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown(DELAY_CONDONATION_FEE, condonationFee, new HashMap<>()));
 
         return feeBreakdowns;
     }
@@ -95,7 +97,7 @@ public class CaseFeesCalculationService {
         return null; // Invalid check amount
     }
 
-    private Boolean isDelayCondontionFeeApplicable(Long delayDuration, Long stdDuration) {
+    private Boolean isDelayCondonationFeeApplicable(Long delayDuration, Long stdDuration) {
 
         return delayDuration > stdDuration;
 

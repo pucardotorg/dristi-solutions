@@ -84,7 +84,8 @@ const UpcomingHearings = ({ t, userInfoType, ...props }) => {
   const [isAdvocate, setIsAdvocate] = useState(false);
 
   // Get the current date
-  const today = useMemo(() => new Date(), []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const today = new Date();
 
   // Format the date
   const dateOptions = { month: "short", day: "numeric" };
@@ -307,6 +308,10 @@ const UpcomingHearings = ({ t, userInfoType, ...props }) => {
   if (isLoading || isLoadingMonthly || isAdvocateLoading || isCaseLoading) {
     return <Loader />;
   }
+  const name = userName?.info?.name
+    .split(" ")
+    .filter((part) => part && part.toLowerCase() !== "null")
+    .join(" ");
 
   const hearingSearchParams = new URLSearchParams();
   hearingSearchParams.set("from-date", earliestHearingSlot?.slotStartTime);
@@ -317,7 +322,7 @@ const UpcomingHearings = ({ t, userInfoType, ...props }) => {
   return (
     <div className="upcoming-hearing-container">
       <div className="header">
-        {curHr < 12 ? "Good Morning" : curHr < 18 ? "Good Afternoon" : "Good Evening"}, <span className="userName">{userName?.info?.name}</span>
+        {curHr < 12 ? t("GOOD_MORNING") : curHr < 18 ? t("GOOD_AFTERNOON") : t("GOOD_EVENING")}, <span className="userName">{name}</span>
       </div>
       {!isFSO && (
         <div className="hearing-card-wrapper">

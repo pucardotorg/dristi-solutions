@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
+import static org.pucar.dristi.config.ServiceConstants.WITNESS_DEPOSITION_UPDATE_EXCEPTION;
 
 @Service
 @Slf4j

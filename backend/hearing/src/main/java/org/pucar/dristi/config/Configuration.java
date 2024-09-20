@@ -159,10 +159,4 @@ public class Configuration {
 
     @Value("${egov.pdf.witness.key}")
     private String witnessPdfKey;
-
-    @Value("${egov.idgen.hearingConfig}")
-    private String hearingConfig;
-
-    @Value("${egov.idgen.hearingFormat}")
-    private String hearingFormat;
 }
