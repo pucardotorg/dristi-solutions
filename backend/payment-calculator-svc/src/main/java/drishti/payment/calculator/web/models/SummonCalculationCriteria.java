@@ -20,14 +20,10 @@ public class SummonCalculationCriteria {
 
     @JsonProperty("channelId")
     @NotNull(message = " channelId cannot be null")
-    @NotBlank(message = " channelId cannot be null")
+    @NotBlank(message = " channelId cannot be blank")
     private String channelId;
 
     @JsonProperty("receiverPincode")
-    @Size(min = 6, max = 6, message = "receiverPincode must be 6 digit")
-    @NotNull(message = "receiverPincode cannot be null")
-    @NotBlank(message = "receiverPincode cannot be null")
-    @Pattern(regexp = "^[1-9][0-9]{5}$")
     private String receiverPincode;
 
     @JsonProperty("tenantId")
