@@ -165,6 +165,7 @@ async function orderRejectVoluntary(req, res, qrCode) {
     } else {
       return renderError(res, "Invalid filingDate format", 500);
     }
+    const additionalComments = order.comments || "";
     const data = {
       Data: [
         {
@@ -179,6 +180,7 @@ async function orderRejectVoluntary(req, res, qrCode) {
           date: formattedToday,
           Date: formattedToday,
           partyName: partyName,
+          additionalComments: additionalComments,
           applicationNumber: application?.applicationNumber,
           content: order?.comments || "",
           judgeSignature: "Judge Signature",
