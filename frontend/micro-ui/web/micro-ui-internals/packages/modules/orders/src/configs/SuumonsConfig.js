@@ -1,6 +1,5 @@
 const defaultSearchValues = {
-  taskType: "",
-  searchText: "",
+  applicationStatus: "",
 };
 
 export const SummonsTabsConfig = {
