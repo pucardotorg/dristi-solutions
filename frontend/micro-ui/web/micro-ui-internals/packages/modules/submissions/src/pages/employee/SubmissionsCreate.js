@@ -808,15 +808,17 @@ const SubmissionsCreate = ({ path }) => {
   return (
     <div className="citizen create-submission" style={{ width: "50%", ...(!isCitizen && { padding: "0 8px 24px 16px" }) }}>
       <Header> {t("CREATE_SUBMISSION")}</Header>
-      <FormComposerV2
-        label={t("REVIEW_SUBMISSION")}
-        config={modifiedFormConfig}
-        defaultValues={defaultFormValue}
-        onFormValueChange={onFormValueChange}
-        onSubmit={handleOpenReview}
-        fieldStyle={fieldStyle}
-        key={applicationType}
-      />
+      <div style={{ minHeight: "550px", overflowY: "auto" }}>
+        <FormComposerV2
+          label={t("REVIEW_SUBMISSION")}
+          config={modifiedFormConfig}
+          defaultValues={defaultFormValue}
+          onFormValueChange={onFormValueChange}
+          onSubmit={handleOpenReview}
+          fieldStyle={fieldStyle}
+          key={applicationType}
+        />
+      </div>
       {showReviewModal && (
         <ReviewSubmissionModal
           t={t}
