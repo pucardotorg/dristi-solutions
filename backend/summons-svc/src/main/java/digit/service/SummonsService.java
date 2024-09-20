@@ -63,7 +63,6 @@ public class SummonsService {
     public TaskResponse generateSummonsDocument(TaskRequest taskRequest) {
         String taskType = taskRequest.getTask().getTaskType();
         String pdfTemplateKey = getPdfTemplateKey(taskType, false);
-        //String moduleName = config.getBffServiceSummonsModule();
 
         return generateDocumentAndUpdateTask(taskRequest, pdfTemplateKey, false);
     }
