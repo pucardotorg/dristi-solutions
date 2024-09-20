@@ -258,6 +258,7 @@ function EFilingCases({ path }) {
       criteria: [
         {
           caseId: caseId,
+          defaultFields: false,
         },
       ],
       tenantId,
@@ -1528,7 +1529,7 @@ function EFilingCases({ path }) {
 
     if (selected === "addSignature" && (isPendingESign || isPendingReESign)) {
       if (courtRooms?.length === 1) {
-        onSubmitCase({ court: courtRooms[0], action: isPendingReESign ? CaseWorkflowAction.PENDING_RE_E_SIGN : CaseWorkflowAction.E_SIGN });
+        onSubmitCase({ court: courtRooms[0], action: CaseWorkflowAction.E_SIGN });
         return;
       } else {
         setOpenConfirmCourtModal(true);
@@ -1622,9 +1623,10 @@ function EFilingCases({ path }) {
       });
   };
 
-  const onErrorCorrectionSubmit = () => {
+  const onErrorCorrectionSubmit = async () => {
     setOpenConfirmCorrectionModal(false);
     onSubmit(CaseWorkflowAction.EDIT_CASE);
+    await createPendingTask({ name: t("PENDING_E_SIGN_FOR_CASE"), status: "PENDING_E-SIGN" });
   };
 
   const handlePageChange = (key, isConfirm) => {
@@ -1778,6 +1780,7 @@ function EFilingCases({ path }) {
   };
   const onSubmitCase = async (data) => {
     setOpenConfirmCourtModal(false);
+    setIsDisabled(true);
     const assignees = getAllAssignees(caseDetails);
     const fileStoreId = localStorage.getItem("fileStoreId");
     await DRISTIService.caseUpdateService(
@@ -1827,7 +1830,8 @@ function EFilingCases({ path }) {
           },
         });
       }
-      setCaseResubmitSuccess(true);
+      if (isPendingReESign) setCaseResubmitSuccess(true);
+      setIsDisabled(false);
       return;
     });
 
@@ -1870,7 +1874,7 @@ function EFilingCases({ path }) {
           ? t("CS_E_SIGN_CASE")
           : t("CS_GO_TO_HOME")
         : selected === "addSignature"
-        ? isPendingESign
+        ? isPendingESign || isPendingReESign
           ? t("CS_SUBMIT_CASE")
           : t("CS_COMMON_CONTINUE")
         : isDisableAllFieldsMode
@@ -1880,7 +1884,7 @@ function EFilingCases({ path }) {
         : isPendingESign
         ? ""
         : t("CS_COMMON_CONTINUE"),
-    [isCaseReAssigned, isDisableAllFieldsMode, isPendingESign, selected, t, isDraftInProgress]
+    [isCaseReAssigned, isDisableAllFieldsMode, isPendingESign, selected, t, isDraftInProgress, isPendingReESign]
   );
 
   const [isOpen, setIsOpen] = useState(false);
@@ -2341,6 +2345,7 @@ function EFilingCases({ path }) {
             alignItems: "center",
             justifyContent: "center",
           }}
+          className="submit-loader"
         >
           <Loader />
         </div>
