@@ -73,7 +73,7 @@ public class SummonsService {
                 taskRequest.getTask().getTenantId(), pdfTemplateKey, qrCode);
         String fileStoreId = fileStorageUtil.saveDocumentToFileStore(byteArrayResource);
 
-        Document document = createDocument(fileStoreId);
+        Document document = createDocument(fileStoreId, qrCode);
         taskRequest.getTask().addDocumentsItem(document);
 
         return taskUtil.callUploadDocumentTask(taskRequest);
@@ -177,12 +177,13 @@ public class SummonsService {
         return summonsRepository.getSummons(searchCriteria);
     }
 
-    private Document createDocument(String fileStoreId) {
-        Field field = Field.builder().key("FILE_CATEGORY").value("GENERATE_SUMMONS_DOCUMENT").build();
+    private Document createDocument(String fileStoreId, boolean qrCode) {
+        String fileCategory = qrCode ? "SEND_SUMMONS_DOCUMENT" : "GENERATE_SUMMONS_DOCUMENT";
+        Field field = Field.builder().key("FILE_CATEGORY").value(fileCategory).build();
         AdditionalFields additionalFields = AdditionalFields.builder().fields(Collections.singletonList(field)).build();
         return Document.builder()
                 .fileStore(fileStoreId)
-                .documentType("UNSIGNED")
+                .documentType("application/pdf")
                 .additionalDetails(additionalFields)
                 .build();
     }
