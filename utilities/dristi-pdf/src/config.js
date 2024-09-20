@@ -226,6 +226,10 @@ module.exports = {
     case_settlement_application_qr:
       process.env.CASE_SETTLEMENT_APPLICATION_QR ||
       "application-case-settlement-qr",
+    order_section202_crpc:
+      process.env.ORDER_SECTION202_CRPC || "order-202-crpc",
+    order_section202_crpc_qr:
+      process.env.ORDER_SECTION202_CRPC_QR || "order-202-crpc-qr",
   },
 
   app: {

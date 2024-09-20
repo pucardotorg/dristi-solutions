@@ -33,6 +33,7 @@ const orderNotice = require("../orderHandlers/orderNotice");
 const orderWarrant = require("../orderHandlers/orderWarrant");
 const orderWithdrawalAccept = require("../orderHandlers/orderWithdrawalAccept");
 const orderWithdrawalReject = require("../orderHandlers/orderWithdrawalReject");
+const orderSection202Crpc = require("../orderHandlers/orderSection202crpc");
 
 function renderError(res, errorMessage, errorCode, errorObject) {
   if (errorCode == undefined) errorCode = 500;
@@ -146,6 +147,9 @@ router.post(
           break;
         case "order-case-withdrawal-rejected":
           await orderWithdrawalReject(req, res, qrCode);
+          break;
+        case "order-202-crpc":
+          await orderSection202Crpc(req, res, qrCode);
           break;
         default:
           await orderGeneric(req, res, qrCode);
