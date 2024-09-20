@@ -769,7 +769,6 @@ const SubmissionsCreate = ({ path }) => {
           setMakePaymentLabel(false);
           setShowPaymentModal(false);
           setShowSuccessModal(true);
-          await updateSubmission(SubmissionWorkflowAction.PAY);
           applicationType === "PRODUCTION_DOCUMENTS" &&
             (orderNumber || orderRefNumber) &&
             createPendingTask({
