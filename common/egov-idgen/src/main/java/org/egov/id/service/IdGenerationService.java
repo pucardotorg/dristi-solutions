@@ -431,7 +431,7 @@ public class IdGenerationService {
             if (ex.getSQLException().getSQLState().equals("42P01")){
                 try{
                     autoCreateNewSeqFlag=true;
-                    if (sequenceList.isEmpty() && autoCreateNewSeqFlag && autoCreateNewSeq){
+                    if (sequenceList.isEmpty() && autoCreateNewSeqFlag){
                         createSequenceInDb(sequenceName);
                         sequenceList = jdbcTemplate.queryForList(sequenceSql, new Object[]{count}, String.class);
                     }
