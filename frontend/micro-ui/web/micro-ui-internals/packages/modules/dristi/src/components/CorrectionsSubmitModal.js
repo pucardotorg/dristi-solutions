@@ -2,7 +2,7 @@ import React from "react";
 import Modal from "./Modal";
 import CustomSubmitModal from "../pages/citizen/FileCase/admission/CustomSubmitModal";
 
-function CorrectionsSubmitModal({ t, filingNumber, handleGoToHome }) {
+function CorrectionsSubmitModal({ t, filingNumber, handleGoToHome, handleDownload }) {
   const modalInfo = {
     header: t("CS_CASE_RESUBMIT_SUCCESSFULLY"),
     subHeader: t("CS_CASE_RESUBMIT_SUCCESSFULLY_SUBTEXT"),

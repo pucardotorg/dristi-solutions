@@ -41,7 +41,8 @@ const PaymentForSummonComponent = ({ infos, links, feeOptions, orderDate, paymen
   const getDateWithMonthName = (orderDate) => {
     let today = new Date();
 
-    today.setDate(today.getDate() - 15);
+    // Add 15 days to today's date
+    today.setDate(today.getDate() + 15);
 
     // Array of month names
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -52,7 +53,7 @@ const PaymentForSummonComponent = ({ infos, links, feeOptions, orderDate, paymen
 
     let formattedDate = `${dd} ${mm} ${yyyy}`;
 
-    return formattedDate; // Output: formatted date 15 days ago with month name
+    return formattedDate; // Output: formatted date 15 days from now with month name
   };
 
   return (
@@ -62,8 +63,7 @@ const PaymentForSummonComponent = ({ infos, links, feeOptions, orderDate, paymen
         label={"Complete in 2 days"}
         additionalElements={[
           <p>
-            It takes 10-15 days via physical post and 3-5 days via e-post for Summon Delivery. Pay by{" "}
-            <span style={{ fontWeight: "bold" }}>{getDateWithMonthName(orderDate)}</span> for on-time delivery before next hearing.
+            {t("SUMMON_DELIVERY_NOTE")} <span style={{ fontWeight: "bold" }}>{getDateWithMonthName(orderDate)}</span> {t("ON_TIME_DELIVERY")}
           </p>,
         ]}
         inline
