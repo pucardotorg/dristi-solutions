@@ -351,7 +351,13 @@ const InsideHearingMainPage = () => {
                   <React.Fragment>
                     <TextArea
                       ref={textAreaRef}
-                      style={{ width: "100%", minHeight: "40vh" }}
+                      style={{
+                        width: "100%",
+                        minHeight: "40vh",
+                        ...((isDepositionSaved || disableTextArea || !IsSelectedWitness) && {
+                          pointerEvents: "unset !important",
+                        }),
+                      }}
                       value={IsSelectedWitness ? witnessDepositionText || "" : ""}
                       onChange={handleChange}
                       disabled={isDepositionSaved || disableTextArea || !IsSelectedWitness}
@@ -390,14 +396,28 @@ const InsideHearingMainPage = () => {
               <React.Fragment>
                 {activeTab === "Witness Deposition" && (
                   <TextArea
-                    style={{ width: "100%", minHeight: "40vh", cursor: "default", backgroundColor: "#E8E8E8", color: "#3D3C3C" }}
+                    style={{
+                      width: "100%",
+                      minHeight: "40vh",
+                      cursor: "default",
+                      backgroundColor: "#E8E8E8",
+                      color: "#3D3C3C",
+                      pointerEvents: "unset !important",
+                    }}
                     value={IsSelectedWitness ? witnessDepositionText || "" : ""}
                     disabled
                   />
                 )}
                 {activeTab !== "Witness Deposition" && (
                   <TextArea
-                    style={{ width: "100%", minHeight: "40vh", cursor: "default", backgroundColor: "#E8E8E8", color: "#3D3C3C" }}
+                    style={{
+                      width: "100%",
+                      minHeight: "40vh",
+                      cursor: "default",
+                      backgroundColor: "#E8E8E8",
+                      color: "#3D3C3C",
+                      pointerEvents: "unset !important",
+                    }}
                     value={transcriptText || ""}
                     disabled
                   />
