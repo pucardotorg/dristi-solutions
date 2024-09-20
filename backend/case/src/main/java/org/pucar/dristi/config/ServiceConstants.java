@@ -9,6 +9,7 @@ public class ServiceConstants {
     private ServiceConstants() {
     }
 
+    public static final String EMPLOYEE = "EMPLOYEE";
     public static final String EXTERNAL_SERVICE_EXCEPTION = "External Service threw an Exception: ";
     public static final String SEARCHER_SERVICE_EXCEPTION = "Exception while fetching from searcher: ";
 
@@ -124,6 +125,7 @@ public class ServiceConstants {
 	public static final String ADMISSION_HEARING_SCHEDULED = "ADMISSION_HEARING_SCHEDULED";
 	public static final String CASE_ADMITTED = "CASE_ADMITTED";
 	public static final String HEARING_REJECTED = "HEARING_REJECTED";
+    public static final String ADVOCATE_ROLE = "ADVOCATE_ROLE";
 
 	public static final String HIGH_COURT_LOCALIZATION_CODE = "HIGH_COURT_KERALA";
 	public static final String NOTIFICATION_ENG_LOCALE_CODE = "en_IN";
@@ -138,4 +140,10 @@ public class ServiceConstants {
 	public static final String ADVOCATE_ESIGN_PENDING= "ADVOCATE_ESIGN_PENDING";
 
 	public static final String PAYMENT_PENDING= "PAYMENT_PENDING";
+    // Roles required for decryption
+    public static final String JUDGE_ROLE = "JUDGE_ROLE";
+    public static final String FSO_ROLE = "FSO_ROLE";
+    public static final String BENCH_CLERK_ROLE = "BENCHCLERK_ROLE";
+    public static final String NYAY_MITRA_ROLE = "NYAY_MITRA_ROLE";
+    public static final String INTERNAL_MICROSERVICE_ROLE = "INTERNAL_MICROSERVICE_ROLE";
 }

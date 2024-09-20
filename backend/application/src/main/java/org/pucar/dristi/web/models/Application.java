@@ -51,6 +51,9 @@ public class Application {
     @Valid
     private UUID referenceId = null;
 
+    @JsonProperty("cmpNumber")
+    private String cmpNumber = null;
+
     @JsonProperty("createdDate")
     @NotNull
     private Long createdDate = null;
