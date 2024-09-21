@@ -205,7 +205,7 @@ async function orderAcceptExtension(req, res, qrCode) {
     const originalDeadlineDate = order.orderDetails.originalDocSubmissionDate
       ? formatDate(
           new Date(order.orderDetails.originalDocSubmissionDate),
-          "DD-MM-YYY"
+          "DD-MM-YYYY"
         )
       : "";
     const originalOrderDate = originalOrder.createdDate

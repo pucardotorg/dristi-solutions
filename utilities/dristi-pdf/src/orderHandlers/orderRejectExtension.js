@@ -196,16 +196,16 @@ async function orderRejectExtension(req, res, qrCode) {
     const requestedDeadlineDate = order.orderDetails.proposedSubmissionDate
       ? formatDate(
           new Date(order.orderDetails.proposedSubmissionDate),
-          "DD-MM-YYY"
+          "DD-MM-YYYY"
         )
       : "";
     const newDeadlineDate = order.orderDetails.newSubmissionDate
-      ? formatDate(new Date(order.orderDetails.newSubmissionDate), "DD-MM-YYY")
+      ? formatDate(new Date(order.orderDetails.newSubmissionDate), "DD-MM-YYYY")
       : "";
     const originalDeadlineDate = order.orderDetails.originalDocSubmissionDate
       ? formatDate(
           new Date(order.orderDetails.originalDocSubmissionDate),
-          "DD-MM-YYY"
+          "DD-MM-YYYY"
         )
       : "";
     const originalOrderDate = originalOrder.createdDate

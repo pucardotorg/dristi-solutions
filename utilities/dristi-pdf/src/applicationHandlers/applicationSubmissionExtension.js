@@ -232,14 +232,14 @@ async function applicationSubmissionExtension(req, res, qrCode) {
       ?.originalSubmissionDate
       ? formatDate(
           new Date(application?.applicationDetails?.originalSubmissionDate),
-          "DD-MM-YYY"
+          "DD-MM-YYYY"
         )
       : "";
     const requestedExtensionDate = application?.applicationDetails
       ?.requestedExtensionDate
       ? formatDate(
           new Date(application?.applicationDetails?.requestedExtensionDate),
-          "DD-MM-YYY"
+          "DD-MM-YYYY"
         )
       : "";
     const benefitOfExtension = application?.benefitOfExtension;
