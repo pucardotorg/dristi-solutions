@@ -123,7 +123,7 @@ const applicationCaseWithdrawal = async (req, res, qrCode) => {
     const additionalComments =
       application?.applicationDetails?.additionalComments || "";
     const reasonForWithdrawal =
-      application?.applicationDetails?.benefitOfExtension || "";
+      application?.applicationDetails?.reasonForWithdrawal || "";
 
     const onBehalfOfLitigent = courtCase?.litigants?.find(
       (item) => item.additionalDetails.uuid === onBehalfOfuuid
@@ -182,7 +182,7 @@ const applicationCaseWithdrawal = async (req, res, qrCode) => {
           caseNumber: courtCase.caseNumber,
           caseYear: caseYear,
           caseName: courtCase.caseTitle,
-          caseNo: "87465464",
+          caseNo: courtCase.caseNumber,
           judgeName: "John Doe", // FIXME: employee.user.name
           courtDesignation: "High Court", //FIXME: mdmsDesignation.name,
           addressOfTheCourt: "Kerala", //FIXME: mdmsCourtRoom.address,
