@@ -62,4 +62,6 @@ public class ServiceConstants {
 
     public static final String PAYMENT_PENDING = "PAYMENT_PENDING";
 
+    public static final String PENDING_PAYMENT = "PENDING_PAYMENT";
+
 }
