@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
+import static org.pucar.dristi.config.ServiceConstants.WARRANT;
 
 @Component
 @Slf4j
@@ -40,27 +41,26 @@ public class TaskRegistrationEnrichment {
             List<String> taskRegistrationIdList = idgenUtil.getIdList(taskRequest.getRequestInfo(), tenantId, idName, idFormat, 1,false);
             log.info("Task Registration Id List :: {}", taskRegistrationIdList);
 
-            if(task.getTaskType().equals(SUMMON)){
-                idFormat = config.getSummonIdFormat();
-                List<String> taskRegistrationSummonIdList = idgenUtil.getIdList(taskRequest.getRequestInfo(), tenantId, idName, idFormat, 1,false);
-                log.info("Task Registration summon Id List :: {}", taskRegistrationIdList);
-                taskRequest.getTask().setTaskDetails("{ summonDetails : { summonId: {" + task.getCnrNumber() +"-"+taskRegistrationSummonIdList.get(0) + "} }");
-            }
-
-            if(task.getTaskType().equals(BAIL)){
-                idFormat = config.getBailIdFormat();
-                List<String> taskRegistrationBailIdList = idgenUtil.getIdList(taskRequest.getRequestInfo(), tenantId, idName, idFormat, 1,false);
-                log.info("Task Registration bail Id List :: {}", taskRegistrationIdList);
-                taskRequest.getTask().setTaskDetails("{ bailId: {" +task.getCnrNumber() +"-"+taskRegistrationBailIdList.get(0) + "} }");
-            }
-
-            if(task.getTaskType().equals(WARRANT)){
-                idFormat = config.getWarrantIdFormat();
-                List<String> taskRegistrationWarrantIdList = idgenUtil.getIdList(taskRequest.getRequestInfo(), tenantId, idName, idFormat, 1,false);
-                log.info("Task Registration warrant Id List :: {}", taskRegistrationIdList);
-                taskRequest.getTask().setTaskDetails("{ warrantId: {" + task.getCnrNumber() +"-"+taskRegistrationWarrantIdList.get(0) + "} }");
-            }
-
+//            if(SUMMON.equalsIgnoreCase(task.getTaskType())){
+//                idFormat = config.getSummonIdFormat();
+//                List<String> taskRegistrationSummonIdList = idgenUtil.getIdList(taskRequest.getRequestInfo(), tenantId, idName, idFormat, 1,false);
+//                log.info("Task Registration summon Id List :: {}", taskRegistrationIdList);
+//                taskRequest.getTask().setTaskDetails("{ summonDetails : { summonId: {" + task.getCnrNumber() +"-"+taskRegistrationSummonIdList.get(0) + "} }");
+//            }
+//
+//            if(BAIL.equalsIgnoreCase(task.getTaskType())){
+//                idFormat = config.getBailIdFormat();
+//                List<String> taskRegistrationBailIdList = idgenUtil.getIdList(taskRequest.getRequestInfo(), tenantId, idName, idFormat, 1,false);
+//                log.info("Task Registration bail Id List :: {}", taskRegistrationIdList);
+//                taskRequest.getTask().setTaskDetails("{ bailId: {" +task.getCnrNumber() +"-"+taskRegistrationBailIdList.get(0) + "} }");
+//            }
+//
+//            if(WARRANT.equalsIgnoreCase(task.getTaskType())){
+//                idFormat = config.getWarrantIdFormat();
+//                List<String> taskRegistrationWarrantIdList = idgenUtil.getIdList(taskRequest.getRequestInfo(), tenantId, idName, idFormat, 1,false);
+//                log.info("Task Registration warrant Id List :: {}", taskRegistrationIdList);
+//                taskRequest.getTask().setTaskDetails("{ warrantId: {" + task.getCnrNumber() +"-"+taskRegistrationWarrantIdList.get(0) + "} }");
+//            }
 
             AuditDetails auditDetails = AuditDetails.builder().createdBy(taskRequest.getRequestInfo().getUserInfo().getUuid()).createdTime(System.currentTimeMillis()).lastModifiedBy(taskRequest.getRequestInfo().getUserInfo().getUuid()).lastModifiedTime(System.currentTimeMillis()).build();
             task.setAuditDetails(auditDetails);

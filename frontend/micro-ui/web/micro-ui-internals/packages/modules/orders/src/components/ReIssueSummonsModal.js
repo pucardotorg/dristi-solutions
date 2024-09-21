@@ -9,7 +9,7 @@ import { Urls } from "../hooks/services/Urls";
 function ReIssueSummonsModal() {
   const { t } = useTranslation();
   const history = useHistory();
-  const { hearingId, filingNumber, cnrNumber } = Digit.Hooks.useQueryParams();
+  const { hearingId, filingNumber, cnrNumber, orderType } = Digit.Hooks.useQueryParams();
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const { data: hearingsData, isLoading: isHearingLoading } = Digit.Hooks.hearings.useGetHearings(
     {
@@ -75,7 +75,7 @@ function ReIssueSummonsModal() {
         },
         documents: [],
         additionalDetails: {
-          isReIssueSummons: true,
+          [orderType === "NOTICE" ? "isReIssueNotice" : "isReIssueSummons"]: true,
           formdata: {
             orderType: {
               code: orderType,
@@ -132,7 +132,7 @@ function ReIssueSummonsModal() {
 
   const handleReIssueSummon = async () => {
     try {
-      return await hadleCreateOrder("SUMMONS");
+      return await hadleCreateOrder(orderType || "SUMMONS");
     } catch (error) {}
   };
 
