@@ -12,24 +12,47 @@ const OrderPreviewOrderTypeMap = {
   SUMMONS: "summons-issue",
   INITIATING_RESCHEDULING_OF_HEARING_DATE: "accept-reschedule-request",
   OTHERS: "order-generic",
-  REFERRAL_CASE_TO_ADR: "order-generic",
-  EXTENSION_OF_DOCUMENT_SUBMISSION_DATE: "order-generic",
+  REFERRAL_CASE_TO_ADR: "order-referral-case-adr",
+  EXTENSION_DEADLINE_ACCEPT: "order-for-extension-deadline",
+  EXTENSION_DEADLINE_REJECT: "order-reject-application-submission-deadline",
   SCHEDULING_NEXT_HEARING: "schedule-hearing-date",
   RESCHEDULE_OF_HEARING_DATE: "new-hearing-date-after-rescheduling",
   REJECTION_RESCHEDULE_REQUEST: "order-for-rejection-rescheduling-request",
   ASSIGNING_NEW_HEARING_DATE: "order-generic",
-  CASE_TRANSFER: "case-transfer",
-  SETTLEMENT: "case-settlement-acceptance",
+  CASE_TRANSFER: "order-case-transfer",
+  SETTLEMENT: "order-case-settlement-acceptance",
+  SETTLEMENT_REJECT: "order-case-settlement-rejected",
+  SETTLEMENT_ACCEPT: "order-case-settlement-acceptance",
   BAIL_APPROVED: "order-bail-acceptance",
   BAIL_REJECT: "order-bail-rejection",
-  WARRANT: "order-generic",
-  WITHDRAWAL: "order-generic",
+  WARRANT: "order-warrant",
+  WITHDRAWAL_ACCEPT: "order-case-withdrawal-acceptance",
+  WITHDRAWAL_REJECT: "order-case-withdrawal-rejected",
   APPROVE_VOLUNTARY_SUBMISSIONS: "order-accept-voluntary",
   REJECT_VOLUNTARY_SUBMISSIONS: "order-reject-voluntary",
   JUDGEMENT: "order-generic",
-  SECTION_202_CRPC: "order-generic",
+  SECTION_202_CRPC: "order-202-crpc",
   CHECKOUT_ACCEPTANCE: "order-accept-checkout-request",
   CHECKOUT_REJECT: "order-reject-checkout-request",
+};
+
+const orderPDFMap = {
+  BAIL: {
+    APPROVED: "BAIL_APPROVED",
+    REJECTED: "BAIL_REJECT",
+  },
+  SETTLEMENT: {
+    APPROVED: "SETTLEMENT_ACCEPT",
+    REJECTED: "SETTLEMENT_REJECT",
+  },
+  WITHDRAWAL: {
+    APPROVED: "WITHDRAWAL_ACCEPT",
+    REJECTED: "WITHDRAWAL_REJECT",
+  },
+  EXTENSION_OF_DOCUMENT_SUBMISSION_DATE: {
+    APPROVED: "EXTENSION_DEADLINE_ACCEPT",
+    REJECTED: "EXTENSION_DEADLINE_REJECT",
+  },
 };
 
 const onDocumentUpload = async (fileData, filename) => {
@@ -49,16 +72,14 @@ function OrderReviewModal({ setShowReviewModal, t, order, setShowsignatureModal,
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const filestoreId = "9d23b127-c9e9-4fd1-9dc8-e2e762269046";
 
-  let orderPreviewKey = order?.orderType;
-  if (order?.additionalDetails?.applicationStatus === "APPROVED" && order?.orderType === "BAIL") {
-    orderPreviewKey = "BAIL_APPROVED";
-  } else if (order?.additionalDetails?.applicationStatus === "Rejected" && order?.orderType === "BAIL") {
-    orderPreviewKey = "BAIL_REJECT";
-  }
-  orderPreviewKey = OrderPreviewOrderTypeMap[orderPreviewKey] || OrderPreviewOrderTypeMap[order?.orderType];
+  const applicationStatus = order?.additionalDetails?.applicationStatus === t("APPROVED") ? "APPROVED" : "REJECTED";
+  const orderType = order?.orderType;
+  let orderPreviewKey = orderPDFMap?.[orderType]?.[applicationStatus] || orderType;
+  orderPreviewKey = OrderPreviewOrderTypeMap[orderPreviewKey];
 
   const { data: { file: orderPreviewPdf, fileName: orderPreviewFileName } = {}, isFetching: isLoading } = useQuery({
     queryKey: ["orderPreviewPdf", tenantId, order?.id, order?.cnrNumber, orderPreviewKey],
+    retry: 3,
     queryFn: async () => {
       return Axios({
         method: "POST",

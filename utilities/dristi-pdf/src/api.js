@@ -185,7 +185,7 @@ async function search_advocate(tenantId, individualId, requestinfo) {
   }
 }
 
-async function search_individual_uuid(tenantId, individualId, requestinfo) {
+async function search_individual_uuid(tenantId, userUuid, requestinfo) {
   var params = {
     tenantId: tenantId,
     limit: 10,
@@ -198,7 +198,7 @@ async function search_individual_uuid(tenantId, individualId, requestinfo) {
       data: {
         RequestInfo: requestinfo,
         Individual: {
-          id: [individualId],
+          userUuid: [userUuid],
         },
       },
       params,
@@ -282,6 +282,25 @@ async function create_pdf(tenantId, key, data, requestinfo) {
   }
 }
 
+async function search_message(tenantId, module, locale, requestinfo) {
+  try {
+    return await axios({
+      responseType: "json",
+      method: "post",
+      url: url.resolve(config.host.localization, config.paths.message_search),
+      data: Object.assign(requestinfo),
+      params: {
+        tenantId: tenantId,
+        module: module,
+        locale: locale,
+      },
+    });
+  } catch (error) {
+    logger.error(`Error in ${config.paths.message_search}: ${error.message}`);
+    throw error;
+  }
+}
+
 module.exports = {
   pool,
   create_pdf,
@@ -295,4 +314,5 @@ module.exports = {
   search_individual_uuid,
   search_application,
   search_advocate,
+  search_message,
 };

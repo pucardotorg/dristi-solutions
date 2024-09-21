@@ -639,6 +639,17 @@ const GenerateOrders = () => {
           };
         });
       }
+      if (orderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE") {
+        orderTypeForm = orderTypeForm?.map((section) => {
+          return {
+            ...section,
+            body: section.body.filter((field) => {
+              const isRejected = currentOrder?.additionalDetails?.applicationStatus === t("REJECTED");
+              return !(field.key === "newSubmissionDate" && isRejected);
+            }),
+          };
+        });
+      }
       newConfig = [...newConfig, ...orderTypeForm];
     }
     const updatedConfig = newConfig.map((config) => {
@@ -742,12 +753,15 @@ const GenerateOrders = () => {
       updatedFormdata.submissionDocuments = applicationDetails?.additionalDetails?.formdata?.submissionDocuments;
       updatedFormdata.bailOf = applicationDetails?.additionalDetails?.onBehalOfName;
     }
+    if (orderType === "CASE_TRANSFER") {
+      updatedFormdata.caseTransferredTo = applicationDetails?.applicationDetails?.selectRequestedCourt;
+      updatedFormdata.grounds = { text: applicationDetails?.applicationDetails?.groundsForSeekingTransfer };
+    }
     if (orderType === "WITHDRAWAL") {
       if (applicationDetails?.applicationType === applicationTypes.WITHDRAWAL) {
         updatedFormdata.applicationOnBehalfOf = applicationDetails?.additionalDetails?.onBehalOfName;
         updatedFormdata.partyType = t(applicationDetails?.additionalDetails?.partyType);
         updatedFormdata.reasonForWithdrawal = t(applicationDetails?.additionalDetails?.formdata?.reasonForWithdrawal?.code);
-        updatedFormdata.applicationStatus = t(applicationDetails?.status);
       }
     }
     if (orderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE") {
@@ -1360,8 +1374,7 @@ const GenerateOrders = () => {
           caseDetails: {
             title: caseDetails?.caseTitle,
             year: new Date(caseDetails).getFullYear(),
-            hearingDate: new Date(orderData?.additionalDetails?.formdata?.date || "").getTime(),
-            judgeName: "",
+            hearingDate: new Date(orderData?.additionalDetails?.formdata?.dateForHearing || "").getTime(),
             courtName: courtDetails?.name,
             courtAddress: courtDetails?.address,
             courtPhone: courtDetails?.phone,
