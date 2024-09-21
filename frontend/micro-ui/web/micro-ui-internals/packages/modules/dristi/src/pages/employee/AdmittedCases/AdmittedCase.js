@@ -770,6 +770,7 @@ const AdmittedCases = () => {
               <Button
                 variation={"outlined"}
                 label={t("DOWNLOAD_CASE_FILE")}
+                isDisabled={!caseDetails?.additionalDetails?.signedCaseDocument}
                 onButtonClick={() => downloadPdf(tenantId, caseDetails?.additionalDetails?.signedCaseDocument)}
               />
             )}
