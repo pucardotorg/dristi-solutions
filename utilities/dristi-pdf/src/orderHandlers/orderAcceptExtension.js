@@ -115,7 +115,7 @@ async function orderAcceptExtension(req, res, qrCode) {
       () => search_order(tenantId, originalOrderNumber, requestInfo, true),
       "Failed to query order service"
     );
-    const originalOrder = resOrder?.data?.list[0];
+    const originalOrder = resOriginalOrder?.data?.list[0];
     if (!originalOrder) {
       renderError(res, "Order not found", 404);
     }
@@ -196,11 +196,11 @@ async function orderAcceptExtension(req, res, qrCode) {
     const requestedDeadlineDate = order.orderDetails.proposedSubmissionDate
       ? formatDate(
           new Date(order.orderDetails.proposedSubmissionDate),
-          "DD-MM-YYY"
+          "DD-MM-YYYY"
         )
       : "";
-    const newDealineDate = order.orderDetails.newSubmissionDate
-      ? formatDate(new Date(order.orderDetails.newSubmissionDate), "DD-MM-YYY")
+    const newDeadlineDate = order.orderDetails.newSubmissionDate
+      ? formatDate(new Date(order.orderDetails.newSubmissionDate), "DD-MM-YYYY")
       : "";
     const originalDeadlineDate = order.orderDetails.originalDocSubmissionDate
       ? formatDate(
@@ -228,7 +228,7 @@ async function orderAcceptExtension(req, res, qrCode) {
           requestedDeadlineDate: requestedDeadlineDate,
           originalDeadlineDate: originalDeadlineDate,
           originalSubmissionName: originalSubmissionName,
-          newDealineDate: newDealineDate,
+          newDeadlineDate: newDeadlineDate,
           additionalComments: additionalComments,
           judgeSignature: "Judge Signature",
           judgeName: "John Doe",

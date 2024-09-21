@@ -68,11 +68,13 @@ async function applicationProductionOfDocuments(req, res, qrCode) {
         search_message(tenantId, "rainmaker-submissions", "en_IN", requestInfo),
       "Failed to query Localized messages"
     );
-    const messages = resMessage?.data?.messages;
-    const messagesMap = messages.reduce((acc, curr) => {
-      acc[curr.code] = curr.message;
-      return acc;
-    }, {});
+    const messages = resMessage?.data?.messages || [];
+    const messagesMap =
+      messages?.length > 0
+        ? Object.fromEntries(
+            messages.map(({ code, message }) => [code, message])
+          )
+        : {};
 
     // Search for case details
     const resCase = await handleApiCall(
@@ -210,7 +212,7 @@ async function applicationProductionOfDocuments(req, res, qrCode) {
       "December",
     ];
     const applicationDocuments =
-      application?.applicationDetails?.applicationDocuments;
+      application?.applicationDetails?.applicationDocuments || [];
     const documentList =
       applicationDocuments?.length > 0
         ? applicationDocuments.map((item) => ({

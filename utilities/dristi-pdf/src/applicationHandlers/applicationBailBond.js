@@ -68,11 +68,13 @@ const applicationBailBond = async (req, res, qrCode) => {
         search_message(tenantId, "rainmaker-submissions", "en_IN", requestInfo),
       "Failed to query Localized messages"
     );
-    const messages = resMessage?.data?.messages;
-    const messagesMap = messages.reduce((acc, curr) => {
-      acc[curr.code] = curr.message;
-      return acc;
-    }, {});
+    const messages = resMessage?.data?.messages || [];
+    const messagesMap =
+      messages?.length > 0
+        ? Object.fromEntries(
+            messages.map(({ code, message }) => [code, message])
+          )
+        : {};
 
     const resCase = await handleApiCall(
       () => search_case(cnrNumber, tenantId, requestInfo),
@@ -139,7 +141,7 @@ const applicationBailBond = async (req, res, qrCode) => {
     const partyName = application?.additionalDetails?.onBehalOfName || "";
 
     const applicationDocuments =
-      application?.applicationDetails?.applicationDocuments;
+      application?.applicationDetails?.applicationDocuments || [];
     const documentList =
       applicationDocuments?.length > 0
         ? applicationDocuments.map((item) => ({
