@@ -42,4 +42,7 @@ public class HearingSearchCriteria {
     @JsonProperty("attendeeIndividualId")
     private String attendeeIndividualId;
 
+    @JsonProperty("courtId")
+    private String courtId;
+
 }
