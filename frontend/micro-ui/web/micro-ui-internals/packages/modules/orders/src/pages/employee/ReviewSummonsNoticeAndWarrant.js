@@ -89,7 +89,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const getTaskDetailsByTaskNumber = useCallback(
     async function () {
-      debugger;
       const response = await DRISTIService.customApiService("/task/v1/table/search", {
         criteria: {
           searchText: taskNumber,
