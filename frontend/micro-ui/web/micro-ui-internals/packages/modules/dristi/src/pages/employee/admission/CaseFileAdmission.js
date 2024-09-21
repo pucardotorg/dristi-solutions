@@ -375,6 +375,7 @@ function CaseFileAdmission({ t, path }) {
             },
           ],
         });
+        setCreateAdmissionOrder(true);
         setModalInfo({ type: "schedule", page: 0 });
         break;
       default:

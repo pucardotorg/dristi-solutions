@@ -2751,6 +2751,8 @@ export const configsIssueNotice = [
         type: "dropdown",
         key: "noticeType",
         label: "NOTICE_TYPE",
+        schemaKeyPath: "orderDetails.noticeType",
+        transformer: "mdmsDropdown",
         populators: {
           name: "noticeType",
           optionsKey: "type",

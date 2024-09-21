@@ -1625,8 +1625,7 @@ function EFilingCases({ path }) {
 
   const onErrorCorrectionSubmit = async () => {
     setOpenConfirmCorrectionModal(false);
-    onSubmit(CaseWorkflowAction.EDIT_CASE);
-    await createPendingTask({ name: t("PENDING_E_SIGN_FOR_CASE"), status: "PENDING_E-SIGN" });
+    onSubmit(CaseWorkflowAction.EDIT_CASE).then(() => createPendingTask({ name: t("PENDING_E_SIGN_FOR_CASE"), status: "PENDING_E-SIGN" }));
   };
 
   const handlePageChange = (key, isConfirm) => {
