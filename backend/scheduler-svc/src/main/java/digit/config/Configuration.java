@@ -173,4 +173,11 @@ public class Configuration {
 
     @Value("${order.businessservice}")
     private String orderEntityType;
+
+    //Application Config
+    @Value("@{dristi.application.host}")
+    private String applicationHost;
+
+    @Value("@{dristi.application.search.endpoint}")
+    private String applicationSearchEndpoint;
 }

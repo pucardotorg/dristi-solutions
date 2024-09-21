@@ -1,14 +1,20 @@
 package digit.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.config.Configuration;
 import digit.config.ServiceConstants;
 import digit.kafka.producer.Producer;
 import digit.repository.CauseListRepository;
 import digit.repository.HearingRepository;
-import digit.util.MdmsUtil;
-import digit.util.PdfServiceUtil;
+import digit.util.*;
 import digit.web.models.*;
+import digit.web.models.cases.CaseCriteria;
+import digit.web.models.cases.SearchCaseRequest;
+import digit.web.models.hearing.Hearing;
+import digit.web.models.hearing.HearingListSearchRequest;
+import digit.web.models.hearing.HearingSearchCriteria;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.request.RequestInfo;
@@ -43,10 +49,21 @@ public class CauseListService {
 
     private ServiceConstants serviceConstants;
 
+    private HearingUtil hearingUtil;
+
+    private CaseUtil caseUtil;
+
+    private DateUtil dateUtil;
+
+    private ObjectMapper objectMapper;
+
+    private final ApplicationUtil applicationUtil;
+
     @Autowired
     public CauseListService(HearingRepository hearingRepository, CauseListRepository causeListRepository,
                             Producer producer, Configuration config, PdfServiceUtil pdfServiceUtil,
-                            MdmsUtil mdmsUtil, ServiceConstants serviceConstants) {
+                            MdmsUtil mdmsUtil, ServiceConstants serviceConstants, HearingUtil hearingUtil,
+                            CaseUtil caseUtil, DateUtil dateUtil, ObjectMapper objectMapper, ApplicationUtil applicationUtil) {
         this.hearingRepository = hearingRepository;
         this.causeListRepository = causeListRepository;
         this.producer = producer;
@@ -54,20 +71,25 @@ public class CauseListService {
         this.pdfServiceUtil = pdfServiceUtil;
         this.mdmsUtil = mdmsUtil;
         this.serviceConstants = serviceConstants;
+        this.hearingUtil = hearingUtil;
+        this.caseUtil = caseUtil;
+        this.dateUtil = dateUtil;
+        this.objectMapper = objectMapper;
+        this.applicationUtil = applicationUtil;
     }
 
     public void updateCauseListForTomorrow() {
         log.info("operation = updateCauseListForTomorrow, result = IN_PROGRESS");
         List<CauseList> causeLists = new ArrayList<>();
         //TODO get judges from db once tables are ready
-        List<String> judgeIds = new ArrayList<>();
-        judgeIds.add("judge001"); judgeIds.add("judge002"); judgeIds.add("judge003");
+        List<String> courtIds = new ArrayList<>();
+        courtIds.add("court1");
 
         // Multi Thread processing: process 10 judges at a time
         ExecutorService executorService = Executors.newCachedThreadPool();
 
         // Submit tasks for each judge
-        submitTasks(executorService, judgeIds, causeLists);
+        submitTasks(executorService, courtIds, causeLists);
 
         // Wait for all tasks to complete
         waitForTasksCompletion(executorService);
@@ -82,10 +104,10 @@ public class CauseListService {
         log.info("operation = updateCauseListForTomorrow, result = SUCCESS");
     }
 
-    private void submitTasks(ExecutorService executorService, List<String> judgeIds, List<CauseList> causeLists) {
-        for (String judgeId : judgeIds) {
+    private void submitTasks(ExecutorService executorService, List<String> courtIds, List<CauseList> causeLists) {
+        for (String courtId : courtIds) {
             // Submit a task to the executor service for each judge
-            executorService.submit(() -> generateCauseListForJudge(judgeId, causeLists));
+            executorService.submit(() -> generateCauseListForJudge(courtId, causeLists));
         }
     }
 
@@ -100,23 +122,16 @@ public class CauseListService {
         }
     }
 
-    private void generateCauseListForJudge(String judgeId, List<CauseList> causeLists) {
-        log.info("operation = generateCauseListForJudge, result = IN_PROGRESS, judgeId = {}", judgeId);
-        ScheduleHearingSearchCriteria searchCriteria =  ScheduleHearingSearchCriteria.builder()
-                .judgeId(judgeId)
+    private void generateCauseListForJudge(String courtId, List<CauseList> causeLists) {
+        log.info("operation = generateCauseListForJudge, result = IN_PROGRESS, judgeId = {}", courtId);
+        HearingSearchCriteria hearingSearchCriteria = HearingSearchCriteria.builder()
+                .fromDate(LocalDate.now().atStartOfDay().plusDays(1).toLocalDate())
+                .courtId(courtId)
                 .build();
-        List<ScheduleHearing> scheduleHearings = hearingRepository.getHearings(searchCriteria, null, null);
-        if (CollectionUtils.isEmpty(scheduleHearings)) {
-            log.info("No hearings scheduled tomorrow for judgeId = {}", judgeId);
-        } else {
-            log.info("No. of hearings scheduled tomorrow for judgeId = {} is {}", judgeId, scheduleHearings.size());
-            fillHearingTimesWithDataFromMdms(scheduleHearings);
-            generateCauseListFromHearings(scheduleHearings, causeLists);
-            if (!CollectionUtils.isEmpty(causeLists)) {
-                log.info("Generated {} CauseLists for judgeId {}", causeLists.size(), judgeId);
-            }
-            log.info("operation = generateCauseListForJudge, result = SUCCESS, judgeId = {}", judgeId);
-        }
+        List<Hearing> hearingList = getHearingsForCourt(hearingSearchCriteria);
+        List<CauseList> causeList  = getCauseListFromHearings(hearingList);
+        enrichCauseList(causeList);
+
     }
 
     private void fillHearingTimesWithDataFromMdms(List<ScheduleHearing> scheduleHearings) {
@@ -192,10 +207,6 @@ public class CauseListService {
                 .judgeId(hearing.getJudgeId())
                 .courtId(hearing.getCourtId())
                 .tenantId(hearing.getTenantId())
-                .caseId(hearing.getCaseId())
-//                .typeOfHearing(hearing.getEventType().getValue())
-                .tentativeSlot(mdmsSlot.getSlotName())
-//                .caseDate(hearing.getDate().toString())
                 .caseTitle(hearing.getTitle())
                 .build();
     }
@@ -239,5 +250,107 @@ public class CauseListService {
                 .requestInfo(searchRequest.getRequestInfo()).causeList(causeLists).build();
         return pdfServiceUtil.generatePdfFromPdfService(causeListRequest , searchRequest.getRequestInfo().getUserInfo().getTenantId(),
                 config.getCauseListPdfTemplateKey());
+    }
+
+    public List<Hearing> getHearingsForCourt(HearingSearchCriteria hearingSearchCriteria) {
+        RequestInfo requestInfo = new RequestInfo();
+        HearingListSearchRequest hearingListSearchRequest = HearingListSearchRequest.builder()
+                .requestInfo(requestInfo)
+                .criteria(hearingSearchCriteria)
+                .build();
+
+        return hearingUtil.fetchHearing(hearingListSearchRequest);
+    }
+
+    public List<CauseList> getCauseListFromHearings(List<Hearing> hearingList) {
+        List<CauseList> causeLists = new ArrayList<>();
+        for (Hearing hearing : hearingList) {
+            CauseList causeList = CauseList.builder()
+                    .id(hearing.getId())
+                    .tenantId(hearing.getTenantId())
+                    .hearingId(hearing.getHearingId())
+                    .filingNumber(hearing.getFilingNumber().get(0))
+                    .cnrNumbers(hearing.getCnrNumbers())
+                    .applicationNumbers(hearing.getApplicationNumbers())
+                    .hearingType(hearing.getHearingType())
+                    .status(hearing.getStatus())
+                    .startTime(hearing.getStartTime())
+                    .endTime(hearing.getEndTime())
+                    .presidedBy(hearing.getPresidedBy())
+                    .attendees(hearing.getAttendees())
+                    .transcript(hearing.getTranscript())
+                    .vcLink(hearing.getVcLink())
+                    .isActive(hearing.getIsActive())
+                    .documents(hearing.getDocuments())
+                    .additionalDetails(hearing.getAdditionalDetails())
+                    .auditDetails(hearing.getAuditDetails())
+                    .workflow(hearing.getWorkflow())
+                    .notes(hearing.getNotes())
+                    .build();
+
+            causeLists.add(causeList);
+        }
+        return causeLists;
+    }
+
+    public void enrichCauseList(List<CauseList> causeLists) {
+        for (CauseList causeList : causeLists) {
+            enrinchCase(causeList);
+            enrichApplication(causeList);
+        }
+    }
+
+    public void enrinchCase(CauseList causeList) {
+        CaseCriteria criteria = CaseCriteria.builder().filingNumber(causeList.getFilingNumber()).build();
+        SearchCaseRequest searchCaseRequest = SearchCaseRequest.builder()
+                .RequestInfo(RequestInfo.builder().build())
+                .criteria(Collections.singletonList(criteria))
+                .build();
+
+        JsonNode caseList = caseUtil.getCases(searchCaseRequest);
+        JsonNode representatives = caseList.get(0).get("representatives");
+        JsonNode litigants = caseList.get(0).get("litigants");
+
+        causeList.setCaseType(caseList.get(0).get("caseType").asText());
+        causeList.setCaseTitle(caseList.get(0).get("caseTitle").asText());
+        causeList.setCaseNumber(caseList.get(0).get("courtCaseNumber").asText());
+
+        long registrationDate = caseList.get(0).get("registrationDate").asLong();
+        causeList.setCaseRegistrationDate(dateUtil.getLocalDateFromEpoch(registrationDate).toString());
+
+        List<AdvocateMapping> advocateMappings = new ArrayList<>();
+        List<Party> litigantsList = new ArrayList<>();
+        try {
+            advocateMappings = objectMapper.readValue(representatives.toString(),
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, AdvocateMapping.class));
+            litigantsList = objectMapper.readValue(litigants.toString(),
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, Party.class));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+        causeList.setRepresentatives(advocateMappings);
+        causeList.setLitigants(litigantsList);
+
+    }
+
+    public void enrichApplication(CauseList causeList) {
+        RequestInfo requestInfo = RequestInfo.builder().build();
+        ApplicationCriteria criteria = ApplicationCriteria.builder()
+                .filingNumber(causeList.getFilingNumber())
+                .status("PENDINGAPPROVAL")
+                .build();
+        ApplicationRequest applicationRequest = ApplicationRequest.builder()
+                .requestInfo(requestInfo)
+                .criteria(criteria)
+                .build();
+
+        JsonNode applicationList = applicationUtil.getApplications(applicationRequest);
+
+        List<String> applicationNumbers = new ArrayList<>();
+        for(JsonNode application : applicationList){
+            applicationNumbers.add(application.get("applicationNumber").asText());
+        }
+        causeList.setApplicationNumbers(applicationNumbers);
     }
 }
