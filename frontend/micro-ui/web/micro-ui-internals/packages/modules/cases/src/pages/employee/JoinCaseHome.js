@@ -206,7 +206,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
   const [caseNumber, setCaseNumber] = useState("");
   const [caseDetails, setCaseDetails] = useState({});
   const [searchCaseResult, setSearchCaseResult] = useState({});
-  const [userType, setUserType] = useState("");
+  const [userType, setUserType] = useState({ label: "", value: "" });
   const [barRegNumber, setBarRegNumber] = useState("");
   const [barDetails, setBarDetails] = useState([]);
   const [selectedParty, setSelectedParty] = useState({});
@@ -507,9 +507,9 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
       });
     }
     if (step === 1) {
-      if (userType && userType === "Litigant" && selectedParty?.label && !selectedParty?.individualId && representingYourself) {
+      if (userType && userType?.value === "Litigant" && selectedParty?.label && !selectedParty?.individualId && representingYourself) {
         setIsDisabled(false);
-      } else if (userType && userType === "Advocate" && selectedParty?.label) {
+      } else if (userType && userType?.value === "Advocate" && selectedParty?.label) {
         const { isFound: advIsFound, partyType } = searchAdvocateInRepresentives(advocateId);
         const { isFound } = searchLitigantInRepresentives();
         if (
@@ -526,14 +526,14 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
         setIsDisabled(true);
       }
     } else if (step === 2) {
-      if (userType === "Litigant" && representingYourself !== "Yes") {
+      if (userType?.value === "Litigant" && representingYourself !== "Yes") {
         if (advocateDetailForm?.advocateBarRegNumberWithName?.[0]?.barRegistrationNumber && advocateDetailForm?.vakalatnamaFileUpload) {
           getUserForAdvocateUUID(advocateDetailForm?.advocateBarRegNumberWithName?.[0]?.barRegistrationNumber);
           setIsDisabled(false);
         } else {
           setIsDisabled(true);
         }
-      } else if (userType === "Litigant" && representingYourself === "Yes" && affidavitText) {
+      } else if (userType?.value === "Litigant" && representingYourself === "Yes" && affidavitText) {
         if (affidavitText?.length > 1) {
           setIsDisabled(false);
           setErrors({
@@ -572,6 +572,9 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
     advocateDetailForm,
     isSignedAdvocate,
     isSignedParty,
+    searchAdvocateInRepresentives,
+    advocateId,
+    searchLitigantInRepresentives,
   ]);
 
   const fetchBasicUserInfo = async () => {
@@ -634,10 +637,10 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
       setBarRegNumber(advocateResponse?.advocates[0]?.responseList[0]?.barRegistrationNumber);
       setAdvocateId(advocateResponse?.advocates[0]?.responseList[0]?.id);
       setAdvocateName(advocateResponse?.advocates[0]?.responseList[0]?.additionalDetails?.username);
-      setUserType(t(JoinHomeLocalisation.ADVOCATE_OPT));
+      setUserType({ label: t(JoinHomeLocalisation.ADVOCATE_OPT), value: "Advocate" });
       setAdvocateDetailForm(advocateResponse?.advocates[0]?.responseList[0]);
     } else {
-      setUserType(t(JoinHomeLocalisation.LITIGANT_OPT));
+      setUserType({ label: t(JoinHomeLocalisation.LITIGANT_OPT), value: "Litigant" });
     }
   };
 
@@ -765,15 +768,19 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
                 setRoleOfNewAdvocate("");
               }}
               disabled={true}
-              options={["Advocate", "Litigant"]}
+              optionsKey={"label"}
+              options={[
+                { label: t(JoinHomeLocalisation.ADVOCATE_OPT), value: "Advocate" },
+                { label: t(JoinHomeLocalisation.LITIGANT_OPT), value: "Litigant" },
+              ]}
             />
           </LabelFieldPair>
-          {userType !== "" && (
+          {userType?.value !== "" && (
             <React.Fragment>
               <hr className="horizontal-line" />
               <LabelFieldPair className="case-label-field-pair">
                 <CardLabel className="case-input-label">
-                  {userType === "Litigant" ? t(JoinHomeLocalisation.WHICH_PARTY_AFFILIATED) : `${t(JoinHomeLocalisation.PLEASE_CHOOSE_PARTY)}`}
+                  {userType?.value === "Litigant" ? t(JoinHomeLocalisation.WHICH_PARTY_AFFILIATED) : `${t(JoinHomeLocalisation.PLEASE_CHOOSE_PARTY)}`}
                 </CardLabel>
                 <RadioButtons
                   selectedOption={selectedParty ? parties[selectedParty?.key] : selectedParty}
@@ -800,7 +807,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
               if (isFound && representative.advocateId === advocateId) return true;
               else return false;
             })() &&
-            userType === "Advocate" && (
+            userType?.value === "Advocate" && (
               <React.Fragment>
                 <hr className="horizontal-line" />
                 <InfoCard
@@ -829,7 +836,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
                 return true;
               else return false;
             })() &&
-            userType === "Advocate" && (
+            userType?.value === "Advocate" && (
               <React.Fragment>
                 <hr className="horizontal-line" />
                 <InfoCard
@@ -874,7 +881,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
                 return true;
               else return false;
             })() &&
-            userType === "Advocate" && (
+            userType?.value === "Advocate" && (
               <React.Fragment>
                 <hr className="horizontal-line" />
                 <InfoCard
@@ -892,7 +899,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
                 />
               </React.Fragment>
             )}
-          {selectedParty?.label && userType === "Litigant" && selectedParty?.individualId && (
+          {selectedParty?.label && userType?.value === "Litigant" && selectedParty?.individualId && (
             <React.Fragment>
               <hr className="horizontal-line" />
               <InfoCard
@@ -910,7 +917,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
               />
             </React.Fragment>
           )}
-          {selectedParty?.label && userType === "Litigant" && !selectedParty?.individualId && (
+          {selectedParty?.label && userType?.value === "Litigant" && !selectedParty?.individualId && (
             <React.Fragment>
               <hr className="horizontal-line" />
               <LabelFieldPair className="case-label-field-pair">
@@ -968,16 +975,16 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
             <React.Fragment>
               <InfoCard
                 variant={"default"}
-                label={userType === "Litigant" ? t(JoinHomeLocalisation.PLEASE_NOTE) : t("INFO")}
+                label={userType?.value === "Litigant" ? t(JoinHomeLocalisation.PLEASE_NOTE) : t("INFO")}
                 additionalElements={
-                  userType === "Litigant" && representingYourself !== "Yes"
+                  userType?.value === "Litigant" && representingYourself !== "Yes"
                     ? [
                         <p>
                           {t(JoinHomeLocalisation.ADD_ADVOCATE_LATER)}{" "}
                           <span style={{ fontWeight: "bold" }}>{t(JoinHomeLocalisation.PARTY_IN_PERSON_TEXT)}</span>
                         </p>,
                       ]
-                    : userType === "Litigant" && representingYourself === "Yes"
+                    : userType?.value === "Litigant" && representingYourself === "Yes"
                     ? [
                         <p>
                           {t(JoinHomeLocalisation.REPRESENT_SELF_PARTY)}{" "}
@@ -988,16 +995,16 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
                 }
                 inline
                 text={
-                  userType === "Litigant" && representingYourself !== "Yes"
+                  userType?.value === "Litigant" && representingYourself !== "Yes"
                     ? undefined
-                    : userType === "Litigant" && representingYourself === "Yes"
+                    : userType?.value === "Litigant" && representingYourself === "Yes"
                     ? undefined
                     : t(JoinHomeLocalisation.FILL_FORM_VAKALATNAMA)
                 }
                 textStyle={{}}
                 className={`custom-info-card`}
               />
-              {userType !== "Litigant" ? (
+              {userType?.value !== "Litigant" ? (
                 <React.Fragment>
                   <LabelFieldPair className="case-label-field-pair">
                     <CardLabel className="case-input-label">{`${"BAR registration"}`}</CardLabel>
@@ -1013,14 +1020,14 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
                           setAdvocateDetail({});
                           setBarDetails([]);
                         }}
-                        disable={userType === "Litigant" ? false : true}
+                        disable={userType?.value === "Litigant" ? false : true}
                       />
                       {errors?.barRegNumber && <CardLabelError> {t(errors?.barRegNumber?.message)} </CardLabelError>}
                       {}
                     </div>
                   </LabelFieldPair>
                   <CustomCaseInfoDiv t={t} data={barDetails} />
-                  {userType === "Advocate" && (
+                  {userType?.value === "Advocate" && (
                     <LabelFieldPair className="case-label-field-pair">
                       <CardLabel className="case-input-label">{`${t(JoinHomeLocalisation.PARTY_PARTIES)}`}</CardLabel>
                       <Dropdown
@@ -1049,7 +1056,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
                     className={`advocate-detail`}
                     noBreakLine
                   />
-                  {userType === "Litigant" && advocateDetail?.barRegistrationNumber && (
+                  {userType?.value === "Litigant" && advocateDetail?.barRegistrationNumber && (
                     <SelectCustomDragDrop
                       t={t}
                       formData={formData}
@@ -1533,7 +1540,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
   const closeModal = () => {
     setCaseNumber("");
     setCaseDetails({});
-    setUserType("");
+    setUserType({});
     setSelectedParty({});
     setRepresentingYourself("");
     setRoleOfNewAdvocate("");
@@ -1559,7 +1566,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
         setCaseDetails(searchCaseResult);
         setCaseNumber(searchCaseResult?.filingNumber);
       } else {
-        if (userType === "Litigant") {
+        if (userType?.value === "Litigant") {
           const isFound = caseDetails?.litigants?.find((item) => item.individualId === individualId) !== undefined;
           if (isFound) {
             setStep(8);
@@ -1574,12 +1581,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
         setIsDisabled(true);
       }
     } else if (step === 1) {
-      if (userType && userType === "Litigant" && selectedParty?.label && representingYourself) {
-        setSelectedParty({
-          ...selectedParty,
-          individualId: individualId,
-          uuid: userInfo?.uuid,
-        });
+      if (userType && userType?.value === "Litigant" && selectedParty?.label && representingYourself) {
         setBarRegNumber("");
         setIsDisabled(true);
         setStep(step + 1);
@@ -1588,7 +1590,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
           ...errors,
           barRegNumber: undefined,
         });
-      } else if (userType && userType === "Advocate") {
+      } else if (userType && userType?.value === "Advocate") {
         if (selectedParty?.individualId) {
           setParties([...parties, selectedParty]);
           setParty(selectedParty);
@@ -1649,7 +1651,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
         closeModal();
         return;
       }
-      if (userType === "Litigant") {
+      if (userType?.value === "Litigant") {
         if (representingYourself !== "Yes" && advocateDetailForm?.advocateBarRegNumberWithName?.[0]?.data?.barRegistrationNumber) {
           setIsDisabled(true);
           setStep(step + 5);
@@ -1680,7 +1682,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
       setStep(step + 1);
       setIsDisabled(true);
     } else if (step === 7 && validationCode.length === 6) {
-      if (userType === "Advocate") {
+      if (userType?.value === "Advocate") {
         const { representative } = searchLitigantInRepresentives();
         const replaceAdvocate = representative;
         if (replaceAdvocate !== undefined) {
@@ -2253,6 +2255,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
     caseDetails?.additionalDetails,
     caseDetails?.cnrNumber,
     caseDetails?.filingNumber,
+    caseDetails?.filingNumber,
     caseDetails?.id,
     caseDetails?.litigants,
     caseNumber,
@@ -2608,7 +2611,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
             } else if (step === 6) {
               setStep(step - 3);
             } else if (step === 7) {
-              if (userType === "Litigant") setStep(step - 5);
+              if (userType?.value === "Litigant") setStep(step - 5);
               else {
                 if (roleOfNewAdvocate?.value === "PRIMARY_ADVOCATE") setStep(step - 1);
                 else setStep(step - 4);
@@ -2618,7 +2621,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
                 ...errors,
                 validationCode: undefined,
               });
-            } else if (step === 3 && userType === "Advocate") {
+            } else if (step === 3 && userType?.value === "Advocate") {
               setStep(step - 1);
             } else setStep(step - 1);
             setIsDisabled(false);
@@ -2632,7 +2635,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
               ? "Done"
               : step === 5
               ? "Make Payment"
-              : userType === "Litigant" && step === 0 && !caseDetails.filingNumber
+              : userType?.value === "Litigant" && step === 0 && !caseDetails.filingNumber
               ? "Search"
               : t("PROCEED_TEXT")
           }
@@ -2641,17 +2644,17 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
           headerBarMain={<Heading label={step === 4 ? "E-Sign" : step === 5 ? "Payment" : t("JOIN_A_CASE")} />}
           className={`join-a-case-modal ${success && "case-join-success"}`}
           popupModuleActionBarClassName={`${
-            step === 2 && userType === "Litigant" && representingYourself !== "Yes" ? "join-case-form-composer" : ""
+            step === 2 && userType?.value === "Litigant" && representingYourself !== "Yes" ? "join-case-form-composer" : ""
           }`}
           isDisabled={isDisabled}
         >
           {step >= 0 && modalItem[step]?.modalMain}
-          {((step === 2 && userType === "Litigant" && representingYourself !== "Yes") || step === 4 || step === 5) && (
+          {((step === 2 && userType?.value === "Litigant" && representingYourself !== "Yes") || step === 4 || step === 5) && (
             <Button
               className={"skip-button"}
               label={t(JoinHomeLocalisation.SKIP_LATER)}
               onButtonClick={() => {
-                if (userType === "Litigant") {
+                if (userType?.value === "Litigant") {
                   setStep(7);
                   setBarRegNumber("");
                   setAdvocateDetailForm({});

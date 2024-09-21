@@ -40,19 +40,13 @@ const PaymentForSummonComponent = ({ infos, links, feeOptions, orderDate, paymen
 
   const getDateWithMonthName = (orderDate) => {
     let today = new Date();
-
-    today.setDate(today.getDate() - 15);
-
-    // Array of month names
+    today.setDate(today.getDate() + 15);
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
     let dd = String(today.getDate()).padStart(2, "0");
     let mm = monthNames[today.getMonth()];
     let yyyy = today.getFullYear();
-
     let formattedDate = `${dd} ${mm} ${yyyy}`;
-
-    return formattedDate; // Output: formatted date 15 days ago with month name
+    return formattedDate; // Output: formatted date 15 days from now with month name
   };
 
   return (
@@ -62,8 +56,8 @@ const PaymentForSummonComponent = ({ infos, links, feeOptions, orderDate, paymen
         label={"Complete in 2 days"}
         additionalElements={[
           <p>
-            It takes 10-15 days via physical post and 3-5 days via e-post for {isCaseAdmitted ? "Summon" : "Notice"} Delivery. Pay by{" "}
-            <span style={{ fontWeight: "bold" }}>{getDateWithMonthName(orderDate)}</span> for on-time delivery before next hearing.
+            {t(isCaseAdmitted ? "SUMMON_DELIVERY_NOTE" : "NOTICE_DELIVERY_NOTE")}{" "}
+            <span style={{ fontWeight: "bold" }}>{getDateWithMonthName(orderDate)}</span> {t("ON_TIME_DELIVERY")}
           </p>,
         ]}
         inline
@@ -98,7 +92,7 @@ const PaymentForSummonComponent = ({ infos, links, feeOptions, orderDate, paymen
                   <Button label={t(action.action)} onButtonClick={action.onClick} isDisabled={paymentLoader} />
                 ) : (
                   <p className="offline-process-text">
-                    This is an offline process. <span className="learn-more-text">Learn More</span>
+                    {t("THIS_OFFLINE_TEXT")} <span className="learn-more-text">{t("LEARN_MORE")}</span>
                   </p>
                 )}
               </div>
@@ -491,9 +485,12 @@ const PaymentForSummonModal = ({ path }) => {
   };
 
   const infos = useMemo(() => {
-    const name = `${orderData?.list?.[0]?.additionalDetails?.formdata?.[isCaseAdmitted ? "SummonsOrder" : "noticeOrder"]?.party?.data?.firstName} ${
-      orderData?.list?.[0]?.additionalDetails?.formdata?.[isCaseAdmitted ? "SummonsOrder" : "noticeOrder"]?.party?.data?.lastName
-    }`;
+    const name = [
+      orderData?.list?.[0]?.additionalDetails?.formdata?.[isCaseAdmitted ? "SummonsOrder" : "noticeOrder"]?.party?.data?.firstName,
+      orderData?.list?.[0]?.additionalDetails?.formdata?.[isCaseAdmitted ? "SummonsOrder" : "noticeOrder"]?.party?.data?.lastName,
+    ]
+      ?.filter(Boolean)
+      ?.join(" ");
     const addressDetails =
       orderData?.list?.[0]?.additionalDetails?.formdata?.[isCaseAdmitted ? "SummonsOrder" : "noticeOrder"]?.party?.data?.addressDetails?.[0]
         ?.addressDetails;
