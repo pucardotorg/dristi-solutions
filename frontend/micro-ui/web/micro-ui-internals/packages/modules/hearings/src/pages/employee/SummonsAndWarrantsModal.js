@@ -81,7 +81,7 @@ const SummonsAndWarrantsModal = () => {
   const handleNavigate = () => {
     const contextPath = window?.contextPath || "";
     history.push(
-      `/${contextPath}/employee/home/home-pending-task/reissue-summons-modal?filingNumber=${filingNumber}&hearingId=${hearingId}&cnrNumber=${cnrNumber}`
+      `/${contextPath}/employee/home/home-pending-task/reissue-summons-modal?filingNumber=${filingNumber}&hearingId=${hearingId}&cnrNumber=${cnrNumber}&orderType=${orderType}`
     );
   };
 
