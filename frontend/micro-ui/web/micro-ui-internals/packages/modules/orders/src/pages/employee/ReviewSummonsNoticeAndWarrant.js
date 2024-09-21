@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Header, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
 import { NoticesTabsConfig, SummonsTabsConfig } from "../../configs/SuumonsConfig";
 import { useTranslation } from "react-i18next";
@@ -12,6 +12,8 @@ import { formatDate } from "../../utils";
 import { ordersService, taskService } from "../../hooks/services";
 import { Urls } from "../../hooks/services/Urls";
 import { convertToDateInputFormat } from "../../utils/index";
+import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
+import { useHistory } from "react-router-dom";
 
 const defaultSearchValues = {
   eprocess: "",
@@ -41,6 +43,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const [actionModalType, setActionModalType] = useState("");
   const [isDisabled, setIsDisabled] = useState(true);
   const [rowData, setRowData] = useState({});
+  const { taskNumber } = Digit.Hooks.useQueryParams();
   const [taskDocuments, setTaskDocumens] = useState([]);
   const [nextHearingDate, setNextHearingDate] = useState();
   const [step, setStep] = useState(0);
@@ -50,7 +53,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const [taskDetails, setTaskDetails] = useState({});
   const [tasksData, setTasksData] = useState(null);
   const [selectedDelievery, setSelectedDelievery] = useState({});
-
+  const history = useHistory();
   const dayInMillisecond = 24 * 3600 * 1000;
   const todayDate = new Date().getTime();
 
@@ -82,6 +85,19 @@ const ReviewSummonsNoticeAndWarrant = () => {
     {},
     true,
     Boolean(showActionModal || step)
+  );
+
+  const getTaskDetailsByTaskNumber = useCallback(
+    async function () {
+      const response = await DRISTIService.customApiService("/task/v1/table/search", {
+        criteria: {
+          searchText: taskNumber,
+          tenantId,
+        },
+      });
+      handleRowClick({ original: response?.list?.[0] });
+    },
+    [taskNumber, tenantId]
   );
 
   useEffect(() => {
@@ -120,6 +136,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const handleClose = () => {
     localStorage.removeItem("SignedFileStoreID");
     setShowActionModal(false);
+    if (taskNumber) history.replace(`/${window?.contextPath}/employee/orders/Summons&Notice`);
     setReload(!reload);
   };
 
@@ -379,9 +396,14 @@ const ReviewSummonsNoticeAndWarrant = () => {
     };
   }, [documents, infos, isSigned, links, submissionData, t]);
 
+  const handleCloseActionModal = () => {
+    setShowActionModal(false);
+    if (taskNumber) history.replace(`/${window?.contextPath}/employee/orders/Summons&Notice`);
+  };
+
   const signedModalConfig = useMemo(() => {
     return {
-      handleClose: () => setShowActionModal(false),
+      handleClose: () => handleCloseActionModal(),
       heading: { label: t("PRINT_SEND_DOCUMENT") },
       actionSaveLabel: t("MARK_AS_SENT"),
       isStepperModal: false,
@@ -394,7 +416,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const sentModalConfig = useMemo(() => {
     return {
-      handleClose: () => setShowActionModal(false),
+      handleClose: () => handleCloseActionModal(),
       heading: { label: t("PRINT_SEND_DOCUMENT") },
       actionSaveLabel: t("UPDATE_STATUS"),
       actionCancelLabel: t("VIEW_DOCUMENT_TEXT"),
@@ -442,6 +464,12 @@ const ReviewSummonsNoticeAndWarrant = () => {
     setDeliveryChannel(handleTaskDetails(props?.original?.taskDetails)?.deliveryChannels?.channelName);
     setTaskDetails(handleTaskDetails(props?.original?.taskDetails));
   };
+
+  useEffect(() => {
+    if (taskNumber) {
+      getTaskDetailsByTaskNumber();
+    }
+  }, [taskNumber, getTaskDetailsByTaskNumber]);
 
   return (
     <div className="review-summon-warrant">
