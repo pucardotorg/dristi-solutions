@@ -53,7 +53,7 @@ public class HearingRegistrationEnrichment {
             String idFormat = configuration.getHearingFormat();
 
             List<String> hearingIdList = idgenUtil.getIdList(hearingRequest.getRequestInfo(), tenantId, idName, idFormat, 1, false);
-            hearing.setHearingId(hearingIdList.get(0));
+            hearing.setHearingId(hearing.getCnrNumbers().get(0) +"-"+hearingIdList.get(0));
         } catch (CustomException e) {
             log.error("Custom Exception occurred while Enriching hearing");
             throw e;
