@@ -1374,8 +1374,7 @@ const GenerateOrders = () => {
           caseDetails: {
             title: caseDetails?.caseTitle,
             year: new Date(caseDetails).getFullYear(),
-            hearingDate: new Date(orderData?.additionalDetails?.formdata?.date || "").getTime(),
-            judgeName: "",
+            hearingDate: new Date(orderData?.additionalDetails?.formdata?.dateForHearing || "").getTime(),
             courtName: courtDetails?.name,
             courtAddress: courtDetails?.address,
             courtPhone: courtDetails?.phone,
