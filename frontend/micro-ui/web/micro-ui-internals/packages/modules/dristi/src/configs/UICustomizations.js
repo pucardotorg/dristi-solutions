@@ -29,7 +29,7 @@ const partyTypes = {
 const removeInvalidNameParts = (name) => {
   return name
     ?.split(" ")
-    .filter((part) => part && !["undefined", "null"].includes(part))
+    .filter((part) => part && !["undefined", "null"].includes(part.toLowerCase()))
     .join(" ");
 };
 
