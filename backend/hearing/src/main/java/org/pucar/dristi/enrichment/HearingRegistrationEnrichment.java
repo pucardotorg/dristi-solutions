@@ -54,6 +54,11 @@ public class HearingRegistrationEnrichment {
 
             List<String> hearingIdList = idgenUtil.getIdList(hearingRequest.getRequestInfo(), tenantId, idName, idFormat, 1, false);
             hearing.setHearingId(hearing.getCnrNumbers().get(0) +"-"+hearingIdList.get(0));
+
+            if(null != hearing.getCourtCaseNumber())
+                hearing.setCaseReferenceNumber(hearing.getCourtCaseNumber());
+            else
+                hearing.setCaseReferenceNumber(hearing.getCmpNumber());
         } catch (CustomException e) {
             log.error("Custom Exception occurred while Enriching hearing");
             throw e;
