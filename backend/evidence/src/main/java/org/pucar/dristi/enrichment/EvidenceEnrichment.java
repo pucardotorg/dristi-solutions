@@ -110,7 +110,7 @@ public class EvidenceEnrichment {
                     1,
                     false
             );
-            evidenceRequest.getArtifact().setEvidenceNumber(evidenceNumberList.get(0));
+            evidenceRequest.getArtifact().setEvidenceNumber(evidenceRequest.getArtifact().getCnrNumber()+"-"+evidenceNumberList.get(0));
             evidenceRequest.getArtifact().setIsEvidence(true);
         } catch (Exception e) {
             log.error("Error enriching evidence number upon update: {}", e.toString());

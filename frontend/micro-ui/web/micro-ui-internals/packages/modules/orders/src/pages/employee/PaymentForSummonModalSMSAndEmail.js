@@ -281,7 +281,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
         ...filteredTasks?.[0],
         taskType: isCaseAdmitted ? "SUMMONS" : "NOTICE",
         workflow: {
-          action: "MAKE PAYMENT",
+          action: isCaseAdmitted ? "MAKE PAYMENT" : "MAKE_PAYMENT",
         },
       };
 
