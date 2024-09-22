@@ -62,7 +62,6 @@ public class TaskRegistrationEnrichment {
 //                taskRequest.getTask().setTaskDetails("{ warrantId: {" + task.getCnrNumber() +"-"+taskRegistrationWarrantIdList.get(0) + "} }");
 //            }
 
-
             AuditDetails auditDetails = AuditDetails.builder().createdBy(taskRequest.getRequestInfo().getUserInfo().getUuid()).createdTime(System.currentTimeMillis()).lastModifiedBy(taskRequest.getRequestInfo().getUserInfo().getUuid()).lastModifiedTime(System.currentTimeMillis()).build();
             task.setAuditDetails(auditDetails);
 
@@ -76,7 +75,7 @@ public class TaskRegistrationEnrichment {
             }
             task.getAmount().setId(UUID.randomUUID());
             task.setCreatedDate(System.currentTimeMillis());
-            task.setTaskNumber(taskRegistrationIdList.get(0));
+            task.setTaskNumber(task.getCnrNumber() +"-"+taskRegistrationIdList.get(0));
 
         } catch (Exception e) {
             log.error("Error enriching task application :: {}", e.toString());
