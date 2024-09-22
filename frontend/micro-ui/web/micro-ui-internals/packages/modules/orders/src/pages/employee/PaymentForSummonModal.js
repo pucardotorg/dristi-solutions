@@ -294,7 +294,7 @@ const PaymentForSummonModal = ({ path }) => {
         taskType: isCaseAdmitted ? "SUMMONS" : "NOTICE", // Change the taskType to SUMMON
         workflow: {
           // Add the workflow object with the desired action
-          action: "MAKE PAYMENT",
+          action: isCaseAdmitted ? "MAKE PAYMENT" : "MAKE_PAYMENT",
         },
       };
 
