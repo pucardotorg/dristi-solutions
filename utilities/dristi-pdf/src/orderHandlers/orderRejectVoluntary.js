@@ -165,18 +165,22 @@ async function orderRejectVoluntary(req, res, qrCode) {
     } else {
       return renderError(res, "Invalid filingDate format", 500);
     }
-    const additionalComments = order.comments || "";
+    const additionalComments = "";
+    const reasonForRejection = order?.comments || "";
     const data = {
       Data: [
         {
           courtName: mdmsCourtRoom.name,
+          place: "Kollam",
+          courtPlace: "Kollam",
+          state: "Kerala",
           caseName: courtCase.caseTitle,
           caseNumber: courtCase.caseNumber,
           caseYear,
           orderName: order.orderNumber,
           submissionType: "Application",
           submissionDate,
-          reasonForRejection: order?.comments,
+          reasonForRejection: reasonForRejection,
           date: formattedToday,
           Date: formattedToday,
           partyName: partyName,

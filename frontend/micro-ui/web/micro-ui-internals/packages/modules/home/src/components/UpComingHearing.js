@@ -293,7 +293,7 @@ const UpcomingHearings = ({ t, userInfoType, ...props }) => {
 
     return Object.keys(hearingCountsByType)
       .map((hearingType) => {
-        return `${hearingType} (${hearingCountsByType[hearingType]})`;
+        return `${t(hearingType)} (${hearingCountsByType[hearingType]})`;
       })
       .join(", ");
   }, [earliestHearingSlot]);
@@ -309,8 +309,8 @@ const UpcomingHearings = ({ t, userInfoType, ...props }) => {
     return <Loader />;
   }
   const name = userName?.info?.name
-    .split(" ")
-    .filter((part) => part && part.toLowerCase() !== "null")
+    ?.split(" ")
+    .filter((part) => part && !["null", "undefined"].includes(part.toLowerCase()))
     .join(" ");
 
   const hearingSearchParams = new URLSearchParams();
