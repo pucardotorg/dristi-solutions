@@ -1,8 +1,6 @@
 package org.egov.transformer.models;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -15,7 +13,10 @@ import org.egov.common.contract.models.Document;
 import org.egov.common.contract.models.Workflow;
 import org.springframework.validation.annotation.Validated;
 
-import java.time.LocalDate;
+import java.text.ParseException;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -61,11 +62,9 @@ public class Order {
     @Size(min = 24, max = 256)
     private String linkedOrderNumber = null;
 
-    @JsonProperty("createdDate")
     @NotNull
     @Valid
-    @JsonFormat(pattern = "dd-MM-yyyy")
-    private LocalDate createdDate = null;
+    private Long createdDate = null;
 
     @JsonProperty("issuedBy")
     private IssuedBy issuedBy = null;
@@ -111,6 +110,10 @@ public class Order {
     @JsonProperty("orderDetails")
     private Order orderDetails;
 
+    @JsonProperty("taskDetails")
+    private Task taskDetails;
+
+
     public Order addApplicationIdsItem(String applicationNumbersItem) {
         this.applicationNumber.add(applicationNumbersItem);
         return this;
@@ -122,6 +125,30 @@ public class Order {
         }
         this.documents.add(documentsItem);
         return this;
+    }
+
+    @JsonProperty("createdDate")
+    public String getCreatedDate() {
+        String formattedDate = "";
+        if (null != this.createdDate) {
+            if (this.createdDate > 0) {
+                formattedDate = Instant.ofEpochMilli(this.createdDate)
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDate()
+                        .format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            }
+        }
+        return formattedDate;
+
+    }
+
+    @JsonProperty("createdDate")
+    public void setCreatedDate(String date) throws ParseException {
+        try {
+            this.createdDate = Long.parseLong(date);
+        } catch (NumberFormatException e) {
+            this.createdDate = new java.text.SimpleDateFormat("dd/MM/yyyy").parse(date).getTime();
+        }
     }
 
 }
