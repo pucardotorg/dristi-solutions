@@ -29,14 +29,29 @@ public class Configuration {
     private String summonsIdFormat;
 
     //Pdf Service Config
-    @Value("${summons.pdf.template.key}")
+    @Value("${summons.accused.pdf.template.key}")
     private String summonsPdfTemplateKey;
 
     @Value("${non.bailable.warrant.pdf.template.key}")
     private String nonBailableWarrantPdfTemplateKey;
 
+    @Value("${task.notice.pdf.template.key}")
+    private String taskNoticePdfTemplateKey;
+
     @Value("${bailable.warrant.pdf.template.key}")
     private String bailableWarrantPdfTemplateKey;
+
+    @Value("${summons.accused.qr.pdf.template.key}")
+    private String summonsQrPdfTemplateKey;
+
+    @Value("${non.bailable.warrant.qr.pdf.template.key}")
+    private String nonBailableWarrantQrPdfTemplateKey;
+
+    @Value("${task.notice.qr.pdf.template.key}")
+    private String taskNoticeQrPdfTemplateKey;
+
+    @Value("${bailable.warrant.qr.pdf.template.key}")
+    private String bailableWarrantQrPdfTemplateKey;
 
     //MDMS
     @Value("${egov.mdms.host}")
@@ -64,6 +79,9 @@ public class Configuration {
 
     @Value("${egov.file.store.save.endpoint}")
     private String fileStoreEndPoint;
+
+    @Value("${egov.file.store.search.endpoint}")
+    private String fileStoreSearchEndPoint;
 
     // task service
 
