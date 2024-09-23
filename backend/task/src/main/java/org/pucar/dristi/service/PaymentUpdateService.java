@@ -81,9 +81,6 @@ public class PaymentUpdateService {
         try {
 
             Bill bill = paymentDetail.getBill();
-            if (!Bill.StatusEnum.PAID.equals(bill.getStatus())) {
-                return;
-            }
             String consumerCode = bill.getConsumerCode();
             String businessService = bill.getBusinessService();
             String[] consumerCodeSplitArray = consumerCode.split("_", 2);
