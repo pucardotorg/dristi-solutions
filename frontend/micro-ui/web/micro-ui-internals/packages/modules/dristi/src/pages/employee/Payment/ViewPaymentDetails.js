@@ -137,12 +137,13 @@ const ViewPaymentDetails = ({ location, match }) => {
     return updatedCalculation;
   }, [calculationResponse?.Calculation]);
   const payerName = useMemo(() => caseDetails?.additionalDetails?.payerName, [caseDetails?.additionalDetails?.payerName]);
-  const bill = paymentDetails?.Bill ? paymentDetails?.Bill[0] : {};
+  const bill = paymentDetails?.Bill ? paymentDetails?.Bill[0] : null;
 
   const onSubmitCase = async () => {
     const consumerCodeWithoutSuffix = consumerCode.split("_")[0];
     let referenceId;
-    if (consumerCodeWithoutSuffix.includes("TASK")) {
+    let taskFilingNumber = "";
+    if (["task-notice", "task-summons"].includes(businessService)) {
       const {
         list: [tasksData],
       } = await Digit.HearingService.searchTaskList({
@@ -160,6 +161,7 @@ const ViewPaymentDetails = ({ location, match }) => {
         },
       });
       referenceId = tasksData?.taskDetails?.deliveryChannels?.channelName + `_${orderNumber}`;
+      taskFilingNumber = tasksData?.filingNumber || caseDetails?.filingNumber;
     } else {
       referenceId = consumerCodeWithoutSuffix;
     }
@@ -199,7 +201,7 @@ const ViewPaymentDetails = ({ location, match }) => {
           referenceId: `MANUAL_${referenceId}`,
           status: "PENDING_PAYMENT",
           cnrNumber: null,
-          filingNumber: caseDetails?.filingNumber,
+          filingNumber: caseDetails?.filingNumber || taskFilingNumber,
           isCompleted: true,
           stateSla: null,
           additionalDetails: {},
