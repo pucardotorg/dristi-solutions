@@ -122,11 +122,14 @@ const AdmittedCases = () => {
   const caseDetails = useMemo(() => caseData?.criteria?.[0]?.responseList?.[0], [caseData]);
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber, [caseDetails]);
 
-  const showTakeAction =
-    (userRoles.includes("JUDGE_ROLE") || userRoles.includes("BENCHCLERK_ROLE")) &&
-    ["CASE_ADMITTED", "ADMISSION_HEARING_SCHEDULED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"].includes(
-      caseData?.criteria[0]?.responseList[0]?.status
-    );
+  const showTakeAction = useMemo(
+    () =>
+      (userRoles.includes("JUDGE_ROLE") || userRoles.includes("BENCHCLERK_ROLE")) &&
+      ["CASE_ADMITTED", "ADMISSION_HEARING_SCHEDULED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"].includes(
+        caseData?.criteria[0]?.responseList[0]?.status
+      ),
+    [caseData, userRoles]
+  );
 
   const { isLoading: isWorkFlowLoading, data: workFlowDetails } = window?.Digit.Hooks.useWorkflowDetails({
     tenantId,
