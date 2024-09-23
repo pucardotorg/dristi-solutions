@@ -17,19 +17,20 @@ public class CauseListRowMapper implements RowMapper<CauseList> {
 
     @Override
     public CauseList mapRow(ResultSet resultSet, int rowNum) throws SQLException {
-        String litigantNamesString = resultSet.getString("litigant_names");
-        List<String> litigantNames = new ArrayList<>();
+        String advocateNameString = resultSet.getString("advocate_names");
+        List<String> advocateNames = new ArrayList<>();
 
-        if (litigantNamesString != null) {
-            litigantNames = Arrays.asList(litigantNamesString.split(","));
+        if (advocateNameString != null) {
+            advocateNames = Arrays.asList(advocateNameString.split(","));
         }
         return CauseList.builder()
                 .courtId(resultSet.getString("court_id"))
                 .tenantId(resultSet.getString("tenant_id"))
                 .judgeId(resultSet.getString("judge_id"))
-                .slot(resultSet.getString("tentative_slot"))
+                .slot(resultSet.getString("slot"))
                 .caseTitle(resultSet.getString("case_title"))
-                .caseRegistrationDate(resultSet.getString("case_date"))
+                .caseRegistrationDate(resultSet.getString("case_registration_date"))
+                .advocateNames(advocateNames)
                 .build();
     }
 }

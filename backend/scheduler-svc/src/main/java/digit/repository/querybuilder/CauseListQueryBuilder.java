@@ -13,11 +13,11 @@ import java.util.List;
 @Slf4j
 public class CauseListQueryBuilder {
 
-    private final String BASE_APPLICATION_QUERY = "SELECT cl.court_id, cl.judge_id, cl.tenant_id, cl.case_id, cl.case_title, cl.litigant_names, cl.hearing_type, cl.tentative_slot, cl.case_date ";
+    private final String BASE_APPLICATION_QUERY = "SELECT * ";
 
     private static final String FROM_TABLES = " FROM cause_list cl ";
 
-    private final String ORDER_BY = " ORDER BY cl.case_date, cl.judge_id, cl.hearing_type";
+    private final String ORDER_BY = " ORDER BY cl.hearing_date, cl.judge_id, cl.hearing_type";
 
     public String getCauseListQuery(CauseListSearchCriteria searchCriteria, List<String> preparedStmtList) {
         StringBuilder query = new StringBuilder(BASE_APPLICATION_QUERY);
@@ -40,7 +40,7 @@ public class CauseListQueryBuilder {
         }
         if (!ObjectUtils.isEmpty(searchCriteria.getSearchDate())) {
             addClauseIfRequired(query, preparedStmtList);
-            query.append(" cl.case_date = ? ");
+            query.append(" cl.hearing_date = ? ");
             preparedStmtList.add(searchCriteria.getSearchDate().toString());
         } else {
             addClauseIfRequired(query, preparedStmtList);

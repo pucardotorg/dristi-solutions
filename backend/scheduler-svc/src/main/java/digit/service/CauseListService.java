@@ -388,9 +388,14 @@ public class CauseListService {
     }
 
     public void enrichCauseList(List<CauseList> causeLists) {
-        for (CauseList causeList : causeLists) {
+        Iterator<CauseList> iterator = causeLists.iterator();
+        while (iterator.hasNext()) {
+            CauseList causeList = iterator.next();
             enrichCase(causeList);
             enrichApplication(causeList);
+            if(causeList.getApplicationNumbers().isEmpty()) {
+                iterator.remove();
+            }
         }
     }
 
