@@ -43,7 +43,7 @@ const useEvidenceDetails = ({ url, params, body, config = {}, plainAccessRequest
         return {
           ...artifact,
           owner: `${owner.Individual.find((individual) => artifact.sourceID === individual.individualId)?.name.givenName} ${
-            owner.Individual.find((individual) => artifact.sourceID === individual.individualId)?.name.familyName
+            owner.Individual.find((individual) => artifact.sourceID === individual.individualId)?.name.familyName || ""
           }`,
         };
       }),
