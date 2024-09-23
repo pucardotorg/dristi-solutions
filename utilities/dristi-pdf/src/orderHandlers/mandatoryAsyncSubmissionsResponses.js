@@ -186,6 +186,8 @@ async function mandatoryAsyncSubmissionsResponses(req, res, qrCode) {
       Data: [
         {
           courtName: mdmsCourtRoom.name,
+          place: "Kollam",
+          state: "Kerala",
           caseNumber: courtCase.caseNumber,
           year: year,
           caseName: courtCase.caseTitle,
@@ -196,6 +198,7 @@ async function mandatoryAsyncSubmissionsResponses(req, res, qrCode) {
           responseSubmissionDeadline,
           additionalComments: order?.comments || "",
           Date: formattedToday,
+          day: day,
           Month: month,
           Year: year,
           judgeSignature: "Judge Signature",
