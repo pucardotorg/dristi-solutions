@@ -800,7 +800,7 @@ export const configsOrderSubmissionExtension = [
         label: "ORIGINAL_DEADLINE",
         isMandatory: false,
         key: "originalDeadline",
-        schemaKeyPath: "orderDetails.originalDate",
+        schemaKeyPath: "orderDetails.originalDocSubmissionDate",
         transformer: "date",
         disable: true,
         type: "date",
