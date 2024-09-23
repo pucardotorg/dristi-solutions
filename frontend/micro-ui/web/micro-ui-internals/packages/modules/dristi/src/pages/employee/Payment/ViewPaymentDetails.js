@@ -189,7 +189,7 @@ const ViewPaymentDetails = ({ location, match }) => {
           paidBy: "PAY_BY_OWNER",
           mobileNumber: caseDetails?.additionalDetails?.payerMobileNo || "",
           payerName: payer || payerName,
-          totalAmountPaid: totalAmount,
+          totalAmountPaid: billFetched.totalAmount || totalAmount,
           instrumentNumber: additionDetails,
           instrumentDate: new Date().getTime(),
         },

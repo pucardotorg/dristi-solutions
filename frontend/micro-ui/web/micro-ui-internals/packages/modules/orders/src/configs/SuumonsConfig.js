@@ -155,7 +155,7 @@ export const SummonsTabsConfig = {
         },
         requestBody: {
           criteria: {
-            completeStatus: ["SUMMONSERVED", "COMPLETED", "DELIVERED"],
+            completeStatus: ["UNDELIVERED", "COMPLETED", "DELIVERED", "ABATED"],
           },
         },
         masterName: "commonUiConfig",
@@ -205,13 +205,12 @@ export const SummonsTabsConfig = {
                 },
               },
               {
-                label: "Summon Status",
+                label: "Status",
                 isMandatory: false,
-                key: "applicationStatus",
+                key: "status",
                 type: "dropdown",
                 disable: false,
                 populators: {
-                  name: "applicationStatus",
                   name: "status",
                   options: ["DELIVERED", "NOT_DELIVERED"],
                   optionsCustomStyle: {

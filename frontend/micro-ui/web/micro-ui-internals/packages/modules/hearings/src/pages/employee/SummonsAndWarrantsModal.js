@@ -157,7 +157,7 @@ const SummonsAndWarrantsModal = () => {
 
     const filteredOrders = ordersData?.list?.filter(
       (item) =>
-        (isCaseAdmitted ? item.orderType === "SUMMONS" || item.orderType === "WARRANT" : item.orderType === "NOTICE") &&
+        (item.orderType === "SUMMONS" || item.orderType === "WARRANT" || item.orderType === "NOTICE") &&
         item?.status === "PUBLISHED" &&
         item?.hearingNumber === hearingId
     );
@@ -214,7 +214,7 @@ const SummonsAndWarrantsModal = () => {
         display: "none",
       }}
       formId="modal-action"
-      headerBarMain={<ModalHeading label={t(`${isCaseAdmitted ? "Summons and Warrants" : "Notice"} Status`)} />}
+      headerBarMain={<ModalHeading label={t(`${orderType === "SUMMONS" ? "Summons and Warrants" : "Notice"} Status`)} />}
     >
       <div className="case-info">
         <div className="case-info-column">
@@ -300,7 +300,7 @@ const SummonsAndWarrantsModal = () => {
           />
         )}
         <Button
-          label={t(`Re-Issue ${isCaseAdmitted ? "Summon" : "Notice"}`)}
+          label={t(`Re-Issue ${orderType === "SUMMONS" ? "Summon" : "Notice"}`)}
           onButtonClick={() => {
             handleNavigate();
           }}

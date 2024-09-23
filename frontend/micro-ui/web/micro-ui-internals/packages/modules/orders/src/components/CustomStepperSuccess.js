@@ -15,6 +15,7 @@ const CustomStepperSuccess = ({
   deliveryChannel,
   submitButtonText,
   closeButtonText,
+  orderType,
 }) => {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const fileStore = localStorage.getItem("SignedFileStoreID");
@@ -42,7 +43,7 @@ const CustomStepperSuccess = ({
         <div className="print-documents-box-div">
           <div className="print-documents-box-text">
             <FileIcon />
-            <div style={{ marginLeft: "0.5rem" }}>Summons Document</div>
+            <div style={{ marginLeft: "0.5rem" }}>{orderType === "SUMMONS" ? "Summons" : "Notice"} Document</div>
           </div>
           <button className="print-button" disabled={!fileStore}>
             <PrintIcon />
@@ -82,7 +83,10 @@ const CustomStepperSuccess = ({
               className={"selector-button-primary"}
               label={t(submitButtonText)}
               onButtonClick={() => {
-                // if (!documents) closeButtonAction();
+                if (submitButtonText === "CS_CLOSE") {
+                  closeButtonAction();
+                  return;
+                }
                 submitButtonAction();
               }}
             >
