@@ -291,34 +291,38 @@ function CaseFileAdmission({ t, path }) {
         ?.map(async (data) => {
           data?.document?.forEach(async (docFile) => {
             if (docFile?.fileStore) {
-              await DRISTIService.createEvidence({
-                artifact: {
-                  artifactType: documentTypeMapping[data?.key],
-                  sourceType: "COMPLAINANT",
-                  sourceID: individualId,
-                  caseId: caseDetails?.id,
-                  filingNumber: caseDetails?.filingNumber,
-                  tenantId,
-                  comments: [],
-                  file: {
-                    documentType: docFile?.fileType || docFile?.documentType,
-                    fileStore: docFile?.fileStore,
-                    fileName: docFile?.fileName,
-                    documentName: docFile?.documentName,
+              try {
+                await DRISTIService.createEvidence({
+                  artifact: {
+                    artifactType: documentTypeMapping[data?.key],
+                    sourceType: "COMPLAINANT",
+                    sourceID: individualId,
+                    caseId: caseDetails?.id,
+                    filingNumber: caseDetails?.filingNumber,
+                    tenantId,
+                    comments: [],
+                    file: {
+                      documentType: docFile?.fileType || docFile?.documentType,
+                      fileStore: docFile?.fileStore,
+                      fileName: docFile?.fileName,
+                      documentName: docFile?.documentName,
+                    },
+                    workflow: {
+                      action: "TYPE DEPOSITION",
+                      documents: [
+                        {
+                          documentType: docFile?.fileType || docFile?.documentType,
+                          fileName: docFile?.fileName,
+                          documentName: docFile?.documentName,
+                          fileStoreId: docFile?.fileStore,
+                        },
+                      ],
+                    },
                   },
-                  workflow: {
-                    action: "TYPE DEPOSITION",
-                    documents: [
-                      {
-                        documentType: docFile?.fileType || docFile?.documentType,
-                        fileName: docFile?.fileName,
-                        documentName: docFile?.documentName,
-                        fileStoreId: docFile?.fileStore,
-                      },
-                    ],
-                  },
-                },
-              });
+                });
+              } catch (error) {
+                console.error(`Error creating evidence for document ${docFile.fileName}:`, error);
+              }
             }
           });
         })
