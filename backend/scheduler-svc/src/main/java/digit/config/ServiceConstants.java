@@ -22,6 +22,7 @@ public class ServiceConstants {
     public static final String NOT_FOUND = " is not found";
     public static final String TENANTID = "?tenantId=";
     public static final String BUSINESS_SERVICES = "&businessServices=";
+    public static final String FILE_STORE_UTILITY_EXCEPTION = "FILE_STORE_UTILITY_EXCEPTION";
 
     public static final String OPT_OUT_DUE = "OPT_OUT_DUE";
 

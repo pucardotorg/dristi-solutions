@@ -23,7 +23,6 @@ import java.util.UUID;
  * CauseList
  */
 @Validated
-@jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2024-04-25T11:13:21.813391200+05:30[Asia/Calcutta]")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -133,4 +132,9 @@ public class CauseList {
     @JsonProperty("slot")
     private String slot = null;
 
+    @JsonProperty("hearingDate")
+    private String hearingDate = null;
+
+    @JsonProperty("hearingTimeInMinutes")
+    private Integer hearingTimeInMinutes = null;
 }

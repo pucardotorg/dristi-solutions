@@ -25,14 +25,11 @@ public class CauseListRowMapper implements RowMapper<CauseList> {
         }
         return CauseList.builder()
                 .courtId(resultSet.getString("court_id"))
-                .caseId(resultSet.getString("case_id"))
                 .tenantId(resultSet.getString("tenant_id"))
                 .judgeId(resultSet.getString("judge_id"))
-                .typeOfHearing(resultSet.getString("hearing_type"))
-                .litigantNames(litigantNames)
-                .tentativeSlot(resultSet.getString("tentative_slot"))
+                .slot(resultSet.getString("tentative_slot"))
                 .caseTitle(resultSet.getString("case_title"))
-                .caseDate(resultSet.getString("case_date"))
+                .caseRegistrationDate(resultSet.getString("case_date"))
                 .build();
     }
 }

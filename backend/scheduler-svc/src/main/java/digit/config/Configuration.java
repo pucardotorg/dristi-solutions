@@ -180,4 +180,17 @@ public class Configuration {
 
     @Value("@{dristi.application.search.endpoint}")
     private String applicationSearchEndpoint;
+
+    // Filestore Config
+    @Value("${egov.filestore.host}")
+    private String fileStoreHost;
+
+    @Value("${egov.file.store.save.endpoint}")
+    private String fileStoreSaveEndPoint;
+
+    @Value("${egov.filestore.causelist.module}")
+    private String fileStoreCauseListModule;
+
+    @Value("${causelist.pdf.save.topic}")
+    private String causeListPdfTopic;
 }
