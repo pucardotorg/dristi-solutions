@@ -140,14 +140,14 @@ const InsideHearingMainPage = () => {
       setAdditionalDetails(responseList?.additionalDetails);
       setOptions(
         responseList?.additionalDetails?.witnessDetails?.formdata?.map((witness) => ({
-          label: `${witness.data.firstName} ${witness.data.lastName}`,
+          label: [witness?.data?.firstName, witness?.data?.lastName].filter(Boolean).join(" "),
           value: witness.data.uuid,
         }))
       );
       const selectedWitnessDefault = responseList?.additionalDetails?.witnessDetails?.formdata?.[0]?.data || {};
       setSelectedWitness(selectedWitnessDefault);
       setWitnessDepositionText(
-        hearing?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitnessDefault.uuid)?.deposition || ""
+        hearing?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitnessDefault?.uuid)?.deposition || ""
       );
     }
   }, [caseDataResponse]);
@@ -280,7 +280,7 @@ const InsideHearingMainPage = () => {
     }
   };
 
-  const attendanceCount = useMemo(() => hearing?.attendees?.filter((attendee) => attendee.wasPresent).length || 0, [hearing]);
+  const attendanceCount = useMemo(() => hearing?.attendees?.filter((attendee) => attendee.wasPresent)?.length || 0, [hearing]);
   const [isTranscriptRecording, setIsTranscriptRecording] = useState(false);
   const [isWitnessRecording, setIsWitnessRecording] = useState(false);
   const [globalStream, setGlobalStream] = useState(null);
@@ -337,8 +337,8 @@ const InsideHearingMainPage = () => {
                 selected={
                   IsSelectedWitness
                     ? {
-                        label: `${selectedWitness.firstName} ${selectedWitness.lastName}`,
-                        value: selectedWitness.uuid,
+                        label: [selectedWitness?.firstName, selectedWitness?.lastName].filter(Boolean).join(" "),
+                        value: selectedWitness?.uuid,
                       }
                     : {}
                 }
@@ -374,7 +374,13 @@ const InsideHearingMainPage = () => {
                   <React.Fragment>
                     <TextArea
                       ref={textAreaRef}
-                      style={{ width: "100%", minHeight: "40vh" }}
+                      style={{
+                        width: "100%",
+                        minHeight: "40vh",
+                        ...((isDepositionSaved || disableTextArea || !IsSelectedWitness) && {
+                          pointerEvents: "unset !important",
+                        }),
+                      }}
                       value={IsSelectedWitness ? witnessDepositionText || "" : ""}
                       onChange={handleChange}
                       disabled={isDepositionSaved || disableTextArea || !IsSelectedWitness}
@@ -431,14 +437,28 @@ const InsideHearingMainPage = () => {
               <React.Fragment>
                 {activeTab === "Witness Deposition" && (
                   <TextArea
-                    style={{ width: "100%", minHeight: "40vh", cursor: "default", backgroundColor: "#E8E8E8", color: "#3D3C3C" }}
+                    style={{
+                      width: "100%",
+                      minHeight: "40vh",
+                      cursor: "default",
+                      backgroundColor: "#E8E8E8",
+                      color: "#3D3C3C",
+                      pointerEvents: "unset !important",
+                    }}
                     value={IsSelectedWitness ? witnessDepositionText || "" : ""}
                     disabled
                   />
                 )}
                 {activeTab !== "Witness Deposition" && (
                   <TextArea
-                    style={{ width: "100%", minHeight: "40vh", cursor: "default", backgroundColor: "#E8E8E8", color: "#3D3C3C" }}
+                    style={{
+                      width: "100%",
+                      minHeight: "40vh",
+                      cursor: "default",
+                      backgroundColor: "#E8E8E8",
+                      color: "#3D3C3C",
+                      pointerEvents: "unset !important",
+                    }}
                     value={transcriptText || ""}
                     disabled
                   />
@@ -571,7 +591,20 @@ const InsideHearingMainPage = () => {
               />
             </div>
           ) : (
-            <Button label={t("EXIT_HEARING")} variation={"primary"} onButtonClick={handleExitHearing} />
+            <Button
+              label={t("EXIT_HEARING")}
+              variation={"primary"}
+              onButtonClick={handleExitHearing}
+              style={{ boxShadow: "none", backgroundColor: "#007e7e", border: "none", padding: "10px", width: "166px" }}
+              textStyles={{
+                fontFamily: "Roboto",
+                fontSize: "16px",
+                fontWeight: 700,
+                lineHeight: "18.75px",
+                textAlign: "center",
+                color: "#ffffff",
+              }}
+            />
           )}
         </div>
       </ActionBar>
