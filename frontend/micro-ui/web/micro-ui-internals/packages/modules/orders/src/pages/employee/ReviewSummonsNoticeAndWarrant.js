@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Header, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
-import { NoticesTabsConfig, SummonsTabsConfig } from "../../configs/SuumonsConfig";
+import { SummonsTabsConfig } from "../../configs/SuumonsConfig";
 import { useTranslation } from "react-i18next";
 import DocumentModal from "../../components/DocumentModal";
 import PrintAndSendDocumentComponent from "../../components/Print&SendDocuments";
@@ -115,19 +115,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const orderType = useMemo(() => orderData?.list[0]?.orderType, [orderData]);
 
-  useEffect(() => {
-    if (orderType === "NOTICE") {
-      setConfig(NoticesTabsConfig?.NoticesTabsConfig?.[0]);
-      setTabData(
-        NoticesTabsConfig?.NoticesTabsConfig?.map((configItem, index) => ({
-          key: index,
-          label: configItem.label,
-          active: index === 0 ? true : false,
-        }))
-      );
-    }
-  }, [orderType]);
-
   const handleSubmitButtonDisable = (disable) => {
     console.log("disable :>> ", disable);
     setIsDisabled(disable);
@@ -228,7 +215,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const onTabChange = (n) => {
     setTabData((prev) => prev.map((i, c) => ({ ...i, active: c === n ? true : false }))); //setting tab enable which is being clicked
-    setConfig(orderType === "NOTICE" ? NoticesTabsConfig?.NoticesTabsConfig?.[n] : SummonsTabsConfig?.SummonsTabsConfig?.[n]); // as per tab number filtering the config
+    setConfig(SummonsTabsConfig?.SummonsTabsConfig?.[n]); // as per tab number filtering the config
   };
 
   function findNextHearings(objectsList) {
