@@ -1,25 +1,29 @@
 package digit.web.models;
 
+
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.validation.Valid;
 import lombok.*;
-import org.egov.common.contract.request.RequestInfo;
 
 import java.util.List;
 
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 @ToString
-public class CauseListRequest {
+@Getter
+@Setter
+public class SlotList {
 
-    @JsonProperty("RequestInfo")
-    @Valid
-    private RequestInfo requestInfo = null;
+    @JsonProperty("slotTime")
+    private String slotTime = null;
+
+    @JsonProperty("slotName")
+    private String slotName = null;
+
+    @JsonProperty("hearingType")
+    private String hearingType = null;
 
     @JsonProperty("CauseList")
-    @Valid
     private List<CauseList> causeLists = null;
 
 }

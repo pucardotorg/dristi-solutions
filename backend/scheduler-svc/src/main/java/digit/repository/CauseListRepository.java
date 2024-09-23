@@ -4,6 +4,7 @@ import digit.repository.querybuilder.CauseListQueryBuilder;
 import digit.repository.rowmapper.CauseListRowMapper;
 import digit.web.models.CauseList;
 import digit.web.models.CauseListSearchCriteria;
+import io.swagger.models.auth.In;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -32,8 +33,9 @@ public class CauseListRepository {
 
     public List<CauseList> getCauseLists(CauseListSearchCriteria searchCriteria) {
 
-        List<String> preparedStmtList = new ArrayList<>();
-        String query = queryBuilder.getCauseListQuery(searchCriteria, preparedStmtList);
+        List<Object> preparedStmtList = new ArrayList<>();
+        List<Integer> preparedStmtListArgs = new ArrayList<>();
+        String query = queryBuilder.getCauseListQuery(searchCriteria, preparedStmtList, preparedStmtListArgs);
         log.debug("Final query: " + query);
         return jdbcTemplate.query(query, preparedStmtList.toArray(), rowMapper);
     }

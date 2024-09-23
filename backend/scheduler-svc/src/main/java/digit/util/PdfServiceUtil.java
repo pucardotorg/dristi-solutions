@@ -1,7 +1,7 @@
 package digit.util;
 
 import digit.config.Configuration;
-import digit.web.models.CauseListRequest;
+import digit.web.models.CauseListSlotRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +27,7 @@ public class PdfServiceUtil {
         this.config = config;
     }
 
-    public ByteArrayResource generatePdfFromPdfService(CauseListRequest causeListRequest, String tenantId,
+    public ByteArrayResource generatePdfFromPdfService(CauseListSlotRequest causeListRequest, String tenantId,
                                                        String pdfTemplateKey) {
         try {
             StringBuilder uri = new StringBuilder();
@@ -37,7 +37,7 @@ public class PdfServiceUtil {
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<CauseListRequest> requestEntity = new HttpEntity<>(causeListRequest, headers);
+            HttpEntity<CauseListSlotRequest> requestEntity = new HttpEntity<>(causeListRequest, headers);
 
             ResponseEntity<ByteArrayResource> responseEntity = restTemplate.postForEntity(uri.toString(), requestEntity, ByteArrayResource.class);
 

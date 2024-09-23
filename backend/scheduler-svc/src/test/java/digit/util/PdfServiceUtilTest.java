@@ -1,14 +1,12 @@
 package digit.util;
 
 import digit.config.Configuration;
-import digit.web.models.CauseListRequest;
+import digit.web.models.CauseListSlotRequest;
 import org.egov.tracer.model.CustomException;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
@@ -35,7 +33,7 @@ public class PdfServiceUtilTest {
     @Test
     void generatePdfFromPdfService_Success() {
         // Given
-        CauseListRequest causeListRequest = new CauseListRequest();
+        CauseListSlotRequest causeListRequest = new CauseListSlotRequest();
         String tenantId = "tenant1";
         String pdfTemplateKey = "templateKey1";
         String pdfServiceHost = "http://localhost";
@@ -61,7 +59,7 @@ public class PdfServiceUtilTest {
     @Test
     void generatePdfFromPdfService_NullResponse() {
         // Given
-        CauseListRequest causeListRequest = new CauseListRequest();
+        CauseListSlotRequest causeListRequest = new CauseListSlotRequest();
         String tenantId = "tenant1";
         String pdfTemplateKey = "templateKey1";
         String pdfServiceHost = "http://localhost";
@@ -85,7 +83,7 @@ public class PdfServiceUtilTest {
     @Test
     void generatePdfFromPdfService_Exception() {
         // Given
-        CauseListRequest causeListRequest = new CauseListRequest();
+        CauseListSlotRequest causeListRequest = new CauseListSlotRequest();
         String tenantId = "tenant1";
         String pdfTemplateKey = "templateKey1";
         String pdfServiceHost = "http://localhost";
