@@ -161,6 +161,9 @@ public class TransactionDetails {
     }
 
     public String toMultiAccountPaymentString() {
+        if (amountDetails == null || amountDetails.isEmpty()) {
+            return "";
+        }
         return amountDetails.stream()
                 .map(detail -> String.format("%s|%s|%s",
                         detail.getPostingAmount(),
