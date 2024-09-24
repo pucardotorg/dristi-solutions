@@ -1025,6 +1025,8 @@ const GenerateOrders = () => {
     createTask = false,
     taskStatus = "CREATE_SUBMISSION",
     taskName = "",
+    channel = "",
+    orderType = "",
   }) => {
     const formdata = order?.additionalDetails?.formdata;
     let create = createTask;
@@ -1103,38 +1105,29 @@ const GenerateOrders = () => {
       });
       return await Promise.all(promises);
     }
-    if (order?.orderType === "SUMMONS") {
+    if ((order?.orderType === "SUMMONS" || orderType) && refId) {
       const assignee = [...complainants?.map((data) => data?.uuid[0])];
       const advocateUuid = Object.keys(allAdvocates)
         .filter((data) => assignee.includes(allAdvocates?.[data]?.[0]))
         ?.flat();
       assignees = [...assignee, ...advocateUuid]?.map((uuid) => ({ uuid }));
-      if (Array.isArray(order?.additionalDetails?.formdata?.SummonsOrder?.selectedChannels)) {
-        entityType = "order-default";
-        const promises = order?.additionalDetails?.formdata?.SummonsOrder?.selectedChannels?.map(async (channel) => {
-          if (channel?.type === "Post" || channel.type === "SMS" || channel.type === "E-mail") {
-            return ordersService.customApiService(Urls.orders.pendingTask, {
-              pendingTask: {
-                name: t(`MAKE_PAYMENT_FOR_SUMMONS_${channelTypeEnum?.[channel?.type]?.code}`),
-                entityType,
-                referenceId: `MANUAL_${channel.type}_${currentOrder?.orderNumber}`,
-                status: `PAYMENT_PENDING_${channelTypeEnum?.[channel?.type]?.code}`,
-                assignedTo: assignees,
-                assignedRole,
-                cnrNumber: cnrNumber,
-                filingNumber: filingNumber,
-                isCompleted: false,
-                stateSla: stateSlaMap?.[order?.orderType] * dayInMillisecond + todayDate,
-                additionalDetails: { ...additionalDetails, applicationNumber: order?.additionalDetails?.formdata?.refApplicationId },
-                tenantId,
-              },
-            });
-          }
-
-          return null;
-        });
-        return await Promise.all(promises);
-      }
+      entityType = "order-default";
+      return ordersService.customApiService(Urls.orders.pendingTask, {
+        pendingTask: {
+          name: t(`MAKE_PAYMENT_FOR_SUMMONS_${channelTypeEnum?.[channel?.type]?.code}`),
+          entityType,
+          referenceId: `MANUAL_${refId}`,
+          status: `PAYMENT_PENDING_${channelTypeEnum?.[channel?.type]?.code}`,
+          assignedTo: assignees,
+          assignedRole,
+          cnrNumber: cnrNumber,
+          filingNumber: filingNumber,
+          isCompleted: false,
+          stateSla: stateSlaMap?.[order?.orderType || orderType] * dayInMillisecond + todayDate,
+          additionalDetails: { ...additionalDetails, applicationNumber: order?.additionalDetails?.formdata?.refApplicationId },
+          tenantId,
+        },
+      });
     }
     if (order?.orderType === "WARRANT") {
       entityType = "order-default";
@@ -1513,38 +1506,44 @@ const GenerateOrders = () => {
             gender: "",
           };
         }
-        await ordersService.customApiService(Urls.orders.taskCreate, {
-          task: {
-            taskDetails: payload,
-            workflow: {
-              action: "CREATE",
-              comments: orderType,
-              documents: [
-                {
-                  documentType: null,
-                  fileStore: null,
-                  documentUid: null,
-                  additionalDetails: {},
-                },
-              ],
-              assignes: null,
-              rating: null,
+        await ordersService
+          .customApiService(Urls.orders.taskCreate, {
+            task: {
+              taskDetails: payload,
+              workflow: {
+                action: "CREATE",
+                comments: orderType,
+                documents: [
+                  {
+                    documentType: null,
+                    fileStore: null,
+                    documentUid: null,
+                    additionalDetails: {},
+                  },
+                ],
+                assignes: null,
+                rating: null,
+              },
+              createdDate: new Date().getTime(),
+              orderId: orderData?.id,
+              filingNumber,
+              cnrNumber,
+              taskType: orderType,
+              status: "INPROGRESS",
+              tenantId,
+              amount: {
+                type: "FINE",
+                status: "DONE",
+                amount: "100",
+              },
             },
-            createdDate: new Date().getTime(),
-            orderId: orderData?.id,
-            filingNumber,
-            cnrNumber,
-            taskType: orderType,
-            status: "INPROGRESS",
             tenantId,
-            amount: {
-              type: "FINE",
-              status: "DONE",
-              amount: "100",
-            },
-          },
-          tenantId,
-        });
+          })
+          .then(async (data) => {
+            if (orderType === "SUMMONS" && item?.type !== "Via Police") {
+              await createPendingTask({ refId: data?.task?.taskNumber, channel: item, orderType: orderType });
+            }
+          });
       });
     } else if (Object.keys(payload || {}).length > 0) {
       await ordersService.customApiService(Urls.orders.taskCreate, {

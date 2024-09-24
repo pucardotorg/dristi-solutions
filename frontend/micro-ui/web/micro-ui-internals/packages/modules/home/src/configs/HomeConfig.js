@@ -337,7 +337,7 @@ export const pendingTaskOrderActions = {
       url: "/home/home-pending-task/post-payment-modal",
       params: [
         { key: "filingNumber", value: "filingNumber" },
-        { key: "orderNumber", value: "referenceId" },
+        { key: "taskNumber", value: "referenceId" },
       ],
     },
   },
@@ -348,7 +348,7 @@ export const pendingTaskOrderActions = {
       url: "/home/home-pending-task/sms-payment-modal",
       params: [
         { key: "filingNumber", value: "filingNumber" },
-        { key: "orderNumber", value: "referenceId" },
+        { key: "taskNumber", value: "referenceId" },
       ],
     },
   },
@@ -359,7 +359,7 @@ export const pendingTaskOrderActions = {
       url: "/home/home-pending-task/email-payment-modal",
       params: [
         { key: "filingNumber", value: "filingNumber" },
-        { key: "orderNumber", value: "referenceId" },
+        { key: "taskNumber", value: "referenceId" },
       ],
     },
   },
