@@ -32,14 +32,17 @@ public class EvidenceEnrichment {
 
     public void enrichEvidenceRegistration(EvidenceRequest evidenceRequest) {
         try {
-                List<String> artifactRegistrationIdList = idgenUtil.getIdList(
-                        evidenceRequest.getRequestInfo(),
-                        evidenceRequest.getRequestInfo().getUserInfo().getTenantId(),
-                        ARTIFACT_ID_NAME,
-                        null,
-                        1,
-                        false
-                );
+            String idName = getIdgenByArtifactTypeAndSourceType(evidenceRequest.getArtifact().getArtifactType(), evidenceRequest.getArtifact().getSourceType());
+            String tenantId = evidenceRequest.getArtifact().getCnrNumber();
+            List<String> evidenceNumberList = idgenUtil.getIdList(
+                    evidenceRequest.getRequestInfo(),
+                    tenantId,
+                    idName,
+                    null,
+                    1,
+                    false
+            );
+            evidenceRequest.getArtifact().setArtifactNumber(evidenceRequest.getArtifact().getCnrNumber()+"-"+evidenceNumberList.get(0));
 
                 AuditDetails auditDetails = AuditDetails.builder()
                         .createdBy(evidenceRequest.getRequestInfo().getUserInfo().getUuid())
@@ -57,7 +60,6 @@ public class EvidenceEnrichment {
 
                 evidenceRequest.getArtifact().setIsActive(true);
                 evidenceRequest.getArtifact().setCreatedDate(System.currentTimeMillis());
-                evidenceRequest.getArtifact().setArtifactNumber(artifactRegistrationIdList.get(0));
 
                 if (evidenceRequest.getArtifact().getFile() != null) {
                     evidenceRequest.getArtifact().getFile().setId(String.valueOf(UUID.randomUUID()));
@@ -100,17 +102,7 @@ public class EvidenceEnrichment {
 
     public void enrichEvidenceNumber(EvidenceRequest evidenceRequest) {
         try {
-            String idName = getIdgenByArtifactTypeAndSourceType(evidenceRequest.getArtifact().getArtifactType(), evidenceRequest.getArtifact().getSourceType());
-            String tenantId = evidenceRequest.getArtifact().getCnrNumber();
-            List<String> evidenceNumberList = idgenUtil.getIdList(
-                    evidenceRequest.getRequestInfo(),
-                    tenantId,
-                    idName,
-                    null,
-                    1,
-                    false
-            );
-            evidenceRequest.getArtifact().setEvidenceNumber(evidenceRequest.getArtifact().getCnrNumber()+"-"+evidenceNumberList.get(0));
+            evidenceRequest.getArtifact().setEvidenceNumber(evidenceRequest.getArtifact().getArtifactNumber());
             evidenceRequest.getArtifact().setIsEvidence(true);
         } catch (Exception e) {
             log.error("Error enriching evidence number upon update: {}", e.toString());
