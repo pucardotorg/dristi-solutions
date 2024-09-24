@@ -1,7 +1,7 @@
 package drishti.payment.calculator.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import drishti.payment.calculator.web.models.EPostConfigParams;
+import drishti.payment.calculator.web.models.SpeedPostConfigParams;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import org.egov.common.contract.request.RequestInfo;
@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class EPostUtilTest {
+public class SpeedPostUtilTest {
 
     @Mock
     private MdmsUtil mdmsUtil;
@@ -30,11 +30,11 @@ public class EPostUtilTest {
     @Mock
     private ObjectMapper objectMapper;
 
-    private SummonUtil ePostUtil;
+    private TaskUtil taskUtil;
 
     @BeforeEach
     void setUp() {
-        ePostUtil = new SummonUtil(mdmsUtil, objectMapper);
+        taskUtil = new TaskUtil(mdmsUtil, objectMapper);
     }
 
     @Test
@@ -54,15 +54,15 @@ public class EPostUtilTest {
 
         when(mdmsUtil.fetchMdmsData(requestInfo, tenantId, SUMMON_MODULE, Collections.singletonList(I_POST_MASTER))).thenReturn(response);
 
-        EPostConfigParams ePostConfigParams = new EPostConfigParams();
-        when(objectMapper.convertValue(jsonObject, EPostConfigParams.class)).thenReturn(ePostConfigParams);
+        SpeedPostConfigParams ePostConfigParams = new SpeedPostConfigParams();
+        when(objectMapper.convertValue(jsonObject, SpeedPostConfigParams.class)).thenReturn(ePostConfigParams);
 
-        EPostConfigParams result = ePostUtil.getIPostFeesDefaultData(requestInfo, tenantId);
+        SpeedPostConfigParams result = taskUtil.getIPostFeesDefaultData(requestInfo, tenantId);
 
         assertNotNull(result);
         assertEquals(ePostConfigParams, result);
 
         verify(mdmsUtil, times(1)).fetchMdmsData(requestInfo, tenantId, SUMMON_MODULE, Collections.singletonList(I_POST_MASTER));
-        verify(objectMapper, times(1)).convertValue(jsonObject, EPostConfigParams.class);
+        verify(objectMapper, times(1)).convertValue(jsonObject, SpeedPostConfigParams.class);
     }
 }
