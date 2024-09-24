@@ -30,11 +30,14 @@ public class TransactionDetailsRowMapper implements RowMapper<TransactionDetails
     public TransactionDetails mapRow(ResultSet rs, int rowNum) throws SQLException {
 
         List<AmountDetails> amountDetails = new ArrayList<>();
-        Object amountDetailsString = rs.getObject("amount_details");
+        String amountDetailsString = rs.getString("amount_details");
         try {
-            amountDetails = objectMapper.convertValue(amountDetailsString, new TypeReference<List<AmountDetails>>() {});
+            if (amountDetailsString != null) {
+                amountDetails = objectMapper.readValue(amountDetailsString, new TypeReference<List<AmountDetails>>() {});
+            }
         } catch (Exception e) {
-            throw new SQLException("Error deserializing jsonb field: " + amountDetailsString, e);
+            log.error("Error deserializing 'amount_details' field: {}", amountDetailsString, e);
+            throw new SQLException("Error deserializing 'amount_details' field: " + amountDetailsString, e);
         }
 
         AuditDetails auditdetails = AuditDetails.builder()
