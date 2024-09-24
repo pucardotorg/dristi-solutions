@@ -150,7 +150,7 @@ public class PaymentUpdateService {
             throw new CustomException("INVALID_RECEIPT", "No Tasks found for the consumerCode " + criteria.getTaskNumber());
         }
 
-        Role role = Role.builder().code("TASK_UPDATOR").tenantId(tenantId).build();
+        Role role = Role.builder().code(config.getSystemAdmin()).tenantId(tenantId).build();
         requestInfo.getUserInfo().getRoles().add(role);
 
         for (Task task : tasks) {
@@ -177,6 +177,9 @@ public class PaymentUpdateService {
                 task.setStatus(status);
 
                 TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
+                if (ISSUENOTICE.equalsIgnoreCase(status))
+                    producer.push(config.getTaskIssueSummonTopic(), taskRequest);
+
                 producer.push(config.getTaskUpdateTopic(), taskRequest);
             }
         }

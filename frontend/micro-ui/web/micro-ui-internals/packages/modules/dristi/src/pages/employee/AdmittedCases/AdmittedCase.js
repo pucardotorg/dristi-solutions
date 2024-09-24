@@ -34,6 +34,7 @@ import {
 } from "../../citizen/FileCase/Config/admissionActionConfig";
 import Modal from "../../../components/Modal";
 import CustomCaseInfoDiv from "../../../components/CustomCaseInfoDiv";
+import { removeInvalidNameParts } from "../../../Utils";
 
 const defaultSearchValues = {};
 
@@ -122,11 +123,14 @@ const AdmittedCases = () => {
   const caseDetails = useMemo(() => caseData?.criteria?.[0]?.responseList?.[0], [caseData]);
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber, [caseDetails]);
 
-  const showTakeAction =
-    (userRoles.includes("JUDGE_ROLE") || userRoles.includes("BENCHCLERK_ROLE")) &&
-    ["CASE_ADMITTED", "ADMISSION_HEARING_SCHEDULED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"].includes(
-      caseData?.criteria[0]?.responseList[0]?.status
-    );
+  const showTakeAction = useMemo(
+    () =>
+      (userRoles.includes("JUDGE_ROLE") || userRoles.includes("BENCHCLERK_ROLE")) &&
+      ["CASE_ADMITTED", "ADMISSION_HEARING_SCHEDULED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"].includes(
+        caseData?.criteria[0]?.responseList[0]?.status
+      ),
+    [caseData, userRoles]
+  );
 
   const { isLoading: isWorkFlowLoading, data: workFlowDetails } = window?.Digit.Hooks.useWorkflowDetails({
     tenantId,
@@ -167,15 +171,15 @@ const AdmittedCases = () => {
   const finalLitigantsData = litigants.map((litigant) => {
     return {
       ...litigant,
-      name: litigant.additionalDetails?.fullName,
+      name: removeInvalidNameParts(litigant.additionalDetails?.fullName),
     };
   });
   const reps = caseDetails?.representatives?.length > 0 ? caseDetails?.representatives : [];
   const finalRepresentativesData = reps.map((rep) => {
     return {
       ...rep,
-      name: rep.additionalDetails?.advocateName,
-      partyType: `Advocate (for ${rep.representing.map((client) => client?.additionalDetails?.fullName).join(", ")})`,
+      name: removeInvalidNameParts(rep.additionalDetails?.advocateName),
+      partyType: `Advocate (for ${rep.representing.map((client) => removeInvalidNameParts(client?.additionalDetails?.fullName)).join(", ")})`,
     };
   });
 
@@ -322,7 +326,7 @@ const AdmittedCases = () => {
                         name: "parties",
                         optionsKey: "name",
                         options: caseRelatedData.parties.map((party) => {
-                          return { code: party.name, name: party.name };
+                          return { code: removeInvalidNameParts(party.name), name: removeInvalidNameParts(party.name) };
                         }),
                       },
                     },
@@ -375,7 +379,7 @@ const AdmittedCases = () => {
                         name: "parties",
                         optionsKey: "name",
                         options: caseRelatedData.parties.map((party) => {
-                          return { code: party.name, name: party.name };
+                          return { code: removeInvalidNameParts(party.name), name: removeInvalidNameParts(party.name) };
                         }),
                       },
                     },
@@ -441,7 +445,7 @@ const AdmittedCases = () => {
                         name: "owner",
                         optionsKey: "name",
                         options: caseRelatedData.parties.map((party) => {
-                          return { code: party.name, name: party.name, value: party.individualId };
+                          return { code: removeInvalidNameParts(party.name), name: removeInvalidNameParts(party.name), value: party.individualId };
                         }),
                       },
                     },
@@ -494,7 +498,11 @@ const AdmittedCases = () => {
                         name: "owner",
                         optionsKey: "name",
                         options: caseRelatedData.parties.map((party) => {
-                          return { code: party.name, name: party.name, value: party.additionalDetails.uuid };
+                          return {
+                            code: removeInvalidNameParts(party.name),
+                            name: removeInvalidNameParts(party.name),
+                            value: party.additionalDetails.uuid,
+                          };
                         }),
                       },
                     },
@@ -700,7 +708,7 @@ const AdmittedCases = () => {
       },
       {
         key: "Complaint / CMP No.",
-        value: "",
+        value: caseDetails?.cmpNumber || "",
       },
       {
         key: "CNR No.",
@@ -708,7 +716,7 @@ const AdmittedCases = () => {
       },
       {
         key: "CCST No.",
-        value: "",
+        value: caseDetails?.ccstNumber || "",
       },
       {
         key: "Submitted on",
@@ -716,7 +724,7 @@ const AdmittedCases = () => {
       },
       {
         key: "Registered on",
-        value: "",
+        value: caseDetails?.registrationDate || "",
       },
     ];
   }, [caseDetails]);
@@ -1325,6 +1333,7 @@ const AdmittedCases = () => {
               <Button
                 variation={"outlined"}
                 label={t("DOWNLOAD_CASE_FILE")}
+                isDisabled={!caseDetails?.additionalDetails?.signedCaseDocument}
                 onButtonClick={() => downloadPdf(tenantId, caseDetails?.additionalDetails?.signedCaseDocument)}
               />
             )}
@@ -1421,12 +1430,12 @@ const AdmittedCases = () => {
       {config?.label !== "Overview" && config?.label !== "Complaint" && config?.label !== "History" && (
         <div style={{ width: "100%", background: "white", padding: "10px", display: "flex", justifyContent: "space-between" }}>
           <div style={{ fontWeight: 700, fontSize: "24px", lineHeight: "28.8px" }}>{t(`All_${config?.label.toUpperCase()}_TABLE_HEADER`)}</div>
-          {(!userRoles.includes("CITIZENS") || userRoles.includes("ADVOCATE_ROLE")) &&
+          {/* {(!userRoles.includes("CITIZENS") || userRoles.includes("ADVOCATE_ROLE")) &&
             (config?.label === "Hearings" || config?.label === "Documents") && (
               <div style={{ fontWeight: 500, fontSize: "16px", lineHeight: "20px", color: "#0A5757", cursor: "pointer" }}>
                 {t("DOWNLOAD_ALL_LINK")}
               </div>
-            )}
+            )} */}
           {userRoles.includes("ORDER_CREATOR") && config?.label === "Orders" && (
             <div style={{ display: "flex", gap: "10px" }}>
               <div
@@ -1435,9 +1444,9 @@ const AdmittedCases = () => {
               >
                 {t("GENERATE_ORDERS_LINK")}
               </div>
-              <div style={{ fontWeight: 500, fontSize: "16px", lineHeight: "20px", color: "#0A5757", cursor: "pointer" }}>
+              {/* <div style={{ fontWeight: 500, fontSize: "16px", lineHeight: "20px", color: "#0A5757", cursor: "pointer" }}>
                 {t("DOWNLOAD_ALL_LINK")}
-              </div>
+              </div> */}
             </div>
           )}
           {userRoles.includes("ORDER_CREATOR") && config?.label === "Submissions" && (
@@ -1448,9 +1457,9 @@ const AdmittedCases = () => {
               >
                 {t("REQUEST_DOCUMENTS_LINK")}
               </div>
-              <div style={{ fontWeight: 500, fontSize: "16px", lineHeight: "20px", color: "#0A5757", cursor: "pointer" }}>
+              {/* <div style={{ fontWeight: 500, fontSize: "16px", lineHeight: "20px", color: "#0A5757", cursor: "pointer" }}>
                 {t("DOWNLOAD_ALL_LINK")}
-              </div>
+              </div> */}
             </div>
           )}
           {isCitizen && config?.label === "Submissions" && (
@@ -1464,9 +1473,9 @@ const AdmittedCases = () => {
                 </div>
               )}
 
-              <div style={{ fontWeight: 500, fontSize: "16px", lineHeight: "20px", color: "#0A5757", cursor: "pointer" }}>
+              {/* <div style={{ fontWeight: 500, fontSize: "16px", lineHeight: "20px", color: "#0A5757", cursor: "pointer" }}>
                 {t("DOWNLOAD_ALL_LINK")}
-              </div>
+              </div> */}
             </div>
           )}
         </div>
