@@ -347,7 +347,7 @@ const initAutocomplete = (onChange, position, isPlaceRequired = false, index) =>
 };
 
 const LocationSearch = (props) => {
-  const { setCoordinateData, isAutoFilledDisabled } = props;
+  const { setCoordinateData, isAutoFilledDisabled = false } = props;
   const [coordinates, setCoordinates] = useState({ lat: 31.6160638, lng: 74.8978579 });
   useEffect(() => {
     async function mapScriptCall() {
