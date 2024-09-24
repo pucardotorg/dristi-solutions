@@ -225,6 +225,7 @@ function CaseFileAdmission({ t, path }) {
       tenantId
     ).then((response) => {
       setUpdatedCaseDetails(response?.cases?.[0]);
+      return response;
     });
   };
 
@@ -527,54 +528,66 @@ function CaseFileAdmission({ t, path }) {
       })),
     ].flat();
 
-    console.log("documentList", documentList, typeof documentTypeMapping[documentList[0]?.key]);
-
-    await Promise.all(
-      documentList
-        ?.filter((data) => data)
-        ?.map(async (data) => {
-          data?.document?.forEach(async (docFile) => {
-            if (docFile?.fileStore) {
-              try {
-                await DRISTIService.createEvidence({
-                  artifact: {
-                    artifactType: documentTypeMapping[data?.key],
-                    sourceType: "COMPLAINANT",
-                    sourceID: individualId,
-                    caseId: caseDetails?.id,
-                    filingNumber: caseDetails?.filingNumber,
-                    tenantId,
-                    comments: [],
-                    file: {
-                      documentType: docFile?.fileType || docFile?.documentType,
-                      fileStore: docFile?.fileStore,
-                      fileName: docFile?.fileName,
-                      documentName: docFile?.documentName,
+    updateCaseDetails("REGISTER", formdata).then(async (res) => {
+      await Promise.all(
+        documentList
+          ?.filter((data) => data)
+          ?.map(async (data) => {
+            data?.document?.forEach(async (docFile) => {
+              if (docFile?.fileStore) {
+                try {
+                  await DRISTIService.createEvidence({
+                    artifact: {
+                      artifactType: documentTypeMapping[data?.key],
+                      sourceType: "COMPLAINANT",
+                      sourceID: individualId,
+                      caseId: caseDetails?.id,
+                      filingNumber: caseDetails?.filingNumber,
+                      cnrNumber: res?.cases?.[0]?.cnrNumber,
+                      tenantId,
+                      comments: [],
+                      file: {
+                        documentType: docFile?.fileType || docFile?.documentType,
+                        fileStore: docFile?.fileStore,
+                        fileName: docFile?.fileName,
+                        documentName: docFile?.documentName,
+                      },
+                      workflow: {
+                        action: "TYPE DEPOSITION",
+                        documents: [
+                          {
+                            documentType: docFile?.fileType || docFile?.documentType,
+                            fileName: docFile?.fileName,
+                            documentName: docFile?.documentName,
+                            fileStoreId: docFile?.fileStore,
+                          },
+                        ],
+                      },
                     },
-                    workflow: {
-                      action: "TYPE DEPOSITION",
-                      documents: [
-                        {
-                          documentType: docFile?.fileType || docFile?.documentType,
-                          fileName: docFile?.fileName,
-                          documentName: docFile?.documentName,
-                          fileStoreId: docFile?.fileStore,
-                        },
-                      ],
-                    },
-                  },
-                });
-              } catch (error) {
-                console.error(`Error creating evidence for document ${docFile.fileName}:`, error);
+                  });
+                } catch (error) {
+                  console.error(`Error creating evidence for document ${docFile.fileName}:`, error);
+                }
               }
-            }
-          });
-        })
-    );
-
-    updateCaseDetails("REGISTER", formdata).then((res) => {
+            });
+          })
+      );
       setCaseADmitLoader(false);
-      setSubmitModalInfo({ ...registerCaseConfig, caseInfo: caseInfo });
+      setSubmitModalInfo({
+        ...registerCaseConfig,
+        showCopytext: true,
+        showTable: false,
+        caseInfo: [
+          {
+            key: "Complaint/ CMP No.",
+            value: res?.cases?.[0]?.cmpNumber,
+          },
+          {
+            key: "CNR No.",
+            value: res?.cases?.[0]?.cnrNumber,
+          },
+        ],
+      });
       setModalInfo({ ...modalInfo, page: 4 });
       setShowModal(true);
     });
@@ -843,7 +856,6 @@ function CaseFileAdmission({ t, path }) {
                 onSkip={onSendBack}
                 skiplabel={t(secondaryAction?.label || "")}
                 noBreakLine
-                submitIcon={<RightArrow />}
                 skipStyle={{ position: "fixed", left: "20px", bottom: "18px", color: "#007E7E", fontWeight: "700" }}
               />
               {showErrorToast && (
