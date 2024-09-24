@@ -147,6 +147,8 @@ public class SummonsService {
             }
         }
         task.setWorkflow(workflow);
+        String deliveryStatus = summonsRequest.getSummonsDelivery().getDeliveryStatus().getName();
+        task.getTaskDetails().getDeliveryChannel().setDeliveryStatus(deliveryStatus);
         TaskRequest taskRequest = TaskRequest.builder()
                 .requestInfo(request.getRequestInfo()).task(task).build();
         taskUtil.callUpdateTask(taskRequest);
@@ -199,5 +201,24 @@ public class SummonsService {
                 .acknowledgeUniqueNumber(summonsDelivery.getSummonDeliveryId())
                 .acknowledgementStatus("SUCCESS")
                 .build();
+    }
+
+    public void updateTaskDetailsStatus(SummonsRequest summonsRequest) {
+        TaskCriteria taskCriteria = TaskCriteria.builder().taskNumber(request.getSummonsDelivery().getTaskNumber()).build();
+        TaskSearchRequest searchRequest = TaskSearchRequest.builder()
+                .requestInfo(request.getRequestInfo()).criteria(taskCriteria).build();
+        TaskListResponse taskListResponse = taskUtil.callSearchTask(searchRequest);
+        if (taskListResponse == null || taskListResponse.getList() == null || taskListResponse.getList().isEmpty()) {
+            log.error("No task found for the given task number");
+        } else {
+            Task task = taskListResponse.getList().get(0);
+            if (task != null && task.getTaskDetails() != null && task.getTaskDetails().getDeliveryChannel() != null) {
+                String deliveryStatus = summonsRequest.getSummonsDelivery().getDeliveryStatus().getName();
+                task.getTaskDetails().getDeliveryChannel().setDeliveryStatus(deliveryStatus);
+                TaskRequest taskRequest = TaskRequest.builder()
+                        .requestInfo(request.getRequestInfo()).task(task).build();
+                taskUtil.callUpdateTask(taskRequest);
+            }
+        }
     }
 }
