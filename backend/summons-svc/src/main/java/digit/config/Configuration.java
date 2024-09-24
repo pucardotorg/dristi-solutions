@@ -124,14 +124,34 @@ public class Configuration {
     @Value("${egov.billingservice.fetch.bill}")
     private String fetchBillEndpoint;
 
-    @Value("${task.taxhead.master.code}")
-    private String taskTaxHeadMasterCode;
+    @Value("${task.taxhead.master.police.code}")
+    private String taskSummonPoliceTaxHeadMasterCode;
+
+    @Value("${task.taxhead.master.email.code}")
+    private String taskSummonEmailTaxHeadMasterCode;
+
+    @Value("${task.taxhead.master.sms.code}")
+    private String taskSummonSmsTaxHeadMasterCode;
 
     @Value("${task.taxhead.master.court.code}")
-    private String taskTaxHeadCourtMasterCode;
+    private String taskSummonTaxHeadCourtMasterCode;
 
     @Value("${task.taxhead.master.epost.code}")
-    private String taskTaxHeadEPostMasterCode;
+    private String taskSummonTaxHeadEPostMasterCode;
+
+
+    @Value("${task.notice.taxhead.master.email.code}")
+    private String taskNoticeEmailTaxHeadMasterCode;
+
+    @Value("${task.notice.taxhead.master.sms.code}")
+    private String taskNoticeSmsTaxHeadMasterCode;
+
+
+    @Value("${task.notice.taxhead.master.court.code}")
+    private String taskNoticeTaxHeadCourtMasterCode;
+
+    @Value("${task.notice.taxhead.master.epost.code}")
+    private String taskNoticeTaxHeadEPostMasterCode;
 
     @Value("${egov.tax.period.to}")
     private Long taxPeriodTo;
@@ -145,8 +165,11 @@ public class Configuration {
     @Value("${task.module.code}")
     private String taskModuleCode;
 
-    @Value(("${task.business.service}"))
-    private String taskBusinessService;
+    @Value(("${task.summon.business.service}"))
+    private String taskSummonBusinessService;
+
+    @Value(("${task.notice.business.service}"))
+    private String taskNoticeBusinessService;
 
     //Payment Calculator Service
 
