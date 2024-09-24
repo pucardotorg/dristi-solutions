@@ -33,15 +33,17 @@ public class EvidenceEnrichment {
     public void enrichEvidenceRegistration(EvidenceRequest evidenceRequest) {
         try {
             String idName = getIdgenByArtifactTypeAndSourceType(evidenceRequest.getArtifact().getArtifactType(), evidenceRequest.getArtifact().getSourceType());
+            String idFormat = getIdGenFormatByArtifactTypeAndSourceType(evidenceRequest.getArtifact().getArtifactType(), evidenceRequest.getArtifact().getSourceType());
             String tenantId = evidenceRequest.getArtifact().getCnrNumber();
             List<String> evidenceNumberList = idgenUtil.getIdList(
                     evidenceRequest.getRequestInfo(),
                     tenantId,
                     idName,
-                    null,
+                    idFormat,
                     1,
                     false
             );
+
             evidenceRequest.getArtifact().setArtifactNumber(evidenceRequest.getArtifact().getCnrNumber()+"-"+evidenceNumberList.get(0));
 
                 AuditDetails auditDetails = AuditDetails.builder()
@@ -89,9 +91,33 @@ public class EvidenceEnrichment {
         artifactSourceMap.put("DEPOSITION_COURT", "case.evidence.court.witness.[TENANT_ID]");
     }
 
+    private static final Map<String, String> artifactSourceMapForIdFormat = new HashMap<>();
+
+    static {
+        artifactSourceMap.put("DOCUMENTARY_COMPLAINANT", "P[SEQ_PRSQN_[TENANT_ID]]");
+        artifactSourceMap.put("DOCUMENTARY_ACCUSED", "D[SEQ_DFNC_[TENANT_ID]]");
+        artifactSourceMap.put("DOCUMENTARY_COURT", "C[SEQ_COURT_[TENANT_ID]]");
+        artifactSourceMap.put("AFFIDAVIT_COMPLAINANT", "P[SEQ_PRSQN_[TENANT_ID]]");
+        artifactSourceMap.put("AFFIDAVIT_ACCUSED", "D[SEQ_DFNC_[TENANT_ID]]");
+        artifactSourceMap.put("AFFIDAVIT_COURT", "C[SEQ_COURT_[TENANT_ID]]");
+        artifactSourceMap.put("DEPOSITION_COMPLAINANT", "PW[SEQ_PRSQNWTNS_[TENANT_ID]]");
+        artifactSourceMap.put("DEPOSITION_ACCUSED", "DW[SEQ_DFNCWTNS_[TENANT_ID]]");
+        artifactSourceMap.put("DEPOSITION_COURT", "CW[SEQ_COURTWTNS_[TENANT_ID]]");
+    }
+
     public String getIdgenByArtifactTypeAndSourceType(String artifactType, String sourceType) {
         String key = artifactType + "_" + sourceType;
         String result = artifactSourceMap.get(key);
+        if (result != null) {
+            return result;
+        } else {
+            throw new CustomException(ENRICHMENT_EXCEPTION, "Invalid artifact type or source type provided");
+        }
+    }
+
+    public String getIdGenFormatByArtifactTypeAndSourceType(String artifactType, String sourceType) {
+        String key = artifactType + "_" + sourceType;
+        String result = artifactSourceMapForIdFormat.get(key);
         if (result != null) {
             return result;
         } else {
