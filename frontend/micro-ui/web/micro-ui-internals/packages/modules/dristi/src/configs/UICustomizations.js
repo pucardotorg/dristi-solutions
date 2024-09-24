@@ -8,6 +8,7 @@ import { RenderInstance } from "../components/RenderInstance";
 import OverlayDropdown from "../components/OverlayDropdown";
 import CustomChip from "../components/CustomChip";
 import ReactTooltip from "react-tooltip";
+import { removeInvalidNameParts } from "../Utils";
 
 const businessServiceMap = {
   "muster roll": "MR",
@@ -186,12 +187,12 @@ export const UICustomizations = {
                   <span className="icon" style={{ display: "flex", justifyContent: "space-between" }}>
                     <span className="icon">{adv?.barRegistrationNumber}</span>
                     <span className="icon" style={{ justifyContent: "end" }}>
-                      {adv?.additionalDetails?.username}
+                      {removeInvalidNameParts(adv?.additionalDetails?.username)}
                     </span>
                   </span>
                 ),
-                barRegistrationNumber: `${adv?.barRegistrationNumber} (${adv?.additionalDetails?.username})`,
-                advocateName: adv?.additionalDetails?.username,
+                barRegistrationNumber: `${adv?.barRegistrationNumber} (${removeInvalidNameParts(adv?.additionalDetails?.username)})`,
+                advocateName: removeInvalidNameParts(adv?.additionalDetails?.username),
                 advocateId: adv?.id,
                 barRegistrationNumberOriginal: adv?.barRegistrationNumber,
                 advocateUuid: adv?.auditDetails?.createdBy,
@@ -222,12 +223,12 @@ export const UICustomizations = {
                     <span className="icon" style={{ display: "flex", justifyContent: "space-between" }}>
                       <span className="icon">{adv?.barRegistrationNumber}</span>
                       <span className="icon" style={{ justifyContent: "end" }}>
-                        {adv?.additionalDetails?.username}
+                        {removeInvalidNameParts(adv?.additionalDetails?.username)}
                       </span>
                     </span>
                   ),
                   barRegistrationNumber: `${adv?.barRegistrationNumber}`,
-                  advocateName: adv?.additionalDetails?.username,
+                  advocateName: removeInvalidNameParts(adv?.additionalDetails?.username),
                   advocateId: adv?.id,
                   barRegistrationNumberOriginal: adv?.barRegistrationNumber,
                   data: adv,
@@ -956,7 +957,7 @@ export const UICustomizations = {
             const finalLitigantsData = litigants.map((litigant) => {
               return {
                 ...litigant,
-                name: litigant.additionalDetails?.fullName,
+                name: removeInvalidNameParts(litigant.additionalDetails?.fullName),
               };
             });
             const reps = data.criteria[0].responseList[0].representatives?.length > 0 ? data.criteria[0].responseList[0].representatives : [];
@@ -964,7 +965,9 @@ export const UICustomizations = {
               return {
                 ...rep,
                 name: rep.additionalDetails?.advocateName,
-                partyType: `Advocate (for ${rep.representing.map((client) => client?.additionalDetails?.fullName).join(", ")})`,
+                partyType: `Advocate (for ${rep.representing
+                  .map((client) => removeInvalidNameParts(client?.additionalDetails?.fullName))
+                  .join(", ")})`,
               };
             });
             return {
@@ -983,8 +986,8 @@ export const UICustomizations = {
     },
     additionalCustomizations: (row, key, column, value, t) => {
       switch (key) {
-        // case "Document":
-        //   return <OwnerColumn name={row?.name?.familyName} t={t} />;
+        case "Party Name":
+          return removeInvalidNameParts(value);
         case "Date Added":
           const date = new Date(value);
           const day = date.getDate().toString().padStart(2, "0");

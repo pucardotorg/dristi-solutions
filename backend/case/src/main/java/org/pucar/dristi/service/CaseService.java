@@ -154,12 +154,14 @@ public class CaseService {
                 enrichmentUtil.enrichAccessCode(caseRequest);
                 enrichmentUtil.enrichCourtCaseNumber(caseRequest);
                 enrichmentUtil.enrichRegistrationDate(caseRequest);
+                caseRequest.getCases().setCaseType(ST);
             }
 
             if (PENDING_ADMISSION_HEARING_STATUS.equals(caseRequest.getCases().getStatus())) {
                 enrichmentUtil.enrichAccessCode(caseRequest);
                 enrichmentUtil.enrichCNRNumber(caseRequest);
                 enrichmentUtil.enrichCMPNumber(caseRequest);
+                caseRequest.getCases().setCaseType(CMP);
             }
 
             log.info("Encrypting: {}", caseRequest);

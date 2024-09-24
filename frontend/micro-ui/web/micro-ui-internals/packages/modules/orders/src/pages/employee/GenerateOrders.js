@@ -49,6 +49,7 @@ import { useGetPendingTask } from "../../hooks/orders/useGetPendingTask";
 import useSearchOrdersService from "../../hooks/orders/useSearchOrdersService";
 import useGetStatuteSection from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useGetStatuteSection";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
+import { constructFullName, removeInvalidNameParts } from "../../utils";
 
 const configKeys = {
   SECTION_202_CRPC: configsOrderSection202CRPC,
@@ -233,9 +234,10 @@ const GenerateOrders = () => {
       caseDetails?.litigants
         ?.filter((item) => item?.partyType?.includes("complainant"))
         .map((item) => {
+          const fullName = removeInvalidNameParts(item?.additionalDetails?.fullName);
           return {
-            code: item?.additionalDetails?.fullName,
-            name: item?.additionalDetails?.fullName,
+            code: fullName,
+            name: fullName,
             uuid: allAdvocates[item?.additionalDetails?.uuid],
             individualId: item?.individualId,
             isJoined: true,
@@ -250,9 +252,10 @@ const GenerateOrders = () => {
       caseDetails?.litigants
         ?.filter((item) => item?.partyType?.includes("respondent"))
         .map((item) => {
+          const fullName = removeInvalidNameParts(item?.additionalDetails?.fullName);
           return {
-            code: item?.additionalDetails?.fullName,
-            name: item?.additionalDetails?.fullName,
+            code: fullName,
+            name: fullName,
             uuid: allAdvocates[item?.additionalDetails?.uuid],
             isJoined: true,
             partyType: "respondent",
@@ -266,9 +269,7 @@ const GenerateOrders = () => {
       caseDetails?.additionalDetails?.respondentDetails?.formdata
         ?.filter((data) => !data?.data?.respondentVerification?.individualDetails?.individualId)
         ?.map((data) => {
-          const fullName = `${data?.data?.respondentFirstName || ""}${
-            data?.data?.respondentMiddleName ? " " + data?.data?.respondentMiddleName + " " : " "
-          }${data?.data?.respondentLastName || ""}`.trim();
+          const fullName = constructFullName(data?.data?.respondentFirstName, data?.data?.respondentMiddleName, data?.data?.respondentLastName);
           return { code: fullName, name: fullName, uuid: data?.data?.uuid, isJoined: false, partyType: "respondent" };
         }) || []
     );
@@ -277,9 +278,7 @@ const GenerateOrders = () => {
   const witnesses = useMemo(() => {
     return (
       caseDetails?.additionalDetails?.witnessDetails?.formdata?.map((data) => {
-        const fullName = `${data?.data?.firstName || ""}${data?.data?.middleName ? " " + data?.data?.middleName + " " : " "}${
-          data?.data?.lastName || ""
-        }`.trim();
+        const fullName = constructFullName(data?.data?.firstName, data?.data?.middleName, data?.data?.lastName);
         return { code: fullName, name: fullName, uuid: data?.data?.uuid, partyType: "witness" };
       }) || []
     );
@@ -1400,9 +1399,11 @@ const GenerateOrders = () => {
     const respondentAddress = orderFormData?.addressDetails
       ? orderFormData?.addressDetails?.map((data) => ({ ...data?.addressDetails }))
       : caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.addressDetails?.map((data) => data?.addressDetails);
-    const respondentName = `${orderFormData?.respondentFirstName || ""}${
-      orderFormData?.respondentMiddleName ? " " + orderFormData?.respondentMiddleName + " " : " "
-    }${orderFormData?.respondentLastName || ""}`.trim();
+    const respondentName = constructFullName(
+      orderFormData?.respondentFirstName,
+      orderFormData?.respondentMiddleName,
+      orderFormData?.respondentLastName
+    );
 
     const respondentPhoneNo = orderFormData?.phonenumbers?.mobileNumber || [];
     const respondentEmail = orderFormData?.emails?.email || [];

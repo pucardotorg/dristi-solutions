@@ -27,6 +27,7 @@ import { uploadIdConfig } from "@egovernments/digit-ui-module-dristi/src/pages/c
 import CustomStepperSuccess from "../../../../orders/src/components/CustomStepperSuccess";
 import { createRespondentIndividualUser, selectMobileNumber, selectOtp, submitJoinCase } from "../../utils/joinCaseUtils";
 import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
+import { getAdvocates } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/EfilingValidationUtils";
 
 const CloseBtn = (props) => {
   return (
@@ -249,6 +250,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
 
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const isCitizen = useMemo(() => userInfo?.type === "CITIZEN", [userInfo]);
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
 
@@ -332,6 +334,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
                   isDisabled: true,
                   inputFieldClassName: "user-details-form-style",
                   validation: {},
+                  isMandatory: false,
                 },
                 {
                   label: "LAST_NAME",
@@ -342,7 +345,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
                   validation: {
                     isRequired: true,
                   },
-                  isMandatory: true,
+                  isMandatory: false,
                 },
               ],
               validation: {},
@@ -454,6 +457,20 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
       return { isFound: true, representative: representative, representing: representing };
     } else return { isFound: false, representative: undefined, representing: undefined };
   }, [caseDetails?.representatives, selectedParty?.individualId]);
+
+  const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
+  const onBehalfOfuuid = useMemo(() => Object.keys(allAdvocates)?.find((key) => allAdvocates[key].includes(userInfo?.uuid)), [
+    allAdvocates,
+    userInfo?.uuid,
+  ]);
+  const onBehalfOfLitigent = useMemo(() => caseDetails?.litigants?.find((item) => item.additionalDetails.uuid === onBehalfOfuuid), [
+    caseDetails,
+    onBehalfOfuuid,
+  ]);
+  const sourceType = useMemo(
+    () => (onBehalfOfLitigent?.partyType?.toLowerCase()?.includes("complainant") ? "COMPLAINANT" : !isCitizen ? "COURT" : "ACCUSED"),
+    [onBehalfOfLitigent, isCitizen]
+  );
 
   const searchAdvocateInRepresentives = useCallback(
     (advocateId) => {
@@ -1381,9 +1398,9 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
   };
 
   const createShorthand = (fullname) => {
-    const words = fullname.split(" ");
-    const firstChars = words.map((word) => word.charAt(0));
-    const shorthand = firstChars.join("");
+    const words = fullname?.split(" ");
+    const firstChars = words?.map((word) => word?.charAt(0));
+    const shorthand = firstChars?.join("");
     return shorthand;
   };
   const getUserFullName = (individual, formDataNames = {}) => {
@@ -1450,7 +1467,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
         }
       })
     );
-    userType === "Advocate"
+    userType?.value === "Advocate"
       ? setRespondentList(respondentList?.filter((data) => data?.respondentVerification?.individualDetails?.individualId)?.map((data) => data))
       : setRespondentList(respondentList?.map((data) => data));
   };
@@ -1489,7 +1506,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
       );
       getRespondentList(caseDetails?.additionalDetails?.respondentDetails?.formdata);
     }
-  }, [caseDetails, t, userType]);
+  }, [caseDetails, t, userType?.value]);
 
   useEffect(() => {
     updateSelectedParty(selectedParty);
@@ -1736,7 +1753,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
                 await DRISTIService.createEvidence({
                   artifact: {
                     artifactType: "DOCUMENTARY",
-                    sourceType: "COMPLAINANT",
+                    sourceType: sourceType,
                     sourceID: individualId,
                     caseId: caseDetails?.id,
                     filingNumber: caseDetails?.filingNumber,
@@ -1875,7 +1892,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
                 await DRISTIService.createEvidence({
                   artifact: {
                     artifactType: "DOCUMENTARY",
-                    sourceType: "COMPLAINANT",
+                    sourceType: sourceType,
                     sourceID: individualId,
                     caseId: caseDetails?.id,
                     filingNumber: caseDetails?.filingNumber,
@@ -2060,12 +2077,16 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
             }
             setRespondentList(
               respondentList?.map((respondent) => {
-                if (respondent?.index === selectedParty?.index)
+                if (respondent?.index === selectedParty?.index) {
+                  const fullName = [name?.givenName, name?.otherNames, name?.familyName]?.filter(Boolean)?.join(" "); // Removes empty or falsy values and joins with a space
+
                   return {
                     ...respondent,
-                    fullName: `${name?.givenName}${name?.otherNames ? " " + name?.otherNames + " " : " "}${name?.familyName}`,
+                    fullName: fullName,
                   };
-                else return respondent;
+                } else {
+                  return respondent;
+                }
               })
             );
             setStep(step + 1);
@@ -2100,7 +2121,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
                 await DRISTIService.createEvidence({
                   artifact: {
                     artifactType: "DOCUMENTARY",
-                    sourceType: "COMPLAINANT",
+                    sourceType: sourceType,
                     sourceID: individualId,
                     caseId: caseDetails?.id,
                     filingNumber: caseDetails?.filingNumber,
@@ -2224,12 +2245,16 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
             }
             setRespondentList(
               respondentList?.map((respondent) => {
-                if (respondent?.index === selectedParty?.index)
+                if (respondent?.index === selectedParty?.index) {
+                  const fullName = [name?.givenName, name?.otherNames, name?.familyName]?.filter(Boolean)?.join(" ");
+
                   return {
                     ...respondent,
-                    fullName: `${name?.givenName}${name?.otherNames ? " " + name?.otherNames + " " : " "}${name?.familyName}`,
+                    fullName: fullName,
                   };
-                else return respondent;
+                } else {
+                  return respondent;
+                }
               })
             );
             setStep(step + 1);
