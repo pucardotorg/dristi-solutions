@@ -32,7 +32,7 @@ const submitModalInfo = {
   showTable: true,
 };
 
-const PaymentForSummonComponent = ({ infos, links, feeOptions, orderDate, paymentLoader, isCaseAdmitted }) => {
+const PaymentForSummonComponent = ({ infos, links, feeOptions, orderDate, paymentLoader, orderType }) => {
   const { t } = useTranslation();
   const CustomErrorTooltip = window?.Digit?.ComponentRegistryService?.getComponent("CustomErrorTooltip");
 
@@ -56,7 +56,7 @@ const PaymentForSummonComponent = ({ infos, links, feeOptions, orderDate, paymen
         label={"Complete in 2 days"}
         additionalElements={[
           <p>
-            {t(isCaseAdmitted ? "SUMMON_DELIVERY_NOTE" : "NOTICE_DELIVERY_NOTE")}{" "}
+            {t(orderType === "SUMMONS" ? "SUMMON_DELIVERY_NOTE" : "NOTICE_DELIVERY_NOTE")}{" "}
             <span style={{ fontWeight: "bold" }}>{getDateWithMonthName(orderDate)}</span> {t("ON_TIME_DELIVERY")}
           </p>,
         ]}
@@ -160,6 +160,8 @@ const PaymentForSummonModal = ({ path }) => {
     Boolean(orderNumber)
   );
 
+  const orderType = useMemo(() => orderData?.list?.[0]?.orderType, [orderData]);
+
   const { data: hearingsData } = Digit.Hooks.hearings.useGetHearings(
     {
       hearing: { tenantId },
@@ -219,7 +221,7 @@ const PaymentForSummonModal = ({ path }) => {
   const { fetchBill, openPaymentPortal, paymentLoader, showPaymentModal, setShowPaymentModal, billPaymentStatus } = usePaymentProcess({
     tenantId,
     consumerCode: consumerCode,
-    service: isCaseAdmitted ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE,
+    service: orderType === "SUMMONS" ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE,
     caseDetails,
     totalAmount: "4",
   });
@@ -229,7 +231,7 @@ const PaymentForSummonModal = ({ path }) => {
     {
       tenantId,
       consumerCode: `${filteredTasks?.[0]?.taskNumber}_POST_COURT`,
-      service: isCaseAdmitted ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE,
+      service: orderType === "SUMMONS" ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE,
     },
     "dristi",
     Boolean(filteredTasks?.[0]?.taskNumber)
@@ -239,7 +241,7 @@ const PaymentForSummonModal = ({ path }) => {
     {
       tenantId,
       consumerCode: `${filteredTasks?.[0]?.taskNumber}_POST_PROCESS`,
-      service: isCaseAdmitted ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE,
+      service: orderType === "SUMMONS" ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE,
     },
     "dristi",
     Boolean(filteredTasks?.[0]?.taskNumber)
@@ -291,10 +293,10 @@ const PaymentForSummonModal = ({ path }) => {
 
       const updatedTask = {
         ...filteredTasks?.[0], // Keep all the existing properties
-        taskType: isCaseAdmitted ? "SUMMONS" : "NOTICE", // Change the taskType to SUMMON
+        taskType: orderType === "SUMMONS" ? "SUMMONS" : "NOTICE", // Change the taskType to SUMMON
         workflow: {
           // Add the workflow object with the desired action
-          action: isCaseAdmitted ? "MAKE PAYMENT" : "MAKE_PAYMENT",
+          action: "MAKE_PAYMENT",
         },
       };
 
@@ -310,10 +312,10 @@ const PaymentForSummonModal = ({ path }) => {
           return Promise.all([
             ordersService.customApiService(Urls.orders.pendingTask, {
               pendingTask: {
-                name: isCaseAdmitted ? "Show Summon-Warrant Status" : "Show Notice Status",
+                name: orderType === "SUMMONS" ? "Show Summon-Warrant Status" : "Show Notice Status",
                 entityType: paymentType.ORDER_MANAGELIFECYCLE,
                 referenceId: hearingsData?.HearingList?.[0]?.hearingId,
-                status: isCaseAdmitted ? paymentType.SUMMON_WARRANT_STATUS : paymentType.NOTICE_STATUS,
+                status: orderType === "SUMMONS" ? paymentType.SUMMON_WARRANT_STATUS : paymentType.NOTICE_STATUS,
                 assignedTo: [],
                 assignedRole: ["JUDGE_ROLE"],
                 cnrNumber: filteredTasks?.[0]?.cnrNumber,
@@ -328,7 +330,7 @@ const PaymentForSummonModal = ({ path }) => {
             }),
             ordersService.customApiService(Urls.orders.pendingTask, {
               pendingTask: {
-                name: isCaseAdmitted ? `MAKE_PAYMENT_FOR_SUMMONS_POST` : `MAKE_PAYMENT_FOR_NOTICE_POST`,
+                name: orderType === "SUMMONS" ? `MAKE_PAYMENT_FOR_SUMMONS_POST` : `MAKE_PAYMENT_FOR_NOTICE_POST`,
                 entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
                 referenceId: `MANUAL_Post_${orderNumber}`,
                 status: paymentType.PAYMENT_PENDING_POST,
@@ -421,13 +423,14 @@ const PaymentForSummonModal = ({ path }) => {
             {
               tenantId,
               consumerCode: `${filteredTasks?.[0]?.taskNumber}_POST_PROCESS`,
-              consumerType: isCaseAdmitted ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE,
-              businessService: isCaseAdmitted ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE,
+              consumerType: orderType === "SUMMONS" ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE,
+              businessService: orderType === "SUMMONS" ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE,
               taxPeriodFrom: Date.now().toString(),
               taxPeriodTo: Date.now().toString(),
               demandDetails: [
                 {
-                  taxHeadMasterCode: isCaseAdmitted ? paymentType.TASK_SUMMON_ADVANCE_CARRYFORWARD : paymentType.TASK_NOTICE_ADVANCE_CARRYFORWARD,
+                  taxHeadMasterCode:
+                    orderType === "SUMMONS" ? paymentType.TASK_SUMMON_ADVANCE_CARRYFORWARD : paymentType.TASK_NOTICE_ADVANCE_CARRYFORWARD,
                   taxAmount: 4,
                   collectionAmount: 0,
                 },
@@ -439,13 +442,13 @@ const PaymentForSummonModal = ({ path }) => {
       const bill = await fetchBill(
         `${filteredTasks?.[0]?.taskNumber}_POST_PROCESS`,
         tenantId,
-        isCaseAdmitted ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE
+        orderType === "SUMMONS" ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE
       );
       history.push(`/${window?.contextPath}/citizen/home/sbi-epost-payment`, {
         state: {
           billData: bill,
           consumerCode: filteredTasks?.[0]?.taskNumber,
-          service: isCaseAdmitted ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE,
+          service: orderType === "SUMMONS" ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE,
         },
       });
     } catch (error) {
@@ -486,13 +489,13 @@ const PaymentForSummonModal = ({ path }) => {
 
   const infos = useMemo(() => {
     const name = [
-      orderData?.list?.[0]?.additionalDetails?.formdata?.[isCaseAdmitted ? "SummonsOrder" : "noticeOrder"]?.party?.data?.firstName,
-      orderData?.list?.[0]?.additionalDetails?.formdata?.[isCaseAdmitted ? "SummonsOrder" : "noticeOrder"]?.party?.data?.lastName,
+      orderData?.list?.[0]?.additionalDetails?.formdata?.[orderType === "SUMMONS" ? "SummonsOrder" : "noticeOrder"]?.party?.data?.firstName,
+      orderData?.list?.[0]?.additionalDetails?.formdata?.[orderType === "SUMMONS" ? "SummonsOrder" : "noticeOrder"]?.party?.data?.lastName,
     ]
       ?.filter(Boolean)
       ?.join(" ");
     const addressDetails =
-      orderData?.list?.[0]?.additionalDetails?.formdata?.[isCaseAdmitted ? "SummonsOrder" : "noticeOrder"]?.party?.data?.addressDetails?.[0]
+      orderData?.list?.[0]?.additionalDetails?.formdata?.[orderType === "SUMMONS" ? "SummonsOrder" : "noticeOrder"]?.party?.data?.addressDetails?.[0]
         ?.addressDetails;
     console.log("addressDetails :>> ", addressDetails);
     return [
@@ -516,7 +519,7 @@ const PaymentForSummonModal = ({ path }) => {
   const paymentForSummonModalConfig = useMemo(() => {
     return {
       handleClose: handleClose,
-      heading: { label: `Payment for ${isCaseAdmitted ? "Summons" : "Notice"} via post` },
+      heading: { label: `Payment for ${orderType === "SUMMONS" ? "Summons" : "Notice"} via post` },
       isStepperModal: false,
       modalBody: (
         <PaymentForSummonComponent
@@ -526,6 +529,7 @@ const PaymentForSummonModal = ({ path }) => {
           orderDate={orderDate}
           paymentLoader={paymentLoader}
           isCaseAdmitted={isCaseAdmitted}
+          orderType={orderType}
         />
       ),
     };

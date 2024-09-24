@@ -170,4 +170,7 @@ public class Configuration {
 
     @Value("${egov.idgen.warrantIdFormat}")
     private String warrantIdFormat;
+
+    @Value("${role.system.admin}")
+    private String systemAdmin;
 }

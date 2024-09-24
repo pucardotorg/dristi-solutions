@@ -1803,7 +1803,7 @@ function EFilingCases({ path }) {
                 caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.respondentLastName || ""
               }`) ||
             caseDetails?.caseTitle,
-          courtId: data?.court?.code,
+          courtId: "KLKM52" || data?.court?.code,
           workflow: {
             ...caseDetails?.workflow,
             action: data?.action || "E-SIGN",

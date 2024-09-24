@@ -594,9 +594,20 @@ export const pendingTaskSubmissionWithoutResponseActions = {
 export const pendingTaskForArtifactActions = {};
 
 export const pendingTaskForSummonsActions = {
-  ISSUESUMMON: {
+  ISSUE_SUMMON: {
     actorName: ["CMO"],
     actionName: "Esign the Task Summon",
+    redirectDetails: {
+      url: "/orders/Summons&Notice",
+      params: [{ key: "taskNumber", value: "referenceId" }],
+    },
+  },
+};
+
+export const pendingTaskForNoticeActions = {
+  ISSUE_NOTICE: {
+    actorName: ["CMO"],
+    actionName: "Esign the Task Notice",
     redirectDetails: {
       url: "/orders/Summons&Notice",
       params: [{ key: "taskNumber", value: "referenceId" }],
@@ -613,4 +624,5 @@ export const selectTaskType = {
   "application-order-submission-default": pendingTaskSubmissionWithoutResponseActions,
   "artifact-default": pendingTaskForArtifactActions,
   "task-summons": pendingTaskForSummonsActions,
+  "task-notice": pendingTaskForNoticeActions,
 };

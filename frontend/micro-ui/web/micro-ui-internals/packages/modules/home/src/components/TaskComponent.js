@@ -161,7 +161,7 @@ const TasksComponent = ({
           details: {
             applicationType: applicationDetails?.applicationType,
             applicationSentOn: getDate(parseInt(applicationDetails?.auditDetails?.createdTime)),
-            sender: applicationDetails?.owner,
+            sender: applicationDetails?.additionalDetails?.owner,
             additionalDetails: applicationDetails?.additionalDetails,
             applicationId: applicationDetails?.id,
             auditDetails: applicationDetails?.auditDetails,
