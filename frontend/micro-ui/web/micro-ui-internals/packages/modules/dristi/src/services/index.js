@@ -1,8 +1,14 @@
 import { Request } from "@egovernments/digit-ui-libraries";
 import { Urls } from "../hooks";
+
 const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
 const benchId = window?.globalConfigs?.getConfig("BENCH_ID") || "BENCH_ID";
 const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "COURT_ID";
+const presidedBy = {
+  judgeId: [judgeId],
+  benchId: benchId,
+  courtId: courtId,
+};
 
 export const DRISTIService = {
   postIndividualService: (data, tenantId) =>
@@ -141,11 +147,6 @@ export const DRISTIService = {
     });
   },
   startHearing: ({ hearing }, params) => {
-    const presidedBy = {
-      judgeId: [judgeId],
-      benchId: benchId,
-      courtId: courtId,
-    };
     const updatedData = { hearing: { ...hearing, presidedBy: presidedBy, workflow: { action: "START" } } };
     return Request({
       url: Urls.dristi.updateHearings,
@@ -156,11 +157,6 @@ export const DRISTIService = {
     });
   },
   createHearings: (data, params) => {
-    const presidedBy = {
-      judgeId: [judgeId],
-      benchId: benchId,
-      courtId: courtId,
-    };
     const updatedData = {
       ...data,
       hearing: {
