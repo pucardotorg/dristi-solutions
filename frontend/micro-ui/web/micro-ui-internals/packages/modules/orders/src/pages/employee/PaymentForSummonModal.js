@@ -83,7 +83,7 @@ const PaymentForSummonComponent = ({ infos, links, feeOptions, orderDate, paymen
           {feeOptions[selectedOption?.value]?.map((action, index) => (
             <div className={`${index === 0 ? "header-row" : "action-row"}`}>
               <div className="payment-label">{t(action?.label)}</div>
-              <div className="payment-amount">{index === 0 ? action?.amount : `Rs. ${action?.amount}/-`}</div>
+              <div className="payment-amount">{action?.action !== "offline-process" && action?.amount ? `Rs. ${action?.amount}/-` : "-"}</div>
               <div className="payment-action">
                 {index === 0 ? (
                   t(action?.action)

@@ -172,6 +172,18 @@ const GenerateOrders = () => {
   ]);
   const courtRooms = useMemo(() => courtRoomDetails?.Court_Rooms || [], [courtRoomDetails]);
 
+  const { data: courtFeeAmount, isLoading: isLoadingCourtFeeData } = Digit.Hooks.useCustomMDMS(
+    Digit.ULBService.getStateId(),
+    "payment",
+    [{ name: "courtFeePayment" }],
+    {
+      select: (data) => {
+        return data?.payment?.courtFeePayment || [];
+      },
+    }
+  );
+  const summonsCourtFee = useMemo(() => courtFeeAmount?.find((p) => p?.paymentCode === "SUMMONS_COURT_FEE")?.amount || 0, [courtFeeAmount]);
+
   const { data: caseData, isLoading: isCaseDetailsLoading } = Digit.Hooks.dristi.useSearchCaseService(
     {
       criteria: [
@@ -1540,7 +1552,7 @@ const GenerateOrders = () => {
             amount: {
               type: "FINE",
               status: "DONE",
-              amount: "100",
+              amount: summonsCourtFee,
             },
           },
           tenantId,
@@ -1574,7 +1586,7 @@ const GenerateOrders = () => {
           amount: {
             type: "FINE",
             status: "DONE",
-            amount: "100",
+            amount: summonsCourtFee,
           },
         },
         tenantId,
