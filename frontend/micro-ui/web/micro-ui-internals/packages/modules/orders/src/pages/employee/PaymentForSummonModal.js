@@ -64,11 +64,13 @@ const PaymentForSummonComponent = ({ infos, links, feeOptions, orderDate, paymen
         className={`custom-info-card warning`}
       />
       <ApplicationInfoComponent infos={infos} links={links} />
+
       <LabelFieldPair className="case-label-field-pair">
         <div className="join-case-tooltip-wrapper">
           <CardLabel className="case-input-label">{t("Select preferred mode of post to pay")}</CardLabel>
           <CustomErrorTooltip message={t("Select date")} showTooltip={true} icon />
         </div>
+
         <RadioButtons
           additionalWrapperClass="mode-of-post-pay"
           options={modeOptions}
@@ -78,15 +80,18 @@ const PaymentForSummonComponent = ({ infos, links, feeOptions, orderDate, paymen
           disabled={paymentLoader}
         />
       </LabelFieldPair>
+
       {selectedOption?.value && (
         <div className="summon-payment-action-table">
           {feeOptions[selectedOption?.value]?.map((action, index) => (
-            <div className={`${index === 0 ? "header-row" : "action-row"}`}>
+            <div className={`${index === 0 ? "header-row" : "action-row"}`} key={index}>
               <div className="payment-label">{t(action?.label)}</div>
               <div className="payment-amount">{index === 0 ? action?.amount : `Rs. ${action?.amount}/-`}</div>
               <div className="payment-action">
                 {index === 0 ? (
                   t(action?.action)
+                ) : action?.billPaymentStatus && action.billPaymentStatus === true ? (
+                  <p className="payment-completed-text">Payment Completed</p>
                 ) : action?.action !== "offline-process" ? (
                   <Button label={t(action.action)} onButtonClick={action.onClick} isDisabled={paymentLoader} />
                 ) : (
@@ -108,6 +113,8 @@ const PaymentForSummonModal = ({ path }) => {
   const { filingNumber, orderNumber } = Digit.Hooks.useQueryParams();
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [caseId, setCaseId] = useState();
+  const [ePostPaymentStatus, setEPostPaymentStatus] = useState();
+  const [courtPaymentStatus, setCourtPaymentStatus] = useState();
 
   const { data: caseData } = Digit.Hooks.dristi.useSearchCaseService(
     {
@@ -201,8 +208,48 @@ const PaymentForSummonModal = ({ path }) => {
     return tasksWithPostChannel;
   }, [tasksData, orderData]);
 
+  const { data: paymentTypeData, isLoading: isPaymentTypeLoading } = Digit.Hooks.useCustomMDMS(
+    Digit.ULBService.getStateId(),
+    "payment",
+    [{ name: "paymentType" }],
+    {
+      select: (data) => {
+        return data?.payment?.paymentType || [];
+      },
+    }
+  );
+
+  const { data: taxPeriodData, isLoading: taxPeriodLoading } = Digit.Hooks.useCustomMDMS(
+    Digit.ULBService.getStateId(),
+    "BillingService",
+    [{ name: "TaxPeriod" }],
+    {
+      select: (data) => {
+        return data?.BillingService?.TaxPeriod || [];
+      },
+    }
+  );
+
+  const suffix = useMemo(() => {
+    if (!paymentTypeData) return [];
+    const data = paymentTypeData;
+    return data.filter(
+      (item) =>
+        item?.deliveryChannel === "EPOST" &&
+        item?.businessService &&
+        item?.businessService?.some((service) => service?.businessCode === "task-summons")
+    );
+  }, paymentTypeData);
+
+  const taxPeriodSummon = useMemo(() => {
+    if (!taxPeriodData) return [];
+    const data = taxPeriodData;
+    console.log("opppopo");
+    return data.filter((item) => item?.service === "task-summons");
+  }, taxPeriodData);
+
   const consumerCode = useMemo(() => {
-    return filteredTasks?.[0]?.taskNumber ? `${filteredTasks?.[0]?.taskNumber}_POST_COURT` : undefined;
+    return filteredTasks?.[0]?.taskNumber ? `${filteredTasks?.[0]?.taskNumber}_${suffix?.[0]?.suffix}` : undefined;
   }, [filteredTasks]);
 
   console.log("consumerCode :>> ", consumerCode);
@@ -213,6 +260,12 @@ const PaymentForSummonModal = ({ path }) => {
 
   console.log("orderData :>> ", orderData);
 
+  console.log(paymentTypeData, "suffix");
+
+  // console.log(courtFeePaymentAmount, "courtfeepayment");
+
+  console.log("dasd", suffix);
+
   const { fetchBill, openPaymentPortal, paymentLoader, showPaymentModal, setShowPaymentModal, billPaymentStatus } = usePaymentProcess({
     tenantId,
     consumerCode: consumerCode,
@@ -221,170 +274,154 @@ const PaymentForSummonModal = ({ path }) => {
     totalAmount: "4",
   });
 
-  const { data: courtBillResponse, isLoading: isCourtBillLoading } = Digit.Hooks.dristi.useBillSearch(
+  const { data: ePostBillResponse, isLoading: isEPOSTBillLoading, refetch: reftechEPostBill } = Digit.Hooks.dristi.useBillSearch(
     {},
-    { tenantId, consumerCode: `${filteredTasks?.[0]?.taskNumber}_POST_COURT`, service: paymentType.TASK_SUMMON },
-    "dristi",
-    Boolean(filteredTasks?.[0]?.taskNumber)
+    { tenantId, consumerCode: `${filteredTasks?.[0]?.taskNumber}_${suffix?.[1]?.suffix}`, service: paymentType.TASK_SUMMON },
+    `${suffix?.[1]?.suffix}`,
+    Boolean(filteredTasks?.[0]?.taskNumber && suffix?.[1]?.suffix)
   );
-  const { data: ePostBillResponse, isLoading: isEPOSTBillLoading } = Digit.Hooks.dristi.useBillSearch(
+
+  const { data: courtBillResponse, isLoading: isCourtBillLoading, refetch: refetchCourtBill } = Digit.Hooks.dristi.useBillSearch(
     {},
-    { tenantId, consumerCode: `${filteredTasks?.[0]?.taskNumber}_POST_PROCESS`, service: paymentType.TASK_SUMMON },
-    "dristi",
-    Boolean(filteredTasks?.[0]?.taskNumber)
+    { tenantId, consumerCode: `${filteredTasks?.[0]?.taskNumber}_${suffix?.[0]?.suffix}`, service: paymentType.TASK_SUMMON },
+    `${suffix?.[0]?.suffix}`,
+    Boolean(filteredTasks?.[0]?.taskNumber && suffix?.[0]?.suffix)
   );
 
   const onPayOnline = async () => {
-    console.log("clikc");
+    courtBillResponse && console.log(courtBillResponse, "llll");
     try {
-      // if (courtBillResponse?.Bill?.length === 0) {
-      //   await DRISTIService.createDemand({
-      //     Demands: [
-      //       {
-      //         tenantId,
-      //         consumerCode: `${filteredTasks?.[0]?.taskNumber}_POST_COURT`,
-      //         consumerType: paymentType.TASK_SUMMON,
-      //         businessService: paymentType.TASK_SUMMON,
-      //         taxPeriodFrom: Date.now().toString(),
-      //         taxPeriodTo: Date.now().toString(),
-      //         demandDetails: [
-      //           {
-      //             taxHeadMasterCode: paymentType.TASK_SUMMON_ADVANCE_CARRYFORWARD,
-      //             taxAmount: 4,
-      //             collectionAmount: 0,
-      //           },
-      //         ],
-      //       },
-      //     ],
-      //   });
-      // }
-      // const bill = await fetchBill(`${filteredTasks?.[0]?.taskNumber}_POST_COURT`, tenantId, paymentType.TASK_SUMMON);
-      // if (bill?.Bill?.length) {
-      //   const billPaymentStatus = await openPaymentPortal(bill);
-      //   console.log(billPaymentStatus);
-      //   if (billPaymentStatus === true) {
-      //     console.log("YAAAYYYYY");
-      // const fileStoreId = await DRISTIService.fetchBillFileStoreId({}, { billId: bill?.Bill?.[0]?.id, tenantId });
-
-      const updatedTask = {
-        ...filteredTasks?.[0], // Keep all the existing properties
-        taskType: "SUMMONS", // Change the taskType to SUMMON
-        workflow: {
-          // Add the workflow object with the desired action
-          action: "MAKE PAYMENT",
-        },
-      };
-
-      await taskService
-        .updateTask(
-          {
-            task: updatedTask,
-            tenantId: tenantId,
-          },
-          {}
-        )
-        .then(() => {
-          return Promise.all([
-            ordersService.customApiService(Urls.orders.pendingTask, {
-              pendingTask: {
-                name: "Show Summon-Warrant Status",
-                entityType: paymentType.ORDER_MANAGELIFECYCLE,
-                referenceId: hearingsData?.HearingList?.[0]?.hearingId,
-                status: paymentType.SUMMON_WARRANT_STATUS,
-                assignedTo: [],
-                assignedRole: ["JUDGE_ROLE"],
-                cnrNumber: filteredTasks?.[0]?.cnrNumber,
-                filingNumber: filingNumber,
-                isCompleted: false,
-                stateSla: 3 * dayInMillisecond + todayDate,
-                additionalDetails: {
-                  hearingId: hearingsData?.list?.[0]?.hearingId,
+      if (courtBillResponse?.Bill?.length === 0) {
+        await DRISTIService.createDemand({
+          Demands: [
+            {
+              tenantId,
+              consumerCode: `${filteredTasks?.[0]?.taskNumber}_${suffix?.[0]?.suffix}`,
+              consumerType: paymentType.TASK_SUMMON,
+              businessService: paymentType.TASK_SUMMON,
+              taxPeriodFrom: taxPeriodSummon?.[0]?.fromDate,
+              taxPeriodTo: taxPeriodSummon?.[0]?.toDate,
+              demandDetails: [
+                {
+                  taxHeadMasterCode: paymentType.TASK_SUMMON_ADVANCE_CARRYFORWARD,
+                  taxAmount: 4,
+                  collectionAmount: 0,
                 },
-                tenantId,
-              },
-            }),
-            ordersService.customApiService(Urls.orders.pendingTask, {
-              pendingTask: {
-                name: `MAKE_PAYMENT_FOR_SUMMONS_POST`,
-                entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
-                referenceId: `MANUAL_Post_${orderNumber}`,
-                status: paymentType.PAYMENT_PENDING_POST,
-                assignedTo: [],
-                assignedRole: [],
-                cnrNumber: filteredTasks?.[0]?.cnrNumber,
-                filingNumber: filingNumber,
-                isCompleted: true,
-                stateSla: "",
-                additionalDetails: {},
-                tenantId,
-              },
-            }),
-          ]);
+              ],
+            },
+          ],
         });
+      }
+      const bill = await fetchBill(`${filteredTasks?.[0]?.taskNumber}_${suffix?.[0]?.suffix}`, tenantId, paymentType.TASK_SUMMON);
+      if (bill?.Bill?.length) {
+        const billPaymentStatus = await openPaymentPortal(bill);
+        console.log(billPaymentStatus);
+        if (billPaymentStatus === true) {
+          console.log("YAAAYYYYY");
+          const fileStoreId = await DRISTIService.fetchBillFileStoreId({}, { billId: bill?.Bill?.[0]?.id, tenantId });
+          const ePostBillResponse = reftechEPostBill();
+          if (ePostBillResponse?.Bill?.[0]?.status === "PAID") {
+            await Promise.all([
+              ordersService.customApiService(Urls.orders.pendingTask, {
+                pendingTask: {
+                  name: "Show Summon-Warrant Status",
+                  entityType: paymentType.ORDER_MANAGELIFECYCLE,
+                  referenceId: hearingsData?.HearingList?.[0]?.hearingId,
+                  status: paymentType.SUMMON_WARRANT_STATUS,
+                  assignedTo: [],
+                  assignedRole: ["JUDGE_ROLE"],
+                  cnrNumber: filteredTasks?.[0]?.cnrNumber,
+                  filingNumber: filingNumber,
+                  isCompleted: false,
+                  stateSla: 3 * dayInMillisecond + todayDate,
+                  additionalDetails: {
+                    hearingId: hearingsData?.list?.[0]?.hearingId,
+                  },
+                  tenantId,
+                },
+              }),
+              ordersService.customApiService(Urls.orders.pendingTask, {
+                pendingTask: {
+                  name: `MAKE_PAYMENT_FOR_SUMMONS_POST`,
+                  entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
+                  referenceId: `MANUAL_Post_${orderNumber}`,
+                  status: paymentType.PAYMENT_PENDING_POST,
+                  assignedTo: [],
+                  assignedRole: [],
+                  cnrNumber: filteredTasks?.[0]?.cnrNumber,
+                  filingNumber: filingNumber,
+                  isCompleted: true,
+                  stateSla: "",
+                  additionalDetails: {},
+                  tenantId,
+                },
+              }),
+            ]);
+          }
 
-      // fileStoreId &&
-      history.push(`/${window?.contextPath}/citizen/home/post-payment-screen`, {
-        state: {
-          success: true,
-          receiptData: {
-            ...mockSubmitModalInfo,
-            caseInfo: [
-              {
-                key: "Case Name & ID",
-                value: caseDetails?.caseTitle + "," + caseDetails?.filingNumber,
-                copyData: false,
+          fileStoreId &&
+            history.push(`/${window?.contextPath}/citizen/home/post-payment-screen`, {
+              state: {
+                success: true,
+                receiptData: {
+                  ...mockSubmitModalInfo,
+                  caseInfo: [
+                    {
+                      key: "Case Name & ID",
+                      value: caseDetails?.caseTitle + "," + caseDetails?.filingNumber,
+                      copyData: false,
+                    },
+                    {
+                      key: "ORDER ID",
+                      value: orderData?.list?.[0]?.orderNumber,
+                      copyData: false,
+                    },
+                    {
+                      key: "Transaction ID",
+                      value: filteredTasks?.[0]?.taskNumber,
+                      copyData: true,
+                    },
+                  ],
+                  isArrow: false,
+                  showTable: true,
+                  showCopytext: true,
+                },
+                fileStoreId: fileStoreId?.Document?.fileStore,
               },
-              {
-                key: "ORDER ID",
-                value: orderData?.list?.[0]?.orderNumber,
-                copyData: false,
+            });
+        } else {
+          console.log("NAAAYYYYY");
+          history.push(`/${window?.contextPath}/citizen/home/post-payment-screen`, {
+            state: {
+              success: false,
+              receiptData: {
+                ...mockSubmitModalInfo,
+                caseInfo: [
+                  {
+                    key: "Case Name & ID",
+                    value: caseDetails?.caseTitle + "," + caseDetails?.filingNumber,
+                    copyData: false,
+                  },
+                  {
+                    key: "ORDER ID",
+                    value: orderData?.list?.[0]?.orderNumber,
+                    copyData: false,
+                  },
+                  {
+                    key: "Transaction ID",
+                    value: filteredTasks?.[0]?.taskNumber,
+                    copyData: true,
+                  },
+                ],
+                isArrow: false,
+                showTable: true,
+                showCopytext: true,
               },
-              {
-                key: "Transaction ID",
-                value: filteredTasks?.[0]?.taskNumber,
-                copyData: true,
-              },
-            ],
-            isArrow: false,
-            showTable: true,
-            showCopytext: true,
-          },
-          fileStoreId: "fileStoreId?.Document?.fileStore",
-        },
-      });
-      //   } else {
-      //     console.log("NAAAYYYYY");
-      //     history.push(`/${window?.contextPath}/citizen/home/post-payment-screen`, {
-      //       state: {
-      //         success: false,
-      //         receiptData: {
-      //           ...mockSubmitModalInfo,
-      //           caseInfo: [
-      //             {
-      //               key: "Case Name & ID",
-      //               value: caseDetails?.caseTitle + "," + caseDetails?.filingNumber,
-      //               copyData: false,
-      //             },
-      //             {
-      //               key: "ORDER ID",
-      //               value: orderData?.list?.[0]?.orderNumber,
-      //               copyData: false,
-      //             },
-      //             {
-      //               key: "Transaction ID",
-      //               value: filteredTasks?.[0]?.taskNumber,
-      //               copyData: true,
-      //             },
-      //           ],
-      //           isArrow: false,
-      //           showTable: true,
-      //           showCopytext: true,
-      //         },
-      //         caseId: caseDetails?.filingNumber,
-      //       },
-      //     });
-      //   }
-      // }
+              caseId: caseDetails?.filingNumber,
+            },
+          });
+        }
+      }
     } catch (error) {
       console.error(error);
     }
@@ -397,11 +434,11 @@ const PaymentForSummonModal = ({ path }) => {
           Demands: [
             {
               tenantId,
-              consumerCode: `${filteredTasks?.[0]?.taskNumber}_POST_PROCESS`,
+              consumerCode: `${filteredTasks?.[0]?.taskNumber}_${suffix?.[1]?.suffix}`,
               consumerType: paymentType.TASK_SUMMON,
               businessService: paymentType.TASK_SUMMON,
-              taxPeriodFrom: Date.now().toString(),
-              taxPeriodTo: Date.now().toString(),
+              taxPeriodFrom: taxPeriodSummon?.[0]?.fromDate,
+              taxPeriodTo: taxPeriodSummon?.[0]?.toDate,
               demandDetails: [
                 {
                   taxHeadMasterCode: paymentType.TASK_SUMMON_ADVANCE_CARRYFORWARD,
@@ -413,12 +450,14 @@ const PaymentForSummonModal = ({ path }) => {
           ],
         });
       }
-      const bill = await fetchBill(`${filteredTasks?.[0]?.taskNumber}_POST_PROCESS`, tenantId, paymentType.TASK_SUMMON);
+      const bill = await fetchBill(`${filteredTasks?.[0]?.taskNumber}_${suffix?.[1]?.suffix}`, tenantId, paymentType.TASK_SUMMON);
       history.push(`/${window?.contextPath}/citizen/home/sbi-epost-payment`, {
         state: {
           billData: bill,
           consumerCode: filteredTasks?.[0]?.taskNumber,
           service: paymentType.TASK_SUMMON,
+          suffix: suffix,
+          taxPeriod: taxPeriodSummon,
         },
       });
     } catch (error) {
@@ -426,8 +465,38 @@ const PaymentForSummonModal = ({ path }) => {
     }
   };
 
+  useEffect(() => {
+    // Check for ePost Bill response
+    if (ePostBillResponse?.Bill?.length > 0) {
+      const ePostBillStatus = ePostBillResponse.Bill[0].status;
+      console.log(ePostBillResponse.Bill[0], "llll");
+      if (ePostBillStatus === "PAID") {
+        setEPostPaymentStatus(true);
+        console.log("true");
+      } else {
+        setEPostPaymentStatus(false);
+        console.log("false");
+      }
+    }
+    console.log(courtBillResponse, "kkkk");
+
+    // Check for Court Bill response
+    if (courtBillResponse?.Bill?.length > 0) {
+      const courtBillStatus = courtBillResponse.Bill[0].status;
+      console.log(courtBillResponse.Bill[0], "kkkk");
+      if (courtBillStatus === "PAID") {
+        setCourtPaymentStatus(true);
+        console.log("true");
+      } else {
+        setCourtPaymentStatus(false);
+        console.log("false");
+      }
+    }
+  }, []);
+
   const feeOptions = useMemo(() => {
     const taskAmount = filteredTasks?.[0]?.amount?.amount || 0;
+    // const courtFeePayment = courtFeePaymentAmount?.[0]?.amount || 0;
 
     return {
       "e-post": [
@@ -436,8 +505,8 @@ const PaymentForSummonModal = ({ path }) => {
           amount: "Amount",
           action: "Actions",
         },
-        { label: "Court Fees", amount: taskAmount, action: "Pay Online", onClick: onPayOnline },
-        { label: "Delivery Partner Fee", amount: taskAmount, action: "Pay Online", onClick: onPayOnlineSBI },
+        { label: "Court Fees", amount: taskAmount, action: "Pay Online", onClick: onPayOnline, billPaymentStatus: courtPaymentStatus },
+        { label: "Delivery Partner Fee", amount: taskAmount, action: "Pay Online", onClick: onPayOnlineSBI, billPaymentStatus: ePostPaymentStatus },
       ],
       "registered-post": [
         {
@@ -449,7 +518,7 @@ const PaymentForSummonModal = ({ path }) => {
         { label: "Delivery Partner Fee", amount: taskAmount, action: "offline-process", onClick: onPayOnline },
       ],
     };
-  }, [filteredTasks, onPayOnline]);
+  }, [filteredTasks, courtPaymentStatus, ePostPaymentStatus, onPayOnline]);
 
   const handleClose = () => {
     if (paymentLoader === false) {
