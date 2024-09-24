@@ -18,6 +18,7 @@ import digit.web.models.hearing.HearingSearchCriteria;
 import digit.web.models.hearing.HearingUpdateBulkRequest;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
+import net.minidev.json.JSONObject;
 import org.egov.common.contract.models.Document;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
@@ -35,6 +36,8 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+
+import static digit.models.coremodels.user.enums.UserType.CITIZEN;
 
 @Service
 @Slf4j
@@ -91,7 +94,7 @@ public class CauseListService {
         List<CauseList> causeLists = new ArrayList<>();
         //TODO get judges from db once tables are ready
         List<String> courtIds = new ArrayList<>();
-        courtIds.add("court1");
+        courtIds.add(config.getCourtId());
 
         // Multi Thread processing: process 10 judges at a time
         ExecutorService executorService = Executors.newCachedThreadPool();
@@ -133,112 +136,146 @@ public class CauseListService {
 
     private void generateCauseList(String courtId, List<CauseList> causeLists) {
         log.info("operation = generateCauseListForJudge, result = IN_PROGRESS, judgeId = {}", courtId);
-        HearingSearchCriteria hearingSearchCriteria = HearingSearchCriteria.builder()
-                .fromDate(dateUtil.getEpochFromLocalDateTime(LocalDateTime.now().toLocalDate().atStartOfDay()))
-                .courtId(courtId)
-                .build();
-        List<Hearing> hearingList = getHearingsForCourt(hearingSearchCriteria);
-        List<CauseList> causeList  = getCauseListFromHearings(hearingList);
-        enrichCauseList(causeList);
-        Map<String, List<CauseList>> hearingTypeMap = getHearingTypeMap(causeList);
+        try {
+            HearingSearchCriteria hearingSearchCriteria = HearingSearchCriteria.builder()
+                    .fromDate(dateUtil.getEpochFromLocalDateTime(LocalDateTime.now().toLocalDate().plusDays(1).atStartOfDay()))
+                    .toDate(dateUtil.getEpochFromLocalDateTime(LocalDateTime.now().toLocalDate().plusDays(2).atStartOfDay()))
+                    .courtId(config.getCourtEnabled() ? courtId : null)
+                    .build();
+            List<Hearing> hearingList = getHearingsForCourt(hearingSearchCriteria);
+            List<CauseList> causeList  = getCauseListFromHearings(hearingList);
+            enrichCauseList(causeList);
+            Map<String, Integer> hearingTypeMap = getHearingTypeMap(causeList);
+            List<CaseType> caseTypePriority = getCaseTypeMap();
 
-        hearingTypeMap.forEach((hearingType, tempCauseList) -> {
-         tempCauseList.sort(Comparator.comparing(CauseList::getCaseType)
-                 .thenComparing(CauseList::getCaseRegistrationDate));
-        });
+            causeList.sort(Comparator
+                    .comparing((CauseList a) -> {
+                        Integer hearingTypeId = hearingTypeMap.get(a.getHearingType());
+                        return hearingTypeId != null ? hearingTypeId : Integer.MAX_VALUE;
+                    })
+                    .thenComparing(a -> {
+                        CaseType caseType = caseTypePriority.stream().filter(b -> b.getCaseType().equalsIgnoreCase(a.getCaseType())).findFirst().orElse(null);
+                        return caseType != null ? caseType.getPriority() : Integer.MAX_VALUE;
+                    })
+                    .thenComparing(CauseList::getCaseRegistrationDate));
 
-        causeList.clear();
-        hearingTypeMap.values().forEach(causeList::addAll);
-        generateCauseListFromHearings(causeList);
-        causeList.removeIf(a -> a.getSlot() == null);
-        ByteArrayResource byteArrayResource = generateCauseListPdf(causeList);
-        Document document = fileStoreUtil.saveDocumentToFileStore(byteArrayResource, config.getEgovStateTenantId());
+            generateCauseListFromHearings(causeList);
+            ByteArrayResource byteArrayResource = generateCauseListPdf(causeList);
+            Document document = fileStoreUtil.saveDocumentToFileStore(byteArrayResource, config.getEgovStateTenantId());
 
-        LocalDate localDate = dateUtil.getLocalDateFromEpoch(causeList.get(0).getStartTime());
-        CauseListPdf causeListPdf = CauseListPdf.builder()
-                .courtId(courtId)
-                .judgeId("judge1")
-                .fileStoreId(document.getFileStore())
-                .date(localDate.toString())
-                .build();
+            LocalDate localDate = dateUtil.getLocalDateFromEpoch(causeList.get(0).getStartTime());
+            CauseListPdf causeListPdf = CauseListPdf.builder()
+                    .courtId(config.getCourtId())
+                    .judgeId(causeList.get(0).getJudgeId())
+                    .fileStoreId(document.getFileStore())
+                    .date(localDate.toString())
+                    .build();
 
-        producer.push(config.getCauseListPdfTopic(), causeListPdf);
-        causeLists.addAll(causeList);
+            producer.push(config.getCauseListPdfTopic(), causeListPdf);
+            causeLists.addAll(causeList);
+            log.info("operation = generateCauseListForJudge, result = SUCCESS, judgeId = {}", courtId);
+        } catch (Exception e) {
+            log.error("operation = generateCauseListForJudge, result = FAILURE, judgeId = {}, error = {}", courtId, e.getMessage(), e);
+        }
     }
 
-    private Map<String, List<CauseList>> getHearingTypeMap(List<CauseList> causeList) {
-        log.info("operation = fillHearingTimesWithDataFromMdms, result = IN_PROGRESS, judgeId = {}", causeList.get(0).getJudgeId());
-        List<MdmsHearing> mdmsHearings = getHearingDataFromMdms();
-        Map<String, List<CauseList>> hearingTypePrioriyMap = new HashMap<>();
-        for(CauseList cause : causeList) {
-            Optional<MdmsHearing> optionalHearing = mdmsHearings.stream().filter(a -> a.getHearingType()
-                    .equalsIgnoreCase(cause.getHearingType())).findFirst();
-            if (optionalHearing.isPresent() && (optionalHearing.get().getHearingTime() != null)) {
-                cause.setHearingTimeInMinutes(optionalHearing.get().getHearingTime());
-                log.info("Minutes to be allotted {} for CauseList {}", cause.getHearingTimeInMinutes(),
-                        cause.getId());
-            }
-            if(hearingTypePrioriyMap.containsKey(cause.getHearingType())) {
-                hearingTypePrioriyMap.get(cause.getHearingType()).add(cause);
-            } else {
-                List<CauseList> causeLists = new ArrayList<>();
-                causeLists.add(cause);
-                hearingTypePrioriyMap.put(cause.getHearingType(), causeLists);
-            }
+
+    public List<CaseType> getCaseTypeMap() {
+        log.info("operation = getCaseTypeMap, result = IN_PROGRESS");
+        List<CaseType> caseTypeList = new ArrayList<>();
+        try {
+            caseTypeList = causeListRepository.getCaseTypes();
+            caseTypeList.sort(Comparator.comparing(CaseType::getPriority));
+        } catch (Exception e) {
+            log.error("operation = getCaseTypeMap, result = FAILURE, error = {}", e.getMessage(), e);
         }
-        log.info("operation = fillHearingTimesWithDataFromMdms, result = SUCCESS, judgeId = {}", causeList.get(0).getJudgeId());
+        return caseTypeList;
+    }
+    private Map<String, Integer> getHearingTypeMap(List<CauseList> causeLists) {
+        log.info("operation = getHearingTypePriority, result = IN_PROGRESS");
+        Map<String, Integer> hearingTypePrioriyMap = new HashMap<>();
+        try {
+            List<MdmsHearing> mdmsHearings = getHearingDataFromMdms();
+            Collections.reverse(mdmsHearings);
+            int priority = 0;
+            for (MdmsHearing mdmsHearing : mdmsHearings) {
+                hearingTypePrioriyMap.put(mdmsHearing.getHearingType(), priority);
+                priority++;
+            }
+
+            for(CauseList cause: causeLists){
+                Optional<MdmsHearing> optionalHearing = mdmsHearings.stream().filter(a -> a.getHearingType()
+                        .equalsIgnoreCase(cause.getHearingType())).findFirst();
+                if (optionalHearing.isPresent() && (optionalHearing.get().getHearingTime() != null)) {
+                    cause.setHearingTimeInMinutes(optionalHearing.get().getHearingTime());
+                    log.info("Minutes to be allotted {} for CauseList {}", cause.getHearingTimeInMinutes(),
+                            cause.getId());
+                }
+            }
+            log.info("operation = getHearingTypePriority, result = SUCCESS");
+        } catch (Exception e) {
+            log.error("operation = getHearingTypePriority, result = FAILURE, error = {}", e.getMessage(), e);
+        }
         return hearingTypePrioriyMap;
     }
 
     private List<MdmsHearing> getHearingDataFromMdms() {
         log.info("operation = getHearingDataFromMdms, result = IN_PROGRESS");
-        RequestInfo requestInfo = new RequestInfo();
-        Map<String, Map<String, JSONArray>> defaultHearingsData =
-                mdmsUtil.fetchMdmsData(requestInfo, config.getEgovStateTenantId(),
-                        serviceConstants.DEFAULT_COURT_MODULE_NAME,
-                        Collections.singletonList(serviceConstants.DEFAULT_HEARING_MASTER_NAME));
-        JSONArray jsonArray = defaultHearingsData.get("court").get("hearings");
         List<MdmsHearing> mdmsHearings = new ArrayList<>();
-        ObjectMapper objectMapper = new ObjectMapper();
-        for (Object obj : jsonArray) {
-            MdmsHearing hearing = objectMapper.convertValue(obj, MdmsHearing.class);
-            mdmsHearings.add(hearing);
+        try {
+            RequestInfo requestInfo = new RequestInfo();
+            Map<String, Map<String, JSONArray>> defaultHearingsData =
+                    mdmsUtil.fetchMdmsData(requestInfo, config.getEgovStateTenantId(),
+                            serviceConstants.DEFAULT_COURT_MODULE_NAME,
+                            Collections.singletonList(serviceConstants.DEFAULT_HEARING_MASTER_NAME));
+            JSONArray jsonArray = defaultHearingsData.get("court").get("hearings");
+            ObjectMapper objectMapper = new ObjectMapper();
+            for (Object obj : jsonArray) {
+                MdmsHearing hearing = objectMapper.convertValue(obj, MdmsHearing.class);
+                mdmsHearings.add(hearing);
+            }
+            log.info("operation = getHearingDataFromMdms, result = SUCCESS");
+        } catch (Exception e) {
+            log.error("operation = getHearingDataFromMdms, result = FAILURE, error = {}", e.getMessage(), e);
         }
-        log.info("operation = getHearingDataFromMdms, result = SUCCESS");
         return mdmsHearings;
     }
 
     private void generateCauseListFromHearings(List<CauseList> causeList) {
         log.info("operation = generateCauseListFromHearings, result = SUCCESS, judgeId = {}", causeList.get(0).getJudgeId());
-        List<MdmsSlot> mdmsSlotList = getSlottingDataFromMdms();
-        int currentSlotIndex = 0; // Track the current slot index
-        int accumulatedTime = 0; // Track accumulated hearing time within the slot
+        try {
+            List<MdmsSlot> mdmsSlotList = getSlottingDataFromMdms();
+            Collections.reverse(mdmsSlotList);int currentSlotIndex = 0; // Track the current slot index
+            int accumulatedTime = 0; // Track accumulated hearing time within the slot
 
-        for(CauseList causeList1 : causeList){
-            while(currentSlotIndex < mdmsSlotList.size()){
-                MdmsSlot mdmsSlot = mdmsSlotList.get(currentSlotIndex);
-                int hearingTime = causeList1.getHearingTimeInMinutes();
+            for(CauseList causeList1 : causeList){
+                while(currentSlotIndex < mdmsSlotList.size()){
+                    MdmsSlot mdmsSlot = mdmsSlotList.get(currentSlotIndex);
+                    int hearingTime = causeList1.getHearingTimeInMinutes();
 
-                if(accumulatedTime + hearingTime <= mdmsSlot.getSlotDuration()){
-                    getCauseListFromHearingAndSlot(causeList1, mdmsSlot, accumulatedTime);
-                    accumulatedTime += hearingTime;
-                    break;
-                } else {
-                    currentSlotIndex++;
-                    accumulatedTime = 0;
-                }
-                if (currentSlotIndex == mdmsSlotList.size()) {
-                    MdmsSlot lastMdmsSlot = mdmsSlotList.get(mdmsSlotList.size() - 1);
-                    getCauseListFromHearingAndSlot(causeList1, lastMdmsSlot, accumulatedTime);
+                    if(accumulatedTime + hearingTime <= mdmsSlot.getSlotDuration()){
+                        getCauseListFromHearingAndSlot(causeList1, mdmsSlot, accumulatedTime);
+                        accumulatedTime += hearingTime;
+                        break;
+                    } else {
+                        currentSlotIndex++;
+                        accumulatedTime = 0;
+                    }
+                    if (currentSlotIndex == mdmsSlotList.size()) {
+                        MdmsSlot lastMdmsSlot = mdmsSlotList.get(mdmsSlotList.size() - 1);
+                        getCauseListFromHearingAndSlot(causeList1, lastMdmsSlot, accumulatedTime);
+                    }
                 }
             }
+            log.info("operation = generateCauseListFromHearings, result = SUCCESS, judgeId = {}", causeList.get(0).getJudgeId());
+        } catch (Exception e) {
+            log.error("operation = generateCauseListFromHearings, result = FAILURE, judgeId = {}, error = {}", causeList.get(0).getJudgeId(), e.getMessage(), e);
         }
-        log.info("operation = generateCauseListFromHearings, result = SUCCESS, judgeId = {}", causeList.get(0).getJudgeId());
     }
 
     private void getCauseListFromHearingAndSlot(CauseList causeList, MdmsSlot mdmsSlot, int accumulatedTime) {
         Long slotStartTime = dateUtil.getEpochFromLocalDateTime(LocalDateTime.of(LocalDate.now().plusDays(1), LocalTime.parse(mdmsSlot.getSlotStartTime())));
-        long startTime = slotStartTime + (accumulatedTime * 60 * 1000);
+        long startTime = slotStartTime + ((long) accumulatedTime * 60 * 1000);
         Long endTime = startTime + (causeList.getHearingTimeInMinutes() * 60 * 1000);
         causeList.setSlot(mdmsSlot.getSlotName());
         causeList.setStartTime(startTime);
@@ -248,19 +285,23 @@ public class CauseListService {
 
     private List<MdmsSlot> getSlottingDataFromMdms() {
         log.info("operation = getSlottingDataFromMdms, result = IN_PROGRESS");
-        RequestInfo requestInfo = new RequestInfo();
-        Map<String, Map<String, JSONArray>> defaultHearingsData =
-                mdmsUtil.fetchMdmsData(requestInfo, config.getEgovStateTenantId(),
-                        serviceConstants.DEFAULT_COURT_MODULE_NAME,
-                        Collections.singletonList(serviceConstants.DEFAULT_SLOTTING_MASTER_NAME));
-        JSONArray jsonArray = defaultHearingsData.get("court").get("slots");
         List<MdmsSlot> mdmsSlots = new ArrayList<>();
-        ObjectMapper objectMapper = new ObjectMapper();
-        for (Object obj : jsonArray) {
-            MdmsSlot mdmsSlot = objectMapper.convertValue(obj, MdmsSlot.class);
-            mdmsSlots.add(mdmsSlot);
+        try {
+            RequestInfo requestInfo = new RequestInfo();
+            Map<String, Map<String, JSONArray>> defaultHearingsData =
+                    mdmsUtil.fetchMdmsData(requestInfo, config.getEgovStateTenantId(),
+                            serviceConstants.DEFAULT_COURT_MODULE_NAME,
+                            Collections.singletonList(serviceConstants.DEFAULT_SLOTTING_MASTER_NAME));
+            JSONArray jsonArray = defaultHearingsData.get("court").get("slots");
+            ObjectMapper objectMapper = new ObjectMapper();
+            for (Object obj : jsonArray) {
+                MdmsSlot mdmsSlot = objectMapper.convertValue(obj, MdmsSlot.class);
+                mdmsSlots.add(mdmsSlot);
+            }
+            log.info("operation = getSlottingDataFromMdms, result = SUCCESS");
+        } catch (Exception e) {
+            log.error("operation = getSlottingDataFromMdms, result = FAILURE, error = {}", e.getMessage(), e);
         }
-        log.info("operation = getSlottingDataFromMdms, result = SUCCESS");
         return mdmsSlots;
     }
 
@@ -277,23 +318,40 @@ public class CauseListService {
         return causeListRepository.getCauseLists(searchCriteria);
     }
 
+    private List<String> getFileStoreForCauseList(CauseListSearchCriteria searchCriteria) {
+        if (searchCriteria != null && searchCriteria.getSearchDate() != null
+                && searchCriteria.getSearchDate().isAfter(LocalDate.now().plusDays(1))) {
+            throw new CustomException("DK_CL_APP_ERR", "CauseList Search date cannot be after than tomorrow");
+        }
+        return causeListRepository.getCauseListFileStore(searchCriteria);
+    }
     public ByteArrayResource downloadCauseListForTomorrow(CauseListSearchRequest searchRequest) {
         log.info("operation = downloadCauseListForTomorrow, with searchRequest : {}", searchRequest.toString());
-        List<CauseList> causeLists = getCauseListForTomorrow(searchRequest.getCauseListSearchCriteria());
-        return generateCauseListPdf(causeLists);
+        List<String> fileStoreIds = getFileStoreForCauseList(searchRequest.getCauseListSearchCriteria());
+        if(CollectionUtils.isEmpty(fileStoreIds)){
+            throw new CustomException("DK_CL_APP_ERR", "No CauseList found for the given search criteria");
+        }
+        byte[] pdfBytes = fileStoreUtil.getFile(config.getEgovStateTenantId(), fileStoreIds.get(0));
+        return new ByteArrayResource(pdfBytes);
     }
 
     public ByteArrayResource generateCauseListPdf(List<CauseList> causeLists){
-        List<SlotList> slotLists;
-        slotLists = buildSlotList(causeLists);
-        setStartAndEndTimeForSlots(slotLists);
-        SlotRequest slotRequest = SlotRequest.builder()
-                .requestInfo(getRequestInfo())
-                .slotList(slotLists)
-                .build();
-        return pdfServiceUtil.generatePdfFromPdfService(slotRequest, config.getEgovStateTenantId(), config.getCauseListPdfTemplateKey());
+        log.info("operation = generateCauseListPdf, result = IN_PROGRESS");
+        ByteArrayResource byteArrayResource = null;
+        try {
+           List<SlotList> slotLists;
+           slotLists = buildSlotList(causeLists);
+           SlotRequest slotRequest = SlotRequest.builder()
+                   .requestInfo(getRequestInfo())
+                   .slotList(slotLists)
+                   .build();
+           byteArrayResource =  pdfServiceUtil.generatePdfFromPdfService(slotRequest, config.getEgovStateTenantId(), config.getCauseListPdfTemplateKey());
+           log.info("operation = generateCauseListPdf, result = SUCCESS");
+        } catch (Exception e) {
+            log.error("Error occurred while generating pdf: {}", e.getMessage());
+        }
+        return byteArrayResource;
     }
-
     public List<SlotList> buildSlotList(List<CauseList> causeLists) {
         List<SlotList> slots = new ArrayList<>();
         List<MdmsHearing> mdmsHearings = getHearingDataFromMdms();
@@ -312,9 +370,16 @@ public class CauseListService {
                 mutableCauseLists.add(causeList);
                 existingSlot.setCauseLists(mutableCauseLists);
             } else {
+                String slotStartTime = Objects.equals(slotName, "Morning Slot") ? "10:00:00" : "14:00:00";
+                String slotEndTime = Objects.equals(slotName, "Morning Slot") ? "13:00:00" : "17:00:00";
                 SlotList newSlot = SlotList.builder()
                         .slotName(slotName)
+                        .slotStartTime(slotStartTime)
+                        .slotEndTime(slotEndTime)
+                        .courtId(config.getCourtId())
                         .hearingType(hearingType)
+                        .judgeName(config.getJudgeName())
+                        .judgeDesignation(config.getJudgeDesignation())
                         .causeLists(List.of(causeList)).build();
                 slots.add(newSlot);
             }
@@ -333,13 +398,19 @@ public class CauseListService {
     }
 
     public List<Hearing> getHearingsForCourt(HearingSearchCriteria hearingSearchCriteria) {
-        RequestInfo requestInfo = new RequestInfo();
-        HearingListSearchRequest hearingListSearchRequest = HearingListSearchRequest.builder()
-                .requestInfo(requestInfo)
-                .criteria(hearingSearchCriteria)
-                .build();
-
-        return hearingUtil.fetchHearing(hearingListSearchRequest);
+        log.info("operation = getHearingsForCourt, result = IN_PROGRESS, courtId = {}", hearingSearchCriteria.getCourtId());
+        List<Hearing> hearings = new ArrayList<>();
+        try {
+            RequestInfo requestInfo = new RequestInfo();
+            HearingListSearchRequest hearingListSearchRequest = HearingListSearchRequest.builder()
+                    .requestInfo(requestInfo)
+                    .criteria(hearingSearchCriteria)
+                    .build();
+            hearings = hearingUtil.fetchHearing(hearingListSearchRequest);
+        } catch (Exception e) {
+            log.error("Error occurred while fetching hearings for court: {}", e.getMessage());
+        }
+        return hearings;
     }
 
     public List<CauseList> getCauseListFromHearings(List<Hearing> hearingList) {
@@ -374,93 +445,119 @@ public class CauseListService {
         return causeLists;
     }
 
-    public void setStartAndEndTimeForSlots(List<SlotList> slotLists){
-        for(SlotList slotList : slotLists) {
-            int size = slotList.getCauseLists().size();
-            Long startTime = slotList.getCauseLists().get(0).getStartTime();
-            Long endTime = slotList.getCauseLists().get(size - 1).getEndTime();
-            LocalTime startDateTime = dateUtil.getLocalDateTimeFromEpoch(startTime).toLocalTime();
-            LocalTime endDateTime = dateUtil.getLocalDateTimeFromEpoch(endTime).toLocalTime();
-
-            slotList.setSlotStartTime(startDateTime.toString());
-            slotList.setSlotEndTime(endDateTime.toString());
-        }
-    }
-
     public void enrichCauseList(List<CauseList> causeLists) {
-        Iterator<CauseList> iterator = causeLists.iterator();
-        while (iterator.hasNext()) {
-            CauseList causeList = iterator.next();
+        for(CauseList causeList: causeLists) {
             enrichCase(causeList);
             enrichApplication(causeList);
-            if(causeList.getApplicationNumbers().isEmpty()) {
-                iterator.remove();
-            }
         }
     }
 
     public void enrichCase(CauseList causeList) {
-        CaseCriteria criteria = CaseCriteria.builder().filingNumber(causeList.getFilingNumber()).build();
-        SearchCaseRequest searchCaseRequest = SearchCaseRequest.builder()
-                .RequestInfo(getRequestInfo())
-                .criteria(Collections.singletonList(criteria))
-                .build();
+        log.info("operation = enrichCase, result = IN_PROGRESS, filingNumber = {}", causeList.getFilingNumber());
+        try {
+            CaseCriteria criteria = CaseCriteria.builder().filingNumber(causeList.getFilingNumber()).build();
+            SearchCaseRequest searchCaseRequest = SearchCaseRequest.builder()
+                    .RequestInfo(getRequestInfo())
+                    .tenantId(config.getEgovStateTenantId())
+                    .criteria(Collections.singletonList(criteria))
+                    .build();
 
-        JsonNode caseList = caseUtil.getCases(searchCaseRequest);
-        if(caseList != null) {
-            JsonNode representatives = caseList.get(0).get("representatives");
-            JsonNode litigants = caseList.get(0).get("litigants");
+            JsonNode caseList = caseUtil.getCases(searchCaseRequest);
+            if(caseList != null) {
+                JsonNode representatives = caseList.get(0).get("representatives");
+                JsonNode litigants = caseList.get(0).get("litigants");
 
-            causeList.setCaseType(caseList.get(0).get("caseType").asText());
-            causeList.setCaseTitle(caseList.get(0).get("caseTitle").asText());
-            causeList.setCaseNumber(caseList.get(0).get("courtCaseNumber").asText());
+                causeList.setCaseId(caseList.get(0).get("id").asText());
+                causeList.setCaseType(caseList.get(0).get("caseType").asText());
+                causeList.setCaseTitle(caseList.get(0).get("caseTitle").asText());
+                causeList.setCaseNumber(caseList.get(0).get("courtCaseNumber").asText());//need to check if casenumber
 
-            long registrationDate = caseList.get(0).get("registrationDate").asLong();
-            causeList.setCaseRegistrationDate(dateUtil.getLocalDateFromEpoch(registrationDate).toString());
+                long registrationDate = caseList.get(0).get("registrationDate").asLong();
+                causeList.setCaseRegistrationDate(dateUtil.getLocalDateFromEpoch(registrationDate).toString());
 
-            List<AdvocateMapping> advocateMappings;
-            List<Party> litigantsList;
-            try {
-                advocateMappings = objectMapper.readValue(representatives.toString(),
-                        objectMapper.getTypeFactory().constructCollectionType(List.class, AdvocateMapping.class));
-                litigantsList = objectMapper.readValue(litigants.toString(),
-                        objectMapper.getTypeFactory().constructCollectionType(List.class, Party.class));
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
+                List<AdvocateMapping> advocateMappings;
+                List<Party> litigantsList;
+                try {
+                    advocateMappings = objectMapper.readValue(representatives.toString(),
+                            objectMapper.getTypeFactory().constructCollectionType(List.class, AdvocateMapping.class));
+                    litigantsList = objectMapper.readValue(litigants.toString(),
+                            objectMapper.getTypeFactory().constructCollectionType(List.class, Party.class));
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+                //party in person
+                causeList.setRepresentatives(advocateMappings != null ? advocateMappings : new ArrayList<>());
+                causeList.setLitigants(litigantsList != null ? litigantsList : new ArrayList<>());
+
+                List<String> advocateNames= new ArrayList<>();
+                assert litigantsList != null;
+                for(Party party: litigantsList) {
+                    if(party.getPartyType().equals(serviceConstants.COMPLAINANT)) {
+                        assert advocateMappings != null;
+                        if (isAdvocatePresent(party.getIndividualId(), advocateMappings)) {
+                            LinkedHashMap advocate = ((LinkedHashMap) party.getAdditionalDetails());
+                            advocateNames.add(advocate.get(serviceConstants.FULLNAME).toString());
+                        }
+                    }
+                }
+
+                for(Party party: litigantsList) {
+                    if(party.getPartyType().equals(serviceConstants.RESPONDENT)) {
+                        assert advocateMappings != null;
+                        if (isAdvocatePresent(party.getIndividualId(), advocateMappings)) {
+                            LinkedHashMap advocate = ((LinkedHashMap) party.getAdditionalDetails());
+                            advocateNames.add(advocate.get(serviceConstants.FULLNAME).toString());
+                        }
+                    }
+                }
+
+                causeList.setAdvocateNames(advocateNames);
+                log.info("operation = enrichCase, result = SUCCESS, filingNumber = {}", causeList.getFilingNumber());
             }
-
-            causeList.setRepresentatives(advocateMappings);
-            causeList.setLitigants(litigantsList);
-        } else {
-            log.error("Case not found for filing number: {}", causeList.getFilingNumber());
+        } catch (Exception e) {
+            log.error("Error occurred while fetching case for filing number: {}", causeList.getFilingNumber());
         }
-
     }
 
+    private boolean isAdvocatePresent(String individualId, List<AdvocateMapping> representatives) {
+        for(AdvocateMapping advocateMapping: representatives) {
+            if(advocateMapping.getRepresenting().stream().anyMatch(a -> a.getIndividualId().equals(individualId))) {
+                return true;
+            }
+        }
+        return false;
+    }
     public void enrichApplication(CauseList causeList) {
+        log.info("operation = enrichApplication, result = IN_PROGRESS, filingNumber = {}", causeList.getFilingNumber());
+
         ApplicationCriteria criteria = ApplicationCriteria.builder()
                 .filingNumber(causeList.getFilingNumber())
-                .status("PENDINGAPPROVAL")
+                .tenantId(config.getEgovStateTenantId())
+                .status(serviceConstants.PENDINGAPPROVAL)
                 .build();
         ApplicationRequest applicationRequest = ApplicationRequest.builder()
                 .requestInfo(getRequestInfo())
                 .criteria(criteria)
                 .build();
 
-        JsonNode applicationList = applicationUtil.getApplications(applicationRequest);
+        try {
+            JsonNode applicationList = applicationUtil.getApplications(applicationRequest);
 
-        List<String> applicationNumbers = new ArrayList<>();
-        if(applicationList != null) {
-            for (JsonNode application : applicationList) {
-                applicationNumbers.add(application.get("applicationNumber").asText());
+            if(applicationList != null) {
+                List<String> applicationNumbers = new ArrayList<>();
+                for (JsonNode application : applicationList) {
+                    applicationNumbers.add(application.get("applicationNumber").asText());
+                }
+                causeList.setApplicationNumbers(applicationNumbers);
             }
+        } catch (Exception e) {
+            log.error("Error occurred while fetching applications for filing number: {}", causeList.getFilingNumber());
         }
-        causeList.setApplicationNumbers(applicationNumbers);
     }
 
     private RequestInfo getRequestInfo() {
         RequestInfo requestInfo = new RequestInfo();
-        requestInfo.setUserInfo(User.builder().tenantId(config.getEgovStateTenantId()).build());
+        requestInfo.setUserInfo(User.builder().tenantId(config.getEgovStateTenantId()).type(CITIZEN.toString()).build());
         requestInfo.setMsgId("1725264118000|en_IN");
         return requestInfo;
     }
