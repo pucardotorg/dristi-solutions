@@ -4,6 +4,12 @@ import { Urls } from "./Urls";
 const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
 const benchId = window?.globalConfigs?.getConfig("BENCH_ID") || "BENCH_ID";
 const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "COURT_ID";
+const presidedBy = {
+  judgeId: [judgeId],
+  benchId: benchId,
+  courtId: courtId,
+};
+
 export const ordersService = {
   createOrder: (data, params) =>
     Request({
@@ -46,11 +52,6 @@ export const ordersService = {
       params,
     }),
   createHearings: (data, params) => {
-    const presidedBy = {
-      judgeId: [judgeId],
-      benchId: benchId,
-      courtId: courtId,
-    };
     const updatedData = {
       ...data,
       hearing: {
@@ -67,11 +68,6 @@ export const ordersService = {
     });
   },
   updateHearings: (data, params) => {
-    const presidedBy = {
-      judgeId: [judgeId],
-      benchId: benchId,
-      courtId: courtId,
-    };
     const updatedData = {
       ...data,
       hearing: {
