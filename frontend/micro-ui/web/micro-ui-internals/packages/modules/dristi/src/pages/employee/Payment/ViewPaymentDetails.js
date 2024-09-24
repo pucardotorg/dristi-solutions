@@ -141,7 +141,6 @@ const ViewPaymentDetails = ({ location, match }) => {
 
   const onSubmitCase = async () => {
     const consumerCodeWithoutSuffix = consumerCode.split("_")[0];
-    let referenceId;
     if (consumerCodeWithoutSuffix.includes("TASK")) {
       const {
         list: [tasksData],
@@ -159,10 +158,8 @@ const ViewPaymentDetails = ({ location, match }) => {
           id: tasksData?.orderId,
         },
       });
-      referenceId = tasksData?.taskDetails?.deliveryChannels?.channelName + `_${orderNumber}`;
-    } else {
-      referenceId = consumerCodeWithoutSuffix;
     }
+    const referenceId = consumerCodeWithoutSuffix;
     setIsDisabled(true);
     const regenerateBill = await DRISTIService.callFetchBill({}, { consumerCode: consumerCode, tenantId, businessService: businessService });
     const billFetched = regenerateBill?.Bill ? regenerateBill?.Bill[0] : {};
