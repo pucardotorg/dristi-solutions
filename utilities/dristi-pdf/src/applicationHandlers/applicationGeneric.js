@@ -72,7 +72,7 @@ async function applicationGeneric(req, res, qrCode) {
       return renderError(res, "Court case not found", 404);
     }
     const allAdvocates = getAdvocates(courtCase);
-    
+
     // Search for HRMS details
     // const resHrms = await handleApiCall(
     //   () => search_hrms(tenantId, "JUDGE", courtCase.courtId, requestInfo),

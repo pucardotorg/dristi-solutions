@@ -138,7 +138,8 @@ const applicationCaseWithdrawal = async (req, res, qrCode) => {
       application?.applicationDetails?.additionalComments || "";
     const localreasonForWithdrawal =
       application?.applicationDetails?.reasonForWithdrawal || "";
-    const reasonForWithdrawal = messagesMap?.[localreasonForWithdrawal] || localreasonForWithdrawal;
+    const reasonForWithdrawal =
+      messagesMap?.[localreasonForWithdrawal] || localreasonForWithdrawal;
     const onBehalfOfLitigent = courtCase?.litigants?.find(
       (item) => item.additionalDetails.uuid === onBehalfOfuuid
     );
