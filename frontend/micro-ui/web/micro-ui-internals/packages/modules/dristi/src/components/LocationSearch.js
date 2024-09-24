@@ -348,7 +348,7 @@ const initAutocomplete = (onChange, position, isPlaceRequired = false, index) =>
 
 const LocationSearch = (props) => {
   const { setCoordinateData, isAutoFilledDisabled = false } = props;
-  const [coordinates, setCoordinates] = useState({ lat: 31.6160638, lng: 74.8978579 });
+  const [coordinates, setCoordinates] = useState({ lat: 8.898827, lng: 76.574801 });
   useEffect(() => {
     async function mapScriptCall() {
       const getLatLng = (position) => {
@@ -360,8 +360,8 @@ const LocationSearch = (props) => {
           defaultLatLong = props?.PTdefaultcoord?.defaultConfig || coordinates;
         } else {
           defaultLatLong = {
-            lat: 31.6160638,
-            lng: 74.8978579,
+            lat: 8.898827,
+            lng: 76.574801,
           };
         }
         initAutocomplete(props.onChange, defaultLatLong, props.isPlaceRequired, props?.index);
