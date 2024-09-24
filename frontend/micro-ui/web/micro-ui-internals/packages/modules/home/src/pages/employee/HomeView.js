@@ -73,9 +73,9 @@ const HomeView = () => {
       criteria: [{ individualId }],
       tenantId,
     },
-    {},
+    { tenantId },
     individualId,
-    Boolean(userType !== "LITIGANT"),
+    Boolean(isUserLoggedIn && individualId && userType !== "LITIGANT"),
     userType === "ADVOCATE" ? "/advocate/advocate/v1/_search" : "/advocate/clerk/v1/_search"
   );
 
