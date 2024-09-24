@@ -299,7 +299,7 @@ const InsideHearingMainPage = () => {
   }, []);
 
   const initWebSocket = () => {
-    const websocketAddress = "wss://dristi-kerala-dev.pucar.org/transcription";
+    const websocketAddress = window?.globalConfigs?.getConfig?.("WEBSOCKET_ADDRESS") || "wss://dristi-kerala-dev.pucar.org/transcription";
 
     if (!websocketAddress) {
       console.log("WebSocket address is required.");
