@@ -1,5 +1,8 @@
 import { Request } from "@egovernments/digit-ui-libraries";
 import { Urls } from "../hooks";
+const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
+const benchId = window?.globalConfigs?.getConfig("BENCH_ID") || "BENCH_ID";
+const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "COURT_ID";
 
 export const DRISTIService = {
   postIndividualService: (data, tenantId) =>
@@ -52,22 +55,42 @@ export const DRISTIService = {
       data,
       params,
     }),
-  caseCreateService: (data, tenantId) =>
-    Request({
+  caseCreateService: (data, tenantId) => {
+    const updatedData = {
+      ...data,
+      cases: {
+        ...data.cases,
+        judgeId: judgeId,
+        benchId: benchId,
+        courtId: courtId,
+      },
+    };
+    return Request({
       url: Urls.dristi.caseCreate,
       useCache: false,
       userService: true,
-      data,
+      data: updatedData,
       params: { tenantId },
-    }),
-  caseUpdateService: (data, tenantId) =>
-    Request({
+    });
+  },
+  caseUpdateService: (data, tenantId) => {
+    const updatedData = {
+      ...data,
+      cases: {
+        ...data.cases,
+        judgeId: judgeId,
+        benchId: benchId,
+        courtId: courtId,
+      },
+    };
+    return Request({
       url: Urls.dristi.caseUpdate,
       useCache: false,
       userService: true,
-      data,
+      data: updatedData,
       params: { tenantId },
-    }),
+    });
+  },
   searchCaseService: (data, params) =>
     Request({
       url: Urls.dristi.caseSearch,
@@ -118,20 +141,38 @@ export const DRISTIService = {
     });
   },
   startHearing: ({ hearing }, params) => {
+    const presidedBy = {
+      judgeId: [judgeId],
+      benchId: benchId,
+      courtId: courtId,
+    };
+    const updatedData = { hearing: { ...hearing, presidedBy: presidedBy, workflow: { action: "START" } } };
     return Request({
       url: Urls.dristi.updateHearings,
       useCache: false,
       userService: false,
-      data: { hearing: { ...hearing, workflow: { action: "START" } } },
+      data: updatedData,
       params,
     });
   },
   createHearings: (data, params) => {
+    const presidedBy = {
+      judgeId: [judgeId],
+      benchId: benchId,
+      courtId: courtId,
+    };
+    const updatedData = {
+      ...data,
+      hearing: {
+        ...data.hearing,
+        presidedBy: presidedBy,
+      },
+    };
     return Request({
       url: Urls.dristi.createHearings,
       useCache: false,
       userService: false,
-      data,
+      data: updatedData,
       params,
     });
   },

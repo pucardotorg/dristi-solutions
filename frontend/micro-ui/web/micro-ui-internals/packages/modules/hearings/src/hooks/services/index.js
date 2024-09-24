@@ -1,22 +1,49 @@
 import { Request } from "@egovernments/digit-ui-libraries";
 import { Urls } from "./Urls";
+const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
+const benchId = window?.globalConfigs?.getConfig("BENCH_ID") || "BENCH_ID";
+const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "COURT_ID";
 
 export const hearingService = {
   updateHearingTranscript: (data, params) => {
+    const presidedBy = {
+      judgeId: [judgeId],
+      benchId: benchId,
+      courtId: courtId,
+    };
+    const updatedData = {
+      ...data,
+      hearing: {
+        ...data.hearing,
+        presidedBy: presidedBy,
+      },
+    };
     return Request({
       url: Urls.hearing.hearingUpdateTranscript,
       useCache: false,
       userService: false,
-      data,
+      data: updatedData,
       params,
     });
   },
   updateHearings: (data, params) => {
+    const presidedBy = {
+      judgeId: [judgeId],
+      benchId: benchId,
+      courtId: courtId,
+    };
+    const updatedData = {
+      ...data,
+      hearing: {
+        ...data.hearing,
+        presidedBy: presidedBy,
+      },
+    };
     return Request({
       url: Urls.hearing.updateHearings,
       useCache: false,
       userService: false,
-      data,
+      data: updatedData,
       params,
     });
   },
@@ -39,11 +66,17 @@ export const hearingService = {
     });
   },
   startHearing: ({ hearing }, params) => {
+    const presidedBy = {
+      judgeId: [judgeId],
+      benchId: benchId,
+      courtId: courtId,
+    };
+    const updatedData = { hearing: { ...hearing, presidedBy: presidedBy, workflow: { action: "START" } } };
     return Request({
       url: Urls.hearing.updateHearings,
       useCache: false,
       userService: false,
-      data: { hearing: { ...hearing, workflow: { action: "START" } } },
+      data: updatedData,
       params,
     });
   },
