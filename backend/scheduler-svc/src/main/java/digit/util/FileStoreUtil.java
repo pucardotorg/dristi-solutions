@@ -14,6 +14,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import lombok.extern.slf4j.Slf4j;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
 import static digit.config.ServiceConstants.FILE_STORE_UTILITY_EXCEPTION;
@@ -38,6 +39,22 @@ public class FileStoreUtil {
         this.restTemplate = restTemplate;
         this.configs = configs;
         this.mapper = mapper;
+    }
+
+    public byte[] getFile(String tenantId,  String fileStoreId) {
+        byte[] pdfBytes = null;
+        try{
+            StringBuilder uri = new StringBuilder(configs.getFileStoreHost()).append(configs.getFileStorePath());
+            uri.append("tenantId=").append(tenantId).append("&").append("fileStoreId=").append(fileStoreId);
+            ResponseEntity<String> responseEntity= restTemplate.getForEntity(uri.toString(), String.class);
+            pdfBytes = responseEntity.getBody().getBytes();
+        }catch (Exception e){
+            log.error("Document {} is not found in the Filestore for tenantId {} ! An exception occurred!",
+                    fileStoreId,
+                    tenantId,
+                    e);
+        }
+        return pdfBytes;
     }
 
     public Document saveDocumentToFileStore(ByteArrayResource byteArrayResource, String tenantId) {

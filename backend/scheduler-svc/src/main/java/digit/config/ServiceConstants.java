@@ -23,12 +23,12 @@ public class ServiceConstants {
     public static final String TENANTID = "?tenantId=";
     public static final String BUSINESS_SERVICES = "&businessServices=";
     public static final String FILE_STORE_UTILITY_EXCEPTION = "FILE_STORE_UTILITY_EXCEPTION";
-
     public static final String OPT_OUT_DUE = "OPT_OUT_DUE";
-
+    public final String PENDINGAPPROVAL = "PENDINGAPPROVAL";
     public static final String OPT_OUT_SELECTION_LIMIT = "OPT_OUT_SELECTION_LIMIT";
-
-
+    public final String COMPLAINANT= "complainant.primary";
+    public final String RESPONDENT= "respondent.primary";
+    public final String FULLNAME = "fullName";
     public static final String INACTIVE = "INACTIVE";
     public static final String ACTIVE = "ACTIVE";
     public static final String BLOCKED = "BLOCKED";

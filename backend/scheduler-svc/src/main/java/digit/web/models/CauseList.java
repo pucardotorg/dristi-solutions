@@ -103,6 +103,9 @@ public class CauseList {
     @JsonProperty("courtId")
     private String courtId = null;
 
+    @JsonProperty("caseId")
+    private String caseId = null;
+
     @JsonProperty("caseType")
     private String caseType = null;
 
@@ -125,6 +128,12 @@ public class CauseList {
 
     @JsonProperty("judgeId")
     private String judgeId = null;
+
+    @JsonProperty("judgeName")
+    private String judgeName = null;
+
+    @JsonProperty("judgeDesignation")
+    private String judgeDesignation = null;
 
     @JsonProperty("advocateNames")
     private List<String> advocateNames = null;
