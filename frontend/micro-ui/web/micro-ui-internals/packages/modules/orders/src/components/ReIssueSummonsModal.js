@@ -53,7 +53,7 @@ function ReIssueSummonsModal() {
   };
   const todayDate = new Date().getTime();
   const dayInMillisecond = 24 * 3600 * 1000;
-  const hadleCreateOrder = async (orderType) => {
+  const hadleCreateOrder = async (orderType, taskOrderType) => {
     const reqbody = {
       order: {
         createdDate: new Date().getTime(),
@@ -75,7 +75,7 @@ function ReIssueSummonsModal() {
         },
         documents: [],
         additionalDetails: {
-          [orderType === "NOTICE" ? "isReIssueNotice" : "isReIssueSummons"]: true,
+          [taskOrderType === "NOTICE" ? "isReIssueNotice" : "isReIssueSummons"]: true,
           formdata: {
             orderType: {
               code: orderType,
@@ -126,7 +126,7 @@ function ReIssueSummonsModal() {
   };
   const handleRescheduleHearing = async () => {
     try {
-      return await hadleCreateOrder("RESCHEDULE_OF_HEARING_DATE");
+      return await hadleCreateOrder("RESCHEDULE_OF_HEARING_DATE", orderType);
     } catch (error) {}
   };
 

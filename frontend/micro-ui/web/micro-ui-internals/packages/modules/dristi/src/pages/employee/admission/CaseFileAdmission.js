@@ -278,7 +278,7 @@ function CaseFileAdmission({ t, path }) {
 
   const statue = useMemo(
     () =>
-      caseDetails?.statutesAndSections[0]?.sections[0]
+      caseDetails?.statutesAndSections?.[0]?.sections?.[0]
         ? `${caseDetails?.statutesAndSections[0]?.sections[0]
             ?.split(" ")
             ?.map((splitString) => splitString.charAt(0))

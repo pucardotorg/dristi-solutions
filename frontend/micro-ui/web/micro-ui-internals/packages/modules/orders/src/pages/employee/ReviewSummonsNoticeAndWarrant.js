@@ -135,7 +135,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
             ...tasksData?.list?.[0],
             workflow: {
               ...tasksData?.list?.[0]?.workflow,
-              action: "SERVED",
+              action: "SEND",
               documents: [{}],
             },
           },
@@ -158,12 +158,27 @@ const ReviewSummonsNoticeAndWarrant = () => {
             ...tasksData?.list?.[0],
             workflow: {
               ...tasksData?.list?.[0]?.workflow,
-              action: "CLOSED",
+              action: selectedDelievery?.key === "DELIVERED" ? "SERVED" : "NOT_SERVED",
               documents: [{}],
             },
           },
         };
-        await taskService.updateTask(reqBody, { tenantId });
+        await taskService.updateTask(reqBody, { tenantId }).then(async (res) => {
+          if (res?.task && selectedDelievery?.key === "NOT_DELIVERED") {
+            await taskService.updateTask(
+              {
+                task: {
+                  ...res.task,
+                  workflow: {
+                    ...res.task?.workflow,
+                    action: orderType === "SUMMONS" ? "NEW_SUMMON" : "NEW_NOTICE",
+                  },
+                },
+              },
+              { tenantId }
+            );
+          }
+        });
         if (selectedDelievery?.key === "NOT_DELIVERED") {
           ordersService.customApiService(Urls.orders.pendingTask, {
             pendingTask: {
@@ -401,7 +416,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     // if (rowData?.id) getTaskDocuments();
     if (rowData?.filingNumber) getHearingFromCaseId();
     setSelectedDelievery(
-      rowData?.status === "SUMMONSERVED" || rowData?.status === "COMPLETED" || rowData?.status === "DELIVERED"
+      rowData?.status === "NOTICE_SENT" || rowData?.status === "SUMMON_SENT" || rowData?.status === "DELIVERED"
         ? {
             key: "DELIVERED",
             value: "Delivered",
@@ -411,7 +426,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   }, [rowData]);
 
   const handleRowClick = (props) => {
-    if (props?.original?.status === "COMPLETED") {
+    if (props?.original?.status === "DELIVERED") {
       return; // Do nothing if the row's status is 'Completed'
     }
 
