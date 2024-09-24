@@ -528,6 +528,14 @@ const GenerateOrders = () => {
                   },
                 };
               }
+              if (field.key === "hearingPurpose") {
+                return {
+                  ...field,
+                  ...(currentOrder?.additionalDetails?.formdata?.hearingPurpose?.type === "ADMISSION" && {
+                    disable: true,
+                  }),
+                };
+              }
               if (field.key === "unjoinedPartiesNote") {
                 const parties = [...unJoinedLitigant, ...witnesses];
                 return {
@@ -2023,6 +2031,9 @@ const GenerateOrders = () => {
           currentOrder?.additionalDetails?.formdata?.namesOfPartiesRequired?.some((data) => data?.partyType.includes("respondent")))) &&
       isCaseAdmitted
     ) {
+      if (currentOrder?.additionalDetails?.isReIssueNotice) {
+        return t("ISSUE_NOTICE_BUTTON");
+      }
       return t("ISSUE_SUMMONS_BUTTON");
     } else if ((prevOrder?.orderType === "RESCHEDULE_OF_HEARING_DATE" || currentOrder?.orderType === "SCHEDULE_OF_HEARING_DATE") && !isCaseAdmitted) {
       return t("ISSUE_NOTICE_BUTTON");

@@ -155,7 +155,7 @@ export const SummonsTabsConfig = {
         },
         requestBody: {
           criteria: {
-            completeStatus: ["UNDELIVERED", "COMPLETED", "DELIVERED", "ABATED"],
+            completeStatus: ["UNDELIVERED", "NOTICE_SENT", "SUMMON_SENT", "DELIVERED", "ABATED"],
           },
         },
         masterName: "commonUiConfig",
