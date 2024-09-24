@@ -188,10 +188,10 @@ async function appendPrayerSwornFilesToPDF(pdf, prayerSwornStatementDetails) {
         const prayerSworn = prayerSwornStatementDetails[i];
 
         if (prayerSworn.memorandumOfComplaintFileStore) {
-            await appendPdfPagesWithHeader(existingPdfDoc, prayerSworn.memorandumOfComplaintFileStore, `Memorandum of Complaint Document ${i + 1}`);
+            await appendPdfPagesWithHeader(existingPdfDoc, prayerSworn.memorandumOfComplaintFileStore, `Complaint Document ${i + 1}`);
         }
         if (prayerSworn.prayerForReliefFileStore) {
-            await appendPdfPagesWithHeader(existingPdfDoc, prayerSworn.prayerForReliefFileStore, `Prayer for Relief Document ${i + 1}`);
+            await appendPdfPagesWithHeader(existingPdfDoc, prayerSworn.prayerForReliefFileStore, `Complaint for Relief Document ${i + 1}`);
         }
         if (prayerSworn.swornStatement) {
             await appendPdfPagesWithHeader(existingPdfDoc, prayerSworn.swornStatement, `Sworn Statement Document ${i + 1}`);
