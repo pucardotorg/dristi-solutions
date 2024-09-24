@@ -13,23 +13,27 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class SummonCalculationCriteria {
+public class TaskPaymentCriteria {
+
 
     @JsonProperty("channelId")
     @NotNull(message = " channelId cannot be null")
-    @NotBlank(message = " channelId cannot be null")
+    @NotBlank(message = " channelId cannot be blank")
     private String channelId;
 
     @JsonProperty("receiverPincode")
     private String receiverPincode;
 
     @JsonProperty("tenantId")
-    @NotNull
-    @NotBlank
+    @NotNull(message = " tenantId cannot be null")
+    @NotBlank(message = " tenantId cannot be blank")
     private String tenantId = null;
 
-    @JsonProperty("summonId")
-    private String summonId;
+    @JsonProperty("taskType")
+    @NotNull(message = " taskType cannot be null")
+    @NotBlank(message = " taskType cannot be blank")
+    private String taskType;
 
-
+    @JsonProperty("id")
+    private String id;
 }

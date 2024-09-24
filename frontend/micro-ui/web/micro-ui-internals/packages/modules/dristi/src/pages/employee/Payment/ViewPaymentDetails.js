@@ -9,6 +9,20 @@ import { Urls } from "../../../hooks";
 import CustomCopyTextDiv from "../../../components/CustomCopyTextDiv";
 import { getSuffixByBusinessCode, getTaxPeriodByBusinessService } from "../../../Utils";
 
+const paymentTaskType = {
+  TASK_SUMMON: "task-summons",
+  TASK_NOTICE: "task-notice",
+  TASK_SUMMON_ADVANCE_CARRYFORWARD: "TASK_SUMMON_ADVANCE_CARRYFORWARD",
+  TASK_NOTICE_ADVANCE_CARRYFORWARD: "TASK_NOTICE_ADVANCE_CARRYFORWARD",
+  ORDER_MANAGELIFECYCLE: "order-default",
+  SUMMON_WARRANT_STATUS: "SUMMON_WARRANT_STATUS",
+  NOTICE_STATUS: "NOTICE_STATUS",
+  ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE: "application-order-submission-default",
+  PAYMENT_PENDING_POST: "PAYMENT_PENDING_POST",
+  PAYMENT_PENDING_EMAIL: "PAYMENT_PENDING_EMAIL",
+  PAYMENT_PENDING_SMS: "PAYMENT_PENDING_SMS",
+};
+
 const paymentOptionConfig = {
   label: "CS_MODE_OF_PAYMENT",
   type: "dropdown",
@@ -29,6 +43,8 @@ const paymentOptionConfig = {
 
 const ViewPaymentDetails = ({ location, match }) => {
   const { t } = useTranslation();
+  const todayDate = new Date().getTime();
+  const dayInMillisecond = 24 * 3600 * 1000;
   const history = useHistory();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [payer, setPayer] = useState("");
@@ -143,6 +159,8 @@ const ViewPaymentDetails = ({ location, match }) => {
     const consumerCodeWithoutSuffix = consumerCode.split("_")[0];
     let referenceId;
     let taskFilingNumber = "";
+    let taskHearingNumber = "";
+    let taskOrderType = "";
     if (["task-notice", "task-summons"].includes(businessService)) {
       const {
         list: [tasksData],
@@ -153,15 +171,18 @@ const ViewPaymentDetails = ({ location, match }) => {
         },
       });
       const {
-        list: [{ orderNumber }],
+        list: [{ orderNumber, hearingNumber, orderType }],
       } = await ordersService.searchOrder({
         criteria: {
           tenantId: tenantId,
           id: tasksData?.orderId,
         },
       });
+      taskHearingNumber = hearingNumber || "";
+      taskOrderType = orderType || "";
       referenceId = tasksData?.taskDetails?.deliveryChannels?.channelName + `_${orderNumber}`;
       taskFilingNumber = tasksData?.filingNumber || caseDetails?.filingNumber;
+      console.log("taskHearingNumber", taskHearingNumber, orderType);
     } else {
       referenceId = consumerCodeWithoutSuffix;
     }
@@ -208,6 +229,26 @@ const ViewPaymentDetails = ({ location, match }) => {
           tenantId,
         },
       });
+      if (["task-notice", "task-summons"].includes(businessService)) {
+        await DRISTIService.customApiService(Urls.dristi.pendingTask, {
+          pendingTask: {
+            name: taskOrderType === "SUMMONS" ? "Show Summon-Warrant Status" : "Show Notice Status",
+            entityType: paymentTaskType.ORDER_MANAGELIFECYCLE,
+            referenceId: taskHearingNumber,
+            status: taskOrderType === "SUMMONS" ? paymentTaskType.SUMMON_WARRANT_STATUS : paymentTaskType.NOTICE_STATUS,
+            assignedTo: [],
+            assignedRole: ["JUDGE_ROLE"],
+            cnrNumber: caseDetails?.cnrNumber,
+            filingNumber: filingNumber,
+            isCompleted: false,
+            stateSla: 3 * dayInMillisecond + todayDate,
+            additionalDetails: {
+              hearingId: taskHearingNumber,
+            },
+            tenantId,
+          },
+        });
+      }
       history.push(`/${window?.contextPath}/employee/dristi/pending-payment-inbox/response`, {
         state: {
           success: true,

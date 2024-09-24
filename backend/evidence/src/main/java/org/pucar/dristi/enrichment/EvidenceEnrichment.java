@@ -33,38 +33,40 @@ public class EvidenceEnrichment {
     public void enrichEvidenceRegistration(EvidenceRequest evidenceRequest) {
         try {
             String idName = getIdgenByArtifactTypeAndSourceType(evidenceRequest.getArtifact().getArtifactType(), evidenceRequest.getArtifact().getSourceType());
+            String idFormat = getIdGenFormatByArtifactTypeAndSourceType(evidenceRequest.getArtifact().getArtifactType(), evidenceRequest.getArtifact().getSourceType());
             String tenantId = evidenceRequest.getArtifact().getCnrNumber();
             List<String> evidenceNumberList = idgenUtil.getIdList(
                     evidenceRequest.getRequestInfo(),
                     tenantId,
                     idName,
-                    null,
+                    idFormat,
                     1,
                     false
             );
+
             evidenceRequest.getArtifact().setArtifactNumber(evidenceRequest.getArtifact().getCnrNumber()+"-"+evidenceNumberList.get(0));
 
-                AuditDetails auditDetails = AuditDetails.builder()
-                        .createdBy(evidenceRequest.getRequestInfo().getUserInfo().getUuid())
-                        .createdTime(System.currentTimeMillis())
-                        .lastModifiedBy(evidenceRequest.getRequestInfo().getUserInfo().getUuid())
-                        .lastModifiedTime(System.currentTimeMillis())
-                        .build();
+            AuditDetails auditDetails = AuditDetails.builder()
+                    .createdBy(evidenceRequest.getRequestInfo().getUserInfo().getUuid())
+                    .createdTime(System.currentTimeMillis())
+                    .lastModifiedBy(evidenceRequest.getRequestInfo().getUserInfo().getUuid())
+                    .lastModifiedTime(System.currentTimeMillis())
+                    .build();
 
-                evidenceRequest.getArtifact().setAuditdetails(auditDetails);
-                evidenceRequest.getArtifact().setId(UUID.randomUUID());
+            evidenceRequest.getArtifact().setAuditdetails(auditDetails);
+            evidenceRequest.getArtifact().setId(UUID.randomUUID());
 
-                for (Comment comment : evidenceRequest.getArtifact().getComments()) {
-                    comment.setId(UUID.randomUUID());
-                }
+            for (Comment comment : evidenceRequest.getArtifact().getComments()) {
+                comment.setId(UUID.randomUUID());
+            }
 
-                evidenceRequest.getArtifact().setIsActive(true);
-                evidenceRequest.getArtifact().setCreatedDate(System.currentTimeMillis());
+            evidenceRequest.getArtifact().setIsActive(true);
+            evidenceRequest.getArtifact().setCreatedDate(System.currentTimeMillis());
 
-                if (evidenceRequest.getArtifact().getFile() != null) {
-                    evidenceRequest.getArtifact().getFile().setId(String.valueOf(UUID.randomUUID()));
-                    evidenceRequest.getArtifact().getFile().setDocumentUid(evidenceRequest.getArtifact().getFile().getId());
-                }
+            if (evidenceRequest.getArtifact().getFile() != null) {
+                evidenceRequest.getArtifact().getFile().setId(String.valueOf(UUID.randomUUID()));
+                evidenceRequest.getArtifact().getFile().setDocumentUid(evidenceRequest.getArtifact().getFile().getId());
+            }
 
         } catch (CustomException e) {
             log.error("Custom Exception occurred while Enriching evidence: {}", e.toString());
@@ -76,8 +78,11 @@ public class EvidenceEnrichment {
     }
 
     private static final Map<String, String> artifactSourceMap = new HashMap<>();
+    private static final Map<String, String> artifactSourceMapForIdFormat = new HashMap<>();
+
 
     static {
+        //For IdName
         artifactSourceMap.put("DOCUMENTARY_COMPLAINANT", "case.evidence.prosecution.[TENANT_ID]");
         artifactSourceMap.put("DOCUMENTARY_ACCUSED", "case.evidence.defence.[TENANT_ID]");
         artifactSourceMap.put("DOCUMENTARY_COURT", "case.evidence.court.[TENANT_ID]");
@@ -87,11 +92,32 @@ public class EvidenceEnrichment {
         artifactSourceMap.put("DEPOSITION_COMPLAINANT", "case.evidence.prosecution.witness.[TENANT_ID]");
         artifactSourceMap.put("DEPOSITION_ACCUSED", "case.evidence.defence.witness.[TENANT_ID]");
         artifactSourceMap.put("DEPOSITION_COURT", "case.evidence.court.witness.[TENANT_ID]");
+
+        //For idFormat
+        artifactSourceMapForIdFormat.put("DOCUMENTARY_COMPLAINANT", "P[SEQ_PRSQN_[TENANT_ID]]");
+        artifactSourceMapForIdFormat.put("DOCUMENTARY_ACCUSED", "D[SEQ_DFNC_[TENANT_ID]]");
+        artifactSourceMapForIdFormat.put("DOCUMENTARY_COURT", "C[SEQ_COURT_[TENANT_ID]]");
+        artifactSourceMapForIdFormat.put("AFFIDAVIT_COMPLAINANT", "P[SEQ_PRSQN_[TENANT_ID]]");
+        artifactSourceMapForIdFormat.put("AFFIDAVIT_ACCUSED", "D[SEQ_DFNC_[TENANT_ID]]");
+        artifactSourceMapForIdFormat.put("AFFIDAVIT_COURT", "C[SEQ_COURT_[TENANT_ID]]");
+        artifactSourceMapForIdFormat.put("DEPOSITION_COMPLAINANT", "PW[SEQ_PRSQNWTNS_[TENANT_ID]]");
+        artifactSourceMapForIdFormat.put("DEPOSITION_ACCUSED", "DW[SEQ_DFNCWTNS_[TENANT_ID]]");
+        artifactSourceMapForIdFormat.put("DEPOSITION_COURT", "CW[SEQ_COURTWTNS_[TENANT_ID]]");
     }
 
     public String getIdgenByArtifactTypeAndSourceType(String artifactType, String sourceType) {
         String key = artifactType + "_" + sourceType;
         String result = artifactSourceMap.get(key);
+        if (result != null) {
+            return result;
+        } else {
+            throw new CustomException(ENRICHMENT_EXCEPTION, "Invalid artifact type or source type provided");
+        }
+    }
+
+    public String getIdGenFormatByArtifactTypeAndSourceType(String artifactType, String sourceType) {
+        String key = artifactType + "_" + sourceType;
+        String result = artifactSourceMapForIdFormat.get(key);
         if (result != null) {
             return result;
         } else {
@@ -109,14 +135,14 @@ public class EvidenceEnrichment {
             throw new CustomException(ENRICHMENT_EXCEPTION, "Failed to generate evidence number for " + evidenceRequest.getArtifact().getId() + ": " + e.toString());
         }
     }
-        public void enrichIsActive(EvidenceRequest evidenceRequest) {
-            try {
-                evidenceRequest.getArtifact().setIsActive(false);
-            }
-            catch (Exception e) {
-                log.error("Error enriching isActive status upon update: {}", e.toString());
-                throw new CustomException(ENRICHMENT_EXCEPTION, "Error in enrichment service during isActive status update process: " + e.toString());
-            }
+    public void enrichIsActive(EvidenceRequest evidenceRequest) {
+        try {
+            evidenceRequest.getArtifact().setIsActive(false);
+        }
+        catch (Exception e) {
+            log.error("Error enriching isActive status upon update: {}", e.toString());
+            throw new CustomException(ENRICHMENT_EXCEPTION, "Error in enrichment service during isActive status update process: " + e.toString());
+        }
     }
 
 

@@ -1,7 +1,7 @@
 package drishti.payment.calculator.web.controllers;
 
 
-import drishti.payment.calculator.service.CaseFeesCalculationService;
+import drishti.payment.calculator.service.CaseFeeCalculationService;
 import drishti.payment.calculator.service.SummonCalculationService;
 import drishti.payment.calculator.util.ResponseInfoFactory;
 import drishti.payment.calculator.web.models.*;
@@ -24,14 +24,16 @@ import java.util.List;
 @Slf4j
 public class PaymentApiController {
 
-    private final CaseFeesCalculationService caseFeesService;
+    private final CaseFeeCalculationService caseFeesService;
     private final SummonCalculationService summonCalculationService;
+
     @Autowired
-    public PaymentApiController(CaseFeesCalculationService caseFeesService, SummonCalculationService summonCalculationService) {
+    public PaymentApiController(CaseFeeCalculationService caseFeesService, SummonCalculationService summonCalculationService) {
         this.caseFeesService = caseFeesService;
         this.summonCalculationService = summonCalculationService;
     }
 
+    @Deprecated
     @PostMapping(value = "/v1/summons/_calculate")
     public ResponseEntity<CalculationRes> v1CalculatePost(@Parameter(in = ParameterIn.DEFAULT, description = "", required = true, schema = @Schema()) @Valid @RequestBody SummonCalculationReq request) {
         log.info("api = /v1/summons/_calculate, result=IN_PROGRESS ");
@@ -42,11 +44,20 @@ public class PaymentApiController {
 
     }
 
+    @PostMapping(value = "/v1/_calculate")
+    public ResponseEntity<CalculationRes> calculateTaskPayment(@Parameter(in = ParameterIn.DEFAULT, description = "", required = true, schema = @Schema()) @Valid @RequestBody TaskPaymentRequest request) {
+        log.info("api = /v1/_calculate, result=IN_PROGRESS ");
+        List<Calculation> calculations = summonCalculationService.calculateTaskPaymentFess(request);
+        CalculationRes response = CalculationRes.builder().responseInfo(ResponseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true)).calculation(calculations).build();
+        log.info("api = /v1/_calculate, result=SUCCESS");
+        return new ResponseEntity<>(response, HttpStatus.OK);
+
+    }
 
     @PostMapping(value = "/v1/case/fees/_calculate")
     public ResponseEntity<CalculationRes> caseFeesCalculation(@Parameter(in = ParameterIn.DEFAULT, description = "", required = true, schema = @Schema()) @Valid @RequestBody EFillingCalculationReq body) {
         log.info("api = /v1/case/fees/_calculate, result=IN_PROGRESS ");
-        List<Calculation>calculations=caseFeesService.calculateCaseFees(body);
+        List<Calculation> calculations = caseFeesService.calculateCaseFees(body);
         CalculationRes response = CalculationRes.builder().responseInfo(ResponseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true)).calculation(calculations).build();
         log.info("api = /v1/case/fees/_calculate, result=SUCCESS");
         return new ResponseEntity<>(response, HttpStatus.OK);
