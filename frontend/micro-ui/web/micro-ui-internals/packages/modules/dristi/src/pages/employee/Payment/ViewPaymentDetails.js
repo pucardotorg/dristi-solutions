@@ -7,7 +7,7 @@ import { useToast } from "../../../components/Toast/useToast";
 import { DRISTIService } from "../../../services";
 import { Urls } from "../../../hooks";
 import CustomCopyTextDiv from "../../../components/CustomCopyTextDiv";
-import { getSuffixByBusinessCode, getTaxPeriodByBusinessService } from "../../../Utils";
+import { getSuffixByBusinessCode, getTaxPeriodByBusinessService, getFilteredPaymentData } from "../../../Utils";
 
 const paymentOptionConfig = {
   label: "CS_MODE_OF_PAYMENT",
@@ -274,8 +274,9 @@ const ViewPaymentDetails = ({ location, match }) => {
         </div>
         <div style={{ display: "flex", flexDirection: "row-reverse", gap: 40, justifyContent: "space-between", width: "100%" }}>
           <div className="payment-calculator-wrapper" style={{ width: "33%" }}>
-            {paymentCalculation.map((item) => (
+            {getFilteredPaymentData(paymentType, paymentCalculation, bill).map((item) => (
               <div
+                key={item.key}
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
