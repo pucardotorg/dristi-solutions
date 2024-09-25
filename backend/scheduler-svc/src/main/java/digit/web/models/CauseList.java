@@ -113,10 +113,13 @@ public class CauseList {
     private String caseTitle = null;
 
     @JsonProperty("caseRegistrationDate")
-    private String caseRegistrationDate = null;
+    private Long caseRegistrationDate = null;
 
     @JsonProperty("caseNumber")
     private String caseNumber = null;
+
+    @JsonProperty("cmpNumber")
+    private String cmpNumber = null;
 
     @JsonProperty("litigants")
     @Valid
