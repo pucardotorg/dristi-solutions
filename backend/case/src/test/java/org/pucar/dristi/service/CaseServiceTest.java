@@ -714,6 +714,8 @@ public class CaseServiceTest {
         when(config.getAdditionalJoinCaseTopic()).thenReturn("topic");
         AddWitnessResponse response = caseService.addWitness(addWitnessRequest);
 
+        verify(encryptionDecryptionUtil, times(1)).encryptObject(eq(caseObj), any(), any());
+        verify(encryptionDecryptionUtil, times(1)).decryptObject(eq(caseObj), any(), any(), any());
         verify(producer, times(1)).push(eq("topic"), eq(addWitnessRequest));
         assertEquals(addWitnessRequest, response.getAddWitnessRequest());
         assertEquals(addWitnessRequest.getAdditionalDetails(), response.getAddWitnessRequest().getAdditionalDetails());
