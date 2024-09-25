@@ -29,7 +29,7 @@ public class CauseListRowMapper implements RowMapper<CauseList> {
                 .judgeId(resultSet.getString("judge_id"))
                 .slot(resultSet.getString("slot"))
                 .caseTitle(resultSet.getString("case_title"))
-                .caseRegistrationDate(resultSet.getString("case_registration_date"))
+                .caseRegistrationDate(resultSet.getLong("case_registration_date"))
                 .advocateNames(advocateNames)
                 .build();
     }
