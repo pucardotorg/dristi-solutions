@@ -345,7 +345,7 @@ export const pendingTaskOrderActions = {
     actorName: ["JUDGE"],
     actionName: "Show Summon-Warrant Status",
     redirectDetails: {
-      url: "/home/home-pending-task/sms-payment-modal",
+      url: "/home/home-pending-task/icops-payment-modal",
       params: [
         { key: "filingNumber", value: "filingNumber" },
         { key: "taskNumber", value: "referenceId" },

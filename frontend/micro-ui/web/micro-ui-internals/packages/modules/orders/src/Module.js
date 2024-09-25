@@ -14,6 +14,8 @@ import SummonsOrderComponent from "./components/SummonsOrderComponent";
 import ReIssueSummonsModal from "./components/ReIssueSummonsModal";
 import PaymentForSummonModal from "./pages/employee/PaymentForSummonModal";
 import PaymentForSummonModalSMSAndEmail from "./pages/employee/PaymentForSummonModalSMSAndEmail";
+import WarrantPaymentModal from "./pages/employee/WarrantPaymentModal";
+
 import SBIEpostPayment from "./pages/employee/SBIEpostPayment";
 
 export const OrdersModule = ({ stateCode, userType, tenants }) => {
@@ -46,6 +48,7 @@ const componentsToRegister = {
   ReIssueSummonsModal,
   PaymentForSummonModal,
   PaymentForSummonModalSMSAndEmail,
+  WarrantPaymentModal,
   SBIEpostPayment,
 };
 
