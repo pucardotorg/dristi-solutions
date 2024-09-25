@@ -470,9 +470,10 @@ public class CauseListService {
                 causeList.setCaseType(caseList.get(0).get("caseType").asText());
                 causeList.setCaseTitle(caseList.get(0).get("caseTitle").asText());
                 causeList.setCaseNumber(caseList.get(0).get("courtCaseNumber").asText());
+                causeList.setCmpNumber(caseList.get(0).get("cmpNumber").asText());
 
                 long registrationDate = caseList.get(0).get("registrationDate").asLong();
-                causeList.setCaseRegistrationDate(dateUtil.getLocalDateFromEpoch(registrationDate).toString());
+                causeList.setCaseRegistrationDate(registrationDate);
 
                 List<AdvocateMapping> advocateMappings;
                 List<Party> litigantsList;
