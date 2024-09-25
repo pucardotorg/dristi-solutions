@@ -104,7 +104,7 @@ export const rolesToConfigMapping = [
     onRowClickRoute: {
       dependentUrl: "/dristi/admission",
       urlDependentOn: "status",
-      urlDependentValue: "PENDING_ADMISSION",
+      urlDependentValue: "",
       params: [
         { key: "filingNumber", value: "filingNumber" },
         { key: "caseId", value: "id" },
@@ -118,7 +118,7 @@ export const rolesToConfigMapping = [
     onRowClickRoute: {
       dependentUrl: "/dristi/admission",
       urlDependentOn: "status",
-      urlDependentValue: "PENDING_ADMISSION",
+      urlDependentValue: "",
       params: [
         { key: "filingNumber", value: "filingNumber" },
         { key: "caseId", value: "id" },
@@ -143,7 +143,7 @@ export const rolesToConfigMapping = [
     onRowClickRoute: {
       dependentUrl: "/dristi/admission",
       urlDependentOn: "status",
-      urlDependentValue: "PENDING_ADMISSION",
+      urlDependentValue: "",
       params: [
         { key: "filingNumber", value: "filingNumber" },
         { key: "caseId", value: "id" },
@@ -157,7 +157,7 @@ export const rolesToConfigMapping = [
     onRowClickRoute: {
       dependentUrl: "/dristi/admission",
       urlDependentOn: "status",
-      urlDependentValue: "PENDING_ADMISSION",
+      urlDependentValue: "",
       params: [
         { key: "filingNumber", value: "filingNumber" },
         { key: "caseId", value: "id" },
@@ -171,7 +171,7 @@ export const rolesToConfigMapping = [
     onRowClickRoute: {
       dependentUrl: "/dristi/admission",
       urlDependentOn: "status",
-      urlDependentValue: "PENDING_ADMISSION",
+      urlDependentValue: "",
       params: [
         { key: "filingNumber", value: "filingNumber" },
         { key: "caseId", value: "id" },
@@ -247,7 +247,7 @@ export const pendingTaskCaseActions = {
     actorName: ["JUDGE"],
     actionName: "Case Approved from Scrutiny",
     redirectDetails: {
-      url: "/dristi/admission",
+      url: "/dristi/home/view-case",
       params: [
         { key: "filingNumber", value: "filingNumber" },
         { key: "caseId", value: "id" },
@@ -258,7 +258,7 @@ export const pendingTaskCaseActions = {
     actorName: ["JUDGE"],
     actionName: "Admission hearing scheduled - Admit Case",
     redirectDetails: {
-      url: "/dristi/admission",
+      url: "/dristi/home/view-case",
       params: [
         { key: "filingNumber", value: "filingNumber" },
         { key: "caseId", value: "id" },
@@ -269,7 +269,7 @@ export const pendingTaskCaseActions = {
     actorName: ["JUDGE"],
     actionName: "Schedule admission hearing",
     redirectDetails: {
-      url: "/dristi/admission",
+      url: "/dristi/home/view-case",
       params: [
         { key: "filingNumber", value: "filingNumber" },
         { key: "caseId", value: "id" },
