@@ -115,6 +115,23 @@ const ViewPaymentDetails = ({ location, match }) => {
     "dristi",
     Boolean(chequeDetails?.totalAmount && chequeDetails.totalAmount !== "0")
   );
+
+  const { data: breakupResponse, isLoading: isSummonsBreakUpLoading } = Digit.Hooks.dristi.useSummonsPaymentBreakUp(
+    {
+      Criteria: [
+        {
+          channelId: "POLICE",
+          tenantId: tenantId,
+          Id: "hello",
+          taskType: "WARRANT",
+        },
+      ],
+    },
+    {},
+    "dristi",
+    true
+  );
+
   const totalAmount = useMemo(() => {
     const totalAmount = calculationResponse?.Calculation?.[0]?.totalAmount || 0;
     return parseFloat(totalAmount).toFixed(2);
