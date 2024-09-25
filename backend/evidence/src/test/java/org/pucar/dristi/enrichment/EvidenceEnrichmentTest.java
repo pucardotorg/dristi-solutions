@@ -13,6 +13,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.util.IdgenUtil;
 import org.pucar.dristi.web.models.Artifact;
 import org.pucar.dristi.web.models.Comment;
@@ -33,6 +34,9 @@ public class EvidenceEnrichmentTest {
 
     @Mock
     private IdgenUtil idgenUtil;
+
+    @Mock
+    private Configuration configuration;
 
     @InjectMocks
     private EvidenceEnrichment evidenceEnrichment;
@@ -73,6 +77,8 @@ public class EvidenceEnrichmentTest {
         List<String> idList = new ArrayList<>();
         idList.add("artifactNumber");
         when(idgenUtil.getIdList(any(), any(), any(), any(), any(),any())).thenReturn(idList);
+        when(configuration.getCourtConfig()).thenReturn("config");
+        when(configuration.getCourtFormat()).thenReturn("testformat");
 
         // Call the method to be tested
         evidenceEnrichment.enrichEvidenceRegistration(evidenceRequest);
