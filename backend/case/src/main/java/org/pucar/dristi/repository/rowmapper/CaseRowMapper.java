@@ -68,6 +68,7 @@ public class CaseRowMapper implements ResultSetExtractor<List<CourtCase>> {
                             .caseType(rs.getString("casetype"))
                             .courtId(rs.getString("courtid"))
                             .benchId(rs.getString("benchid"))
+                            .cmpNumber(rs.getString("cmpnumber"))
                             .judgeId(rs.getString("judgeid"))
                             .stage(rs.getString("stage"))
                             .isActive(rs.getBoolean("isactive"))
