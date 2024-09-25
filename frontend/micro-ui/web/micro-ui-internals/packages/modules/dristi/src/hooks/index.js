@@ -26,6 +26,7 @@ import useEvidenceDetails from "./dristi/useEvidenceDetails.js";
 import useGetStatuteSection from "./dristi/useGetStatuteSection.js";
 import useDownloadCasePdf from "./dristi/useDownloadCasePdf.js";
 import useSummonsPaymentBreakUp from "./dristi/useSummonsPaymentBreakUp.js";
+import { getTaskType, extractFeeMedium } from "../Utils/index.js";
 export const Urls = {
   Authenticate: "/user/oauth/token",
   dristi: {
@@ -107,7 +108,7 @@ const Hooks = {
 };
 
 const Utils = {
-  dristi: {},
+  dristi: { extractFeeMedium, getTaskType },
 };
 export const CustomizedHooks = {
   Hooks,
