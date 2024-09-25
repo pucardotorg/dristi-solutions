@@ -38,8 +38,6 @@
               "nextState": "OPT_OUT",
               "roles": [
                 "HEARING_EDITOR"
-<<<<<<< HEAD
-=======
               ]
             },
             {
@@ -47,7 +45,6 @@
               "nextState": "SCHEDULED",
               "roles": [
                 "HEARING_SCHEDULER"
->>>>>>> origin/dpg-qa-deployment
               ]
             },
             {
