@@ -17,7 +17,7 @@ public class CauseListPdf {
     @JsonProperty("fileStoreId")
     private String fileStoreId;
 
-    @JsonProperty("date")
+    @JsonProperty("hearingDate")
     private String date;
 
     @JsonProperty("courtId")

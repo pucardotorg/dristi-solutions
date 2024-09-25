@@ -39,6 +39,7 @@ public class ServiceConstants {
     public final String DEFAULT_COURT_MODULE_NAME = "court";
     public final String DEFAULT_SLOTTING_MASTER_NAME = "slots";
     public final String DEFAULT_HEARING_MASTER_NAME = "hearings";
+    public final String HEARING_PRIORITY_MASTER_NAME = "hearingPriority";
     public final String SCHEDULER_CONFIG_MASTER_NAME = "config";
     public final String SCHEDULER_CONFIG_MODULE_NAME = "SCHEDULER-CONFIG";
 

@@ -16,10 +16,10 @@ public class CaseTypeRowMapper implements RowMapper<CaseType> {
     public CaseType mapRow(ResultSet resultSet, int rowNum) throws SQLException {
         return CaseType.builder()
                 .id(resultSet.getInt("id"))
-                .caseType(resultSet.getString("case_type"))
+                .caseType(resultSet.getString("casetype"))
                 .description(resultSet.getString("description"))
                 .priority(resultSet.getInt("priority"))
-                .isActive(resultSet.getBoolean("is_active"))
+                .isActive(resultSet.getBoolean("isactive"))
                 .build();
     }
 }
