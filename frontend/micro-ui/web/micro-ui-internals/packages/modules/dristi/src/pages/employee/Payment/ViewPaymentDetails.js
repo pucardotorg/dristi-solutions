@@ -7,7 +7,7 @@ import { useToast } from "../../../components/Toast/useToast";
 import { DRISTIService } from "../../../services";
 import { Urls } from "../../../hooks";
 import CustomCopyTextDiv from "../../../components/CustomCopyTextDiv";
-import { getSuffixByBusinessCode, getTaxPeriodByBusinessService, getFilteredPaymentData } from "../../../Utils";
+import { getSuffixByBusinessCode, getTaxPeriodByBusinessService, getFilteredPaymentData, getTaskType, extractFeeMedium } from "../../../Utils";
 
 const paymentOptionConfig = {
   label: "CS_MODE_OF_PAYMENT",
@@ -113,31 +113,33 @@ const ViewPaymentDetails = ({ location, match }) => {
     },
     {},
     "dristi",
-    Boolean(chequeDetails?.totalAmount && chequeDetails.totalAmount !== "0")
+    Boolean(chequeDetails?.totalAmount && chequeDetails.totalAmount !== "0" && businessService.toLowerCase() === "case-default")
   );
 
   const { data: breakupResponse, isLoading: isSummonsBreakUpLoading } = Digit.Hooks.dristi.useSummonsPaymentBreakUp(
     {
       Criteria: [
         {
-          channelId: "POLICE",
+          channelId: extractFeeMedium(paymentType),
+          ...(extractFeeMedium(paymentType) === "EPOST" && { receiverPincode: "686001" }),
           tenantId: tenantId,
           Id: "hello",
-          taskType: "WARRANT",
+          taskType: getTaskType(businessService),
         },
       ],
     },
     {},
     "dristi",
-    true
+    !["case-default", "application-voluntary-submission"].includes(businessService.toLowerCase())
   );
 
   const totalAmount = useMemo(() => {
-    const totalAmount = calculationResponse?.Calculation?.[0]?.totalAmount || 0;
+    const totalAmount = calculationResponse?.Calculation?.[0]?.totalAmount || breakupResponse?.Calculation?.[0]?.totalAmount || 0;
     return parseFloat(totalAmount).toFixed(2);
-  }, [calculationResponse?.Calculation]);
+  }, [calculationResponse?.Calculation, breakupResponse?.Calculation]);
   const paymentCalculation = useMemo(() => {
-    const breakdown = calculationResponse?.Calculation?.[0]?.breakDown || [];
+    const breakdown = calculationResponse?.Calculation?.[0]?.breakDown || breakupResponse?.Calculation?.[0]?.breakDown || [];
+    console.log(breakupResponse);
     const updatedCalculation = breakdown.map((item) => ({
       key: item?.type,
       value: item?.amount,
@@ -152,7 +154,7 @@ const ViewPaymentDetails = ({ location, match }) => {
     });
 
     return updatedCalculation;
-  }, [calculationResponse?.Calculation]);
+  }, [calculationResponse?.Calculation, breakupResponse?.Calculation]);
   const payerName = useMemo(() => caseDetails?.additionalDetails?.payerName, [caseDetails?.additionalDetails?.payerName]);
   const bill = paymentDetails?.Bill ? paymentDetails?.Bill[0] : {};
 
