@@ -1472,9 +1472,9 @@ const GenerateOrders = () => {
             channelName: channelTypeEnum?.[item?.type]?.type,
           };
 
-          const address = respondentAddress[channelMap.get(item?.type) - 1];
-          const sms = respondentPhoneNo[channelMap.get(item?.type) - 1];
-          const email = respondentEmail[channelMap.get(item?.type) - 1];
+          const address = ["Post", "Via Police"].includes(item?.type) ? respondentAddress[channelMap.get(item?.type) - 1] : respondentAddress[0];
+          const sms = ["SMS"].includes(item?.type) ? respondentPhoneNo[channelMap.get(item?.type) - 1] : respondentPhoneNo[0];
+          const email = ["E-mail"].includes(item?.type) ? respondentEmail[channelMap.get(item?.type) - 1] : respondentEmail[0];
 
           payload.respondentDetails = {
             ...payload.respondentDetails,
