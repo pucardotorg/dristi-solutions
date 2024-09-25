@@ -28,6 +28,7 @@ import CustomStepperSuccess from "../../../../orders/src/components/CustomSteppe
 import { createRespondentIndividualUser, selectMobileNumber, selectOtp, submitJoinCase } from "../../utils/joinCaseUtils";
 import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
 import { getAdvocates } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/EfilingValidationUtils";
+import { Urls as hearingUrls } from "../../../../hearings/src/hooks/services/Urls";
 
 const CloseBtn = (props) => {
   return (
@@ -252,7 +253,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
   const [otp, setOtp] = useState("");
   const [accusedIdVerificationDocument, setAccusedIdVerificationDocument] = useState();
 
-  const [nextHearingDate, setNextHearingDate] = useState("");
+  const [nextHearing, setNextHearing] = useState("");
 
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
@@ -280,6 +281,15 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
       ],
     },
   };
+
+  const { mutateAsync: updateAttendees } = Digit.Hooks.useCustomAPIMutationHook({
+    url: hearingUrls.hearing.hearingUpdateTranscript,
+    params: { applicationNumber: "", cnrNumber: "" },
+    body: { tenantId, hearingType: "", status: "" },
+    config: {
+      mutationKey: "addAttendee",
+    },
+  });
 
   const barRegistrationSerachConfig = useMemo(() => {
     return [
@@ -470,7 +480,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
         },
         {}
       );
-      setNextHearingDate(findNextHearings(response?.HearingList));
+      setNextHearing(findNextHearings(response?.HearingList));
     } catch (error) {
       console.error("error :>> ", error);
     }
@@ -1512,14 +1522,14 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
     return [
       {
         key: "Attendance to the Hearing Date on",
-        value: caseDetails?.filingNumber,
+        value: formatDate(new Date(nextHearing?.startTime)),
       },
       {
         key: "Responding as / for",
-        value: selectedParty?.fullName || "",
+        value: `${name?.givenName}${name?.otherNames ? " " + name?.otherNames + " " : " "}${name?.familyName}` || "",
       },
     ];
-  }, [caseDetails?.filingNumber, selectedParty?.fullName]);
+  }, [name?.familyName, name?.givenName, name?.otherNames, nextHearing?.startTime]);
 
   useEffect(() => {
     if (userType === "Litigant") setParties(respondentList?.map((data, index) => ({ ...data, key: index })));
@@ -1528,7 +1538,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
 
   useEffect(() => {
     if (caseDetails?.caseCategory) {
-      getNextHearingFromCaseId(caseDetails?.id);
+      getNextHearingFromCaseId(caseDetails?.filingNumber);
       setCaseInfo([
         {
           key: "CASE_CATEGORY",
@@ -1638,7 +1648,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
             setStep(8);
             setMessageHeader(t(JoinHomeLocalisation.ALREADY_PART_OF_CASE));
             setSuccess(true);
-            // setIsLitigantPartOfCase(true);
+            setIsLitigantPartOfCase(true);
           } else {
             setStep(step + 1);
           }
@@ -2594,11 +2604,26 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
     [caseDetails, selectedParty, t, tenantId]
   );
 
-  const verifySummonCode = async (summonCode) => {
-    console.log("summonCode :>> ", summonCode);
-    return {
-      continue: true,
-    };
+  const onConfirmAttendee = async () => {
+    const updatedHearing = structuredClone(nextHearing);
+    updatedHearing.attendees = updatedHearing.attendees || [];
+    if (updatedHearing?.attendees?.some((attendee) => attendee?.individualId === individualId)) {
+      console.log("attendes alreding join :>>");
+      return {
+        continue: false,
+      };
+    } else {
+      updatedHearing.attendees.push({
+        name: `${name?.givenName}${name?.otherNames ? " " + name?.otherNames + " " : " "}${name?.familyName}` || "",
+        individualId: individualId,
+        type: "Respondent",
+      });
+      const response = await updateAttendees({ body: { hearing: updatedHearing } });
+      console.log("response :>> ", response);
+      return {
+        continue: true,
+      };
+    }
   };
 
   const registerRespondentConfig = useMemo(() => {
@@ -2790,50 +2815,51 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
           actionSaveLabel: "Yes",
           actionCancelLabel: "No",
           modalBody: <CustomCaseInfoDiv t={t} data={attendanceDetails} column={2} />,
-        },
-        {
-          heading: { label: "Verify your Summons ID" },
-          actionSaveLabel: "Done",
-          modalBody: (
-            <div className="enter-validation-code">
-              <LabelFieldPair className="case-label-field-pair">
-                <div className="join-case-tooltip-wrapper">
-                  <CardLabel className="case-input-label">{`${t("Enter Summons ID")}`}</CardLabel>
-                </div>
-                <div style={{ width: "100%", maxWidth: "960px" }}>
-                  <TextInput
-                    style={{ width: "100%" }}
-                    type={"text"}
-                    name="summonCode"
-                    value={summonCode}
-                    onChange={(e) => {
-                      let val = e.target.value;
-                      val = val.substring(0, 6);
-                      setSummonCode(val);
-
-                      setErrors({
-                        ...errors,
-                        summonCode: undefined,
-                      });
-                    }}
-                  />
-                  {errors?.summonCode && <CardLabelError> {t(errors?.validationCode?.message)} </CardLabelError>}
-                  {}
-                </div>
-              </LabelFieldPair>
-            </div>
-          ),
           actionSaveOnSubmit: async () => {
-            // return await verifyAccessCode(responsePendingTask, validationCode);
-            const resp = await verifySummonCode(summonCode);
+            const resp = await onConfirmAttendee();
             if (resp.continue) setShowConfirmSummonModal(false);
           },
-          async: true,
-          isDisabled: summonCode?.length === 6 ? false : true,
         },
+        // {
+        //   heading: { label: "Verify your Summons ID" },
+        //   actionSaveLabel: "Done",
+        //   modalBody: (
+        //     <div className="enter-validation-code">
+        //       <LabelFieldPair className="case-label-field-pair">
+        //         <div className="join-case-tooltip-wrapper">
+        //           <CardLabel className="case-input-label">{`${t("Enter Summons ID")}`}</CardLabel>
+        //         </div>
+        //         <div style={{ width: "100%", maxWidth: "960px" }}>
+        //           <TextInput
+        //             style={{ width: "100%" }}
+        //             type={"text"}
+        //             name="summonCode"
+        //             value={summonCode}
+        //             onChange={(e) => {
+        //               let val = e.target.value;
+        //               val = val.substring(0, 6);
+        //               setSummonCode(val);
+
+        //               setErrors({
+        //                 ...errors,
+        //                 summonCode: undefined,
+        //               });
+        //             }}
+        //           />
+        //           {errors?.summonCode && <CardLabelError> {t(errors?.validationCode?.message)} </CardLabelError>}
+        //           {}
+        //         </div>
+        //       </LabelFieldPair>
+        //     </div>
+        //   ),
+        //   actionSaveOnSubmit: async () => {
+        //     // return await verifyAccessCode(responsePendingTask, validationCode);
+        //   },
+        //   async: true,
+        // },
       ].filter(Boolean),
     };
-  }, [attendanceDetails, errors, setShowSubmitResponseModal, summonCode, t]);
+  }, [attendanceDetails, setShowSubmitResponseModal, t]);
 
   return (
     <div>
