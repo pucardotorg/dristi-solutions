@@ -188,7 +188,7 @@ const advocateVakalatnamaConfig = [
   },
 ];
 
-const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, updateCase, updateSelectedParty, setResponsePendingTask }) => {
+const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePendingTask }) => {
   const { t } = useTranslation();
   const history = useHistory();
   const todayDate = new Date().getTime();
@@ -1407,13 +1407,15 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
                   onButtonClick={() => {
                     setShow(false);
                     if (caseDetails?.status === "PENDING_RESPONSE" && selectedParty?.isRespondent) {
-                      setAskOtp(false);
                       setShowSubmitResponseModal(true);
                     } else {
                       if (isLitigantPartOfCase) {
                         closeModal();
                         setShowConfirmSummonModal(true);
-                      } else history.push(`/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${caseDetails?.id}`);
+                      } else
+                        history.push(
+                          `/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${caseDetails?.filingNumber}&tab=Overview`
+                        );
                     }
                   }}
                 >
@@ -1453,7 +1455,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
     const complainantList = await Promise.all(
       formdata?.map(async (data, index) => {
         try {
-          const response = await getUserUUID(data?.data?.complainantVerification?.individualDetails?.individualId);
+          const response = await getUserUUID(data?.individualId);
 
           const fullName = getUserFullName(response?.Individual?.[0]);
 
@@ -1557,12 +1559,11 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
   }, [caseDetails, t, userType?.value]);
 
   useEffect(() => {
-    updateSelectedParty(selectedParty);
     setAccusedRegisterFormData({
       ...selectedParty,
       ...(selectedParty?.phonenumbers?.mobileNumber?.[0] && { mobileNumber: selectedParty?.phonenumbers?.mobileNumber?.[0] }),
     });
-  }, [selectedParty, updateSelectedParty]);
+  }, [selectedParty]);
 
   useEffect(() => {
     setBarDetails([
