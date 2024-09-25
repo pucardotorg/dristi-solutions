@@ -72,13 +72,6 @@ public class EPostFeeService implements SummonPayment {
 
         SpeedPostConfigParams speedPostConfigParams = taskUtil.getIPostFeesDefaultData(requestInfo, criteria.getTenantId());
 
-        HubSearchCriteria searchCriteria = HubSearchCriteria.builder().pincode(Collections.singletonList(criteria.getReceiverPincode())).build();
-        List<PostalHub> postalHub = repository.getPostalHub(searchCriteria);
-        if (postalHub.isEmpty()) {
-            throw new CustomException(POSTAL_HUB_NOT_FOUND, POSTAL_HUB_NOT_FOUND_MSG);
-        }
-        Classification classification = postalHub.get(0).getClassification();
-
         String taskType = criteria.getTaskType();
         String tenantId = criteria.getTenantId();
         List<TaskPayment> taskPaymentMasterData = taskUtil.getTaskPaymentMasterData(requestInfo, tenantId);
@@ -87,11 +80,18 @@ public class EPostFeeService implements SummonPayment {
                 .toList();
 
         Double courtFees = taskUtil.calculateCourtFees(filteredTaskPayment.get(0));
-        Double postFee = speedPostUtil.calculateEPostFee(config.getNumberOfPgOfSummon(), classification, speedPostConfigParams);
+
+        HubSearchCriteria searchCriteria = HubSearchCriteria.builder().pincode(Collections.singletonList(criteria.getReceiverPincode())).build();
+        List<PostalHub> postalHub = repository.getPostalHub(searchCriteria);
+        Double postFee = null; // RPAD Condition
+        if (!postalHub.isEmpty()) {
+            Classification classification = postalHub.get(0).getClassification();
+            postFee = speedPostUtil.calculateEPostFee(config.getNumberOfPgOfSummon(), classification, speedPostConfigParams);
+        }
 
         List<BreakDown> breakDowns = taskUtil.getFeeBreakdown(courtFees, postFee);
 
-        double totalAmount = courtFees + postFee;
+        double totalAmount = getTotalAmount(courtFees, postFee);
 
         return Calculation.builder()
                 .applicationId(criteria.getId())
@@ -100,7 +100,15 @@ public class EPostFeeService implements SummonPayment {
                 .breakDown(breakDowns)
                 .build();
 
+    }
 
+
+    double getTotalAmount(Double courtFee, Double postFee) {
+        if (postFee != null) {
+            return courtFee + postFee;
+        } else {
+            return courtFee;
+        }
     }
 
 
