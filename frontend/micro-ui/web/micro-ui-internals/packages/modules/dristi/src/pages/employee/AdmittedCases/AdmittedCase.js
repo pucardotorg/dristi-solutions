@@ -22,7 +22,6 @@ import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import HearingTranscriptModal from "./HearingTranscriptModal";
 import AdmissionActionModal from "../admission/AdmissionActionModal";
-import { generateUUID } from "../../../Utils";
 import { DRISTIService } from "../../../services";
 import { Urls } from "../../../hooks";
 import {
@@ -666,7 +665,7 @@ const AdmittedCases = () => {
           },
         },
       };
-      DRISTIService.customApiService(Urls.dristi.ordersCreate, orderBody, { tenantId })
+      return DRISTIService.customApiService(Urls.dristi.ordersCreate, orderBody, { tenantId })
         .then((res) => {
           history.push(`/digit-ui/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`, {
             caseId: caseDetails?.id,
@@ -983,9 +982,9 @@ const AdmittedCases = () => {
               caseId: caseId,
               tab: "Orders",
             });
-            updateCaseDetails("ADMIT");
+            await updateCaseDetails("ADMIT");
           } else {
-            handleIssueNotice(hearingDate, hearingNumber);
+            await handleIssueNotice(hearingDate, hearingNumber);
             await updateCaseDetails("ADMIT");
           }
         } else {
@@ -1017,7 +1016,6 @@ const AdmittedCases = () => {
             caseId: caseId,
             tab: "Orders",
           });
-          updateCaseDetails("ADMIT");
         } else {
           handleIssueNotice(hearingDate, hearingNumber);
         }
@@ -1588,7 +1586,18 @@ const AdmittedCases = () => {
                 onButtonClick={onSaveDraft}
               />
             )}
-            {primaryAction.action && <SubmitBar label={t(primaryAction?.label)} submit="submit" disabled={""} onSubmit={onSubmit} />}
+            {primaryAction.action && (
+              <SubmitBar
+                label={t(
+                  [CaseWorkflowState.ADMISSION_HEARING_SCHEDULED].includes(caseDetails?.status) && primaryAction?.action === "ADMIT"
+                    ? "CS_CASE_ISSUE_ORDER"
+                    : primaryAction?.label
+                )}
+                submit="submit"
+                disabled={""}
+                onSubmit={onSubmit}
+              />
+            )}
           </div>
           {secondaryAction.action && (
             <Button
