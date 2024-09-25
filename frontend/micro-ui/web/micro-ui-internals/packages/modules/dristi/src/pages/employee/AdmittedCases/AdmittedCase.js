@@ -125,9 +125,14 @@ const AdmittedCases = () => {
   const showTakeAction = useMemo(
     () =>
       (userRoles.includes("JUDGE_ROLE") || userRoles.includes("BENCHCLERK_ROLE")) &&
-      ["CASE_ADMITTED", "ADMISSION_HEARING_SCHEDULED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"].includes(
-        caseData?.criteria[0]?.responseList[0]?.status
-      ),
+      [
+        "CASE_ADMITTED",
+        "ADMISSION_HEARING_SCHEDULED",
+        "PENDING_ADMISSION_HEARING",
+        "PENDING_NOTICE",
+        "PENDING_RESPONSE",
+        "PENDING_ADMISSION",
+      ].includes(caseData?.criteria[0]?.responseList[0]?.status),
     [caseData, userRoles]
   );
 
@@ -576,6 +581,7 @@ const AdmittedCases = () => {
           caseDetails?.status !== "ADMISSION_HEARING_SCHEDULED" &&
           caseDetails?.status !== "PENDING_ADMISSION_HEARING" &&
           caseDetails?.status !== "PENDING_NOTICE" &&
+          caseDetails?.status !== "PENDING_ADMISSION" &&
           caseDetails?.status !== "PENDING_RESPONSE";
   }, [caseDetails?.status, config?.label, isFSO]);
 
@@ -626,10 +632,13 @@ const AdmittedCases = () => {
   };
 
   const formatDate = (date) => {
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = date.getFullYear();
-    return `${day}-${month}-${year}`;
+    if (date) {
+      const day = String(date.getDate()).padStart(2, "0");
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const year = date.getFullYear();
+      return `${day}-${month}-${year}`;
+    }
+    return "";
   };
 
   const handleIssueNotice = async (hearingDate, hearingNumber) => {
@@ -665,7 +674,7 @@ const AdmittedCases = () => {
           },
         },
       };
-      return DRISTIService.customApiService(Urls.dristi.ordersCreate, orderBody, { tenantId })
+      return DRISTIService.customApiService(Urls.dristi.ordersCreate, { order: orderBody }, { tenantId })
         .then((res) => {
           history.push(`/digit-ui/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`, {
             caseId: caseDetails?.id,
@@ -715,7 +724,7 @@ const AdmittedCases = () => {
       },
       {
         key: "CCST No.",
-        value: caseDetails?.ccstNumber || "",
+        value: caseDetails?.caseCourtNumber || "",
       },
       {
         key: "Submitted on",
@@ -723,7 +732,7 @@ const AdmittedCases = () => {
       },
       {
         key: "Registered on",
-        value: caseDetails?.registrationDate || "",
+        value: formatDate(caseDetails?.registrationDate) || "",
       },
     ];
   }, [caseDetails]);
@@ -763,9 +772,25 @@ const AdmittedCases = () => {
 
   const handleAdmitCase = async () => {
     setCaseAdmitLoader(true);
-    updateCaseDetails("ADMIT", caseDetails).then((res) => {
+    updateCaseDetails("ADMIT", caseDetails).then(async (res) => {
       setModalInfo({ ...modalInfo, page: 1 });
       setCaseAdmitLoader(false);
+      const { HearingList = [] } = await Digit.HearingService.searchHearings({
+        hearing: { tenantId },
+        criteria: {
+          tenantID: tenantId,
+          filingNumber: filingNumber,
+        },
+      });
+      if (caseDetails?.status === "PENDING_RESPONSE") {
+        const hearingData = HearingList?.find((list) => list?.hearingType === "ADMISSION" && list?.status === "SCHEDULED");
+        hearingData.workflow = hearingData.workflow || {};
+        hearingData.workflow.action = "ABANDON";
+        await Digit.HearingService.updateHearings(
+          { tenantId, hearing: hearingData, hearingType: "", status: "" },
+          { applicationNumber: "", cnrNumber: "" }
+        );
+      }
       DRISTIService.customApiService(Urls.dristi.pendingTask, {
         pendingTask: {
           name: "Schedule Hearing",

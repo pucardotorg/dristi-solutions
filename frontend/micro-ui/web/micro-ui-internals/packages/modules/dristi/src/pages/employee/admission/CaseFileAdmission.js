@@ -167,7 +167,7 @@ function CaseFileAdmission({ t, path }) {
           },
         },
       };
-      DRISTIService.customApiService(Urls.dristi.ordersCreate, orderBody, { tenantId })
+      DRISTIService.customApiService(Urls.dristi.ordersCreate, { order: orderBody }, { tenantId })
         .then((res) => {
           history.push(`/digit-ui/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`, {
             caseId: caseDetails?.id,
@@ -446,9 +446,25 @@ function CaseFileAdmission({ t, path }) {
 
   const handleAdmitCase = async () => {
     setCaseADmitLoader(true);
-    updateCaseDetails("ADMIT", formdata).then((res) => {
+    updateCaseDetails("ADMIT", formdata).then(async (res) => {
       setModalInfo({ ...modalInfo, page: 1 });
       setCaseADmitLoader(false);
+      const { HearingList = [] } = await Digit.HearingService.searchHearings({
+        hearing: { tenantId },
+        criteria: {
+          tenantID: tenantId,
+          filingNumber: caseDetails?.filingNumber,
+        },
+      });
+      if (caseDetails?.status === "PENDING_RESPONSE") {
+        const hearingData = HearingList?.find((list) => list?.hearingType === "ADMISSION" && list?.status === "SCHEDULED");
+        hearingData.workflow = hearingData.workflow || {};
+        hearingData.workflow.action = "ABANDON";
+        await Digit.HearingService.updateHearings(
+          { tenantId, hearing: hearingData, hearingType: "", status: "" },
+          { applicationNumber: "", cnrNumber: "" }
+        );
+      }
       DRISTIService.customApiService(Urls.dristi.pendingTask, {
         pendingTask: {
           name: "Schedule Hearing",
