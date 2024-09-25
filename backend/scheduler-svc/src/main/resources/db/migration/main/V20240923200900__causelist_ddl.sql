@@ -12,6 +12,7 @@ CREATE TABLE cause_list (
     case_title VARCHAR(255),
     case_registration_date BIGINT,
     case_number VARCHAR(255),
+    cmp_number VARCHAR(255),
     court_id VARCHAR(255),
     judge_id VARCHAR(255),
     advocate_names JSONB,

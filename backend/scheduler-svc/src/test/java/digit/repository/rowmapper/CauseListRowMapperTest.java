@@ -40,8 +40,14 @@ public class CauseListRowMapperTest {
         when(resultSet.getString("advocate_names")).thenReturn("John Doe,Jane Doe");
         when(resultSet.getString("slot")).thenReturn("10:00 AM");
         when(resultSet.getString("case_title")).thenReturn("Case Title 1");
-        when(resultSet.getString("case_registration_date")).thenReturn("2024-07-01");
-
+        when(resultSet.getLong("case_registration_date")).thenReturn(1727240400000L);
+        when(resultSet.getString("hearing_date")).thenReturn("2024-09-26");
+        when(resultSet.getString("hearing_id")).thenReturn("hearing-id-1");
+        when(resultSet.getString("case_id")).thenReturn("case-id-1");
+        when(resultSet.getString("case_type")).thenReturn("case-type-1");
+        when(resultSet.getString("case_number")).thenReturn("case-number-1");
+        when(resultSet.getLong("start_time")).thenReturn(1727240400000L);
+        when(resultSet.getLong("end_time")).thenReturn(1727240400000L);
         // Map row
         CauseList causeList = rowMapper.mapRow(resultSet, 1);
 
@@ -53,7 +59,7 @@ public class CauseListRowMapperTest {
         assertEquals(expectedLitigantNames, causeList.getAdvocateNames());
         assertEquals("10:00 AM", causeList.getSlot());
         assertEquals("Case Title 1", causeList.getCaseTitle());
-        assertEquals("2024-07-01", causeList.getCaseRegistrationDate());
+        assertEquals(1727240400000L, causeList.getCaseRegistrationDate());
     }
 
     @Test
@@ -65,7 +71,14 @@ public class CauseListRowMapperTest {
         when(resultSet.getString("advocate_names")).thenReturn(null);
         when(resultSet.getString("slot")).thenReturn(null);
         when(resultSet.getString("case_title")).thenReturn(null);
-        when(resultSet.getString("case_registration_date")).thenReturn(null);
+        when(resultSet.getLong("case_registration_date")).thenReturn(0L);
+        when(resultSet.getString("hearing_date")).thenReturn("2024-09-26");
+        when(resultSet.getString("hearing_id")).thenReturn("hearing-id-1");
+        when(resultSet.getString("case_id")).thenReturn("case-id-1");
+        when(resultSet.getString("case_type")).thenReturn("case-type-1");
+        when(resultSet.getString("case_number")).thenReturn("case-number-1");
+        when(resultSet.getLong("start_time")).thenReturn(1727240400000L);
+        when(resultSet.getLong("end_time")).thenReturn(1727240400000L);
 
         // Map row
         CauseList causeList = rowMapper.mapRow(resultSet, 1);
@@ -77,6 +90,6 @@ public class CauseListRowMapperTest {
         assertEquals(Arrays.asList(), causeList.getAdvocateNames());
         assertEquals(null, causeList.getSlot());
         assertEquals(null, causeList.getCaseTitle());
-        assertEquals(null, causeList.getHearingDate());
+        assertEquals(0L, causeList.getCaseRegistrationDate());
     }
 }
