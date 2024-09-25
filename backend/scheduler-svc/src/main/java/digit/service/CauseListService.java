@@ -18,7 +18,6 @@ import digit.web.models.hearing.HearingSearchCriteria;
 import digit.web.models.hearing.HearingUpdateBulkRequest;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
-import net.minidev.json.JSONObject;
 import org.egov.common.contract.models.Document;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
@@ -227,8 +226,8 @@ public class CauseListService {
             Map<String, Map<String, JSONArray>> defaultHearingsData =
                     mdmsUtil.fetchMdmsData(requestInfo, config.getEgovStateTenantId(),
                             serviceConstants.DEFAULT_COURT_MODULE_NAME,
-                            Collections.singletonList(serviceConstants.DEFAULT_HEARING_MASTER_NAME));
-            JSONArray jsonArray = defaultHearingsData.get("court").get("hearings");
+                            Collections.singletonList(serviceConstants.HEARING_PRIORITY_MASTER_NAME));
+            JSONArray jsonArray = defaultHearingsData.get(serviceConstants.DEFAULT_COURT_MODULE_NAME).get(serviceConstants.HEARING_PRIORITY_MASTER_NAME);
             ObjectMapper objectMapper = new ObjectMapper();
             for (Object obj : jsonArray) {
                 MdmsHearing hearing = objectMapper.convertValue(obj, MdmsHearing.class);
@@ -470,7 +469,7 @@ public class CauseListService {
                 causeList.setCaseId(caseList.get(0).get("id").asText());
                 causeList.setCaseType(caseList.get(0).get("caseType").asText());
                 causeList.setCaseTitle(caseList.get(0).get("caseTitle").asText());
-                causeList.setCaseNumber(caseList.get(0).get("courtCaseNumber").asText());//need to check if casenumber
+                causeList.setCaseNumber(caseList.get(0).get("courtCaseNumber").asText());
 
                 long registrationDate = caseList.get(0).get("registrationDate").asLong();
                 causeList.setCaseRegistrationDate(dateUtil.getLocalDateFromEpoch(registrationDate).toString());
@@ -492,17 +491,15 @@ public class CauseListService {
                 List<String> respondentAdvocates = new ArrayList<>();
                 assert litigantsList != null;
                 for(Party party: litigantsList) {
+                    assert advocateMappings != null;
+                    AdvocateMapping advocateDetails= isAdvocatePresent(party.getIndividualId(), advocateMappings);
                     if(party.getPartyType().equals(serviceConstants.COMPLAINANT)) {
-                        assert advocateMappings != null;
-                        AdvocateMapping advocateDetails= isAdvocatePresent(party.getIndividualId(), advocateMappings);
                         if (advocateDetails != null) {
                             LinkedHashMap advocate = ((LinkedHashMap) advocateDetails.getAdditionalDetails());
                             complainantAdvocates.add(advocate.get(serviceConstants.FULLNAME).toString());
                         }
                     }
                     else if(party.getPartyType().equals(serviceConstants.RESPONDENT)) {
-                        assert advocateMappings != null;
-                        AdvocateMapping advocateDetails= isAdvocatePresent(party.getIndividualId(), advocateMappings);
                         if (advocateDetails != null) {
                             LinkedHashMap advocate = ((LinkedHashMap) advocateDetails.getAdditionalDetails());
                             respondentAdvocates.add(advocate.get(serviceConstants.FULLNAME).toString());
@@ -512,7 +509,10 @@ public class CauseListService {
                 }
 
                 if(complainantAdvocates.isEmpty()){
-                    complainantAdvocates.add(serviceConstants.PARTY_IN_PERSON);
+                    complainantAdvocates.add("");
+                }
+                if(respondentAdvocates.isEmpty()){
+                    respondentAdvocates.add("");
                 }
                 causeList.setComplainantAdvocates(complainantAdvocates);
                 causeList.setRespondentAdvocates(respondentAdvocates);
