@@ -136,7 +136,13 @@ public class CauseList {
     private String judgeDesignation = null;
 
     @JsonProperty("advocateNames")
-    private List<String> advocateNames = null;
+    private List<String> advocateNames = new ArrayList<>();
+
+    @JsonProperty("complainantAdvocates")
+    private List<String> complainantAdvocates = null;
+
+    @JsonProperty("respondentAdvocates")
+    private List<String> respondentAdvocates = null;
 
     @JsonProperty("slot")
     private String slot = null;
