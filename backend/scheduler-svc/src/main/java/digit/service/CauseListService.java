@@ -318,7 +318,7 @@ public class CauseListService {
         return causeListRepository.getCauseLists(searchCriteria);
     }
 
-    private List<String> getFileStoreForCauseList(CauseListSearchCriteria searchCriteria) {
+    public List<String> getFileStoreForCauseList(CauseListSearchCriteria searchCriteria) {
         if (searchCriteria != null && searchCriteria.getSearchDate() != null
                 && searchCriteria.getSearchDate().isAfter(LocalDate.now().plusDays(1))) {
             throw new CustomException("DK_CL_APP_ERR", "CauseList Search date cannot be after than tomorrow");
@@ -485,33 +485,43 @@ public class CauseListService {
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException(e);
                 }
-                //party in person
                 causeList.setRepresentatives(advocateMappings != null ? advocateMappings : new ArrayList<>());
                 causeList.setLitigants(litigantsList != null ? litigantsList : new ArrayList<>());
 
-                List<String> advocateNames= new ArrayList<>();
+                List<String> complainantAdvocates = new ArrayList<>();
+                List<String> respondentAdvocates = new ArrayList<>();
                 assert litigantsList != null;
                 for(Party party: litigantsList) {
                     if(party.getPartyType().equals(serviceConstants.COMPLAINANT)) {
                         assert advocateMappings != null;
-                        if (isAdvocatePresent(party.getIndividualId(), advocateMappings)) {
-                            LinkedHashMap advocate = ((LinkedHashMap) party.getAdditionalDetails());
-                            advocateNames.add(advocate.get(serviceConstants.FULLNAME).toString());
+                        AdvocateMapping advocateDetails= isAdvocatePresent(party.getIndividualId(), advocateMappings);
+                        if (advocateDetails != null) {
+                            LinkedHashMap advocate = ((LinkedHashMap) advocateDetails.getAdditionalDetails());
+                            complainantAdvocates.add(advocate.get(serviceConstants.FULLNAME).toString());
                         }
                     }
-                }
-
-                for(Party party: litigantsList) {
-                    if(party.getPartyType().equals(serviceConstants.RESPONDENT)) {
+                    else if(party.getPartyType().equals(serviceConstants.RESPONDENT)) {
                         assert advocateMappings != null;
-                        if (isAdvocatePresent(party.getIndividualId(), advocateMappings)) {
-                            LinkedHashMap advocate = ((LinkedHashMap) party.getAdditionalDetails());
-                            advocateNames.add(advocate.get(serviceConstants.FULLNAME).toString());
+                        AdvocateMapping advocateDetails= isAdvocatePresent(party.getIndividualId(), advocateMappings);
+                        if (advocateDetails != null) {
+                            LinkedHashMap advocate = ((LinkedHashMap) advocateDetails.getAdditionalDetails());
+                            respondentAdvocates.add(advocate.get(serviceConstants.FULLNAME).toString());
                         }
                     }
+
                 }
 
+                if(complainantAdvocates.isEmpty()){
+                    complainantAdvocates.add(serviceConstants.PARTY_IN_PERSON);
+                }
+                causeList.setComplainantAdvocates(complainantAdvocates);
+                causeList.setRespondentAdvocates(respondentAdvocates);
+
+                List<String> advocateNames = new ArrayList<>();
+                advocateNames.addAll(complainantAdvocates);
+                advocateNames.addAll(respondentAdvocates);
                 causeList.setAdvocateNames(advocateNames);
+
                 log.info("operation = enrichCase, result = SUCCESS, filingNumber = {}", causeList.getFilingNumber());
             }
         } catch (Exception e) {
@@ -519,13 +529,13 @@ public class CauseListService {
         }
     }
 
-    private boolean isAdvocatePresent(String individualId, List<AdvocateMapping> representatives) {
+    private AdvocateMapping isAdvocatePresent(String individualId, List<AdvocateMapping> representatives) {
         for(AdvocateMapping advocateMapping: representatives) {
             if(advocateMapping.getRepresenting().stream().anyMatch(a -> a.getIndividualId().equals(individualId))) {
-                return true;
+                return advocateMapping;
             }
         }
-        return false;
+        return null;
     }
     public void enrichApplication(CauseList causeList) {
         log.info("operation = enrichApplication, result = IN_PROGRESS, filingNumber = {}", causeList.getFilingNumber());

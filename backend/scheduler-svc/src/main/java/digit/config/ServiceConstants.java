@@ -29,6 +29,7 @@ public class ServiceConstants {
     public final String COMPLAINANT= "complainant.primary";
     public final String RESPONDENT= "respondent.primary";
     public final String FULLNAME = "fullName";
+    public final String PARTY_IN_PERSON = "Party In Person";
     public static final String INACTIVE = "INACTIVE";
     public static final String ACTIVE = "ACTIVE";
     public static final String BLOCKED = "BLOCKED";
