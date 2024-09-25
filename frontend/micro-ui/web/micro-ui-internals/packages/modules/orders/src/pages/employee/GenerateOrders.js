@@ -845,64 +845,6 @@ const GenerateOrders = () => {
         };
       }
     }
-    if (orderType === "NOTICE") {
-      if (hearingDetails?.startTime) {
-        updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
-      }
-      if (currentOrder?.additionalDetails?.selectedParty && currentOrder?.additionalDetails?.selectedParty?.uuid) {
-        updatedFormdata.noticeOrder = {
-          party: caseDetails?.additionalDetails?.respondentDetails?.formdata
-            ?.filter((data) => data?.data?.uuid === currentOrder?.additionalDetails?.selectedParty?.uuid)
-            ?.map((item) => ({
-              ...item,
-              data: {
-                ...item.data,
-                firstName: item?.data?.respondentFirstName,
-                lastName: item?.data?.respondentLastName,
-                address: item?.data?.addressDetails.map((address) => ({
-                  locality: address?.addressDetails?.locality,
-                  city: address.addressDetails.city,
-                  district: address?.addressDetails?.district,
-                  pincode: address?.addressDetails?.pincode,
-                })),
-                partyType: "Respondent",
-                phone_numbers: item?.data?.phonenumbers?.mobileNumber || [],
-                email: item?.data?.emails?.emailId,
-              },
-            }))?.[0],
-          selectedChannels: currentOrder?.additionalDetails?.formdata?.noticeOrder?.selectedChannels,
-        };
-      }
-    }
-    if (orderType === "NOTICE") {
-      if (hearingDetails?.startTime) {
-        updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
-      }
-      if (currentOrder?.additionalDetails?.selectedParty && currentOrder?.additionalDetails?.selectedParty?.uuid) {
-        updatedFormdata.noticeOrder = {
-          party: caseDetails?.additionalDetails?.respondentDetails?.formdata
-            ?.filter((data) => data?.data?.uuid === currentOrder?.additionalDetails?.selectedParty?.uuid)
-            ?.map((item) => ({
-              ...item,
-              data: {
-                ...item.data,
-                firstName: item?.data?.respondentFirstName,
-                lastName: item?.data?.respondentLastName,
-                address: item?.data?.addressDetails.map((address) => ({
-                  locality: address?.addressDetails?.locality,
-                  city: address.addressDetails.city,
-                  district: address?.addressDetails?.district,
-                  pincode: address?.addressDetails?.pincode,
-                })),
-                partyType: "Respondent",
-                phone_numbers: item?.data?.phonenumbers?.mobileNumber || [],
-                email: item?.data?.emails?.emailId,
-              },
-            }))?.[0],
-          selectedChannels: currentOrder?.additionalDetails?.formdata?.noticeOrder?.selectedChannels,
-        };
-      }
-    }
     if (orderType === "WARRANT") {
       if (hearingDetails?.startTime) {
         updatedFormdata.dateOfHearing = formatDate(new Date(hearingDetails?.startTime));

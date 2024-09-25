@@ -11,11 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-<<<<<<<< HEAD:backend/payment-calculator-svc/src/main/java/drishti/payment/calculator/web/models/EPostConfigParams.java
-public class EPostConfigParams {
-========
 public class SpeedPostConfigParams {
->>>>>>>> dpg-qa-deployment:backend/payment-calculator-svc/src/main/java/drishti/payment/calculator/web/models/SpeedPostConfigParams.java
 
     @JsonProperty("pageWeight")
     private Double pageWeight;
