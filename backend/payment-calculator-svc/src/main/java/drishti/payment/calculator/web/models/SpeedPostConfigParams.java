@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class EPostConfigParams {
+public class SpeedPostConfigParams {
 
     @JsonProperty("pageWeight")
     private Double pageWeight;

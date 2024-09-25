@@ -203,6 +203,9 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
 
   const [show, setShow] = useState(false);
   const [showEditRespondentDetailsModal, setShowEditRespondentDetailsModal] = useState(false);
+  const [showConfirmSummonModal, setShowConfirmSummonModal] = useState(false);
+
+  const [isLitigantPartOfCase, setIsLitigantPartOfCase] = useState(false);
   const [step, setStep] = useState(0);
   const [caseNumber, setCaseNumber] = useState("");
   const [caseDetails, setCaseDetails] = useState({});
@@ -222,6 +225,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
 
   const [party, setParty] = useState("");
   const [validationCode, setValidationCode] = useState("");
+  const [summonCode, setSummonCode] = useState("");
   const [isDisabled, setIsDisabled] = useState(true);
   const [errors, setErrors] = useState({});
   const [caseInfo, setCaseInfo] = useState([]);
@@ -247,6 +251,8 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
   const [isAccusedRegistered, setIsAccusedRegistered] = useState(false);
   const [otp, setOtp] = useState("");
   const [accusedIdVerificationDocument, setAccusedIdVerificationDocument] = useState();
+
+  const [nextHearingDate, setNextHearingDate] = useState("");
 
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
@@ -443,6 +449,31 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
       }
     }
     setIsSearchingCase(false);
+  };
+
+  function findNextHearings(objectsList) {
+    const now = Date.now();
+    const futureStartTimes = objectsList.filter((obj) => obj.startTime > now);
+    futureStartTimes.sort((a, b) => a.startTime - b.startTime);
+    console.log("futureStartTimes[0] :>> ", futureStartTimes?.[0]);
+    return futureStartTimes.length > 0 ? futureStartTimes[0] : null;
+  }
+
+  const getNextHearingFromCaseId = async (caseId) => {
+    try {
+      const response = await Digit.HearingService.searchHearings(
+        {
+          criteria: {
+            tenantId: Digit.ULBService.getCurrentTenantId(),
+            filingNumber: caseId,
+          },
+        },
+        {}
+      );
+      setNextHearingDate(findNextHearings(response?.HearingList));
+    } catch (error) {
+      console.error("error :>> ", error);
+    }
   };
 
   const searchLitigantInRepresentives = useCallback(() => {
@@ -1369,6 +1400,8 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
                   label={
                     caseDetails?.status === "PENDING_RESPONSE" && selectedParty?.isRespondent
                       ? "Submit Response"
+                      : isLitigantPartOfCase
+                      ? "Confirm attendance in summon"
                       : t(JoinHomeLocalisation.VIEW_CASE_DETAILS)
                   }
                   onButtonClick={() => {
@@ -1377,7 +1410,10 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
                       setAskOtp(false);
                       setShowSubmitResponseModal(true);
                     } else {
-                      history.push(`/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${caseDetails?.id}`);
+                      if (isLitigantPartOfCase) {
+                        closeModal();
+                        setShowConfirmSummonModal(true);
+                      } else history.push(`/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${caseDetails?.id}`);
                     }
                   }}
                 >
@@ -1467,10 +1503,21 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
         }
       })
     );
-    userType?.value === "Advocate"
-      ? setRespondentList(respondentList?.filter((data) => data?.respondentVerification?.individualDetails?.individualId)?.map((data) => data))
-      : setRespondentList(respondentList?.map((data) => data));
+    setRespondentList(respondentList?.map((data) => data));
   };
+
+  const attendanceDetails = useMemo(() => {
+    return [
+      {
+        key: "Attendance to the Hearing Date on",
+        value: caseDetails?.filingNumber,
+      },
+      {
+        key: "Responding as / for",
+        value: selectedParty?.fullName || "",
+      },
+    ];
+  }, [caseDetails?.filingNumber, selectedParty?.fullName]);
 
   useEffect(() => {
     if (userType === "Litigant") setParties(respondentList?.map((data, index) => ({ ...data, key: index })));
@@ -1479,6 +1526,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
 
   useEffect(() => {
     if (caseDetails?.caseCategory) {
+      getNextHearingFromCaseId(caseDetails?.id);
       setCaseInfo([
         {
           key: "CASE_CATEGORY",
@@ -1589,6 +1637,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
             setStep(8);
             setMessageHeader(t(JoinHomeLocalisation.ALREADY_PART_OF_CASE));
             setSuccess(true);
+            // setIsLitigantPartOfCase(true);
           } else {
             setStep(step + 1);
           }
@@ -1757,6 +1806,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
                     sourceID: individualId,
                     caseId: caseDetails?.id,
                     filingNumber: caseDetails?.filingNumber,
+                    cnrNumber: caseDetails?.cnrNumber,
                     tenantId,
                     comments: [],
                     file: {
@@ -1782,7 +1832,44 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
           );
 
           const [res, err] = await submitJoinCase({
-            additionalDetails: caseDetails?.additionalDetails,
+            additionalDetails: {
+              ...caseDetails?.additionalDetails,
+              advocateDetails: (() => {
+                const advocateFormdataCopy = structuredClone(caseDetails?.additionalDetails?.advocateDetails?.formdata);
+                const idx = advocateFormdataCopy?.findIndex((adv) => adv?.data?.advocateId === replaceAdvocate?.advocateId);
+                if (idx !== -1)
+                  advocateFormdataCopy[idx] = {
+                    data: {
+                      advocateId: advocateDetailForm?.id,
+                      advocateName: advocateDetailForm?.additionalDetails?.username,
+                      barRegistrationNumber: advocateDetailForm?.barRegistrationNumber,
+                      vakalatnamaFileUpload: vakalatnamaDocument?.length > 0 && vakalatnamaDocument,
+                      nocFileUpload: nocDocument?.length > 0 && nocDocument,
+                      courtOrderFileUpload: courOrderDocument?.length > 0 && courOrderDocument,
+                      isAdvocateRepresenting: {
+                        code: "YES",
+                        name: "Yes",
+                        showForm: true,
+                        isEnabled: true,
+                      },
+                      advocateBarRegNumberWithName: [
+                        {
+                          modified: true,
+                          advocateId: advocateDetailForm?.id,
+                          advocateName: advocateDetailForm?.additionalDetails?.username,
+                          barRegistrationNumber: advocateDetailForm?.barRegistrationNumber,
+                          barRegistrationNumberOriginal: advocateDetailForm?.barRegistrationNumber,
+                        },
+                      ],
+                      barRegistrationNumberOriginal: advocateDetailForm?.barRegistrationNumber,
+                    },
+                  };
+                return {
+                  ...caseDetails?.additionalDetails?.advocateDetails,
+                  formdata: advocateFormdataCopy,
+                };
+              })(),
+            },
             caseFilingNumber: caseNumber,
             tenantId: tenantId,
             accessCode: validationCode,
@@ -1896,6 +1983,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
                     sourceID: individualId,
                     caseId: caseDetails?.id,
                     filingNumber: caseDetails?.filingNumber,
+                    cnrNumber: caseDetails?.cnrNumber,
                     tenantId,
                     comments: [],
                     file: {
@@ -2125,6 +2213,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
                     sourceID: individualId,
                     caseId: caseDetails?.id,
                     filingNumber: caseDetails?.filingNumber,
+                    cnrNumber: caseDetails?.cnrNumber,
                     tenantId,
                     comments: [],
                     file: {
@@ -2156,7 +2245,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
                   ...caseDetails?.additionalDetails?.respondentDetails,
                   formdata: [
                     ...caseDetails?.additionalDetails?.respondentDetails?.formdata?.map((data, index) => {
-                      if (index === selectedParty?.index) {
+                      if (selectedParty?.isRespondent && index === selectedParty?.index) {
                         return {
                           ...data,
                           data: {
@@ -2177,6 +2266,67 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
                     }),
                   ],
                 },
+                ...(advocateDetailForm?.advocateBarRegNumberWithName && {
+                  advocateDetails: (() => {
+                    if (
+                      caseDetails?.additionalDetails?.advocateDetails?.formdata?.some(
+                        (data) => data?.data?.advocateId === advocateDetailForm?.advocateBarRegNumberWithName?.[0]?.advocateId
+                      )
+                    ) {
+                      return {
+                        ...caseDetails?.additionalDetails?.advocateDetails,
+                        formdata: [
+                          ...caseDetails?.additionalDetails?.advocateDetails?.formdata?.map((data, index) => {
+                            if (data?.data?.advocateId === advocateDetailForm?.advocateBarRegNumberWithName?.[0]?.advocateId)
+                              return {
+                                ...data,
+                                data: {
+                                  ...data?.data,
+                                  vakalatnamaFileUpload: {
+                                    document: [...data?.data?.vakalatnamaFileUpload?.document, ...newDocument],
+                                  },
+                                },
+                              };
+                            return data;
+                          }),
+                        ],
+                      };
+                    } else {
+                      return {
+                        ...caseDetails?.additionalDetails?.advocateDetails,
+                        formdata: [
+                          ...caseDetails?.additionalDetails?.advocateDetails?.formdata,
+                          {
+                            data: {
+                              advocateId: advocateDetailForm?.advocateBarRegNumberWithName?.[0]?.advocateId,
+                              advocateName: advocateDetailForm?.advocateBarRegNumberWithName?.[0]?.advocateName,
+                              barRegistrationNumber: advocateDetailForm?.advocateBarRegNumberWithName?.[0]?.barRegistrationNumber,
+                              vakalatnamaFileUpload: {
+                                document: [...newDocument],
+                              },
+                              isAdvocateRepresenting: {
+                                code: "YES",
+                                name: "Yes",
+                                showForm: true,
+                                isEnabled: true,
+                              },
+                              advocateBarRegNumberWithName: [
+                                {
+                                  modified: true,
+                                  advocateId: advocateDetailForm?.advocateBarRegNumberWithName?.[0]?.advocateId,
+                                  advocateName: advocateDetailForm?.advocateBarRegNumberWithName?.[0]?.advocateName,
+                                  barRegistrationNumber: advocateDetailForm?.advocateBarRegNumberWithName?.[0]?.barRegistrationNumber,
+                                  barRegistrationNumberOriginal: advocateDetailForm?.advocateBarRegNumberWithName?.[0]?.barRegistrationNumber,
+                                },
+                              ],
+                              barRegistrationNumberOriginal: advocateDetailForm?.advocateBarRegNumberWithName?.[0]?.barRegistrationNumber,
+                            },
+                          },
+                        ],
+                      };
+                    }
+                  })(),
+                }),
               },
               caseFilingNumber: caseNumber,
               tenantId: tenantId,
@@ -2443,6 +2593,13 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
     [caseDetails, selectedParty, t, tenantId]
   );
 
+  const verifySummonCode = async (summonCode) => {
+    console.log("summonCode :>> ", summonCode);
+    return {
+      continue: true,
+    };
+  };
+
   const registerRespondentConfig = useMemo(() => {
     return {
       handleClose: () => {
@@ -2617,6 +2774,66 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
     updateRespondentDetails,
   ]);
 
+  const confirmSummonConfig = useMemo(() => {
+    return {
+      handleClose: () => {
+        setShowSubmitResponseModal(false);
+      },
+      heading: { label: "" },
+      actionSaveLabel: "",
+      isStepperModal: true,
+      actionSaveOnSubmit: () => {},
+      steps: [
+        {
+          heading: { label: "Confirm your attendance to the hearing" },
+          actionSaveLabel: "Yes",
+          actionCancelLabel: "No",
+          modalBody: <CustomCaseInfoDiv t={t} data={attendanceDetails} column={2} />,
+        },
+        {
+          heading: { label: "Verify your Summons ID" },
+          actionSaveLabel: "Done",
+          modalBody: (
+            <div className="enter-validation-code">
+              <LabelFieldPair className="case-label-field-pair">
+                <div className="join-case-tooltip-wrapper">
+                  <CardLabel className="case-input-label">{`${t("Enter Summons ID")}`}</CardLabel>
+                </div>
+                <div style={{ width: "100%", maxWidth: "960px" }}>
+                  <TextInput
+                    style={{ width: "100%" }}
+                    type={"text"}
+                    name="summonCode"
+                    value={summonCode}
+                    onChange={(e) => {
+                      let val = e.target.value;
+                      val = val.substring(0, 6);
+                      setSummonCode(val);
+
+                      setErrors({
+                        ...errors,
+                        summonCode: undefined,
+                      });
+                    }}
+                  />
+                  {errors?.summonCode && <CardLabelError> {t(errors?.validationCode?.message)} </CardLabelError>}
+                  {}
+                </div>
+              </LabelFieldPair>
+            </div>
+          ),
+          actionSaveOnSubmit: async () => {
+            // return await verifyAccessCode(responsePendingTask, validationCode);
+            const resp = await verifySummonCode(summonCode);
+            if (resp.continue) setShowConfirmSummonModal(false);
+          },
+          async: true,
+          isDisabled: summonCode?.length === 6 ? false : true,
+        },
+      ].filter(Boolean),
+    };
+  }, [attendanceDetails, errors, setShowSubmitResponseModal, summonCode, t]);
+
   return (
     <div>
       <Button
@@ -2701,6 +2918,7 @@ const JoinCaseHome = ({ refreshInbox, setAskOtp, setShowSubmitResponseModal, upd
         </Modal>
       )}
       {showEditRespondentDetailsModal && <DocumentModal config={registerRespondentConfig} />}
+      {showConfirmSummonModal && <DocumentModal config={confirmSummonConfig} />}
     </div>
   );
 };
