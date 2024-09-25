@@ -7,6 +7,7 @@ import org.egov.common.contract.models.Document;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
@@ -46,8 +47,8 @@ public class FileStoreUtil {
         try{
             StringBuilder uri = new StringBuilder(configs.getFileStoreHost()).append(configs.getFileStorePath());
             uri.append("tenantId=").append(tenantId).append("&").append("fileStoreId=").append(fileStoreId);
-            ResponseEntity<String> responseEntity= restTemplate.getForEntity(uri.toString(), String.class);
-            pdfBytes = responseEntity.getBody().getBytes();
+            ResponseEntity<Resource> responseEntity= restTemplate.getForEntity(uri.toString(), Resource.class);
+            return responseEntity.getBody().getContentAsByteArray();
         }catch (Exception e){
             log.error("Document {} is not found in the Filestore for tenantId {} ! An exception occurred!",
                     fileStoreId,

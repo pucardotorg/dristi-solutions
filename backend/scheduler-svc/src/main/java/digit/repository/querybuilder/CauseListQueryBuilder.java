@@ -50,7 +50,7 @@ public class CauseListQueryBuilder {
             preparedStmtList.add(searchCriteria.getSearchDate().toString());
         } else {
             addClauseIfRequired(query, preparedStmtList);
-            query.append(" cl.case_date = ? ");
+            query.append(" cl.hearing_date = ? ");
             preparedStmtList.add(LocalDate.now().plusDays(1).toString());
         }
         query.append(ORDER_BY);
