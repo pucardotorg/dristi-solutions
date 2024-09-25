@@ -782,7 +782,7 @@ const AdmittedCases = () => {
       if (caseDetails?.status === "PENDING_RESPONSE") {
         const hearingData = HearingList?.find((list) => list?.hearingType === "ADMISSION" && list?.status === "SCHEDULED");
         hearingData.workflow = hearingData.workflow || {};
-        hearingData.workflow.action = "CLOSE";
+        hearingData.workflow.action = "ABANDON";
         await Digit.HearingService.updateHearings(
           { tenantId, hearing: hearingData, hearingType: "", status: "" },
           { applicationNumber: "", cnrNumber: "" }
