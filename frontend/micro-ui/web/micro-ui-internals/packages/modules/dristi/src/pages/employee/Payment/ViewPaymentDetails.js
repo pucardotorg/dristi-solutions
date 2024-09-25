@@ -1,5 +1,5 @@
 import { Loader, SubmitBar, ActionBar, CustomDropdown, CardLabel, LabelFieldPair, TextInput } from "@egovernments/digit-ui-react-components";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
@@ -7,7 +7,7 @@ import { useToast } from "../../../components/Toast/useToast";
 import { DRISTIService } from "../../../services";
 import { Urls } from "../../../hooks";
 import CustomCopyTextDiv from "../../../components/CustomCopyTextDiv";
-import { getSuffixByBusinessCode, getTaxPeriodByBusinessService, getFilteredPaymentData, getTaskType, extractFeeMedium } from "../../../Utils";
+import { getFilteredPaymentData, getTaskType, extractFeeMedium } from "../../../Utils";
 
 const paymentOptionConfig = {
   label: "CS_MODE_OF_PAYMENT",
@@ -27,6 +27,21 @@ const paymentOptionConfig = {
   },
 };
 
+const handleTaskSearch = async (businessService, consumerCodeWithoutSuffix, tenantId) => {
+  if (["task-summons", "task-notice"].includes(businessService)) {
+    const {
+      list: [tasksData],
+    } = await Digit.HearingService.searchTaskList({
+      criteria: {
+        tenantId: tenantId,
+        taskNumber: consumerCodeWithoutSuffix,
+      },
+    });
+    return { tasksData };
+  }
+  return {};
+};
+
 const ViewPaymentDetails = ({ location, match }) => {
   const { t } = useTranslation();
   const history = useHistory();
@@ -38,7 +53,8 @@ const ViewPaymentDetails = ({ location, match }) => {
   const [isDisabled, setIsDisabled] = useState(false);
   const { caseId, filingNumber, consumerCode, businessService, paymentType } = window?.Digit.Hooks.useQueryParams();
   const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
-
+  const consumerCodeWithoutSuffix = consumerCode.split("_")[0];
+  const [tasksData, setTasksData] = useState(null);
   const { data: caseData, isLoading: isCaseSearchLoading } = useSearchCaseService(
     {
       criteria: [
@@ -57,6 +73,17 @@ const ViewPaymentDetails = ({ location, match }) => {
     caseId || filingNumber,
     caseId || filingNumber
   );
+
+  useEffect(() => {
+    const fetchTaskData = async () => {
+      const { tasksData = {} } = await handleTaskSearch(businessService, consumerCodeWithoutSuffix, tenantId);
+      setTasksData(tasksData);
+    };
+    fetchTaskData();
+  }, [businessService, consumerCode, consumerCodeWithoutSuffix, tenantId]);
+
+  const summonsPincode = useMemo(() => tasksData?.taskDetails?.respondentDetails?.address?.pincode, [tasksData]);
+  const channelId = useMemo(() => extractFeeMedium(tasksData?.taskDetails?.deliveryChannels?.channelName || ""), [tasksData]);
 
   const caseDetails = useMemo(
     () => ({
@@ -113,24 +140,24 @@ const ViewPaymentDetails = ({ location, match }) => {
     },
     {},
     "dristi",
-    Boolean(chequeDetails?.totalAmount && chequeDetails.totalAmount !== "0" && businessService.toLowerCase() === "case-default")
+    Boolean(chequeDetails?.totalAmount && chequeDetails.totalAmount !== "0" && paymentType?.toLowerCase()?.includes("case"))
   );
 
   const { data: breakupResponse, isLoading: isSummonsBreakUpLoading } = Digit.Hooks.dristi.useSummonsPaymentBreakUp(
     {
       Criteria: [
         {
-          channelId: extractFeeMedium(paymentType),
-          ...(extractFeeMedium(paymentType) === "EPOST" && { receiverPincode: "686001" }),
+          channelId: channelId,
+          receiverPincode: summonsPincode,
           tenantId: tenantId,
-          Id: "hello",
+          Id: consumerCodeWithoutSuffix,
           taskType: getTaskType(businessService),
         },
       ],
     },
     {},
     "dristi",
-    !["case-default", "application-voluntary-submission"].includes(businessService.toLowerCase())
+    Boolean(!paymentType?.toLowerCase()?.includes("application") && !paymentType?.toLowerCase()?.includes("case") && tasksData)
   );
 
   const totalAmount = useMemo(() => {
@@ -159,25 +186,6 @@ const ViewPaymentDetails = ({ location, match }) => {
   const bill = paymentDetails?.Bill ? paymentDetails?.Bill[0] : {};
 
   const onSubmitCase = async () => {
-    const consumerCodeWithoutSuffix = consumerCode.split("_")[0];
-    if (consumerCodeWithoutSuffix.includes("TASK")) {
-      const {
-        list: [tasksData],
-      } = await Digit.HearingService.searchTaskList({
-        criteria: {
-          tenantId: tenantId,
-          taskNumber: consumerCodeWithoutSuffix,
-        },
-      });
-      const {
-        list: [{ orderNumber }],
-      } = await ordersService.searchOrder({
-        criteria: {
-          tenantId: tenantId,
-          id: tasksData?.orderId,
-        },
-      });
-    }
     const referenceId = consumerCodeWithoutSuffix;
     setIsDisabled(true);
     const regenerateBill = await DRISTIService.callFetchBill({}, { consumerCode: consumerCode, tenantId, businessService: businessService });

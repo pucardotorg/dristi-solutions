@@ -133,10 +133,7 @@ export const extractFeeMedium = (feeName) => {
     post: "EPOST",
     email: "EMAIL",
     sms: "SMS",
-    icops: "POLICE",
+    police: "POLICE",
   };
-  const words = feeName.trim().toLowerCase().split(" ");
-  const medium = words.find((word) => feeMediums[word]);
-
-  return medium ? feeMediums[medium] : "";
+  return feeMediums?.[feeName?.toLowerCase()] || "";
 };
