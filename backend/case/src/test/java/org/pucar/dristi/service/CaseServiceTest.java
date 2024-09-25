@@ -692,10 +692,8 @@ public class CaseServiceTest {
         addWitnessRequest.setAdditionalDetails("details");
         RequestInfo requestInfo = new RequestInfo();
         User user = new User();
-        CaseRequest caseRequest = new CaseRequest(); // Assume CaseRequest is suitably instantiated
         CourtCase cases = new CourtCase(); // Mock court case list
         cases.setId(UUID.randomUUID());
-        caseRequest.setCases(cases);
         user.setType("EMPLOYEE");
         Role role = new Role();
         role.setName("EMPLOYEE");
@@ -708,10 +706,6 @@ public class CaseServiceTest {
         List<CaseExists> caseExistsList = Collections.singletonList(caseExists);
         when(encryptionDecryptionUtil.encryptObject(any(),any(),any())).thenReturn(cases);
         when(encryptionDecryptionUtil.decryptObject(any(),any(),any(),any())).thenReturn(cases);
-        CourtCase caseObj = CourtCase.builder()
-                .filingNumber(addWitnessRequest.getCaseFilingNumber())
-                .additionalDetails(addWitnessRequest.getAdditionalDetails())
-                .build();
 
         when(caseRepository.checkCaseExists(anyList())).thenReturn(caseExistsList);
         when(config.getAdditionalJoinCaseTopic()).thenReturn("topic");
