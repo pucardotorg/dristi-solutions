@@ -1357,7 +1357,9 @@ const JoinCaseHome = ({ refreshInbox }) => {
                   }
                   onButtonClick={() => {
                     if (roleOfNewAdvocate?.value === "PRIMARY_ADVOCATE") {
-                      history.push(`/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${caseDetails?.id}`);
+                      history.push(
+                        `/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${caseDetails?.filingNumber}&tab=Overview`
+                      );
                     }
                   }}
                 >
