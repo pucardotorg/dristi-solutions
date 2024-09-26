@@ -157,6 +157,15 @@ public class DemandService {
 
             demandDetailList.add(basicDetail);
         }
+        else if(channelName.equals("RPAD")){
+            DemandDetail basicDetail = DemandDetail.builder()
+                    .tenantId(tenantId)
+                    .taxAmount(BigDecimal.valueOf(4))
+                    .taxHeadMasterCode(getTestRpadTaxHeadMasterCode(businessService))
+                    .build();
+
+            demandDetailList.add(basicDetail);
+        }
 
         return demandDetailList;
     }
@@ -323,6 +332,13 @@ public class DemandService {
             return config.getTaskNoticeTaxHeadCourtMasterCode();
         } else {
             return config.getTaskSummonTaxHeadCourtMasterCode();
+        }
+    }
+    private String getTestRpadTaxHeadMasterCode(String businessService) {
+        if (businessService.equalsIgnoreCase(config.getTaskNoticeBusinessService())) {
+            return config.getTaskNoticeTaxHeadRpadCourtMasterCode();
+        } else {
+            return config.getTaskSummonTaxHeadRpadCourtMasterCode();
         }
     }
 

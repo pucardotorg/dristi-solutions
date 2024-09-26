@@ -154,6 +154,12 @@ public class Configuration {
     @Value("${task.notice.taxhead.master.epost.code}")
     private String taskNoticeTaxHeadEPostMasterCode;
 
+    @Value(("${task.notice.taxhead.master.rpad.court.code}"))
+    private String taskNoticeTaxHeadRpadCourtMasterCode;
+
+    @Value(("${task.summon.taxhead.master.rpad.court.code}"))
+    private String taskSummonTaxHeadRpadCourtMasterCode;
+
     @Value("${egov.tax.period.to}")
     private Long taxPeriodTo;
 
