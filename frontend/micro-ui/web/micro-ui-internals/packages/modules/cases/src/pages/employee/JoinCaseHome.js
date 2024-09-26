@@ -2938,9 +2938,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
       {showErrorToast && (
         <Toast
           error={!isAttendeeAdded}
-          label={t(
-            isAttendeeAdded ? "You have confirmed your attendance for summon!" : "You have already confirmed your attendance for the summons!"
-          )}
+          label={t(isAttendeeAdded ? "You have confirmed your attendance for summon!" : "You have already confirmed your attendance for the summon!")}
           isDleteBtn={true}
           onClose={closeToast}
         />
