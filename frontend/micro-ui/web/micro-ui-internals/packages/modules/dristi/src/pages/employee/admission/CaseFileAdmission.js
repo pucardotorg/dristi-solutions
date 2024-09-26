@@ -457,7 +457,7 @@ function CaseFileAdmission({ t, path }) {
         },
       });
       if (caseDetails?.status === "PENDING_RESPONSE") {
-        const hearingData = HearingList?.find((list) => list?.hearingType === "ADMISSION" && list?.status === "SCHEDULED");
+        const hearingData = HearingList?.find((list) => list?.hearingType === "ADMISSION" && list?.status === "SCHEDULED") || {};
         hearingData.workflow = hearingData.workflow || {};
         hearingData.workflow.action = "ABANDON";
         await Digit.HearingService.updateHearings(
@@ -723,7 +723,9 @@ function CaseFileAdmission({ t, path }) {
           },
         });
       })
-      .catch();
+      .catch((error) => {
+        console.error("Error while creating order", error);
+      });
   };
 
   const updateConfigWithCaseDetails = (config, caseDetails) => {

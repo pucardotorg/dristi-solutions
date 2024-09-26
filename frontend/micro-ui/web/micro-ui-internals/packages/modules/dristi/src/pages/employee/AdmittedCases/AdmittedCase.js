@@ -65,6 +65,15 @@ const CloseBtn = (props) => {
   );
 };
 
+const relevantStatuses = [
+  "CASE_ADMITTED",
+  "ADMISSION_HEARING_SCHEDULED",
+  "PENDING_ADMISSION_HEARING",
+  "PENDING_NOTICE",
+  "PENDING_RESPONSE",
+  "PENDING_ADMISSION",
+];
+
 const AdmittedCases = () => {
   const { t } = useTranslation();
   const { path } = useRouteMatch();
@@ -125,14 +134,7 @@ const AdmittedCases = () => {
   const showTakeAction = useMemo(
     () =>
       (userRoles.includes("JUDGE_ROLE") || userRoles.includes("BENCHCLERK_ROLE")) &&
-      [
-        "CASE_ADMITTED",
-        "ADMISSION_HEARING_SCHEDULED",
-        "PENDING_ADMISSION_HEARING",
-        "PENDING_NOTICE",
-        "PENDING_RESPONSE",
-        "PENDING_ADMISSION",
-      ].includes(caseData?.criteria[0]?.responseList[0]?.status),
+      relevantStatuses.includes(caseData?.criteria[0]?.responseList[0]?.status),
     [caseData, userRoles]
   );
 
@@ -575,14 +577,7 @@ const AdmittedCases = () => {
   const [showScheduleHearingModal, setShowScheduleHearingModal] = useState(false);
 
   const isTabDisabled = useMemo(() => {
-    return isFSO
-      ? true
-      : caseDetails?.status !== "CASE_ADMITTED" &&
-          caseDetails?.status !== "ADMISSION_HEARING_SCHEDULED" &&
-          caseDetails?.status !== "PENDING_ADMISSION_HEARING" &&
-          caseDetails?.status !== "PENDING_NOTICE" &&
-          caseDetails?.status !== "PENDING_ADMISSION" &&
-          caseDetails?.status !== "PENDING_RESPONSE";
+    return isFSO ? true : !relevantStatuses.includes(caseDetails?.status);
   }, [caseDetails?.status, config?.label, isFSO]);
 
   const isCaseAdmitted = useMemo(() => {
@@ -632,7 +627,7 @@ const AdmittedCases = () => {
   };
 
   const formatDate = (date) => {
-    if (date) {
+    if (date instanceof Date && !isNaN(date)) {
       const day = String(date.getDate()).padStart(2, "0");
       const month = String(date.getMonth() + 1).padStart(2, "0");
       const year = date.getFullYear();
@@ -681,7 +676,9 @@ const AdmittedCases = () => {
             tab: "Orders",
           });
         })
-        .catch();
+        .catch((error) => {
+          console.error("Error while creating order", error);
+        });
     } catch (error) {}
   };
 
@@ -783,7 +780,7 @@ const AdmittedCases = () => {
         },
       });
       if (caseDetails?.status === "PENDING_RESPONSE") {
-        const hearingData = HearingList?.find((list) => list?.hearingType === "ADMISSION" && list?.status === "SCHEDULED");
+        const hearingData = HearingList?.find((list) => list?.hearingType === "ADMISSION" && list?.status === "SCHEDULED") || {};
         hearingData.workflow = hearingData.workflow || {};
         hearingData.workflow.action = "ABANDON";
         await Digit.HearingService.updateHearings(
@@ -940,7 +937,9 @@ const AdmittedCases = () => {
           },
         });
       })
-      .catch();
+      .catch((error) => {
+        console.error("Error while creating order", error);
+      });
   };
 
   const updateConfigWithCaseDetails = (config, caseDetails) => {
