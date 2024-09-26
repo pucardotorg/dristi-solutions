@@ -346,9 +346,14 @@ const initAutocomplete = (onChange, position, isPlaceRequired = false, index) =>
   });
 };
 
+export const defaultCoordinates = {
+  lat: 8.801127,
+  lng: 76.413856,
+};
+
 const LocationSearch = (props) => {
   const { setCoordinateData, isAutoFilledDisabled = false } = props;
-  const [coordinates, setCoordinates] = useState({ lat: 8.898827, lng: 76.574801 });
+  const [coordinates, setCoordinates] = useState({ ...defaultCoordinates });
   useEffect(() => {
     async function mapScriptCall() {
       const getLatLng = (position) => {
@@ -359,10 +364,7 @@ const LocationSearch = (props) => {
         if (props?.isPTDefault) {
           defaultLatLong = props?.PTdefaultcoord?.defaultConfig || coordinates;
         } else {
-          defaultLatLong = {
-            lat: 8.898827,
-            lng: 76.574801,
-          };
+          defaultLatLong = { ...defaultCoordinates };
         }
         initAutocomplete(props.onChange, defaultLatLong, props.isPlaceRequired, props?.index);
       };
