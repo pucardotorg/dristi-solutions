@@ -775,7 +775,7 @@ function EFilingCases({ path }) {
           };
         });
       });
-      if ((!isCaseReAssigned ? !isPendingESign : !isCaseReAssigned) || selected === "addSignature" || selected === "reviewCaseFile") {
+      if ((!isCaseReAssigned && !isPendingESign) || selected === "addSignature" || selected === "reviewCaseFile") {
         return modifiedFormData;
       }
     }
