@@ -44,7 +44,6 @@ const DocumentModal = ({ config, setShow, currentStep }) => {
       const actionCancelType = config?.steps[step]?.actionCancelType;
       const actionCancelOnSubmit = config?.steps[step]?.actionCancelOnSubmit;
       const jumpValue = config?.steps[step]?.jumpValue;
-      debugger;
       if (actionCancelType === "SKIP") setStep(step + 1);
       else if (actionCancelType === "JUMP" && jumpValue && jumpValue > 0) {
         if (actionCancelOnSubmit) actionCancelOnSubmit();

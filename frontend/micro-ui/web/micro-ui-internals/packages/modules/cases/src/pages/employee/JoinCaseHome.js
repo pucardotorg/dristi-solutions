@@ -2881,7 +2881,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
   const confirmSummonConfig = useMemo(() => {
     return {
       handleClose: () => {
-        setShowSubmitResponseModal(false);
+        setShowConfirmSummonModal(false);
       },
       heading: { label: "" },
       actionSaveLabel: "",
@@ -2897,6 +2897,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
             const resp = await onConfirmAttendee();
             if (resp.continue) setShowConfirmSummonModal(false);
           },
+          actionCancelOnSubmit: () => setShowConfirmSummonModal(false),
         },
       ].filter(Boolean),
     };
