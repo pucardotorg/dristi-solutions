@@ -137,6 +137,9 @@ const HomeView = () => {
     };
   }, [advocateId, individualId]);
 
+  const getCaseDetailsUrl = (caseId, filingNumber) =>
+    `/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview`;
+
   const submitResponse = async (responseDoc) => {
     let newCase;
 
@@ -246,9 +249,7 @@ const HomeView = () => {
               successMessage={"RESPONSE_SUCCESSFULLY"}
               submitButtonAction={async () => {
                 setShowSubmitResponseModal(false);
-                history.push(
-                  `/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${responsePendingTask?.caseId}&filingNumber=${responsePendingTask?.filingNumber}&tab=Overview`
-                );
+                history.push(history.push(getCaseDetailsUrl(responsePendingTask?.caseId, responsePendingTask?.filingNumber)));
               }}
               submitButtonText={"VIEW_CASE_DETAILS"}
               closeButtonText={"BACK_HOME"}

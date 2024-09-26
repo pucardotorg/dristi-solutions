@@ -484,7 +484,6 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
     const now = Date.now();
     const futureStartTimes = objectsList.filter((obj) => obj.startTime > now);
     futureStartTimes.sort((a, b) => a.startTime - b.startTime);
-    console.log("futureStartTimes[0] :>> ", futureStartTimes?.[0]);
     return futureStartTimes.length > 0 ? futureStartTimes[0] : null;
   }
 
@@ -2639,7 +2638,6 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
         type: "Respondent",
       });
       const response = await updateAttendees({ body: { hearing: updatedHearing } });
-      console.log("response :>> ", response);
       if (response) {
         setShowErrorToast(true);
         setIsAttendeeAdded(true);
