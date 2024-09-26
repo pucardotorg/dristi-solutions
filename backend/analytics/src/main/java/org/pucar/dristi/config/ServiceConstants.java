@@ -183,7 +183,11 @@ public class ServiceConstants {
     public static final String OFFLINE_PAYMENT_ERROR_MESSAGE = "Offline paymnet is not supported";
 
     public static final String JSON_PROCESSING_EXCEPTION = "JSON_PROCESSING_EXCEPTION";
-    public static final String EXCEPTION_AT_FILTER_SERVICE_CODE = "Exception occurred while filtering payment type master data";
+    public static final String JSON_PROCESSING_EXCEPTION_MSG = "Exception occurred while filtering payment type master data";
 
-    public static final String PAYMENT_TYPE ="paymentType";
+    public static final String PAYMENT_TYPE = "paymentType";
+
+    public static final String NO_PAYMENT_TYPE_FOUND_CODE = "NO_PAYMENT_TYPE_FOUND";
+
+    public static final String NO_PAYMENT_TYPE_FOUND_MSG = "No payment type found for the given service code.";
 }

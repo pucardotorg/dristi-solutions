@@ -114,9 +114,12 @@ public class BillingUtil {
 
         try {
             List<Map<String, Object>> maps = filterServiceCode(payment, businessService);
+            if (maps.isEmpty()) {
+                throw new CustomException(NO_PAYMENT_TYPE_FOUND_CODE, NO_PAYMENT_TYPE_FOUND_MSG);
+            }
             return maps.get(0).get(PAYMENT_TYPE).toString();
         } catch (JsonProcessingException e) {
-            throw new CustomException(JSON_PROCESSING_EXCEPTION, EXCEPTION_AT_FILTER_SERVICE_CODE);
+            throw new CustomException(JSON_PROCESSING_EXCEPTION, JSON_PROCESSING_EXCEPTION_MSG);
         }
     }
 
