@@ -1,8 +1,8 @@
 package drishti.payment.calculator.service;
 
 import drishti.payment.calculator.config.Configuration;
-import drishti.payment.calculator.factory.SummonContext;
-import drishti.payment.calculator.factory.SummonFactory;
+import drishti.payment.calculator.factory.PaymentContext;
+import drishti.payment.calculator.factory.PaymentFactory;
 import drishti.payment.calculator.web.models.*;
 import org.egov.common.contract.request.RequestInfo;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,22 +17,22 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class SummonCalculationServiceTest {
+class PaymentCalculationServiceTest {
 
     @Mock
-    private SummonFactory summonFactory;
+    private PaymentFactory paymentFactory;
 
     @Mock
     private Configuration config;
 
     @InjectMocks
-    private SummonCalculationService summonCalculationService;
+    private PaymentCalculationService PaymentCalculationService;
 
     @Mock
-    private SummonContext summonContext;
+    private PaymentContext paymentContext;
 
     @Mock
-    private SummonPayment summonPayment;
+    private Payment payment;
 
     private SummonCalculationReq summonCalculationReq;
     private RequestInfo requestInfo;
@@ -53,13 +53,13 @@ class SummonCalculationServiceTest {
 
     @Test
     void testCalculateSummonFees() {
-        when(summonFactory.getChannelById(anyString())).thenReturn(summonPayment);
+        when(paymentFactory.getChannelById(anyString())).thenReturn(payment);
 
-        List<Calculation> calculations = summonCalculationService.calculateSummonFees(summonCalculationReq);
+        List<Calculation> calculations = PaymentCalculationService.calculateSummonFees(summonCalculationReq);
 
         assertNotNull(calculations);
         assertEquals(1, calculations.size());
 
-        verify(summonFactory, times(1)).getChannelById(anyString());
+        verify(paymentFactory, times(1)).getChannelById(anyString());
     }
 }

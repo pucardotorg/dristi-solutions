@@ -22,6 +22,7 @@ public class ChannelConstant {
         CONSTANTS.put("POLICE", "drishti.payment.calculator.service.channels.PoliceFeeService");
         CONSTANTS.put("EMAIL", "drishti.payment.calculator.service.channels.EmailFeeService");
         CONSTANTS.put("SMS", "drishti.payment.calculator.service.channels.SmsFeeService");
+        CONSTANTS.put("RPAD", "drishti.payment.calculator.service.channels.RPADFeeService");
     }
 
     public static String getConstant(String key) {

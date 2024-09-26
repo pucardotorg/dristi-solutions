@@ -4,7 +4,7 @@ import static org.mockito.Mockito.*;
 import static org.assertj.core.api.Assertions.*;
 
 import drishti.payment.calculator.service.CaseFeeCalculationService;
-import drishti.payment.calculator.service.SummonCalculationService;
+import drishti.payment.calculator.service.PaymentCalculationService;
 import drishti.payment.calculator.web.models.Calculation;
 import drishti.payment.calculator.web.models.CalculationRes;
 import drishti.payment.calculator.web.models.EFillingCalculationReq;
@@ -27,7 +27,7 @@ import java.util.List;
 public class PaymentApiControllerTest {
 
     @Mock
-    private SummonCalculationService summonCalculationService;
+    private PaymentCalculationService summonCalculationService;
 
     @Mock
     private CaseFeeCalculationService calculationService;
