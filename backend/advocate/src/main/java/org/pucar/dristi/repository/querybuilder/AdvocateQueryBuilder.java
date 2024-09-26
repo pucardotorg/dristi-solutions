@@ -43,6 +43,7 @@ public class AdvocateQueryBuilder {
                     preparedStmtList.add(tenantId.toLowerCase());
                     preparedStmtArgList.add(Types.VARCHAR);
                 }
+                query.append(" AND adv.isactive=true ");
             }
 
             query.append(ORDERBY_CREATEDTIME_DESC);
