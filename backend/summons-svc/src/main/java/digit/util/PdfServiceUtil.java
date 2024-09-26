@@ -76,7 +76,7 @@ public class PdfServiceUtil {
         } else if (SUMMON.equals(task.getTaskType())) {
             issueDate = task.getTaskDetails().getSummonDetails().getIssueDate();
         }
-        String issueDateString = formatDateFromMillis(issueDate);
+        String issueDateString = (issueDate != null) ? formatDateFromMillis(issueDate) : "";
         String filingNUmber = task.getFilingNumber();
         return SummonsPdf.builder()
                 .tenantId(task.getTenantId())
