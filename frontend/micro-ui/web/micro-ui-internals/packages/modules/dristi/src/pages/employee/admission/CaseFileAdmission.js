@@ -458,12 +458,14 @@ function CaseFileAdmission({ t, path }) {
       });
       if (caseDetails?.status === "PENDING_RESPONSE") {
         const hearingData = HearingList?.find((list) => list?.hearingType === "ADMISSION" && list?.status === "SCHEDULED") || {};
-        hearingData.workflow = hearingData.workflow || {};
-        hearingData.workflow.action = "ABANDON";
-        await Digit.HearingService.updateHearings(
-          { tenantId, hearing: hearingData, hearingType: "", status: "" },
-          { applicationNumber: "", cnrNumber: "" }
-        );
+        if (hearingData.hearingId) {
+          hearingData.workflow = hearingData.workflow || {};
+          hearingData.workflow.action = "ABANDON";
+          await Digit.HearingService.updateHearings(
+            { tenantId, hearing: hearingData, hearingType: "", status: "" },
+            { applicationNumber: "", cnrNumber: "" }
+          );
+        }
       }
       DRISTIService.customApiService(Urls.dristi.pendingTask, {
         pendingTask: {

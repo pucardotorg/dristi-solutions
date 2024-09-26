@@ -678,6 +678,7 @@ const AdmittedCases = () => {
         })
         .catch((error) => {
           console.error("Error while creating order", error);
+          showToast({ isError: true, message: "ORDER_CREATION_FAILED" });
         });
     } catch (error) {}
   };
@@ -781,12 +782,14 @@ const AdmittedCases = () => {
       });
       if (caseDetails?.status === "PENDING_RESPONSE") {
         const hearingData = HearingList?.find((list) => list?.hearingType === "ADMISSION" && list?.status === "SCHEDULED") || {};
-        hearingData.workflow = hearingData.workflow || {};
-        hearingData.workflow.action = "ABANDON";
-        await Digit.HearingService.updateHearings(
-          { tenantId, hearing: hearingData, hearingType: "", status: "" },
-          { applicationNumber: "", cnrNumber: "" }
-        );
+        if (hearingData.hearingId) {
+          hearingData.workflow = hearingData.workflow || {};
+          hearingData.workflow.action = "ABANDON";
+          await Digit.HearingService.updateHearings(
+            { tenantId, hearing: hearingData, hearingType: "", status: "" },
+            { applicationNumber: "", cnrNumber: "" }
+          );
+        }
       }
       DRISTIService.customApiService(Urls.dristi.pendingTask, {
         pendingTask: {
@@ -939,6 +942,7 @@ const AdmittedCases = () => {
       })
       .catch((error) => {
         console.error("Error while creating order", error);
+        showToast({ isError: true, message: "ORDER_CREATION_FAILED" });
       });
   };
 
@@ -1139,7 +1143,9 @@ const AdmittedCases = () => {
             tab: activeTab,
           });
         })
-        .catch((err) => {});
+        .catch((err) => {
+          showToast({ isError: true, message: "ORDER_CREATION_FAILED" });
+        });
       return;
     } else if (option === t("MANDATORY_SUBMISSIONS_RESPONSES")) {
       const reqBody = {
@@ -1181,7 +1187,9 @@ const AdmittedCases = () => {
             tab: activeTab,
           });
         })
-        .catch((err) => {});
+        .catch((err) => {
+          showToast({ isError: true, message: "ORDER_CREATION_FAILED" });
+        });
       return;
     }
     history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}`, { caseId: caseId, tab: "Orders" });
@@ -1284,7 +1292,9 @@ const AdmittedCases = () => {
         });
         history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
       })
-      .catch((err) => {});
+      .catch((err) => {
+        showToast({ isError: true, message: "ORDER_CREATION_FAILED" });
+      });
   };
   const takeActionOptions = useMemo(
     () =>
@@ -1604,7 +1614,7 @@ const AdmittedCases = () => {
                   [CaseWorkflowState.ADMISSION_HEARING_SCHEDULED, CaseWorkflowState.PENDING_NOTICE, CaseWorkflowState.PENDING_RESPONSE].includes(
                     caseDetails?.status
                   )
-                    ? t("HEARING_IS_SCHEDULED")
+                    ? t("RESCHEDULE_ADMISSION_HEARING")
                     : t(tertiaryAction.label)
                 }
                 onButtonClick={onSaveDraft}
