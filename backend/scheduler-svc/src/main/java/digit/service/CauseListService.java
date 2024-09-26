@@ -16,6 +16,7 @@ import digit.web.models.hearing.Hearing;
 import digit.web.models.hearing.HearingListSearchRequest;
 import digit.web.models.hearing.HearingSearchCriteria;
 import digit.web.models.hearing.HearingUpdateBulkRequest;
+import io.swagger.util.Json;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.models.Document;
@@ -469,11 +470,12 @@ public class CauseListService {
                 JsonNode representatives = caseList.get(0).get("representatives");
                 JsonNode litigants = caseList.get(0).get("litigants");
 
-                causeList.setCaseId(caseList.get(0).get("id").asText());
-                causeList.setCaseType(caseList.get(0).get("caseType").asText());
-                causeList.setCaseTitle(caseList.get(0).get("caseTitle").asText());
-                causeList.setCaseNumber(caseList.get(0).get("courtCaseNumber").asText());
-                causeList.setCmpNumber(caseList.get(0).get("cmpNumber").asText());
+
+                causeList.setCaseId(caseList.get(0).get("id").isNull() ? null : caseList.get(0).get("id").asText());
+                causeList.setCaseType(caseList.get(0).get("caseType").isNull() ? null : caseList.get(0).get("caseType").asText());
+                causeList.setCaseTitle(caseList.get(0).get("caseTitle").isNull() ? null : caseList.get(0).get("caseTitle").asText());
+                causeList.setCaseNumber(caseList.get(0).get("courtCaseNumber").isNull() ? null : caseList.get(0).get("courtCaseNumber").asText());
+                causeList.setCmpNumber(caseList.get(0).get("cmpNumber").isNull() ? null : caseList.get(0).get("cmpNumber").asText());
 
                 long registrationDate = caseList.get(0).get("registrationDate").asLong();
                 causeList.setCaseRegistrationDate(registrationDate);
