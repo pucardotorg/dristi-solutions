@@ -1536,6 +1536,10 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
     setRespondentList(respondentList?.map((data) => data));
   };
 
+  const formatFullName = (name) => {
+    return [name?.givenName, name?.otherNames, name?.familyName].filter(Boolean).join(" ");
+  };
+
   const attendanceDetails = useMemo(() => {
     return [
       {
@@ -1544,10 +1548,10 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
       },
       {
         key: "Responding as / for",
-        value: `${name?.givenName}${name?.otherNames ? " " + name?.otherNames + " " : " "}${name?.familyName}` || "",
+        value: formatFullName(name) || "",
       },
     ];
-  }, [name?.familyName, name?.givenName, name?.otherNames, nextHearing?.startTime]);
+  }, [name, nextHearing?.startTime]);
 
   useEffect(() => {
     if (userType === "Litigant") setParties(respondentList?.map((data, index) => ({ ...data, key: index })));
@@ -2842,43 +2846,6 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
             if (resp.continue) setShowConfirmSummonModal(false);
           },
         },
-        // {
-        //   heading: { label: "Verify your Summons ID" },
-        //   actionSaveLabel: "Done",
-        //   modalBody: (
-        //     <div className="enter-validation-code">
-        //       <LabelFieldPair className="case-label-field-pair">
-        //         <div className="join-case-tooltip-wrapper">
-        //           <CardLabel className="case-input-label">{`${t("Enter Summons ID")}`}</CardLabel>
-        //         </div>
-        //         <div style={{ width: "100%", maxWidth: "960px" }}>
-        //           <TextInput
-        //             style={{ width: "100%" }}
-        //             type={"text"}
-        //             name="summonCode"
-        //             value={summonCode}
-        //             onChange={(e) => {
-        //               let val = e.target.value;
-        //               val = val.substring(0, 6);
-        //               setSummonCode(val);
-
-        //               setErrors({
-        //                 ...errors,
-        //                 summonCode: undefined,
-        //               });
-        //             }}
-        //           />
-        //           {errors?.summonCode && <CardLabelError> {t(errors?.validationCode?.message)} </CardLabelError>}
-        //           {}
-        //         </div>
-        //       </LabelFieldPair>
-        //     </div>
-        //   ),
-        //   actionSaveOnSubmit: async () => {
-        //     // return await verifyAccessCode(responsePendingTask, validationCode);
-        //   },
-        //   async: true,
-        // },
       ].filter(Boolean),
     };
   }, [attendanceDetails, setShowSubmitResponseModal, t]);

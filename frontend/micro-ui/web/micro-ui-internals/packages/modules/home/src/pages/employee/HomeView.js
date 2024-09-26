@@ -49,7 +49,7 @@ const HomeView = () => {
       active: index === 0 ? true : false,
     }))
   );
-  const [callRefetch, SetCallRefetch] = useState(false);
+  const [callRefetch, setCallRefetch] = useState(false);
   const [tabConfig, setTabConfig] = useState(TabLitigantSearchConfig);
   const [onRowClickData, setOnRowClickData] = useState({ url: "", params: [] });
   const [taskType, setTaskType] = useState(state?.taskType || {});
@@ -94,7 +94,7 @@ const HomeView = () => {
   );
 
   const refreshInbox = () => {
-    SetCallRefetch(!callRefetch);
+    setCallRefetch(!callRefetch);
   };
 
   const userTypeDetail = useMemo(() => {
