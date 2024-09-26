@@ -2674,6 +2674,10 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
         return {
           continue: true,
         };
+      } else {
+        setShowErrorToast(true);
+        setIsAttendeeAdded(false);
+        return { continue: false };
       }
     }
   };
