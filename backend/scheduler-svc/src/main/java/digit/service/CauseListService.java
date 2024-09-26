@@ -151,12 +151,15 @@ public class CauseListService {
                     .comparing((CauseList a) -> {
                         Integer hearingTypeId = hearingTypeMap.get(a.getHearingType());
                         return hearingTypeId != null ? hearingTypeId : Integer.MAX_VALUE;
-                    })
+                    }, Comparator.nullsLast(Integer::compareTo))
                     .thenComparing(a -> {
-                        CaseType caseType = caseTypePriority.stream().filter(b -> b.getCaseType().equalsIgnoreCase(a.getCaseType())).findFirst().orElse(null);
+                        CaseType caseType = caseTypePriority.stream()
+                                .filter(b -> b.getCaseType().equalsIgnoreCase(a.getCaseType()))
+                                .findFirst()
+                                .orElse(null);
                         return caseType != null ? caseType.getPriority() : Integer.MAX_VALUE;
-                    })
-                    .thenComparing(CauseList::getCaseRegistrationDate));
+                    }, Comparator.nullsLast(Integer::compareTo))
+                    .thenComparing(CauseList::getCaseRegistrationDate, Comparator.nullsLast(Comparable::compareTo)));
 
             generateCauseListFromHearings(causeList);
             ByteArrayResource byteArrayResource = generateCauseListPdf(causeList);
@@ -195,11 +198,8 @@ public class CauseListService {
         Map<String, Integer> hearingTypePrioriyMap = new HashMap<>();
         try {
             List<MdmsHearing> mdmsHearings = getHearingDataFromMdms();
-            Collections.reverse(mdmsHearings);
-            int priority = 0;
             for (MdmsHearing mdmsHearing : mdmsHearings) {
-                hearingTypePrioriyMap.put(mdmsHearing.getHearingType(), priority);
-                priority++;
+                hearingTypePrioriyMap.put(mdmsHearing.getHearingType(), mdmsHearing.getPriority());
             }
 
             for(CauseList cause: causeLists){
@@ -226,8 +226,8 @@ public class CauseListService {
             Map<String, Map<String, JSONArray>> defaultHearingsData =
                     mdmsUtil.fetchMdmsData(requestInfo, config.getEgovStateTenantId(),
                             serviceConstants.DEFAULT_COURT_MODULE_NAME,
-                            Collections.singletonList(serviceConstants.HEARING_PRIORITY_MASTER_NAME));
-            JSONArray jsonArray = defaultHearingsData.get(serviceConstants.DEFAULT_COURT_MODULE_NAME).get(serviceConstants.HEARING_PRIORITY_MASTER_NAME);
+                            Collections.singletonList(serviceConstants.DEFAULT_HEARING_MASTER_NAME));
+            JSONArray jsonArray = defaultHearingsData.get(serviceConstants.DEFAULT_COURT_MODULE_NAME).get(serviceConstants.DEFAULT_HEARING_MASTER_NAME);
             ObjectMapper objectMapper = new ObjectMapper();
             for (Object obj : jsonArray) {
                 MdmsHearing hearing = objectMapper.convertValue(obj, MdmsHearing.class);
