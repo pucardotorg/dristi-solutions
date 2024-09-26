@@ -41,10 +41,22 @@ const DocumentModal = ({ config, setShow, currentStep }) => {
 
   const actionCancelOnSubmit = () => {
     if (config?.isStepperModal) {
-      if (config?.steps[step]?.actionCancelType === "SKIP") setStep(step + 1);
-      else if (config?.steps[step]?.actionCancelOnSubmit) config?.steps[step]?.actionCancelOnSubmit();
-    } else if (config?.actionCancelOnSubmit) config?.actionCancelOnSubmit();
-    if (step - 1 >= 0) setStep(step - 1);
+      const actionCancelType = config?.steps[step]?.actionCancelType;
+      const actionCancelOnSubmit = config?.steps[step]?.actionCancelOnSubmit;
+      const jumpValue = config?.steps[step]?.jumpValue;
+      debugger;
+      if (actionCancelType === "SKIP") setStep(step + 1);
+      else if (actionCancelType === "JUMP" && jumpValue && jumpValue > 0) {
+        if (actionCancelOnSubmit) actionCancelOnSubmit();
+        setStep(step - jumpValue);
+      } else if (actionCancelOnSubmit) {
+        actionCancelOnSubmit();
+        if (step - 1 >= 0) setStep(step - 1);
+      } else if (step - 1 >= 0) setStep(step - 1);
+    } else if (config?.actionCancelOnSubmit) {
+      config?.actionCancelOnSubmit();
+      if (step - 1 >= 0) setStep(step - 1);
+    } else if (step - 1 >= 0) setStep(step - 1);
   };
 
   return (
