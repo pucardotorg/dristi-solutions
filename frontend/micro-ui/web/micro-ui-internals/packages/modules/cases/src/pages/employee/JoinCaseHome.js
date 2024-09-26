@@ -740,6 +740,19 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
     { key: "Total Fees", value: 2000, currency: "Rs", isTotalFee: true },
   ];
 
+  const respondentNameEFiling = useMemo(() => {
+    const { respondentFirstName, respondentMiddleName, respondentLastName } =
+      caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data || {};
+    return [respondentFirstName, respondentMiddleName, respondentLastName]?.filter(Boolean)?.join(" ");
+  }, [caseDetails]);
+
+  const accusedName = useMemo(() => {
+    if (respondentList.length > 0) {
+      return respondentList?.map((respondent) => respondent?.fullName).join(", ");
+    }
+    return respondentNameEFiling;
+  }, [respondentList, respondentNameEFiling]);
+
   const modalItem = [
     // 0
     {
@@ -816,7 +829,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                     <div style={{ width: "50%" }}>
                       <h2 className="case-info-title">{t(JoinHomeLocalisation.RESPONDENTS_TEXT)}</h2>
                       <div className="case-info-value">
-                        <span>{respondentList?.map((respondent) => respondent?.fullName).join(", ")}</span>
+                        <span>{accusedName}</span>
                       </div>
                     </div>
                   </div>
@@ -1415,7 +1428,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                     <div style={{ width: "50%" }}>
                       <h2 className="case-info-title">{t(JoinHomeLocalisation.RESPONDENTS_TEXT)}</h2>
                       <div className="case-info-value">
-                        <span>{respondentList?.map((respondent) => respondent?.fullName).join(", ")}</span>
+                        <span>{accusedName}</span>
                       </div>
                     </div>
                   </div>
