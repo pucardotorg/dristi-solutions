@@ -9,6 +9,7 @@ import {
   LabelFieldPair,
   RadioButtons,
   TextInput,
+  Toast,
 } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { InfoCard } from "@egovernments/digit-ui-components";
@@ -160,6 +161,7 @@ const advocateVakalatnamaAndNocConfig = [
     ],
   },
 ];
+
 const advocateVakalatnamaConfig = [
   {
     body: [
@@ -252,6 +254,8 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
   const [isAccusedRegistered, setIsAccusedRegistered] = useState(false);
   const [otp, setOtp] = useState("");
   const [accusedIdVerificationDocument, setAccusedIdVerificationDocument] = useState();
+  const [showErrorToast, setShowErrorToast] = useState(false);
+  const [isAttendeeAdded, setIsAttendeeAdded] = useState(false);
 
   const [nextHearing, setNextHearing] = useState("");
 
@@ -260,6 +264,21 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
   const isCitizen = useMemo(() => userInfo?.type === "CITIZEN", [userInfo]);
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
+
+  const closeToast = () => {
+    setShowErrorToast(false);
+    setIsAttendeeAdded(false);
+  };
+
+  useEffect(() => {
+    let timer;
+    if (showErrorToast) {
+      timer = setTimeout(() => {
+        closeToast();
+      }, 2000);
+    }
+    return () => clearTimeout(timer);
+  }, [showErrorToast]);
 
   const documentUploaderConfig = {
     key: "vakalatnama",
@@ -2608,9 +2627,10 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
     const updatedHearing = structuredClone(nextHearing);
     updatedHearing.attendees = updatedHearing.attendees || [];
     if (updatedHearing?.attendees?.some((attendee) => attendee?.individualId === individualId)) {
-      console.log("attendes alreding join :>>");
+      setShowErrorToast(true);
+      setIsAttendeeAdded(false);
       return {
-        continue: false,
+        continue: true,
       };
     } else {
       updatedHearing.attendees.push({
@@ -2620,9 +2640,13 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
       });
       const response = await updateAttendees({ body: { hearing: updatedHearing } });
       console.log("response :>> ", response);
-      return {
-        continue: true,
-      };
+      if (response) {
+        setShowErrorToast(true);
+        setIsAttendeeAdded(true);
+        return {
+          continue: true,
+        };
+      }
     }
   };
 
@@ -2946,6 +2970,16 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
       )}
       {showEditRespondentDetailsModal && <DocumentModal config={registerRespondentConfig} />}
       {showConfirmSummonModal && <DocumentModal config={confirmSummonConfig} />}
+      {showErrorToast && (
+        <Toast
+          error={!isAttendeeAdded}
+          label={t(
+            isAttendeeAdded ? "You have confirmed your attendance for summon!" : "You have already confirmed your attendance for the summons!"
+          )}
+          isDleteBtn={true}
+          onClose={closeToast}
+        />
+      )}
     </div>
   );
 };
