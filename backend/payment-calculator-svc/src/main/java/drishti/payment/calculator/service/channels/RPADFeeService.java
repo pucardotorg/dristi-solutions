@@ -5,6 +5,7 @@ import drishti.payment.calculator.util.TaskUtil;
 import drishti.payment.calculator.web.models.*;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,7 +13,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-import static drishti.payment.calculator.config.ServiceConstants.COURT_FEE;
+import static drishti.payment.calculator.config.ServiceConstants.*;
 
 @Service
 @Slf4j
@@ -25,6 +26,7 @@ public class RPADFeeService implements Payment {
         this.taskUtil = taskUtil;
     }
 
+    @Deprecated
     @Override
     public Calculation calculatePayment(RequestInfo requestInfo, SummonCalculationCriteria criteria) {
         return null;
@@ -32,22 +34,34 @@ public class RPADFeeService implements Payment {
 
     @Override
     public Calculation calculatePayment(RequestInfo requestInfo, TaskPaymentCriteria criteria) {
-        String taskType = criteria.getTaskType();
-        String tenantId = criteria.getTenantId();
-        List<TaskPayment> taskPaymentMasterData = taskUtil.getTaskPaymentMasterData(requestInfo, tenantId);
-        List<TaskPayment> filteredTaskPayment = taskPaymentMasterData.stream()
-                .filter(element -> taskType.equals(element.getType()))
-                .toList();
 
-        //TODO:validation on allowed methods
+        try {
+            String taskType = criteria.getTaskType();
+            String tenantId = criteria.getTenantId();
+            log.info("Calculating payment for task type: {} in tenant: {}", taskType, tenantId);
 
-        Double courtFees = taskUtil.calculateCourtFees(filteredTaskPayment.get(0));
+            List<TaskPayment> taskPaymentMasterData = taskUtil.getTaskPaymentMasterData(requestInfo, tenantId);
+            List<TaskPayment> filteredTaskPayment = taskPaymentMasterData.stream()
+                    .filter(element -> taskType.equals(element.getType()))
+                    .toList();
 
-        return Calculation.builder()
-                .applicationId(criteria.getId())
-                .tenantId(criteria.getTenantId())
-                .totalAmount(courtFees)
-                .breakDown(Collections.singletonList(new BreakDown(COURT_FEE, courtFees, new HashMap<>()))).build();
+            if (filteredTaskPayment.isEmpty()) {
+                throw new CustomException(ILLEGAL_STATE_EXCEPTION, "No matching task payment found for task type: " + taskType);
+            }
+
+            Double courtFees = taskUtil.calculateCourtFees(filteredTaskPayment.get(0));
+            log.debug("Calculated court fees: {}", courtFees);
+
+            return Calculation.builder()
+                    .applicationId(criteria.getId())
+                    .tenantId(criteria.getTenantId())
+                    .totalAmount(courtFees)
+                    .breakDown(Collections.singletonList(new BreakDown(COURT_FEE, courtFees, new HashMap<>()))).build();
+        } catch (Exception e) {
+            log.error("Error calculating payment for task type: {} in tenant: {}", criteria.getTaskType(), criteria.getTenantId(), e);
+            throw new CustomException(CALCULATE_PAYMENT_EXCEPTION, e.getMessage());
+        }
     }
-
 }
+
+

@@ -23,7 +23,7 @@ public class PaymentCalculationService {
 
     }
 
-
+    @Deprecated
     public List<Calculation> calculateSummonFees(SummonCalculationReq request) {
         List<SummonCalculationCriteria> calculationCriteria = request.getCalculationCriteria();
         RequestInfo requestInfo = request.getRequestInfo();

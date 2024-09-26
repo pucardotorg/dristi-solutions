@@ -17,10 +17,10 @@ public class PaymentContext {
 
     @Deprecated
     public Calculation calculatePayment(RequestInfo requestInfo, SummonCalculationCriteria criteria) {
-       return payment.calculatePayment(requestInfo,criteria);
+        return payment.calculatePayment(requestInfo, criteria);
     }
 
     public Calculation calculatePayment(RequestInfo requestInfo, TaskPaymentCriteria criteria) {
-        return payment.calculatePayment(requestInfo,criteria);
+        return payment.calculatePayment(requestInfo, criteria);
     }
 }
