@@ -118,7 +118,7 @@ public class PaymentUpdateService {
                         consumerCodeSet.add(newConsumerCode);
                     }
                 }
-                BillResponse billResponse = getBill(requestInfo, bill.getTenantId(), consumerCodeSet);
+                BillResponse billResponse = getBill(requestInfo, bill.getTenantId(), consumerCodeSet, businessService);
                 List<Bill> partsBill = billResponse.getBill();
                 boolean canUpdateWorkflow = !partsBill.isEmpty();
                 for (Bill element : partsBill) {
@@ -196,8 +196,8 @@ public class PaymentUpdateService {
         }
     }
 
-    public BillResponse getBill(RequestInfo requestInfo, String tenantId, Set<String> consumerCodes) {
-        String uri = buildSearchBillURI(tenantId, consumerCodes, config.getTaskBusinessService());
+    public BillResponse getBill(RequestInfo requestInfo, String tenantId, Set<String> consumerCodes, String businessService) {
+        String uri = buildSearchBillURI(tenantId, consumerCodes, businessService);
 
         org.egov.common.contract.models.RequestInfoWrapper requestInfoWrapper = RequestInfoWrapper.builder().requestInfo(requestInfo).build();
 
