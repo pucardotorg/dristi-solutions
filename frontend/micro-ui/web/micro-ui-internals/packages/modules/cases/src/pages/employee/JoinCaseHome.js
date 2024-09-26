@@ -597,7 +597,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
         if (
           (isFound && roleOfNewAdvocate?.value) ||
           (!isFound && selectedParty?.partyType?.includes(partyType)) ||
-          (advIsFound && representative?.representing?.find((represent) => represent?.individualId === selectedParty?.individualId) !== undefined) ||
+          (advIsFound && representative?.representing?.some((represent) => represent?.individualId === selectedParty?.individualId) !== undefined) ||
           (!advIsFound && ((isFound && roleOfNewAdvocate?.value) || !isFound))
         ) {
           setIsDisabled(false);
@@ -1713,7 +1713,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
 
         if (selectedParty?.individualId) {
           setParty(selectedParty);
-          if (advIsFound && representative?.representing?.map((represent) => represent?.individualId === selectedParty?.individualId)) {
+          if (advIsFound && representative?.representing?.some((represent) => represent?.individualId === selectedParty?.individualId)) {
             setStep(8);
             setMessageHeader(`${t(JoinHomeLocalisation.ALREADY_REPRESENTING)} ${selectedParty?.fullName}`);
             setSuccess(true);
