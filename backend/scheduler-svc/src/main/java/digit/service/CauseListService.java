@@ -436,6 +436,9 @@ public class CauseListService {
                     .auditDetails(hearing.getAuditDetails())
                     .workflow(hearing.getWorkflow())
                     .notes(hearing.getNotes())
+                    .courtId(config.getCourtId())
+                    .judgeName(config.getJudgeName())
+                    .judgeDesignation(config.getJudgeDesignation())
                     .hearingDate(LocalDate.now().plusDays(1).toString())
                     .build();
 
