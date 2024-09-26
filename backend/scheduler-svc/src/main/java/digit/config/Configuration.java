@@ -197,8 +197,12 @@ public class Configuration {
     @Value("${causelist.pdf.save.topic}")
     private String causeListPdfTopic;
 
+    //court details
     @Value("${court.id}")
     private String courtId;
+
+    @Value("${court.name}")
+    private String courtName;
 
     @Value("${court.enabled}")
     private Boolean courtEnabled;

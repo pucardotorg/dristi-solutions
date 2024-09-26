@@ -375,7 +375,7 @@ public class CauseListService {
                         .slotName(slotName)
                         .slotStartTime(slotStartTime)
                         .slotEndTime(slotEndTime)
-                        .courtId(config.getCourtId())
+                        .courtId(config.getCourtName())
                         .hearingType(hearingType)
                         .judgeName(config.getJudgeName())
                         .judgeDesignation(config.getJudgeDesignation())
