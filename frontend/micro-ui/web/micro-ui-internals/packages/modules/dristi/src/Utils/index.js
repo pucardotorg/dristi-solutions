@@ -103,9 +103,38 @@ export const getSuffixByBusinessCode = (paymentType = [], businessCode) => {
 export const getTaxPeriodByBusinessService = (taxPeriod = [], businessService) => {
   return taxPeriod?.find((data) => data?.service === businessService) || {};
 };
+
 export const removeInvalidNameParts = (name) => {
   return name
     ?.split(" ")
     .filter((part) => part && !["undefined", "null"].includes(part.toLowerCase()))
     .join(" ");
+};
+
+export const getFilteredPaymentData = (paymentType, paymentData, bill) => {
+  const processedPaymentType = paymentType?.trim()?.toLowerCase();
+  return ["application filing fee"].includes(processedPaymentType) ? [{ key: "Total Amount", value: bill?.totalAmount }] : paymentData;
+};
+
+export const getTaskType = (businessService) => {
+  const normalizedBusinessService = businessService?.trim().toLowerCase();
+
+  switch (normalizedBusinessService) {
+    case "task-summons":
+      return "SUMMON";
+    case "task-notice":
+      return "NOTICE";
+    default:
+      return "WARRANT";
+  }
+};
+
+export const extractFeeMedium = (feeName) => {
+  const feeMediums = {
+    post: "EPOST",
+    email: "EMAIL",
+    sms: "SMS",
+    police: "POLICE",
+  };
+  return feeMediums?.[feeName?.toLowerCase()] || "";
 };
