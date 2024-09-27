@@ -7,6 +7,7 @@ const qs = require('qs');
 const app = express();
 const port = 8080;
 const backendUrl = process.env.EXTERNAL_HOST || "http://localhost:8088/sbi-backend/v1/_decryptBrowserResponse";
+const redirectUrl = process.env.REDIRECT_URL || 'https://dristi-kerala-dev.pucar.org/digit-ui/citizen';
 const pushResponseContextPath = "/sbi-payments";
 const successUrlContextPath = "/sbi-payments/success.jsp";
 const failUrlContextPath = "/sbi-payments/fail.jsp";
