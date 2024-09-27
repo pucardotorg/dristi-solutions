@@ -93,9 +93,9 @@ public class SummonsService {
 
         generateDocumentAndUpdateTask(taskRequest, pdfTemplateKey, true);
 
-        SummonsDelivery summonsDelivery = summonsDeliveryEnrichment.generateAndEnrichSummonsDelivery(request.getTask(), request.getRequestInfo());
+        SummonsDelivery summonsDelivery = summonsDeliveryEnrichment.generateAndEnrichSummonsDelivery(taskRequest.getTask(), taskRequest.getRequestInfo());
 
-        ChannelMessage channelMessage = externalChannelUtil.sendSummonsByDeliveryChannel(request, summonsDelivery);
+        ChannelMessage channelMessage = externalChannelUtil.sendSummonsByDeliveryChannel(taskRequest, summonsDelivery);
 
         if (channelMessage.getAcknowledgementStatus().equalsIgnoreCase("success")) {
             summonsDelivery.setIsAcceptedByChannel(Boolean.TRUE);
