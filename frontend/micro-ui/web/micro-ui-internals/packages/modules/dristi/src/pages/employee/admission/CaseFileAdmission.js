@@ -62,7 +62,7 @@ function CaseFileAdmission({ t, path }) {
   const moduleCode = "case-default";
   const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
 
-  const { data: caseFetchResponse, isLoading } = useSearchCaseService(
+  const { data: caseFetchResponse, isLoading, refetch } = useSearchCaseService(
     {
       criteria: [
         {
@@ -78,7 +78,7 @@ function CaseFileAdmission({ t, path }) {
   );
   const caseDetails = useMemo(() => caseFetchResponse?.criteria?.[0]?.responseList?.[0] || null, [caseFetchResponse]);
 
-  const { isLoading: isWorkFlowLoading, data: workFlowDetails } = window?.Digit.Hooks.useWorkflowDetailsV2({
+  const { isLoading: isWorkFlowLoading, data: workFlowDetails, revalidate } = window?.Digit.Hooks.useWorkflowDetailsV2({
     tenantId,
     id: caseDetails?.filingNumber,
     moduleCode,
@@ -222,6 +222,8 @@ function CaseFileAdmission({ t, path }) {
       tenantId
     ).then((response) => {
       setUpdatedCaseDetails(response?.cases?.[0]);
+      refetch();
+      revalidate();
       return response;
     });
   };
@@ -801,6 +803,19 @@ function CaseFileAdmission({ t, path }) {
             isCompleted: false,
             stateSla: todayDate + stateSla.SCHEDULE_HEARING,
             additionalDetails: {},
+            tenantId,
+          },
+        });
+        await DRISTIService.customApiService(Urls.dristi.pendingTask, {
+          pendingTask: {
+            name: "Pending Response",
+            entityType: "case-default",
+            referenceId: `MANUAL_${caseDetails?.filingNumber}`,
+            status: "PENDING_RESPONSE",
+            assignedRole: ["CASE_RESPONDER"],
+            cnrNumber: caseDetails?.cnrNumber,
+            filingNumber: caseDetails?.filingNumber,
+            isCompleted: true,
             tenantId,
           },
         });
