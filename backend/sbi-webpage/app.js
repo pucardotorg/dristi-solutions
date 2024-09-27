@@ -110,9 +110,9 @@ app.post(`${successUrlContextPath}`, async (req, res) => {
 });
 
 app.post(`${failUrlContextPath}`, async (req, res) => {
-  console.log('Request body:', JSON.stringify(req.body.encData));
+  console.log('Request body:', JSON.stringify(req.body));
   try {
-    const backendResponse = await callBackendService(backendUrl, req.body);
+    const backendResponse = await callBackendService(backendUrl, req.body.encData);
     const transactionDetails = backendResponse.TransactionDetails;
     forwardJspPage(res, redirectUrl, transactionDetails);
   } catch (error) {
@@ -121,9 +121,9 @@ app.post(`${failUrlContextPath}`, async (req, res) => {
 });
 
 app.post(`${pushResponseContextPath}`, async (req, res) => {
-  console.log('Request body:', JSON.stringify(req.body.pushRespData));
+  console.log('Request body:', JSON.stringify(req.body));
   try {
-    await callBackendService(backendUrl, req.body);
+    await callBackendService(backendUrl, req.body.pushRespData);
     res.status(200).send('Response processed successfully');
   } catch (error) {
     res.status(500).send('Failed to process response');
