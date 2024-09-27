@@ -24,36 +24,42 @@ app.use(bodyParser.json());
         encryptedPayload: JSON.stringify(data)
       }
 
-      let backendResponse;
-      try {
-        // Log the data to send
-        console.log("Data to send:", JSON.stringify(dataToSend, null, 2));
-        backendResponse = await axios.post(`${backendUrl}`, dataToSend, {
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Basic ZWdvdi11c2VyLWNsaWVudDo="
-          }
-        });
-        console.log("Backend response:", backendResponse.data);
-      } catch (backendError) {
-        console.error("Backend request error:", backendError);
-        backendResponse = null;
-      }
+      console.log("Data to send:", JSON.stringify(dataToSend, null, 2));
 
-      console.log('Payload sent to backend successfully');
+      const backendResponse = await axios.post(`${backendUrl}`, dataToSend, {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Basic ZWdvdi11c2VyLWNsaWVudDo="
+        }
+      });
+
+      console.log("Backend response:", backendResponse.data);
+      return backendResponse.data;
     } catch (error) {
       console.error('Error forwarding to backend:', error);
-      throw error;
+    return {
+        TransactionDetails: {
+          TransactionStatus: 'error'
+        }
+      };
     }
   }
 
   function forwardJspPage(res, redirectUrl, transactionDetails) {
-    const queryParams = new URLSearchParams({
-      TransactionStatus: transactionDetails.TransactionStatus,
-      billId: transactionDetails.billId,
-      businessService: transactionDetails.businessService,
-      serviceNumber: transactionDetails.serviceNumber
-    }).toString();
+    const queryParams = new URLSearchParams();
+
+    if (transactionDetails.TransactionStatus) {
+      queryParams.append('TransactionStatus', transactionDetails.TransactionStatus);
+    }
+    if (transactionDetails.billId) {
+      queryParams.append('billId', transactionDetails.billId);
+    }
+    if (transactionDetails.businessService) {
+      queryParams.append('businessService', transactionDetails.businessService);
+    }
+    if (transactionDetails.serviceNumber) {
+      queryParams.append('serviceNumber', transactionDetails.serviceNumber);
+    }
 
     res.redirect(`${redirectUrl}?${queryParams}`);
   }
