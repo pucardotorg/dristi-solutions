@@ -88,7 +88,7 @@ public class PdfServiceUtil {
                 .caseNumber(extractCaseNumber(filingNUmber))
                 .caseYear(extractCaseYear(filingNUmber))
                 .judgeName(task.getTaskDetails().getCaseDetails().getJudgeName())
-                .courtName(courtName == null ? COURT_NAME: courtName)
+                .courtName(courtName == null ? config.getCourtName(): courtName)
                 .hearingDate(task.getTaskDetails().getCaseDetails().getHearingDate().toString())
                 .respondentName(task.getTaskDetails().getRespondentDetails().getName())
                 .respondentAddress(task.getTaskDetails().getRespondentDetails().getAddress().toString())
