@@ -7,7 +7,7 @@ const qs = require('qs');
 const app = express();
 const port = 8080;
 const backendUrl = process.env.EXTERNAL_HOST || "http://localhost:8088/sbi-backend/v1/_decryptBrowserResponse";
-const redirectUrl = process.env.REDIRECT_URL || 'https://dristi-kerala-dev.pucar.org/digit-ui/citizen/home';
+const redirectUrl = process.env.REDIRECT_URL || 'https://dristi-kerala-dev.pucar.org/digit-ui/citizen/home/sbi-payment-screen';
 const pushResponseContextPath = "/sbi-payments";
 const successUrlContextPath = "/sbi-payments/success.jsp";
 const failUrlContextPath = "/sbi-payments/fail.jsp";
@@ -47,14 +47,15 @@ app.use(bodyParser.json());
     }
   }
 
-  function forwardJspPage(res, jspFileName) {
-    const jspFilePath = path.join(__dirname, "public", jspFileName);
-    res.sendFile(jspFilePath, (err) => {
-      if (err) {
-        console.error('Error serving JSP page:', err);
-        res.status(500).send('Error serving JSP page');
-      }
-    });
+  function forwardJspPage(res, redirectUrl, transactionDetails) {
+    const queryParams = new URLSearchParams({
+      TransactionStatus: transactionDetails.TransactionStatus,
+      billId: transactionDetails.billId,
+      businessService: transactionDetails.businessService,
+      serviceNumber: transactionDetails.serviceNumber
+    }).toString();
+
+    res.redirect(`${redirectUrl}?${queryParams}`);
   }
 
   async function getRequestInfo() {
@@ -100,8 +101,9 @@ app.use(bodyParser.json());
 app.post(`${successUrlContextPath}`, async (req, res) => {
   console.log('Request body:', JSON.stringify(req.body));
   try {
-    await callBackendService(backendUrl, req.body.encData);
-    forwardJspPage(res, '/success.jsp');
+    const backendResponse = await callBackendService(backendUrl, req.body.encData);
+    const transactionDetails = backendResponse.TransactionDetails;
+    forwardJspPage(res, redirectUrl, transactionDetails);
   } catch (error) {
     res.status(500).send('Failed to process payment');
   }
@@ -110,8 +112,9 @@ app.post(`${successUrlContextPath}`, async (req, res) => {
 app.post(`${failUrlContextPath}`, async (req, res) => {
   console.log('Request body:', JSON.stringify(req.body.encData));
   try {
-    await callBackendService(backendUrl, req.body);
-    forwardJspPage(res, '/fail.jsp');
+    const backendResponse = await callBackendService(backendUrl, req.body);
+    const transactionDetails = backendResponse.TransactionDetails;
+    forwardJspPage(res, redirectUrl, transactionDetails);
   } catch (error) {
     res.status(500).send('Failed to process payment');
   }
