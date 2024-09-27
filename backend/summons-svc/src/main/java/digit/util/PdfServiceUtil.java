@@ -55,6 +55,7 @@ public class PdfServiceUtil {
 
                 }
             }
+            log.info("Summons Pdf: {}", summonsPdf);
             SummonsPdfRequest summonsPdfRequest = SummonsPdfRequest.builder()
                     .summonsPdf(summonsPdf).requestInfo(taskRequest.getRequestInfo()).build();
             HttpEntity<SummonsPdfRequest> requestEntity = new HttpEntity<>(summonsPdfRequest, headers);
@@ -95,7 +96,7 @@ public class PdfServiceUtil {
                 .build();
     }
 
-    private String extractCaseNumber(String input) {
+    private String extractCaseYear(String input) {
         if (input == null) {
             return "";
         }
@@ -111,11 +112,11 @@ public class PdfServiceUtil {
         }
     }
 
-    public static String extractCaseYear(String input) {
+    public static String extractCaseNumber(String input) {
         if (input == null) {
             return "";
         }
-        String regex = "-(\\d{4})-";
+        String regex = "-(\\d{6})-";
         java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(regex);
         java.util.regex.Matcher matcher = pattern.matcher(input);
 

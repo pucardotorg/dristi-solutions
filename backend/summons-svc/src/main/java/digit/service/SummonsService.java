@@ -87,8 +87,11 @@ public class SummonsService {
         Task task = taskListResponse.getList().get(0);
         String taskType = task.getTaskType();
         String pdfTemplateKey = getPdfTemplateKey(taskType, true);
+        TaskRequest taskRequest = TaskRequest.builder()
+                .task(task)
+                .requestInfo(request.getRequestInfo()).build();
 
-        generateDocumentAndUpdateTask(request, pdfTemplateKey, true);
+        generateDocumentAndUpdateTask(taskRequest, pdfTemplateKey, true);
 
         SummonsDelivery summonsDelivery = summonsDeliveryEnrichment.generateAndEnrichSummonsDelivery(request.getTask(), request.getRequestInfo());
 
