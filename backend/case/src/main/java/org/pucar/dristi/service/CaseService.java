@@ -106,7 +106,7 @@ public class CaseService {
             for (CaseCriteria criteria : caseCriteriaList) {
                 CourtCase courtCase = null;
                 if (!criteria.getDefaultFields() && criteria.getCaseId() != null) {
-                    courtCase = searchRedisCache(caseSearchRequests.getRequestInfo(), criteria);
+                    courtCase = searchRedisCache(caseSearchRequests.getRequestInfo(), criteria.getCaseId());
                 }
                 if (courtCase != null) {
                     criteria.setResponseList(Collections.singletonList(courtCase));
@@ -197,6 +197,12 @@ public class CaseService {
         }
     }
 
+    public void updateCaseAdditionalDetailsInRedis(RequestInfo requestInfo, Object additionalDetails, String caseId){
+        CourtCase courtCase = searchRedisCache(requestInfo, caseId);
+        courtCase.setAdditionalDetails(additionalDetails);
+        cacheService.save(requestInfo.getUserInfo().getTenantId() + ":" + courtCase.getId().toString(), courtCase);
+    }
+
     public AddWitnessResponse addWitness(AddWitnessRequest addWitnessRequest) {
 
         try {
@@ -225,12 +231,15 @@ public class CaseService {
 
             caseObj = encryptionDecryptionUtil.encryptObject(caseObj, config.getCourtCaseEncrypt(), CourtCase.class);
 
+
             addWitnessRequest.setAdditionalDetails(caseObj.getAdditionalDetails());
             producer.push(config.getAdditionalJoinCaseTopic(), addWitnessRequest);
 
-            caseObj = encryptionDecryptionUtil.decryptObject(caseObj, config.getCaseDecryptSelf(),CourtCase.class,addWitnessRequest.getRequestInfo());
+            updateCaseAdditionalDetailsInRedis(addWitnessRequest.getRequestInfo(), caseObj.getAdditionalDetails(), caseExistsList.get(0).getCaseId());
 
+            caseObj = encryptionDecryptionUtil.decryptObject(caseObj, config.getCaseDecryptSelf(),CourtCase.class,addWitnessRequest.getRequestInfo());
             addWitnessRequest.setAdditionalDetails(caseObj.getAdditionalDetails());
+
             return AddWitnessResponse.builder().addWitnessRequest(addWitnessRequest).build();
 
         } catch (CustomException e) {
@@ -241,6 +250,7 @@ public class CaseService {
         }
 
     }
+
 
     private void verifyAndEnrichLitigant(JoinCaseRequest joinCaseRequest, CourtCase courtCase,CourtCase caseObj, AuditDetails auditDetails) {
         log.info("enriching litigants");
@@ -258,6 +268,9 @@ public class CaseService {
 
             log.info("Pushing additional details for litigant:: {}", joinCaseRequest.getAdditionalDetails());
             producer.push(config.getAdditionalJoinCaseTopic(), joinCaseRequest);
+
+            updateCaseAdditionalDetailsInRedis(joinCaseRequest.getRequestInfo(),joinCaseRequest.getAdditionalDetails(), caseObj.getId().toString());
+
             caseObj.setAuditdetails(courtCase.getAuditdetails());
             caseObj = encryptionDecryptionUtil.decryptObject(caseObj, config.getCaseDecryptSelf(),CourtCase.class,joinCaseRequest.getRequestInfo());
             joinCaseRequest.setAdditionalDetails(caseObj.getAdditionalDetails());
@@ -279,6 +292,9 @@ public class CaseService {
             joinCaseRequest.setAdditionalDetails(caseObj.getAdditionalDetails());
             log.info("Pushing additional details :: {}", joinCaseRequest.getAdditionalDetails());
             producer.push(config.getAdditionalJoinCaseTopic(), joinCaseRequest);
+
+            updateCaseAdditionalDetailsInRedis(joinCaseRequest.getRequestInfo(),joinCaseRequest.getAdditionalDetails(), caseObj.getId().toString());
+
             caseObj.setAuditdetails(courtCase.getAuditdetails());
             caseObj = encryptionDecryptionUtil.decryptObject(caseObj, config.getCaseDecryptSelf(),CourtCase.class,joinCaseRequest.getRequestInfo());
             joinCaseRequest.setAdditionalDetails(caseObj.getAdditionalDetails());
@@ -460,9 +476,9 @@ public class CaseService {
         return requestInfo.getUserInfo().getTenantId() + ":" + caseId;
     }
 
-    public CourtCase searchRedisCache(RequestInfo requestInfo, CaseCriteria criteria) {
+    public CourtCase searchRedisCache(RequestInfo requestInfo, String caseId) {
         try {
-            Object value = cacheService.findById(getRedisKey(requestInfo, criteria.getCaseId()));
+            Object value = cacheService.findById(getRedisKey(requestInfo, caseId));
             if (value != null) {
                 String caseObject = objectMapper.writeValueAsString(value);
                 return objectMapper.readValue(caseObject, CourtCase.class);
@@ -474,7 +490,7 @@ public class CaseService {
             throw new CustomException(SEARCH_CASE_ERR, e.getMessage());
         }
     }
-
+    
     public void saveInRedisCache(List<CaseCriteria> casesList, RequestInfo requestInfo) {
         for (CaseCriteria criteria : casesList) {
             if (!criteria.getDefaultFields() && criteria.getCaseId() != null && criteria.getResponseList() != null) {

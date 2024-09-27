@@ -345,6 +345,9 @@ public class CaseServiceTest {
         when(config.getCaseDecryptSelf()).thenReturn("CaseDecryptSelf");
         when(config.getCourtCaseEncrypt()).thenReturn("CourtCase");
 
+        when(cacheService.findById(any())).thenReturn(courtCase);
+        doNothing().when(cacheService).save(any(),any());
+
         // Call the method
         JoinCaseResponse response = caseService.verifyJoinCaseRequest(joinCaseRequest);
 
@@ -434,6 +437,9 @@ public class CaseServiceTest {
 
         when(encryptionDecryptionUtil.encryptObject(any(CourtCase.class), any(String.class), eq(CourtCase.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
+
+        when(cacheService.findById(any())).thenReturn(courtCase);
+        doNothing().when(cacheService).save(any(),any());
 
         JoinCaseResponse response = caseService.verifyJoinCaseRequest(joinCaseRequest);
         assertEquals("validAccessCode", response.getJoinCaseRequest().getAccessCode());
@@ -704,10 +710,14 @@ public class CaseServiceTest {
         CaseExists caseExists = new CaseExists();
         caseExists.setExists(true);
         List<CaseExists> caseExistsList = Collections.singletonList(caseExists);
+
         when(encryptionDecryptionUtil.encryptObject(any(),any(),any())).thenReturn(cases);
         when(encryptionDecryptionUtil.decryptObject(any(),any(),any(),any())).thenReturn(cases);
 
         when(caseRepository.checkCaseExists(anyList())).thenReturn(caseExistsList);
+
+        when(cacheService.findById(any())).thenReturn(cases);
+        doNothing().when(cacheService).save(any(),any());
         when(config.getAdditionalJoinCaseTopic()).thenReturn("topic");
         AddWitnessResponse response = caseService.addWitness(addWitnessRequest);
 
@@ -795,7 +805,7 @@ public class CaseServiceTest {
         CourtCase expectedCourtCase = new CourtCase();
         when(cacheService.findById(expectedId)).thenReturn(expectedCourtCase);
 
-        CourtCase result = caseService.searchRedisCache(requestInfo, caseCriteria);
+        CourtCase result = caseService.searchRedisCache(requestInfo, caseCriteria.getCaseId());
 
         assertNotNull(result);
         assertEquals(expectedCourtCase, result);
@@ -809,7 +819,7 @@ public class CaseServiceTest {
 
         when(cacheService.findById(anyString())).thenReturn(null);
 
-        CourtCase result = caseService.searchRedisCache(requestInfo, criteria);
+        CourtCase result = caseService.searchRedisCache(requestInfo, criteria.getCaseId());
 
         assertNull(result);
     }
