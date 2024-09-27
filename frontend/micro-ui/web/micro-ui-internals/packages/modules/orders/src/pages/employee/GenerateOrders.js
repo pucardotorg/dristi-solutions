@@ -1208,8 +1208,9 @@ const GenerateOrders = () => {
         },
       });
     }
-    if (order?.orderType === "WARRANT") {
+    if ((order?.orderType === "WARRANT" || orderType === "WARRANT") && refId) {
       entityType = "order-default";
+      referenceId = refId;
       create = true;
       assignees = [...[...new Set([...Object.keys(allAdvocates)?.flat(), ...Object.values(allAdvocates)?.flat()])]?.map((uuid) => ({ uuid }))];
       name = t("PAYMENT_PENDING_FOR_WARRANT");
@@ -1684,38 +1685,45 @@ const GenerateOrders = () => {
           });
       });
     } else if (Object.keys(payload || {}).length > 0) {
-      await ordersService.customApiService(Urls.orders.taskCreate, {
-        task: {
-          taskDetails: payload,
-          workflow: {
-            action: "CREATE",
-            comments: orderType,
-            documents: [
-              {
-                documentType: null,
-                fileStore: null,
-                documentUid: null,
-                additionalDetails: {},
-              },
-            ],
-            assignes: null,
-            rating: null,
+      await ordersService
+        .customApiService(Urls.orders.taskCreate, {
+          task: {
+            taskDetails: payload,
+            workflow: {
+              action: "CREATE",
+              comments: orderType,
+              documents: [
+                {
+                  documentType: null,
+                  fileStore: null,
+                  documentUid: null,
+                  additionalDetails: {},
+                },
+              ],
+              assignes: null,
+              rating: null,
+            },
+            createdDate: new Date().getTime(),
+            orderId: orderData?.id,
+            filingNumber,
+            cnrNumber,
+            taskType: orderType,
+            status: "INPROGRESS",
+            tenantId,
+            amount: {
+              type: "FINE",
+              status: "DONE",
+              amount: summonsCourtFee,
+            },
           },
-          createdDate: new Date().getTime(),
-          orderId: orderData?.id,
-          filingNumber,
-          cnrNumber,
-          taskType: orderType,
-          status: "INPROGRESS",
           tenantId,
-          amount: {
-            type: "FINE",
-            status: "DONE",
-            amount: summonsCourtFee,
-          },
-        },
-        tenantId,
-      });
+        })
+        .then(async (data) => {
+          if (["WARRANT"].includes(orderType)) {
+            debugger;
+            await createPendingTask({ refId: data?.task?.taskNumber, orderType: orderType });
+          }
+        });
     }
   };
 

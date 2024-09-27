@@ -54,7 +54,7 @@ const WarrantPaymentModal = ({ path }) => {
   );
 
   useEffect(() => {
-    const pathname = location.pathname;
+    const pathname = location?.pathname;
     const channel = pathname.split("/")[5].split("-")[0];
     setChannelId(channel);
   }, [location]);
@@ -140,13 +140,12 @@ const WarrantPaymentModal = ({ path }) => {
       (item) =>
         item?.deliveryChannel === requiredChannel &&
         item?.businessService &&
-        item?.businessService?.some((service) => service?.businessCode === "task-summon")
+        item?.businessService?.some((service) => service?.businessCode === "task-warrant")
     );
   }, paymentTypeData);
   const taxPeriodSummon = useMemo(() => {
     if (!taxPeriodData) return [];
     const data = taxPeriodData;
-    console.log("opppopo");
     return data.filter((item) => item?.service === "task-summons");
   }, taxPeriodData);
 
@@ -168,6 +167,18 @@ const WarrantPaymentModal = ({ path }) => {
     }
   });
   const referenceId = "Icops";
+  const receiptData = {
+    caseInfo: [
+      {
+        key: "Case Name & ID",
+        value: `${caseDetails?.caseTitle}, ${caseDetails?.filingNumber}`,
+        copyData: false,
+      },
+    ],
+    isArrow: false,
+    showTable: true,
+    showCopytext: true,
+  };
   // const { data: billResponse, isLoading: isBillLoading } = Digit.Hooks.dristi.useBillSearch(
   //   {},
   //   { tenantId, consumerCode: `${filteredTasks?.[0]?.taskNumber}_${suffix}`, service: paymentType.TASK_WARRANT },
@@ -175,7 +186,6 @@ const WarrantPaymentModal = ({ path }) => {
   //   Boolean(filteredTasks?.[0]?.taskNumber)
   // );
   // const orderType = useMemo(() => orderData?.list?.[0]?.orderType, [orderData]);
-  console.log(orderType, "ORDERTYPEE");
   const onPayOnline = async () => {
     try {
       // if (billResponse?.Bill?.length === 0) {
@@ -228,48 +238,48 @@ const WarrantPaymentModal = ({ path }) => {
       //   };
       const updatedTask = {
         ...filteredTasks?.[0],
-        taskType: orderType === "SUMMONS" ? "SUMMONS" : "NOTICE",
+        taskType: "WARRANT",
         workflow: {
           action: "MAKE_PAYMENT",
         },
       };
 
-      await taskService
-        .updateTask(
-          {
-            task: updatedTask,
-            tenantId: tenantId,
-          },
-          {}
-        )
-        .then(() => {
-          return ordersService.customApiService(Urls.orders.pendingTask, {
-            pendingTask: {
-              name: orderType === "SUMMONS" ? `MAKE_PAYMENT_FOR_SUMMONS_POST` : `MAKE_PAYMENT_FOR_NOTICE_POST`,
-              entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
-              referenceId: `MANUAL_${taskNumber}`,
-              status: status,
-              assignedTo: [],
-              assignedRole: [],
-              cnrNumber: filteredTasks?.[0]?.cnrNumber,
-              filingNumber: filingNumber,
-              isCompleted: true,
-              stateSla: "",
-              additionalDetails: {},
-              tenantId,
-            },
-          });
-        }),
-        // if (billPaymentStatus) {
-        // const fileStoreId = await DRISTIService.fetchBillFileStoreId({}, { billId, tenantId });
-        history.push(`/${window?.contextPath}/citizen/home/post-payment-screen`, {
-          state: {
-            success: true,
-            receiptData,
-            fileStoreId: fileStoreId?.Document?.fileStore,
-            amount: "Rs 11/-",
-          },
-        });
+      // await taskService
+      //   .updateTask(
+      //     {
+      //       task: updatedTask,
+      //       tenantId: tenantId,
+      //     },
+      //     {}
+      //   )
+      //   .then(() => {
+      //     return
+      await ordersService.customApiService(Urls.orders.pendingTask, {
+        pendingTask: {
+          name: `PAYMENT_PENDING_FOR_WARRANT`,
+          entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
+          referenceId: `MANUAL_${taskNumber}`,
+          status: status,
+          assignedTo: [],
+          assignedRole: [],
+          cnrNumber: filteredTasks?.[0]?.cnrNumber,
+          filingNumber: filingNumber,
+          isCompleted: true,
+          stateSla: "",
+          additionalDetails: {},
+          tenantId,
+        },
+      });
+      // }),
+      // if (billPaymentStatus) {
+      // const fileStoreId = await DRISTIService.fetchBillFileStoreId({}, { billId, tenantId });
+      history.push(`/${window?.contextPath}/citizen/home/post-payment-screen`, {
+        state: {
+          success: true,
+          receiptData,
+          amount: "Rs 11/-",
+        },
+      });
       // } else {
       //   history.push(`/${window?.contextPath}/citizen/home/post-payment-screen`, {
       //     state: {
@@ -293,8 +303,8 @@ const WarrantPaymentModal = ({ path }) => {
           action: "Actions",
         },
         ...breakupResponse?.Calculation[0]?.breakDown?.map((item) => ({
-          label: item.type,
-          amount: item.amount,
+          label: item?.type,
+          amount: item?.amount,
           action: "Pay Online",
           onClick: onPayOnline,
         })),
@@ -312,12 +322,10 @@ const WarrantPaymentModal = ({ path }) => {
       history.goBack();
     }
   };
-  console.log(orderData, "ORDER");
   const infos = useMemo(() => {
     const name = orderData?.list?.[0]?.additionalDetails?.formdata?.warrantFor;
     const task = filteredTasks?.[0];
     const taskDetails = task?.taskDetails;
-    // console.log(taskDetails, "TASK", orderNumber);
 
     return [
       { key: "Issued to", value: name },
