@@ -8,7 +8,7 @@ exports.generateCasePdf = async (req, res, next) => {
         const cases = req.body.cases;
 
         const filingNumber = cases.filingNumber || null;
-        const courtName = cases.courtName || ${config.courtName}`;
+        const courtName = cases.courtName || `${config.courtName}`;
         
         const caseYear = await extractCaseYear(filingNumber);
         const caseNumber = await extractCaseNumber(filingNumber);
