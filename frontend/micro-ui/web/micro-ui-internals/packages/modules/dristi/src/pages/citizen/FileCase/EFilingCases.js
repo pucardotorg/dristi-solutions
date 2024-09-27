@@ -483,7 +483,9 @@ function EFilingCases({ path }) {
       caseDetails?.caseDetails?.[selected]?.formdata ||
       (selected === "witnessDetails" ? [{}] : [{ isenabled: true, data: {}, displayindex: 0 }]);
     setFormdata(data);
-
+    if (selected === "addSignature" && !caseDetails?.additionalDetails?.signedCaseDocument && !isLoading) {
+      setShowReviewCorrectionModal(true);
+    }
     if (selected === "addSignature" && !caseDetails?.additionalDetails?.["reviewCaseFile"]?.isCompleted && !isLoading) {
       setShowReviewCorrectionModal(true);
     }
@@ -773,7 +775,7 @@ function EFilingCases({ path }) {
           };
         });
       });
-      if (!isCaseReAssigned || selected === "addSignature" || selected === "reviewCaseFile") {
+      if ((!isCaseReAssigned && !isPendingESign) || selected === "addSignature" || selected === "reviewCaseFile") {
         return modifiedFormData;
       }
     }
@@ -1541,9 +1543,11 @@ function EFilingCases({ path }) {
       if (selected === "reviewCaseFile") {
         setIsDisabled(true);
         res = await refetchCasePDfGeneration();
-        // if (res?.data?.cases?.[0]?.documents?.[0]?.fileStore) {
-        //   localStorage.setItem("fileStoreId", res?.data?.cases?.[0]?.documents?.[0]?.fileStore);
-        // }
+        if (res?.status === "error") {
+          setIsDisabled(false);
+          toast.error(t("CASE_PDF_ERROR"));
+          return;
+        }
       }
       updateCaseDetails({
         isCompleted: true,
@@ -1783,6 +1787,7 @@ function EFilingCases({ path }) {
   const onSubmitCase = async (data) => {
     setOpenConfirmCourtModal(false);
     setIsDisabled(true);
+    let calculationResponse = {};
     const assignees = getAllAssignees(caseDetails);
     const fileStoreId = localStorage.getItem("fileStoreId");
     await DRISTIService.caseUpdateService(
@@ -1831,13 +1836,12 @@ function EFilingCases({ path }) {
             tenantId,
           },
         });
+        calculationResponse = await callCreateDemandAndCalculation(caseDetails, tenantId, caseId);
       }
       if (isPendingReESign) setCaseResubmitSuccess(true);
       setIsDisabled(false);
       return;
     });
-
-    const calculationResponse = await callCreateDemandAndCalculation(caseDetails, tenantId, caseId);
 
     setPrevSelected(selected);
     history.push(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculationResponse: calculationResponse } });
@@ -2329,7 +2333,7 @@ function EFilingCases({ path }) {
           caseDetails={caseDetails}
         />
       )}
-      {selected === "witnessDetails" && Object.keys(formdata.filter((data) => data.isenabled)?.[0] || {}).length === 0 && (
+      {selected === "witnessDetails" && !isPendingESign && Object.keys(formdata.filter((data) => data.isenabled)?.[0] || {}).length === 0 && (
         <ActionBar className={"e-filing-action-bar"}>
           <SubmitBar
             label={t("CS_COMMON_CONTINUE")}

@@ -37,10 +37,7 @@ const caseSecondaryActions = [
   { action: "SEND_BACK", label: "SEND_BACK_FOR_CORRECTION" },
   { action: "REJECT", label: "CS_CASE_REJECT" },
 ];
-const caseTertiaryActions = [
-  { action: "ISSUE_ORDER", label: "CS_CASE_ISSUE_ORDER" },
-  { action: "RESPOND", label: "CS_CASE_RESPOND" },
-];
+const caseTertiaryActions = [{ action: "ISSUE_ORDER", label: "CS_CASE_ISSUE_ORDER" }];
 
 function CaseFileAdmission({ t, path }) {
   const [isDisabled, setIsDisabled] = useState(false);
@@ -167,7 +164,7 @@ function CaseFileAdmission({ t, path }) {
           },
         },
       };
-      DRISTIService.customApiService(Urls.dristi.ordersCreate, orderBody, { tenantId })
+      DRISTIService.customApiService(Urls.dristi.ordersCreate, { order: orderBody }, { tenantId })
         .then((res) => {
           history.push(`/digit-ui/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`, {
             caseId: caseDetails?.id,
@@ -446,9 +443,27 @@ function CaseFileAdmission({ t, path }) {
 
   const handleAdmitCase = async () => {
     setCaseADmitLoader(true);
-    updateCaseDetails("ADMIT", formdata).then((res) => {
+    updateCaseDetails("ADMIT", formdata).then(async (res) => {
       setModalInfo({ ...modalInfo, page: 1 });
       setCaseADmitLoader(false);
+      const { HearingList = [] } = await Digit.HearingService.searchHearings({
+        hearing: { tenantId },
+        criteria: {
+          tenantID: tenantId,
+          filingNumber: caseDetails?.filingNumber,
+        },
+      });
+      if (caseDetails?.status === "PENDING_RESPONSE") {
+        const hearingData = HearingList?.find((list) => list?.hearingType === "ADMISSION" && list?.status === "SCHEDULED") || {};
+        if (hearingData.hearingId) {
+          hearingData.workflow = hearingData.workflow || {};
+          hearingData.workflow.action = "ABANDON";
+          await Digit.HearingService.updateHearings(
+            { tenantId, hearing: hearingData, hearingType: "", status: "" },
+            { applicationNumber: "", cnrNumber: "" }
+          );
+        }
+      }
       DRISTIService.customApiService(Urls.dristi.pendingTask, {
         pendingTask: {
           name: "Schedule Hearing",
@@ -707,7 +722,9 @@ function CaseFileAdmission({ t, path }) {
           },
         });
       })
-      .catch();
+      .catch((error) => {
+        console.error("Error while creating order", error);
+      });
   };
 
   const updateConfigWithCaseDetails = (config, caseDetails) => {
