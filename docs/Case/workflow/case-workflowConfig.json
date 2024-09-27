@@ -258,8 +258,7 @@
                             "action": "RESPOND",
                             "nextState": "PENDING_ADMISSION",
                             "roles": [
-                                "SYSTEM",
-                                "SYSTEM_ADMIN"
+                                "CASE_RESPONDER"
                             ]
                         },
                         {
