@@ -50,7 +50,7 @@ public class ServiceConstants {
     public static final String SUMMON = "SUMMONS";
     public static final String WARRANT = "WARRANT";
     public static final String NOTICE = "NOTICE";
-    public static final String ISSUESUMMON = "ISSUESUMMON";
+    public static final String ISSUESUMMON = "ISSUE_SUMMON";
 
     public static final String PAYMENTMASTERCODE = "PaymentMasterCode";
 
@@ -60,6 +60,6 @@ public class ServiceConstants {
 
     public static final String PAYMENT_CALCULATOR_ERROR = "PAYMENT_CALCULATOR_ERROR";
 
-    public static final String PAYMENT_PENDING = "PAYMENT_PENDING";
+    public static final String PENDING_PAYMENT = "PENDING_PAYMENT";
 
 }
