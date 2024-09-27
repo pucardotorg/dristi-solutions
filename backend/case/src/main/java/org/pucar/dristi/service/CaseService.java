@@ -234,9 +234,10 @@ public class CaseService {
             producer.push(config.getAdditionalJoinCaseTopic(), addWitnessRequest);
 
             CourtCase courtCaseRedis = searchRedisCache(addWitnessRequest.getRequestInfo(), caseExistsList.get(0).getCaseId());
-            courtCaseRedis.setAdditionalDetails(addWitnessRequest.getAdditionalDetails());
-            updateCourtCaseInRedis(addWitnessRequest.getRequestInfo().getUserInfo().getTenantId(),courtCaseRedis);
-
+            if (courtCaseRedis != null) {
+                courtCaseRedis.setAdditionalDetails(addWitnessRequest.getAdditionalDetails());
+                updateCourtCaseInRedis(addWitnessRequest.getRequestInfo().getUserInfo().getTenantId(), courtCaseRedis);
+            }
             caseObj = encryptionDecryptionUtil.decryptObject(caseObj, config.getCaseDecryptSelf(),CourtCase.class,addWitnessRequest.getRequestInfo());
             addWitnessRequest.setAdditionalDetails(caseObj.getAdditionalDetails());
 
@@ -260,10 +261,13 @@ public class CaseService {
         producer.push(config.getLitigantJoinCaseTopic(), joinCaseRequest.getLitigant());
 
         CourtCase courtCaseRedis = searchRedisCache(joinCaseRequest.getRequestInfo(), caseObj.getId().toString());
-        List<Party> litigants = courtCaseRedis.getLitigants();
-        litigants.add(joinCaseRequest.getLitigant());
+
         String tenantId = joinCaseRequest.getRequestInfo().getUserInfo().getTenantId();
-        updateCourtCaseInRedis(tenantId,courtCaseRedis);
+        if (courtCaseRedis != null) {
+            List<Party> litigants = courtCaseRedis.getLitigants();
+            litigants.add(joinCaseRequest.getLitigant());
+            updateCourtCaseInRedis(tenantId, courtCaseRedis);
+        }
 
         if (joinCaseRequest.getAdditionalDetails() != null) {
 
@@ -275,8 +279,10 @@ public class CaseService {
             log.info("Pushing additional details for litigant:: {}", joinCaseRequest.getAdditionalDetails());
             producer.push(config.getAdditionalJoinCaseTopic(), joinCaseRequest);
 
-            courtCaseRedis.setAdditionalDetails(joinCaseRequest.getAdditionalDetails());
-            updateCourtCaseInRedis(tenantId,courtCaseRedis);
+            if (courtCaseRedis != null) {
+                courtCaseRedis.setAdditionalDetails(joinCaseRequest.getAdditionalDetails());
+                updateCourtCaseInRedis(tenantId, courtCaseRedis);
+            }
 
             caseObj.setAuditdetails(courtCase.getAuditdetails());
             caseObj = encryptionDecryptionUtil.decryptObject(caseObj, config.getCaseDecryptSelf(),CourtCase.class,joinCaseRequest.getRequestInfo());
@@ -294,10 +300,13 @@ public class CaseService {
         producer.push(config.getRepresentativeJoinCaseTopic(), joinCaseRequest.getRepresentative());
 
         CourtCase courtCaseRedis = searchRedisCache(joinCaseRequest.getRequestInfo(), caseObj.getId().toString());
-        List<AdvocateMapping> representatives = courtCaseRedis.getRepresentatives();
-        representatives.add(joinCaseRequest.getRepresentative());
+
         String tenantId = joinCaseRequest.getRequestInfo().getUserInfo().getTenantId();
-        updateCourtCaseInRedis(tenantId,courtCaseRedis);
+        if (courtCaseRedis != null) {
+            List<AdvocateMapping> representatives = courtCaseRedis.getRepresentatives();
+            representatives.add(joinCaseRequest.getRepresentative());
+            updateCourtCaseInRedis(tenantId, courtCaseRedis);
+        }
 
         if (joinCaseRequest.getAdditionalDetails() != null) {
             caseObj.setAdditionalDetails(editAdvocateDetails(joinCaseRequest.getAdditionalDetails(),courtCase.getAdditionalDetails()));
@@ -306,8 +315,10 @@ public class CaseService {
             log.info("Pushing additional details :: {}", joinCaseRequest.getAdditionalDetails());
             producer.push(config.getAdditionalJoinCaseTopic(), joinCaseRequest);
 
-            courtCaseRedis.setAdditionalDetails(joinCaseRequest.getAdditionalDetails());
-            updateCourtCaseInRedis(tenantId,courtCaseRedis);
+            if (courtCaseRedis != null) {
+                courtCaseRedis.setAdditionalDetails(joinCaseRequest.getAdditionalDetails());
+                updateCourtCaseInRedis(tenantId, courtCaseRedis);
+            }
 
             caseObj.setAuditdetails(courtCase.getAuditdetails());
             caseObj = encryptionDecryptionUtil.decryptObject(caseObj, config.getCaseDecryptSelf(),CourtCase.class,joinCaseRequest.getRequestInfo());
