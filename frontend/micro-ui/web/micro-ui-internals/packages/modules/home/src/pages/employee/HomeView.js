@@ -407,6 +407,7 @@ const HomeView = () => {
         "PENDING_ADMISSION_HEARING",
         "PENDING_NOTICE",
         "PENDING_RESPONSE",
+        "UNDER_SCRUTINY",
       ];
       if (statusArray.includes(row?.original?.status)) {
         if (row?.original?.status === "CASE_ADMITTED") {
@@ -422,6 +423,10 @@ const HomeView = () => {
             userInfoType === "employee"
               ? `/${window?.contextPath}/${userInfoType}/dristi/admission?caseId=${row?.original?.id}&filingNumber=${row?.original?.filingNumber}`
               : `/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${row?.original?.id}&filingNumber=${row?.original?.filingNumber}&tab=Complaint`
+          );
+        } else if (row?.original?.status === "UNDER_SCRUTINY" && userInfoType !== "employee") {
+          history.push(
+            `/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${row?.original?.id}&filingNumber=${row?.original?.filingNumber}&tab=Complaint`
           );
         } else if (row?.original?.status === "PENDING_E-SIGN") {
           history.push(`/${window?.contextPath}/${userInfoType}/dristi/home/file-case/case?caseId=${row?.original?.id}&selected=addSignature`);
