@@ -1115,8 +1115,10 @@ const generateQRCodes = async (
 
     if (isUrl) {
       let qrCodeImage = await QRCode.toDataURL(qrtext);
+      variableTovalueMap[varname] = qrCodeImage;
+    } else {
+      variableTovalueMap[varname] = qrtext;
     }
-    variableTovalueMap[varname] = qrtext;
   }
 };
 
