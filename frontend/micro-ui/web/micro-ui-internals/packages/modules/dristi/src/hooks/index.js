@@ -26,6 +26,8 @@ import useEvidenceDetails from "./dristi/useEvidenceDetails.js";
 import useGetStatuteSection from "./dristi/useGetStatuteSection.js";
 import useDownloadCasePdf from "./dristi/useDownloadCasePdf.js";
 import useWorkflowDetails from "./dristi/useWorkflowDetails.js";
+import useSummonsPaymentBreakUp from "./dristi/useSummonsPaymentBreakUp.js";
+import { getTaskType, extractFeeMedium } from "../Utils/index.js";
 export const Urls = {
   Authenticate: "/user/oauth/token",
   dristi: {
@@ -66,6 +68,7 @@ export const Urls = {
     sendOCR: "/ocr-service/verify",
     receiveOCR: "/ocr-service/data",
     taskDocuments: "/task/v1/document/search",
+    summonsPayment: "/payment-calculator/v1/_calculate",
   },
   case: {
     addWitness: "/case/v1/add/witness",
@@ -98,6 +101,7 @@ const dristi = {
   useJudgeAvailabilityDates,
   useGetOCRData,
   useDownloadCasePdf,
+  useSummonsPaymentBreakUp,
 };
 
 const Hooks = {
@@ -105,7 +109,7 @@ const Hooks = {
 };
 
 const Utils = {
-  dristi: {},
+  dristi: { extractFeeMedium, getTaskType },
 };
 export const CustomizedHooks = {
   Hooks,

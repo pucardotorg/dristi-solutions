@@ -15,7 +15,7 @@ import ReIssueSummonsModal from "./components/ReIssueSummonsModal";
 import PaymentForSummonModal from "./pages/employee/PaymentForSummonModal";
 import PaymentForSummonModalSMSAndEmail from "./pages/employee/PaymentForSummonModalSMSAndEmail";
 import SBIEpostPayment from "./pages/employee/SBIEpostPayment";
-
+import WarrantPaymentModal from "./pages/employee/WarrantPaymentModal";
 export const OrdersModule = ({ stateCode, userType, tenants }) => {
   const { path } = useRouteMatch();
   const moduleCode = ["orders", "hearings", "common", "case", "workflow"];
@@ -47,6 +47,7 @@ const componentsToRegister = {
   PaymentForSummonModal,
   PaymentForSummonModalSMSAndEmail,
   SBIEpostPayment,
+  WarrantPaymentModal,
 };
 
 export const initOrdersComponents = () => {

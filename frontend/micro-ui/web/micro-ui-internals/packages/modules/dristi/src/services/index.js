@@ -313,4 +313,12 @@ export const DRISTIService = {
       params,
     });
   },
+  getSummonsPaymentBreakup: (data, params) =>
+    Request({
+      url: Urls.dristi.summonsPayment,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
 };

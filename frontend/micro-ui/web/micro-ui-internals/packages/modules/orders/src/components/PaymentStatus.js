@@ -20,6 +20,8 @@ const PaymentStatus = ({ path }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const caseId = location.state.state.caseId;
   const receiptData = location.state.state.receiptData;
+  const amount = location.state.state.amount;
+
   const history = useHistory();
 
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${fileStoreId}`;
@@ -68,7 +70,7 @@ const PaymentStatus = ({ path }) => {
         />
         {isResponseSuccess ? (
           <div>
-            <div className="payment-status-message">The Summons would be sent to the relevant party.</div>
+            {/* <div className="payment-status-message">The Summons would be sent to the relevant party.</div> */}
             <CustomCopyTextDiv
               t={t}
               keyStyle={{ margin: "8px 0px" }}
@@ -86,7 +88,7 @@ const PaymentStatus = ({ path }) => {
               name: "infocard",
             }}
             variant="default"
-            text={"You have a payment due of Rs 525/-. This is a mandatory step to send summons via selected delivery channel for your case."}
+            text={`You have a payment due ${amount || "Rs 11/-"}. `}
             label={"Note"}
             style={{ marginTop: "1.5rem" }}
             textStyle={{

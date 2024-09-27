@@ -14,6 +14,7 @@ import PaymentStatus from "../../../../orders/src/components/PaymentStatus";
 import ScheduleNextHearing from "./ScheduleNextHearing";
 import DashboardPage from "./Dashboard";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+
 const bredCrumbStyle = { maxWidth: "min-content" };
 
 const ProjectBreadCrumb = ({ location }) => {
@@ -40,6 +41,7 @@ const ProjectBreadCrumb = ({ location }) => {
 
 const App = ({ path, stateCode, userType, tenants }) => {
   const Digit = useMemo(() => window?.Digit || {}, []);
+  const WarrantPaymentModal = Digit.ComponentRegistryService.getComponent("WarrantPaymentModal") || <React.Fragment></React.Fragment>;
   const SummonsAndWarrantsModal = Digit.ComponentRegistryService.getComponent("SummonsAndWarrantsModal") || <React.Fragment></React.Fragment>;
   const ReIssueSummonsModal = Digit.ComponentRegistryService.getComponent("ReIssueSummonsModal") || <React.Fragment></React.Fragment>;
   const PaymentForSummonModal = Digit.ComponentRegistryService.getComponent("PaymentForSummonModal") || <React.Fragment></React.Fragment>;
@@ -86,6 +88,7 @@ const App = ({ path, stateCode, userType, tenants }) => {
           path={`${path}/home-pending-task/email-payment-modal`}
           component={() => <PaymentForSummonModalSMSAndEmail></PaymentForSummonModalSMSAndEmail>}
         />
+        <PrivateRoute path={`${path}/home-pending-task/icops-payment-modal`} component={() => <WarrantPaymentModal></WarrantPaymentModal>} />
         <PrivateRoute path={`${path}/sbi-epost-payment`} component={() => <SBIEpostPayment></SBIEpostPayment>} />
         <PrivateRoute path={`${path}/post-payment-screen`} component={() => <PaymentStatus></PaymentStatus>} />
         <PrivateRoute path={`${path}/view-hearing`} component={() => <ViewHearing></ViewHearing>} />
