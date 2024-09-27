@@ -99,7 +99,7 @@ app.use(bodyParser.json());
 app.post(`${successUrlContextPath}`, async (req, res) => {
   console.log('Request body:', JSON.stringify(req.body));
   try {
-    await callBackendService(backendUrl, req.body);
+    await callBackendService(backendUrl, req.body.encData);
     forwardJspPage(res, '/success.jsp');
   } catch (error) {
     res.status(500).send('Failed to process payment');
@@ -107,7 +107,7 @@ app.post(`${successUrlContextPath}`, async (req, res) => {
 });
 
 app.post(`${failUrlContextPath}`, async (req, res) => {
-  console.log('Request body:', JSON.stringify(req.body));
+  console.log('Request body:', JSON.stringify(req.body.encData));
   try {
     await callBackendService(backendUrl, req.body);
     forwardJspPage(res, '/fail.jsp');
@@ -117,7 +117,7 @@ app.post(`${failUrlContextPath}`, async (req, res) => {
 });
 
 app.post(`${pushResponseContextPath}`, async (req, res) => {
-  console.log('Request body:', JSON.stringify(req.body));
+  console.log('Request body:', JSON.stringify(req.body.pushRespData));
   try {
     await callBackendService(backendUrl, req.body);
     res.status(200).send('Response processed successfully');
