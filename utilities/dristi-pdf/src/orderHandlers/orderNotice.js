@@ -141,6 +141,8 @@ async function orderNotice(req, res, qrCode) {
       ? formatDate(new Date(order?.orderDetails?.hearingDate), "DD-MM-YYYY")
       : "";
     const partyName = order?.orderDetails?.respondentName || "";
+    const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+
     const data = {
       Data: [
         {
@@ -148,7 +150,7 @@ async function orderNotice(req, res, qrCode) {
           place: mdmsCourtRoom.place,
           state: mdmsCourtRoom.state,
           caseName: courtCase.caseTitle,
-          caseNumber: courtCase.caseNumber,
+          caseNumber: caseNumber,
           partyName: partyName,
           typeOfNotice: typeOfNotice,
           hearingDate: hearingDate,
