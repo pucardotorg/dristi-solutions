@@ -79,6 +79,7 @@ public class PdfServiceUtil {
         }
         String issueDateString = (issueDate != null) ? formatDateFromMillis(issueDate) : "";
         String filingNUmber = task.getFilingNumber();
+        String courtName = task.getTaskDetails().getCaseDetails().getCourtName();
         return SummonsPdf.builder()
                 .tenantId(task.getTenantId())
                 .cnrNumber(task.getCnrNumber())
@@ -87,7 +88,7 @@ public class PdfServiceUtil {
                 .caseNumber(extractCaseNumber(filingNUmber))
                 .caseYear(extractCaseYear(filingNUmber))
                 .judgeName(task.getTaskDetails().getCaseDetails().getJudgeName())
-                .courtName(task.getTaskDetails().getCaseDetails().getCourtName())
+                .courtName(courtName == null ? COURT_NAME: courtName)
                 .hearingDate(task.getTaskDetails().getCaseDetails().getHearingDate().toString())
                 .respondentName(task.getTaskDetails().getRespondentDetails().getName())
                 .respondentAddress(task.getTaskDetails().getRespondentDetails().getAddress().toString())
