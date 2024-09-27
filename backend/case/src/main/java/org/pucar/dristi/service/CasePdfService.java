@@ -62,7 +62,6 @@ public class CasePdfService {
             caseRepository.getCases(body.getCriteria(), body.getRequestInfo());
             CourtCase courtCase = body.getCriteria().get(0).getResponseList().get(0);
             courtCase = encryptionDecryptionUtil.decryptObject(courtCase, CASE_DECRYPT_SELF, CourtCase.class, body.getRequestInfo());
-
             if (!CollectionUtils.isEmpty(courtCase.getDocuments())) {
                 for (Document document : courtCase.getDocuments()) {
                     JsonNode additionalDetailsNode = mapper.convertValue(document.getAdditionalDetails(), JsonNode.class);

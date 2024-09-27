@@ -62,7 +62,6 @@ public class IndividualService {
             StringBuilder uri = buildIndividualSearchUri(requestInfo, uuids);
             List<Individual> individual = individualUtils.getIndividualByIndividualId(individualSearchRequest, uri);
             if (individual != null) {
-
                 return individual;
             } else {
                 log.error("No individuals found");

@@ -263,5 +263,4 @@ public class Configuration {
 
 	@Value("${egov.idgen.cmpFormat}")
 	private String cmpFormat;
-
 }

@@ -73,6 +73,4 @@ public class ServiceConstants {
 
     public static final String PDF_UTILITY_EXCEPTION = "PDF_UTILITY_EXCEPTION";
     public static final String WITNESS_DEPOSITION_UPDATE_EXCEPTION = "Exception while uploading witness deposition pdf";
-
-
 }
