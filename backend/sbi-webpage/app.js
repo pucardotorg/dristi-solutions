@@ -49,7 +49,7 @@ app.use(bodyParser.json());
     const queryParams = new URLSearchParams();
 
     if (transactionDetails.TransactionStatus) {
-      queryParams.append('TransactionStatus', transactionDetails.TransactionStatus);
+      queryParams.append('status', transactionDetails.TransactionStatus);
     }
     if (transactionDetails.billId) {
       queryParams.append('billId', transactionDetails.billId);
