@@ -1,6 +1,7 @@
 import { useToast } from "../../../components/Toast/useToast";
 import { getUserDetails } from "../../../hooks/useGetAccessToken";
 import { DRISTIService } from "../../../services";
+import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import { userTypeOptions } from "../registration/config";
 import { formatDate } from "./CaseType";
 import { efilingDocumentKeyAndTypeMapping } from "./Config/efilingDocumentKeyAndTypeMapping";
@@ -880,7 +881,7 @@ export const createIndividualUser = async ({ data, documentData, tenantId }) => 
             "SUBMISSION_DELETE",
             "TASK_VIEWER",
             "CASE_RESPONDER",
-            "HEARING_ACCEPTOR"
+            "HEARING_ACCEPTOR",
           ]?.map((role) => ({
             code: role,
             name: role,
@@ -2050,9 +2051,6 @@ export const updateCaseDetails = async ({
         workflow: {
           ...caseDetails?.workflow,
           action: action,
-          ...(action === "E-SIGN" && {
-            assignees,
-          }),
         },
       },
       tenantId,
