@@ -404,7 +404,7 @@ const LocationSearch = (props) => {
           autoComplete="off"
         />
       </div>
-      <div id={"map-" + props?.index} className="map"></div>;
+      <div id={"map-" + props?.index} className="map"></div>
     </div>
   );
 };
