@@ -82,7 +82,6 @@ const JoinHomeLocalisation = {
   CONFIRM_ATTENDANCE: "CONFIRM_ATTENDANCE",
   JOINING_THIS_CASE_AS: "JOINING_THIS_CASE_AS",
   SKIP_LATER: "SKIP_LATER",
-  CASE_NO_ADMITTED_STATUS: "CASE_NO_ADMITTED_STATUS",
   INVALID_ACCESS_CODE_MESSAGE: "INVALID_ACCESS_CODE_MESSAGE",
   AFFIDAVIT_MINIMUM_CHAR_MESSAGE: "AFFIDAVIT_MINIMUM_CHAR_MESSAGE",
   FILLING_NUMBER_FORMATE_TEXT: `FILLING_NUMBER_FORMATE_TEXT`,
@@ -109,7 +108,7 @@ const JoinHomeLocalisation = {
   CASE_NUMBER: "CASE_NUMBER",
   ALREADY_REPRESENTING: "ALREADY_REPRESENTING",
   CANT_REPRESENT_BOTH_PARTY: "CANT_REPRESENT_BOTH_PARTY",
-  VIEW_CASE_DETAILS: "VIEW_CASE_DETAILS",
+  VIEW_CASE_FILE: "VIEW_CASE_FILE",
 };
 
 const advocateVakalatnamaAndNocConfig = [
@@ -1447,7 +1446,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                       ? "Submit Response"
                       : !isAttendingHearing && nextHearing
                       ? "Confirm attendance in summon"
-                      : t(JoinHomeLocalisation.VIEW_CASE_DETAILS)
+                      : t(JoinHomeLocalisation.VIEW_CASE_FILE)
                   }
                   onButtonClick={() => {
                     setShow(false);
@@ -2513,6 +2512,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
     caseDetails?.filingNumber,
     caseDetails?.id,
     caseDetails?.litigants,
+    caseDetails?.status,
     caseNumber,
     errors,
     individualAddress,
@@ -2880,7 +2880,8 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                 setOtp("");
                 setAccusedRegisterFormData({});
                 setShowEditRespondentDetailsModal(false);
-                setShow(isAccusedRegistered ? false : true);
+                if (isAccusedRegistered) closeModal();
+                else setShow(true);
               }}
               submitButtonText={"NEXT"}
               t={t}
