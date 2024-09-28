@@ -111,6 +111,8 @@ public class CaseService {
                 if (courtCase != null) {
                     criteria.setResponseList(Collections.singletonList(courtCase));
                     caseCriteriaInRedis.add(criteria);
+                } else {
+                    log.debug("CourtCase not found in Redis cache for caseId: {}", criteria.getCaseId());
                 }
             }
 
@@ -198,6 +200,9 @@ public class CaseService {
     }
 
     public void updateCourtCaseInRedis(String tenantId, CourtCase courtCase){
+        if (tenantId == null || courtCase == null) {
+            throw new CustomException("INVALID_INPUT", "Tenant ID or CourtCase is null");
+        }
         cacheService.save(tenantId + ":" + courtCase.getId().toString(), courtCase);
     }
 
@@ -210,11 +215,11 @@ public class CaseService {
             List<CaseCriteria> existingApplications = caseRepository.getCases(Collections.singletonList(caseCriteria), requestInfo);
 
             if (existingApplications.isEmpty()) {
-                throw new CustomException(INVALID_CASE, "No case found for the given filling Number");
+                throw new CustomException(INVALID_CASE, "No case found for the given filing Number");
             }
             List<CourtCase> courtCaseList = existingApplications.get(0).getResponseList();
             if (courtCaseList.isEmpty()) {
-                throw new CustomException(INVALID_CASE, "No case found for the given filling Number");
+                throw new CustomException(INVALID_CASE, "No case found for the given filing Number");
             }
 
             if (addWitnessRequest.getAdditionalDetails() == null)
