@@ -1969,7 +1969,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
             },
           });
           if (res) {
-            if (caseDetails?.status === "PENDING_RESPONSE") {
+            if (caseDetails?.status === "PENDING_RESPONSE" && selectedParty?.isRespondent) {
               // closing old pending task
               try {
                 await DRISTIService.customApiService(Urls.dristi.pendingTask, {
@@ -2128,25 +2128,27 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
           });
           if (res) {
             // creating new pending task for submit response
-            try {
-              await DRISTIService.customApiService(Urls.dristi.pendingTask, {
-                pendingTask: {
-                  name: "Pending Response",
-                  entityType: "case-default",
-                  referenceId: `MANUAL_${caseDetails?.filingNumber}`,
-                  status: "PENDING_RESPONSE",
-                  assignedTo: [{ uuid: selectedParty?.uuid }, { uuid: userInfo?.uuid }],
-                  assignedRole: ["CASE_RESPONDER"],
-                  cnrNumber: caseDetails?.cnrNumber,
-                  filingNumber: caseDetails?.filingNumber,
-                  isCompleted: false,
-                  stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
-                  additionalDetails: { individualId, caseId: caseDetails?.id },
-                  tenantId,
-                },
-              });
-            } catch (err) {
-              console.error("err :>> ", err);
+            if (caseDetails?.status === "PENDING_RESPONSE" && selectedParty?.isRespondent) {
+              try {
+                await DRISTIService.customApiService(Urls.dristi.pendingTask, {
+                  pendingTask: {
+                    name: "Pending Response",
+                    entityType: "case-default",
+                    referenceId: `MANUAL_${caseDetails?.filingNumber}`,
+                    status: "PENDING_RESPONSE",
+                    assignedTo: [{ uuid: selectedParty?.uuid }, { uuid: userInfo?.uuid }],
+                    assignedRole: ["CASE_RESPONDER"],
+                    cnrNumber: caseDetails?.cnrNumber,
+                    filingNumber: caseDetails?.filingNumber,
+                    isCompleted: false,
+                    stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
+                    additionalDetails: { individualId, caseId: caseDetails?.id },
+                    tenantId,
+                  },
+                });
+              } catch (err) {
+                console.error("err :>> ", err);
+              }
             }
             setStep(step + 1);
             setSuccess(true);
@@ -2220,25 +2222,27 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
             {}
           );
           if (res) {
-            try {
-              await DRISTIService.customApiService(Urls.dristi.pendingTask, {
-                pendingTask: {
-                  name: "Pending Response",
-                  entityType: "case-default",
-                  referenceId: `MANUAL_${caseDetails?.filingNumber}`,
-                  status: "PENDING_RESPONSE",
-                  assignedTo: [{ uuid: userInfo?.uuid }],
-                  assignedRole: ["CASE_RESPONDER"],
-                  cnrNumber: caseDetails?.cnrNumber,
-                  filingNumber: caseDetails?.filingNumber,
-                  isCompleted: false,
-                  stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
-                  additionalDetails: { individualId, caseId: caseDetails?.id },
-                  tenantId,
-                },
-              });
-            } catch (err) {
-              console.error("err :>> ", err);
+            if (caseDetails?.status === "PENDING_RESPONSE") {
+              try {
+                await DRISTIService.customApiService(Urls.dristi.pendingTask, {
+                  pendingTask: {
+                    name: "Pending Response",
+                    entityType: "case-default",
+                    referenceId: `MANUAL_${caseDetails?.filingNumber}`,
+                    status: "PENDING_RESPONSE",
+                    assignedTo: [{ uuid: userInfo?.uuid }],
+                    assignedRole: ["CASE_RESPONDER"],
+                    cnrNumber: caseDetails?.cnrNumber,
+                    filingNumber: caseDetails?.filingNumber,
+                    isCompleted: false,
+                    stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
+                    additionalDetails: { individualId, caseId: caseDetails?.id },
+                    tenantId,
+                  },
+                });
+              } catch (err) {
+                console.error("err :>> ", err);
+              }
             }
             setRespondentList(
               respondentList?.map((respondent) => {
@@ -2450,25 +2454,27 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
             {}
           );
           if (res) {
-            try {
-              await DRISTIService.customApiService(Urls.dristi.pendingTask, {
-                pendingTask: {
-                  name: "Pending Response",
-                  entityType: "case-default",
-                  referenceId: `MANUAL_${caseDetails?.filingNumber}`,
-                  status: "PENDING_RESPONSE",
-                  assignedTo: [{ uuid: userInfo?.uuid }, { uuid: userUUID }],
-                  assignedRole: ["CASE_RESPONDER"],
-                  cnrNumber: caseDetails?.cnrNumber,
-                  filingNumber: caseDetails?.filingNumber,
-                  isCompleted: false,
-                  stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
-                  additionalDetails: { individualId, caseId: caseDetails?.id },
-                  tenantId,
-                },
-              });
-            } catch (err) {
-              console.error("err :>> ", err);
+            if (caseDetails?.status === "PENDING_RESPONSE") {
+              try {
+                await DRISTIService.customApiService(Urls.dristi.pendingTask, {
+                  pendingTask: {
+                    name: "Pending Response",
+                    entityType: "case-default",
+                    referenceId: `MANUAL_${caseDetails?.filingNumber}`,
+                    status: "PENDING_RESPONSE",
+                    assignedTo: [{ uuid: userInfo?.uuid }, { uuid: userUUID }],
+                    assignedRole: ["CASE_RESPONDER"],
+                    cnrNumber: caseDetails?.cnrNumber,
+                    filingNumber: caseDetails?.filingNumber,
+                    isCompleted: false,
+                    stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
+                    additionalDetails: { individualId, caseId: caseDetails?.id },
+                    tenantId,
+                  },
+                });
+              } catch (err) {
+                console.error("err :>> ", err);
+              }
             }
             setRespondentList(
               respondentList?.map((respondent) => {
