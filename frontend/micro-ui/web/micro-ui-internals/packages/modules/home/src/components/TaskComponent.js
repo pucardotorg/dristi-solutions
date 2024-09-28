@@ -463,9 +463,9 @@ const TasksComponent = ({
               successMessage={"RESPONSE_SUCCESSFULLY"}
               submitButtonAction={async () => {
                 const pendingTask = joinCaseShowSubmitResponseModal ? joinCaseResponsePendingTask : responsePendingTask;
+                history.push(getCaseDetailsUrl(pendingTask?.caseId, pendingTask?.filingNumber));
                 setShowSubmitResponseModal(false);
                 setJoinCaseShowSubmitResponseModal(false);
-                history.push(getCaseDetailsUrl(pendingTask?.caseId, pendingTask?.filingNumber));
               }}
               submitButtonText={"VIEW_CASE_FILE"}
               closeButtonText={"BACK_HOME"}
