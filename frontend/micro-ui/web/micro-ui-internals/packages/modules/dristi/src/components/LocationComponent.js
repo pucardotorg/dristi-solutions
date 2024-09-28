@@ -134,43 +134,50 @@ const LocationComponent = ({ t, config, onLocationSelect, locationFormData, erro
                     index={mapIndex}
                     isAutoFilledDisabled={isAutoFilledDisabled}
                     onChange={(pincode, location, coordinates = {}) => {
+                      const isDefaultCoordinates =
+                        parseFloat(coordinates?.latitude) === defaultCoordinates?.lat &&
+                        parseFloat(coordinates?.longitude) === defaultCoordinates?.lng;
+
                       setValue(
                         {
-                          pincode:
-                            locationFormData && isFirstRender && locationFormData?.[config.key]
-                              ? locationFormData[config.key]["pincode"]
-                              : pincode || "",
-                          state:
-                            locationFormData && isFirstRender && locationFormData?.[config.key]
-                              ? locationFormData[config.key]["state"]
-                              : getLocation(location, "administrative_area_level_1") || "",
-                          district:
-                            locationFormData && isFirstRender && locationFormData?.[config.key]
-                              ? locationFormData[config.key]["district"]
-                              : getLocation(location, "administrative_area_level_3") || "",
-                          city:
-                            locationFormData && isFirstRender && locationFormData?.[config.key]
-                              ? locationFormData[config.key]["city"]
-                              : getLocation(location, "locality") || "",
-                          locality:
-                            coordinates?.latitude === defaultCoordinates?.lat && coordinates?.longitude === defaultCoordinates?.lng
-                              ? ""
-                              : isFirstRender && locationFormData?.[config.key]
-                              ? locationFormData[config.key]["locality"]
-                              : (() => {
-                                  const plusCode = getLocation(location, "plus_code");
-                                  const neighborhood = getLocation(location, "neighborhood");
-                                  const sublocality_level_1 = getLocation(location, "sublocality_level_1");
-                                  const sublocality_level_2 = getLocation(location, "sublocality_level_2");
-                                  return [plusCode, neighborhood, sublocality_level_1, sublocality_level_2]
-                                    .reduce((result, current) => {
-                                      if (current) {
-                                        result.push(current);
-                                      }
-                                      return result;
-                                    }, [])
-                                    .join(", ");
-                                })(),
+                          pincode: isDefaultCoordinates
+                            ? ""
+                            : locationFormData && isFirstRender && locationFormData?.[config.key]
+                            ? locationFormData[config.key]["pincode"]
+                            : pincode || "",
+                          state: isDefaultCoordinates
+                            ? ""
+                            : locationFormData && isFirstRender && locationFormData?.[config.key]
+                            ? locationFormData[config.key]["state"]
+                            : getLocation(location, "administrative_area_level_1") || "",
+                          district: isDefaultCoordinates
+                            ? ""
+                            : locationFormData && isFirstRender && locationFormData?.[config.key]
+                            ? locationFormData[config.key]["district"]
+                            : getLocation(location, "administrative_area_level_3") || "",
+                          city: isDefaultCoordinates
+                            ? ""
+                            : locationFormData && isFirstRender && locationFormData?.[config.key]
+                            ? locationFormData[config.key]["city"]
+                            : getLocation(location, "locality") || "",
+                          locality: isDefaultCoordinates
+                            ? ""
+                            : isFirstRender && locationFormData?.[config.key]
+                            ? locationFormData[config.key]["locality"]
+                            : (() => {
+                                const plusCode = getLocation(location, "plus_code");
+                                const neighborhood = getLocation(location, "neighborhood");
+                                const sublocality_level_1 = getLocation(location, "sublocality_level_1");
+                                const sublocality_level_2 = getLocation(location, "sublocality_level_2");
+                                return [plusCode, neighborhood, sublocality_level_1, sublocality_level_2]
+                                  .reduce((result, current) => {
+                                    if (current) {
+                                      result.push(current);
+                                    }
+                                    return result;
+                                  }, [])
+                                  .join(", ");
+                              })(),
                           coordinates,
                         },
                         input.name

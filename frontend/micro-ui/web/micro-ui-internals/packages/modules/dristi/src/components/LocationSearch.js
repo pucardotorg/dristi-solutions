@@ -252,8 +252,12 @@ const onMarkerDragged = (marker, onChange, isPlaceRequired = false, index) => {
 };
 
 const initAutocomplete = (onChange, position, isPlaceRequired = false, index) => {
+  const coordinates = {
+    lat: parseFloat(position?.lat),
+    lng: parseFloat(position?.lng),
+  };
   const map = new window.google.maps.Map(document.getElementById("map-" + index), {
-    center: position,
+    center: coordinates,
     zoom: 15,
     mapTypeId: "roadmap",
     styles: mapStyles,
@@ -347,8 +351,8 @@ const initAutocomplete = (onChange, position, isPlaceRequired = false, index) =>
 };
 
 export const defaultCoordinates = {
-  lat: 8.801127,
-  lng: 76.413856,
+  lat: 8.89277008,
+  lng: 76.57501922,
 };
 
 const LocationSearch = (props) => {
@@ -400,7 +404,7 @@ const LocationSearch = (props) => {
           autoComplete="off"
         />
       </div>
-      <div id={"map-" + props?.index} className="map"></div>
+      <div id={"map-" + props?.index} className="map"></div>;
     </div>
   );
 };
