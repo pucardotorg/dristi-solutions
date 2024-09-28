@@ -752,15 +752,15 @@ const AdmittedCases = () => {
       },
       {
         key: "Complaint / CMP No.",
-        value: caseDetails?.cmpNumber || "",
+        value: caseDetails?.cmpNumber || "N.A.",
       },
       {
         key: "CNR No.",
-        value: caseDetails?.cnrNumber,
+        value: caseDetails?.cnrNumber || "N.A.",
       },
       {
         key: "CCST No.",
-        value: caseDetails?.caseCourtNumber || "",
+        value: caseDetails?.courtCaseNumber || "N.A.",
       },
       {
         key: "Submitted on",
@@ -768,7 +768,7 @@ const AdmittedCases = () => {
       },
       {
         key: "Registered on",
-        value: formatDate(caseDetails?.registrationDate) || "",
+        value: formatDate(new Date(caseDetails?.registrationDate)) || "N.A.",
       },
     ];
   }, [caseDetails]);
