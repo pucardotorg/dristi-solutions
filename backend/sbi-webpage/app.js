@@ -18,10 +18,12 @@ app.use(bodyParser.json());
     try {
       const requestInfo = await getRequestInfo();
 
+      const encryptedPayload = typeof data === 'string' ? data : JSON.stringify(data);
+
       const dataToSend = {
-        RequestInfo: requestInfo, 
-        encryptedPayload: JSON.stringify(data)
-      }
+        RequestInfo: requestInfo,
+        encryptedPayload
+      };
 
       let backendResponse;
       try {
