@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Banner } from "@egovernments/digit-ui-react-components";
@@ -15,34 +15,84 @@ const getStatusMessage = (status) => {
     case "ERROR":
       return "CS_ERROR";
     default:
-      return "Payment Successful";
+      return "CS_PAYMENT_SUCCESS";
   }
 };
 
 const getPaymentDueMessage = (status, amount) => {
-  if (status === "ERROR") {
-    return "Something Went Wrong";
-  } else {
-    return `You have a payment due ${amount || "Rs 11/-"}. `;
-  }
+  return status === "ERROR" ? "Something went wrong" : `You have a payment due ${amount || "Rs 11/-"}. `;
 };
 
 const SBIPaymentStatus = ({ path }) => {
-  const location = useLocation();
   const { t } = useTranslation();
-  const status = location.state.state.status;
+  const { status, businessService, erviceNumber } = Digit.Hooks.useQueryParams();
   const { state } = useLocation();
-  const fileStoreId = location.state.state.fileStoreId;
-  const tenantId = Digit.ULBService.getCurrentTenantId();
-  const caseId = location.state.state.caseId;
-  const receiptData = location.state.state.receiptData;
-  const amount = location.state.state.amount;
-
   const history = useHistory();
-  const userInfo = Digit?.UserService?.getUser()?.info;
-  const hasCitizenRoute = useMemo(() => path?.includes(`/${window?.contextPath}/citizen`), [path]);
-  const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
+  const localStorageData = localStorage?.getItem("paymentReceiptData");
+  const storedData = localStorageData ? JSON.parse(localStorageData) : {};
+  const receiptData = storedData?.receiptData;
+  const tenantId = Digit.ULBService.getCurrentTenantId();
+  const amount = "!!";
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     const billAfterPayment = await DRISTIService.callSearchBill(
+  //       {},
+  //       { tenantId: tenantId, consumerCode: receiptData?.consumerCode, service: businessService }
+  //     );
+  //     if (status === "SUCCESS" && billAfterPayment?.Bill?.[0]?.status === "PAID") {
+  //       setLoading(true);
+  //       setError(null); // Reset error state before the call
+  //       try {
+  //         await Promise.all([
+  //           ordersService.customApiService(Urls.orders.pendingTask, {
+  //             pendingTask: {
+  //               name: "Show Summon-Warrant Status",
+  //               entityType: paymentType.ORDER_MANAGELIFECYCLE,
+  //               referenceId: hearingsData?.HearingList?.[0]?.hearingId,
+  //               status: paymentType.SUMMON_WARRANT_STATUS,
+  //               assignedTo: [],
+  //               assignedRole: ["JUDGE_ROLE"],
+  //               cnrNumber: filteredTasks?.[0]?.cnrNumber,
+  //               filingNumber: filingNumber,
+  //               isCompleted: false,
+  //               stateSla: 3 * dayInMillisecond + todayDate,
+  //               additionalDetails: {
+  //                 hearingId: hearingsData?.list?.[0]?.hearingId,
+  //               },
+  //               tenantId,
+  //             },
+  //           }),
+  //           ordersService.customApiService(Urls.orders.pendingTask, {
+  //             pendingTask: {
+  //               name: `MAKE_PAYMENT_FOR_SUMMONS_POST`,
+  //               entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
+  //               referenceId: `MANUAL_Post_${orderNumber}`,
+  //               status: paymentType.PAYMENT_PENDING_POST,
+  //               assignedTo: [],
+  //               assignedRole: [],
+  //               cnrNumber: filteredTasks?.[0]?.cnrNumber,
+  //               filingNumber: filingNumber,
+  //               isCompleted: true,
+  //               stateSla: "",
+  //               additionalDetails: {},
+  //               tenantId,
+  //             },
+  //           }),
+  //         ]);
+  //       } catch (err) {
+  //         console.error("Error fetching payment tasks:", err);
+  //         setError("Failed to fetch payment tasks. Please try again later."); // Set error message
+  //       } finally {
+  //         setLoading(false); // Reset loading state
+  //       }
+  //     }
+  //   };
+
+  //   fetchData();
+  // }, [status]); // Dependency array to run this effect when status changes
   const commonProps = {
     whichSvg: status === "SUCCESS" ? "tick" : null,
     headerStyles: { fontSize: "32px" },
@@ -55,18 +105,12 @@ const SBIPaymentStatus = ({ path }) => {
     message: t(getStatusMessage(status)),
   };
 
-  if (isCitizen && !hasCitizenRoute && Boolean(userInfo)) {
-    history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
-  } else if (!isCitizen && hasCitizenRoute && Boolean(userInfo)) {
-    history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
-  }
-
   return (
     <div className="user-registration">
       <div className="e-filing-payment" style={{ minHeight: "100%", height: "100%" }}>
         <Banner
           successful={status === "SUCCESS"}
-          message={status === "SUCCESS" ? "Payment Successful" : getStatusMessage(status)}
+          message={status === "SUCCESS" ? t("CS_PAYMENT_SUCCESS") : t(getStatusMessage(status))}
           info={`${state?.showID ? t("SUBMISSION_ID") : ""}`}
           whichSvg={status === "SUCCESS" ? "tick" : null}
           {...bannerProps}
@@ -99,35 +143,15 @@ const SBIPaymentStatus = ({ path }) => {
             }}
           />
         )}
-        <div className="button-field" style={{ width: "100%", marginTop: 16 }}>
-          {!fileStoreId && caseId ? (
-            <Button
-              variation={"secondary"}
-              className={"secondary-button-selector"}
-              label={t("Retry Payment")}
-              labelClassName={"secondary-label-selector"}
-              onClick={() => {
-                history.goBack();
-              }}
-            />
-          ) : (
-            <Button
-              variation={"secondary"}
-              className={"secondary-button-selector"}
-              label={t("CS_PRINT_RECEIPT")}
-              labelClassName={"secondary-label-selector"}
-              isDisabled={true}
-              onButtonClick={() => {
-                // To Do: implement generate pdf functionality when backend support is ready.
-              }}
-            />
-          )}
 
+        <div className="button-field" style={{ width: "100%", marginTop: 16 }}>
           <Button
-            className={"tertiary-button-selector"}
+            className="tertiary-button-selector"
             label={t("CS_GO_TO_HOME")}
-            labelClassName={"tertiary-label-selector"}
+            style={{ width: "100%" }}
+            labelClassName="tertiary-label-selector"
             onClick={() => {
+              localStorage.removeItem("paymentReceiptData");
               history.replace(`/${window?.contextPath}/citizen/home/home-pending-task`);
             }}
           />
