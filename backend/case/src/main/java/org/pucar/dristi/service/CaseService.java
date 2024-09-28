@@ -19,6 +19,10 @@ import org.pucar.dristi.util.BillingUtil;
 import org.pucar.dristi.util.EncryptionDecryptionUtil;
 import org.pucar.dristi.validators.CaseRegistrationValidator;
 import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.analytics.CaseOutcome;
+import org.pucar.dristi.web.models.analytics.CaseOverallStatus;
+import org.pucar.dristi.web.models.analytics.CaseStageSubStage;
+import org.pucar.dristi.web.models.analytics.Outcome;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -607,5 +611,47 @@ public class CaseService {
 
         // Convert the updated ObjectNode back to its original form
         return objectMapper.convertValue(details2Node, additionalDetails2.getClass());
+    }
+
+    private CourtCase fetchCourtCaseByFilingNumber(RequestInfo requestInfo, String filingNumber){
+
+        CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(filingNumber).build();
+        List<CaseCriteria> caseCriteriaList = caseRepository.getCases(Collections.singletonList(caseCriteria), requestInfo);
+        if (caseCriteriaList.isEmpty()) {
+            throw new CustomException(INVALID_CASE, "No case found for the given filing Number");
+        }
+        List<CourtCase> courtCaseList = caseCriteriaList.get(0).getResponseList();
+        if (courtCaseList.isEmpty()) {
+            throw new CustomException(INVALID_CASE, "No case found for the given filing Number");
+        }
+        return courtCaseList.get(0);
+    }
+
+    public void updateCaseOverallStatus(CaseStageSubStage caseStageSubStage) {
+
+        CaseOverallStatus caseOverallStatus = caseStageSubStage.getCaseOverallStatus();
+
+        CourtCase courtCaseDb = fetchCourtCaseByFilingNumber(caseStageSubStage.getRequestInfo(),caseOverallStatus.getFilingNumber());
+        CourtCase courtCaseRedis = searchRedisCache(caseStageSubStage.getRequestInfo(), courtCaseDb.getId().toString());
+
+        if (courtCaseRedis != null){
+            courtCaseRedis.setStage(caseOverallStatus.getStage());
+            courtCaseRedis.setSubstage(caseOverallStatus.getSubstage());
+        }
+        updateCourtCaseInRedis(caseOverallStatus.getTenantId(),courtCaseRedis);
+    }
+
+    public void updateCaseOutcome(CaseOutcome caseOutcome) {
+
+        Outcome outcome = caseOutcome.getOutcome();
+
+        CourtCase courtCaseDb = fetchCourtCaseByFilingNumber(caseOutcome.getRequestInfo(), outcome.getFilingNumber());
+        CourtCase courtCaseRedis = searchRedisCache(caseOutcome.getRequestInfo(), courtCaseDb.getId().toString());
+
+        if (courtCaseRedis != null){
+            courtCaseRedis.setOutcome(outcome.getOutcome());
+        }
+        updateCourtCaseInRedis(outcome.getTenantId(), courtCaseRedis);
+
     }
 }
