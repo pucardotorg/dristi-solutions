@@ -42,7 +42,8 @@ import {
   updateCaseDetails,
   validateDateForDelayApplication,
 } from "./EfilingValidationUtils";
-import { isEqual, isMatch } from "lodash";
+import isEqual from "lodash/isEqual";
+import isMatch from "lodash/isMatch";
 import cloneDeep from "lodash/cloneDeep";
 import CorrectionsSubmitModal from "../../../components/CorrectionsSubmitModal";
 import { Urls } from "../../../hooks";

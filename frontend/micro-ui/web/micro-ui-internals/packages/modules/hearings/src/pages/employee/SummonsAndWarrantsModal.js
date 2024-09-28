@@ -26,7 +26,11 @@ const ModalHeading = ({ label, orderList }) => {
   return (
     <h1 className="modal-heading" style={{ padding: 8 }}>
       <span className="heading-m">{label}</span>
-      <span className="heading-xs">Failed {orderList?.length - 1} times</span>
+      {orderList && orderList.length > 1 ? (
+        <span className="heading-xs">Failed {orderList.length - 1} times</span>
+      ) : (
+        <span className="heading-xs">No previous failed attempts</span>
+      )}{" "}
     </h1>
   );
 };
@@ -190,9 +194,13 @@ const SummonsAndWarrantsModal = () => {
 
   const getFormData = (orderType, orderList) => {
     const orderItem = orderList?.find((item) => orderType === item?.orderType);
-    return orderItem?.additionalDetails?.formdata?.[
-      orderType === "SUMMONS" ? "SummonsOrder" : orderType === "WARRANT" ? "warrantFor" : "noticeOrder"
-    ];
+    const formDataKeyMap = {
+      SUMMONS: "SummonsOrder",
+      WARRANT: "warrantFor",
+      NOTICE: "noticeOrder",
+    };
+    const formDataKey = formDataKeyMap[orderType];
+    return orderItem?.additionalDetails?.formdata?.[formDataKey];
   };
 
   const getOrderData = (orderType, orderFormData) => {
@@ -202,6 +210,9 @@ const SummonsAndWarrantsModal = () => {
   const { respondentName, partyType } = useMemo(() => {
     const orderFormData = getFormData(orderType, orderList);
     const orderData = getOrderData(orderType, orderFormData);
+    if (!orderData) {
+      return { respondentName: "Unknown Respondent", partyType: "Respondent" };
+    }
     const respondentName = `${orderData?.firstName || ""} ${orderData?.middleName || ""} ${orderData?.lastName || ""}`.trim() || orderData || "";
     const partyType = orderData?.partyType || "Respondent";
     return { respondentName, partyType };
@@ -226,7 +237,7 @@ const SummonsAndWarrantsModal = () => {
         display: "none",
       }}
       formId="modal-action"
-      headerBarMain={<ModalHeading label={t(modalLabel)} orderList={orderList} />}
+      headerBarMain={orderList && <ModalHeading label={t(modalLabel)} orderList={orderList} />}
     >
       <div className="case-info">
         <div className="case-info-column">
