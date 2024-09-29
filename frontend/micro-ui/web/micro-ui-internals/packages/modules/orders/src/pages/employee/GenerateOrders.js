@@ -1862,10 +1862,11 @@ const GenerateOrders = () => {
             },
             { tenantId }
           )
-          .then(() => {
+          .then((res) => {
             if (caseDetails?.status === "ADMISSION_HEARING_SCHEDULED") {
               updateCaseDetails("ADMIT");
             }
+            return res;
           })
       );
 
@@ -1945,7 +1946,9 @@ const GenerateOrders = () => {
         });
       }
       if (orderType === "INITIATING_RESCHEDULING_OF_HEARING_DATE") {
-        const dateObject = new Date(applicationDetails?.additionalDetails?.formdata?.changedHearingDate);
+        const dateObject = new Date(
+          applicationDetails?.additionalDetails?.formdata?.changedHearingDate || currentOrder?.additionalDetails?.formdata?.originalHearingDate
+        );
         let date = dateObject && dateObject?.getTime();
         if (isNaN(date)) {
           date = Date.now();
