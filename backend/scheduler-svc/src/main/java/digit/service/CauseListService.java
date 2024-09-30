@@ -120,7 +120,7 @@ public class CauseListService {
     private void submitTasks(ExecutorService executorService, List<String> courtIds, List<CauseList> causeLists) {
         for (String courtId : courtIds) {
             // Submit a task to the executor service for each judge
-            executorService.submit(() -> generateCauseList(courtId, causeLists, null));
+            executorService.submit(() -> generateCauseList(courtId, causeLists, null, null));
         }
     }
 
@@ -135,16 +135,12 @@ public class CauseListService {
         }
     }
 
-    public void generateCauseList(String courtId, List<CauseList> causeLists, String hearingDate) {
+    public void generateCauseList(String courtId, List<CauseList> causeLists, String hearingDate, String uuid) {
         log.info("operation = generateCauseListForJudge, result = IN_PROGRESS, judgeId = {}", courtId);
         try {
             HearingSearchCriteria hearingSearchCriteria = HearingSearchCriteria.builder()
-                    .fromDate(hearingDate == null
-                            ? dateUtil.getEpochFromLocalDateTime(LocalDateTime.now().toLocalDate().plusDays(1).atStartOfDay())
-                            : dateUtil.getEpochFromLocalDateTime(LocalDate.parse(hearingDate).atStartOfDay()))
-                    .toDate(hearingDate == null
-                            ? dateUtil.getEpochFromLocalDateTime(LocalDateTime.now().toLocalDate().plusDays(2).atStartOfDay())
-                            : dateUtil.getEpochFromLocalDateTime(LocalDate.parse(hearingDate).plusDays(1).atStartOfDay()))
+                    .fromDate(getFromDate(hearingDate))
+                    .toDate(getToDate(hearingDate))
                     .courtId(config.getCourtEnabled() ? courtId : null)
                     .build();
             List<Hearing> hearingList = getHearingsForCourt(hearingSearchCriteria);
@@ -184,6 +180,7 @@ public class CauseListService {
                     .fileStoreId(document.getFileStore())
                     .date(dateUtil.getLocalDateFromEpoch(causeList.get(0).getStartTime()).toString())
                     .createdTime(dateUtil.getEpochFromLocalDateTime(LocalDateTime.now()))
+                    .createdBy(uuid == null ? serviceConstants.SYSTEM_ADMIN : uuid)
                     .build();
 
             producer.push(config.getCauseListPdfTopic(), causeListPdf);
@@ -192,6 +189,18 @@ public class CauseListService {
         } catch (Exception e) {
             log.error("operation = generateCauseListForJudge, result = FAILURE, judgeId = {}, error = {}", courtId, e.getMessage(), e);
         }
+    }
+
+    private Long getToDate(String hearingDate) {
+        return hearingDate == null
+                ? dateUtil.getEpochFromLocalDateTime(LocalDateTime.now().toLocalDate().plusDays(2).atStartOfDay())
+                : dateUtil.getEpochFromLocalDateTime(LocalDate.parse(hearingDate).plusDays(1).atStartOfDay());
+    }
+
+    private Long getFromDate(String hearingDate) {
+        return hearingDate == null
+                ? dateUtil.getEpochFromLocalDateTime(LocalDateTime.now().toLocalDate().plusDays(1).atStartOfDay())
+                : dateUtil.getEpochFromLocalDateTime(LocalDate.parse(hearingDate).atStartOfDay());
     }
 
 

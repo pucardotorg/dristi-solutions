@@ -7,7 +7,7 @@ serviceMaps:
       isTransaction: true
       isAuditEnabled: true
       queryMaps:
-        - query: INSERT INTO cause_list_document (file_store_id, court_id, judge_id,hearing_date, created_time, tenant_id) VALUES (?, ?, ?, ?, ?, ?);
+        - query: INSERT INTO cause_list_document (file_store_id, court_id, judge_id,hearing_date, created_time, tenant_id, created_by) VALUES (?, ?, ?, ?, ?, ?, ?);
           basePath: $
           jsonMaps:
             - jsonPath: $.fileStoreId
@@ -16,3 +16,4 @@ serviceMaps:
             - jsonPath: $.hearingDate
             - jsonPath: $.createdTime
             - jsonPath: $.tenantId
+            - jsonPath: $.createdBy
