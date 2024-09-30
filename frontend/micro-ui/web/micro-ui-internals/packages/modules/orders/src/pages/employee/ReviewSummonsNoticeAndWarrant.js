@@ -13,6 +13,7 @@ import { Urls } from "../../hooks/services/Urls";
 import { convertToDateInputFormat } from "../../utils/index";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { useHistory } from "react-router-dom";
+import isEqual from "lodash/isEqual";
 
 const defaultSearchValues = {
   eprocess: "",
@@ -99,7 +100,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   );
 
   useEffect(() => {
-    if (fetchedTasksData && fetchedTasksData !== tasksData) {
+    if (fetchedTasksData && !isEqual(fetchedTasksData, tasksData)) {
       setTasksData(fetchedTasksData); // Store tasksData only if it's different
     }
   }, [fetchedTasksData, tasksData]);
@@ -127,7 +128,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const handleSubmit = useCallback(async () => {
     localStorage.removeItem("SignedFileStoreID");
-    await refetch();
+    const { data: tasksData } = await refetch();
     if (tasksData) {
       try {
         const task = tasksData?.list?.[0];
@@ -152,7 +153,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   }, [refetch, reload, tasksData, tenantId]);
 
   const handleUpdateStatus = useCallback(async () => {
-    await refetch();
+    const { data: tasksData } = await refetch();
     if (tasksData) {
       try {
         const task = tasksData?.list?.[0];
