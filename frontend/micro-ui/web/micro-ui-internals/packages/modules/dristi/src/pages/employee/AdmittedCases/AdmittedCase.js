@@ -1094,7 +1094,7 @@ const AdmittedCases = () => {
     return sortedOrders;
   }, [currentHearingId, ordersData]);
 
-  const noticeFailureCount = useMemo(() => (isCaseAdmitted ? 0 : orderListFiltered?.length - 0), [isCaseAdmitted, orderListFiltered?.length]);
+  const noticeFailureCount = useMemo(() => (isCaseAdmitted ? 0 : orderListFiltered?.length - 1), [isCaseAdmitted, orderListFiltered?.length]);
 
   const getHearingData = async () => {
     try {
