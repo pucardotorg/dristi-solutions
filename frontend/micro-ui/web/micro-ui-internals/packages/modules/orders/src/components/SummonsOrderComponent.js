@@ -87,6 +87,17 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect }) => {
   //     uuid: allAdvocates[item?.additionalDetails?.uuid],
   //   };
   // }) || []
+
+  const mapAddressDetails = (addressDetails, isIndividualData = false) => {
+    return addressDetails?.map((address) => ({
+      locality: address?.addressDetails?.locality || address?.street || "",
+      city: address?.addressDetails?.city || address?.city || "",
+      district: address?.addressDetails?.district || address?.addressLine2 || "",
+      pincode: address?.addressDetails?.pincode || address?.pincode || "",
+      address: isIndividualData ? undefined : address?.addressDetails,
+    }));
+  };
+
   useEffect(() => {
     const fetchUsers = async () => {
       let users = [];
@@ -123,19 +134,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect }) => {
                   respondentMiddleName: individualData?.name?.otherNames,
                   respondentLastName: individualData?.name?.familyName,
                 }),
-                address: individualData
-                  ? individualData?.address?.map((address) => ({
-                      locality: address?.street || "",
-                      city: address?.city || "",
-                      district: address?.addressLine2 || "",
-                      pincode: address?.pincode || "",
-                    }))
-                  : item?.data?.addressDetails?.map((address) => ({
-                      locality: address?.addressDetails?.locality || "",
-                      city: address?.addressDetails?.city || "",
-                      district: address?.addressDetails?.district || "",
-                      pincode: address?.addressDetails?.pincode || "",
-                    })),
+                address: individualData ? mapAddressDetails(individualData?.address, true) : mapAddressDetails(item?.data?.addressDetails),
                 partyType: "Respondent",
                 phone_numbers: (individualData ? [individualData?.mobileNumber] : [])
                   .concat(item?.data?.phonenumbers?.mobileNumber || [])
@@ -151,13 +150,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect }) => {
             ...item?.data,
             firstName: item?.data?.firstName,
             lastName: item?.data?.lastName,
-            address: item?.data?.addressDetails?.map((address) => ({
-              locality: address?.addressDetails?.locality,
-              city: address?.addressDetails?.city,
-              district: address?.addressDetails?.district,
-              pincode: address?.addressDetails?.pincode,
-              address: address?.addressDetails,
-            })),
+            address: mapAddressDetails(item?.data?.addressDetails),
             partyType: "Witness",
             phone_numbers: item?.data?.phonenumbers?.mobileNumber || [],
             email: item?.data?.emails?.emailId || [],
