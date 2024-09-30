@@ -72,24 +72,27 @@ public class PdfServiceUtil {
 
     private SummonsPdf createSummonsPdfFromTask(Task task) {
         Long issueDate = null;
+        Long hearingDate = task.getTaskDetails().getCaseDetails().getHearingDate();
         if (NOTICE.equals(task.getTaskType())) {
             issueDate = task.getTaskDetails().getNoticeDetails().getIssueDate();
         } else if (SUMMON.equals(task.getTaskType())) {
             issueDate = task.getTaskDetails().getSummonDetails().getIssueDate();
         }
         String issueDateString = (issueDate != null) ? formatDateFromMillis(issueDate) : "";
+        String hearingDateString = (hearingDate != null) ? formatDateFromMillis(hearingDate) : "";
         String filingNUmber = task.getFilingNumber();
         String courtName = task.getTaskDetails().getCaseDetails().getCourtName();
         return SummonsPdf.builder()
                 .tenantId(task.getTenantId())
                 .cnrNumber(task.getCnrNumber())
+                .filingNumber(filingNUmber)
                 .issueDate(issueDateString)
                 .caseName(task.getTaskDetails().getCaseDetails().getCaseTitle())
                 .caseNumber(extractCaseNumber(filingNUmber))
                 .caseYear(extractCaseYear(filingNUmber))
                 .judgeName(task.getTaskDetails().getCaseDetails().getJudgeName())
                 .courtName(courtName == null ? config.getCourtName(): courtName)
-                .hearingDate(task.getTaskDetails().getCaseDetails().getHearingDate().toString())
+                .hearingDate(hearingDateString)
                 .respondentName(task.getTaskDetails().getRespondentDetails().getName())
                 .respondentAddress(task.getTaskDetails().getRespondentDetails().getAddress().toString())
                 .complainantName(task.getTaskDetails().getComplainantDetails().getName())
