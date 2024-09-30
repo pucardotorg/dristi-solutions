@@ -35,6 +35,7 @@ import Modal from "../../../components/Modal";
 import CustomCaseInfoDiv from "../../../components/CustomCaseInfoDiv";
 import { removeInvalidNameParts } from "../../../Utils";
 import useWorkflowDetails from "../../../hooks/dristi/useWorkflowDetails";
+import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersService";
 
 const defaultSearchValues = {};
 
@@ -85,10 +86,39 @@ const relevantStatuses = [
   "PENDING_ADMISSION",
 ];
 
+const styles = {
+  container: {
+    display: "flex",
+    gap: "8px",
+    padding: "8px",
+    borderRadius: "4px",
+    backgroundColor: "#FCE8E8",
+  },
+  icon: {
+    height: "20px",
+    width: "20px",
+  },
+  text: {
+    fontFamily: "Roboto",
+    fontSize: "16px",
+    fontWeight: "400",
+    lineHeight: "18.75px",
+    textAlign: "left",
+    color: "#0a0a0a",
+    margin: "0px",
+  },
+  link: {
+    textDecoration: "underline",
+    color: "#007e7e",
+    cursor: "pointer",
+  },
+};
+
 const AdmittedCases = () => {
   const { t } = useTranslation();
   const { path } = useRouteMatch();
   const urlParams = new URLSearchParams(window.location.search);
+  const { hearingId, taskOrderType } = Digit.Hooks.useQueryParams();
   const caseId = urlParams.get("caseId");
   const roles = Digit.UserService.getUser()?.info?.roles;
   const isFSO = roles.some((role) => role.code === "FSO_ROLE");
@@ -115,12 +145,12 @@ const AdmittedCases = () => {
   const [createAdmissionOrder, setCreateAdmissionOrder] = useState(false);
   const [updatedCaseDetails, setUpdatedCaseDetails] = useState({});
   const [showDismissCaseConfirmation, setShowDismissCaseConfirmation] = useState(false);
-  const [noticeFailureCount, setNoticeFailureCount] = useState(0);
   const history = useHistory();
   const isCitizen = userRoles.includes("CITIZEN");
   const OrderWorkflowAction = Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {};
   const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
   const OrderReviewModal = Digit.ComponentRegistryService.getComponent("OrderReviewModal") || {};
+  const SummonsAndWarrantsModal = Digit.ComponentRegistryService.getComponent("SummonsAndWarrantsModal") || <React.Fragment></React.Fragment>;
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const todayDate = new Date().getTime();
@@ -1027,28 +1057,75 @@ const AdmittedCases = () => {
     }
   };
 
-  const getHearingData = async () => {
-    const { HearingList = [] } = await Digit.HearingService.searchHearings({
+  const { data: hearingDetails } = Digit.Hooks.hearings.useGetHearings(
+    {
       hearing: { tenantId },
       criteria: {
         tenantID: tenantId,
         filingNumber: filingNumber,
       },
-    });
-    const { startTime: hearingDate, hearingId: hearingNumber } = HearingList?.find(
-      (list) => list?.hearingType === "ADMISSION" && list?.status === "SCHEDULED"
-    ) || { startTime: null, hearingId: null };
+    },
+    {},
+    filingNumber,
+    Boolean(filingNumber)
+  );
 
-    if (!(hearingDate || hearingNumber)) {
-      showToast(
-        {
-          isError: true,
-          message: "NO_ADMISSION_HEARING_SCHEDULED",
+  const currentHearingId = useMemo(
+    () => hearingDetails?.HearingList?.find((list) => list?.hearingType === "ADMISSION" && list?.status === "SCHEDULED")?.hearingId,
+    [hearingDetails?.HearingList]
+  );
+
+  const { data: ordersData } = useSearchOrdersService(
+    { criteria: { tenantId: tenantId, filingNumber } },
+    { tenantId },
+    filingNumber,
+    Boolean(filingNumber)
+  );
+
+  const orderListFiltered = useMemo(() => {
+    if (!ordersData?.list) return [];
+
+    const filteredOrders = ordersData?.list?.filter(
+      (item) => item.orderType === "NOTICE" && item?.status === "PUBLISHED" && item?.hearingNumber === currentHearingId
+    );
+
+    const sortedOrders = filteredOrders?.sort((a, b) => {
+      return new Date(b.auditDetails.createdTime) - new Date(a.auditDetails.createdTime);
+    });
+
+    return sortedOrders;
+  }, [currentHearingId, ordersData]);
+
+  const noticeFailureCount = useMemo(() => (isCaseAdmitted ? 0 : orderListFiltered?.length - 0), [isCaseAdmitted, orderListFiltered?.length]);
+
+  const getHearingData = async () => {
+    try {
+      const { HearingList = [] } = await Digit.HearingService.searchHearings({
+        hearing: { tenantId },
+        criteria: {
+          tenantID: tenantId,
+          filingNumber: filingNumber,
         },
-        3000
-      );
+      });
+      const { startTime: hearingDate, hearingId: hearingNumber } = HearingList?.find(
+        (list) => list?.hearingType === "ADMISSION" && list?.status === "SCHEDULED"
+      ) || { startTime: null, hearingId: null };
+
+      if (!(hearingDate || hearingNumber)) {
+        showToast(
+          {
+            isError: true,
+            message: "NO_ADMISSION_HEARING_SCHEDULED",
+          },
+          3000
+        );
+      }
+      return { hearingDate, hearingNumber };
+    } catch (error) {
+      console.error("Error while fetching Hearing Data", error);
+      showToast({ isError: true, message: "ERROR_WHILE_FETCH_HEARING_DETAILS" }, 3000);
+      return { hearingDate: null, hearingNumber: null };
     }
-    return { hearingDate, hearingNumber };
   };
 
   const onSubmit = async () => {
@@ -1454,6 +1531,12 @@ const AdmittedCases = () => {
     [caseDetails, primaryAction.action, secondaryAction.action, tertiaryAction.action, isCitizen]
   );
 
+  const handleOpenSummonNoticeModal = async () => {
+    if (currentHearingId) {
+      history.push(`${path}?filingNumber=${filingNumber}&caseId=${caseId}&taskOrderType=NOTICE&hearingId=${currentHearingId}&tab=${config?.label}`);
+    }
+  };
+
   if (isLoading || isWorkFlowLoading) {
     return <Loader />;
   }
@@ -1540,19 +1623,14 @@ const AdmittedCases = () => {
             </div>
           )}
         </div>
-        {noticeFailureCount > 0 && (
-          <div className="notice-failed-notification">
-            <div className="notice-failed-icon">
-              <InfoIconRed />
+        {noticeFailureCount > 0 && !isCaseAdmitted && (
+          <div className="notice-failed-notification" style={styles.container}>
+            <div className="notice-failed-icon" style={styles.icon}>
+              <InfoIconRed style={styles.icon} />
             </div>
-            <p className="notice-failed-text">
+            <p className="notice-failed-text" style={styles.text}>
               {`${t("NOTICE_FAILED")} ${noticeFailureCount} ${t("TIMES_VIEW_STATUS")} `}
-              <span
-                onClick={() => {
-                  history.push("/");
-                }}
-                className="click-here"
-              >
+              <span onClick={() => handleOpenSummonNoticeModal()} className="click-here" style={styles.link}>
                 {t("NOTICE_CLICK_HERE")}
               </span>
             </p>
@@ -1818,6 +1896,13 @@ const AdmittedCases = () => {
             handleActionModal();
           }}
         ></Modal>
+      )}
+      {taskOrderType && hearingId && (
+        <SummonsAndWarrantsModal
+          handleClose={() => {
+            history.push(`${path}?filingNumber=${filingNumber}&caseId=${caseId}&tab=${config?.label}`);
+          }}
+        />
       )}
     </div>
   );

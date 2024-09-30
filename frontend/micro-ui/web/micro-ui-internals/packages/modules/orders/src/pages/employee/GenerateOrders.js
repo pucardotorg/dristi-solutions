@@ -1463,6 +1463,7 @@ const GenerateOrders = () => {
           summonDetails: {
             issueDate: orderData?.auditDetails?.lastModifiedTime,
             caseFilingDate: caseDetails?.filingDate,
+            docSubType: orderFormData?.partyType === "Witness" ? "WITNESS" : "ACCUSED",
           },
           respondentDetails: {
             name: respondentName,
