@@ -1397,6 +1397,20 @@ const GenerateOrders = () => {
     );
   };
 
+  const getFormData = (orderType, order) => {
+    const formDataKeyMap = {
+      SUMMONS: "SummonsOrder",
+      WARRANT: "warrantFor",
+      NOTICE: "noticeOrder",
+    };
+    const formDataKey = formDataKeyMap[orderType];
+    return order?.additionalDetails?.formdata?.[formDataKey];
+  };
+
+  const getOrderData = (orderType, orderFormData) => {
+    return ["SUMMONS", "NOTICE"].includes(orderType) ? orderFormData?.party?.data : orderFormData;
+  };
+
   const createTask = async (orderType, caseDetails, orderDetails) => {
     let payload = {};
     const { litigants } = caseDetails;
@@ -1411,17 +1425,15 @@ const GenerateOrders = () => {
     );
 
     const orderData = orderDetails?.order;
-    const orderFormData = orderDetails?.order?.additionalDetails?.formdata?.[orderType === "NOTICE" ? "noticeOrder" : "SummonsOrder"]?.party?.data;
+    const orderFormData = getFormData(orderType, orderData);
+    const respondentNameData = getOrderData(orderType, orderFormData);
     const selectedChannel = orderData?.additionalDetails?.formdata?.[orderType === "NOTICE" ? "noticeOrder" : "SummonsOrder"]?.selectedChannels;
     const noticeType = orderData?.additionalDetails?.formdata?.noticeType?.type;
     const respondentAddress = orderFormData?.addressDetails
       ? orderFormData?.addressDetails?.map((data) => ({ ...data?.addressDetails }))
       : caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.addressDetails?.map((data) => data?.addressDetails);
-    const respondentName = constructFullName(
-      orderFormData?.respondentFirstName,
-      orderFormData?.respondentMiddleName,
-      orderFormData?.respondentLastName
-    );
+    const respondentName =
+      constructFullName(respondentNameData?.firstName, respondentNameData?.middleName, respondentNameData?.lastName) || respondentNameData;
 
     const respondentPhoneNo = orderFormData?.phonenumbers?.mobileNumber || [];
     const respondentEmail = orderFormData?.emails?.email || [];
@@ -1553,7 +1565,8 @@ const GenerateOrders = () => {
             courtPhone: courtDetails?.phone,
             courtId: caseDetails?.courtId,
           },
-          deliveryChannel: {
+          deliveryChannels: {
+            channelName: "Police",
             name: "",
             address: "",
             phone: "",
