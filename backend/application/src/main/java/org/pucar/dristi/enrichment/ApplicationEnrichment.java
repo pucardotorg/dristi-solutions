@@ -32,10 +32,6 @@ public class ApplicationEnrichment {
         try {
             if(applicationRequest.getRequestInfo().getUserInfo() != null) {
                 String tenantId = applicationRequest.getApplication().getCnrNumber();
-                String cmpNumber = applicationRequest.getApplication().getCmpNumber();
-                if(cmpNumber!=null){
-                    tenantId = cmpNumber;
-                }
                 String idName = configuration.getApplicationConfig();
                 String idFormat = configuration.getApplicationFormat();
 
