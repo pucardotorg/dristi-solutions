@@ -66,8 +66,8 @@ jobs:
       - name: Build and Push Docker image for transformer
         if: (github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/uat-backend' || github.ref == 'refs/heads/dpg-qa-deployment')) || github.event_name == 'workflow_dispatch'
         run: |
-          docker build --build-arg WORK_DIR="backend/transformer" -t pucarsolutionsdev.azurecr.io/pucar_transformer:v1.0.0-${{ env.commit_hash }} -f build/maven/Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/pucar_transformer:v1.0.0-${{ env.commit_hash }}
+          docker build --build-arg WORK_DIR="backend/transformer" -t pucarsolutionsdev.azurecr.io/pucar_transformer:${{ github.ref }}-${{ env.commit_hash }} -f build/maven/Dockerfile .
+          docker push pucarsolutionsdev.azurecr.io/pucar_transformer:${{ github.ref }}-${{ env.commit_hash }}
 
 
   Workflow_Trigger:

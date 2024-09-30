@@ -66,14 +66,14 @@ jobs:
       - name: Build and Push Docker image for Payment-calculator-svc
         if: (github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/uat-backend' || github.ref == 'refs/heads/dpg-qa-deployment')) || github.event_name == 'workflow_dispatch'
         run: |
-          docker build --build-arg WORK_DIR="backend/payment-calculator-svc" -t pucarsolutionsdev.azurecr.io/payment-calculator-svc:v1.0.0-${{ env.commit_hash }} -f build/maven/Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/payment-calculator-svc:v1.0.0-${{ env.commit_hash }}
+          docker build --build-arg WORK_DIR="backend/payment-calculator-svc" -t pucarsolutionsdev.azurecr.io/payment-calculator-svc:${{ github.ref }}-${{ env.commit_hash }} -f build/maven/Dockerfile .
+          docker push pucarsolutionsdev.azurecr.io/payment-calculator-svc:${{ github.ref }}-${{ env.commit_hash }}
 
       - name: Build and Push Docker image for Payment-calculator-svc_DB
         if: (github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/uat-backend' || github.ref == 'refs/heads/dpg-qa-deployment')) || github.event_name == 'workflow_dispatch'
         run: |
-          docker build  -t pucarsolutionsdev.azurecr.io/payment-calculator-svc_db:v1.0.0-${{ env.commit_hash }} -f  Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/payment-calculator-svc_db:v1.0.0-${{ env.commit_hash }}
+          docker build  -t pucarsolutionsdev.azurecr.io/payment-calculator-svc_db:${{ github.ref }}-${{ env.commit_hash }} -f  Dockerfile .
+          docker push pucarsolutionsdev.azurecr.io/payment-calculator-svc_db:${{ github.ref }}-${{ env.commit_hash }}
         working-directory: backend/payment-calculator-svc/src/main/resources/db
 
   Workflow_Trigger:

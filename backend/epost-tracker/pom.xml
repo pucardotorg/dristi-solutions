@@ -19,6 +19,7 @@
         <maven.version>3.3.9</maven.version>
         <lombok.version>1.18.22</lombok.version>
     </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>

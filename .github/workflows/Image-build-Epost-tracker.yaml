@@ -67,14 +67,14 @@ jobs:
       - name: Build and Push Docker image for Epost Tracker
         if: (github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/uat-backend' || github.ref == 'refs/heads/dpg-qa-deployment')) || github.event_name == 'workflow_dispatch'
         run: |
-          docker build --build-arg WORK_DIR="backend/epost-tracker" -t pucarsolutionsdev.azurecr.io/epost-tracker:v1.0.0-${{ env.commit_hash }} -f build/maven/Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/epost-tracker:v1.0.0-${{ env.commit_hash }}
+          docker build --build-arg WORK_DIR="backend/epost-tracker" -t pucarsolutionsdev.azurecr.io/epost-tracker:${{ github.ref }}-${{ env.commit_hash }} -f build/maven/Dockerfile .
+          docker push pucarsolutionsdev.azurecr.io/epost-tracker:${{ github.ref }}-${{ env.commit_hash }}
 
       - name: Build and Push Docker image for Epost Tracker DB
         if: (github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/uat-backend' || github.ref == 'refs/heads/dpg-qa-deployment')) || github.event_name == 'workflow_dispatch'
         run: |
-          docker build  -t pucarsolutionsdev.azurecr.io/epost-tracker-db:v1.0.0-${{ env.commit_hash }} -f  Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/epost-tracker-db:v1.0.0-${{ env.commit_hash }}
+          docker build  -t pucarsolutionsdev.azurecr.io/epost-tracker-db:${{ github.ref }}-${{ env.commit_hash }} -f  Dockerfile .
+          docker push pucarsolutionsdev.azurecr.io/epost-tracker-db:${{ github.ref }}-${{ env.commit_hash }}
         working-directory: backend/epost-tracker/src/main/resources/db
 
   Workflow_Trigger:

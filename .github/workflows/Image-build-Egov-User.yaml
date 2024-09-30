@@ -55,13 +55,13 @@ jobs:
 
       - name: Build and Push Docker image for Egov-User
         run: |
-          docker build --build-arg WORK_DIR="common/egov-user" -t pucarsolutionsdev.azurecr.io/egov-user:v1.0.0-${{ env.commit_hash }} -f build/maven/Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/egov-user:v1.0.0-${{ env.commit_hash }}
+          docker build --build-arg WORK_DIR="common/egov-user" -t pucarsolutionsdev.azurecr.io/egov-user:${{ github.ref }}-${{ env.commit_hash }} -f build/maven/Dockerfile .
+          docker push pucarsolutionsdev.azurecr.io/egov-user:${{ github.ref }}-${{ env.commit_hash }}
 
       - name: Build and Push Docker image for Egov-User DB
         run: |
-          docker build  -t pucarsolutionsdev.azurecr.io/egov-user-db:v1.0.0-${{ env.commit_hash }} -f  Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/egov-user-db:v1.0.0-${{ env.commit_hash }}
+          docker build  -t pucarsolutionsdev.azurecr.io/egov-user-db:${{ github.ref }}-${{ env.commit_hash }} -f  Dockerfile .
+          docker push pucarsolutionsdev.azurecr.io/egov-user-db:${{ github.ref }}-${{ env.commit_hash }}
         working-directory: common/egov-user/src/main/resources/db
 
   Workflow_Trigger:

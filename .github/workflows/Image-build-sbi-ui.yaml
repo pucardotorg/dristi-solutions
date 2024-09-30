@@ -39,8 +39,8 @@ jobs:
       - name: Build and Push Docker image for sbi-ui
         if: (github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/uat-backend' || github.ref == 'refs/heads/dpg-qa-deployment')) || github.event_name == 'workflow_dispatch'
         run: |
-          docker build  -t pucarsolutionsdev.azurecr.io/sbi-ui:v1.0.0-${{ env.commit_hash }} -f Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/sbi-ui:v1.0.0-${{ env.commit_hash }}
+          docker build  -t pucarsolutionsdev.azurecr.io/sbi-ui:${{ github.ref }}-${{ env.commit_hash }} -f Dockerfile .
+          docker push pucarsolutionsdev.azurecr.io/sbi-ui:${{ github.ref }}-${{ env.commit_hash }}
         working-directory: backend/sbi-webpage/
 
   Workflow_Trigger:

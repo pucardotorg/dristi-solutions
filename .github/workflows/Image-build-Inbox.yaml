@@ -55,8 +55,8 @@ jobs:
 
       - name: Build and Push Docker image for inbox
         run: |
-          docker build --build-arg WORK_DIR="common/inbox" -t pucarsolutionsdev.azurecr.io/inbox:v1.0.0-${{ env.commit_hash }} -f build/maven-java8/Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/inbox:v1.0.0-${{ env.commit_hash }}
+          docker build --build-arg WORK_DIR="common/inbox" -t pucarsolutionsdev.azurecr.io/inbox:${{ github.ref }}-${{ env.commit_hash }} -f build/maven-java8/Dockerfile .
+          docker push pucarsolutionsdev.azurecr.io/inbox:${{ github.ref }}-${{ env.commit_hash }}
 
   Workflow_Trigger:
     if: (github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/uat-backend' || github.ref == 'refs/heads/dpg-qa-deployment')) || github.event_name == 'workflow_dispatch'
