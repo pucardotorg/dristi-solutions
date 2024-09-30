@@ -146,7 +146,7 @@ const AdmittedCases = () => {
   const showTakeAction = useMemo(
     () =>
       (userRoles.includes("JUDGE_ROLE") || userRoles.includes("BENCHCLERK_ROLE")) &&
-      relevantStatuses.includes(caseData?.criteria[0]?.responseList[0]?.status),
+      relevantStatuses.includes(caseData?.criteria?.[0]?.responseList?.[0]?.status),
     [caseData, userRoles]
   );
 
@@ -182,8 +182,8 @@ const AdmittedCases = () => {
   const statue = useMemo(() => {
     const statutesAndSections = caseDetails?.statutesAndSections;
     if (!statutesAndSections?.length) return "";
-    const section = statutesAndSections[0]?.sections?.[0];
-    const subsection = statutesAndSections[0]?.subsections?.[0];
+    const section = statutesAndSections?.[0]?.sections?.[0];
+    const subsection = statutesAndSections?.[0]?.subsections?.[0];
 
     return section && subsection
       ? `${section
@@ -1482,7 +1482,7 @@ const AdmittedCases = () => {
                 <hr className="vertical-line" />
               </React.Fragment>
             )}
-            <div className="sub-details-text">Code: {caseData?.criteria[0].responseList[0]?.accessCode}</div>
+            <div className="sub-details-text">Code: {caseData?.criteria?.[0].responseList?.[0]?.accessCode}</div>
           </div>
           <div className="make-submission-action" style={{ display: "flex", gap: 20, justifyContent: "space-between", alignItems: "center" }}>
             {isCitizen && (
@@ -1647,7 +1647,7 @@ const AdmittedCases = () => {
           onTabChange={onTabChange}
         ></InboxSearchComposer>
       </div>
-      {tabData.filter((tab) => tab.label === "Overview")[0].active && (
+      {tabData.filter((tab) => tab.label === "Overview")?.[0].active && (
         <div className="case-overview-wrapper">
           <CaseOverview
             handleDownload={handleDownload}
@@ -1663,7 +1663,7 @@ const AdmittedCases = () => {
           />
         </div>
       )}
-      {tabData.filter((tab) => tab.label === "Complaint")[0].active && (
+      {tabData.filter((tab) => tab.label === "Complaint")?.[0].active && (
         <div className="view-case-file-wrapper">
           <ViewCaseFile t={t} inViewCase={true} />
         </div>
@@ -1675,7 +1675,7 @@ const AdmittedCases = () => {
           show={show}
           setShow={setShow}
           userRoles={userRoles}
-          modalType={tabData.filter((tab) => tab.active)[0].label}
+          modalType={tabData.filter((tab) => tab.active)?.[0].label}
           setUpdateCounter={setUpdateCounter}
           showToast={showToast}
           caseData={caseRelatedData}

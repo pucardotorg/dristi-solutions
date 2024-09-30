@@ -1022,7 +1022,7 @@ const GenerateOrders = () => {
       try {
         orderSchema = Digit.Customizations.dristiOrders.OrderFormSchemaUtils.formToSchema(order.additionalDetails.formdata, modifiedFormConfig);
       } catch (error) {
-        console.log(error);
+        console.error("error :>> ", error);
       }
 
       return await ordersService.updateOrder(
@@ -1047,7 +1047,7 @@ const GenerateOrders = () => {
       try {
         orderSchema = Digit.Customizations.dristiOrders.OrderFormSchemaUtils.formToSchema(order.additionalDetails.formdata, modifiedFormConfig);
       } catch (error) {
-        console.log(error);
+        console.error("error :>> ", error);
       }
       // const formOrder = await Digit.Customizations.dristiOrders.OrderFormSchemaUtils.schemaToForm(orderDetails, modifiedFormConfig);
 
@@ -2009,7 +2009,40 @@ const GenerateOrders = () => {
             });
           });
         } else {
-          updateCaseDetails("ISSUE_ORDER");
+          updateCaseDetails("ISSUE_ORDER").then(() => {
+            refetchCaseData().then(async (caseDetails) => {
+              const caseData = caseDetails?.data?.criteria?.[0]?.responseList?.[0];
+              const respondent = caseData?.litigants?.filter((litigant) => litigant?.partyType?.includes("respondent"))?.[0];
+              const advocate = caseData?.representatives?.filter((representative) =>
+                representative?.representing?.some((represent) => respondent && represent?.individualId === respondent?.individualId)
+              )?.[0];
+              const assignees = [];
+              if (respondent) assignees.push({ uuid: respondent?.additionalDetails?.uuid });
+              if (advocate) assignees.push({ uuid: advocate?.additionalDetails?.uuid });
+              if (respondent && assignees?.length > 0) {
+                try {
+                  await DRISTIService.customApiService(Urls.orders.pendingTask, {
+                    pendingTask: {
+                      name: "Pending Response",
+                      entityType: "case-default",
+                      referenceId: `MANUAL_${caseData?.filingNumber}`,
+                      status: "PENDING_RESPONSE",
+                      assignedTo: assignees,
+                      assignedRole: ["CASE_RESPONDER"],
+                      cnrNumber: caseData?.cnrNumber,
+                      filingNumber: caseData?.filingNumber,
+                      isCompleted: false,
+                      stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
+                      additionalDetails: { individualId: respondent?.individualId, caseId: caseData?.id },
+                      tenantId,
+                    },
+                  });
+                } catch (err) {
+                  console.error("err :>> ", err);
+                }
+              }
+            });
+          });
         }
       }
       createTask(orderType, caseDetails, orderResponse);
