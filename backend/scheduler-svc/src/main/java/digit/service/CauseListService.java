@@ -139,12 +139,8 @@ public class CauseListService {
         log.info("operation = generateCauseListForJudge, result = IN_PROGRESS, judgeId = {}", courtId);
         try {
             HearingSearchCriteria hearingSearchCriteria = HearingSearchCriteria.builder()
-                    .fromDate(hearingDate == null
-                            ? dateUtil.getEpochFromLocalDateTime(LocalDateTime.now().toLocalDate().plusDays(1).atStartOfDay())
-                            : dateUtil.getEpochFromLocalDateTime(LocalDate.parse(hearingDate).atStartOfDay()))
-                    .toDate(hearingDate == null
-                            ? dateUtil.getEpochFromLocalDateTime(LocalDateTime.now().toLocalDate().plusDays(2).atStartOfDay())
-                            : dateUtil.getEpochFromLocalDateTime(LocalDate.parse(hearingDate).plusDays(1).atStartOfDay()))
+                    .fromDate(getFromDate(hearingDate))
+                    .toDate(getToDate(hearingDate))
                     .courtId(config.getCourtEnabled() ? courtId : null)
                     .build();
             List<Hearing> hearingList = getHearingsForCourt(hearingSearchCriteria);
@@ -193,6 +189,18 @@ public class CauseListService {
         } catch (Exception e) {
             log.error("operation = generateCauseListForJudge, result = FAILURE, judgeId = {}, error = {}", courtId, e.getMessage(), e);
         }
+    }
+
+    private Long getToDate(String hearingDate) {
+        return hearingDate == null
+                ? dateUtil.getEpochFromLocalDateTime(LocalDateTime.now().toLocalDate().plusDays(2).atStartOfDay())
+                : dateUtil.getEpochFromLocalDateTime(LocalDate.parse(hearingDate).plusDays(1).atStartOfDay());
+    }
+
+    private Long getFromDate(String hearingDate) {
+        return hearingDate == null
+                ? dateUtil.getEpochFromLocalDateTime(LocalDateTime.now().toLocalDate().plusDays(1).atStartOfDay())
+                : dateUtil.getEpochFromLocalDateTime(LocalDate.parse(hearingDate).atStartOfDay());
     }
 
 
