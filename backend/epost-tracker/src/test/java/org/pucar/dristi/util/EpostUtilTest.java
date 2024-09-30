@@ -62,7 +62,9 @@ class EpostUtilTest {
         TaskRequest request = mock(TaskRequest.class);
         RequestInfo requestInfo = mock(RequestInfo.class);
         Task task = mock(Task.class);
-        Document document = mock(Document.class);
+        Document document = new Document();
+        document.setFileStore("fileStoreId");
+        document.setDocumentType("SIGNED_TASK_DOCUMENT");
         RespondentDetails respondentDetails = mock(RespondentDetails.class);
         TaskDetails taskDetails = mock(TaskDetails.class);
 
@@ -73,7 +75,6 @@ class EpostUtilTest {
         //when(respondentDetails.getAddress().getPinCode()).thenReturn("123456");
         when(respondentDetails.getAddress()).thenReturn(new Address());
         when(task.getDocuments()).thenReturn(Collections.singletonList(document));
-        when(document.getFileStore()).thenReturn("fileStoreId");
 
         when(idgenUtil.getIdList(any(), any(), any(), any(), anyInt())).thenReturn(Collections.singletonList("PN123"));
         when(config.getEgovStateTenantId()).thenReturn("tenantId");

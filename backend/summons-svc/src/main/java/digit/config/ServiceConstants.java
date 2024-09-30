@@ -62,5 +62,13 @@ public class ServiceConstants {
 
     public static final String PENDING_PAYMENT = "PENDING_PAYMENT";
 
+    public static final String GENERATE_TASK_DOCUMENT = "GENERATE_TASK_DOCUMENT";
+
+    public static final String SEND_TASK_DOCUMENT = "SEND_TASK_DOCUMENT";
+
+    public static final String FILE_CATEGORY = "FILE_CATEGORY";
+
+    public static final String SIGNED_TASK_DOCUMENT = "SIGNED_TASK_DOCUMENT";
+
 
 }

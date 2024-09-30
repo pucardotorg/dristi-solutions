@@ -18,4 +18,6 @@ public class ServiceConstants {
 
     public static final String FILES = "files";
 
+    public static final String SIGNED_TASK_DOCUMENT = "SIGNED_TASK_DOCUMENT";
+
 }

@@ -18,6 +18,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -49,9 +50,17 @@ public class PdfServiceUtil {
             headers.setContentType(MediaType.APPLICATION_JSON);
             SummonsPdf summonsPdf = createSummonsPdfFromTask(taskRequest.getTask());
             if (qrCode && taskRequest.getTask().getDocuments() != null && !taskRequest.getTask().getDocuments().isEmpty()) {
-                Document document = taskRequest.getTask().getDocuments().get(0);
-                if (document != null) {
-                    String embeddedUrl = config.getFileStoreHost() + config.getFileStoreSearchEndPoint() + "?tenantId=" + tenantId + "&fileStoreId=" + document.getFileStore();
+                List<Document> documents = taskRequest.getTask().getDocuments();
+                Document signedDocuments = null;
+
+                for(Document document : documents) {
+                    if (document.getDocumentType() != null && document.getDocumentType().equalsIgnoreCase(SIGNED_TASK_DOCUMENT)) {
+                        signedDocuments = document;
+                        break;
+                    }
+                }
+                if (signedDocuments != null) {
+                    String embeddedUrl = config.getFileStoreHost() + config.getFileStoreSearchEndPoint() + "?tenantId=" + tenantId + "&fileStoreId=" + signedDocuments.getFileStore();
                     summonsPdf.setEmbeddedUrl(embeddedUrl);
 
                 }

@@ -1,8 +1,10 @@
 package org.pucar.dristi.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.egov.common.contract.models.AuditDetails;
+import org.egov.common.contract.models.Document;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.EPostConfiguration;
@@ -14,9 +16,9 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.stream.StreamSupport;
 
-import static org.pucar.dristi.config.ServiceConstants.EPOST_TRACKER_ERROR;
-import static org.pucar.dristi.config.ServiceConstants.INVALID_EPOST_TRACKER_FIELD;
+import static org.pucar.dristi.config.ServiceConstants.*;
 
 @Component
 public class EpostUtil {
@@ -58,10 +60,19 @@ public class EpostUtil {
     }
 
     private String getFileStore(TaskRequest request) {
-        if(request.getTask().getDocuments() == null || request.getTask().getDocuments().isEmpty() || request.getTask().getDocuments().get(0).getFileStore() == null){
+        if(request.getTask().getDocuments() == null || request.getTask().getDocuments().isEmpty()){
             return null;
         }
-        return request.getTask().getDocuments().get(0).getFileStore();
+        List<Document> documents = request.getTask().getDocuments();
+        Document signedDocuments = null;
+
+        for(Document document : documents) {
+            if (document.getDocumentType() != null && document.getDocumentType().equalsIgnoreCase(SIGNED_TASK_DOCUMENT)) {
+                signedDocuments = document;
+                break;
+            }
+        }
+            return signedDocuments != null ? signedDocuments.getFileStore() : null;
     }
 
     public EPostTracker updateEPostTracker(EPostRequest ePostRequest) {

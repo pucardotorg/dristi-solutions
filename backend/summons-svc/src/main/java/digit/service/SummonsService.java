@@ -191,12 +191,12 @@ public class SummonsService {
     }
 
     private Document createDocument(String fileStoreId, boolean qrCode) {
-        String fileCategory = qrCode ? "SEND_SUMMONS_DOCUMENT" : "GENERATE_SUMMONS_DOCUMENT";
-        Field field = Field.builder().key("FILE_CATEGORY").value(fileCategory).build();
+        String fileCategory = qrCode ? SEND_TASK_DOCUMENT : GENERATE_TASK_DOCUMENT;
+        Field field = Field.builder().key(FILE_CATEGORY).value(fileCategory).build();
         AdditionalFields additionalFields = AdditionalFields.builder().fields(Collections.singletonList(field)).build();
         return Document.builder()
                 .fileStore(fileStoreId)
-                .documentType("application/pdf")
+                .documentType(fileCategory)
                 .additionalDetails(additionalFields)
                 .build();
     }

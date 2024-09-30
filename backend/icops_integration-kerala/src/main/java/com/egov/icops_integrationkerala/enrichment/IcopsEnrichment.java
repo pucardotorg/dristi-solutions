@@ -8,6 +8,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
+import org.egov.common.contract.models.Document;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -154,7 +155,7 @@ public class IcopsEnrichment {
                 .tenantId(config.getEgovStateTenantId())
                 .taskNumber(request.getTask().getTaskNumber())
                 .taskType(request.getTask().getTaskType())
-                .fileStoreId(request.getTask().getDocuments().get(0).getFileStore())
+                .fileStoreId(getFileStore(request))
                 .taskDetails(request.getTask().getTaskDetails())
                 .deliveryStatus(status)
                 .remarks(channelMessage.getFailureMsg())
@@ -162,6 +163,22 @@ public class IcopsEnrichment {
                 .bookingDate(currentDate)
                 .acknowledgementId(channelMessage.getAcknowledgeUniqueNumber())
                 .build();
+    }
+
+    private String getFileStore(TaskRequest request) {
+        if(request.getTask().getDocuments() == null || request.getTask().getDocuments().isEmpty()){
+            return null;
+        }
+        List<Document> documents = request.getTask().getDocuments();
+        Document signedDocuments = null;
+
+        for(Document document : documents) {
+            if (document.getDocumentType() != null && document.getDocumentType().equalsIgnoreCase(SIGNED_TASK_DOCUMENT)) {
+                signedDocuments = document;
+                break;
+            }
+        }
+        return signedDocuments != null ? signedDocuments.getFileStore() : null;
     }
 
     public IcopsTracker enrichIcopsTrackerForUpdate(IcopsProcessReport icopsProcessReport) throws ProcessReportException {
