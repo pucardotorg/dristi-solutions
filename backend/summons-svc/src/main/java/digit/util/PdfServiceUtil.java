@@ -19,6 +19,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
+import java.util.Optional;
 
 import static digit.config.ServiceConstants.*;
 
@@ -72,24 +73,27 @@ public class PdfServiceUtil {
 
     private SummonsPdf createSummonsPdfFromTask(Task task) {
         Long issueDate = null;
-        Long hearingDate = task.getTaskDetails().getCaseDetails().getHearingDate();
         if (NOTICE.equals(task.getTaskType())) {
             issueDate = task.getTaskDetails().getNoticeDetails().getIssueDate();
         } else if (SUMMON.equals(task.getTaskType())) {
             issueDate = task.getTaskDetails().getSummonDetails().getIssueDate();
         }
-        String issueDateString = (issueDate != null) ? formatDateFromMillis(issueDate) : "";
-        String hearingDateString = (hearingDate != null) ? formatDateFromMillis(hearingDate) : "";
-        String filingNUmber = task.getFilingNumber();
+        String issueDateString = Optional.ofNullable(issueDate)
+                .map(this::formatDateFromMillis)
+                .orElse("");
+        String hearingDateString = Optional.ofNullable(task.getTaskDetails().getCaseDetails().getHearingDate())
+                .map(this::formatDateFromMillis)
+                .orElse("");
+        String filingNumber = task.getFilingNumber();
         String courtName = task.getTaskDetails().getCaseDetails().getCourtName();
         return SummonsPdf.builder()
                 .tenantId(task.getTenantId())
                 .cnrNumber(task.getCnrNumber())
-                .filingNumber(filingNUmber)
+                .filingNumber(filingNumber)
                 .issueDate(issueDateString)
                 .caseName(task.getTaskDetails().getCaseDetails().getCaseTitle())
-                .caseNumber(extractCaseNumber(filingNUmber))
-                .caseYear(extractCaseYear(filingNUmber))
+                .caseNumber(extractCaseNumber(filingNumber))
+                .caseYear(extractCaseYear(filingNumber))
                 .judgeName(task.getTaskDetails().getCaseDetails().getJudgeName())
                 .courtName(courtName == null ? config.getCourtName(): courtName)
                 .hearingDate(hearingDateString)
