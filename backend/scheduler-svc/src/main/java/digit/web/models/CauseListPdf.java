@@ -31,4 +31,7 @@ public class CauseListPdf {
 
     @JsonProperty("createdTime")
     private Long createdTime;
+
+    @JsonProperty("createdBy")
+    private String createdBy;
 }

@@ -120,7 +120,7 @@ public class CauseListService {
     private void submitTasks(ExecutorService executorService, List<String> courtIds, List<CauseList> causeLists) {
         for (String courtId : courtIds) {
             // Submit a task to the executor service for each judge
-            executorService.submit(() -> generateCauseList(courtId, causeLists, null));
+            executorService.submit(() -> generateCauseList(courtId, causeLists, null, null));
         }
     }
 
@@ -135,7 +135,7 @@ public class CauseListService {
         }
     }
 
-    public void generateCauseList(String courtId, List<CauseList> causeLists, String hearingDate) {
+    public void generateCauseList(String courtId, List<CauseList> causeLists, String hearingDate, String uuid) {
         log.info("operation = generateCauseListForJudge, result = IN_PROGRESS, judgeId = {}", courtId);
         try {
             HearingSearchCriteria hearingSearchCriteria = HearingSearchCriteria.builder()
@@ -184,6 +184,7 @@ public class CauseListService {
                     .fileStoreId(document.getFileStore())
                     .date(dateUtil.getLocalDateFromEpoch(causeList.get(0).getStartTime()).toString())
                     .createdTime(dateUtil.getEpochFromLocalDateTime(LocalDateTime.now()))
+                    .createdBy(uuid == null ? serviceConstants.SYSTEM_ADMIN : uuid)
                     .build();
 
             producer.push(config.getCauseListPdfTopic(), causeListPdf);

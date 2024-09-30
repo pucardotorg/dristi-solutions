@@ -81,12 +81,6 @@ public class CauseListQueryBuilder {
             preparedStmtList.add(searchCriteria.getSearchDate().toString());
             preparedStmtArgsList.add(Types.VARCHAR);
         }
-        else if(ObjectUtils.isEmpty(searchCriteria.getSearchDate())) {
-            addClauseIfRequired(query, preparedStmtList);
-            query.append(" hearing_date = ? ");
-            preparedStmtList.add(getCauseListDate());
-            preparedStmtArgsList.add(Types.VARCHAR);
-        }
 
         query.append(CAUSE_LIST_FILE_ORDER_BY);
         return query.toString();
@@ -121,11 +115,4 @@ public class CauseListQueryBuilder {
         return CASE_TYPE_QUERY;
     }
 
-    private String getCauseListDate() {
-        if(LocalDateTime.now().isAfter(LocalDateTime.now().withHour(17))) {
-            return LocalDate.now().plusDays(1).toString();
-        } else {
-            return LocalDate.now().toString();
-        }
-    }
 }
