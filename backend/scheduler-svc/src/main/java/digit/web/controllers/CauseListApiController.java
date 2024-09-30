@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2024-04-25T11:13:21.813391200+05:30[Asia/Calcutta]")
@@ -60,6 +61,19 @@ public class CauseListApiController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(resource);
+    }
+
+    @RequestMapping(value = "/v1/_generate", method = RequestMethod.POST)
+    public ResponseEntity<Object> generateCauseList(@Valid @RequestBody CauseListSearchRequest request) {
+        log.info("api = /causelist/v1/_generate, result = IN_PROGRESS");
+        try {
+            causeListService.generateCauseList(request.getCauseListSearchCriteria().getCourtId(), new ArrayList<>(), request.getCauseListSearchCriteria().getSearchDate().toString());
+            log.info("api = /causelist/v1/_generate, result = SUCCESS");
+            return new ResponseEntity<>(HttpStatus.CREATED);
+        } catch (Exception e) {
+            log.error("api = /causelist/v1/_generate, result = FAILED, error = {}", e.getMessage());
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
     }
 
 }
