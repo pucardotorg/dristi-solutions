@@ -358,7 +358,15 @@ const ReviewSummonsNoticeAndWarrant = () => {
           hideSubmit: true,
           modalBody: (
             <CustomStepperSuccess
-              successMessage={t(`${t(orderType === "NOTICE" ? "SENT_NOTICE_VIA" : "SENT_SUMMONS_VIA")} ${deliveryChannel}`)}
+              successMessage={`${
+                documents
+                  ? orderType === "NOTICE"
+                    ? t("SUCCESSFULLY_SIGNED_NOTICE")
+                    : t("SUCCESSFULLY_SIGNED_SUMMON")
+                  : orderType === "NOTICE"
+                  ? t("SENT_NOTICE_VIA")
+                  : t("SENT_SUMMONS_VIA")
+              }${!documents ? " " + deliveryChannel : ""}`}
               bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
               submitButtonText={documents ? "MARK_AS_SENT" : "CS_CLOSE"}
               closeButtonText={documents ? "CS_CLOSE" : "DOWNLOAD_DOCUMENT"}
