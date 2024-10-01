@@ -62,7 +62,8 @@ public class SummonsService {
 
     public TaskResponse generateSummonsDocument(TaskRequest taskRequest) {
         String taskType = taskRequest.getTask().getTaskType();
-        String pdfTemplateKey = getPdfTemplateKey(taskType, false);
+        String docSubType = getDocSubType(taskType, taskRequest.getTask().getTaskDetails());
+        String pdfTemplateKey = getPdfTemplateKey(taskType, docSubType, false);
 
         return generateDocumentAndUpdateTask(taskRequest, pdfTemplateKey, false);
     }
@@ -86,7 +87,8 @@ public class SummonsService {
         TaskListResponse taskListResponse = taskUtil.callSearchTask(searchRequest);
         Task task = taskListResponse.getList().get(0);
         String taskType = task.getTaskType();
-        String pdfTemplateKey = getPdfTemplateKey(taskType, true);
+        String docSubType = getDocSubType(taskType, task.getTaskDetails());
+        String pdfTemplateKey = getPdfTemplateKey(taskType, docSubType, true);
         TaskRequest taskRequest = TaskRequest.builder()
                 .task(task)
                 .requestInfo(request.getRequestInfo()).build();
@@ -166,11 +168,24 @@ public class SummonsService {
         taskUtil.callUpdateTask(taskRequest);
     }
 
-    private String getPdfTemplateKey(String taskType, boolean qrCode) {
+    private String getPdfTemplateKey(String taskType, String docSubType, boolean qrCode) {
         return switch (taskType) {
-            case SUMMON -> qrCode ? config.getSummonsQrPdfTemplateKey() : config.getSummonsPdfTemplateKey();
+            case SUMMON -> switch (docSubType) {
+                case ACCUSED -> qrCode ? config.getSummonsAccusedQrPdfTemplateKey() : config.getSummonsAccusedPdfTemplateKey();
+                case WITNESS -> qrCode ? config.getSummonsIssueQrPdfTemplateKey() : config.getSummonsIssuePdfTemplateKey();
+                default -> throw new CustomException("INVALID_DOC_SUB_TYPE", "Document Sub-Type must be valid. Provided: " + docSubType);
+            };
             case WARRANT -> qrCode ? config.getNonBailableWarrantQrPdfTemplateKey() : config.getNonBailableWarrantPdfTemplateKey();
             case NOTICE -> qrCode ? config.getTaskNoticeQrPdfTemplateKey() : config.getTaskNoticePdfTemplateKey();
+            default -> throw new CustomException("INVALID_TASK_TYPE", "Task Type must be valid. Provided: " + taskType);
+        };
+    }
+
+    private String getDocSubType(String taskType, TaskDetails taskDetails) {
+        return switch (taskType) {
+            case SUMMON -> taskDetails.getSummonDetails().getDocSubType();
+            case WARRANT -> taskDetails.getWarrantDetails().getDocSubType();
+            case NOTICE -> taskDetails.getNoticeDetails().getDocSubType();
             default -> throw new CustomException("INVALID_TASK_TYPE", "Task Type must be valid. Provided: " + taskType);
         };
     }

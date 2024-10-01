@@ -70,5 +70,9 @@ public class ServiceConstants {
 
     public static final String SIGNED_TASK_DOCUMENT = "SIGNED_TASK_DOCUMENT";
 
+    public static final String ACCUSED = "ACCUSED";
+
+    public static final String WITNESS = "WITNESS";
+
 
 }
