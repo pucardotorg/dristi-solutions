@@ -402,6 +402,7 @@ public class CauseListService {
         List<MdmsHearing> mdmsHearings = getHearingDataFromMdms();
         for (CauseList causeList : causeLists) {
             String slotName = causeList.getSlot();
+            if(slotName == null)continue;
             String hearingType = causeList.getHearingType();
             Optional<String> hearingNameOptional = mdmsHearings.stream()
                     .filter(a -> a.getHearingType().equals(causeList.getHearingType()))
@@ -547,13 +548,13 @@ public class CauseListService {
                     if(party.getPartyType().equals(serviceConstants.COMPLAINANT)) {
                         if (advocateDetails != null) {
                             LinkedHashMap advocate = ((LinkedHashMap) advocateDetails.getAdditionalDetails());
-                            complainantAdvocates.add(advocate.get(serviceConstants.FULLNAME).toString());
+                            complainantAdvocates.add(advocate.get(serviceConstants.ADVOCATE_NAME).toString());
                         }
                     }
                     else if(party.getPartyType().equals(serviceConstants.RESPONDENT)) {
                         if (advocateDetails != null) {
                             LinkedHashMap advocate = ((LinkedHashMap) advocateDetails.getAdditionalDetails());
-                            respondentAdvocates.add(advocate.get(serviceConstants.FULLNAME).toString());
+                            respondentAdvocates.add(advocate.get(serviceConstants.ADVOCATE_NAME).toString());
                         }
                     }
 
