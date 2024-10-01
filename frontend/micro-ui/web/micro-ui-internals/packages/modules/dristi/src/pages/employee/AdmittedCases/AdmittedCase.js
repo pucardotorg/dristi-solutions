@@ -41,6 +41,7 @@ const defaultSearchValues = {};
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
+  NOTICE: 3 * 24 * 3600 * 1000,
 };
 
 const casePrimaryActions = [
@@ -739,6 +740,22 @@ const AdmittedCases = () => {
       };
       return DRISTIService.customApiService(Urls.dristi.ordersCreate, { order: orderBody }, { tenantId })
         .then((res) => {
+          DRISTIService.customApiService(Urls.dristi.pendingTask, {
+            pendingTask: {
+              name: t("DRAFT_IN_PROGRESS_ISSUE_NOTICE"),
+              entityType: "order-default",
+              referenceId: `MANUAL_${res?.order?.orderNumber}`,
+              status: "DRAFT_IN_PROGRESS",
+              assignedTo: [],
+              assignedRole: ["JUDGE_ROLE"],
+              cnrNumber: updatedCaseDetails?.cnrNumber,
+              filingNumber: caseDetails?.filingNumber,
+              isCompleted: false,
+              stateSla: todayDate + stateSla.NOTICE,
+              additionalDetails: {},
+              tenantId,
+            },
+          });
           history.push(`/digit-ui/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`, {
             caseId: caseDetails?.id,
             tab: "Orders",
@@ -853,16 +870,15 @@ const AdmittedCases = () => {
           filingNumber: filingNumber,
         },
       });
-      if (caseDetails?.status === "PENDING_RESPONSE") {
-        const hearingData = HearingList?.find((list) => list?.hearingType === "ADMISSION" && list?.status === "SCHEDULED") || {};
-        if (hearingData.hearingId) {
-          hearingData.workflow = hearingData.workflow || {};
-          hearingData.workflow.action = "ABANDON";
-          await Digit.HearingService.updateHearings(
-            { tenantId, hearing: hearingData, hearingType: "", status: "" },
-            { applicationNumber: "", cnrNumber: "" }
-          );
-        }
+      const hearingData =
+        HearingList?.find((list) => list?.hearingType === "ADMISSION" && !(list?.status === "COMPLETED" || list?.status === "ABATED")) || {};
+      if (hearingData.hearingId) {
+        hearingData.workflow = hearingData.workflow || {};
+        hearingData.workflow.action = "ABANDON";
+        await Digit.HearingService.updateHearings(
+          { tenantId, hearing: hearingData, hearingType: "", status: "" },
+          { applicationNumber: "", cnrNumber: "" }
+        );
       }
       DRISTIService.customApiService(Urls.dristi.pendingTask, {
         pendingTask: {
@@ -1069,7 +1085,9 @@ const AdmittedCases = () => {
   );
 
   const currentHearingId = useMemo(
-    () => hearingDetails?.HearingList?.find((list) => list?.hearingType === "ADMISSION" && list?.status === "SCHEDULED")?.hearingId,
+    () =>
+      hearingDetails?.HearingList?.find((list) => list?.hearingType === "ADMISSION" && !(list?.status === "COMPLETED" || list?.status === "ABATED"))
+        ?.hearingId,
     [hearingDetails?.HearingList]
   );
 
@@ -1106,7 +1124,7 @@ const AdmittedCases = () => {
         },
       });
       const { startTime: hearingDate, hearingId: hearingNumber } = HearingList?.find(
-        (list) => list?.hearingType === "ADMISSION" && list?.status === "SCHEDULED"
+        (list) => list?.hearingType === "ADMISSION" && !(list?.status === "COMPLETED" || list?.status === "ABATED")
       ) || { startTime: null, hearingId: null };
 
       if (!(hearingDate || hearingNumber)) {
@@ -1871,6 +1889,7 @@ const AdmittedCases = () => {
           handleScheduleNextHearing={handleScheduleNextHearing}
           caseAdmitLoader={caseAdmitLoader}
           caseDetails={caseDetails}
+          isAdmissionHearingAvailable={Boolean(currentHearingId)}
         ></AdmissionActionModal>
       )}
       {showDismissCaseConfirmation && (
