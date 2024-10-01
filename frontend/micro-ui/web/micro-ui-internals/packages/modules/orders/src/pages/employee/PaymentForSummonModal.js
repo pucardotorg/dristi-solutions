@@ -13,6 +13,7 @@ import { Urls } from "../../hooks/services/Urls";
 import { useEffect } from "react";
 import { paymentType } from "../../utils/paymentType";
 import { taskService } from "../../hooks/services";
+import { extractFeeMedium, getTaskType } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const modeOptions = [
   { label: "E-Post (3-5 days)", value: "e-post" },
@@ -219,6 +220,26 @@ const PaymentForSummonModal = ({ path }) => {
     },
     "dristi",
     Boolean(filteredTasks?.[0]?.taskNumber)
+  );
+
+  const summonsPincode = useMemo(() => filteredTasks?.[0]?.taskDetails?.respondentDetails?.address?.pincode, [filteredTasks]);
+  const channelId = useMemo(() => extractFeeMedium(filteredTasks?.[0]?.taskDetails?.deliveryChannels?.channelName || ""), [filteredTasks]);
+
+  const { data: breakupResponse, isLoading: isSummonsBreakUpLoading } = Digit.Hooks.dristi.useSummonsPaymentBreakUp(
+    {
+      Criteria: [
+        {
+          channelId: channelId,
+          receiverPincode: summonsPincode,
+          tenantId: tenantId,
+          Id: filteredTasks?.[0]?.taskNumber,
+          taskType: getTaskType(orderType === "SUMMONS" ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE),
+        },
+      ],
+    },
+    {},
+    "dristi",
+    Boolean(tasksData)
   );
 
   const mockSubmitModalInfo = useMemo(
@@ -444,8 +465,18 @@ const PaymentForSummonModal = ({ path }) => {
           amount: "Amount",
           action: "Actions",
         },
-        { label: "Court Fees", amount: taskAmount, action: "Pay Online", onClick: onPayOnline },
-        { label: "Delivery Partner Fee", amount: taskAmount, action: "Pay Online", onClick: onPayOnlineSBI },
+        {
+          label: "Court Fees",
+          amount: breakupResponse?.Calculation?.[0]?.breakDown?.find((data) => data?.type === "Court Fee")?.amount,
+          action: "Pay Online",
+          onClick: onPayOnline,
+        },
+        {
+          label: "Delivery Partner Fee",
+          amount: breakupResponse?.Calculation?.[0]?.breakDown?.find((data) => data?.type === "E Post")?.amount,
+          action: "Pay Online",
+          onClick: onPayOnlineSBI,
+        },
       ],
       "registered-post": [
         {
@@ -453,7 +484,12 @@ const PaymentForSummonModal = ({ path }) => {
           amount: "Amount",
           action: "Actions",
         },
-        { label: "Court Fees", amount: taskAmount, action: "Pay Online", onClick: onPayOnline },
+        {
+          label: "Court Fees",
+          amount: breakupResponse?.Calculation?.[0]?.breakDown.find((data) => data?.type === "Court Fee")?.amount,
+          action: "Pay Online",
+          onClick: onPayOnline,
+        },
         { label: "Delivery Partner Fee", amount: taskAmount, action: "offline-process", onClick: onPayOnline },
       ],
     };
