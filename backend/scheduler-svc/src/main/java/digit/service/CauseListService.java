@@ -402,7 +402,7 @@ public class CauseListService {
         List<MdmsHearing> mdmsHearings = getHearingDataFromMdms();
         for (CauseList causeList : causeLists) {
             String slotName = causeList.getSlot();
-            if(slotName == null)break;
+            if(slotName == null)continue;
             String hearingType = causeList.getHearingType();
             Optional<String> hearingNameOptional = mdmsHearings.stream()
                     .filter(a -> a.getHearingType().equals(causeList.getHearingType()))
