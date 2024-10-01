@@ -53,7 +53,7 @@ jobs:
           if [ "${{ github.ref }}" == "refs/heads/develop" ]; then
             echo "WORKFLOW_FILE=solutions-dev.yaml" >> $GITHUB_ENV
           elif [ "${{ github.ref }}" == "refs/heads/uat-v0.3" ]; then
-            echo "WORKFLOW_FILE=solutions-uat-v0.3.yaml" >> $GITHUB_ENV
+            echo "WORKFLOW_FILE=solutions-qa.yaml" >> $GITHUB_ENV
           elif [ "${{ github.ref }}" == "refs/heads/dpg-qa-deployment" ]; then
             echo "WORKFLOW_FILE=solutions-dpg-qa.yaml" >> $GITHUB_ENV
           fi
