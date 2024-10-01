@@ -105,7 +105,9 @@ function CaseFileAdmission({ t, path }) {
   );
 
   const currentHearingId = useMemo(
-    () => hearingDetails?.HearingList?.find((list) => list?.hearingType === "ADMISSION" && list?.status === "SCHEDULED")?.hearingId,
+    () =>
+      hearingDetails?.HearingList?.find((list) => list?.hearingType === "ADMISSION" && !(list?.status === "COMPLETED" || list?.status === "ABATED"))
+        ?.hearingId,
     [hearingDetails?.HearingList]
   );
   const nextActions = useMemo(() => workFlowDetails?.nextActions || [{}], [workFlowDetails]);
@@ -360,7 +362,7 @@ function CaseFileAdmission({ t, path }) {
             },
           });
           const { startTime: hearingDate, hearingId: hearingNumber } = HearingList?.find(
-            (list) => list?.hearingType === "ADMISSION" && list?.status === "SCHEDULED"
+            (list) => list?.hearingType === "ADMISSION" && !(list?.status === "COMPLETED" || list?.status === "ABATED")
           );
           const {
             list: [orderData],
@@ -491,7 +493,8 @@ function CaseFileAdmission({ t, path }) {
           filingNumber: caseDetails?.filingNumber,
         },
       });
-      const hearingData = HearingList?.find((list) => list?.hearingType === "ADMISSION" && list?.status === "SCHEDULED") || {};
+      const hearingData =
+        HearingList?.find((list) => list?.hearingType === "ADMISSION" && !(list?.status === "COMPLETED" || list?.status === "ABATED")) || {};
       if (hearingData.hearingId) {
         hearingData.workflow = hearingData.workflow || {};
         hearingData.workflow.action = "ABANDON";

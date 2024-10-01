@@ -265,6 +265,8 @@ function AdmissionActionModal({
           headerBarEnd={<CloseBtn onClick={() => setShowModal(false)} />}
           isDisabled={caseAdmitLoader}
           actionSaveOnSubmit={(props) => handleAdmitCase(props)}
+          actionCancelOnSubmit={() => setShowModal(false)}
+          actionCancelLabel={t(isAdmissionHearingAvailable ? "CS_COMMON_CANCEL" : "")}
         >
           <CardText>{t(isAdmissionHearingAvailable ? "CS_CONFIRM_CLOSE_HEARING_AFTER_ADMIT_CASE_TEXT" : stepItems[1]?.text)}</CardText>
         </Modal>

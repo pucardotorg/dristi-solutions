@@ -870,7 +870,8 @@ const AdmittedCases = () => {
           filingNumber: filingNumber,
         },
       });
-      const hearingData = HearingList?.find((list) => list?.hearingType === "ADMISSION" && list?.status === "SCHEDULED") || {};
+      const hearingData =
+        HearingList?.find((list) => list?.hearingType === "ADMISSION" && !(list?.status === "COMPLETED" || list?.status === "ABATED")) || {};
       if (hearingData.hearingId) {
         hearingData.workflow = hearingData.workflow || {};
         hearingData.workflow.action = "ABANDON";
@@ -1084,7 +1085,9 @@ const AdmittedCases = () => {
   );
 
   const currentHearingId = useMemo(
-    () => hearingDetails?.HearingList?.find((list) => list?.hearingType === "ADMISSION" && list?.status === "SCHEDULED")?.hearingId,
+    () =>
+      hearingDetails?.HearingList?.find((list) => list?.hearingType === "ADMISSION" && !(list?.status === "COMPLETED" || list?.status === "ABATED"))
+        ?.hearingId,
     [hearingDetails?.HearingList]
   );
 
@@ -1121,7 +1124,7 @@ const AdmittedCases = () => {
         },
       });
       const { startTime: hearingDate, hearingId: hearingNumber } = HearingList?.find(
-        (list) => list?.hearingType === "ADMISSION" && list?.status === "SCHEDULED"
+        (list) => list?.hearingType === "ADMISSION" && !(list?.status === "COMPLETED" || list?.status === "ABATED")
       ) || { startTime: null, hearingId: null };
 
       if (!(hearingDate || hearingNumber)) {
