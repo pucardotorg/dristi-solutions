@@ -431,7 +431,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
   };
 
   const searchCase = async (caseNumber) => {
-    setIsSearchingCase(true);
+    setIsSearchingCase(false);
     if (caseNumber && !caseDetails?.filingNumber) {
       const response = await DRISTIService.searchCaseService(
         {
@@ -482,7 +482,6 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
           });
       }
     }
-    setIsSearchingCase(false);
   };
 
   function findNextHearings(objectsList) {
@@ -770,6 +769,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                     if (str.length > 50) {
                       str = str.substring(0, 50);
                     }
+                    setIsSearchingCase(true);
                     setIsDisabled(true);
                     setCaseNumber(str);
                   } else {
@@ -780,7 +780,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
               <div
                 className="icon-div"
                 onClick={() => {
-                  if (!isSearchingCase) searchCase(caseNumber);
+                  if (isSearchingCase) searchCase(caseNumber);
                 }}
               >
                 <SearchIcon />
@@ -1774,7 +1774,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
             ]);
             setStep(step + 1);
           }
-        } else {
+        } else if (selectedParty?.fullName) {
           setShow(false);
           setShowEditRespondentDetailsModal(true);
         }
@@ -2553,10 +2553,10 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
     (event) => {
       if (event.key === "Enter") {
         if (!isDisabled) onProceed();
-        if (step === 0) searchCase(caseNumber);
+        if (step === 0 && isSearchingCase) searchCase(caseNumber);
       }
     },
-    [isDisabled, onProceed, step, caseDetails?.caseNumber, caseNumber]
+    [isDisabled, onProceed, step, isSearchingCase, caseNumber]
   );
 
   useEffect(() => {
@@ -2720,7 +2720,15 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
     setShowEditRespondentDetailsModal(false);
     setAccusedRegisterFormData({});
     setOtp("");
-    setSelectedParty(parties?.find((party) => party?.key === selectedParty?.key));
+    let tempSelectedParty = parties?.find((party) => party?.key === selectedParty?.key);
+    tempSelectedParty = {
+      ...tempSelectedParty,
+      respondentType: {
+        code: tempSelectedParty?.respondentType?.code,
+        name: tempSelectedParty?.respondentType?.name,
+      },
+    };
+    setSelectedParty(tempSelectedParty);
   };
 
   const registerRespondentConfig = useMemo(() => {
