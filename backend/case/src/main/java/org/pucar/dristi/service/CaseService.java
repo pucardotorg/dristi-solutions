@@ -305,7 +305,7 @@ public class CaseService {
             caseObj.setAuditdetails(courtCase.getAuditdetails());
             caseObj = encryptionDecryptionUtil.decryptObject(caseObj, config.getCaseDecryptSelf(),CourtCase.class,joinCaseRequest.getRequestInfo());
             joinCaseRequest.setAdditionalDetails(caseObj.getAdditionalDetails());
-
+            courtCase.setAdditionalDetails(joinCaseRequest.getAdditionalDetails());
         } else {
             CourtCase encryptedCourtCase = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncrypt(), CourtCase.class);
             updateCourtCaseInRedis(tenantId, encryptedCourtCase);
