@@ -153,6 +153,7 @@ const AdmittedCases = () => {
   const SummonsAndWarrantsModal = Digit.ComponentRegistryService.getComponent("SummonsAndWarrantsModal") || <React.Fragment></React.Fragment>;
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
+  const isJudge = userInfo?.roles?.some((role) => role.code === "JUDGE_ROLE");
   const todayDate = new Date().getTime();
   const { downloadPdf } = useDownloadCasePdf();
   const { data: caseData, isLoading, refetch: refetchCaseData, isFetching } = useSearchCaseService(
@@ -1076,8 +1077,9 @@ const AdmittedCases = () => {
   const { data: ordersData } = useSearchOrdersService(
     { criteria: { tenantId: tenantId, filingNumber } },
     { tenantId },
-    filingNumber,
-    Boolean(filingNumber)
+    filingNumber + currentHearingId,
+    Boolean(filingNumber),
+    0
   );
 
   const orderListFiltered = useMemo(() => {
@@ -1623,7 +1625,7 @@ const AdmittedCases = () => {
             </div>
           )}
         </div>
-        {noticeFailureCount > 0 && !isCaseAdmitted && (
+        {noticeFailureCount > 0 && !isCaseAdmitted && isJudge && (
           <div className="notice-failed-notification" style={styles.container}>
             <div className="notice-failed-icon" style={styles.icon}>
               <InfoIconRed style={styles.icon} />
