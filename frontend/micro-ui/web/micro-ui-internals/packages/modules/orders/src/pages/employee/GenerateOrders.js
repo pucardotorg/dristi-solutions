@@ -397,9 +397,12 @@ const GenerateOrders = () => {
       setSelectedOrder(defaultIndex);
     }
     const isSignSuccess = localStorage.getItem("esignProcess");
+    const savedOrderPdf = localStorage.getItem("orderPDF");
     if (isSignSuccess) {
       setShowsignatureModal(true);
+      setOrderPdfFileStoreID(savedOrderPdf);
       localStorage.removeItem("esignProcess");
+      localStorage.removeItem("orderPDF");
     }
   }, [defaultIndex]);
 
@@ -543,9 +546,10 @@ const GenerateOrders = () => {
               if (field.key === "hearingPurpose") {
                 return {
                   ...field,
-                  ...(currentOrder?.additionalDetails?.formdata?.hearingPurpose?.type === "ADMISSION" && {
-                    disable: true,
-                  }),
+                  ...(currentOrder?.additionalDetails?.formdata?.hearingPurpose?.type === "ADMISSION" &&
+                    !isCaseAdmitted && {
+                      disable: true,
+                    }),
                 };
               }
               if (field.key === "unjoinedPartiesNote") {
@@ -874,6 +878,11 @@ const GenerateOrders = () => {
     ) {
       updatedFormdata.originalHearingDate =
         applicationDetails?.additionalDetails?.formdata?.initialHearingDate || currentOrder.additionalDetails?.formdata?.originalHearingDate || "";
+      if (!isCaseAdmitted) {
+        updatedFormdata.hearingPurpose = {
+          code: "ADMISSION",
+        };
+      }
     }
     setCurrentFormData(updatedFormdata);
     return updatedFormdata;
@@ -1022,7 +1031,7 @@ const GenerateOrders = () => {
       try {
         orderSchema = Digit.Customizations.dristiOrders.OrderFormSchemaUtils.formToSchema(order.additionalDetails.formdata, modifiedFormConfig);
       } catch (error) {
-        console.log(error);
+        console.error("error :>> ", error);
       }
 
       return await ordersService.updateOrder(
@@ -1047,7 +1056,7 @@ const GenerateOrders = () => {
       try {
         orderSchema = Digit.Customizations.dristiOrders.OrderFormSchemaUtils.formToSchema(order.additionalDetails.formdata, modifiedFormConfig);
       } catch (error) {
-        console.log(error);
+        console.error("error :>> ", error);
       }
       // const formOrder = await Digit.Customizations.dristiOrders.OrderFormSchemaUtils.schemaToForm(orderDetails, modifiedFormConfig);
 
@@ -1323,6 +1332,7 @@ const GenerateOrders = () => {
         {
           application: {
             ...applicationDetails,
+            cmpNumber: caseDetails?.cmpNumber,
             workflow: {
               ...applicationDetails.workflow,
               action:
@@ -1391,6 +1401,20 @@ const GenerateOrders = () => {
     );
   };
 
+  const getFormData = (orderType, order) => {
+    const formDataKeyMap = {
+      SUMMONS: "SummonsOrder",
+      WARRANT: "warrantFor",
+      NOTICE: "noticeOrder",
+    };
+    const formDataKey = formDataKeyMap[orderType];
+    return order?.additionalDetails?.formdata?.[formDataKey];
+  };
+
+  const getOrderData = (orderType, orderFormData) => {
+    return ["SUMMONS", "NOTICE"].includes(orderType) ? orderFormData?.party?.data : orderFormData;
+  };
+
   const createTask = async (orderType, caseDetails, orderDetails) => {
     let payload = {};
     const { litigants } = caseDetails;
@@ -1405,17 +1429,15 @@ const GenerateOrders = () => {
     );
 
     const orderData = orderDetails?.order;
-    const orderFormData = orderDetails?.order?.additionalDetails?.formdata?.[orderType === "NOTICE" ? "noticeOrder" : "SummonsOrder"]?.party?.data;
+    const orderFormData = getFormData(orderType, orderData);
+    const respondentNameData = getOrderData(orderType, orderFormData);
     const selectedChannel = orderData?.additionalDetails?.formdata?.[orderType === "NOTICE" ? "noticeOrder" : "SummonsOrder"]?.selectedChannels;
     const noticeType = orderData?.additionalDetails?.formdata?.noticeType?.type;
     const respondentAddress = orderFormData?.addressDetails
       ? orderFormData?.addressDetails?.map((data) => ({ ...data?.addressDetails }))
       : caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.addressDetails?.map((data) => data?.addressDetails);
-    const respondentName = constructFullName(
-      orderFormData?.respondentFirstName,
-      orderFormData?.respondentMiddleName,
-      orderFormData?.respondentLastName
-    );
+    const respondentName =
+      constructFullName(respondentNameData?.firstName, respondentNameData?.middleName, respondentNameData?.lastName) || respondentNameData;
 
     const respondentPhoneNo = orderFormData?.phonenumbers?.mobileNumber || [];
     const respondentEmail = orderFormData?.emails?.email || [];
@@ -1451,6 +1473,7 @@ const GenerateOrders = () => {
           summonDetails: {
             issueDate: orderData?.auditDetails?.lastModifiedTime,
             caseFilingDate: caseDetails?.filingDate,
+            docSubType: orderFormData?.partyType === "Witness" ? "WITNESS" : "ACCUSED",
           },
           respondentDetails: {
             name: respondentName,
@@ -1547,7 +1570,8 @@ const GenerateOrders = () => {
             courtPhone: courtDetails?.phone,
             courtId: caseDetails?.courtId,
           },
-          deliveryChannel: {
+          deliveryChannels: {
+            channelName: "Police",
             name: "",
             address: "",
             phone: "",
@@ -1862,10 +1886,11 @@ const GenerateOrders = () => {
             },
             { tenantId }
           )
-          .then(() => {
+          .then((res) => {
             if (caseDetails?.status === "ADMISSION_HEARING_SCHEDULED") {
               updateCaseDetails("ADMIT");
             }
+            return res;
           })
       );
 
@@ -1945,7 +1970,9 @@ const GenerateOrders = () => {
         });
       }
       if (orderType === "INITIATING_RESCHEDULING_OF_HEARING_DATE") {
-        const dateObject = new Date(applicationDetails?.additionalDetails?.formdata?.changedHearingDate);
+        const dateObject = new Date(
+          applicationDetails?.additionalDetails?.formdata?.changedHearingDate || currentOrder?.additionalDetails?.formdata?.originalHearingDate
+        );
         let date = dateObject && dateObject?.getTime();
         if (isNaN(date)) {
           date = Date.now();
@@ -2006,7 +2033,44 @@ const GenerateOrders = () => {
             });
           });
         } else {
-          updateCaseDetails("ISSUE_ORDER");
+          try {
+            await updateCaseDetails("ISSUE_ORDER");
+            const caseDetails = await refetchCaseData();
+            const caseData = caseDetails?.data?.criteria?.[0]?.responseList?.[0];
+            const respondent = caseData?.litigants?.find((litigant) => litigant?.partyType?.includes("respondent"));
+            const advocate = caseData?.representatives?.find((representative) =>
+              representative?.representing?.some((represent) => respondent && represent?.individualId === respondent?.individualId)
+            );
+
+            const assignees = [];
+            if (respondent) assignees.push({ uuid: respondent?.additionalDetails?.uuid });
+            if (advocate) assignees.push({ uuid: advocate?.additionalDetails?.uuid });
+
+            if (respondent && assignees?.length > 0) {
+              try {
+                await DRISTIService.customApiService(Urls.orders.pendingTask, {
+                  pendingTask: {
+                    name: "Pending Response",
+                    entityType: "case-default",
+                    referenceId: `MANUAL_${caseData?.filingNumber}`,
+                    status: "PENDING_RESPONSE",
+                    assignedTo: assignees,
+                    assignedRole: ["CASE_RESPONDER"],
+                    cnrNumber: caseData?.cnrNumber,
+                    filingNumber: caseData?.filingNumber,
+                    isCompleted: false,
+                    stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
+                    additionalDetails: { individualId: respondent?.individualId, caseId: caseData?.id },
+                    tenantId,
+                  },
+                });
+              } catch (err) {
+                console.error("err :>> ", err);
+              }
+            }
+          } catch (error) {
+            console.error("error :>> ", error);
+          }
         }
       }
       createTask(orderType, caseDetails, orderResponse);
