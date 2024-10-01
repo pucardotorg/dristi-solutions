@@ -88,7 +88,26 @@ function CaseFileAdmission({ t, path }) {
       cacheTime: 0,
     },
   });
-  console.log("workFlowDetails", workFlowDetails);
+
+  const filingNumber = useMemo(() => caseDetails?.filingNumber, [caseDetails?.filingNumber]);
+
+  const { data: hearingDetails } = Digit.Hooks.hearings.useGetHearings(
+    {
+      hearing: { tenantId },
+      criteria: {
+        tenantID: tenantId,
+        filingNumber: filingNumber,
+      },
+    },
+    {},
+    filingNumber,
+    Boolean(filingNumber)
+  );
+
+  const currentHearingId = useMemo(
+    () => hearingDetails?.HearingList?.find((list) => list?.hearingType === "ADMISSION" && list?.status === "SCHEDULED")?.hearingId,
+    [hearingDetails?.HearingList]
+  );
   const nextActions = useMemo(() => workFlowDetails?.nextActions || [{}], [workFlowDetails]);
 
   const primaryAction = useMemo(
@@ -472,16 +491,14 @@ function CaseFileAdmission({ t, path }) {
           filingNumber: caseDetails?.filingNumber,
         },
       });
-      if (caseDetails?.status === "PENDING_RESPONSE") {
-        const hearingData = HearingList?.find((list) => list?.hearingType === "ADMISSION" && list?.status === "SCHEDULED") || {};
-        if (hearingData.hearingId) {
-          hearingData.workflow = hearingData.workflow || {};
-          hearingData.workflow.action = "ABANDON";
-          await Digit.HearingService.updateHearings(
-            { tenantId, hearing: hearingData, hearingType: "", status: "" },
-            { applicationNumber: "", cnrNumber: "" }
-          );
-        }
+      const hearingData = HearingList?.find((list) => list?.hearingType === "ADMISSION" && list?.status === "SCHEDULED") || {};
+      if (hearingData.hearingId) {
+        hearingData.workflow = hearingData.workflow || {};
+        hearingData.workflow.action = "ABANDON";
+        await Digit.HearingService.updateHearings(
+          { tenantId, hearing: hearingData, hearingType: "", status: "" },
+          { applicationNumber: "", cnrNumber: "" }
+        );
       }
       DRISTIService.customApiService(Urls.dristi.pendingTask, {
         pendingTask: {
@@ -941,6 +958,7 @@ function CaseFileAdmission({ t, path }) {
                   caseDetails={caseDetails}
                   caseAdmittedSubmit={caseAdmittedSubmit}
                   createAdmissionOrder={createAdmissionOrder}
+                  isAdmissionHearingAvailable={Boolean(currentHearingId)}
                 ></AdmissionActionModal>
               )}
             </div>
