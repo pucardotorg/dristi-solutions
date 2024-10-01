@@ -1,9 +1,7 @@
-import { useToast } from "../../../components/Toast/useToast";
+import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
 import { getUserDetails } from "../../../hooks/useGetAccessToken";
 import { DRISTIService } from "../../../services";
-import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import { userTypeOptions } from "../registration/config";
-import { formatDate } from "./CaseType";
 import { efilingDocumentKeyAndTypeMapping } from "./Config/efilingDocumentKeyAndTypeMapping";
 
 export const showDemandNoticeModal = ({
@@ -1118,7 +1116,7 @@ export const updateCaseDetails = async ({
                 individualId: data?.data?.complainantVerification?.individualDetails?.individualId,
                 partyType: index === 0 ? "complainant.primary" : "complainant.additional",
                 additionalDetails: {
-                  fullName: `${data?.data?.firstName}${data?.data?.middleName ? " " + data?.data?.middleName + " " : " "}${data?.data?.lastName}`,
+                  fullName: getFullName(" ", data?.data?.firstName, data?.data?.middleName, data?.data?.lastName),
                   uuid: userUuid ? userUuid : null,
                 },
               };
@@ -1199,7 +1197,7 @@ export const updateCaseDetails = async ({
                     individualId: Individual?.Individual?.individualId,
                     partyType: index === 0 ? "complainant.primary" : "complainant.additional",
                     additionalDetails: {
-                      fullName: `${firstName}${middleName ? " " + middleName + " " : " "}${lastName}`,
+                      fullName: getFullName(" ", firstName, middleName, lastName),
                       uuid: userUuid ? userUuid : null,
                     },
                   };
@@ -1251,7 +1249,7 @@ export const updateCaseDetails = async ({
                     individualId: Individual?.Individual?.individualId,
                     partyType: index === 0 ? "complainant.primary" : "complainant.additional",
                     additionalDetails: {
-                      fullName: `${firstName}${middleName ? " " + middleName + " " : " "}${lastName}`,
+                      fullName: getFullName(" ", firstName, middleName, lastName),
                       uuid: userUuid ? userUuid : null,
                     },
                   };

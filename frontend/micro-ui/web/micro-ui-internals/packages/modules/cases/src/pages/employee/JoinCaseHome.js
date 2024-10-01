@@ -27,6 +27,7 @@ import { uploadIdConfig } from "@egovernments/digit-ui-module-dristi/src/pages/c
 import CustomStepperSuccess from "../../../../orders/src/components/CustomStepperSuccess";
 import {
   createRespondentIndividualUser,
+  getFullName,
   searchIndividualUserWithUuid,
   selectMobileNumber,
   selectOtp,
@@ -2208,7 +2209,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
               caseId: caseDetails?.id,
               litigant: {
                 additionalDetails: {
-                  fullName: `${name?.givenName}${name?.otherNames ? " " + name?.otherNames + " " : " "}${name?.familyName}`,
+                  fullName: getFullName(" ", name?.givenName, name?.otherNames, name?.familyName),
                   affidavitText,
                   uuid: userInfo?.uuid,
                 },
@@ -2415,7 +2416,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
               caseId: caseDetails?.id,
               litigant: {
                 additionalDetails: {
-                  fullName: `${name?.givenName}${name?.otherNames ? " " + name?.otherNames + " " : " "}${name?.familyName}`,
+                  fullName: getFullName(" ", name?.givenName, name?.otherNames, name?.familyName),
                   uuid: userInfo?.uuid,
                 },
                 tenantId: tenantId,
@@ -2430,7 +2431,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                   representing: [
                     {
                       additionalDetails: {
-                        fullName: `${name?.givenName}${name?.otherNames ? " " + name?.otherNames + " " : " "}${name?.familyName}`,
+                        fullName: getFullName(" ", name?.givenName, name?.otherNames, name?.familyName),
                         document: newDocument,
                         uuid: userInfo?.uuid,
                       },
