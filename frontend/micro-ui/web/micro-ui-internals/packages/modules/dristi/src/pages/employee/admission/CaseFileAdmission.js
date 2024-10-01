@@ -26,6 +26,7 @@ import ScheduleHearing from "../AdmittedCases/ScheduleHearing";
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
+  NOTICE: 3 * 24 * 3600 * 1000,
 };
 
 const casePrimaryActions = [
@@ -166,6 +167,22 @@ function CaseFileAdmission({ t, path }) {
       };
       DRISTIService.customApiService(Urls.dristi.ordersCreate, { order: orderBody }, { tenantId })
         .then((res) => {
+          DRISTIService.customApiService(Urls.dristi.pendingTask, {
+            pendingTask: {
+              name: t("DRAFT_IN_PROGRESS_ISSUE_NOTICE"),
+              entityType: "order-default",
+              referenceId: `MANUAL_${res?.order?.orderNumber}`,
+              status: "DRAFT_IN_PROGRESS",
+              assignedTo: [],
+              assignedRole: ["JUDGE_ROLE"],
+              cnrNumber: updatedCaseDetails?.cnrNumber,
+              filingNumber: caseDetails?.filingNumber,
+              isCompleted: false,
+              stateSla: todayDate + stateSla.NOTICE,
+              additionalDetails: {},
+              tenantId,
+            },
+          });
           history.push(`/digit-ui/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`, {
             caseId: caseDetails?.id,
             tab: "Orders",
