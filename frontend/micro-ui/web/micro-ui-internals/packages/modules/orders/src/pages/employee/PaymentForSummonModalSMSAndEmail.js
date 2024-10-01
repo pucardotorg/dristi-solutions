@@ -14,6 +14,7 @@ import { useEffect } from "react";
 import { paymentType } from "../../utils/paymentType";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { taskService } from "../../hooks/services";
+import { extractFeeMedium, getTaskType } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const submitModalInfo = {
   header: "CS_HEADER_FOR_SUMMON_POST",
@@ -231,6 +232,26 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
 
   const referenceId = channelId === "sms" ? "SMS" : channelId === "email" ? "E-mail" : "";
 
+  const summonsPincode = useMemo(() => filteredTasks?.[0]?.taskDetails?.respondentDetails?.address?.pincode, [filteredTasks]);
+  const calculateChannelId = useMemo(() => extractFeeMedium(filteredTasks?.[0]?.taskDetails?.deliveryChannels?.channelName || ""), [tasksData]);
+
+  const { data: breakupResponse, isLoading: isSummonsBreakUpLoading } = Digit.Hooks.dristi.useSummonsPaymentBreakUp(
+    {
+      Criteria: [
+        {
+          channelId: calculateChannelId,
+          receiverPincode: summonsPincode,
+          tenantId: tenantId,
+          Id: filteredTasks?.[0]?.taskNumber,
+          taskType: getTaskType(orderType === "SUMMONS" ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE),
+        },
+      ],
+    },
+    {},
+    "dristi",
+    Boolean(tasksData)
+  );
+
   const onPayOnline = async () => {
     // console.log("clikc");
     try {
@@ -374,7 +395,12 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
           amount: "Amount",
           action: "Actions",
         },
-        { label: "Court Fees", amount: taskAmount, action: "Pay Online", onClick: onPayOnline },
+        {
+          label: "Court Fees",
+          amount: breakupResponse?.Calculation?.[0]?.breakDown?.find((data) => data?.type === "Court Fee")?.amount,
+          action: "Pay Online",
+          onClick: onPayOnline,
+        },
       ],
       sms: [
         {
@@ -382,7 +408,12 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
           amount: "Amount",
           action: "Actions",
         },
-        { label: "Court Fees", amount: taskAmount, action: "Pay Online", onClick: onPayOnline },
+        {
+          label: "Court Fees",
+          amount: breakupResponse?.Calculation?.[0]?.breakDown.find((data) => data?.type === "Court Fee")?.amount,
+          action: "Pay Online",
+          onClick: onPayOnline,
+        },
       ],
     };
   }, [filteredTasks, onPayOnline]);

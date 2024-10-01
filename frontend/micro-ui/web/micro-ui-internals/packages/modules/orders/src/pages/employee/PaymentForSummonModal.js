@@ -13,6 +13,7 @@ import { Urls } from "../../hooks/services/Urls";
 import { useEffect } from "react";
 import { paymentType } from "../../utils/paymentType";
 import { taskService } from "../../hooks/services";
+import { extractFeeMedium, getTaskType } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const modeOptions = [
   { label: "E-Post (3-5 days)", value: "e-post" },
@@ -131,7 +132,6 @@ const PaymentForSummonModal = ({ path }) => {
     if (caseData) {
       const id = caseData?.criteria?.[0]?.responseList?.[0]?.id;
       if (id) {
-        console.log(id, "id");
         setCaseId(id); // Set the caseId in state
       } else {
         console.error("caseId is undefined or not available");
@@ -144,13 +144,11 @@ const PaymentForSummonModal = ({ path }) => {
   }, [caseData]);
 
   const onViewOrderClick = () => {
-    console.log(caseId, "caseID");
     history.push(
       `/${window.contextPath}/citizen/dristi/home/view-case?caseId=${caseData?.criteria?.[0]?.responseList?.[0]?.id}&filingNumber=${filingNumber}&tab=Orders`
     );
   };
 
-  console.log("caseData :>> ", caseData?.criteria?.[0]?.responseList?.[0]?.id);
   const todayDate = new Date().getTime();
   const dayInMillisecond = 24 * 3600 * 1000;
 
@@ -224,6 +222,26 @@ const PaymentForSummonModal = ({ path }) => {
     Boolean(filteredTasks?.[0]?.taskNumber)
   );
 
+  const summonsPincode = useMemo(() => filteredTasks?.[0]?.taskDetails?.respondentDetails?.address?.pincode, [filteredTasks]);
+  const channelId = useMemo(() => extractFeeMedium(filteredTasks?.[0]?.taskDetails?.deliveryChannels?.channelName || ""), [filteredTasks]);
+
+  const { data: breakupResponse, isLoading: isSummonsBreakUpLoading } = Digit.Hooks.dristi.useSummonsPaymentBreakUp(
+    {
+      Criteria: [
+        {
+          channelId: channelId,
+          receiverPincode: summonsPincode,
+          tenantId: tenantId,
+          Id: filteredTasks?.[0]?.taskNumber,
+          taskType: getTaskType(orderType === "SUMMONS" ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE),
+        },
+      ],
+    },
+    {},
+    "dristi",
+    Boolean(tasksData)
+  );
+
   const mockSubmitModalInfo = useMemo(
     () =>
       isCaseAdmitted
@@ -237,7 +255,6 @@ const PaymentForSummonModal = ({ path }) => {
   );
 
   const onPayOnline = async () => {
-    console.log("clikc");
     try {
       // if (courtBillResponse?.Bill?.length === 0) {
       //   await DRISTIService.createDemand({
@@ -448,8 +465,18 @@ const PaymentForSummonModal = ({ path }) => {
           amount: "Amount",
           action: "Actions",
         },
-        { label: "Court Fees", amount: taskAmount, action: "Pay Online", onClick: onPayOnline },
-        { label: "Delivery Partner Fee", amount: taskAmount, action: "Pay Online", onClick: onPayOnlineSBI },
+        {
+          label: "Court Fees",
+          amount: breakupResponse?.Calculation?.[0]?.breakDown?.find((data) => data?.type === "Court Fee")?.amount,
+          action: "Pay Online",
+          onClick: onPayOnline,
+        },
+        {
+          label: "Delivery Partner Fee",
+          amount: breakupResponse?.Calculation?.[0]?.breakDown?.find((data) => data?.type === "E Post")?.amount,
+          action: "Pay Online",
+          onClick: onPayOnlineSBI,
+        },
       ],
       "registered-post": [
         {
@@ -457,7 +484,12 @@ const PaymentForSummonModal = ({ path }) => {
           amount: "Amount",
           action: "Actions",
         },
-        { label: "Court Fees", amount: taskAmount, action: "Pay Online", onClick: onPayOnline },
+        {
+          label: "Court Fees",
+          amount: breakupResponse?.Calculation?.[0]?.breakDown.find((data) => data?.type === "Court Fee")?.amount,
+          action: "Pay Online",
+          onClick: onPayOnline,
+        },
         { label: "Delivery Partner Fee", amount: taskAmount, action: "offline-process", onClick: onPayOnline },
       ],
     };
@@ -479,13 +511,19 @@ const PaymentForSummonModal = ({ path }) => {
     const addressDetails =
       orderData?.list?.[0]?.additionalDetails?.formdata?.[orderType === "SUMMONS" ? "SummonsOrder" : "noticeOrder"]?.party?.data?.addressDetails?.[0]
         ?.addressDetails;
-    console.log("addressDetails :>> ", addressDetails);
+
+    const formattedAddress =
+      typeof addressDetails === "object"
+        ? `${addressDetails?.locality || ""}, ${addressDetails?.city || ""}, ${addressDetails?.district || ""}, ${addressDetails?.state || ""}, ${
+            addressDetails?.pincode || ""
+          }`
+        : addressDetails;
     return [
       { key: "Issued to", value: name },
       { key: "Next Hearing Date", value: formatDate(new Date(hearingsData?.HearingList?.[0]?.startTime)) },
       {
         key: "Delivery Channel",
-        value: `Post (${addressDetails?.locality}, ${addressDetails?.city}, ${addressDetails?.district}, ${addressDetails?.state}, ${addressDetails?.pincode})`,
+        value: `Post (${formattedAddress})`,
       },
     ];
   }, [hearingsData?.HearingList, orderData?.list]);

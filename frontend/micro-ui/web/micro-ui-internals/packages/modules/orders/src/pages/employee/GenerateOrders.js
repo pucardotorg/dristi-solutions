@@ -303,7 +303,7 @@ const GenerateOrders = () => {
       pagination: { limit: 1000, offset: 0 },
     },
     { tenantId },
-    filingNumber,
+    filingNumber + OrderWorkflowState.DRAFT_IN_PROGRESS,
     Boolean(filingNumber)
   );
   const { data: publishedOrdersData, isLoading: isPublishedOrdersLoading } = useSearchOrdersService(
@@ -397,9 +397,12 @@ const GenerateOrders = () => {
       setSelectedOrder(defaultIndex);
     }
     const isSignSuccess = localStorage.getItem("esignProcess");
+    const savedOrderPdf = localStorage.getItem("orderPDF");
     if (isSignSuccess) {
       setShowsignatureModal(true);
+      setOrderPdfFileStoreID(savedOrderPdf);
       localStorage.removeItem("esignProcess");
+      localStorage.removeItem("orderPDF");
     }
   }, [defaultIndex]);
 
