@@ -131,7 +131,6 @@ const PaymentForSummonModal = ({ path }) => {
     if (caseData) {
       const id = caseData?.criteria?.[0]?.responseList?.[0]?.id;
       if (id) {
-        console.log(id, "id");
         setCaseId(id); // Set the caseId in state
       } else {
         console.error("caseId is undefined or not available");
@@ -144,13 +143,11 @@ const PaymentForSummonModal = ({ path }) => {
   }, [caseData]);
 
   const onViewOrderClick = () => {
-    console.log(caseId, "caseID");
     history.push(
       `/${window.contextPath}/citizen/dristi/home/view-case?caseId=${caseData?.criteria?.[0]?.responseList?.[0]?.id}&filingNumber=${filingNumber}&tab=Orders`
     );
   };
 
-  console.log("caseData :>> ", caseData?.criteria?.[0]?.responseList?.[0]?.id);
   const todayDate = new Date().getTime();
   const dayInMillisecond = 24 * 3600 * 1000;
 
@@ -237,7 +234,6 @@ const PaymentForSummonModal = ({ path }) => {
   );
 
   const onPayOnline = async () => {
-    console.log("clikc");
     try {
       // if (courtBillResponse?.Bill?.length === 0) {
       //   await DRISTIService.createDemand({
@@ -479,13 +475,19 @@ const PaymentForSummonModal = ({ path }) => {
     const addressDetails =
       orderData?.list?.[0]?.additionalDetails?.formdata?.[orderType === "SUMMONS" ? "SummonsOrder" : "noticeOrder"]?.party?.data?.addressDetails?.[0]
         ?.addressDetails;
-    console.log("addressDetails :>> ", addressDetails);
+
+    const formattedAddress =
+      typeof addressDetails === "object"
+        ? `${addressDetails?.locality || ""}, ${addressDetails?.city || ""}, ${addressDetails?.district || ""}, ${addressDetails?.state || ""}, ${
+            addressDetails?.pincode || ""
+          }`
+        : addressDetails;
     return [
       { key: "Issued to", value: name },
       { key: "Next Hearing Date", value: formatDate(new Date(hearingsData?.HearingList?.[0]?.startTime)) },
       {
         key: "Delivery Channel",
-        value: `Post (${addressDetails?.locality}, ${addressDetails?.city}, ${addressDetails?.district}, ${addressDetails?.state}, ${addressDetails?.pincode})`,
+        value: `Post (${formattedAddress})`,
       },
     ];
   }, [hearingsData?.HearingList, orderData?.list]);
