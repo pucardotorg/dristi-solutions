@@ -143,15 +143,21 @@ public class SummonsService {
         Workflow workflow = null;
         if (task.getTaskType().equalsIgnoreCase(SUMMON)) {
             if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.DELIVERED)) {
-                workflow = Workflow.builder().action("SERVE").build();
+                workflow = Workflow.builder().action("SERVED").build();
             } else {
-                workflow = Workflow.builder().action("REISSUE").build();
+                workflow = Workflow.builder().action("NOT_SERVED").build();
             }
         } else if (task.getTaskType().equalsIgnoreCase(WARRANT)) {
             if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.EXECUTED)) {
                 workflow = Workflow.builder().action("DELIVERED").build();
             } else {
-                workflow = Workflow.builder().action("NOT DELIVERED").build();
+                workflow = Workflow.builder().action("NOT_DELIVERED").build();
+            }
+        } else if (task.getTaskType().equalsIgnoreCase(NOTICE)) {
+            if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.EXECUTED)) {
+                workflow = Workflow.builder().action("SERVED").build();
+            } else {
+                workflow = Workflow.builder().action("NOT_SERVED").build();
             }
         }
         task.setWorkflow(workflow);
