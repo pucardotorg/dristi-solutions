@@ -1430,6 +1430,7 @@ const GenerateOrders = () => {
 
     const orderData = orderDetails?.order;
     const orderFormData = getFormData(orderType, orderData);
+    const orderFormValue = orderDetails?.order?.additionalDetails?.formdata;
     const respondentNameData = getOrderData(orderType, orderFormData);
     const selectedChannel = orderData?.additionalDetails?.formdata?.[orderType === "NOTICE" ? "noticeOrder" : "SummonsOrder"]?.selectedChannels;
     const noticeType = orderData?.additionalDetails?.formdata?.noticeType?.type;
@@ -1551,10 +1552,10 @@ const GenerateOrders = () => {
           warrantDetails: {
             issueDate: orderData?.auditDetails?.lastModifiedTime,
             caseFilingDate: caseDetails?.filingDate,
-            docType: orderDetails?.order?.additionalDetails?.formdata?.warrantType?.code,
-            docSubType: orderDetails?.order?.additionalDetails?.formdata?.bailInfo?.isBailable?.code ? "BAILABLE" : "NON_BAILABLE",
-            surety: orderDetails?.order?.additionalDetails?.formdata?.bailInfo?.noOfSureties?.code,
-            bailableamount: orderDetails?.order?.additionalDetails?.formdata?.bailInfo?.bailableAmount,
+            docType: orderFormValue.warrantType?.code,
+            docSubType: orderFormValue.bailInfo?.isBailable?.code ? "BAILABLE" : "NON_BAILABLE",
+            surety: orderFormValue.bailInfo?.noOfSureties?.code,
+            bailableamount: orderFormValue.bailInfo?.bailableAmount,
           },
           respondentDetails: {
             name: respondentName,
