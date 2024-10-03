@@ -16,7 +16,6 @@ import java.util.List;
  * CaseSearchRequest
  */
 @Validated
-@jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2024-09-24T14:05:42.847785340+05:30[Asia/Kolkata]")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

@@ -87,13 +87,16 @@ public class SummonsService {
         TaskListResponse taskListResponse = taskUtil.callSearchTask(searchRequest);
         Task task = taskListResponse.getList().get(0);
         String taskType = task.getTaskType();
-        String docSubType = getDocSubType(taskType, task.getTaskDetails());
-        String pdfTemplateKey = getPdfTemplateKey(taskType, docSubType, true);
         TaskRequest taskRequest = TaskRequest.builder()
                 .task(task)
                 .requestInfo(request.getRequestInfo()).build();
 
-        generateDocumentAndUpdateTask(taskRequest, pdfTemplateKey, true);
+        if (!taskType.equalsIgnoreCase(WARRANT)) {
+            String docSubType = getDocSubType(taskType, task.getTaskDetails());
+            String pdfTemplateKey = getPdfTemplateKey(taskType, docSubType, true);
+
+            generateDocumentAndUpdateTask(taskRequest, pdfTemplateKey, true);
+        }
 
         SummonsDelivery summonsDelivery = summonsDeliveryEnrichment.generateAndEnrichSummonsDelivery(taskRequest.getTask(), taskRequest.getRequestInfo());
 
@@ -174,14 +177,19 @@ public class SummonsService {
                 if (docSubType.equals(ACCUSED)) {
                     return qrCode ? config.getSummonsAccusedQrPdfTemplateKey() : config.getSummonsAccusedPdfTemplateKey();
                 } else if (docSubType.equals(WITNESS)) {
-                    return qrCode ? config.getSummonsIssueQrPdfTemplateKey() : config.getSummonsIssuePdfTemplateKey();
+                    return qrCode ? config.getBailableWarrantPdfTemplateKey() : config.getSummonsIssuePdfTemplateKey();
                 } else {
                     throw new CustomException("INVALID_DOC_SUB_TYPE", "Document Sub-Type must be valid. Provided: " + docSubType);
                 }
             }
             case WARRANT -> {
-                return qrCode ? config.getNonBailableWarrantQrPdfTemplateKey() : config.getNonBailableWarrantPdfTemplateKey();
-            }
+                if (docSubType.equals(BAILABLE)) {
+                    return config.getBailableWarrantPdfTemplateKey();
+                } else if (docSubType.equals(NON_BAILABLE)) {
+                    return config.getNonBailableWarrantQrPdfTemplateKey();
+                } else {
+                    throw new CustomException("INVALID_DOC_SUB_TYPE", "Document Sub-Type must be valid. Provided: " + docSubType);
+                }            }
             case NOTICE -> {
                 return qrCode ? config.getTaskNoticeQrPdfTemplateKey() : config.getTaskNoticePdfTemplateKey();
             }
