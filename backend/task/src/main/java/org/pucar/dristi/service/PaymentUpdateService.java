@@ -178,6 +178,17 @@ public class PaymentUpdateService {
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
                 }
+                case WARRANT -> {
+                    Workflow workflow = new Workflow();
+                    workflow.setAction(MAKE_PAYMENT);
+                    task.setWorkflow(workflow);
+                    String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, task.getTaskNumber(),
+                            config.getTaskWarrantBusinessServiceName(), workflow, config.getTaskWarrantBusinessName());
+                    task.setStatus(status);
+
+                    TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
+                    producer.push(config.getTaskUpdateTopic(), taskRequest);
+                }
             }
         }
     }
