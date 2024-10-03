@@ -55,6 +55,31 @@ public class PdfServiceUtil {
             headers.setContentType(MediaType.APPLICATION_JSON);
             SummonsPdf summonsPdf = createSummonsPdfFromTask(taskRequest.getTask());
 
+            if (SUMMON.equalsIgnoreCase(taskRequest.getTask().getTaskType())) {
+                var summonDetails = taskRequest.getTask().getTaskDetails().getSummonDetails();
+
+                if (WITNESS.equalsIgnoreCase(summonDetails.getDocSubType())) {
+                    var witnessDetails = taskRequest.getTask().getTaskDetails().getWitnessDetails();
+                    summonsPdf.setWitnessName(witnessDetails.getName());
+                    summonsPdf.setWitnessAddress(witnessDetails.getAddress().toString());
+                }
+            }
+
+            if (WARRANT.equalsIgnoreCase(taskRequest.getTask().getTaskType())) {
+                var warrantDetails = taskRequest.getTask().getTaskDetails().getWarrantDetails();
+                summonsPdf.setExecutorName(warrantDetails.getExecutorName());
+                String docSubType = warrantDetails.getDocSubType();
+
+                if (BAILABLE.equalsIgnoreCase(docSubType)) {
+                    Integer surety = warrantDetails.getSurety();
+                    double baiableAmount = Double.parseDouble(warrantDetails.getBaiableAmount());
+                    if (surety != null && surety == 2) {
+                        baiableAmount /= 2;
+                    }
+                    summonsPdf.setTwoSuretyAmount(String.valueOf(baiableAmount));
+                }
+            }
+
             if (taskRequest.getTask().getTaskType().equalsIgnoreCase(SUMMON) || taskRequest.getTask().getTaskType().equalsIgnoreCase(NOTICE)) {
                 CaseSearchRequest caseSearchRequest = createCaseSearchRequest(taskRequest.getRequestInfo(), taskRequest.getTask());
                 JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);

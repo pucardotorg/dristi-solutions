@@ -24,4 +24,13 @@ public class WarrantDetails {
 
     @JsonProperty("partyType")
     private String partyType;
+
+    @JsonProperty("baiableAmount")
+    private String baiableAmount;
+
+    @JsonProperty("surety")
+    private Integer surety;
+
+    @JsonProperty("executorName")
+    private String executorName;
 }

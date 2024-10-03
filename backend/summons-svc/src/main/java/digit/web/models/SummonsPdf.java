@@ -59,4 +59,19 @@ public class SummonsPdf  {
 
     @JsonProperty("accessCode")
     private String accessCode;
+
+    @JsonProperty("witnessName")
+    private String witnessName;
+
+    @JsonProperty("witnessAddress")
+    private String witnessAddress;
+
+    @JsonProperty("oneSuretyAmount")
+    private String oneSuretyAmount;
+
+    @JsonProperty("twoSuretyAmount")
+    private String twoSuretyAmount;
+
+    @JsonProperty("executorName")
+    private String executorName;
 }
