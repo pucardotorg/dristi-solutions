@@ -169,7 +169,7 @@ const PaymentForRPADModal = ({ path }) => {
     Boolean(filteredTasks?.[0]?.orderId)
   );
 
-  const orderType = useMemo(() => orderData?.list?.[0]?.orderType, [orderData]);
+  const orderType = useMemo(() => orderData?.list?.[0]?.orderType || "", [orderData]);
 
   const { data: hearingsData } = Digit.Hooks.hearings.useGetHearings(
     {
@@ -210,7 +210,7 @@ const PaymentForRPADModal = ({ path }) => {
 
   const summonsPincode = useMemo(() => filteredTasks?.[0]?.taskDetails?.respondentDetails?.address?.pincode, [filteredTasks]);
   const channelId = useMemo(() => extractFeeMedium(filteredTasks?.[0]?.taskDetails?.deliveryChannels?.channelName || ""), [filteredTasks]);
-  console.log("channelId", channelId, filteredTasks);
+  console.log("channelId", channelId, filteredTasks, orderType);
 
   const { data: breakupResponse, isLoading: isSummonsBreakUpLoading } = Digit.Hooks.dristi.useSummonsPaymentBreakUp(
     {
@@ -225,8 +225,8 @@ const PaymentForRPADModal = ({ path }) => {
       ],
     },
     {},
-    "dristi" + channelId,
-    Boolean(filteredTasks && channelId)
+    "dristi" + channelId + orderType,
+    Boolean(filteredTasks && channelId && orderType)
   );
 
   const mockSubmitModalInfo = useMemo(
