@@ -13,6 +13,7 @@ function PublishedOrderModal({
   caseStatus,
   handleOrdersTab,
   extensionApplications = [],
+  productionOfDocumentApplications = [],
 }) {
   const [fileStoreId, setFileStoreID] = useState(null);
   const [fileName, setFileName] = useState();
@@ -34,6 +35,9 @@ function PublishedOrderModal({
   const signedOrder = useMemo(() => order?.documents?.filter((item) => item?.documentType === "SIGNED")[0], [order]);
   const userInfo = Digit.UserService.getUser()?.info;
   const showSubmissionButtons = useMemo(() => {
+    if (productionOfDocumentApplications?.some((item) => item?.referenceId === order?.id)) {
+      return false;
+    }
     const submissionParty = order?.additionalDetails?.formdata?.submissionParty?.map((item) => item.uuid).flat();
     return (
       submissionParty?.includes(userInfo?.uuid) &&
@@ -47,7 +51,7 @@ function PublishedOrderModal({
         CaseWorkflowState.CASE_ADMITTED,
       ].includes(caseStatus)
     );
-  }, [caseStatus, order?.additionalDetails?.formdata?.submissionParty, userInfo?.uuid, userRoles]);
+  }, [caseStatus, order, userInfo?.uuid, userRoles, productionOfDocumentApplications]);
   const showSubmitDocumentButton = useMemo(() => showSubmissionButtons, [showSubmissionButtons]);
   const showExtensionButton = useMemo(
     () => showSubmissionButtons && !extensionApplications?.some((item) => item?.additionalDetails?.formdata?.refOrderId === order?.orderNumber),
