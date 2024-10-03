@@ -56,6 +56,9 @@ public class TaskCaseQueryBuilder {
     }
 
     public String addPaginationQuery(String query, Pagination pagination, List<Object> preparedStatementList) {
+        for(Object object: preparedStatementList){
+            preparedStatementList.add(object.toString());
+        }
         preparedStatementList.add(pagination.getLimit());
         preparedStatementList.add(pagination.getOffSet());
         return PAGINATION_QUERY.replace("{baseQuery}", query);
