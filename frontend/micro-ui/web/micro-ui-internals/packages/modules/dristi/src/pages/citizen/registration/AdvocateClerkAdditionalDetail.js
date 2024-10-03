@@ -4,6 +4,27 @@ import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import { advocateClerkConfig } from "./config";
 
+const headerStyle = {
+  fontFamily: "Roboto",
+  fontSize: "24px",
+  fontWeight: 700,
+  lineHeight: "30px",
+  textAlign: "center",
+  color: "#0b0c0c",
+  margin: 0,
+  width: "100%",
+};
+
+const subHeaderStyle = {
+  margin: 0,
+  fontFamily: "Roboto",
+  fontSize: "14px",
+  fontWeight: 400,
+  lineHeight: "21px",
+  textAlign: "center",
+  color: "#505a5f",
+};
+
 function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOnRefresh }) {
   const { t } = useTranslation();
   const Digit = window.Digit || {};
@@ -141,6 +162,17 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
   }
   return (
     <div className="advocate-additional-details">
+      <div className="id-verificatin-header">
+        <p className="vefifcation-header" style={headerStyle}>
+          {t("CORE_ADVOCATE_VERFICATION")}
+        </p>
+        <p className="vefifcation-sub-header" style={subHeaderStyle}>
+          {t("CORE_ADVOCATE_AUTHENTICITY_TEXT")}
+        </p>
+        <p className="vefifcation-sub-header" style={{ ...subHeaderStyle, paddingBottom: "40px" }}>
+          {t("CORE_ADVOCATE_DETAILS_TEXT")}
+        </p>
+      </div>
       <FormComposerV2
         config={advocateClerkConfig}
         t={t}

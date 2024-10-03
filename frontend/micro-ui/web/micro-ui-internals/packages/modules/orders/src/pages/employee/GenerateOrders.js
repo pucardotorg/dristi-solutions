@@ -1467,6 +1467,16 @@ const GenerateOrders = () => {
       locality: address,
     };
     const courtDetails = courtRoomData?.Court_Rooms?.find((data) => data?.code === caseDetails?.courtId);
+
+    const respondentDetails = {
+      name: respondentName,
+      address: respondentAddress?.[0],
+      phone: respondentPhoneNo[0] || "",
+      email: respondentEmail[0] || "",
+      age: "",
+      gender: "",
+    };
+
     switch (orderType) {
       case "SUMMONS":
         payload = {
@@ -1475,14 +1485,8 @@ const GenerateOrders = () => {
             caseFilingDate: caseDetails?.filingDate,
             docSubType: orderFormData?.partyType === "Witness" ? "WITNESS" : "ACCUSED",
           },
-          respondentDetails: {
-            name: respondentName,
-            address: respondentAddress?.[0],
-            phone: respondentPhoneNo[0] || "",
-            email: respondentEmail[0] || "",
-            age: "",
-            gender: "",
-          },
+          respondentDetails: respondentDetails,
+          witnessDetails: respondentDetails,
           complainantDetails: {
             name: complainantName,
             address: complainantAddress,
@@ -1514,14 +1518,8 @@ const GenerateOrders = () => {
             caseFilingDate: caseDetails?.filingDate,
             noticeType,
           },
-          respondentDetails: {
-            name: respondentName,
-            address: respondentAddress?.[0],
-            phone: respondentPhoneNo[0] || "",
-            email: respondentEmail[0] || "",
-            age: "",
-            gender: "",
-          },
+          respondentDetails: respondentDetails,
+          witnessDetails: respondentDetails,
           complainantDetails: {
             name: complainantName,
             address: complainantAddress,

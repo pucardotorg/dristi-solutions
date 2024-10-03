@@ -553,9 +553,6 @@ export const termsAndConditionConfig = [
 
 export const advocateClerkConfig = [
   {
-    head: "CORE_ADVOCATE_VERFICATION",
-    subHead: "CORE_ADVOCATE_VERFICATION_TEXT",
-
     body: [
       {
         type: "component",
