@@ -1496,7 +1496,7 @@ const GenerateOrders = () => {
             courtPhone: courtDetails?.phone,
             courtId: caseDetails?.courtId,
             hearingNumber: orderData?.hearingNumber,
-            judgeName: "super",
+            judgeName: "John Koshy",
           },
           deliveryChannels: {
             channelName: "",
@@ -1535,7 +1535,7 @@ const GenerateOrders = () => {
             courtPhone: courtDetails?.phone,
             courtId: caseDetails?.courtId,
             hearingNumber: orderData?.hearingNumber,
-            judgeName: "super",
+            judgeName: "John Koshy",
           },
           deliveryChannels: {
             channelName: "",
@@ -1551,6 +1551,10 @@ const GenerateOrders = () => {
           warrantDetails: {
             issueDate: orderData?.auditDetails?.lastModifiedTime,
             caseFilingDate: caseDetails?.filingDate,
+            docType: orderDetails?.order?.additionalDetails?.formdata?.warrantType?.code,
+            docSubType: orderDetails?.order?.additionalDetails?.formdata?.bailInfo?.isBailable?.code ? "BAILABLE" : "NONBAILABLE",
+            surety: orderDetails?.order?.additionalDetails?.formdata?.bailInfo?.noOfSureties?.code,
+            baiableAmount: orderDetails?.order?.additionalDetails?.formdata?.bailInfo?.bailableAmount,
           },
           respondentDetails: {
             name: respondentName,
@@ -1564,7 +1568,7 @@ const GenerateOrders = () => {
             caseTitle: caseDetails?.caseTitle,
             year: new Date(caseDetails).getFullYear(),
             hearingDate: new Date(orderData?.additionalDetails?.formData?.dateOfHearing || "").getTime(),
-            judgeName: "",
+            judgeName: "John Koshy",
             courtName: courtDetails?.name,
             courtAddress: courtDetails?.address,
             courtPhone: courtDetails?.phone,
