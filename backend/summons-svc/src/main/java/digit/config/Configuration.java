@@ -246,4 +246,11 @@ public class Configuration {
     @Value("${dristi.court.name}")
     private String courtName;
 
+    // Case Config
+    @Value("${egov.case.host}")
+    private String caseHost;
+
+    @Value("${egov.case.search.path}")
+    private String caseSearchPath;
+
 }

@@ -1,9 +1,11 @@
 package digit.util;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import digit.config.Configuration;
 import digit.web.models.*;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.Document;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
@@ -32,10 +34,13 @@ public class PdfServiceUtil {
 
     private final Configuration config;
 
+    private final CaseUtil caseUtil;
+
     @Autowired
-    public PdfServiceUtil(RestTemplate restTemplate, Configuration config) {
+    public PdfServiceUtil(RestTemplate restTemplate, Configuration config, CaseUtil caseUtil) {
         this.restTemplate = restTemplate;
         this.config = config;
+        this.caseUtil = caseUtil;
     }
 
     public ByteArrayResource generatePdfFromPdfService(TaskRequest taskRequest, String tenantId,
@@ -49,6 +54,13 @@ public class PdfServiceUtil {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             SummonsPdf summonsPdf = createSummonsPdfFromTask(taskRequest.getTask());
+
+            if (taskRequest.getTask().getTaskType().equalsIgnoreCase(SUMMON) || taskRequest.getTask().getTaskType().equalsIgnoreCase(NOTICE)) {
+                CaseSearchRequest caseSearchRequest = createCaseSearchRequest(taskRequest.getRequestInfo(), taskRequest.getTask());
+                JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+                String accessCode = caseDetails.has("accessCode") ? caseDetails.get("accessCode").asText() : "";
+                summonsPdf.setAccessCode(accessCode);
+            }
             if (qrCode && taskRequest.getTask().getDocuments() != null && !taskRequest.getTask().getDocuments().isEmpty()) {
                 List<Document> documents = taskRequest.getTask().getDocuments();
                 Document signedDocuments = null;
@@ -62,7 +74,6 @@ public class PdfServiceUtil {
                 if (signedDocuments != null) {
                     String embeddedUrl = config.getFileStoreHost() + config.getFileStoreSearchEndPoint() + "?tenantId=" + tenantId + "&fileStoreId=" + signedDocuments.getFileStore();
                     summonsPdf.setEmbeddedUrl(embeddedUrl);
-
                 }
             }
             log.info("Summons Pdf: {}", summonsPdf);
@@ -111,6 +122,14 @@ public class PdfServiceUtil {
                 .complainantName(task.getTaskDetails().getComplainantDetails().getName())
                 .complainantAddress(task.getTaskDetails().getComplainantDetails().getAddress().toString())
                 .build();
+    }
+
+    public CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, Task task) {
+        CaseSearchRequest caseSearchRequest = new CaseSearchRequest();
+        caseSearchRequest.setRequestInfo(requestInfo);
+        CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(task.getFilingNumber()).defaultFields(false).build();
+        caseSearchRequest.addCriteriaItem(caseCriteria);
+        return caseSearchRequest;
     }
 
     private String extractCaseYear(String input) {
