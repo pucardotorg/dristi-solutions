@@ -247,6 +247,38 @@ const AdmittedCases = () => {
   const listAllAdvocates = useMemo(() => Object.values(allAdvocates || {}).flat(), [allAdvocates]);
   const isAdvocatePresent = useMemo(() => listAllAdvocates?.includes(userInfo?.uuid), [listAllAdvocates, userInfo?.uuid]);
 
+  const onBehalfOfuuid = useMemo(() => Object.keys(allAdvocates)?.find((key) => allAdvocates[key].includes(userInfo?.uuid)), [
+    allAdvocates,
+    userInfo?.uuid,
+  ]);
+  const { data: applicationData, isloading: isApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
+    {
+      criteria: {
+        filingNumber,
+        tenantId,
+      },
+      tenantId,
+    },
+    {},
+    filingNumber + "allApplications",
+    filingNumber
+  );
+  const extensionApplications = useMemo(
+    () =>
+      applicationData?.applicationList?.filter(
+        (item) =>
+          item?.applicationType === "EXTENSION_SUBMISSION_DEADLINE" &&
+          item?.onBehalfOf?.includes(onBehalfOfuuid) &&
+          ![
+            SubmissionWorkflowState.COMPLETED,
+            SubmissionWorkflowState.DELETED,
+            SubmissionWorkflowState.REJECTED,
+            SubmissionWorkflowState.ABATED,
+          ].includes(item?.status)
+      ) || [],
+    [applicationData, onBehalfOfuuid]
+  );
+
   const caseRelatedData = useMemo(
     () => ({
       caseId,
@@ -261,6 +293,7 @@ const AdmittedCases = () => {
     [caseDetails, caseId, cnrNumber, filingNumber, statue]
   );
 
+  const caseStatus = useMemo(() => caseDetails?.status || "", [caseDetails]);
   const showMakeSubmission = useMemo(() => {
     return (
       isAdvocatePresent &&
@@ -272,25 +305,9 @@ const AdmittedCases = () => {
         CaseWorkflowState.PENDING_RESPONSE,
         CaseWorkflowState.PENDING_ADMISSION,
         CaseWorkflowState.CASE_ADMITTED,
-      ].includes(caseDetails?.status)
+      ].includes(caseStatus)
     );
-  }, [userRoles, caseDetails?.status, isAdvocatePresent]);
-
-  const showSubmissionButtons = useMemo(() => {
-    const submissionParty = currentOrder?.additionalDetails?.formdata?.submissionParty?.map((item) => item.uuid).flat();
-    return (
-      submissionParty?.includes(userInfo?.uuid) &&
-      userRoles.includes("APPLICATION_CREATOR") &&
-      [
-        CaseWorkflowState.PENDING_ADMISSION_HEARING,
-        CaseWorkflowState.ADMISSION_HEARING_SCHEDULED,
-        CaseWorkflowState.PENDING_NOTICE,
-        CaseWorkflowState.PENDING_RESPONSE,
-        CaseWorkflowState.PENDING_ADMISSION,
-        CaseWorkflowState.CASE_ADMITTED,
-      ].includes(caseDetails?.status)
-    );
-  }, [caseDetails?.status, currentOrder?.additionalDetails?.formdata?.submissionParty, userInfo?.uuid, userRoles]);
+  }, [userRoles, caseStatus, isAdvocatePresent]);
 
   const openDraftModal = (orderList) => {
     setDraftOrderList(orderList);
@@ -1557,7 +1574,7 @@ const AdmittedCases = () => {
     }
   };
 
-  if (isLoading || isWorkFlowLoading) {
+  if (isLoading || isWorkFlowLoading || isApplicationLoading) {
     return <Loader />;
   }
 
@@ -1759,7 +1776,8 @@ const AdmittedCases = () => {
             showToast={showToast}
             t={t}
             order={currentOrder}
-            showSubmissionButtons={showSubmissionButtons}
+            caseStatus={caseStatus}
+            extensionApplications={extensionApplications}
           />
         </div>
       )}
@@ -1789,7 +1807,8 @@ const AdmittedCases = () => {
           handleDownload={handleDownload}
           handleRequestLabel={handleExtensionRequest}
           handleSubmitDocument={handleSubmitDocument}
-          showSubmissionButtons={showSubmissionButtons}
+          extensionApplications={extensionApplications}
+          caseStatus={caseStatus}
           handleOrdersTab={handleOrdersTab}
         />
       )}
