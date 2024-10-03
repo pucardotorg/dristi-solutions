@@ -169,16 +169,12 @@ public class IcopsEnrichment {
         if(request.getTask().getDocuments() == null || request.getTask().getDocuments().isEmpty()){
             return null;
         }
-        List<Document> documents = request.getTask().getDocuments();
-        Document signedDocuments = null;
-
-        for(Document document : documents) {
-            if (document.getDocumentType() != null && document.getDocumentType().equalsIgnoreCase(SIGNED_TASK_DOCUMENT)) {
-                signedDocuments = document;
-                break;
-            }
-        }
-        return signedDocuments != null ? signedDocuments.getFileStore() : null;
+        return request.getTask().getDocuments().stream()
+                .filter(document -> document.getDocumentType() != null)
+                .filter(document -> document.getDocumentType().equalsIgnoreCase(SEND_TASK_DOCUMENT))
+                .findFirst()
+                .map(Document::getFileStore)
+                .orElse(null);
     }
 
     public IcopsTracker enrichIcopsTrackerForUpdate(IcopsProcessReport icopsProcessReport) throws ProcessReportException {

@@ -169,23 +169,35 @@ public class SummonsService {
     }
 
     private String getPdfTemplateKey(String taskType, String docSubType, boolean qrCode) {
-        return switch (taskType) {
-            case SUMMON -> switch (docSubType) {
-                case ACCUSED -> qrCode ? config.getSummonsAccusedQrPdfTemplateKey() : config.getSummonsAccusedPdfTemplateKey();
-                case WITNESS -> qrCode ? config.getSummonsIssueQrPdfTemplateKey() : config.getSummonsIssuePdfTemplateKey();
-                default -> throw new CustomException("INVALID_DOC_SUB_TYPE", "Document Sub-Type must be valid. Provided: " + docSubType);
-            };
-            case WARRANT -> qrCode ? config.getNonBailableWarrantQrPdfTemplateKey() : config.getNonBailableWarrantPdfTemplateKey();
-            case NOTICE -> qrCode ? config.getTaskNoticeQrPdfTemplateKey() : config.getTaskNoticePdfTemplateKey();
+        switch (taskType) {
+            case SUMMON -> {
+                if (docSubType.equals(ACCUSED)) {
+                    return qrCode ? config.getSummonsAccusedQrPdfTemplateKey() : config.getSummonsAccusedPdfTemplateKey();
+                } else if (docSubType.equals(WITNESS)) {
+                    return qrCode ? config.getSummonsIssueQrPdfTemplateKey() : config.getSummonsIssuePdfTemplateKey();
+                } else {
+                    throw new CustomException("INVALID_DOC_SUB_TYPE", "Document Sub-Type must be valid. Provided: " + docSubType);
+                }
+            }
+            case WARRANT -> {
+                return qrCode ? config.getNonBailableWarrantQrPdfTemplateKey() : config.getNonBailableWarrantPdfTemplateKey();
+            }
+            case NOTICE -> {
+                return qrCode ? config.getTaskNoticeQrPdfTemplateKey() : config.getTaskNoticePdfTemplateKey();
+            }
             default -> throw new CustomException("INVALID_TASK_TYPE", "Task Type must be valid. Provided: " + taskType);
-        };
+        }
     }
 
     private String getDocSubType(String taskType, TaskDetails taskDetails) {
+        if (taskDetails == null) {
+            return null;
+        }
+
         return switch (taskType) {
-            case SUMMON -> taskDetails.getSummonDetails().getDocSubType();
-            case WARRANT -> taskDetails.getWarrantDetails().getDocSubType();
-            case NOTICE -> taskDetails.getNoticeDetails().getDocSubType();
+            case SUMMON -> taskDetails.getSummonDetails() != null ? taskDetails.getSummonDetails().getDocSubType() : null;
+            case WARRANT -> taskDetails.getWarrantDetails() != null ? taskDetails.getWarrantDetails().getDocSubType() : null;
+            case NOTICE -> taskDetails.getNoticeDetails() != null ? taskDetails.getNoticeDetails().getDocSubType() : null;
             default -> throw new CustomException("INVALID_TASK_TYPE", "Task Type must be valid. Provided: " + taskType);
         };
     }

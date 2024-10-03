@@ -51,5 +51,5 @@ public class ServiceConstants {
     public static final String BUSINESS_SERVICES = "&businessServices=";
 
 
-    public static final String SIGNED_TASK_DOCUMENT = "SIGNED_TASK_DOCUMENT";
+    public static final String SEND_TASK_DOCUMENT = "SEND_TASK_DOCUMENT";
 }
