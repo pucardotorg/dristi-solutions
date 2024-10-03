@@ -1430,6 +1430,7 @@ const GenerateOrders = () => {
 
     const orderData = orderDetails?.order;
     const orderFormData = getFormData(orderType, orderData);
+    const orderFormValue = orderDetails?.order?.additionalDetails?.formdata;
     const respondentNameData = getOrderData(orderType, orderFormData);
     const selectedChannel = orderData?.additionalDetails?.formdata?.[orderType === "NOTICE" ? "noticeOrder" : "SummonsOrder"]?.selectedChannels;
     const noticeType = orderData?.additionalDetails?.formdata?.noticeType?.type;
@@ -1500,7 +1501,7 @@ const GenerateOrders = () => {
             courtPhone: courtDetails?.phone,
             courtId: caseDetails?.courtId,
             hearingNumber: orderData?.hearingNumber,
-            judgeName: "super",
+            judgeName: "John Koshy",
           },
           deliveryChannels: {
             channelName: "",
@@ -1533,7 +1534,7 @@ const GenerateOrders = () => {
             courtPhone: courtDetails?.phone,
             courtId: caseDetails?.courtId,
             hearingNumber: orderData?.hearingNumber,
-            judgeName: "super",
+            judgeName: "John Koshy",
           },
           deliveryChannels: {
             channelName: "",
@@ -1549,6 +1550,10 @@ const GenerateOrders = () => {
           warrantDetails: {
             issueDate: orderData?.auditDetails?.lastModifiedTime,
             caseFilingDate: caseDetails?.filingDate,
+            docType: orderFormValue.warrantType?.code,
+            docSubType: orderFormValue.bailInfo?.isBailable?.code ? "BAILABLE" : "NON_BAILABLE",
+            surety: orderFormValue.bailInfo?.noOfSureties?.code,
+            bailableamount: orderFormValue.bailInfo?.bailableAmount,
           },
           respondentDetails: {
             name: respondentName,
@@ -1562,7 +1567,7 @@ const GenerateOrders = () => {
             caseTitle: caseDetails?.caseTitle,
             year: new Date(caseDetails).getFullYear(),
             hearingDate: new Date(orderData?.additionalDetails?.formData?.dateOfHearing || "").getTime(),
-            judgeName: "",
+            judgeName: "John Koshy",
             courtName: courtDetails?.name,
             courtAddress: courtDetails?.address,
             courtPhone: courtDetails?.phone,
