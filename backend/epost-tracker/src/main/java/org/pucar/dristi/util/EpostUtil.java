@@ -64,7 +64,7 @@ public class EpostUtil {
         }
         return request.getTask().getDocuments().stream()
             .filter(document -> document.getDocumentType() != null)
-            .filter(document -> document.getDocumentType().equalsIgnoreCase(SIGNED_TASK_DOCUMENT))
+            .filter(document -> document.getDocumentType().equalsIgnoreCase(SEND_TASK_DOCUMENT))
             .findFirst()
             .map(Document::getFileStore)
             .orElse(null);
