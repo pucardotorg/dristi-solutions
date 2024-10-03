@@ -186,7 +186,7 @@ public class SummonsService {
                 if (docSubType.equals(BAILABLE)) {
                     return config.getBailableWarrantPdfTemplateKey();
                 } else if (docSubType.equals(NON_BAILABLE)) {
-                    return config.getNonBailableWarrantQrPdfTemplateKey();
+                    return config.getNonBailableWarrantPdfTemplateKey();
                 } else {
                     throw new CustomException("INVALID_DOC_SUB_TYPE", "Document Sub-Type must be valid. Provided: " + docSubType);
                 }            }
