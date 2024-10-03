@@ -8,6 +8,7 @@ import org.pucar.dristi.web.models.TaskCaseSearchCriteria;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -56,8 +57,9 @@ public class TaskCaseQueryBuilder {
     }
 
     public String addPaginationQuery(String query, Pagination pagination, List<Object> preparedStatementList) {
-        for(Object object: preparedStatementList){
-            preparedStatementList.add(object.toString());
+        if(!preparedStatementList.isEmpty()){
+            List<Object> duplicateValues = new ArrayList<>(preparedStatementList);
+            preparedStatementList.addAll(duplicateValues);
         }
         preparedStatementList.add(pagination.getLimit());
         preparedStatementList.add(pagination.getOffSet());
