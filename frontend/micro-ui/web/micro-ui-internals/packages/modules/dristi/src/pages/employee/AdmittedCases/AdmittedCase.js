@@ -279,6 +279,17 @@ const AdmittedCases = () => {
     [applicationData, onBehalfOfuuid]
   );
 
+  const productionOfDocumentApplications = useMemo(
+    () =>
+      applicationData?.applicationList?.filter(
+        (item) =>
+          item?.applicationType === "PRODUCTION_DOCUMENTS" &&
+          item?.onBehalfOf?.includes(onBehalfOfuuid) &&
+          ![SubmissionWorkflowState.DELETED, SubmissionWorkflowState.ABATED].includes(item?.status)
+      ) || [],
+    [applicationData, onBehalfOfuuid]
+  );
+
   const caseRelatedData = useMemo(
     () => ({
       caseId,
@@ -1778,6 +1789,7 @@ const AdmittedCases = () => {
             order={currentOrder}
             caseStatus={caseStatus}
             extensionApplications={extensionApplications}
+            productionOfDocumentApplications={productionOfDocumentApplications}
           />
         </div>
       )}
@@ -1808,6 +1820,7 @@ const AdmittedCases = () => {
           handleRequestLabel={handleExtensionRequest}
           handleSubmitDocument={handleSubmitDocument}
           extensionApplications={extensionApplications}
+          productionOfDocumentApplications={productionOfDocumentApplications}
           caseStatus={caseStatus}
           handleOrdersTab={handleOrdersTab}
         />

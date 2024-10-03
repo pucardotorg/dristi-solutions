@@ -21,6 +21,7 @@ const CaseOverview = ({
   handleExtensionRequest,
   extensionApplications,
   caseStatus,
+  productionOfDocumentApplications,
 }) => {
   const { t } = useTranslation();
   const filingNumber = caseData.filingNumber;
@@ -276,6 +277,7 @@ const CaseOverview = ({
                 handleRequestLabel={handleExtensionRequest}
                 handleSubmitDocument={handleSubmitDocument}
                 extensionApplications={extensionApplications}
+                productionOfDocumentApplications={productionOfDocumentApplications}
                 caseStatus={caseStatus}
                 handleOrdersTab={() => {
                   setShowReviewModal(false);
