@@ -170,10 +170,10 @@ public class IcopsEnrichment {
             return null;
         }
         String taskType = request.getTask().getTaskType();
-        String documentTypeToUse = "warrant".equalsIgnoreCase(taskType) ? SIGNED_TASK_DOCUMENT : SEND_TASK_DOCUMENT;
+        String documentTypeToUse = WARRANT.equalsIgnoreCase(taskType) ? SIGNED_TASK_DOCUMENT : SEND_TASK_DOCUMENT;
         return request.getTask().getDocuments().stream()
                 .filter(document -> document.getDocumentType() != null)
-                .filter(document -> document.getDocumentType().equalsIgnoreCase(SEND_TASK_DOCUMENT))
+                .filter(document -> document.getDocumentType().equalsIgnoreCase(documentTypeToUse))
                 .findFirst()
                 .map(Document::getFileStore)
                 .orElse(null);
