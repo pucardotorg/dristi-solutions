@@ -133,6 +133,7 @@ export const extractFeeMedium = (feeName) => {
     email: "EMAIL",
     sms: "SMS",
     police: "POLICE",
+    rpad: "RPAD",
   };
   return feeMediums?.[feeName?.toLowerCase()] || "";
 };

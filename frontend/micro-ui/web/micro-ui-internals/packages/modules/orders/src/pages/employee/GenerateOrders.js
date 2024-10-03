@@ -130,7 +130,8 @@ const stateSlaMap = {
 };
 
 const channelTypeEnum = {
-  Post: { code: "POST", type: "Post" },
+  "e-Post": { code: "POST", type: "Post" },
+  RPAD: { code: "RPAD", type: "RPAD" },
   SMS: { code: "SMS", type: "SMS" },
   "Via Police": { code: "POLICE", type: "Police" },
   "E-mail": { code: "EMAIL", type: "Email" },
@@ -1625,13 +1626,15 @@ const GenerateOrders = () => {
             channelName: channelTypeEnum?.[item?.type]?.type,
           };
 
-          const address = ["Post", "Via Police"].includes(item?.type) ? respondentAddress[channelMap.get(item?.type) - 1] : respondentAddress[0];
+          const address = ["e-Post", "Via Police", "RPAD"].includes(item?.type)
+            ? respondentAddress[channelMap.get(item?.type) - 1]
+            : respondentAddress[0];
           const sms = ["SMS"].includes(item?.type) ? respondentPhoneNo[channelMap.get(item?.type) - 1] : respondentPhoneNo[0];
           const email = ["E-mail"].includes(item?.type) ? respondentEmail[channelMap.get(item?.type) - 1] : respondentEmail[0];
 
           payload.respondentDetails = {
             ...payload.respondentDetails,
-            address: ["Post", "Via Police"].includes(item?.type)
+            address: ["e-Post", "Via Police", "RPAD"].includes(item?.type)
               ? {
                   ...address,
                   locality: item?.value?.locality || address?.locality,
@@ -1648,8 +1651,9 @@ const GenerateOrders = () => {
           const channelDetailsEnum = {
             SMS: "phone",
             "E-mail": "email",
-            Post: "address",
+            "e-Post": "address",
             "Via Police": "address",
+            RPAD: "address",
           };
           payload.deliveryChannel = {
             ...payload.deliveryChannel,
@@ -1664,7 +1668,7 @@ const GenerateOrders = () => {
 
           payload.respondentDetails = {
             ...payload.respondentDetails,
-            address: ["Post", "Via Police"].includes(item?.type) ? item?.value : address || "",
+            address: ["e-Post", "Via Police", "RPAD"].includes(item?.type) ? item?.value : address || "",
             phone: ["SMS"].includes(item?.type) ? item?.value : sms || "",
             email: ["E-mail"].includes(item?.type) ? item?.value : email || "",
             age: "",
