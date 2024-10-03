@@ -1552,9 +1552,9 @@ const GenerateOrders = () => {
             issueDate: orderData?.auditDetails?.lastModifiedTime,
             caseFilingDate: caseDetails?.filingDate,
             docType: orderDetails?.order?.additionalDetails?.formdata?.warrantType?.code,
-            docSubType: orderDetails?.order?.additionalDetails?.formdata?.bailInfo?.isBailable?.code ? "BAILABLE" : "NONBAILABLE",
+            docSubType: orderDetails?.order?.additionalDetails?.formdata?.bailInfo?.isBailable?.code ? "BAILABLE" : "NON_BAILABLE",
             surety: orderDetails?.order?.additionalDetails?.formdata?.bailInfo?.noOfSureties?.code,
-            baiableAmount: orderDetails?.order?.additionalDetails?.formdata?.bailInfo?.bailableAmount,
+            bailableamount: orderDetails?.order?.additionalDetails?.formdata?.bailInfo?.bailableAmount,
           },
           respondentDetails: {
             name: respondentName,
