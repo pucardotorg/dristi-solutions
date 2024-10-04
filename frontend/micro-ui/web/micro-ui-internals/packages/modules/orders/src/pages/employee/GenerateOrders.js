@@ -1553,7 +1553,7 @@ const GenerateOrders = () => {
             docType: orderFormValue.warrantType?.code,
             docSubType: orderFormValue.bailInfo?.isBailable?.code ? "BAILABLE" : "NON_BAILABLE",
             surety: orderFormValue.bailInfo?.noOfSureties?.code,
-            bailableamount: orderFormValue.bailInfo?.bailableAmount,
+            bailableAmount: orderFormValue.bailInfo?.bailableAmount,
           },
           respondentDetails: {
             name: respondentName,
