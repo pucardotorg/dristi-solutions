@@ -28,8 +28,9 @@ public class ServiceConstants {
     public static final String OPT_OUT_SELECTION_LIMIT = "OPT_OUT_SELECTION_LIMIT";
     public final String COMPLAINANT= "complainant.primary";
     public final String RESPONDENT= "respondent.primary";
-    public final String FULLNAME = "fullName";
-    public final String PARTY_IN_PERSON = "Party In Person";
+    public final String ADVOCATE_NAME = "advocateName";
+    public final String SYSTEM_ADMIN = "SYSTEM_ADMIN";
+    public static final String CAUSE_LIST_NOT_FOUND = "Cause list not found for given date or court, please generate one.";
     public static final String INACTIVE = "INACTIVE";
     public static final String ACTIVE = "ACTIVE";
     public static final String BLOCKED = "BLOCKED";

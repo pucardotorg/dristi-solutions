@@ -289,7 +289,7 @@ const SubmissionsCreate = ({ path }) => {
     allAdvocates,
     userInfo?.uuid,
   ]);
-  const onBehalfOfLitigent = useMemo(() => caseDetails?.litigants?.find((item) => item.additionalDetails.uuid === onBehalfOfuuid), [
+  const onBehalfOfLitigent = useMemo(() => caseDetails?.litigants?.find((item) => item?.additionalDetails?.uuid === onBehalfOfuuid), [
     caseDetails,
     onBehalfOfuuid,
   ]);
@@ -563,6 +563,7 @@ const SubmissionsCreate = ({ path }) => {
           tenantId,
           filingNumber,
           cnrNumber: caseDetails?.cnrNumber,
+          cmpNumber: caseDetails?.cmpNumber,
           caseId: caseDetails?.id,
           referenceId: isExtension ? null : orderDetails?.id || null,
           createdDate: new Date().getTime(),
