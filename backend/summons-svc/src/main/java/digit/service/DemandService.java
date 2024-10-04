@@ -61,7 +61,7 @@ public class DemandService {
     }
 
     public List<Calculation> generatePaymentDetails(RequestInfo requestInfo, Task task) {
-        SummonCalculationCriteria criteria = SummonCalculationCriteria.builder()
+        TaskPaymentCriteria criteria = TaskPaymentCriteria.builder()
                 .channelId(ChannelName.fromString(task.getTaskDetails().getDeliveryChannel().getChannelName()).toString())
                 .receiverPincode(task.getTaskDetails().getRespondentDetails().getAddress().getPinCode())
                 .tenantId(task.getTenantId())
@@ -73,7 +73,7 @@ public class DemandService {
 
         log.info("Requesting Payment Calculator : {}", criteria.toString());
 
-        SummonCalculationRequest calculationRequest = SummonCalculationRequest.builder()
+        TaskPaymentRequest calculationRequest = TaskPaymentRequest.builder()
                 .requestInfo(requestInfo).calculationCriteria(Collections.singletonList(criteria)).build();
 
         Object response = repository.fetchResult(url, calculationRequest);
@@ -89,7 +89,7 @@ public class DemandService {
         );
         for (Calculation calculation : calculations) {
             List<DemandDetail> demandDetailList = createDemandDetails(calculation, task, mdmsData, businessService);
-            demands.addAll(createDemandList(task, demandDetailList, calculation.getTenantId(), mdmsData, businessService));
+            demands.addAll(createDemandList(task, demandDetailList, "kl", mdmsData, businessService));
         }
         return callBillServiceAndCreateDemand(requestInfo, demands, task);
     }
@@ -101,7 +101,7 @@ public class DemandService {
         Map<String, String> masterCodes = getTaxHeadMasterCodes(mdmsData, businessService, deliveryChannel);
 
         if (config.isTest()) {
-            demandDetailList.addAll(createTestDemandDetails(calculation.getTenantId(), task, businessService));
+            demandDetailList.addAll(createTestDemandDetails("kl", task, businessService));
         } else {
             for (BreakDown breakDown : calculation.getBreakDown()) {
                 demandDetailList.add(createDemandDetail(calculation.getTenantId(), breakDown, masterCodes));
