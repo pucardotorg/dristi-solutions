@@ -25,8 +25,8 @@ public class WarrantDetails {
     @JsonProperty("partyType")
     private String partyType;
 
-    @JsonProperty("baiableAmount")
-    private String baiableAmount;
+    @JsonProperty("bailableAmount")
+    private String bailableAmount;
 
     @JsonProperty("surety")
     private Integer surety;

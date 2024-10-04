@@ -72,7 +72,7 @@ public class PdfServiceUtil {
 
                 if (BAILABLE.equalsIgnoreCase(docSubType)) {
                     Integer surety = warrantDetails.getSurety();
-                    double baiableAmount = Double.parseDouble(warrantDetails.getBaiableAmount());
+                    double baiableAmount = Double.parseDouble(warrantDetails.getBailableAmount());
                     if (surety != null && surety == 2) {
                         baiableAmount /= 2;
                     }
