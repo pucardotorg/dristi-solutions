@@ -261,7 +261,7 @@ export const TabSearchconfig = {
               // },
               {
                 label: "Parties",
-                jsonPath: "workflow.assignees",
+                jsonPath: "orderDetails.parties",
               },
               {
                 label: "Status",

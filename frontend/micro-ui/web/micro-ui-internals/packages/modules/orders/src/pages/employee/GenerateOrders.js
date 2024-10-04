@@ -1016,6 +1016,27 @@ const GenerateOrders = () => {
     }
   };
 
+  const getParties = (type, orderSchema) => {
+    let parties = [];
+    if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(type)) {
+      parties = orderSchema?.orderDetails.partyName;
+    } else if (type === "MANDATORY_SUBMISSIONS_RESPONSES") {
+      parties = [...orderSchema?.orderDetails?.partyDetails?.partiesToRespond, ...orderSchema?.orderDetails?.partyDetails?.partyToMakeSubmission];
+    } else if (["WARRANT", "SUMMONS", "NOTICE"].includes(type)) {
+      parties = orderSchema?.orderDetails?.respondentName ? [orderSchema?.orderDetails?.respondentName] : [];
+    } else if (type === "SECTION_202_CRPC") {
+      parties = [orderSchema?.orderDetails.soughtOfDetails];
+    } else if (
+      orderSchema?.orderDetails?.parties?.length > 0 &&
+      ["BAIL", "REJECT_VOLUNTARY_SUBMISSIONS", "APPROVE_VOLUNTARY_SUBMISSIONS", "REJECTION_RESCHEDULE_REQUEST", "CHECKOUT_REJECT"].includes(type)
+    ) {
+      parties = orderSchema?.orderDetails?.parties;
+    } else {
+      parties = [...complainants, ...respondents, ...unJoinedLitigant]?.map((item) => item?.name || "");
+    }
+    return parties;
+  };
+
   const updateOrder = async (order, action) => {
     try {
       const localStorageID = localStorage.getItem("fileStoreId");
@@ -1029,11 +1050,21 @@ const GenerateOrders = () => {
           : null;
       let orderSchema = {};
       try {
-        orderSchema = Digit.Customizations.dristiOrders.OrderFormSchemaUtils.formToSchema(order.additionalDetails.formdata, modifiedFormConfig);
+        let orderTypeDropDownConfig = order?.orderNumber
+          ? applicationTypeConfig?.map((item) => ({ body: item.body.map((input) => ({ ...input, disable: true })) }))
+          : structuredClone(applicationTypeConfig);
+        let orderFormConfig = configKeys.hasOwnProperty(order?.orderType) ? configKeys[order?.orderType] : [];
+        const modifiedPlainFormConfig = [...orderTypeDropDownConfig, ...orderFormConfig];
+        orderSchema = Digit.Customizations.dristiOrders.OrderFormSchemaUtils.formToSchema(order.additionalDetails.formdata, modifiedPlainFormConfig);
       } catch (error) {
         console.error("error :>> ", error);
       }
 
+      const parties = getParties(order?.orderType, {
+        ...orderSchema,
+        orderDetails: { ...orderSchema?.orderDetails, ...(order?.orderDetails || {}) },
+      });
+      orderSchema = { ...orderSchema, orderDetails: { ...orderSchema?.orderDetails, parties: parties } };
       return await ordersService.updateOrder(
         {
           order: {
@@ -1054,11 +1085,20 @@ const GenerateOrders = () => {
     try {
       let orderSchema = {};
       try {
-        orderSchema = Digit.Customizations.dristiOrders.OrderFormSchemaUtils.formToSchema(order.additionalDetails.formdata, modifiedFormConfig);
+        let orderTypeDropDownConfig = order?.orderNumber
+          ? applicationTypeConfig?.map((item) => ({ body: item.body.map((input) => ({ ...input, disable: true })) }))
+          : structuredClone(applicationTypeConfig);
+        let orderFormConfig = configKeys.hasOwnProperty(order?.orderType) ? configKeys[order?.orderType] : [];
+        const modifiedPlainFormConfig = [...orderTypeDropDownConfig, ...orderFormConfig];
+        orderSchema = Digit.Customizations.dristiOrders.OrderFormSchemaUtils.formToSchema(order.additionalDetails.formdata, modifiedPlainFormConfig);
       } catch (error) {
         console.error("error :>> ", error);
       }
-      // const formOrder = await Digit.Customizations.dristiOrders.OrderFormSchemaUtils.schemaToForm(orderDetails, modifiedFormConfig);
+      const parties = getParties(order?.orderType, {
+        ...orderSchema,
+        orderDetails: { ...orderSchema?.orderDetails, ...(order?.orderDetails || {}) },
+      });
+      orderSchema = { ...orderSchema, orderDetails: { ...orderSchema?.orderDetails, parties: parties } };
 
       return await ordersService.createOrder(
         {
