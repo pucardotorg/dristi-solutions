@@ -89,7 +89,7 @@ public class DemandService {
         );
         for (Calculation calculation : calculations) {
             List<DemandDetail> demandDetailList = createDemandDetails(calculation, task, mdmsData, businessService);
-            demands.addAll(createDemandList(task, demandDetailList, "kl", mdmsData, businessService));
+            demands.addAll(createDemandList(task, demandDetailList, calculation.getTenantId(), mdmsData, businessService));
         }
         return callBillServiceAndCreateDemand(requestInfo, demands, task);
     }
@@ -101,7 +101,7 @@ public class DemandService {
         Map<String, String> masterCodes = getTaxHeadMasterCodes(mdmsData, businessService, deliveryChannel);
 
         if (config.isTest()) {
-            demandDetailList.addAll(createTestDemandDetails("kl", task, businessService));
+            demandDetailList.addAll(createTestDemandDetails(calculation.getTenantId(), task, businessService));
         } else {
             for (BreakDown breakDown : calculation.getBreakDown()) {
                 demandDetailList.add(createDemandDetail(calculation.getTenantId(), breakDown, masterCodes));
