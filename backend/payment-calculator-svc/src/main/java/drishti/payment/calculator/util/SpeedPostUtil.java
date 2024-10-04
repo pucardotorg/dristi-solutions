@@ -99,11 +99,11 @@ public class SpeedPostUtil {
         // Total Fee including GST and envelope fee
         double totalFee = ePostFeeWithoutGST + gstFee + envelopeFee;
 
-        // Round the result to 2 decimal places
-        BigDecimal roundedTotalFee = new BigDecimal(totalFee).setScale(2, RoundingMode.HALF_UP);
-
-        return roundedTotalFee.doubleValue();
+        return getRoundOffValue(totalFee);
     }
 
-
+    private Double getRoundOffValue(double totalFee) {
+        BigDecimal roundedTotalFee = BigDecimal.valueOf(totalFee).setScale(2, RoundingMode.HALF_UP);
+        return roundedTotalFee.doubleValue();
+    }
 }
