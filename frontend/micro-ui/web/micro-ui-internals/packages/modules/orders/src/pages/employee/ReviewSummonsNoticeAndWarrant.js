@@ -287,7 +287,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const documents = useMemo(() => {
     if (rowData?.documents)
       return rowData?.documents?.map((document) => {
-        return { ...document, fileName: `${orderType === "NOTICE" ? "Notice" : "Summon"}s Document` };
+        return { ...document, fileName: `${t(rowData?.taskType)} ${t("DOCUMENT_TEXT")}` };
       });
   }, [rowData, orderType]);
 
@@ -333,7 +333,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const unsignedModalConfig = useMemo(() => {
     return {
       handleClose: handleClose,
-      heading: { label: `${t("REVIEW_DOCUMENT_TEXT")} ${orderType === "NOTICE" ? "Notices" : "Summons"} ${t("DOCUMENT_TEXT")}` },
+      heading: { label: `${t("REVIEW_DOCUMENT_TEXT")} ${t(rowData?.taskType)} ${t("DOCUMENT_TEXT")}` },
       actionSaveLabel: t("E_SIGN_TEXT"),
       isStepperModal: true,
       actionSaveOnSubmit: () => {},
