@@ -166,6 +166,7 @@ public class TaskRepository {
 
         String taskQuery = taskCaseQueryBuilder.getTaskTableSearchQuery(request.getCriteria(), preparedStmtList);
         taskQuery = taskCaseQueryBuilder.addOrderByQuery(taskQuery, request.getPagination());
+        taskQuery = taskCaseQueryBuilder.addApplicationStatusQuery(request.getCriteria(), taskQuery, preparedStmtList);
         log.debug("Final query: " + taskQuery);
 
         if (request.getPagination() != null) {
