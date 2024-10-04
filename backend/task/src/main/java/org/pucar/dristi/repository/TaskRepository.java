@@ -175,12 +175,6 @@ public class TaskRepository {
             taskQuery = taskCaseQueryBuilder.addPaginationQuery(taskQuery, request.getPagination(), preparedStmtList);
         }
         List<TaskCase> list = jdbcTemplate.query(taskQuery, preparedStmtList.toArray(), taskCaseRowMapper);
-        String applicationStatus = request.getCriteria().getApplicationStatus();
-
-        if (!ObjectUtils.isEmpty(applicationStatus) && list != null) {
-            list = list.stream().filter((element) -> applicationStatus.equals(element.getDocumentStatus())).toList();
-        }
-
         List<Object> preparedStmtDc = new ArrayList<>();
 
         List<String> ids = new ArrayList<>();

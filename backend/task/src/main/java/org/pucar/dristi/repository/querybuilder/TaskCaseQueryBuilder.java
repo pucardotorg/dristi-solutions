@@ -119,7 +119,11 @@ public class TaskCaseQueryBuilder {
             query.append("(task.tasknumber ILIKE '%").append(taskCaseSearchCriteria.getSearchText()).append("%' or task.cnrnumber ILIKE '%").append(taskCaseSearchCriteria.getSearchText()).append("%' )");
         }
 
-
+        if(!ObjectUtils.isEmpty(taskCaseSearchCriteria.getApplicationStatus())) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" dtd.documentType = ? ");
+            preparedStmtList.add(taskCaseSearchCriteria.getApplicationStatus());
+        }
     }
 
     public void addClauseIfRequired(StringBuilder query, List<Object> preparedStmtList) {
