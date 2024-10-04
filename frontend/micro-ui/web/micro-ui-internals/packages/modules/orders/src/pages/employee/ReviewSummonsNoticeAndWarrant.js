@@ -163,13 +163,20 @@ const ReviewSummonsNoticeAndWarrant = () => {
             ...(typeof task?.taskDetails === "string" && { taskDetails: JSON.parse(task?.taskDetails) }),
             workflow: {
               ...tasksData?.list?.[0]?.workflow,
-              action: selectedDelievery?.key === "DELIVERED" ? "SERVED" : "NOT_SERVED",
+              action:
+                selectedDelievery?.key === "DELIVERED"
+                  ? orderType === "WARRANT"
+                    ? "DELIVERED"
+                    : "SERVED"
+                  : orderType === "WARRANT"
+                  ? "NOT_DELIVERED"
+                  : "NOT_SERVED",
               documents: [{}],
             },
           },
         };
         await taskService.updateTask(reqBody, { tenantId }).then(async (res) => {
-          if (res?.task && selectedDelievery?.key === "NOT_DELIVERED") {
+          if (res?.task && selectedDelievery?.key === "NOT_DELIVERED" && orderType !== "WARRANT") {
             await taskService.updateTask(
               {
                 task: {
