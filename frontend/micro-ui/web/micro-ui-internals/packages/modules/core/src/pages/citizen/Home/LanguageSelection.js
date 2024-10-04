@@ -53,7 +53,7 @@ const LanguageSelection = () => {
     <div className="selection-card-wrapper langauge-select-wrapper">
       <PageBasedInput style={getLanguageSelectionStyles()} texts={texts} onSubmit={onSubmit}>
         <CardHeader styles={{ margin: 0 , textAlign: "center" ,fontSize: "48px"}}>{t("CS_COMMON_CHOOSE_LANGUAGE")}</CardHeader>
-        <CardHeader styles={{ margin: 0 , textAlign: "center" ,fontSize: "48px"}} >{t("CS_COMMON_CHOOSE_LANGUAGE_ML")}</CardHeader>
+        <CardHeader styles={{ textAlign: "center" ,fontSize: "48px"}} >{t("CS_COMMON_CHOOSE_LANGUAGE_ML")}</CardHeader>
         <RadioButtons {...RadioButtonProps} />
       </PageBasedInput>
     </div>
