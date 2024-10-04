@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { LabelFieldPair, CardLabel, TextInput, CardLabelError } from "@egovernments/digit-ui-react-components";
-import LocationSearch from "./LocationSearch";
+import LocationSearch, { defaultCoordinates } from "./LocationSearch";
 import Axios from "axios";
 
 const getLocation = (places, code) => {
@@ -22,6 +22,28 @@ const LocationComponent = ({ t, config, onLocationSelect, locationFormData, erro
         },
       ],
     [config?.populators?.inputs]
+  );
+
+  const parseCoordinates = useCallback(() => {
+    let coordinates = locationFormData?.[config.key]?.coordinates || {};
+    coordinates = {
+      latitude: parseFloat(coordinates?.latitude) || 0,
+      longitude: parseFloat(coordinates?.longitude) || 0,
+    };
+    return coordinates;
+  }, [locationFormData, config?.key]);
+
+  const getFieldValue = useCallback(
+    (isFirstRender, coordinates, field, defaultValue = "") => {
+      const isDefaultCoordinates =
+        parseFloat(coordinates?.latitude) === defaultCoordinates?.lat && parseFloat(coordinates?.longitude) === defaultCoordinates?.lng;
+      if (isDefaultCoordinates) return "";
+      if (isFirstRender && locationFormData?.[config?.key]) {
+        return locationFormData[config?.key]?.[field];
+      }
+      return defaultValue;
+    },
+    [locationFormData, config?.key]
   );
 
   const getLatLngByPincode = async (pincode) => {
@@ -129,46 +151,36 @@ const LocationComponent = ({ t, config, onLocationSelect, locationFormData, erro
                 {input?.type === "LocationSearch" && mapIndex ? (
                   <LocationSearch
                     locationStyle={{}}
-                    position={locationFormData?.[config.key]?.coordinates || {}}
+                    position={parseCoordinates()}
                     setCoordinateData={setCoordinateData}
                     index={mapIndex}
                     isAutoFilledDisabled={isAutoFilledDisabled}
                     onChange={(pincode, location, coordinates = {}) => {
                       setValue(
                         {
-                          pincode:
-                            locationFormData && isFirstRender && locationFormData?.[config.key]
-                              ? locationFormData[config.key]["pincode"]
-                              : pincode || "",
-                          state:
-                            locationFormData && isFirstRender && locationFormData?.[config.key]
-                              ? locationFormData[config.key]["state"]
-                              : getLocation(location, "administrative_area_level_1") || "",
-                          district:
-                            locationFormData && isFirstRender && locationFormData?.[config.key]
-                              ? locationFormData[config.key]["district"]
-                              : getLocation(location, "administrative_area_level_3") || "",
-                          city:
-                            locationFormData && isFirstRender && locationFormData?.[config.key]
-                              ? locationFormData[config.key]["city"]
-                              : getLocation(location, "locality") || "",
-                          locality:
-                            isFirstRender && locationFormData?.[config.key]
-                              ? locationFormData[config.key]["locality"]
-                              : (() => {
-                                  const plusCode = getLocation(location, "plus_code");
-                                  const neighborhood = getLocation(location, "neighborhood");
-                                  const sublocality_level_1 = getLocation(location, "sublocality_level_1");
-                                  const sublocality_level_2 = getLocation(location, "sublocality_level_2");
-                                  return [plusCode, neighborhood, sublocality_level_1, sublocality_level_2]
-                                    .reduce((result, current) => {
-                                      if (current) {
-                                        result.push(current);
-                                      }
-                                      return result;
-                                    }, [])
-                                    .join(", ");
-                                })(),
+                          pincode: getFieldValue(isFirstRender, coordinates, "pincode", pincode || ""),
+                          state: getFieldValue(isFirstRender, coordinates, "state", getLocation(location, "administrative_area_level_1") || ""),
+                          district: getFieldValue(isFirstRender, coordinates, "district", getLocation(location, "administrative_area_level_3") || ""),
+                          city: getFieldValue(isFirstRender, coordinates, "city", getLocation(location, "locality") || ""),
+                          locality: getFieldValue(
+                            isFirstRender,
+                            coordinates,
+                            "locality",
+                            (() => {
+                              const plusCode = getLocation(location, "plus_code");
+                              const neighborhood = getLocation(location, "neighborhood");
+                              const sublocality_level_1 = getLocation(location, "sublocality_level_1");
+                              const sublocality_level_2 = getLocation(location, "sublocality_level_2");
+                              return [plusCode, neighborhood, sublocality_level_1, sublocality_level_2]
+                                .reduce((result, current) => {
+                                  if (current) {
+                                    result.push(current);
+                                  }
+                                  return result;
+                                }, [])
+                                .join(", ");
+                            })()
+                          ),
                           coordinates,
                         },
                         input.name
