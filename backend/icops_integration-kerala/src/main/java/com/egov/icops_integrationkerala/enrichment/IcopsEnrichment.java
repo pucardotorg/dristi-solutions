@@ -89,7 +89,7 @@ public class IcopsEnrichment {
                     .processUniqueId(processUniqueId)
                     .processCourtName(taskDetails.getCaseDetails().getCourtName())
                     .processJudge(taskDetails.getCaseDetails().getJudgeName())
-                    .processIssueDate(converter.convertLongToDate(taskDetails.getSummonDetails().getIssueDate()))
+                    .processIssueDate(converter.convertLongToDate(taskDetails.getWarrantDetails().getIssueDate()))
                     .processNextHearingDate(converter.convertLongToDate(taskDetails.getCaseDetails().getHearingDate()))
                     .processPartyType(taskDetails.getSummonDetails().getPartyType())
                     .processDocType(docTypeInfo != null ? docTypeInfo.get("name") : null)
