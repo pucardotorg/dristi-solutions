@@ -40,6 +40,7 @@ public class TaskCaseQueryBuilder {
 
     private static final String DOCUMENT_LEFT_JOIN = " LEFT JOIN dristi_task_document dtd ON task.id = dtd.task_id ";
 
+    private static final String DOCUMENT_STATUS_QUERY = " SELECT * FROM ({baseQuery}) application_status_result WHERE documentstatus = ? ";
 
     public String getTaskTableSearchQuery(TaskCaseSearchCriteria criteria, List<Object> preparedStmtList) {
         try {
@@ -56,6 +57,13 @@ public class TaskCaseQueryBuilder {
         }
     }
 
+    public String addApplicationStatusQuery(TaskCaseSearchCriteria searchCriteria, String query, List<Object> preparedStmtList){
+        if(!ObjectUtils.isEmpty(searchCriteria.getApplicationStatus())) {
+            preparedStmtList.add(searchCriteria.getApplicationStatus());
+            return DOCUMENT_STATUS_QUERY.replace("{baseQuery}", query);
+        }
+        return query;
+    }
     public String addPaginationQuery(String query, Pagination pagination, List<Object> preparedStatementList) {
         if(!preparedStatementList.isEmpty()){
             List<Object> duplicateValues = new ArrayList<>(preparedStatementList);
@@ -118,7 +126,6 @@ public class TaskCaseQueryBuilder {
             addClauseIfRequired(query, preparedStmtList);
             query.append("(task.tasknumber ILIKE '%").append(taskCaseSearchCriteria.getSearchText()).append("%' or task.cnrnumber ILIKE '%").append(taskCaseSearchCriteria.getSearchText()).append("%' )");
         }
-
 
     }
 
