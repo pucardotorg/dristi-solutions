@@ -131,6 +131,17 @@ public class PdfServiceUtil {
                 .orElse("");
         String filingNumber = task.getFilingNumber();
         String courtName = task.getTaskDetails().getCaseDetails().getCourtName();
+
+        String complainantName = Optional.of(task.getTaskDetails())
+                .map(TaskDetails::getComplainantDetails)
+                .map(ComplainantDetails::getName)
+                .orElse("");
+
+        String complainantAddress = Optional.of(task.getTaskDetails())
+                .map(TaskDetails::getComplainantDetails)
+                .map(ComplainantDetails::getAddress)
+                .map(Object::toString)
+                .orElse("");
         return SummonsPdf.builder()
                 .tenantId(task.getTenantId())
                 .cnrNumber(task.getCnrNumber())
@@ -144,8 +155,8 @@ public class PdfServiceUtil {
                 .hearingDate(hearingDateString)
                 .respondentName(task.getTaskDetails().getRespondentDetails().getName())
                 .respondentAddress(task.getTaskDetails().getRespondentDetails().getAddress().toString())
-                .complainantName(task.getTaskDetails().getComplainantDetails().getName())
-                .complainantAddress(task.getTaskDetails().getComplainantDetails().getAddress().toString())
+                .complainantName(complainantName)
+                .complainantAddress(complainantAddress)
                 .build();
     }
 
