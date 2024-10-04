@@ -19,10 +19,41 @@ const modalPopup = {
   transform: "translate(50%, 50%)",
   borderRadius: "0.3rem",
   display: "inline-block",
-  overflowY: "scroll",
+  // height: "calc(100% - 64px)"
 };
 
-const SummonsAndWarrantsModal = () => {
+const actionButtonStyle = {
+  position: "fixed",
+  marginBottom: "0px",
+  bottom: "0px",
+  right: "21px",
+  width: "calc(100% - 21px)",
+  backgroundColor: "white",
+  paddingBottom: "16px",
+};
+
+const headingStyle = {
+  fontFamily: "Roboto",
+  fontSize: "16px",
+  fontWeight: 700,
+  lineHeight: "18.75px",
+  textAlign: "center",
+};
+
+const ModalHeading = ({ label, orderList }) => {
+  return (
+    <h1 className="modal-heading" style={{ padding: 8 }}>
+      <span className="heading-m">{label}</span>
+      {orderList && orderList.length > 1 ? (
+        <span className="heading-xs">Failed {orderList.length - 1} times</span>
+      ) : (
+        <span className="heading-xs">No previous failed attempts</span>
+      )}{" "}
+    </h1>
+  );
+};
+
+const SummonsAndWarrantsModal = ({ handleClose }) => {
   const history = useHistory();
   const { t } = useTranslation();
   const { filingNumber, hearingId, taskOrderType } = Digit.Hooks.useQueryParams();
@@ -75,7 +106,9 @@ const SummonsAndWarrantsModal = () => {
   const { caseId, cnrNumber } = useMemo(() => ({ cnrNumber: caseDetails.cnrNumber || "", caseId: caseDetails?.id }), [caseDetails]);
 
   const handleCloseModal = () => {
-    history.goBack();
+    if (handleClose) {
+      handleClose();
+    } else history.goBack();
   };
 
   const handleNavigate = () => {
@@ -179,15 +212,31 @@ const SummonsAndWarrantsModal = () => {
 
   const config = useMemo(() => summonsConfig({ filingNumber, orderNumber, orderId, orderType }), [filingNumber, orderId, orderNumber, orderType]);
 
-  const { respondentName, partyType } = useMemo(() => {
-    const orderData = orderList[orderList.length - 1]?.additionalDetails?.formdata?.SummonsOrder?.party?.data;
-    return {
-      respondentName: `${orderData?.firstName || ""}${orderData?.respondentMiddleName ? " " + orderData?.middleName + " " : " "}${
-        orderData?.lastName || ""
-      }`,
-      partyType: orderData?.partyType || "Respondent",
+  const getFormData = (orderType, orderList) => {
+    const orderItem = orderList?.find((item) => orderType === item?.orderType);
+    const formDataKeyMap = {
+      SUMMONS: "SummonsOrder",
+      WARRANT: "warrantFor",
+      NOTICE: "noticeOrder",
     };
-  }, [orderList]);
+    const formDataKey = formDataKeyMap[orderType];
+    return orderItem?.additionalDetails?.formdata?.[formDataKey];
+  };
+
+  const getOrderData = (orderType, orderFormData) => {
+    return ["SUMMONS", "NOTICE"].includes(orderType) ? orderFormData?.party?.data : orderFormData;
+  };
+
+  const { respondentName, partyType } = useMemo(() => {
+    const orderFormData = getFormData(orderType, orderList);
+    const orderData = getOrderData(orderType, orderFormData);
+    if (!orderData) {
+      return { respondentName: "Unknown Respondent", partyType: "Respondent" };
+    }
+    const respondentName = `${orderData?.firstName || ""} ${orderData?.middleName || ""} ${orderData?.lastName || ""}`.trim() || orderData || "";
+    const partyType = orderData?.partyType || "Respondent";
+    return { respondentName, partyType };
+  }, [orderList, orderType]);
 
   const CloseButton = (props) => {
     return (
@@ -197,14 +246,8 @@ const SummonsAndWarrantsModal = () => {
     );
   };
 
-  const ModalHeading = ({ label }) => {
-    return (
-      <h1 className="modal-heading" style={{ padding: 8 }}>
-        <span className="heading-m">{label}</span>
-        <span className="heading-xs">Failed {orderList.length - 1} times</span>
-      </h1>
-    );
-  };
+  const modalLabel = ["SUMMONS", "WARRANT"].includes(orderType) ? "SUMMON_WARRANT_STATUS" : "NOTICE_STATUS";
+
   return (
     <Modal
       isOpen={true}
@@ -214,98 +257,125 @@ const SummonsAndWarrantsModal = () => {
         display: "none",
       }}
       formId="modal-action"
-      headerBarMain={<ModalHeading label={t(`${orderType === "SUMMONS" ? "Summons and Warrants" : "Notice"} Status`)} />}
+      headerBarMain={orderList && <ModalHeading label={t(modalLabel)} orderList={orderList} />}
+      popupModuleMianStyles={{
+        height: "calc(100% - 64px)",
+        overFlowY: "auto",
+        overflowX: "hidden",
+      }}
     >
-      <div className="case-info">
-        <div className="case-info-column">
-          <span className="case-info-label">{t("Case Name & ID")}</span>
-          <span className="case-info-label">{t("Issued to")}</span>
-          <span className="case-info-label">{t("Next Hearing Date")}</span>
-          <span className="case-info-label">{t("Issued on")}</span>
-        </div>
-
-        <div className="case-info-column">
-          <span className="case-info-value">
-            {caseDetails?.caseTitle}, {filingNumber}
-          </span>
-          <span className="case-info-value">
-            {respondentName} ({partyType} 1)
-          </span>
-          <span className="case-info-value">{hearingDetails?.startTime && formatDate(new Date(hearingDetails?.startTime), "DD-MM-YYYY")}</span>
-          <span className="case-info-value">
-            {orderList[orderList.length - 1]?.createdDate && formatDate(new Date(orderList[orderList.length - 1]?.createdDate), "DD-MM-YYYY")} (Round{" "}
-            {orderList.length})
-          </span>
-        </div>
-
-        <div className="case-info-column">
-          <a
-            href={`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview`}
-            className="case-info-link"
-          >
-            {t("View Case")}
-          </a>
-          <a
-            href={`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Orders`}
-            className="case-info-link"
-          >
-            {t("View Order")}
-          </a>
-          <span></span>
-          <span></span>
-        </div>
-      </div>
-
-      <h1 className="heading-m">{t("Rounds Of Delivery")}</h1>
-      <div></div>
-      <div className="rounds-of-delivery" style={{ cursor: "pointer" }}>
-        {orderList.map((item, index) => (
-          <div
-            key={index}
-            onClick={() => {
-              setActiveIndex(index);
-              setOrderLoading(true);
-              setOrderNumber(item?.orderNumber);
-              setOrderType(item?.orderType);
-              setOrderId(item?.id);
-              setTimeout(() => {
-                setOrderLoading((prev) => !prev);
-              }, 0);
-            }}
-            className={`round-item ${index === activeIndex ? "active" : ""}`}
-          >
-            {`${orderList.length - index} (${item?.orderType})`}
+      <div className="summon-modal" style={{ width: "100%" }}>
+        <div className="case-info">
+          <div className="case-info-column">
+            <span className="case-info-label">{t("Case Name & ID")}</span>
+            <span className="case-info-label">{t("Issued to")}</span>
+            <span className="case-info-label">{t("Next Hearing Date")}</span>
+            <span className="case-info-label">{t("Issued on")}</span>
           </div>
-        ))}
-      </div>
 
-      {orderNumber && !orderLoading && <InboxSearchComposer configs={config} defaultValues={filingNumber}></InboxSearchComposer>}
+          <div className="case-info-column">
+            <span className="case-info-value">
+              {caseDetails?.caseTitle}, {filingNumber}
+            </span>
+            <span className="case-info-value">
+              {respondentName} ({partyType} 1)
+            </span>
+            <span className="case-info-value">{hearingDetails?.startTime && formatDate(new Date(hearingDetails?.startTime), "DD-MM-YYYY")}</span>
+            <span className="case-info-value">
+              {orderList[orderList.length - 1]?.createdDate && formatDate(new Date(orderList[orderList.length - 1]?.createdDate), "DD-MM-YYYY")}{" "}
+              (Round {orderList.length})
+            </span>
+          </div>
 
-      <div className="action-buttons">
-        {isCaseAdmitted && (
+          <div className="case-info-column">
+            <a
+              href={`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview`}
+              className="case-info-link"
+            >
+              {t("View Case")}
+            </a>
+            <a
+              href={`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Orders`}
+              className="case-info-link"
+            >
+              {t("View Order")}
+            </a>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+
+        <h1 className="heading-m">{t("Rounds Of Delivery")}</h1>
+        <div></div>
+        <div className="rounds-of-delivery" style={{ cursor: "pointer" }}>
+          {orderList.map((item, index) => (
+            <div
+              key={index}
+              onClick={() => {
+                setActiveIndex(index);
+                setOrderLoading(true);
+                setOrderNumber(item?.orderNumber);
+                setOrderType(item?.orderType);
+                setOrderId(item?.id);
+                setTimeout(() => {
+                  setOrderLoading((prev) => !prev);
+                }, 0);
+              }}
+              className={`round-item ${index === activeIndex ? "active" : ""}`}
+            >
+              {`${orderList.length - index} (${item?.orderType})`}
+            </div>
+          ))}
+        </div>
+
+        {orderNumber && !orderLoading && <InboxSearchComposer configs={config} defaultValues={filingNumber}></InboxSearchComposer>}
+
+        <div className="action-buttons" style={actionButtonStyle}>
+          {isCaseAdmitted && orderType !== "NOTICE" ? (
+            <Button
+              variation="secondary"
+              className="action-button"
+              label={t("Issue Warrant")}
+              labelClassName={"secondary-label-selector"}
+              onButtonClick={() => {
+                handleIssueWarrant({
+                  cnrNumber,
+                  filingNumber,
+                  orderType: "WARRANT",
+                  hearingId,
+                });
+              }}
+              style={{ marginRight: "1rem", fontWeight: "900" }}
+            />
+          ) : (
+            orderType === "NOTICE" && (
+              <Button
+                variation="secondary"
+                className="action-button"
+                label={t("View Case File")}
+                labelClassName={"secondary-label-selector"}
+                onButtonClick={() => {
+                  history.push(
+                    `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${caseDetails?.filingNumber}&tab=Overview`
+                  );
+                }}
+                style={{ marginRight: "1rem", fontWeight: "900" }}
+              />
+            )
+          )}
           <Button
-            variation="secondary"
-            className="action-button"
-            label={t("Issue Warrant")}
-            labelClassName={"secondary-label-selector"}
+            label={t(`Re-Issue ${orderType === "SUMMONS" ? "Summon" : "Notice"}`)}
             onButtonClick={() => {
-              handleIssueWarrant({
-                cnrNumber,
-                filingNumber,
-                orderType: "WARRANT",
-                hearingId,
-              });
+              handleNavigate();
             }}
-            style={{ marginRight: "1rem", fontWeight: "900" }}
+            className="action-button"
+            style={{
+              boxShadow: "none",
+              padding: "16px 24px",
+            }}
+            textStyles={headingStyle}
           />
-        )}
-        <Button
-          label={t(`Re-Issue ${orderType === "SUMMONS" ? "Summon" : "Notice"}`)}
-          onButtonClick={() => {
-            handleNavigate();
-          }}
-          className="action-button"
-        />
+        </div>
       </div>
     </Modal>
   );

@@ -3,7 +3,7 @@ import { Urls } from "./Urls";
 
 const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
 const benchId = window?.globalConfigs?.getConfig("BENCH_ID") || "BENCH_ID";
-const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
+const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "COURT_ID";
 const presidedBy = {
   judgeId: [judgeId],
   benchId: benchId,
@@ -71,13 +71,14 @@ export const hearingService = {
       params,
     });
   },
-  customApiService: (url, data, params, useCache = false, userService = true) =>
+  customApiService: (url, data, params, useCache = false, userDownload = false) =>
     Request({
       url: url,
       useCache: useCache,
       userService: true,
       data,
       params,
+      userDownload,
     }),
 
   generateWitnessDepostionDownload: (data, params) =>

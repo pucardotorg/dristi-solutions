@@ -13,6 +13,7 @@ import { Urls } from "../../hooks/services/Urls";
 import { convertToDateInputFormat } from "../../utils/index";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { useHistory } from "react-router-dom";
+import isEqual from "lodash/isEqual";
 
 const defaultSearchValues = {
   eprocess: "",
@@ -99,7 +100,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   );
 
   useEffect(() => {
-    if (fetchedTasksData && fetchedTasksData !== tasksData) {
+    if (fetchedTasksData && !isEqual(fetchedTasksData, tasksData)) {
       setTasksData(fetchedTasksData); // Store tasksData only if it's different
     }
   }, [fetchedTasksData, tasksData]);
@@ -127,12 +128,14 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const handleSubmit = useCallback(async () => {
     localStorage.removeItem("SignedFileStoreID");
-    await refetch();
+    const { data: tasksData } = await refetch();
     if (tasksData) {
       try {
+        const task = tasksData?.list?.[0];
         const reqBody = {
           task: {
-            ...tasksData?.list?.[0],
+            ...task,
+            ...(typeof task?.taskDetails === "string" && { taskDetails: JSON.parse(task?.taskDetails) }),
             workflow: {
               ...tasksData?.list?.[0]?.workflow,
               action: "SEND",
@@ -150,12 +153,14 @@ const ReviewSummonsNoticeAndWarrant = () => {
   }, [refetch, reload, tasksData, tenantId]);
 
   const handleUpdateStatus = useCallback(async () => {
-    await refetch();
+    const { data: tasksData } = await refetch();
     if (tasksData) {
       try {
+        const task = tasksData?.list?.[0];
         const reqBody = {
           task: {
-            ...tasksData?.list?.[0],
+            ...task,
+            ...(typeof task?.taskDetails === "string" && { taskDetails: JSON.parse(task?.taskDetails) }),
             workflow: {
               ...tasksData?.list?.[0]?.workflow,
               action: selectedDelievery?.key === "DELIVERED" ? "SERVED" : "NOT_SERVED",
@@ -302,6 +307,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       const reqBody = {
         task: {
           ...rowData,
+          ...(typeof rowData?.taskDetails === "string" && { taskDetails: JSON.parse(rowData?.taskDetails) }),
           documents: documentsFile ? [...documents, documentsFile] : documents,
           tenantId,
         },
