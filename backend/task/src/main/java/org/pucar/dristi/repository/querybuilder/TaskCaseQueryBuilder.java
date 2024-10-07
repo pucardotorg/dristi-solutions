@@ -75,12 +75,16 @@ public class TaskCaseQueryBuilder {
     }
 
     public String addOrderByQuery(String query, Pagination pagination) {
-        if (pagination == null || pagination.getSortBy() == null || pagination.getOrder() == null) {
+        if (isPaginationInvalid(pagination) || pagination.getSortBy().contains(";")) {
             return query + DEFAULT_ORDERBY_CLAUSE;
         } else {
             query = query + ORDERBY_CLAUSE;
         }
         return query.replace("{orderBy}", pagination.getSortBy()).replace("{sortingOrder}", pagination.getOrder().name());
+    }
+
+    private static boolean isPaginationInvalid(Pagination pagination) {
+        return pagination == null || pagination.getSortBy() == null || pagination.getOrder() == null;
     }
 
     public String getDocumentSearchQuery(List<String> ids, List<Object> preparedStmtList) {
@@ -124,7 +128,9 @@ public class TaskCaseQueryBuilder {
 
         if (!ObjectUtils.isEmpty(taskCaseSearchCriteria.getSearchText())) {
             addClauseIfRequired(query, preparedStmtList);
-            query.append("(task.tasknumber ILIKE '%").append(taskCaseSearchCriteria.getSearchText()).append("%' or task.cnrnumber ILIKE '%").append(taskCaseSearchCriteria.getSearchText()).append("%' )");
+            query.append("(task.tasknumber ILIKE ").append(" ? ").append(" or task.cnrnumber ILIKE ").append(" ? ").append(" )");
+            preparedStmtList.add(taskCaseSearchCriteria.getSearchText());
+            preparedStmtList.add(taskCaseSearchCriteria.getSearchText());
         }
 
     }
