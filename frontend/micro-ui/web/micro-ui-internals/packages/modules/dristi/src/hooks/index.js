@@ -37,7 +37,7 @@ export const Urls = {
     searchIndividual: "/individual/v1/_search",
     searchIndividualAdvocate: "/advocate/advocate/v1/_search",
     searchIndividualClerk: "/advocate/clerk/v1/_search",
-    updateAdvocateDetails: "/advocate/advocate/v1/_update",
+    updateAdvocateDetails: "/advocate/v1/_update",
     caseCreate: "/case/v1/_create",
     caseUpdate: "/case/v1/_update",
     caseSearch: "/case/v1/_search",

@@ -143,7 +143,7 @@ const ApplicationDetails = ({ location, match }) => {
     const applications = searchResult;
     applications[0].workflow.action = action;
     const data = { [userTypeDetail?.apiDetails?.requestKey]: applications?.[0] };
-    const url = userType === "ADVOCATE_CLERK" ? "/advocate/clerk/v1/_update" : "/advocate/advocate/v1/_update";
+    const url = userType === "ADVOCATE_CLERK" ? "/advocate/clerk/v1/_update" : "/advocate/v1/_update";
     if (showModal) {
       applications[0].workflow.comments = reasons;
     }

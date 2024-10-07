@@ -48,7 +48,7 @@ export const userTypeOptions = [
       "HEARING_ACCEPTOR",
     ],
     apiDetails: {
-      serviceName: "/advocate/advocate/v1/_create",
+      serviceName: "/advocate/v1/_create",
       requestKey: "advocate",
       AdditionalFields: ["barRegistrationNumber"],
     },
