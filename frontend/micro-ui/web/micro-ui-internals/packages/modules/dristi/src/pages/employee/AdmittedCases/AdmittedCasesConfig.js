@@ -262,6 +262,7 @@ export const TabSearchconfig = {
               {
                 label: "Parties",
                 jsonPath: "orderDetails.parties",
+                additionalCustomization: true,
               },
               {
                 label: "Status",
