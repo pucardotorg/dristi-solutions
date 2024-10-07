@@ -390,6 +390,17 @@ export const pendingTaskOrderActions = {
       ],
     },
   },
+  PAYMENT_PENDING_RPAD: {
+    actorName: ["JUDGE"],
+    actionName: "Show Summon-Warrant Status",
+    redirectDetails: {
+      url: "/home/home-pending-task/rpad-payment-modal",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "taskNumber", value: "referenceId" },
+      ],
+    },
+  },
   PAYMENT_PENDING_SMS: {
     actorName: ["JUDGE"],
     actionName: "Show Summon-Warrant Status",

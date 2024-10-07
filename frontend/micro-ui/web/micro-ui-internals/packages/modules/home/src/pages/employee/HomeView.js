@@ -348,7 +348,9 @@ const HomeView = () => {
               <UpcomingHearings handleNavigate={handleNavigate} attendeeIndividualId={individualId} userInfoType={userInfoType} t={t} />
               {isJudge && (
                 <div className="hearingCard" style={{ backgroundColor: "#ECF3FD" }}>
-                  <Link to={`/${window.contextPath}/employee/home/dashboard`}> Open Dashboard </Link>
+                  <Link to={`/${window.contextPath}/employee/home/dashboard`} style={{ color: "#007e7e", fontWeight: 700, textDecoration: "none" }}>
+                    Open Dashboard
+                  </Link>
                 </div>
               )}
               {isCourtRoomRole && <ReviewCard data={data} userInfoType={userInfoType} />}

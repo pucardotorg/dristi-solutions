@@ -173,8 +173,8 @@ const ViewPaymentDetails = ({ location, match }) => {
       ],
     },
     {},
-    "dristi",
-    Boolean(!paymentType?.toLowerCase()?.includes("application") && !paymentType?.toLowerCase()?.includes("case") && tasksData)
+    "dristi" + channelId,
+    Boolean(!paymentType?.toLowerCase()?.includes("application") && !paymentType?.toLowerCase()?.includes("case") && tasksData && channelId)
   );
 
   const totalAmount = useMemo(() => {
