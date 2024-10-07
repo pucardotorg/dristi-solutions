@@ -35,7 +35,8 @@ CREATE TABLE dristi_case_document (
                                       litigant_id varchar(64)  NULL,
                                       representative_id varchar(64)  NULL,
                                       representing_id varchar(64)  NULL,
-                                      additionalDetails JSONB NULL
+                                      additionalDetails JSONB NULL,
+                                      CONSTRAINT fk_case_document_case_id FOREIGN KEY (case_id) REFERENCES dristi_cases(id)
 );
 
 CREATE TABLE dristi_linked_case (
@@ -48,7 +49,8 @@ CREATE TABLE dristi_linked_case (
                                     createdBy varchar(64) NULL,
                                     lastModifiedBy varchar(64) NULL,
                                     createdTime int8 NULL,
-                                    lastModifiedTime int8 NULL
+                                    lastModifiedTime int8 NULL,
+                                    CONSTRAINT fk_linked_case_case_id FOREIGN KEY (case_id) REFERENCES dristi_cases(id)
 );
 
 CREATE TABLE dristi_case_statutes_and_sections (
@@ -62,7 +64,8 @@ CREATE TABLE dristi_case_statutes_and_sections (
                                                    createdBy varchar(64) NULL,
                                                    lastModifiedBy varchar(64) NULL,
                                                    createdTime int8 NULL,
-                                                   lastModifiedTime int8 NULL
+                                                   lastModifiedTime int8 NULL,
+                                                   CONSTRAINT fk_case_statutes_and_sections_case_id FOREIGN KEY (case_id) REFERENCES dristi_cases(id)
 );
 
 
@@ -79,7 +82,8 @@ CREATE TABLE dristi_case_litigants (
                                        createdBy varchar(64) NULL,
                                        lastModifiedBy varchar(64) NULL,
                                        createdTime int8 NULL,
-                                       lastModifiedTime int8 NULL
+                                       lastModifiedTime int8 NULL,
+                                       CONSTRAINT fk_case_litigants_case_id FOREIGN KEY (case_id) REFERENCES dristi_cases(id)
 );
 
 CREATE TABLE dristi_case_representatives (
@@ -92,7 +96,8 @@ CREATE TABLE dristi_case_representatives (
                                              createdBy varchar(64) NULL,
                                              lastModifiedBy varchar(64) NULL,
                                              createdTime int8 NULL,
-                                             lastModifiedTime int8 NULL
+                                             lastModifiedTime int8 NULL,
+                                             CONSTRAINT fk_case_representatives_case_id FOREIGN KEY (case_id) REFERENCES dristi_cases(id)
 );
 
 CREATE TABLE dristi_case_representing (
@@ -109,5 +114,7 @@ CREATE TABLE dristi_case_representing (
                                           createdBy varchar(64) NULL,
                                           lastModifiedBy varchar(64) NULL,
                                           createdTime int8 NULL,
-                                          lastModifiedTime int8 NULL
+                                          lastModifiedTime int8 NULL,
+                                          CONSTRAINT fk_case_representing_case_id FOREIGN KEY (caseId) REFERENCES dristi_cases(id),
+                                          CONSTRAINT fk_case_representing_representative_id FOREIGN KEY (representative_id) REFERENCES dristi_case_representatives(id)
 );
