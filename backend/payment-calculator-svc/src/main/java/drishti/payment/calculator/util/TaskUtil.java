@@ -55,11 +55,6 @@ public class TaskUtil {
         return taskPayments;
     }
 
-    @Deprecated
-    public Double calculateCourtFees(SpeedPostConfigParams ePostFeesDefaultData) {
-        double totalFee = ePostFeesDefaultData.getCourtFee() + ePostFeesDefaultData.getApplicationFee();
-        return getRoundOffValue(totalFee);
-    }
 
     public Double calculateCourtFees(TaskPayment taskPayment) {
         double courtFee = taskPayment.getCourtfee();
@@ -82,16 +77,6 @@ public class TaskUtil {
 
     }
 
-    @Deprecated
-    public List<BreakDown> getFeeBreakdown(double courtFee, double gst, double postFee) {
-        List<BreakDown> feeBreakdowns = new ArrayList<>();
-
-        feeBreakdowns.add(new BreakDown(COURT_FEE, courtFee, new HashMap<>()));
-        feeBreakdowns.add(new BreakDown(GST, gst, new HashMap<>()));
-        feeBreakdowns.add(new BreakDown(E_POST, postFee, new HashMap<>()));
-
-        return feeBreakdowns;
-    }
 
     public List<BreakDown> getFeeBreakdown(double courtFee, double postFee) {
         List<BreakDown> feeBreakdowns = new ArrayList<>();

@@ -1,13 +1,12 @@
 package drishti.payment.calculator.service;
 
-import drishti.payment.calculator.config.Configuration;
-import drishti.payment.calculator.factory.PaymentContext;
 import drishti.payment.calculator.factory.PaymentFactory;
 import drishti.payment.calculator.web.models.Calculation;
-import drishti.payment.calculator.web.models.SummonCalculationCriteria;
-import drishti.payment.calculator.web.models.SummonCalculationReq;
+import drishti.payment.calculator.web.models.TaskPaymentCriteria;
+import drishti.payment.calculator.web.models.TaskPaymentRequest;
 import org.egov.common.contract.request.RequestInfo;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -27,40 +26,35 @@ class PaymentCalculationServiceTest {
     @Mock
     private PaymentFactory paymentFactory;
 
-    @Mock
-    private Configuration config;
-
     @InjectMocks
-    private PaymentCalculationService PaymentCalculationService;
-
-    @Mock
-    private PaymentContext paymentContext;
+    private PaymentCalculationService paymentCalculationService;
 
     @Mock
     private Payment payment;
 
-    private SummonCalculationReq summonCalculationReq;
+    private TaskPaymentRequest taskPaymentRequest;
     private RequestInfo requestInfo;
-    private List<SummonCalculationCriteria> calculationCriteria;
-    private SummonCalculationCriteria criteria;
+    private List<TaskPaymentCriteria> calculationCriteria;
+    private TaskPaymentCriteria criteria;
 
     @BeforeEach
     void setUp() {
         requestInfo = new RequestInfo();
-        criteria = SummonCalculationCriteria.builder().channelId("channel1").build();
+        criteria = TaskPaymentCriteria.builder().channelId("channel1").build();
         calculationCriteria = Collections.singletonList(criteria);
 
-        summonCalculationReq = SummonCalculationReq.builder()
+        taskPaymentRequest = TaskPaymentRequest.builder()
                 .requestInfo(requestInfo)
                 .calculationCriteria(calculationCriteria)
                 .build();
     }
 
     @Test
-    void testCalculateSummonFees() {
+    @DisplayName("calculate task payment fees for channel id")
+    void doCalculateTaskPaymentFees() {
         when(paymentFactory.getChannelById(anyString())).thenReturn(payment);
 
-        List<Calculation> calculations = PaymentCalculationService.calculateSummonFees(summonCalculationReq);
+        List<Calculation> calculations = paymentCalculationService.calculateTaskPaymentFees(taskPaymentRequest);
 
         assertNotNull(calculations);
         assertEquals(1, calculations.size());

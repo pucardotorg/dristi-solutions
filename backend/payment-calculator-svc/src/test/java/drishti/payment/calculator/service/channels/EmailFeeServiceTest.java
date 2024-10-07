@@ -33,7 +33,7 @@ public class EmailFeeServiceTest {
     private EmailFeeService emailFeeService;
 
     @Test
-    @DisplayName("do calculate email fee")
+    @DisplayName("do calculate email summon fee")
     public void doCalculateEmailSummonFee() {
 
         TaskPayment payment = TaskPaymentTestBuilder.builder().withConfig("SUMMON").build();
