@@ -74,4 +74,7 @@ public class SummonsPdf  {
 
     @JsonProperty("executorName")
     private String executorName;
+
+    @JsonProperty("bailableAmount")
+    private String bailableAmount;
 }
