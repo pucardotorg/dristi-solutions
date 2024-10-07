@@ -125,4 +125,7 @@ public class Configuration {
 
     @Value("${egov.filestore.path}")
     private String fileStorePath;
+
+    @Value("${egov.documenttype.path}")
+    private String documentTypePath;
 }
