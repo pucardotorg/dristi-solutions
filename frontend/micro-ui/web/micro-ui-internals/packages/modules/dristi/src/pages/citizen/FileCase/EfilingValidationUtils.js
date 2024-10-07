@@ -1924,7 +1924,7 @@ export const updateCaseDetails = async ({
               })
             );
           }
-          const advocateDetail = await DRISTIService.searchAdvocateClerk("/advocate/advocate/v1/_search", {
+          const advocateDetail = await DRISTIService.searchAdvocateClerk("/advocate/v1/_search", {
             criteria: [
               {
                 barRegistrationNumber: data?.data?.advocateBarRegNumberWithName?.[0]?.barRegistrationNumber,
