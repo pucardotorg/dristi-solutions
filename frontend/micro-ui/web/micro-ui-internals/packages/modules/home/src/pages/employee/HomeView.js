@@ -89,7 +89,7 @@ const HomeView = () => {
     { tenantId },
     individualId,
     Boolean(isUserLoggedIn && individualId && userType !== "LITIGANT"),
-    userType === "ADVOCATE" ? "/advocate/advocate/v1/_search" : "/advocate/clerk/v1/_search"
+    userType === "ADVOCATE" ? "/advocate/v1/_search" : "/advocate/clerk/v1/_search"
   );
 
   const refreshInbox = () => {

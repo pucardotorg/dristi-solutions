@@ -39,7 +39,7 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
   };
 
   const getUserForAdvocateUUID = async (barRegistrationNumber) => {
-    const advocateDetail = await window?.Digit.DRISTIService.searchAdvocateClerk("/advocate/advocate/v1/_search", {
+    const advocateDetail = await window?.Digit.DRISTIService.searchAdvocateClerk("/advocate/v1/_search", {
       criteria: [
         {
           barRegistrationNumber: barRegistrationNumber,
