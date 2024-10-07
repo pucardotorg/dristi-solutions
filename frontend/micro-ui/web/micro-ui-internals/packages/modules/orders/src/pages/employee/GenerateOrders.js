@@ -1279,12 +1279,29 @@ const GenerateOrders = () => {
         },
       });
     }
-    if (order?.orderType === "WARRANT") {
+    if ((order?.orderType === "WARRANT" || orderType === "WARRANT") && refId) {
+      const assignee = [...complainants?.map((data) => data?.uuid[0])];
+      const advocateUuid = Object.keys(allAdvocates)
+        .filter((data) => assignee?.includes(allAdvocates?.[data]?.[0]))
+        ?.flat();
+      assignees = [...assignee, ...advocateUuid]?.map((uuid) => ({ uuid }));
       entityType = "order-default";
-      create = false; //Temporarily not allow to create pending task for warrant payment
-      assignees = [...[...new Set([...Object.keys(allAdvocates)?.flat(), ...Object.values(allAdvocates)?.flat()])]?.map((uuid) => ({ uuid }))];
-      name = t("PAYMENT_PENDING_FOR_WARRANT");
-      status = `PAYMENT_PENDING_FOR_WARRANT`;
+      return ordersService.customApiService(Urls.orders.pendingTask, {
+        pendingTask: {
+          name: t(`PAYMENT_PENDING_FOR_WARRANT`),
+          entityType,
+          referenceId: `MANUAL_${refId}`,
+          status: `PAYMENT_PENDING_POLICE`,
+          assignedTo: assignees,
+          assignedRole,
+          cnrNumber: cnrNumber,
+          filingNumber: filingNumber,
+          isCompleted: false,
+          stateSla: stateSlaMap?.[order?.orderType || orderType] * dayInMillisecond + todayDate,
+          additionalDetails: { ...additionalDetails, applicationNumber: order?.additionalDetails?.formdata?.refApplicationId },
+          tenantId,
+        },
+      });
     }
 
     if (isAssignedRole) {
@@ -1770,44 +1787,50 @@ const GenerateOrders = () => {
             tenantId,
           })
           .then(async (data) => {
-            if (["SUMMONS", "NOTICE"].includes(orderType) && item?.type !== "Via Police") {
+            if (["SUMMONS", "NOTICE"].includes(orderType)) {
               await createPendingTask({ refId: data?.task?.taskNumber, channel: item, orderType: orderType });
             }
           });
       });
     } else if (Object.keys(payload || {}).length > 0) {
-      await ordersService.customApiService(Urls.orders.taskCreate, {
-        task: {
-          taskDetails: payload,
-          workflow: {
-            action: "CREATE",
-            comments: orderType,
-            documents: [
-              {
-                documentType: null,
-                fileStore: null,
-                documentUid: null,
-                additionalDetails: {},
-              },
-            ],
-            assignes: null,
-            rating: null,
+      await ordersService
+        .customApiService(Urls.orders.taskCreate, {
+          task: {
+            taskDetails: payload,
+            workflow: {
+              action: "CREATE",
+              comments: orderType,
+              documents: [
+                {
+                  documentType: null,
+                  fileStore: null,
+                  documentUid: null,
+                  additionalDetails: {},
+                },
+              ],
+              assignes: null,
+              rating: null,
+            },
+            createdDate: new Date().getTime(),
+            orderId: orderData?.id,
+            filingNumber,
+            cnrNumber,
+            taskType: orderType,
+            status: "INPROGRESS",
+            tenantId,
+            amount: {
+              type: "FINE",
+              status: "DONE",
+              amount: summonsCourtFee,
+            },
           },
-          createdDate: new Date().getTime(),
-          orderId: orderData?.id,
-          filingNumber,
-          cnrNumber,
-          taskType: orderType,
-          status: "INPROGRESS",
           tenantId,
-          amount: {
-            type: "FINE",
-            status: "DONE",
-            amount: summonsCourtFee,
-          },
-        },
-        tenantId,
-      });
+        })
+        .then(async (data) => {
+          if (["WARRANT"].includes(orderType)) {
+            await createPendingTask({ refId: data?.task?.taskNumber, orderType: orderType });
+          }
+        });
     }
   };
 
