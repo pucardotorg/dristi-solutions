@@ -101,11 +101,12 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
           const updatedValue = value.replace(/[^A-Z0-9\/]/g, "");
           if (updatedValue !== oldValue) {
             clientValue.barRegistrationNumber = updatedValue;
-            setValue(key, clientValue);
+            setValue(key, clientValue, { shouldValidate: true });
           }
         }
       }
     }
+
     let isDisabled = false;
     advocateClerkConfig.forEach((curr) => {
       if (isDisabled) return;
@@ -144,13 +145,14 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
       setShowErrorToast(!validateFormData(formData));
       return;
     }
-    // if (formData?.clientDetails?.barRegistrationNumber) {
-    //   const advocateDetail = await getUserForAdvocateUUID(formData?.clientDetails?.barRegistrationNumber);
-    //   if (advocateDetail?.advocates[0]?.responseList?.length !== 0) {
-    //     setFormErrors.current("barRegistrationNumber", { message: t("DUPLICATE_BAR_REGISTRATION") });
-    //     return;
-    //   }
-    // }
+
+    if (formData?.clientDetails?.barRegistrationNumber) {
+      const advocateDetail = await getUserForAdvocateUUID(formData?.clientDetails?.barRegistrationNumber);
+      if (advocateDetail?.advocates[0]?.responseList?.length !== 0) {
+        setFormErrors.current("barRegistrationNumber", { message: t("DUPLICATE_BAR_REGISTRATION") });
+        return;
+      }
+    }
     setParams({
       ...params,
       formData: formData,
