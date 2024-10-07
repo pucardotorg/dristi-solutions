@@ -95,7 +95,7 @@ public class SpeedPostUtil {
         // gst on post Fee
         Double gstFee = ePostFeeWithoutGST * gstPercentage;
         // Total Fee before GST
-        return ePostFeeWithoutGST + gstFee + envelopeFee;
+        return Math.round((ePostFeeWithoutGST + gstFee + envelopeFee) * 100.0) / 100.0 ; //
     }
 
 
