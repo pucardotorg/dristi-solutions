@@ -73,7 +73,7 @@ public class ApplicationEnrichment {
 
     public void enrichApplicationNumberByCMPNumber(ApplicationRequest applicationRequest) {
         try {
-            String tenantId = applicationRequest.getApplication().getCnrNumber().substring(0,);
+            String tenantId = applicationRequest.getApplication().getCnrNumber().substring(0,6);
             String idName = configuration.getCmpConfig();
             String idFormat = configuration.getCmpFormat();
             List<String> cmpNumberIdList = idgenUtil.getIdList(applicationRequest.getRequestInfo(),tenantId, idName, idFormat, 1,false);
