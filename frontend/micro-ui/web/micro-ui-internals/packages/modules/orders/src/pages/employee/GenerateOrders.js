@@ -47,7 +47,6 @@ import { HearingWorkflowAction } from "../../utils/hearingWorkflow";
 import _ from "lodash";
 import { useGetPendingTask } from "../../hooks/orders/useGetPendingTask";
 import useSearchOrdersService from "../../hooks/orders/useSearchOrdersService";
-import useGetStatuteSection from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useGetStatuteSection";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { constructFullName, removeInvalidNameParts } from "../../utils";
 
@@ -296,6 +295,13 @@ const GenerateOrders = () => {
       }) || []
     );
   }, [caseDetails]);
+
+  const allParties = useMemo(() => [...complainants, ...respondents, ...unJoinedLitigant, ...witnesses], [
+    complainants,
+    respondents,
+    unJoinedLitigant,
+    witnesses,
+  ]);
 
   const { data: ordersData, refetch: refetchOrdersData, isLoading: isOrdersLoading, isFetching: isOrdersFetching } = useSearchOrdersService(
     {
@@ -1033,8 +1039,23 @@ const GenerateOrders = () => {
     ) {
       parties = orderSchema?.orderDetails?.parties;
     } else {
-      parties = [...complainants, ...respondents, ...unJoinedLitigant]?.map((item) => item?.name || "");
+      parties = allParties?.map((party) => ({ partyName: party.name, partyType: party?.partyType }));
+      return parties;
     }
+    parties = parties?.map((party) => {
+      const matchingParty = allParties.find((p) => p.name === party);
+      if (matchingParty) {
+        return {
+          partyName: matchingParty.name,
+          partyType: matchingParty.partyType,
+        };
+      } else {
+        return {
+          partyName: party,
+          partyType: "witness",
+        };
+      }
+    });
     return parties;
   };
 
@@ -2264,7 +2285,8 @@ const GenerateOrders = () => {
     !ordersData?.list ||
     isHearingLoading ||
     pendingTasksLoading ||
-    isCourtIdsLoading
+    isCourtIdsLoading ||
+    isPublishedOrdersLoading
   ) {
     return <Loader />;
   }
