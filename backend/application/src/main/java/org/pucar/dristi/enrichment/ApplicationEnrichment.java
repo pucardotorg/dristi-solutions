@@ -87,9 +87,12 @@ public class ApplicationEnrichment {
             String idFormat = configuration.getCmpFormat();
             List<String> cmpNumberIdList = idgenUtil.getIdList(applicationRequest.getRequestInfo(), courtId, idName, idFormat, 1,false);
             applicationRequest.getApplication().setApplicationNumber(cmpNumberIdList.get(0));
+        } catch (CustomException e) {
+            log.error("Custom Exception while enriching application number by CMP number: {}", e.toString());
+            throw new CustomException(ENRICHMENT_EXCEPTION, "Custom Exception in case enrichment service while enriching application number: " + e);
         } catch (Exception e) {
-            log.error("Error enriching application number: {}", e.toString());
-            throw new CustomException(ENRICHMENT_EXCEPTION, "Error in case enrichment service while enriching application number: " + e.getMessage());
+            log.error("Error enriching application number by CMP number: {}", e.toString());
+            throw new CustomException(ENRICHMENT_EXCEPTION, "Error in case enrichment service while enriching application number: " + e);
         }
     }
 
