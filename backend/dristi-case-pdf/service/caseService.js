@@ -42,6 +42,23 @@ const getDocumentFileStore = (documents, fileName) => {
 };
 
 /**
+ * Extracts address information from a nested object.
+ *
+ * @param {Object} addressObject - The object containing address details.
+ * @returns {Object} An object containing extracted address details.
+ */
+const getAddressDetails = (addressObject) => {
+    return {
+      locality: addressObject?.locality || '',
+      city: addressObject?.city || '',
+      district: addressObject?.district || '',
+      state: addressObject?.state || '',
+      pincode: addressObject?.pincode || ''
+    };
+  };
+  
+
+/**
  * Extracts complainant information from the case object.
  *
  * @param {Object} cases - The cases object containing court case details.
@@ -61,13 +78,7 @@ exports.getComplainantsDetails = async (cases) => {
 
         if (complainantType.code === 'REPRESENTATIVE') {
             const companyDetails = data.addressCompanyDetails || {};
-            const companyAddress = {
-                locality: companyDetails.locality || '',
-                city: companyDetails.city || '',
-                district: companyDetails.district || '',
-                state: companyDetails.state || '',
-                pincode: companyDetails.pincode || ''
-            };
+            const companyAddress = getAddressDetails(companyDetails);
 
             return {
                 complainantType: complainantType.name || '',
@@ -81,13 +92,7 @@ exports.getComplainantsDetails = async (cases) => {
             };
         } else {
             const addressDetails = data.complainantVerification && data.complainantVerification.individualDetails && data.complainantVerification.individualDetails.addressDetails || {};
-            const address = {
-                locality: addressDetails.locality || '',
-                city: addressDetails.city || '',
-                district: addressDetails.district || '',
-                state: addressDetails.state || '',
-                pincode: addressDetails.pincode || ''
-            };
+            const address = getAddressDetails(addressDetails);
 
             return {
                 complainantType: complainantType.name || '',
@@ -120,13 +125,7 @@ exports.getRespondentsDetails = async (cases) => {
         const middleName = data.respondentMiddleName || '';
         const lastName = data.respondentLastName || '';
         const addresses = data.addressDetails.map((addressDetail) => {
-            return {
-                locality: addressDetail.addressDetails.locality,
-                city: addressDetail.addressDetails.city,
-                district: addressDetail.addressDetails.district,
-                state: addressDetail.addressDetails.state,
-                pincode: addressDetail.addressDetails.pincode
-            };
+            return getAddressDetails(addressDetail.addressDetails);
         });
         const affidavitDocument = data.inquiryAffidavitFileUpload && data.inquiryAffidavitFileUpload.document.find(doc => doc.fileName === 'Affidavit documents');
 
@@ -154,13 +153,7 @@ exports.getWitnessDetails = async (cases) => {
     return cases.additionalDetails.witnessDetails.formdata.map((formData) => {
         const data = formData.data;
         const addresses = data.addressDetails.map((addressDetail) => {
-            return {
-                locality: addressDetail.addressDetails.locality,
-                city: addressDetail.addressDetails.city,
-                district: addressDetail.addressDetails.district,
-                state: addressDetail.addressDetails.state,
-                pincode: addressDetail.addressDetails.pincode
-            };
+            return getAddressDetails(addressDetail.addressDetails);
         });
         const firstName = data.firstName || '';
         const middleName = data.middleName || '';
