@@ -79,7 +79,7 @@ public class PdfServiceUtil {
                         summonsPdf.setTwoSuretyAmount(String.valueOf(bailableAmount));
                     }
                     if(surety !=null && surety == 1){
-                        summonsPdf.setTwoSuretyAmount(String.valueOf(bailableAmount));
+                        summonsPdf.setOneSuretyAmount(String.valueOf(bailableAmount));
                     }
                 }
             }
