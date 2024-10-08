@@ -262,11 +262,6 @@ exports.getDemandNoticeDetails = (cases) => {
     const demandNoticeDetailsList = cases.caseDetails.demandNoticeDetails.formdata.map(dataItem => {
         const demandNoticeData = dataItem.data || {};
 
-        const legalDemandNoticeDocument = demandNoticeData.legalDemandNoticeFileUpload && demandNoticeData.legalDemandNoticeFileUpload.document.find(doc => doc.fileName === 'LEGAL_DEMAND_NOTICE');
-        const proofOfServiceDocument = demandNoticeData.proofOfDispatchFileUpload && demandNoticeData.proofOfDispatchFileUpload.document.find(doc => doc.fileName === 'PROOF_OF_DISPATCH_FILE_NAME');
-        const proofOfAcknowledgmentDocument = demandNoticeData.proofOfAcknowledgmentFileUpload && demandNoticeData.proofOfAcknowledgmentFileUpload.document.find(doc => doc.fileName === 'PROOF_LEGAL_DEMAND_NOTICE_FILE_NAME');
-        const proofOfReplyDocument = demandNoticeData.proofOfReplyFileUpload && demandNoticeData.proofOfReplyFileUpload.document.find(doc => doc.fileName === 'CS_PROOF_TO_REPLY_DEMAND_NOTICE_FILE_NAME');
-
         return {
             modeOfDispatch: demandNoticeData.modeOfDispatchType && demandNoticeData.modeOfDispatchType.modeOfDispatchType && demandNoticeData.modeOfDispatchType.modeOfDispatchType.name || null,
             dateOfIssuance: demandNoticeData.dateOfIssuance || null,
