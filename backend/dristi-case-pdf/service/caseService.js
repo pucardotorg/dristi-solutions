@@ -344,7 +344,7 @@ exports.getPrayerSwornStatementDetails = (cases) => {
             memorandumOfComplaintFileStore: getDocumentFileStore(swornStatementData.memorandumOfComplaint.document, 'CS_MEMORANDUM_OF_COMPLAINT_HEADER'),
             prayerForReliefText: swornStatementData.prayerForRelief && swornStatementData.prayerForRelief.text || null,
             prayerForReliefFileStore: getDocumentFileStore(swornStatementData.prayerForRelief.document, 'CS_PRAYER_FOR_RELIEF_HEADER'),
-            swornStatement: getDocumentFileStore(swornStatementData.swornStatementDocument, 'CS_SWORN_STATEMENT_HEADER') || ''
+            swornStatement: getDocumentFileStore(swornStatementData.swornStatementDocument, 'CS_SWORN_STATEMENT_HEADER') || '',
             additionalDetails: swornStatementData.additionalDetails && swornStatementData.additionalDetails.text || null,
             additionalActsSectionsToChargeWith: swornStatementData.additionalActsSections && swornStatementData.additionalActsSections.text || null
         };
