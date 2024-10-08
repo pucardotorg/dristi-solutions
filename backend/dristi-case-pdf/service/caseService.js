@@ -2,7 +2,7 @@ const config = require('../config/config');
 
 
 /**
- * Extracts witness information from the case section.
+ * Extracts case section from the case object.
  *
  * @param {Object} cases - The cases object containing court case details.
  * @returns {String} A string object that refers to section Number.
@@ -42,7 +42,7 @@ const getDocumentFileStore = (documents, fileName) => {
 };
 
 /**
- * Extracts complainant information from the case section.
+ * Extracts complainant information from the case object.
  *
  * @param {Object} cases - The cases object containing court case details.
  * @returns {Array} An array of complainant information objects.
@@ -104,7 +104,7 @@ exports.getComplainantsDetails = async (cases) => {
 };
 
 /**
- * Extracts respondent information from the case section.
+ * Extracts respondent information from the case object.
  *
  * @param {Object} cases - The cases object containing court case details.
  * @returns {Array} An array of respondent information objects.
@@ -179,7 +179,7 @@ exports.getWitnessDetails = async (cases) => {
 };
 
 /**
- * Extracts advocate information from the case section.
+ * Extracts advocate information from the case object.
  *
  * @param {Object} cases - The cases object containing court case details.
  * @returns {Array} An array of advocate information objects.
@@ -201,7 +201,7 @@ exports.getAdvocateDetails = async (cases) => {
 };
 
 /**
- * Extracts cheque information from the case section.
+ * Extracts cheque information from the case object.
  *
  * @param {Object} cases - The cases object containing court case details.
  * @returns {Array} An array of cheque information objects.
@@ -233,7 +233,7 @@ exports.getChequeDetails = (cases) => {
 };
 
 /**
- * Extracts debt liability information from the case section.
+ * Extracts debt liability information from the case object.
  *
  * @param {Object} cases - The cases object containing court case details.
  * @returns {Array} An array of debt liability information objects.
@@ -257,7 +257,7 @@ exports.getDebtLiabilityDetails = (cases) => {
 };
 
 /**
- * Extracts demand notice information from the case section.
+ * Extracts demand notice information from the case object.
  *
  * @param {Object} cases - The cases object containing court case details.
  * @returns {Array} An array of demand notice information objects.
@@ -298,7 +298,7 @@ exports.getDemandNoticeDetails = (cases) => {
 };
 
 /**
- * Extracts delay condonation information from the case section.
+ * Extracts delay condonation information from the case object.
  *
  * @param {Object} cases - The cases object containing court case details.
  * @returns {Array} An array of delay condonation information objects.
@@ -322,7 +322,7 @@ exports.getDelayCondonationDetails = (cases) => {
 };
 
 /**
- * Extracts prayer and sworn statement information from the case section.
+ * Extracts prayer and sworn statement information from the case object.
  *
  * @param {Object} cases - The cases object containing court case details.
  * @returns {Array} An array of prayer and sworn statement information objects.
