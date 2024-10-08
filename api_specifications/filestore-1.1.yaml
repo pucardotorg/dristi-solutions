@@ -1,0 +1,384 @@
+openapi: 3.0.1
+info:
+  title: Filestore serivce APIs
+  description: |
+    APIs available for filestore service
+      -  Uploads different kinds of files to server including images and different document types.
+  contact:
+    name: eGovernments Foundation
+    email: contacts@egovernments.org
+  version: 2.0.0
+servers:
+- url: /filestore/v1
+paths:
+  /files:
+    post:
+      tags:
+      - Upload File
+      summary: Uploads different kinds of files to server.
+      description: The endpoint for uploading file in the system.
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              required:
+              - file
+              - tenantId
+              properties:
+                file:
+                  type: string
+                  description: The file to upload.
+                  format: binary
+                tenantId:
+                  type: string
+                  description: Unique ulb identifier.
+                module:
+                  type: string
+                  description: module name.
+                tag:
+                  type: string
+                  description: tag name.
+        required: true
+      responses:
+        200:
+          description: Success response with filestoreid and tenantid.
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/UploadFileResponse'
+        400:
+          description: Error response in case of failures.
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ErrorRes'
+  
+  /delete:
+    post:
+      tags:
+      - Delete
+      summary: Delete a list of files 
+      description: Deletes file(s) based on tenantid, filestoreid and return the deleted list of ids
+      requestBody:
+        content:
+          '*/*':
+            schema:
+              required:
+              - filestoreIds
+              - tenantId
+              properties:
+                filestoreIds:
+                  type: array
+                  description: The list of files to be deleted. Can be just one or more
+                  items:
+                    type: string
+                tenantId:
+                  type: string
+                  description: Unique tenantId to which the filestoreIds belong. Note that all filestoreIds must belong to a single tenant for deletion.
+                module:
+                  type: string
+                  description: module name.
+      responses:
+        200:
+          description: Success response with the list of deleted filestore Ids.
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/FilestoreIdResponse'
+        400:
+          description: Error response in case of failures.
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ErrorRes'
+  /files/url:
+    get:
+      tags:
+      - Search
+      summary: Search file url based on tenantid and filestoreid.
+      description: Search file url.
+      parameters:
+      - name: tenantId
+        in: query
+        description: Unique id for a tenant.
+        required: true
+        schema:
+          type: string
+          format: varchar
+      - name: fileStoreIds
+        in: query
+        description: Unique filestoreids.
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: List of urls to access the uploaded file which is map to particular
+            fielstoreid.
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/FilestoreIdResponse'
+        400:
+          description: Error response in case of failures.
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ErrorRes'
+  /files/tag:
+    get:
+      tags:
+      - Search
+      summary: Search file url based on tenantid and tag name.
+      description: Search file url.
+      parameters:
+      - name: tenantId
+        in: query
+        description: Unique id for a tenant.
+        required: true
+        schema:
+          type: string
+          format: varchar
+      - name: tag
+        in: query
+        description: tag name.
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: List of urls to access the uploaded file which is map to particular
+            tag name.
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/TagFileResponse'
+        400:
+          description: Error response in case of failures.
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ErrorRes'
+  /files/metaData:
+    get:
+      tags:
+      - Search
+      summary: Get metadata of file based on tenantId and filestoreId.
+      description: metadata of file.
+      parameters:
+      - name: tenantId
+        in: query
+        description: Unique id for a tenant.
+        required: true
+        schema:
+          type: string
+          format: varchar
+      - name: fileStoreId
+        in: query
+        description: Unique fileStoreId.
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: Metadata of file map to particulare filestoreId.
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/MetaDataResponse'
+        400:
+          description: Error response in case of failures.
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ErrorRes'
+  /files/id:
+    get:
+      tags:
+      - Search
+      summary: Search file url based on tenantid and filestoreid.
+      description: Search file url.
+      parameters:
+      - name: tenantId
+        in: query
+        description: Unique id for a tenant.
+        required: true
+        schema:
+          type: string
+          format: varchar
+      - name: fileStoreId
+        in: query
+        description: fileStore id.
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: Return file binary.
+          content: {}
+        400:
+          description: Error response in case of failures.
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ErrorRes'
+components:
+  schemas:
+    FilestoreIdResponse:
+      required:
+      - filestoreId
+      type: object
+      properties:
+        filestoreId:
+          type: array
+          items:
+            type: string
+      description: A list of values
+    UploadFileResponse:
+      type: object
+      properties:
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/UploadFile'
+    TagFileResponse:
+      type: object
+      properties:
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/TagFile'
+    MetaDataResponse:
+      type: object
+      properties:
+        fileName:
+          type: string
+          description: file name.
+        contetntType:
+          type: string
+          description: contetnt type of file.
+        tenantId:
+          type: string
+          description: Unique ulb identifier.
+        resource:
+          type: string
+          description: resource.
+        fileSize:
+          type: string
+          description: file size.
+      description: Response data cobtains details of files.
+    UploadFile:
+      type: object
+      properties:
+        fileStoreId:
+          type: string
+          description: filestore id of the particular file.
+        tenantId:
+          type: string
+          description: Unique ulb identifier.
+      description: Upload file response data with filestoreid and tenantid.
+    TagFile:
+      type: object
+      properties:
+        url:
+          type: string
+          description: url to access the particular file belong to the tag.
+        contetntType:
+          type: string
+          description: contetnt type of file.
+      description: Upload file response data with url and contetnt type of file.
+    ErrorRes:
+      required:
+      - ResponseInfo
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: '#/components/schemas/ResponseInfo'
+        Errors:
+          type: array
+          description: Error response array corresponding to Request Object array.
+            In case of single object submission or _search related paths this may
+            be an array of one error element
+          items:
+            $ref: '#/components/schemas/Error'
+      description: All APIs will return ErrorRes in case of failure which will carry
+        ResponseInfo as metadata and Error object as actual representation of error.
+        In case of bulk apis, some apis may chose to return the array of Error objects
+        to indicate individual failure.
+    ResponseInfo:
+      required:
+      - apiId
+      - status
+      - ts
+      - ver
+      type: object
+      properties:
+        apiId:
+          maxLength: 128
+          type: string
+          description: unique API ID
+        ver:
+          maxLength: 32
+          type: string
+          description: API version
+        ts:
+          type: integer
+          description: response time in epoch
+          format: int64
+        resMsgId:
+          maxLength: 256
+          type: string
+          description: unique response message id (UUID) - will usually be the correlation
+            id from the server
+        msgId:
+          maxLength: 256
+          type: string
+          description: message id of the request
+        status:
+          type: string
+          description: status of request processing - to be enhanced in futuer to
+            include INPROGRESS
+          enum:
+          - SUCCESSFUL
+          - FAILED
+      description: ResponseInfo should be used to carry metadata information about
+        the response from the server. apiId, ver and msgId in ResponseInfo should
+        always correspond to the same values in respective request's RequestInfo.
+    Error:
+      required:
+      - code
+      - message
+      type: object
+      properties:
+        code:
+          type: string
+          description: Error Code will be module specific error label/code to identiffy
+            the error. All modules should also publish the Error codes with their
+            specific localized values in localization service to ensure clients can
+            print locale specific error messages. Example for error code would be
+            User.NotFound to indicate User Not Found by User/Authentication service.
+            All services must declare their possible Error Codes with brief description
+            in the error response section of their API path.
+        message:
+          type: string
+          description: English locale message of the error code. Clients should make
+            a separate call to get the other locale description if configured with
+            the service. Clients may choose to cache these locale specific messages
+            to enhance performance with a reasonable TTL (May be defined by the localization
+            service based on tenant + module combination).
+        description:
+          type: string
+          description: Optional long description of the error to help clients take
+            remedial action. This will not be available as part of localization service.
+        params:
+          type: array
+          description: Some error messages may carry replaceable fields (say $1, $2)
+            to provide more context to the message. E.g. Format related errors may
+            want to indicate the actual field for which the format is invalid. Client's
+            should use the values in the param array to replace those fields.
+          items:
+            type: string
+      description: Error object will be returned as a part of reponse body in conjunction
+        with ResponseInfo as part of ErrorResponse whenever the request processing
+        status in the ResponseInfo is FAILED. HTTP return in this scenario will usually
+        be HTTP 400.
