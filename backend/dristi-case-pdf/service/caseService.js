@@ -25,7 +25,7 @@ exports.getCaseSectionNumber = async (cases) => {
 };
 
 /**
- * Extracts witness information from the case section.
+ * Extracts document file store id from respective object.
  *
  * @param {Object} documents - The object containing file store id.
  * @param {String} fileName - File Name to search for in the document.
