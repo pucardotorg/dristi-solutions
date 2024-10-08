@@ -246,8 +246,8 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       consumerCode: `${filteredTasks?.[0]?.taskNumber}_${suffix}`,
       service: businessService,
     },
-    "dristi",
-    Boolean(filteredTasks?.[0]?.taskNumber)
+    `dristi_${suffix}`,
+    Boolean(filteredTasks?.[0]?.taskNumber && suffix)
   );
 
   const { data: breakupResponse, isLoading: isSummonsBreakUpLoading } = Digit.Hooks.dristi.useSummonsPaymentBreakUp(
