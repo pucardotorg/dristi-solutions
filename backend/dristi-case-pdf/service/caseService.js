@@ -271,18 +271,14 @@ exports.getDemandNoticeDetails = (cases) => {
             modeOfDispatch: demandNoticeData.modeOfDispatchType && demandNoticeData.modeOfDispatchType.modeOfDispatchType && demandNoticeData.modeOfDispatchType.modeOfDispatchType.name || null,
             dateOfIssuance: demandNoticeData.dateOfIssuance || null,
             dateOfDispatch: demandNoticeData.dateOfDispatch || null,
-            legalDemandNoticeFileStore: legalDemandNoticeDocument ? legalDemandNoticeDocument.fileStore : null,
-            proofOfDispatchFileStore: proofOfServiceDocument ? proofOfServiceDocument.fileStore : null,
             legalDemandNoticeFileStore: getDocumentFileStore(demandNoticeData.legalDemandNoticeFileUpload, 'LEGAL_DEMAND_NOTICE') || '',
             proofOfDispatchFileStore: getDocumentFileStore(demandNoticeData.proofOfDispatchFileUpload, 'PROOF_OF_DISPATCH_FILE_NAME') || '',
             proofOfService: demandNoticeData.proofOfService && demandNoticeData.proofOfService.code || null,
             dateOfDeemedService: demandNoticeData.dateOfDeemedService || null,
             dateOfAccrual: demandNoticeData.dateOfAccrual || null,
-            proofOfAcknowledgmentFileStore: proofOfAcknowledgmentDocument ? proofOfAcknowledgmentDocument.fileStore : null,
             proofOfAcknowledgmentFileStore: getDocumentFileStore(demandNoticeData.proofOfAcknowledgmentFileUpload, 'PROOF_LEGAL_DEMAND_NOTICE_FILE_NAME') || '',
             replyReceived: demandNoticeData.proofOfReply && demandNoticeData.proofOfReply.code || null,
             dateOfReply: demandNoticeData.dateOfReply || null,
-            proofOfReplyFileStore: proofOfReplyDocument ? proofOfReplyDocument.fileStore : null,
             proofOfReplyFileStore: getDocumentFileStore(demandNoticeData.proofOfReplyFileUpload, 'CS_PROOF_TO_REPLY_DEMAND_NOTICE_FILE_NAME') || ''
         };
     });
