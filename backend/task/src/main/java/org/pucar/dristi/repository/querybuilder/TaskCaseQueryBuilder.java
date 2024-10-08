@@ -30,9 +30,9 @@ public class TaskCaseQueryBuilder {
     private static final String FROM_DOCUMENTS_TABLE = " FROM dristi_task_document doc";
     private static final String DOCUMENT_SELECT_QUERY_TASK = "SELECT doc.id as id, doc.documenttype as documenttype, doc.filestore as filestore," +
             " doc.documentuid as documentuid, doc.additionaldetails as additionaldetails, doc.task_id as task_id";
-    private static final String TOTAL_COUNT_QUERY = "SELECT COUNT(*) from (select  distinct id FROM ({baseQuery}) total_result) result";
-    private static final String ORDERBY_CLAUSE = " ORDER BY task.{orderBy} {sortingOrder} ";
-    private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY task.createdtime DESC ";
+    private static final String TOTAL_COUNT_QUERY = "SELECT COUNT(*) from (select  distinct id FROM ({baseQuery}) total_result ) result";
+    private static final String ORDERBY_CLAUSE = " ORDER BY {orderBy} {sortingOrder} ";
+    private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY createdtime DESC ";
     private static final String PAGINATION_QUERY = " SELECT * FROM ({baseQuery}) task_case_results WHERE id IN ( SELECT  DISTINCT id FROM ({baseQuery}) total_result LIMIT ? OFFSET ? ) ";
     private static final String DEFAULT_JOIN_CLAUSE =
             " JOIN dristi_orders o ON task.orderId = o.id " +
