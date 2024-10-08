@@ -78,6 +78,9 @@ paths:
                 module:
                   type: string
                   description: module name.
+                isSoftDelete:
+                  type: boolean
+                  description: For soft deletes, set this to be true. For hard deletes, this should be false.
       responses:
         200:
           description: Success response with the list of deleted filestore Ids.
