@@ -79,6 +79,10 @@ public class ApplicationEnrichment {
             CaseSearchRequest caseSearchRequest = createCaseSearchRequest(applicationRequest.getRequestInfo(), applicationRequest.getApplication());
             JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
             String courtId = caseDetails.has("courtId") ? caseDetails.get("courtId").asText() : "";
+            if(courtId==null || courtId.isEmpty()){
+                log.error("CourtId not found for the filingNumber :: {}", applicationRequest.getApplication().getFilingNumber());
+                throw new CustomException(ENRICHMENT_EXCEPTION, "CourtId not found for the filingNumber :: {}" + applicationRequest.getApplication().getFilingNumber());
+            }
             String idName = configuration.getCmpConfig();
             String idFormat = configuration.getCmpFormat();
             List<String> cmpNumberIdList = idgenUtil.getIdList(applicationRequest.getRequestInfo(), courtId, idName, idFormat, 1,false);
