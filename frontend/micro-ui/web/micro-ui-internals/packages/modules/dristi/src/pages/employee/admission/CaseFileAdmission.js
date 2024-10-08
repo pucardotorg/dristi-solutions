@@ -23,6 +23,7 @@ import AdmissionActionModal from "./AdmissionActionModal";
 import { generateUUID } from "../../../Utils";
 import { documentTypeMapping } from "../../citizen/FileCase/Config";
 import ScheduleHearing from "../AdmittedCases/ScheduleHearing";
+import { submissionService } from "../../../../../submissions/src/hooks/services";
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
@@ -102,6 +103,21 @@ function CaseFileAdmission({ t, path }) {
     {},
     filingNumber,
     Boolean(filingNumber)
+  );
+
+  const { data: caseData, isLoading: isCaseDetailsLoading, refetch: refetchCaseData } = Digit.Hooks.dristi.useSearchCaseService(
+    {
+      criteria: [
+        {
+          filingNumber: filingNumber,
+        },
+      ],
+      tenantId,
+    },
+    {},
+    "dristi",
+    filingNumber,
+    filingNumber
   );
 
   const currentHearingId = useMemo(
@@ -522,6 +538,45 @@ function CaseFileAdmission({ t, path }) {
     });
   };
 
+  const handleDelayCondonation = async (caseDetails) => {
+    const documents = caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload?.document?.map((document) => {
+      return {
+        documentType: document?.documentType,
+        fileStore: document?.fileStore,
+        additionalDetails: {
+          name: document?.fileName,
+        },
+      };
+    });
+    const applicationReqBody = {
+      tenantId,
+      application: {
+        tenantId,
+        filingNumber,
+        cnrNumber: caseDetails?.cnrNumber,
+        cmpNumber: caseDetails?.cmpNumber,
+        caseId: caseDetails?.id,
+        // referenceId: isExtension ? null : orderDetails?.id || null,
+        createdDate: new Date().getTime(),
+        applicationType: "DElAY_CONDONATION",
+        isActive: true,
+        statuteSection: { tenantId },
+        documents,
+        onBehalfOf: [caseDetails?.litigants?.[0]?.additionalDetails?.uuid],
+        workflow: null,
+        status: null,
+      },
+    };
+    try {
+      const res = await submissionService.createApplication(applicationReqBody, { tenantId });
+      if (res)
+        await submissionService.createApplication(
+          { application: { ...res?.application, workflow: null, status: "COMPLETED" }, tenantId },
+          { tenantId }
+        );
+    } catch (error) {}
+  };
+
   const handleRegisterCase = async () => {
     setCaseADmitLoader(true);
     const individualId = await fetchBasicUserInfo();
@@ -583,6 +638,10 @@ function CaseFileAdmission({ t, path }) {
     ].flat();
 
     updateCaseDetails("REGISTER", formdata).then(async (res) => {
+      const caseDetails = await refetchCaseData();
+      const caseData = caseDetails?.data?.criteria?.[0]?.responseList?.[0];
+      if (caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code === "NO")
+        await handleDelayCondonation(caseData);
       await Promise.all(
         documentList
           ?.filter((data) => data)
