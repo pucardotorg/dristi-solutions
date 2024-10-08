@@ -71,11 +71,16 @@ public class PdfServiceUtil {
                 String docSubType = warrantDetails.getDocSubType();
 
                 if (BAILABLE.equalsIgnoreCase(docSubType)) {
+                    Integer surety = warrantDetails.getSurety();
                     double bailableAmount = Double.parseDouble(warrantDetails.getBailableAmount());
                     summonsPdf.setBailableAmount(String.valueOf(bailableAmount));
-                    summonsPdf.setTwoSuretyAmount(String.valueOf(bailableAmount/2));
-                    summonsPdf.setOneSuretyAmount(String.valueOf(bailableAmount));
-
+                    if (surety != null && surety == 2) {
+                        bailableAmount /= 2;
+                        summonsPdf.setTwoSuretyAmount(String.valueOf(bailableAmount));
+                    }
+                    if(surety !=null && surety == 1){
+                        summonsPdf.setOneSuretyAmount(String.valueOf(bailableAmount));
+                    }
                 }
             }
 
