@@ -82,6 +82,10 @@ const App = ({ path, stateCode, userType, tenants }) => {
         <PrivateRoute path={`${path}/home-pending-task/post-payment-modal`} component={() => <PaymentForSummonModal></PaymentForSummonModal>} />
         <PrivateRoute path={`${path}/home-pending-task/rpad-payment-modal`} component={() => <PaymentForRPADModal></PaymentForRPADModal>} />
         <PrivateRoute
+          path={`${path}/home-pending-task/icops-payment-modal`}
+          component={() => <PaymentForSummonModalSMSAndEmail></PaymentForSummonModalSMSAndEmail>}
+        />
+        <PrivateRoute
           path={`${path}/home-pending-task/sms-payment-modal`}
           component={() => <PaymentForSummonModalSMSAndEmail></PaymentForSummonModalSMSAndEmail>}
         />

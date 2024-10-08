@@ -434,11 +434,15 @@ export const pendingTaskOrderActions = {
       ],
     },
   },
-  PAYMENT_PENDING_FOR_WARRANT: {
+  PAYMENT_PENDING_POLICE: {
     actorName: ["JUDGE"],
     actionName: "Show Warrant Payment Status",
     redirectDetails: {
-      url: "/home/home-pending-task/e-filing-payment-breakdown",
+      url: "/home/home-pending-task/icops-payment-modal",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "taskNumber", value: "referenceId" },
+      ],
     },
   },
   "RE-ISSUE_SUMMON": {
