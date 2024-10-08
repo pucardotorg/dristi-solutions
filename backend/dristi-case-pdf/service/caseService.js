@@ -127,7 +127,6 @@ exports.getRespondentsDetails = async (cases) => {
         const addresses = data.addressDetails.map((addressDetail) => {
             return getAddressDetails(addressDetail.addressDetails);
         });
-        const affidavitDocument = data.inquiryAffidavitFileUpload && data.inquiryAffidavitFileUpload.document.find(doc => doc.fileName === 'Affidavit documents');
 
         return {
             name: `${firstName} ${middleName} ${lastName}`,
@@ -135,7 +134,7 @@ exports.getRespondentsDetails = async (cases) => {
             phoneNumber: data.phonenumbers && data.phonenumbers.mobileNumber ? data.phonenumbers.mobileNumber.join(', ') : null,
             email: data.emails && data.emails.emailId ? data.emails.emailId.join(', ') : null,
             address: addresses,
-            inquiryAffidavitFileStore: affidavitDocument ? affidavitDocument.fileStore : null
+            inquiryAffidavitFileStore: getDocumentFileStore(data.inquiryAffidavitFileUpload, 'Affidavit documents')
         };
     });
 };
@@ -315,8 +314,6 @@ exports.getPrayerSwornStatementDetails = (cases) => {
     }
     const prayerSwornStatementDetailsList = cases.additionalDetails.prayerSwornStatement.formdata.map(dataItem => {
         const swornStatementData = dataItem.data || {};
-
-        const swornStatementDocument = swornStatementData.swornStatement && swornStatementData.swornStatement.document.find(doc => doc.fileName === 'CS_SWORN_STATEMENT_HEADER');
 
         return {
             prayerAndSwornStatementType: swornStatementData.prayerAndSwornStatementType && swornStatementData.prayerAndSwornStatementType.name || null,
