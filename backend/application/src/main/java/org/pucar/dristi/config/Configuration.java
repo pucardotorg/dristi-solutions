@@ -154,4 +154,7 @@ public class Configuration {
 
     @Value("${egov.idgen.cmpFormat}")
     private String cmpFormat;
+
+    @Value("${egov.case.search.path}")
+    private String caseSearchPath;
 }
