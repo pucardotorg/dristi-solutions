@@ -294,8 +294,6 @@ exports.getDelayCondonationDetails = (cases) => {
     const delayCondonationDetailsList = cases.caseDetails.delayApplications.formdata.map(dataItem => {
         const delayData = dataItem.data || {};
 
-        const delayCondonationDocument = delayData.legalDemandNoticeFileUpload && delayData.legalDemandNoticeFileUpload.document.find(doc => doc.fileName === 'CS_DELAY_CONDONATION_APPLICATION');
-
         return {
             reasonForDelay: delayData.delayApplicationReason && delayData.delayApplicationReason.reasonForDelay || null,
             proofOfReplyFileStore: getDocumentFileStore(delayData.legalDemandNoticeFileUpload, 'CS_DELAY_CONDONATION_APPLICATION') || ''
