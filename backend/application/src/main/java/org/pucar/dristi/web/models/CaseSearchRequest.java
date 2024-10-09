@@ -25,7 +25,7 @@ public class CaseSearchRequest {
 
     @JsonProperty("RequestInfo")
     @Valid
-    private RequestInfo requestInfo = null;
+    private RequestInfo requestInfo;
 
     @JsonProperty("criteria")
     @Valid
