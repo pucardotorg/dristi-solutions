@@ -1605,13 +1605,13 @@ const AdmittedCases = () => {
               </React.Fragment>
             )}
             <hr className="vertical-line" />
-            <div className="sub-details-text">{caseDetails?.stage}</div>
+            <div className="sub-details-text">{t(caseDetails?.stage)}</div>
             <hr className="vertical-line" />
-            <div className="sub-details-text">{caseDetails?.substage}</div>
+            <div className="sub-details-text">{t(caseDetails?.substage)}</div>
             <hr className="vertical-line" />
             {caseDetails?.outcome && (
               <React.Fragment>
-                <div className="sub-details-text">{caseDetails?.outcome}</div>
+                <div className="sub-details-text">{t(caseDetails?.outcome)}</div>
                 <hr className="vertical-line" />
               </React.Fragment>
             )}
