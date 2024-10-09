@@ -56,11 +56,24 @@ public class CaseUtil {
         StringBuilder uri = new StringBuilder();
         uri.append(configs.getCaseHost()).append(configs.getCaseSearchPath());
 
-        Object response = new HashMap<>();
         try {
-            response = restTemplate.postForObject(uri.toString(), caseSearchRequest, Map.class);
+            Object response = restTemplate.postForObject(uri.toString(), caseSearchRequest, Map.class);
+            if (response == null) {
+                throw new CustomException(ERROR_WHILE_FETCHING_FROM_CASE, "Received null response from case search");
+            }
+
             JsonNode jsonNode = mapper.readTree(mapper.writeValueAsString(response));
-            JsonNode caseList = jsonNode.get("criteria").get(0).get("responseList");
+            JsonNode criteria = jsonNode.get("criteria");
+            if (criteria == null || criteria.size() == 0 || !criteria.get(0).has("responseList")) {
+                throw new CustomException(ERROR_WHILE_FETCHING_FROM_CASE, "Invalid response structure");
+            }
+
+            JsonNode caseList = criteria.get(0).get("responseList");
+            if (caseList.size() == 0) {
+                return null; // or throw an exception, depending on your requirements
+            }
+
+            // Returning the first item. Consider returning the whole list if needed.
             return caseList.get(0);
         } catch (Exception e) {
             log.error(ERROR_WHILE_FETCHING_FROM_CASE, e);

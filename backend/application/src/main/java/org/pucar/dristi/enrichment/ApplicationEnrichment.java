@@ -26,19 +26,19 @@ public class ApplicationEnrichment {
 
     @Autowired
     public ApplicationEnrichment(IdgenUtil idgenUtil, Configuration configuration, CaseUtil caseUtil) {
-            this.idgenUtil = idgenUtil;
-            this.configuration = configuration;
-            this.caseUtil = caseUtil;
-        }
+        this.idgenUtil = idgenUtil;
+        this.configuration = configuration;
+        this.caseUtil = caseUtil;
+    }
 
     public void enrichApplication(ApplicationRequest applicationRequest) {
         try {
-            if(applicationRequest.getRequestInfo().getUserInfo() != null) {
+            if (applicationRequest.getRequestInfo().getUserInfo() != null) {
                 String tenantId = applicationRequest.getApplication().getCnrNumber();
                 String idName = configuration.getApplicationConfig();
                 String idFormat = configuration.getApplicationFormat();
 
-                List<String> applicationIdList = idgenUtil.getIdList(applicationRequest.getRequestInfo(), tenantId, idName, idFormat, 1,false);
+                List<String> applicationIdList = idgenUtil.getIdList(applicationRequest.getRequestInfo(), tenantId, idName, idFormat, 1, false);
                 Application application = applicationRequest.getApplication();
                 AuditDetails auditDetails = AuditDetails
                         .builder()
@@ -51,7 +51,7 @@ public class ApplicationEnrichment {
                 application.setId(UUID.randomUUID());
                 application.setCreatedDate(System.currentTimeMillis());
                 application.setIsActive(true);
-                application.setApplicationNumber(application.getCnrNumber()+"-"+applicationIdList.get(0));
+                application.setApplicationNumber(application.getCnrNumber() + "-" + applicationIdList.get(0));
 
                 if (application.getStatuteSection() != null) {
                     application.getStatuteSection().setId(UUID.randomUUID());
@@ -63,12 +63,10 @@ public class ApplicationEnrichment {
                     });
                 }
             }
-        }
-        catch (CustomException e){
+        } catch (CustomException e) {
             log.error("Exception occurred while enriching application");
             throw e;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error("Error occurred while enriching application: {}", e.getMessage());
             throw new CustomException(ENRICHMENT_EXCEPTION, e.getMessage());
         }
@@ -78,19 +76,24 @@ public class ApplicationEnrichment {
         try {
             CaseSearchRequest caseSearchRequest = createCaseSearchRequest(applicationRequest.getRequestInfo(), applicationRequest.getApplication());
             JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+            if (caseDetails == null) {
+                log.error("Case details not found for the filingNumber :: {}", applicationRequest.getApplication().getFilingNumber());
+                throw new CustomException(ENRICHMENT_EXCEPTION, "Case details not found for the filingNumber: " + applicationRequest.getApplication().getFilingNumber());
+            }
+
             String courtId = caseDetails.has("courtId") ? caseDetails.get("courtId").asText() : "";
-            if(courtId==null || courtId.isEmpty()){
+            if (courtId == null || courtId.isEmpty()) {
                 log.error("CourtId not found for the filingNumber :: {}", applicationRequest.getApplication().getFilingNumber());
-                throw new CustomException(ENRICHMENT_EXCEPTION, "CourtId not found for the filingNumber :: {}" + applicationRequest.getApplication().getFilingNumber());
+                throw new CustomException(ENRICHMENT_EXCEPTION, "CourtId not found for the filingNumber :: " + applicationRequest.getApplication().getFilingNumber());
             }
             String idName = configuration.getCmpConfig();
             String idFormat = configuration.getCmpFormat();
-            List<String> cmpNumberIdList = idgenUtil.getIdList(applicationRequest.getRequestInfo(),courtId, idName, idFormat, 1,false);
+            List<String> cmpNumberIdList = idgenUtil.getIdList(applicationRequest.getRequestInfo(), courtId, idName, idFormat, 1, false);
             applicationRequest.getApplication().setApplicationNumber(cmpNumberIdList.get(0));
-        }  catch (CustomException e) {
+        } catch (CustomException e) {
             log.error("Custom Exception while enriching application number by CMP number: {}", e.toString());
             throw new CustomException(ENRICHMENT_EXCEPTION, "Custom Exception in case enrichment service while enriching application number: " + e);
-        }catch (Exception e) {
+        } catch (Exception e) {
             log.error("Error enriching application number by CMP number: {}", e.toString());
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in case enrichment service while enriching application number: " + e);
         }
@@ -105,23 +108,24 @@ public class ApplicationEnrichment {
     }
 
     public void enrichApplicationUponUpdate(ApplicationRequest applicationRequest) {
-            try {
-                // Enrich lastModifiedTime and lastModifiedBy in case of update
-                Application application = applicationRequest.getApplication();
-                application.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
-                application.getAuditDetails().setLastModifiedBy(applicationRequest.getRequestInfo().getUserInfo().getUuid());
+        try {
+            // Enrich lastModifiedTime and lastModifiedBy in case of update
+            Application application = applicationRequest.getApplication();
+            application.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
+            application.getAuditDetails().setLastModifiedBy(applicationRequest.getRequestInfo().getUserInfo().getUuid());
 
-                if (application.getDocuments() != null) {
-                    application.getDocuments().forEach(document -> {
-                        if(document.getId()==null)
-                         document.setId(String.valueOf(UUID.randomUUID()));
-                    });
-                }
-            } catch (Exception e) {
-                log.error("Error enriching application upon update: {}", e.getMessage());
-                throw new CustomException(ENRICHMENT_EXCEPTION, "Error enriching application upon update: " + e.getMessage());
+            if (application.getDocuments() != null) {
+                application.getDocuments().forEach(document -> {
+                    if (document.getId() == null)
+                        document.setId(String.valueOf(UUID.randomUUID()));
+                });
             }
+        } catch (Exception e) {
+            log.error("Error enriching application upon update: {}", e.getMessage());
+            throw new CustomException(ENRICHMENT_EXCEPTION, "Error enriching application upon update: " + e.getMessage());
+        }
     }
+
     public void enrichCommentUponCreate(Comment comment, AuditDetails auditDetails) {
         try {
             comment.setId(UUID.randomUUID());
