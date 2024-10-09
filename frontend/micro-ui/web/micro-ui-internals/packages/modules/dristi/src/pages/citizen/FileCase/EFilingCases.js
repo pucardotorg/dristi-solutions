@@ -1962,7 +1962,7 @@ function EFilingCases({ path }) {
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", `CasePdf.pdf`);
+    link.setAttribute("download", `${caseDetails?.filingNumber || "CasePdf"}.pdf`);
     document.body.appendChild(link);
     link.click();
     link.parentNode.removeChild(link);
@@ -1990,6 +1990,7 @@ function EFilingCases({ path }) {
       setIsModalOpen(true);
     } catch (error) {
       console.error("Error generating case PDF:", error);
+      toast.error(t("CASE_PDF_GENERATION_ERROR"));
     } finally {
       setIsLoader(false);
     }
