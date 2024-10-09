@@ -20,10 +20,9 @@ import {
 import { reviewCaseFileFormConfig } from "../../citizen/FileCase/Config/reviewcasefileconfig";
 import { getAllAssignees } from "../../citizen/FileCase/EfilingValidationUtils";
 import AdmissionActionModal from "./AdmissionActionModal";
-import { generateUUID } from "../../../Utils";
+import { generateUUID, getFullName } from "../../../Utils";
 import { documentTypeMapping } from "../../citizen/FileCase/Config";
 import ScheduleHearing from "../AdmittedCases/ScheduleHearing";
-import { submissionService } from "../../../../../submissions/src/hooks/services";
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
@@ -524,6 +523,16 @@ function CaseFileAdmission({ t, path }) {
   };
 
   const handleDelayCondonation = async (caseDetails) => {
+    const ownerIndividual = await window?.Digit.DRISTIService.searchIndividualUser(
+      {
+        Individual: {
+          userUuid: [caseDetails?.auditDetails?.createdBy],
+        },
+      },
+      { tenantId, limit: 1000, offset: 0 },
+      "",
+      caseDetails?.auditDetails?.createdBy
+    );
     const documents = caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload?.document
       ? caseDetails.caseDetails.delayApplications.formdata[0].data.condonationFileUpload.document.map((document) => {
           return {
@@ -550,7 +559,12 @@ function CaseFileAdmission({ t, path }) {
         statuteSection: { tenantId },
         documents,
         additionalDetails: {
-          owner: caseDetails?.additionalDetails?.payerName,
+          owner: getFullName(
+            " ",
+            ownerIndividual?.Individual?.[0]?.name?.givenName,
+            ownerIndividual?.Individual?.[0]?.name?.otherNames,
+            ownerIndividual?.Individual?.[0]?.name?.familyName
+          ),
         },
         onBehalfOf: caseDetails?.litigants?.length > 0 ? [caseDetails.litigants[0].additionalDetails.uuid] : [],
         workflow: null,
@@ -558,9 +572,9 @@ function CaseFileAdmission({ t, path }) {
       },
     };
     try {
-      const res = await submissionService.createApplication(applicationReqBody, { tenantId });
+      const res = await Digit.DRISTIService.createApplication(applicationReqBody, { tenantId });
       if (res)
-        await submissionService.createApplication(
+        await Digit.DRISTIService.createApplication(
           { application: { ...res?.application, workflow: null, status: "COMPLETED" }, tenantId },
           { tenantId }
         );
