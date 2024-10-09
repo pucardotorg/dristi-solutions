@@ -37,7 +37,7 @@ const TopBarComponent = ({
   //   }
   // };
   return (
-    <div className="navbar" style={{ zIndex: "0" }}>
+    <div className="navbar" style={{ zIndex: "999" }}>
       <div className="center-container back-wrapper">
         <div className="hambuger-back-wrapper">
           {isMobile && <Hamburger handleClick={toggleSidebar} />}
