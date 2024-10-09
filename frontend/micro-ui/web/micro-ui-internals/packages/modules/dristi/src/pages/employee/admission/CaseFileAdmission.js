@@ -105,21 +105,6 @@ function CaseFileAdmission({ t, path }) {
     Boolean(filingNumber)
   );
 
-  const { data: caseData, isLoading: isCaseDetailsLoading, refetch: refetchCaseData } = Digit.Hooks.dristi.useSearchCaseService(
-    {
-      criteria: [
-        {
-          filingNumber: filingNumber,
-        },
-      ],
-      tenantId,
-    },
-    {},
-    "dristi",
-    filingNumber,
-    filingNumber
-  );
-
   const currentHearingId = useMemo(
     () =>
       hearingDetails?.HearingList?.find((list) => list?.hearingType === "ADMISSION" && !(list?.status === "COMPLETED" || list?.status === "ABATED"))
@@ -645,7 +630,7 @@ function CaseFileAdmission({ t, path }) {
     ].flat();
 
     updateCaseDetails("REGISTER", formdata).then(async (res) => {
-      const caseDetails = await refetchCaseData();
+      const caseDetails = await refetch();
       const caseData = caseDetails?.data?.criteria?.[0]?.responseList?.[0];
       if (caseData?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code === "NO") await handleDelayCondonation(caseData);
       await Promise.all(
