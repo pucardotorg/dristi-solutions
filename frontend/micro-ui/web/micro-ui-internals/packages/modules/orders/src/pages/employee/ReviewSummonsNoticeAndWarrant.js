@@ -300,6 +300,28 @@ const ReviewSummonsNoticeAndWarrant = () => {
     ];
   }, []);
 
+  const successMessage = useMemo(() => {
+    let msg = "";
+    if (documents) {
+      if (orderType === "NOTICE") {
+        msg = t("SUCCESSFULLY_SIGNED_NOTICE");
+      } else if (orderType === "WARRANT") {
+        msg = t("SUCCESSFULLY_SIGNED_WARRANT");
+      } else {
+        msg = t("SUCCESSFULLY_SIGNED_SUMMON");
+      }
+    } else {
+      if (orderType === "NOTICE") {
+        msg = t("SENT_NOTICE_VIA");
+      } else if (orderType === "WARRANT") {
+        msg = t("SENT_WARRANT_VIA");
+      } else {
+        msg = t("SENT_SUMMONS_VIA");
+      }
+    }
+    return `${msg}${!documents ? " " + deliveryChannel : ""}`;
+  }, [documents, orderType, deliveryChannel]);
+
   const handleSubmitEsign = useCallback(async () => {
     try {
       const localStorageID = localStorage.getItem("fileStoreId");
@@ -366,19 +388,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           hideSubmit: true,
           modalBody: (
             <CustomStepperSuccess
-              successMessage={`${
-                documents
-                  ? orderType === "NOTICE"
-                    ? t("SUCCESSFULLY_SIGNED_NOTICE")
-                    : orderType === "WARRANT"
-                    ? t("SUCCESSFULLY_SIGNED_WARRANT")
-                    : t("SUCCESSFULLY_SIGNED_SUMMON")
-                  : orderType === "NOTICE"
-                  ? t("SENT_NOTICE_VIA")
-                  : orderType === "WARRANT"
-                  ? t("SENT_WARRANT_VIA")
-                  : t("SENT_SUMMONS_VIA")
-              }${!documents ? " " + deliveryChannel : ""}`}
+              successMessage={successMessage}
               bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
               submitButtonText={documents ? "MARK_AS_SENT" : "CS_CLOSE"}
               closeButtonText={documents ? "CS_CLOSE" : "DOWNLOAD_DOCUMENT"}
