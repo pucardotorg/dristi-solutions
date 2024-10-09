@@ -85,7 +85,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       },
     },
     {},
-    true,
+    rowData?.taskNumber,
     Boolean(showActionModal || step)
   );
 
@@ -370,9 +370,13 @@ const ReviewSummonsNoticeAndWarrant = () => {
                 documents
                   ? orderType === "NOTICE"
                     ? t("SUCCESSFULLY_SIGNED_NOTICE")
+                    : orderType === "WARRANT"
+                    ? t("SUCCESSFULLY_SIGNED_WARRANT")
                     : t("SUCCESSFULLY_SIGNED_SUMMON")
                   : orderType === "NOTICE"
                   ? t("SENT_NOTICE_VIA")
+                  : orderType === "WARRANT"
+                  ? t("SENT_WARRANT_VIA")
                   : t("SENT_SUMMONS_VIA")
               }${!documents ? " " + deliveryChannel : ""}`}
               bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
@@ -384,6 +388,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
               submissionData={submissionData}
               documents={documents}
               deliveryChannel={deliveryChannel}
+              orderType={orderType}
             />
           ),
         },

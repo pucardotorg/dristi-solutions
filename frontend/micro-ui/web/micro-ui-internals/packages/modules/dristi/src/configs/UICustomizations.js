@@ -677,11 +677,11 @@ export const UICustomizations = {
           return (
             <div>
               {value?.length > 2 && (
-                <ReactTooltip id={`hearing-list`}>{value?.map((party) => party?.partyName || party.name).join(", ")}</ReactTooltip>
+                <ReactTooltip id={`hearing-list`}>{value?.map((party) => party?.partyName || party?.name).join(", ")}</ReactTooltip>
               )}
               <span data-tip data-for={`hearing-list`}>{`${value
                 ?.slice(0, 2)
-                ?.map((party) => party?.partyName || party.name)
+                ?.map((party) => party?.partyName || party?.name)
                 ?.join(", ")}${value?.length > 2 ? `+${value?.length - 2}` : ""}`}</span>
             </div>
           );

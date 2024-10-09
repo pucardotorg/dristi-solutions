@@ -52,7 +52,9 @@ const CustomStepperSuccess = ({
         <div className="print-documents-box-div">
           <div className="print-documents-box-text">
             <FileIcon />
-            <div style={{ marginLeft: "0.5rem" }}>{orderType === "SUMMONS" ? "Summons" : "Notice"} Document</div>
+            <div style={{ marginLeft: "0.5rem" }}>
+              {orderType === "SUMMONS" ? "Summons" : orderType === "WARRANT" ? "Warrant" : "Notice"} Document
+            </div>
           </div>
           <button className="print-button" disabled={!fileStore}>
             <PrintIcon />
