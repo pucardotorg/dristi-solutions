@@ -140,7 +140,7 @@ const TopBar = ({
     );
   }
   return (
-    <div className="topbar">
+    <div className="topbar" style={{ zIndex: "0" }}>
       <div
         className="hambuger-back-wrapper"
         onClick={() => {

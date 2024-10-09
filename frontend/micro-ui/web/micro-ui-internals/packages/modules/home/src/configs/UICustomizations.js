@@ -429,6 +429,7 @@ export const UICustomizations = {
         completeStatusData = sentData;
       }
       const isCompleteStatus = Boolean(Object.keys(filterList?.completeStatus || {}).length);
+      const isIssueDate = Boolean(Object.keys(filterList?.sortCaseListByDate || {}).length);
       return {
         ...requestCriteria,
         body: {
@@ -444,6 +445,7 @@ export const UICustomizations = {
           pagination: {
             limit: requestCriteria?.state?.tableForm?.limit,
             offSet: requestCriteria?.state?.tableForm?.offset,
+            ...(isIssueDate && filterList?.sortCaseListByDate),
           },
         },
         config: {
