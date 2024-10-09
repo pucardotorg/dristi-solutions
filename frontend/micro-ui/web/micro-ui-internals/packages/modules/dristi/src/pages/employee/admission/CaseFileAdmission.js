@@ -539,15 +539,17 @@ function CaseFileAdmission({ t, path }) {
   };
 
   const handleDelayCondonation = async (caseDetails) => {
-    const documents = caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload?.document?.map((document) => {
-      return {
-        documentType: document?.documentType,
-        fileStore: document?.fileStore,
-        additionalDetails: {
-          name: document?.fileName,
-        },
-      };
-    });
+    const documents = caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload?.document
+      ? caseDetails.caseDetails.delayApplications.formdata[0].data.condonationFileUpload.document.map((document) => {
+          return {
+            documentType: document?.documentType,
+            fileStore: document?.fileStore,
+            additionalDetails: {
+              name: document?.fileName,
+            },
+          };
+        })
+      : [];
     const applicationReqBody = {
       tenantId,
       application: {
@@ -565,7 +567,7 @@ function CaseFileAdmission({ t, path }) {
         additionalDetails: {
           owner: caseDetails?.additionalDetails?.payerName,
         },
-        onBehalfOf: [caseDetails?.litigants?.[0]?.additionalDetails?.uuid],
+        onBehalfOf: caseDetails?.litigants?.length > 0 ? [caseDetails.litigants[0].additionalDetails.uuid] : [],
         workflow: null,
         status: "",
       },
@@ -577,7 +579,9 @@ function CaseFileAdmission({ t, path }) {
           { application: { ...res?.application, workflow: null, status: "COMPLETED" }, tenantId },
           { tenantId }
         );
-    } catch (error) {}
+    } catch (error) {
+      console.error("Error in handleDelayCondonation:", error);
+    }
   };
 
   const handleRegisterCase = async () => {
