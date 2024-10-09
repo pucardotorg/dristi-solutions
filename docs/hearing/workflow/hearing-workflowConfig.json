@@ -73,7 +73,7 @@
           "isStateUpdatable": true,
           "actions": [
             {
-              "action": "SETDATE",
+              "action": "SET_DATE",
               "nextState": "SCHEDULED",
               "roles": [
                 "HEARING_APPROVER",
