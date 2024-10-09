@@ -1988,8 +1988,8 @@ function EFilingCases({ path }) {
       );
       setPdfDetails(response?.data);
       setIsModalOpen(true);
-    } catch {
-      console.error("error");
+    } catch (error) {
+      console.error("Error generating case PDF:", error);
     } finally {
       setIsLoader(false);
     }
