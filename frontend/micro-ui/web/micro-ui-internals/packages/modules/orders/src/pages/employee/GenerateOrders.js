@@ -1645,7 +1645,7 @@ const GenerateOrders = () => {
           caseDetails: {
             caseTitle: caseDetails?.caseTitle,
             year: new Date(caseDetails).getFullYear(),
-            hearingDate: new Date(orderData?.additionalDetails?.formData?.dateOfHearing || "").getTime(),
+            hearingDate: new Date(orderData?.additionalDetails?.formdata?.dateOfHearing || "").getTime(),
             judgeName: "John Koshy",
             courtName: courtDetails?.name,
             courtAddress: courtDetails?.address,
@@ -1678,7 +1678,7 @@ const GenerateOrders = () => {
           caseDetails: {
             title: caseDetails?.caseTitle,
             year: new Date(caseDetails).getFullYear(),
-            hearingDate: new Date(orderData?.additionalDetails?.formData?.date || "").getTime(),
+            hearingDate: new Date(orderData?.additionalDetails?.formdata?.date || "").getTime(),
             judgeName: "",
             courtName: courtDetails?.name,
             courtAddress: courtDetails?.address,

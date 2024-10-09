@@ -14,19 +14,8 @@ const handleTaskDetails = (taskDetails) => {
     if (typeof taskDetails === "string") {
       // First, remove escape characters like backslashes if present
       const cleanedDetails = taskDetails.replace(/\\n/g, "").replace(/\\/g, "");
-
-      // Try parsing the cleaned string as JSON
-      const parsed = JSON.parse(cleanedDetails);
-
-      // If the parsed result is a string, try parsing it again
-      if (typeof parsed === "string") {
-        return JSON.parse(parsed);
-      }
-
-      // Return the parsed object if it's already a valid JSON object
-      return parsed;
+      return JSON.parse(cleanedDetails);
     }
-
     // If taskDetails is not a string, return it as it is
     return taskDetails;
   } catch (error) {

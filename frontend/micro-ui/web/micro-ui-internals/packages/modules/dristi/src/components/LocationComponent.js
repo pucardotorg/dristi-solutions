@@ -64,7 +64,7 @@ const LocationComponent = ({
     (isFirstRender, coordinates, field, defaultValue = "", location) => {
       const isDefaultCoordinates =
         parseFloat(coordinates?.latitude) === defaultCoordinates?.lat && parseFloat(coordinates?.longitude) === defaultCoordinates?.lng;
-      if (!locationFormData.hasOwnProperty("addressDetails")) return "";
+      if (isFirstRender && !locationFormData.hasOwnProperty("addressDetails")) return "";
 
       // this check is to set error when user enters invalid pincode and save draft
       // and after visiting different page and comes to the same page-> error should be set.
@@ -77,6 +77,8 @@ const LocationComponent = ({
             ) {
               debugger;
               setError("pincode", { message: "ADDRESS_PINCODE_INVALID" });
+            } else {
+              clearErrors("pincode");
             }
           })
           .catch(() => {
@@ -84,7 +86,7 @@ const LocationComponent = ({
           });
       }
 
-      if (locationFormData?.[config?.key]) {
+      if (isFirstRender && locationFormData?.[config?.key]) {
         return locationFormData[config?.key]?.[field];
       }
       return defaultValue;
@@ -167,6 +169,7 @@ const LocationComponent = ({
           return res;
         }, {}),
       });
+      clearErrors("pincode");
     } else onLocationSelect(config.key, { ...locationFormData[config.key], [input]: value });
   }
 
