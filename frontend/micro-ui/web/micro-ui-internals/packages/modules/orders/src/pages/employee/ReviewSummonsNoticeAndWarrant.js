@@ -22,11 +22,14 @@ const defaultSearchValues = {
 
 const handleTaskDetails = (taskDetails) => {
   try {
-    const parsed = JSON.parse(taskDetails);
-    if (typeof parsed === "string") {
-      return JSON.parse(parsed);
+    // Check if taskDetails is a string
+    if (typeof taskDetails === "string") {
+      // First, remove escape characters like backslashes if present
+      const cleanedDetails = taskDetails.replace(/\\n/g, "").replace(/\\/g, "");
+      return JSON.parse(cleanedDetails);
     }
-    return parsed;
+    // If taskDetails is not a string, return it as it is
+    return taskDetails;
   } catch (error) {
     console.error("Failed to parse taskDetails:", error);
     return null;
@@ -115,7 +118,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const orderType = useMemo(() => orderData?.list[0]?.orderType, [orderData]);
 
   const handleSubmitButtonDisable = (disable) => {
-    console.log("disable :>> ", disable);
     setIsDisabled(disable);
   };
 
@@ -323,7 +325,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
       // Attempt to upload the document and handle the response
       const update = await taskService.UploadTaskDocument(reqBody, { tenantId });
-      console.log("Document upload successful:", update);
     } catch (error) {
       // Handle errors that occur during the upload process
       console.error("Error uploading document:", error);
