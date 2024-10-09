@@ -35,7 +35,7 @@
           "actions": [
             {
               "action": "RESCHEDULE",
-              "nextState": "OPT_OUT",
+              "nextState": "OPTOUT",
               "roles": [
                 "HEARING_DATE_REQUESTOR"
               ]
@@ -65,7 +65,7 @@
         },
         {
           "sla": 5,
-          "state": "OPT_OUT",
+          "state": "OPTOUT",
           "applicationStatus": "INWORKFLOW",
           "docUploadRequired": false,
           "isStartState": false,
@@ -73,7 +73,7 @@
           "isStateUpdatable": true,
           "actions": [
             {
-              "action": "SET_DATE",
+              "action": "SETDATE",
               "nextState": "SCHEDULED",
               "roles": [
                 "HEARING_APPROVER",
@@ -91,7 +91,7 @@
         },
         {
           "sla": 10,
-          "state": "IN_PROGRESS",
+          "state": "INPROGRESS",
           "applicationStatus": "INWORKFLOW",
           "docUploadRequired": false,
           "isStartState": false,
