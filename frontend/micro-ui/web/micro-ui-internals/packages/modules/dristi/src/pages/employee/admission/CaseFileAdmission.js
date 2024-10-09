@@ -558,13 +558,16 @@ function CaseFileAdmission({ t, path }) {
         caseId: caseDetails?.id,
         // referenceId: isExtension ? null : orderDetails?.id || null,
         createdDate: new Date().getTime(),
-        applicationType: "DElAY_CONDONATION",
+        applicationType: "DELAY_CONDONATION",
         isActive: true,
         statuteSection: { tenantId },
         documents,
+        additionalDetails: {
+          owner: caseDetails?.additionalDetails?.payerName,
+        },
         onBehalfOf: [caseDetails?.litigants?.[0]?.additionalDetails?.uuid],
         workflow: null,
-        status: null,
+        status: "",
       },
     };
     try {
@@ -640,8 +643,7 @@ function CaseFileAdmission({ t, path }) {
     updateCaseDetails("REGISTER", formdata).then(async (res) => {
       const caseDetails = await refetchCaseData();
       const caseData = caseDetails?.data?.criteria?.[0]?.responseList?.[0];
-      if (caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code === "NO")
-        await handleDelayCondonation(caseData);
+      if (caseData?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code === "NO") await handleDelayCondonation(caseData);
       await Promise.all(
         documentList
           ?.filter((data) => data)
