@@ -1,13 +1,14 @@
 package org.pucar.dristi.enrichment;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
+import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.IdgenUtil;
-import org.pucar.dristi.web.models.Application;
-import org.pucar.dristi.web.models.ApplicationRequest;
-import org.pucar.dristi.web.models.Comment;
+import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -21,12 +22,14 @@ import static org.pucar.dristi.config.ServiceConstants.ENRICHMENT_EXCEPTION;
 public class ApplicationEnrichment {
     private final IdgenUtil idgenUtil;
     private final Configuration configuration;
+    private final CaseUtil caseUtil;
 
     @Autowired
-    public ApplicationEnrichment(IdgenUtil idgenUtil, Configuration configuration) {
-        this.idgenUtil = idgenUtil;
-        this.configuration = configuration;
-    }
+    public ApplicationEnrichment(IdgenUtil idgenUtil, Configuration configuration, CaseUtil caseUtil) {
+            this.idgenUtil = idgenUtil;
+            this.configuration = configuration;
+            this.caseUtil = caseUtil;
+        }
 
     public void enrichApplication(ApplicationRequest applicationRequest) {
         try {
@@ -73,15 +76,32 @@ public class ApplicationEnrichment {
 
     public void enrichApplicationNumberByCMPNumber(ApplicationRequest applicationRequest) {
         try {
-            String tenantId = applicationRequest.getApplication().getCnrNumber().substring(0,5);
+            CaseSearchRequest caseSearchRequest = createCaseSearchRequest(applicationRequest.getRequestInfo(), applicationRequest.getApplication());
+            JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+            String courtId = caseDetails.has("courtId") ? caseDetails.get("courtId").asText() : "";
+            if(courtId==null || courtId.isEmpty()){
+                log.error("CourtId not found for the filingNumber :: {}", applicationRequest.getApplication().getFilingNumber());
+                throw new CustomException(ENRICHMENT_EXCEPTION, "CourtId not found for the filingNumber :: {}" + applicationRequest.getApplication().getFilingNumber());
+            }
             String idName = configuration.getCmpConfig();
             String idFormat = configuration.getCmpFormat();
-            List<String> cmpNumberIdList = idgenUtil.getIdList(applicationRequest.getRequestInfo(),tenantId, idName, idFormat, 1,false);
+            List<String> cmpNumberIdList = idgenUtil.getIdList(applicationRequest.getRequestInfo(),courtId, idName, idFormat, 1,false);
             applicationRequest.getApplication().setApplicationNumber(cmpNumberIdList.get(0));
-        } catch (Exception e) {
-            log.error("Error enriching application number: {}", e.toString());
-            throw new CustomException(ENRICHMENT_EXCEPTION, "Error in case enrichment service while enriching application number: " + e.getMessage());
+        }  catch (CustomException e) {
+            log.error("Custom Exception while enriching application number by CMP number: {}", e.toString());
+            throw new CustomException(ENRICHMENT_EXCEPTION, "Custom Exception in case enrichment service while enriching application number: " + e);
+        }catch (Exception e) {
+            log.error("Error enriching application number by CMP number: {}", e.toString());
+            throw new CustomException(ENRICHMENT_EXCEPTION, "Error in case enrichment service while enriching application number: " + e);
         }
+    }
+
+    public CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, Application application) {
+        CaseSearchRequest caseSearchRequest = new CaseSearchRequest();
+        caseSearchRequest.setRequestInfo(requestInfo);
+        CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(application.getFilingNumber()).defaultFields(false).build();
+        caseSearchRequest.addCriteriaItem(caseCriteria);
+        return caseSearchRequest;
     }
 
     public void enrichApplicationUponUpdate(ApplicationRequest applicationRequest) {
