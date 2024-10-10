@@ -6,6 +6,9 @@ const { PDFDocument } = require("pdf-lib");
 const fs = require("fs");
 const path = require("path");
 
+const A4_WIDTH = 595.28; // A4 width in points
+const A4_HEIGHT = 841.89; // A4 height in points
+
 router.post(
   "/combine-documents",
   upload.array("documents"),
@@ -29,13 +32,16 @@ router.post(
             ext === ".png"
               ? await mergedPdf.embedPng(fileData)
               : await mergedPdf.embedJpg(fileData);
-          const imgDims = img.scale(1);
-          const page = mergedPdf.addPage([imgDims.width, imgDims.height]);
+          const { width, height } = img.scale(1);
+          const scale = Math.min(A4_WIDTH / width, A4_HEIGHT / height);
+          const xOffset = (A4_WIDTH - width * scale) / 2;
+          const yOffset = (A4_HEIGHT - height * scale) / 2;
+          const page = mergedPdf.addPage([A4_WIDTH, A4_HEIGHT]);
           page.drawImage(img, {
-            x: 0,
-            y: 0,
-            width: imgDims.width,
-            height: imgDims.height,
+            x: xOffset,
+            y: yOffset,
+            width: width * scale,
+            height: height * scale,
           });
         }
 
