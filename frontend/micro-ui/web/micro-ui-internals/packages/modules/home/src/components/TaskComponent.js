@@ -8,6 +8,13 @@ import PendingTaskAccordion from "./PendingTaskAccordion";
 import { HomeService, Urls } from "../hooks/services";
 import { caseTypes, selectTaskType, taskTypes } from "../configs/HomeConfig";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import CustomStepperSuccess from "@egovernments/digit-ui-module-orders/src/components/CustomStepperSuccess";
+import UploadIdType from "@egovernments/digit-ui-module-dristi/src/pages/citizen/registration/UploadIdType";
+import DocumentModal from "@egovernments/digit-ui-module-orders/src/components/DocumentModal";
+import { uploadResponseDocumentConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/Config/resgisterRespondentConfig";
+import isEqual from "lodash/isEqual";
+import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
+import { updateCaseDetails } from "../../../cases/src/utils/joinCaseUtils";
 
 export const CaseWorkflowAction = {
   SAVE_DRAFT: "SAVE_DRAFT",
@@ -16,7 +23,20 @@ export const CaseWorkflowAction = {
 };
 const dayInMillisecond = 1000 * 3600 * 24;
 
-const TasksComponent = ({ taskType, setTaskType, caseType, setCaseType, isLitigant, uuid, filingNumber, inCase = false }) => {
+const TasksComponent = ({
+  taskType,
+  setTaskType,
+  caseType,
+  setCaseType,
+  isLitigant,
+  uuid,
+  filingNumber,
+  inCase = false,
+  joinCaseResponsePendingTask,
+  joinCaseShowSubmitResponseModal,
+  setJoinCaseShowSubmitResponseModal,
+  hideTaskComponent,
+}) => {
   const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
   const [pendingTasks, setPendingTasks] = useState([]);
   const history = useHistory();
@@ -28,6 +48,11 @@ const TasksComponent = ({ taskType, setTaskType, caseType, setCaseType, isLitiga
   const todayDate = useMemo(() => new Date().getTime(), []);
   const [totalPendingTask, setTotalPendingTask] = useState(0);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
+
+  const [showSubmitResponseModal, setShowSubmitResponseModal] = useState(false);
+  const [responsePendingTask, setResponsePendingTask] = useState({});
+  const [responseDoc, setResponseDoc] = useState({});
+
   const { data: pendingTaskDetails = [], isLoading, refetch } = useGetPendingTask({
     data: {
       SearchCriteria: {
@@ -266,6 +291,8 @@ const TasksComponent = ({ taskType, setTaskType, caseType, setCaseType, isLitiga
           const actionName = data?.fields?.find((field) => field.key === "name")?.value;
           const referenceId = data?.fields?.find((field) => field.key === "referenceId")?.value;
           const entityType = data?.fields?.find((field) => field.key === "entityType")?.value;
+          const individualId = data?.fields?.find((field) => field.key === "additionalDetails.individualId")?.value;
+          const caseId = data?.fields?.find((field) => field.key === "additionalDetails.caseId")?.value;
           const updateReferenceId = referenceId.split("_").pop();
           const isManual = referenceId?.includes("MANUAL_");
           const defaultObj = { referenceId: updateReferenceId, ...caseDetail };
@@ -292,6 +319,9 @@ const TasksComponent = ({ taskType, setTaskType, caseType, setCaseType, isLitiga
           const due = dayCount > 1 ? `Due in ${dayCount} Days` : dayCount === 1 || dayCount === 0 ? `Due today` : `No Due Date`;
           return {
             actionName: actionName || pendingTaskActions?.[status]?.actionName,
+            status,
+            individualId,
+            caseId,
             caseTitle: caseDetail?.caseTitle || "",
             filingNumber: filingNumber,
             caseType: "NIA S138",
@@ -320,6 +350,138 @@ const TasksComponent = ({ taskType, setTaskType, caseType, setCaseType, isLitiga
     ]
   );
 
+  const submitResponse = async (responseDoc) => {
+    let newCase;
+    const pendingTask = joinCaseShowSubmitResponseModal ? joinCaseResponsePendingTask : responsePendingTask;
+
+    const caseResponse = await DRISTIService.searchCaseService(
+      {
+        criteria: [
+          {
+            filingNumber: pendingTask?.filingNumber,
+          },
+        ],
+        tenantId,
+      },
+      {}
+    );
+
+    if (caseResponse?.criteria[0]?.responseList?.length === 1) {
+      newCase = caseResponse?.criteria[0]?.responseList[0];
+    }
+
+    if (newCase && pendingTask?.individualId && responseDoc.fileStore) {
+      newCase = {
+        ...newCase,
+        litigants: newCase?.litigants?.map((data) => {
+          if (data?.individualId === pendingTask?.individualId) {
+            return {
+              ...data,
+              documents: [
+                {
+                  ...responseDoc,
+                  additionalDetails: {
+                    fileName: `Response (${data?.additionalDetails?.fullName})`,
+                  },
+                },
+              ],
+            };
+          } else return data;
+        }),
+      };
+    }
+    const response = await updateCaseDetails(newCase, tenantId, "RESPOND");
+    if (response) {
+      try {
+        await DRISTIService.customApiService(Urls.pendingTask, {
+          pendingTask: {
+            name: "Pending Response",
+            entityType: "case-default",
+            referenceId: `MANUAL_${pendingTask?.filingNumber}`,
+            status: "PENDING_RESPONSE",
+            assignedTo: [{ uuid: userInfo?.uuid }],
+            assignedRole: ["CASE_RESPONDER"],
+            cnrNumber: pendingTask?.cnrNumber,
+            filingNumber: pendingTask?.filingNumber,
+            isCompleted: true,
+            stateSla: null,
+            additionalDetails: {},
+            tenantId,
+          },
+        });
+      } catch (err) {
+        console.error("err :>> ", err);
+      }
+      return { continue: true };
+    } else return { continue: false };
+  };
+
+  const getCaseDetailsUrl = (caseId, filingNumber) =>
+    `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview`;
+
+  const sumbitResponseConfig = useMemo(() => {
+    return {
+      handleClose: () => {
+        setShowSubmitResponseModal(false);
+      },
+      heading: { label: "" },
+      actionSaveLabel: "",
+      isStepperModal: true,
+      actionSaveOnSubmit: () => {},
+      steps: [
+        {
+          heading: { label: "Submit Response" },
+          actionSaveLabel: "Submit",
+          modalBody: (
+            <UploadIdType
+              config={uploadResponseDocumentConfig}
+              isAdvocateUploading={true}
+              onFormValueChange={(setValue, formData) => {
+                const documentData = {
+                  fileStore: formData?.SelectUserTypeComponent?.ID_Proof?.[0]?.[1]?.fileStoreId?.fileStoreId,
+                  documentType: formData?.SelectUserTypeComponent?.ID_Proof?.[0]?.[1]?.file?.type,
+                  identifierType: formData?.SelectUserTypeComponent?.selectIdType?.type,
+                  additionalDetails: {
+                    fileName: formData?.SelectUserTypeComponent?.ID_Proof?.[0]?.[1]?.file?.name,
+                    fileType: "respondent-response",
+                  },
+                };
+                if (!isEqual(documentData, responseDoc)) setResponseDoc(documentData);
+              }}
+            />
+          ),
+          actionSaveOnSubmit: async () => {
+            await submitResponse(responseDoc);
+          },
+          isDisabled: responseDoc?.fileStore ? false : true,
+        },
+        {
+          type: "success",
+          hideSubmit: true,
+          modalBody: (
+            <CustomStepperSuccess
+              successMessage={"RESPONSE_SUCCESSFULLY"}
+              submitButtonAction={async () => {
+                const pendingTask = joinCaseShowSubmitResponseModal ? joinCaseResponsePendingTask : responsePendingTask;
+                history.push(getCaseDetailsUrl(pendingTask?.caseId, pendingTask?.filingNumber));
+                setShowSubmitResponseModal(false);
+                if (setJoinCaseShowSubmitResponseModal) setJoinCaseShowSubmitResponseModal(false);
+              }}
+              submitButtonText={"VIEW_CASE_FILE"}
+              closeButtonText={"BACK_HOME"}
+              closeButtonAction={() => {
+                if (joinCaseShowSubmitResponseModal) history.push(`/${window?.contextPath}/${userType}/home/home-pending-task`);
+                setShowSubmitResponseModal(false);
+                if (setJoinCaseShowSubmitResponseModal) setJoinCaseShowSubmitResponseModal(false);
+              }}
+              t={t}
+            />
+          ),
+        },
+      ].filter(Boolean),
+    };
+  }, [responseDoc, t, submitResponse, joinCaseShowSubmitResponseModal, joinCaseResponsePendingTask, responsePendingTask]);
+
   useEffect(() => {
     fetchPendingTasks();
   }, [fetchPendingTasks]);
@@ -346,77 +508,87 @@ const TasksComponent = ({ taskType, setTaskType, caseType, setCaseType, isLitiga
   }
   return (
     <div className="tasks-component">
-      <h2>{!isLitigant ? "Your Tasks" : t("ALL_PENDING_TASK_TEXT")}</h2>
-      {totalPendingTask !== undefined && totalPendingTask > 0 ? (
+      {!hideTaskComponent && (
         <React.Fragment>
-          <div className="task-filters">
-            <LabelFieldPair>
-              <CardLabel style={{ fontSize: "16px" }} className={"card-label"}>{`Case Type`}</CardLabel>
-              <Dropdown
-                option={caseTypes}
-                selected={caseType}
-                optionKey={"name"}
-                select={(value) => {
-                  setCaseType(value);
-                }}
-                placeholder={t("CS_CASE_TYPE")}
-              />
-            </LabelFieldPair>
-            <LabelFieldPair>
-              <CardLabel style={{ fontSize: "16px" }} className={"card-label"}>{`Task Type`}</CardLabel>
-              <Dropdown
-                option={taskTypes}
-                optionKey={"name"}
-                selected={taskType}
-                select={(value) => {
-                  setTaskType(value);
-                }}
-                placeholder={t("CS_TASK_TYPE")}
-              />
-            </LabelFieldPair>
-          </div>
+          <h2>{!isLitigant ? "Your Tasks" : t("ALL_PENDING_TASK_TEXT")}</h2>
+          {totalPendingTask !== undefined && totalPendingTask > 0 ? (
+            <React.Fragment>
+              <div className="task-filters">
+                <LabelFieldPair>
+                  <CardLabel style={{ fontSize: "16px" }} className={"card-label"}>{`Case Type`}</CardLabel>
+                  <Dropdown
+                    option={caseTypes}
+                    selected={caseType}
+                    optionKey={"name"}
+                    select={(value) => {
+                      setCaseType(value);
+                    }}
+                    placeholder={t("CS_CASE_TYPE")}
+                  />
+                </LabelFieldPair>
+                <LabelFieldPair>
+                  <CardLabel style={{ fontSize: "16px" }} className={"card-label"}>{`Task Type`}</CardLabel>
+                  <Dropdown
+                    option={taskTypes}
+                    optionKey={"name"}
+                    selected={taskType}
+                    select={(value) => {
+                      setTaskType(value);
+                    }}
+                    placeholder={t("CS_TASK_TYPE")}
+                  />
+                </LabelFieldPair>
+              </div>
 
-          <React.Fragment>
-            {searchCaseLoading && <Loader />}
-            {!searchCaseLoading && (
               <React.Fragment>
-                <div className="task-section">
-                  <PendingTaskAccordion
-                    pendingTasks={pendingTaskDataInWeek}
-                    accordionHeader={"COMPLETE_THIS_WEEK"}
-                    t={t}
-                    totalCount={pendingTaskDataInWeek?.length}
-                    isHighlighted={true}
-                    isAccordionOpen={true}
-                  />
-                </div>
-                <div className="task-section">
-                  <PendingTaskAccordion
-                    pendingTasks={allOtherPendingTask}
-                    accordionHeader={"ALL_OTHER_TASKS"}
-                    t={t}
-                    totalCount={allOtherPendingTask?.length}
-                  />
-                </div>
-                <div className="task-section"></div>
+                {searchCaseLoading && <Loader />}
+                {!searchCaseLoading && (
+                  <React.Fragment>
+                    <div className="task-section">
+                      <PendingTaskAccordion
+                        pendingTasks={pendingTaskDataInWeek}
+                        accordionHeader={"COMPLETE_THIS_WEEK"}
+                        t={t}
+                        totalCount={pendingTaskDataInWeek?.length}
+                        isHighlighted={true}
+                        isAccordionOpen={true}
+                        setShowSubmitResponseModal={setShowSubmitResponseModal}
+                        setResponsePendingTask={setResponsePendingTask}
+                      />
+                    </div>
+                    <div className="task-section">
+                      <PendingTaskAccordion
+                        pendingTasks={allOtherPendingTask}
+                        accordionHeader={"ALL_OTHER_TASKS"}
+                        t={t}
+                        totalCount={allOtherPendingTask?.length}
+                        setShowSubmitResponseModal={setShowSubmitResponseModal}
+                        setResponsePendingTask={setResponsePendingTask}
+                      />
+                    </div>
+                    <div className="task-section"></div>
+                  </React.Fragment>
+                )}
               </React.Fragment>
-            )}
-          </React.Fragment>
+            </React.Fragment>
+          ) : (
+            <div
+              style={{
+                fontSize: "20px",
+                fontStyle: "italic",
+                lineHeight: "23.44px",
+                fontWeight: "500",
+                font: "Roboto",
+                color: "#77787B",
+              }}
+            >
+              {!isLitigant ? t("NO_TASK_TEXT") : t("NO_PENDING_TASK_TEXT")}
+            </div>
+          )}
         </React.Fragment>
-      ) : (
-        <div
-          style={{
-            fontSize: "20px",
-            fontStyle: "italic",
-            lineHeight: "23.44px",
-            fontWeight: "500",
-            font: "Roboto",
-            color: "#77787B",
-          }}
-        >
-          {!isLitigant ? t("NO_TASK_TEXT") : t("NO_PENDING_TASK_TEXT")}
-        </div>
       )}
+
+      {(showSubmitResponseModal || joinCaseShowSubmitResponseModal) && <DocumentModal config={sumbitResponseConfig} />}
     </div>
   );
 };

@@ -1,14 +1,79 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import useSearchCaseService from "../../../dristi/src/hooks/dristi/useSearchCaseService";
 import { Button, Dropdown } from "@egovernments/digit-ui-react-components";
 import _ from "lodash";
 import AddParty from "../../../hearings/src/pages/employee/AddParty";
+import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
+
+const RenderDeliveryChannels = ({ partyDetails, deliveryChannels, handleCheckboxChange }) => {
+  return (
+    <div>
+      <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", height: 32 }}>
+        <h1>Select Delivery Channels</h1>
+        <p>
+          {partyDetails?.length || 0} of {deliveryChannels.reduce((acc, channel) => acc + (channel.values?.length || 0), 0)} selected
+        </p>
+      </div>
+      <form>
+        {deliveryChannels.map((channel) => (
+          <div key={channel?.type}>
+            {Array.isArray(channel?.values) && channel?.values?.length > 0 && channel?.values[0] != null && (
+              <div>
+                <h2>
+                  <strong>{channel.type} to </strong>
+                </h2>
+
+                {Array.isArray(channel?.values) &&
+                  channel?.values?.map((value, index) => (
+                    <div key={`${channel.type}-${index}`}>
+                      <input
+                        type="checkbox"
+                        id={`${channel.type}-${index}`}
+                        checked={
+                          Array.isArray(partyDetails) &&
+                          partyDetails.some((data) => data.type === channel.type && JSON.stringify(value) === JSON.stringify(data.value))
+                        }
+                        onChange={() => handleCheckboxChange(channel.type, value)}
+                      />
+                      <label htmlFor={`${channel.type}-${index}`}>
+                        {channel.type === "e-Post" || channel.type === "Via Police" || channel.type === "RPAD"
+                          ? typeof value.address === "string"
+                            ? value.address
+                            : `${value.locality}, ${value.city}, ${value.district}, ${value.pincode}`
+                          : value}
+                      </label>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </form>
+    </div>
+  );
+};
+
 const SummonsOrderComponent = ({ t, config, formData, onSelect }) => {
   const urlParams = new URLSearchParams(window.location.search);
   const filingNumber = urlParams.get("filingNumber");
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [selectedChannels, setSelectedChannels] = useState(formData[config.key]?.["selectedChannels"] || []);
   const inputs = useMemo(() => config?.populators?.inputs || [], [config?.populators?.inputs]);
+  const orderType = useMemo(() => formData?.orderType?.code, [formData?.orderType?.code]);
+  const [userList, setUserList] = useState([]);
+  const [deliveryChannels, setDeliveryChannels] = useState([
+    { type: "SMS", values: [] },
+    { type: "E-mail", values: [] },
+    {
+      type: "e-Post",
+      values: [],
+    },
+    {
+      type: "RPAD",
+      values: [],
+    },
+    { type: "Via Police", values: [] },
+  ]);
 
   const { data: caseData, refetch } = useSearchCaseService(
     {
@@ -35,50 +100,82 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect }) => {
   //     uuid: allAdvocates[item?.additionalDetails?.uuid],
   //   };
   // }) || []
-  const userList = useMemo(() => {
-    let users = [];
-    if (caseDetails?.additionalDetails) {
-      const respondentData = caseDetails?.additionalDetails?.respondentDetails?.formdata || [];
-      const witnessData = caseDetails?.additionalDetails?.witnessDetails?.formdata || [];
-      const updatedRespondentData = respondentData.map((item) => ({
-        ...item,
-        data: {
-          ...item?.data,
-          firstName: item?.data?.respondentFirstName || "",
-          lastName: item?.data?.respondentLastName || "",
-          address: item?.data?.addressDetails?.map((address) => ({
-            locality: address?.addressDetails?.locality || "",
-            city: address?.addressDetails?.city || "",
-            district: address?.addressDetails?.district || "",
-            pincode: address?.addressDetails?.pincode || "",
-          })),
-          partyType: "Respondent",
-          phone_numbers: item?.data?.phonenumbers?.mobileNumber || [],
-          email: item?.data?.emails?.emailId || [],
-        },
-      }));
-      const updatedWitnessData = witnessData.map((item) => ({
-        ...item,
-        data: {
-          ...item?.data,
-          firstName: item?.data?.firstName,
-          lastName: item?.data?.lastName,
-          address: item?.data?.addressDetails?.map((address) => ({
-            locality: address?.addressDetails?.locality,
-            city: address?.addressDetails?.city,
-            district: address?.addressDetails?.district,
-            pincode: address?.addressDetails?.pincode,
-            address: address?.addressDetails,
-          })),
-          partyType: "Witness",
-          phone_numbers: item?.data?.phonenumbers?.mobileNumber || [],
-          email: item?.data?.emails?.emailId || [],
-        },
-      }));
-      users = [...updatedRespondentData, ...updatedWitnessData];
-    }
-    return users;
-  }, [caseDetails]);
+
+  const mapAddressDetails = (addressDetails, isIndividualData = false) => {
+    return addressDetails?.map((address) => ({
+      locality: address?.addressDetails?.locality || address?.street || "",
+      city: address?.addressDetails?.city || address?.city || "",
+      district: address?.addressDetails?.district || address?.addressLine2 || "",
+      pincode: address?.addressDetails?.pincode || address?.pincode || "",
+      address: isIndividualData ? undefined : address?.addressDetails,
+    }));
+  };
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      let users = [];
+      if (caseDetails?.additionalDetails) {
+        const respondentData = caseDetails?.additionalDetails?.respondentDetails?.formdata || [];
+        const witnessData = caseDetails?.additionalDetails?.witnessDetails?.formdata || [];
+        const updatedRespondentData = await Promise.all(
+          respondentData.map(async (item) => {
+            const individualId = item?.data?.respondentVerification?.individualDetails?.individualId;
+            let individualData = undefined;
+            if (individualId) {
+              try {
+                const response = await window?.Digit.DRISTIService.searchIndividualUser(
+                  {
+                    Individual: {
+                      individualId: individualId,
+                    },
+                  },
+                  { tenantId, limit: 1000, offset: 0 }
+                );
+                individualData = response?.Individual?.[0];
+              } catch (error) {
+                console.error("error :>> ", error);
+              }
+            }
+            return {
+              ...item,
+              data: {
+                ...item?.data,
+                firstName: individualData ? individualData?.name?.givenName : item?.data?.respondentFirstName || "",
+                lastName: individualData ? individualData?.name?.familyName : item?.data?.respondentLastName || "",
+                ...(individualData && {
+                  respondentFirstName: individualData?.name.givenName,
+                  respondentMiddleName: individualData?.name?.otherNames,
+                  respondentLastName: individualData?.name?.familyName,
+                }),
+                address: individualData ? mapAddressDetails(individualData?.address, true) : mapAddressDetails(item?.data?.addressDetails),
+                partyType: "Respondent",
+                phone_numbers: (individualData ? [individualData?.mobileNumber] : [])
+                  .concat(item?.data?.phonenumbers?.mobileNumber || [])
+                  .filter(Boolean),
+                email: (individualData ? [individualData?.email] : []).concat(item?.data?.emails?.emailId || []).filter(Boolean),
+              },
+            };
+          })
+        );
+        const updatedWitnessData = witnessData.map((item) => ({
+          ...item,
+          data: {
+            ...item?.data,
+            firstName: item?.data?.firstName,
+            lastName: item?.data?.lastName,
+            address: mapAddressDetails(item?.data?.addressDetails),
+            partyType: "Witness",
+            phone_numbers: item?.data?.phonenumbers?.mobileNumber || [],
+            email: item?.data?.emails?.emailId || [],
+          },
+        }));
+        users = [...updatedRespondentData, ...updatedWitnessData];
+      }
+      setUserList(users);
+    };
+
+    fetchUsers();
+  }, [caseDetails?.additionalDetails, tenantId]);
 
   const handleDropdownChange = (selectedOption) => {
     const isEqual = _.isEqual(selectedOption.value.data, formData?.[config.key]?.party?.data);
@@ -114,63 +211,6 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect }) => {
   //     return values;
   //   }, []);
   // };
-  const renderDeliveryChannels = () => {
-    const party = formData[config.key]?.party;
-    if (!party) return null;
-    const partyDetails = selectedChannels.length === 0 ? formData[config.key]?.selectedChannels : selectedChannels;
-    const { address, phone_numbers, email } = party.data || {};
-    const deliveryChannels = [
-      { type: "SMS", values: phone_numbers || [] },
-      { type: "E-mail", values: email || [] },
-      { type: "Post", values: address || [] },
-      { type: "Via Police", values: address || [] },
-    ];
-    return (
-      <div>
-        <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between" }}>
-          <h1>Select Delivery Channels</h1>
-          <p>
-            {partyDetails?.length || 0} of {deliveryChannels.reduce((acc, channel) => acc + (channel.values?.length || 0), 0)} selected
-          </p>
-        </div>
-        <form>
-          {deliveryChannels.map((channel) => (
-            <div key={channel?.type}>
-              {Array.isArray(channel?.values) && channel?.values?.length > 0 && channel?.values[0] != null && (
-                <div>
-                  <h2>
-                    <strong>{channel.type} to </strong>
-                  </h2>
-
-                  {Array.isArray(channel?.values) &&
-                    channel?.values?.map((value, index) => (
-                      <div key={`${channel.type}-${index}`}>
-                        <input
-                          type="checkbox"
-                          id={`${channel.type}-${index}`}
-                          checked={
-                            Array.isArray(partyDetails) &&
-                            partyDetails.some((data) => data.type === channel.type && JSON.stringify(value) === JSON.stringify(data.value))
-                          }
-                          onChange={() => handleCheckboxChange(channel.type, value)}
-                        />
-                        <label htmlFor={`${channel.type}-${index}`}>
-                          {channel.type === "Post" || channel.type === "Via Police"
-                            ? typeof value.address === "string"
-                              ? value.address
-                              : `${value.locality}, ${value.city}, ${value.district}, ${value.pincode}`
-                            : value}
-                        </label>
-                      </div>
-                    ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </form>
-      </div>
-    );
-  };
 
   const selectedParty = useMemo(() => {
     const partyData = formData?.[config.key]?.party?.data || {};
@@ -185,8 +225,90 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect }) => {
   }, [config.key, formData]);
 
   const [isPartyModalOpen, setIsPartyModalOpen] = useState(false);
+  const party = useMemo(() => formData[config.key]?.party, [config.key, formData]);
+  const partyDetails = selectedChannels.length === 0 ? formData[config.key]?.selectedChannels : selectedChannels;
+  const { address, phone_numbers, email } = useMemo(() => party?.data || {}, [party?.data]);
+
+  const getRespondentPincodeDetails = useCallback(
+    async (pincode) => {
+      const pincodeData = await DRISTIService.getrepondentPincodeDetails(
+        {
+          Criteria: {
+            pincode: [pincode],
+          },
+
+          tenantId,
+        },
+        {}
+      );
+      if (pincodeData?.PostalHubs && Array.isArray(pincodeData.PostalHubs) && Boolean(pincodeData.PostalHubs.length)) {
+        return pincodeData.PostalHubs?.[0];
+      }
+      return null;
+    },
+    [tenantId]
+  );
+
+  const getEPostAddress = useCallback(
+    async (address = []) => {
+      const addressList = await Promise.all(
+        address.map(async (item) => {
+          if (item?.pincode) {
+            const verifiedPincode = await getRespondentPincodeDetails(item.pincode);
+            if (Boolean(verifiedPincode)) {
+              return item;
+            }
+            return null;
+          }
+          return null;
+        })
+      );
+      const ePostAddresses = addressList?.filter((item) => Boolean(item));
+      setDeliveryChannels(
+        [
+          { type: "SMS", values: phone_numbers || [] },
+          { type: "E-mail", values: email || [] },
+          {
+            type: "e-Post",
+            values: ePostAddresses,
+          },
+          {
+            type: "RPAD",
+            values: address || [],
+          },
+          orderType === "SUMMONS" && { type: "Via Police", values: address || [] },
+        ]
+          .filter((item) => Boolean(item))
+          .map((item) => item)
+      );
+    },
+    [email, getRespondentPincodeDetails, orderType, phone_numbers]
+  );
+
+  // console.log("selectedParty", selectedParty);
+
+  // const summonsPincode = useMemo(() => filteredTasks?.[0]?.taskDetails?.respondentDetails?.address?.pincode, [filteredTasks]);
+
+  // const { data: respondentPincodeDetails, isLoading: isRespondentPincodeLoading } = Digit.Hooks.dristi.useRepondentPincodeDetails(
+  //   {
+  //     Criteria: [
+  //       {
+  //         pincode: [summonsPincode],
+  //       },
+  //     ],
+  //   },
+  //   {},
+  //   "dristi",
+  //   Boolean(filteredTasks)
+  // );
+
+  useEffect(() => {
+    if (address && Array.isArray(address)) {
+      getEPostAddress(address);
+    }
+  }, [address, email, getEPostAddress, orderType, phone_numbers]);
+
   const handleAddParty = (e) => {
-    console.log(e);
     e?.stopPropagation();
     e?.preventDefault();
     setIsPartyModalOpen(!isPartyModalOpen);
@@ -200,14 +322,14 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect }) => {
             <div>
               <Dropdown
                 t={t}
-                option={userList.map((user) => ({
-                  label: [user.data.firstName, user.data.lastName, `(${user.data.partyType})`].filter(Boolean).join(" "),
+                option={userList?.map((user) => ({
+                  label: [user?.data?.firstName, user?.data?.lastName, `(${user?.data?.partyType})`].filter(Boolean).join(" "),
                   value: user,
                 }))}
                 optionKey="label"
                 selected={selectedParty}
                 select={handleDropdownChange}
-                style={{ maxWidth: "100%" }}
+                style={{ maxWidth: "100%", marginBottom: 8 }}
               />
               {
                 <Button
@@ -215,20 +337,30 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect }) => {
                   className="add-party-btn"
                   style={{
                     backgroundColor: "transparent",
-                    color: "blue",
                     border: "none",
-                    textDecoration: "underline",
                     cursor: "pointer",
                     padding: 0,
                     WebkitBoxShadow: "none",
                     boxShadow: "none",
+                    height: "auto",
+                  }}
+                  textStyles={{
+                    marginTop: 0,
+                    fontFamily: "Roboto",
+                    fontSize: "16px",
+                    fontWeight: 700,
+                    lineHeight: "18.75px",
+                    textAlign: "center",
+                    color: "#007E7E",
                   }}
                   label={t("+ Add new witness")}
                 />
               }
             </div>
           )}
-          {input.type !== "dropdown" && renderDeliveryChannels()}
+          {input.type !== "dropdown" && selectedParty && (
+            <RenderDeliveryChannels deliveryChannels={deliveryChannels} handleCheckboxChange={handleCheckboxChange} partyDetails={partyDetails} />
+          )}
         </div>
       ))}
       {isPartyModalOpen && (

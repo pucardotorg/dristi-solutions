@@ -5,7 +5,7 @@ const defaultSearchValues = {
 };
 
 export const CaseWorkflowState = {
-  CASE_RE_ASSIGNED: "CASE_RE_ASSIGNED",
+  CASE_REASSIGNED: "CASE_REASSIGNED",
   DRAFT_IN_PROGRESS: "DRAFT_IN_PROGRESS",
   UNDER_SCRUTINY: "UNDER_SCRUTINY",
   CASE_ADMITTED: "CASE_ADMITTED",
@@ -58,7 +58,7 @@ export const userTypeOptions = [
       "TASK_VIEWER",
     ],
     apiDetails: {
-      serviceName: "/advocate/advocate/v1/_create",
+      serviceName: "/advocate/v1/_create",
       requestKey: "advocate",
       AdditionalFields: ["barRegistrationNumber"],
     },

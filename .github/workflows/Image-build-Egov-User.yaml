@@ -21,7 +21,7 @@ permissions:
   contents: read
 jobs:
   docker_image-build:
-    if: (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/uat-backend' || github.ref == 'refs/heads/dpg-qa-deployment') && github.event_name == 'push'
+    if: (github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/uat-backend' || github.ref == 'refs/heads/dpg-qa-deployment')) || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -55,7 +55,7 @@ jobs:
 
       - name: Build and Push Docker image for Egov-User
         run: |
-          docker build --build-arg WORK_DIR="common/egov-user" -t pucarsolutionsdev.azurecr.io/egov-user:v1.0.0-${{ env.commit_hash }} -f build/maven/Dockerfile .
+          docker build --build-arg WORK_DIR="common/egov-user" -t pucarsolutionsdev.azurecr.io/egov-user:v1.0.0-${{ env.commit_hash }} -f build/maven-java8/Dockerfile .
           docker push pucarsolutionsdev.azurecr.io/egov-user:v1.0.0-${{ env.commit_hash }}
 
       - name: Build and Push Docker image for Egov-User DB
@@ -65,7 +65,7 @@ jobs:
         working-directory: common/egov-user/src/main/resources/db
 
   Workflow_Trigger:
-    if: (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/uat-backend' || github.ref == 'refs/heads/dpg-qa-deployment') && github.event_name == 'push'
+    if: (github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/uat-backend' || github.ref == 'refs/heads/dpg-qa-deployment')) || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     needs: docker_image-build
     steps:

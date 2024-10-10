@@ -68,20 +68,22 @@ async function caseTransfer(req, res, qrCode) {
     // }
 
     // Search for MDMS court room details
-    const resMdms = await handleApiCall(
-      () =>
-        search_mdms(
-          courtCase.courtId,
-          "common-masters.Court_Rooms",
-          tenantId,
-          requestInfo
-        ),
-      "Failed to query MDMS service for court room"
-    );
-    const mdmsCourtRoom = resMdms?.data?.mdms[0]?.data;
-    if (!mdmsCourtRoom) {
-      renderError(res, "Court room MDMS master not found", 404);
-    }
+    // const resMdms = await handleApiCall(
+    //   () =>
+    //     search_mdms(
+    //       courtCase.courtId,
+    //       "common-masters.Court_Rooms",
+    //       tenantId,
+    //       requestInfo
+    //     ),
+    //   "Failed to query MDMS service for court room"
+    // );
+    // const mdmsCourtRoom = resMdms?.data?.mdms[0]?.data;
+    // if (!mdmsCourtRoom) {
+    //   renderError(res, "Court room MDMS master not found", 404);
+    // }
+    const mdmsCourtRoom = config.constants.mdmsCourtRoom;
+    const judgeDetails = config.constants.judgeDetails;
 
     // Search for MDMS court establishment details
     // const resMdms1 = await handleApiCall(
@@ -181,14 +183,14 @@ async function caseTransfer(req, res, qrCode) {
       order?.additionalDetails?.applicationStatus === "Rejected"
         ? additionalComments
         : "";
-
+    const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
     const data = {
       Data: [
         {
           courtName: mdmsCourtRoom.name,
-          place: "Kollam",
-          state: "Kerala",
-          caseNumber: courtCase.caseNumber,
+          place: mdmsCourtRoom.place,
+          state: mdmsCourtRoom.state,
+          caseNumber: caseNumber,
           caseYear: caseYear,
           caseName: courtCase.caseTitle,
           date: formattedToday,
@@ -199,9 +201,9 @@ async function caseTransfer(req, res, qrCode) {
           grantStatus: grantStatus, //todo
           reasonForRejection: reasonForRejection, // missing in order Object
           additionalComments: additionalComments,
-          judgeSignature: "Judge Signature",
-          judgeName: "John Doe",
-          courtSeal: "Court Seal",
+          judgeSignature: judgeDetails.judgeSignature,
+          judgeName: judgeDetails.name,
+          courtSeal: judgeDetails.courtSeal,
           qrCodeUrl: base64Url,
         },
       ],

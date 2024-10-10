@@ -71,20 +71,23 @@ const orderForRejectionReschedulingRequest = async (req, res, qrCode) => {
     }
 
     // Search for MDMS court room details
-    const resMdms = await handleApiCall(
-      () =>
-        search_mdms(
-          courtCase.courtId,
-          "common-masters.Court_Rooms",
-          tenantId,
-          requestInfo
-        ),
-      "Failed to query MDMS service for court room"
-    );
-    const mdmsCourtRoom = resMdms?.data?.mdms[0]?.data;
-    if (!mdmsCourtRoom) {
-      return renderError(res, "Court room MDMS master not found", 404);
-    }
+    // const resMdms = await handleApiCall(
+    //   () =>
+    //     search_mdms(
+    //       courtCase.courtId,
+    //       "common-masters.Court_Rooms",
+    //       tenantId,
+    //       requestInfo
+    //     ),
+    //   "Failed to query MDMS service for court room"
+    // );
+    // const mdmsCourtRoom = resMdms?.data?.mdms[0]?.data;
+    // if (!mdmsCourtRoom) {
+    //   return renderError(res, "Court room MDMS master not found", 404);
+    // }
+
+    const mdmsCourtRoom = config.constants.mdmsCourtRoom;
+    const judgeDetails = config.constants.judgeDetails;
 
     const resOrder = await handleApiCall(
       () => search_order(tenantId, orderId, requestInfo),
@@ -178,14 +181,14 @@ const orderForRejectionReschedulingRequest = async (req, res, qrCode) => {
     const year = currentDate.getFullYear();
 
     const ordinalSuffix = getOrdinalSuffix(day);
-
+    const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
     const data = {
       Data: [
         {
           courtName: mdmsCourtRoom.name,
-          place: "Kollam",
-          state: "Kerala",
-          caseNumber: courtCase.caseNumber,
+          place: mdmsCourtRoom.place,
+          state: mdmsCourtRoom.state,
+          caseNumber: caseNumber,
           year: year,
           caseName: courtCase.caseTitle,
           partyName: partyName,
@@ -194,13 +197,11 @@ const orderForRejectionReschedulingRequest = async (req, res, qrCode) => {
           originalHearingDate,
           date: formattedToday,
           additionalComments: order.comments,
-          judgeSignature: "Judge Signature",
-          designation: "Judge designation",
-          courtSeal: "Court Seal",
+          judgeSignature: judgeDetails.judgeSignature,
+          designation: judgeDetails.designation,
+          courtSeal: judgeDetails.courtSeal,
+          judgeName: judgeDetails.name,
           qrCodeUrl: base64Url,
-          place: "Kollam", // FIXME: mdmsCourtEstablishment.boundaryName,
-          state: "Kerala", //FIXME: mdmsCourtEstablishment.rootBoundaryName,
-          judgeName: "John Doe", // FIXME: employee.user.name,
         },
       ],
     };

@@ -18,11 +18,11 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.core.io.ByteArrayResource;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static digit.config.ServiceConstants.SUMMON;
-import static digit.config.ServiceConstants.WARRANT;
+import static digit.config.ServiceConstants.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -50,12 +50,27 @@ class SummonsServiceTest {
     @Mock
     private TaskResponse taskResponse;
 
+    private final List<Task> tasks = new ArrayList<>();
+    private TaskListResponse taskListResponse;
+
     @InjectMocks
     private SummonsService summonsService;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        Task task = createTask();
+        tasks.add(task);
+        taskListResponse = TaskListResponse.builder().list(tasks).build();
+    }
+
+    private Task createTask() {
+        Task task = new Task();
+        task.setTaskType("SUMMONS");
+        SummonsDetails summonsDetails = SummonsDetails.builder().docSubType(ACCUSED).build();
+        TaskDetails taskDetails = TaskDetails.builder().summonDetails(summonsDetails).build();
+        task.setTaskDetails(taskDetails);
+        return task;
     }
 
 //    @Test
@@ -126,6 +141,7 @@ class SummonsServiceTest {
         when(pdfServiceUtil.generatePdfFromPdfService(any(),any(),any(),anyBoolean())).thenReturn(byteArrayResource);
         when(fileStorageUtil.saveDocumentToFileStore(any())).thenReturn("kdshfj");
         when(taskUtil.callUpdateTask(any())).thenReturn(taskResponse);
+        when(taskUtil.callSearchTask(any())).thenReturn(taskListResponse);
 
         SummonsDelivery result = summonsService.sendSummonsViaChannels(request);
 
@@ -148,6 +164,7 @@ class SummonsServiceTest {
         when(pdfServiceUtil.generatePdfFromPdfService(any(),any(),any(),anyBoolean())).thenReturn(byteArrayResource);
         when(fileStorageUtil.saveDocumentToFileStore(any())).thenReturn("kdshfj");
         when(taskUtil.callUpdateTask(any())).thenReturn(taskResponse);
+        when(taskUtil.callSearchTask(any())).thenReturn(taskListResponse);
 
         SummonsDelivery result = summonsService.sendSummonsViaChannels(request);
 
@@ -240,6 +257,9 @@ class SummonsServiceTest {
     private TaskRequest createTaskRequest(String taskType) {
         Task task = new Task();
         task.setTaskType(taskType);
+        SummonsDetails summonsDetails = SummonsDetails.builder().docSubType(ACCUSED).build();
+        TaskDetails taskDetails = TaskDetails.builder().summonDetails(summonsDetails).build();
+        task.setTaskDetails(taskDetails);
         return TaskRequest.builder().task(task).build();
     }
 }

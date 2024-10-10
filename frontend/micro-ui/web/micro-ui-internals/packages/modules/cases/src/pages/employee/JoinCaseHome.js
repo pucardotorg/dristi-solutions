@@ -9,17 +9,33 @@ import {
   LabelFieldPair,
   RadioButtons,
   TextInput,
+  Toast,
 } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { InfoCard } from "@egovernments/digit-ui-components";
 import { DRISTIService } from "../../../../dristi/src/services";
 import { AdvocateIcon, RightArrow, SearchIcon } from "../../../../dristi/src/icons/svgIndex";
-import { CASEService } from "../../hooks/services";
 import isEqual from "lodash/isEqual";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { formatDate } from "../../utils";
+import RegisterRespondentForm from "./RegisterRespondentForm";
+import DocumentModal from "../../../../orders/src/components/DocumentModal";
+import OtpComponent from "../../components/OtpComponent";
+import UploadIdType from "@egovernments/digit-ui-module-dristi/src/pages/citizen/registration/UploadIdType";
+import { uploadIdConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/Config/resgisterRespondentConfig";
+import CustomStepperSuccess from "../../../../orders/src/components/CustomStepperSuccess";
+import {
+  createRespondentIndividualUser,
+  getFullName,
+  searchIndividualUserWithUuid,
+  selectMobileNumber,
+  selectOtp,
+  submitJoinCase,
+} from "../../utils/joinCaseUtils";
+import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
 import { getAdvocates } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/EfilingValidationUtils";
+import { Urls as hearingUrls } from "../../../../hearings/src/hooks/services/Urls";
 
 const CloseBtn = (props) => {
   return (
@@ -67,7 +83,6 @@ const JoinHomeLocalisation = {
   CONFIRM_ATTENDANCE: "CONFIRM_ATTENDANCE",
   JOINING_THIS_CASE_AS: "JOINING_THIS_CASE_AS",
   SKIP_LATER: "SKIP_LATER",
-  CASE_NO_ADMITTED_STATUS: "CASE_NO_ADMITTED_STATUS",
   INVALID_ACCESS_CODE_MESSAGE: "INVALID_ACCESS_CODE_MESSAGE",
   AFFIDAVIT_MINIMUM_CHAR_MESSAGE: "AFFIDAVIT_MINIMUM_CHAR_MESSAGE",
   FILLING_NUMBER_FORMATE_TEXT: `FILLING_NUMBER_FORMATE_TEXT`,
@@ -94,7 +109,7 @@ const JoinHomeLocalisation = {
   CASE_NUMBER: "CASE_NUMBER",
   ALREADY_REPRESENTING: "ALREADY_REPRESENTING",
   CANT_REPRESENT_BOTH_PARTY: "CANT_REPRESENT_BOTH_PARTY",
-  VIEW_CASE_DETAILS: "VIEW_CASE_DETAILS",
+  VIEW_CASE_FILE: "VIEW_CASE_FILE",
 };
 
 const advocateVakalatnamaAndNocConfig = [
@@ -151,6 +166,7 @@ const advocateVakalatnamaAndNocConfig = [
     ],
   },
 ];
+
 const advocateVakalatnamaConfig = [
   {
     body: [
@@ -180,9 +196,10 @@ const advocateVakalatnamaConfig = [
   },
 ];
 
-const JoinCaseHome = ({ refreshInbox }) => {
+const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePendingTask }) => {
   const { t } = useTranslation();
   const history = useHistory();
+  const todayDate = new Date().getTime();
 
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
   const CustomCaseInfoDiv = window?.Digit?.ComponentRegistryService?.getComponent("CustomCaseInfoDiv");
@@ -193,6 +210,9 @@ const JoinCaseHome = ({ refreshInbox }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
 
   const [show, setShow] = useState(false);
+  const [showEditRespondentDetailsModal, setShowEditRespondentDetailsModal] = useState(false);
+  const [showConfirmSummonModal, setShowConfirmSummonModal] = useState(false);
+
   const [step, setStep] = useState(0);
   const [caseNumber, setCaseNumber] = useState("");
   const [caseDetails, setCaseDetails] = useState({});
@@ -232,13 +252,38 @@ const JoinCaseHome = ({ refreshInbox }) => {
   const [respondentList, setRespondentList] = useState([]);
   const [individualDoc, setIndividualDoc] = useState([]);
   const [advocateName, setAdvocateName] = useState("");
-  const [joinCaseRequest, setJoinCaseRequest] = useState({});
+  const [accusedRegisterFormData, setAccusedRegisterFormData] = useState({});
+  const [accusedRegisterFormDataError, setAccusedRegisterFormDataError] = useState({});
+  const [isAccusedRegistered, setIsAccusedRegistered] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [accusedIdVerificationDocument, setAccusedIdVerificationDocument] = useState();
+  const [showErrorToast, setShowErrorToast] = useState(false);
+  const [isAttendeeAdded, setIsAttendeeAdded] = useState(false);
+
+  const [registerId, setRegisterId] = useState({});
+
+  const [nextHearing, setNextHearing] = useState("");
 
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const isCitizen = useMemo(() => userInfo?.type === "CITIZEN", [userInfo]);
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
+
+  const closeToast = () => {
+    setShowErrorToast(false);
+    setIsAttendeeAdded(false);
+  };
+
+  useEffect(() => {
+    let timer;
+    if (showErrorToast) {
+      timer = setTimeout(() => {
+        closeToast();
+      }, 2000);
+    }
+    return () => clearTimeout(timer);
+  }, [showErrorToast]);
 
   const documentUploaderConfig = {
     key: "vakalatnama",
@@ -260,6 +305,15 @@ const JoinCaseHome = ({ refreshInbox }) => {
       ],
     },
   };
+
+  const { mutateAsync: updateAttendees } = Digit.Hooks.useCustomAPIMutationHook({
+    url: hearingUrls.hearing.hearingUpdateTranscript,
+    params: { applicationNumber: "", cnrNumber: "" },
+    body: { tenantId, hearingType: "", status: "" },
+    config: {
+      mutationKey: "addAttendee",
+    },
+  });
 
   const barRegistrationSerachConfig = useMemo(() => {
     return [
@@ -377,7 +431,7 @@ const JoinCaseHome = ({ refreshInbox }) => {
   };
 
   const searchCase = async (caseNumber) => {
-    setIsSearchingCase(true);
+    setIsSearchingCase(false);
     if (caseNumber && !caseDetails?.filingNumber) {
       const response = await DRISTIService.searchCaseService(
         {
@@ -391,7 +445,16 @@ const JoinCaseHome = ({ refreshInbox }) => {
         {}
       );
       if (response?.criteria[0]?.responseList?.length === 1) {
-        if (response?.criteria[0]?.responseList[0]?.status === "CASE_ADMITTED") {
+        if (
+          [
+            "PENDING_RESPONSE",
+            "PENDING_ADMISSION_HEARING",
+            "ADMISSION_HEARING_SCHEDULED",
+            "PENDING_NOTICE",
+            "CASE_ADMITTED",
+            "PENDING_ADMISSION",
+          ].includes(response?.criteria[0]?.responseList[0]?.status)
+        ) {
           setIsDisabled(false);
           setSearchCaseResult(response?.criteria[0]?.responseList[0]);
           setErrors({
@@ -419,8 +482,36 @@ const JoinCaseHome = ({ refreshInbox }) => {
           });
       }
     }
-    setIsSearchingCase(false);
   };
+
+  function findNextHearings(objectsList) {
+    const now = Date.now();
+    const futureStartTimes = objectsList.filter((obj) => obj.startTime > now);
+    futureStartTimes.sort((a, b) => a.startTime - b.startTime);
+    return futureStartTimes.length > 0 ? futureStartTimes[0] : null;
+  }
+
+  const getNextHearingFromCaseId = async (caseId) => {
+    try {
+      const response = await Digit.HearingService.searchHearings(
+        {
+          criteria: {
+            tenantId: Digit.ULBService.getCurrentTenantId(),
+            filingNumber: caseId,
+          },
+        },
+        {}
+      );
+      setNextHearing(findNextHearings(response?.HearingList));
+    } catch (error) {
+      console.error("error :>> ", error);
+    }
+  };
+
+  const isAttendingHearing = useMemo(() => {
+    if (individualId && nextHearing?.attendees) return nextHearing?.attendees?.some((attendee) => attendee?.individualId === individualId);
+    return false;
+  }, [individualId, nextHearing]);
 
   const searchLitigantInRepresentives = useCallback(() => {
     const representative = caseDetails?.representatives?.find((data) =>
@@ -440,7 +531,7 @@ const JoinCaseHome = ({ refreshInbox }) => {
     allAdvocates,
     userInfo?.uuid,
   ]);
-  const onBehalfOfLitigent = useMemo(() => caseDetails?.litigants?.find((item) => item.additionalDetails.uuid === onBehalfOfuuid), [
+  const onBehalfOfLitigent = useMemo(() => caseDetails?.litigants?.find((item) => item?.additionalDetails?.uuid === onBehalfOfuuid), [
     caseDetails,
     onBehalfOfuuid,
   ]);
@@ -482,7 +573,7 @@ const JoinCaseHome = ({ refreshInbox }) => {
   };
 
   const getUserForAdvocateUUID = async (barRegistrationNumber) => {
-    const advocateDetail = await window?.Digit.DRISTIService.searchAdvocateClerk("/advocate/advocate/v1/_search", {
+    const advocateDetail = await window?.Digit.DRISTIService.searchAdvocateClerk("/advocate/v1/_search", {
       criteria: [
         {
           barRegistrationNumber: barRegistrationNumber,
@@ -504,11 +595,14 @@ const JoinCaseHome = ({ refreshInbox }) => {
       if (userType && userType?.value === "Litigant" && selectedParty?.label && !selectedParty?.individualId && representingYourself) {
         setIsDisabled(false);
       } else if (userType && userType?.value === "Advocate" && selectedParty?.label) {
-        const { isFound: advIsFound, partyType } = searchAdvocateInRepresentives(advocateId);
+        const { isFound: advIsFound, representative, partyType } = searchAdvocateInRepresentives(advocateId);
         const { isFound } = searchLitigantInRepresentives();
         if (
           (isFound && roleOfNewAdvocate?.value) ||
           (!isFound && selectedParty?.partyType?.includes(partyType)) ||
+          (advIsFound &&
+            representative?.representing?.some((represent) => represent?.individualId === selectedParty?.individualId) &&
+            selectedParty?.partyType?.includes(partyType)) ||
           (!advIsFound && ((isFound && roleOfNewAdvocate?.value) || !isFound))
         ) {
           setIsDisabled(false);
@@ -572,16 +666,7 @@ const JoinCaseHome = ({ refreshInbox }) => {
   ]);
 
   const fetchBasicUserInfo = async () => {
-    const individualData = await window?.Digit.DRISTIService.searchIndividualUser(
-      {
-        Individual: {
-          userUuid: [userInfo?.uuid],
-        },
-      },
-      { tenantId, limit: 1000, offset: 0 },
-      "",
-      userInfo?.uuid && isUserLoggedIn
-    );
+    const individualData = await searchIndividualUserWithUuid(userInfo?.uuid, tenantId);
 
     setIndividualId(individualData?.Individual?.[0]?.individualId);
     setName(individualData?.Individual?.[0]?.name);
@@ -610,8 +695,8 @@ const JoinCaseHome = ({ refreshInbox }) => {
       city: city,
       state: addressLine1,
       coordinates: {
-        longitude: latitude,
-        latitude: longitude,
+        longitude: longitude,
+        latitude: latitude,
       },
       locality: address,
     });
@@ -651,6 +736,19 @@ const JoinCaseHome = ({ refreshInbox }) => {
     { key: "Total Fees", value: 2000, currency: "Rs", isTotalFee: true },
   ];
 
+  const respondentNameEFiling = useMemo(() => {
+    const { respondentFirstName, respondentMiddleName, respondentLastName } =
+      caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data || {};
+    return [respondentFirstName, respondentMiddleName, respondentLastName]?.filter(Boolean)?.join(" ");
+  }, [caseDetails]);
+
+  const accusedName = useMemo(() => {
+    if (respondentList.length > 0) {
+      return respondentList?.map((respondent) => respondent?.fullName).join(", ");
+    }
+    return respondentNameEFiling;
+  }, [respondentList, respondentNameEFiling]);
+
   const modalItem = [
     // 0
     {
@@ -671,6 +769,7 @@ const JoinCaseHome = ({ refreshInbox }) => {
                     if (str.length > 50) {
                       str = str.substring(0, 50);
                     }
+                    setIsSearchingCase(true);
                     setIsDisabled(true);
                     setCaseNumber(str);
                   } else {
@@ -681,14 +780,14 @@ const JoinCaseHome = ({ refreshInbox }) => {
               <div
                 className="icon-div"
                 onClick={() => {
-                  if (!isSearchingCase) searchCase(caseNumber);
+                  if (isSearchingCase) searchCase(caseNumber);
                 }}
               >
                 <SearchIcon />
               </div>
             </div>
             <p style={{ fontSize: "12px" }}>
-              {t(JoinHomeLocalisation.FILLING_NUMBER_FORMATE_TEXT)} {"F-<StatuteSection>-<YYYY>-<6 digit sequence number>"}
+              {t(JoinHomeLocalisation.FILLING_NUMBER_FORMATE_TEXT)} {"KL-<6 digit sequence number>-<YYYY>"}
             </p>
           </LabelFieldPair>
           {errors?.caseNumber && (
@@ -709,7 +808,7 @@ const JoinCaseHome = ({ refreshInbox }) => {
               className={`custom-info-card error`}
             />
           )}
-          {caseDetails?.caseNumber && (
+          {caseDetails?.cnrNumber && (
             <React.Fragment>
               <h3 className="sure-text">{t(JoinHomeLocalisation.CONFIRM_JOIN_CASE)}</h3>
               <CustomCaseInfoDiv
@@ -727,7 +826,7 @@ const JoinCaseHome = ({ refreshInbox }) => {
                     <div style={{ width: "50%" }}>
                       <h2 className="case-info-title">{t(JoinHomeLocalisation.RESPONDENTS_TEXT)}</h2>
                       <div className="case-info-value">
-                        <span>{respondentList?.map((respondent) => respondent?.fullName).join(", ")}</span>
+                        <span>{accusedName}</span>
                       </div>
                     </div>
                   </div>
@@ -777,14 +876,20 @@ const JoinCaseHome = ({ refreshInbox }) => {
                   {userType?.value === "Litigant" ? t(JoinHomeLocalisation.WHICH_PARTY_AFFILIATED) : `${t(JoinHomeLocalisation.PLEASE_CHOOSE_PARTY)}`}
                 </CardLabel>
                 <RadioButtons
-                  selectedOption={selectedParty}
+                  selectedOption={selectedParty ? parties[selectedParty?.key] : selectedParty}
                   onSelect={(value) => {
-                    setSelectedParty(value);
+                    setSelectedParty({
+                      ...value,
+                      respondentType: {
+                        code: value?.respondentType?.code,
+                        name: value?.respondentType?.name,
+                      },
+                    });
                     setRoleOfNewAdvocate("");
                     setRepresentingYourself("");
                   }}
                   optionsKey={"label"}
-                  options={userType?.value === "Litigant" ? respondentList : [...complainantList, ...respondentList]}
+                  options={parties}
                 />
               </LabelFieldPair>
             </React.Fragment>
@@ -799,8 +904,8 @@ const JoinCaseHome = ({ refreshInbox }) => {
               <React.Fragment>
                 <hr className="horizontal-line" />
                 <InfoCard
-                  variant={"warning"}
-                  label={t(JoinHomeLocalisation.WARNING)}
+                  variant={"default"}
+                  label={t("ES_COMMON_INFO")}
                   additionalElements={[
                     <p>
                       {t(JoinHomeLocalisation.ALREADY_REPRESENTING)} <span style={{ fontWeight: "bold" }}>{selectedParty?.label}</span>{" "}
@@ -808,7 +913,7 @@ const JoinCaseHome = ({ refreshInbox }) => {
                   ]}
                   inline
                   textStyle={{}}
-                  className={`custom-info-card warning`}
+                  className={`custom-info-card`}
                 />
               </React.Fragment>
             )}
@@ -1320,7 +1425,7 @@ const JoinCaseHome = ({ refreshInbox }) => {
                     <div style={{ width: "50%" }}>
                       <h2 className="case-info-title">{t(JoinHomeLocalisation.RESPONDENTS_TEXT)}</h2>
                       <div className="case-info-value">
-                        <span>{respondentList?.map((respondent) => respondent?.fullName).join(", ")}</span>
+                        <span>{accusedName}</span>
                       </div>
                     </div>
                   </div>
@@ -1338,13 +1443,24 @@ const JoinCaseHome = ({ refreshInbox }) => {
                 <Button
                   className={"selector-button-primary"}
                   label={
-                    roleOfNewAdvocate?.value === "PRIMARY_ADVOCATE"
-                      ? t(JoinHomeLocalisation.VIEW_CASE_DETAILS)
-                      : t(JoinHomeLocalisation.CONFIRM_ATTENDANCE)
+                    caseDetails?.status === "PENDING_RESPONSE" && selectedParty?.isRespondent
+                      ? "Submit Response"
+                      : !isAttendingHearing && nextHearing
+                      ? "Confirm attendance in summon"
+                      : t(JoinHomeLocalisation.VIEW_CASE_FILE)
                   }
                   onButtonClick={() => {
-                    if (roleOfNewAdvocate?.value === "PRIMARY_ADVOCATE") {
-                      history.push(`/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${caseDetails?.id}`);
+                    setShow(false);
+                    if (caseDetails?.status === "PENDING_RESPONSE" && selectedParty?.isRespondent) {
+                      if (setShowSubmitResponseModal) setShowSubmitResponseModal(true);
+                    } else {
+                      if (!isAttendingHearing && nextHearing) {
+                        closeModal();
+                        setShowConfirmSummonModal(true);
+                      } else
+                        history.push(
+                          `/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${caseDetails?.filingNumber}&tab=Overview`
+                        );
                     }
                   }}
                 >
@@ -1384,7 +1500,7 @@ const JoinCaseHome = ({ refreshInbox }) => {
     const complainantList = await Promise.all(
       formdata?.map(async (data, index) => {
         try {
-          const response = await getUserUUID(data?.data?.complainantVerification?.individualDetails?.individualId);
+          const response = await getUserUUID(data?.individualId);
 
           const fullName = getUserFullName(response?.Individual?.[0]);
 
@@ -1394,7 +1510,8 @@ const JoinCaseHome = ({ refreshInbox }) => {
             fullName: fullName,
             partyType: index === 0 ? "complainant.primary" : "complainant.additional",
             isComplainant: true,
-            individualId: data?.data?.complainantVerification?.individualDetails?.individualId,
+            individualId: data?.individualId,
+            uuid: response?.Individual?.[0]?.userUuid,
           };
         } catch (error) {
           console.error(error);
@@ -1433,13 +1550,34 @@ const JoinCaseHome = ({ refreshInbox }) => {
         }
       })
     );
-    userType?.value === "Advocate"
-      ? setRespondentList(respondentList?.filter((data) => data?.respondentVerification?.individualDetails?.individualId)?.map((data) => data))
-      : setRespondentList(respondentList?.map((data) => data));
+    setRespondentList(respondentList?.map((data) => data));
   };
+
+  const formatFullName = (name) => {
+    return [name?.givenName, name?.otherNames, name?.familyName].filter(Boolean).join(" ");
+  };
+
+  const attendanceDetails = useMemo(() => {
+    return [
+      {
+        key: "Attendance to the Hearing Date on",
+        value: formatDate(new Date(nextHearing?.startTime)),
+      },
+      {
+        key: "Responding as / for",
+        value: formatFullName(name) || "",
+      },
+    ];
+  }, [name, nextHearing]);
+
+  useEffect(() => {
+    if (userType === "Litigant") setParties(respondentList?.map((data, index) => ({ ...data, key: index })));
+    else setParties([...complainantList, ...respondentList].map((data, index) => ({ ...data, key: index })));
+  }, [complainantList, respondentList, userType]);
 
   useEffect(() => {
     if (caseDetails?.caseCategory) {
+      getNextHearingFromCaseId(caseDetails?.filingNumber);
       setCaseInfo([
         {
           key: "CASE_CATEGORY",
@@ -1460,16 +1598,27 @@ const JoinCaseHome = ({ refreshInbox }) => {
           value: caseDetails?.stage,
         },
       ]);
-      getComplainantList(caseDetails?.additionalDetails?.complainantDetails?.formdata);
+      getComplainantList(
+        caseDetails?.litigants
+          ?.filter((litigant) => litigant?.partyType.includes("complainant"))
+          ?.map((litigant) => ({ individualId: litigant?.individualId }))
+      );
       getRespondentList(caseDetails?.additionalDetails?.respondentDetails?.formdata);
     }
   }, [caseDetails, t, userType?.value]);
 
   useEffect(() => {
+    setAccusedRegisterFormData({
+      ...selectedParty,
+      ...(selectedParty?.phonenumbers?.mobileNumber?.[0] && { mobileNumber: selectedParty?.phonenumbers?.mobileNumber?.[0] }),
+    });
+  }, [selectedParty]);
+
+  useEffect(() => {
     setBarDetails([
       {
         key: "CASE_NUMBER",
-        value: caseDetails?.caseNumber,
+        value: caseDetails?.filingNumber,
       },
       {
         key: JoinHomeLocalisation.COURT_COMPLEX_TEXT,
@@ -1481,6 +1630,27 @@ const JoinCaseHome = ({ refreshInbox }) => {
       },
     ]);
   }, [caseDetails, advocateName, t]);
+
+  useEffect(() => {
+    if (setResponsePendingTask)
+      setResponsePendingTask({
+        actionName: "Pending Response",
+        caseTitle: caseDetails?.caseTitle,
+        filingNumber: caseDetails?.filingNumber,
+        cnrNumber: caseDetails?.cnrNumber,
+        caseId: caseDetails?.id,
+        individualId: selectedParty?.individualId,
+        isCompleted: false,
+        status: "PENDING_RESPONSE",
+      });
+  }, [
+    caseDetails?.caseTitle,
+    caseDetails?.cnrNumber,
+    caseDetails?.filingNumber,
+    caseDetails?.id,
+    selectedParty?.individualId,
+    setResponsePendingTask,
+  ]);
 
   const closeModal = () => {
     setCaseNumber("");
@@ -1505,25 +1675,28 @@ const JoinCaseHome = ({ refreshInbox }) => {
     setRespondentList([]);
   };
 
-  const submitJoinCase = async (data) => {
-    let res;
-    try {
-      res = await CASEService.joinCaseService(data, {});
-      return [res, undefined];
-    } catch (err) {
-      return [res, err];
+  const removeAttendee = async (individualId) => {
+    const updatedHearing = structuredClone(nextHearing);
+    updatedHearing.attendees = updatedHearing.attendees || [];
+    if (updatedHearing?.attendees?.some((attendee) => attendee?.individualId === individualId)) {
+      updatedHearing.attendees = updatedHearing.attendees.filter((attendee) => attendee?.individualId !== individualId);
+      try {
+        await updateAttendees({ body: { hearing: updatedHearing } });
+      } catch (error) {
+        console.error("error :>> ", error);
+      }
     }
   };
 
   const onProceed = useCallback(async () => {
     if (step === 0) {
-      if (!caseDetails?.caseNumber) {
+      if (!caseDetails?.cnrNumber) {
         setCaseDetails(searchCaseResult);
         setCaseNumber(searchCaseResult?.filingNumber);
       } else {
         if (userType?.value === "Litigant") {
-          const isFound = caseDetails?.litigants?.find((item) => item.individualId === individualId) !== undefined;
-          if (isFound) {
+          const isFound = caseDetails?.litigants?.find((item) => item.individualId === individualId);
+          if (isFound !== undefined) {
             setStep(8);
             setMessageHeader(t(JoinHomeLocalisation.ALREADY_PART_OF_CASE));
             setSuccess(true);
@@ -1545,58 +1718,65 @@ const JoinCaseHome = ({ refreshInbox }) => {
           ...errors,
           barRegNumber: undefined,
         });
-      } else if (userType && userType?.value === "Advocate" && selectedParty?.label) {
-        setParties([...parties, selectedParty]);
-        setParty(selectedParty);
-        if (roleOfNewAdvocate?.value !== "SUPPORTING_ADVOCATE") {
-          const { isFound, representative } = searchLitigantInRepresentives();
-          if (isFound && representative?.advocateId === advocateId) {
-            setStep(8);
-            setMessageHeader(t(""));
-            setSuccess(true);
-          } else setStep(step + 1);
-        } else {
-          const { representative } = searchLitigantInRepresentives();
-          const replaceAdvocate = representative;
-          const advocateFormdataCopy = structuredClone(caseDetails?.additionalDetails?.advocateDetails?.formdata);
-          const idx = advocateFormdataCopy?.findIndex((adv) => adv?.data?.advocateId === replaceAdvocate?.advocateId);
-          const advocateResponse = await DRISTIService.searchIndividualAdvocate(
-            {
-              criteria: [
-                {
-                  barRegistrationNumber: idx !== -1 ? advocateFormdataCopy[idx]?.data?.barRegistrationNumber : "",
-                },
-              ],
-              tenantId,
-            },
-            {}
-          );
+      } else if (userType && userType?.value === "Advocate") {
+        const { isFound: advIsFound, representative } = searchAdvocateInRepresentives(advocateId);
 
-          const individualData = await window?.Digit.DRISTIService.searchIndividualUser(
-            {
-              Individual: {
-                individualId: advocateResponse?.advocates[0]?.responseList[0]?.individualId,
+        if (selectedParty?.individualId) {
+          setParty(selectedParty);
+          if (advIsFound && representative?.representing?.some((represent) => represent?.individualId === selectedParty?.individualId)) {
+            setStep(8);
+            setMessageHeader(`${t(JoinHomeLocalisation.ALREADY_REPRESENTING)} ${selectedParty?.fullName}`);
+            setSuccess(true);
+          } else if (roleOfNewAdvocate?.value !== "SUPPORTING_ADVOCATE") {
+            const { isFound, representative } = searchLitigantInRepresentives();
+            if (isFound && representative?.advocateId === advocateId) {
+              setStep(8);
+              setMessageHeader(t(""));
+              setSuccess(true);
+            } else setStep(step + 1);
+          } else {
+            const { representative } = searchLitigantInRepresentives();
+            const advocateResponse = await DRISTIService.searchIndividualAdvocate(
+              {
+                criteria: [
+                  {
+                    id: representative?.advocateId,
+                  },
+                ],
+                tenantId,
               },
-            },
-            { tenantId, limit: 1000, offset: 0 },
-            "",
-            userInfo?.uuid && isUserLoggedIn
-          );
-          setPrimaryAdvocateDetail([
-            {
-              key: "Name",
-              value: idx !== -1 ? advocateFormdataCopy[idx]?.data?.advocateBarRegNumberWithName?.[0]?.advocateName : "",
-            },
-            {
-              key: "Bar Council Id",
-              value: idx !== -1 ? advocateFormdataCopy[idx]?.data?.advocateBarRegNumberWithName?.[0]?.barRegistrationNumber : "",
-            },
-            {
-              key: "Email",
-              value: individualData.Individual[0]?.email || "Email Not Available",
-            },
-          ]);
-          setStep(step + 1);
+              {}
+            );
+
+            const individualData = await window?.Digit.DRISTIService.searchIndividualUser(
+              {
+                Individual: {
+                  individualId: advocateResponse?.advocates[0]?.responseList[0]?.individualId,
+                },
+              },
+              { tenantId, limit: 1000, offset: 0 },
+              "",
+              userInfo?.uuid && isUserLoggedIn
+            );
+            setPrimaryAdvocateDetail([
+              {
+                key: "Name",
+                value: representative?.additionalDetails?.advocateName || "",
+              },
+              {
+                key: "Bar Council Id",
+                value: advocateResponse?.advocates[0]?.responseList[0]?.barRegistrationNumber || "",
+              },
+              {
+                key: "Email",
+                value: individualData.Individual[0]?.email || "Email Not Available",
+              },
+            ]);
+            setStep(step + 1);
+          }
+        } else if (selectedParty?.fullName) {
+          setShow(false);
+          setShowEditRespondentDetailsModal(true);
         }
       }
     } else if (step === 2) {
@@ -1635,6 +1815,7 @@ const JoinCaseHome = ({ refreshInbox }) => {
       setStep(step + 1);
       setIsDisabled(true);
     } else if (step === 7 && validationCode.length === 6) {
+      setIsDisabled(true);
       if (userType?.value === "Advocate") {
         const { representative } = searchLitigantInRepresentives();
         const replaceAdvocate = representative;
@@ -1693,6 +1874,7 @@ const JoinCaseHome = ({ refreshInbox }) => {
                     sourceID: individualId,
                     caseId: caseDetails?.id,
                     filingNumber: caseDetails?.filingNumber,
+                    cnrNumber: caseDetails?.cnrNumber,
                     tenantId,
                     comments: [],
                     file: {
@@ -1768,9 +1950,6 @@ const JoinCaseHome = ({ refreshInbox }) => {
                 {
                   additionalDetails: {
                     uuid: userUUID,
-                    firstName: selectedParty?.isComplainant ? selectedParty?.firstName : selectedParty?.respondentFirstName,
-                    middleName: selectedParty?.isComplainant ? selectedParty?.middleName : selectedParty?.respondentMiddleName,
-                    lastName: selectedParty?.isComplainant ? selectedParty?.lastName : selectedParty?.respondentLastName,
                     fullName: selectedParty?.fullName,
                   },
                   caseId: caseDetails?.id,
@@ -1791,6 +1970,59 @@ const JoinCaseHome = ({ refreshInbox }) => {
             },
           });
           if (res) {
+            if (caseDetails?.status === "PENDING_RESPONSE" && selectedParty?.isRespondent) {
+              // closing old pending task
+              try {
+                await DRISTIService.customApiService(Urls.dristi.pendingTask, {
+                  pendingTask: {
+                    name: "Pending Response",
+                    entityType: "case-default",
+                    referenceId: `MANUAL_${caseDetails?.filingNumber}`,
+                    status: "PENDING_RESPONSE",
+                    assignedTo: [{ uuid: selectedParty?.uuid }, { uuid: replaceAdvocate?.additionalDetails?.uuid }],
+                    assignedRole: ["CASE_RESPONDER"],
+                    cnrNumber: caseDetails?.cnrNumber,
+                    filingNumber: caseDetails?.filingNumber,
+                    isCompleted: true,
+                    stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
+                    additionalDetails: { individualId, caseId: caseDetails?.id },
+                    tenantId,
+                  },
+                });
+              } catch (err) {
+                console.error("err :>> ", err);
+              }
+
+              // creating new pending task
+              try {
+                await DRISTIService.customApiService(Urls.dristi.pendingTask, {
+                  pendingTask: {
+                    name: "Pending Response",
+                    entityType: "case-default",
+                    referenceId: `MANUAL_${caseDetails?.filingNumber}`,
+                    status: "PENDING_RESPONSE",
+                    assignedTo: [{ uuid: selectedParty?.uuid }, { uuid: userInfo?.uuid }],
+                    assignedRole: ["CASE_RESPONDER"],
+                    cnrNumber: caseDetails?.cnrNumber,
+                    filingNumber: caseDetails?.filingNumber,
+                    isCompleted: false,
+                    stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
+                    additionalDetails: { individualId, caseId: caseDetails?.id },
+                    tenantId,
+                  },
+                });
+              } catch (err) {
+                console.error("err :>> ", err);
+              }
+            } else {
+              try {
+                const individualData = await searchIndividualUserWithUuid(replaceAdvocate?.additionalDetails?.uuid, tenantId);
+                await removeAttendee(individualData?.Individual?.[0]?.individualId);
+              } catch (err) {
+                console.error("err :>> ", err);
+              }
+            }
+
             setStep(step + 1);
             setSuccess(true);
           } else {
@@ -1802,6 +2034,8 @@ const JoinCaseHome = ({ refreshInbox }) => {
             });
           }
         } else {
+          const isLitigantJoinedCase = caseDetails?.litigants?.find((litigant) => litigant?.individualId === selectedParty?.individualId);
+
           const vakalatnamaDocument = await Promise.all(
             adovacteVakalatnama?.adcVakalatnamaFileUpload?.document?.map(async (document) => {
               if (document) {
@@ -1827,6 +2061,7 @@ const JoinCaseHome = ({ refreshInbox }) => {
                     sourceID: individualId,
                     caseId: caseDetails?.id,
                     filingNumber: caseDetails?.filingNumber,
+                    cnrNumber: caseDetails?.cnrNumber,
                     tenantId,
                     comments: [],
                     file: {
@@ -1851,54 +2086,22 @@ const JoinCaseHome = ({ refreshInbox }) => {
               })
           );
           const [res, err] = await submitJoinCase({
-            additionalDetails: {
-              ...caseDetails?.additionalDetails,
-              advocateDetails: (() => {
-                return {
-                  ...caseDetails?.additionalDetails?.advocateDetails,
-                  formdata: [
-                    ...caseDetails?.additionalDetails?.advocateDetails?.formdata,
-                    {
-                      data: {
-                        advocateId: advocateDetailForm?.id,
-                        advocateName: advocateDetailForm?.additionalDetails?.username,
-                        barRegistrationNumber: advocateDetailForm?.barRegistrationNumber,
-                        vakalatnamaFileUpload: {
-                          document: [
-                            {
-                              documentType: adovacteVakalatnama?.documentType,
-                              fileStore: adovacteVakalatnama?.fileStore,
-                              documentName: adovacteVakalatnama?.additionalDetails?.fileName,
-                              fileName: `Vakalatnama (${selectedParty?.label})`,
-                              individualId: selectedParty?.individualId,
-                            },
-                          ],
-                        },
-                        isAdvocateRepresenting: {
-                          code: "YES",
-                          name: "Yes",
-                          showForm: true,
-                          isEnabled: true,
-                        },
-                        advocateBarRegNumberWithName: [
-                          {
-                            modified: true,
-                            advocateId: advocateDetailForm?.id,
-                            advocateName: advocateDetailForm?.additionalDetails?.username,
-                            barRegistrationNumber: advocateDetailForm?.barRegistrationNumber,
-                            barRegistrationNumberOriginal: advocateDetailForm?.barRegistrationNumber,
-                          },
-                        ],
-                        barRegistrationNumberOriginal: advocateDetailForm?.barRegistrationNumber,
-                      },
-                    },
-                  ],
-                };
-              })(),
-            },
+            additionalDetails: caseDetails?.additionalDetails,
             caseFilingNumber: caseNumber,
             tenantId: tenantId,
             accessCode: validationCode,
+            ...(!isLitigantJoinedCase && {
+              litigant: {
+                additionalDetails: {
+                  fullName: selectedParty?.fullName,
+                  uuid: selectedParty?.uuid,
+                },
+                tenantId: tenantId,
+                individualId: selectedParty?.individualId,
+                partyCategory: "INDIVIDUAL",
+                partyType: selectedParty?.partyType,
+              },
+            }),
             representative: {
               tenantId: tenantId,
               advocateId: advocateId,
@@ -1907,9 +2110,6 @@ const JoinCaseHome = ({ refreshInbox }) => {
                 {
                   additionalDetails: {
                     uuid: userUUID,
-                    firstName: selectedParty?.isComplainant ? selectedParty?.firstName : selectedParty?.respondentFirstName,
-                    middleName: selectedParty?.isComplainant ? selectedParty?.middleName : selectedParty?.respondentMiddleName,
-                    lastName: selectedParty?.isComplainant ? selectedParty?.lastName : selectedParty?.respondentLastName,
                     fullName: selectedParty?.fullName,
                   },
                   caseId: caseDetails?.id,
@@ -1928,6 +2128,29 @@ const JoinCaseHome = ({ refreshInbox }) => {
             },
           });
           if (res) {
+            // creating new pending task for submit response
+            if (caseDetails?.status === "PENDING_RESPONSE" && selectedParty?.isRespondent) {
+              try {
+                await DRISTIService.customApiService(Urls.dristi.pendingTask, {
+                  pendingTask: {
+                    name: "Pending Response",
+                    entityType: "case-default",
+                    referenceId: `MANUAL_${caseDetails?.filingNumber}`,
+                    status: "PENDING_RESPONSE",
+                    assignedTo: [{ uuid: selectedParty?.uuid }, { uuid: userInfo?.uuid }],
+                    assignedRole: ["CASE_RESPONDER"],
+                    cnrNumber: caseDetails?.cnrNumber,
+                    filingNumber: caseDetails?.filingNumber,
+                    isCompleted: false,
+                    stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
+                    additionalDetails: { individualId, caseId: caseDetails?.id },
+                    tenantId,
+                  },
+                });
+              } catch (err) {
+                console.error("err :>> ", err);
+              }
+            }
             setStep(step + 1);
             setSuccess(true);
           } else {
@@ -1986,10 +2209,7 @@ const JoinCaseHome = ({ refreshInbox }) => {
               caseId: caseDetails?.id,
               litigant: {
                 additionalDetails: {
-                  firstName: name?.givenName,
-                  middleName: name?.otherNames,
-                  lastName: name?.familyName,
-                  fullName: `${name?.givenName}${name?.otherNames ? " " + name?.otherNames + " " : " "}${name?.familyName}`,
+                  fullName: getFullName(" ", name?.givenName, name?.otherNames, name?.familyName),
                   affidavitText,
                   uuid: userInfo?.uuid,
                 },
@@ -2003,7 +2223,28 @@ const JoinCaseHome = ({ refreshInbox }) => {
             {}
           );
           if (res) {
-            setJoinCaseRequest(res?.joinCaseRequest);
+            if (caseDetails?.status === "PENDING_RESPONSE") {
+              try {
+                await DRISTIService.customApiService(Urls.dristi.pendingTask, {
+                  pendingTask: {
+                    name: "Pending Response",
+                    entityType: "case-default",
+                    referenceId: `MANUAL_${caseDetails?.filingNumber}`,
+                    status: "PENDING_RESPONSE",
+                    assignedTo: [{ uuid: userInfo?.uuid }],
+                    assignedRole: ["CASE_RESPONDER"],
+                    cnrNumber: caseDetails?.cnrNumber,
+                    filingNumber: caseDetails?.filingNumber,
+                    isCompleted: false,
+                    stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
+                    additionalDetails: { individualId, caseId: caseDetails?.id },
+                    tenantId,
+                  },
+                });
+              } catch (err) {
+                console.error("err :>> ", err);
+              }
+            }
             setRespondentList(
               respondentList?.map((respondent) => {
                 if (respondent?.index === selectedParty?.index) {
@@ -2054,6 +2295,7 @@ const JoinCaseHome = ({ refreshInbox }) => {
                     sourceID: individualId,
                     caseId: caseDetails?.id,
                     filingNumber: caseDetails?.filingNumber,
+                    cnrNumber: caseDetails?.cnrNumber,
                     tenantId,
                     comments: [],
                     file: {
@@ -2077,7 +2319,7 @@ const JoinCaseHome = ({ refreshInbox }) => {
                 });
               })
           );
-          const [res, err] = await submitJoinCase(
+          const [res] = await submitJoinCase(
             {
               additionalDetails: {
                 ...caseDetails?.additionalDetails,
@@ -2085,7 +2327,7 @@ const JoinCaseHome = ({ refreshInbox }) => {
                   ...caseDetails?.additionalDetails?.respondentDetails,
                   formdata: [
                     ...caseDetails?.additionalDetails?.respondentDetails?.formdata?.map((data, index) => {
-                      if (index === selectedParty?.index) {
+                      if (selectedParty?.isRespondent && index === selectedParty?.index) {
                         return {
                           ...data,
                           data: {
@@ -2174,10 +2416,7 @@ const JoinCaseHome = ({ refreshInbox }) => {
               caseId: caseDetails?.id,
               litigant: {
                 additionalDetails: {
-                  firstName: name?.givenName,
-                  middleName: name?.otherNames,
-                  lastName: name?.familyName,
-                  fullName: `${name?.givenName}${name?.otherNames ? " " + name?.otherNames + " " : " "}${name?.familyName}`,
+                  fullName: getFullName(" ", name?.givenName, name?.otherNames, name?.familyName),
                   uuid: userInfo?.uuid,
                 },
                 tenantId: tenantId,
@@ -2192,10 +2431,7 @@ const JoinCaseHome = ({ refreshInbox }) => {
                   representing: [
                     {
                       additionalDetails: {
-                        firstName: name?.givenName,
-                        middleName: name?.otherNames,
-                        lastName: name?.familyName,
-                        fullName: `${name?.givenName}${name?.otherNames ? " " + name?.otherNames + " " : " "}${name?.familyName}`,
+                        fullName: getFullName(" ", name?.givenName, name?.otherNames, name?.familyName),
                         document: newDocument,
                         uuid: userInfo?.uuid,
                       },
@@ -2219,7 +2455,28 @@ const JoinCaseHome = ({ refreshInbox }) => {
             {}
           );
           if (res) {
-            setJoinCaseRequest(res?.joinCaseRequest);
+            if (caseDetails?.status === "PENDING_RESPONSE") {
+              try {
+                await DRISTIService.customApiService(Urls.dristi.pendingTask, {
+                  pendingTask: {
+                    name: "Pending Response",
+                    entityType: "case-default",
+                    referenceId: `MANUAL_${caseDetails?.filingNumber}`,
+                    status: "PENDING_RESPONSE",
+                    assignedTo: [{ uuid: userInfo?.uuid }, { uuid: userUUID }],
+                    assignedRole: ["CASE_RESPONDER"],
+                    cnrNumber: caseDetails?.cnrNumber,
+                    filingNumber: caseDetails?.filingNumber,
+                    isCompleted: false,
+                    stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
+                    additionalDetails: { individualId, caseId: caseDetails?.id },
+                    tenantId,
+                  },
+                });
+              } catch (err) {
+                console.error("err :>> ", err);
+              }
+            }
             setRespondentList(
               respondentList?.map((respondent) => {
                 if (respondent?.index === selectedParty?.index) {
@@ -2246,12 +2503,10 @@ const JoinCaseHome = ({ refreshInbox }) => {
           }
         }
       }
+      setIsDisabled(false);
     }
   }, [
     adovacteVakalatnama?.adcVakalatnamaFileUpload?.document,
-    adovacteVakalatnama?.additionalDetails?.fileName,
-    adovacteVakalatnama?.documentType,
-    adovacteVakalatnama?.fileStore,
     advocateDetailForm?.additionalDetails?.username,
     advocateDetailForm?.advocateBarRegNumberWithName,
     advocateDetailForm?.barRegistrationNumber,
@@ -2260,10 +2515,11 @@ const JoinCaseHome = ({ refreshInbox }) => {
     advocateId,
     affidavitText,
     caseDetails?.additionalDetails,
-    caseDetails?.caseNumber,
+    caseDetails?.cnrNumber,
     caseDetails?.filingNumber,
     caseDetails?.id,
     caseDetails?.litigants,
+    caseDetails?.status,
     caseNumber,
     errors,
     individualAddress,
@@ -2273,18 +2529,20 @@ const JoinCaseHome = ({ refreshInbox }) => {
     name?.familyName,
     name?.givenName,
     name?.otherNames,
-    parties,
     replaceAdvocateDocuments?.advocateCourtOrder?.document,
     replaceAdvocateDocuments?.nocFileUpload?.document,
     representingYourself,
     respondentList,
     roleOfNewAdvocate?.value,
+    searchAdvocateInRepresentives,
     searchCaseResult,
     searchLitigantInRepresentives,
     selectedParty,
+    sourceType,
     step,
     t,
     tenantId,
+    todayDate,
     userInfo?.uuid,
     userType,
     userUUID,
@@ -2295,10 +2553,10 @@ const JoinCaseHome = ({ refreshInbox }) => {
     (event) => {
       if (event.key === "Enter") {
         if (!isDisabled) onProceed();
-        if (step === 0) searchCase(caseNumber);
+        if (step === 0 && isSearchingCase) searchCase(caseNumber);
       }
     },
-    [isDisabled, onProceed, step, caseDetails?.caseNumber, caseNumber]
+    [isDisabled, onProceed, step, isSearchingCase, caseNumber]
   );
 
   useEffect(() => {
@@ -2308,6 +2566,388 @@ const JoinCaseHome = ({ refreshInbox }) => {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [handleKeyDown]);
+
+  const onOtpChange = (value) => {
+    setOtp(value);
+  };
+
+  const onResendOtp = () => {
+    setOtp("");
+  };
+
+  const [userData, setUserData] = useState({});
+
+  const registerRespondentFormAction = useCallback(async () => {
+    const regex = /^[6-9]\d{9}$/;
+    let tempValue = {};
+    for (const key in accusedRegisterFormData) {
+      switch (key) {
+        case "mobileNumber":
+          if (!regex.test(accusedRegisterFormData?.mobileNumber)) {
+            tempValue = { ...tempValue, mobileNumber: { message: "Incorrect Mobile Number" } };
+          }
+          break;
+        default:
+          break;
+      }
+    }
+    if (Object.keys(tempValue).length > 0) {
+      setAccusedRegisterFormDataError({
+        ...accusedRegisterFormDataError,
+        ...tempValue,
+      });
+      return { continue: false };
+    }
+    const { response, isRegistered } = await selectMobileNumber(accusedRegisterFormData?.mobileNumber, tenantId);
+    setIsAccusedRegistered(isRegistered);
+    return { continue: response ? true : false };
+  }, [accusedRegisterFormData, accusedRegisterFormDataError, tenantId]);
+
+  const otpVerificationAction = useCallback(async () => {
+    const data = await selectOtp(isAccusedRegistered, accusedRegisterFormData?.mobileNumber, otp, tenantId);
+    setUserData({ ...userData, ...data });
+    return { continue: data ? true : false };
+  }, [accusedRegisterFormData?.mobileNumber, isAccusedRegistered, otp, tenantId, userData]);
+
+  const updateRespondentDetails = useCallback(
+    async (data, documentData) => {
+      const response = await createRespondentIndividualUser(data, documentData, tenantId);
+      const identifierIdDetails = JSON.parse(
+        response?.Individual?.additionalFields?.fields?.find((obj) => obj.key === "identifierIdDetails")?.value || "{}"
+      );
+      const idType = response?.Individual?.identifiers[0]?.identifierType || "";
+      const copyIndividualDoc = identifierIdDetails?.fileStoreId
+        ? [{ fileName: `${idType} Card`, fileStore: identifierIdDetails?.fileStoreId, documentName: identifierIdDetails?.filename }]
+        : null;
+
+      const additionalDetails = {
+        ...caseDetails?.additionalDetails,
+        respondentDetails: {
+          ...caseDetails?.additionalDetails?.respondentDetails,
+          formdata: [
+            ...caseDetails?.additionalDetails?.respondentDetails?.formdata?.map((data, index) => {
+              if (index === selectedParty?.index) {
+                return {
+                  ...data,
+                  data: {
+                    ...data?.data,
+                    respondentFirstName: response?.Individual?.name?.givenName,
+                    respondentMiddleName: response?.Individual?.name?.otherNames,
+                    respondentLastName: response?.Individual?.name?.familyName,
+                    addressDetails: response?.Individual?.address,
+                    respondentVerification: {
+                      individualDetails: {
+                        individualId: response?.Individual?.individualId,
+                        document: copyIndividualDoc,
+                      },
+                    },
+                  },
+                };
+              }
+              return data;
+            }),
+          ],
+        },
+      };
+
+      if (response) {
+        setCaseDetails({
+          ...caseDetails,
+          additionalDetails: additionalDetails,
+        });
+        const fullName = `${response?.Individual?.name?.givenName} ${
+          response?.Individual?.name?.otherNames ? response?.Individual?.name?.otherNames + " " : ""
+        }${response?.Individual?.name?.familyName}`;
+        setSelectedParty({
+          ...selectedParty,
+          fullName: fullName,
+          label: `${fullName} ${t(JoinHomeLocalisation.RESPONDENT_BRACK)}`,
+          respondentFirstName: response?.Individual?.name?.givenName,
+          respondentMiddleName: response?.Individual?.name?.otherNames,
+          respondentLastName: response?.Individual?.name?.familyName,
+          addressDetails: response?.Individual?.address,
+          respondentVerification: {
+            individualDetails: {
+              individualId: response?.Individual?.individualId,
+              document: copyIndividualDoc,
+            },
+          },
+          individualId: response?.Individual?.individualId,
+          uuid: response?.Individual?.userUuid,
+        });
+      }
+      return { continue: response ? true : false };
+    },
+    [caseDetails, selectedParty, t, tenantId]
+  );
+
+  const onConfirmAttendee = async () => {
+    const updatedHearing = structuredClone(nextHearing);
+    updatedHearing.attendees = updatedHearing.attendees || [];
+    if (updatedHearing?.attendees?.some((attendee) => attendee?.individualId === individualId)) {
+      setShowErrorToast(true);
+      setIsAttendeeAdded(false);
+      return {
+        continue: true,
+      };
+    } else {
+      updatedHearing.attendees.push({
+        name: `${name?.givenName}${name?.otherNames ? " " + name?.otherNames + " " : " "}${name?.familyName}` || "",
+        individualId: individualId,
+        type: "Respondent",
+      });
+      try {
+        const response = await updateAttendees({ body: { hearing: updatedHearing } });
+        if (response) {
+          setShowErrorToast(true);
+          setIsAttendeeAdded(true);
+          return {
+            continue: true,
+          };
+        } else {
+          setShowErrorToast(true);
+          setIsAttendeeAdded(false);
+          return { continue: false };
+        }
+      } catch (error) {
+        console.error("error :>> ", error);
+      }
+    }
+  };
+
+  const handleRegisterRespondentModalClose = () => {
+    setShow(true);
+    setShowEditRespondentDetailsModal(false);
+    setAccusedRegisterFormData({});
+    setOtp("");
+    let tempSelectedParty = parties?.find((party) => party?.key === selectedParty?.key);
+    tempSelectedParty = {
+      ...tempSelectedParty,
+      respondentType: {
+        code: tempSelectedParty?.respondentType?.code,
+        name: tempSelectedParty?.respondentType?.name,
+      },
+    };
+    setSelectedParty(tempSelectedParty);
+  };
+
+  const registerRespondentConfig = useMemo(() => {
+    return {
+      handleClose: () => handleRegisterRespondentModalClose(),
+      heading: { label: "" },
+      actionSaveLabel: "",
+      isStepperModal: true,
+      actionSaveOnSubmit: () => {},
+      steps: [
+        {
+          type: "document",
+          heading: { label: t("EDIT_RESPONDENT") },
+          modalBody: (
+            <RegisterRespondentForm
+              accusedRegisterFormData={accusedRegisterFormData}
+              setAccusedRegisterFormData={setAccusedRegisterFormData}
+              error={accusedRegisterFormDataError}
+            />
+          ),
+          actionSaveOnSubmit: async () => {
+            return await registerRespondentFormAction();
+          },
+          async: true,
+          actionSaveLabel: t("VERIFY_WITH_OTP"),
+          actionCancelLabel: t("BACK"),
+          actionCancelOnSubmit: () => {
+            handleRegisterRespondentModalClose();
+          },
+          isDisabled:
+            accusedRegisterFormData?.respondentType &&
+            accusedRegisterFormData?.mobileNumber &&
+            accusedRegisterFormData?.respondentFirstName &&
+            accusedRegisterFormData?.addressDetails?.[0]?.addressDetails?.city &&
+            accusedRegisterFormData?.addressDetails?.[0]?.addressDetails?.district &&
+            accusedRegisterFormData?.addressDetails?.[0]?.addressDetails?.locality &&
+            accusedRegisterFormData?.addressDetails?.[0]?.addressDetails?.pincode &&
+            accusedRegisterFormData?.addressDetails?.[0]?.addressDetails?.state &&
+            ((accusedRegisterFormData?.respondentType?.code === "REPRESENTATIVE" && accusedRegisterFormData?.companyName) ||
+              (accusedRegisterFormData?.respondentType?.code !== "REPRESENTATIVE" && !accusedRegisterFormData?.companyName))
+              ? false
+              : true,
+        },
+        {
+          heading: { label: t("VERIFY_WITH_OTP_HEADER") },
+          actionSaveLabel: t("VERIFY_BUTTON_TEXT"),
+          actionCancelLabel: t("BACK"),
+          modalBody: (
+            <OtpComponent
+              t={t}
+              length={6}
+              onOtpChange={onOtpChange}
+              otp={otp}
+              size={6}
+              otpEnterTime={10}
+              onResend={onResendOtp}
+              mobileNumber={accusedRegisterFormData?.phoneNumber}
+            />
+          ),
+          actionSaveOnSubmit: async () => {
+            return await otpVerificationAction();
+          },
+          actionCancelOnSubmit: () => {
+            setOtp("");
+          },
+          isDisabled: otp?.length === 6 ? false : true,
+        },
+        !isAccusedRegistered && {
+          heading: { label: t("ID_VERIFICATION_HEADER") },
+          actionSaveLabel: t("REGISTER_RESPONDENT"),
+          actionCancelLabel: t("BACK"),
+          modalBody: (
+            <UploadIdType
+              config={uploadIdConfig}
+              isAdvocateUploading={true}
+              onFormValueChange={(setValue, formData) => {
+                const documentData = {
+                  fileStore: formData?.SelectUserTypeComponent?.ID_Proof?.[0]?.[1]?.fileStoreId?.fileStoreId,
+                  documentType: formData?.SelectUserTypeComponent?.ID_Proof?.[0]?.[1]?.file?.type,
+                  identifierType: formData?.SelectUserTypeComponent?.selectIdType?.type,
+                  additionalDetails: {
+                    fileName: formData?.SelectUserTypeComponent?.ID_Proof?.[0]?.[1]?.file?.name,
+                    fileType: "respondent-response",
+                  },
+                };
+                if (!isEqual(documentData, registerId)) setRegisterId(documentData);
+
+                if (!isEqual(accusedIdVerificationDocument, formData)) setAccusedIdVerificationDocument(formData);
+              }}
+            />
+          ),
+          actionSaveOnSubmit: async () => {
+            const data = {
+              firstName: accusedRegisterFormData?.respondentFirstName,
+              middleName: accusedRegisterFormData?.respondentMiddleName,
+              lastName: accusedRegisterFormData?.respondentLastName,
+              userDetails: {
+                mobileNumber: userData?.info?.mobileNumber,
+                username: userData?.info?.userName,
+                userUuid: userData?.info?.uuid,
+                userId: userData?.info?.id,
+                roles: [
+                  {
+                    code: "CITIZEN",
+                    name: "Citizen",
+                    tenantId: tenantId,
+                  },
+                  ...[
+                    "CASE_CREATOR",
+                    "CASE_EDITOR",
+                    "CASE_VIEWER",
+                    "DEPOSITION_CREATOR",
+                    "DEPOSITION_VIEWER",
+                    "APPLICATION_CREATOR",
+                    "APPLICATION_VIEWER",
+                    "HEARING_VIEWER",
+                    "ORDER_VIEWER",
+                    "SUBMISSION_CREATOR",
+                    "SUBMISSION_RESPONDER",
+                    "SUBMISSION_DELETE",
+                    "TASK_VIEWER",
+                  ]?.map((role) => ({
+                    code: role,
+                    name: role,
+                    tenantId: tenantId,
+                  })),
+                ],
+                type: userData?.info?.type,
+              },
+              addressDetails: [
+                ...accusedRegisterFormData?.addressDetails?.map((address) => {
+                  return {
+                    ...address,
+                    tenantId: tenantId,
+                    type: "PERMANENT",
+                  };
+                }),
+              ],
+            };
+            const documentData = {
+              fileStoreId: accusedIdVerificationDocument?.SelectUserTypeComponent?.ID_Proof?.[0]?.[1]?.fileStoreId?.fileStoreId,
+              fileName: accusedIdVerificationDocument?.SelectUserTypeComponent?.ID_Proof?.[0]?.[1]?.file?.name,
+              fileType: accusedIdVerificationDocument?.SelectUserTypeComponent?.ID_Proof?.[0]?.[1]?.file?.type,
+              identifierType: accusedIdVerificationDocument?.SelectUserTypeComponent?.selectIdType?.type,
+            };
+            return await updateRespondentDetails(data, documentData);
+          },
+          actionCancelType: "JUMP",
+          jumpValue: 2,
+          async: true,
+          actionCancelOnSubmit: () => {
+            setOtp("");
+          },
+          isDisabled: registerId?.fileStore && Boolean(accusedIdVerificationDocument?.SelectUserTypeComponent?.selectIdType?.type) ? false : true,
+        },
+        {
+          type: "success",
+          hideSubmit: true,
+          modalBody: (
+            <CustomStepperSuccess
+              successMessage={isAccusedRegistered ? "ACCUSED_MOBILE_REGISTERED" : "RESPONDENT_DETAILS_VERIFIED"}
+              bannerSubText={"EDIT_REQUEST_FROM_COMPLAINANT"}
+              submitButtonAction={() => {
+                setOtp("");
+                setAccusedRegisterFormData({});
+                setShowEditRespondentDetailsModal(false);
+                if (isAccusedRegistered) closeModal();
+                else setShow(true);
+              }}
+              submitButtonText={"NEXT"}
+              t={t}
+            />
+          ),
+        },
+      ].filter(Boolean),
+    };
+  }, [
+    accusedRegisterFormData,
+    accusedRegisterFormDataError,
+    t,
+    otp,
+    isAccusedRegistered,
+    registerId,
+    accusedIdVerificationDocument,
+    registerRespondentFormAction,
+    otpVerificationAction,
+    userData?.info?.mobileNumber,
+    userData?.info?.userName,
+    userData?.info?.uuid,
+    userData?.info?.id,
+    userData?.info?.type,
+    tenantId,
+    updateRespondentDetails,
+  ]);
+
+  const confirmSummonConfig = useMemo(() => {
+    return {
+      handleClose: () => {
+        setShowConfirmSummonModal(false);
+      },
+      heading: { label: "" },
+      actionSaveLabel: "",
+      isStepperModal: true,
+      actionSaveOnSubmit: () => {},
+      steps: [
+        {
+          heading: { label: "Confirm your attendance to the hearing" },
+          actionSaveLabel: "Yes",
+          actionCancelLabel: "No",
+          modalBody: <CustomCaseInfoDiv t={t} data={attendanceDetails} column={2} />,
+          actionSaveOnSubmit: async () => {
+            const resp = await onConfirmAttendee();
+            if (resp.continue) setShowConfirmSummonModal(false);
+          },
+          actionCancelOnSubmit: () => setShowConfirmSummonModal(false),
+        },
+      ].filter(Boolean),
+    };
+  }, [attendanceDetails, t]);
 
   return (
     <div>
@@ -2376,7 +3016,7 @@ const JoinCaseHome = ({ refreshInbox }) => {
                   setBarRegNumber("");
                   setAdvocateDetailForm({});
                 } else {
-                  if (roleOfNewAdvocate) {
+                  if (roleOfNewAdvocate?.value) {
                     setStep(6);
                     if (step === 4) {
                       setIsSignedAdvocate(false);
@@ -2391,6 +3031,16 @@ const JoinCaseHome = ({ refreshInbox }) => {
             />
           )}
         </Modal>
+      )}
+      {showEditRespondentDetailsModal && <DocumentModal config={registerRespondentConfig} />}
+      {showConfirmSummonModal && <DocumentModal config={confirmSummonConfig} />}
+      {showErrorToast && (
+        <Toast
+          error={!isAttendeeAdded}
+          label={t(isAttendeeAdded ? "You have confirmed your attendance for summon!" : "You have already confirmed your attendance for the summon!")}
+          isDleteBtn={true}
+          onClose={closeToast}
+        />
       )}
     </div>
   );

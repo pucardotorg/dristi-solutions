@@ -13,10 +13,6 @@ const UpdateDeliveryStatusComponent = ({ t, infos, links, handleSubmitButtonDisa
   const [remarks, setRemarks] = useState("");
   const deliveryOptions = [
     {
-      key: "SENT",
-      value: "Sent",
-    },
-    {
       key: "DELIVERED",
       value: "Delivered",
     },
@@ -32,7 +28,7 @@ const UpdateDeliveryStatusComponent = ({ t, infos, links, handleSubmitButtonDisa
   }, [selectedDelievery, date]);
 
   return (
-    <div className="update-delivery-status">
+    <div className="update-delivery-status" style={{ width: 616 }}>
       <LabelFieldPair className="case-label-field-pair">
         <CardLabel className="case-input-label">{`${t("Update Delivery Status")}`}</CardLabel>
         <Dropdown t={t} option={deliveryOptions} selected={selectedDelievery} optionKey={"value"} select={(e) => setSelectedDelievery(e)} />

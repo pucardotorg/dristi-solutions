@@ -92,20 +92,22 @@ async function newHearingDateAfterReschedule(req, res, qrCode) {
     // }
 
     // Search for MDMS court room details
-    const resMdms = await handleApiCall(
-      () =>
-        search_mdms(
-          courtCase.courtId,
-          "common-masters.Court_Rooms",
-          tenantId,
-          requestInfo
-        ),
-      "Failed to query MDMS service for court room"
-    );
-    const mdmsCourtRoom = resMdms?.data?.mdms[0]?.data;
-    if (!mdmsCourtRoom) {
-      renderError(res, "Court room MDMS master not found", 404);
-    }
+    // const resMdms = await handleApiCall(
+    //   () =>
+    //     search_mdms(
+    //       courtCase.courtId,
+    //       "common-masters.Court_Rooms",
+    //       tenantId,
+    //       requestInfo
+    //     ),
+    //   "Failed to query MDMS service for court room"
+    // );
+    // const mdmsCourtRoom = resMdms?.data?.mdms[0]?.data;
+    // if (!mdmsCourtRoom) {
+    //   renderError(res, "Court room MDMS master not found", 404);
+    // }
+    const mdmsCourtRoom = config?.constants.mdmsCourtRoom;
+    const judgeDetails = config.constants.judgeDetails;
 
     // Search for order details
     const resOrder = await handleApiCall(
@@ -146,22 +148,22 @@ async function newHearingDateAfterReschedule(req, res, qrCode) {
     const newHearingDate = order?.orderDetails?.newHearingDate
       ? formatDate(order?.orderDetails?.newHearingDate)
       : "";
-
+    const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
     const data = {
       Data: [
         {
           courtName: mdmsCourtRoom.name,
-          place: "Kollam",
-          state: "Kerala",
+          place: mdmsCourtRoom.place,
+          state: mdmsCourtRoom.state,
           caseName: courtCase.caseTitle,
-          caseNumber: courtCase.caseNumber,
+          caseNumber: caseNumber,
           originalHearingDate,
           date: formattedToday,
           newHearingDate,
           additionalComments: order.comments,
-          judgeSignature: "Judge Signature",
-          judgeName: "John Doe", // FIXME: employee.user.name,
-          courtSeal: "Court Seal",
+          judgeSignature: judgeDetails.name,
+          judgeName: judgeDetails.name,
+          courtSeal: judgeDetails.courtSeal,
           qrCodeUrl: base64Url,
         },
       ],

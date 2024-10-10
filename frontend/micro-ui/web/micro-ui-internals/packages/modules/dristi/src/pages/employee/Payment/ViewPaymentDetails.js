@@ -1,5 +1,5 @@
 import { Loader, SubmitBar, ActionBar, CustomDropdown, CardLabel, LabelFieldPair, TextInput } from "@egovernments/digit-ui-react-components";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
@@ -7,7 +7,22 @@ import { useToast } from "../../../components/Toast/useToast";
 import { DRISTIService } from "../../../services";
 import { Urls } from "../../../hooks";
 import CustomCopyTextDiv from "../../../components/CustomCopyTextDiv";
-import { getSuffixByBusinessCode, getTaxPeriodByBusinessService } from "../../../Utils";
+import { extractFeeMedium, getFilteredPaymentData, getTaskType } from "../../../Utils";
+
+const paymentTaskType = {
+  TASK_SUMMON: "task-summons",
+  TASK_NOTICE: "task-notice",
+  TASK_WARRANT: "task-warrant",
+  TASK_SUMMON_ADVANCE_CARRYFORWARD: "TASK_SUMMON_ADVANCE_CARRYFORWARD",
+  TASK_NOTICE_ADVANCE_CARRYFORWARD: "TASK_NOTICE_ADVANCE_CARRYFORWARD",
+  ORDER_MANAGELIFECYCLE: "order-default",
+  SUMMON_WARRANT_STATUS: "SUMMON_WARRANT_STATUS",
+  NOTICE_STATUS: "NOTICE_STATUS",
+  ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE: "application-order-submission-default",
+  PAYMENT_PENDING_POST: "PAYMENT_PENDING_POST",
+  PAYMENT_PENDING_EMAIL: "PAYMENT_PENDING_EMAIL",
+  PAYMENT_PENDING_SMS: "PAYMENT_PENDING_SMS",
+};
 
 const paymentOptionConfig = {
   label: "CS_MODE_OF_PAYMENT",
@@ -27,8 +42,25 @@ const paymentOptionConfig = {
   },
 };
 
+const handleTaskSearch = async (businessService, consumerCodeWithoutSuffix, tenantId) => {
+  if (["task-summons", "task-notice", "task-warrant"].includes(businessService)) {
+    const {
+      list: [tasksData],
+    } = await Digit.HearingService.searchTaskList({
+      criteria: {
+        tenantId: tenantId,
+        taskNumber: consumerCodeWithoutSuffix,
+      },
+    });
+    return { tasksData };
+  }
+  return {};
+};
+
 const ViewPaymentDetails = ({ location, match }) => {
   const { t } = useTranslation();
+  const todayDate = new Date().getTime();
+  const dayInMillisecond = 24 * 3600 * 1000;
   const history = useHistory();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [payer, setPayer] = useState("");
@@ -38,6 +70,9 @@ const ViewPaymentDetails = ({ location, match }) => {
   const [isDisabled, setIsDisabled] = useState(false);
   const { caseId, filingNumber, consumerCode, businessService, paymentType } = window?.Digit.Hooks.useQueryParams();
   const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
+
+  const consumerCodeWithoutSuffix = consumerCode.split("_")[0];
+  const [tasksData, setTasksData] = useState(null);
 
   const { data: caseData, isLoading: isCaseSearchLoading } = useSearchCaseService(
     {
@@ -57,6 +92,16 @@ const ViewPaymentDetails = ({ location, match }) => {
     caseId || filingNumber,
     caseId || filingNumber
   );
+
+  useEffect(() => {
+    const fetchTaskData = async () => {
+      const { tasksData = {} } = await handleTaskSearch(businessService, consumerCodeWithoutSuffix, tenantId);
+      setTasksData(tasksData);
+    };
+    fetchTaskData();
+  }, [businessService, consumerCode, consumerCodeWithoutSuffix, tenantId]);
+  const summonsPincode = useMemo(() => tasksData?.taskDetails?.respondentDetails?.address?.pincode, [tasksData]);
+  const channelId = useMemo(() => extractFeeMedium(tasksData?.taskDetails?.deliveryChannels?.channelName || ""), [tasksData]);
 
   const caseDetails = useMemo(
     () => ({
@@ -113,14 +158,33 @@ const ViewPaymentDetails = ({ location, match }) => {
     },
     {},
     "dristi",
-    Boolean(chequeDetails?.totalAmount && chequeDetails.totalAmount !== "0")
+    Boolean(chequeDetails?.totalAmount && chequeDetails.totalAmount !== "0" && paymentType?.toLowerCase()?.includes("case"))
   );
+
+  const { data: breakupResponse, isLoading: isSummonsBreakUpLoading } = Digit.Hooks.dristi.useSummonsPaymentBreakUp(
+    {
+      Criteria: [
+        {
+          channelId: channelId,
+          receiverPincode: summonsPincode,
+          tenantId: tenantId,
+          Id: consumerCodeWithoutSuffix,
+          taskType: getTaskType(businessService),
+        },
+      ],
+    },
+    {},
+    "dristi" + channelId,
+    Boolean(!paymentType?.toLowerCase()?.includes("application") && !paymentType?.toLowerCase()?.includes("case") && tasksData && channelId)
+  );
+
   const totalAmount = useMemo(() => {
-    const totalAmount = calculationResponse?.Calculation?.[0]?.totalAmount || 0;
+    const totalAmount = calculationResponse?.Calculation?.[0]?.totalAmount || breakupResponse?.Calculation?.[0]?.totalAmount || 0;
     return parseFloat(totalAmount).toFixed(2);
-  }, [calculationResponse?.Calculation]);
+  }, [calculationResponse?.Calculation, breakupResponse?.Calculation]);
+
   const paymentCalculation = useMemo(() => {
-    const breakdown = calculationResponse?.Calculation?.[0]?.breakDown || [];
+    const breakdown = calculationResponse?.Calculation?.[0]?.breakDown || breakupResponse?.Calculation?.[0]?.breakDown || [];
     const updatedCalculation = breakdown.map((item) => ({
       key: item?.type,
       value: item?.amount,
@@ -135,34 +199,30 @@ const ViewPaymentDetails = ({ location, match }) => {
     });
 
     return updatedCalculation;
-  }, [calculationResponse?.Calculation]);
+  }, [calculationResponse?.Calculation, breakupResponse?.Calculation, totalAmount]);
   const payerName = useMemo(() => caseDetails?.additionalDetails?.payerName, [caseDetails?.additionalDetails?.payerName]);
-  const bill = paymentDetails?.Bill ? paymentDetails?.Bill[0] : {};
+  const bill = paymentDetails?.Bill ? paymentDetails?.Bill[0] : null;
 
   const onSubmitCase = async () => {
     const consumerCodeWithoutSuffix = consumerCode.split("_")[0];
-    let referenceId;
-    if (consumerCodeWithoutSuffix.includes("TASK")) {
+    let taskFilingNumber = "";
+    let taskHearingNumber = "";
+    let taskOrderType = "";
+    if (["task-notice", "task-summons", "task-warrant"].includes(businessService)) {
       const {
-        list: [tasksData],
-      } = await Digit.HearingService.searchTaskList({
-        criteria: {
-          tenantId: tenantId,
-          taskNumber: consumerCodeWithoutSuffix,
-        },
-      });
-      const {
-        list: [{ orderNumber }],
+        list: [{ orderNumber, hearingNumber, orderType }],
       } = await ordersService.searchOrder({
         criteria: {
           tenantId: tenantId,
           id: tasksData?.orderId,
         },
       });
-      referenceId = tasksData?.taskDetails?.deliveryChannels?.channelName + `_${orderNumber}`;
-    } else {
-      referenceId = consumerCodeWithoutSuffix;
+      taskHearingNumber = hearingNumber || "";
+      taskOrderType = orderType || "";
+      taskFilingNumber = tasksData?.filingNumber || caseDetails?.filingNumber;
     }
+
+    const referenceId = consumerCodeWithoutSuffix;
     setIsDisabled(true);
     const regenerateBill = await DRISTIService.callFetchBill({}, { consumerCode: consumerCode, tenantId, businessService: businessService });
     const billFetched = regenerateBill?.Bill ? regenerateBill?.Bill[0] : {};
@@ -187,7 +247,7 @@ const ViewPaymentDetails = ({ location, match }) => {
           paidBy: "PAY_BY_OWNER",
           mobileNumber: caseDetails?.additionalDetails?.payerMobileNo || "",
           payerName: payer || payerName,
-          totalAmountPaid: totalAmount,
+          totalAmountPaid: billFetched.totalAmount || totalAmount,
           instrumentNumber: additionDetails,
           instrumentDate: new Date().getTime(),
         },
@@ -197,15 +257,35 @@ const ViewPaymentDetails = ({ location, match }) => {
           name: "Pending Payment",
           entityType: businessService,
           referenceId: `MANUAL_${referenceId}`,
-          status: "PAYMENT_PENDING",
+          status: "PENDING_PAYMENT",
           cnrNumber: null,
-          filingNumber: caseDetails?.filingNumber,
+          filingNumber: caseDetails?.filingNumber || taskFilingNumber,
           isCompleted: true,
           stateSla: null,
           additionalDetails: {},
           tenantId,
         },
       });
+      if (["task-notice", "task-summons", "task-warrant"].includes(businessService)) {
+        await DRISTIService.customApiService(Urls.dristi.pendingTask, {
+          pendingTask: {
+            name: taskOrderType === "SUMMONS" ? "Show Summon-Warrant Status" : "Show Notice Status",
+            entityType: paymentTaskType.ORDER_MANAGELIFECYCLE,
+            referenceId: taskHearingNumber,
+            status: taskOrderType === "SUMMONS" ? paymentTaskType.SUMMON_WARRANT_STATUS : paymentTaskType.NOTICE_STATUS,
+            assignedTo: [],
+            assignedRole: ["JUDGE_ROLE"],
+            cnrNumber: caseDetails?.cnrNumber,
+            filingNumber: filingNumber,
+            isCompleted: false,
+            stateSla: 3 * dayInMillisecond + todayDate,
+            additionalDetails: {
+              hearingId: taskHearingNumber,
+            },
+            tenantId,
+          },
+        });
+      }
       history.push(`/${window?.contextPath}/employee/dristi/pending-payment-inbox/response`, {
         state: {
           success: true,
@@ -274,8 +354,9 @@ const ViewPaymentDetails = ({ location, match }) => {
         </div>
         <div style={{ display: "flex", flexDirection: "row-reverse", gap: 40, justifyContent: "space-between", width: "100%" }}>
           <div className="payment-calculator-wrapper" style={{ width: "33%" }}>
-            {paymentCalculation.map((item) => (
+            {getFilteredPaymentData(paymentType, paymentCalculation, bill)?.map((item) => (
               <div
+                key={item.key}
                 style={{
                   display: "flex",
                   justifyContent: "space-between",

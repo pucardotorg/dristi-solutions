@@ -174,7 +174,7 @@ export const UICustomizations = {
   getAdvocateNameUsingBarRegistrationNumber: {
     getNames: () => {
       return {
-        url: "/advocate/advocate/v1/status/_search",
+        url: "/advocate/v1/status/_search",
         params: { status: "ACTIVE", tenantId: window?.Digit.ULBService.getStateId(), offset: 0, limit: 1000 },
         body: {
           tenantId: window?.Digit.ULBService.getStateId(),
@@ -208,7 +208,7 @@ export const UICustomizations = {
       const removeOptions = props?.removeOptions ? props?.removeOptions : [];
       const removeOptionsKey = props?.removeOptionsKey || "";
       return {
-        url: "/advocate/advocate/v1/status/_search",
+        url: "/advocate/v1/status/_search",
         params: { status: "ACTIVE", tenantId: window?.Digit.ULBService.getStateId(), offset: 0, limit: 1000 },
         body: {
           tenantId: window?.Digit.ULBService.getStateId(),
@@ -676,10 +676,10 @@ export const UICustomizations = {
         case "Parties":
           return (
             <div>
-              {value.length > 2 && <ReactTooltip id={`hearing-list`}>{value.map((party) => party.name).join(", ")}</ReactTooltip>}
+              {value.length > 2 && <ReactTooltip id={`hearing-list`}>{value.map((party) => party.partyName).join(", ")}</ReactTooltip>}
               <span data-tip data-for={`hearing-list`}>{`${value
                 .slice(0, 2)
-                .map((party) => party.name)
+                .map((party) => party.partyName)
                 .join(", ")}${value.length > 2 ? `+${value.length - 2}` : ""}`}</span>
             </div>
           );

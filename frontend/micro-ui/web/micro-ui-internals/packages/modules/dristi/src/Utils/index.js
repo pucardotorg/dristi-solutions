@@ -109,3 +109,31 @@ export const removeInvalidNameParts = (name) => {
     .filter((part) => part && !["undefined", "null"].includes(part.toLowerCase()))
     .join(" ");
 };
+
+export const getFilteredPaymentData = (paymentType, paymentData, bill) => {
+  const processedPaymentType = paymentType?.toLowerCase()?.includes("application");
+  return processedPaymentType ? [{ key: "Total Amount", value: bill?.totalAmount }] : paymentData;
+};
+
+export const getTaskType = (businessService) => {
+  const normalizedBusinessService = businessService?.trim().toLowerCase();
+  switch (normalizedBusinessService) {
+    case "task-summons":
+      return "SUMMONS";
+    case "task-notice":
+      return "NOTICE";
+    default:
+      return "WARRANT";
+  }
+};
+
+export const extractFeeMedium = (feeName) => {
+  const feeMediums = {
+    post: "EPOST",
+    email: "EMAIL",
+    sms: "SMS",
+    police: "POLICE",
+    rpad: "RPAD",
+  };
+  return feeMediums?.[feeName?.toLowerCase()] || "";
+};

@@ -18,6 +18,8 @@ export const userTypeOptions = [
       "SUBMISSION_RESPONDER",
       "SUBMISSION_DELETE",
       "TASK_VIEWER",
+      "CASE_RESPONDER",
+      "HEARING_ACCEPTOR",
     ],
     subText: "LITIGANT_SUB_TEXT",
   },
@@ -42,9 +44,11 @@ export const userTypeOptions = [
       "SUBMISSION_RESPONDER",
       "SUBMISSION_DELETE",
       "TASK_VIEWER",
+      "CASE_RESPONDER",
+      "HEARING_ACCEPTOR",
     ],
     apiDetails: {
-      serviceName: "/advocate/advocate/v1/_create",
+      serviceName: "/advocate/v1/_create",
       requestKey: "advocate",
       AdditionalFields: ["barRegistrationNumber"],
     },
@@ -71,6 +75,8 @@ export const userTypeOptions = [
       "SUBMISSION_RESPONDER",
       "SUBMISSION_DELETE",
       "TASK_VIEWER",
+      "CASE_RESPONDER",
+      "HEARING_ACCEPTOR",
     ],
     apiDetails: {
       serviceName: "/advocate/clerk/v1/_create",
@@ -547,9 +553,6 @@ export const termsAndConditionConfig = [
 
 export const advocateClerkConfig = [
   {
-    head: "CORE_ADVOCATE_VERFICATION",
-    subHead: "CORE_ADVOCATE_VERFICATION_TEXT",
-
     body: [
       {
         type: "component",

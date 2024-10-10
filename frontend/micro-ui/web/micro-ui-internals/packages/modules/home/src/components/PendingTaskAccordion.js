@@ -16,6 +16,8 @@ function PendingTaskAccordion({
   accordionKey = "accordion",
   isHighlighted = false,
   isAccordionOpen = false,
+  setShowSubmitResponseModal,
+  setResponsePendingTask,
 }) {
   const history = useHistory();
   const [isOpen, setIsOpen] = useState(isAccordionOpen);
@@ -86,12 +88,17 @@ function PendingTaskAccordion({
               className={`task-item ${item?.due === "Due today" && "due-today"}`}
               key={item?.filingNumber}
               style={{ cursor: "pointer" }}
-              onClick={() => redirectPendingTaskUrl(item?.redirectUrl, item?.isCustomFunction, item?.params)}
+              onClick={() => {
+                if (item?.status === "PENDING_RESPONSE") {
+                  setResponsePendingTask(item);
+                  setShowSubmitResponseModal(true);
+                } else redirectPendingTaskUrl(item?.redirectUrl, item?.isCustomFunction, item?.params);
+              }}
             >
               <input type="checkbox" value={check} />
               <div className="task-details" style={{ display: "flex", flexDirection: "column", gap: 8, marginLeft: 8 }}>
                 <span className="task-title">
-                  {item?.actionName} : {item?.caseTitle}
+                  {t(item?.actionName)} : {item?.caseTitle}
                 </span>
                 <span className="task-info">
                   {item?.caseType} - {item?.filingNumber} -{" "}

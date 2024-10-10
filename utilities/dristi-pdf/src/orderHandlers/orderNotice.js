@@ -68,20 +68,23 @@ async function orderNotice(req, res, qrCode) {
     // }
 
     // Search for MDMS court room details
-    const resMdms = await handleApiCall(
-      () =>
-        search_mdms(
-          courtCase.courtId,
-          "common-masters.Court_Rooms",
-          tenantId,
-          requestInfo
-        ),
-      "Failed to query MDMS service for court room"
-    );
-    const mdmsCourtRoom = resMdms?.data?.mdms[0]?.data;
-    if (!mdmsCourtRoom) {
-      renderError(res, "Court room MDMS master not found", 404);
-    }
+    // const resMdms = await handleApiCall(
+    //   () =>
+    //     search_mdms(
+    //       courtCase.courtId,
+    //       "common-masters.Court_Rooms",
+    //       tenantId,
+    //       requestInfo
+    //     ),
+    //   "Failed to query MDMS service for court room"
+    // );
+    // const mdmsCourtRoom = resMdms?.data?.mdms[0]?.data;
+    // if (!mdmsCourtRoom) {
+    //   renderError(res, "Court room MDMS master not found", 404);
+    // }
+
+    const mdmsCourtRoom = config.constants.mdmsCourtRoom;
+    const judgeDetails = config.constants.judgeDetails;
 
     // Search for order details
     const resOrder = await handleApiCall(
@@ -121,14 +124,14 @@ async function orderNotice(req, res, qrCode) {
     const currentDate = new Date();
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
 
-    let year;
+    let caseYear;
     if (typeof courtCase.filingDate === "string") {
-      year = courtCase.filingDate.slice(-4);
+      caseYear = courtCase.filingDate.slice(-4);
     } else if (courtCase.filingDate instanceof Date) {
-      year = courtCase.filingDate.getFullYear();
+      caseYear = courtCase.filingDate.getFullYear();
     } else if (typeof courtCase.filingDate === "number") {
       // Assuming the number is in milliseconds (epoch time)
-      year = new Date(courtCase.filingDate).getFullYear();
+      caseYear = new Date(courtCase.filingDate).getFullYear();
     } else {
       return renderError(res, "Invalid filingDate format", 500);
     }
@@ -138,24 +141,25 @@ async function orderNotice(req, res, qrCode) {
       ? formatDate(new Date(order?.orderDetails?.hearingDate), "DD-MM-YYYY")
       : "";
     const partyName = order?.orderDetails?.respondentName || "";
+    const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+
     const data = {
       Data: [
         {
           courtName: mdmsCourtRoom.name,
-          place: "Kollam",
-          state: "Kerala",
+          place: mdmsCourtRoom.place,
+          state: mdmsCourtRoom.state,
           caseName: courtCase.caseTitle,
-          caseNumber: courtCase.caseNumber,
-          place: "Kollam",
-          state: "Kerala",
+          caseYear: caseYear,
+          caseNumber: caseNumber,
           partyName: partyName,
           typeOfNotice: typeOfNotice,
           hearingDate: hearingDate,
           date: formattedToday,
           additionalComments: additionalComments,
-          judgeSignature: "Judge Signature",
-          judgeName: "John Doe", // FIXME: employee.user.name,
-          courtSeal: "Court Seal",
+          judgeSignature: judgeDetails.judgeSignature,
+          judgeName: judgeDetails.name,
+          courtSeal: judgeDetails.courtSeal,
           qrCodeUrl: base64Url,
         },
       ],

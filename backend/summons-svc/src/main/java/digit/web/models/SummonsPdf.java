@@ -18,6 +18,9 @@ public class SummonsPdf  {
     @JsonProperty("cnrNumber")
     private String cnrNumber;
 
+    @JsonProperty("filingNumber")
+    private String filingNumber;
+
     @JsonProperty("issueDate")
     private String issueDate;
 
@@ -47,4 +50,31 @@ public class SummonsPdf  {
 
     @JsonProperty("embeddedUrl")
     private String embeddedUrl;
+
+    @JsonProperty("complainantName")
+    private String complainantName;
+
+    @JsonProperty("complainantAddress")
+    private String complainantAddress;
+
+    @JsonProperty("accessCode")
+    private String accessCode;
+
+    @JsonProperty("witnessName")
+    private String witnessName;
+
+    @JsonProperty("witnessAddress")
+    private String witnessAddress;
+
+    @JsonProperty("oneSuretyAmount")
+    private String oneSuretyAmount;
+
+    @JsonProperty("twoSuretyAmount")
+    private String twoSuretyAmount;
+
+    @JsonProperty("executorName")
+    private String executorName;
+
+    @JsonProperty("bailableAmount")
+    private String bailableAmount;
 }

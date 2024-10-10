@@ -30,7 +30,7 @@ public class Configuration {
 
     //Pdf Service Config
     @Value("${summons.accused.pdf.template.key}")
-    private String summonsPdfTemplateKey;
+    private String summonsAccusedPdfTemplateKey;
 
     @Value("${non.bailable.warrant.pdf.template.key}")
     private String nonBailableWarrantPdfTemplateKey;
@@ -42,7 +42,13 @@ public class Configuration {
     private String bailableWarrantPdfTemplateKey;
 
     @Value("${summons.accused.qr.pdf.template.key}")
-    private String summonsQrPdfTemplateKey;
+    private String summonsAccusedQrPdfTemplateKey;
+
+    @Value("${summons.issue.pdf.template.key}")
+    private String summonsIssuePdfTemplateKey;
+
+    @Value("${summons.issue.qr.pdf.template.key}")
+    private String summonsIssueQrPdfTemplateKey;
 
     @Value("${non.bailable.warrant.qr.pdf.template.key}")
     private String nonBailableWarrantQrPdfTemplateKey;
@@ -139,6 +145,8 @@ public class Configuration {
     @Value("${task.taxhead.master.epost.code}")
     private String taskSummonTaxHeadEPostMasterCode;
 
+    @Value("${task.warrant.taxhead.master.police.code}")
+    private String taskWarrantPoliceTaxHeadMasterCode;
 
     @Value("${task.notice.taxhead.master.email.code}")
     private String taskNoticeEmailTaxHeadMasterCode;
@@ -146,12 +154,17 @@ public class Configuration {
     @Value("${task.notice.taxhead.master.sms.code}")
     private String taskNoticeSmsTaxHeadMasterCode;
 
-
     @Value("${task.notice.taxhead.master.court.code}")
     private String taskNoticeTaxHeadCourtMasterCode;
 
     @Value("${task.notice.taxhead.master.epost.code}")
     private String taskNoticeTaxHeadEPostMasterCode;
+
+    @Value(("${task.notice.taxhead.master.rpad.court.code}"))
+    private String taskNoticeTaxHeadRpadCourtMasterCode;
+
+    @Value(("${task.summon.taxhead.master.rpad.court.code}"))
+    private String taskSummonTaxHeadRpadCourtMasterCode;
 
     @Value("${egov.tax.period.to}")
     private Long taxPeriodTo;
@@ -167,6 +180,9 @@ public class Configuration {
 
     @Value(("${task.summon.business.service}"))
     private String taskSummonBusinessService;
+
+    @Value(("${task.warrant.business.service}"))
+    private String taskWarrantBusinessService;
 
     @Value(("${task.notice.business.service}"))
     private String taskNoticeBusinessService;
@@ -226,5 +242,15 @@ public class Configuration {
 
     @Value("${dristi.dev.order.search.url}")
     private String orderSearchPath;
+
+    @Value("${dristi.court.name}")
+    private String courtName;
+
+    // Case Config
+    @Value("${egov.case.host}")
+    private String caseHost;
+
+    @Value("${egov.case.search.path}")
+    private String caseSearchPath;
 
 }

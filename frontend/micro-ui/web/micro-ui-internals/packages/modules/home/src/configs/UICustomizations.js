@@ -10,17 +10,25 @@ const customColumnStyle = { whiteSpace: "nowrap" };
 
 const handleTaskDetails = (taskDetails) => {
   try {
-    // Try parsing the taskDetails string
-    const parsed = JSON.parse(taskDetails);
+    // Check if taskDetails is a string
+    if (typeof taskDetails === "string") {
+      // First, remove escape characters like backslashes if present
+      const cleanedDetails = taskDetails.replace(/\\n/g, "").replace(/\\/g, "");
 
-    // Check if the result is a string (indicating it's a double-escaped JSON)
-    if (typeof parsed === "string") {
-      // Attempt to parse it again as JSON
-      return JSON.parse(parsed);
+      // Try parsing the cleaned string as JSON
+      const parsed = JSON.parse(cleanedDetails);
+
+      // If the parsed result is a string, try parsing it again
+      if (typeof parsed === "string") {
+        return JSON.parse(parsed);
+      }
+
+      // Return the parsed object if it's already a valid JSON object
+      return parsed;
     }
 
-    // Return the parsed object if it's already a valid JSON object
-    return parsed;
+    // If taskDetails is not a string, return it as it is
+    return taskDetails;
   } catch (error) {
     console.error("Failed to parse taskDetails:", error);
     return null;
@@ -409,14 +417,28 @@ export const UICustomizations = {
           {}
         );
       const tenantId = window?.Digit.ULBService.getStateId();
+      const { data: sentData } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "Order", [{ name: "SentStatus" }], {
+        select: (data) => {
+          return (data?.Order?.SentStatus || []).flatMap((item) => {
+            return [item?.code];
+          });
+        },
+      });
+      let completeStatusData = requestCriteria.body?.criteria?.completeStatus || [];
+      if (completeStatusData?.length === 0 || (typeof completeStatusData === "object" && !Array.isArray(completeStatusData))) {
+        completeStatusData = sentData;
+      }
+      const isCompleteStatus = Boolean(Object.keys(filterList?.completeStatus || {}).length);
       return {
         ...requestCriteria,
         body: {
           ...requestCriteria.body,
           criteria: {
-            completeStatus: requestCriteria.body?.criteria?.completeStatus,
+            completeStatus: completeStatusData,
             ...filterList,
-            ...(filterList?.orderType ? { orderType: [filterList?.orderType] } : { orderType: [] }),
+            orderType: filterList?.orderType ? [filterList?.orderType?.code] : [],
+            applicationStatus: filterList?.applicationStatus?.code || "",
+            ...(isCompleteStatus && { completeStatus: [filterList?.completeStatus?.code] }),
           },
           tenantId,
           pagination: {
@@ -441,6 +463,8 @@ export const UICustomizations = {
           return t(value); // document status
         case "Issued":
           return `${formatDateDifference(value)} days ago`;
+        case "Order Type":
+          return t(value);
         case "Delivery Channel":
           return caseDetails?.deliveryChannels?.channelName || "N/A";
         default:

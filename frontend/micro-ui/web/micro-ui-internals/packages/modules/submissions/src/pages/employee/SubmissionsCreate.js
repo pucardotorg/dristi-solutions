@@ -29,7 +29,7 @@ import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../../../d
 import { Urls } from "../../hooks/services/Urls";
 import { getAdvocates } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/EfilingValidationUtils";
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
-import { getSuffixByBusinessCode, getTaxPeriodByBusinessService } from "../../utils";
+import { getSuffixByBusinessCode, getTaxPeriodByBusinessService, getCourtFeeAmountByPaymentType } from "../../utils";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 
@@ -110,6 +110,17 @@ const SubmissionsCreate = ({ path }) => {
     }
   );
 
+  const { data: courtFeeAmount, isLoading: isLoadingCourtFeeData } = Digit.Hooks.useCustomMDMS(
+    Digit.ULBService.getStateId(),
+    "payment",
+    [{ name: "courtFeePayment" }],
+    {
+      select: (data) => {
+        return data?.payment?.courtFeePayment || [];
+      },
+    }
+  );
+
   const { data: documentTypeData } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "Application", [{ name: "DocumentType" }], {
     select: (data) => {
       return data?.Application?.DocumentType || [];
@@ -125,7 +136,7 @@ const SubmissionsCreate = ({ path }) => {
       APPLICATION: applicationTypeConfig,
     };
     if (Array.isArray(submissionConfigKeys[submissionType])) {
-      if (orderNumber || hearingId || !isCitizen) {
+      if (orderNumber || (hearingId && applicationTypeUrl) || !isCitizen) {
         return submissionConfigKeys[submissionType]?.map((item) => {
           return {
             ...item,
@@ -278,7 +289,7 @@ const SubmissionsCreate = ({ path }) => {
     allAdvocates,
     userInfo?.uuid,
   ]);
-  const onBehalfOfLitigent = useMemo(() => caseDetails?.litigants?.find((item) => item.additionalDetails.uuid === onBehalfOfuuid), [
+  const onBehalfOfLitigent = useMemo(() => caseDetails?.litigants?.find((item) => item?.additionalDetails?.uuid === onBehalfOfuuid), [
     caseDetails,
     onBehalfOfuuid,
   ]);
@@ -294,6 +305,27 @@ const SubmissionsCreate = ({ path }) => {
     Boolean(filingNumber && caseDetails?.cnrNumber && (orderNumber || orderRefNumber))
   );
   const orderDetails = useMemo(() => orderData?.list?.[0], [orderData]);
+
+  const { data: allOrdersData, isloading: isAllOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
+    { tenantId, criteria: { filingNumber, applicationNumber: "", cnrNumber: caseDetails?.cnrNumber } },
+    { tenantId },
+    filingNumber + caseDetails?.cnrNumber + "allOrdersData",
+    Boolean(filingNumber && caseDetails?.cnrNumber)
+  );
+  const allOrdersList = useMemo(() => allOrdersData?.list, [allOrdersData]);
+  const extensionOrders = useMemo(
+    () =>
+      allOrdersList
+        ?.filter(
+          (item) =>
+            item.orderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE" &&
+            item?.additionalDetails?.applicationStatus === "APPROVED" &&
+            item?.linkedOrderNumber === orderDetails?.orderNumber
+        )
+        ?.sort((a, b) => b?.auditDetails?.lastModifiedTime - a?.auditDetails?.lastModifiedTime),
+    [allOrdersList, orderDetails]
+  );
+  const latestExtensionOrder = useMemo(() => extensionOrders?.[0], [extensionOrders]);
 
   const { entityType, taxHeadMasterCode } = useMemo(() => {
     const isResponseRequired = orderDetails?.additionalDetails?.formdata?.responseInfo?.isResponseRequired?.code === true;
@@ -327,7 +359,7 @@ const SubmissionsCreate = ({ path }) => {
           },
         }),
       };
-    } else if (hearingId && hearingsData?.HearingList?.[0]?.startTime) {
+    } else if (hearingId && hearingsData?.HearingList?.[0]?.startTime && applicationTypeUrl) {
       return {
         submissionType: {
           code: "APPLICATION",
@@ -343,6 +375,9 @@ const SubmissionsCreate = ({ path }) => {
     } else if (orderNumber) {
       if (orderDetails?.orderType === orderTypes.MANDATORY_SUBMISSIONS_RESPONSES) {
         if (isExtension) {
+          const initialSubmissionDate = latestExtensionOrder
+            ? formatDate(new Date(latestExtensionOrder?.orderDetails.newSubmissionDate))
+            : orderDetails?.additionalDetails?.formdata?.submissionDeadline;
           return {
             submissionType: {
               code: "APPLICATION",
@@ -356,7 +391,7 @@ const SubmissionsCreate = ({ path }) => {
             refOrderId: orderDetails?.orderNumber,
             applicationDate: formatDate(new Date()),
             documentType: orderDetails?.additionalDetails?.formdata?.documentType,
-            initialSubmissionDate: orderDetails?.additionalDetails?.formdata?.submissionDeadline,
+            initialSubmissionDate: initialSubmissionDate,
           };
         } else {
           return {
@@ -417,15 +452,29 @@ const SubmissionsCreate = ({ path }) => {
         applicationDate: formatDate(new Date()),
       };
     }
-  }, [applicationDetails, isCitizen, hearingId, hearingsData, orderNumber, applicationType, applicationTypeParam, orderDetails, isExtension]);
+  }, [
+    applicationDetails,
+    isCitizen,
+    hearingId,
+    hearingsData,
+    orderNumber,
+    applicationType,
+    applicationTypeParam,
+    orderDetails,
+    isExtension,
+    latestExtensionOrder,
+    applicationTypeUrl,
+  ]);
+
+  const formKey = useMemo(() => applicationType + (defaultFormValue?.initialSubmissionDate || ""), [applicationType, defaultFormValue]);
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     if (applicationType && !["OTHERS", "DOCUMENT"].includes(applicationType) && !formData?.applicationDate) {
       setValue("applicationDate", formatDate(new Date()));
     }
-    if (applicationType && applicationType === "TRANSFER" && !formData?.requestedCourt) {
-      setValue("requestedCourt", caseDetails?.courtId ? t(`COMMON_MASTERS_COURT_R00M_${caseDetails?.courtId}`) : "");
-    }
+    // if (applicationType && applicationType === "TRANSFER" && !formData?.requestedCourt) {
+    //   setValue("requestedCourt", caseDetails?.courtId ? t(`COMMON_MASTERS_COURT_R00M_${caseDetails?.courtId}`) : "");
+    // }
     if (applicationType && hearingId && ["CHECKOUT_REQUEST", "RE_SCHEDULE"].includes(applicationType) && !formData?.initialHearingDate) {
       setValue("initialHearingDate", formatDate(new Date(hearingsData?.HearingList?.[0]?.startTime)));
     }
@@ -552,6 +601,7 @@ const SubmissionsCreate = ({ path }) => {
           tenantId,
           filingNumber,
           cnrNumber: caseDetails?.cnrNumber,
+          cmpNumber: caseDetails?.cmpNumber,
           caseId: caseDetails?.id,
           referenceId: isExtension ? null : orderDetails?.id || null,
           createdDate: new Date().getTime(),
@@ -722,7 +772,7 @@ const SubmissionsCreate = ({ path }) => {
   };
 
   const suffix = useMemo(() => getSuffixByBusinessCode(paymentTypeData, entityType) || "APPL_FILING", [entityType, paymentTypeData]);
-
+  // const amount = getCourtFeeAmountByPaymentType(courtFeeAmount, "APPLICATION_FEE");
   const { fetchBill, openPaymentPortal, paymentLoader, showPaymentModal, setShowPaymentModal, billPaymentStatus } = usePaymentProcess({
     tenantId,
     consumerCode: applicationDetails?.applicationNumber + `_${suffix}`,
@@ -802,7 +852,8 @@ const SubmissionsCreate = ({ path }) => {
     isApplicationLoading ||
     (applicationNumber ? !applicationDetails?.additionalDetails?.formdata : false) ||
     (orderNumber ? !orderDetails?.orderType : false) ||
-    (hearingId ? (hearingsData?.HearingList?.[0]?.startTime ? false : true) : false)
+    (hearingId ? (hearingsData?.HearingList?.[0]?.startTime ? false : true) : false) ||
+    isAllOrdersLoading
   ) {
     return <Loader />;
   }
@@ -817,7 +868,7 @@ const SubmissionsCreate = ({ path }) => {
           onFormValueChange={onFormValueChange}
           onSubmit={handleOpenReview}
           fieldStyle={fieldStyle}
-          key={applicationType}
+          key={formKey}
         />
       </div>
       {showReviewModal && (

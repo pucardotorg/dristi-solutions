@@ -96,7 +96,7 @@ const ApplicationDetails = ({ location, match }) => {
     {},
     applicationNo + individualId,
     userType,
-    userType === "ADVOCATE" ? "/advocate/advocate/v1/_search" : "/advocate/clerk/v1/_search"
+    userType === "ADVOCATE" ? "/advocate/v1/_search" : "/advocate/clerk/v1/_search"
   );
 
   const userTypeDetail = useMemo(() => {
@@ -116,7 +116,7 @@ const ApplicationDetails = ({ location, match }) => {
     () =>
       workFlowDetails?.processInstances?.[0]?.state?.actions
         ?.filter((action) => action.roles.every((role) => userRoles.includes(role)))
-        .map((action) => action.action),
+        .map((action) => action.action) || [],
     [workFlowDetails?.processInstances, userRoles]
   );
 
@@ -143,7 +143,7 @@ const ApplicationDetails = ({ location, match }) => {
     const applications = searchResult;
     applications[0].workflow.action = action;
     const data = { [userTypeDetail?.apiDetails?.requestKey]: applications?.[0] };
-    const url = userType === "ADVOCATE_CLERK" ? "/advocate/clerk/v1/_update" : "/advocate/advocate/v1/_update";
+    const url = userType === "ADVOCATE_CLERK" ? "/advocate/clerk/v1/_update" : "/advocate/v1/_update";
     if (showModal) {
       applications[0].workflow.comments = reasons;
     }
@@ -261,7 +261,7 @@ const ApplicationDetails = ({ location, match }) => {
           )}
           {applicationNo && (
             <div className="action-button-application">
-              {actions.map((option, index) => (
+              {actions?.map((option, index) => (
                 <SubmitBar
                   key={index}
                   label={option == "REJECT" ? "Reject Request" : "Accept Request"}

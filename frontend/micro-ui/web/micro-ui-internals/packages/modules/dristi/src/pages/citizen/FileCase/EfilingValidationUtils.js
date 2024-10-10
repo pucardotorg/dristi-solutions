@@ -1,8 +1,7 @@
-import { useToast } from "../../../components/Toast/useToast";
+import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
 import { getUserDetails } from "../../../hooks/useGetAccessToken";
 import { DRISTIService } from "../../../services";
 import { userTypeOptions } from "../registration/config";
-import { formatDate } from "./CaseType";
 import { efilingDocumentKeyAndTypeMapping } from "./Config/efilingDocumentKeyAndTypeMapping";
 
 export const showDemandNoticeModal = ({
@@ -249,7 +248,7 @@ export const checkNameValidation = ({ formData, setValue, selected, reset, index
     if (formData?.respondentFirstName || formData?.respondentMiddleName || formData?.respondentLastName) {
       const formDataCopy = structuredClone(formData);
       for (const key in formDataCopy) {
-        if (Object.hasOwnProperty.call(formDataCopy, key)) {
+        if (["respondentFirstName", "respondentMiddleName", "respondentLastName"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)) {
           const oldValue = formDataCopy[key];
           let value = oldValue;
           if (typeof value === "string") {
@@ -879,6 +878,8 @@ export const createIndividualUser = async ({ data, documentData, tenantId }) => 
             "SUBMISSION_RESPONDER",
             "SUBMISSION_DELETE",
             "TASK_VIEWER",
+            "CASE_RESPONDER",
+            "HEARING_ACCEPTOR",
           ]?.map((role) => ({
             code: role,
             name: role,
@@ -1082,7 +1083,8 @@ export const updateCaseDetails = async ({
   setFormDataValue,
   action = "SAVE_DRAFT",
   fileStoreId,
-  isCaseReAssigned = false,
+  isSaveDraftEnabled = false,
+  isCaseSignedState = false,
   setErrorCaseDetails = () => {},
 }) => {
   const data = {};
@@ -1114,7 +1116,7 @@ export const updateCaseDetails = async ({
                 individualId: data?.data?.complainantVerification?.individualDetails?.individualId,
                 partyType: index === 0 ? "complainant.primary" : "complainant.additional",
                 additionalDetails: {
-                  fullName: `${data?.data?.firstName}${data?.data?.middleName ? " " + data?.data?.middleName + " " : " "}${data?.data?.lastName}`,
+                  fullName: getFullName(" ", data?.data?.firstName, data?.data?.middleName, data?.data?.lastName),
                   uuid: userUuid ? userUuid : null,
                 },
               };
@@ -1180,8 +1182,8 @@ export const updateCaseDetails = async ({
                         city: city,
                         state: addressLine1,
                         coordinates: {
-                          longitude: latitude,
-                          latitude: longitude,
+                          longitude: longitude,
+                          latitude: latitude,
                         },
                         locality: address,
                       },
@@ -1195,7 +1197,7 @@ export const updateCaseDetails = async ({
                     individualId: Individual?.Individual?.individualId,
                     partyType: index === 0 ? "complainant.primary" : "complainant.additional",
                     additionalDetails: {
-                      fullName: `${firstName}${middleName ? " " + middleName + " " : " "}${lastName}`,
+                      fullName: getFullName(" ", firstName, middleName, lastName),
                       uuid: userUuid ? userUuid : null,
                     },
                   };
@@ -1247,7 +1249,7 @@ export const updateCaseDetails = async ({
                     individualId: Individual?.Individual?.individualId,
                     partyType: index === 0 ? "complainant.primary" : "complainant.additional",
                     additionalDetails: {
-                      fullName: `${firstName}${middleName ? " " + middleName + " " : " "}${lastName}`,
+                      fullName: getFullName(" ", firstName, middleName, lastName),
                       uuid: userUuid ? userUuid : null,
                     },
                   };
@@ -1922,7 +1924,7 @@ export const updateCaseDetails = async ({
               })
             );
           }
-          const advocateDetail = await DRISTIService.searchAdvocateClerk("/advocate/advocate/v1/_search", {
+          const advocateDetail = await DRISTIService.searchAdvocateClerk("/advocate/v1/_search", {
             criteria: [
               {
                 barRegistrationNumber: data?.data?.advocateBarRegNumberWithName?.[0]?.barRegistrationNumber,
@@ -2030,9 +2032,10 @@ export const updateCaseDetails = async ({
     },
   });
 
-  const assignees = getAllAssignees(caseDetails);
-
-  if (isCaseReAssigned && action === "SAVE_DRAFT") {
+  if (isSaveDraftEnabled && action === "SAVE_DRAFT") {
+    return null;
+  }
+  if (isCaseSignedState && action === "SUBMIT_CASE") {
     return null;
   }
 
@@ -2048,9 +2051,7 @@ export const updateCaseDetails = async ({
         workflow: {
           ...caseDetails?.workflow,
           action: action,
-          ...(action === "SUBMIT_CASE" && {
-            assignees,
-          }),
+          assignes: [],
         },
       },
       tenantId,

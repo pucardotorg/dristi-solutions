@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import CustomChooseDate from "../../../components/CustomChooseDate";
 import { Button, CardText, CustomDropdown, SubmitBar, TextInput, Toast, Loader } from "@egovernments/digit-ui-react-components";
 import CustomCaseInfoDiv from "../../../components/CustomCaseInfoDiv";
@@ -21,6 +21,7 @@ function ScheduleAdmission({
   disabled = true,
   isCaseAdmitted = false,
   isSubmitBarDisabled = false,
+  createAdmissionOrder = false,
   caseAdmittedSubmit = () => {},
 }) {
   // const getNextNDates = (n) => {
@@ -51,11 +52,23 @@ function ScheduleAdmission({
     return () => clearTimeout(timer);
   }, [closeToast]);
 
+  const setPurpose = useCallback((props) => setPurposeValue(props), []);
+  useEffect(() => {
+    if (createAdmissionOrder) {
+      setPurpose({
+        id: 5,
+        type: "ADMISSION",
+        isactive: true,
+        code: "ADMISSION",
+      });
+    }
+  }, [createAdmissionOrder, setPurpose]);
+
   const handleSubmit = (props) => {
     if (!scheduleHearingParams?.date && !modalInfo?.showCustomDate) {
       setShowErrorToast(true);
     } else {
-      isCaseAdmitted ? caseAdmittedSubmit(scheduleHearingParams) : setModalInfo({ ...modalInfo, page: 1 });
+      isCaseAdmitted || createAdmissionOrder ? caseAdmittedSubmit(scheduleHearingParams) : setModalInfo({ ...modalInfo, page: 1 });
     }
   };
 
@@ -115,11 +128,6 @@ function ScheduleAdmission({
     }
   }, [dateResponse]);
 
-  const defaultHearingType = useMemo(() => getMDMSObj(hearingTypes, "type", "EVIDENCE"), [hearingTypes]);
-  if (isLoading) {
-    return <Loader />;
-  }
-
   return (
     <div className="schedule-admission-main">
       {selectedChip && <CustomCaseInfoDiv t={t} data={submitModalInfo?.shortCaseInfo} style={{ marginTop: "24px" }} />}
@@ -127,7 +135,7 @@ function ScheduleAdmission({
       <CardText className="card-label-smaller">{t(config.label)}</CardText>
       {!isCaseAdmitted ? (
         <TextInput
-          value={scheduleHearingParams?.purpose}
+          value={t(createAdmissionOrder ? scheduleHearingParams?.purpose?.code : scheduleHearingParams?.purpose)}
           className="field desktop-w-full"
           name={`${config.name}`}
           onChange={(e) => {
@@ -138,13 +146,9 @@ function ScheduleAdmission({
       ) : (
         <CustomDropdown
           t={t}
-          deafultValue={defaultHearingType}
-          defaulValue={defaultHearingType}
           onChange={(e) => {
             setPurposeValue(e, config.name);
-            console.log(e);
           }}
-          // value={userType}
           config={dropdownConfig}
         ></CustomDropdown>
       )}
@@ -190,7 +194,9 @@ function ScheduleAdmission({
           onSubmit={handleSubmit}
           className="primary-label-btn select-participant-submit"
           disabled={isSubmitBarDisabled}
-          label={isCaseAdmitted ? t("GENERATE_ORDERS_LINK") : selectedChip ? t("CS_COMMON_CONTINUE") : t("CS_SELECT_PARTICIPANT")}
+          label={
+            isCaseAdmitted || createAdmissionOrder ? t("GENERATE_ORDERS_LINK") : selectedChip ? t("CS_COMMON_CONTINUE") : t("CS_SELECT_PARTICIPANT")
+          }
         ></SubmitBar>
       </div>
 

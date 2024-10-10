@@ -1,5 +1,8 @@
 package digit.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.config.Configuration;
 import digit.web.models.*;
 import org.egov.tracer.model.CustomException;
@@ -28,8 +31,12 @@ class PdfServiceUtilTest {
     @Mock
     private Task task;
 
+    @Mock
+    private CaseUtil caseUtil;
+
     @InjectMocks
     private PdfServiceUtil pdfServiceUtil;
+
 
     @BeforeEach
     void setUp() {
@@ -37,16 +44,18 @@ class PdfServiceUtilTest {
     }
 
     @Test
-    void generatePdfFromPdfService_Success() {
+    void generatePdfFromPdfService_Success() throws JsonProcessingException {
         TaskRequest taskRequest = mock(TaskRequest.class);
         TaskDetails taskDetails = mock(TaskDetails.class);
         SummonsDetails summonsDetails = mock(SummonsDetails.class);
         CaseDetails caseDetails = mock(CaseDetails.class);
         RespondentDetails respondentDetails = mock(RespondentDetails.class);
+        ComplainantDetails complainantDetails = mock(ComplainantDetails.class);
         Address address = mock(Address.class);
         String tenantId = "tenant1";
         String pdfTemplateKey = "templateKey";
         ByteArrayResource byteArrayResource = new ByteArrayResource(new byte[]{1, 2, 3});
+        JsonNode dummyJsonNode = getJsonNode();
 
         when(config.getPdfServiceHost()).thenReturn("http://localhost");
         when(config.getPdfServiceEndpoint()).thenReturn("/pdf-service");
@@ -57,11 +66,36 @@ class PdfServiceUtilTest {
         when(taskDetails.getSummonDetails()).thenReturn(summonsDetails);
         when(taskDetails.getCaseDetails()).thenReturn(caseDetails);
         when(taskDetails.getRespondentDetails()).thenReturn(respondentDetails);
+        when(taskDetails.getComplainantDetails()).thenReturn(complainantDetails);
         when(respondentDetails.getAddress()).thenReturn(address);
+        when(taskDetails.getComplainantDetails().getName()).thenReturn("jhdf");
+        when(complainantDetails.getAddress()).thenReturn(address);
+        when(task.getTaskType()).thenReturn("SUMMONS");
+        when(caseUtil.searchCaseDetails(any())).thenReturn(dummyJsonNode);
         ByteArrayResource result = pdfServiceUtil.generatePdfFromPdfService(taskRequest, tenantId, pdfTemplateKey, false);
 
         assertNotNull(result);
         assertArrayEquals(new byte[]{1, 2, 3}, result.getByteArray());
+    }
+
+    private JsonNode getJsonNode() throws JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        String jsonString = "{"
+                + "\"criteria\": ["
+                + "    {"
+                + "        \"responseList\": ["
+                + "            {"
+                + "                \"caseId\": \"12345\","
+                + "                \"caseName\": \"Sample Case\","
+                + "                \"status\": \"Open\""
+                + "            }"
+                + "        ]"
+                + "    }"
+                + "]"
+                + "}";
+
+        JsonNode dummyJsonNode = mapper.readTree(jsonString);
+        return dummyJsonNode;
     }
 
     @Test

@@ -1,7 +1,9 @@
 import { useTranslation } from "react-i18next";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useHistory } from "react-router-dom";
-import { Button, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
+import { Button, InboxSearchComposer, CardLabel, CardLabelError, LabelFieldPair, TextInput } from "@egovernments/digit-ui-react-components";
+import { InfoCard } from "@egovernments/digit-ui-components";
+
 import { rolesToConfigMapping, userTypeOptions } from "../../configs/HomeConfig";
 import UpcomingHearings from "../../components/UpComingHearing";
 import { Loader } from "@egovernments/digit-ui-react-components";
@@ -13,7 +15,15 @@ import { TabLitigantSearchConfig } from "../../configs/LitigantHomeConfig";
 import ReviewCard from "../../components/ReviewCard";
 import { InboxIcon, DocumentIcon } from "../../../homeIcon";
 import { Link } from "react-router-dom";
-import _ from "lodash";
+import isEqual from "lodash/isEqual";
+import CustomStepperSuccess from "@egovernments/digit-ui-module-orders/src/components/CustomStepperSuccess";
+import { uploadResponseDocumentConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/Config/resgisterRespondentConfig";
+import UploadIdType from "@egovernments/digit-ui-module-dristi/src/pages/citizen/registration/UploadIdType";
+import DocumentModal from "@egovernments/digit-ui-module-orders/src/components/DocumentModal";
+import { submitJoinCase, updateCaseDetails } from "../../../../cases/src/utils/joinCaseUtils";
+import CustomErrorTooltip from "@egovernments/digit-ui-module-dristi/src/components/CustomErrorTooltip";
+import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
+import { Urls as PendingsUrls } from "@egovernments/digit-ui-module-dristi/src/hooks";
 
 const defaultSearchValues = {
   filingNumber: "",
@@ -39,11 +49,14 @@ const HomeView = () => {
       active: index === 0 ? true : false,
     }))
   );
-  const [callRefetch, SetCallRefetch] = useState(false);
+  const [callRefetch, setCallRefetch] = useState(false);
   const [tabConfig, setTabConfig] = useState(TabLitigantSearchConfig);
   const [onRowClickData, setOnRowClickData] = useState({ url: "", params: [] });
   const [taskType, setTaskType] = useState(state?.taskType || {});
   const [caseType, setCaseType] = useState(state?.caseType || {});
+
+  const [showSubmitResponseModal, setShowSubmitResponseModal] = useState(false);
+  const [responsePendingTask, setResponsePendingTask] = useState({});
 
   const roles = useMemo(() => Digit.UserService.getUser()?.info?.roles, [Digit.UserService]);
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
@@ -73,11 +86,15 @@ const HomeView = () => {
       criteria: [{ individualId }],
       tenantId,
     },
-    {},
+    { tenantId },
     individualId,
-    Boolean(userType !== "LITIGANT"),
-    userType === "ADVOCATE" ? "/advocate/advocate/v1/_search" : "/advocate/clerk/v1/_search"
+    Boolean(isUserLoggedIn && individualId && userType !== "LITIGANT"),
+    userType === "ADVOCATE" ? "/advocate/v1/_search" : "/advocate/clerk/v1/_search"
   );
+
+  const refreshInbox = () => {
+    setCallRefetch(!callRefetch);
+  };
 
   const userTypeDetail = useMemo(() => {
     return userTypeOptions.find((item) => item.code === userType) || {};
@@ -232,8 +249,26 @@ const HomeView = () => {
   };
   const JoinCaseHome = Digit?.ComponentRegistryService?.getComponent("JoinCaseHome");
 
-  const refreshInbox = () => {
-    SetCallRefetch(true);
+  const getRedirectUrl = (status, caseId, filingNumber) => {
+    const contextPath = window?.contextPath;
+    const userType = userInfoType;
+    const baseUrl = `/${contextPath}/${userType}/dristi/home/view-case`;
+    const params = `caseId=${caseId}&filingNumber=${filingNumber}`;
+
+    switch (status) {
+      case "UNDER_SCRUTINY":
+        return userType === "employee" ? `/${contextPath}/${userType}/dristi/cases?${params}` : `${baseUrl}?${params}&tab=Complaint`;
+      case "ADMISSION_HEARING_SCHEDULED":
+        return `${baseUrl}?${params}&tab=Complaint`;
+      case "PENDING_REGISTRATION":
+        return userType === "employee" ? `/${contextPath}/${userType}/dristi/admission?${params}` : `${baseUrl}?${params}&tab=Complaint`;
+      case "PENDING_E-SIGN":
+        return `/${contextPath}/${userType}/dristi/home/file-case/case?caseId=${caseId}&selected=addSignature`;
+      case "PENDING_RE_E-SIGN":
+        return `/${contextPath}/${userType}/dristi/home/file-case/case?caseId=${caseId}&selected=addSignature`;
+      default:
+        return `${baseUrl}?${params}&tab=Overview`;
+    }
   };
 
   const onRowClick = (row) => {
@@ -253,21 +288,22 @@ const HomeView = () => {
       });
       history.push(`/${window?.contextPath}/${userInfoType}${onRowClickData?.url}?${searchParams.toString()}`);
     } else {
-      const statusArray = ["CASE_ADMITTED", "ADMISSION_HEARING_SCHEDULED", "PAYMENT_PENDING", "UNDER_SCRUTINY", "PENDING_ADMISSION"];
+      const statusArray = [
+        "PENDING_REGISTRATION",
+        "CASE_ADMITTED",
+        "ADMISSION_HEARING_SCHEDULED",
+        "PENDING_PAYMENT",
+        "UNDER_SCRUTINY",
+        "PENDING_ADMISSION",
+        "PENDING_E-SIGN",
+        "PENDING_RE_E-SIGN",
+        "PENDING_ADMISSION_HEARING",
+        "PENDING_NOTICE",
+        "PENDING_RESPONSE",
+        "UNDER_SCRUTINY",
+      ];
       if (statusArray.includes(row?.original?.status)) {
-        if (row?.original?.status === "CASE_ADMITTED") {
-          history.push(
-            `/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${row?.original?.id}&filingNumber=${row?.original?.filingNumber}&tab=Overview`
-          );
-        } else if (row?.original?.status === "ADMISSION_HEARING_SCHEDULED") {
-          history.push(
-            `/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${row?.original?.id}&filingNumber=${row?.original?.filingNumber}&tab=Complaint`
-          );
-        } else {
-          history.push(
-            `/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${row?.original?.id}&filingNumber=${row?.original?.filingNumber}&tab=Complaint`
-          );
-        }
+        history.push(getRedirectUrl(row?.original?.status, row?.original?.id, row?.original?.filingNumber));
       }
     }
   };
@@ -288,13 +324,11 @@ const HomeView = () => {
     {
       logo: <InboxIcon />,
       title: t("REVIEW_SUMMON_NOTICE_WARRANTS_TEXT"),
-      pendingAction: 40,
       actionLink: "orders/Summons&Notice",
     },
     {
       logo: <DocumentIcon />,
       title: t("VIEW_ISSUED_ORDERS"),
-      pendingAction: 11,
       actionLink: "",
     },
   ];
@@ -302,15 +336,21 @@ const HomeView = () => {
   return (
     <div className="home-view-hearing-container">
       {individualId && userType && userInfoType === "citizen" && !caseDetails ? (
-        <LitigantHomePage isApprovalPending={isApprovalPending} />
+        <LitigantHomePage
+          isApprovalPending={isApprovalPending}
+          setShowSubmitResponseModal={setShowSubmitResponseModal}
+          setResponsePendingTask={setResponsePendingTask}
+        />
       ) : (
         <React.Fragment>
-          <div className="left-side">
+          <div className="left-side" style={{ width: individualId && userType && userInfoType === "citizen" && !caseDetails ? "100vw" : "70vw" }}>
             <div className="home-header-wrapper">
               <UpcomingHearings handleNavigate={handleNavigate} attendeeIndividualId={individualId} userInfoType={userInfoType} t={t} />
               {isJudge && (
                 <div className="hearingCard" style={{ backgroundColor: "#ECF3FD" }}>
-                  <Link to={`/${window.contextPath}/employee/home/dashboard`}> Open Dashboard </Link>
+                  <Link to={`/${window.contextPath}/employee/home/dashboard`} style={{ color: "#007e7e", fontWeight: 700, textDecoration: "none" }}>
+                    Open Dashboard
+                  </Link>
                 </div>
               )}
               {isCourtRoomRole && <ReviewCard data={data} userInfoType={userInfoType} />}
@@ -321,7 +361,11 @@ const HomeView = () => {
                 {individualId && userType && userInfoType === "citizen" && (
                   <div className="button-field" style={{ width: "50%" }}>
                     <React.Fragment>
-                      <JoinCaseHome refreshInbox={refreshInbox} t={t} />
+                      <JoinCaseHome
+                        refreshInbox={refreshInbox}
+                        setShowSubmitResponseModal={setShowSubmitResponseModal}
+                        setResponsePendingTask={setResponsePendingTask}
+                      />
                       <Button
                         className={"tertiary-button-selector"}
                         label={t("FILE_A_CASE")}
@@ -359,19 +403,23 @@ const HomeView = () => {
               </div>
             </div>
           </div>
-          <div className="right-side">
-            <TasksComponent
-              taskType={taskType}
-              setTaskType={setTaskType}
-              caseType={caseType}
-              setCaseType={setCaseType}
-              isLitigant={Boolean(individualId && userType && userInfoType === "citizen")}
-              uuid={userInfo?.uuid}
-              userInfoType={userInfoType}
-            />
-          </div>
         </React.Fragment>
       )}
+      <div className="right-side" style={{ width: individualId && userType && userInfoType === "citizen" && !caseDetails ? "0vw" : "30vw" }}>
+        <TasksComponent
+          taskType={taskType}
+          setTaskType={setTaskType}
+          caseType={caseType}
+          setCaseType={setCaseType}
+          isLitigant={Boolean(individualId && userType && userInfoType === "citizen")}
+          uuid={userInfo?.uuid}
+          userInfoType={userInfoType}
+          joinCaseResponsePendingTask={responsePendingTask}
+          joinCaseShowSubmitResponseModal={showSubmitResponseModal}
+          setJoinCaseShowSubmitResponseModal={setShowSubmitResponseModal}
+          hideTaskComponent={individualId && userType && userInfoType === "citizen" && !caseDetails}
+        />
+      </div>
     </div>
   );
 };

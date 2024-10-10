@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import static digit.config.ServiceConstants.*;
 
 
 @Component
@@ -30,14 +31,41 @@ public class SummonsDeliveryEnrichment {
         TaskDetails taskDetails = task.getTaskDetails();
         AuditDetails auditDetails = createAuditDetails(requestInfo);
         String id = idgenUtil.getIdList(requestInfo, task.getTenantId(), config.getSummonsIdFormat(), null, 1).get(0);
+
+        SummonsDetails summonDetails = taskDetails.getSummonDetails();
+        NoticeDetails noticeDetails = taskDetails.getNoticeDetails();
+        WarrantDetails warrantDetails = taskDetails.getWarrantDetails();
+
+        String docType;
+        String docSubType;
+        String partyType;
+
+        switch (task.getTaskType()) {
+            case NOTICE:
+                docType = noticeDetails.getDocType();
+                docSubType = noticeDetails.getDocSubType();
+                partyType = noticeDetails.getPartyType();
+                break;
+            case WARRANT:
+                docType = warrantDetails.getDocType();
+                docSubType = warrantDetails.getDocSubType();
+                partyType = warrantDetails.getPartyType();
+                break;
+            default:
+                docType = summonDetails.getDocType();
+                docSubType = summonDetails.getDocSubType();
+                partyType = summonDetails.getPartyType();
+                break;
+        }
+
         return SummonsDelivery.builder()
                 .summonDeliveryId(id)
                 .taskNumber(task.getTaskNumber())
                 .caseId(task.getCnrNumber())
                 .tenantId(config.getEgovStateTenantId())
-                .docType(taskDetails.getSummonDetails().getDocType())
-                .docSubType(taskDetails.getSummonDetails().getDocSubType())
-                .partyType(taskDetails.getSummonDetails().getPartyType())
+                .docType(docType)
+                .docSubType(docSubType)
+                .partyType(partyType)
                 .paymentFees(taskDetails.getDeliveryChannel().getPaymentFees())
                 .paymentStatus(taskDetails.getDeliveryChannel().getPaymentStatus())
                 .paymentTransactionId(taskDetails.getDeliveryChannel().getPaymentTransactionId())

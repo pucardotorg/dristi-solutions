@@ -47,6 +47,9 @@ public class Application {
     @JsonProperty("cnrNumber")
     private String cnrNumber = null;
 
+    @JsonProperty("cmpNumber")
+    private String cmpNumber = null;
+
     @JsonProperty("referenceId")
     @Valid
     private UUID referenceId = null;
@@ -69,7 +72,7 @@ public class Application {
     private String applicationType = null;
 
     @JsonProperty("applicationNumber")
-    @Size(min = 24, max = 48)
+    @Size(min = 20, max = 48)
     private String applicationNumber = null;
 
     @JsonProperty("issuedBy")

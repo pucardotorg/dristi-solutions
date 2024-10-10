@@ -17,6 +17,7 @@ participant AnalyticsSvc as AAS #gold
 end box
 
 box DIGIT Services
+participant IDGenSvc as IS #lightgreen
 participant Workflow as W #lightgreen
 queue Kafka as K #lightgreen
 participant PersisterSvc as P #lightgreen
@@ -43,7 +44,7 @@ J->ARU: Review application and comments if any
 alt approve application
 J->ARU: Click "Accept"
 ARU->AS++: updateAppication (approved)
-AS->CS++: getCMPNumber (caseId)
+AS->IS++: getCMPNumber (caseId)
 return cmpNumber
 AS->AS: enrich applicationNumber = cmpNumber
 AS->W++: action "APPROVE"
@@ -64,7 +65,7 @@ end
 else reject application
 J->ARU: Click "Reject"
 ARU->AS++: updateAppication (rejected)
-AS->CS++: getCMPNumber (caseId)
+AS->IS++: getCMPNumber (caseId)
 return cmpNumber
 AS->AS: enrich applicationNumber = cmpNumber
 AS->W++: action "REJECT"

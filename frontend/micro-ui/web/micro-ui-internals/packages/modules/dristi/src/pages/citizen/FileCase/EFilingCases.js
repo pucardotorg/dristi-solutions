@@ -21,6 +21,7 @@ import { DRISTIService } from "../../../services";
 import { formatDate } from "./CaseType";
 import { sideMenuConfig } from "./Config";
 import EditFieldsModal from "./EditFieldsModal";
+import axios from "axios";
 import {
   advocateDetailsFileValidation,
   checkDuplicateMobileEmailValidation,
@@ -42,13 +43,17 @@ import {
   updateCaseDetails,
   validateDateForDelayApplication,
 } from "./EfilingValidationUtils";
-import _, { isEqual, isMatch } from "lodash";
+import isEqual from "lodash/isEqual";
+import isMatch from "lodash/isMatch";
+import cloneDeep from "lodash/cloneDeep";
 import CorrectionsSubmitModal from "../../../components/CorrectionsSubmitModal";
 import { Urls } from "../../../hooks";
 import useGetStatuteSection from "../../../hooks/dristi/useGetStatuteSection";
 import useCasePdfGeneration from "../../../hooks/dristi/useCasePdfGeneration";
 import { getSuffixByBusinessCode, getTaxPeriodByBusinessService } from "../../../Utils";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
+import DocViewerWrapper from "../../employee/docViewerWrapper";
+
 const OutlinedInfoIcon = () => (
   <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: "absolute", right: -22, top: 0 }}>
     <g clip-path="url(#clip0_7603_50401)">
@@ -130,7 +135,7 @@ const extractCodeFromErrorMsg = (error) => {
 };
 
 const stateSla = {
-  PAYMENT_PENDING: 2,
+  PENDING_PAYMENT: 2,
 };
 
 const dayInMillisecond = 24 * 3600 * 1000;
@@ -144,6 +149,7 @@ function EFilingCases({ path }) {
   const [isDisabled, setIsDisabled] = useState(false);
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
   const todayDate = new Date().getTime();
+  const userInfo = Digit?.UserService?.getUser()?.info;
 
   const setFormErrors = useRef(null);
   const resetFormData = useRef(null);
@@ -167,10 +173,14 @@ function EFilingCases({ path }) {
   const [showConfirmMandatoryModal, setShowConfirmMandatoryModal] = useState(false);
   const [showConfirmOptionalModal, setShowConfirmOptionalModal] = useState(false);
   const [showReviewCorrectionModal, setShowReviewCorrectionModal] = useState(false);
+  const [showReviewConfirmationModal, setShowReviewConfirmationModal] = useState(false);
   const [caseResubmitSuccess, setCaseResubmitSuccess] = useState(false);
   const [prevSelected, setPrevSelected] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const homepagePath = "/digit-ui/citizen/dristi/home";
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoader, setIsLoader] = useState(false);
+  const [pdfDetails, setPdfDetails] = useState(null);
   const { downloadPdf } = useDownloadCasePdf();
 
   const { data: casePdf, isPdfLoading, refetch: refetchCasePDfGeneration } = useCasePdfGeneration(
@@ -258,6 +268,7 @@ function EFilingCases({ path }) {
       criteria: [
         {
           caseId: caseId,
+          defaultFields: false,
         },
       ],
       tenantId,
@@ -432,8 +443,15 @@ function EFilingCases({ path }) {
 
   const state = useMemo(() => caseDetails?.status, [caseDetails]);
 
-  const isCaseReAssigned = useMemo(() => state === CaseWorkflowState.CASE_RE_ASSIGNED, [state]);
-  const isDisableAllFieldsMode = !(state === CaseWorkflowState.CASE_RE_ASSIGNED || state === CaseWorkflowState.DRAFT_IN_PROGRESS);
+  const isCaseReAssigned = useMemo(() => state === CaseWorkflowState.CASE_REASSIGNED, [state]);
+  const isPendingReESign = useMemo(() => state === CaseWorkflowState.PENDING_RE_E_SIGN, [state]);
+  const isPendingESign = useMemo(() => state === CaseWorkflowState.PENDING_E_SIGN, [state]);
+  const isDisableAllFieldsMode = !(
+    state === CaseWorkflowState.CASE_REASSIGNED ||
+    state === CaseWorkflowState.DRAFT_IN_PROGRESS ||
+    state === CaseWorkflowState.PENDING_E_SIGN ||
+    state === CaseWorkflowState.PENDING_RE_E_SIGN
+  );
   const isDraftInProgress = state === CaseWorkflowState.DRAFT_IN_PROGRESS;
   const { data: courtRoomDetails, isLoading: isCourtIdsLoading } = useGetStatuteSection("common-masters", [{ name: "Court_Rooms" }]);
   const courtRooms = useMemo(() => courtRoomDetails?.Court_Rooms || [], [courtRoomDetails]);
@@ -473,7 +491,9 @@ function EFilingCases({ path }) {
       caseDetails?.caseDetails?.[selected]?.formdata ||
       (selected === "witnessDetails" ? [{}] : [{ isenabled: true, data: {}, displayindex: 0 }]);
     setFormdata(data);
-
+    if (selected === "addSignature" && !caseDetails?.additionalDetails?.signedCaseDocument && !isLoading) {
+      setShowReviewCorrectionModal(true);
+    }
     if (selected === "addSignature" && !caseDetails?.additionalDetails?.["reviewCaseFile"]?.isCompleted && !isLoading) {
       setShowReviewCorrectionModal(true);
     }
@@ -763,7 +783,7 @@ function EFilingCases({ path }) {
           };
         });
       });
-      if (!isCaseReAssigned || selected === "addSignature" || selected === "reviewCaseFile") {
+      if ((!isCaseReAssigned && !isPendingESign && !isPendingReESign) || selected === "addSignature" || selected === "reviewCaseFile") {
         return modifiedFormData;
       }
     }
@@ -1021,7 +1041,7 @@ function EFilingCases({ path }) {
             });
           });
           let updatedBody = [];
-          if (Object.keys(scrutinyObj).length > 0) {
+          if (Object.keys(scrutinyObj).length > 0 || isPendingESign || isPendingReESign) {
             updatedBody = config.body
               .map((formComponent) => {
                 let key = formComponent.key || formComponent.populators?.name;
@@ -1047,7 +1067,10 @@ function EFilingCases({ path }) {
                 if (selected === "delayApplications" && formComponent.component === "CustomRadioInfoComponent") {
                   key = formComponent.key + "." + formComponent?.populators?.optionsKey;
                 }
-                const modifiedFormComponent = structuredClone(formComponent);
+                if (selected === "complainantDetails" && formComponent.component === "CustomRadioInfoComponent") {
+                  key = formComponent.key + "." + formComponent?.populators?.optionsKey;
+                }
+                const modifiedFormComponent = cloneDeep(formComponent);
                 if (modifiedFormComponent?.labelChildren === "optional") {
                   modifiedFormComponent.labelChildren = <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>;
                 }
@@ -1069,7 +1092,7 @@ function EFilingCases({ path }) {
                   );
                 }
 
-                modifiedFormComponent.disable = scrutiny?.[selected]?.scrutinyMessage?.FSOError || judgeObj ? false : true;
+                modifiedFormComponent.disable = scrutiny?.[selected]?.scrutinyMessage?.FSOError || (judgeObj && !isPendingReESign) ? false : true;
 
                 if (scrutiny?.[selected] && scrutiny?.[selected]?.form?.[index]) {
                   if (formComponent.component == "SelectUploadFiles") {
@@ -1129,6 +1152,8 @@ function EFilingCases({ path }) {
     caseDetails?.caseDetails,
     t,
     scrutinyObj,
+    isPendingESign,
+    isPendingReESign,
   ]);
 
   const activeForms = useMemo(() => {
@@ -1151,6 +1176,45 @@ function EFilingCases({ path }) {
 
   const handleSkip = () => {
     setShowConfirmOptionalModal(false);
+  };
+
+  const createPendingTask = async ({ name, status, isCompleted = false, stateSla = null, isAssignedRole = false, assignedRole = [] }) => {
+    const entityType = "case-default";
+    const assignes = !isAssignedRole ? [userInfo?.uuid] || [] : [];
+    const filingNumber = caseDetails?.filingNumber;
+    await DRISTIService.customApiService(Urls.dristi.pendingTask, {
+      pendingTask: {
+        name,
+        entityType,
+        referenceId: `MANUAL_${filingNumber}`,
+        status,
+        assignedTo: assignes?.map((uuid) => ({ uuid })),
+        assignedRole: assignedRole,
+        cnrNumber: caseDetails?.cnrNumber,
+        filingNumber: filingNumber,
+        isCompleted,
+        stateSla,
+        additionalDetails: {},
+        tenantId,
+      },
+    });
+  };
+
+  const closePendingTask = async ({ status }) => {
+    const entityType = "case-default";
+    const filingNumber = caseDetails?.filingNumber;
+    await DRISTIService.customApiService(Urls.dristi.pendingTask, {
+      pendingTask: {
+        entityType,
+        status,
+        referenceId: `MANUAL_${filingNumber}`,
+        cnrNumber: caseDetails?.cnrNumber,
+        filingNumber: filingNumber,
+        isCompleted: true,
+        additionalDetails: {},
+        tenantId,
+      },
+    });
   };
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues, index, currentDisplayIndex) => {
@@ -1471,13 +1535,17 @@ function EFilingCases({ path }) {
     ) {
       return;
     }
-    if (selected === "addSignature" && isCaseReAssigned && !openConfirmCorrectionModal) {
+    if (selected === "reviewCaseFile" && isCaseReAssigned && !openConfirmCorrectionModal) {
       return setOpenConfirmCorrectionModal(true);
     }
 
-    if (selected === "addSignature" && isDraftInProgress) {
+    if (selected === "reviewCaseFile" && !showReviewConfirmationModal && isDraftInProgress) {
+      return setShowReviewConfirmationModal(true);
+    }
+
+    if (selected === "addSignature" && (isPendingESign || isPendingReESign)) {
       if (courtRooms?.length === 1) {
-        onSubmitCase({ court: courtRooms[0] });
+        onSubmitCase({ court: courtRooms[0], action: CaseWorkflowAction.E_SIGN });
         return;
       } else {
         setOpenConfirmCourtModal(true);
@@ -1487,9 +1555,11 @@ function EFilingCases({ path }) {
       if (selected === "reviewCaseFile") {
         setIsDisabled(true);
         res = await refetchCasePDfGeneration();
-        // if (res?.data?.cases?.[0]?.documents?.[0]?.fileStore) {
-        //   localStorage.setItem("fileStoreId", res?.data?.cases?.[0]?.documents?.[0]?.fileStore);
-        // }
+        if (res?.status === "error") {
+          setIsDisabled(false);
+          toast.error(t("CASE_PDF_ERROR"));
+          return;
+        }
       }
       updateCaseDetails({
         isCompleted: true,
@@ -1503,7 +1573,8 @@ function EFilingCases({ path }) {
         setFormDataValue: setFormDataValue.current,
         action,
         setErrorCaseDetails,
-        isCaseReAssigned,
+        isCaseSignedState: isPendingESign || isPendingReESign,
+        isSaveDraftEnabled: isCaseReAssigned || isPendingReESign || isPendingESign,
         ...(res && { fileStoreId: res?.data?.cases?.[0]?.documents?.[0]?.fileStore }),
       })
         .then(() => {
@@ -1518,10 +1589,10 @@ function EFilingCases({ path }) {
               (nextSelected === "witnessDetails" ? [{}] : [{ isenabled: true, data: {}, displayindex: 0 }]);
             setFormdata(caseData);
             setIsDisabled(false);
-            if (action === CaseWorkflowAction.EDIT_CASE) {
-              setCaseResubmitSuccess(true);
-              return;
-            }
+            // if (action === CaseWorkflowAction.EDIT_CASE) {
+            //   setCaseResubmitSuccess(true);
+            //   return;
+            // }
             setPrevSelected(selected);
             history.push(`?caseId=${caseId}&selected=${nextSelected}`);
           });
@@ -1571,19 +1642,20 @@ function EFilingCases({ path }) {
       });
   };
 
-  const onErrorCorrectionSubmit = () => {
+  const onErrorCorrectionSubmit = async () => {
     setOpenConfirmCorrectionModal(false);
     onSubmit(CaseWorkflowAction.EDIT_CASE);
+    await createPendingTask({ name: t("PENDING_E_SIGN_FOR_CASE"), status: "PENDING_E-SIGN" });
   };
 
   const handlePageChange = (key, isConfirm) => {
     if (key === selected) {
       return;
     }
-    if (!isConfirm) {
-      setOpenConfigurationModal(key);
-      return;
-    }
+    // if (!isConfirm) {
+    //   setOpenConfigurationModal(key);
+    //   return;
+    // }
     setParmas({ ...params, [pageConfig.key]: formdata });
     setFormdata([{ isenabled: true, data: {}, displayindex: 0 }]);
     if (resetFormData.current) {
@@ -1614,7 +1686,7 @@ function EFilingCases({ path }) {
       setIsDisabled,
       tenantId,
       setErrorCaseDetails,
-      isCaseReAssigned,
+      isSaveDraftEnabled: isCaseReAssigned || isPendingReESign || isPendingESign,
     })
       .then(() => {
         if (!isCaseReAssigned) {
@@ -1716,6 +1788,7 @@ function EFilingCases({ path }) {
               taxHeadMasterCode: "CASE_ADVANCE_CARRYFORWARD",
               taxAmount: 4, // amount to be replaced with calculationResponse
               collectionAmount: 0,
+              delayCondonation: delayCondonation,
             },
           ],
         },
@@ -1726,6 +1799,8 @@ function EFilingCases({ path }) {
   };
   const onSubmitCase = async (data) => {
     setOpenConfirmCourtModal(false);
+    setIsDisabled(true);
+    let calculationResponse = {};
     const assignees = getAllAssignees(caseDetails);
     const fileStoreId = localStorage.getItem("fileStoreId");
     await DRISTIService.caseUpdateService(
@@ -1746,38 +1821,46 @@ function EFilingCases({ path }) {
                 caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.respondentLastName || ""
               }`) ||
             caseDetails?.caseTitle,
-          courtId: data?.court?.code,
+          courtId: "KLKM52" || data?.court?.code,
           workflow: {
             ...caseDetails?.workflow,
-            action: "SUBMIT_CASE",
+            action: data?.action || "E-SIGN",
+            assignes: [],
           },
         },
         tenantId,
       },
       tenantId
-    ).then(async () => {
-      await DRISTIService.customApiService(Urls.dristi.pendingTask, {
-        pendingTask: {
-          name: "Pending Payment",
-          entityType: "case-default",
-          referenceId: `MANUAL_${caseDetails?.filingNumber}`,
-          status: "PAYMENT_PENDING",
-          assignedTo: [...assignees?.map((uuid) => ({ uuid }))],
-          assignedRole: ["CASE_CREATOR"],
-          cnrNumber: null,
-          filingNumber: caseDetails?.filingNumber,
-          isCompleted: false,
-          stateSla: stateSla.PAYMENT_PENDING * dayInMillisecond + todayDate,
-          additionalDetails: {},
-          tenantId,
-        },
-      });
+    ).then(async (res) => {
+      await closePendingTask({ status: "PENDING_PAYMENT" });
+      if (res?.cases?.[0]?.status === "PENDING_PAYMENT") {
+        await DRISTIService.customApiService(Urls.dristi.pendingTask, {
+          pendingTask: {
+            name: "Pending Payment",
+            entityType: "case-default",
+            referenceId: `MANUAL_${caseDetails?.filingNumber}`,
+            status: "PENDING_PAYMENT",
+            assignedTo: [...assignees?.map((uuid) => ({ uuid }))],
+            assignedRole: ["CASE_CREATOR"],
+            cnrNumber: null,
+            filingNumber: caseDetails?.filingNumber,
+            isCompleted: false,
+            stateSla: stateSla.PENDING_PAYMENT * dayInMillisecond + todayDate,
+            additionalDetails: {},
+            tenantId,
+          },
+        });
+        calculationResponse = await callCreateDemandAndCalculation(caseDetails, tenantId, caseId);
+      }
+      if (isPendingReESign) setCaseResubmitSuccess(true);
+      setIsDisabled(false);
+      return;
     });
 
-    const calculationResponse = await callCreateDemandAndCalculation(caseDetails, tenantId, caseId);
-
     setPrevSelected(selected);
-    history.push(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculationResponse: calculationResponse } });
+    if (isPendingESign) {
+      history.push(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculationResponse: calculationResponse } });
+    }
   };
 
   const getFormClassName = useCallback(() => {
@@ -1802,8 +1885,34 @@ function EFilingCases({ path }) {
     setFormdata(newArray);
   };
 
+  const actionName = useMemo(
+    () =>
+      selected === "reviewCaseFile"
+        ? isPendingESign
+          ? ""
+          : isCaseReAssigned
+          ? t("CS_COMMONS_NEXT")
+          : isDraftInProgress
+          ? t("CS_E_SIGN_CASE")
+          : isPendingReESign
+          ? t("CS_COMMON_CONTINUE")
+          : t("CS_GO_TO_HOME")
+        : selected === "addSignature"
+        ? isPendingESign || isPendingReESign
+          ? t("CS_SUBMIT_CASE")
+          : t("CS_COMMON_CONTINUE")
+        : isDisableAllFieldsMode
+        ? t("CS_GO_TO_HOME")
+        : isCaseReAssigned
+        ? t("CS_COMMONS_NEXT")
+        : isPendingESign
+        ? ""
+        : t("CS_COMMON_CONTINUE"),
+    [isCaseReAssigned, isDisableAllFieldsMode, isPendingESign, selected, t, isDraftInProgress, isPendingReESign]
+  );
+
   const [isOpen, setIsOpen] = useState(false);
-  if (isLoading || isGetAllCasesLoading || isCourtIdsLoading) {
+  if (isLoading || isGetAllCasesLoading || isCourtIdsLoading || isLoader) {
     return <Loader />;
   }
 
@@ -1812,6 +1921,7 @@ function EFilingCases({ path }) {
     act: "Negotiable Instruments Act",
     section: "138",
     courtName: "Kollam S-138 Special Court",
+    href: "https://districts.ecourts.gov.in/sites/default/files/study%20circles.pdf",
   };
 
   const takeUserToRemainingMandatoryFieldsPage = () => {
@@ -1848,6 +1958,44 @@ function EFilingCases({ path }) {
     }
   }
 
+  const handleDownload = async (blob) => {
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `${caseDetails?.filingNumber || "CasePdf"}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handleViewCasePdf = async () => {
+    setIsLoader(true);
+    try {
+      const caseObject = isCaseReAssigned && errorCaseDetails ? errorCaseDetails : caseDetails;
+      const response = await axios.post(
+        "/dristi-case-pdf/v1/generateCasePdf",
+        {
+          cases: caseObject,
+          RequestInfo: {
+            authToken: Digit.UserService.getUser().access_token,
+            userInfo: Digit.UserService.getUser()?.info,
+            msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
+            apiId: "Rainmaker",
+          },
+        },
+        { responseType: "blob" } // Important: Set responseType to handle binary data
+      );
+      setPdfDetails(response?.data);
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error("Error generating case PDF:", error);
+      toast.error(t("CASE_PDF_GENERATION_ERROR"));
+    } finally {
+      setIsLoader(false);
+    }
+  };
+
   return (
     <div className="file-case">
       <div className="file-case-side-stepper">
@@ -1860,7 +2008,9 @@ function EFilingCases({ path }) {
               </span>
             </div>
             <p>
-              {t("CS_UNDER")} <a href="#" className="act-name">{`S-${caseType.section}, ${caseType.act}`}</a> {t("CS_IN")}
+              {t("CS_UNDER")}{" "}
+              <a href={caseType?.href} target="_blank" rel="noreferrer" className="act-name">{`S-${caseType.section}, ${caseType.act}`}</a>{" "}
+              {t("CS_IN")}
               <span className="place-name">{` ${caseType.courtName}.`}</span>
             </p>
           </div>
@@ -1950,10 +2100,13 @@ function EFilingCases({ path }) {
       <div className="file-case-form-section">
         <div className="employee-card-wrapper">
           <div className="header-content">
-            <div className="header-details">
-              <Header>
+            <div className="header-details" style={{ display: selected === "reviewCaseFile" ? "block" : "flex" }}>
+              <Header styles={{ display: "flex", gap: "10px", justifyContent: "space-between" }}>
                 {`${t(pageConfig.header)}`}
                 {pageConfig?.showOptionalInHeader && <span style={{ color: "#77787B", fontWeight: 100 }}>&nbsp;(optional)</span>}
+                {selected === "reviewCaseFile" && (
+                  <Button className="border-none dristi-font-bold" onButtonClick={handleViewCasePdf} label={t("View PDF")} variation={"secondary"} />
+                )}
               </Header>
               <div
                 className="header-icon"
@@ -2003,17 +2156,11 @@ function EFilingCases({ path }) {
                   </div>
                 )}
                 <FormComposerV2
-                  label={
-                    selected === "addSignature"
-                      ? t("CS_SUBMIT_CASE")
-                      : isDisableAllFieldsMode
-                      ? t("CS_GO_TO_HOME")
-                      : isCaseReAssigned
-                      ? t("CS_COMMONS_NEXT")
-                      : t("CS_COMMON_CONTINUE")
-                  }
+                  label={actionName}
                   config={config}
-                  onSubmit={() => onSubmit("SAVE_DRAFT", index)}
+                  onSubmit={() =>
+                    onSubmit(selected === "reviewCaseFile" ? "SUBMIT_CASE" : selected === "addSignature" ? "E-SIGN" : "SAVE_DRAFT", index)
+                  }
                   onSecondayActionClick={onSaveDraft}
                   defaultValues={getDefaultValues(index)}
                   onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
@@ -2177,6 +2324,30 @@ function EFilingCases({ path }) {
               }}
             ></Modal>
           )}
+          {showReviewConfirmationModal && (
+            <Modal
+              headerBarMain={<Heading label={t("SUBMIT_CASE_CONFIRMATION")} />}
+              headerBarEnd={
+                <CloseBtn
+                  onClick={() => {
+                    setPrevSelected(selected);
+                    setShowReviewConfirmationModal(false);
+                  }}
+                />
+              }
+              actionCancelLabel={t("CS_BACK")}
+              actionSaveLabel={t("CS_PROCEED")}
+              children={<div style={{ margin: "16px 0px" }}>{t("SUBMIT_CASE_CONFIRMATION_TEXT")}</div>}
+              actionSaveOnSubmit={async () => {
+                setShowReviewConfirmationModal(false);
+                await onSubmit("SUBMIT_CASE");
+                await createPendingTask({ name: t("PENDING_E_SIGN_FOR_CASE"), status: "PENDING_E-SIGN" });
+              }}
+              actionCancelOnSubmit={async () => {
+                setShowReviewConfirmationModal(false);
+              }}
+            ></Modal>
+          )}
           {pageConfig?.addFormText && (
             <Button
               variation="secondary"
@@ -2221,16 +2392,18 @@ function EFilingCases({ path }) {
           caseDetails={caseDetails}
         />
       )}
-      {selected === "witnessDetails" && Object.keys(formdata.filter((data) => data.isenabled)?.[0] || {}).length === 0 && (
+      {selected === "witnessDetails" && !isPendingESign && Object.keys(formdata.filter((data) => data.isenabled)?.[0] || {}).length === 0 && (
         <ActionBar className={"e-filing-action-bar"}>
           <SubmitBar
-            label={t("CS_COMMON_CONTINUE")}
+            label={t(isCaseReAssigned ? "CS_COMMONS_NEXT" : "CS_COMMON_CONTINUE")}
             submit="submit"
             disabled={isDisabled}
             submitIcon={<RightArrow />}
             onSubmit={() => onSubmit("SAVE_DRAFT")}
           />
-          <Button className="previous-button" variation="secondary" label={t("CS_SAVE_DRAFT")} onButtonClick={onSaveDraft} />
+          {!(isCaseReAssigned || isPendingReESign) && (
+            <Button className="previous-button" variation="secondary" label={t("CS_SAVE_DRAFT")} onButtonClick={onSaveDraft} />
+          )}
         </ActionBar>
       )}
 
@@ -2248,9 +2421,38 @@ function EFilingCases({ path }) {
             alignItems: "center",
             justifyContent: "center",
           }}
+          className="submit-loader"
         >
           <Loader />
         </div>
+      )}
+      {isModalOpen && (
+        <Modal
+          headerBarEnd={<CloseBtn onClick={() => setIsModalOpen(false)} />}
+          actionSaveLabel={t("DOWNLOAD_PDF")}
+          actionSaveOnSubmit={() => handleDownload(pdfDetails)}
+          actionCancelLabel={t("DOWNLOAD_CS_BACK")}
+          actionCancelOnSubmit={() => setIsModalOpen(false)}
+          formId="modal-action"
+          headerBarMain={<Heading label={t("REVIEW_YOUR_COMPLAINT")} />}
+          className={"review-order-modal"}
+          style={{
+            border: "1px solid #007E7E",
+            backgroundColor: "white",
+            fontFamily: "Roboto",
+            fontSize: "16px",
+            fontWeight: 700,
+            lineHeight: "18.75px",
+            textAlign: "center",
+            width: "190px",
+          }}
+          textStyle={{ margin: "0px", color: "#007E7E" }}
+          popupStyles={{ maxWidth: "60%" }}
+          popUpStyleMain={{ zIndex: "1000" }}
+          isDisabled={isDisabled}
+        >
+          {<DocViewerWrapper docWidth={"calc(93vw* 62/ 100)"} docHeight={"60vh"} selectedDocs={[pdfDetails]} showDownloadOption={false} />}
+        </Modal>
       )}
     </div>
   );

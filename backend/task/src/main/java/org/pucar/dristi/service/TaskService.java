@@ -99,7 +99,7 @@ public class TaskService {
             workflowUpdate(body);
 
             String status = body.getTask().getStatus();
-            if (ISSUESUMMON.equalsIgnoreCase(status))
+            if (SUMMON_SENT.equalsIgnoreCase(status) || NOTICE_SENT.equalsIgnoreCase(status) || WARRANT_SENT.equalsIgnoreCase(status))
                 producer.push(config.getTaskIssueSummonTopic(), body);
 
             producer.push(config.getTaskUpdateTopic(), body);
@@ -144,6 +144,8 @@ public class TaskService {
                     config.getTaskSummonBusinessServiceName(), workflow, config.getTaskSummonBusinessName());
             case WARRANT -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskWarrantBusinessServiceName(), workflow, config.getTaskWarrantBusinessName());
+            case NOTICE -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
+                    config.getTaskNoticeBusinessServiceName(), workflow, config.getTaskNoticeBusinessName());
             default -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskBusinessServiceName(), workflow, config.getTaskBusinessName());
         };
@@ -160,9 +162,9 @@ public class TaskService {
            TaskRequest taskRequest = TaskRequest.builder().requestInfo(body.getRequestInfo()).task(task).build();
             enrichmentUtil.enrichCaseApplicationUponUpdate(taskRequest);
 
-            producer.push(config.getTaskUpdateTopic(), body);
+            producer.push(config.getTaskUpdateTopic(), taskRequest);
 
-            return body.getTask();
+            return taskRequest.getTask();
 
         } catch (CustomException e) {
             log.error("Custom Exception occurred while uploading document into task :: {}", e.toString());

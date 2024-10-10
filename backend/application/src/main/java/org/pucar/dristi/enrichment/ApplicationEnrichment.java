@@ -3,6 +3,7 @@ package org.pucar.dristi.enrichment;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.tracer.model.CustomException;
+import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.util.IdgenUtil;
 import org.pucar.dristi.web.models.Application;
 import org.pucar.dristi.web.models.ApplicationRequest;
@@ -19,16 +20,22 @@ import static org.pucar.dristi.config.ServiceConstants.ENRICHMENT_EXCEPTION;
 @Slf4j
 public class ApplicationEnrichment {
     private final IdgenUtil idgenUtil;
+    private final Configuration configuration;
 
     @Autowired
-    public ApplicationEnrichment(IdgenUtil idgenUtil) {
+    public ApplicationEnrichment(IdgenUtil idgenUtil, Configuration configuration) {
         this.idgenUtil = idgenUtil;
+        this.configuration = configuration;
     }
 
     public void enrichApplication(ApplicationRequest applicationRequest) {
         try {
             if(applicationRequest.getRequestInfo().getUserInfo() != null) {
-                List<String> applicationIdList = idgenUtil.getIdList(applicationRequest.getRequestInfo(), applicationRequest.getRequestInfo().getUserInfo().getTenantId(), "application.application_number", null, 1);
+                String tenantId = applicationRequest.getApplication().getCnrNumber();
+                String idName = configuration.getApplicationConfig();
+                String idFormat = configuration.getApplicationFormat();
+
+                List<String> applicationIdList = idgenUtil.getIdList(applicationRequest.getRequestInfo(), tenantId, idName, idFormat, 1,false);
                 Application application = applicationRequest.getApplication();
                 AuditDetails auditDetails = AuditDetails
                         .builder()
@@ -40,8 +47,8 @@ public class ApplicationEnrichment {
                 application.setAuditDetails(auditDetails);
                 application.setId(UUID.randomUUID());
                 application.setCreatedDate(System.currentTimeMillis());
-                application.setApplicationNumber(applicationIdList.get(0));
                 application.setIsActive(true);
+                application.setApplicationNumber(application.getCnrNumber()+"-"+applicationIdList.get(0));
 
                 if (application.getStatuteSection() != null) {
                     application.getStatuteSection().setId(UUID.randomUUID());
@@ -61,6 +68,19 @@ public class ApplicationEnrichment {
         catch (Exception e) {
             log.error("Error occurred while enriching application: {}", e.getMessage());
             throw new CustomException(ENRICHMENT_EXCEPTION, e.getMessage());
+        }
+    }
+
+    public void enrichApplicationNumberByCMPNumber(ApplicationRequest applicationRequest) {
+        try {
+            String tenantId = applicationRequest.getApplication().getCnrNumber().substring(0,5);
+            String idName = configuration.getCmpConfig();
+            String idFormat = configuration.getCmpFormat();
+            List<String> cmpNumberIdList = idgenUtil.getIdList(applicationRequest.getRequestInfo(),tenantId, idName, idFormat, 1,false);
+            applicationRequest.getApplication().setApplicationNumber(cmpNumberIdList.get(0));
+        } catch (Exception e) {
+            log.error("Error enriching application number: {}", e.toString());
+            throw new CustomException(ENRICHMENT_EXCEPTION, "Error in case enrichment service while enriching application number: " + e.getMessage());
         }
     }
 

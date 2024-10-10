@@ -84,20 +84,22 @@ async function acceptReschedulingRequest(req, res, qrCode) {
     // }
 
     // Search for MDMS court room details
-    const resMdms = await handleApiCall(
-      () =>
-        search_mdms(
-          courtCase.courtId,
-          "common-masters.Court_Rooms",
-          tenantId,
-          requestInfo
-        ),
-      "Failed to query MDMS service for court room"
-    );
-    const mdmsCourtRoom = resMdms?.data?.mdms[0]?.data;
-    if (!mdmsCourtRoom) {
-      renderError(res, "Court room MDMS master not found", 404);
-    }
+    // const resMdms = await handleApiCall(
+    //   () =>
+    //     search_mdms(
+    //       courtCase.courtId,
+    //       "common-masters.Court_Rooms",
+    //       tenantId,
+    //       requestInfo
+    //     ),
+    //   "Failed to query MDMS service for court room"
+    // );
+    // const mdmsCourtRoom = resMdms?.data?.mdms[0]?.data;
+    // if (!mdmsCourtRoom) {
+    //   renderError(res, "Court room MDMS master not found", 404);
+    // }
+    const mdmsCourtRoom = config.constants.mdmsCourtRoom;
+    const judgeDetails = config.constants.judgeDetails;
 
     // Search for order details
     const resOrder = await handleApiCall(
@@ -169,6 +171,7 @@ async function acceptReschedulingRequest(req, res, qrCode) {
     }
 
     const formattedToday = formatDate(Date.now());
+    const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
 
     const data = {
       Data: [
@@ -177,19 +180,17 @@ async function acceptReschedulingRequest(req, res, qrCode) {
           place: "Kollam",
           state: "Kerala",
           caseName: courtCase.caseTitle,
-          caseNumber: courtCase.caseNumber,
+          caseNumber: caseNumber,
           date: formattedToday,
           partyNames: partyName,
           applicationId: order.orderDetails?.refApplicationId || "",
           reasonForRescheduling,
           originalHearingDate,
           additionalComments: order.comments,
-          judgeSignature: "Judge Signature",
-          courtSeal: "Court Seal",
+          judgeSignature: judgeDetails.judgeSignature,
+          judgeName: judgeDetails.name,
+          courtSeal: judgeDetails.courtSeal,
           qrCodeUrl: base64Url,
-          place: "Kollam", // FIXME: mdmsCourtEstablishment.boundaryName,
-          state: "Kerala", //FIXME: mdmsCourtEstablishment.rootBoundaryName,
-          judgeName: "John Doe", // FIXME: employee.user.name,
         },
       ],
     };

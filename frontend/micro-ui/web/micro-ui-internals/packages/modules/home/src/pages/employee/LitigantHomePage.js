@@ -1,8 +1,14 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Button } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import JoinCaseHome from "../../../../cases/src/pages/employee/JoinCaseHome";
+import DocumentModal from "@egovernments/digit-ui-module-orders/src/components/DocumentModal";
+import UploadIdType from "@egovernments/digit-ui-module-dristi/src/pages/citizen/registration/UploadIdType";
+import { uploadResponseDocumentConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/Config/resgisterRespondentConfig";
+import OtpComponent from "../../../../cases/src/components/OtpComponent";
+import CustomStepperSuccess from "@egovernments/digit-ui-module-orders/src/components/CustomStepperSuccess";
+import { updateCaseDetails } from "../../../../cases/src/utils/joinCaseUtils";
 const FileNewCaseIcon = () => (
   <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
     <rect width="120" height="120" rx="60" fill="#FFF4FC" fill-opacity="0.5" />
@@ -442,7 +448,7 @@ const containerJoinFileCaseStyle = {
   border: "1px solid #e8e8e8",
   borderRadius: "8px",
 };
-const LitigantHomePage = ({ isApprovalPending }) => {
+const LitigantHomePage = ({ isApprovalPending, setShowSubmitResponseModal, setResponsePendingTask }) => {
   const userName = Digit.SessionStorage.get("User");
   const { t } = useTranslation();
   const today = new Date();
@@ -450,6 +456,7 @@ const LitigantHomePage = ({ isApprovalPending }) => {
   const curHr = today.getHours();
   const userType = Digit.UserService.getType();
   const [callRefetch, SetCallRefetch] = useState(false);
+
   const refreshInbox = () => {
     SetCallRefetch(true);
     history.push(`/${window?.contextPath}/${userType}/home/home-pending-task`);
@@ -535,7 +542,11 @@ const LitigantHomePage = ({ isApprovalPending }) => {
                 {t("CS_JOIN_ONGOING_CASE_SUBTEXT_1")}
               </span>
             </React.Fragment>
-            <JoinCaseHome refreshInbox={refreshInbox} t={t} />
+            <JoinCaseHome
+              refreshInbox={refreshInbox}
+              setShowSubmitResponseModal={setShowSubmitResponseModal}
+              setResponsePendingTask={setResponsePendingTask}
+            />
           </div>
         </div>
       </div>
