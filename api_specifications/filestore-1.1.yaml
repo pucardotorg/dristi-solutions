@@ -286,9 +286,9 @@ components:
         url:
           type: string
           description: url to access the particular file belong to the tag.
-        contetntType:
+        contentType:
           type: string
-          description: contetnt type of file.
+          description: content type of file.
       description: Upload file response data with url and contetnt type of file.
     ErrorRes:
       required:
