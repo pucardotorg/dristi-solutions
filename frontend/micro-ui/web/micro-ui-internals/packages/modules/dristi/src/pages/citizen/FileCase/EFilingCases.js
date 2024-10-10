@@ -1,4 +1,4 @@
-import { ActionBar, Button, CloseSvg, FormComposerV2, Header, Loader, SubmitBar, Toast } from "@egovernments/digit-ui-react-components";
+import { ActionBar, Button, CheckBox, CloseSvg, FormComposerV2, Header, Loader, SubmitBar, Toast } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
@@ -140,6 +140,21 @@ const stateSla = {
 
 const dayInMillisecond = 24 * 3600 * 1000;
 
+const caseLockingMainDiv = {
+  padding: "24px",
+  display: "flex",
+  flexDirection: "column",
+  gap: "16px",
+};
+
+const caseSubmissionWarningText = {
+  fontFamily: "Roboto",
+  fontSize: "16px",
+  fontWeight: 400,
+  lineHeight: "21.6px",
+  color: "#3D3C3C",
+};
+
 function EFilingCases({ path }) {
   const [params, setParmas] = useState({});
   const { t } = useTranslation();
@@ -174,6 +189,9 @@ function EFilingCases({ path }) {
   const [showConfirmOptionalModal, setShowConfirmOptionalModal] = useState(false);
   const [showReviewCorrectionModal, setShowReviewCorrectionModal] = useState(false);
   const [showReviewConfirmationModal, setShowReviewConfirmationModal] = useState(false);
+  const [showCaseLockingModal, setShowCaseLockingModal] = useState(false);
+
+  const [caseLockedFlag, setCaseLockedFlag] = useState(false);
   const [caseResubmitSuccess, setCaseResubmitSuccess] = useState(false);
   const [prevSelected, setPrevSelected] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
@@ -2452,6 +2470,52 @@ function EFilingCases({ path }) {
           isDisabled={isDisabled}
         >
           {<DocViewerWrapper docWidth={"calc(93vw* 62/ 100)"} docHeight={"60vh"} selectedDocs={[pdfDetails]} showDownloadOption={false} />}
+        </Modal>
+      )}
+
+      {true && (
+        <Modal
+          headerBarEnd={<CloseBtn onClick={() => setShowCaseLockingModal(false)} />}
+          actionSaveLabel={t("CONFIRM_AND_SIGN")}
+          actionSaveOnSubmit={() => handleDownload(pdfDetails)}
+          actionCancelLabel={t("DOWNLOAD_CS_BACK")}
+          actionCancelOnSubmit={() => setShowCaseLockingModal(false)}
+          formId="modal-action"
+          headerBarMain={<Heading label={t("CONFIRM_CASE_DETAILS")} />}
+          className={"review-order-modal"}
+          style={{
+            border: "1px solid #007E7E",
+            backgroundColor: "white",
+            fontFamily: "Roboto",
+            fontSize: "16px",
+            fontWeight: 700,
+            lineHeight: "18.75px",
+            textAlign: "center",
+            width: "190px",
+          }}
+          textStyle={{ margin: "0px", color: "#007E7E" }}
+          popupStyles={{ maxWidth: "60%" }}
+          popUpStyleMain={{ zIndex: "1000" }}
+          isDisabled={isDisabled}
+        >
+          <div className="case-locking-main-div" style={caseLockingMainDiv}>
+            <p className="case-submission-warning" style={{ ...caseSubmissionWarningText, margin: "0px" }}>
+              {t("CASE_SUBMISSION_WARNING")}
+            </p>
+            <p className="case-submission-warning" style={{ ...caseSubmissionWarningText, margin: "0px" }}>
+              {t("CASE_SUBMISSION_PROCESS_SUBMISSION")} <span style={{ fontWeight: "700" }}>{t("CASE_SUBMISSION_PROCESS_SIGNED")}</span>{" "}
+              {t("CASE_SUBMISSION_PROCESS_MOVED")} <span style={{ fontWeight: "700" }}>{t("CASE_SUBMISSION_PROCESS_SCRUTINY")}</span>{" "}
+              {t("CASE_SUBMISSION_PROCESS_COMPLETED")}
+            </p>
+
+            <CheckBox
+              value={caseLockedFlag}
+              label={t("CASE_SUBMISSION_CONFIRMATION")}
+              wrkflwStyle={{}}
+              style={{ ...caseSubmissionWarningText, lineHeight: "18.75px", fontStyle: "italic" }}
+              onChange={() => setCaseLockedFlag(!caseLockedFlag)}
+            />
+          </div>
         </Modal>
       )}
     </div>
