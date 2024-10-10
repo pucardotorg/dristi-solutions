@@ -295,11 +295,18 @@ const InsideHearingMainPage = () => {
   }, [selectedWitness]);
 
   useEffect(() => {
-    initWebSocket();
-  }, []);
+    if (!websocket) initWebSocket();
+    return () => {
+      if (websocket) {
+        websocket.close();
+        // console.log("WebSocket connection closed on cleanup");
+        setWebSocketStatus("Not Connected");
+      }
+    };
+  }, [websocket]);
 
   const initWebSocket = () => {
-    const websocketAddress = window?.globalConfigs?.getConfig?.("WEBSOCKET_ADDRESS") || "wss://dristi-kerala-dev.pucar.org/transcription";
+    const websocketAddress = window?.globalConfigs?.getConfig?.("WEBSOCKET_ADDRESS");
 
     if (!websocketAddress) {
       console.log("WebSocket address is required.");

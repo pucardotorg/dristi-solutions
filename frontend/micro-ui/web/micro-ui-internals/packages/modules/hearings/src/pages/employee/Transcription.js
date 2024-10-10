@@ -54,6 +54,7 @@ const TranscriptComponent = ({
     };
 
     websocket.onclose = (event) => {
+      stopRecording();
       console.log("WebSocket connection closed", event);
       setWebSocketStatus("Not Connected");
     };
