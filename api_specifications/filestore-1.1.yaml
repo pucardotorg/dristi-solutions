@@ -1,6 +1,6 @@
 openapi: 3.0.1
 info:
-  title: Filestore serivce APIs
+  title: Filestore service APIs
   description: |
     APIs available for filestore service
       -  Uploads different kinds of files to server including images and different document types.
