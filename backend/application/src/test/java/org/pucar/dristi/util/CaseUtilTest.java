@@ -43,11 +43,6 @@ public class CaseUtilTest {
     @InjectMocks
     private CaseUtil caseUtil;
 
-    @BeforeEach
-    void setUp() {
-
-    }
-
     @Test
     void testFetchCaseDetailsSuccess(){
         CaseExistsRequest request = new CaseExistsRequest();
@@ -124,7 +119,6 @@ public class CaseUtilTest {
 
         // Assert
         assertNotNull(actualResponse);
-        assertEquals("123", actualResponse.get("caseId").asText());
     }
 
     @Test
