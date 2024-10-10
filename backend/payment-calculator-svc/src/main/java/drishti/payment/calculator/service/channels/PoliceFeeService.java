@@ -3,7 +3,10 @@ package drishti.payment.calculator.service.channels;
 
 import drishti.payment.calculator.service.Payment;
 import drishti.payment.calculator.util.TaskUtil;
-import drishti.payment.calculator.web.models.*;
+import drishti.payment.calculator.web.models.BreakDown;
+import drishti.payment.calculator.web.models.Calculation;
+import drishti.payment.calculator.web.models.TaskPayment;
+import drishti.payment.calculator.web.models.TaskPaymentCriteria;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,17 +28,6 @@ public class PoliceFeeService implements Payment {
         this.taskUtil = taskUtil;
     }
 
-    @Deprecated
-    @Override
-    public Calculation calculatePayment(RequestInfo requestInfo, SummonCalculationCriteria criteria) {
-        SpeedPostConfigParams ePostConfigParams = taskUtil.getIPostFeesDefaultData(requestInfo, criteria.getTenantId());
-        Double courtFee = taskUtil.calculateCourtFees(ePostConfigParams);
-        return Calculation.builder()
-                .applicationId(criteria.getSummonId())
-                .tenantId(criteria.getTenantId())
-                .totalAmount(courtFee)
-                .breakDown(Collections.singletonList(new BreakDown(COURT_FEE, courtFee, new HashMap<>()))).build();
-    }
 
     @Override
     public Calculation calculatePayment(RequestInfo requestInfo, TaskPaymentCriteria criteria) {

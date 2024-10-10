@@ -4,7 +4,10 @@ package drishti.payment.calculator.web.controllers;
 import drishti.payment.calculator.service.CaseFeeCalculationService;
 import drishti.payment.calculator.service.PaymentCalculationService;
 import drishti.payment.calculator.util.ResponseInfoFactory;
-import drishti.payment.calculator.web.models.*;
+import drishti.payment.calculator.web.models.Calculation;
+import drishti.payment.calculator.web.models.CalculationRes;
+import drishti.payment.calculator.web.models.EFillingCalculationReq;
+import drishti.payment.calculator.web.models.TaskPaymentRequest;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -35,21 +38,10 @@ public class PaymentApiController {
         this.summonCalculationService = summonCalculationService;
     }
 
-    @Deprecated
-    @PostMapping(value = "/v1/summons/_calculate")
-    public ResponseEntity<CalculationRes> v1CalculatePost(@Parameter(in = ParameterIn.DEFAULT, description = "", required = true, schema = @Schema()) @Valid @RequestBody SummonCalculationReq request) {
-        log.info("api = /v1/summons/_calculate, result=IN_PROGRESS ");
-        List<Calculation> calculations = summonCalculationService.calculateSummonFees(request);
-        CalculationRes response = CalculationRes.builder().responseInfo(ResponseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true)).calculation(calculations).build();
-        log.info("api = /v1/summons/_calculate, result=SUCCESS");
-        return new ResponseEntity<>(response, HttpStatus.OK);
-
-    }
-
     @PostMapping(value = "/v1/_calculate")
     public ResponseEntity<CalculationRes> calculateTaskPayment(@Parameter(in = ParameterIn.DEFAULT, description = "", required = true, schema = @Schema()) @Valid @RequestBody TaskPaymentRequest request) {
         log.info("api = /v1/_calculate, result=IN_PROGRESS ");
-        List<Calculation> calculations = summonCalculationService.calculateTaskPaymentFess(request);
+        List<Calculation> calculations = summonCalculationService.calculateTaskPaymentFees(request);
         CalculationRes response = CalculationRes.builder().responseInfo(ResponseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true)).calculation(calculations).build();
         log.info("api = /v1/_calculate, result=SUCCESS");
         return new ResponseEntity<>(response, HttpStatus.OK);

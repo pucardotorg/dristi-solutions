@@ -34,37 +34,6 @@ public class EPostFeeService implements Payment {
         this.config = config;
     }
 
-    @Deprecated
-    @Override
-    public Calculation calculatePayment(RequestInfo requestInfo, SummonCalculationCriteria criteria) {
-
-        SpeedPostConfigParams ePostConfigParams = taskUtil.getIPostFeesDefaultData(requestInfo, criteria.getTenantId());
-
-        HubSearchCriteria searchCriteria = HubSearchCriteria.builder().pincode(Collections.singletonList(criteria.getReceiverPincode())).build();
-        List<PostalHub> postalHub = repository.getPostalHub(searchCriteria);
-        if (postalHub.isEmpty()) {
-            throw new CustomException(POSTAL_HUB_NOT_FOUND, POSTAL_HUB_NOT_FOUND_MSG);
-        }
-
-        Classification classification = postalHub.get(0).getClassification();
-        Double ePostFeeWithoutGST = speedPostUtil.calculateEPostFee(config.getNumberOfPgOfSummon(), classification, ePostConfigParams);
-
-        Double courtFees = taskUtil.calculateCourtFees(ePostConfigParams);
-        Double envelopeFee = ePostConfigParams.getEnvelopeChargeIncludingGst();
-        Double gstPercentage = ePostConfigParams.getGstPercentage();
-        Double gstFee = ePostFeeWithoutGST * gstPercentage;
-
-        List<BreakDown> breakDowns = taskUtil.getFeeBreakdown(courtFees, gstFee, ePostFeeWithoutGST + envelopeFee);
-
-        double totalAmount = ePostFeeWithoutGST + (gstPercentage * ePostFeeWithoutGST) + courtFees + envelopeFee;
-
-        return Calculation.builder()
-                .applicationId(criteria.getSummonId())
-                .totalAmount(Math.round(totalAmount * 100.0) / 100.0)
-                .tenantId(criteria.getTenantId())
-                .breakDown(breakDowns)
-                .build();
-    }
 
     @Override
     public Calculation calculatePayment(RequestInfo requestInfo, TaskPaymentCriteria criteria) {

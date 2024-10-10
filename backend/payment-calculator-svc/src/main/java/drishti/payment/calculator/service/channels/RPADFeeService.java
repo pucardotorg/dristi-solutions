@@ -2,7 +2,10 @@ package drishti.payment.calculator.service.channels;
 
 import drishti.payment.calculator.service.Payment;
 import drishti.payment.calculator.util.TaskUtil;
-import drishti.payment.calculator.web.models.*;
+import drishti.payment.calculator.web.models.BreakDown;
+import drishti.payment.calculator.web.models.Calculation;
+import drishti.payment.calculator.web.models.TaskPayment;
+import drishti.payment.calculator.web.models.TaskPaymentCriteria;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
@@ -24,12 +27,6 @@ public class RPADFeeService implements Payment {
     @Autowired
     public RPADFeeService(TaskUtil taskUtil) {
         this.taskUtil = taskUtil;
-    }
-
-    @Deprecated
-    @Override
-    public Calculation calculatePayment(RequestInfo requestInfo, SummonCalculationCriteria criteria) {
-        return null;
     }
 
     @Override

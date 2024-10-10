@@ -2,10 +2,11 @@ package drishti.payment.calculator.web.controllers;
 
 import drishti.payment.calculator.service.CaseFeeCalculationService;
 import drishti.payment.calculator.service.PaymentCalculationService;
+import drishti.payment.calculator.util.ResponseInfoFactory;
 import drishti.payment.calculator.web.models.Calculation;
 import drishti.payment.calculator.web.models.CalculationRes;
 import drishti.payment.calculator.web.models.EFillingCalculationReq;
-import drishti.payment.calculator.web.models.SummonCalculationReq;
+import drishti.payment.calculator.web.models.TaskPaymentRequest;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.response.ResponseInfo;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,11 +18,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -37,10 +40,12 @@ public class PaymentApiControllerTest {
     @InjectMocks
     private PaymentApiController paymentApiController;
 
-    private SummonCalculationReq request;
     private List<Calculation> calculations;
     private CalculationRes calculationRes;
     private EFillingCalculationReq calculationReq;
+
+
+    private TaskPaymentRequest taskPaymentRequest;
 
     @BeforeEach
     void setUp() {
@@ -48,8 +53,8 @@ public class PaymentApiControllerTest {
         calculationReq = new EFillingCalculationReq();
         calculationReq.setRequestInfo(new RequestInfo());
 
-        request = new SummonCalculationReq();
-        request.setRequestInfo(new RequestInfo());
+        taskPaymentRequest= new TaskPaymentRequest();
+        taskPaymentRequest.setRequestInfo(new RequestInfo());
 
         Calculation calculation = new Calculation();
         calculations = Collections.singletonList(calculation);
@@ -61,27 +66,6 @@ public class PaymentApiControllerTest {
                 .build();
     }
 
-    @Test
-    void v1CalculatePost_success() {
-        when(paymentCalculationService.calculateSummonFees(request)).thenReturn(calculations);
-
-        ResponseEntity<CalculationRes> responseEntity = paymentApiController.v1CalculatePost(request);
-
-        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(responseEntity.getBody().getCalculation()).isEqualTo(calculationRes.getCalculation());
-        verify(paymentCalculationService).calculateSummonFees(request);
-    }
-
-    @Test
-    void v1CalculatePost_serviceFailure() {
-        when(paymentCalculationService.calculateSummonFees(request)).thenThrow(new RuntimeException("Service failure"));
-
-        assertThatThrownBy(() -> paymentApiController.v1CalculatePost(request))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessage("Service failure");
-
-        verify(paymentCalculationService).calculateSummonFees(request);
-    }
 
     @Test
     void caseFeesCalculation_success() {
@@ -105,14 +89,15 @@ public class PaymentApiControllerTest {
     }
 
     @Test
-    void v1CalculatePost_invalidRequest() {
-        // Assuming that request validation fails
-        SummonCalculationReq invalidRequest = new SummonCalculationReq();
+    public void testCalculateTaskPayment() throws Exception {
 
-        // Optionally, mock validation exception handling
-        // when(summonCalculationService.calculateSummonFees(invalidRequest)).thenThrow(new MethodArgumentNotValidException());
+        when(paymentCalculationService.calculateTaskPaymentFees(taskPaymentRequest)).thenReturn(calculations);
+        ResponseEntity<CalculationRes> response = paymentApiController.calculateTaskPayment(taskPaymentRequest);
 
-        // Validate that the controller returns bad request or handles validation error as expected
-        // This can vary based on your actual validation mechanism and controller advice setup
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(calculationRes.getCalculation(), response.getBody().getCalculation());
+        verify(paymentCalculationService).calculateTaskPaymentFees(taskPaymentRequest);
+
     }
+
 }
