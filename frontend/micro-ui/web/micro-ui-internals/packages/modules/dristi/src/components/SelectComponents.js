@@ -212,8 +212,8 @@ const SelectComponents = ({ t, config, onSelect, formData = {}, errors, formStat
                                     .join(", ");
                                 })(),
                           coordinates,
-                          buildingName: formData && isFirstRender && formData[config.key] ? formData[configKey]["buildingName"] : "",
-                          doorNo: formData && isFirstRender && formData[config.key] ? formData[configKey]["doorNo"] : "",
+                          buildingName: formData && isFirstRender && formData?.[config.key] ? formData?.[configKey]?.["buildingName"] || "" : "",
+                          doorNo: formData && isFirstRender && formData?.[config.key] ? formData?.[configKey]?.["doorNo"] || "" : "",
                         },
                         input.name
                       );

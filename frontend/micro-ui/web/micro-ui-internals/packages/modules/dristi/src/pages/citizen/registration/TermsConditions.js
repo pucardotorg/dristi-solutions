@@ -100,15 +100,15 @@ function TermsConditions({ params = {}, setParams = () => {}, path, refetchIndiv
           {
             tenantId: tenantId,
             type: "PERMANENT",
-            doorNo: data?.addressDetails?.doorNo,
+            doorNo: data?.addressDetails?.doorNo || "",
             latitude: data?.addressDetails?.coordinates?.latitude,
             longitude: data?.addressDetails?.coordinates?.longitude,
             city: data?.addressDetails?.city,
             pincode: data?.addressDetails?.pincode,
             addressLine1: data?.addressDetails?.state,
             addressLine2: data?.addressDetails?.district,
-            buildingName: data?.addressDetails?.buildingName,
-            street: data?.addressDetails?.locality,
+            buildingName: data?.addressDetails?.buildingName || "",
+            street: data?.addressDetails?.locality || "",
           },
         ],
         identifiers: [

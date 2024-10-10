@@ -39,7 +39,7 @@ const RenderDeliveryChannels = ({ partyDetails, deliveryChannels, handleCheckbox
                         {channel.type === "e-Post" || channel.type === "Via Police" || channel.type === "RPAD"
                           ? typeof value.address === "string"
                             ? value.address
-                            : `${value.locality}, ${value.city}, ${value.district}, ${value.pincode}`
+                            : `${value?.locality || ""}, ${value.city}, ${value.district}, ${value.pincode}`
                           : value}
                       </label>
                     </div>
