@@ -854,7 +854,7 @@ const GenerateOrders = () => {
                 firstName: item.data.respondentFirstName,
                 lastName: item.data.respondentLastName,
                 address: item.data.addressDetails.map((address) => ({
-                  locality: address.addressDetails.locality,
+                  locality: address?.addressDetails?.locality,
                   city: address.addressDetails.city,
                   district: address?.addressDetails?.district,
                   pincode: address?.addressDetails?.pincode,
@@ -1715,7 +1715,7 @@ const GenerateOrders = () => {
             address: ["e-Post", "Via Police", "RPAD"].includes(item?.type)
               ? {
                   ...address,
-                  locality: item?.value?.locality || address?.locality,
+                  locality: item?.value?.locality || address?.locality || "",
                   coordinates: item?.value?.coordinates || address?.coordinates,
                 }
               : address || "",

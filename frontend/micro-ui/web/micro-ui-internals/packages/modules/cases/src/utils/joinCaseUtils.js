@@ -123,15 +123,15 @@ export const createRespondentIndividualUser = async (data, documentData, tenantI
         {
           tenantId: data?.addressDetails?.[0]?.tenantId,
           type: "PERMANENT",
-          doorNo: data?.addressDetails?.[0]?.addressDetails?.doorNo,
+          doorNo: data?.addressDetails?.[0]?.addressDetails?.doorNo || "",
           latitude: data?.addressDetails?.[0]?.addressDetails?.coordinates?.latitude,
           longitude: data?.addressDetails?.[0]?.addressDetails?.coordinates?.longitude,
           city: data?.addressDetails?.[0]?.addressDetails?.city,
           pincode: data?.addressDetails?.[0]?.addressDetails?.pincode,
           addressLine1: data?.addressDetails?.[0]?.addressDetails?.state,
           addressLine2: data?.addressDetails?.[0]?.addressDetails?.district,
-          buildingName: data?.addressDetails?.[0]?.addressDetails?.buildingName,
-          street: data?.addressDetails?.[0]?.addressDetails?.locality,
+          buildingName: data?.addressDetails?.[0]?.addressDetails?.buildingName || "",
+          street: data?.addressDetails?.[0]?.addressDetails?.locality || "",
         },
       ],
       identifiers: [
