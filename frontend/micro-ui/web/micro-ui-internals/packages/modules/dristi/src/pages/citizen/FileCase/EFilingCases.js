@@ -2473,7 +2473,7 @@ function EFilingCases({ path }) {
         </Modal>
       )}
 
-      {true && (
+      {showCaseLockingModal && (
         <Modal
           headerBarEnd={<CloseBtn onClick={() => setShowCaseLockingModal(false)} />}
           actionSaveLabel={t("CONFIRM_AND_SIGN")}
