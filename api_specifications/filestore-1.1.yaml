@@ -339,7 +339,7 @@ components:
           description: message id of the request
         status:
           type: string
-          description: status of request processing - to be enhanced in futuer to
+          description: status of request processing - to be enhanced in future to
             include INPROGRESS
           enum:
           - SUCCESSFUL
