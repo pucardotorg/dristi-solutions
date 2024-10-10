@@ -674,6 +674,9 @@ export const UICustomizations = {
           const formattedDate = `${day}-${month}-${year}`;
           return <span>{formattedDate}</span>;
         case "Parties":
+          if (value === null || value === undefined || value === "undefined" || value === "null") {
+            return null;
+          }
           return (
             <div>
               {value?.length > 2 && (
