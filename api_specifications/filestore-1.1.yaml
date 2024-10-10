@@ -117,7 +117,7 @@ paths:
       responses:
         200:
           description: List of urls to access the uploaded file which is map to particular
-            fielstoreid.
+            filestoreid.
           content:
             '*/*':
               schema:
