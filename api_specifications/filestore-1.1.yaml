@@ -257,9 +257,9 @@ components:
         fileName:
           type: string
           description: file name.
-        contetntType:
+        contentType:
           type: string
-          description: contetnt type of file.
+          description: content type of file.
         tenantId:
           type: string
           description: Unique ulb identifier.
