@@ -119,6 +119,7 @@ public class CaseUtilTest {
 
         // Assert
         assertNotNull(actualResponse);
+        assertEquals("123", actualResponse.get("caseId").asText());
     }
 
     @Test
