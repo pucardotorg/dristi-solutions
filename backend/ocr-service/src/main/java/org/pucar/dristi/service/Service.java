@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.pucar.dristi.config.ServiceConstants.NOT_A_VALID_DOCUMENT;
+
 @org.springframework.stereotype.Service
 public class Service {
 
@@ -87,6 +89,7 @@ public class Service {
             }
             if (missingKeywords.size() == ocrRequest.getKeywords().size()) {
                 ocr.setMessage("Not a valid " + ocrRequest.getDocumentType());
+                ocr.setCode(NOT_A_VALID_DOCUMENT);
             }
             log.info(missingKeywords.toString());
         }
