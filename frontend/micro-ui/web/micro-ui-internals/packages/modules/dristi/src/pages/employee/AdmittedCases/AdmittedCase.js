@@ -48,7 +48,7 @@ const casePrimaryActions = [
   { action: "REGISTER", label: "CS_REGISTER" },
   { action: "ADMIT", label: "CS_ADMIT_CASE" },
   { action: "SCHEDULE_ADMISSION_HEARING", label: "CS_SCHEDULE_ADMISSION_HEARING" },
-  { action: "ISSUE_ORDER", label: "CS_CASE_ISSUE_ORDER" },
+  { action: "ISSUE_ORDER", label: "ISSUE_NOTICE" },
 ];
 const caseSecondaryActions = [
   { action: "SEND_BACK", label: "SEND_BACK_FOR_CORRECTION" },
@@ -1880,7 +1880,7 @@ const AdmittedCases = () => {
               <SubmitBar
                 label={t(
                   [CaseWorkflowState.ADMISSION_HEARING_SCHEDULED].includes(caseDetails?.status) && primaryAction?.action === "ADMIT"
-                    ? "CS_CASE_ISSUE_ORDER"
+                    ? "ISSUE_NOTICE"
                     : primaryAction?.label
                 )}
                 submit="submit"
