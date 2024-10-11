@@ -1037,7 +1037,7 @@ const GenerateOrders = () => {
       orderSchema?.orderDetails?.parties?.length > 0 &&
       ["BAIL", "REJECT_VOLUNTARY_SUBMISSIONS", "APPROVE_VOLUNTARY_SUBMISSIONS", "REJECTION_RESCHEDULE_REQUEST", "CHECKOUT_REJECT"].includes(type)
     ) {
-      parties = orderSchema?.orderDetails?.parties;
+      parties = orderSchema?.orderDetails?.parties?.map((party) => party?.partyName);
     } else {
       parties = allParties?.map((party) => ({ partyName: party.name, partyType: party?.partyType }));
       return parties;
