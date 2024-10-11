@@ -1,7 +1,13 @@
 package org.pucar.dristi.repository.rowmapper;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
+import org.json.JSONObject;
 import org.pucar.dristi.web.models.*;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Component;
@@ -14,6 +20,12 @@ import java.util.*;
 @Slf4j
 public class CaseSummaryRowMapper implements ResultSetExtractor<List<CaseSummary>> {
 
+    private final ObjectMapper objectMapper;
+
+    @Autowired
+    public CaseSummaryRowMapper(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
 
     @Override
     public List<CaseSummary> extractData(ResultSet rs) throws SQLException, DataAccessException {
@@ -53,17 +65,18 @@ public class CaseSummaryRowMapper implements ResultSetExtractor<List<CaseSummary
                         .build();
 
                 //todo:write logic to add statue and section to case summary
+                String statutesAndSections = caseSummary.getStatutesAndSections();
             }
 
             String partyId = rs.getString("litigant_id");
             if (partyId != null) {
                 PartySummary party = PartySummary.builder()
-                        .partyCategory(rs.getString("litigant_partycategory")) // from `ltg.partycategory` or `rpst.partycategory`
-                        .partyType(rs.getString("litigant_partytype")) // from `ltg.partytype` or `rpst.partytype`
-                        .individualId(rs.getString("litigant_individualid")) // from `ltg.individualid` or `rpst.individualid`
-//         not implemented             .individualName(rs.getString("individualName")) // Assuming you are getting this from somewhere else, as it's not in the query
-                        .organisationId(rs.getString("litigant_organisationid")) // from `ltg.organisationid` or `rpst.organisationid`
-//         proposed but not implemented               .isPartyInPerson(rs.getBoolean("isPartyInPerson")) // Assuming this is handled separately, as it's not in the query
+                        .partyCategory(rs.getString("litigant_partycategory"))
+                        .partyType(rs.getString("litigant_partytype"))
+                        .individualId(rs.getString("litigant_individualid"))
+                        .individualName(getNameForLitigant(rs))
+                        .organisationId(rs.getString("litigant_organisationid"))
+//                        .isPartyInPerson(rs.getBoolean("isPartyInPerson"))
                         .build();
                 caseSummary.getLitigants().add(party);
             }
@@ -71,17 +84,47 @@ public class CaseSummaryRowMapper implements ResultSetExtractor<List<CaseSummary
             String representativeId = rs.getString("representative_id");
             if (representativeId != null) {
                 RepresentativeSummary representative = RepresentativeSummary.builder()
-                        .partyId(rs.getString("representative_case_id")) // from `rep.case_id` (assuming this refers to the party/case represented)
-                        .advocateType(rs.getString("advocateType")) // Not in the query; ensure it's populated separately if needed
-                        .advocateId(rs.getString("representative_advocateid")) // from `rep.advocateid`
+                        .partyId(rs.getString("representative_case_id"))
+//                        .advocateType(rs.getString("advocateType"))
+                        .advocateId(rs.getString("representative_advocateid"))
                         .build();
 
                 caseSummary.getRepresentatives().add(representative);
             }
         }
 
-
         return new ArrayList<>(caseMap.values());
+    }
+
+
+    //todo: this is temporary method once the db schema is updated we need to remove this table
+    private String getNameForLitigant(ResultSet rs) {
+
+        String additionaldetails = null;
+
+        String fullName = null;
+        try {
+            additionaldetails = rs.getString("litigant_additionaldetails");
+
+            if (additionaldetails != null && !additionaldetails.isEmpty()) {
+                Object details = objectMapper.readValue(additionaldetails, Object.class);
+
+                Gson gson = new Gson();
+                String jsonString = gson.toJson(details);
+                JSONObject jsonObject = new JSONObject(jsonString);
+                if (jsonObject.has("fullName")) {
+                    fullName = jsonObject.get("fullName").toString();
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } catch (JsonMappingException e) {
+            throw new RuntimeException(e);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+        return fullName;
     }
 
     private Judge getJudge(ResultSet rs) {

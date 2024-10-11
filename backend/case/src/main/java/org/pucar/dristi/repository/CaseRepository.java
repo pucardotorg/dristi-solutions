@@ -421,15 +421,17 @@ public class CaseRepository {
         List<Object> preparedStmtList = new ArrayList<>();
         List<Integer> preparedStmtArgList = new ArrayList<>();
 
-        String caseSummaryQuery = "";
-        caseSummaryQuery = caseSummaryQueryBuilder.getCaseSummarySearchQuery(request.getCriteria(), preparedStmtList, preparedStmtArgList);
-        caseSummaryQuery = caseSummaryQueryBuilder.addOrderByQuery(caseSummaryQuery, request.getPagination());
-        log.info("Final case summary query :: {}", caseSummaryQuery);
+        String caseBaseQuery = "";
+        caseBaseQuery = caseSummaryQueryBuilder.getCaseBaseQuery(request.getCriteria(), preparedStmtList, preparedStmtArgList);
+        caseBaseQuery = caseSummaryQueryBuilder.addOrderByQuery(caseBaseQuery, request.getPagination());
+        log.info("Final case base query :: {}", caseBaseQuery);
         if (request.getPagination() != null) {
-            Integer totalRecords = getTotalCount(caseSummaryQuery, preparedStmtList);
+            Integer totalRecords = getTotalCount(caseBaseQuery, preparedStmtList);
             request.getPagination().setTotalCount(Double.valueOf(totalRecords));
-            caseSummaryQuery = caseSummaryQueryBuilder.addPaginationQuery(caseSummaryQuery, preparedStmtList, request.getPagination(), preparedStmtArgList);
+            caseBaseQuery = caseSummaryQueryBuilder.addPaginationQuery(caseBaseQuery, preparedStmtList, request.getPagination(), preparedStmtArgList);
         }
+
+        String caseSummaryQuery = caseSummaryQueryBuilder.getCaseSummarySearchQuery(caseBaseQuery);
         if (preparedStmtList.size() != preparedStmtArgList.size()) {
             log.info("Arg size :: {}, and ArgType size :: {}", preparedStmtList.size(), preparedStmtArgList.size());
             throw new CustomException(CASE_SEARCH_QUERY_EXCEPTION, "Arg and ArgType size mismatch ");

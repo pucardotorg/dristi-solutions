@@ -15,7 +15,7 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 @Data
-@OneOf
+//@OneOf
 public class CaseSearchCriteria {
 
     @NotNull
