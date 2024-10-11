@@ -2295,6 +2295,14 @@ const GenerateOrders = () => {
     }
   };
 
+  const handleCloseSuccessModal = () => {
+    history.push(`/${window.contextPath}/employee/dristi/home/view-case?tab=${"Orders"}&caseId=${caseDetails?.id}&filingNumber=${filingNumber}`, {
+      from: "orderSuccessModal",
+    });
+    localStorage.removeItem("fileStoreId");
+    setShowSuccessModal(false);
+  };
+
   if (!filingNumber) {
     history.push("/employee/home/home-pending-task");
   }
@@ -2402,6 +2410,7 @@ const GenerateOrders = () => {
           order={prevOrder}
           handleDownloadOrders={handleDownloadOrders}
           handleClose={handleClose}
+          handleCloseSuccessModal={handleCloseSuccessModal}
           actionSaveLabel={successModalActionSaveLabel}
         />
       )}
