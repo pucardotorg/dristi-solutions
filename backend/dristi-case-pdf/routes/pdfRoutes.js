@@ -17,19 +17,21 @@ router.post(
       const mergedPdf = await PDFDocument.create();
 
       for (const file of req.files) {
-        const ext = path.extname(file.originalname).toLowerCase();
-        const fileData = fs.readFileSync(file.path);
+        const mimeType = file.mimetype;
+        const fileData = await fs.promises.readFile(file.path);
 
-        if (ext === ".pdf") {
+        if (mimeType === "application/pdf") {
           const pdfDoc = await PDFDocument.load(fileData);
           const pages = await mergedPdf.copyPages(
             pdfDoc,
             pdfDoc.getPageIndices()
           );
           pages.forEach((page) => mergedPdf.addPage(page));
-        } else if ([".jpg", ".jpeg", ".png"].includes(ext)) {
+        } else if (
+          ["image/jpeg", "image/png", "image/jpg"].includes(mimeType)
+        ) {
           const img =
-            ext === ".png"
+            mimeType === "image/png"
               ? await mergedPdf.embedPng(fileData)
               : await mergedPdf.embedJpg(fileData);
           const { width, height } = img.scale(1);
@@ -44,8 +46,11 @@ router.post(
             height: height * scale,
           });
         }
-
-        fs.unlinkSync(file.path);
+        try {
+          await fs.promises.unlink(file.path);
+        } catch (err) {
+          console.error(`Failed to delete file ${file.path}:`, err);
+        }
       }
       const mergedPdfBytes = await mergedPdf.save();
       const finalPdfBuffer = Buffer.from(mergedPdfBytes);
@@ -55,7 +60,7 @@ router.post(
       });
       res.send(finalPdfBuffer);
     } catch (error) {
-      console.error("Error during PDF merging:", error);
+      console.error("Error during PDF merging:", error?.message);
 
       res.status(500).json({
         message: "Error creating merged PDF",
