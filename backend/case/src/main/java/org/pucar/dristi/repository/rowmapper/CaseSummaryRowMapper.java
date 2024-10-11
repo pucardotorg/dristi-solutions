@@ -42,7 +42,7 @@ public class CaseSummaryRowMapper implements ResultSetExtractor<List<CaseSummary
                         .tenantId(rs.getString("tenantid"))
                         .caseTitle(rs.getString("casetitle"))
                         .filingDate(rs.getLong("filingdate"))
-                        .statutesAndSections(null) // connect with manimaran
+                        .statutesAndSections(null)
                         .stage(rs.getString("stage"))
                         .subStage(rs.getString("substage"))
                         .outcome(rs.getString("outcome"))
@@ -65,7 +65,11 @@ public class CaseSummaryRowMapper implements ResultSetExtractor<List<CaseSummary
                         .build();
 
                 //todo:write logic to add statue and section to case summary
-                String statutesAndSections = caseSummary.getStatutesAndSections();
+
+                StringBuilder existingStatues = caseSummary.getStatutesAndSections() != null ? new StringBuilder(caseSummary.getStatutesAndSections()) : new StringBuilder();
+                String statuteAndSectionsString = getStatuteAndSectionsString(existingStatues, statuteSection.getStatute(), statuteSection.getSections());
+                caseSummary.setStatutesAndSections(statuteAndSectionsString);
+
             }
 
             String partyId = rs.getString("litigant_id");
@@ -141,5 +145,35 @@ public class CaseSummaryRowMapper implements ResultSetExtractor<List<CaseSummary
         }
 
         return list;
+    }
+
+
+    public String getStatuteAndSectionsString(StringBuilder statueAndSections, String statute, List<String> sections) {
+        if (!statueAndSections.isEmpty()) {
+            statueAndSections.append(";");
+        }
+        if (statute != null) statueAndSections.append(statute);
+
+        if (!sections.isEmpty()) {
+            statueAndSections.append(" ");
+            for (int i = 0; i < sections.size(); i++) {
+                statueAndSections.append(sections.get(i));
+                if (i < sections.size() - 1) {
+                    statueAndSections.append(", ");
+                }
+            }
+        }
+
+//        if (!subsections.isEmpty()) {
+//            statuteAndSectionsStringBuilder.append(" ");
+//            for (int i = 0; i < subsections.size(); i++) {
+//                statuteAndSectionsStringBuilder.append(subsections.get(i));
+//                if (i < subsections.size() - 1) {
+//                    statuteAndSectionsStringBuilder.append(", ");
+//                }
+//            }
+//        }
+
+        return statueAndSections.toString();
     }
 }
