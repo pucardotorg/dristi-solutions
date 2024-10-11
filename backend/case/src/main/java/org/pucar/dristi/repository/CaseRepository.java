@@ -418,7 +418,6 @@ public class CaseRepository {
 
     public List<CaseSummary> getCaseSummary(CaseSummaryRequest request) {
 
-
         List<Object> preparedStmtList = new ArrayList<>();
         List<Integer> preparedStmtArgList = new ArrayList<>();
 

@@ -22,18 +22,18 @@ public class CaseSummaryRowMapper implements ResultSetExtractor<List<CaseSummary
         Map<String, CaseSummary> caseMap = new HashMap<>();
 
         while (rs.next()) {
-            String caseId = rs.getString("dc.id");
+            String caseId = rs.getString("id");
             CaseSummary caseSummary = caseMap.get(caseId);
             if (caseSummary == null) {
                 caseSummary = CaseSummary.builder()
                         .id(caseId)
-                        .tenantId(rs.getString("tenantid")) // from `cases.tenantid`
-                        .caseTitle(rs.getString("casetitle")) // from `cases.casetitle`
-                        .filingDate(rs.getLong("filingdate")) // from `cases.filingdate`
-                        .statutesAndSections(null) // Assuming it's handled separately
-                        .stage(rs.getString("stage")) // from `cases.stage`
-                        .subStage(rs.getString("substage")) // from `cases.substage`
-                        .outcome(rs.getString("outcome")) // `outcome` is not present in the query. Ensure it exists or remove it.
+                        .tenantId(rs.getString("tenantid"))
+                        .caseTitle(rs.getString("casetitle"))
+                        .filingDate(rs.getLong("filingdate"))
+                        .statutesAndSections(null) // connect with manimaran
+                        .stage(rs.getString("stage"))
+                        .subStage(rs.getString("substage"))
+                        .outcome(rs.getString("outcome"))
                         .litigants(new ArrayList<>())
                         .representatives(new ArrayList<>())
                         .judge(getJudge(rs))
@@ -42,35 +42,33 @@ public class CaseSummaryRowMapper implements ResultSetExtractor<List<CaseSummary
                 caseMap.put(caseId, caseSummary);
             }
 
-            String statuteId = rs.getString("dcss.id");
-            if (statuteId != null) {  // Make sure there are statutes for this case
+            String statuteId = rs.getString("statute_section_id");
+            if (statuteId != null) {
                 StatuteSection statuteSection = StatuteSection.builder()
-                        .id(UUID.fromString(rs.getString("statute_section_id"))) // from `stse.id`
-                        .tenantId(rs.getString("statute_section_tenantid")) // from `stse.tenantid`
-                        .sections(stringToList(rs.getString("statute_section_sections"))) // from `stse.sections`
-                        .subsections(stringToList(rs.getString("statute_section_subsections"))) // from `stse.subsections`
-                        .statute(rs.getString("statute_section_statutes")) // from `stse.statutes`
+                        .id(UUID.fromString(rs.getString("statute_section_id")))
+                        .tenantId(rs.getString("statute_section_tenantid"))
+                        .sections(stringToList(rs.getString("statute_section_sections")))
+                        .subsections(stringToList(rs.getString("statute_section_subsections")))
+                        .statute(rs.getString("statute_section_statutes"))
                         .build();
 
-
                 //todo:write logic to add statue and section to case summary
-//                caseSummary.getStatutesAndSectionsList().add(statute);
             }
 
-            String partyId = rs.getString("dcl.id");
+            String partyId = rs.getString("litigant_id");
             if (partyId != null) {
                 PartySummary party = PartySummary.builder()
                         .partyCategory(rs.getString("litigant_partycategory")) // from `ltg.partycategory` or `rpst.partycategory`
                         .partyType(rs.getString("litigant_partytype")) // from `ltg.partytype` or `rpst.partytype`
                         .individualId(rs.getString("litigant_individualid")) // from `ltg.individualid` or `rpst.individualid`
-                        .individualName(rs.getString("individualName")) // Assuming you are getting this from somewhere else, as it's not in the query
+//         not implemented             .individualName(rs.getString("individualName")) // Assuming you are getting this from somewhere else, as it's not in the query
                         .organisationId(rs.getString("litigant_organisationid")) // from `ltg.organisationid` or `rpst.organisationid`
-                        .isPartyInPerson(rs.getBoolean("isPartyInPerson")) // Assuming this is handled separately, as it's not in the query
+//         proposed but not implemented               .isPartyInPerson(rs.getBoolean("isPartyInPerson")) // Assuming this is handled separately, as it's not in the query
                         .build();
                 caseSummary.getLitigants().add(party);
             }
 
-            String representativeId = rs.getString("dcr.id");
+            String representativeId = rs.getString("representative_id");
             if (representativeId != null) {
                 RepresentativeSummary representative = RepresentativeSummary.builder()
                         .partyId(rs.getString("representative_case_id")) // from `rep.case_id` (assuming this refers to the party/case represented)

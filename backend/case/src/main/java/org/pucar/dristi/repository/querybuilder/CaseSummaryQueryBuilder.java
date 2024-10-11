@@ -16,7 +16,7 @@ public class CaseSummaryQueryBuilder {
 
 
     private static final String BASE_CASE_SUMMARY_QUERY = " SELECT cases.id as id, cases.tenantid as tenantid, cases.casenumber as casenumber,  cases.casetitle as casetitle,  " +
-            "cases.filingnumber as filingnumber, cases.casenumber as casenumber,  cases.cnrNumber as cnrNumber, " +
+            "cases.filingnumber as filingnumber, cases.casenumber as casenumber,  cases.cnrNumber as cnrNumber, cases.outcome as outcome, " +
             " cases.cmpnumber, cases.courtid as courtid, cases.benchid as benchid, cases.casetype, cases.judgeid as judgeid, cases.stage as stage, cases.substage as substage, cases.filingdate as filingdate, cases.registrationdate as registrationdate,  cases.status as status,  cases.isactive as isactive,  cases.casecategory as casecategory, cases.createdby as createdby," +
             " cases.lastmodifiedby as lastmodifiedby, cases.createdtime as createdtime, cases.lastmodifiedtime as lastmodifiedtime, " +
             "ltg.id as litigant_id, ltg.tenantid as litigant_tenantid, ltg.partycategory as litigant_partycategory, ltg.case_id as litigant_case_id, " +
