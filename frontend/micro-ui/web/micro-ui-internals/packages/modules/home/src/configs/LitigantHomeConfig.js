@@ -223,7 +223,7 @@ export const TabLitigantSearchConfig = {
       },
     },
     {
-      label: "Drafts",
+      label: "Pending Submission",
       type: "search",
       apiDetails: {
         serviceName: "/case/v1/_search",
@@ -232,7 +232,7 @@ export const TabLitigantSearchConfig = {
           tenantId: "pg",
           criteria: [
             {
-              status: ["DRAFT_IN_PROGRESS"],
+              status: ["DRAFT_IN_PROGRESS", "PENDING_E-SIGN"],
             },
           ],
         },
@@ -247,48 +247,12 @@ export const TabLitigantSearchConfig = {
         search: {
           uiConfig: {
             formClassName: "custom-both-clear-search",
-            primaryLabel: "ES_COMMON_SEARCH",
-            secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
+            // primaryLabel: "ES_COMMON_SEARCH",
+            // secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
             minReqFields: 0,
             defaultValues: {
               ...defaultSearchValues,
-              sortCaseListByDate: {
-                sortBy: "lastModifiedTime",
-                order: "asc",
-              },
             },
-            fields: [
-              {
-                type: "component",
-                component: "CustomSortComponent",
-                isMandatory: false,
-                disable: false,
-                name: "Last Edited",
-                key: "sortCaseListByDate",
-                sortBy: "lastModifiedTime",
-                showIcon: true,
-                icon: "UpDownArrowIcon",
-                populators: {},
-              },
-              {
-                label: "Case Type",
-                isMandatory: false,
-                key: "caseType",
-                type: "dropdown",
-                disable: false,
-                populators: {
-                  name: "caseType",
-                  options: ["NIA S138"],
-                  styles: {
-                    maxWidth: "200px",
-                    minWidth: "150px",
-                  },
-                  optionsCustomStyle: {
-                    overflowX: "hidden",
-                  },
-                },
-              },
-            ],
           },
 
           show: true,
@@ -298,9 +262,13 @@ export const TabLitigantSearchConfig = {
           uiConfig: {
             columns: [
               {
-                label: "Draft Name",
+                label: "Case Name",
                 jsonPath: "caseTitle",
                 additionalCustomization: true,
+              },
+              {
+                label: "Stage",
+                jsonPath: "substage",
               },
               // {
               //   label: "Case ID",

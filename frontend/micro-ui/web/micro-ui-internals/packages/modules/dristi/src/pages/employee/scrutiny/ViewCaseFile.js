@@ -367,13 +367,13 @@ function ViewCaseFile({ t, inViewCase = false }) {
   const checkList = [
     "CS_SPELLING_MISTAKES",
     "CS_WRONG_INPUTS",
-    "CS_MISSING_DETAILS",
-    "CS_FIELDS_NO_MATCHUP",
-    "CS_WRONG_DOCUMENT",
-    "CS_POOR_UPLOAD",
-    "CS_WRONG_JURISDICTION",
-    "CS_PHOTO_MISMATCH",
-    "CS_DATE_MATCH_DOCUMENT",
+    "CS_DOCUMENT_CLEAR",
+    "CS_JURISDICTION_ACCURATE",
+    "CS_VERIFY_SIGNATURE ",
+    "CS_CHEQUE_VALID",
+    "CS_ENSURE_DOC_UPLOAD",
+    "CS_CROSS_CHECK_DOC_FIELD",
+    "CS_REFERENCE_RELATED_FIELDS",
   ];
   const caseInfo = [
     {
