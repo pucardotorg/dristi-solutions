@@ -307,7 +307,7 @@ public class PaymentService {
     public void callCollectionServiceAndUpdatePayment(TreasuryPaymentRequest request) {
 
         String paymentStatus = String.valueOf(request.getTreasuryPaymentData().getStatus());
-        BigDecimal totalAmountPaid = BigDecimal(String.valueOf(request.getTreasuryPaymentData().getAmount()));
+        BigDecimal totalAmountPaid = new BigDecimal(String.valueOf(request.getTreasuryPaymentData().getAmount()));
         if (paymentStatus.equals("N")) {
             if (config.isTest()) {
                 totalAmountPaid = BigDecimal.valueOf(request.getTreasuryPaymentData().getTotalDue());
