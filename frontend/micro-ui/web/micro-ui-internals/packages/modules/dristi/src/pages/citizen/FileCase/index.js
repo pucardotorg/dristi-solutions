@@ -8,7 +8,7 @@ import EFilingCases from "./EFilingCases";
 import WitnessDetails from "./WitnessDetails";
 import EFilingPayment from "./EFilingPayment";
 import EFilingPaymentResponse from "./EFilingPaymentResponse";
-import ComplaintantSignature from "./ComplaintantSignature";
+import ComplainantSignature from "./ComplainantSignature";
 
 function FileCase({ t }) {
   const { path } = useRouteMatch();
@@ -39,7 +39,7 @@ function FileCase({ t }) {
             <EFilingPaymentResponse t={t} />
           </Route>
           <Route path={`${path}/sign-complaint`}>
-            <ComplaintantSignature path={path} />
+            <ComplainantSignature path={path} />
           </Route>
         </AppContainer>
       </Switch>

@@ -86,7 +86,6 @@ const getStyles = () => ({
   uploadButton: {
     marginBottom: "16px",
     height: "40px",
-    alignItems: "center",
     fontWeight: 700,
     fontSize: "16px",
     display: "flex",
@@ -122,7 +121,7 @@ const caseType = {
   href: "https://districts.ecourts.gov.in/sites/default/files/study%20circles.pdf",
 };
 
-const ComplaintantSignature = ({ path }) => {
+const ComplainantSignature = ({ path }) => {
   const { t } = useTranslation();
   const history = useHistory();
   const urlParams = new URLSearchParams(window.location.search);
@@ -177,7 +176,7 @@ const ComplaintantSignature = ({ path }) => {
     downloadPdf(tenantId, DocumentFileStoreId || fileStoreId);
   };
 
-  const hanldeEsing = () => {
+  const handleEsign = () => {
     setLitigantSign(true);
   };
 
@@ -196,7 +195,7 @@ const ComplaintantSignature = ({ path }) => {
     history.push(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculationResponse: 4 } });
   };
 
-  const SubmitDisabled = () => {
+  const isSubmitEnabled = () => {
     return advocateDetails ? advocateDetails && litigantSign : litigantSign;
   };
 
@@ -274,7 +273,7 @@ const ComplaintantSignature = ({ path }) => {
           <div style={styles.signaturePanel}>
             <div style={styles.signatureTitle}>{t("ADD_SIGNATURE")}</div>
             <p style={styles.signatureDescription}>{t("EITHER_ESIGN_UPLOAD")}</p>
-            <button style={styles.esignButton} onClick={hanldeEsing}>
+            <button style={styles.esignButton} onClick={handleEsign}>
               {t("CS_ESIGN")}
             </button>
             <button style={styles.uploadButton} onClick={handleUploadFile}>
@@ -296,7 +295,7 @@ const ComplaintantSignature = ({ path }) => {
             }
             onSubmit={handleSubmit}
             style={styles.submitButton}
-            disabled={!SubmitDisabled()}
+            disabled={!isSubmitEnabled()}
           />
         </div>
       </ActionBar>
@@ -304,4 +303,4 @@ const ComplaintantSignature = ({ path }) => {
   );
 };
 
-export default ComplaintantSignature;
+export default ComplainantSignature;
