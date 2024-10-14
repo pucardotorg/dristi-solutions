@@ -1,6 +1,7 @@
 package org.pucar.dristi.web.controllers;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -18,21 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.pucar.dristi.service.CaseService;
 import org.pucar.dristi.service.WitnessService;
 import org.pucar.dristi.util.ResponseInfoFactory;
-import org.pucar.dristi.web.models.CaseCriteria;
-import org.pucar.dristi.web.models.CaseExists;
-import org.pucar.dristi.web.models.CaseExistsRequest;
-import org.pucar.dristi.web.models.CaseExistsResponse;
-import org.pucar.dristi.web.models.CaseListResponse;
-import org.pucar.dristi.web.models.CaseRequest;
-import org.pucar.dristi.web.models.CaseResponse;
-import org.pucar.dristi.web.models.CaseSearchRequest;
-import org.pucar.dristi.web.models.CourtCase;
-import org.pucar.dristi.web.models.JoinCaseRequest;
-import org.pucar.dristi.web.models.JoinCaseResponse;
-import org.pucar.dristi.web.models.Witness;
-import org.pucar.dristi.web.models.WitnessRequest;
-import org.pucar.dristi.web.models.WitnessResponse;
-import org.pucar.dristi.web.models.WitnessSearchRequest;
+import org.pucar.dristi.web.models.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -51,10 +38,10 @@ public class CaseApiControllerTest {
     @Mock
     private ResponseInfoFactory responseInfoFactory;
 
-    @BeforeEach
-    public void setup() {
-        MockitoAnnotations.openMocks(this);
-    }
+//    @BeforeEach
+//    public void setup() {
+//        MockitoAnnotations.openMocks(this);
+//    }
 
     @Test
     public void caseV1CreatePostSuccess() {
@@ -223,5 +210,33 @@ public class CaseApiControllerTest {
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
         assertEquals(witness, responseEntity.getBody().getWitnesses().get(0));
     }
+
+    @Test
+    public void caseV1SummaryPostSuccess() {
+        CaseSummaryRequest caseSummaryRequest = new CaseSummaryRequest();
+        RequestInfo requestInfo = new RequestInfo();
+        caseSummaryRequest.setRequestInfo(requestInfo);
+        caseSummaryRequest.setPagination(new Pagination());
+
+        ResponseEntity<CaseSummaryResponse> responseEntity = caseApiController.caseV1SummaryPost(caseSummaryRequest);
+
+        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        assertEquals(0, responseEntity.getBody().getCases().size());
+    }
+
+    @Test
+    public void caseV1SummaryPost_withEmptyResponse() {
+        CaseSummaryRequest caseSummaryRequest = new CaseSummaryRequest();
+        RequestInfo requestInfo = new RequestInfo();
+        caseSummaryRequest.setRequestInfo(requestInfo);
+        caseSummaryRequest.setPagination(new Pagination());
+
+
+        ResponseEntity<CaseSummaryResponse> responseEntity = caseApiController.caseV1SummaryPost(caseSummaryRequest);
+
+        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        assertTrue(responseEntity.getBody().getCases().isEmpty());
+    }
+
 
 }
