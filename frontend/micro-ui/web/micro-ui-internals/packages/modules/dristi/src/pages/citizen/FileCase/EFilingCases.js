@@ -1813,8 +1813,8 @@ function EFilingCases({ path }) {
             },
           }),
           caseTitle:
-            `${getComplainantName(caseDetails?.additionalDetails?.complainantDetails?.formdata?.[0]?.data)} vs ${getRespondentName(
-              caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data
+            `${getComplainantName(caseDetails?.additionalDetails?.complainantDetails?.formdata?.[0]?.data || {})} vs ${getRespondentName(
+              caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data || {}
             )}` || caseDetails?.caseTitle,
           courtId: "KLKM52" || data?.court?.code,
           workflow: {

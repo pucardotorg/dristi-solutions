@@ -60,7 +60,7 @@ const CustomReviewCardRow = ({
     badgeType = null,
     textDependentOn = null,
     textDependentValue = null,
-    notAvailbale = null,
+    notAvailable = null,
   } = config;
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
 
@@ -182,7 +182,7 @@ const CustomReviewCardRow = ({
                     : t("")
                   : textValue && typeof textValue === "object"
                   ? t(textValue?.text) || ""
-                  : t(textValue) || (dependentOnValue && t(textDependentValue)) || t(notAvailbale) || t("")}
+                  : t(textValue) || (dependentOnValue && t(textDependentValue)) || t(notAvailable) || t("")}
               </div>
               {showFlagIcon && (
                 <div
@@ -705,7 +705,7 @@ const CustomReviewCardRow = ({
     textDependentOn,
     label,
     textDependentValue,
-    notAvailbale,
+    notAvailable,
     isJudge,
     handleOpenPopup,
     configKey,

@@ -285,7 +285,7 @@ export const reviewCaseFileFormConfig = [
                   type: "text",
                   label: "CS_DATE_OF_REPLY_LDN",
                   value: "dateOfReply",
-                  notAvailbale: "NO_REPLY_RECIEVED",
+                  notAvailable: "NO_REPLY_RECIEVED",
                 },
                 {
                   type: "text",

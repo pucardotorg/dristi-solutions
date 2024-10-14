@@ -29,7 +29,7 @@ export const sideMenuConfig = [
           "firstName",
           "complainantVerification.otpNumber", // checkThis- make sure to unset otpNumber if otp model is closed or canceled.
         ],
-        initialMandatoryFieldCount: 10,
+        initialMandatoryFieldCount: 12,
         dependentMandatoryFields: [
           { field: "addressCompanyDetails-select.pincode", dependentOn: "complainantType", dependentOnKey: "showCompanyDetails" },
           { field: "addressCompanyDetails-select.state", dependentOn: "complainantType", dependentOnKey: "showCompanyDetails" },
@@ -45,7 +45,7 @@ export const sideMenuConfig = [
           { field: "complainantTypeOfEntity", dependentOn: "complainantType", dependentOnKey: "showCompanyDetails" },
         ],
         optionalFields: ["middleName", "lastName", "complainantAge"],
-        initialOptionalFieldCount: 1,
+        initialOptionalFieldCount: 3,
         dependentOptionalFields: [{ field: "companyDetailsUpload.document", dependentOn: "complainantType", dependentOnKey: "showCompanyDetails" }],
       },
       {
@@ -76,7 +76,7 @@ export const sideMenuConfig = [
             "addressDetails.locality",
           ],
         },
-        initialMandatoryFieldCount: 8,
+        initialMandatoryFieldCount: 10,
         dependentMandatoryFields: [
           { field: "respondentCompanyName", dependentOn: "respondentType", dependentOnKey: "showCompanyDetails" },
           { field: "respondentTypeOfEntity", dependentOn: "respondentType", dependentOnKey: "showCompanyDetails" },
@@ -90,7 +90,7 @@ export const sideMenuConfig = [
           "inquiryAffidavitFileUpload.document",
         ],
         dependentOptionalFields: [{ field: "companyDetailsUpload.document", dependentOn: "respondentType", dependentOnKey: "showCompanyDetails" }],
-        initialOptionalFieldCount: 4,
+        initialOptionalFieldCount: 6,
       },
     ],
   },

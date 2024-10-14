@@ -238,19 +238,20 @@ export const checkNameValidation = ({ formData, setValue, selected, reset, index
         if (key === "respondentAge" && Object.hasOwnProperty.call(formDataCopy, key)) {
           const oldValue = formDataCopy[key];
           let value = oldValue;
-
-          let updatedValue = value?.replace(/\D/g, "");
-          if (updatedValue?.length > 4) {
-            updatedValue = updatedValue?.substring(0, 4);
-          }
-          if (updatedValue !== oldValue) {
-            const element = document?.querySelector(`[name="${key}"]`);
-            const start = element?.selectionStart;
-            const end = element?.selectionEnd;
-            setValue(key, updatedValue);
-            setTimeout(() => {
-              element?.setSelectionRange(start, end);
-            }, 0);
+          if (typeof value === "string") {
+            let updatedValue = value?.replace(/\D/g, "");
+            if (updatedValue?.length > 4) {
+              updatedValue = updatedValue?.substring(0, 4);
+            }
+            if (updatedValue !== oldValue) {
+              const element = document?.querySelector(`[name="${key}"]`);
+              const start = element?.selectionStart;
+              const end = element?.selectionEnd;
+              setValue(key, updatedValue);
+              setTimeout(() => {
+                element?.setSelectionRange(start, end);
+              }, 0);
+            }
           }
         }
       }
@@ -765,7 +766,10 @@ export const chequeDateValidation = ({ selected, formData, setError, clearErrors
 
 export const delayApplicationValidation = ({ t, formData, selected, setShowErrorToast, setErrorMsg, toast, setFormErrors }) => {
   if (selected === "delayApplications") {
-    if (formData?.delayCondonationType?.code === "NO" && !formData?.condonationFileUpload?.document.length > 0) {
+    if (
+      formData?.delayCondonationType?.code === "NO" &&
+      (!formData?.condonationFileUpload?.document || formData?.condonationFileUpload?.document.length === 0)
+    ) {
       setFormErrors("condonationFileUpload", { type: "required" });
       toast.error(t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"));
       return true;
@@ -1049,7 +1053,6 @@ const fetchBasicUserInfo = async (caseDetails, tenantId) => {
 };
 
 export const getComplainantName = (complainantDetails) => {
-  debugger;
   if (complainantDetails?.complainantType?.code === "INDIVIDUAL") {
     return complainantDetails?.firstName && `${complainantDetails?.firstName || ""} ${complainantDetails?.lastName || ""}`.trim();
   }
@@ -1057,7 +1060,6 @@ export const getComplainantName = (complainantDetails) => {
 };
 
 export const getRespondentName = (respondentDetails) => {
-  debugger;
   if (respondentDetails?.respondentType?.code === "INDIVIDUAL") {
     return (
       respondentDetails?.respondentFirstName &&
@@ -1530,7 +1532,8 @@ export const updateCaseDetails = async ({
           if (
             data?.data?.depositDate &&
             data?.data?.issuanceDate &&
-            new Date(data?.data?.issuanceDate).getTime() + 3 * 30 * 24 * 60 * 60 * 1000 > new Date(data?.data?.depositDate).getTime()
+            new Date(data?.data?.issuanceDate).setMonth(new Date(data?.data?.issuanceDate).getMonth() + 3) >
+              new Date(data?.data?.depositDate).getTime()
           ) {
             infoBoxData.data.splice(0, 0, "CS_SIX_MONTH_BEFORE_DEPOSIT_TEXT");
           }
@@ -1554,7 +1557,7 @@ export const updateCaseDetails = async ({
       debtLiabilityDetails: {
         ...caseDetails?.caseDetails?.debtLiabilityDetails,
         formdata: caseDetails?.caseDetails?.debtLiabilityDetails?.formdata?.map((data) => {
-          if (data?.data?.liabilityType?.code === "FULL_LIABILITY") {
+          if (data?.data?.liabilityType?.code === "FULL_LIABILITY" && newFormData?.[0]) {
             return {
               ...data,
               data: {
@@ -1956,8 +1959,8 @@ export const updateCaseDetails = async ({
   const caseTitle =
     caseDetails?.status !== "DRAFT_IN_PROGRESS"
       ? caseDetails?.caseTitle
-      : `${getComplainantName(data?.additionalDetails?.complainantDetails?.formdata?.[0]?.data)} vs ${getRespondentName(
-          data?.additionalDetails?.respondentDetails?.formdata?.[0]?.data
+      : `${getComplainantName(data?.additionalDetails?.complainantDetails?.formdata?.[0]?.data || {})} vs ${getRespondentName(
+          data?.additionalDetails?.respondentDetails?.formdata?.[0]?.data || {}
         )}`;
   setErrorCaseDetails({
     ...caseDetails,
