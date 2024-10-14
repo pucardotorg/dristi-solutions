@@ -35,6 +35,8 @@ import {
   delayApplicationValidation,
   demandNoticeFileValidation,
   getAllAssignees,
+  getComplainantName,
+  getRespondentName,
   prayerAndSwornValidation,
   respondentValidation,
   showDemandNoticeModal,
@@ -182,7 +184,6 @@ function EFilingCases({ path }) {
   const [openConfigurationModal, setOpenConfigurationModal] = useState(false);
   const [openConfirmCourtModal, setOpenConfirmCourtModal] = useState(false);
   const [openConfirmCorrectionModal, setOpenConfirmCorrectionModal] = useState(false);
-  const [receiptDemandNoticeModal, setReceiptDemandNoticeModal] = useState(false);
   const [serviceOfDemandNoticeModal, setServiceOfDemandNoticeModal] = useState(false);
   const [confirmDeleteModal, setConfirmDeleteModal] = useState(false);
   const [showConfirmMandatoryModal, setShowConfirmMandatoryModal] = useState(false);
@@ -1258,7 +1259,6 @@ function EFilingCases({ path }) {
         index,
         caseDetails,
         selected,
-        setReceiptDemandNoticeModal,
         setServiceOfDemandNoticeModal,
       });
       checkDuplicateMobileEmailValidation({
@@ -1307,13 +1307,13 @@ function EFilingCases({ path }) {
     let totalMandatoryLeft = 0;
     let totalOptionalLeft = 0;
 
-    if (currentPageData.length === 0) {
+    if (currentPageData?.length === 0) {
       // this case is specially for witness details page (which is optional),
       // so there might not be any witness at all.
       totalMandatoryLeft = 0;
       totalOptionalLeft = 1;
     } else {
-      for (let i = 0; i < currentPageData.length; i++) {
+      for (let i = 0; i < currentPageData?.length; i++) {
         const currentIndexData = currentPageData[i];
         const currentPageMandatoryFields = [];
         const currentPageOptionalFields = [];
@@ -1444,7 +1444,6 @@ function EFilingCases({ path }) {
             selected,
             setShowErrorToast,
             setFormErrors: setFormErrors.current,
-            setReceiptDemandNoticeModal,
           })
         )
     ) {
@@ -1832,13 +1831,9 @@ function EFilingCases({ path }) {
             },
           }),
           caseTitle:
-            (caseDetails?.additionalDetails?.complainantDetails?.formdata?.[0]?.data?.firstName &&
-              `${caseDetails?.additionalDetails?.complainantDetails?.formdata?.[0]?.data?.firstName} ${
-                caseDetails?.additionalDetails?.complainantDetails?.formdata?.[0]?.data?.lastName || ""
-              } vs ${caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.respondentFirstName || ""} ${
-                caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.respondentLastName || ""
-              }`) ||
-            caseDetails?.caseTitle,
+            `${getComplainantName(caseDetails?.additionalDetails?.complainantDetails?.formdata?.[0]?.data || {})} vs ${getRespondentName(
+              caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data || {}
+            )}` || caseDetails?.caseTitle,
           courtId: "KLKM52" || data?.court?.code,
           workflow: {
             ...caseDetails?.workflow,
@@ -2220,48 +2215,6 @@ function EFilingCases({ path }) {
               className={"confirm-delete-modal"}
             ></Modal>
           )}
-          {receiptDemandNoticeModal && (
-            <Modal
-              headerBarMain={<Heading label={t("CS_IMPORTANT_NOTICE")} />}
-              headerBarEnd={
-                <CloseBtn
-                  onClick={() => {
-                    setReceiptDemandNoticeModal(false);
-                  }}
-                />
-              }
-              actionCancelLabel={t("CS_CANCEL_E_FILING")}
-              actionCancelOnSubmit={async () => {
-                await DRISTIService.caseUpdateService(
-                  {
-                    cases: {
-                      ...caseDetails,
-                      litigants: !caseDetails?.litigants ? [] : caseDetails?.litigants,
-                      workflow: {
-                        ...caseDetails?.workflow,
-                        action: "DELETE_DRAFT",
-                      },
-                    },
-                    tenantId,
-                  },
-                  tenantId
-                );
-                setReceiptDemandNoticeModal(false);
-                history.push(`/${window?.contextPath}/citizen/dristi/home`);
-              }}
-              actionSaveLabel={t("CS_NOT_PAID_FULL")}
-              children={<div style={{ padding: "16px 0" }}>{t("CS_NOT_PAID_FULL_TEXT")}</div>}
-              actionSaveOnSubmit={async () => {
-                setFormDataValue.current?.("delayApplicationType", {
-                  code: "YES",
-                  name: "YES",
-                  showForm: false,
-                  isEnabled: true,
-                });
-                setReceiptDemandNoticeModal(false);
-              }}
-            ></Modal>
-          )}
           {serviceOfDemandNoticeModal && (
             <Modal
               headerBarMain={<Heading label={t("CS_IMPORTANT_NOTICE")} />}
@@ -2296,7 +2249,6 @@ function EFilingCases({ path }) {
                   },
                   tenantId
                 );
-                setReceiptDemandNoticeModal(false);
                 history.push(`/${window?.contextPath}/citizen/dristi/home`);
               }}
             ></Modal>
