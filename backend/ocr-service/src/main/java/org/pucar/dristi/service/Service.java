@@ -22,8 +22,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.pucar.dristi.config.ServiceConstants.NOT_A_VALID_DOCUMENT;
-import static org.pucar.dristi.config.ServiceConstants.RETRY_WITH_A_BETTER_QUALITY_IMAGE;
+import static org.pucar.dristi.config.ServiceConstants.*;
 
 @org.springframework.stereotype.Service
 public class Service {
@@ -80,7 +79,12 @@ public class Service {
                 .setDocumentType(ocrRequest.getDocumentType());
         if (null != ocrResponse.getMessage()) {
             ocr.setMessage(ocrResponse.getMessage());
-            ocr.setCode(RETRY_WITH_A_BETTER_QUALITY_IMAGE);
+            if (ocrResponse.getMessage().contains(RETRY_WITH_A_BETTER_QUALITY_IMAGE_MESSAGE)) {
+                ocr.setCode(RETRY_WITH_A_BETTER_QUALITY_IMAGE_CODE);
+            }
+            else {
+                ocr.setCode(OCR_ERROR);
+            }
         } else if (null != ocrResponse.getKeywordCounts()) {
             Map<String, Integer> keyWordCounts = ocrResponse.getKeywordCounts();
             List<String> missingKeywords = new ArrayList<>();
