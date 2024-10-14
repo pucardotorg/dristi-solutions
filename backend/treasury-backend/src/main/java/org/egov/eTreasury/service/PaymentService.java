@@ -307,14 +307,17 @@ public class PaymentService {
     public void callCollectionServiceAndUpdatePayment(TreasuryPaymentRequest request) {
 
         String paymentStatus = String.valueOf(request.getTreasuryPaymentData().getStatus());
-        if(!config.isTest() && paymentStatus.equals("N")){
-            return;
+        BigDecimal totalAmountPaid = new BigDecimal(String.valueOf(request.getTreasuryPaymentData().getAmount()));
+        if (paymentStatus.equals("N")) {
+            if (config.isTest()) {
+                totalAmountPaid = BigDecimal.valueOf(request.getTreasuryPaymentData().getTotalDue());
+            }
         }
 
         PaymentDetail paymentDetail = PaymentDetail.builder()
                 .billId(request.getTreasuryPaymentData().getBillId())
                 .totalDue(BigDecimal.valueOf(request.getTreasuryPaymentData().getTotalDue()))
-                .totalAmountPaid(new BigDecimal(String.valueOf(request.getTreasuryPaymentData().getAmount())))
+                .totalAmountPaid(totalAmountPaid)
                 .businessService(request.getTreasuryPaymentData().getBusinessService()).build();
         Payment payment = Payment.builder()
                 .tenantId(config.getEgovStateTenantId())
