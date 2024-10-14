@@ -239,7 +239,7 @@ const AdmittedCases = () => {
     return {
       ...rep,
       name: removeInvalidNameParts(rep.additionalDetails?.advocateName),
-      partyType: `Advocate (for ${rep.representing.map((client) => removeInvalidNameParts(client?.additionalDetails?.fullName)).join(", ")})`,
+      partyType: `Advocate (for ${rep.representing?.map((client) => removeInvalidNameParts(client?.additionalDetails?.fullName))?.join(", ")})`,
     };
   });
 

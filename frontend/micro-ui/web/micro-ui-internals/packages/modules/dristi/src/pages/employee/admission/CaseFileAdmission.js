@@ -308,7 +308,7 @@ function CaseFileAdmission({ t, path }) {
         return {
           ...rep,
           name: rep.additionalDetails?.advocateName,
-          partyType: `Advocate (for ${rep.representing.map((client) => client?.additionalDetails?.fullName).join(", ")})`,
+          partyType: `Advocate (for ${rep.representing?.map((client) => client?.additionalDetails?.fullName)?.join(", ")})`,
         };
       }),
     [reps]
