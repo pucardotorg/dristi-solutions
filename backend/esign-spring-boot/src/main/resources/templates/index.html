@@ -1,0 +1,37 @@
+<!--<!DOCTYPE html>-->
+<!--<html xmlns:th="http://www.thymeleaf.org">-->
+<!--<head>-->
+<!--    <title>eSign Request</title>-->
+<!--</head>-->
+<!--<body>-->
+<!--<h1>eSign Request Form</h1>-->
+<!--<form action="/esign" method="post" enctype="multipart/form-data">-->
+<!--    <label for="file">Upload File:</label>-->
+<!--    <input type="file" id="file" name="file" required><br><br>-->
+<!--    <button type="submit">Submit</button>-->
+<!--</form>-->
+<!--</body>-->
+<!--</html>-->
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Esign App</title>
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
+
+</head>
+
+<body bgcolor="blue">
+<!--       <th:block th:include="/_menu"></th:block> -->
+<div><br></div>
+<div style="text-align: center"><h3>Welcome to e-Sign ASP</h3></div>
+
+<div style="text-align: center">
+    <a th:href="@{/esign-its}">Click Here</a>
+    <!--         <li><a th:href="@{/uploadMultiFile}">Upload Multiple Files Example</a></li> -->
+</div>
+</body>
+</html>
