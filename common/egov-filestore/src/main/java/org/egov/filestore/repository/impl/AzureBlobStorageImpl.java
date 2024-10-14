@@ -253,6 +253,38 @@ public class AzureBlobStorageImpl implements CloudFilesManager {
 			return null;
 		}
 	}
-	
-	
+
+	@Override
+	public void deleteFiles(List<org.egov.filestore.persistence.entity.Artifact> artifacts) {
+		if (null == azureBlobClient)
+			azureBlobClient = azureFacade.getAzureClient();
+
+		artifacts.forEach(artifact -> {
+			try {
+				CloudBlobContainer container;
+				String completeName = artifact.getFileName();
+				int index = completeName.indexOf('/');
+				String containerName = completeName.substring(0, index);
+				String fileNameWithPath = completeName.substring(index + 1);
+
+				if (isContainerFixed)
+					container = azureBlobClient.getContainerReference(fixedContainerName);
+				else
+					container = azureBlobClient.getContainerReference(containerName);
+
+				CloudBlockBlob blob = container.getBlockBlobReference(fileNameWithPath);
+
+				if (blob.exists()) {
+					blob.deleteIfExists();
+					log.info("Deleted blob: " + fileNameWithPath);
+				} else {
+					log.info("Blob not found or already deleted: " + fileNameWithPath);
+				}
+			} catch (Exception e) {
+				log.error("Error deleting file: " + artifact.getFileName(), e);
+				throw new CustomException("WG_WF_DELETE_ERROR", e.getMessage());
+			}
+		});
+	}
+
 }

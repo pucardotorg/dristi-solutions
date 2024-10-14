@@ -138,4 +138,23 @@ public class ArtifactRepository {
 	public List<Artifact> getByTenantIdAndFileStoreIdList(String tenantId, List<String> fileStoreIds) {
 		return fileStoreJpaRepository.findByTenantIdAndFileStoreIdList(tenantId, fileStoreIds);
 	}
+
+	public List<String> delete(List<String> fileStoreIds, String tenantId,String module,boolean isSoftDelete) {
+		List<Artifact> artifacts = getByTenantIdAndFileStoreIdList(tenantId, fileStoreIds);
+		cloudFilesManager.deleteFiles(artifacts);
+		if (module != null) {
+			artifacts = artifacts.stream().filter(artifact -> artifact.getModule().equals(module))
+					.collect(Collectors.toList());
+		}
+		if (isSoftDelete) {
+			artifacts.forEach(artifact -> {
+				artifact.setDeleted(true);
+			});
+			fileStoreJpaRepository.saveAll(artifacts);
+		} else {
+			fileStoreJpaRepository.deleteAll(artifacts);
+		}
+		return fileStoreIds;
+
+	}
 }

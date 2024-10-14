@@ -94,6 +94,8 @@ public class Artifact extends AbstractPersistable<Long> {
 
     private Long lastModifiedTime; 
 
+    private boolean isDeleted;
+
     public FileLocation getFileLocation() {
         return new FileLocation(fileStoreId, module, tag,tenantId,fileName,fileSource);
     }
