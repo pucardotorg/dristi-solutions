@@ -29,7 +29,12 @@ public class TreasuryEnrichment {
 
         String departmentId = idgenUtil.getIdList(requestInfo,config.getEgovStateTenantId(),config.getIdName(),null,1).get(0);
 
-        String challanAmount = String.valueOf(challanData.getTotalDue());
+        String challanAmount;
+        if (config.isTest()) {
+            challanAmount = String.valueOf(4);
+        } else {
+            challanAmount = String.valueOf(challanData.getTotalDue());
+        }
         String noOfHeads = String.valueOf(1);
         List<HeadDetails> headDetailsList = new ArrayList<>();
         HeadDetails headDetails  = HeadDetails.builder()
