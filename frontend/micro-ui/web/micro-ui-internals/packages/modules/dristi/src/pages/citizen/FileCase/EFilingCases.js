@@ -55,6 +55,7 @@ import useCasePdfGeneration from "../../../hooks/dristi/useCasePdfGeneration";
 import { getSuffixByBusinessCode, getTaxPeriodByBusinessService } from "../../../Utils";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import DocViewerWrapper from "../../employee/docViewerWrapper";
+import CaseLockModal from "./CaseLockModal";
 
 const OutlinedInfoIcon = () => (
   <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: "absolute", right: -22, top: 0 }}>
@@ -142,21 +143,6 @@ const stateSla = {
 
 const dayInMillisecond = 24 * 3600 * 1000;
 
-const caseLockingMainDiv = {
-  padding: "24px",
-  display: "flex",
-  flexDirection: "column",
-  gap: "16px",
-};
-
-const caseSubmissionWarningText = {
-  fontFamily: "Roboto",
-  fontSize: "16px",
-  fontWeight: 400,
-  lineHeight: "21.6px",
-  color: "#3D3C3C",
-};
-
 function EFilingCases({ path }) {
   const [params, setParmas] = useState({});
   const { t } = useTranslation();
@@ -167,6 +153,8 @@ function EFilingCases({ path }) {
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
   const todayDate = new Date().getTime();
   const userInfo = Digit?.UserService?.getUser()?.info;
+  const roles = Digit.UserService.getUser()?.info?.roles;
+  const isAdvocateFilingCase = roles?.some((role) => role.code === "ADVOCATE_ROLE");
 
   const setFormErrors = useRef(null);
   const resetFormData = useRef(null);
@@ -192,7 +180,6 @@ function EFilingCases({ path }) {
   const [showReviewConfirmationModal, setShowReviewConfirmationModal] = useState(false);
   const [showCaseLockingModal, setShowCaseLockingModal] = useState(false);
 
-  const [caseLockedFlag, setCaseLockedFlag] = useState(false);
   const [caseResubmitSuccess, setCaseResubmitSuccess] = useState(false);
   const [prevSelected, setPrevSelected] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
@@ -1409,7 +1396,7 @@ function EFilingCases({ path }) {
     };
     return obj;
   };
-  const onSubmit = async (action) => {
+  const onSubmit = async (action, isCaseLocked = false) => {
     if (isDisableAllFieldsMode) {
       history.push(homepagePath);
     }
@@ -1556,27 +1543,31 @@ function EFilingCases({ path }) {
       return setOpenConfirmCorrectionModal(true);
     }
 
-    if (selected === "reviewCaseFile" && !showReviewConfirmationModal && isDraftInProgress) {
-      return setShowReviewConfirmationModal(true);
+    if (selected === "reviewCaseFile" && !showCaseLockingModal && isDraftInProgress) {
+      return setShowCaseLockingModal(true);
     }
 
-    if (selected === "addSignature" && (isPendingESign || isPendingReESign)) {
-      if (courtRooms?.length === 1) {
-        onSubmitCase({ court: courtRooms[0], action: CaseWorkflowAction.E_SIGN });
-        return;
-      } else {
-        setOpenConfirmCourtModal(true);
-      }
-    } else {
+    //check- include below commented code for signing process changes.
+
+    // if (selected === "addSignature" && (isPendingESign || isPendingReESign)) {
+    //   if (courtRooms?.length === 1) {
+    //     onSubmitCase({ court: courtRooms[0], action: CaseWorkflowAction.E_SIGN });
+    //     return;
+    //   } else {
+    //     setOpenConfirmCourtModal(true);
+    //   }
+    // }
+    else {
       let res;
-      if (selected === "reviewCaseFile") {
+      if (isCaseLocked) {
         setIsDisabled(true);
-        res = await refetchCasePDfGeneration();
-        if (res?.status === "error") {
-          setIsDisabled(false);
-          toast.error(t("CASE_PDF_ERROR"));
-          return;
-        }
+        //check- uncomment below code once case pdf service starts working.
+        // res = await refetchCasePDfGeneration();
+        // if (res?.status === "error") {
+        //   setIsDisabled(false);
+        //   toast.error(t("CASE_PDF_ERROR"));
+        //   return;
+        // }
       }
       updateCaseDetails({
         isCompleted: true,
@@ -1611,7 +1602,7 @@ function EFilingCases({ path }) {
             //   return;
             // }
             setPrevSelected(selected);
-            history.push(`?caseId=${caseId}&selected=${nextSelected}`);
+            if (selected !== "reviewCaseFile") history.push(`?caseId=${caseId}&selected=${nextSelected}`);
           });
         })
         .catch((error) => {
@@ -1906,7 +1897,7 @@ function EFilingCases({ path }) {
           : isCaseReAssigned
           ? t("CS_COMMONS_NEXT")
           : isDraftInProgress
-          ? t("CS_E_SIGN_CASE")
+          ? t("CS_CONFIRM_DETAILS")
           : isPendingReESign
           ? t("CS_COMMON_CONTINUE")
           : t("CS_GO_TO_HOME")
@@ -2171,9 +2162,7 @@ function EFilingCases({ path }) {
                 <FormComposerV2
                   label={actionName}
                   config={config}
-                  onSubmit={() =>
-                    onSubmit(selected === "reviewCaseFile" ? "SUBMIT_CASE" : selected === "addSignature" ? "E-SIGN" : "SAVE_DRAFT", index)
-                  }
+                  onSubmit={() => onSubmit("SAVE_DRAFT", index)}
                   onSecondayActionClick={onSaveDraft}
                   defaultValues={getDefaultValues(index)}
                   onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
@@ -2294,30 +2283,6 @@ function EFilingCases({ path }) {
               }}
             ></Modal>
           )}
-          {showReviewConfirmationModal && (
-            <Modal
-              headerBarMain={<Heading label={t("SUBMIT_CASE_CONFIRMATION")} />}
-              headerBarEnd={
-                <CloseBtn
-                  onClick={() => {
-                    setPrevSelected(selected);
-                    setShowReviewConfirmationModal(false);
-                  }}
-                />
-              }
-              actionCancelLabel={t("CS_BACK")}
-              actionSaveLabel={t("CS_PROCEED")}
-              children={<div style={{ margin: "16px 0px" }}>{t("SUBMIT_CASE_CONFIRMATION_TEXT")}</div>}
-              actionSaveOnSubmit={async () => {
-                setShowReviewConfirmationModal(false);
-                await onSubmit("SUBMIT_CASE");
-                await createPendingTask({ name: t("PENDING_E_SIGN_FOR_CASE"), status: "PENDING_E-SIGN" });
-              }}
-              actionCancelOnSubmit={async () => {
-                setShowReviewConfirmationModal(false);
-              }}
-            ></Modal>
-          )}
           {pageConfig?.addFormText && (
             <Button
               variation="secondary"
@@ -2426,49 +2391,17 @@ function EFilingCases({ path }) {
       )}
 
       {showCaseLockingModal && (
-        <Modal
-          headerBarEnd={<CloseBtn onClick={() => setShowCaseLockingModal(false)} />}
-          actionSaveLabel={t("CONFIRM_AND_SIGN")}
-          actionSaveOnSubmit={() => handleDownload(pdfDetails)}
-          actionCancelLabel={t("DOWNLOAD_CS_BACK")}
-          actionCancelOnSubmit={() => setShowCaseLockingModal(false)}
-          formId="modal-action"
-          headerBarMain={<Heading label={t("CONFIRM_CASE_DETAILS")} />}
-          className={"review-order-modal"}
-          style={{
-            border: "1px solid #007E7E",
-            backgroundColor: "white",
-            fontFamily: "Roboto",
-            fontSize: "16px",
-            fontWeight: 700,
-            lineHeight: "18.75px",
-            textAlign: "center",
-            width: "190px",
-          }}
-          textStyle={{ margin: "0px", color: "#007E7E" }}
-          popupStyles={{ maxWidth: "60%" }}
-          popUpStyleMain={{ zIndex: "1000" }}
-          isDisabled={isDisabled}
-        >
-          <div className="case-locking-main-div" style={caseLockingMainDiv}>
-            <p className="case-submission-warning" style={{ ...caseSubmissionWarningText, margin: "0px" }}>
-              {t("CASE_SUBMISSION_WARNING")}
-            </p>
-            <p className="case-submission-warning" style={{ ...caseSubmissionWarningText, margin: "0px" }}>
-              {t("CASE_SUBMISSION_PROCESS_SUBMISSION")} <span style={{ fontWeight: "700" }}>{t("CASE_SUBMISSION_PROCESS_SIGNED")}</span>{" "}
-              {t("CASE_SUBMISSION_PROCESS_MOVED")} <span style={{ fontWeight: "700" }}>{t("CASE_SUBMISSION_PROCESS_SCRUTINY")}</span>{" "}
-              {t("CASE_SUBMISSION_PROCESS_COMPLETED")}
-            </p>
-
-            <CheckBox
-              value={caseLockedFlag}
-              label={t("CASE_SUBMISSION_CONFIRMATION")}
-              wrkflwStyle={{}}
-              style={{ ...caseSubmissionWarningText, lineHeight: "18.75px", fontStyle: "italic" }}
-              onChange={() => setCaseLockedFlag(!caseLockedFlag)}
-            />
-          </div>
-        </Modal>
+        <CaseLockModal
+          t={t}
+          path={path}
+          setShowCaseLockingModal={setShowCaseLockingModal}
+          isAdvocateFilingCase={isAdvocateFilingCase}
+          onSubmit={onSubmit}
+          createPendingTask={createPendingTask}
+          setPrevSelected={setPrevSelected}
+          selected={selected}
+          caseId={caseId}
+        ></CaseLockModal>
       )}
     </div>
   );
