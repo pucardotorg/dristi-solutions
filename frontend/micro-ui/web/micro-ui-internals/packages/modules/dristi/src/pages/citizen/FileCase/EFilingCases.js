@@ -1561,13 +1561,12 @@ function EFilingCases({ path }) {
       let res;
       if (isCaseLocked) {
         setIsDisabled(true);
-        //check- uncomment below code once case pdf service starts working.
-        // res = await refetchCasePDfGeneration();
-        // if (res?.status === "error") {
-        //   setIsDisabled(false);
-        //   toast.error(t("CASE_PDF_ERROR"));
-        //   return;
-        // }
+        res = await refetchCasePDfGeneration();
+        if (res?.status === "error") {
+          setIsDisabled(false);
+          toast.error(t("CASE_PDF_ERROR"));
+          return;
+        }
       }
       updateCaseDetails({
         isCompleted: true,

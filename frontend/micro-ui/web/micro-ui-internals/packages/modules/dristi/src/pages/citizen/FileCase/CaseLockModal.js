@@ -37,17 +37,17 @@ const Heading = (props) => {
   );
 };
 
+const CloseBtn = (props) => {
+  return (
+    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
+      <CloseSvg />
+    </div>
+  );
+};
+
 function CaseLockModal({ t, path, caseId, setShowCaseLockingModal, isAdvocateFilingCase, onSubmit, createPendingTask, setPrevSelected, selected }) {
   const [submitConfirmed, setSubmitConfirmed] = useState(false);
   const history = useHistory();
-
-  const CloseBtn = (props) => {
-    return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
-        <CloseSvg />
-      </div>
-    );
-  };
 
   const handleSaveOnSubmit = async () => {
     setShowCaseLockingModal(false);
