@@ -37,7 +37,7 @@ public class EvidenceEnrichment {
 
             String tenantId = evidenceRequest.getArtifact().getCnrNumber();
 
-            List<String> evidenceNumberList = idgenUtil.getIdList(
+            List<String> artifactNumberList = idgenUtil.getIdList(
                     evidenceRequest.getRequestInfo(),
                     tenantId,
                     idName,
@@ -46,7 +46,7 @@ public class EvidenceEnrichment {
                     false
             );
 
-            evidenceRequest.getArtifact().setArtifactNumber(tenantId+"-"+evidenceNumberList.get(0));
+            evidenceRequest.getArtifact().setArtifactNumber(tenantId+"-"+artifactNumberList.get(0));
 
             AuditDetails auditDetails = AuditDetails.builder()
                     .createdBy(evidenceRequest.getRequestInfo().getUserInfo().getUuid())
