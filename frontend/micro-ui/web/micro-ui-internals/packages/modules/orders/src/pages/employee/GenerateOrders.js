@@ -1563,7 +1563,7 @@ const GenerateOrders = () => {
           summonDetails: {
             issueDate: orderData?.auditDetails?.lastModifiedTime,
             caseFilingDate: caseDetails?.filingDate,
-            docSubType: orderFormData?.partyType === "Witness" ? "WITNESS" : "ACCUSED",
+            docSubType: orderFormData?.party?.data?.partyType === "Witness" ? "WITNESS" : "ACCUSED",
           },
           respondentDetails: respondentDetails,
           witnessDetails: respondentDetails,
@@ -1597,6 +1597,7 @@ const GenerateOrders = () => {
             issueDate: orderData?.auditDetails?.lastModifiedTime,
             caseFilingDate: caseDetails?.filingDate,
             noticeType,
+            docSubType: orderFormData?.party?.data?.partyType === "Witness" ? "WITNESS" : "ACCUSED",
           },
           respondentDetails: respondentDetails,
           witnessDetails: respondentDetails,
