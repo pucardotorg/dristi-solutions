@@ -30,7 +30,7 @@ public class TaskCaseQueryBuilder {
     private static final String FROM_DOCUMENTS_TABLE = " FROM dristi_task_document doc";
     private static final String DOCUMENT_SELECT_QUERY_TASK = "SELECT doc.id as id, doc.documenttype as documenttype, doc.filestore as filestore," +
             " doc.documentuid as documentuid, doc.additionaldetails as additionaldetails, doc.task_id as task_id";
-    private static final String TOTAL_COUNT_QUERY = " SELECT COUNT(*) from task_case_results ";
+    private static final String TOTAL_COUNT_QUERY = " SELECT COUNT(*) from ({baseQuery}) AS total_count ";
     private static final String ORDERBY_CLAUSE = " ORDER BY {orderBy} {sortingOrder} ";
     private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY createdtime DESC ";
     private static final String PAGINATION_QUERY = " LIMIT ? OFFSET ? ";
@@ -62,16 +62,15 @@ public class TaskCaseQueryBuilder {
         return WITH_CLAUSE_QUERY.replace("{baseQuery}", query);
     }
 
-    public String getFinalTaskCaseSearchQuery(String query) {
-        return query + TASK_CASE_SELECT_QUERY;
+    public String getFinalTaskCaseSearchQuery() {
+        return TASK_CASE_SELECT_QUERY + ROW_NUM_WHERE_CLAUSE;
     }
     public String addApplicationStatusQuery(TaskCaseSearchCriteria searchCriteria, String query, List<Object> preparedStmtList){
         if(!ObjectUtils.isEmpty(searchCriteria.getApplicationStatus())) {
             preparedStmtList.add(searchCriteria.getApplicationStatus());
-            return query + ROW_NUM_WHERE_CLAUSE + " AND documentstatus IN ( ? )";
-        } else {
-            return query + ROW_NUM_WHERE_CLAUSE + " AND documentstatus IN ('SIGNED', 'SIGN_PENDING') ";
+            return query + " AND documentstatus IN ( ? )";
         }
+        return query;
     }
 
     public String addPaginationQuery(String query, Pagination pagination, List<Object> preparedStatementList) {
@@ -113,10 +112,8 @@ public class TaskCaseQueryBuilder {
         }
     }
 
-    public String getTotalCountQuery(String baseQuery, TaskCaseSearchCriteria criteria, List<Object> preparedStmtList) {
-        String countQuery = baseQuery + TOTAL_COUNT_QUERY;
-        countQuery = addApplicationStatusQuery(criteria, countQuery, preparedStmtList);
-        return countQuery;
+    public String getTotalCountQuery(String baseQuery) {
+        return TOTAL_COUNT_QUERY.replace("{baseQuery}", baseQuery);
     }
 
     private void getWhereFields(TaskCaseSearchCriteria taskCaseSearchCriteria, StringBuilder query, List<Object> preparedStmtList) {
