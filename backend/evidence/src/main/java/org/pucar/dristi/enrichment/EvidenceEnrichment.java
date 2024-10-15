@@ -35,7 +35,7 @@ public class EvidenceEnrichment {
             String idName = configuration.getArtifactConfig();
             String idFormat = configuration.getArtifactFormat();
 
-            String tenantId = evidenceRequest.getArtifact().getCnrNumber();
+            String tenantId = evidenceRequest.getArtifact().getFilingNumber().replace("-","");
 
             List<String> artifactNumberList = idgenUtil.getIdList(
                     evidenceRequest.getRequestInfo(),
@@ -116,7 +116,7 @@ public class EvidenceEnrichment {
                 }
             }
 
-            String tenantId = evidenceRequest.getArtifact().getCnrNumber();
+            String tenantId = evidenceRequest.getArtifact().getFilingNumber().replace("-","");
 
             List<String> evidenceNumberList = idgenUtil.getIdList(
                     evidenceRequest.getRequestInfo(),
