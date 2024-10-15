@@ -11,6 +11,7 @@ import useGetSubmissions from "./dristi/useGetSubmissions";
 import useInboxCustomHook from "./dristi/useInboxCustomHook";
 import useSearchCaseService from "./dristi/useSearchCaseService";
 import useCasePdfGeneration from "./dristi/useCasePdfGeneration";
+import useCombineMultipleFiles from "./dristi/useCombineMultipleFiles.js";
 
 import usePaymentCalculator from "./dristi/usePaymentCalculator";
 import { useToast } from "../components/Toast/useToast.js";
@@ -87,6 +88,7 @@ const dristi = {
   useInboxCustomHook,
   useSearchCaseService,
   useCasePdfGeneration,
+  useCombineMultipleFiles,
   usePaymentCalculator,
   useCreateHearings,
   useGetEvidence,

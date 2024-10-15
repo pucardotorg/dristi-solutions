@@ -1,4 +1,5 @@
 import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
+import useCombineMultipleFiles from "../../../hooks/dristi/useCombineMultipleFiles";
 import { getUserDetails } from "../../../hooks/useGetAccessToken";
 import { DRISTIService } from "../../../services";
 import { userTypeOptions } from "../registration/config";
@@ -1509,8 +1510,9 @@ export const updateCaseDetails = async ({
           }
           if (data?.data?.returnMemoFileUpload?.document) {
             documentData.returnMemoFileUpload = {};
+            const resp = await useCombineMultipleFiles(data?.data?.returnMemoFileUpload?.document, "memo.pdf");
             documentData.returnMemoFileUpload.document = await Promise.all(
-              data?.data?.returnMemoFileUpload?.document?.map(async (document, index) => {
+              resp?.map(async (document, index) => {
                 const { tempDocList: tempData, tempFile } = await documentUploadHandler(
                   document,
                   index,
