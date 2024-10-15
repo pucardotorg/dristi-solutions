@@ -994,14 +994,14 @@ export const UICustomizations = {
     additionalCustomizations: (row, key, column, value, t) => {
       switch (key) {
         case "Party Name":
-          return removeInvalidNameParts(value);
+          return removeInvalidNameParts(value) || "N.A.";
         case "Date Added":
           const date = new Date(value);
           const day = date.getDate().toString().padStart(2, "0");
           const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Month is zero-based
           const year = date.getFullYear();
           const formattedDate = `${day}-${month}-${year}`;
-          return <span>{formattedDate}</span>;
+          return <span>{formattedDate || "N.A."}</span>;
         case "Party Type":
           return partyTypes[value] ? partyTypes[value] : value;
         default:
