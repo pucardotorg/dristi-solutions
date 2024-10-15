@@ -119,10 +119,10 @@ public class CaseSummaryQueryBuilder {
     public String addPaginationQuery(String caseSummaryQuery, List<Object> preparedStmtList, @Valid Pagination pagination, List<Integer> preparedStmtArgList) {
 
         preparedStmtList.add(pagination.getLimit());
-        preparedStmtArgList.add(Types.DOUBLE);
+        preparedStmtArgList.add(Types.INTEGER);
 
         preparedStmtList.add(pagination.getOffSet());
-        preparedStmtArgList.add(Types.DOUBLE);
+        preparedStmtArgList.add(Types.INTEGER);
         return caseSummaryQuery + " LIMIT ? OFFSET ?";
     }
 
