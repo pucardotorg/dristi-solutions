@@ -1,7 +1,10 @@
 package org.pucar.dristi.repository.rowmapper;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,8 +54,10 @@ public class CaseSummaryRowMapperTest {
         when(resultSet.getString("litigant_individualid")).thenReturn("individual1");
         when(resultSet.getString("litigant_additionaldetails")).thenReturn("{\"fullName\": \"John Doe\"}");
         when(resultSet.getString("litigant_organisationid")).thenReturn("org1");
-        when(objectMapper.readValue("{\"fullName\": \"John Doe\"}", Object.class)).thenReturn(new Object());
+        ObjectNode jsonNode = new ObjectNode(JsonNodeFactory.instance);
+        jsonNode.put("fullName", "John Doe");
 
+        when(objectMapper.readTree("{\"fullName\": \"John Doe\"}")).thenReturn(jsonNode);
         // Setting up representative
         when(resultSet.getString("representative_id")).thenReturn("rep1");
         when(resultSet.getString("representative_case_id")).thenReturn("case1");
