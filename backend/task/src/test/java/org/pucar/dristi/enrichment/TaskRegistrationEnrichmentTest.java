@@ -46,6 +46,7 @@ public class TaskRegistrationEnrichmentTest {
         requestInfo = RequestInfo.builder().userInfo(userInfo).build();
         task = new Task();
         task.setTenantId("tenant-id");
+        task.setFilingNumber("KL-123");
         task.setAmount(new Amount());
         taskRequest = new TaskRequest();
         taskRequest.setRequestInfo(requestInfo);

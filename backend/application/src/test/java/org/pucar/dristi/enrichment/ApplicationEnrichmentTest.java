@@ -43,6 +43,7 @@ class ApplicationEnrichmentTest {
         RequestInfo requestInfo = RequestInfo.builder().userInfo(userInfo).build();
         Application application = Application.builder()
                 .statuteSection(new StatuteSection())
+                .filingNumber("KL-123")
                 .documents(Collections.singletonList(new Document()))
                 .build();
         applicationRequest = ApplicationRequest.builder()
