@@ -699,6 +699,8 @@ export const UICustomizations = {
         case "Status":
           //Need to change the shade as per the value
           return <CustomChip text={t(value)} shade={value === "PUBLISHED" ? "green" : "orange"} />;
+        case "Owner":
+          return removeInvalidNameParts(value);
         case "Actions":
           return (
             <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="SearchIndividualConfig" />
@@ -992,14 +994,14 @@ export const UICustomizations = {
     additionalCustomizations: (row, key, column, value, t) => {
       switch (key) {
         case "Party Name":
-          return removeInvalidNameParts(value);
+          return removeInvalidNameParts(value) || "N.A.";
         case "Date Added":
           const date = new Date(value);
           const day = date.getDate().toString().padStart(2, "0");
           const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Month is zero-based
           const year = date.getFullYear();
           const formattedDate = `${day}-${month}-${year}`;
-          return <span>{formattedDate}</span>;
+          return <span>{formattedDate || "N.A."}</span>;
         case "Party Type":
           return partyTypes[value] ? partyTypes[value] : value;
         default:
