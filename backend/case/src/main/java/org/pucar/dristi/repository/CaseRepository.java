@@ -17,8 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.pucar.dristi.config.ServiceConstants.CASE_SEARCH_QUERY_EXCEPTION;
-import static org.pucar.dristi.config.ServiceConstants.SEARCH_CASE_ERR;
+import static org.pucar.dristi.config.ServiceConstants.*;
 
 
 @Slf4j
@@ -418,28 +417,32 @@ public class CaseRepository {
 
     public List<CaseSummary> getCaseSummary(CaseSummaryRequest request) {
 
-        List<Object> preparedStmtList = new ArrayList<>();
-        List<Integer> preparedStmtArgList = new ArrayList<>();
+        try {
+            List<Object> preparedStmtList = new ArrayList<>();
+            List<Integer> preparedStmtArgList = new ArrayList<>();
 
-        String caseBaseQuery = "";
-        caseBaseQuery = caseSummaryQueryBuilder.getCaseBaseQuery(request.getCriteria(), preparedStmtList, preparedStmtArgList);
-        caseBaseQuery = caseSummaryQueryBuilder.addOrderByQuery(caseBaseQuery, request.getPagination());
-        log.info("Final case base query :: {}", caseBaseQuery);
-        if (request.getPagination() != null) {
-            Integer totalRecords = getTotalCount(caseBaseQuery, preparedStmtList);
-            request.getPagination().setTotalCount(Double.valueOf(totalRecords));
-            caseBaseQuery = caseSummaryQueryBuilder.addPaginationQuery(caseBaseQuery, preparedStmtList, request.getPagination(), preparedStmtArgList);
+            String caseBaseQuery = "";
+            caseBaseQuery = caseSummaryQueryBuilder.getCaseBaseQuery(request.getCriteria(), preparedStmtList, preparedStmtArgList);
+            caseBaseQuery = caseSummaryQueryBuilder.addOrderByQuery(caseBaseQuery, request.getPagination());
+            log.info("Final case base query :: {}", caseBaseQuery);
+            if (request.getPagination() != null) {
+                Integer totalRecords = getTotalCount(caseBaseQuery, preparedStmtList);
+                request.getPagination().setTotalCount(Double.valueOf(totalRecords));
+                caseBaseQuery = caseSummaryQueryBuilder.addPaginationQuery(caseBaseQuery, preparedStmtList, request.getPagination(), preparedStmtArgList);
+            }
+
+            String caseSummaryQuery = caseSummaryQueryBuilder.getCaseSummarySearchQuery(caseBaseQuery);
+            if (preparedStmtList.size() != preparedStmtArgList.size()) {
+                log.info("Arg size :: {}, and ArgType size :: {}", preparedStmtList.size(), preparedStmtArgList.size());
+                throw new CustomException(CASE_SUMMARY_SEARCH_QUERY_EXCEPTION, "Arg and ArgType size mismatch ");
+            }
+
+            List<CaseSummary> list = jdbcTemplate.query(caseSummaryQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), caseSummaryRowMapper);
+
+            return list;
+        } catch (Exception e) {
+            throw new CustomException(CASE_SUMMARY_SEARCH_QUERY_EXCEPTION, "Error occurred while retrieving data from the database");
         }
-
-        String caseSummaryQuery = caseSummaryQueryBuilder.getCaseSummarySearchQuery(caseBaseQuery);
-        if (preparedStmtList.size() != preparedStmtArgList.size()) {
-            log.info("Arg size :: {}, and ArgType size :: {}", preparedStmtList.size(), preparedStmtArgList.size());
-            throw new CustomException(CASE_SEARCH_QUERY_EXCEPTION, "Arg and ArgType size mismatch ");
-        }
-
-        List<CaseSummary> list = jdbcTemplate.query(caseSummaryQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), caseSummaryRowMapper);
-
-        return list;
 
 
     }
