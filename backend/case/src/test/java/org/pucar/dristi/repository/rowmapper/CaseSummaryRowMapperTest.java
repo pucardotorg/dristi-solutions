@@ -31,10 +31,6 @@ public class CaseSummaryRowMapperTest {
     @Mock
     private ResultSet resultSet;
 
-    @BeforeEach
-    public void setup() {
-    }
-
     @Test
     public void testExtractData_withValidData() throws SQLException, DataAccessException, JsonProcessingException {
         when(resultSet.next()).thenReturn(true, false);
@@ -168,5 +164,15 @@ public class CaseSummaryRowMapperTest {
         String result = caseSummaryRowMapper.getStatuteAndSectionsString(existingStatutes, "Statute1", sections);
 
         assertEquals("Statute0;Statute1 section1", result);
+    }
+
+    @Test
+    public void testGetStatuteAndSectionsString_withMultipleExistingStatutes() {
+        StringBuilder existingStatutes = new StringBuilder("Statute0;Statute1");
+        List<String> sections = List.of("section1");
+
+        String result = caseSummaryRowMapper.getStatuteAndSectionsString(existingStatutes, "Statute2", sections);
+
+        assertEquals("Statute0;Statute1;Statute2 section1", result);
     }
 }

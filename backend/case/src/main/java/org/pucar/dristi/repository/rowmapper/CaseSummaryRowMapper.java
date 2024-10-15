@@ -1,11 +1,10 @@
 package org.pucar.dristi.repository.rowmapper;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
-import org.json.JSONObject;
+import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -64,8 +63,6 @@ public class CaseSummaryRowMapper implements ResultSetExtractor<List<CaseSummary
                         .statute(rs.getString("statute_section_statutes"))
                         .build();
 
-                //todo:write logic to add statue and section to case summary
-
                 StringBuilder existingStatues = caseSummary.getStatutesAndSections() != null ? new StringBuilder(caseSummary.getStatutesAndSections()) : new StringBuilder();
                 String statuteAndSectionsString = getStatuteAndSectionsString(existingStatues, statuteSection.getStatute(), statuteSection.getSections());
                 caseSummary.setStatutesAndSections(statuteAndSectionsString);
@@ -103,29 +100,20 @@ public class CaseSummaryRowMapper implements ResultSetExtractor<List<CaseSummary
 
     //todo: this is temporary method once the db schema is updated we need to remove this table
     private String getNameForLitigant(ResultSet rs) {
-
-        String additionaldetails = null;
-
+        String additionalDetails ;
         String fullName = null;
         try {
-            additionaldetails = rs.getString("litigant_additionaldetails");
+            additionalDetails = rs.getString("litigant_additionaldetails");
 
-            if (additionaldetails != null && !additionaldetails.isEmpty()) {
-                Object details = objectMapper.readValue(additionaldetails, Object.class);
-
-                Gson gson = new Gson();
-                String jsonString = gson.toJson(details);
-                JSONObject jsonObject = new JSONObject(jsonString);
-                if (jsonObject.has("fullName")) {
-                    fullName = jsonObject.get("fullName").toString();
+            if (additionalDetails != null && !additionalDetails.isEmpty()) {
+                JsonNode jsonNode = objectMapper.readTree(additionalDetails);
+                if (jsonNode.has("fullName")) {
+                    fullName = jsonNode.get("fullName").asText();
                 }
             }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        } catch (JsonMappingException e) {
-            throw new RuntimeException(e);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+        } catch (SQLException | JsonProcessingException e) {
+            throw new CustomException("JSON_PROCESSING_EXCEPTION", "Error processing litigant additional details") {
+            };
         }
 
         return fullName;

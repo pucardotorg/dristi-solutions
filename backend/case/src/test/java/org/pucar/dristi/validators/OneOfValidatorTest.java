@@ -6,6 +6,7 @@ import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.pucar.dristi.web.models.CaseSearchCriteria;
 
+import java.util.ArrayList;
 import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -64,12 +65,12 @@ public class OneOfValidatorTest {
     @Test
     public void testIsValid_withAllFieldsEmpty() {
         CaseSearchCriteria criteria = new CaseSearchCriteria();
-        criteria.setCaseId(Collections.singletonList(""));
-        criteria.setFilingNumber(Collections.singletonList(""));
-        criteria.setCnrNumber(Collections.singletonList(""));
+        criteria.setCaseId(new ArrayList<>());
+        criteria.setFilingNumber(new ArrayList<>());
+        criteria.setCnrNumber(new ArrayList<>());
 
         boolean result = oneOfValidator.isValid(criteria, null);
-        assertTrue(result, "Validation should fail when all fields are empty.");
+        assertFalse(result, "Validation should fail when all fields are empty.");
     }
 
     @Test

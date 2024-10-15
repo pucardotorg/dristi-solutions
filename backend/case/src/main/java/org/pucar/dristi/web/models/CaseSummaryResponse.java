@@ -1,15 +1,23 @@
 package org.pucar.dristi.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.egov.common.contract.response.ResponseInfo;
 
 import java.util.List;
 
-@Data
+
+/**
+ * Represents a summary response for a case with pagination.
+ * <p>
+ * This class is used to hold the summary information of a case, including pagination details.
+ *
+ * @since 1.0
+ */
+@Getter
+@Setter
+@ToString
+@EqualsAndHashCode
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder

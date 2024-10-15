@@ -81,11 +81,11 @@ public class CaseSummaryQueryBuilder {
 
     private static final String LEFT_JOIN_QUERY =
             LEFT_JOIN + FROM_LITIGANT_TABLE + " ON uc.id = ltg.case_id " +
-            LEFT_JOIN + FROM_STATUTE_SECTION_TABLE + " ON uc.id = stse.case_id " +
-            " LEFT JOIN ( " +
-            FROM_REPRESENTATIVES_TABLE +
-            LEFT_JOIN + FROM_REPRESENTING_TABLE + " ON rep.id = rpst.representative_id " +
-            " ) ON uc.id = rep.case_id ";
+                    LEFT_JOIN + FROM_STATUTE_SECTION_TABLE + " ON uc.id = stse.case_id " +
+                    " LEFT JOIN ( " +
+                    FROM_REPRESENTATIVES_TABLE +
+                    LEFT_JOIN + FROM_REPRESENTING_TABLE + " ON rep.id = rpst.representative_id " +
+                    " ) ON uc.id = rep.case_id ";
 
 
     public void addClauseIfRequired(StringBuilder query, List<Object> preparedStmtList) {
@@ -153,6 +153,13 @@ public class CaseSummaryQueryBuilder {
 
         StringBuilder query = new StringBuilder(BASE_CASE_QUERY);
         query.append(FROM_CASES_TABLE);
+
+        if (criteria.getTenantId() != null) {
+            addClauseIfRequired(query, preparedStmtList);
+            query.append(" cases.tenantid = ? ");
+            preparedStmtList.add(criteria.getTenantId());
+            preparedStmtArgList.add(Types.VARCHAR);
+        }
 
         if (!CollectionUtils.isEmpty(criteria.getCaseId())) {
             addClauseIfRequired(query, preparedStmtList);
