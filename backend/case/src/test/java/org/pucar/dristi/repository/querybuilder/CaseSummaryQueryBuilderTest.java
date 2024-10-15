@@ -104,15 +104,15 @@ public class CaseSummaryQueryBuilderTest {
     public void testAddPaginationQuery_withValidPagination() {
         String baseQuery = "SELECT * FROM cases";
         Pagination pagination = new Pagination();
-        pagination.setLimit(10.0);
-        pagination.setOffSet((double) 0);
+        pagination.setLimit(10);
+        pagination.setOffSet(0);
 
         String result = caseSummaryQueryBuilder.addPaginationQuery(baseQuery, preparedStmtList, pagination, preparedStmtArgList);
 
         assertTrue(result.contains("LIMIT ? OFFSET ?"));
         assertEquals(2, preparedStmtList.size());
-        assertEquals(Types.DOUBLE, preparedStmtArgList.get(0));
-        assertEquals(Types.DOUBLE, preparedStmtArgList.get(1));
+        assertEquals(Types.INTEGER, preparedStmtArgList.get(0));
+        assertEquals(Types.INTEGER, preparedStmtArgList.get(1));
     }
 
     @Test
