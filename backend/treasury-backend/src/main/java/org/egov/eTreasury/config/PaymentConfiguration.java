@@ -27,12 +27,6 @@ public class PaymentConfiguration {
     @Value("${treasury-client-id}")
     private String clientId;
 
-    @Value("${treasury_from_date}")
-    private String fromDate;
-
-    @Value("${treasury_to_date}")
-    private String toDate;
-
     @Value("${treasury_head_id}")
     private String headId;
 
