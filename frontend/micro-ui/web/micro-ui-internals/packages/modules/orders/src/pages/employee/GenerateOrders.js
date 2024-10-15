@@ -1563,7 +1563,7 @@ const GenerateOrders = () => {
           summonDetails: {
             issueDate: orderData?.auditDetails?.lastModifiedTime,
             caseFilingDate: caseDetails?.filingDate,
-            docSubType: orderFormData?.partyType === "Witness" ? "WITNESS" : "ACCUSED",
+            docSubType: orderFormData?.party?.data?.partyType === "Witness" ? "WITNESS" : "ACCUSED",
           },
           respondentDetails: respondentDetails,
           witnessDetails: respondentDetails,
@@ -1597,6 +1597,7 @@ const GenerateOrders = () => {
             issueDate: orderData?.auditDetails?.lastModifiedTime,
             caseFilingDate: caseDetails?.filingDate,
             noticeType,
+            docSubType: orderFormData?.party?.data?.partyType === "Witness" ? "WITNESS" : "ACCUSED",
           },
           respondentDetails: respondentDetails,
           witnessDetails: respondentDetails,
@@ -2295,6 +2296,14 @@ const GenerateOrders = () => {
     }
   };
 
+  const handleCloseSuccessModal = () => {
+    history.push(`/${window.contextPath}/employee/dristi/home/view-case?tab=${"Orders"}&caseId=${caseDetails?.id}&filingNumber=${filingNumber}`, {
+      from: "orderSuccessModal",
+    });
+    localStorage.removeItem("fileStoreId");
+    setShowSuccessModal(false);
+  };
+
   if (!filingNumber) {
     history.push("/employee/home/home-pending-task");
   }
@@ -2402,6 +2411,7 @@ const GenerateOrders = () => {
           order={prevOrder}
           handleDownloadOrders={handleDownloadOrders}
           handleClose={handleClose}
+          handleCloseSuccessModal={handleCloseSuccessModal}
           actionSaveLabel={successModalActionSaveLabel}
         />
       )}
