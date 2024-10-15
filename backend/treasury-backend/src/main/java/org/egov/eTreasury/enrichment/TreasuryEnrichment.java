@@ -9,6 +9,8 @@ import org.egov.eTreasury.model.HeadDetails;
 import org.egov.eTreasury.util.IdgenUtil;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,9 +45,13 @@ public class TreasuryEnrichment {
                 .build();
         headDetailsList.add(headDetails);
 
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        LocalDate currentDate = LocalDate.now();
+        String formattedDate = currentDate.format(formatter);
+
         return ChallanDetails.builder()
-                .fromDate(config.getFromDate())
-                .toDate(config.getToDate())
+                .fromDate(formattedDate)
+                .toDate(formattedDate)
                 .paymentMode("E")
                 .challanAmount(challanAmount)
                 .noOfHeads(noOfHeads)
