@@ -1,7 +1,7 @@
 import { CloseSvg, Modal, CheckBox } from "@egovernments/digit-ui-react-components";
 
 import React, { useMemo, useState } from "react";
-import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { useHistory } from "react-router-dom";
 
 const caseLockingMainDiv = {
   padding: "24px",
