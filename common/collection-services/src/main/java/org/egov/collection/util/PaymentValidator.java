@@ -376,10 +376,11 @@ public class PaymentValidator {
                     "The amount to be paid is mismatching with bill for paymentDetial with bill id: " + bill.getId());
 
 
-        // If advance is not allowed bill total amount should be positive integer
+        // If advance is not allowed bill total amount should be positive value
         if(!isAdvanceAllowed && !Utils.isPositiveValue(paymentDetail.getBill().getTotalAmount()))
             errorMap.put("INVALID_BILL_AMOUNT","The bill amount of bill: "+paymentDetail.getBill().getId()+" is less than zero");
 
+        // If advance is not allowed bill total amount should be positive integer
         if(!applicationProperties.getIsFractionalPaymentAllowed() && !isAdvanceAllowed
                 && !Utils.isPositiveInteger(paymentDetail.getBill().getTotalAmount()))
             errorMap.put("INVALID_BILL_AMOUNT","The bill amount of bill: "+paymentDetail.getBill().getId()+" is fractional or less than zero");
