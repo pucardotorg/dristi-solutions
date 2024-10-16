@@ -568,6 +568,18 @@ export const pendingTaskSubmissionWithResponseActions = {
       ],
     },
   },
+  RESPOND_TO_PRODUCTION_DOCUMENTS: {
+    actorName: ["LITIGANT/ADVOCATE"],
+    actionName: "Review the submission",
+    customFunction: "handleReviewSubmission",
+    redirectDetails: {
+      url: "/submissions/submissions-create",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "applicationNumber", value: "referenceId" },
+      ],
+    },
+  },
 };
 
 export const pendingTaskSubmissionWithoutResponseActions = {

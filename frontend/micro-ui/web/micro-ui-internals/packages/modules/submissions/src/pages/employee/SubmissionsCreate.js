@@ -328,7 +328,7 @@ const SubmissionsCreate = ({ path }) => {
   const latestExtensionOrder = useMemo(() => extensionOrders?.[0], [extensionOrders]);
 
   const { entityType, taxHeadMasterCode } = useMemo(() => {
-    const isResponseRequired = orderDetails?.additionalDetails?.formdata?.responseInfo?.isResponseRequired?.code === true;
+    const isResponseRequired = orderDetails?.orderDetails.isResponseRequired?.code === true;
     if ((orderNumber || orderRefNumber) && referenceId) {
       return {
         entityType: isResponseRequired ? "application-order-submission-feedback" : "application-order-submission-default",
@@ -510,15 +510,16 @@ const SubmissionsCreate = ({ path }) => {
     stateSla = null,
     isAssignedRole = false,
     assignedRole = [],
+    assignees,
   }) => {
-    const assignes = !isAssignedRole ? [userInfo?.uuid] || [] : [];
+    const assignes = assignees ? assignees : !isAssignedRole ? [userInfo?.uuid] || [] : [];
     await submissionService.customApiService(Urls.application.pendingTask, {
       pendingTask: {
         name,
         entityType,
         referenceId: `MANUAL_${refId}`,
         status,
-        assignedTo: assignes?.map((uuid) => ({ uuid })),
+        assignedTo: assignees ? assignes : assignes?.map((uuid) => ({ uuid })),
         assignedRole: assignedRole,
         cnrNumber: caseDetails?.cnrNumber,
         filingNumber: filingNumber,
@@ -616,11 +617,10 @@ const SubmissionsCreate = ({ path }) => {
             onBehalOfName: onBehalfOfLitigent?.additionalDetails?.fullName,
             partyType: "complainant.primary",
             ...(orderDetails &&
-              orderDetails?.additionalDetails?.formdata?.responseInfo?.isResponseRequired?.code === true && {
+              orderDetails?.orderDetails.isResponseRequired?.code === true && {
                 respondingParty: orderDetails?.additionalDetails?.formdata?.responseInfo?.respondingParty,
               }),
-            isResponseRequired:
-              orderDetails && !isExtension ? orderDetails?.additionalDetails?.formdata?.responseInfo?.isResponseRequired?.code === true : true,
+            isResponseRequired: orderDetails && !isExtension ? orderDetails?.orderDetails.isResponseRequired?.code === true : true,
             ...(hearingId && { hearingId }),
             owner: caseDetails?.additionalDetails?.payerName,
           },
@@ -822,12 +822,21 @@ const SubmissionsCreate = ({ path }) => {
         const billPaymentStatus = await openPaymentPortal(bill);
         setPaymentStatus(billPaymentStatus);
         await applicationRefetch();
-        console.log(billPaymentStatus);
         if (billPaymentStatus === true) {
           setMakePaymentLabel(false);
           setShowPaymentModal(false);
           setShowSuccessModal(true);
+
           createPendingTask({ name: t("MAKE_PAYMENT_SUBMISSION"), status: "MAKE_PAYMENT_SUBMISSION", isCompleted: true });
+
+          if (applicationDetails?.additionalDetails?.isResponseRequired === true) {
+            createPendingTask({
+              name: t("RESPOND_TO_PRODUCTION_DOCUMENTS"),
+              status: "RESPOND_TO_PRODUCTION_DOCUMENTS",
+              stateSla: orderDetails?.orderDetails?.dates?.submissionDeadlineDate,
+              assignees: applicationDetails?.additionalDetails?.respondingParty?.map((item) => ({ uuid: item?.uuid[0] })),
+            });
+          }
         } else {
           setMakePaymentLabel(true);
           setShowPaymentModal(false);
