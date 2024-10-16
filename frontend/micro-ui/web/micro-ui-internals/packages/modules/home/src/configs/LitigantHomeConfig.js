@@ -102,7 +102,7 @@ export const TabLitigantSearchConfig = {
   showTab: true,
   TabSearchConfig: [
     {
-      label: "Ongoing",
+      label: "CS_ONGOING",
       type: "search",
       apiDetails: {
         serviceName: "/case/v1/_search",
@@ -128,7 +128,7 @@ export const TabLitigantSearchConfig = {
             defaultValues: defaultSearchValues,
             fields: [
               {
-                label: "Case Type",
+                label: "CASE_TYPE",
                 isMandatory: false,
                 key: "caseType",
                 type: "dropdown",
@@ -146,7 +146,7 @@ export const TabLitigantSearchConfig = {
                 },
               },
               {
-                label: "Stage",
+                label: "CS_STAGE",
                 isMandatory: false,
                 key: "stage",
                 type: "dropdown",
@@ -168,7 +168,7 @@ export const TabLitigantSearchConfig = {
                 },
               },
               {
-                label: "Case ID",
+                label: "CS_CASE_ID",
                 type: "text",
                 isMandatory: false,
                 disable: false,
@@ -208,11 +208,6 @@ export const TabLitigantSearchConfig = {
                 jsonPath: "",
                 additionalCustomization: true,
               },
-              // {
-              //   label: "Filing Date",
-              //   jsonPath: "filingDate",
-              //   additionalCustomization: true,
-              // },
             ],
 
             enableColumnSort: true,
@@ -223,7 +218,7 @@ export const TabLitigantSearchConfig = {
       },
     },
     {
-      label: "Pending Submission",
+      label: "CS_PENDING_SUBMISSION",
       type: "search",
       apiDetails: {
         serviceName: "/case/v1/_search",
@@ -255,7 +250,7 @@ export const TabLitigantSearchConfig = {
             },
             fields: [
               {
-                label: "Case ID",
+                label: "CS_CASE_ID",
                 type: "text",
                 isMandatory: false,
                 disable: false,
@@ -311,7 +306,7 @@ export const TabLitigantSearchConfig = {
       },
     },
     {
-      label: "Closed",
+      label: "CS_CLOSED",
       type: "search",
       apiDetails: {
         serviceName: "/case/v1/_search",
@@ -337,21 +332,7 @@ export const TabLitigantSearchConfig = {
             defaultValues: defaultSearchValues,
             fields: [
               {
-                label: "Case ID",
-                type: "text",
-                isMandatory: false,
-                disable: false,
-                populators: {
-                  name: "filingNumber",
-                  error: "BR_PATTERN_ERR_MSG",
-                  validation: {
-                    pattern: {},
-                    minlength: 2,
-                  },
-                },
-              },
-              {
-                label: "Case Type",
+                label: "CASE_TYPE",
                 isMandatory: false,
                 key: "caseType",
                 type: "dropdown",
@@ -369,7 +350,7 @@ export const TabLitigantSearchConfig = {
                 },
               },
               {
-                label: "Outcome",
+                label: "CS_OUTCOME",
                 isMandatory: false,
                 key: "outcome",
                 type: "dropdown",
@@ -393,7 +374,7 @@ export const TabLitigantSearchConfig = {
                 },
               },
               {
-                label: "Case ID",
+                label: "CS_CASE_ID",
                 type: "text",
                 isMandatory: false,
                 disable: false,
