@@ -74,6 +74,7 @@ public class EsignApiController {
     }
 
     @PostMapping(value = "/redirect")
+    @ResponseBody
     public void redirectRequest(@RequestParam("eSignResponse") String response, @RequestParam("espTxnID") String espId) {
 
         log.info("E-Sign Response : {}",response);

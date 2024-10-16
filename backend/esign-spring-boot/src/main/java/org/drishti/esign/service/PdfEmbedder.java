@@ -3,10 +3,13 @@ package org.drishti.esign.service;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.pdf.*;
+import com.itextpdf.text.pdf.parser.PdfContentStreamProcessor;
+import com.itextpdf.text.pdf.parser.PdfTextExtractor;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.drishti.esign.cipher.Decryption;
 import org.drishti.esign.util.ByteArrayMultipartFile;
+import org.drishti.esign.web.models.TextLocation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
@@ -16,9 +19,9 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +34,7 @@ public class PdfEmbedder {
 
     @Autowired
     Decryption decryption;
+
 
     public MultipartFile signPdfWithDSAndReturnMultipartFile(Resource resource, String response) throws IOException {
 
@@ -47,9 +51,50 @@ public class PdfEmbedder {
             appearance.setRenderingMode(PdfSignatureAppearance.RenderingMode.DESCRIPTION);
             appearance.setAcro6Layers(false);
 
-            Rectangle cropBox = reader.getCropBox(1);
-            Rectangle rectangle = new Rectangle(cropBox.getLeft(), cropBox.getBottom(), cropBox.getLeft(100), cropBox.getBottom(90));
-            appearance.setVisibleSignature(rectangle, reader.getNumberOfPages(), null);
+
+            List<TextLocation> resultTextLocation = new ArrayList<>();
+
+            TextLocationFinder finder = new TextLocationFinder("Litigant Sign");
+
+            for (int i = 1; i <= reader.getNumberOfPages(); i++) {
+                PdfContentStreamProcessor processor = new PdfContentStreamProcessor(finder);
+                PdfDictionary pageDic = reader.getPageN(i);
+                PdfDictionary resourcesDic = pageDic.getAsDict(PdfName.RESOURCES);
+
+                // Use the raw content stream instead of PdfTextExtractor
+                byte[] contentBytes = reader.getPageContent(i);
+                processor.processContent(contentBytes, resourcesDic);
+
+                if (finder.found) {
+                    // Once found, use the coordinates of the keyword
+                    float x = finder.getX();
+                    float y = finder.getY();
+
+                    // Define the signature rectangle at the coordinates
+                    PdfSignatureAppearance signatureAppearance = stamper.getSignatureAppearance();
+                    signatureAppearance.setVisibleSignature(new com.itextpdf.text.Rectangle(x, y, x + 100, y + 50), i, "SignatureField");
+
+                    break; // Exit after finding and placing the signature
+                }
+            }
+
+
+            //todo: stratergy based
+//            for (int i = 1; i <= reader.getNumberOfPages(); i++) {
+//                CustomTextLocationStrategy strategy = new CustomTextLocationStrategy("Complainant");
+//                PdfTextExtractor.getTextFromPage(reader, i, strategy);
+//                List<TextLocation> textLocations = strategy.getTextLocations();
+//                resultTextLocation.addAll(textLocations);
+//            }
+//            TextLocation textLocation = resultTextLocation.get(0);
+//            float fixedWidth = 100; // set your desired width
+//            float fixedHeight = 90; // set your desired height
+//            Rectangle cropBox = reader.getCropBox(1);
+//            Rectangle rectangle = new Rectangle(textLocation.getStartX(), textLocation.getStartY(), textLocation.getStartX()+fixedWidth, textLocation.getStartY()+fixedHeight);
+
+
+//            appearance.setVisibleSignature("Signature1");
+//            appearance.setVisibleSignature(rectangle, reader.getNumberOfPages(), null);
 
             Font font = new Font();
             font.setSize(6);
@@ -77,7 +122,6 @@ public class PdfEmbedder {
             Certificate cert = factory.generateCertificate(stream);
             List<Certificate> certificates = List.of(cert);
             appearance.setCrypto(null, certificates.toArray(new Certificate[0]), null, null);
-
 
 
             int contentEstimated = 8192;
