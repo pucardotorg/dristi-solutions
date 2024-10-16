@@ -43,7 +43,7 @@ class HearingRegistrationEnrichmentTest {
         Hearing hearing = new Hearing();
         hearing.setAuditDetails(new AuditDetails());
         hearing.setDocuments(Arrays.asList(new Document(), new Document()));
-        hearing.setFilingNumber(Collections.singletonList("tenant-123"));
+        hearing.setFilingNumber(Collections.singletonList("tenant123"));
 
         RequestInfo requestInfo = new RequestInfo();
         User userInfo = new User();

@@ -50,7 +50,7 @@ public class OrderRegistrationEnrichment {
                     });
                 }
 
-                String orderNumber = tenantId+"-"+orderRegistrationIdList.get(0);
+                String orderNumber = orderRequest.getOrder().getFilingNumber()+"-"+orderRegistrationIdList.get(0);
                 orderRequest.getOrder().setOrderNumber(orderNumber);
                 orderRequest.getOrder().setCreatedDate(System.currentTimeMillis());
             }

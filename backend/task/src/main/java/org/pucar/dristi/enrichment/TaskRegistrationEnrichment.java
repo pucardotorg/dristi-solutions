@@ -75,7 +75,7 @@ public class TaskRegistrationEnrichment {
             }
             task.getAmount().setId(UUID.randomUUID());
             task.setCreatedDate(System.currentTimeMillis());
-            task.setTaskNumber(tenantId +"-"+taskRegistrationIdList.get(0));
+            task.setTaskNumber(taskRequest.getTask().getFilingNumber() +"-"+taskRegistrationIdList.get(0));
 
         } catch (Exception e) {
             log.error("Error enriching task application :: {}", e.toString());

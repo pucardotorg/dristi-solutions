@@ -53,7 +53,7 @@ public class HearingRegistrationEnrichment {
             String idFormat = configuration.getHearingFormat();
 
             List<String> hearingIdList = idgenUtil.getIdList(hearingRequest.getRequestInfo(), tenantId, idName, idFormat, 1, false);
-            hearing.setHearingId(tenantId +"-"+hearingIdList.get(0));
+            hearing.setHearingId(hearing.getFilingNumber().get(0) +"-"+hearingIdList.get(0));
 
             if(null != hearing.getCourtCaseNumber())
                 hearing.setCaseReferenceNumber(hearing.getCourtCaseNumber());
