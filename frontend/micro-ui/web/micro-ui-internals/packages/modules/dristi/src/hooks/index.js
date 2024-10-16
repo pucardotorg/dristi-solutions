@@ -11,7 +11,6 @@ import useGetSubmissions from "./dristi/useGetSubmissions";
 import useInboxCustomHook from "./dristi/useInboxCustomHook";
 import useSearchCaseService from "./dristi/useSearchCaseService";
 import useCasePdfGeneration from "./dristi/useCasePdfGeneration";
-import useCombineMultipleFiles from "./dristi/useCombineMultipleFiles.js";
 
 import usePaymentCalculator from "./dristi/usePaymentCalculator";
 import { useToast } from "../components/Toast/useToast.js";
@@ -28,7 +27,7 @@ import useGetStatuteSection from "./dristi/useGetStatuteSection.js";
 import useDownloadCasePdf from "./dristi/useDownloadCasePdf.js";
 import useWorkflowDetails from "./dristi/useWorkflowDetails.js";
 import useSummonsPaymentBreakUp from "./dristi/useSummonsPaymentBreakUp.js";
-import { extractFeeMedium, getTaskType } from "../Utils/index.js";
+import { extractFeeMedium, getTaskType, combineMultipleFiles } from "../Utils/index.js";
 import useRepondentPincodeDetails from "./dristi/useRepondentPincodeDetails.js";
 
 export const Urls = {
@@ -77,6 +76,7 @@ export const Urls = {
     addWitness: "/case/v1/add/witness",
   },
   FileFetchById: "/filestore/v1/files/id",
+  CombineDocuments: "/egov-pdf/dristi-pdf/combine-documents",
 };
 
 const dristi = {
@@ -88,7 +88,6 @@ const dristi = {
   useInboxCustomHook,
   useSearchCaseService,
   useCasePdfGeneration,
-  useCombineMultipleFiles,
   usePaymentCalculator,
   useCreateHearings,
   useGetEvidence,
@@ -114,7 +113,7 @@ const Hooks = {
 };
 
 const Utils = {
-  dristi: { extractFeeMedium, getTaskType },
+  dristi: { extractFeeMedium, getTaskType, combineMultipleFiles },
 };
 export const CustomizedHooks = {
   Hooks,

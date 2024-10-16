@@ -1,7 +1,8 @@
 import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
-import useCombineMultipleFiles from "../../../hooks/dristi/useCombineMultipleFiles";
 import { getUserDetails } from "../../../hooks/useGetAccessToken";
 import { DRISTIService } from "../../../services";
+import { combineMultipleFiles } from "../../../Utils";
+
 import { userTypeOptions } from "../registration/config";
 import { efilingDocumentKeyAndTypeMapping } from "./Config/efilingDocumentKeyAndTypeMapping";
 
@@ -1071,6 +1072,7 @@ export const getRespondentName = (respondentDetails) => {
 };
 
 export const updateCaseDetails = async ({
+  t,
   isCompleted,
   setIsDisabled,
   tenantId,
@@ -1491,8 +1493,16 @@ export const updateCaseDetails = async ({
           }
           if (data?.data?.depositChequeFileUpload?.document) {
             documentData.depositChequeFileUpload = {};
+            let documentsArray = structuredClone(data?.data?.depositChequeFileUpload?.document || []);
+            if (documentsArray?.length > 1) {
+              try {
+                documentsArray = await combineMultipleFiles(documentsArray, `${t("CHEQUE_DEPOSIT")}.pdf`);
+              } catch (error) {
+                console.error("Error combining files: ", error);
+              }
+            }
             documentData.depositChequeFileUpload.document = await Promise.all(
-              data?.data?.depositChequeFileUpload?.document?.map(async (document, index) => {
+              documentsArray?.map(async (document, index) => {
                 const { tempDocList: tempData, tempFile } = await documentUploadHandler(
                   document,
                   index,
@@ -1510,9 +1520,16 @@ export const updateCaseDetails = async ({
           }
           if (data?.data?.returnMemoFileUpload?.document) {
             documentData.returnMemoFileUpload = {};
-            const resp = await useCombineMultipleFiles(data?.data?.returnMemoFileUpload?.document, "memo.pdf");
+            let documentsArray = structuredClone(data?.data?.returnMemoFileUpload?.document || []);
+            if (documentsArray?.length > 1) {
+              try {
+                documentsArray = await combineMultipleFiles(documentsArray, `${t("RETURN_MEMO")}.pdf`);
+              } catch (error) {
+                console.error("Error combining files: ", error);
+              }
+            }
             documentData.returnMemoFileUpload.document = await Promise.all(
-              resp?.map(async (document, index) => {
+              documentsArray?.map(async (document, index) => {
                 const { tempDocList: tempData, tempFile } = await documentUploadHandler(
                   document,
                   index,
@@ -1592,7 +1609,6 @@ export const updateCaseDetails = async ({
                   selected,
                   tenantId
                 );
-                console.log("tempDocList", tempDocList, tempFile);
                 tempDocList = [...tempDocList, ...tempData];
                 return tempFile;
               })

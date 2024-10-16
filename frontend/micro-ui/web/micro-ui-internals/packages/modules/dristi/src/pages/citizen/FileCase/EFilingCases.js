@@ -1569,6 +1569,7 @@ function EFilingCases({ path }) {
         }
       }
       updateCaseDetails({
+        t,
         isCompleted: true,
         caseDetails: isCaseReAssigned && errorCaseDetails ? errorCaseDetails : caseDetails,
         prevCaseDetails: prevCaseDetails,
@@ -1618,6 +1619,7 @@ function EFilingCases({ path }) {
   const onSaveDraft = (props) => {
     setParmas({ ...params, [pageConfig.key]: formdata });
     updateCaseDetails({
+      t,
       caseDetails,
       prevCaseDetails: prevCaseDetails,
       formdata,
@@ -1683,6 +1685,7 @@ function EFilingCases({ path }) {
           )
         : false;
     updateCaseDetails({
+      t,
       isCompleted: isDrafted,
       caseDetails: isCaseReAssigned && errorCaseDetails ? errorCaseDetails : caseDetails,
       prevCaseDetails: prevCaseDetails,
