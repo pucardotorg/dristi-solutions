@@ -1539,7 +1539,7 @@ function EFilingCases({ path }) {
     ) {
       return;
     }
-    if (selected === "reviewCaseFile" && isCaseReAssigned && !openConfirmCorrectionModal) {
+    if (selected === "reviewCaseFile" && isCaseReAssigned && !openConfirmCorrectionModal && !isCaseLocked) {
       return setOpenConfirmCorrectionModal(true);
     }
 
@@ -1565,53 +1565,58 @@ function EFilingCases({ path }) {
         if (res?.status === "error") {
           setIsDisabled(false);
           toast.error(t("CASE_PDF_ERROR"));
-          return;
+          throw new Error("CASE_PDF_ERROR");
         }
       }
-      updateCaseDetails({
-        isCompleted: true,
-        caseDetails: isCaseReAssigned && errorCaseDetails ? errorCaseDetails : caseDetails,
-        prevCaseDetails: prevCaseDetails,
-        formdata,
-        pageConfig,
-        selected,
-        setIsDisabled,
-        tenantId,
-        setFormDataValue: setFormDataValue.current,
-        action,
-        setErrorCaseDetails,
-        isCaseSignedState: isPendingESign || isPendingReESign,
-        isSaveDraftEnabled: isCaseReAssigned || isPendingReESign || isPendingESign,
-        ...(res && { fileStoreId: res?.data?.cases?.[0]?.documents?.[0]?.fileStore }),
-      })
-        .then(() => {
-          if (resetFormData.current) {
-            resetFormData.current();
-            setIsDisabled(false);
-          }
-          return refetchCaseData().then(() => {
-            const caseData =
-              caseDetails?.additionalDetails?.[nextSelected]?.formdata ||
-              caseDetails?.caseDetails?.[nextSelected]?.formdata ||
-              (nextSelected === "witnessDetails" ? [{}] : [{ isenabled: true, data: {}, displayindex: 0 }]);
-            setFormdata(caseData);
-            setIsDisabled(false);
-            // if (action === CaseWorkflowAction.EDIT_CASE) {
-            //   setCaseResubmitSuccess(true);
-            //   return;
-            // }
-            setPrevSelected(selected);
-            if (selected !== "reviewCaseFile") history.push(`?caseId=${caseId}&selected=${nextSelected}`);
-          });
-        })
-        .catch((error) => {
-          if (extractCodeFromErrorMsg(error) === 413) {
-            toast.error(t("FAILED_TO_UPLOAD_FILE"));
-          } else {
-            toast.error(t("SOMETHING_WENT_WRONG"));
-          }
-          setIsDisabled(false);
+      try {
+        // Await the result of updateCaseDetails
+        await updateCaseDetails({
+          isCompleted: true,
+          caseDetails: isCaseReAssigned && errorCaseDetails ? errorCaseDetails : caseDetails,
+          prevCaseDetails: prevCaseDetails,
+          formdata,
+          pageConfig,
+          selected,
+          setIsDisabled,
+          tenantId,
+          setFormDataValue: setFormDataValue.current,
+          action,
+          setErrorCaseDetails,
+          isCaseSignedState: isPendingESign || isPendingReESign,
+          isSaveDraftEnabled: isCaseReAssigned || isPendingReESign || isPendingESign,
+          ...(res && { fileStoreId: res?.data?.cases?.[0]?.documents?.[0]?.fileStore }),
         });
+
+        // After successful update, reset form and refetch case data
+        if (resetFormData.current) {
+          resetFormData.current();
+          setIsDisabled(false);
+        }
+
+        await refetchCaseData();
+        const caseData =
+          caseDetails?.additionalDetails?.[nextSelected]?.formdata ||
+          caseDetails?.caseDetails?.[nextSelected]?.formdata ||
+          (nextSelected === "witnessDetails" ? [{}] : [{ isenabled: true, data: {}, displayindex: 0 }]);
+
+        setFormdata(caseData);
+        setIsDisabled(false);
+        setPrevSelected(selected);
+
+        if (selected !== "reviewCaseFile") {
+          history.push(`?caseId=${caseId}&selected=${nextSelected}`);
+        }
+      } catch (error) {
+        // If any error occurs in updateCaseDetails or refetching, handle it here
+        if (extractCodeFromErrorMsg(error) === 413) {
+          toast.error(t("FAILED_TO_UPLOAD_FILE"));
+        } else {
+          toast.error(t("SOMETHING_WENT_WRONG"));
+        }
+        setIsDisabled(false);
+        console.error("An error occurred:", error);
+        throw error; // Re-throw the error to propagate it further if needed
+      }
     }
   };
 
@@ -1651,8 +1656,9 @@ function EFilingCases({ path }) {
 
   const onErrorCorrectionSubmit = async () => {
     setOpenConfirmCorrectionModal(false);
-    onSubmit(CaseWorkflowAction.EDIT_CASE);
-    await createPendingTask({ name: t("PENDING_E_SIGN_FOR_CASE"), status: "PENDING_E-SIGN" });
+    // onSubmit(CaseWorkflowAction.EDIT_CASE);
+    // await createPendingTask({ name: t("PENDING_E_SIGN_FOR_CASE"), status: "PENDING_E-SIGN" });
+    setShowCaseLockingModal(true);
   };
 
   const handlePageChange = (key, isConfirm) => {
@@ -2400,6 +2406,8 @@ function EFilingCases({ path }) {
           setPrevSelected={setPrevSelected}
           selected={selected}
           caseId={caseId}
+          caseDetails={caseDetails}
+          state={state}
         ></CaseLockModal>
       )}
     </div>
