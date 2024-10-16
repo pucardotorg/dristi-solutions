@@ -102,7 +102,7 @@ export const TabLitigantSearchConfig = {
   showTab: true,
   TabSearchConfig: [
     {
-      label: "All",
+      label: "Ongoing",
       type: "search",
       apiDetails: {
         serviceName: "/case/v1/_search",
@@ -223,7 +223,7 @@ export const TabLitigantSearchConfig = {
       },
     },
     {
-      label: "Drafts",
+      label: "Pending Submission",
       type: "search",
       apiDetails: {
         serviceName: "/case/v1/_search",
@@ -232,7 +232,7 @@ export const TabLitigantSearchConfig = {
           tenantId: "pg",
           criteria: [
             {
-              status: ["DRAFT_IN_PROGRESS"],
+              status: ["DRAFT_IN_PROGRESS", "PENDING_E-SIGN", "PENDING_E-SIGN-2"],
             },
           ],
         },
@@ -252,39 +252,20 @@ export const TabLitigantSearchConfig = {
             minReqFields: 0,
             defaultValues: {
               ...defaultSearchValues,
-              sortCaseListByDate: {
-                sortBy: "lastModifiedTime",
-                order: "asc",
-              },
             },
             fields: [
               {
-                type: "component",
-                component: "CustomSortComponent",
+                label: "Case ID",
+                type: "text",
                 isMandatory: false,
-                disable: false,
-                name: "Last Edited",
-                key: "sortCaseListByDate",
-                sortBy: "lastModifiedTime",
-                showIcon: true,
-                icon: "UpDownArrowIcon",
-                populators: {},
-              },
-              {
-                label: "Case Type",
-                isMandatory: false,
-                key: "caseType",
-                type: "dropdown",
                 disable: false,
                 populators: {
-                  name: "caseType",
-                  options: ["NIA S138"],
-                  styles: {
-                    maxWidth: "200px",
-                    minWidth: "150px",
-                  },
-                  optionsCustomStyle: {
-                    overflowX: "hidden",
+                  name: "filingNumber",
+                  error: "BR_PATTERN_ERR_MSG",
+                  style: { maxWidth: "250px", minWidth: "200px", width: "220px" },
+                  validation: {
+                    pattern: {},
+                    minlength: 2,
                   },
                 },
               },
@@ -298,14 +279,15 @@ export const TabLitigantSearchConfig = {
           uiConfig: {
             columns: [
               {
-                label: "Draft Name",
+                label: "Case Name",
                 jsonPath: "caseTitle",
                 additionalCustomization: true,
               },
-              // {
-              //   label: "Case ID",
-              //   jsonPath: "filingNumber",
-              // },
+              {
+                label: "Stage",
+                jsonPath: "status",
+                additionalCustomization: true,
+              },
               {
                 label: "Case Type",
                 jsonPath: "",
