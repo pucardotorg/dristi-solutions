@@ -408,7 +408,7 @@ public class PaymentValidator {
                     "The paymentMode: " + paymentMode + " is not allowed for the bill: " + bill.getId());
 
         // Checks if the amount paid is positive integer
-        if (!Utils.isPositiveInteger(paymentDetail.getTotalAmountPaid()))
+        if (!Utils.isPositiveValue(paymentDetail.getTotalAmountPaid()))
             errorMap.put("INVALID_PAYMENTDETAIL",
                     "The amount paid for the paymentDetail with bill number: " + paymentDetail.getBillId());
 
