@@ -88,6 +88,7 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
         if (popup.closed) {
           setPaymentLoader(false);
           const billAfterPayment = await DRISTIService.callSearchBill({}, { tenantId, consumerCode, service });
+          debugger;
           clearInterval(checkPopupClosed);
           resolve(billAfterPayment?.Bill?.[0]?.status === "PAID");
         }

@@ -190,14 +190,6 @@ const PaymentForRPADModal = ({ path }) => {
     return taskNumber ? `${taskNumber}_EPOST_COURT` : undefined;
   }, [taskNumber]);
 
-  const { openPaymentPortal, paymentLoader } = usePaymentProcess({
-    tenantId,
-    consumerCode: consumerCode,
-    service: orderType === "SUMMONS" ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE,
-    caseDetails,
-    totalAmount: "4",
-  });
-
   const { data: courtBillResponse, isLoading: isCourtBillLoading } = Digit.Hooks.dristi.useBillSearch(
     {},
     {
@@ -232,6 +224,14 @@ const PaymentForRPADModal = ({ path }) => {
   const courtFeeAmount = useMemo(() => breakupResponse?.Calculation?.[0]?.breakDown?.find((data) => data?.type === "Court Fee")?.amount, [
     breakupResponse,
   ]);
+
+  const { openPaymentPortal, paymentLoader } = usePaymentProcess({
+    tenantId,
+    consumerCode: consumerCode,
+    service: orderType === "SUMMONS" ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE,
+    caseDetails,
+    totalAmount: courtFeeAmount,
+  });
 
   const mockSubmitModalInfo = useMemo(
     () =>

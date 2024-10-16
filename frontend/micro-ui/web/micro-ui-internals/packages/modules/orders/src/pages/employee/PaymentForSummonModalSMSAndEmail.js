@@ -268,7 +268,6 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
         }
         const billPaymentStatus = await openPaymentPortal(billResponse);
         if (!billPaymentStatus) {
-          debugger;
           console.log("Payment canceled or failed", taskNumber);
           return;
         }

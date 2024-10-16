@@ -183,14 +183,6 @@ const PaymentForSummonModal = ({ path }) => {
     return taskNumber ? `${taskNumber}_POST_COURT` : undefined;
   }, [taskNumber]);
 
-  const { fetchBill, openPaymentPortal, paymentLoader } = usePaymentProcess({
-    tenantId,
-    consumerCode: consumerCode,
-    service: orderType === "SUMMONS" ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE,
-    caseDetails,
-    totalAmount: "4",
-  });
-
   const { data: courtBillResponse, isLoading: isCourtBillLoading } = Digit.Hooks.dristi.useBillSearch(
     {},
     {
@@ -236,6 +228,14 @@ const PaymentForSummonModal = ({ path }) => {
     breakupResponse,
   ]);
 
+  const { openPaymentPortal, paymentLoader } = usePaymentProcess({
+    tenantId,
+    consumerCode: consumerCode,
+    service: orderType === "SUMMONS" ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE,
+    caseDetails,
+    totalAmount: courtFeeAmount,
+  });
+
   const deliveryPartnerFeeAmount = useMemo(() => breakupResponse?.Calculation?.[0]?.breakDown?.find((data) => data?.type === "E Post")?.amount, [
     breakupResponse,
   ]);
@@ -257,7 +257,6 @@ const PaymentForSummonModal = ({ path }) => {
 
     const onPayOnline = async () => {
       try {
-        debugger;
         if (!courtBillResponse?.Bill?.length) {
           console.log("Bill not found");
           return null;
@@ -346,14 +345,9 @@ const PaymentForSummonModal = ({ path }) => {
 
     const onPayOnlineSBI = async () => {
       try {
-        const bill = await fetchBill(
-          `${taskNumber}_POST_PROCESS`,
-          tenantId,
-          orderType === "SUMMONS" ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE
-        );
         history.push(`/${window?.contextPath}/citizen/home/sbi-epost-payment`, {
           state: {
-            billData: bill,
+            billData: ePostBillResponse,
             serviceNumber: taskNumber,
             businessService: orderType === "SUMMONS" ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE,
             caseDetails: caseDetails,
@@ -410,11 +404,11 @@ const PaymentForSummonModal = ({ path }) => {
   }, [
     filteredTasks,
     courtFeeAmount,
-    deliveryPartnerFeeAmount,
     courtBillResponse,
+    deliveryPartnerFeeAmount,
+    ePostBillResponse,
     openPaymentPortal,
     tenantId,
-    ePostBillResponse?.Bill,
     mockSubmitModalInfo,
     caseDetails,
     orderData,
@@ -426,7 +420,6 @@ const PaymentForSummonModal = ({ path }) => {
     filingNumber,
     dayInMillisecond,
     todayDate,
-    fetchBill,
   ]);
 
   const infos = useMemo(() => {
