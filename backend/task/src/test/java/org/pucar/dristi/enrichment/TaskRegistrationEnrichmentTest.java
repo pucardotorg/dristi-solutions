@@ -44,7 +44,7 @@ class TaskRegistrationEnrichmentTest {
         Task task = new Task();
         task.setAmount(new Amount());
         task.setAuditDetails(new AuditDetails());
-        task.setFilingNumber("FIL123");
+        task.setFilingNumber("FIL-123");
 
         RequestInfo requestInfo = new RequestInfo();
         User userInfo = new User();
@@ -64,7 +64,7 @@ class TaskRegistrationEnrichmentTest {
         TaskRequest taskRequest = createMockTaskRequest();
         String mockTenantId = "FIL123";
         String mockTaskId = "TASK123";
-        String mockTaskNumber = mockTenantId + "-" + mockTaskId;
+        String mockTaskNumber = "FIL-123" + "-" + mockTaskId;
 
         when(configuration.getTaskConfig()).thenReturn("taskConfigValue");
         when(configuration.getTaskFormat()).thenReturn("taskFormatValue");

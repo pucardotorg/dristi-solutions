@@ -43,7 +43,7 @@ class HearingRegistrationEnrichmentTest {
         Hearing hearing = new Hearing();
         hearing.setAuditDetails(new AuditDetails());
         hearing.setDocuments(Arrays.asList(new Document(), new Document()));
-        hearing.setFilingNumber(Collections.singletonList("tenant123"));
+        hearing.setFilingNumber(Collections.singletonList("tenant-123"));
 
         RequestInfo requestInfo = new RequestInfo();
         User userInfo = new User();
@@ -63,7 +63,7 @@ class HearingRegistrationEnrichmentTest {
         HearingRequest hearingRequest = createMockHearingRequest();
         String mockTenantId = "tenant123";
         String mockHearingId = "HEARING123";
-        String mockHearingNumber = mockTenantId + "-" + mockHearingId;
+        String mockHearingNumber = "tenant-123" + "-" + mockHearingId;
 
         when(configuration.getHearingConfig()).thenReturn("hearingConfig");
         when(configuration.getHearingFormat()).thenReturn("hearingFormat");

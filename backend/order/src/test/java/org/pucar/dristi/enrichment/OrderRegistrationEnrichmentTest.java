@@ -42,7 +42,7 @@ class OrderRegistrationEnrichmentTest {
         OrderRequest orderRequest = new OrderRequest();
         Order order = new Order();
         order.setStatuteSection(new StatuteSection());
-        order.setFilingNumber("tenant123");
+        order.setFilingNumber("tenant-123");
         orderRequest.setOrder(order);
         orderRequest.setRequestInfo(new RequestInfo());
         orderRequest.getRequestInfo().setUserInfo(new User());
@@ -57,7 +57,7 @@ class OrderRegistrationEnrichmentTest {
         OrderRequest orderRequest = createMockOrderRequest();  // Ensure mock request is fully initialized
         String mockTenantId = "tenant123";
         String mockOrderId = "ORDER123";  // Mock ID to return
-        String mockOrderNumber = mockTenantId + "-" + mockOrderId;
+        String mockOrderNumber = "tenant-123" + "-" + mockOrderId;
 
         // Mock configuration and ID generation utility behavior
         when(configuration.getOrderConfig()).thenReturn("orderConfigValue");  // Mock return for getOrderConfig
