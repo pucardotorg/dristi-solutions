@@ -134,9 +134,6 @@ public class PdfServiceUtil {
             issueDate = task.getTaskDetails().getWarrantDetails().getIssueDate();
             docSubType = task.getTaskDetails().getWarrantDetails().getDocSubType();
         }
-        else if(WARRANT.equals(task.getTaskType())){
-            issueDate = task.getTaskDetails().getWarrantDetails().getIssueDate();
-        }
         String issueDateString = Optional.ofNullable(issueDate)
                 .map(this::formatDateFromMillis)
                 .orElse("");
