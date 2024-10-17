@@ -1,10 +1,7 @@
-import { Link, useHistory } from "react-router-dom";
 import React from "react";
-import _ from "lodash";
-import { Button } from "@egovernments/digit-ui-react-components";
-import OverlayDropdown from "../components/custom_dropdown";
-import { formatDateDifference } from "../../../orders/src/utils";
+import { Link } from "react-router-dom";
 import { formatDate } from "../../../cases/src/utils";
+import { formatDateDifference } from "../../../orders/src/utils";
 
 const customColumnStyle = { whiteSpace: "nowrap" };
 
@@ -14,8 +11,23 @@ const handleTaskDetails = (taskDetails) => {
     if (typeof taskDetails === "string") {
       // First, remove escape characters like backslashes if present
       const cleanedDetails = taskDetails.replace(/\\n/g, "").replace(/\\/g, "");
-      return JSON.parse(cleanedDetails);
+
+      // Try parsing the cleaned string as JSON
+      const parsed = JSON.parse(cleanedDetails);
+
+      // If the parsed result is a string, try parsing it again
+      if (typeof parsed === "string") {
+        try {
+          return JSON.parse(parsed);
+        } catch (e) {
+          return parsed;
+        }
+      }
+
+      // Return the parsed object if it's already a valid JSON object
+      return parsed;
     }
+
     // If taskDetails is not a string, return it as it is
     return taskDetails;
   } catch (error) {

@@ -62,7 +62,6 @@ const LocationComponent = ({
 
   const getFieldValue = useCallback(
     (isFirstRender, coordinates, field, defaultValue = "", location) => {
-    (isFirstRender, coordinates, field, defaultValue = "", location) => {
       const isDefaultCoordinates =
         parseFloat(coordinates?.latitude) === defaultCoordinates?.lat && parseFloat(coordinates?.longitude) === defaultCoordinates?.lng;
       if (isFirstRender && !locationFormData.hasOwnProperty("addressDetails")) return "";
