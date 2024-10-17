@@ -12,6 +12,7 @@ import { getSuffixByBusinessCode, getTaxPeriodByBusinessService } from "../../..
 import UploadSignatureModal from "../../../components/UploadSignatureModal";
 import { getAllAssignees } from "./EfilingValidationUtils";
 import { Urls } from "../../../hooks";
+import { useToast } from "../../../components/Toast/useToast";
 
 const getStyles = () => ({
   container: { display: "flex", flexDirection: "row", height: "100vh", marginBottom: "50px" },
@@ -152,6 +153,7 @@ const dayInMillisecond = 24 * 3600 * 1000;
 const ComplainantSignature = ({ path }) => {
   const { t } = useTranslation();
   const history = useHistory();
+  const toast = useToast();
   const Digit = window.Digit || {};
   const { filingNumber } = Digit.Hooks.useQueryParams();
   const todayDate = new Date().getTime();
@@ -430,66 +432,79 @@ const ComplainantSignature = ({ path }) => {
 
   const handleSubmit = async (state) => {
     setLoader(true);
+
     let calculationResponse = {};
     const assignees = getAllAssignees(caseDetails);
 
     if (isSubmit(state)) {
-      await DRISTIService.caseUpdateService(
-        {
-          cases: {
-            ...caseDetails,
-            additionalDetails: {
-              ...caseDetails?.additionalDetails,
-              signedCaseDocument: signatureDocumentId ? signatureDocumentId : DocumentFileStoreId,
+      try {
+        await DRISTIService.caseUpdateService(
+          {
+            cases: {
+              ...caseDetails,
+              additionalDetails: {
+                ...caseDetails?.additionalDetails,
+                signedCaseDocument: signatureDocumentId ? signatureDocumentId : DocumentFileStoreId,
+              },
+              workflow: {
+                ...caseDetails?.workflow,
+                action: isSelectedUploadDoc
+                  ? complainantWorkflowACTION.UPLOAD_DOCUMENT
+                  : isAdvocateFilingCase
+                  ? complainantWorkflowACTION.ADVOCATE_SUBMIT_CASE
+                  : complainantWorkflowACTION.LITIGANT_SUBMIT_CASE,
+                assignes: [],
+              },
             },
-            workflow: {
-              ...caseDetails?.workflow,
-              action: isSelectedUploadDoc
-                ? complainantWorkflowACTION.UPLOAD_DOCUMENT
-                : isAdvocateFilingCase
-                ? complainantWorkflowACTION.ADVOCATE_SUBMIT_CASE
-                : complainantWorkflowACTION.LITIGANT_SUBMIT_CASE,
-
-              assignes: [],
-            },
+            tenantId,
           },
-          tenantId,
-        },
-        tenantId
-      ).then(async (res) => {
-        await closePendingTask({
-          status: isSelectedUploadDoc
-            ? complainantWorkflowState.UPLOAD_SIGN_DOC
-            : isAdvocateFilingCase
-            ? complainantWorkflowState.PENDING_ESIGN_ADVOCATE
-            : complainantWorkflowState.PENDING_ESIGN_LITIGANT,
-        });
-        if (res?.cases?.[0]?.status === "PENDING_PAYMENT") {
-          await DRISTIService.customApiService(Urls.dristi.pendingTask, {
-            pendingTask: {
-              name: "Pending Payment",
-              entityType: "case-default",
-              referenceId: `MANUAL_${caseDetails?.filingNumber}`,
-              status: "PENDING_PAYMENT",
-              assignedTo: [...assignees?.map((uuid) => ({ uuid }))],
-              assignedRole: ["CASE_CREATOR"],
-              cnrNumber: null,
-              filingNumber: caseDetails?.filingNumber,
-              isCompleted: false,
-              stateSla: stateSla.PENDING_PAYMENT * dayInMillisecond + todayDate,
-              additionalDetails: {},
-              tenantId,
-            },
+          tenantId
+        )
+          .then(async (res) => {
+            await closePendingTask({
+              status: isSelectedUploadDoc
+                ? complainantWorkflowState.UPLOAD_SIGN_DOC
+                : isAdvocateFilingCase
+                ? complainantWorkflowState.PENDING_ESIGN_ADVOCATE
+                : complainantWorkflowState.PENDING_ESIGN_LITIGANT,
+            });
+
+            if (res?.cases?.[0]?.status === "PENDING_PAYMENT") {
+              await DRISTIService.customApiService(Urls.dristi.pendingTask, {
+                pendingTask: {
+                  name: "Pending Payment",
+                  entityType: "case-default",
+                  referenceId: `MANUAL_${caseDetails?.filingNumber}`,
+                  status: "PENDING_PAYMENT",
+                  assignedTo: [...assignees?.map((uuid) => ({ uuid }))],
+                  assignedRole: ["CASE_CREATOR"],
+                  cnrNumber: null,
+                  filingNumber: caseDetails?.filingNumber,
+                  isCompleted: false,
+                  stateSla: stateSla.PENDING_PAYMENT * dayInMillisecond + todayDate,
+                  additionalDetails: {},
+                  tenantId,
+                },
+              });
+            }
+          })
+          .catch((error) => {
+            toast.error(t("SOMETHING_WENT_WRONG"));
+            throw error;
           });
+
+        if (isScrutiny) {
+          setLoader(false);
+          history.push(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
+        } else {
+          calculationResponse = await callCreateDemandAndCalculation(caseDetails, tenantId, caseId);
+          setLoader(false);
+          history.push(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculationResponse } });
         }
-      });
-      if (isScrutiny) {
+      } catch (error) {
+        console.error("Error:", error);
+        toast.error(t("SOMETHING_WENT_WRONG"));
         setLoader(false);
-        history.push(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
-      } else {
-        calculationResponse = await callCreateDemandAndCalculation(caseDetails, tenantId, caseId);
-        setLoader(false);
-        history.push(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculationResponse } });
       }
     } else {
       await DRISTIService.caseUpdateService(
@@ -509,32 +524,38 @@ const ComplainantSignature = ({ path }) => {
           tenantId,
         },
         tenantId
-      ).then(async (res) => {
-        await closePendingTask({
-          status: complainantWorkflowState.PENDING_ESIGN_LITIGANT,
-        });
-
-        if (res?.cases?.[0]?.status === complainantWorkflowState.PENDING_ESIGN_ADVOCATE) {
-          await DRISTIService.customApiService(Urls.dristi.pendingTask, {
-            pendingTask: {
-              name: "Pending Advocate Sign",
-              entityType: "case-default",
-              referenceId: `MANUAL_${caseDetails?.filingNumber}`,
-              status: complainantWorkflowState.PENDING_ESIGN_ADVOCATE,
-              assignedTo: [{ uuid: advocateUuid }],
-              assignedRole: ["CASE_CREATOR"],
-              cnrNumber: null,
-              filingNumber: caseDetails?.filingNumber,
-              isCompleted: false,
-              stateSla: stateSla.PENDING_PAYMENT * dayInMillisecond + todayDate,
-              additionalDetails: {},
-              tenantId,
-            },
+      )
+        .then(async (res) => {
+          await closePendingTask({
+            status: complainantWorkflowState.PENDING_ESIGN_LITIGANT,
           });
-        }
-      });
-      setLoader(false);
-      history.push(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
+
+          if (res?.cases?.[0]?.status === complainantWorkflowState.PENDING_ESIGN_ADVOCATE) {
+            await DRISTIService.customApiService(Urls.dristi.pendingTask, {
+              pendingTask: {
+                name: "Pending Advocate Sign",
+                entityType: "case-default",
+                referenceId: `MANUAL_${caseDetails?.filingNumber}`,
+                status: complainantWorkflowState.PENDING_ESIGN_ADVOCATE,
+                assignedTo: [{ uuid: advocateUuid }],
+                assignedRole: ["CASE_CREATOR"],
+                cnrNumber: null,
+                filingNumber: caseDetails?.filingNumber,
+                isCompleted: false,
+                stateSla: stateSla.PENDING_PAYMENT * dayInMillisecond + todayDate,
+                additionalDetails: {},
+                tenantId,
+              },
+            });
+          }
+        })
+        .catch((error) => {
+          toast.error(t("SOMETHING_WENT_WRONG"));
+        })
+        .finally(() => {
+          setLoader(false);
+          history.push(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
+        });
     }
   };
 
@@ -570,12 +591,31 @@ const ComplainantSignature = ({ path }) => {
     return !(isLitigantEsignCompleted || isEsignSuccess);
   };
 
-  if (isLoading || Loading) {
+  if (isLoading) {
     return <Loader />;
   }
 
   return (
     <div style={styles.container}>
+      {Loading && (
+        <div
+          style={{
+            width: "100vw",
+            height: "100vh",
+            zIndex: "9999",
+            position: "fixed",
+            right: "0",
+            display: "flex",
+            top: "0",
+            background: "rgb(234 234 245 / 50%)",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          className="submit-loader"
+        >
+          <Loader />
+        </div>
+      )}
       <div style={styles.leftPanel}>
         <div style={styles.caseDetails}>
           <div style={styles.infoRow}>
