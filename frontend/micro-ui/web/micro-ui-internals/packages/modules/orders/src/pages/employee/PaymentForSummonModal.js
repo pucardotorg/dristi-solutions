@@ -85,6 +85,8 @@ const PaymentForSummonComponent = ({ infos, links, feeOptions, orderDate, paymen
               <div className="payment-action">
                 {index === 0 ? (
                   t(action?.action)
+                ) : action?.isCompleted ? (
+                  <p style={{ color: "green" }}>{t("PAYMENT_COMPLETED")}</p>
                 ) : action?.action !== "offline-process" ? (
                   <Button label={t(action.action)} onButtonClick={action.onClick} isDisabled={paymentLoader} />
                 ) : (

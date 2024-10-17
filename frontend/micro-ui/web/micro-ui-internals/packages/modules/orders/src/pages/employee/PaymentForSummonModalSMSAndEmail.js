@@ -104,7 +104,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       tenantId,
     },
     {},
-    "case-details",
+    `case-details-${filingNumber}`,
     filingNumber,
     Boolean(filingNumber)
   );
@@ -220,8 +220,8 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       ],
     },
     {},
-    `breakup-response-${summonsPincode}${channelId}${taskNumber}`,
-    Boolean(filteredTasks && channelId && orderType && taskNumber)
+    `breakup-response-${summonsPincode}${channelId}${taskNumber}${businessService}`,
+    Boolean(filteredTasks && channelId && orderType && taskNumber && businessService)
   );
 
   const courtFeeAmount = useMemo(() => breakupResponse?.Calculation?.[0]?.breakDown.find((data) => data?.type === "Court Fee")?.amount, [
@@ -255,7 +255,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       consumerCode: `${taskNumber}_${suffix}`,
       service: businessService,
     },
-    "billResponse",
+    `billResponse-${businessService}${taskNumber}`,
     Boolean(taskNumber && businessService)
   );
 
