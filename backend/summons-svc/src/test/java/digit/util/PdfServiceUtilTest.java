@@ -79,6 +79,7 @@ class PdfServiceUtilTest {
         when(task.getTaskDetails().getNoticeDetails().getDocSubType()).thenReturn("ACCUSED");
         when(task.getTaskDetails().getSummonDetails().getDocSubType()).thenReturn("ACCUSED");
         when(task.getTaskDetails().getWarrantDetails().getDocSubType()).thenReturn("ACCUSED");
+
         ByteArrayResource result = pdfServiceUtil.generatePdfFromPdfService(taskRequest, tenantId, pdfTemplateKey, false);
 
         assertNotNull(result);
