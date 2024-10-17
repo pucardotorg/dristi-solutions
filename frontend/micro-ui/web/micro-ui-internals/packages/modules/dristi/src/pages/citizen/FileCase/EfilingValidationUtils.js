@@ -1077,17 +1077,43 @@ export const updateCaseDetails = async ({
   isSaveDraftEnabled = false,
   isCaseSignedState = false,
   setErrorCaseDetails = () => {},
+  multiUploadList,
 }) => {
   const data = {};
   setIsDisabled(true);
   let tempDocList = [];
   const individualId = await fetchBasicUserInfo(prevCaseDetails, tenantId);
+  let updatedFormData = structuredClone(formdata);
+  async function processFormData() {
+    try {
+      const promises = updatedFormData.map(async (formItem, index) => {
+        if (formItem?.isenabled) {
+          const subPromises = multiUploadList.map(async (obj) => {
+            const { key, fieldType } = obj;
+            if (formItem?.data?.[key]?.[fieldType]?.length > 1) {
+              let docData = structuredClone(formItem?.data?.[key]?.[fieldType]);
+              // Combine multiple files and store the result in formItem
+              const combinedDoc = await combineMultipleFiles(docData, `${t("COMBINED_DOC")}.pdf`);
+              updatedFormData[index].data[key][fieldType] = combinedDoc; // Update the form data with the combined document
+            }
+          });
+          await Promise.all(subPromises);
+        }
+      });
+      await Promise.all(promises);
+    } catch (error) {
+      console.error("Error processing form data: ", error);
+      throw error;
+    }
+  }
+  await processFormData();
+
   if (selected === "complainantDetails") {
     let litigants = [];
     const complainantVerification = {};
     if (isCompleted === true) {
       litigants = await Promise.all(
-        formdata
+        updatedFormData
           .filter((item) => item.isenabled)
           .map(async (data, index) => {
             if (data?.data?.complainantVerification?.individualDetails) {
@@ -1253,7 +1279,7 @@ export const updateCaseDetails = async ({
     }
 
     const newFormData = await Promise.all(
-      formdata
+      updatedFormData
         .filter((item) => item.isenabled)
         .map(async (data, index) => {
           let documentData = {
@@ -1301,6 +1327,7 @@ export const updateCaseDetails = async ({
                 }
               })
             );
+            setFormDataValue("companyDetailsUpload", documentData?.companyDetailsUpload);
           }
           return {
             ...data,
@@ -1344,7 +1371,7 @@ export const updateCaseDetails = async ({
   }
   if (selected === "respondentDetails") {
     const newFormData = await Promise.all(
-      formdata
+      updatedFormData
         .filter((item) => item.isenabled)
         .map(async (data) => {
           const documentData = {
@@ -1379,6 +1406,7 @@ export const updateCaseDetails = async ({
                 }
               })
             );
+            setFormDataValue("inquiryAffidavitFileUpload", documentData?.inquiryAffidavitFileUpload);
           }
           if (
             data?.data?.companyDetailsUpload?.document &&
@@ -1419,6 +1447,7 @@ export const updateCaseDetails = async ({
                 }
               })
             );
+            setFormDataValue("companyDetailsUpload", documentData?.companyDetailsUpload);
           }
           return {
             ...data,
@@ -1453,8 +1482,9 @@ export const updateCaseDetails = async ({
       scrutinyHeader: "CS_COMPLAINANT_HAVE_CONFIRMED",
       data: ["CS_CHEQUE_RETURNED_INSUFFICIENT_FUND"],
     };
+
     const newFormData = await Promise.all(
-      formdata
+      updatedFormData
         .filter((item) => item.isenabled)
         .map(async (data) => {
           const documentData = {
@@ -1581,7 +1611,7 @@ export const updateCaseDetails = async ({
   }
   if (selected === "debtLiabilityDetails") {
     const newFormData = await Promise.all(
-      formdata
+      updatedFormData
         .filter((item) => item.isenabled)
         .map(async (data) => {
           const debtDocumentData = { debtLiabilityFileUpload: null };
@@ -1626,7 +1656,7 @@ export const updateCaseDetails = async ({
     };
   }
   if (selected === "witnessDetails") {
-    const newFormDataCopy = structuredClone(formdata.filter((item) => item.isenabled));
+    const newFormDataCopy = structuredClone(updatedFormData.filter((item) => item.isenabled));
     for (let i = 0; i < newFormDataCopy.length; i++) {
       const obj = newFormDataCopy[i];
       if (obj?.data?.phonenumbers) {
@@ -1646,7 +1676,7 @@ export const updateCaseDetails = async ({
   }
   if (selected === "demandNoticeDetails") {
     const newFormData = await Promise.all(
-      formdata
+      updatedFormData
         .filter((item) => item.isenabled)
         .map(async (data) => {
           const demandNoticeDocumentData = {
@@ -1701,7 +1731,7 @@ export const updateCaseDetails = async ({
   }
   if (selected === "delayApplications") {
     const newFormData = await Promise.all(
-      formdata
+      updatedFormData
         .filter((item) => item.isenabled)
         .map(async (data) => {
           const condonationDocumentData = { condonationFileUpload: null };
@@ -1740,7 +1770,7 @@ export const updateCaseDetails = async ({
   }
   if (selected === "prayerSwornStatement") {
     const newFormData = await Promise.all(
-      formdata
+      updatedFormData
         .filter((item) => item.isenabled)
         .map(async (data) => {
           const documentData = { SelectUploadDocWithName: null, swornStatement: null };
@@ -1839,7 +1869,7 @@ export const updateCaseDetails = async ({
   if (selected === "advocateDetails") {
     const advocateDetails = {};
     const newFormData = await Promise.all(
-      formdata
+      updatedFormData
         .filter((item) => item.isenabled)
         .map(async (data) => {
           const vakalatnamaDocumentData = { vakalatnamaFileUpload: null };
@@ -1867,6 +1897,7 @@ export const updateCaseDetails = async ({
                 }
               })
             );
+            setFormDataValue("vakalatnamaFileUpload", vakalatnamaDocumentData?.vakalatnamaFileUpload);
           }
           const advocateDetail = await DRISTIService.searchAdvocateClerk("/advocate/v1/_search", {
             criteria: [
@@ -1901,8 +1932,8 @@ export const updateCaseDetails = async ({
         })
     );
     let representatives = [];
-    if (formdata?.filter((item) => item.isenabled).some((data) => data?.data?.isAdvocateRepresenting?.code === "YES")) {
-      representatives = formdata
+    if (updatedFormData?.filter((item) => item.isenabled).some((data) => data?.data?.isAdvocateRepresenting?.code === "YES")) {
+      representatives = updatedFormData
         .filter((item) => item.isenabled)
         .map((data, index) => {
           return {
@@ -1949,7 +1980,7 @@ export const updateCaseDetails = async ({
     data.additionalDetails = {
       ...caseDetails.additionalDetails,
       reviewCaseFile: {
-        formdata: formdata,
+        formdata: updatedFormData,
         isCompleted: isCompleted === "PAGE_CHANGE" ? caseDetails.caseDetails?.[selected]?.isCompleted : isCompleted,
       },
       ...(fileStoreId && { signedCaseDocument: fileStoreId }),

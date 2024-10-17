@@ -581,7 +581,19 @@ function EFilingCases({ path }) {
   const formConfig = useMemo(() => {
     return pageConfig?.formconfig;
   }, [pageConfig?.formconfig]);
-
+  const multiUploadList = useMemo(
+    () =>
+      formConfig.flatMap((config) =>
+        config.body
+          .filter((item) => ["SelectCustomDragDrop"].includes(item.component))
+          .map((item) => {
+            const { key } = item;
+            const fieldType = item.populators.inputs[0]?.name;
+            return { key, fieldType };
+          })
+      ),
+    [formConfig]
+  );
   if (!getAllKeys.includes(selected) || !formConfig) {
     setPrevSelected(selected);
     history.push(`?caseId=${caseId}&selected=${getAllKeys[0]}`);
@@ -1584,6 +1596,7 @@ function EFilingCases({ path }) {
         isCaseSignedState: isPendingESign || isPendingReESign,
         isSaveDraftEnabled: isCaseReAssigned || isPendingReESign || isPendingESign,
         ...(res && { fileStoreId: res?.data?.cases?.[0]?.documents?.[0]?.fileStore }),
+        multiUploadList,
       })
         .then(() => {
           if (resetFormData.current) {
@@ -1629,6 +1642,7 @@ function EFilingCases({ path }) {
       setIsDisabled,
       tenantId,
       setErrorCaseDetails,
+      multiUploadList,
     })
       .then(() => {
         refetchCaseData().then(() => {
@@ -1697,6 +1711,7 @@ function EFilingCases({ path }) {
       tenantId,
       setErrorCaseDetails,
       isSaveDraftEnabled: isCaseReAssigned || isPendingReESign || isPendingESign,
+      multiUploadList,
     })
       .then(() => {
         if (!isCaseReAssigned) {
