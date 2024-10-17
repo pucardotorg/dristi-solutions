@@ -553,12 +553,13 @@ const ComplainantSignature = ({ path }) => {
             });
           }
         })
-        .catch((error) => {
-          toast.error(t("SOMETHING_WENT_WRONG"));
-        })
-        .finally(() => {
+        .then(() => {
           setLoader(false);
           history.push(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
+        })
+        .catch((error) => {
+          setLoader(false);
+          toast.error(t("SOMETHING_WENT_WRONG"));
         });
     }
   };
