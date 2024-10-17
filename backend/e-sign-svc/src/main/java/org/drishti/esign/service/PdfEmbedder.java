@@ -3,10 +3,13 @@ package org.drishti.esign.service;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.pdf.*;
+import com.itextpdf.text.pdf.parser.PdfContentStreamProcessor;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.drishti.esign.cipher.Decryption;
 import org.drishti.esign.util.ByteArrayMultipartFile;
+import org.drishti.esign.util.TextLocationFinder;
+import org.drishti.esign.web.models.Coordinate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
@@ -16,7 +19,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.util.Calendar;
@@ -32,7 +34,7 @@ public class PdfEmbedder {
     @Autowired
     Decryption decryption;
 
-    public MultipartFile signPdfWithDSAndReturnMultipartFile(Resource resource, String response) throws IOException {
+    public MultipartFile signPdfWithDSAndReturnMultipartFile(Resource resource, String response ,String signaturePlaceHolder) throws IOException {
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
@@ -47,8 +49,8 @@ public class PdfEmbedder {
             appearance.setRenderingMode(PdfSignatureAppearance.RenderingMode.DESCRIPTION);
             appearance.setAcro6Layers(false);
 
-            Rectangle cropBox = reader.getCropBox(1);
-            Rectangle rectangle = new Rectangle(cropBox.getLeft(), cropBox.getBottom(), cropBox.getLeft(100), cropBox.getBottom(90));
+            Coordinate locationToSign = findLocationToSign(reader, signaturePlaceHolder);
+            Rectangle rectangle = new Rectangle(locationToSign.getX(), locationToSign.getY(), locationToSign.getX()+(100), locationToSign.getY()+(90));
             appearance.setVisibleSignature(rectangle, reader.getNumberOfPages(), null);
 
             Font font = new Font();
@@ -77,7 +79,6 @@ public class PdfEmbedder {
             Certificate cert = factory.generateCertificate(stream);
             List<Certificate> certificates = List.of(cert);
             appearance.setCrypto(null, certificates.toArray(new Certificate[0]), null, null);
-
 
 
             int contentEstimated = 8192;
@@ -112,6 +113,37 @@ public class PdfEmbedder {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+
+    private Coordinate findLocationToSign(PdfReader reader, String signaturePlace) {
+        TextLocationFinder finder = new TextLocationFinder(signaturePlace);
+
+        try {
+            for (int i = 1; i <= reader.getNumberOfPages(); i++) {
+                PdfContentStreamProcessor processor = new PdfContentStreamProcessor(finder);
+                PdfDictionary pageDic = reader.getPageN(i);
+                PdfDictionary resourcesDic = pageDic.getAsDict(PdfName.RESOURCES);
+
+                // Use the raw content stream instead of PdfTextExtractor
+                byte[] contentBytes = reader.getPageContent(i);
+                processor.processContent(contentBytes, resourcesDic);
+
+                if (finder.found) {
+                    // Once found, use the coordinates of the keyword
+                    float x = finder.getX();
+                    float y = finder.getY();
+
+                    return Coordinate.builder().x(x).y(y).found(true).pageNumber(i).build();
+
+                }
+            }
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        Rectangle cropBox = reader.getCropBox(1);
+        return Coordinate.builder().x(cropBox.getLeft()).y(cropBox.getBottom()).found(false).pageNumber(reader.getNumberOfPages()).build();
     }
 }
 

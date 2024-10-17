@@ -25,10 +25,16 @@ public class ESignParameter {
     @JsonProperty("fileStoreId")
     private String fileStoreId;
 
+    @JsonProperty("signedFileStoreId")
+    private String signedFileStoreId;
+
     @JsonProperty("tenantId")
     private String tenantId;
 
     @JsonProperty("pageModule")
     private String pageModule;
+
+    @JsonProperty("signPlaceHolder")
+    private String signPlaceHolder;
 
 }
