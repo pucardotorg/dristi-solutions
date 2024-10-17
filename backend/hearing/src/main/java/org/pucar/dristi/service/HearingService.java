@@ -169,7 +169,12 @@ public class HearingService {
                 existingHearing.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
                 existingHearing.getAuditDetails().setLastModifiedBy(body.getRequestInfo().getUserInfo().getUuid());
                 hearing.setAuditDetails(existingHearing.getAuditDetails());
-                producer.push(config.getStartEndTimeUpdateTopic(), hearing);
+
+                HearingRequest hearingRequest = new HearingRequest();
+                hearingRequest.setHearing(hearing);
+                hearingRequest.setRequestInfo(body.getRequestInfo());
+
+                producer.push(config.getStartEndTimeUpdateTopic(), hearingRequest);
             }
 
         } catch (CustomException e) {

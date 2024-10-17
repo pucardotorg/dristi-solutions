@@ -142,7 +142,12 @@ public class ApplicationService {
             AuditDetails applicationAuditDetails = applicationToUpdate.getAuditDetails();
             applicationAuditDetails.setLastModifiedBy(auditDetails.getLastModifiedBy());
             applicationAuditDetails.setLastModifiedTime(auditDetails.getLastModifiedTime());
-            producer.push(config.getApplicationUpdateCommentsTopic(), applicationToUpdate);
+
+            ApplicationRequest applicationRequest = new ApplicationRequest();
+            applicationRequest.setApplication(applicationToUpdate);
+            applicationRequest.setRequestInfo(applicationAddCommentRequest.getRequestInfo());
+
+            producer.push(config.getApplicationUpdateCommentsTopic(), applicationRequest);
         }
         catch (CustomException e){
             log.error("Error while adding comments {}", e.toString());
