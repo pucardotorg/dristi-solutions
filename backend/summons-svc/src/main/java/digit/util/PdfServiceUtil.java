@@ -134,6 +134,9 @@ public class PdfServiceUtil {
             issueDate = task.getTaskDetails().getWarrantDetails().getIssueDate();
             docSubType = task.getTaskDetails().getWarrantDetails().getDocSubType();
         }
+        else if(WARRANT.equals(task.getTaskType())){
+            issueDate = task.getTaskDetails().getWarrantDetails().getIssueDate();
+        }
         String issueDateString = Optional.ofNullable(issueDate)
                 .map(this::formatDateFromMillis)
                 .orElse("");
@@ -155,6 +158,7 @@ public class PdfServiceUtil {
                 .orElse("");
         String respondentName = docSubType.equals(WITNESS) ? task.getTaskDetails().getWitnessDetails().getName() : task.getTaskDetails().getRespondentDetails().getName();
         String respondentAddress = docSubType.equals(WITNESS) ? task.getTaskDetails().getWitnessDetails().getAddress().toString() : task.getTaskDetails().getRespondentDetails().getAddress().toString();
+
         return SummonsPdf.builder()
                 .tenantId(task.getTenantId())
                 .cnrNumber(task.getCnrNumber())
