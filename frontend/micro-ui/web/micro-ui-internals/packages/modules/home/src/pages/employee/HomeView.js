@@ -178,7 +178,7 @@ const HomeView = () => {
           const totalCount = response?.criteria?.[0]?.pagination?.totalCount;
           return {
             key: index,
-            label: totalCount ? `${configItem.label} (${totalCount})` : `${configItem.label} (0)`,
+            label: totalCount ? `${t(configItem.label)} (${totalCount})` : `${t(configItem.label)} (0)`,
             active: index === 0 ? true : false,
           };
         }) || []
@@ -263,7 +263,9 @@ const HomeView = () => {
       case "PENDING_REGISTRATION":
         return userType === "employee" ? `/${contextPath}/${userType}/dristi/admission?${params}` : `${baseUrl}?${params}&tab=Complaint`;
       case "PENDING_E-SIGN":
-        return `/${contextPath}/${userType}/dristi/home/file-case/case?caseId=${caseId}&selected=addSignature`;
+        return `/${contextPath}/${userType}/dristi/home/file-case/sign-complaint?caseId=${caseId}`;
+      case "PENDING_E-SIGN-2":
+        return `/${contextPath}/${userType}/dristi/home/file-case/sign-complaint?caseId=${caseId}`;
       case "PENDING_RE_E-SIGN":
         return `/${contextPath}/${userType}/dristi/home/file-case/case?caseId=${caseId}&selected=addSignature`;
       default:
@@ -296,6 +298,7 @@ const HomeView = () => {
         "UNDER_SCRUTINY",
         "PENDING_ADMISSION",
         "PENDING_E-SIGN",
+        "PENDING_E-SIGN-2",
         "PENDING_RE_E-SIGN",
         "PENDING_ADMISSION_HEARING",
         "PENDING_NOTICE",
