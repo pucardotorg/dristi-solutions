@@ -173,5 +173,7 @@ public class StorageService {
 				+ "/" + calendar.get(Calendar.DATE) + "/";
 	}
 
-	
+	public List<String> delete(List<String> fileStoreIds, String tenantId,String module,boolean isSoftDelete) {
+		return artifactRepository.delete(fileStoreIds, tenantId,module,isSoftDelete);
+	}
 }
