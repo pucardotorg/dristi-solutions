@@ -212,4 +212,7 @@ public class Configuration {
 
     @Value("${judge.designation}")
     private String judgeDesignation;
+
+    @Value("${state.level.tenant.id}")
+    private String stateLevelTenantId;
 }

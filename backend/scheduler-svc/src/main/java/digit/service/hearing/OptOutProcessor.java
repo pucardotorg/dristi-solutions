@@ -6,10 +6,12 @@ import digit.kafka.producer.Producer;
 import digit.repository.ReScheduleRequestRepository;
 import digit.service.HearingService;
 import digit.service.RescheduleRequestOptOutService;
+import digit.service.UserService;
 import digit.util.PendingTaskUtil;
 import digit.web.models.*;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -29,10 +31,10 @@ public class OptOutProcessor {
     private final HearingService hearingService;
     private final RescheduleRequestOptOutService optOutService;
     private final PendingTaskUtil pendingTaskUtil;
-
+    private final UserService userService;
 
     @Autowired
-    public OptOutProcessor(Producer producer, ReScheduleRequestRepository repository, Configuration configuration, ObjectMapper mapper, HearingService hearingService, RescheduleRequestOptOutService optOutService, PendingTaskUtil pendingTaskUtil) {
+    public OptOutProcessor(Producer producer, ReScheduleRequestRepository repository, Configuration configuration, ObjectMapper mapper, HearingService hearingService, RescheduleRequestOptOutService optOutService, PendingTaskUtil pendingTaskUtil, UserService userService) {
         this.producer = producer;
         this.repository = repository;
         this.configuration = configuration;
@@ -40,6 +42,7 @@ public class OptOutProcessor {
         this.hearingService = hearingService;
         this.optOutService = optOutService;
         this.pendingTaskUtil = pendingTaskUtil;
+        this.userService = userService;
     }
 
 
@@ -77,7 +80,10 @@ public class OptOutProcessor {
                 reScheduleHearing.setStatus(ACTIVE);
             }
 
-            producer.push(configuration.getUpdateRescheduleRequestTopic(), reScheduleRequest);
+            RequestInfo requestInfo = createInternalRequestInfo();
+            ReScheduleHearingRequest reScheduleHearingRequest = ReScheduleHearingRequest.builder().requestInfo(requestInfo)
+                    .reScheduleHearing(reScheduleRequest).build();
+            producer.push(configuration.getUpdateRescheduleRequestTopic(), reScheduleHearingRequest);
 
             log.info("operation = checkAndScheduleHearingForOptOut, result = SUCCESS");
 
@@ -134,11 +140,21 @@ public class OptOutProcessor {
                     newHearings.add(scheduleHearing);
                 }
             }
-            producer.push(configuration.getScheduleHearingUpdateTopic(),Collections.singletonList(newHearings) );
+
+            RequestInfo requestInfo = createInternalRequestInfo();
+            ScheduleHearingRequest scheduleHearingRequest = ScheduleHearingRequest.builder().requestInfo(requestInfo)
+                    .hearing(newHearings).build();
+            producer.push(configuration.getScheduleHearingUpdateTopic(), scheduleHearingRequest);
             log.info("operation = unblockJudgeCalendarForSuggestedDays, result = SUCCESS");
         } catch (Exception e) {
             log.error("Error unblocking calendar: {}", e.getMessage());
             log.info("operation = unblockJudgeCalendarForSuggestedDays, result = FAILURE, message = {}", e.getMessage());
         }
+    }
+
+    private RequestInfo createInternalRequestInfo() {
+        User userInfo = new User();
+        userInfo.setUuid(userService.internalMicroserviceRoleUuid);
+        return RequestInfo.builder().userInfo(userInfo).build();
     }
 }
