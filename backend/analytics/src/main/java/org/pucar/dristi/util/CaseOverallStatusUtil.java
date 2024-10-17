@@ -47,6 +47,8 @@ public class CaseOverallStatusUtil {
 			request.put("RequestInfo", requestInfo);
 			caseOverallStatusTypeList = mdmsDataConfig.getCaseOverallStatusTypeMap().get(entityType);
 			if(config.getCaseBusinessServiceList().contains(entityType)){
+				//Due to two actions with same name case stage is not updating correctly. So added check for status along with actions
+				//Currently only implemented this logic for case, might have to for other modules in case of similar issue
 				return processCaseOverallStatus(request, referenceId, status, action, tenantId);
 			} else if (config.getHearingBusinessServiceList().contains(entityType)) {
 				return processHearingCaseOverallStatus(request, referenceId, action, tenantId);
