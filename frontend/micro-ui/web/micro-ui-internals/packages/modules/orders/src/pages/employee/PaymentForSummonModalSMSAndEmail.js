@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, {useCallback, useMemo, useState } from "react";
 import { Modal, Button, CardText, RadioButtons, CardLabel, LabelFieldPair } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
@@ -165,12 +165,13 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
 
   const filteredTasks = useMemo(() => tasksData?.list, [tasksData]);
 
-  const { data: orderData, isloading: isOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
+  const { data: orderData, isloading: isOrdersLoading,refetch : refetchOrderData } = Digit.Hooks.orders.useSearchOrdersService(
     { tenantId, criteria: { id: filteredTasks?.[0]?.orderId } },
     { tenantId },
     filteredTasks?.[0]?.orderId,
     Boolean(filteredTasks?.[0]?.orderId)
   );
+  useEffect(()=>refetchOrderData(),[filteredTasks] );
 
   const summonsPincode = useMemo(() => filteredTasks?.[0]?.taskDetails?.respondentDetails?.address?.pincode, [filteredTasks]);
   const channelId = useMemo(() => extractFeeMedium(filteredTasks?.[0]?.taskDetails?.deliveryChannels?.channelName || ""), [filteredTasks]);
@@ -267,9 +268,14 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     Boolean(tasksData)
   );
 
-  useEffect(() => {
+  const memoizedRefetchBreakupResponse = useCallback(() => {
     refetchBreakupResponse();
-  }, [businessService, channelId, filteredTasks]);                    
+  }, [businessService, channelId]);
+  
+  useEffect(() => {
+    memoizedRefetchBreakupResponse();
+  }, [memoizedRefetchBreakupResponse]);
+                  
 
   const onPayOnline = async () => {
     // console.log("clikc");
