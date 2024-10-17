@@ -62,14 +62,18 @@ function CaseLockModal({
   const [submitConfirmed, setSubmitConfirmed] = useState(false);
   const history = useHistory();
 
+  const filingNumber = useMemo(() => {
+    return caseDetails?.filingNumber;
+  }, [caseDetails]);
+
   const handleSaveOnSubmit = async () => {
     setShowCaseLockingModal(false);
 
     if (state === CaseWorkflowState.CASE_REASSIGNED) {
       try {
         await onSubmit("EDIT_CASE", true);
-        // await createPendingTask({ name: t("PENDING_RE_E_SIGN_FOR_CASE"), status: "PENDING_RE_E-SIGN" }); // check status
-        // history.push(`${path}/sign-complaint?caseId=${caseId}`);
+        await createPendingTask({ name: t("PENDING_RE_E_SIGN_FOR_CASE"), status: "PENDING_RE_E-SIGN" }); // check status
+        history.push(`${path}/sign-complaint?filingNumber=${filingNumber}`);
       } catch (error) {
         console.error("An error occurred", error);
       }
@@ -77,7 +81,7 @@ function CaseLockModal({
       try {
         await onSubmit("SUBMIT_CASE", true);
         await createPendingTask({ name: t("PENDING_E_SIGN_FOR_CASE"), status: "PENDING_E-SIGN" }); // check status
-        history.push(`${path}/sign-complaint?caseId=${caseId}`);
+        history.push(`${path}/sign-complaint?filingNumber=${filingNumber}`);
       } catch (error) {
         console.error("An error occurred", error);
       }
@@ -91,7 +95,7 @@ function CaseLockModal({
         try {
           await onSubmit("EDIT_CASE_ADVOCATE", true);
           await createPendingTask({ name: t("PENDING_RE_UPLOAD_SIGNATURE_FOR_CASE"), status: "PENDING_RE_SIGN" }); // check status
-          history.push(`${path}/sign-complaint?caseId=${caseId}`);
+          history.push(`${path}/sign-complaint?filingNumber=${filingNumber}`);
         } catch (error) {
           console.error("An error occurred", error);
         }
@@ -101,7 +105,7 @@ function CaseLockModal({
         try {
           await onSubmit("SUBMIT_CASE_ADVOCATE", true);
           await createPendingTask({ name: t("PENDING_UPLOAD_SIGNATURE_FOR_CASE"), status: "PENDING_SIGN" }); // check status
-          history.push(`${path}/sign-complaint?caseId=${caseId}`);
+          history.push(`${path}/sign-complaint?filingNumber=${filingNumber}`);
         } catch (error) {
           console.error("An error occurred", error);
         }

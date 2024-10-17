@@ -349,6 +349,13 @@ function EFilingCases({ path }) {
 
   const prevCaseDetails = useMemo(() => structuredClone(caseDetails), [caseDetails]);
 
+  const isAdvocateRepresenting = useMemo(() => {
+    const advocateUuid = caseDetails?.representatives?.[0]?.additionalDetails?.uuid;
+    if (advocateUuid) {
+      return { isRepresenting: true, uuid: advocateUuid };
+    } else return { isRepresenting: false, uuid: null };
+  });
+
   const scrutinyObj = useMemo(() => {
     return caseDetails?.additionalDetails?.scrutiny?.data || {};
   }, [caseDetails]);
@@ -1186,7 +1193,29 @@ function EFilingCases({ path }) {
 
   const createPendingTask = async ({ name, status, isCompleted = false, stateSla = null, isAssignedRole = false, assignedRole = [] }) => {
     const entityType = "case-default";
-    const assignes = !isAssignedRole ? [userInfo?.uuid] || [] : [];
+    let assignees = [];
+    // if esign is the preferred at the time of case locking.
+    if (["PENDING_E-SIGN", "PENDING_RE_E-SIGN"].includes(status)) {
+      if (!isAdvocateFilingCase) {
+        // when complainant is locking case
+        if (!isAdvocateRepresenting?.isRepresenting) {
+          //when complainant is locking case and didn't choose an advocate representing.
+          assignees.push({ uuid: userInfo?.uuid }); // pending task for complainant
+        } else {
+          //when complainant is locking case and advocate is representing the case.
+          assignees.push({ uuid: userInfo?.uuid }); // pending task for complainant
+          assignees.push({ uuid: isAdvocateRepresenting?.uuid }); // pending task for advocate
+        }
+      } else {
+        // when advocate is locking case, pending task will be created for advocate as well as complainant.
+        assignees.push({ uuid: userInfo?.uuid }); // pending task for advocate
+        assignees.push({ uuid: caseDetails?.litigants?.[0]?.additionalDetails?.uuid }); //pending task for complainant
+      }
+    }
+    // if Uploading Documents is the preferred at the time of case locking.(this can only be done when advocate is locking the case)
+    else if (["PENDING_SIGN", "PENDING_RE_SIGN"].includes(status)) {
+      assignees.push({ uuid: userInfo?.uuid }); // pending task for advocate
+    }
     const filingNumber = caseDetails?.filingNumber;
     await DRISTIService.customApiService(Urls.dristi.pendingTask, {
       pendingTask: {
@@ -1194,7 +1223,7 @@ function EFilingCases({ path }) {
         entityType,
         referenceId: `MANUAL_${filingNumber}`,
         status,
-        assignedTo: assignes?.map((uuid) => ({ uuid })),
+        assignedTo: assignees,
         assignedRole: assignedRole,
         cnrNumber: caseDetails?.cnrNumber,
         filingNumber: filingNumber,

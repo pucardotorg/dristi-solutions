@@ -153,8 +153,7 @@ const ComplainantSignature = ({ path }) => {
   const { t } = useTranslation();
   const history = useHistory();
   const Digit = window.Digit || {};
-  const urlParams = new URLSearchParams(window.location.search);
-  const caseId = urlParams.get("caseId");
+  const { filingNumber } = Digit.Hooks.useQueryParams();
   const todayDate = new Date().getTime();
   const [Loading, setLoader] = useState(false);
   const [isEsignSuccess, setEsignSuccess] = useState(false);
@@ -217,22 +216,21 @@ const ComplainantSignature = ({ path }) => {
     };
 
     upload();
-  }, [formData]);
+  }, [formData, tenantId, uploadDocuments]);
 
   const { data: caseData, refetch: refetchCaseData, isLoading } = useSearchCaseService(
     {
       criteria: [
         {
-          caseId: caseId,
-          defaultFields: false,
+          filingNumber: filingNumber,
         },
       ],
       tenantId,
     },
     {},
-    "dristi",
-    caseId,
-    caseId
+    `case-details-${filingNumber}`,
+    filingNumber,
+    filingNumber
   );
 
   const caseDetails = useMemo(
@@ -241,6 +239,7 @@ const ComplainantSignature = ({ path }) => {
     }),
     [caseData]
   );
+  const caseId = useMemo(() => caseDetails?.id, [caseDetails]);
 
   const DocumentFileStoreId = useMemo(() => {
     return caseDetails?.additionalDetails?.signedCaseDocument;
@@ -253,6 +252,10 @@ const ComplainantSignature = ({ path }) => {
     }
     return null;
   }, [caseDetails]);
+
+  const advocateUuid = useMemo(() => {
+    return advocateDetails?.advocateBarRegNumberWithName?.[0]?.advocateUuid || "";
+  }, [advocateDetails]);
 
   const litigants = useMemo(() => {
     return caseDetails?.litigants?.filter((litigant) => litigant.partyType === "complainant.primary")?.[0];
@@ -480,14 +483,14 @@ const ComplainantSignature = ({ path }) => {
           });
         }
       });
-      calculationResponse = await callCreateDemandAndCalculation(caseDetails, tenantId, caseId);
-      setLoader(false);
-
       if (isScrutiny) {
+        setLoader(false);
         history.push(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
+      } else {
+        calculationResponse = await callCreateDemandAndCalculation(caseDetails, tenantId, caseId);
+        setLoader(false);
+        history.push(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculationResponse } });
       }
-
-      history.push(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculationResponse: calculationResponse } });
     } else {
       await DRISTIService.caseUpdateService(
         {
@@ -518,7 +521,7 @@ const ComplainantSignature = ({ path }) => {
               entityType: "case-default",
               referenceId: `MANUAL_${caseDetails?.filingNumber}`,
               status: complainantWorkflowState.PENDING_ESIGN_ADVOCATE,
-              assignedTo: [...assignees?.map((uuid) => ({ uuid }))],
+              assignedTo: [{ uuid: advocateUuid }],
               assignedRole: ["CASE_CREATOR"],
               cnrNumber: null,
               filingNumber: caseDetails?.filingNumber,
