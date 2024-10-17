@@ -513,13 +513,14 @@ const SubmissionsCreate = ({ path }) => {
     assignees,
   }) => {
     const assignes = assignees ? assignees : !isAssignedRole ? [userInfo?.uuid] || [] : [];
+    const finalAssigneesList = assignees ? assignes : assignes?.map((uuid) => ({ uuid }));
     await submissionService.customApiService(Urls.application.pendingTask, {
       pendingTask: {
         name,
         entityType,
         referenceId: `MANUAL_${refId}`,
         status,
-        assignedTo: assignees ? assignes : assignes?.map((uuid) => ({ uuid })),
+        assignedTo: finalAssigneesList,
         assignedRole: assignedRole,
         cnrNumber: caseDetails?.cnrNumber,
         filingNumber: filingNumber,
@@ -834,7 +835,7 @@ const SubmissionsCreate = ({ path }) => {
               name: t("RESPOND_TO_PRODUCTION_DOCUMENTS"),
               status: "RESPOND_TO_PRODUCTION_DOCUMENTS",
               stateSla: orderDetails?.orderDetails?.dates?.submissionDeadlineDate,
-              assignees: applicationDetails?.additionalDetails?.respondingParty?.map((item) => ({ uuid: item?.uuid[0] })),
+              assignees: applicationDetails?.additionalDetails?.respondingParty?.flatMap((item) => item?.uuid?.map((u) => ({ uuid: u }))),
             });
           }
         } else {
