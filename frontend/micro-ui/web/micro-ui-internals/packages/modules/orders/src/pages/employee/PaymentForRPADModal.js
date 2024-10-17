@@ -251,12 +251,12 @@ const PaymentForRPADModal = ({ path }) => {
     const onPayOnline = async () => {
       try {
         if (!courtBillResponse?.Bill?.length) {
-          console.log("Bill not found");
+          console.error("Bill not found");
           return null;
         }
         const billPaymentStatus = await openPaymentPortal(courtBillResponse);
         if (!billPaymentStatus) {
-          console.log("Payment canceled or failed", taskNumber);
+          console.error("Payment canceled or failed", taskNumber);
           return null;
         }
         const resfileStoreId = await DRISTIService.fetchBillFileStoreId({}, { billId: courtBillResponse?.Bill?.[0]?.id, tenantId });
@@ -332,7 +332,7 @@ const PaymentForRPADModal = ({ path }) => {
 
         history.push(`/${window?.contextPath}/citizen/home/post-payment-screen`, postPaymenScreenObj);
       } catch (error) {
-        console.error(error);
+        console.error("Error in onPayOnline function:", error);
       }
     };
 

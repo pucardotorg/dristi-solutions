@@ -129,7 +129,7 @@ const ViewPaymentDetails = ({ location, match }) => {
     `summons-warrant-notice-bill-${consumerCodeWithoutSuffix}`,
     Boolean(businessService && consumerCodeWithoutSuffix)
   );
-  const curretnBillDetails = useMemo(() => BillResponse?.Bill?.[0], [BillResponse]);
+  const currentBillDetails = useMemo(() => BillResponse?.Bill?.[0], [BillResponse]);
 
   const { data: ePostBillResponse, isLoading: isEPOSTBillLoading } = Digit.Hooks.dristi.useBillSearch(
     {},
@@ -208,9 +208,9 @@ const ViewPaymentDetails = ({ location, match }) => {
     breakupResponse?.Calculation,
   ]);
   const totalAmount = useMemo(() => {
-    const totalAmount = calculationResponse?.Calculation?.[0]?.totalAmount || curretnBillDetails?.totalAmount || 0;
+    const totalAmount = calculationResponse?.Calculation?.[0]?.totalAmount || currentBillDetails?.totalAmount || 0;
     return parseFloat(totalAmount).toFixed(2);
-  }, [calculationResponse?.Calculation, curretnBillDetails]);
+  }, [calculationResponse?.Calculation, currentBillDetails]);
 
   const paymentCalculation = useMemo(() => {
     const breakdown = calculationResponse?.Calculation?.[0]?.breakDown || courtFeeBreakup || [];
@@ -281,8 +281,8 @@ const ViewPaymentDetails = ({ location, match }) => {
           instrumentDate: new Date().getTime(),
         },
       });
-      isDeliveryPartnerPaid &&
-        (await DRISTIService.customApiService(Urls.dristi.pendingTask, {
+      if (isDeliveryPartnerPaid) {
+        await DRISTIService.customApiService(Urls.dristi.pendingTask, {
           pendingTask: {
             name: "Pending Payment",
             entityType: businessService,
@@ -295,7 +295,9 @@ const ViewPaymentDetails = ({ location, match }) => {
             additionalDetails: {},
             tenantId,
           },
-        }));
+        });
+      }
+
       if (["task-notice", "task-summons", "task-warrant"].includes(businessService) && isDeliveryPartnerPaid) {
         await DRISTIService.customApiService(Urls.dristi.pendingTask, {
           pendingTask: {
