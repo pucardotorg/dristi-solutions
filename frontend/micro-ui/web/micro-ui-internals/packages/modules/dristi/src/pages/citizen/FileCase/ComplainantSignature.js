@@ -196,7 +196,7 @@ const ComplainantSignature = ({ path }) => {
   }, [name]);
 
   const onSelect = (key, value) => {
-    if (value === null) {
+    if (value?.[name] === null) {
       setFormData({});
       setSignatureDocumentId(null);
       setUploadDoc(false);
@@ -266,6 +266,10 @@ const ComplainantSignature = ({ path }) => {
   const isScrutiny = useMemo(() => {
     return !!caseDetails?.additionalDetails?.scrutiny?.data;
   }, [caseDetails]);
+
+  const isLitigantPartingPerson = useMemo(() => {
+    return !isAdvocateFilingCase && !advocateDetails;
+  }, [advocateDetails, isAdvocateFilingCase]);
 
   const state = useMemo(() => caseDetails?.status, [caseDetails]);
   const isSelectedEsign = useMemo(() => {
@@ -418,7 +422,7 @@ const ComplainantSignature = ({ path }) => {
       return "CS_ADVOCATE_SIGN";
     }
     return "CS_SUBMIT_CASE";
-  }, [isLitigantEsignCompleted, advocateDetails, isAdvocateFilingCase]);
+  }, [isAdvocateFilingCase, isSelectedUploadDoc, advocateDetails, isLitigantEsignCompleted]);
 
   const isSubmit = (state) => {
     const pendingStates = [complainantWorkflowState.PENDING_ESIGN_LITIGANT, complainantWorkflowState.PENDING_ESIGN_LITIGANT_SCRUTINITY];
@@ -588,7 +592,7 @@ const ComplainantSignature = ({ path }) => {
       return !(isEsignSuccess || uploadDoc);
     }
 
-    return !(isLitigantEsignCompleted || isEsignSuccess);
+    return !(isLitigantEsignCompleted || isEsignSuccess || (isLitigantPartingPerson && uploadDoc));
   };
 
   if (isLoading) {
@@ -641,7 +645,9 @@ const ComplainantSignature = ({ path }) => {
               <div style={{ marginTop: "5px" }}>{litigants?.additionalDetails?.fullName}</div>
             </div>
             {!isAdvocateFilingCase
-              ? (isEsignSuccess || isLitigantEsignCompleted) && <span style={styles.signedLabel}>{t("SIGNED")}</span>
+              ? (isEsignSuccess || isLitigantEsignCompleted || (isLitigantPartingPerson && uploadDoc)) && (
+                  <span style={styles.signedLabel}>{t("SIGNED")}</span>
+                )
               : (isLitigantEsignCompleted || uploadDoc) && <span style={styles.signedLabel}>{t("SIGNED")}</span>}
           </div>
           {advocateDetails && (
@@ -694,18 +700,18 @@ const ComplainantSignature = ({ path }) => {
                   {t("CS_ESIGN")}
                 </button>
               ) : (
-                <p style={{ fontSize: "18px", fontWeight: 700 }}>Wait for litigant to Complete Signature</p>
+                <p style={{ fontSize: "18px", fontWeight: 700 }}>{t("WAIT_FOR_LITIGANT_SIGNATURE")}</p>
               ))}
 
-            {isSelectedUploadDoc && (
+            {(isSelectedUploadDoc || isLitigantPartingPerson) && (
               <button
                 style={{
                   ...styles.uploadButton,
-                  opacity: isAdvocateFilingCase ? 1 : 0.5,
-                  cursor: isAdvocateFilingCase ? "pointer" : "default",
+                  opacity: isAdvocateFilingCase || isLitigantPartingPerson ? 1 : 0.5,
+                  cursor: isAdvocateFilingCase || isLitigantPartingPerson ? "pointer" : "default",
                 }}
-                onClick={isAdvocateFilingCase ? handleUploadFile : undefined}
-                disabled={!isAdvocateFilingCase}
+                onClick={handleUploadFile}
+                disabled={!(isAdvocateFilingCase || isLitigantPartingPerson)}
               >
                 <FileUploadIcon />
                 <span style={{ marginLeft: "8px" }}>{t("UPLOAD_SIGNED_PDF")}</span>
