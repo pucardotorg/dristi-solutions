@@ -269,7 +269,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
 
   useEffect(() => {
     refetchBreakupResponse();
-  }, [businessService, channelId, filteredTasks]);                    
+  }, [businessService, channelId, filteredTasks]);
 
   const onPayOnline = async () => {
     // console.log("clikc");
