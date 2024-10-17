@@ -244,7 +244,7 @@ const ComplainantSignature = ({ path }) => {
 
   const DocumentFileStoreId = useMemo(() => {
     return caseDetails?.additionalDetails?.signedCaseDocument;
-  });
+  }, [caseDetails]);
 
   const advocateDetails = useMemo(() => {
     const advocateData = caseDetails?.additionalDetails?.advocateDetails?.formdata?.[0]?.data;
@@ -302,7 +302,7 @@ const ComplainantSignature = ({ path }) => {
   };
 
   const handleCasePdf = () => {
-    downloadPdf(tenantId, signatureDocumentId || DocumentFileStoreId);
+    downloadPdf(tenantId, signatureDocumentId ? signatureDocumentId : DocumentFileStoreId);
   };
 
   const handleEsignAction = () => {
@@ -405,24 +405,32 @@ const ComplainantSignature = ({ path }) => {
   };
 
   const SubmitLabel = useMemo(() => {
+    if (!isAdvocateFilingCase && isSelectedUploadDoc) {
+      return "CS_SUBMIT_CASE";
+    }
+
     if (!isAdvocateFilingCase && advocateDetails && !isLitigantEsignCompleted) {
       return "CS_ADVOCATE_SIGN";
     }
     return "CS_SUBMIT_CASE";
-  }, [isLitigantEsignCompleted, advocateDetails]);
+  }, [isLitigantEsignCompleted, advocateDetails, isAdvocateFilingCase]);
 
-  const handleSubmit = async (Submitlabel) => {
-    localStorage.removeItem("name");
-    localStorage.removeItem("isSignSuccess");
-    localStorage.removeItem("signStatus");
-    localStorage.removeItem("fileStoreId");
-    localStorage.removeItem("esignProcess");
+  const isSubmit = (state) => {
+    const pendingStates = [complainantWorkflowState.PENDING_ESIGN_LITIGANT, complainantWorkflowState.PENDING_ESIGN_LITIGANT_SCRUTINITY];
 
+    if (pendingStates.includes(state) && advocateDetails) {
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = async (state) => {
     setLoader(true);
     let calculationResponse = {};
     const assignees = getAllAssignees(caseDetails);
 
-    if (Submitlabel === "CS_SUBMIT_CASE") {
+    if (isSubmit(state)) {
       await DRISTIService.caseUpdateService(
         {
           cases: {
@@ -544,6 +552,11 @@ const ComplainantSignature = ({ path }) => {
         setEsignSuccess(true);
       }
     }
+
+    localStorage.removeItem("isSignSuccess");
+    localStorage.removeItem("signStatus");
+    localStorage.removeItem("fileStoreId");
+    localStorage.removeItem("esignProcess");
   }, []);
 
   const isRightPannelEnable = () => {
@@ -599,7 +612,6 @@ const ComplainantSignature = ({ path }) => {
           )}
         </div>
       </div>
-
       <div style={styles.centerPanel}>
         <div style={styles.header}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -618,7 +630,7 @@ const ComplainantSignature = ({ path }) => {
             <DocViewerWrapper
               docWidth={"100vh"}
               docHeight={"70vh"}
-              fileStoreId={signatureDocumentId || DocumentFileStoreId}
+              fileStoreId={signatureDocumentId ? signatureDocumentId : DocumentFileStoreId}
               tenantId={tenantId}
               docViewerCardClassName={"doc-card"}
               showDownloadOption={false}
@@ -628,7 +640,6 @@ const ComplainantSignature = ({ path }) => {
           )}
         </div>
       </div>
-
       <div style={styles.rightPanel}>
         {isRightPannelEnable() && (
           <div style={styles.signaturePanel}>
@@ -644,7 +655,15 @@ const ComplainantSignature = ({ path }) => {
               ))}
 
             {isSelectedUploadDoc && (
-              <button style={styles.uploadButton} onClick={handleUploadFile}>
+              <button
+                style={{
+                  ...styles.uploadButton,
+                  opacity: isAdvocateFilingCase ? 1 : 0.5,
+                  cursor: isAdvocateFilingCase ? "pointer" : "default",
+                }}
+                onClick={isAdvocateFilingCase ? handleUploadFile : undefined}
+                disabled={!isAdvocateFilingCase}
+              >
                 <FileUploadIcon />
                 <span style={{ marginLeft: "8px" }}>{t("UPLOAD_SIGNED_PDF")}</span>
               </button>
@@ -652,7 +671,6 @@ const ComplainantSignature = ({ path }) => {
           </div>
         )}
       </div>
-
       <ActionBar>
         <div style={styles.actionBar}>
           <SubmitBar
@@ -662,7 +680,7 @@ const ComplainantSignature = ({ path }) => {
                 <RightArrow />
               </div>
             }
-            onSubmit={() => handleSubmit(SubmitLabel)}
+            onSubmit={() => handleSubmit(state)}
             style={styles.submitButton}
             disabled={!isSubmitEnabled()}
           />
