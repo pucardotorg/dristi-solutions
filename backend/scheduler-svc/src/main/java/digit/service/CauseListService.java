@@ -70,11 +70,14 @@ public class CauseListService {
 
     private FileStoreUtil fileStoreUtil;
 
+    private UserService userService;
+
     @Autowired
     public CauseListService(HearingRepository hearingRepository, CauseListRepository causeListRepository,
                             Producer producer, Configuration config, PdfServiceUtil pdfServiceUtil,
                             MdmsUtil mdmsUtil, ServiceConstants serviceConstants, HearingUtil hearingUtil,
-                            CaseUtil caseUtil, DateUtil dateUtil, ObjectMapper objectMapper, ApplicationUtil applicationUtil, FileStoreUtil fileStoreUtil) {
+                            CaseUtil caseUtil, DateUtil dateUtil, ObjectMapper objectMapper, ApplicationUtil applicationUtil,
+                            FileStoreUtil fileStoreUtil, UserService userService) {
         this.hearingRepository = hearingRepository;
         this.causeListRepository = causeListRepository;
         this.producer = producer;
@@ -88,6 +91,7 @@ public class CauseListService {
         this.objectMapper = objectMapper;
         this.applicationUtil = applicationUtil;
         this.fileStoreUtil = fileStoreUtil;
+        this.userService = userService;
     }
 
     public void updateCauseListForTomorrow() {
@@ -109,7 +113,14 @@ public class CauseListService {
         if (!CollectionUtils.isEmpty(causeLists)) {
             CauseListResponse causeListResponse = CauseListResponse.builder()
                     .responseInfo(ResponseInfo.builder().build()).causeList(causeLists).build();
-            producer.push(config.getCauseListInsertTopic(), causeListResponse);
+
+            User userInfo = new User();
+            RequestInfo requestInfo = RequestInfo.builder().userInfo(userInfo).build();
+            requestInfo.getUserInfo().setUuid(userService.internalMicroserviceRoleUuid);
+            CauseListRequest causeListRequest = CauseListRequest.builder().requestInfo(requestInfo)
+                    .causeList(causeLists).build();
+
+            producer.push(config.getCauseListInsertTopic(), causeListRequest);
             updateBulkHearing(causeLists);
         } else {
             log.info("No cause lists to be created");
@@ -183,7 +194,11 @@ public class CauseListService {
                     .createdBy(uuid == null ? serviceConstants.SYSTEM_ADMIN : uuid)
                     .build();
 
-            producer.push(config.getCauseListPdfTopic(), causeListPdf);
+            RequestInfo requestInfo = new RequestInfo();
+            requestInfo.getUserInfo().setUuid(userService.internalMicroserviceRoleUuid);
+            CauseListPdfRequest causeListPdfRequest = CauseListPdfRequest.builder().requestInfo(requestInfo).causeListPdf(causeListPdf).build();
+
+            producer.push(config.getCauseListPdfTopic(), causeListPdfRequest);
             causeLists.addAll(causeList);
             log.info("operation = generateCauseListForJudge, result = SUCCESS, judgeId = {}", courtId);
         } catch (Exception e) {
