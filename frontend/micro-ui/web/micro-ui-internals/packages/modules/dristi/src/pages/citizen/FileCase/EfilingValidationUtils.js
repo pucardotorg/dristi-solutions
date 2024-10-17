@@ -1002,15 +1002,16 @@ const documentUploadHandler = async (document, index, prevCaseDetails, data, pag
 };
 
 const fetchBasicUserInfo = async (caseDetails, tenantId) => {
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const individualData = await window?.Digit.DRISTIService.searchIndividualUser(
     {
       Individual: {
-        userUuid: [caseDetails?.auditDetails?.createdBy],
+        userUuid: [userInfo?.uuid],
       },
     },
     { tenantId, limit: 1000, offset: 0 },
     "",
-    caseDetails?.auditDetails?.createdBy
+    userInfo?.uuid
   );
 
   return individualData?.Individual?.[0]?.individualId;
@@ -1554,7 +1555,6 @@ export const updateCaseDetails = async ({
                   selected,
                   tenantId
                 );
-                console.log("tempDocList", tempDocList, tempFile);
                 tempDocList = [...tempDocList, ...tempData];
                 return tempFile;
               })
