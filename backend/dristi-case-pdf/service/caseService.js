@@ -57,7 +57,6 @@ const getAddressDetails = (addressObject) => {
       pincode: addressObject?.pincode || ''
     };
   };
-  
 
 /**
  * Extracts complainant information from the case object.
