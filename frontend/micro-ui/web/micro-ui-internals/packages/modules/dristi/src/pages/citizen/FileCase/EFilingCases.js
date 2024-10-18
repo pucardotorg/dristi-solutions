@@ -590,7 +590,19 @@ function EFilingCases({ path }) {
   const formConfig = useMemo(() => {
     return pageConfig?.formconfig;
   }, [pageConfig?.formconfig]);
-
+  const multiUploadList = useMemo(
+    () =>
+      formConfig.flatMap((config) =>
+        config.body
+          .filter((item) => ["SelectCustomDragDrop"].includes(item.component))
+          .map((item) => {
+            const { key } = item;
+            const fieldType = item?.populators?.inputs?.[0]?.name;
+            return { key, fieldType };
+          })
+      ),
+    [formConfig]
+  );
   if (!getAllKeys.includes(selected) || !formConfig) {
     setPrevSelected(selected);
     history.push(`?caseId=${caseId}&selected=${getAllKeys[0]}`);
@@ -1612,6 +1624,7 @@ function EFilingCases({ path }) {
           isCaseSignedState: isPendingESign || isPendingReESign,
           isSaveDraftEnabled: isCaseReAssigned || isPendingReESign || isPendingESign,
           ...(res && { fileStoreId: res?.data?.cases?.[0]?.documents?.[0]?.fileStore }),
+          multiUploadList,
         });
 
         // After successful update, reset form and refetch case data
@@ -1650,6 +1663,7 @@ function EFilingCases({ path }) {
   const onSaveDraft = (props) => {
     setParmas({ ...params, [pageConfig.key]: formdata });
     updateCaseDetails({
+      t,
       caseDetails,
       prevCaseDetails: prevCaseDetails,
       formdata,
@@ -1659,6 +1673,7 @@ function EFilingCases({ path }) {
       setIsDisabled,
       tenantId,
       setErrorCaseDetails,
+      multiUploadList,
     })
       .then(() => {
         refetchCaseData().then(() => {
@@ -1716,6 +1731,7 @@ function EFilingCases({ path }) {
           )
         : false;
     updateCaseDetails({
+      t,
       isCompleted: isDrafted,
       caseDetails: isCaseReAssigned && errorCaseDetails ? errorCaseDetails : caseDetails,
       prevCaseDetails: prevCaseDetails,
@@ -1727,6 +1743,7 @@ function EFilingCases({ path }) {
       tenantId,
       setErrorCaseDetails,
       isSaveDraftEnabled: isCaseReAssigned || isPendingReESign || isPendingESign,
+      multiUploadList,
     })
       .then(() => {
         if (!isCaseReAssigned) {

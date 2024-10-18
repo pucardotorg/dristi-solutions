@@ -1,6 +1,8 @@
 import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
 import { getUserDetails } from "../../../hooks/useGetAccessToken";
 import { DRISTIService } from "../../../services";
+import { combineMultipleFiles } from "../../../Utils";
+
 import { userTypeOptions } from "../registration/config";
 import { efilingDocumentKeyAndTypeMapping } from "./Config/efilingDocumentKeyAndTypeMapping";
 
@@ -100,11 +102,6 @@ export const validateDateForDelayApplication = ({ selected, setValue, caseDetail
 };
 
 export const showToastForComplainant = ({ formData, setValue, selected, setSuccessToast, formState, clearErrors }) => {
-  if (selected === "respondentDetails") {
-    if (formData?.addressDetails?.[0]?.addressDetails?.typeOfAddress && Object?.keys(formState?.errors)?.includes("typeOfAddress")) {
-      clearErrors("typeOfAddress");
-    }
-  }
   if (selected === "complainantDetails") {
     if (formData?.complainantId?.complainantId && formData?.complainantId?.verificationType && formData?.complainantId?.isFirstRender) {
       setValue("complainantId", { ...formData?.complainantId, isFirstRender: false });
@@ -114,16 +111,10 @@ export const showToastForComplainant = ({ formData, setValue, selected, setSucce
         successMsg: "CS_AADHAR_VERIFIED_SUCCESS_MSG",
       }));
     }
-    if (
-      (formData?.addressDetails?.typeOfAddress || formData?.addressCompanyDetails?.typeOfAddress) &&
-      Object?.keys(formState?.errors)?.includes("typeOfAddress")
-    ) {
-      clearErrors("typeOfAddress");
-    }
     const formDataCopy = structuredClone(formData);
     const addressDet = formDataCopy?.complainantVerification?.individualDetails?.addressDetails;
     const addressDetSelect = formDataCopy?.complainantVerification?.individualDetails?.["addressDetails-select"];
-    if (!!addressDet && !!addressDetSelect) {
+    if (!!addressDet && !!addressDetSelect && formDataCopy?.addressDetails) {
       setValue("addressDetails", { ...addressDet, typeOfAddress: formDataCopy?.addressDetails?.typeOfAddress });
       setValue("addressDetails-select", addressDetSelect);
     }
@@ -542,11 +533,6 @@ export const respondentValidation = ({
 }) => {
   if (selected === "respondentDetails") {
     const formDataCopy = structuredClone(formData);
-    if (!formDataCopy?.addressDetails?.[0]?.addressDetails?.typeOfAddress) {
-      setFormErrors("typeOfAddress", { message: "CORE_REQUIRED_FIELD_ERROR" });
-      toast.error(t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"));
-      return true;
-    }
     if ("inquiryAffidavitFileUpload" in formDataCopy) {
       if (
         formData?.addressDetails?.some(
@@ -649,16 +635,6 @@ export const complainantValidation = ({ formData, t, caseDetails, selected, setS
   if (selected === "complainantDetails") {
     if (!formData?.complainantId?.complainantId) {
       setShowErrorToast(true);
-      return true;
-    }
-    if (formData.complainantType.code === "INDIVIDUAL" && !formData.addressDetails.typeOfAddress) {
-      setFormErrors("typeOfAddress", { message: "CORE_REQUIRED_FIELD_ERROR" });
-      toast.error(t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"));
-      return true;
-    }
-    if (formData.complainantType.code !== "INDIVIDUAL" && !formData?.addressCompanyDetails?.typeOfAddress) {
-      setFormErrors("typeOfAddress", { message: "CORE_REQUIRED_FIELD_ERROR" });
-      toast.error(t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS"));
       return true;
     }
     if (!formData?.complainantVerification?.mobileNumber || !formData?.complainantVerification?.otpNumber) {
@@ -1061,6 +1037,7 @@ export const getRespondentName = (respondentDetails) => {
 };
 
 export const updateCaseDetails = async ({
+  t,
   isCompleted,
   setIsDisabled,
   tenantId,
@@ -1075,17 +1052,43 @@ export const updateCaseDetails = async ({
   isSaveDraftEnabled = false,
   isCaseSignedState = false,
   setErrorCaseDetails = () => {},
+  multiUploadList,
 }) => {
   const data = {};
   setIsDisabled(true);
   let tempDocList = [];
   const individualId = await fetchBasicUserInfo(prevCaseDetails, tenantId);
+  let updatedFormData = structuredClone(formdata);
+  async function processFormData() {
+    try {
+      const promises = updatedFormData.map(async (formItem, index) => {
+        if (formItem?.isenabled) {
+          const subPromises = multiUploadList.map(async (obj) => {
+            const { key, fieldType } = obj;
+            if (formItem?.data?.[key]?.[fieldType]?.length > 1) {
+              let docData = structuredClone(formItem?.data?.[key]?.[fieldType]);
+              // Combine multiple files and store the result in formItem
+              const combinedDoc = await combineMultipleFiles(docData, `${t("COMBINED_DOC")}.pdf`);
+              updatedFormData[index].data[key][fieldType] = combinedDoc; // Update the form data with the combined document
+            }
+          });
+          await Promise.all(subPromises);
+        }
+      });
+      await Promise.all(promises);
+    } catch (error) {
+      console.error("Error processing form data: ", error);
+      throw error;
+    }
+  }
+  await processFormData();
+
   if (selected === "complainantDetails") {
     let litigants = [];
     const complainantVerification = {};
     if (isCompleted === true) {
       litigants = await Promise.all(
-        formdata
+        updatedFormData
           .filter((item) => item.isenabled)
           .map(async (data, index) => {
             if (data?.data?.complainantVerification?.individualDetails) {
@@ -1251,7 +1254,7 @@ export const updateCaseDetails = async ({
     }
 
     const newFormData = await Promise.all(
-      formdata
+      updatedFormData
         .filter((item) => item.isenabled)
         .map(async (data, index) => {
           let documentData = {
@@ -1299,6 +1302,7 @@ export const updateCaseDetails = async ({
                 }
               })
             );
+            setFormDataValue("companyDetailsUpload", documentData?.companyDetailsUpload);
           }
           return {
             ...data,
@@ -1342,7 +1346,7 @@ export const updateCaseDetails = async ({
   }
   if (selected === "respondentDetails") {
     const newFormData = await Promise.all(
-      formdata
+      updatedFormData
         .filter((item) => item.isenabled)
         .map(async (data) => {
           const documentData = {
@@ -1377,6 +1381,7 @@ export const updateCaseDetails = async ({
                 }
               })
             );
+            setFormDataValue("inquiryAffidavitFileUpload", documentData?.inquiryAffidavitFileUpload);
           }
           if (
             data?.data?.companyDetailsUpload?.document &&
@@ -1417,6 +1422,7 @@ export const updateCaseDetails = async ({
                 }
               })
             );
+            setFormDataValue("companyDetailsUpload", documentData?.companyDetailsUpload);
           }
           return {
             ...data,
@@ -1451,8 +1457,9 @@ export const updateCaseDetails = async ({
       scrutinyHeader: "CS_COMPLAINANT_HAVE_CONFIRMED",
       data: ["CS_CHEQUE_RETURNED_INSUFFICIENT_FUND"],
     };
+
     const newFormData = await Promise.all(
-      formdata
+      updatedFormData
         .filter((item) => item.isenabled)
         .map(async (data) => {
           const documentData = {
@@ -1563,7 +1570,7 @@ export const updateCaseDetails = async ({
   }
   if (selected === "debtLiabilityDetails") {
     const newFormData = await Promise.all(
-      formdata
+      updatedFormData
         .filter((item) => item.isenabled)
         .map(async (data) => {
           const debtDocumentData = { debtLiabilityFileUpload: null };
@@ -1608,7 +1615,7 @@ export const updateCaseDetails = async ({
     };
   }
   if (selected === "witnessDetails") {
-    const newFormDataCopy = structuredClone(formdata.filter((item) => item.isenabled));
+    const newFormDataCopy = structuredClone(updatedFormData.filter((item) => item.isenabled));
     for (let i = 0; i < newFormDataCopy.length; i++) {
       const obj = newFormDataCopy[i];
       if (obj?.data?.phonenumbers) {
@@ -1628,7 +1635,7 @@ export const updateCaseDetails = async ({
   }
   if (selected === "demandNoticeDetails") {
     const newFormData = await Promise.all(
-      formdata
+      updatedFormData
         .filter((item) => item.isenabled)
         .map(async (data) => {
           const demandNoticeDocumentData = {
@@ -1683,7 +1690,7 @@ export const updateCaseDetails = async ({
   }
   if (selected === "delayApplications") {
     const newFormData = await Promise.all(
-      formdata
+      updatedFormData
         .filter((item) => item.isenabled)
         .map(async (data) => {
           const condonationDocumentData = { condonationFileUpload: null };
@@ -1722,7 +1729,7 @@ export const updateCaseDetails = async ({
   }
   if (selected === "prayerSwornStatement") {
     const newFormData = await Promise.all(
-      formdata
+      updatedFormData
         .filter((item) => item.isenabled)
         .map(async (data) => {
           const documentData = { SelectUploadDocWithName: null, swornStatement: null };
@@ -1821,7 +1828,7 @@ export const updateCaseDetails = async ({
   if (selected === "advocateDetails") {
     const advocateDetails = {};
     const newFormData = await Promise.all(
-      formdata
+      updatedFormData
         .filter((item) => item.isenabled)
         .map(async (data) => {
           const vakalatnamaDocumentData = { vakalatnamaFileUpload: null };
@@ -1849,6 +1856,7 @@ export const updateCaseDetails = async ({
                 }
               })
             );
+            setFormDataValue("vakalatnamaFileUpload", vakalatnamaDocumentData?.vakalatnamaFileUpload);
           }
           const advocateDetail = await DRISTIService.searchAdvocateClerk("/advocate/v1/_search", {
             criteria: [
@@ -1883,8 +1891,8 @@ export const updateCaseDetails = async ({
         })
     );
     let representatives = [];
-    if (formdata?.filter((item) => item.isenabled).some((data) => data?.data?.isAdvocateRepresenting?.code === "YES")) {
-      representatives = formdata
+    if (updatedFormData?.filter((item) => item.isenabled).some((data) => data?.data?.isAdvocateRepresenting?.code === "YES")) {
+      representatives = updatedFormData
         .filter((item) => item.isenabled)
         .map((data, index) => {
           return {
@@ -1931,7 +1939,7 @@ export const updateCaseDetails = async ({
     data.additionalDetails = {
       ...caseDetails.additionalDetails,
       reviewCaseFile: {
-        formdata: formdata,
+        formdata: updatedFormData,
         isCompleted: isCompleted === "PAGE_CHANGE" ? caseDetails.caseDetails?.[selected]?.isCompleted : isCompleted,
       },
       ...(fileStoreId && { signedCaseDocument: fileStoreId }),
@@ -1940,8 +1948,10 @@ export const updateCaseDetails = async ({
   const caseTitle =
     caseDetails?.status !== "DRAFT_IN_PROGRESS"
       ? caseDetails?.caseTitle
-      : `${getComplainantName(data?.additionalDetails?.complainantDetails?.formdata?.[0]?.data || {})} vs ${getRespondentName(
-          data?.additionalDetails?.respondentDetails?.formdata?.[0]?.data || {}
+      : `${getComplainantName(
+          data?.additionalDetails?.complainantDetails?.formdata?.[0]?.data || caseDetails?.additionalDetails?.complainantDetails?.formdata?.[0]?.data
+        )} vs ${getRespondentName(
+          data?.additionalDetails?.respondentDetails?.formdata?.[0]?.data || caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data
         )}`;
   setErrorCaseDetails({
     ...caseDetails,
