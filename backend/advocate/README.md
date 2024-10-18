@@ -1,20 +1,53 @@
-# e-courts
-PUCAR is a public mission by a collaborative of changemakers to transform the dispute resolution experience for citizens in India. PUCAR sees opportunity to go beyond digitising paper-based processes, and transform end-to-end processes for a digital environment in a phased manner. Digital courts can radically improve access, efficiency and predictability of the system for its users. 
+# Advocate Service
 
-This repository houses the digital platform that will act as the chassis for Digital Courts of the future. This is being built with open source software as a Digital Public Good on top of the DIGIT platform. 
+## Overview
+This module hosts the backend service for managing the advocate and advocate clerk registries within the Dristi platform. It provides APIs to create, update, and search advocate-related & advocate clerk-related data.
 
-Key principles behind its design and architecture are:
+## Prerequisites
+- **Java** (version 17 or higher)
+- **Spring Boot** (3.2.2 is recommended) 
+- **Maven** for dependency management and builds
+- **PostgreSQL** (v14 or higher) for database management
+- **Docker** (optional, for containerized deployments)
+- **DIGIT Platform Services** (2.9 LTS): The service relies on core components from the DIGIT platform. Run the dependent components locally or point to a deployed version of the platform
 
-Modularity: Most technology systems are monolithic: they are designed end to end.  Digital platforms are developed by unbundling complex functionality into multiple mico pieces which allow their re-bundling into specific contexts - similar to LEGO building blocks. Each of these mirco pieces are interchangeable and replaceable without necessitating a redesign of the infrastructure as a whole. For example, pdf generator as a building block can be reused for generating payment receipts as well as downloadable copies of a case file. As new use cases arise, the same building blocks can be used to roll out and quickly deploy new functionality. 
+## Setup Instructions
 
-Registries and Data Standards: In the past, when developing digital solutions for different stages of a case's lifecycle, each solution managed its own data, resulting in multiple versions in diverse formats. To address this, the platform adopts registries with data standards, published and available for all to use, ensuring uniformity and consistency as new digital solutions are built. Additionally, APIs enable new solutions to plug in and operate using registries of existing solutions, guaranteeing a singular, reliable version of the truth.
+### 1. Clone the Repository
+```bash
+git clone https://github.com/pucardotorg/dristi-solutions.git
+cd dristi-solutions/backend/advocate
+```
 
-Separate Data and Workflows: Data related to different cases is separated from the specific workflows that manage those cases allowing for the platform to accommodate variations in the nature of cases. For example, a cheque bouncing case has different processes and workflows from civil suit for recovery or  workflows from a motor vehicle compensation cases. Separation of data from workflow ensures that the same underlying data tables can be used across both these.
+### 2. Modify application.properties file:
 
-Federated & decentralized allowing data to remain where it’s been collected. 
+```
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=your_user
+DB_PASSWORD=your_password
+DIGIT_API_URL=https://api.digit.org
+```
+### 3. Build the project
 
-Privacy & Security by Design: Managing security and privacy of data is crucial to building and maintaining trust between ecosystem participants and thus will be a critical design principle. All data access is through API calls to only authenticated and authorized stakeholders to ensure only those with necessary permissions can see/consume data. Standard and certifications for data privacy and security are ensured and all personal information is stored in an encrypted format. 
+In the IDE or via commandline as follows:
 
-Workflows related to advocate module:
+```mvn clean install```
+
+## API Documentation
+The advocate backend offers the following key endpoints:
+
+```
+POST /advocate/v1/_create - Register a new advocate
+POST /advocate/v1/_update - Update advocate details
+POST /advocate/v1/status/_search - Search for advocates by registration status
+POST /clerk/v1/_create - Register a new advocate clerk
+POST /clerk/v1/status/_search - Search clerks by status
+```
+
+Refer to the full API Specification for detailed request and response structures.
+
+## Workflows
+
 1. [advocateregistration-workflowConfig.json](../../docs/Advocate/worfkow/advocateregistration-workflowConfig.json)
 2. [advocateclerkregistration-workflowConfig - Copy.json](..%2F..%2Fdocs%2FAdvocate%2Fworfkow%2Fadvocateclerkregistration-workflowConfig%20-%20Copy.json)
