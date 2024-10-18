@@ -6,6 +6,7 @@ import digit.kafka.producer.Producer;
 import digit.repository.ReScheduleRequestRepository;
 import digit.service.HearingService;
 import digit.service.RescheduleRequestOptOutService;
+import digit.service.UserService;
 import digit.util.PendingTaskUtil;
 import digit.web.models.*;
 import org.egov.common.contract.request.RequestInfo;
@@ -50,6 +51,9 @@ public class OptOutProcessorTest {
     @InjectMocks
     private OptOutProcessor optOutProcessor;
 
+    @Mock
+    private UserService userService;
+
     @Test
     public void testCheckAndScheduleHearingForOptOut_Success_LastOptOut() {
         // Arrange
@@ -72,7 +76,7 @@ public class OptOutProcessorTest {
 
         // Assert
         assertEquals(ACTIVE, reScheduleHearing.getStatus());
-        verify(producer).push(eq(updateTopic), anyList());
+        verify(producer).push(eq(updateTopic), any(ReScheduleHearingRequest.class));
     }
 
     @Test
@@ -97,7 +101,7 @@ public class OptOutProcessorTest {
 
         // Assert
         assertEquals(ACTIVE, reScheduleHearing.getStatus());
-        verify(producer).push(eq(updateTopic), anyList());
+        verify(producer).push(eq(updateTopic), any(ReScheduleHearingRequest.class));
     }
 
     @Test
@@ -128,7 +132,7 @@ public class OptOutProcessorTest {
 
         // Assert
         assertEquals(INACTIVE, scheduleHearings.get(0).getStatus());
-        verify(producer).push(eq(scheduleUpdateTopic), anyList());
+        verify(producer).push(eq(scheduleUpdateTopic), any(ScheduleHearingRequest.class));
     }
 
     @Test
