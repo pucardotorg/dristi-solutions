@@ -2,6 +2,7 @@ package org.drishti.esign.service;
 
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.drishti.esign.cipher.Encryption;
 import org.drishti.esign.config.Configuration;
@@ -10,6 +11,8 @@ import org.drishti.esign.repository.EsignRequestRepository;
 import org.drishti.esign.util.FileStoreUtil;
 import org.drishti.esign.util.XmlFormDataSetter;
 import org.drishti.esign.web.models.*;
+import org.egov.common.contract.models.AuditDetails;
+import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -18,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.security.PrivateKey;
+import java.util.UUID;
 
 
 @Service
@@ -54,13 +58,14 @@ public class ESignService {
     public ESignXmlForm signDoc(ESignRequest request) {
 
         ESignParameter eSignParameter = request.getESignParameter();
+        eSignParameter.setId(UUID.randomUUID().toString());
         String fileStoreId = eSignParameter.getFileStoreId();
         String tenantId = eSignParameter.getTenantId();
         String pageModule = eSignParameter.getPageModule();
         Resource resource = fileStoreUtil.fetchFileStoreObjectById(fileStoreId, eSignParameter.getTenantId());
         String fileHash = pdfEmbedder.generateHash(resource);
         ESignXmlData eSignXmlData = formDataSetter.setFormXmlData(fileHash, new ESignXmlData());
-        eSignXmlData.setTxn(tenantId + "-" + pageModule + "-" + fileStoreId);
+        eSignXmlData.setTxn(tenantId + "-" + pageModule + "-" +eSignParameter.getId());
         String strToEncrypt = xmlGenerator.generateXml(eSignXmlData);  // this method is writing in testing.xml
         log.info(strToEncrypt);
         String xmlData = "";
@@ -75,6 +80,8 @@ public class ESignService {
 
         }
 
+        setAuditDetails(eSignParameter, request.getRequestInfo());
+
         producer.push(configuration.getEsignCreateTopic(), request);
 
         ESignXmlForm myRequestXmlForm = new ESignXmlForm();
@@ -88,6 +95,15 @@ public class ESignService {
 
     }
 
+    private void setAuditDetails(ESignParameter eSignParameter, @Valid RequestInfo requestInfo) {
+        eSignParameter.setAuditDetails(AuditDetails.builder()
+                .createdBy(requestInfo.getUserInfo().getUuid())
+                .createdTime(System.currentTimeMillis())
+                .lastModifiedBy(requestInfo.getUserInfo().getUuid())
+                .lastModifiedTime(System.currentTimeMillis()).
+                build());
+    }
+
     public String signDocWithDigitalSignature(SignDocRequest request) {
 
         SignDocParameter eSignParameter = request.getESignParameter();
@@ -97,25 +113,29 @@ public class ESignService {
         String fileStoreId = eSignDetails.getFileStoreId();
         String tenantId = eSignParameter.getTenantId();
         String response = eSignParameter.getResponse();
-        String signPlaceHolder= eSignDetails.getSignPlaceHolder();
+        String signPlaceHolder = eSignDetails.getSignPlaceHolder();
 
         Resource resource = fileStoreUtil.fetchFileStoreObjectById(fileStoreId, eSignParameter.getTenantId());
         MultipartFile multipartFile;
         try {
             //fixme: get the multipart file and upload into fileStore
-            multipartFile = pdfEmbedder.signPdfWithDSAndReturnMultipartFile(resource, response,signPlaceHolder);
+            multipartFile = pdfEmbedder.signPdfWithDSAndReturnMultipartFile(resource, response, signPlaceHolder);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        String sigendFileStoreId = null;
+        String sigendFileStoreId;
 
         sigendFileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
 
         eSignDetails.setSignedFileStoreId(sigendFileStoreId);
+        eSignDetails.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
         ESignRequest eSignRequest = ESignRequest.builder()
                 .eSignParameter(eSignDetails).requestInfo(request.getRequestInfo()).build();
 
         producer.push(configuration.getEsignUpdateTopic(), eSignRequest);
         return sigendFileStoreId;
     }
+
+
+
 }

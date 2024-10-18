@@ -31,10 +31,8 @@ public class PdfEmbedder {
 
     PdfSignatureAppearance appearance;
 
-    @Autowired
-    Decryption decryption;
 
-    public MultipartFile signPdfWithDSAndReturnMultipartFile(Resource resource, String response ,String signaturePlaceHolder) throws IOException {
+    public MultipartFile signPdfWithDSAndReturnMultipartFile(Resource resource, String response, String signaturePlaceHolder) throws IOException {
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
@@ -50,8 +48,8 @@ public class PdfEmbedder {
             appearance.setAcro6Layers(false);
 
             Coordinate locationToSign = findLocationToSign(reader, signaturePlaceHolder);
-            Rectangle rectangle = new Rectangle(locationToSign.getX(), locationToSign.getY(), locationToSign.getX()+(100), locationToSign.getY()+(90));
-            appearance.setVisibleSignature(rectangle, reader.getNumberOfPages(), null);
+            Rectangle rectangle = new Rectangle(locationToSign.getX(), locationToSign.getY(), locationToSign.getX() + (100), locationToSign.getY() + (90));
+            appearance.setVisibleSignature(rectangle, locationToSign.getPageNumber(), signaturePlaceHolder);
 
             Font font = new Font();
             font.setSize(6);
@@ -117,6 +115,16 @@ public class PdfEmbedder {
 
 
     private Coordinate findLocationToSign(PdfReader reader, String signaturePlace) {
+        Coordinate coordinate = new Coordinate();
+        Rectangle cropBox = reader.getCropBox(1);
+        coordinate.setX(cropBox.getLeft());
+        coordinate.setY(cropBox.getBottom());
+        coordinate.setFound(false);
+        coordinate.setPageNumber(reader.getNumberOfPages());
+
+        if (signaturePlace == null || signaturePlace.isEmpty() || signaturePlace.isBlank()) {
+            return coordinate;
+        }
         TextLocationFinder finder = new TextLocationFinder(signaturePlace);
 
         try {
@@ -133,8 +141,11 @@ public class PdfEmbedder {
                     // Once found, use the coordinates of the keyword
                     float x = finder.getX();
                     float y = finder.getY();
-
-                    return Coordinate.builder().x(x).y(y).found(true).pageNumber(i).build();
+                    coordinate.setX(x);
+                    coordinate.setY(y);
+                    coordinate.setFound(true);
+                    coordinate.setPageNumber(i);
+                    return coordinate;
 
                 }
             }
@@ -142,8 +153,7 @@ public class PdfEmbedder {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        Rectangle cropBox = reader.getCropBox(1);
-        return Coordinate.builder().x(cropBox.getLeft()).y(cropBox.getBottom()).found(false).pageNumber(reader.getNumberOfPages()).build();
+        return coordinate;
     }
 }
 
