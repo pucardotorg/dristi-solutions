@@ -1,9 +1,9 @@
-import { ActionBar, Button, CheckBox, CloseSvg, FormComposerV2, Header, Loader, SubmitBar, Toast } from "@egovernments/digit-ui-react-components";
+import { ActionBar, Button, CloseSvg, FormComposerV2, Header, Loader, SubmitBar, Toast } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import ReactTooltip from "react-tooltip";
-import { CaseWorkflowAction, CaseWorkflowState } from "../../../Utils/caseWorkflow";
+import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import Accordion from "../../../components/Accordion";
 import ConfirmCorrectionModal from "../../../components/ConfirmCorrectionModal";
 import ConfirmCourtModal from "../../../components/ConfirmCourtModal";
@@ -56,7 +56,7 @@ import { getSuffixByBusinessCode, getTaxPeriodByBusinessService } from "../../..
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import DocViewerWrapper from "../../employee/docViewerWrapper";
 import CaseLockModal from "./CaseLockModal";
-import ConfirmCaseDetailsModal from "./confirmCaseDetailsModal";
+import ConfirmCaseDetailsModal from "./ConfirmCaseDetailsModal";
 
 const OutlinedInfoIcon = () => (
   <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: "absolute", right: -22, top: 0 }}>
@@ -356,7 +356,7 @@ function EFilingCases({ path }) {
     if (advocateUuid) {
       return { isRepresenting: true, uuid: advocateUuid };
     } else return { isRepresenting: false, uuid: null };
-  });
+  }, [caseDetails]);
 
   const scrutinyObj = useMemo(() => {
     return caseDetails?.additionalDetails?.scrutiny?.data || {};
@@ -1579,11 +1579,13 @@ function EFilingCases({ path }) {
       return;
     }
     if (selected === "reviewCaseFile" && isCaseReAssigned && !openConfirmCorrectionModal && !isCaseLocked) {
-      return setOpenConfirmCorrectionModal(true);
+      setOpenConfirmCorrectionModal(true);
+      return;
     }
 
     if (selected === "reviewCaseFile" && !showCaseLockingModal && isDraftInProgress) {
-      return setShowCaseLockingModal(true);
+      setShowCaseLockingModal(true);
+      return;
     }
 
     //check- include below commented code for signing process changes.

@@ -1,8 +1,6 @@
-import { CloseSvg, Modal, CheckBox } from "@egovernments/digit-ui-react-components";
-
-import React, { useCallback, useMemo, useState } from "react";
+import { CloseSvg, Modal } from "@egovernments/digit-ui-react-components";
+import React, { useMemo } from "react";
 import { useHistory } from "react-router-dom";
-import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 
 const Heading = (props) => {
   return (

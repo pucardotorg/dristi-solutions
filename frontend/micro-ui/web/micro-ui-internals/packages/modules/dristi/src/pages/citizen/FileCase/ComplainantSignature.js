@@ -267,7 +267,7 @@ const ComplainantSignature = ({ path }) => {
     return !!caseDetails?.additionalDetails?.scrutiny?.data;
   }, [caseDetails]);
 
-  const isLitigantPartingPerson = useMemo(() => {
+  const isLitigantPartyInPerson = useMemo(() => {
     return !isAdvocateFilingCase && !advocateDetails;
   }, [advocateDetails, isAdvocateFilingCase]);
 
@@ -593,7 +593,7 @@ const ComplainantSignature = ({ path }) => {
       return !(isEsignSuccess || uploadDoc);
     }
 
-    return !(isLitigantEsignCompleted || isEsignSuccess || (isLitigantPartingPerson && uploadDoc));
+    return !(isLitigantEsignCompleted || isEsignSuccess || (isLitigantPartyInPerson && uploadDoc));
   };
 
   if (isLoading) {
@@ -646,7 +646,7 @@ const ComplainantSignature = ({ path }) => {
               <div style={{ marginTop: "5px" }}>{litigants?.additionalDetails?.fullName}</div>
             </div>
             {!isAdvocateFilingCase
-              ? (isEsignSuccess || isLitigantEsignCompleted || (isLitigantPartingPerson && uploadDoc)) && (
+              ? (isEsignSuccess || isLitigantEsignCompleted || (isLitigantPartyInPerson && uploadDoc)) && (
                   <span style={styles.signedLabel}>{t("SIGNED")}</span>
                 )
               : (isLitigantEsignCompleted || uploadDoc) && <span style={styles.signedLabel}>{t("SIGNED")}</span>}
@@ -704,15 +704,15 @@ const ComplainantSignature = ({ path }) => {
                 <p style={{ fontSize: "18px", fontWeight: 700 }}>{t("WAIT_FOR_LITIGANT_SIGNATURE")}</p>
               ))}
 
-            {(isSelectedUploadDoc || isLitigantPartingPerson) && (
+            {(isSelectedUploadDoc || isLitigantPartyInPerson) && (
               <button
                 style={{
                   ...styles.uploadButton,
-                  opacity: isAdvocateFilingCase || isLitigantPartingPerson ? 1 : 0.5,
-                  cursor: isAdvocateFilingCase || isLitigantPartingPerson ? "pointer" : "default",
+                  opacity: isAdvocateFilingCase || isLitigantPartyInPerson ? 1 : 0.5,
+                  cursor: isAdvocateFilingCase || isLitigantPartyInPerson ? "pointer" : "default",
                 }}
                 onClick={handleUploadFile}
-                disabled={!(isAdvocateFilingCase || isLitigantPartingPerson)}
+                disabled={!(isAdvocateFilingCase || isLitigantPartyInPerson)}
               >
                 <FileUploadIcon />
                 <span style={{ marginLeft: "8px" }}>{t("UPLOAD_SIGNED_PDF")}</span>
