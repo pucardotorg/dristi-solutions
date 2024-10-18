@@ -56,6 +56,7 @@ import { getSuffixByBusinessCode, getTaxPeriodByBusinessService } from "../../..
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import DocViewerWrapper from "../../employee/docViewerWrapper";
 import CaseLockModal from "./CaseLockModal";
+import ConfirmCaseDetailsModal from "./confirmCaseDetailsModal";
 
 const OutlinedInfoIcon = () => (
   <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: "absolute", right: -22, top: 0 }}>
@@ -179,6 +180,7 @@ function EFilingCases({ path }) {
   const [showReviewCorrectionModal, setShowReviewCorrectionModal] = useState(false);
   const [showReviewConfirmationModal, setShowReviewConfirmationModal] = useState(false);
   const [showCaseLockingModal, setShowCaseLockingModal] = useState(false);
+  const [showConfirmCaseDetailsModal, setShowConfirmCaseDetailsModal] = useState(false);
 
   const [caseResubmitSuccess, setCaseResubmitSuccess] = useState(false);
   const [prevSelected, setPrevSelected] = useState("");
@@ -1206,10 +1208,6 @@ function EFilingCases({ path }) {
           assignees.push({ uuid: userInfo?.uuid }); // pending task for complainant
           assignees.push({ uuid: isAdvocateRepresenting?.uuid }); // pending task for advocate
         }
-      } else {
-        // when advocate is locking case, pending task will be created for advocate as well as complainant.
-        assignees.push({ uuid: userInfo?.uuid }); // pending task for advocate
-        assignees.push({ uuid: caseDetails?.litigants?.[0]?.additionalDetails?.uuid }); //pending task for complainant
       }
     }
     // if Uploading Documents is the preferred at the time of case locking.(this can only be done when advocate is locking the case)
@@ -2429,15 +2427,18 @@ function EFilingCases({ path }) {
           t={t}
           path={path}
           setShowCaseLockingModal={setShowCaseLockingModal}
+          setShowConfirmCaseDetailsModal={setShowConfirmCaseDetailsModal}
           isAdvocateFilingCase={isAdvocateFilingCase}
           onSubmit={onSubmit}
           createPendingTask={createPendingTask}
           setPrevSelected={setPrevSelected}
           selected={selected}
-          caseId={caseId}
           caseDetails={caseDetails}
           state={state}
         ></CaseLockModal>
+      )}
+      {showConfirmCaseDetailsModal && (
+        <ConfirmCaseDetailsModal t={t} setShowConfirmCaseDetailsModal={setShowConfirmCaseDetailsModal}></ConfirmCaseDetailsModal>
       )}
     </div>
   );
