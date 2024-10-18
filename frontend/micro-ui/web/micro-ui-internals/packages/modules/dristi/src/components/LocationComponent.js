@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { LabelFieldPair, CardLabel, TextInput, CardLabelError } from "@egovernments/digit-ui-react-components";
+import { LabelFieldPair, CardLabel, TextInput, CardLabelError, RadioButtons } from "@egovernments/digit-ui-react-components";
 import LocationSearch, { defaultCoordinates } from "./LocationSearch";
 import Axios from "axios";
 
@@ -64,7 +64,7 @@ const LocationComponent = ({
     (isFirstRender, coordinates, field, defaultValue = "", location) => {
       const isDefaultCoordinates =
         parseFloat(coordinates?.latitude) === defaultCoordinates?.lat && parseFloat(coordinates?.longitude) === defaultCoordinates?.lng;
-      if (!locationFormData.hasOwnProperty("addressDetails")) return "";
+      if (isFirstRender && !locationFormData.hasOwnProperty("addressDetails")) return "";
 
       // this check is to set error when user enters invalid pincode and save draft
       // and after visiting different page and comes to the same page-> error should be set.
@@ -75,7 +75,10 @@ const LocationComponent = ({
               (res.data.results && (res.data.results?.length === 0 || !res.data.results?.[0]?.hasOwnProperty("postcode_localities"))) ||
               (res.data.status === "OK" && getLocation(res.data.results[0], "country") !== "India")
             ) {
+              debugger;
               setError("pincode", { message: "ADDRESS_PINCODE_INVALID" });
+            } else {
+              clearErrors("pincode");
             }
           })
           .catch(() => {
@@ -83,7 +86,7 @@ const LocationComponent = ({
           });
       }
 
-      if (locationFormData?.[config?.key]) {
+      if (isFirstRender && locationFormData?.[config?.key]) {
         return locationFormData[config?.key]?.[field];
       }
       return defaultValue;
@@ -166,6 +169,7 @@ const LocationComponent = ({
           return res;
         }, {}),
       });
+      clearErrors("pincode");
     } else onLocationSelect(config.key, { ...locationFormData[config.key], [input]: value });
   }
 
@@ -180,7 +184,7 @@ const LocationComponent = ({
             <LabelFieldPair>
               <CardLabel className="card-label-smaller">
                 {t(input.label)}
-                <span>{input?.showOptional && ` ${t("CS_IS_OPTIONAL")}`}</span>
+                <span style={{ color: "rgb(119, 120, 123)" }}>{input?.showOptional && ` ${t("CS_IS_OPTIONAL")}`}</span>
               </CardLabel>
               <div className="field">
                 {input?.type === "LocationSearch" && mapIndex ? (
@@ -206,6 +210,17 @@ const LocationComponent = ({
                     }}
                     disable={input.isDisabled || disable}
                   />
+                ) : input?.type === "Radio" ? (
+                  <RadioButtons
+                    style={{ display: "flex", justifyContent: "flex-start", gap: "3rem", ...input.styles }}
+                    selectedOption={currentValue}
+                    options={input?.options}
+                    optionsKey={"code"}
+                    innerStyles={{ justifyContent: "start" }}
+                    onSelect={(value) => {
+                      setValue(value, input?.name);
+                    }}
+                  />
                 ) : (
                   <TextInput
                     className="field desktop-w-full"
@@ -230,6 +245,11 @@ const LocationComponent = ({
                 {errors?.pincode && input?.name === "pincode" && (
                   <CardLabelError>
                     <span style={{ color: "#ff0000" }}>{t(errors?.pincode?.message)}</span>
+                  </CardLabelError>
+                )}
+                {errors[input?.name] && (
+                  <CardLabelError>
+                    <span style={{ color: "#ff0000" }}>{t(errors[input?.name]?.message)}</span>
                   </CardLabelError>
                 )}
               </div>
