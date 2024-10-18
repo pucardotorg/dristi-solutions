@@ -299,7 +299,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
           uploadGuidelines: t("UPLOAD_DOC_50"),
           maxFileSize: 50,
           maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
-          fileTypes: ["JPG", "PNG", "PDF"],
+          fileTypes: ["JPG", "PDF"],
           isMultipleUpload: false,
         },
       ],
@@ -3032,7 +3032,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
           )}
         </Modal>
       )}
-      {showEditRespondentDetailsModal && <DocumentModal config={registerRespondentConfig} />}
+      {showEditRespondentDetailsModal && <DocumentModal config={registerRespondentConfig} documentStyle={{ zIndex: "1000" }} />}
       {showConfirmSummonModal && <DocumentModal config={confirmSummonConfig} />}
       {showErrorToast && (
         <Toast
