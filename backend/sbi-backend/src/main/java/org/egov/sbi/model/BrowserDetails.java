@@ -116,7 +116,7 @@ public class BrowserDetails {
         return browserDetails;
     }
 
-    public static BrowserDetails browserdetailsFromString(String browserDetailsString){
+    public static BrowserDetails doubleVerifyBrowserdetailsFromString(String browserDetailsString){
         String[] parts = browserDetailsString.split("\\|", -1);
         BrowserDetails browserDetails = new BrowserDetails();
 
