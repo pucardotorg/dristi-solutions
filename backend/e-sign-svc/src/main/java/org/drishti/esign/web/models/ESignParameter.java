@@ -41,6 +41,6 @@ public class ESignParameter {
 
     @JsonProperty("auditDetails")
     @Valid
-    private AuditDetails auditDetails = null;
+    private AuditDetails auditDetails ;
 
 }

@@ -40,6 +40,22 @@ public class EsignRequestRepository {
 
     }
 
+    //
+    private String getSignQuery(boolean includePagination, String... conditions) {
+        StringBuilder query = new StringBuilder(BASE_QUERY);
+        query.append(FROM_TABLE);
+
+        if (conditions.length > 0) {
+            query.append(WHERE).append(String.join(" AND ", conditions));
+        }
+
+        if (includePagination) {
+            query.append(" ").append(LIMIT).append(OFFSET);
+        }
+
+        return query.toString();
+    }
+
     public ESignParameter getESignDetails(String id) {
 
         List<Integer> preparedStmtArgList = new ArrayList<>(List.of(Types.VARCHAR, Types.INTEGER, Types.INTEGER));

@@ -123,17 +123,17 @@ public class ESignService {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        String sigendFileStoreId;
+        String signedFileStoreId;
 
-        sigendFileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
+        signedFileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
 
-        eSignDetails.setSignedFileStoreId(sigendFileStoreId);
+        eSignDetails.setSignedFileStoreId(signedFileStoreId);
         eSignDetails.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
         ESignRequest eSignRequest = ESignRequest.builder()
                 .eSignParameter(eSignDetails).requestInfo(request.getRequestInfo()).build();
 
         producer.push(configuration.getEsignUpdateTopic(), eSignRequest);
-        return sigendFileStoreId;
+        return signedFileStoreId;
     }
 
 

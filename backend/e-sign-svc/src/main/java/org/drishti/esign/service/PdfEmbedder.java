@@ -6,11 +6,9 @@ import com.itextpdf.text.pdf.*;
 import com.itextpdf.text.pdf.parser.PdfContentStreamProcessor;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.drishti.esign.cipher.Decryption;
 import org.drishti.esign.util.ByteArrayMultipartFile;
 import org.drishti.esign.util.TextLocationFinder;
 import org.drishti.esign.web.models.Coordinate;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -131,16 +129,21 @@ public class PdfEmbedder {
             for (int i = 1; i <= reader.getNumberOfPages(); i++) {
                 PdfContentStreamProcessor processor = new PdfContentStreamProcessor(finder);
                 PdfDictionary pageDic = reader.getPageN(i);
+                if (pageDic == null) {
+                    continue;
+                }
                 PdfDictionary resourcesDic = pageDic.getAsDict(PdfName.RESOURCES);
-
+                if (resourcesDic == null) {
+                    continue;
+                }
                 // Use the raw content stream instead of PdfTextExtractor
                 byte[] contentBytes = reader.getPageContent(i);
                 processor.processContent(contentBytes, resourcesDic);
 
-                if (finder.found) {
+                if (finder.getKeywordFound()) {
                     // Once found, use the coordinates of the keyword
-                    float x = finder.getX();
-                    float y = finder.getY();
+                    float x = finder.getKeywordX();
+                    float y = finder.getKeywordY();
                     coordinate.setX(x);
                     coordinate.setY(y);
                     coordinate.setFound(true);
