@@ -10,7 +10,9 @@ import org.egov.sbi.repository.TransactionDetailsRepository;
 import org.egov.sbi.util.AES256Util;
 import org.egov.sbi.util.CollectionsUtil;
 import org.egov.sbi.util.PaymentUtil;
+import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.spec.SecretKeySpec;
@@ -19,6 +21,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+
+import static org.egov.sbi.config.ServiceConstants.*;
 
 @Service
 @Slf4j
@@ -80,6 +84,8 @@ public class PaymentService {
         String decryptedPayloadString = aes256Util.decrypt(encryptedPayload, secretKeySpec);
         BrowserDetails browserDetails = BrowserDetails.fromString(decryptedPayloadString);
 
+        doubleVerificationPayment(browserDetails);
+
         TransactionSearchCriteria searchCriteria = TransactionSearchCriteria.builder()
                 .merchantOrderNumber(browserDetails.getMerchantOrderNumber()).build();
         TransactionDetails transactionDetails = repository.getTransactionDetails(searchCriteria)
@@ -131,6 +137,67 @@ public class PaymentService {
         }
         PaymentRequest paymentRequest = new PaymentRequest(request.getRequestInfo(), payment);
         collectionsUtil.callService(paymentRequest, config.getCollectionServiceHost(), config.getCollectionsPaymentCreatePath());
+    }
+
+    private void doubleVerificationPayment(BrowserDetails browserDetails){
+        String sbiEpayRefId = browserDetails.getSbiEpayRefId();
+        String merchantId = config.getSbiMerchantId();
+        String merchantOrderNumber = browserDetails.getMerchantOrderNumber();
+        String amount = String.valueOf(browserDetails.getAmount());
+        String queryRequest = String.join("|", sbiEpayRefId, merchantId, merchantOrderNumber, amount);
+
+        Map<String, String> params = new HashMap<>();
+        params.put("queryRequest", queryRequest);
+        params.put("aggregatorId", config.getSbiAggregatorId());
+        params.put("merchantId", merchantId);
+        ResponseEntity<String> responseEntity = paymentUtil.doubleVerificationRequest(params);
+        if(responseEntity.getStatusCode().is2xxSuccessful() && responseEntity.getBody() != null) {
+            String response = responseEntity.getBody();
+            if(response.equals(SBIVERIFICATIONERROR) || response.equals(SBIINVALIDDATAERROR)){
+                throw new CustomException(DOUBLE_VERIFICATION_FAILED, "fail double verification: " + response);
+            }
+            else{
+                BrowserDetails doubleVerificationBrowserDetails = getBrowserdetailsFromString(response);
+                if (!browserDetails.getTransactionStatus().equals(doubleVerificationBrowserDetails.getTransactionStatus())
+                        && browserDetails.getAmount() != doubleVerificationBrowserDetails.getAmount()) {
+                    throw new CustomException(DOUBLE_VERIFICATION_FAILED, "failed to verify double verification");
+                }
+            }
+        }
+        else{
+            throw new CustomException(DOUBLE_VERIFICATION_FAILED, "failed to access double verification api");
+        }
+
+    }
+
+    private BrowserDetails getBrowserdetailsFromString(String browserDetailsString){
+        String[] parts = browserDetailsString.split("\\|", -1);
+        BrowserDetails browserDetails = new BrowserDetails();
+
+        browserDetails.setMerchantId(parts[0]);
+        browserDetails.setSbiEpayRefId(parts[1]);
+        browserDetails.setTransactionStatus(parts[2]);
+        browserDetails.setCountry(parts[3]);
+        browserDetails.setCurrency(parts[4]);
+        browserDetails.setOtherDetails(parts[5]);
+        browserDetails.setMerchantOrderNumber(parts[6]);
+        browserDetails.setAmount(Double.parseDouble(parts[7]));
+        browserDetails.setBankCode(parts[9]);
+        browserDetails.setBankReferenceNumber(parts[10]);
+        browserDetails.setTransactionDate(parts[11]);
+        browserDetails.setPayMode(parts[12]);
+        browserDetails.setCin(parts[13]);
+        browserDetails.setRef1(parts[15]);
+        browserDetails.setRef2(parts[16]);
+        browserDetails.setRef3(parts[17]);
+        browserDetails.setRef4(parts[18]);
+        browserDetails.setRef5(parts[19]);
+        browserDetails.setRef6(parts[20]);
+        browserDetails.setRef7(parts[21]);
+        browserDetails.setRef8(parts[22]);
+        browserDetails.setRef9(parts[23]);
+
+        return browserDetails;
     }
 
     private Long convertTimestampToMillis(String timestampStr) {
