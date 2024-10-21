@@ -153,7 +153,7 @@ public class ReScheduleHearingService {
 
                 }
                 List<ScheduleHearing> schedule = hearingService.schedule(ScheduleHearingRequest.builder().requestInfo(requestInfo).hearing(udpateHearingList).build());
-                producer.push(config.getScheduleHearingTopic(), schedule);
+                producer.push(config.getScheduleHearingTopic(), ScheduleHearingRequest.builder().requestInfo(requestInfo).hearing(schedule).build());
             }
 
         } catch (Exception e) {
@@ -162,7 +162,7 @@ public class ReScheduleHearingService {
         }
 
 
-        producer.push(config.getRescheduleRequestCreateTopic(), reScheduleHearing);
+        producer.push(config.getRescheduleRequestCreateTopic(), reScheduleHearingsRequest);
 
         log.info("operation = create, result=SUCCESS, ReScheduleHearing={}", reScheduleHearing);
 
