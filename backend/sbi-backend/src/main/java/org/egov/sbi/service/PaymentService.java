@@ -157,7 +157,7 @@ public class PaymentService {
                 throw new CustomException(DOUBLE_VERIFICATION_FAILED, "fail double verification: " + response);
             }
             else{
-                BrowserDetails doubleVerificationBrowserDetails = BrowserDetails.browserdetailsFromString(response);
+                BrowserDetails doubleVerificationBrowserDetails = BrowserDetails.doubleVerifyBrowserdetailsFromString(response);
                 if (!isDoubleVerificationValid(browserDetails, doubleVerificationBrowserDetails)) {
                     throw new CustomException(DOUBLE_VERIFICATION_FAILED, "failed to verify double verification");
                 }
