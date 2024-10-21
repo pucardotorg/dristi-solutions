@@ -150,9 +150,9 @@ const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRe
             pincode: data?.address?.addressDetails?.pincode,
             addressLine1: data?.address?.addressDetails?.state,
             addressLine2: data?.address?.addressDetails?.district,
-            street: data?.address?.addressDetails?.locality,
-            doorNo: data?.address?.addressDetails?.doorNo,
-            buildingName: data?.address?.addressDetails?.buildingName,
+            street: data?.address?.addressDetails?.locality || "",
+            doorNo: data?.address?.addressDetails?.doorNo || "",
+            buildingName: data?.address?.addressDetails?.buildingName || "",
           },
         ],
         identifiers: [

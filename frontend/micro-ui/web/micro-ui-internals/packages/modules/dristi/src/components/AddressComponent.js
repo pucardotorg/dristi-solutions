@@ -166,8 +166,8 @@ const AddressComponent = ({ t, config, onSelect, formData = {}, errors }) => {
                                 .join(", ");
                             })(),
                       coordinates,
-                      buildingName: formData && isFirstRender && formData[config.key] ? formData[config.key]["buildingName"] : "",
-                      doorNo: formData && isFirstRender && formData[config.key] ? formData[config.key]["doorNo"] : "",
+                      buildingName: formData && isFirstRender && formData?.[config.key] ? formData?.[config.key]?.["buildingName"] || "" : "",
+                      doorNo: formData && isFirstRender && formData?.[config.key] ? formData?.[config.key]?.["doorNo"] || "" : "",
                     },
                     input.name
                   );
