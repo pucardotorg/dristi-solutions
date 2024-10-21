@@ -1828,7 +1828,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                   documentType: uploadedData.fileType || document?.documentType,
                   fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
                   documentName: uploadedData.filename || document?.documentName,
-                  fileName: `NOC (${name?.givenName}${name?.otherNames ? " " + name?.otherNames + " " : " "}${name?.familyName})`,
+                  fileName: `NOC (${getFullName(" ", name?.givenName, name?.otherNames, name?.familyName)})`,
                   individualId,
                 };
               }
@@ -1842,7 +1842,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                   documentType: uploadedData.fileType || document?.documentType,
                   fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
                   documentName: uploadedData.filename || document?.documentName,
-                  fileName: `Court Order (${name?.givenName}${name?.otherNames ? " " + name?.otherNames + " " : " "}${name?.familyName})`,
+                  fileName: `Court Order (${getFullName(" ", name?.givenName, name?.otherNames, name?.familyName)})`,
                   individualId,
                 };
               }
@@ -1856,7 +1856,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                   documentType: uploadedData.fileType || document?.documentType,
                   fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
                   documentName: uploadedData.filename || document?.documentName,
-                  fileName: `Vakalatnama (${name?.givenName}${name?.otherNames ? " " + name?.otherNames + " " : " "}${name?.familyName})`,
+                  fileName: `Vakalatnama (${getFullName(" ", name?.givenName, name?.otherNames, name?.familyName)})`,
                   individualId,
                 };
               }
@@ -2044,7 +2044,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                   documentType: uploadedData.fileType || document?.documentType,
                   fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
                   documentName: uploadedData.filename || document?.documentName,
-                  fileName: `Vakalatnama (${name?.givenName}${name?.otherNames ? " " + name?.otherNames + " " : " "}${name?.familyName})`,
+                  fileName: `Vakalatnama (${getFullName(" ", name?.givenName, name?.otherNames, name?.familyName)})`,
                   individualId,
                 };
               }
@@ -2278,7 +2278,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                   documentType: uploadedData.fileType || document?.documentType,
                   fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
                   documentName: uploadedData.filename || document?.documentName,
-                  fileName: `Vakalatnama (${name?.givenName}${name?.otherNames ? " " + name?.otherNames + " " : " "}${name?.familyName})`,
+                  fileName: `Vakalatnama (${getFullName(" ", name?.givenName, name?.otherNames, name?.familyName)})`,
                   individualId,
                 };
               }
@@ -2655,9 +2655,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
           ...caseDetails,
           additionalDetails: additionalDetails,
         });
-        const fullName = `${response?.Individual?.name?.givenName} ${
-          response?.Individual?.name?.otherNames ? response?.Individual?.name?.otherNames + " " : ""
-        }${response?.Individual?.name?.familyName}`;
+        const fullName =getUserFullName(response?.Individual)
         setSelectedParty({
           ...selectedParty,
           fullName: fullName,
