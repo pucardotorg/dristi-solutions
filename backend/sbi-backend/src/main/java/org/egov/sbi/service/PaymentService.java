@@ -157,9 +157,8 @@ public class PaymentService {
                 throw new CustomException(DOUBLE_VERIFICATION_FAILED, "fail double verification: " + response);
             }
             else{
-                BrowserDetails doubleVerificationBrowserDetails = getBrowserdetailsFromString(response);
-                if (!browserDetails.getTransactionStatus().equals(doubleVerificationBrowserDetails.getTransactionStatus())
-                        && browserDetails.getAmount() != doubleVerificationBrowserDetails.getAmount()) {
+                BrowserDetails doubleVerificationBrowserDetails = BrowserDetails.browserdetailsFromString(response);
+                if (!isDoubleVerificationValid(browserDetails, doubleVerificationBrowserDetails)) {
                     throw new CustomException(DOUBLE_VERIFICATION_FAILED, "failed to verify double verification");
                 }
             }
@@ -170,35 +169,14 @@ public class PaymentService {
 
     }
 
-    private BrowserDetails getBrowserdetailsFromString(String browserDetailsString){
-        String[] parts = browserDetailsString.split("\\|", -1);
-        BrowserDetails browserDetails = new BrowserDetails();
+    private boolean isDoubleVerificationValid(BrowserDetails browserDetails, BrowserDetails doubleVerificationBrowserDetails) {
+        boolean isTransactionStatusEqual = browserDetails.getTransactionStatus().equals(doubleVerificationBrowserDetails.getTransactionStatus());
+        boolean isAmountEqual = browserDetails.getAmount() == doubleVerificationBrowserDetails.getAmount();
+        boolean isMerchantOrderNumberEqual = browserDetails.getMerchantOrderNumber().equals(doubleVerificationBrowserDetails.getMerchantOrderNumber());
 
-        browserDetails.setMerchantId(parts[0]);
-        browserDetails.setSbiEpayRefId(parts[1]);
-        browserDetails.setTransactionStatus(parts[2]);
-        browserDetails.setCountry(parts[3]);
-        browserDetails.setCurrency(parts[4]);
-        browserDetails.setOtherDetails(parts[5]);
-        browserDetails.setMerchantOrderNumber(parts[6]);
-        browserDetails.setAmount(Double.parseDouble(parts[7]));
-        browserDetails.setBankCode(parts[9]);
-        browserDetails.setBankReferenceNumber(parts[10]);
-        browserDetails.setTransactionDate(parts[11]);
-        browserDetails.setPayMode(parts[12]);
-        browserDetails.setCin(parts[13]);
-        browserDetails.setRef1(parts[15]);
-        browserDetails.setRef2(parts[16]);
-        browserDetails.setRef3(parts[17]);
-        browserDetails.setRef4(parts[18]);
-        browserDetails.setRef5(parts[19]);
-        browserDetails.setRef6(parts[20]);
-        browserDetails.setRef7(parts[21]);
-        browserDetails.setRef8(parts[22]);
-        browserDetails.setRef9(parts[23]);
-
-        return browserDetails;
+        return isTransactionStatusEqual && isAmountEqual && isMerchantOrderNumberEqual;
     }
+
 
     private Long convertTimestampToMillis(String timestampStr) {
         List<DateTimeFormatter> formatters = new ArrayList<>();

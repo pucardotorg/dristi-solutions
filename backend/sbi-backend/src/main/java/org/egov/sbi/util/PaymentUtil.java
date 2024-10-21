@@ -71,7 +71,7 @@ public class PaymentUtil {
         });
 
         HttpEntity<String> requestEntity = new HttpEntity<>(requestBody.toString(), headers);
-
+        log.info("request body: {}", requestEntity.getBody());
         return restTemplate.postForEntity(configuration.getSbiDoubleVerificationUrl(), requestEntity, String.class);
     }
 }
