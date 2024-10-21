@@ -3,6 +3,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { DRISTIService } from "../../../services";
+import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
 
 function timeInMillisFromDateAndTime(date, hhmmssms) {
   const startOfDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -31,7 +32,7 @@ const NextHearingCard = ({ caseData, width }) => {
     true
   );
 
-  const scheduledHearing = hearingRes?.HearingList?.filter((hearing) => !["COMPLETED", "OPT_OUT"].includes(hearing?.status)).sort(
+  const scheduledHearing = hearingRes?.HearingList?.filter((hearing) => !["COMPLETED", HearingWorkflowState?.OPTOUT].includes(hearing?.status)).sort(
     (hearing1, hearing2) => hearing1.startTime - hearing2.startTime
   )[0];
 
@@ -81,7 +82,6 @@ const NextHearingCard = ({ caseData, width }) => {
   if (!scheduledHearing) {
     return null;
   }
-  debugger;
 
   return (
     <Card
