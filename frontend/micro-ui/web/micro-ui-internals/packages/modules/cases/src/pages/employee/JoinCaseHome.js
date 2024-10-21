@@ -2278,6 +2278,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                   documentType: uploadedData.fileType || document?.documentType,
                   fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
                   documentName: uploadedData.filename || document?.documentName,
+                  fileName: `Vakalatnama (${formatFullName(name)})`,
                   individualId,
                 };
               }
