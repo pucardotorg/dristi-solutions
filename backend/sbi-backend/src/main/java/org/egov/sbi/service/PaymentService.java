@@ -105,32 +105,31 @@ public class PaymentService {
 
     public void callCollectionServiceAndUpdatePayment(TransactionRequest request) {
 
-        PaymentDetail paymentDetail = PaymentDetail.builder()
-                .billId(request.getTransactionDetails().getBillId())
-                .totalDue(BigDecimal.valueOf(request.getTransactionDetails().getTotalDue()))
-                .totalAmountPaid(new BigDecimal(String.valueOf(request.getTransactionDetails().getPostingAmount())))
-                .businessService(request.getTransactionDetails().getBusinessService()).build();
-
-        Payment payment = Payment.builder()
-                .tenantId(config.getEgovStateTenantId())
-                .paymentDetails(Collections.singletonList(paymentDetail))
-                .payerName(request.getTransactionDetails().getPayerName())
-                .paidBy(request.getTransactionDetails().getPaidBy())
-                .mobileNumber(request.getTransactionDetails().getMobileNumber())
-                .transactionNumber(request.getTransactionDetails().getSbiEpayRefId())
-                .transactionDate(convertTimestampToMillis(request.getTransactionDetails().getTransactionDate()))
-                .instrumentNumber(request.getTransactionDetails().getCin())
-                .instrumentDate(convertTimestampToMillis(request.getTransactionDetails().getTransactionDate()))
-                .paymentMode("ONLINE")
-                .build();
         if (request.getTransactionDetails().getTransactionStatus().equalsIgnoreCase("SUCCESS")) {
-            payment.setTotalAmountPaid(new BigDecimal(request.getTransactionDetails().getPostingAmount()));
-            payment.setPaymentStatus("DEPOSITED");
-        } else {
-            payment.setTotalAmountPaid(BigDecimal.ZERO);
+            PaymentDetail paymentDetail = PaymentDetail.builder()
+                    .billId(request.getTransactionDetails().getBillId())
+                    .totalDue(BigDecimal.valueOf(request.getTransactionDetails().getTotalDue()))
+                    .totalAmountPaid(new BigDecimal(String.valueOf(request.getTransactionDetails().getPostingAmount())))
+                    .businessService(request.getTransactionDetails().getBusinessService()).build();
+
+            Payment payment = Payment.builder()
+                    .tenantId(config.getEgovStateTenantId())
+                    .paymentDetails(Collections.singletonList(paymentDetail))
+                    .payerName(request.getTransactionDetails().getPayerName())
+                    .paidBy(request.getTransactionDetails().getPaidBy())
+                    .mobileNumber(request.getTransactionDetails().getMobileNumber())
+                    .transactionNumber(request.getTransactionDetails().getSbiEpayRefId())
+                    .transactionDate(convertTimestampToMillis(request.getTransactionDetails().getTransactionDate()))
+                    .instrumentNumber(request.getTransactionDetails().getCin())
+                    .instrumentDate(convertTimestampToMillis(request.getTransactionDetails().getTransactionDate()))
+                    .paymentMode("ONLINE")
+                    .totalAmountPaid(BigDecimal.valueOf(request.getTransactionDetails().getPostingAmount()))
+                    .paymentStatus("DEPOSITED")
+                    .build();
+
+            PaymentRequest paymentRequest = new PaymentRequest(request.getRequestInfo(), payment);
+            collectionsUtil.callService(paymentRequest, config.getCollectionServiceHost(), config.getCollectionsPaymentCreatePath());
         }
-        PaymentRequest paymentRequest = new PaymentRequest(request.getRequestInfo(), payment);
-        collectionsUtil.callService(paymentRequest, config.getCollectionServiceHost(), config.getCollectionsPaymentCreatePath());
     }
 
     private Long convertTimestampToMillis(String timestampStr) {
