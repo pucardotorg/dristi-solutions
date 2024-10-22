@@ -11,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.util.IdgenUtil;
 import org.pucar.dristi.web.models.Application;
 import org.pucar.dristi.web.models.ApplicationRequest;
@@ -28,6 +29,9 @@ class ApplicationEnrichmentTest {
     @Mock
     private IdgenUtil idgenUtil;
 
+    @Mock
+    private Configuration configuration;
+
     @InjectMocks
     private ApplicationEnrichment applicationEnrichment;
 
@@ -39,6 +43,7 @@ class ApplicationEnrichmentTest {
         RequestInfo requestInfo = RequestInfo.builder().userInfo(userInfo).build();
         Application application = Application.builder()
                 .statuteSection(new StatuteSection())
+                .filingNumber("KL-123")
                 .documents(Collections.singletonList(new Document()))
                 .build();
         applicationRequest = ApplicationRequest.builder()
@@ -49,14 +54,19 @@ class ApplicationEnrichmentTest {
 
     @Test
     void enrichApplication() {
-        when(idgenUtil.getIdList(any(), any(), any(), any(), anyInt()))
-                .thenReturn(Collections.singletonList("application-number"));
+        String mockedTenantId = "KL123";
+        String mockedAppNumber = "KL-123-AP1";
+        when(idgenUtil.getIdList(any(), any(), any(), any(), anyInt(),any()))
+                .thenReturn(Collections.singletonList("AP1"));
 
+        when(configuration.getApplicationConfig()).thenReturn("config");
+        when(configuration.getApplicationFormat()).thenReturn("format");
         applicationEnrichment.enrichApplication(applicationRequest);
 
         Application application = applicationRequest.getApplication();
+        assertEquals(mockedAppNumber, application.getApplicationNumber());
+
         assertNotNull(application.getId());
-        assertEquals("application-number", application.getApplicationNumber());
         assertNotNull(application.getAuditDetails());
         assertNotNull(application.getStatuteSection().getId());
         assertNotNull(application.getStatuteSection().getAuditdetails());
@@ -65,7 +75,7 @@ class ApplicationEnrichmentTest {
             assertNotNull(document.getId());
         });
 
-        verify(idgenUtil).getIdList(any(), any(), any(), any(), anyInt());
+        verify(idgenUtil).getIdList(any(), eq(mockedTenantId), any(), any(), anyInt(),any());
     }
 
     @Test
@@ -96,7 +106,7 @@ class ApplicationEnrichmentTest {
     }
     @Test
     public void testEnrichApplication_CustomException() {
-        when(idgenUtil.getIdList(applicationRequest.getRequestInfo(), applicationRequest.getRequestInfo().getUserInfo().getTenantId(), "application.application_number", null, 1))
+        when(idgenUtil.getIdList(applicationRequest.getRequestInfo(), applicationRequest.getRequestInfo().getUserInfo().getTenantId(), "application.application_number", null, 1,false))
                 .thenThrow(new CustomException("IDGEN_ERROR", "ID generation error"));
 
         assertThrows(CustomException.class, () -> {
@@ -106,7 +116,7 @@ class ApplicationEnrichmentTest {
 
     @Test
     public void testEnrichApplication_GenericException() {
-        when(idgenUtil.getIdList(applicationRequest.getRequestInfo(), applicationRequest.getRequestInfo().getUserInfo().getTenantId(), "application.application_number", null, 1))
+        when(idgenUtil.getIdList(applicationRequest.getRequestInfo(), applicationRequest.getRequestInfo().getUserInfo().getTenantId(), "application.application_number", null, 1,false))
                 .thenThrow(new RuntimeException("Runtime exception"));
 
         assertThrows(CustomException.class, () -> {

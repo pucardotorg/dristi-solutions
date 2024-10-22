@@ -3,7 +3,7 @@ import React, { Fragment, useState } from "react";
 import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer";
 import { useTranslation } from "react-i18next";
 import { Urls } from "../../hooks";
-
+import { Link } from "react-router-dom";
 const SUPPORTED_FILE_FORMATS = [
   ".pdf",
   ".bmp",
@@ -32,6 +32,7 @@ const DocViewerWrapper = ({
   documentName,
   selectedDocs = [],
   docViewerCardClassName,
+  docViewerStyle,
   showDownloadOption = true,
   docWidth = "262px",
   docHeight = "206px",
@@ -50,7 +51,7 @@ const DocViewerWrapper = ({
       }));
   return (
     <div className="docviewer-wrapper" id="docviewer-id">
-      <Card className={docViewerCardClassName}>
+      <Card className={docViewerCardClassName} style={docViewerStyle}>
         {documents?.length != 0 && (
           <>
             <DocViewer
@@ -85,14 +86,13 @@ const DocViewerWrapper = ({
         )}
       </Card>
       {showDownloadOption && (
-        <a
-          href={uri}
+        <Link
+          to={{ pathname: uri }}
           target="_blank"
           rel="noreferrer"
           style={{
             display: "flex",
-            color: "#505A5F",
-            textDecoration: "none",
+            color: "#007e7e",
             width: 250,
             whiteSpace: "nowrap",
             overflow: "hidden",
@@ -100,7 +100,7 @@ const DocViewerWrapper = ({
           }}
         >
           {t(displayFilename) || t("CS_CLICK_TO_DOWNLOAD")}
-        </a>
+        </Link>
       )}
       {documentName && (
         <p
