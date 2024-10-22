@@ -43,7 +43,6 @@ public class UserService {
 
     @PostConstruct
     void initializeSystemUser(){
-
         RequestInfo requestInfo = new RequestInfo();
         StringBuilder uri = new StringBuilder();
         uri.append(configuration.getUserHost()).append(configuration.getUserSearchEndpoint()); // URL for user search call
