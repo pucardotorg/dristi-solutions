@@ -51,10 +51,10 @@ public class UserService {
         uri.append(configuration.getUserHost()).append(configuration.getUserSearchEndpoint()); // URL for user search call
         Map<String, Object> userSearchRequest = new HashMap<>();
         userSearchRequest.put("RequestInfo", requestInfo);
-        userSearchRequest.put("tenantId", configuration.getStateLevelTenantId());
+        userSearchRequest.put("tenantId", configuration.getEgovStateTenantId());
         userSearchRequest.put("roleCodes", Collections.singletonList(INTERNALMICROSERVICEROLE_CODE));
         if(multiStateInstanceUtil.getIsEnvironmentCentralInstance()){
-            MDC.put(TENANT_ID_MDC_STRING, configuration.getStateLevelTenantId());
+            MDC.put(TENANT_ID_MDC_STRING, configuration.getEgovStateTenantId());
         }
         try {
             LinkedHashMap<String, Object> responseMap = (LinkedHashMap<String, Object>) requestRepository.fetchResult(uri, userSearchRequest);
@@ -75,10 +75,10 @@ public class UserService {
         //Creating role with INTERNAL_MICROSERVICE_ROLE
         Role role = Role.builder()
                 .name(INTERNALMICROSERVICEROLE_NAME).code(INTERNALMICROSERVICEROLE_CODE)
-                .tenantId(configuration.getStateLevelTenantId()).build();
+                .tenantId(configuration.getEgovStateTenantId()).build();
         User user = User.builder().userName(INTERNALMICROSERVICEUSER_USERNAME)
                 .name(INTERNALMICROSERVICEUSER_NAME).mobileNumber(INTERNALMICROSERVICEUSER_MOBILENO)
-                .type(INTERNALMICROSERVICEUSER_TYPE).tenantId(configuration.getStateLevelTenantId())
+                .type(INTERNALMICROSERVICEUSER_TYPE).tenantId(configuration.getEgovStateTenantId())
                 .roles(Collections.singletonList(role)).id(0L).build();
 
         userCreateRequest.put("RequestInfo", requestInfo);
