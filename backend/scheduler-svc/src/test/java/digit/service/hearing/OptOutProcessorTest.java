@@ -59,7 +59,8 @@ public class OptOutProcessorTest {
         // Arrange
         HashMap<String, Object> record = new HashMap<>();
         OptOut optOut = createOptOut();
-        when(mapper.convertValue(record, OptOut.class)).thenReturn(optOut);
+        OptOutRequest optOutRequest = OptOutRequest.builder().optOut(optOut).build();
+        when(mapper.convertValue(record, OptOutRequest.class)).thenReturn(optOutRequest);
 
         OptOutSearchRequest searchRequest = createOptOutSearchRequest(optOut);
         when(optOutService.search(any(OptOutSearchRequest.class), any(), any())).thenReturn(Collections.singletonList(optOut));
@@ -84,7 +85,8 @@ public class OptOutProcessorTest {
         // Arrange
         HashMap<String, Object> record = new HashMap<>();
         OptOut optOut = createOptOut();
-        when(mapper.convertValue(record, OptOut.class)).thenReturn(optOut);
+        OptOutRequest optOutRequest = OptOutRequest.builder().optOut(optOut).build();
+        when(mapper.convertValue(record, OptOutRequest.class)).thenReturn(optOutRequest);
 
         OptOutSearchRequest searchRequest = createOptOutSearchRequest(optOut);
         when(optOutService.search(any(OptOutSearchRequest.class), any(), any())).thenReturn(Collections.emptyList());
