@@ -56,9 +56,9 @@ public class ServiceConstants {
 
     public static final String INTERNALMICROSERVICEUSER_NAME = "Internal Microservice User";
 
-    public static final String INTERNALMICROSERVICEUSER_USERNAME = "INTERNAL_USER_SCHEDULER_CHANGE_ME";
+    public static final String INTERNALMICROSERVICEUSER_USERNAME = "INTERNAL_USER";
 
-    public static final String INTERNALMICROSERVICEUSER_MOBILENO = "9999999998";
+    public static final String INTERNALMICROSERVICEUSER_MOBILENO = "9999999999";
 
     public static final String INTERNALMICROSERVICEUSER_TYPE = "SYSTEM";
 
