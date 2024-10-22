@@ -14,7 +14,7 @@ const witnessFormConfig = [
               message: "CORE_COMMON_APPLICANT_NAME_INVALID",
               value: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,100}$/i,
             },
-            minLength: 2,
+            minLength: 1,
             title: "",
             patternType: "Name",
           },
@@ -24,6 +24,7 @@ const witnessFormConfig = [
         type: "text",
         label: "MIDDLE_NAME",
         labelChildren: "optional",
+        isMandatory: false,
         populators: {
           name: "middleName",
           validation: {
@@ -39,16 +40,15 @@ const witnessFormConfig = [
       {
         type: "text",
         label: "LAST_NAME",
-        isMandatory: true,
+        labelChildren: "optional",
+        isMandatory: false,
         populators: {
           name: "lastName",
-          error: "FIRST_LAST_NAME_MANDATORY_MESSAGE",
           validation: {
             pattern: {
               message: "CORE_COMMON_APPLICANT_NAME_INVALID",
               value: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,100}$/i,
             },
-            minLength: 2,
             title: "",
             patternType: "Name",
           },
@@ -128,7 +128,7 @@ const witnessFormConfig = [
         isMandatory: true,
         populators: {
           inputs: [
-            { label: "CS_COMMON_LOCATION", type: "LocationSearch", name: ["pincode", "state", "district", "city", "coordinates", "locality"] },
+            { label: "CS_LOCATION", type: "LocationSearch", name: ["pincode", "state", "district", "city", "coordinates", "locality"] },
             {
               label: "PINCODE",
               type: "text",
@@ -188,10 +188,11 @@ const witnessFormConfig = [
         populators: {
           inputs: [
             {
+              isOptional: true,
               name: "text",
-              textAreaHeader: "CS_TEXTAREA_WITNESS_ADDITIONAL_DETAIL",
+              textAreaSubHeader: "CS_TEXTAREA_WITNESS_ADDITIONAL_DETAIL",
               placeholder: "CS_TEXTAREA_PLACEHOLDER_ADDITIONAL_DETAIL",
-              headerClassName: "dristi-font-bold",
+              subHeaderClassName: "dristi-font-bold",
               type: "TextAreaComponent",
             },
           ],

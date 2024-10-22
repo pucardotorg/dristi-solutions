@@ -32,17 +32,29 @@ export const delayAppConfig = [
   },
   {
     body: [
+      // {
+      //   type: "component",
+      //   component: "SelectCustomTextArea",
+      //   key: "delayApplicationReason",
+      //   populators: {
+      //     inputs: [
+      //       {
+      //         textAreaHeader: "CS_TEXTAREA_HEADER_DELAY_REASON",
+      //         type: "TextAreaComponent",
+      //       },
+      //     ],
+      //   },
+      // },
       {
         type: "component",
-        component: "SelectCustomTextArea",
+        component: "SelectTranscriptTextArea",
         key: "delayApplicationReason",
+        withoutLabel: true,
         populators: {
-          inputs: [
-            {
-              textAreaHeader: "CS_TEXTAREA_HEADER_DELAY_REASON",
-              type: "TextAreaComponent",
-            },
-          ],
+          input: {
+            textAreaHeader: "CS_TEXTAREA_HEADER_DELAY_REASON",
+            type: "TranscriptionTextAreaComponent",
+          },
         },
       },
     ],
@@ -83,7 +95,7 @@ export const delayAppConfig = [
               uploadGuidelines: "UPLOAD_DOC_50",
               maxFileSize: 50,
               maxFileErrorMessage: "CS_FILE_LIMIT_1_MB",
-              fileTypes: ["JPG", "PNG", "PDF"],
+              fileTypes: ["JPG", "PDF"],
             },
           ],
         },
