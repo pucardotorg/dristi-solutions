@@ -49,7 +49,8 @@ public class OptOutProcessor {
     public void checkAndScheduleHearingForOptOut(HashMap<String, Object> record) {
         try {
             log.info("operation = checkAndScheduleHearingForOptOut, result = IN_PROGRESS, record = {}", record);
-            OptOut optOut = mapper.convertValue(record, OptOut.class);
+            OptOutRequest optOutRequest = mapper.convertValue(record, OptOutRequest.class);
+            OptOut optOut = optOutRequest.getOptOut();
 
             String rescheduleRequestId = optOut.getRescheduleRequestId();
 
