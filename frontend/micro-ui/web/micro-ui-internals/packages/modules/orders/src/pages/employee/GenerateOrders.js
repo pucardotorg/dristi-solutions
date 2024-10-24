@@ -1037,7 +1037,7 @@ const GenerateOrders = () => {
       orderSchema?.orderDetails?.parties?.length > 0 &&
       ["BAIL", "REJECT_VOLUNTARY_SUBMISSIONS", "APPROVE_VOLUNTARY_SUBMISSIONS", "REJECTION_RESCHEDULE_REQUEST", "CHECKOUT_REJECT"].includes(type)
     ) {
-      parties = orderSchema?.orderDetails?.parties;
+      parties = orderSchema?.orderDetails?.parties?.map((party) => party?.partyName);
     } else {
       parties = allParties?.map((party) => ({ partyName: party.name, partyType: party?.partyType }));
       return parties;
@@ -1494,6 +1494,28 @@ const GenerateOrders = () => {
     return ["SUMMONS", "NOTICE"].includes(orderType) ? orderFormData?.party?.data : orderFormData;
   };
 
+  const getCourtFee = async (channelId, receiverPincode, taskType) => {
+    try {
+      const breakupResponse = await DRISTIService.getSummonsPaymentBreakup(
+        {
+          Criteria: [
+            {
+              channelId: channelId,
+              receiverPincode: receiverPincode,
+              tenantId: tenantId,
+              taskType: taskType,
+            },
+          ],
+        },
+        {}
+      );
+      return breakupResponse?.Calculation?.[0]?.breakDown?.filter((data) => data?.type === "Court Fee").reduce((sum, fee) => (sum += fee.amount), 0);
+    } catch (error) {
+      console.error("error", error);
+      return 0;
+    }
+  };
+
   const createTask = async (orderType, caseDetails, orderDetails) => {
     let payload = {};
     const { litigants } = caseDetails;
@@ -1519,8 +1541,8 @@ const GenerateOrders = () => {
     const respondentName =
       constructFullName(respondentNameData?.firstName, respondentNameData?.middleName, respondentNameData?.lastName) || respondentNameData;
 
-    const respondentPhoneNo = orderFormData?.phonenumbers?.mobileNumber || [];
-    const respondentEmail = orderFormData?.emails?.email || [];
+    const respondentPhoneNo = orderFormData?.party?.data?.phone_numbers || [];
+    const respondentEmail = orderFormData?.party?.data?.email || [];
     const complainantDetails = individualDetail?.Individual?.[0];
     const addressLine1 = complainantDetails?.address[0]?.addressLine1 || "";
     const addressLine2 = complainantDetails?.address[0]?.addressLine2 || "";
@@ -1556,6 +1578,14 @@ const GenerateOrders = () => {
       age: "",
       gender: "",
     };
+    const caseRespondent = {
+      name: caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.respondentFirstName || "",
+      address: caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.addressDetails?.[0]?.addressDetails,
+      phone: caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.phonenumbers?.mobileNumber?.[0] || "",
+      email: caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.emails?.emailId?.[0] || "",
+      age: caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.respondentAge,
+      gender: "",
+    };
 
     switch (orderType) {
       case "SUMMONS":
@@ -1563,10 +1593,10 @@ const GenerateOrders = () => {
           summonDetails: {
             issueDate: orderData?.auditDetails?.lastModifiedTime,
             caseFilingDate: caseDetails?.filingDate,
-            docSubType: orderFormData?.partyType === "Witness" ? "WITNESS" : "ACCUSED",
+            docSubType: orderFormData?.party?.data?.partyType === "Witness" ? "WITNESS" : "ACCUSED",
           },
-          respondentDetails: respondentDetails,
-          witnessDetails: respondentDetails,
+          respondentDetails: orderFormData?.party?.data?.partyType === "Witness" ? caseRespondent : respondentDetails,
+          ...(orderFormData?.party?.data?.partyType === "Witness" && { witnessDetails: respondentDetails }),
           complainantDetails: {
             name: complainantName,
             address: complainantAddress,
@@ -1597,9 +1627,10 @@ const GenerateOrders = () => {
             issueDate: orderData?.auditDetails?.lastModifiedTime,
             caseFilingDate: caseDetails?.filingDate,
             noticeType,
+            docSubType: orderFormData?.party?.data?.partyType === "Witness" ? "WITNESS" : "ACCUSED",
           },
-          respondentDetails: respondentDetails,
-          witnessDetails: respondentDetails,
+          respondentDetails: orderFormData?.party?.data?.partyType === "Witness" ? caseRespondent : respondentDetails,
+          ...(orderFormData?.party?.data?.partyType === "Witness" && { witnessDetails: respondentDetails }),
           complainantDetails: {
             name: complainantName,
             address: complainantAddress,
@@ -1645,7 +1676,7 @@ const GenerateOrders = () => {
           caseDetails: {
             caseTitle: caseDetails?.caseTitle,
             year: new Date(caseDetails).getFullYear(),
-            hearingDate: new Date(orderData?.additionalDetails?.formData?.dateOfHearing || "").getTime(),
+            hearingDate: new Date(orderData?.additionalDetails?.formdata?.dateOfHearing || "").getTime(),
             judgeName: "John Koshy",
             courtName: courtDetails?.name,
             courtAddress: courtDetails?.address,
@@ -1660,7 +1691,7 @@ const GenerateOrders = () => {
             email: "",
             status: "",
             statusChangeDate: "",
-            fees: "",
+            fees: await getCourtFee("POLICE", respondentAddress?.[0]?.pincode, orderType),
             feesStatus: "",
           },
         };
@@ -1678,7 +1709,7 @@ const GenerateOrders = () => {
           caseDetails: {
             title: caseDetails?.caseTitle,
             year: new Date(caseDetails).getFullYear(),
-            hearingDate: new Date(orderData?.additionalDetails?.formData?.date || "").getTime(),
+            hearingDate: new Date(orderData?.additionalDetails?.formdata?.date || "").getTime(),
             judgeName: "",
             courtName: courtDetails?.name,
             courtAddress: courtDetails?.address,
@@ -1693,6 +1724,8 @@ const GenerateOrders = () => {
     if (Object.keys(payload || {}).length > 0 && Array.isArray(selectedChannel)) {
       const channelMap = new Map();
       selectedChannel.forEach(async (item) => {
+        let courtFees = await getCourtFee(item?.code, payload?.respondentDetails?.address?.pincode, orderType);
+
         if (channelMap.get(item?.type)) {
           channelMap.set(item?.type, channelMap.get(item?.type) + 1);
         } else {
@@ -1702,6 +1735,7 @@ const GenerateOrders = () => {
           payload.deliveryChannels = {
             ...payload.deliveryChannels,
             channelName: channelTypeEnum?.[item?.type]?.type,
+            fees: courtFees,
           };
 
           const address = ["e-Post", "Via Police", "RPAD"].includes(item?.type)
@@ -2295,6 +2329,14 @@ const GenerateOrders = () => {
     }
   };
 
+  const handleCloseSuccessModal = () => {
+    history.push(`/${window.contextPath}/employee/dristi/home/view-case?tab=${"Orders"}&caseId=${caseDetails?.id}&filingNumber=${filingNumber}`, {
+      from: "orderSuccessModal",
+    });
+    localStorage.removeItem("fileStoreId");
+    setShowSuccessModal(false);
+  };
+
   if (!filingNumber) {
     history.push("/employee/home/home-pending-task");
   }
@@ -2402,6 +2444,7 @@ const GenerateOrders = () => {
           order={prevOrder}
           handleDownloadOrders={handleDownloadOrders}
           handleClose={handleClose}
+          handleCloseSuccessModal={handleCloseSuccessModal}
           actionSaveLabel={successModalActionSaveLabel}
         />
       )}

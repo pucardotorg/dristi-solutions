@@ -299,7 +299,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
           uploadGuidelines: t("UPLOAD_DOC_50"),
           maxFileSize: 50,
           maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
-          fileTypes: ["JPG", "PNG", "PDF"],
+          fileTypes: ["JPG", "PDF"],
           isMultipleUpload: false,
         },
       ],
@@ -1828,7 +1828,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                   documentType: uploadedData.fileType || document?.documentType,
                   fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
                   documentName: uploadedData.filename || document?.documentName,
-                  fileName: `NOC (${name?.givenName}${name?.otherNames ? " " + name?.otherNames + " " : " "}${name?.familyName})`,
+                  fileName: `NOC (${formatFullName(name)})`,
                   individualId,
                 };
               }
@@ -1842,7 +1842,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                   documentType: uploadedData.fileType || document?.documentType,
                   fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
                   documentName: uploadedData.filename || document?.documentName,
-                  fileName: `Court Order (${name?.givenName}${name?.otherNames ? " " + name?.otherNames + " " : " "}${name?.familyName})`,
+                  fileName: `Court Order (${formatFullName(name)})`,
                   individualId,
                 };
               }
@@ -1856,7 +1856,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                   documentType: uploadedData.fileType || document?.documentType,
                   fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
                   documentName: uploadedData.filename || document?.documentName,
-                  fileName: `Vakalatnama (${name?.givenName}${name?.otherNames ? " " + name?.otherNames + " " : " "}${name?.familyName})`,
+                  fileName: `Vakalatnama (${formatFullName(name)})`,
                   individualId,
                 };
               }
@@ -2044,7 +2044,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                   documentType: uploadedData.fileType || document?.documentType,
                   fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
                   documentName: uploadedData.filename || document?.documentName,
-                  fileName: `Vakalatnama (${name?.givenName}${name?.otherNames ? " " + name?.otherNames + " " : " "}${name?.familyName})`,
+                  fileName: `Vakalatnama (${formatFullName(name)})`,
                   individualId,
                 };
               }
@@ -2248,7 +2248,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
             setRespondentList(
               respondentList?.map((respondent) => {
                 if (respondent?.index === selectedParty?.index) {
-                  const fullName = [name?.givenName, name?.otherNames, name?.familyName]?.filter(Boolean)?.join(" "); // Removes empty or falsy values and joins with a space
+                  const fullName = formatFullName(name);
 
                   return {
                     ...respondent,
@@ -2278,7 +2278,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                   documentType: uploadedData.fileType || document?.documentType,
                   fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
                   documentName: uploadedData.filename || document?.documentName,
-                  fileName: `Vakalatnama (${name?.givenName}${name?.otherNames ? " " + name?.otherNames + " " : " "}${name?.familyName})`,
+                  fileName: `Vakalatnama (${formatFullName(name)})`,
                   individualId,
                 };
               }
@@ -2480,7 +2480,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
             setRespondentList(
               respondentList?.map((respondent) => {
                 if (respondent?.index === selectedParty?.index) {
-                  const fullName = [name?.givenName, name?.otherNames, name?.familyName]?.filter(Boolean)?.join(" ");
+                  const fullName = formatFullName(name);
 
                   return {
                     ...respondent,
@@ -2655,9 +2655,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
           ...caseDetails,
           additionalDetails: additionalDetails,
         });
-        const fullName = `${response?.Individual?.name?.givenName} ${
-          response?.Individual?.name?.otherNames ? response?.Individual?.name?.otherNames + " " : ""
-        }${response?.Individual?.name?.familyName}`;
+        const fullName = getUserFullName(response?.Individual);
         setSelectedParty({
           ...selectedParty,
           fullName: fullName,
@@ -2692,7 +2690,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
       };
     } else {
       updatedHearing.attendees.push({
-        name: `${name?.givenName}${name?.otherNames ? " " + name?.otherNames + " " : " "}${name?.familyName}` || "",
+        name: formatFullName(name) || "",
         individualId: individualId,
         type: "Respondent",
       });
@@ -3032,7 +3030,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
           )}
         </Modal>
       )}
-      {showEditRespondentDetailsModal && <DocumentModal config={registerRespondentConfig} />}
+      {showEditRespondentDetailsModal && <DocumentModal config={registerRespondentConfig} documentStyle={{ zIndex: "1000" }} />}
       {showConfirmSummonModal && <DocumentModal config={confirmSummonConfig} />}
       {showErrorToast && (
         <Toast

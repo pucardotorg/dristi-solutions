@@ -105,7 +105,7 @@ const debtLiabilityFromconfig = [
               maxFileSize: 50,
               maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
               fileTypes: ["JPG", "PDF"],
-              isMultipleUpload: false,
+              isMultipleUpload: true,
             },
           ],
         },

@@ -48,7 +48,7 @@ const casePrimaryActions = [
   { action: "REGISTER", label: "CS_REGISTER" },
   { action: "ADMIT", label: "CS_ADMIT_CASE" },
   { action: "SCHEDULE_ADMISSION_HEARING", label: "CS_SCHEDULE_ADMISSION_HEARING" },
-  { action: "ISSUE_ORDER", label: "CS_CASE_ISSUE_ORDER" },
+  { action: "ISSUE_ORDER", label: "ISSUE_NOTICE" },
 ];
 const caseSecondaryActions = [
   { action: "SEND_BACK", label: "SEND_BACK_FOR_CORRECTION" },
@@ -85,6 +85,15 @@ const relevantStatuses = [
   "PENDING_NOTICE",
   "PENDING_RESPONSE",
   "PENDING_ADMISSION",
+];
+const judgeReviewStages = [
+  "CASE_ADMITTED",
+  "ADMISSION_HEARING_SCHEDULED",
+  "PENDING_ADMISSION_HEARING",
+  "PENDING_NOTICE",
+  "PENDING_RESPONSE",
+  "PENDING_ADMISSION",
+  "CASE_DISMISSED",
 ];
 
 const styles = {
@@ -126,6 +135,7 @@ const AdmittedCases = () => {
   const activeTab = isFSO ? "Complaints" : urlParams.get("tab") || "Overview";
   const filingNumber = urlParams.get("filingNumber");
   const [show, setShow] = useState(false);
+  const [openAdmitCaseModal, setOpenAdmitCaseModal] = useState(true);
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
   const [documentSubmission, setDocumentSubmission] = useState();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
@@ -175,12 +185,11 @@ const AdmittedCases = () => {
   const caseDetails = useMemo(() => caseData?.criteria?.[0]?.responseList?.[0] || {}, [caseData]);
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber || "", [caseDetails]);
 
-  const showTakeAction = useMemo(
-    () =>
-      (userRoles.includes("JUDGE_ROLE") || userRoles.includes("BENCHCLERK_ROLE")) &&
-      relevantStatuses.includes(caseData?.criteria?.[0]?.responseList?.[0]?.status),
-    [caseData, userRoles]
-  );
+  const showTakeAction = useMemo(() => userRoles.includes("ORDER_CREATOR") && !isCitizen && relevantStatuses.includes(caseDetails?.status), [
+    caseDetails?.status,
+    userRoles,
+    isCitizen,
+  ]);
 
   const {
     isLoading: isWorkFlowLoading,
@@ -239,7 +248,7 @@ const AdmittedCases = () => {
     return {
       ...rep,
       name: removeInvalidNameParts(rep.additionalDetails?.advocateName),
-      partyType: `Advocate (for ${rep.representing.map((client) => removeInvalidNameParts(client?.additionalDetails?.fullName)).join(", ")})`,
+      partyType: `Advocate (for ${rep.representing?.map((client) => removeInvalidNameParts(client?.additionalDetails?.fullName))?.join(", ")})`,
     };
   });
 
@@ -683,6 +692,15 @@ const AdmittedCases = () => {
   }, [caseDetails?.status]);
 
   useEffect(() => {
+    if (history?.location?.state?.triggerAdmitCase && openAdmitCaseModal) {
+      setSubmitModalInfo({ ...admitCaseSubmitConfig, caseInfo: caseInfo });
+      setModalInfo({ type: "admitCase", page: 0 });
+      setShowModal(true);
+      setOpenAdmitCaseModal(false);
+    }
+  }, [history?.location]);
+
+  useEffect(() => {
     if (history?.location?.state?.from && history?.location?.state?.from === "orderSuccessModal") {
       showToast(true);
       setToastDetails({
@@ -889,6 +907,7 @@ const AdmittedCases = () => {
 
   const handleAdmitCase = async () => {
     setCaseAdmitLoader(true);
+    setOpenAdmitCaseModal(false);
     updateCaseDetails("ADMIT", caseDetails).then(async (res) => {
       setModalInfo({ ...modalInfo, page: 1 });
       setCaseAdmitLoader(false);
@@ -1547,24 +1566,13 @@ const AdmittedCases = () => {
       });
   };
   const takeActionOptions = useMemo(
-    () =>
-      userRoles.includes("ORDER_CREATOR")
-        ? [
-            ...((userRoles?.includes("SUBMISSION_CREATOR") || userRoles?.includes("APPLICATION_CREATOR")) && !isCitizen
-              ? [t("MAKE_SUBMISSION")]
-              : []),
-            t("GENERATE_ORDER_HOME"),
-            t("SCHEDULE_HEARING"),
-            t("REFER_TO_ADR"),
-          ]
-        : [
-            ...((userRoles?.includes("SUBMISSION_CREATOR") || userRoles?.includes("APPLICATION_CREATOR")) && !isCitizen
-              ? [t("MAKE_SUBMISSION")]
-              : []),
-            t("SCHEDULE_HEARING"),
-            t("REFER_TO_ADR"),
-          ],
-    [t, userRoles, isCitizen]
+    () => [
+      ...(userRoles?.includes("SUBMISSION_CREATOR") || userRoles?.includes("APPLICATION_CREATOR") ? [t("MAKE_SUBMISSION")] : []),
+      t("GENERATE_ORDER_HOME"),
+      t("SCHEDULE_HEARING"),
+      t("REFER_TO_ADR"),
+    ],
+    [t, userRoles]
   );
 
   const showActionBar = useMemo(
@@ -1588,6 +1596,12 @@ const AdmittedCases = () => {
   if (isLoading || isWorkFlowLoading || isApplicationLoading) {
     return <Loader />;
   }
+  if (
+    (userRoles?.includes("JUDGE_ROLE") || userRoles?.includes("BENCHCLERK_ROLE") || userRoles?.includes("COURT_ROOM_MANAGER")) &&
+    !judgeReviewStages.includes(caseData?.criteria?.[0]?.responseList?.[0]?.status)
+  ) {
+    history.push(`/${window.contextPath}/employee/home/home-pending-task`);
+  }
 
   return (
     <div className="admitted-case" style={{ position: "absolute", width: "100%" }}>
@@ -1605,17 +1619,17 @@ const AdmittedCases = () => {
               </React.Fragment>
             )}
             <hr className="vertical-line" />
-            <div className="sub-details-text">{caseDetails?.stage}</div>
+            <div className="sub-details-text">{t(caseDetails?.stage)}</div>
             <hr className="vertical-line" />
-            <div className="sub-details-text">{caseDetails?.substage}</div>
+            <div className="sub-details-text">{t(caseDetails?.substage)}</div>
             <hr className="vertical-line" />
             {caseDetails?.outcome && (
               <React.Fragment>
-                <div className="sub-details-text">{caseDetails?.outcome}</div>
+                <div className="sub-details-text">{t(caseDetails?.outcome)}</div>
                 <hr className="vertical-line" />
               </React.Fragment>
             )}
-            <div className="sub-details-text">Code: {caseData?.criteria?.[0]?.responseList?.[0]?.accessCode}</div>
+            <div className="sub-details-text">Code: {caseDetails?.accessCode}</div>
           </div>
           <div className="make-submission-action" style={{ display: "flex", gap: 20, justifyContent: "space-between", alignItems: "center" }}>
             {isCitizen && (
@@ -1694,7 +1708,7 @@ const AdmittedCases = () => {
                 onClick={() => {
                   onTabChange(num);
                 }}
-                disabled={isTabDisabled}
+                disabled={["Complaint", "Overview"].includes(i?.label) ? false : isTabDisabled}
               >
                 {t(i?.label)}
               </button>
@@ -1880,7 +1894,7 @@ const AdmittedCases = () => {
               <SubmitBar
                 label={t(
                   [CaseWorkflowState.ADMISSION_HEARING_SCHEDULED].includes(caseDetails?.status) && primaryAction?.action === "ADMIT"
-                    ? "CS_CASE_ISSUE_ORDER"
+                    ? "ISSUE_NOTICE"
                     : primaryAction?.label
                 )}
                 submit="submit"
@@ -1924,6 +1938,7 @@ const AdmittedCases = () => {
           caseAdmitLoader={caseAdmitLoader}
           caseDetails={caseDetails}
           isAdmissionHearingAvailable={Boolean(currentHearingId)}
+          setOpenAdmitCaseModal={setOpenAdmitCaseModal}
         ></AdmissionActionModal>
       )}
       {showDismissCaseConfirmation && (

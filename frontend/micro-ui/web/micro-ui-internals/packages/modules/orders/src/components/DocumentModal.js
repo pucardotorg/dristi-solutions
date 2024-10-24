@@ -1,5 +1,15 @@
 import { CloseSvg } from "@egovernments/digit-ui-react-components";
 import React, { useMemo, useState } from "react";
+
+const submitButtonTextStyle = {
+  fontFamily: "Roboto",
+  fontSize: "16px",
+  fontWeight: 700,
+  lineHeight: "18.75px",
+  textAlign: "center",
+  margin: "0px",
+};
+
 const CloseBtn = (props) => {
   return (
     <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
@@ -15,7 +25,7 @@ const Heading = ({ heading }) => {
     </div>
   );
 };
-const DocumentModal = ({ config, setShow, currentStep }) => {
+const DocumentModal = ({ config, setShow, currentStep, documentStyle = {} }) => {
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
   const [step, setStep] = useState(currentStep || 0);
   // const [isDisabled, setIsDisabled] = useState(false);
@@ -94,8 +104,9 @@ const DocumentModal = ({ config, setShow, currentStep }) => {
           ? "custom-modal-stepper"
           : "custom-modal-stepper-non-doc"
       }
-      popUpStyleMain={{ zIndex: "1000" }}
+      popUpStyleMain={documentStyle}
       isDisabled={isDisabled}
+      textStyle={submitButtonTextStyle}
     >
       {config?.isStepperModal ? config?.steps[step]?.modalBody || config?.modalBody : config?.modalBody}
     </Modal>

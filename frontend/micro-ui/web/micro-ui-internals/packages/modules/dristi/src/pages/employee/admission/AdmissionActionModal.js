@@ -63,6 +63,7 @@ function AdmissionActionModal({
   caseDetails,
   scheduleHearing = false,
   isAdmissionHearingAvailable = false,
+  setOpenAdmitCaseModal,
 }) {
   const history = useHistory();
   const [showErrorToast, setShowErrorToast] = useState(false);
@@ -227,6 +228,10 @@ function AdmissionActionModal({
     } catch (error) {}
   };
 
+  const handleCancelClick = () => {
+    history.push(`/${window?.contextPath}/employee/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${caseDetails?.filingNumber}`);
+  };
+
   return (
     <React.Fragment>
       {modalInfo?.page === 0 && modalInfo?.type === "sendCaseBack" && (
@@ -262,10 +267,20 @@ function AdmissionActionModal({
         <Modal
           headerBarMain={<Heading label={t(stepItems[1].headModal)} />}
           actionSaveLabel={t(isAdmissionHearingAvailable ? "CS_ADMIT_CASE" : stepItems[1]?.submitText)}
-          headerBarEnd={<CloseBtn onClick={() => setShowModal(false)} />}
+          headerBarEnd={
+            <CloseBtn
+              onClick={() => {
+                setOpenAdmitCaseModal(false);
+                setShowModal(false);
+              }}
+            />
+          }
           isDisabled={caseAdmitLoader}
           actionSaveOnSubmit={(props) => handleAdmitCase(props)}
-          actionCancelOnSubmit={() => setShowModal(false)}
+          actionCancelOnSubmit={() => {
+            setOpenAdmitCaseModal(false);
+            setShowModal(false);
+          }}
           actionCancelLabel={t(isAdmissionHearingAvailable ? "CS_COMMON_CANCEL" : "")}
         >
           <CardText>{t(isAdmissionHearingAvailable ? "CS_CONFIRM_CLOSE_HEARING_AFTER_ADMIT_CASE_TEXT" : stepItems[1]?.text)}</CardText>
@@ -348,6 +363,8 @@ function AdmissionActionModal({
       )}
       {showSuccessModal(modalInfo) && (
         <Modal
+          headerBarMain={modalInfo?.type === "admitCase" && true}
+          headerBarEnd={modalInfo?.type === "admitCase" && <CloseBtn onClick={() => handleCancelClick()} />}
           actionSaveLabel={
             <div>
               {t(submitModalInfo?.nextButtonText)}
@@ -398,6 +415,8 @@ function AdmissionActionModal({
       )}
       {modalInfo?.page === 4 && (
         <Modal
+          headerBarMain={true}
+          headerBarEnd={<CloseBtn onClick={() => handleCancelClick()} />}
           actionSaveLabel={
             <div>
               {t(submitModalInfo?.nextButtonText)}

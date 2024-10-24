@@ -1,9 +1,9 @@
-import { ActionBar, Button, CheckBox, CloseSvg, FormComposerV2, Header, Loader, SubmitBar, Toast } from "@egovernments/digit-ui-react-components";
+import { ActionBar, Button, CloseSvg, FormComposerV2, Header, Loader, SubmitBar, Toast } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import ReactTooltip from "react-tooltip";
-import { CaseWorkflowAction, CaseWorkflowState } from "../../../Utils/caseWorkflow";
+import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import Accordion from "../../../components/Accordion";
 import ConfirmCorrectionModal from "../../../components/ConfirmCorrectionModal";
 import ConfirmCourtModal from "../../../components/ConfirmCourtModal";
@@ -56,6 +56,7 @@ import { getSuffixByBusinessCode, getTaxPeriodByBusinessService } from "../../..
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import DocViewerWrapper from "../../employee/docViewerWrapper";
 import CaseLockModal from "./CaseLockModal";
+import ConfirmCaseDetailsModal from "./ConfirmCaseDetailsModal";
 
 const OutlinedInfoIcon = () => (
   <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: "absolute", right: -22, top: 0 }}>
@@ -157,6 +158,7 @@ function EFilingCases({ path }) {
   const isAdvocateFilingCase = roles?.some((role) => role.code === "ADVOCATE_ROLE");
 
   const setFormErrors = useRef(null);
+  const setFormState = useRef(null);
   const resetFormData = useRef(null);
   const setFormDataValue = useRef(null);
   const clearFormDataErrors = useRef(null);
@@ -179,6 +181,7 @@ function EFilingCases({ path }) {
   const [showReviewCorrectionModal, setShowReviewCorrectionModal] = useState(false);
   const [showReviewConfirmationModal, setShowReviewConfirmationModal] = useState(false);
   const [showCaseLockingModal, setShowCaseLockingModal] = useState(false);
+  const [showConfirmCaseDetailsModal, setShowConfirmCaseDetailsModal] = useState(false);
 
   const [caseResubmitSuccess, setCaseResubmitSuccess] = useState(false);
   const [prevSelected, setPrevSelected] = useState("");
@@ -348,6 +351,13 @@ function EFilingCases({ path }) {
   );
 
   const prevCaseDetails = useMemo(() => structuredClone(caseDetails), [caseDetails]);
+
+  const isAdvocateRepresenting = useMemo(() => {
+    const advocateUuid = caseDetails?.representatives?.[0]?.additionalDetails?.uuid;
+    if (advocateUuid) {
+      return { isRepresenting: true, uuid: advocateUuid };
+    } else return { isRepresenting: false, uuid: null };
+  }, [caseDetails]);
 
   const scrutinyObj = useMemo(() => {
     return caseDetails?.additionalDetails?.scrutiny?.data || {};
@@ -581,7 +591,19 @@ function EFilingCases({ path }) {
   const formConfig = useMemo(() => {
     return pageConfig?.formconfig;
   }, [pageConfig?.formconfig]);
-
+  const multiUploadList = useMemo(
+    () =>
+      formConfig.flatMap((config) =>
+        config.body
+          .filter((item) => ["SelectCustomDragDrop"].includes(item.component))
+          .map((item) => {
+            const { key } = item;
+            const fieldType = item?.populators?.inputs?.[0]?.name;
+            return { key, fieldType };
+          })
+      ),
+    [formConfig]
+  );
   if (!getAllKeys.includes(selected) || !formConfig) {
     setPrevSelected(selected);
     history.push(`?caseId=${caseId}&selected=${getAllKeys[0]}`);
@@ -1186,7 +1208,25 @@ function EFilingCases({ path }) {
 
   const createPendingTask = async ({ name, status, isCompleted = false, stateSla = null, isAssignedRole = false, assignedRole = [] }) => {
     const entityType = "case-default";
-    const assignes = !isAssignedRole ? [userInfo?.uuid] || [] : [];
+    let assignees = [];
+    // if esign is the preferred at the time of case locking.
+    if (["PENDING_E-SIGN", "PENDING_RE_E-SIGN"].includes(status)) {
+      if (!isAdvocateFilingCase) {
+        // when complainant is locking case
+        if (!isAdvocateRepresenting?.isRepresenting) {
+          //when complainant is locking case and didn't choose an advocate representing.
+          assignees.push({ uuid: userInfo?.uuid }); // pending task for complainant
+        } else {
+          //when complainant is locking case and advocate is representing the case.
+          assignees.push({ uuid: userInfo?.uuid }); // pending task for complainant
+          assignees.push({ uuid: isAdvocateRepresenting?.uuid }); // pending task for advocate
+        }
+      }
+    }
+    // if Uploading Documents is the preferred at the time of case locking.(this can only be done when advocate is locking the case)
+    else if (["PENDING_SIGN", "PENDING_RE_SIGN"].includes(status)) {
+      assignees.push({ uuid: userInfo?.uuid }); // pending task for advocate
+    }
     const filingNumber = caseDetails?.filingNumber;
     await DRISTIService.customApiService(Urls.dristi.pendingTask, {
       pendingTask: {
@@ -1194,7 +1234,7 @@ function EFilingCases({ path }) {
         entityType,
         referenceId: `MANUAL_${filingNumber}`,
         status,
-        assignedTo: assignes?.map((uuid) => ({ uuid })),
+        assignedTo: assignees,
         assignedRole: assignedRole,
         cnrNumber: caseDetails?.cnrNumber,
         filingNumber: filingNumber,
@@ -1275,6 +1315,7 @@ function EFilingCases({ path }) {
     }
 
     setFormErrors.current = setError;
+    setFormState.current = formState;
     resetFormData.current = reset;
     setFormDataValue.current = setValue;
     clearFormDataErrors.current = clearErrors;
@@ -1462,6 +1503,7 @@ function EFilingCases({ path }) {
             setShowErrorToast,
             toast,
             setFormErrors: setFormErrors.current,
+            formState: setFormState.current,
             clearFormDataErrors: clearFormDataErrors.current,
           })
         )
@@ -1539,12 +1581,14 @@ function EFilingCases({ path }) {
     ) {
       return;
     }
-    if (selected === "reviewCaseFile" && isCaseReAssigned && !openConfirmCorrectionModal) {
-      return setOpenConfirmCorrectionModal(true);
+    if (selected === "reviewCaseFile" && isCaseReAssigned && !openConfirmCorrectionModal && !isCaseLocked) {
+      setOpenConfirmCorrectionModal(true);
+      return;
     }
 
     if (selected === "reviewCaseFile" && !showCaseLockingModal && isDraftInProgress) {
-      return setShowCaseLockingModal(true);
+      setShowCaseLockingModal(true);
+      return;
     }
 
     //check- include below commented code for signing process changes.
@@ -1565,59 +1609,67 @@ function EFilingCases({ path }) {
         if (res?.status === "error") {
           setIsDisabled(false);
           toast.error(t("CASE_PDF_ERROR"));
-          return;
+          throw new Error("CASE_PDF_ERROR");
         }
       }
-      updateCaseDetails({
-        isCompleted: true,
-        caseDetails: isCaseReAssigned && errorCaseDetails ? errorCaseDetails : caseDetails,
-        prevCaseDetails: prevCaseDetails,
-        formdata,
-        pageConfig,
-        selected,
-        setIsDisabled,
-        tenantId,
-        setFormDataValue: setFormDataValue.current,
-        action,
-        setErrorCaseDetails,
-        isCaseSignedState: isPendingESign || isPendingReESign,
-        isSaveDraftEnabled: isCaseReAssigned || isPendingReESign || isPendingESign,
-        ...(res && { fileStoreId: res?.data?.cases?.[0]?.documents?.[0]?.fileStore }),
-      })
-        .then(() => {
-          if (resetFormData.current) {
-            resetFormData.current();
-            setIsDisabled(false);
-          }
-          return refetchCaseData().then(() => {
-            const caseData =
-              caseDetails?.additionalDetails?.[nextSelected]?.formdata ||
-              caseDetails?.caseDetails?.[nextSelected]?.formdata ||
-              (nextSelected === "witnessDetails" ? [{}] : [{ isenabled: true, data: {}, displayindex: 0 }]);
-            setFormdata(caseData);
-            setIsDisabled(false);
-            // if (action === CaseWorkflowAction.EDIT_CASE) {
-            //   setCaseResubmitSuccess(true);
-            //   return;
-            // }
-            setPrevSelected(selected);
-            if (selected !== "reviewCaseFile") history.push(`?caseId=${caseId}&selected=${nextSelected}`);
-          });
-        })
-        .catch((error) => {
-          if (extractCodeFromErrorMsg(error) === 413) {
-            toast.error(t("FAILED_TO_UPLOAD_FILE"));
-          } else {
-            toast.error(t("SOMETHING_WENT_WRONG"));
-          }
-          setIsDisabled(false);
+      try {
+        // Await the result of updateCaseDetails
+        await updateCaseDetails({
+          t,
+          isCompleted: true,
+          caseDetails: isCaseReAssigned && errorCaseDetails ? errorCaseDetails : caseDetails,
+          prevCaseDetails: prevCaseDetails,
+          formdata,
+          pageConfig,
+          selected,
+          setIsDisabled,
+          tenantId,
+          setFormDataValue: setFormDataValue.current,
+          action,
+          setErrorCaseDetails,
+          isCaseSignedState: isPendingESign || isPendingReESign,
+          isSaveDraftEnabled: isCaseReAssigned || isPendingReESign || isPendingESign,
+          ...(res && { fileStoreId: res?.data?.cases?.[0]?.documents?.[0]?.fileStore }),
+          multiUploadList,
         });
+
+        // After successful update, reset form and refetch case data
+        if (resetFormData.current) {
+          resetFormData.current();
+          setIsDisabled(false);
+        }
+
+        await refetchCaseData();
+        const caseData =
+          caseDetails?.additionalDetails?.[nextSelected]?.formdata ||
+          caseDetails?.caseDetails?.[nextSelected]?.formdata ||
+          (nextSelected === "witnessDetails" ? [{}] : [{ isenabled: true, data: {}, displayindex: 0 }]);
+
+        setFormdata(caseData);
+        setIsDisabled(false);
+        setPrevSelected(selected);
+
+        if (selected !== "reviewCaseFile") {
+          history.push(`?caseId=${caseId}&selected=${nextSelected}`);
+        }
+      } catch (error) {
+        // If any error occurs in updateCaseDetails or refetching, handle it here
+        if (extractCodeFromErrorMsg(error) === 413) {
+          toast.error(t("FAILED_TO_UPLOAD_FILE"));
+        } else {
+          toast.error(t("SOMETHING_WENT_WRONG"));
+        }
+        setIsDisabled(false);
+        console.error("An error occurred:", error);
+        throw error; // Re-throw the error to propagate it further if needed
+      }
     }
   };
 
   const onSaveDraft = (props) => {
     setParmas({ ...params, [pageConfig.key]: formdata });
     updateCaseDetails({
+      t,
       caseDetails,
       prevCaseDetails: prevCaseDetails,
       formdata,
@@ -1627,6 +1679,7 @@ function EFilingCases({ path }) {
       setIsDisabled,
       tenantId,
       setErrorCaseDetails,
+      multiUploadList,
     })
       .then(() => {
         refetchCaseData().then(() => {
@@ -1651,8 +1704,9 @@ function EFilingCases({ path }) {
 
   const onErrorCorrectionSubmit = async () => {
     setOpenConfirmCorrectionModal(false);
-    onSubmit(CaseWorkflowAction.EDIT_CASE);
-    await createPendingTask({ name: t("PENDING_E_SIGN_FOR_CASE"), status: "PENDING_E-SIGN" });
+    // onSubmit(CaseWorkflowAction.EDIT_CASE);
+    // await createPendingTask({ name: t("PENDING_E_SIGN_FOR_CASE"), status: "PENDING_E-SIGN" });
+    setShowCaseLockingModal(true);
   };
 
   const handlePageChange = (key, isConfirm) => {
@@ -1683,6 +1737,7 @@ function EFilingCases({ path }) {
           )
         : false;
     updateCaseDetails({
+      t,
       isCompleted: isDrafted,
       caseDetails: isCaseReAssigned && errorCaseDetails ? errorCaseDetails : caseDetails,
       prevCaseDetails: prevCaseDetails,
@@ -1694,6 +1749,7 @@ function EFilingCases({ path }) {
       tenantId,
       setErrorCaseDetails,
       isSaveDraftEnabled: isCaseReAssigned || isPendingReESign || isPendingESign,
+      multiUploadList,
     })
       .then(() => {
         if (!isCaseReAssigned) {
@@ -2161,7 +2217,7 @@ function EFilingCases({ path }) {
                 <FormComposerV2
                   label={actionName}
                   config={config}
-                  onSubmit={() => onSubmit("SAVE_DRAFT", index)}
+                  onSubmit={() => onSubmit("SAVE_DRAFT")}
                   onSecondayActionClick={onSaveDraft}
                   defaultValues={getDefaultValues(index)}
                   onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
@@ -2394,13 +2450,18 @@ function EFilingCases({ path }) {
           t={t}
           path={path}
           setShowCaseLockingModal={setShowCaseLockingModal}
+          setShowConfirmCaseDetailsModal={setShowConfirmCaseDetailsModal}
           isAdvocateFilingCase={isAdvocateFilingCase}
           onSubmit={onSubmit}
           createPendingTask={createPendingTask}
           setPrevSelected={setPrevSelected}
           selected={selected}
-          caseId={caseId}
+          caseDetails={caseDetails}
+          state={state}
         ></CaseLockModal>
+      )}
+      {showConfirmCaseDetailsModal && (
+        <ConfirmCaseDetailsModal t={t} setShowConfirmCaseDetailsModal={setShowConfirmCaseDetailsModal}></ConfirmCaseDetailsModal>
       )}
     </div>
   );
