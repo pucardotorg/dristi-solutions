@@ -23,6 +23,8 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 
+import static org.drishti.esign.config.ServiceConstants.*;
+
 
 @Component
 public class PdfEmbedder {
@@ -51,8 +53,8 @@ public class PdfEmbedder {
 
             Font font = new Font();
             font.setSize(6);
-            font.setFamily("Helvetica");
-            font.setStyle("italic");
+            font.setFamily(FONT_FAMILY);
+            font.setStyle(FONT_STYLE);
             appearance.setLayer2Font(font);
             Calendar currentDat = Calendar.getInstance();
             appearance.setSignDate(currentDat);
@@ -67,18 +69,18 @@ public class PdfEmbedder {
             HashMap<PdfName, Integer> exc = new HashMap<>();
             exc.put(PdfName.CONTENTS, 8192 * 2 + 2);
 
-            String certString = response.substring(response.indexOf("<UserX509Certificate>"), response.indexOf("</UserX509Certificate>"))
-                    .replaceAll("<UserX509Certificate>", "").replaceAll("</UserX509Certificate>", "");
+            String certString = response.substring(response.indexOf(User_X509_START_TAG), response.indexOf(User_X509_END_TAG))
+                    .replaceAll(User_X509_START_TAG, "").replaceAll(User_X509_END_TAG, "");
             byte[] certBytes = Base64.decodeBase64(certString);
             ByteArrayInputStream stream = new ByteArrayInputStream(certBytes);
-            CertificateFactory factory = CertificateFactory.getInstance("X.509");
+            CertificateFactory factory = CertificateFactory.getInstance(X_509);
             Certificate cert = factory.generateCertificate(stream);
             List<Certificate> certificates = List.of(cert);
             appearance.setCrypto(null, certificates.toArray(new Certificate[0]), null, null);
 
 
             int contentEstimated = 8192;
-            String errorCode = response.substring(response.indexOf("errCode"), response.indexOf("errMsg"));
+            String errorCode = response.substring(response.indexOf(ERR_CODE), response.indexOf(ERR_MSG));
             errorCode = errorCode.trim();
             if (errorCode.contains("NA")) {
                 String pkcsResponse = new XmlSigning().parseXml(response.trim());
@@ -97,7 +99,7 @@ public class PdfEmbedder {
 
             bos.close();
 
-            return new ByteArrayMultipartFile("signedDoc.pdf", bos.toByteArray());
+            return new ByteArrayMultipartFile(FILE_NAME, bos.toByteArray());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.security.PrivateKey;
 import java.util.UUID;
 
+import static org.drishti.esign.config.ServiceConstants.PRIVATE_KEY_FILE_NAME;
+
 
 @Service
 @Slf4j
@@ -71,7 +73,7 @@ public class ESignService {
         String xmlData = "";
 
         try {
-            PrivateKey rsaPrivateKey = encryption.getPrivateKey("privateKey.pem");
+            PrivateKey rsaPrivateKey = encryption.getPrivateKey(PRIVATE_KEY_FILE_NAME);
             xmlData = xmlSigning.signXmlStringNew(servletRequest.getServletContext().getRealPath("upload") + File.separator + "Testing.xml", rsaPrivateKey);
             log.info(xmlData);
             xmlGenerator.writeToXmlFile(xmlData, servletRequest.getServletContext().getRealPath("upload") + File.separator + "Testing.xml");

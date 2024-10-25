@@ -19,6 +19,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.drishti.esign.config.ServiceConstants.FILE_STORE_SERVICE_EXCEPTION_CODE;
+import static org.drishti.esign.config.ServiceConstants.FILE_STORE_SERVICE_EXCEPTION_MESSAGE;
+
 @Component
 public class FileStoreUtil {
 
@@ -48,7 +51,7 @@ public class FileStoreUtil {
             return object;
 
         } catch (Exception e) {
-            throw new CustomException("FILESTORE_SERVICE_EXCEPTION", "exception occurred while calling filestore service");
+            throw new CustomException(FILE_STORE_SERVICE_EXCEPTION_CODE, FILE_STORE_SERVICE_EXCEPTION_MESSAGE);
 
         }
 
