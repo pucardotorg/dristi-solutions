@@ -60,8 +60,7 @@
     "**/@babel/core": "7.14.0",
     "**/@babel/preset-env": "7.14.0",
     "**/@babel/plugin-transform-modules-commonjs": "7.14.0",
-    "**/polished": "4.2.2",
-    "**/styled-components": "5.3.6"
+    "**/polished": "4.2.2"
   },
   "scripts": {
     "start": "react-scripts start",
