@@ -72,11 +72,6 @@ public class ApplicationService {
             validator.validateOrderDetails(applicationRequest);
             if (application.getWorkflow()!=null)
                 workflowService.updateWorkflowStatus(applicationRequest);
-
-            if(COMPLETED.equalsIgnoreCase(applicationRequest.getApplication().getStatus())
-            || REJECTED.equalsIgnoreCase(applicationRequest.getApplication().getStatus())){
-                enrichmentUtil.enrichApplicationNumberByCMPNumber(applicationRequest);
-            }
             producer.push(config.getApplicationUpdateTopic(), applicationRequest);
 
             return applicationRequest.getApplication();
@@ -142,7 +137,10 @@ public class ApplicationService {
             AuditDetails applicationAuditDetails = applicationToUpdate.getAuditDetails();
             applicationAuditDetails.setLastModifiedBy(auditDetails.getLastModifiedBy());
             applicationAuditDetails.setLastModifiedTime(auditDetails.getLastModifiedTime());
-            producer.push(config.getApplicationUpdateCommentsTopic(), applicationToUpdate);
+
+            ApplicationRequest applicationRequest = ApplicationRequest.builder().application(applicationToUpdate)
+                    .requestInfo(applicationAddCommentRequest.getRequestInfo()).build();
+            producer.push(config.getApplicationUpdateCommentsTopic(), applicationRequest);
         }
         catch (CustomException e){
             log.error("Error while adding comments {}", e.toString());
