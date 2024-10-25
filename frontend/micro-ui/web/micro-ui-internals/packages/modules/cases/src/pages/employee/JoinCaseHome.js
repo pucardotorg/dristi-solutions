@@ -1443,7 +1443,8 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                 <Button
                   className={"selector-button-primary"}
                   label={
-                    caseDetails?.status === "PENDING_RESPONSE" && selectedParty?.isRespondent
+                    caseDetails?.status === "PENDING_RESPONSE" &&
+                    (selectedParty?.isRespondent || parties?.find((temp) => temp.individualId === individualId)?.isRespondent)
                       ? "Submit Response"
                       : !isAttendingHearing && nextHearing
                       ? "Confirm attendance in summon"
@@ -1451,7 +1452,10 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                   }
                   onButtonClick={() => {
                     setShow(false);
-                    if (caseDetails?.status === "PENDING_RESPONSE" && selectedParty?.isRespondent) {
+                    if (
+                      caseDetails?.status === "PENDING_RESPONSE" &&
+                      (selectedParty?.isRespondent || parties?.find((temp) => temp.individualId === individualId)?.isRespondent)
+                    ) {
                       if (setShowSubmitResponseModal) setShowSubmitResponseModal(true);
                     } else {
                       if (!isAttendingHearing && nextHearing) {
@@ -2547,6 +2551,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
     userType,
     userUUID,
     validationCode,
+    parties,
   ]);
 
   const handleKeyDown = useCallback(

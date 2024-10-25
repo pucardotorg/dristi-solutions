@@ -423,6 +423,7 @@ const TasksComponent = ({
     return {
       handleClose: () => {
         setShowSubmitResponseModal(false);
+        setJoinCaseShowSubmitResponseModal(false);
       },
       heading: { label: "" },
       actionSaveLabel: "",
