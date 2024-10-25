@@ -1,13 +1,13 @@
 package digit.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Builder;
-import lombok.Data;
-import lombok.ToString;
+import lombok.*;
 
 @Data
 @Builder
 @ToString
+@NoArgsConstructor
+@AllArgsConstructor
 public class LocationBasedJurisdiction {
 
     @JsonProperty("included_jurisdiction")
