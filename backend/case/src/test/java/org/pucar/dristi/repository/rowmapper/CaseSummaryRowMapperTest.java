@@ -47,7 +47,7 @@ public class CaseSummaryRowMapperTest {
         when(resultSet.getString("substage")).thenReturn("substage1");
         when(resultSet.getString("outcome")).thenReturn("outcome1");
         when (resultSet.getString("courtid")).thenReturn("courtId");
-        when (resultSet.getString("registrationdate")).thenReturn("123");
+        when (resultSet.getLong("registrationdate")).thenReturn(123L);
         when (resultSet.getString("cmpnumber")).thenReturn("cmp-123");
 
         // Setting up litigant

@@ -46,7 +46,7 @@ public class CaseSummaryRowMapper implements ResultSetExtractor<List<CaseSummary
                         .subStage(rs.getString("substage"))
                         .outcome(rs.getString("outcome"))
                         .courtId(rs.getString("courtid"))
-                        .registrationDate(rs.getString("registrationdate"))
+                        .registrationDate(rs.getLong("registrationdate"))
                         .registrationNumber(rs.getString("cmpnumber"))
                         .litigants(new ArrayList<>())
                         .representatives(new ArrayList<>())

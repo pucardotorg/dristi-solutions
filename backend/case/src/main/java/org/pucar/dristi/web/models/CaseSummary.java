@@ -51,7 +51,7 @@ public class CaseSummary {
     private String courtId;
 
     @JsonProperty("registrationDate")
-    private String registrationDate;
+    private Long registrationDate ;
 
     @JsonProperty("registrationNumber")
     private String registrationNumber;
