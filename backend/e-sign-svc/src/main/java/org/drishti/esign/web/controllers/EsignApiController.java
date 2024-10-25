@@ -8,11 +8,10 @@ import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.drishti.esign.service.ESignService;
 import org.drishti.esign.util.ResponseInfoFactory;
-import org.drishti.esign.web.models.ESignRequest;
-import org.drishti.esign.web.models.ESignResponse;
-import org.drishti.esign.web.models.ESignXmlForm;
-import org.drishti.esign.web.models.SignDocRequest;
+import org.drishti.esign.web.models.*;
+import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -49,6 +48,15 @@ public class EsignApiController {
         return ResponseEntity.accepted().body(fileStoreId);
     }
 
+
+    @PostMapping("/v1/_verify")
+    public ResponseEntity<ESignVerifyResponse> verifyTxnId(@Parameter(in = ParameterIn.DEFAULT, description = "verify txnId", required = true, schema = @Schema()) @Valid @RequestBody RequestInfo requestInfo, @RequestParam("txnId") String txnId) {
+        log.info("api=/v1/_verify, result = IN_PROGRESS");
+        Boolean verification = eSignService.existTxnForESign(requestInfo,txnId);
+        ESignVerifyResponse  response = ESignVerifyResponse.builder().responseInfo(ResponseInfoFactory.createResponseInfoFromRequestInfo(requestInfo,true)).verified(verification).build();
+        log.info("api=/v1/_verify, result = SUCCESS");
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 
 }
 

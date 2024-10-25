@@ -21,7 +21,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.security.PrivateKey;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 
 @Service
@@ -65,7 +67,7 @@ public class ESignService {
         Resource resource = fileStoreUtil.fetchFileStoreObjectById(fileStoreId, eSignParameter.getTenantId());
         String fileHash = pdfEmbedder.generateHash(resource);
         ESignXmlData eSignXmlData = formDataSetter.setFormXmlData(fileHash, new ESignXmlData());
-        eSignXmlData.setTxn(tenantId + "-" + pageModule + "-" +eSignParameter.getId());
+        eSignXmlData.setTxn(tenantId + "-" + pageModule + "-" + eSignParameter.getId());
         String strToEncrypt = xmlGenerator.generateXml(eSignXmlData);  // this method is writing in testing.xml
         log.info(strToEncrypt);
         String xmlData = "";
@@ -109,7 +111,9 @@ public class ESignService {
         SignDocParameter eSignParameter = request.getESignParameter();
 
         String txnId = eSignParameter.getTxnId();
-        ESignParameter eSignDetails = repository.getESignDetails(txnId);
+        List<ESignParameter> signRequestList = repository.getESignDetails(txnId);
+        ESignParameter eSignDetails = signRequestList.get(0);
+
         String fileStoreId = eSignDetails.getFileStoreId();
         String tenantId = eSignParameter.getTenantId();
         String response = eSignParameter.getResponse();
@@ -136,6 +140,18 @@ public class ESignService {
         return signedFileStoreId;
     }
 
+
+    public Boolean existTxnForESign(RequestInfo requestInfo,String txnId) {
+
+        boolean response = false;
+        List<ESignParameter> signReqList = repository.getESignDetails(txnId);
+        if (!signReqList.isEmpty()) {
+            List<ESignParameter> txnIdDetails = signReqList.stream().filter((ele) -> ele.getId().equals(txnId)).toList();
+            response = !txnIdDetails.isEmpty();
+
+        }
+        return response;
+    }
 
 
 }

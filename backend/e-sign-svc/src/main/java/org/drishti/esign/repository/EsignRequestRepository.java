@@ -56,14 +56,14 @@ public class EsignRequestRepository {
         return query.toString();
     }
 
-    public ESignParameter getESignDetails(String id) {
+    public List<ESignParameter> getESignDetails(String id) {
 
         List<Integer> preparedStmtArgList = new ArrayList<>(List.of(Types.VARCHAR, Types.INTEGER, Types.INTEGER));
         List<Object> preparedStmtList = new ArrayList<>(List.of(id, 1, 0));
         String query = getSignQuery();
-        List<ESignParameter> parameter = jdbcTemplate.query(query, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), rowMapper);
+        List<ESignParameter> list = jdbcTemplate.query(query, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), rowMapper);
 
-        return parameter.get(0);
+        return list;
 
     }
 }
