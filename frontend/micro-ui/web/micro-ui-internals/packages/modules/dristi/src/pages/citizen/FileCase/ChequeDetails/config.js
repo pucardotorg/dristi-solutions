@@ -129,9 +129,9 @@ export const chequeDetailsConfig = [
           inputs: [
             {
               name: "document",
-              documentHeader: "Proof of deposit of Cheque",
+              documentHeader: "CS_PROOF_DEPOSIT_CHEQUE",
               isOptional: "CS_IS_OPTIONAL",
-              infoTooltipMessage: "Proof of deposit of Cheque",
+              infoTooltipMessage: "CS_PROOF_DEPOSIT_CHEQUE",
               type: "DragDropComponent",
               uploadGuidelines: "UPLOAD_DOC_50",
               maxFileSize: 50,
@@ -154,9 +154,9 @@ export const chequeDetailsConfig = [
           inputs: [
             {
               name: "document",
-              documentHeader: "Cheque Return Memo",
+              documentHeader: "CS_CHEQUE_RETURN_MEMO",
               isOptional: "CS_IS_OPTIONAL",
-              infoTooltipMessage: "Cheque Return Memo",
+              infoTooltipMessage: "CS_CHEQUE_RETURN_MEMO",
               type: "DragDropComponent",
               uploadGuidelines: "UPLOAD_DOC_50",
               maxFileSize: 50,
