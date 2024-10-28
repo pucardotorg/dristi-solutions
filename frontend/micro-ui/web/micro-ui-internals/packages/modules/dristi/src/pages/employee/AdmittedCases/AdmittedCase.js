@@ -56,6 +56,13 @@ const caseSecondaryActions = [
 ];
 const caseTertiaryActions = [];
 
+const HearingWorkflowState = {
+  OPTOUT: "OPT_OUT",
+  INPROGRESS: "IN_PROGRESS",
+  COMPLETED: "COMPLETED",
+  ABATED: "ABATED",
+};
+
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
 };
@@ -156,6 +163,7 @@ const AdmittedCases = () => {
   const [createAdmissionOrder, setCreateAdmissionOrder] = useState(false);
   const [updatedCaseDetails, setUpdatedCaseDetails] = useState({});
   const [showDismissCaseConfirmation, setShowDismissCaseConfirmation] = useState(false);
+  const [toastStatus, setToastStatus] = useState({ alreadyShown: false });
   const history = useHistory();
   const isCitizen = userRoles.includes("CITIZEN");
   const OrderWorkflowAction = Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {};
@@ -701,7 +709,7 @@ const AdmittedCases = () => {
   }, [history?.location]);
 
   useEffect(() => {
-    if (history?.location?.state?.from && history?.location?.state?.from === "orderSuccessModal") {
+    if (history?.location?.state?.from === "orderSuccessModal" && !toastStatus?.alreadyShown) {
       showToast(true);
       setToastDetails({
         isError: false,
@@ -1139,6 +1147,15 @@ const AdmittedCases = () => {
     [hearingDetails?.HearingList]
   );
 
+  const currentHearingStatus = useMemo(
+    () =>
+      hearingDetails?.HearingList?.find(
+        (list) =>
+          list?.hearingType === "ADMISSION" && !(list?.status === HearingWorkflowState.COMPLETED || list?.status === HearingWorkflowState.ABATED)
+      )?.status,
+    [hearingDetails?.HearingList]
+  );
+
   const { data: ordersData } = useSearchOrdersService(
     { criteria: { tenantId: tenantId, filingNumber } },
     { tenantId },
@@ -1452,7 +1469,7 @@ const AdmittedCases = () => {
     setToastDetails(details);
     setTimeout(() => {
       setToast(false);
-      history.replace(history.location.pathname + history.location.search, { from: "" });
+      setToastStatus({ alreadyShown: true });
     }, duration);
   };
 
@@ -1873,23 +1890,24 @@ const AdmittedCases = () => {
       {showActionBar && !isWorkFlowFetching && (
         <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
           <div style={{ width: "fit-content", display: "flex", gap: 20 }}>
-            {(tertiaryAction.action ||
-              [CaseWorkflowState.ADMISSION_HEARING_SCHEDULED, CaseWorkflowState.PENDING_NOTICE, CaseWorkflowState.PENDING_RESPONSE].includes(
-                caseDetails?.status
-              )) && (
-              <Button
-                className="previous-button"
-                variation="secondary"
-                label={
-                  [CaseWorkflowState.ADMISSION_HEARING_SCHEDULED, CaseWorkflowState.PENDING_NOTICE, CaseWorkflowState.PENDING_RESPONSE].includes(
-                    caseDetails?.status
-                  ) && !isCitizen
-                    ? t("RESCHEDULE_ADMISSION_HEARING")
-                    : t(tertiaryAction.label)
-                }
-                onButtonClick={onSaveDraft}
-              />
-            )}
+            {currentHearingStatus !== HearingWorkflowState.OPTOUT &&
+              (tertiaryAction.action ||
+                [CaseWorkflowState.ADMISSION_HEARING_SCHEDULED, CaseWorkflowState.PENDING_NOTICE, CaseWorkflowState.PENDING_RESPONSE].includes(
+                  caseDetails?.status
+                )) && (
+                <Button
+                  className="previous-button"
+                  variation="secondary"
+                  label={
+                    [CaseWorkflowState.ADMISSION_HEARING_SCHEDULED, CaseWorkflowState.PENDING_NOTICE, CaseWorkflowState.PENDING_RESPONSE].includes(
+                      caseDetails?.status
+                    ) && !isCitizen
+                      ? t("RESCHEDULE_ADMISSION_HEARING")
+                      : t(tertiaryAction.label)
+                  }
+                  onButtonClick={onSaveDraft}
+                />
+              )}
             {primaryAction.action && (
               <SubmitBar
                 label={t(
