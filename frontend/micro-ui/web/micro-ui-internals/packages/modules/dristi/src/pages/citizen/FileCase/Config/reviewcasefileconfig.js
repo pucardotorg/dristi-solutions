@@ -316,8 +316,8 @@ export const reviewCaseFileFormConfig = [
                   label: "CS_DOCUMENT",
                   value: [
                     "legalDemandNoticeFileUpload.document",
-                    "proofOfAcknowledgmentFileUpload.document",
                     "proofOfDispatchFileUpload.document",
+                    "proofOfAcknowledgmentFileUpload.document",
                     "proofOfReplyFileUpload.document",
                   ],
                 },

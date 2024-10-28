@@ -239,7 +239,6 @@ function ViewCaseFile({ t, inViewCase = false }) {
                         ],
                       };
                     } else if (["complainantDetails", "respondentDetails"].includes(input?.key)) {
-                      console.log("object :>> ", caseDetails);
                       const isPartyInPerson = (individualId) => {
                         const representative = caseDetails?.representatives?.find((data) =>
                           data?.representing?.find((rep) => rep?.individualId === individualId && rep?.isActive === true)
@@ -560,7 +559,6 @@ function ViewCaseFile({ t, inViewCase = false }) {
                 showSecondaryLabel={totalErrors?.total > 0}
                 actionClassName="e-filing-action-bar"
               />
-
               {!inViewCase && (
                 <div className="error-flag-class">
                   <FlagIcon isError={totalErrors?.total > 0} />
@@ -571,7 +569,6 @@ function ViewCaseFile({ t, inViewCase = false }) {
                   </h3>
                 </div>
               )}
-
               {showErrorToast && (
                 <Toast error={true} label={t("ES_COMMON_PLEASE_ENTER_ALL_MANDATORY_FIELDS")} isDleteBtn={true} onClose={closeToast} />
               )}
