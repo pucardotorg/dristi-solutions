@@ -496,7 +496,7 @@ const GenerateOrders = () => {
   const hearingsList = useMemo(() => hearingsData?.HearingList?.sort((a, b) => b.startTime - a.startTime), [hearingsData]);
 
   const isHearingAlreadyScheduled = useMemo(() => {
-    const isPresent = hearingsData?.HearingList.some((hearing) => hearing?.status === HearingWorkflowState?.SCHEDULED);
+    const isPresent = (hearingsData?.HearingList || []).some((hearing) => hearing?.status === HearingWorkflowState?.SCHEDULED);
     return isPresent;
   }, [hearingsData]);
 
