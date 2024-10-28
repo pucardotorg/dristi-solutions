@@ -5,7 +5,6 @@ import org.egov.domain.service.OtpService;
 import org.egov.web.contract.OtpRequest;
 import org.egov.web.contract.OtpResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,7 +25,7 @@ public class OtpController {
     @PostMapping("/v1/_send")
     @ResponseStatus(HttpStatus.CREATED)
     public OtpResponse sendOtp(@RequestBody OtpRequest otpRequest) {
-            otpService.sendOtp(otpRequest.toDomain());
+        otpService.sendOtp(otpRequest.toDomain());
         return OtpResponse.builder().
                 responseInfo(null).successful(true).build();
     }
