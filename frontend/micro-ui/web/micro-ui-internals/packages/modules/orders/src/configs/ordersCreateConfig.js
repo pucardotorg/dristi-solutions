@@ -1120,7 +1120,7 @@ export const configsScheduleHearingDate = [
             {
               infoHeader: "CS_COMMON_NOTE",
               infoText: "FOLLOWING_PARTIES_HAVE_NOT_JOINED",
-              infoTooltipMessage: "Tooltip",
+              infoTooltipMessage: "FOLLOWING_PARTIES_HAVE_NOT_JOINED",
               type: "InfoComponent",
               children: "unjoinedParties",
             },
@@ -1289,7 +1289,7 @@ export const configsScheduleNextHearingDate = [
             {
               infoHeader: "CS_COMMON_NOTE",
               infoText: "FOLLOWING_PARTIES_HAVE_NOT_JOINED",
-              infoTooltipMessage: "Tooltip",
+              infoTooltipMessage: "FOLLOWING_PARTIES_HAVE_NOT_JOINED",
               type: "InfoComponent",
               children: "unjoinedParties",
             },
@@ -1808,6 +1808,22 @@ export const configsInitiateRescheduleHearingDate = [
         type: "date",
         populators: {
           name: "originalHearingDate",
+        },
+      },
+      {
+        label: "REASON_FOR_RESCHEDULING",
+        isMandatory: true,
+        key: "reasonForRescheduling",
+        type: "text",
+        populators: {
+          name: "reasonForRescheduling",
+          error: "CS_ALPHANUMERIC_ALLOWED",
+          validation: {
+            customValidationFn: {
+              moduleName: "dristiOrders",
+              masterName: "alphaNumericInputTextValidation",
+            },
+          },
         },
       },
       {
