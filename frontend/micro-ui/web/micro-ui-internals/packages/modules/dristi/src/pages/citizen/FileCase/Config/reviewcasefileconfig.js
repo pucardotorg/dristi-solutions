@@ -458,7 +458,6 @@ export const reviewCaseFileFormConfig = [
               name: "advocateDetails",
               label: "CS_ADVOCATE_DETAILS",
               icon: "AdvocateDetailsIcon",
-              disableScrutiny: true,
               config: [
                 {
                   type: "title",
