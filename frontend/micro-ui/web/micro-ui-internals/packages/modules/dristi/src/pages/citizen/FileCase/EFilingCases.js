@@ -44,6 +44,7 @@ import {
   signatureValidation,
   updateCaseDetails,
   validateDateForDelayApplication,
+  witnessDetailsValidation,
 } from "./EfilingValidationUtils";
 import isEqual from "lodash/isEqual";
 import isMatch from "lodash/isMatch";
@@ -1274,7 +1275,7 @@ function EFilingCases({ path }) {
       ]);
     }
     checkIfscValidation({ formData, setValue, selected });
-    checkNameValidation({ formData, setValue, selected, formdata, index, reset });
+    checkNameValidation({ formData, setValue, selected, formdata, index, reset, clearErrors, formState });
     checkOnlyCharInCheque({ formData, setValue, selected });
     if (!isEqual(formData, formdata[index].data)) {
       chequeDateValidation({ formData, setError, clearErrors, selected });
@@ -1539,6 +1540,24 @@ function EFilingCases({ path }) {
             setShowErrorToast,
             toast,
             setFormErrors: setFormErrors.current,
+          })
+        )
+    ) {
+      return;
+    }
+    if (
+      formdata
+        .filter((data) => data.isenabled)
+        .some((data) =>
+          witnessDetailsValidation({
+            formData: data?.data,
+            t,
+            caseDetails,
+            selected,
+            setShowErrorToast,
+            toast,
+            setFormErrors: setFormErrors.current,
+            clearFormDataErrors: clearFormDataErrors.current,
           })
         )
     ) {
