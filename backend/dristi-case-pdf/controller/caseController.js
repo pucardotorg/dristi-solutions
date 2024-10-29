@@ -146,7 +146,7 @@ exports.caseComplaintPdf = async (req, res, next) => {
     const finalPdfBuffer = Buffer.from(finalComplaintPdf);
     console.log("Pdf Generated Successfully");
 
-    res.setHeader("Content-Type", "caseComplaint/pdf");
+    res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
       "Content-Disposition",
       'attachment; filename="caseCompliantDetails.pdf"'
