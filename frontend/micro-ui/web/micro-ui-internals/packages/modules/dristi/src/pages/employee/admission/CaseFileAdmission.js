@@ -60,6 +60,7 @@ function CaseFileAdmission({ t, path }) {
   const [updateCounter, setUpdateCounter] = useState(0);
   const roles = Digit.UserService.getUser()?.info?.roles;
   const isCaseApprover = roles.some((role) => role.code === "CASE_APPROVER");
+  const isCourtRoomManager = roles.find((role) => role.code === "COURT_ROOM_MANAGER");
   const moduleCode = "case-default";
   const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
 
@@ -902,7 +903,7 @@ function CaseFileAdmission({ t, path }) {
                 defaultValues={{}}
                 onFormValueChange={onFormValueChange}
                 cardStyle={{ minWidth: "100%" }}
-                isDisabled={isDisabled}
+                isDisabled={isCourtRoomManager ? true : isDisabled}
                 cardClassName={`e-filing-card-form-style review-case-file`}
                 secondaryLabel={
                   [CaseWorkflowState.ADMISSION_HEARING_SCHEDULED, CaseWorkflowState.PENDING_RESPONSE, CaseWorkflowState.PENDING_NOTICE].includes(
@@ -911,9 +912,9 @@ function CaseFileAdmission({ t, path }) {
                     ? t("HEARING_IS_SCHEDULED")
                     : t(tertiaryAction.label || "")
                 }
-                showSecondaryLabel={Boolean(tertiaryAction?.action)}
+                showSecondaryLabel={isCourtRoomManager ? false : Boolean(tertiaryAction?.action)}
                 actionClassName={"case-file-admission-action-bar"}
-                showSkip={secondaryAction?.label}
+                showSkip={isCourtRoomManager ? false : secondaryAction?.label}
                 onSkip={onSendBack}
                 skiplabel={t(secondaryAction?.label || "")}
                 noBreakLine
