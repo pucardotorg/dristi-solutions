@@ -88,6 +88,22 @@ function AdvocateNameDetails({ t, config, onSelect, formData = {}, errors, regis
     setIsApproved(!isPending);
   }, []);
 
+  const selectedAdvindividualId = useMemo(() => formData?.advocateBarRegNumberWithName?.[0]?.individualId || null, [
+    formData?.advocateBarRegNumberWithName,
+  ]);
+
+  const { selectedIndividual, isLoading: isInidividualLoading } = window?.Digit.Hooks.dristi.useGetIndividualUser(
+    {
+      Individual: {
+        individualId: selectedAdvindividualId,
+      },
+    },
+    { tenantId, limit: 1000, offset: 0 },
+    moduleCode,
+    `getindividual-${selectedAdvindividualId}`,
+    selectedAdvindividualId
+  );
+
   useEffect(() => {
     if (formData.advocateBarRegNumberWithName) {
       const fullName = formData?.advocateBarRegNumberWithName?.[0]?.advocateName;
@@ -107,6 +123,7 @@ function AdvocateNameDetails({ t, config, onSelect, formData = {}, errors, regis
       const userName = searchResult[0]?.additionalDetails?.username;
       const advocateId = searchResult[0]?.id;
       const advocateUuid = searchResult[0]?.auditDetails?.createdBy;
+      const individualId = searchResult[0]?.individualId;
       onSelect("advocateBarRegNumberWithName", [
         {
           barRegistrationNumber: `${barRegNum} (${userName})`,
@@ -115,6 +132,7 @@ function AdvocateNameDetails({ t, config, onSelect, formData = {}, errors, regis
           barRegistrationNumberOriginal: barRegNum,
           advocateId,
           advocateUuid,
+          individualId,
         },
       ]);
       onSelect("AdvocateNameDetails", {

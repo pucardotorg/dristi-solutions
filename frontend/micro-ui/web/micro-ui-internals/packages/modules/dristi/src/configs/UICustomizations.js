@@ -196,6 +196,7 @@ export const UICustomizations = {
                 advocateId: adv?.id,
                 barRegistrationNumberOriginal: adv?.barRegistrationNumber,
                 advocateUuid: adv?.auditDetails?.createdBy,
+                individualId: adv?.individualId,
               };
             });
           },

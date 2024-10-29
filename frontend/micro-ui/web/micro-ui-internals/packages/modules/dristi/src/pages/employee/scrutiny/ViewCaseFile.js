@@ -13,6 +13,8 @@ import { DRISTIService } from "../../../services";
 import { formatDate } from "../../citizen/FileCase/CaseType";
 import { reviewCaseFileFormConfig } from "../../citizen/FileCase/Config/reviewcasefileconfig";
 import { getAllAssignees } from "../../citizen/FileCase/EfilingValidationUtils";
+import useGetStatuteSection from "../../../hooks/dristi/useGetStatuteSection";
+import { sideMenuConfig } from "../../citizen/FileCase/Config";
 function ViewCaseFile({ t, inViewCase = false }) {
   const history = useHistory();
   const roles = Digit.UserService.getUser()?.info?.roles;
@@ -64,6 +66,32 @@ function ViewCaseFile({ t, inViewCase = false }) {
 
     return { total, inputErrors, sectionErrors };
   };
+
+  const masterDetailsNames = sideMenuConfig.flatMap((section) =>
+    section.children.flatMap((child) => child.pageConfig.flatMap((config) => config.masterDetails.map((detail) => ({ name: detail.name }))))
+  );
+  const firstChildModuleName = sideMenuConfig[0]?.children[0]?.pageConfig[0]?.moduleName || null;
+  const { data: efilingCongfigs, isLoading: isConfigsLoading } = useGetStatuteSection(firstChildModuleName, masterDetailsNames);
+
+  const allDates = useMemo(() => {
+    const notMarkDates = ["respondentDateOfBirth"]; // We can add this key to the config as well, type date, notMarkDate = true
+
+    const dateFields = [];
+    if (!efilingCongfigs) {
+      return dateFields;
+    }
+    Object.keys(efilingCongfigs)?.forEach((configKey) => {
+      efilingCongfigs[configKey]?.[0]?.formconfig?.forEach((item) => {
+        item?.body?.forEach((bodyObj) => {
+          if (bodyObj?.type === "date" && !notMarkDates?.includes(bodyObj?.populators?.name)) {
+            dateFields.push(`${configKey}.${bodyObj?.populators?.name}`);
+          }
+        });
+      });
+    });
+
+    return dateFields;
+  }, [efilingCongfigs]);
 
   const { data: caseFetchResponse, refetch: refetchCaseData, isLoading } = useSearchCaseService(
     {
@@ -359,7 +387,7 @@ function ViewCaseFile({ t, inViewCase = false }) {
     return <Redirect to="cases" />;
   }
 
-  if (isLoading) {
+  if (isLoading || isConfigsLoading) {
     return <Loader />;
   }
   // if (isScrutiny && state !== CaseWorkflowState.UNDER_SCRUTINY) {

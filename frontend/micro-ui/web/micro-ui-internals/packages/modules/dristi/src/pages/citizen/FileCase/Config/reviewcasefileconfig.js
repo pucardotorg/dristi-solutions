@@ -16,7 +16,6 @@ export const reviewCaseFileFormConfig = [
               name: "complainantDetails",
               label: "CS_COMPLAINT_DETAILS",
               icon: "ComplainantDetailsIcon",
-              disableScrutiny: true,
               config: [
                 {
                   type: "title",
