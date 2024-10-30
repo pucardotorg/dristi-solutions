@@ -139,7 +139,7 @@ const AdmittedCases = () => {
   const caseId = urlParams.get("caseId");
   const roles = Digit.UserService.getUser()?.info?.roles;
   const isFSO = roles.some((role) => role.code === "FSO_ROLE");
-  const isCourtRoomManager = roles.find((role) => role.code === "COURT_ROOM_MANAGER");
+  const isCourtRoomManager = roles.some((role) => role.code === "COURT_ROOM_MANAGER");
   const activeTab = isFSO ? "Complaints" : urlParams.get("tab") || "Overview";
   const filingNumber = urlParams.get("filingNumber");
   const [show, setShow] = useState(false);
