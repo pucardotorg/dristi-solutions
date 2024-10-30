@@ -19,6 +19,7 @@ function RenderFileCard({
   const [file, setFile] = useState(null);
   const popupAnchor = useRef();
   const [showImageModal, setShowImageModal] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth); 
 
   useEffect(() => {
     if (fileData.fileStore) {
@@ -28,6 +29,16 @@ function RenderFileCard({
       setFile(draftFile);
     }
   }, [fileData]);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const uploadedFileDivIconAreaStyles = {
+    width: windowWidth <= 900 ? '100%' : 'calc(100% - 310px)'
+  };
 
   const viewImageModal = useMemo(() => {
     return (
@@ -59,7 +70,7 @@ function RenderFileCard({
   return (
     <div className={`uploaded-file-div-main upload-${!!uploadErrorInfo ? "error" : "successful"}`}>
       <div className={`uploaded-file-div-sub ${!!uploadErrorInfo ? "error" : ""}`}>
-        <div className="uploaded-file-div-icon-area" onClick={() => setShowImageModal(true)}>
+        <div className="uploaded-file-div-icon-area" style={uploadedFileDivIconAreaStyles} onClick={() => setShowImageModal(true)}>
           <div className="uploaded-file-icon">
             <FileIcon />
           </div>
