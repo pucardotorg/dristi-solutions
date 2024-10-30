@@ -17,7 +17,9 @@ import useSearchCaseService from "../hooks/dristi/useSearchCaseService";
 import { CaseWorkflowState } from "../Utils/caseWorkflow";
 import ReactTooltip from "react-tooltip";
 import { efilingDocumentTypeAndKeyMapping, ocrErrorLocations } from "../pages/citizen/FileCase/Config/efilingDocumentKeyAndTypeMapping";
-import { isEqual } from "lodash";
+import isEqual from "lodash/isEqual";
+import get from "lodash/get";
+import set from "lodash/set";
 
 const extractValue = (data, key) => {
   if (!key.includes(".")) {
@@ -287,6 +289,19 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
         };
       }
       setValue(config.key, currentMessage, name);
+
+      const dependentFields = inputs?.find((item) => item.name === name).config.find(f => f.value === fieldName)?.dependentFields || [];
+      for (const {configKey, page, field} of dependentFields) {
+        const scrutinyMessage = { ...(get(formData, [configKey, page]) || {
+          scrutinyMessage: "",
+          form: inputs.find((item) => item.name === name)?.data?.map(() => ({})),
+        })};
+        set(scrutinyMessage, ["form", index, field].filter(x => x != null), {
+          [type ? type : "FSOError"]: trimmedError,
+        });
+        setValue(configKey, scrutinyMessage, page);
+      }
+
       setValue("scrutinyMessage", { popupInfo: null, imagePopupInfo: null }, ["popupInfo", "imagePopupInfo"]);
       setScrutinyError("");
       setSystemError("");

@@ -192,6 +192,13 @@ export const reviewCaseFileFormConfig = [
                   type: "date",
                   label: "CS_DATE_OF_ISSUANCE",
                   value: "issuanceDate",
+                  dependentFields: [
+                    {configKey: "caseSpecificDetails", page: "chequeDetails", field: "depositDate"},
+                    {configKey: "caseSpecificDetails", page: "debtLiabilityDetails", field: "dateOfDispatch"},
+                    {configKey: "caseSpecificDetails", page: "debtLiabilityDetails", field: "dateOfService"},
+                    {configKey: "caseSpecificDetails", page: "debtLiabilityDetails", field: "dateOfReply"},
+                    {configKey: "caseSpecificDetails", page: "debtLiabilityDetails", field: "dateOfAccrual"},
+                  ]
                 },
                 {
                   type: "text",
