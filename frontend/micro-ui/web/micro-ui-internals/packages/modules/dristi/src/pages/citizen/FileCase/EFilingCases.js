@@ -1387,9 +1387,9 @@ function EFilingCases({ path }) {
         }
 
         if ("ifMultipleAddressLocations" in currentPage) {
-          const arrayValue = currentIndexData?.data[currentPage?.ifDataKeyHasValueAsArray?.dataKey] || [];
+          const arrayValue = currentIndexData?.data[currentPage?.ifMultipleAddressLocations?.dataKey] || [];
           for (let i = 0; i < arrayValue.length; i++) {
-            const mandatoryFields = currentPage?.ifDataKeyHasValueAsArray?.mandatoryFields || [];
+            const mandatoryFields = currentPage?.ifMultipleAddressLocations?.mandatoryFields || [];
             for (let j = 0; j < mandatoryFields.length; j++) {
               const value = extractValue(arrayValue[i], mandatoryFields[j]);
               const isValueEmpty = isEmptyValue(value);
