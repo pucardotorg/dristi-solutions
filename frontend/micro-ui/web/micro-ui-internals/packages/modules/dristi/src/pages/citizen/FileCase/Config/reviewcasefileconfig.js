@@ -31,7 +31,7 @@ export const reviewCaseFileFormConfig = [
                 {
                   type: "text",
                   label: "AGE",
-                  value: "complainantVerification.complainantAge",
+                  value: "complainantAge",
                 },
                 {
                   type: "text",
@@ -383,8 +383,8 @@ export const reviewCaseFileFormConfig = [
                 },
                 {
                   type: "text",
-                  label: "DATE_OF_BIRTH",
-                  value: "witnessDateOfBirth",
+                  label: "AGE",
+                  value: "witnessAge",
                 },
                 {
                   type: "address",
