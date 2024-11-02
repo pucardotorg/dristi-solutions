@@ -92,7 +92,7 @@ function AdvocateNameDetails({ t, config, onSelect, formData = {}, errors, regis
     formData?.advocateBarRegNumberWithName,
   ]);
 
-  const { selectedIndividual, isLoading: isInidividualLoading } = window?.Digit.Hooks.dristi.useGetIndividualUser(
+  const { data: selectedIndividual, isLoading: isInidividualLoading } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
         individualId: selectedAdvindividualId,
@@ -102,6 +102,11 @@ function AdvocateNameDetails({ t, config, onSelect, formData = {}, errors, regis
     moduleCode,
     `getindividual-${selectedAdvindividualId}`,
     selectedAdvindividualId
+  );
+
+  const idType = selectedIndividual?.Individual?.[0]?.identifiers[0]?.identifierType || "";
+  const identifierIdDetails = JSON.parse(
+    selectedIndividual?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "identifierIdDetails")?.value || "{}"
   );
 
   useEffect(() => {
@@ -139,9 +144,34 @@ function AdvocateNameDetails({ t, config, onSelect, formData = {}, errors, regis
         firstName: splitNamesPartiallyFromFullName(userName)?.firstName,
         middleName: splitNamesPartiallyFromFullName(userName)?.middleName,
         lastName: splitNamesPartiallyFromFullName(userName)?.lastName,
+        advocateIdProof: identifierIdDetails?.fileStoreId
+          ? [
+              {
+                name: idType,
+                fileStore: identifierIdDetails?.fileStoreId,
+                documentName: identifierIdDetails?.filename,
+                fileName: "ID Proof",
+              },
+            ]
+          : null,
       });
     }
-  }, [isApproved, onSelect, searchResult]);
+    if (isApproved && !searchResult && selectedIndividual) {
+      onSelect("AdvocateNameDetails", {
+        ...formData?.AdvocateNameDetails,
+        advocateIdProof: identifierIdDetails?.fileStoreId
+          ? [
+              {
+                name: idType,
+                fileStore: identifierIdDetails?.fileStoreId,
+                documentName: identifierIdDetails?.filename,
+                fileName: "ID Proof",
+              },
+            ]
+          : null,
+      });
+    }
+  }, [isApproved, onSelect, searchResult, selectedIndividual]);
 
   const inputs = useMemo(
     () =>

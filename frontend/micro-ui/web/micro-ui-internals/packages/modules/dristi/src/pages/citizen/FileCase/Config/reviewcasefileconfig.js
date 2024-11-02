@@ -16,6 +16,7 @@ export const reviewCaseFileFormConfig = [
               name: "complainantDetails",
               label: "CS_COMPLAINT_DETAILS",
               icon: "ComplainantDetailsIcon",
+              disableScrutiny: true,
               config: [
                 {
                   type: "title",
@@ -43,6 +44,7 @@ export const reviewCaseFileFormConfig = [
                   type: "image",
                   label: "CS_ID_PROOF",
                   value: ["complainantVerification.individualDetails.document", "companyDetailsUpload.document"],
+                  enableScrutinyField: true,
                 },
                 {
                   type: "address",
@@ -457,6 +459,7 @@ export const reviewCaseFileFormConfig = [
               name: "advocateDetails",
               label: "CS_ADVOCATE_DETAILS",
               icon: "AdvocateDetailsIcon",
+              disableScrutiny: true,
               config: [
                 {
                   type: "title",
@@ -469,8 +472,8 @@ export const reviewCaseFileFormConfig = [
                 },
                 {
                   type: "image",
-                  label: "CS_VAKALAT_NAMA",
-                  value: ["vakalatnamaFileUpload.document"],
+                  label: "CS_DOCUMENT",
+                  value: ["vakalatnamaFileUpload.document", "AdvocateNameDetails.advocateIdProof"],
                 },
               ],
               data: {},
