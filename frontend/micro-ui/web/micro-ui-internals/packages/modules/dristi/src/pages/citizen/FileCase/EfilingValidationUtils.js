@@ -209,7 +209,7 @@ export const checkIfscValidation = ({ formData, setValue, selected }) => {
   }
 };
 
-export const checkNameValidation = ({ formData, setValue, selected, reset, index, formdata }) => {
+export const checkNameValidation = ({ formData, setValue, selected, reset, index, formdata, clearErrors, formState }) => {
   if (selected === "respondentDetails") {
     if (formData?.respondentFirstName || formData?.respondentMiddleName || formData?.respondentLastName || formData?.respondentAge) {
       const formDataCopy = structuredClone(formData);
@@ -260,10 +260,17 @@ export const checkNameValidation = ({ formData, setValue, selected, reset, index
     }
   }
   if (selected === "complainantDetails" || selected === "witnessDetails") {
-    if (formData?.firstName || formData?.middleName || formData?.lastName || formData?.witnessAge || formData?.complainantAge) {
+    if (
+      formData?.firstName ||
+      formData?.middleName ||
+      formData?.lastName ||
+      formData?.witnessDesignation ||
+      formData?.witnessAge ||
+      formData?.complainantAge
+    ) {
       const formDataCopy = structuredClone(formData);
       for (const key in formDataCopy) {
-        if (["firstName", "middleName", "lastName"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)) {
+        if (["firstName", "middleName", "lastName", "witnessDesignation"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)) {
           const oldValue = formDataCopy[key];
           let value = oldValue;
           if (typeof value === "string") {
@@ -283,6 +290,16 @@ export const checkNameValidation = ({ formData, setValue, selected, reset, index
               setTimeout(() => {
                 element?.setSelectionRange(start, end);
               }, 0);
+            }
+            if (selected === "witnessDetails") {
+              if (updatedValue !== "" && ["firstName", "witnessDesignation"].includes(key)) {
+                if (formState?.errors?.firstName) {
+                  clearErrors("firstName");
+                }
+                if (formState?.errors?.witnessDesignation) {
+                  clearErrors("witnessDesignation");
+                }
+              }
             }
           }
         }
@@ -800,6 +817,19 @@ export const delayApplicationValidation = ({ t, formData, selected, setShowError
   }
 };
 
+export const witnessDetailsValidation = ({ t, formData, selected, setShowErrorToast, setErrorMsg, toast, setFormErrors }) => {
+  if (selected === "witnessDetails") {
+    if (!(formData?.firstName || formData?.witnessDesignation)) {
+      setFormErrors("firstName", { message: "FIRST_LAST_NAME_MANDATORY_MESSAGE" });
+      setFormErrors("witnessDesignation", { message: "FIRST_LAST_NAME_MANDATORY_MESSAGE" });
+      toast.error(t("AT_LEAST_ONE_OUT_OF_FIRST_NAME_AND_WITNESS_DESIGNATION_IS_MANDATORY"));
+      return true;
+    }
+  } else {
+    return false;
+  }
+};
+
 export const debtLiabilityValidation = ({ t, formData, selected, setShowErrorToast, setErrorMsg, toast, setFormErrors }) => {
   if (selected === "debtLiabilityDetails") {
     if (formData?.totalAmount === "0") {
@@ -1110,6 +1140,7 @@ export const updateCaseDetails = async ({
   isCaseSignedState = false,
   setErrorCaseDetails = () => {},
   multiUploadList,
+  caseComplaintDocument,
 }) => {
   const data = {};
   setIsDisabled(true);
@@ -2003,6 +2034,10 @@ export const updateCaseDetails = async ({
     };
   }
   if (selected === "reviewCaseFile") {
+    if (caseComplaintDocument) {
+      data.documents = [...(data.documents || []), caseComplaintDocument];
+    }
+
     data.additionalDetails = {
       ...caseDetails.additionalDetails,
       reviewCaseFile: {
@@ -2048,6 +2083,7 @@ export const updateCaseDetails = async ({
         ...data,
         // documents: tempDocList,
         linkedCases: caseDetails?.linkedCases ? caseDetails?.linkedCases : [],
+        courtId: action !== "SAVE_DRAFT" ? window?.globalConfigs?.getConfig("COURT_ID") || "COURT_ID" : null,
         workflow: {
           ...caseDetails?.workflow,
           action: action,
