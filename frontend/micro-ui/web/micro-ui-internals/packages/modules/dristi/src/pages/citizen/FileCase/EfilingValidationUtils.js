@@ -209,7 +209,7 @@ export const checkIfscValidation = ({ formData, setValue, selected }) => {
   }
 };
 
-export const checkNameValidation = ({ formData, setValue, selected, reset, index, formdata }) => {
+export const checkNameValidation = ({ formData, setValue, selected, reset, index, formdata, clearErrors, formState }) => {
   if (selected === "respondentDetails") {
     if (formData?.respondentFirstName || formData?.respondentMiddleName || formData?.respondentLastName || formData?.respondentAge) {
       const formDataCopy = structuredClone(formData);
@@ -260,10 +260,17 @@ export const checkNameValidation = ({ formData, setValue, selected, reset, index
     }
   }
   if (selected === "complainantDetails" || selected === "witnessDetails") {
-    if (formData?.firstName || formData?.middleName || formData?.lastName || formData?.witnessAge || formData?.complainantAge) {
+    if (
+      formData?.firstName ||
+      formData?.middleName ||
+      formData?.lastName ||
+      formData?.witnessDesignation ||
+      formData?.witnessAge ||
+      formData?.complainantAge
+    ) {
       const formDataCopy = structuredClone(formData);
       for (const key in formDataCopy) {
-        if (["firstName", "middleName", "lastName"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)) {
+        if (["firstName", "middleName", "lastName", "witnessDesignation"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)) {
           const oldValue = formDataCopy[key];
           let value = oldValue;
           if (typeof value === "string") {
@@ -283,6 +290,16 @@ export const checkNameValidation = ({ formData, setValue, selected, reset, index
               setTimeout(() => {
                 element?.setSelectionRange(start, end);
               }, 0);
+            }
+            if (selected === "witnessDetails") {
+              if (updatedValue !== "" && ["firstName", "witnessDesignation"].includes(key)) {
+                if (formState?.errors?.firstName) {
+                  clearErrors("firstName");
+                }
+                if (formState?.errors?.witnessDesignation) {
+                  clearErrors("witnessDesignation");
+                }
+              }
             }
           }
         }
@@ -800,6 +817,19 @@ export const delayApplicationValidation = ({ t, formData, selected, setShowError
   }
 };
 
+export const witnessDetailsValidation = ({ t, formData, selected, setShowErrorToast, setErrorMsg, toast, setFormErrors }) => {
+  if (selected === "witnessDetails") {
+    if (!(formData?.firstName || formData?.witnessDesignation)) {
+      setFormErrors("firstName", { message: "FIRST_LAST_NAME_MANDATORY_MESSAGE" });
+      setFormErrors("witnessDesignation", { message: "FIRST_LAST_NAME_MANDATORY_MESSAGE" });
+      toast.error(t("AT_LEAST_ONE_OUT_OF_FIRST_NAME_AND_WITNESS_DESIGNATION_IS_MANDATORY"));
+      return true;
+    }
+  } else {
+    return false;
+  }
+};
+
 export const debtLiabilityValidation = ({ t, formData, selected, setShowErrorToast, setErrorMsg, toast, setFormErrors }) => {
   if (selected === "debtLiabilityDetails") {
     if (formData?.totalAmount === "0") {
@@ -929,6 +959,47 @@ export const createIndividualUser = async ({ data, documentData, tenantId }) => 
     },
   };
   const response = await window?.Digit.DRISTIService.postIndividualService(Individual, tenantId);
+  const refreshToken = window.localStorage.getItem(`temp-refresh-token-${data?.complainantVerification?.userDetails?.mobileNumber}`);
+  window.localStorage.removeItem(`temp-refresh-token-${data?.complainantVerification?.userDetails?.mobileNumber}`);
+  if (refreshToken) {
+    await getUserDetails(refreshToken, data?.complainantVerification?.userDetails?.mobileNumber);
+  }
+  return response;
+};
+
+export const updateIndividualUser = async ({ data, documentData, tenantId, individualData }) => {
+  const identifierId = documentData
+    ? documentData?.fileStore
+      ? documentData?.fileStore
+      : documentData?.file?.files?.[0]?.fileStoreId
+    : data?.complainantId?.complainantId;
+  const identifierIdDetails = documentData
+    ? {
+        fileStoreId: identifierId,
+        filename: documentData?.filename,
+        documentType: documentData?.fileType,
+      }
+    : {};
+  const identifierType = documentData ? data?.complainantId?.complainantId?.selectIdTypeType?.type : "AADHAR";
+  let Individual = {
+    Individual: {
+      ...individualData,
+      identifiers: [
+        {
+          ...individualData?.identifiers?.[0],
+          identifierType: identifierType,
+          identifierId: identifierId,
+        },
+      ],
+      additionalFields: {
+        ...individualData.additionalFields,
+        fields: individualData.additionalFields.fields.map((field) =>
+          field.key === "identifierIdDetails" ? { ...field, value: JSON.stringify(identifierIdDetails) } : field
+        ),
+      },
+    },
+  };
+  const response = await window?.Digit.DRISTIService.updateIndividualUser(Individual, { tenantId });
   const refreshToken = window.localStorage.getItem(`temp-refresh-token-${data?.complainantVerification?.userDetails?.mobileNumber}`);
   window.localStorage.removeItem(`temp-refresh-token-${data?.complainantVerification?.userDetails?.mobileNumber}`);
   if (refreshToken) {
@@ -1110,6 +1181,8 @@ export const updateCaseDetails = async ({
   isCaseSignedState = false,
   setErrorCaseDetails = () => {},
   multiUploadList,
+  scrutinyObj,
+  caseComplaintDocument,
 }) => {
   const data = {};
   setIsDisabled(true);
@@ -1168,6 +1241,48 @@ export const updateCaseDetails = async ({
                 { tenantId, limit: 1, offset: 0 }
               );
               const userUuid = Individual?.Individual?.[0]?.userUuid || "";
+              if (
+                scrutinyObj?.litigentDetails?.complainantDetails?.form?.some((item) =>
+                  item.hasOwnProperty("complainantVerification.individualDetails.document")
+                )
+              ) {
+                const documentData = await onDocumentUpload(
+                  data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file,
+                  data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[0],
+                  tenantId
+                );
+                !!setFormDataValue &&
+                  setFormDataValue("complainantVerification", {
+                    ...data?.data?.complainantVerification,
+                    individualDetails: {
+                      ...data?.data?.complainantVerification?.individualDetails,
+                      document: [
+                        {
+                          ...data?.data?.complainantVerification?.individualDetails?.document?.[0],
+                          documentType: documentData.fileType || documentData?.documentType,
+                          fileStore: documentData.file?.files?.[0]?.fileStoreId || documentData?.fileStore,
+                          documentName: documentData.filename || documentData?.documentName,
+                          fileName: "ID Proof",
+                        },
+                      ],
+                    },
+                  });
+                complainantVerification[index] = {
+                  individualDetails: {
+                    ...data?.data?.complainantVerification?.individualDetails,
+                    document: [
+                      {
+                        ...data?.data?.complainantVerification?.individualDetails?.document?.[0],
+                        documentType: documentData.fileType || documentData?.documentType,
+                        fileStore: documentData.file?.files?.[0]?.fileStoreId || documentData?.fileStore,
+                        documentName: documentData.filename || documentData?.documentName,
+                        fileName: "ID Proof",
+                      },
+                    ],
+                  },
+                };
+                await updateIndividualUser({ data: data?.data, documentData, tenantId, individualData: Individual?.Individual?.[0] });
+              }
               return {
                 tenantId,
                 caseId: caseDetails?.id,
@@ -2003,6 +2118,10 @@ export const updateCaseDetails = async ({
     };
   }
   if (selected === "reviewCaseFile") {
+    if (caseComplaintDocument) {
+      data.documents = [...(data.documents || []), caseComplaintDocument];
+    }
+
     data.additionalDetails = {
       ...caseDetails.additionalDetails,
       reviewCaseFile: {
@@ -2048,6 +2167,7 @@ export const updateCaseDetails = async ({
         ...data,
         // documents: tempDocList,
         linkedCases: caseDetails?.linkedCases ? caseDetails?.linkedCases : [],
+        courtId: action !== "SAVE_DRAFT" ? window?.globalConfigs?.getConfig("COURT_ID") || "COURT_ID" : null,
         workflow: {
           ...caseDetails?.workflow,
           action: action,
