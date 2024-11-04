@@ -1,6 +1,11 @@
 import { Button, CardText, EditPencilIcon, TextArea } from "@egovernments/digit-ui-react-components";
+import get from "lodash/get";
+import isEqual from "lodash/isEqual";
+import set from "lodash/set";
 import React, { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useHistory } from "react-router-dom";
+import ReactTooltip from "react-tooltip";
+import useSearchCaseService from "../hooks/dristi/useSearchCaseService";
 import {
   ChequeDetailsIcon,
   CustomArrowDownIcon,
@@ -10,16 +15,10 @@ import {
   PrayerSwornIcon,
   RespondentDetailsIcon,
 } from "../icons/svgIndex";
+import { CaseWorkflowState } from "../Utils/caseWorkflow";
 import CustomPopUp from "./CustomPopUp";
 import CustomReviewCard from "./CustomReviewCard";
 import ImageModal from "./ImageModal";
-import useSearchCaseService from "../hooks/dristi/useSearchCaseService";
-import { CaseWorkflowState } from "../Utils/caseWorkflow";
-import ReactTooltip from "react-tooltip";
-import { efilingDocumentTypeAndKeyMapping, ocrErrorLocations } from "../pages/citizen/FileCase/Config/efilingDocumentKeyAndTypeMapping";
-import isEqual from "lodash/isEqual";
-import get from "lodash/get";
-import set from "lodash/set";
 
 const extractValue = (data, key) => {
   if (!key.includes(".")) {
@@ -308,17 +307,20 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
           scrutinyMessage: "",
           form: inputs.find((item) => item.name === name)?.data?.map(() => ({})),
         })};
+        const fieldInputData = config.populators.inputs.find(input => input.name === page)?.data[0].data[field]
+        if (fieldInputData) {
         set(scrutinyMessage, ["form", index, field].filter(x => x != null), {
           [type ? type : "FSOError"]: trimmedError,
         });
-        setValue(configKey, scrutinyMessage, page);
+          setValue(configKey, scrutinyMessage, page);
+        }
       }
 
-      setValue("scrutinyMessage", { popupInfo: null, imagePopupInfo: null }, ["popupInfo", "imagePopupInfo"]);
-      setScrutinyError("");
-      setSystemError("");
-    }
-  };
+    setValue("scrutinyMessage", { popupInfo: null, imagePopupInfo: null }, ["popupInfo", "imagePopupInfo"]);
+    setScrutinyError("");
+    setSystemError("");
+  }
+};
 
   const updateObject = (formData, update, message) => {
     if (update?.configKey in formData) {
