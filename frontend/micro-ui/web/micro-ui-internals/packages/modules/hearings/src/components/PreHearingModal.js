@@ -10,7 +10,7 @@ import { formatDate } from "../utils";
 function PreHearingModal({ onCancel, hearingData, courtData, individualId, userType }) {
   const { t } = useTranslation();
   const roles = Digit.UserService.getUser()?.info?.roles;
-  const isCourtRoomManager = roles.some((role) => role.code === "COURT_ROOM_MANAGER");
+  const isCourtRoomManager = roles?.some((role) => role.code === "COURT_ROOM_MANAGER");
   const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
   const [totalCount, setTotalCount] = useState(null);
   const [purposeModalOpen, setPurposeModalOpen] = useState(false);
