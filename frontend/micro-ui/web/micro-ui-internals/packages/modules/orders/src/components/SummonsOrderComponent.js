@@ -36,7 +36,7 @@ const RenderDeliveryChannels = ({ partyDetails, deliveryChannels, handleCheckbox
                         onChange={() => handleCheckboxChange(channel.type, channel.code, value)}
                       />
                       <label htmlFor={`${channel.type}-${index}`}>
-                        {channel.type === "e-Post" || channel.type === "Via Police" || channel.type === "RPAD"
+                        {channel.type === "e-Post" || channel.type === "Via Police" || channel.type === "Registered Post"
                           ? typeof value.address === "string"
                             ? value.address
                             : `${value.locality}, ${value.city}, ${value.district}, ${value.pincode}`
@@ -53,7 +53,7 @@ const RenderDeliveryChannels = ({ partyDetails, deliveryChannels, handleCheckbox
   );
 };
 
-const SummonsOrderComponent = ({ t, config, formData, onSelect }) => {
+const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) => {
   const urlParams = new URLSearchParams(window.location.search);
   const filingNumber = urlParams.get("filingNumber");
   const tenantId = Digit.ULBService.getCurrentTenantId();
@@ -70,7 +70,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect }) => {
       values: [],
     },
     {
-      type: "RPAD",
+      type: "Registered Post",
       code: "RPAD",
       values: [],
     },
@@ -180,6 +180,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect }) => {
   }, [caseDetails?.additionalDetails, tenantId]);
 
   const handleDropdownChange = (selectedOption) => {
+    clearErrors(config?.key);
     const isEqual = _.isEqual(selectedOption.value.data, formData?.[config.key]?.party?.data);
     if (!isEqual) {
       setSelectedChannels([]);
@@ -276,7 +277,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect }) => {
             values: ePostAddresses,
           },
           {
-            type: "RPAD",
+            type: "Registered Post",
             code: "RPAD",
             values: address || [],
           },

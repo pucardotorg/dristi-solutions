@@ -43,7 +43,7 @@ import { OrderWorkflowAction, OrderWorkflowState } from "../../utils/orderWorkfl
 import { Urls } from "../../hooks/services/Urls";
 import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../utils/submissionWorkflow";
 import { getAdvocates, getuuidNameMap } from "../../utils/caseUtils";
-import { HearingWorkflowAction } from "../../utils/hearingWorkflow";
+import { HearingWorkflowAction, HearingWorkflowState } from "../../utils/hearingWorkflow";
 import _ from "lodash";
 import { useGetPendingTask } from "../../hooks/orders/useGetPendingTask";
 import useSearchOrdersService from "../../hooks/orders/useSearchOrdersService";
@@ -130,7 +130,7 @@ const stateSlaMap = {
 
 const channelTypeEnum = {
   "e-Post": { code: "POST", type: "Post" },
-  RPAD: { code: "RPAD", type: "RPAD" },
+  "Registered Post": { code: "RPAD", type: "RPAD" },
   SMS: { code: "SMS", type: "SMS" },
   "Via Police": { code: "POLICE", type: "Police" },
   "E-mail": { code: "EMAIL", type: "Email" },
@@ -496,9 +496,7 @@ const GenerateOrders = () => {
   const hearingsList = useMemo(() => hearingsData?.HearingList?.sort((a, b) => b.startTime - a.startTime), [hearingsData]);
 
   const isHearingAlreadyScheduled = useMemo(() => {
-    const isPresent = hearingsData?.HearingList.some((hearing) => {
-      return !(hearing?.status === "COMPLETED" || hearing?.status === "ABATED");
-    });
+    const isPresent = (hearingsData?.HearingList || []).some((hearing) => hearing?.status === HearingWorkflowState?.SCHEDULED);
     return isPresent;
   }, [hearingsData]);
 
@@ -1738,7 +1736,7 @@ const GenerateOrders = () => {
             fees: courtFees,
           };
 
-          const address = ["e-Post", "Via Police", "RPAD"].includes(item?.type)
+          const address = ["e-Post", "Via Police", "Registered Post"].includes(item?.type)
             ? respondentAddress[channelMap.get(item?.type) - 1]
             : respondentAddress[0];
           const sms = ["SMS"].includes(item?.type) ? respondentPhoneNo[channelMap.get(item?.type) - 1] : respondentPhoneNo[0];
@@ -1746,7 +1744,7 @@ const GenerateOrders = () => {
 
           payload.respondentDetails = {
             ...payload.respondentDetails,
-            address: ["e-Post", "Via Police", "RPAD"].includes(item?.type)
+            address: ["e-Post", "Via Police", "Registered Post"].includes(item?.type)
               ? {
                   ...address,
                   locality: item?.value?.locality || address?.locality,
@@ -1765,7 +1763,7 @@ const GenerateOrders = () => {
             "E-mail": "email",
             "e-Post": "address",
             "Via Police": "address",
-            RPAD: "address",
+            "Registered Post": "address",
           };
           payload.deliveryChannel = {
             ...payload.deliveryChannel,
@@ -1780,7 +1778,7 @@ const GenerateOrders = () => {
 
           payload.respondentDetails = {
             ...payload.respondentDetails,
-            address: ["e-Post", "Via Police", "RPAD"].includes(item?.type) ? item?.value : address || "",
+            address: ["e-Post", "Via Police", "Registered Post"].includes(item?.type) ? item?.value : address || "",
             phone: ["SMS"].includes(item?.type) ? item?.value : sms || "",
             email: ["E-mail"].includes(item?.type) ? item?.value : email || "",
             age: "",
@@ -2263,6 +2261,13 @@ const GenerateOrders = () => {
     if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(orderType) && isHearingAlreadyScheduled) {
       setShowErrorToast({
         label: t("HEARING_IS_ALREADY_SCHEDULED_FOR_THIS_CASE"),
+        error: true,
+      });
+      return;
+    }
+    if (["INITIATING_RESCHEDULING_OF_HEARING_DATE", "ASSIGNING_DATE_RESCHEDULED_HEARING"].includes(orderType) && !isHearingAlreadyScheduled) {
+      setShowErrorToast({
+        label: t("CURRENTLY_A_HEARING_IS_IN_OPTOUT_STATE"),
         error: true,
       });
       return;
