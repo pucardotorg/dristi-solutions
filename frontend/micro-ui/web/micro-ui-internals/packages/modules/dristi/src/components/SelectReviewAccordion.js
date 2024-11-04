@@ -301,13 +301,13 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
       }
       setValue(config.key, currentMessage, name);
 
-      const dependentFields = inputs?.find((item) => item.name === name).config.find(f => f.value === fieldName)?.dependentFields || [];
+      const dependentFields = inputs?.find((item) => item.name === name)?.config?.find(f => f.value === fieldName)?.dependentFields || [];
       for (const {configKey, page, field} of dependentFields) {
         const scrutinyMessage = { ...(get(formData, [configKey, page]) || {
           scrutinyMessage: "",
           form: inputs.find((item) => item.name === name)?.data?.map(() => ({})),
         })};
-        const fieldInputData = config.populators.inputs.find(input => input.name === page)?.data[0].data[field]
+        const fieldInputData = config.populators.inputs.find(input => input.name === page)?.data?.[0]?.data?.[field]
         if (fieldInputData) {
         set(scrutinyMessage, ["form", index, field].filter(x => x != null), {
           [type ? type : "FSOError"]: trimmedError,
