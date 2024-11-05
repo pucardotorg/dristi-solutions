@@ -18,10 +18,11 @@ participant CaseUtilSvc as CUS #gold
 end box
 
 box DIGIT Services #lightgray
-Database ESIndexer as ES #gray
 participant FilestoreSvc as FS #lightgreen
 participant PDFSvc as PS #lightgreen
 participant MasterDataSvc as MDS #lightgreen
+Database ESIndexer as ES #gray
+Database PostgreSQL as DB #gray
 end box
 
 P->HU: login
@@ -30,6 +31,7 @@ HU->VU: redirects to View Case screen
 P->VU: Click "Case PDF"
 VU->VCPDFU: view case bundle PDF
 VCPDFU->CMS++: create case bundle (caseId)
+CMS->CMS: record CaseBundleTracker.startDate
 
 CMS->ES++: query 'case-bundle-pdf' index for caseId
 return indexJson
@@ -99,6 +101,11 @@ return fileStoreId
 CBS->CBS: update indexJson.filestoreId = fileStoreId
 
 CBS->ES: update index (indexJson.ID, caseId, indexJson)
+
+CMS->CMS: record CaseBundleTracker.pageCount
+CMS->CMS: record CaseBundleTracker.endDate
+CMS->DB: insert CaseBundleTracker
+
 return success
 return index.fileStoreId
 return index.fileStoreId

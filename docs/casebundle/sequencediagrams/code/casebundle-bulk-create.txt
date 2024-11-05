@@ -9,10 +9,11 @@ control CronJob as CJ
 box DRISIT Services
 participant CaseManagementService as CMS #gold
 participant ProducerSvc as P #gold
+participant CaseBundleGeneratorSvc as C #gold
 end box
 
 box DIGIT Services #lightgray
-participant Kafka as K #lightgreen
+queue Kafka as K #lightgreen
 Database ESIndexer as ES #gray
 Database PostgreSQL as DB #gray
 end box
@@ -27,11 +28,15 @@ return caseBundleList
 CMS->P++: process caseBundleList
 loop for each case in caseBundleList
   P->P: create eventStructure
-  P->K++: log create.bundle.create topic (eventStructure)
+  P->K: log create.bundle.create topic (eventStructure)
 end
-
-CMS->CMS: set CaseBundleTracker.caseCount = caseBundleList.Count
-CMS->CMS: record CaseBundleTracker.endDate
-CMS->DB++: insert CaseBundleTracker
-
+return success
+CMS->CMS: set BulkCaseBundleTracker.caseCount = caseBundleList.Count
+CMS->CMS: record BulkCaseBundleTracker.endDate
+CMS->DB: insert BulkCaseBundleTracker
+return success
+== Case Bundle Creation ==
+C->K: listen to 'case.bundle.create' topic
+C->CMS: create case bundle (caseId)
+note right of CMS: follow the "Case Bundle - Create API" sequence diagram
 @enduml

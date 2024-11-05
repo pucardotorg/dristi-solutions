@@ -1,0 +1,54 @@
+@startuml
+autonumber
+skinparam responseMessageBelowArrow true
+
+title "Case Bundle - Event Listener"
+
+box DRISIT Services
+participant CaseBundleIndexBuilderSvc as CBIBS #gold
+participant CaseSvc as CS #gold
+participant CaseBundleSvc as CBS #gold
+end box
+
+box DIGIT Services #lightgray
+participant MasterDataSvc as MDS #lightgreen
+queue Kafka as K #lightgreen
+Database ESIndexer as ES #gray
+end box
+
+
+CBIBS->K++: listen to save-wf-transition topic
+return topic entry
+
+CBIBS ->CBS ++: is valid state (ProcessInstances.state.state)
+CBS ->MDS++: query case_bundle_state_master for state
+return masterRecord
+
+alt eventName not in masterRecord
+  CBS ->CBIBS : return FALSE
+  note right of CBIBS : This state is not related to case bundle PDF. Hence exit
+else
+  return return TRUE
+  note right of CBIBS : This is a state related to case bundle PDF. proceed further
+end
+
+CBIBS->CS++: get case details (caseId)
+return caseDetails
+CBIBS->ES++: query 'case-bundle-pdf' index for caseId
+return indexJson
+
+alt if ProcessInstances.moduleName = case
+  CBIBS->CBS : processCase(caseDetails, indexJson, state)
+  note right of CBIBS : look at "Case Bundle - Case Index Generator" Sequence Diagram
+else if ProcessInstances.moduleName = application
+  CBIBS->CBS : processApplication(caseId, indexJson, state)
+  note right of CBIBS: look at "Case Bundle - Application Index Generator" Sequence Diagram
+else if ProcessInstances.moduleName = order
+  CBIBS->CBS : processOrder(caseId, indexJson, state)
+  note right of CBIBS: look at "Case Bundle - Order Index Generator" Sequence Diagram
+else if ProcessInstances.moduleName = task
+  CBIBS->CBS : processTask(caseId, indexJson, state)
+  note right of CBIBS: look at "Case Bundle - Task Index Generator" Sequence Diagram
+end
+
+@enduml
