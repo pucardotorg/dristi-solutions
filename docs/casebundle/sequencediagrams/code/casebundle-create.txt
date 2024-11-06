@@ -89,7 +89,9 @@ end
            CBS->CBS: update indexJson (case-bundle-pdf, caseId)
         end
      else
-        CBS->CBS: merge item.fileStoreId into CasePDF and update header with caseNumber
+        CBS->FS++: get item.fileStoreId
+        return filePDF
+        CBS->CBS: merge (append) filePDF into CasePDF and update header with caseNumber and add page number
      end
   end
   end
@@ -99,11 +101,11 @@ CBS->FS++: store CasePDF
 return fileStoreId
 
 CBS->CBS: update indexJson.filestoreId = fileStoreId
+CBS->CBS: update indexJson.pdfCreatedDate = current datetime in EPOCH (milliseconds)
+CBS->ES: update index (indexJson, caseId)
 
-CBS->ES: update index (indexJson.ID, caseId, indexJson)
-
-CMS->CMS: record CaseBundleTracker.pageCount
-CMS->CMS: record CaseBundleTracker.endDate
+CMS->CMS: record CaseBundleTracker.pageCount = casePDF.pagecount
+CMS->CMS: record CaseBundleTracker.endDate = current datetime in EPOCH (milliseconds)
 CMS->DB: insert CaseBundleTracker
 
 return success

@@ -35,6 +35,9 @@
       },
       "items": {
         "item": {
+          "type": {
+            "enum": ["complaint", "affidavit", "application", "order", "task", "objection",  "evidence", "notes"]
+          },
           "createPDF": {
             "type": "boolean",
             "description": "true means need to create the PDF and use it. false (default) means PDF is available and just need to use it. use fileStoreId for it. "
@@ -53,22 +56,6 @@
             "type":  "string",
             "description": "parameter on which individual items will be sorted, could be EPOCH, could be cmpNumber, could be just specific sequence number"
           }
-        },
-        "item": {
-          "createPDF": {
-            "type": "boolean"
-          },
-          "sourceId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "fileStoreId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "sortParam": {
-            "type":  "string"
-          }
         }
       }
     },
@@ -77,6 +64,9 @@
       "items": {
         "item": {
           "item": {
+            "type": {
+              "enum": ["complaint", "affidavit", "application", "order", "task", "objection",  "evidence", "notes"]
+            },
             "createPDF": {
               "type": "boolean"
             },
@@ -99,6 +89,24 @@
       "name": "pendingapplications",
       "items": {
         "item": {
+          "type":  "application",
+          "createPDF": {
+            "type": "boolean"
+          },
+          "sourceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fileStoreId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sortParam": {
+            "type":  "string"
+          }
+        },
+        "item": {
+          "type":  "objection",
           "createPDF": {
             "type": "boolean"
           },
@@ -119,400 +127,96 @@
     "section": {
       "name": "complaint",
       "items": {
-        "item": {
-          "createPDF": {
-            "type": "boolean"
-          },
-          "sourceId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "fileStoreId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "sortParam": {
-            "type":  "string"
-          }
-        }
       }
     },
     "section": {
       "name": "affidavit",
       "items": {
-        "item": {
-          "createPDF": {
-            "type": "boolean"
-          },
-          "sourceId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "fileStoreId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "sortParam": {
-            "type":  "string"
-          }
-        }
       }
     },
     "section": {
       "name": "vakalat",
       "items": {
-        "item": {
-          "createPDF": {
-            "type": "boolean"
-          },
-          "sourceId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "fileStoreId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "sortParam": {
-            "type":  "string"
-          }
-        }
       }
     },
     "section": {
       "name": "witnessschedule",
       "items": {
-        "item": {
-          "createPDF": {
-            "type": "boolean"
-          },
-          "sourceId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "fileStoreId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "sortParam": {
-            "type":  "string"
-          }
-        }
       }
     },
     "section": {
       "name": "documents",
       "items": {
-        "item": {
-          "createPDF": {
-            "type": "boolean"
-          },
-          "sourceId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "fileStoreId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "sortParam": {
-            "type":  "string"
-          }
-        }
       }
     },
     "section": {
       "name": "complainantevidence",
       "items": {
-        "item": {
-          "createPDF": {
-            "type": "boolean"
-          },
-          "sourceId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "fileStoreId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "sortParam": {
-            "type":  "string"
-          }
-        }
       }
     },
     "section": {
       "name": "313",
       "items": {
-        "item": {
-          "createPDF": {
-            "type": "boolean"
-          },
-          "sourceId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "fileStoreId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "sortParam": {
-            "type":  "string"
-          }
-        }
       }
     },
     "section": {
       "name": "accusedstatement",
       "items": {
-        "item": {
-          "createPDF": {
-            "type": "boolean"
-          },
-          "sourceId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "fileStoreId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "sortParam": {
-            "type":  "string"
-          }
-        }
       }
     },
     "section": {
       "name": "accusedevidence",
       "items": {
-        "item": {
-          "createPDF": {
-            "type": "boolean"
-          },
-          "sourceId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "fileStoreId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "sortParam": {
-            "type":  "string"
-          }
-        }
       }
     },
     "section": {
       "name": "courtevidence",
       "items": {
-        "item": {
-          "createPDF": {
-            "type": "boolean"
-          },
-          "sourceId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "fileStoreId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "sortParam": {
-            "type":  "string"
-          }
-        }
       }
     },
     "section": {
       "name": "courtnotes",
       "items": {
-        "item": {
-          "createPDF": {
-            "type": "boolean"
-          },
-          "sourceId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "fileStoreId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "sortParam": {
-            "type":  "string"
-          }
-        }
       }
     },
     "section": {
       "name": "complainantnotes",
       "items": {
-        "item": {
-          "createPDF": {
-            "type": "boolean"
-          },
-          "sourceId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "fileStoreId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "sortParam": {
-            "type":  "string"
-          }
-        }
       }
     },
     "section": {
       "name": "accusednotes",
       "items": {
-        "item": {
-          "createPDF": {
-            "type": "boolean"
-          },
-          "sourceId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "fileStoreId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "sortParam": {
-            "type":  "string"
-          }
-        }
       }
     },
     "section": {
       "name": "applications",
       "items": {
-        "item": {
-          "createPDF": {
-            "type": "boolean"
-          },
-          "sourceId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "fileStoreId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "sortParam": {
-            "type":  "string"
-          }
-        }
       }
     },
     "section": {
       "name": "baildocument",
       "items": {
-        "item": {
-          "createPDF": {
-            "type": "boolean"
-          },
-          "sourceId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "fileStoreId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "sortParam": {
-            "type":  "string"
-          }
-        }
       }
     },
     "section": {
       "name": "memos",
       "items": {
-        "item": {
-          "createPDF": {
-            "type": "boolean"
-          },
-          "sourceId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "fileStoreId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "sortParam": {
-            "type":  "string"
-          }
-        }
       }
     },
     "section": {
       "name": "processes",
       "items": {
-        "item": {
-          "createPDF": {
-            "type": "boolean"
-          },
-          "sourceId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "fileStoreId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "sortParam": {
-            "type":  "string"
-          }
-        }
       }
     },
     "section": {
       "name": "paymentreceipts",
       "items": {
-        "item": {
-          "createPDF": {
-            "type": "boolean"
-          },
-          "sourceId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "fileStoreId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "sortParam": {
-            "type":  "string"
-          }
-        }
       }
     },
     "section": {
       "name": "orders",
       "items": {
-        "item": {
-          "createPDF": {
-            "type": "boolean"
-          },
-          "sourceId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "fileStoreId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "sortParam": {
-            "type":  "string"
-          }
-        }
       }
     }
   }

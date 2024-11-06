@@ -23,7 +23,9 @@ Database PostgreSQL as DB #gray
 end box
 
 
-CBIBS->CBS ++: processCase(caseDetails, indexJson, state)
+CBIBS->CBS ++: processCase(caseId, indexJson, state)
+CBIBS->CS++: get case details (caseId)
+return caseDetails
 note right of CBS: Different sections below as per the case states being processed
 
 == State - UNDER_SCRUTINY ==

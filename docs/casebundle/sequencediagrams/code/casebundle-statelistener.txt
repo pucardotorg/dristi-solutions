@@ -2,7 +2,7 @@
 autonumber
 skinparam responseMessageBelowArrow true
 
-title "Case Bundle - Event Listener"
+title "Case Bundle - State Change Listener"
 
 box DRISIT Services
 participant CaseBundleIndexBuilderSvc as CBIBS #gold
@@ -20,11 +20,11 @@ end box
 CBIBS->K++: listen to save-wf-transition topic
 return topic entry
 
-CBIBS ->CBS ++: is valid state (ProcessInstances.state.state)
-CBS ->MDS++: query case_bundle_state_master for state
+CBIBS ->CBS ++: is valid state (ProcessInstances.moduleName, ProcessInstances.businessService, ProcessInstances.state.state)
+CBS ->MDS++: query case_bundle_state_master for module, businessService, state
 return masterRecord
 
-alt eventName not in masterRecord
+alt stateName not in masterRecord
   CBS ->CBIBS : return FALSE
   note right of CBIBS : This state is not related to case bundle PDF. Hence exit
 else
@@ -32,22 +32,21 @@ else
   note right of CBIBS : This is a state related to case bundle PDF. proceed further
 end
 
-CBIBS->CS++: get case details (caseId)
-return caseDetails
+
 CBIBS->ES++: query 'case-bundle-pdf' index for caseId
 return indexJson
 
 alt if ProcessInstances.moduleName = case
-  CBIBS->CBS : processCase(caseDetails, indexJson, state)
+  CBIBS->CBS : processCase(ProcessInstances.businessId, indexJson, stateName)
   note right of CBIBS : look at "Case Bundle - Case Index Generator" Sequence Diagram
 else if ProcessInstances.moduleName = application
-  CBIBS->CBS : processApplication(caseId, indexJson, state)
+  CBIBS->CBS : processApplication(ProcessInstances.businessId, indexJson, stateName)
   note right of CBIBS: look at "Case Bundle - Application Index Generator" Sequence Diagram
 else if ProcessInstances.moduleName = order
-  CBIBS->CBS : processOrder(caseId, indexJson, state)
+  CBIBS->CBS : processOrder(ProcessInstances.businessId, indexJson, stateName)
   note right of CBIBS: look at "Case Bundle - Order Index Generator" Sequence Diagram
 else if ProcessInstances.moduleName = task
-  CBIBS->CBS : processTask(caseId, indexJson, state)
+  CBIBS->CBS : processTask(ProcessInstances.businessId, indexJson, stateName)
   note right of CBIBS: look at "Case Bundle - Task Index Generator" Sequence Diagram
 end
 
