@@ -5,9 +5,44 @@ const upload = multer({ dest: "uploads/" });
 const { PDFDocument } = require("pdf-lib");
 const fs = require("fs");
 const asyncMiddleware = require("../utils/asyncMiddleware");
+const buildCasePdf = require("../caseBundle/buildCasePdf");
 
 const A4_WIDTH = 595.28; // A4 width in points
 const A4_HEIGHT = 841.89; // A4 height in points
+
+router.post(
+  "/case-bundle",
+  asyncMiddleware(async (req, res) => {
+    const { index, caseNumber } = req.body;
+
+    // Validate required parameters
+    if (!index || !caseNumber) {
+      return renderError(
+        res,
+        "Missing required fields: 'index' and/or 'caseNumber'.",
+        400
+      );
+    }
+
+    try {
+      await buildCasePdf(caseNumber, index); // Assuming buildCasePdf is a function that processes the case bundle
+
+      // Send success response
+      res.status(200).json({
+        message: `Case bundle PDF created successfully for caseNumber: ${caseNumber}`,
+      });
+    } catch (error) {
+      renderError(
+        res,
+        "An error occurred while creating the case bundle PDF",
+        500,
+        error
+      );
+    }
+  })
+);
+
+
 
 router.post(
   "/combine-documents",
