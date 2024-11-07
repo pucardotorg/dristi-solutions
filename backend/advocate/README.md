@@ -2,7 +2,7 @@
 
 This service handles the registration of new advocates and advocate clerks in the system. Advocates and clerks are created in the user and individual registries with linkages.
 
-## Prerequisites
+## Tech Stack
 
 - Java 17 JDK or JVM installed locally
 - Maven 
@@ -11,7 +11,8 @@ This service handles the registration of new advocates and advocate clerks in th
 - PostgreSQL 14+ locally installed & running or deployed in the cloud
 
 ## Dependencies
-Below are the DIGIT services that this service depends on:
+
+Below are the DRISTI services that this service depends on:
 - MDMS v2.0
 - Workflow
 - IDGen
@@ -19,25 +20,59 @@ Below are the DIGIT services that this service depends on:
 - Individual
 - User
 
-## Setup
-1. Clone the repository
-2. Clone the configs repository for the persister configuration file
-3. Import the egov-persister code from DIGIT-Core latest release branch. In the application.properties of the egov-persister, modify the egov.persist.yml.repo.path property to point to the advocate persister YAML file in the configs/egov-persister folder. 
-4. Create a database in PostgreSQL
-5. Import the project into an IDE and build using Maven
-6. Move to the configuration section
+## Getting started
+
+### Clone the repository
+```
+git clone https://github.com/pucardotorg/dristi-solutions.git
+cd dristi-solutions/backend/advocate
+```
+
+### Clone the configs repository
+```
+git clone https://github.com/pucardotorg/kerala-configs.git
+cd kerala-configs/egov-persister
+```
+Locate the advocate-persister.yml and advocate-clerk-persister.yml files.
+
+### Clone the DIGIT-Core repository
+
+```
+https://github.com/egovernments/Digit-Core.git
+cd core-services/egov-persister
+```
+
+Import the egov-persister project from DIGIT-Core and modify the application.properties egov.persist.yml.repo.path property with the path to the persister configuration files for the service. Use a comma separated list if there are multiple persister files.
+
+### Setup database
+
+Create a database in PostgreSQL
+
+```CREATE DATABASE dristi_db;```
 
 ## Configuration
-1. In application.properties, tweak the database configuration and Flyway configuration sections to reflect the DB name, username and password.
-2. Enter the dependent service host URLs:
+In application.properties:
+
+1. Tweak the database configuration and Flyway configuration sections to reflect the DB name, username and password.
+2. Enter the Kafka host URL
+3. Enter the dependent service host URLs:
 - egov.individual.host
 - egov.mdms.host
 - egov.user.host
 - egov.idgen.host
 - egov.workflow.host
 
+## Build the service
+
+Build the service using maven.
+
+```
+mvn clean install
+mvn build
+```
+
 ## Running the service
-Once above steps are completed, run the persister and the advocate services. 
+Run PostgreSQL, Kafka, egov-persister. Run the service via IDE or from the command line
 
 ## API specifications
 
