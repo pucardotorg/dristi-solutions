@@ -346,60 +346,48 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
       groupedByDocumentType
     ) {
       setFormDataLoad(false);
-      if (groupedByDocumentType?.LEGAL_NOTICE || groupedByDocumentType?.CHEQUE_RETURN_MEMO)
-        onSelect("caseSpecificDetails", {
-          ...formData["caseSpecificDetails"],
-          ...(groupedByDocumentType?.LEGAL_NOTICE && {
-            demandNoticeDetails: {
-              form: [
-                {
-                  image: {
-                    systemError: groupedByDocumentType?.LEGAL_NOTICE?.[0]?.message,
-                    fileName: "LEGAL_DEMAND_NOTICE",
-                  },
-                  "legalDemandNoticeFileUpload.document": {
-                    systemError: groupedByDocumentType?.LEGAL_NOTICE?.[0]?.message,
-                    fileName: "LEGAL_DEMAND_NOTICE",
-                  },
-                },
-              ],
-            },
-          }),
-          ...(groupedByDocumentType?.CHEQUE_RETURN_MEMO && {
-            chequeDetails: {
-              form: [
-                {
-                  image: {
-                    systemError: groupedByDocumentType?.CHEQUE_RETURN_MEMO?.[0]?.message,
-                    fileName: "CS_CHEQUE_RETURN_MEMO",
-                  },
-                  "returnMemoFileUpload.document": {
-                    systemError: groupedByDocumentType?.CHEQUE_RETURN_MEMO?.[0]?.message,
-                    fileName: "CS_CHEQUE_RETURN_MEMO",
-                  },
-                },
-              ],
-            },
-          }),
+      let clonedFormData = structuredClone(formData);
+      if (groupedByDocumentType?.LEGAL_NOTICE || groupedByDocumentType?.CHEQUE_RETURN_MEMO) {
+        if (groupedByDocumentType?.LEGAL_NOTICE) {
+          const demandNoticeForm = { ...clonedFormData?.caseSpecificDetails?.demandNoticeDetails?.form?.[0] } || {};
+          set(demandNoticeForm, "image", {
+            systemError: groupedByDocumentType?.LEGAL_NOTICE?.[0]?.message,
+            fileName: "LEGAL_DEMAND_NOTICE",
+          });
+          set(demandNoticeForm, "legalDemandNoticeFileUpload.document", {
+            systemError: groupedByDocumentType?.LEGAL_NOTICE?.[0]?.message,
+            fileName: "LEGAL_DEMAND_NOTICE",
+          });
+          set(clonedFormData, "caseSpecificDetails.demandNoticeDetails.form[0]", demandNoticeForm);
+        }
+        if (groupedByDocumentType?.CHEQUE_RETURN_MEMO) {
+          const chequeReturnForm = { ...clonedFormData?.caseSpecificDetails?.chequeDetails?.form?.[0] } || {};
+          set(chequeReturnForm, "image", {
+            systemError: groupedByDocumentType?.CHEQUE_RETURN_MEMO?.[0]?.message,
+            fileName: "CS_CHEQUE_RETURN_MEMO",
+          });
+          set(chequeReturnForm, "returnMemoFileUpload.document", {
+            systemError: groupedByDocumentType?.CHEQUE_RETURN_MEMO?.[0]?.message,
+            fileName: "CS_CHEQUE_RETURN_MEMO",
+          });
+          set(clonedFormData, "caseSpecificDetails.chequeDetails.form[0]", chequeReturnForm);
+        }
+      }
+      if (groupedByDocumentType?.AFFIDAVIT) {
+        const affidavitForm = { ...clonedFormData.litigentDetails?.respondentDetails?.form?.[0] } || {};
+        set(affidavitForm, "image", {
+          systemError: groupedByDocumentType?.AFFIDAVIT?.[0]?.message,
+          fileName: "Affidavit documents",
         });
-      if (groupedByDocumentType?.AFFIDAVIT)
-        onSelect("litigentDetails", {
-          ...formData["litigentDetails"],
-          respondentDetails: {
-            form: [
-              {
-                image: {
-                  systemError: groupedByDocumentType?.AFFIDAVIT?.[0]?.message,
-                  fileName: "Affidavit documents",
-                },
-                "inquiryAffidavitFileUpload.document": {
-                  systemError: groupedByDocumentType?.AFFIDAVIT?.[0]?.message,
-                  fileName: "Affidavit documents",
-                },
-              },
-            ],
-          },
+        set(affidavitForm, "inquiryAffidavitFileUpload.document", {
+          systemError: groupedByDocumentType?.AFFIDAVIT?.[0]?.message,
+          fileName: "Affidavit documents",
         });
+        set(clonedFormData, "litigentDetails.respondentDetails.form[0]", affidavitForm);
+      }
+
+      onSelect("caseSpecificDetails", clonedFormData["caseSpecificDetails"]);
+      onSelect("litigentDetails", clonedFormData["litigentDetails"]);
     }
   }, [ocrDataList, formData, formDataLoad, groupedByDocumentType, onSelect]);
 
