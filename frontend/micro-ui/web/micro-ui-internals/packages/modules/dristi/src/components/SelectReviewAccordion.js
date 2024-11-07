@@ -1,6 +1,11 @@
 import { Button, CardText, EditPencilIcon, TextArea } from "@egovernments/digit-ui-react-components";
+import get from "lodash/get";
+import isEqual from "lodash/isEqual";
+import set from "lodash/set";
 import React, { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useHistory } from "react-router-dom";
+import ReactTooltip from "react-tooltip";
+import useSearchCaseService from "../hooks/dristi/useSearchCaseService";
 import {
   ChequeDetailsIcon,
   CustomArrowDownIcon,
@@ -10,14 +15,10 @@ import {
   PrayerSwornIcon,
   RespondentDetailsIcon,
 } from "../icons/svgIndex";
+import { CaseWorkflowState } from "../Utils/caseWorkflow";
 import CustomPopUp from "./CustomPopUp";
 import CustomReviewCard from "./CustomReviewCard";
 import ImageModal from "./ImageModal";
-import useSearchCaseService from "../hooks/dristi/useSearchCaseService";
-import { CaseWorkflowState } from "../Utils/caseWorkflow";
-import ReactTooltip from "react-tooltip";
-import { efilingDocumentTypeAndKeyMapping, ocrErrorLocations } from "../pages/citizen/FileCase/Config/efilingDocumentKeyAndTypeMapping";
-import { isEqual } from "lodash";
 
 const extractValue = (data, key) => {
   if (!key.includes(".")) {
