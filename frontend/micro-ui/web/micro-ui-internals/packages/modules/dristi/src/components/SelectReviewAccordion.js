@@ -277,9 +277,9 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
     const trimmedError = message ? message : scrutinyError.trim();
 
     const { name, configKey, index, fieldName, inputlist, fileName } = popupInfoData ? popupInfoData : popupInfo;
-    let fieldObj = { [fieldName]: { [type ? type : "FSOError"]: trimmedError, markError: true } };
+    let fieldObj = { [fieldName]: { [type ? type : "FSOError"]: trimmedError, ...(isPrevScrutiny && { markError: true }) } };
     inputlist.forEach((key) => {
-      fieldObj[key] = { [type ? type : "FSOError"]: trimmedError, fileName, markError: true };
+      fieldObj[key] = { [type ? type : "FSOError"]: trimmedError, fileName, ...(isPrevScrutiny && { markError: true }) };
     });
     let currentMessage =
       formData && formData[configKey] && formData[config.key]?.[name]
@@ -291,7 +291,7 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
 
     if (currentMessage?.form) {
       if (index == null) {
-        currentMessage.scrutinyMessage = { [type ? type : "FSOError"]: trimmedError, fileName, markError: true };
+        currentMessage.scrutinyMessage = { [type ? type : "FSOError"]: trimmedError, fileName, ...(isPrevScrutiny && { markError: true }) };
       } else {
         currentMessage.form[index] = {
           ...(currentMessage?.form?.[index] || {}),
@@ -299,6 +299,28 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
         };
       }
       setValue(config.key, currentMessage, name);
+
+      const dependentFields = inputs?.find((item) => item.name === name)?.config?.find((f) => f.value === fieldName)?.dependentFields || [];
+      for (const { configKey, page, field } of dependentFields) {
+        const scrutinyMessage = {
+          ...(get(formData, [configKey, page]) || {
+            scrutinyMessage: "",
+            form: inputs.find((item) => item.name === name)?.data?.map(() => ({})),
+          }),
+        };
+        const fieldInputData = config.populators.inputs.find((input) => input.name === page)?.data?.[0]?.data?.[field];
+        if (fieldInputData) {
+          set(
+            scrutinyMessage,
+            ["form", index, field].filter((x) => x != null),
+            {
+              [type ? type : "FSOError"]: trimmedError,
+            }
+          );
+          setValue(configKey, scrutinyMessage, page);
+        }
+      }
+
       setValue("scrutinyMessage", { popupInfo: null, imagePopupInfo: null }, ["popupInfo", "imagePopupInfo"]);
       setScrutinyError("");
       setSystemError("");
@@ -366,7 +388,7 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
       onSelect("caseSpecificDetails", clonedFormData["caseSpecificDetails"]);
       onSelect("litigentDetails", clonedFormData["litigentDetails"]);
     }
-  }, [ocrDataList, formData, formDataLoad, groupedByDocumentType]);
+  }, [ocrDataList, formData, formDataLoad, groupedByDocumentType, onSelect]);
 
   let showFlagIcon = isScrutiny ? true : false;
   return (
