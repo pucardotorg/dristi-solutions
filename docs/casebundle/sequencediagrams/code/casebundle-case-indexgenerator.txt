@@ -38,10 +38,10 @@ alt sectionRow.isActive = false
   note right of CBS: section not to be processed. exit method
 else
   CBS->CBS: get complaintPDF from caseDetails as streamPDF
-  alt sectionRow.coverPageRequired = true
-    CBS->PS++: create cover PDF (item.sourceId, sectionRow.coverpagestatement)
-    return coverPDF
-    CBS->CBS: streamPDF = merge (append) streamPDF into coverPDF
+  alt sectionRow.docketPageRequired = true
+    CBS->PS++: create docket PDF (item.sourceId, sectionRow.docketpagestatement)
+    return docketPDF
+    CBS->CBS: streamPDF = merge (append) streamPDF into docketPDF
     return streamPDF
   end
 
@@ -67,10 +67,10 @@ else
   note right of CBS: There are 2 affidavits
 
   CBS->CBS: get complaintPDF from caseDetails as streamPDF
-  alt sectionRow.coverPageRequired = true
-    CBS->PS++: create cover PDF (item.sourceId, sectionRow.coverpagestatement)
-    return coverPDF
-    CBS->CBS: streamPDF = merge (append) streamPDF into coverPDF
+  alt sectionRow.docketPageRequired = true
+    CBS->PS++: create docket PDF (item.sourceId, sectionRow.docketpagestatement)
+    return docketPDF
+    CBS->CBS: streamPDF = merge (append) streamPDF into docketPDF
     return streamPDF
   end
 
