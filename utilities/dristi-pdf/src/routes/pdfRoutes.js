@@ -10,6 +10,7 @@ const buildCasePdf = require("../caseBundle/buildCasePdf");
 const A4_WIDTH = 595.28; // A4 width in points
 const A4_HEIGHT = 841.89; // A4 height in points
 
+
 router.post(
   "/case-bundle",
   asyncMiddleware(async (req, res) => {
@@ -19,17 +20,18 @@ router.post(
     if (!index || !caseNumber || !RequestInfo) {
       return renderError(
         res,
-        "Missing required fields: 'index', 'caseNumber', and/or 'RequestInfo'.",
+        "Missing required fields: 'index', 'caseNumber', or 'RequestInfo'.",
         400
       );
     }
 
     try {
-      const caseBundleFileStoreId = await buildCasePdf(caseNumber, index, RequestInfo);
+      const updatedIndex = await buildCasePdf(caseNumber, index, RequestInfo);
 
       // Send success response
       res.status(200).json({
-        fileStoreId: caseBundleFileStoreId
+        ResponseInfo: RequestInfo,
+        index: updatedIndex
       });
     } catch (error) {
       renderError(
@@ -41,6 +43,7 @@ router.post(
     }
   })
 );
+
 
 
 
