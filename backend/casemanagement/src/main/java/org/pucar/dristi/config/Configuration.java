@@ -116,6 +116,19 @@ public class Configuration {
 	@Value("${dristi.dev.task.search.url}")
 	private String taskSearchPath;
 
+
+	@Value("${egov.dristi.pdf.host}")
+	private String caseBundlePdfHost;
+
+	@Value("${egov.dristi.pdf.bundle}")
+	private String caseBundelPdfPath;
+
+	@Value("${dristi.case.host}")
+	private String caseHost;
+
+	@Value("${dristi.case.search.url}")
+	private String caseSearchUrl;
+
 	//ElasticSearch Config
 	@Value("${egov.infra.indexer.host}")
 	private String esHostUrl;
@@ -128,6 +141,9 @@ public class Configuration {
 
 	@Value("${dristi.case.index}")
 	private String caseIndex;
+
+	@Value("${dristi.bundle.index}")
+	private String caseBundleIndex;
 
 	@Value("${dristi.hearing.index}")
 	private String hearingIndex;
