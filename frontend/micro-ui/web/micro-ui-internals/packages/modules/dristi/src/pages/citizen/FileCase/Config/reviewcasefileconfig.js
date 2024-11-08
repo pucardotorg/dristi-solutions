@@ -194,12 +194,12 @@ export const reviewCaseFileFormConfig = [
                   label: "CS_DATE_OF_ISSUANCE",
                   value: "issuanceDate",
                   dependentFields: [
-                    {configKey: "caseSpecificDetails", page: "chequeDetails", field: "depositDate"},
-                    {configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfDispatch"},
-                    {configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfService"},
-                    {configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfReply"},
-                    {configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfAccrual"},
-                  ]
+                    { configKey: "caseSpecificDetails", page: "chequeDetails", field: "depositDate" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfDispatch" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfService" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfReply" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfAccrual" },
+                  ],
                 },
                 {
                   type: "text",
@@ -231,12 +231,12 @@ export const reviewCaseFileFormConfig = [
                   label: "CS_DATE_OF_CHEQUE_DEPOSIT",
                   value: "depositDate",
                   dependentFields: [
-                    {configKey: "caseSpecificDetails", page: "chequeDetails", field: "issuanceDate"},
-                    {configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfDispatch"},
-                    {configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfService"},
-                    {configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfReply"},
-                    {configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfAccrual"},
-                  ]
+                    { configKey: "caseSpecificDetails", page: "chequeDetails", field: "issuanceDate" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfDispatch" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfService" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfReply" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfAccrual" },
+                  ],
                 },
                 {
                   type: "text",
@@ -310,24 +310,24 @@ export const reviewCaseFileFormConfig = [
                   label: "CS_DATE_OF_DISPATCH_LDN",
                   value: "dateOfDispatch",
                   dependentFields: [
-                    {configKey: "caseSpecificDetails", page: "chequeDetails", field: "depositDate"},
-                    {configKey: "caseSpecificDetails", page: "chequeDetails", field: "issuanceDate"},
-                    {configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfService"},
-                    {configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfReply"},
-                    {configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfAccrual"},
-                  ]
+                    { configKey: "caseSpecificDetails", page: "chequeDetails", field: "depositDate" },
+                    { configKey: "caseSpecificDetails", page: "chequeDetails", field: "issuanceDate" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfService" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfReply" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfAccrual" },
+                  ],
                 },
                 {
                   type: "date",
                   label: "CS_DATE_OF_SERVICE_LDN",
                   value: "dateOfService",
                   dependentFields: [
-                    {configKey: "caseSpecificDetails", page: "chequeDetails", field: "depositDate"},
-                    {configKey: "caseSpecificDetails", page: "chequeDetails", field: "issuanceDate"},
-                    {configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfDispatch"},
-                    {configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfReply"},
-                    {configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfAccrual"},
-                  ]
+                    { configKey: "caseSpecificDetails", page: "chequeDetails", field: "depositDate" },
+                    { configKey: "caseSpecificDetails", page: "chequeDetails", field: "issuanceDate" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfDispatch" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfReply" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfAccrual" },
+                  ],
                 },
                 {
                   type: "date",
@@ -335,24 +335,24 @@ export const reviewCaseFileFormConfig = [
                   value: "dateOfReply",
                   notAvailable: "NO_REPLY_RECIEVED",
                   dependentFields: [
-                    {configKey: "caseSpecificDetails", page: "chequeDetails", field: "depositDate"},
-                    {configKey: "caseSpecificDetails", page: "chequeDetails", field: "issuanceDate"},
-                    {configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfDispatch"},
-                    {configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfService"},
-                    {configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfAccrual"},
-                  ]
+                    { configKey: "caseSpecificDetails", page: "chequeDetails", field: "depositDate" },
+                    { configKey: "caseSpecificDetails", page: "chequeDetails", field: "issuanceDate" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfDispatch" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfService" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfAccrual" },
+                  ],
                 },
                 {
                   type: "date",
                   label: "CS_DATE_OF_ACCRUAL_LDN",
                   value: "dateOfAccrual",
                   dependentFields: [
-                    {configKey: "caseSpecificDetails", page: "chequeDetails", field: "depositDate"},
-                    {configKey: "caseSpecificDetails", page: "chequeDetails", field: "issuanceDate"},
-                    {configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfDispatch"},
-                    {configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfService"},
-                    {configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfReply"},
-                  ]
+                    { configKey: "caseSpecificDetails", page: "chequeDetails", field: "depositDate" },
+                    { configKey: "caseSpecificDetails", page: "chequeDetails", field: "issuanceDate" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfDispatch" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfService" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfReply" },
+                  ],
                 },
                 {
                   type: "image",
