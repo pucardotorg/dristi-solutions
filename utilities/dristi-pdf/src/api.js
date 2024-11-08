@@ -321,9 +321,6 @@ async function search_pdf(tenantId, fileStoreId) {
 
 async function create_file(filePath, tenantId, module, tag) {
   try {
-    console.log("Starting create_file API call...");
-    console.log("File path to upload:", filePath);
-
     // Check if file exists
     if (!fs.existsSync(filePath)) {
       console.error(`Error: File does not exist at path: ${filePath}`);
@@ -338,8 +335,6 @@ async function create_file(filePath, tenantId, module, tag) {
 
     // Prepare URL for the request
     const url = `${config.host.filestore}${config.paths.filestore_create}`;
-    console.log("Request URL:", url);
-
     const response = await axios.post(url, form, {
       headers: {
         ...form.getHeaders(), // Adds the required Content-Type header for multipart/form-data
@@ -351,8 +346,6 @@ async function create_file(filePath, tenantId, module, tag) {
     });
     return response;
   } catch (error) {
-    console.error("Error in create_file:", error.message);
-    console.error("Full error:", error);
     throw error;
   }
 }
