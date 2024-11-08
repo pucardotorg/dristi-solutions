@@ -6,8 +6,8 @@ on:
       - release/0.4
       - dpg-qa-deployment
       - sdc/0.4
-    paths:
-      - 'frontend/micro-ui/**'
+#    paths:
+#      - 'frontend/micro-ui/**'
   pull_request:
     branches:
       - develop
