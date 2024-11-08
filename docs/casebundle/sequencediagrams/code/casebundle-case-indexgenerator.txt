@@ -13,17 +13,15 @@ participant CaseUtilSvc as CUS #gold
 end box
 
 box DIGIT Services #lightgray
-Database ESIndexer as ES #gray
 participant FilestoreSvc as FS #lightgreen
 participant PDFSvc as PS #lightgreen
 participant MasterDataSvc as MDS #lightgreen
-queue Kafka as K #lightgreen
-participant PersisterSvc as PS #lightgreen
+Database ESIndexer as ES #gray
 Database PostgreSQL as DB #gray
 end box
 
 
-CBIBS->CBS ++: processCase(caseId, indexJson, state)
+CBIBS->CBS++: processCase(caseId, indexJson, state)
 CBIBS->CS++: get case details (caseId)
 return caseDetails
 note right of CBS: Different sections below as per the case states being processed
@@ -36,26 +34,28 @@ CBS->MDS++: get record from case_bundle_master where "complaint" = section.name
 return sectionRow
 alt sectionRow.isActive = false
   note right of CBS: section not to be processed. exit method
-else
-  CBS->CBS: get complaintPDF from caseDetails as streamPDF
-  alt sectionRow.docketPageRequired = true
-    CBS->PS++: create docket PDF (item.sourceId, sectionRow.docketpagestatement)
-    return docketPDF
-    CBS->CBS: streamPDF = merge (append) streamPDF into docketPDF
-    return streamPDF
-  end
-
-  CBS->FS++: store streamPDF
-  return streamPDF fileStoreId
-  CBS->CBS: update indexJson with fileStoreId,
-  note right of CUS
-     update section.name = complaint, in indexJson
-     set items.item.createPDF = false
-     set items.item.sourceId = complaintPDF.fileStoreId
-     set items.item.fileStoreId = streamPDF fileStroreId
-     set items.item.sortParam = null
-  end note
 end
+
+CBS->CBS: get complaintPDF from caseDetails as streamPDF
+alt sectionRow.docketPageRequired = true
+  CBS->CBS: get docketTitle
+  CBS->PS++: create docket PDF (item.sourceId, docketTitle)
+  return docketPDF
+  CBS->CBS: streamPDF = merge (append) streamPDF into docketPDF
+  return streamPDF
+end
+
+CBS->FS++: store streamPDF
+return streamPDF fileStoreId
+CBS->CBS: update indexJson with fileStoreId,
+note right of CUS
+  update section.name = complaint, in indexJson
+  update lineItem details
+    set Item.createPDF = false
+    set Item.sourceId = complaintPDF.fileStoreId
+    set Item.fileStoreId = streamPDF fileStroreId
+    set Item.sortParam = null
+end note
 
 
 note right of CBS: affidavit section  of Case Bundle
@@ -63,53 +63,67 @@ CBS->MDS++: get record from case_bundle_master where "affidavit" = section.name
 return sectionRow
 alt sectionRow.isActive = false
   note right of CBS: section not to be processed. exit method
-else
-  note right of CBS: There are 2 affidavits
-
-  CBS->CBS: get complaintPDF from caseDetails as streamPDF
-  alt sectionRow.docketPageRequired = true
-    CBS->PS++: create docket PDF (item.sourceId, sectionRow.docketpagestatement)
-    return docketPDF
-    CBS->CBS: streamPDF = merge (append) streamPDF into docketPDF
-    return streamPDF
-  end
-
-  CBS->FS++: store streamPDF
-  return streamPDF fileStoreId
-  CBS->CBS: update indexJson with fileStoreId,
-  note right of CUS
-     update section.name = complaint, in indexJson
-     set items.item.createPDF = false
-     set items.item.sourceId = complaintPDF.fileStoreId
-     set items.item.fileStoreId = streamPDF fileStroreId
-     set items.item.sortParam = null
-  end note
 end
 
-note right of CBS: vakalat section  of Case Bundle
-CBLS->CUS++: process vakalat(caseDetails)
+note right of CBS: There are 2 affidavits
 
-note right of CBS: witness schedule section  of Case Bundle
-CBLS->CUS++: process witnessschedule(caseDetails)
+CBS->CBS: get affidavitPDF from caseDetails as streamPDF where documentType = case.affidavit.223bnss
+alt sectionRow.docketPageRequired = true
+  CBS->CBS: get docketTitle
+  CBS->PS++: create docket PDF (item.sourceId, docketTitle)
+  return docketPDF
+  CBS->CBS: streamPDF = merge (append) streamPDF into docketPDF
+  return streamPDF
+end
 
-note right of CBS: documents section  of Case Bundle
-CBLS->CUS++: process documents(caseDetails)
+CBS->FS++: store streamPDF
+return streamPDF fileStoreId
+CBS->CBS: update indexJson with fileStoreId,
+note right of CUS
+  update section.name = complaint, in indexJson
+  update lineItem details
+    set Item.createPDF = false
+    set Item.sourceId = affidavitPDF.fileStoreId
+    set Item.fileStoreId = streamPDF fileStroreId
+    set Item.sortParam = null
+end note
 
+CBS->CBS: get affidavit 2 from caseDetails as streamPDF where documentType = case.affidavit.225bnss
+alt if affidavit 2 is present
+  note right of CBS: repeat the flow with affidavit 2
+end
 
+note right of CBS: vakalat section of Case Bundle
+CBS->MDS++: get record from case_bundle_master where "vakalat" = section.name
+return sectionRow
+alt sectionRow.isActive = false
+  note right of CBS: section not to be processed. exit method
+end
 
-
+note right of CBS: filings section of Case Bundle
+CBS->MDS++: get record from case_bundle_master where "filings" = section.name
+return sectionRow
+alt sectionRow.isActive = false
+  note right of CBS: section not to be processed. exit method
+end
 
 == PENDING_ADMISSION_HEARING ==
+note across: case is getting registered. A CMP number will be generated. Just need to mark that bundle PDF needs to be generated
+
+CBS->CBS: update indexJson.contentLastModified = current datetime in EPOCH (milliseconds)
+CBS->ES++: update index (indexJson, caseId)
+return success
+
 == CASE_ADMITTED ==
-== PENDING_APPROVAL ==
-== COMPLETED ==
+note across: case is getting admitted. A ST number will be generated. Need to mark that bundle PDF needs to be generated
+
+CBS->CBS: update indexJson.contentLastModified = current datetime in EPOCH (milliseconds)
+CBS->ES++: update index (indexJson, caseId)
+return success
 
 
-
-
-
-
-== Event Processing ==
+== CASE_REASSIGNED ==
+note across: the case has been sent back to litigant/advocate to fix errors. They can change any file. Hence need to mark complain, affidavit, vakalat and filings section to be redone
 
 
 @enduml

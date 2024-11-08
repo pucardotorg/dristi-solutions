@@ -56,22 +56,28 @@ note right of CMS: Case not yet registered
 end
 
 CMS->CBS++: Build CasePDF (caseNumber, indexJson)
+Note over CBS: Before proceeding, need to validate if there are any duplicate sourceIds and fileStoreIds
+CBS->CBS: ValidateAndRemoveDuplicates(indexJson)
 
-loop for each section in index.bundle.sections
+
+loop for each section in index.sections
 
 CBS->MDS++: get sectionRow from case_bundle_master where name = section.name
 return sectionRow
 alt sectionRow.isActive = false
   note right of CBS: section not to be processed. continue to next item in loop
 end
-
+  note right of CBS: the title page needs specific treatment
   alt section.name = "titlepage"
     CBS->PS++: create Cover Page PDF (caseNumber)
     return streamPDF
     CBS->CBS: set CasePDF = streamPDF
   else
-  loop for each item in section.items
-     alt item.createPDF = true
+    Note over CBS: need to ensure that all items in a section are in correct sort order
+    CBS->CBS: ValidateAndFixSort(section)
+
+    loop for each item in section.lineItems
+      alt item.createPDF = true
         CBS->PS++: create PDF (item.sourceId)
         return streamPDF
 
@@ -88,12 +94,12 @@ end
            CBS->CBS: update item.fileStoreId = fileStoreID
            CBS->CBS: update indexJson (case-bundle-pdf, caseId)
         end
-     else
+      else
         CBS->FS++: get item.fileStoreId
         return filePDF
         CBS->CBS: merge (append) filePDF into CasePDF and update header with caseNumber and add page number
-     end
-  end
+      end
+    end
   end
 end
 
@@ -102,11 +108,14 @@ return fileStoreId
 
 CBS->CBS: update indexJson.filestoreId = fileStoreId
 CBS->CBS: update indexJson.pdfCreatedDate = current datetime in EPOCH (milliseconds)
-CBS->ES: update index (indexJson, caseId)
+
+CBS->ES++: update index (indexJson, caseId)
+return success
 
 CMS->CMS: record CaseBundleTracker.pageCount = casePDF.pagecount
 CMS->CMS: record CaseBundleTracker.endDate = current datetime in EPOCH (milliseconds)
-CMS->DB: insert CaseBundleTracker
+CMS->DB++: insert CaseBundleTracker
+return success
 
 return success
 return index.fileStoreId
