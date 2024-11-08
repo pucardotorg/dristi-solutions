@@ -287,18 +287,6 @@ async function create_pdf(tenantId, key, data, requestinfo) {
 async function search_pdf(tenantId, fileStoreId) {
   try {
     const apiUrl = url.resolve(config.host.filestore, config.paths.filestore_create + "/url");
-
-    console.log(`search_pdf URL: ${apiUrl}`);
-    console.log(`search_pdf Headers:`, {
-      'Content-Type': 'application/json',
-      'auth-token': auth_token,
-      'tenantId': tenantId
-    });
-    console.log(`search_pdf Params:`, {
-      tenantId: tenantId,
-      fileStoreIds: fileStoreId
-    });
-
     const response = await axios.get(apiUrl, {
       headers: {
         'Content-Type': 'application/json',

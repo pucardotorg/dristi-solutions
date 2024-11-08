@@ -77,11 +77,9 @@ async function buildCasePdf(caseNumber, index, requestInfo) {
     }
 
     const mergedPdf = await PDFDocument.create();
-    console.log("Starting PDF merge");
 
     for (const section of index.sections) {
       if (!section || !section.name) {
-        console.log(`Skipping invalid section: ${JSON.stringify(section)}`);
         continue;
       }
 
@@ -90,24 +88,20 @@ async function buildCasePdf(caseNumber, index, requestInfo) {
       );
 
       if (!sectionConfig) {
-        console.log(`Skipping disabled or undefined section: ${section.name}`);
         continue;
       }
 
       if (!section.lineItems || section.lineItems.length === 0) {
-        console.log(`Skipping section with no lineItems: ${section.name}`);
         continue;
       }
 
       for (const item of section.lineItems) {
         if (!item || !item.fileStoreId || !item.content) {
-          console.log(`Skipping invalid item in section ${section.name}: ${JSON.stringify(item)}`);
           continue;
         }
 
         if (sectionConfig.isEnabled && !item.createPDF) {
           const pdfResponse = await search_pdf(index.tenantId, item.fileStoreId);
-          console.log("PDF response for search is", pdfResponse.data);
 
           if (pdfResponse.status === 200 && pdfResponse.data[item.fileStoreId]) {
             const pdfUrl = pdfResponse.data[item.fileStoreId];
@@ -134,10 +128,11 @@ async function buildCasePdf(caseNumber, index, requestInfo) {
               const modifiedPages = await mergedPdf.copyPages(itemPdf, itemPdf.getPageIndices());
               modifiedPages.forEach((page) => mergedPdf.addPage(page));
             } catch (pdfFetchError) {
-              console.log(`Failed to fetch or load PDF for URL: ${pdfUrl}`, pdfFetchError.message);
+                //add error handling
             }
           } else {
             console.log(`Failed to fetch PDF for fileStoreId: ${item.fileStoreId}`);
+            // add error handling 
           }
         }
       }
@@ -169,15 +164,12 @@ async function buildCasePdf(caseNumber, index, requestInfo) {
 
     const tenantId = index.tenantId;
     const fileStoreResponse = await create_file(filePath, tenantId, "test", "gotcha");
-    console.log("Filestore response is", fileStoreResponse.data);
     const fileStoreId = fileStoreResponse?.data?.files?.[0].fileStoreId;
 
     index.fileStoreId = fileStoreId;
     index.contentLastModified = currentDate;
 
     fs.unlinkSync(filePath);
-    console.log(`Temporary file ${filePath} deleted from local storage.`);
-
     return index;
   } catch (error) {
     console.error("Error processing case bundle:", error.message);
