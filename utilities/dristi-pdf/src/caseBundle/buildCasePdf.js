@@ -1,11 +1,9 @@
 // Required imports
 const {
-    search_mdms,
     search_pdf,
-    create_pdf,
     create_file // New utility
   } = require("../api"); // Using imports as per the initial setup
-  const { PDFDocument } = require("pdf-lib");
+  const { PDFDocument, rgb } = require("pdf-lib");
   const axios = require("axios");
   const fs = require("fs");
   const path = require("path");
@@ -75,16 +73,21 @@ const {
   ];
   
   // Main function to build case PDF bundle
-  async function buildCasePdf(caseNumber, index) {
+  async function buildCasePdf(caseNumber, index, requestInfo) {
     try {
-      // Step 17: Retrieve MDMS configuration
+      // Add RequestInfo validation
+      if (!requestInfo || !requestInfo.authToken) {
+        throw new Error("RequestInfo with valid authToken is required.");
+      }
+  
+      // Todo- Get caseBundleDesign from MDMS V2
       const caseBundleDesign = caseBundleDesignMock;
   
       if (!caseBundleDesign || caseBundleDesign.length === 0) {
         throw new Error("No case bundle design found in MDMS.");
       }
   
-      // Initialize a new PDF document
+      // Initialize a new PDF document for the merged bundle
       const mergedPdf = await PDFDocument.create();
       console.log("Starting PDF merge");
   
@@ -99,7 +102,7 @@ const {
         for (const item of section.lineItems) {
           if (sectionConfig.isEnabled && !item.createPDF) {
             // Step 23-25: Retrieve and log the PDF URL for each item in the section
-            const pdfResponse = await search_pdf("kl", item.fileStoreId);
+            const pdfResponse = await search_pdf("kl", item.fileStoreId, requestInfo);
             console.log("PDF response for search is", pdfResponse.data);
   
             if (pdfResponse.status === 200 && pdfResponse.data[item.fileStoreId]) {
@@ -109,27 +112,38 @@ const {
               try {
                 // Fetch the PDF data from the URL
                 const pdfFetchResponse = await axios.get(pdfUrl, {
-                  responseType: 'arraybuffer'
+                  responseType: "arraybuffer",
+                  headers: { "auth-token": requestInfo.authToken } // Add authToken for authentication
                 });
                 const pdfData = pdfFetchResponse.data;
   
                 // Load the PDF document
                 const itemPdf = await PDFDocument.load(pdfData);
-                console.log("Loaded PDF document", itemPdf);
+                console.log("Loaded PDF document");
   
-                // Copy pages from the loaded PDF into the merged PDF
-                const pages = await mergedPdf.copyPages(itemPdf, itemPdf.getPageIndices());
-                pages.forEach((page) => mergedPdf.addPage(page));
+                // Add caseNumber as a header to each page of the individual PDF
+                const pages = itemPdf.getPages();
+                for (const page of pages) {
+                  const { width, height } = page.getSize();
+                  page.drawText(`${caseNumber}`, {
+                    x: width / 2 - 50, // Center the text
+                    y: height - 30, // Position near the top
+                    size: 12,
+                    color: rgb(0, 0, 0),
+                  });
+                }
   
+                // Copy pages from the modified individual PDF into the merged PDF
+                const modifiedPages = await mergedPdf.copyPages(itemPdf, itemPdf.getPageIndices());
+                modifiedPages.forEach((page) => mergedPdf.addPage(page));
               } catch (pdfFetchError) {
                 console.log(`Failed to fetch or load PDF for URL: ${pdfUrl}`, pdfFetchError.message);
               }
             } else {
               console.log(`Failed to fetch PDF for fileStoreId: ${item.fileStoreId}`);
             }
-          }
-          else{
-            //logic for when createPdf is true goes here
+          } else {
+            // Logic for when createPdf is true goes here
           }
         }
       }
@@ -140,22 +154,35 @@ const {
         fs.mkdirSync(directoryPath, { recursive: true });
       }
   
+      // Add page numbers as footers
+      const mergedPages = mergedPdf.getPages();
+      mergedPages.forEach((page, index) => {
+        const { width } = page.getSize();
+        const pageNumber = index + 1; // Page numbers are 1-based
+        page.drawText(`${pageNumber}`, {
+          x: width - 100, // Position near the right side
+          y: 30, // Position near the bottom
+          size: 10,
+          color: rgb(0, 0, 0),
+        });
+      });
+  
       // Save the final merged PDF
       const pdfBytes = await mergedPdf.save();
       const filePath = path.join(directoryPath, `${caseNumber}-bundle.pdf`);
       fs.writeFileSync(filePath, pdfBytes);
   
-      const fileContent = fs.readFileSync(filePath);
-      const currentDate = Date.now();
-      
       // Save to filestore using the new utility
-      const tenantId = "kl"; // Assuming tenantId is available in index
-      const fileStoreResponse = await create_file(filePath, tenantId, "test", "gotcha");
+      const tenantId = index.tenantId; 
+      const fileStoreResponse = await create_file(filePath, tenantId, "test", "gotcha", requestInfo);
       console.log("Filestore response is", fileStoreResponse.data);
       const fileStoreId = fileStoreResponse?.data?.files?.[0].fileStoreId;
       console.log(`Case bundle saved to file store with ID: ${fileStoreId}`);
-      return fileStoreId;
   
+      fs.unlinkSync(filePath);
+      console.log(`Temporary file ${filePath} deleted from local storage.`);
+  
+      return fileStoreId;
     } catch (error) {
       console.error("Error processing case bundle:", error.message);
     }

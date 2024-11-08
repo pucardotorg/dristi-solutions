@@ -13,23 +13,23 @@ const A4_HEIGHT = 841.89; // A4 height in points
 router.post(
   "/case-bundle",
   asyncMiddleware(async (req, res) => {
-    const { index, caseNumber } = req.body;
+    const { index, caseNumber, RequestInfo } = req.body;
 
     // Validate required parameters
-    if (!index || !caseNumber) {
+    if (!index || !caseNumber || !RequestInfo) {
       return renderError(
         res,
-        "Missing required fields: 'index' and/or 'caseNumber'.",
+        "Missing required fields: 'index', 'caseNumber', and/or 'RequestInfo'.",
         400
       );
     }
 
     try {
-      await buildCasePdf(caseNumber, index); // Assuming buildCasePdf is a function that processes the case bundle
+      const caseBundleFileStoreId = await buildCasePdf(caseNumber, index, RequestInfo);
 
       // Send success response
       res.status(200).json({
-        message: `Case bundle PDF created successfully for caseNumber: ${caseNumber}`,
+        fileStoreId: caseBundleFileStoreId
       });
     } catch (error) {
       renderError(
@@ -41,6 +41,7 @@ router.post(
     }
   })
 );
+
 
 
 
