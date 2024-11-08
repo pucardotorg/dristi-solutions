@@ -68,7 +68,7 @@ Build the service using maven.
 
 ```
 mvn clean install
-mvn build
+mvn spring-boot:run
 ```
 
 ## Running the service
