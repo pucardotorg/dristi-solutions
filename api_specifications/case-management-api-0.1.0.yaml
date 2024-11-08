@@ -380,6 +380,12 @@ components:
     CaseBundleTracker:
       type: object
       properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          minLength: 36
+          maxLength: 36
         startTime:
           type: integer
           format: int64
@@ -401,6 +407,12 @@ components:
     BulkCaseBundleTracker:
       type: object
       properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+          minLength: 36
+          maxLength: 36
         startTime:
           type: integer
           format: int64
@@ -413,3 +425,5 @@ components:
           type: integer
           format: int32
           description: the count of the cases retrieved from the index, whose bundle needs to be created
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/AuditDetails'
