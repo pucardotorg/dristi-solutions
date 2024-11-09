@@ -48,15 +48,15 @@ public class CasePdfService {
 
     @Autowired
     public CasePdfService(Configuration config, CasePdfUtil casePdfUtil, CaseRepository caseRepository, FileStoreUtil fileStoreUtil, ObjectMapper mapper, Producer producer, EncryptionDecryptionUtil encryptionDecryptionUtil, CacheService cacheService) {
-            this.config = config;
-            this.casePdfUtil = casePdfUtil;
-            this.caseRepository = caseRepository;
-            this.fileStoreUtil = fileStoreUtil;
-            this.mapper = mapper;
-            this.producer = producer;
-            this.encryptionDecryptionUtil = encryptionDecryptionUtil;
-            this.cacheService = cacheService;
-        }
+        this.config = config;
+        this.casePdfUtil = casePdfUtil;
+        this.caseRepository = caseRepository;
+        this.fileStoreUtil = fileStoreUtil;
+        this.mapper = mapper;
+        this.producer = producer;
+        this.encryptionDecryptionUtil = encryptionDecryptionUtil;
+        this.cacheService = cacheService;
+    }
 
     public CourtCase generatePdf(CaseSearchRequest body) {
         log.info("Received Generate Pdf for case search criteria: {}", body);
