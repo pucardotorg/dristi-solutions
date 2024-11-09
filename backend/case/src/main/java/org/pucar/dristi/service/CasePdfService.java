@@ -44,16 +44,19 @@ public class CasePdfService {
 
     private final EncryptionDecryptionUtil encryptionDecryptionUtil;
 
+    private final CacheService cacheService;
+
     @Autowired
-    public CasePdfService(Configuration config, CasePdfUtil casePdfUtil, CaseRepository caseRepository, FileStoreUtil fileStoreUtil, ObjectMapper mapper, Producer producer, EncryptionDecryptionUtil encryptionDecryptionUtil) {
-        this.config = config;
-        this.casePdfUtil = casePdfUtil;
-        this.caseRepository = caseRepository;
-        this.fileStoreUtil = fileStoreUtil;
-        this.mapper = mapper;
-        this.producer = producer;
-        this.encryptionDecryptionUtil = encryptionDecryptionUtil;
-    }
+    public CasePdfService(Configuration config, CasePdfUtil casePdfUtil, CaseRepository caseRepository, FileStoreUtil fileStoreUtil, ObjectMapper mapper, Producer producer, EncryptionDecryptionUtil encryptionDecryptionUtil, CacheService cacheService) {
+            this.config = config;
+            this.casePdfUtil = casePdfUtil;
+            this.caseRepository = caseRepository;
+            this.fileStoreUtil = fileStoreUtil;
+            this.mapper = mapper;
+            this.producer = producer;
+            this.encryptionDecryptionUtil = encryptionDecryptionUtil;
+            this.cacheService = cacheService;
+        }
 
     public CourtCase generatePdf(CaseSearchRequest body) {
         log.info("Received Generate Pdf for case search criteria: {}", body);
@@ -91,6 +94,11 @@ public class CasePdfService {
             } else {
                 courtCase.getDocuments().add(document);
             }
+
+            log.info("Encrypting: {}", caseRequest);
+            caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), "CourtCase", CourtCase.class));
+            cacheService.save(caseRequest.getCases().getTenantId() + ":" + caseRequest.getCases().getId(), caseRequest.getCases());
+
             producer.push(config.getCaseUpdateTopic(), caseRequest);
 
             return courtCase;
