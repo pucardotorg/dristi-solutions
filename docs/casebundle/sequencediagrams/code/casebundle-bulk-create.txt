@@ -9,7 +9,7 @@ control CronJob as CJ
 box DRISIT Services
 participant CaseManagementService as CMS #gold
 participant ProducerSvc as P #gold
-participant CaseBundleGeneratorSvc as C #gold
+participant CaseBundleGeneratorSvc as CBGS #gold
 end box
 
 box DIGIT Services #lightgray
@@ -21,14 +21,14 @@ end box
 note right of CJ: CronJob runs at midnight daily
 CJ->CMS++:Bulk create case bundle
 CMS->CMS: record BulkCaseBundleTracker.startDate
-CMS->ES++: query for index 'case-bundle-pdf' where index.contentLastModified > index.pdfCreatedDate
+CMS->ES++: query for index 'case-bundle-pdf' where (index.contentLastModified > index.pdfCreatedDate) OR (isCaseRegistered = false)
 note right of CMS: only query those index items where the case bundle content has any updates since the last time the case bundle PDF was generated
 return caseBundleList
 
 CMS->P++: process caseBundleList
 loop for each case in caseBundleList
   P->P: create eventStructure
-  P->K: log create.bundle.create topic (eventStructure)
+  P->K: log case-bundle-create topic (eventStructure)
 end
 return success
 CMS->CMS: set BulkCaseBundleTracker.caseCount = caseBundleList.Count
@@ -36,7 +36,7 @@ CMS->CMS: record BulkCaseBundleTracker.endDate
 CMS->DB: insert BulkCaseBundleTracker
 return success
 == Case Bundle Creation ==
-C->K: listen to 'case.bundle.create' topic
-C->CMS: create case bundle (caseId)
+CBGS ->K: listen to 'case-bundle-create topic' topic
+CBGS ->CMS: create case bundle (caseId)
 note right of CMS: follow the "Case Bundle - Create API" sequence diagram
 @enduml

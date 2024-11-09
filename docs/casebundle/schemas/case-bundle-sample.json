@@ -2,6 +2,7 @@
   "name": "case-bundle-pdf",
   "tenantId": "KL",
   "caseID": "123e4567-e89b-12d3-a456-426614174000",
+  "isCaseRegistered": true,
   "pdfCreatedDate": 1696102400,
   "fileStoreId": "987e6543-b21d-45f6-a879-214365876543",
   "contentLastModified": 1696188800,

@@ -13,6 +13,10 @@
       "format": "uuid",
       "description": "the primary key of the case"
     },
+    "isCaseRegistered": {
+      "type": "boolean",
+      "description": "till the case is registered the case bundle is created a bit differently. use this flag to distinguish"
+    },
     "pdfCreatedDate": {
       "type": "number",
       "description": "Date the last time the case bundle PDF was created. Stored in EPOCH date time"

@@ -6,7 +6,6 @@ title "Case Bundle - State Change Listener"
 
 box DRISIT Services
 participant CaseBundleIndexBuilderSvc as CBIBS #gold
-participant CaseSvc as CS #gold
 participant CaseBundleSvc as CBS #gold
 end box
 
@@ -16,6 +15,15 @@ queue Kafka as K #lightgreen
 Database ESIndexer as ES #gray
 end box
 
+
+alt save-case-application topic
+  CBIBS->K++: listen to save-wf-transition topic
+  return topicEntry
+  CBIBS ->CBS ++: initiate indexJson from template
+  CBS->CBS: enrich indexJson.caseId = topicEntry.caseId
+  CBS->ES: insert index (indexJson)
+  return
+else save-wf-transition topic
 
 CBIBS->K++: listen to save-wf-transition topic
 return topic entry
@@ -37,7 +45,7 @@ CBIBS->ES++: query 'case-bundle-pdf' index for caseId
 return indexJson
 
 alt if ProcessInstances.moduleName = case
-  CBIBS->CBS : processCase(ProcessInstances.businessId, indexJson, stateName)
+  CBIBS->CBS++ : processCase(ProcessInstances.businessId, indexJson, stateName)
   note right of CBIBS : look at "Case Bundle - Case Index Generator" Sequence Diagram
 else if ProcessInstances.moduleName = application
   CBIBS->CBS : processApplication(ProcessInstances.businessId, indexJson, stateName)
@@ -49,5 +57,6 @@ else if ProcessInstances.moduleName = task
   CBIBS->CBS : processTask(ProcessInstances.businessId, indexJson, stateName)
   note right of CBIBS: look at "Case Bundle - Task Index Generator" Sequence Diagram
 end
-
+return
+end
 @enduml

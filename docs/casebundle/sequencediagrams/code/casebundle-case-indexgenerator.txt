@@ -138,29 +138,19 @@ return sectionRow
 alt sectionRow.isActive = false
   note right of CBS: section not to be processed. exit method
 end
+CBS->CBS: update indexJson.isRegistered = true
 
-
-
-return indexJson
-return
-
-== PENDING_ADMISSION_HEARING ==
-note across: case is getting registered. A CMP number will be generated. Just need to mark that bundle PDF needs to be generated
-
-CBS->CBS: update indexJson.contentLastModified = current datetime in EPOCH (milliseconds)
-CBS->ES++: update index (indexJson, caseId)
-return success
-
-== CASE_ADMITTED ==
+== State - CASE_ADMITTED ==
 note across: case is getting admitted. A ST number will be generated. Need to mark that bundle PDF needs to be generated
 
 CBS->CBS: update indexJson.contentLastModified = current datetime in EPOCH (milliseconds)
-CBS->ES++: update index (indexJson, caseId)
-return success
 
 
-== CASE_REASSIGNED ==
+
+== State - CASE_REASSIGNED ==
 note across: the case has been sent back to litigant/advocate to fix errors. They can change any file. Hence need to mark complain, affidavit, vakalat and filings section to be redone
 
-
+== Common Processing ==
+return indexJson
+CMS->ES: update index (indexJson, caseId)
 @enduml

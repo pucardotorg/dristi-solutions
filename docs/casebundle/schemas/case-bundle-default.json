@@ -2,6 +2,7 @@
   "name": "case-bundle-pdf",
   "tenantId": "KL",
   "caseID": null,
+  "isCaseRegistered": false,
   "pdfCreatedDate": 0,
   "fileStoreId": null,
   "contentLastModified": 0,

@@ -15,6 +15,9 @@
       "format": "uuid",
       "description": "the primary key of the case whose bundle needs to be created"
     },
+    "isCaseRegistered": {
+      "type": "boolean"
+    },
     "moduleName": {
       "type": "string",
       "description": "name of module/entity who has raised this event"
