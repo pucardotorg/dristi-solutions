@@ -70,6 +70,8 @@ const caseBundleDesignMock = [
 
 async function buildCasePdf(caseNumber, index, requestInfo) {
   try {
+
+    // Todo- fetch this data from mdms.
     const caseBundleDesign = caseBundleDesignMock;
 
     if (!caseBundleDesign || caseBundleDesign.length === 0) {
@@ -77,6 +79,12 @@ async function buildCasePdf(caseNumber, index, requestInfo) {
     }
 
     const mergedPdf = await PDFDocument.create();
+
+    //Todo- create complaint pdf based on case details. It is already available in the api. include in the params for buildCasePdf above and merge to mergePdf
+
+
+    //Todo- create cover page pdf function to be implemented.
+
 
     for (const section of index.sections) {
       if (!section || !section.name) {
