@@ -221,7 +221,7 @@ const ViewPaymentDetails = ({ location, match }) => {
     }));
 
     updatedCalculation.push({
-      key: "Total amount",
+      key: "TOTAL_AMOUNT",
       value: totalAmount,
       currency: "Rs",
       isTotalFee: true,
@@ -397,7 +397,7 @@ const ViewPaymentDetails = ({ location, match }) => {
                   paddingTop: item.isTotalFee && "20px",
                 }}
               >
-                <span>{item.key}</span>
+                <span>{t(item.key)}</span>
                 <span>
                   {item.currency} {parseFloat(item.value).toFixed(2)}
                 </span>
