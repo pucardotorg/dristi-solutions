@@ -3,6 +3,7 @@ package digit.repository.rowmapper;
 import digit.models.coremodels.AuditDetails;
 import digit.web.models.ScheduleHearing;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.tracer.model.CustomException;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 
@@ -26,7 +27,7 @@ public class HearingRowMapper implements RowMapper<ScheduleHearing> {
                 .caseId(resultSet.getString("case_id"))
                 .title(resultSet.getString("title"))
                 .status(resultSet.getString("status"))
-                .hearingDate(resultSet.getLong("hearing_date"))
+                .hearingDate(parseDateToLong(resultSet.getString("hearing_date")))
                 .startTime(Long.parseLong(resultSet.getString("start_time")))
                 .endTime(Long.parseLong(resultSet.getString("end_time")))
                 .rescheduleRequestId(resultSet.getString("reschedule_request_id"))
@@ -38,5 +39,18 @@ public class HearingRowMapper implements RowMapper<ScheduleHearing> {
                         .build())
                 .rowVersion(resultSet.getInt("row_version")).build();
         return hearing;
+    }
+
+    private Long parseDateToLong(String dateStr) {
+        if (dateStr == null || dateStr.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return Long.valueOf(dateStr);
+        } catch (NumberFormatException e) {
+            log.error("Invalid date format: {}", dateStr);
+            throw new CustomException("INVALID_DATE_FORMAT",
+                    "Date must be a valid timestamp: " + dateStr);
+        }
     }
 }
