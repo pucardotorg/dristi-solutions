@@ -21,7 +21,7 @@ end box
 note right of CJ: CronJob runs at midnight daily
 CJ->CMS++:Bulk create case bundle
 CMS->CMS: record BulkCaseBundleTracker.startDate
-CMS->ES++: query for index 'case-bundle-pdf' where (index.contentLastModified > index.pdfCreatedDate) OR (isCaseRegistered = false)
+CMS->ES++: query for index 'case-bundle-pdf' where (isInProcessing = false) AND ((index.contentLastModified > index.pdfCreatedDate) OR (isCaseRegistered = false))
 note right of CMS: only query those index items where the case bundle content has any updates since the last time the case bundle PDF was generated
 return caseBundleList
 
@@ -29,6 +29,8 @@ CMS->P++: process caseBundleList
 loop for each case in caseBundleList
   P->P: create eventStructure
   P->K: log case-bundle-create topic (eventStructure)
+  P->CMS: isInProcessing = true
+  CMS->ES: update index(caseId) with isInProcessing
 end
 return success
 CMS->CMS: set BulkCaseBundleTracker.caseCount = caseBundleList.Count

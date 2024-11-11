@@ -106,7 +106,7 @@ end
 CBS->FS++: store CasePDF
 return CasePDFFileStoreId
 CBS->CBS: oldbundlePDFId = indexJson.filestoreId
-CBS->CBS: update indexJson(filestoreId = CasePDFFileStoreId, pdfCreatedDate = current datetime in EPOCH (milliseconds))
+CBS->CBS: update indexJson(filestoreId = CasePDFFileStoreId, pdfCreatedDate = current datetime in EPOCH (milliseconds), isInProcessing = false)
 
 CBS->FS: delete oldbundlePDFId
 CBS->ES++: update index (indexJson, caseId)

@@ -1,6 +1,7 @@
 {
   "name": "case-bundle-pdf",
   "tenantId": "KL",
+  "isInProcessing": false,
   "caseID": null,
   "isCaseRegistered": false,
   "pdfCreatedDate": 0,
