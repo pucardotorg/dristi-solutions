@@ -14,7 +14,7 @@ const A4_HEIGHT = 841.89; // A4 height in points
 router.post(
   "/case-bundle",
   asyncMiddleware(async (req, res) => {
-    const { index, caseNumber, RequestInfo } = req.body;
+    const { index, caseNumber, RequestInfo, caseDetails} = req.body;
 
     // Validate required parameters
     if (!index || !caseNumber || !RequestInfo) {
@@ -26,17 +26,22 @@ router.post(
     }
 
     try {
-      const updatedIndex = await buildCasePdf(caseNumber, index, RequestInfo);
+      // Call buildCasePdf and get updated index with pageCount
+      const result = await buildCasePdf(caseNumber, index, RequestInfo);
 
-      // Send success response
+      // Extract pageCount and remove it from updatedIndex
+      const { pageCount, ...updatedIndex } = result;
+
+      // Send success response with pageCount included but removed from updatedIndex
       res.status(200).json({
         ResponseInfo: RequestInfo,
-        index: updatedIndex
+        index: updatedIndex, // Updated index without pageCount
+        pageCount: pageCount, // Page count sent separately
       });
     } catch (error) {
       renderError(
         res,
-        "An error occurred while creating the case bundle PDF",
+        "An error occurred while creating the case bundle PDF.",
         500,
         error
       );

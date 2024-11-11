@@ -128,11 +128,10 @@ async function buildCasePdf(caseNumber, index, requestInfo) {
               const modifiedPages = await mergedPdf.copyPages(itemPdf, itemPdf.getPageIndices());
               modifiedPages.forEach((page) => mergedPdf.addPage(page));
             } catch (pdfFetchError) {
-                //add error handling
+                console.error(`Failed to fetch PDF for fileStoreId: ${item.fileStoreId}`);
             }
           } else {
-            console.log(`Failed to fetch PDF for fileStoreId: ${item.fileStoreId}`);
-            // add error handling 
+            console.error(`Failed to fetch PDF for fileStoreId: ${item.fileStoreId}`);
           }
         }
       }
@@ -156,7 +155,7 @@ async function buildCasePdf(caseNumber, index, requestInfo) {
     });
 
     const pdfBytes = await mergedPdf.save();
-    const filePath = path.join(directoryPath, `${caseNumber}-bundle.pdf`);
+    const filePath = path.join(directoryPath, `bundle.pdf`);
     fs.writeFileSync(filePath, pdfBytes);
 
     const fileContent = fs.readFileSync(filePath);
@@ -168,9 +167,13 @@ async function buildCasePdf(caseNumber, index, requestInfo) {
 
     index.fileStoreId = fileStoreId;
     index.contentLastModified = currentDate;
+    const totalPageCount = mergedPdf.getPageCount();
 
     fs.unlinkSync(filePath);
-    return index;
+    return {
+      ...index,
+      pageCount: totalPageCount,
+    };
   } catch (error) {
     console.error("Error processing case bundle:", error.message);
     throw error;
