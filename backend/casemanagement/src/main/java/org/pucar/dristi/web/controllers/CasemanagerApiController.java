@@ -123,7 +123,7 @@ public class CasemanagerApiController {
     }
 
     @PostMapping("/casemanager/case/v1/_buildcasebundle")
-    public ResponseEntity<Object> caseBundleBulk(@Valid @RequestBody CaseBundleRequest caseBundleRequest) {
+    public ResponseEntity<Object> caseBundle(@Valid @RequestBody CaseBundleRequest caseBundleRequest) {
         String fileStoreId = caseBundleService.getCaseBundle(caseBundleRequest);
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(caseBundleRequest.getRequestInfo(), true);
         CaseBundleResponse caseBundleResponse = CaseBundleResponse.builder().responseInfo(responseInfo).fileStoreId(fileStoreId).build();

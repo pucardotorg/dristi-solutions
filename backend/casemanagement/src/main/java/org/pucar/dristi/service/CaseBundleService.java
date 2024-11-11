@@ -168,6 +168,8 @@ public class CaseBundleService {
                     Map<String, Object> indexMap = (Map<String, Object>) pdfResponseMap.get("index");
                     JsonNode updateIndexJson = objectMapper.valueToTree(indexMap);
                     fileStoreId = (String) indexMap.get("fileStoreId");
+                    Integer pageCount = (Integer) pdfResponseMap.get("pageCount");
+                    caseBundleTracker.setPageCount(pageCount);
 
                     String esUpdateUrl = configuration.getEsHostUrl() + configuration.getCaseBundleIndex() + "/_update/" + caseId;
                     String esRequest;
@@ -190,7 +192,6 @@ public class CaseBundleService {
             throw new CustomException("UNKNOWN_ERROR", "Unexpected error while processing case bundle");
         }
 
-        caseBundleTracker.setPageCount(1);
         caseBundleTracker.setEndTime(System.currentTimeMillis());
         caseBundleRepository.insertCaseTracker(caseBundleTracker);
 
