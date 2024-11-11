@@ -42,13 +42,13 @@ public class CaseSummaryRowMapper implements ResultSetExtractor<List<CaseSummary
                         .id(caseId)
                         .tenantId(rs.getString("tenantid"))
                         .caseTitle(rs.getString("casetitle"))
-                        .filingDate(rs.getString("filingdate") == null ? null : Long.valueOf(rs.getString("filingdate")))
+                        .filingDate(parseDateToLong(rs.getString("filingdate")))
                         .statutesAndSections(null)
                         .stage(rs.getString("stage"))
                         .subStage(rs.getString("substage"))
                         .outcome(rs.getString("outcome"))
                         .courtId(rs.getString("courtid"))
-                        .registrationDate(rs.getString("registrationdate") == null ? null : Long.valueOf(rs.getString("registrationdate")))
+                        .registrationDate(parseDateToLong(rs.getString("registrationdate")))
                         .registrationNumber(rs.getString("cmpnumber"))
                         .litigants(new ArrayList<>())
                         .representatives(new ArrayList<>())
@@ -172,5 +172,18 @@ public class CaseSummaryRowMapper implements ResultSetExtractor<List<CaseSummary
 //        }
 
         return statueAndSections.toString();
+    }
+
+    private Long parseDateToLong(String dateStr) {
+        if (dateStr == null || dateStr.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return Long.valueOf(dateStr);
+        } catch (NumberFormatException e) {
+            log.error("Invalid date format: {}", dateStr);
+            throw new CustomException("INVALID_DATE_FORMAT",
+                    "Date must be a valid timestamp: " + dateStr);
+        }
     }
 }

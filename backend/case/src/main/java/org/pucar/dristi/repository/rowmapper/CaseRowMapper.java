@@ -67,9 +67,9 @@ public class CaseRowMapper implements ResultSetExtractor<List<CourtCase>> {
                             .stage(rs.getString("stage"))
                             .isActive(rs.getBoolean("isactive"))
                             .substage(rs.getString("substage"))
-                            .filingDate(rs.getString("filingdate") == null ? null : Long.valueOf(rs.getString("filingdate")))
-                            .judgementDate(rs.getString("judgementdate") == null ? null : Long.valueOf(rs.getString("judgementdate")))
-                            .registrationDate(rs.getString("registrationdate") == null ? null : Long.valueOf(rs.getString("registrationdate")))
+                            .filingDate(parseDateToLong(rs.getString("filingdate")))
+                            .judgementDate(parseDateToLong(rs.getString("judgementdate")))
+                            .registrationDate(parseDateToLong(rs.getString("registrationdate")))
                             .caseCategory(rs.getString("casecategory"))
                             .natureOfPleading(rs.getString("natureofpleading"))
                             .status(rs.getString("status"))
@@ -134,5 +134,19 @@ public class CaseRowMapper implements ResultSetExtractor<List<CourtCase>> {
             throw new CustomException("DATE_PARSING_FAILED", "Failed to parse date: " + str);
         }
         return localDate;
+    }
+
+
+    private Long parseDateToLong(String dateStr) {
+        if (dateStr == null || dateStr.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return Long.valueOf(dateStr);
+        } catch (NumberFormatException e) {
+            log.error("Invalid date format: {}", dateStr);
+            throw new CustomException("INVALID_DATE_FORMAT",
+                    "Date must be a valid timestamp: " + dateStr);
+        }
     }
 }
