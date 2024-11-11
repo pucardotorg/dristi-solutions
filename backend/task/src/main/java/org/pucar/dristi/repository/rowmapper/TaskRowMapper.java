@@ -60,9 +60,9 @@ public class TaskRowMapper implements ResultSetExtractor<List<Task>> {
                             .filingNumber(rs.getString("filingnumber"))
                             .taskNumber(rs.getString("tasknumber"))
                             .cnrNumber(rs.getString("cnrnumber"))
-                            .createdDate(rs.getLong("createddate"))
-                            .dateCloseBy(rs.getLong("datecloseby"))
-                            .dateClosed(rs.getLong("dateclosed"))
+                            .createdDate(parseDateToLong(rs.getString("createddate")))
+                            .dateCloseBy(parseDateToLong(rs.getString("datecloseby")))
+                            .dateClosed(parseDateToLong(rs.getString("dateclosed")))
                             .taskDescription(rs.getString("taskdescription"))
                             .taskDetails(objectMapper.readValue(rs.getString("taskdetails"), Object.class))
                             .taskType(rs.getString("tasktype"))
@@ -101,6 +101,19 @@ public class TaskRowMapper implements ResultSetExtractor<List<Task>> {
             return objectMapper.readValue(json, typeRef);
         } catch (Exception e) {
             throw new CustomException("Failed to convert JSON to " + typeRef.getType(), e.getMessage());
+        }
+    }
+
+    private Long parseDateToLong(String dateStr) {
+        if (dateStr == null || dateStr.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return Long.valueOf(dateStr);
+        } catch (NumberFormatException e) {
+            log.error("Invalid date format: {}", dateStr);
+            throw new CustomException("INVALID_DATE_FORMAT",
+                    "Date must be a valid timestamp: " + dateStr);
         }
     }
 }
