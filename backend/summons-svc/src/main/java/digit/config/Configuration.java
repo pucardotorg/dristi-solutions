@@ -111,6 +111,10 @@ public class Configuration {
     @Value("${egov.icops.request.endpoint}")
     private String iCopsRequestEndPoint;
 
+
+    @Value("${egov.icops.location.endpoint}")
+    private String iCopsLocationEndPoint;
+
     // ESummons
 
     @Value("${egov.esummons.host}")
@@ -252,5 +256,8 @@ public class Configuration {
 
     @Value("${egov.case.search.path}")
     private String caseSearchPath;
+
+    @Value("${role.system.admin}")
+    private String systemAdmin;
 
 }

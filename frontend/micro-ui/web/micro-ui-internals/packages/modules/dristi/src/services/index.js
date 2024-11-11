@@ -27,6 +27,14 @@ export const DRISTIService = {
       data,
       params,
     }),
+  updateIndividualUser: (data, params) =>
+    Request({
+      url: Urls.dristi.updateIndividual,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
   searchIndividualUser: (data, params) =>
     Request({
       url: Urls.dristi.searchIndividual,
@@ -68,7 +76,6 @@ export const DRISTIService = {
         ...data.cases,
         judgeId: judgeId,
         benchId: benchId,
-        courtId: courtId,
       },
     };
     return Request({
@@ -86,7 +93,6 @@ export const DRISTIService = {
         ...data.cases,
         judgeId: judgeId,
         benchId: benchId,
-        courtId: courtId,
       },
     };
     return Request({

@@ -31,7 +31,7 @@ export const reviewCaseFileFormConfig = [
                 {
                   type: "text",
                   label: "AGE",
-                  value: "complainantVerification.complainantAge",
+                  value: "complainantAge",
                 },
                 {
                   type: "text",
@@ -44,6 +44,7 @@ export const reviewCaseFileFormConfig = [
                   type: "image",
                   label: "CS_ID_PROOF",
                   value: ["complainantVerification.individualDetails.document", "companyDetailsUpload.document"],
+                  enableScrutinyField: true,
                 },
                 {
                   type: "address",
@@ -189,9 +190,16 @@ export const reviewCaseFileFormConfig = [
                   value: "payeeBranchName",
                 },
                 {
-                  type: "text",
+                  type: "date",
                   label: "CS_DATE_OF_ISSUANCE",
                   value: "issuanceDate",
+                  dependentFields: [
+                    { configKey: "caseSpecificDetails", page: "chequeDetails", field: "depositDate" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfDispatch" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfService" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfReply" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfAccrual" },
+                  ],
                 },
                 {
                   type: "text",
@@ -219,9 +227,16 @@ export const reviewCaseFileFormConfig = [
                   value: "policeStation.code",
                 },
                 {
-                  type: "text",
+                  type: "date",
                   label: "CS_DATE_OF_CHEQUE_DEPOSIT",
                   value: "depositDate",
+                  dependentFields: [
+                    { configKey: "caseSpecificDetails", page: "chequeDetails", field: "issuanceDate" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfDispatch" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfService" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfReply" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfAccrual" },
+                  ],
                 },
                 {
                   type: "text",
@@ -291,33 +306,61 @@ export const reviewCaseFileFormConfig = [
                 //   value: "modeOfDispatchType.modeOfDispatchType.name",
                 // },
                 {
-                  type: "text",
+                  type: "date",
                   label: "CS_DATE_OF_DISPATCH_LDN",
                   value: "dateOfDispatch",
+                  dependentFields: [
+                    { configKey: "caseSpecificDetails", page: "chequeDetails", field: "depositDate" },
+                    { configKey: "caseSpecificDetails", page: "chequeDetails", field: "issuanceDate" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfService" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfReply" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfAccrual" },
+                  ],
                 },
                 {
-                  type: "text",
+                  type: "date",
                   label: "CS_DATE_OF_SERVICE_LDN",
                   value: "dateOfService",
+                  dependentFields: [
+                    { configKey: "caseSpecificDetails", page: "chequeDetails", field: "depositDate" },
+                    { configKey: "caseSpecificDetails", page: "chequeDetails", field: "issuanceDate" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfDispatch" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfReply" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfAccrual" },
+                  ],
                 },
                 {
-                  type: "text",
+                  type: "date",
                   label: "CS_DATE_OF_REPLY_LDN",
                   value: "dateOfReply",
                   notAvailable: "NO_REPLY_RECIEVED",
+                  dependentFields: [
+                    { configKey: "caseSpecificDetails", page: "chequeDetails", field: "depositDate" },
+                    { configKey: "caseSpecificDetails", page: "chequeDetails", field: "issuanceDate" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfDispatch" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfService" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfAccrual" },
+                  ],
                 },
                 {
-                  type: "text",
+                  type: "date",
                   label: "CS_DATE_OF_ACCRUAL_LDN",
                   value: "dateOfAccrual",
+                  dependentFields: [
+                    { configKey: "caseSpecificDetails", page: "chequeDetails", field: "depositDate" },
+                    { configKey: "caseSpecificDetails", page: "chequeDetails", field: "issuanceDate" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfDispatch" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfService" },
+                    { configKey: "caseSpecificDetails", page: "demandNoticeDetails", field: "dateOfReply" },
+                  ],
                 },
                 {
                   type: "image",
                   label: "CS_DOCUMENT",
                   value: [
                     "legalDemandNoticeFileUpload.document",
-                    "proofOfAcknowledgmentFileUpload.document",
                     "proofOfDispatchFileUpload.document",
+                    "proofOfAcknowledgmentFileUpload.document",
                     "proofOfReplyFileUpload.document",
                   ],
                 },
@@ -383,8 +426,8 @@ export const reviewCaseFileFormConfig = [
                 },
                 {
                   type: "text",
-                  label: "DATE_OF_BIRTH",
-                  value: "witnessDateOfBirth",
+                  label: "AGE",
+                  value: "witnessAge",
                 },
                 {
                   type: "address",
@@ -471,8 +514,9 @@ export const reviewCaseFileFormConfig = [
                 },
                 {
                   type: "image",
-                  label: "CS_VAKALAT_NAMA",
-                  value: ["vakalatnamaFileUpload.document"],
+                  label: "CS_DOCUMENT",
+                  value: ["vakalatnamaFileUpload.document", "AdvocateNameDetails.advocateIdProof"],
+                  enableScrutinyField: true,
                 },
               ],
               data: {},

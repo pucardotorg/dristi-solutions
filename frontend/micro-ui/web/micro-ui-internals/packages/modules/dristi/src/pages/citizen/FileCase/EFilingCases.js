@@ -44,6 +44,7 @@ import {
   signatureValidation,
   updateCaseDetails,
   validateDateForDelayApplication,
+  witnessDetailsValidation,
 } from "./EfilingValidationUtils";
 import isEqual from "lodash/isEqual";
 import isMatch from "lodash/isMatch";
@@ -1098,6 +1099,9 @@ function EFilingCases({ path }) {
                 if (selected === "complainantDetails" && formComponent.component === "CustomRadioInfoComponent") {
                   key = formComponent.key + "." + formComponent?.populators?.optionsKey;
                 }
+                if (selected === "complainantDetails" && formComponent.component === "VerificationComponent") {
+                  key = "complainantVerification.individualDetails.document";
+                }
                 const modifiedFormComponent = cloneDeep(formComponent);
                 if (modifiedFormComponent?.labelChildren === "optional") {
                   modifiedFormComponent.labelChildren = <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>;
@@ -1139,6 +1143,9 @@ function EFilingCases({ path }) {
                     modifiedFormComponent.disable = false;
                   }
                   if (key in scrutiny?.[selected]?.form?.[index] && scrutiny?.[selected]?.form?.[index]?.[key]?.FSOError) {
+                    if (key === "complainantVerification.individualDetails.document") {
+                      modifiedFormComponent.isScrutiny = true;
+                    }
                     modifiedFormComponent.disable = false;
                     modifiedFormComponent.withoutLabel = true;
                     modifiedFormComponent.disableScrutinyHeader = true;
@@ -1274,7 +1281,7 @@ function EFilingCases({ path }) {
       ]);
     }
     checkIfscValidation({ formData, setValue, selected });
-    checkNameValidation({ formData, setValue, selected, formdata, index, reset });
+    checkNameValidation({ formData, setValue, selected, formdata, index, reset, clearErrors, formState });
     checkOnlyCharInCheque({ formData, setValue, selected });
     if (!isEqual(formData, formdata[index].data)) {
       chequeDateValidation({ formData, setError, clearErrors, selected });
@@ -1386,9 +1393,9 @@ function EFilingCases({ path }) {
         }
 
         if ("ifMultipleAddressLocations" in currentPage) {
-          const arrayValue = currentIndexData?.data[currentPage?.ifDataKeyHasValueAsArray?.dataKey] || [];
+          const arrayValue = currentIndexData?.data[currentPage?.ifMultipleAddressLocations?.dataKey] || [];
           for (let i = 0; i < arrayValue.length; i++) {
-            const mandatoryFields = currentPage?.ifDataKeyHasValueAsArray?.mandatoryFields || [];
+            const mandatoryFields = currentPage?.ifMultipleAddressLocations?.mandatoryFields || [];
             for (let j = 0; j < mandatoryFields.length; j++) {
               const value = extractValue(arrayValue[i], mandatoryFields[j]);
               const isValueEmpty = isEmptyValue(value);
@@ -1437,6 +1444,16 @@ function EFilingCases({ path }) {
     };
     return obj;
   };
+  const onDocumentUpload = async (fileData, filename) => {
+    try {
+      const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", fileData, Digit.ULBService.getCurrentTenantId());
+      return { file: fileUploadRes?.data, fileType: fileData.type, filename };
+    } catch (error) {
+      console.error("Failed to upload document:", error);
+      throw error; // or handle error appropriately
+    }
+  };
+
   const onSubmit = async (action, isCaseLocked = false) => {
     if (isDisableAllFieldsMode) {
       history.push(homepagePath);
@@ -1548,6 +1565,24 @@ function EFilingCases({ path }) {
       formdata
         .filter((data) => data.isenabled)
         .some((data) =>
+          witnessDetailsValidation({
+            formData: data?.data,
+            t,
+            caseDetails,
+            selected,
+            setShowErrorToast,
+            toast,
+            setFormErrors: setFormErrors.current,
+            clearFormDataErrors: clearFormDataErrors.current,
+          })
+        )
+    ) {
+      return;
+    }
+    if (
+      formdata
+        .filter((data) => data.isenabled)
+        .some((data) =>
           prayerAndSwornValidation({
             t,
             formData: data?.data,
@@ -1603,8 +1638,38 @@ function EFilingCases({ path }) {
     // }
     else {
       let res;
+      let caseComplaintDocument = {};
       if (isCaseLocked) {
         setIsDisabled(true);
+        const caseObject = isCaseReAssigned && errorCaseDetails ? errorCaseDetails : caseDetails;
+        const response = await axios.post(
+          "/dristi-case-pdf/v1/fetchCaseComplaintPdf",
+          {
+            cases: caseObject,
+            RequestInfo: {
+              authToken: Digit.UserService.getUser().access_token,
+              userInfo: Digit.UserService.getUser()?.info,
+              msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
+              apiId: "Rainmaker",
+            },
+          },
+          { responseType: "blob" } // Important: Set responseType to handle binary data
+        );
+        const contentDisposition = response.headers["content-disposition"];
+        const filename = contentDisposition ? contentDisposition.split("filename=")[1]?.replace(/['"]/g, "") : "caseCompliantDetails.pdf";
+        const pdfFile = new File([response?.data], filename, { type: "application/pdf" });
+        const document = await onDocumentUpload(pdfFile, pdfFile.name);
+        const fileStoreId = document?.file?.files?.[0]?.fileStoreId;
+
+        if (fileStoreId) {
+          caseComplaintDocument = {
+            documentType: document?.fileType,
+            fileStore: fileStoreId,
+            fileName: filename,
+          };
+        } else {
+          throw new Error("FILE_STORE_ID_MISSING");
+        }
         res = await refetchCasePDfGeneration();
         if (res?.status === "error") {
           setIsDisabled(false);
@@ -1630,7 +1695,9 @@ function EFilingCases({ path }) {
           isCaseSignedState: isPendingESign || isPendingReESign,
           isSaveDraftEnabled: isCaseReAssigned || isPendingReESign || isPendingESign,
           ...(res && { fileStoreId: res?.data?.cases?.[0]?.documents?.[0]?.fileStore }),
+          ...(caseComplaintDocument && { caseComplaintDocument: caseComplaintDocument }),
           multiUploadList,
+          scrutinyObj,
         });
 
         // After successful update, reset form and refetch case data
@@ -1680,6 +1747,7 @@ function EFilingCases({ path }) {
       tenantId,
       setErrorCaseDetails,
       multiUploadList,
+      scrutinyObj,
     })
       .then(() => {
         refetchCaseData().then(() => {
@@ -1750,6 +1818,7 @@ function EFilingCases({ path }) {
       setErrorCaseDetails,
       isSaveDraftEnabled: isCaseReAssigned || isPendingReESign || isPendingESign,
       multiUploadList,
+      scrutinyObj,
     })
       .then(() => {
         if (!isCaseReAssigned) {
@@ -1980,7 +2049,7 @@ function EFilingCases({ path }) {
     act: "Negotiable Instruments Act",
     section: "138",
     courtName: "Kollam S-138 Special Court",
-    href: "https://districts.ecourts.gov.in/sites/default/files/study%20circles.pdf",
+    href: "https://www.indiacode.nic.in/bitstream/123456789/2189/1/a1881-26.pdf",
   };
 
   const takeUserToRemainingMandatoryFieldsPage = () => {

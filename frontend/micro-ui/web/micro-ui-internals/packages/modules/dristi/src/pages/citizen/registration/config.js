@@ -156,11 +156,6 @@ export const newConfig = [
         populators: {
           inputs: [
             {
-              label: "CS_LOCATION",
-              type: "LocationSearch",
-              name: ["pincode", "state", "district", "city", "coordinates", "locality", "buildingName", "doorNo"],
-            },
-            {
               label: "PINCODE",
               type: "text",
               name: "pincode",
@@ -469,7 +464,7 @@ export const newConfig = [
               name: "ID_Proof",
               validation: {},
               clearFields: { aadharNumber: "" },
-              allowedFileTypes: /(.*?)(png|jpg|pdf)$/i,
+              allowedFileTypes: /(.*?)(png|jpg|pdf|jpeg)$/i,
               isMandatory: true,
               disableMandatoryFieldFor: ["aadharNumber"],
               errorMessage: "CUSTOM_DOCUMENT_ERROR_MSG",
