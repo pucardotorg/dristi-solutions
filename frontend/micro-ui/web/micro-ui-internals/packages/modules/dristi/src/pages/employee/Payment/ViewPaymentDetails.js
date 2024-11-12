@@ -101,11 +101,11 @@ const ViewPaymentDetails = ({ location, match }) => {
       consumerCode,
       service: businessService,
     },
-    `summons-warrant-notice-bill-${consumerCodeWithoutSuffix}`,
-    Boolean(businessService && consumerCodeWithoutSuffix)
+    `summons-warrant-notice-bill-${consumerCodeWithoutSuffix}-${paymentDetails?.Bill[0].billNumber}`,
+    Boolean(businessService && consumerCode)
   );
 
-  const demandBill = useMemo(() => BillResponse?.Bill?.[0]?.billDetails[0], [BillResponse]);
+  const demandBill = useMemo(() => BillResponse?.Bill?.[0]?.billDetails?.[0], [BillResponse]);
 
   const currentBillDetails = useMemo(() => BillResponse?.Bill?.[0], [BillResponse]);
 
@@ -186,6 +186,7 @@ const ViewPaymentDetails = ({ location, match }) => {
 
     return updatedCalculation;
   }, [calculationResponse?.Calculation, courtFeeBreakup, totalAmount]);
+  const payerName = useMemo(() => demandBill?.additionalDetails?.payer, [demandBill?.additionalDetails?.payer]);
   const bill = paymentDetails?.Bill ? paymentDetails?.Bill[0] : null;
 
   const onSubmitCase = async () => {
@@ -231,7 +232,7 @@ const ViewPaymentDetails = ({ location, match }) => {
           paymentMode: modeOfPayment.code,
           paidBy: "PAY_BY_OWNER",
           mobileNumber: demandBill?.additionalDetails?.payerMobileNo || "",
-          payerName: payer || demandBill?.additionalDetails?.payer,
+          payerName: payer || payerName,
           totalAmountPaid: billFetched.totalAmount || totalAmount,
           instrumentNumber: additionDetails,
           instrumentDate: new Date().getTime(),
@@ -381,7 +382,7 @@ const ViewPaymentDetails = ({ location, match }) => {
                   isMandatory={false}
                   name="name"
                   disable={true}
-                  value={demandBill?.additionalDetails?.payer}
+                  value={payerName}
                   onChange={(e) => {
                     const { value } = e.target;
                     let updatedValue = value
