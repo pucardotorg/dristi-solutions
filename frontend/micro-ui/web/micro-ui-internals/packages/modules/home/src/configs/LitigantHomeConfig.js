@@ -56,6 +56,7 @@ export const userTypeOptions = [
       "SUBMISSION_RESPONDER",
       "SUBMISSION_DELETE",
       "TASK_VIEWER",
+      "ADVOCATE_VIEWER",
     ],
     apiDetails: {
       serviceName: "/advocate/v1/_create",
@@ -191,20 +192,20 @@ export const TabLitigantSearchConfig = {
           uiConfig: {
             columns: [
               {
-                label: "Case Name",
+                label: "CS_CASE_NAME",
                 jsonPath: "caseTitle",
                 additionalCustomization: true,
               },
               {
-                label: "Stage",
+                label: "CS_STAGE",
                 jsonPath: "substage",
               },
               {
-                label: "Case ID",
+                label: "CS_CASE_ID",
                 jsonPath: "filingNumber",
               },
               {
-                label: "Case Type",
+                label: "CASE_TYPE",
                 jsonPath: "",
                 additionalCustomization: true,
               },
@@ -274,22 +275,22 @@ export const TabLitigantSearchConfig = {
           uiConfig: {
             columns: [
               {
-                label: "Case Name",
+                label: "CS_CASE_NAME",
                 jsonPath: "caseTitle",
                 additionalCustomization: true,
               },
               {
-                label: "Stage",
+                label: "CS_STAGE",
                 jsonPath: "status",
                 additionalCustomization: true,
               },
               {
-                label: "Case Type",
+                label: "CASE_TYPE",
                 jsonPath: "",
                 additionalCustomization: true,
               },
               {
-                label: "Last Edited",
+                label: "CS_LAST_EDITED",
                 jsonPath: "auditDetails.lastModifiedTime",
                 additionalCustomization: true,
               },
@@ -397,25 +398,25 @@ export const TabLitigantSearchConfig = {
           uiConfig: {
             columns: [
               {
-                label: "Case Name",
+                label: "CS_CASE_NAME",
                 jsonPath: "caseTitle",
               },
               {
-                label: "Stage",
+                label: "CS_STAGE",
                 jsonPath: "outcome",
                 additionalCustomization: true,
               },
               {
-                label: "Case ID",
+                label: "CS_CASE_ID",
                 jsonPath: "filingNumber",
               },
               {
-                label: "Case Type",
+                label: "CASE_TYPE",
                 jsonPath: "",
                 additionalCustomization: true,
               },
               {
-                label: "Filing Date",
+                label: "CS_FILING_DATE",
                 jsonPath: "filingDate",
                 additionalCustomization: true,
               },
