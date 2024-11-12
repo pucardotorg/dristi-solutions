@@ -76,8 +76,6 @@ async function buildCasePdf(caseNumber, index, requestInfo) {
       throw new Error("No case bundle design found in MDMS.");
     }
 
-    //Todo- create pdf for complaint and cover page and append with mergePdf- complaint pdf can be created with casedetails which is part of input in the api.
-
     // Create a new PDF document to merge all sections
     const mergedPdf = await PDFDocument.create();
 
@@ -102,7 +100,7 @@ async function buildCasePdf(caseNumber, index, requestInfo) {
         continue;
       }
 
-      // Process each line item in the section
+      // Process each line item
       for (const item of section.lineItems) {
         if (!item || !item.fileStoreId || !item.content) {
           console.warn("Skipping invalid line item");
@@ -112,7 +110,6 @@ async function buildCasePdf(caseNumber, index, requestInfo) {
         try {
           // Fetch PDF from fileStoreId
           const pdfResponse = await search_pdf(index.tenantId, item.fileStoreId);
-
           if (pdfResponse.status === 200 && pdfResponse.data[item.fileStoreId]) {
             const pdfUrl = pdfResponse.data[item.fileStoreId];
             const pdfFetchResponse = await axios.get(pdfUrl, {
@@ -122,7 +119,7 @@ async function buildCasePdf(caseNumber, index, requestInfo) {
 
             const itemPdf = await PDFDocument.load(pdfData);
 
-            // Add case number to each page of the fetched PDF
+            // Add case number to each page
             const pages = itemPdf.getPages();
             for (const page of pages) {
               const { width, height } = page.getSize();
@@ -134,16 +131,14 @@ async function buildCasePdf(caseNumber, index, requestInfo) {
               });
             }
 
-            // Merge the fetched PDF pages into the merged PDF
+            // Merge the fetched PDF pages
             const copiedPages = await mergedPdf.copyPages(
               itemPdf,
               itemPdf.getPageIndices()
             );
             copiedPages.forEach((page) => mergedPdf.addPage(page));
 
-            console.log(
-              `Successfully appended pages from fileStoreId: ${item.fileStoreId}`
-            );
+            console.log(`Successfully appended pages from fileStoreId: ${item.fileStoreId}`);
           } else {
             console.error(`Failed to fetch PDF for fileStoreId: ${item.fileStoreId}`);
           }
@@ -168,34 +163,42 @@ async function buildCasePdf(caseNumber, index, requestInfo) {
       });
     });
 
-    // Save the merged PDF to a file
-    const directoryPath = path.join(__dirname, "../case-bundles");
+    // Create a temporary directory and unique file name
+    const directoryPath = process.env.TEMP_FILES_DIR || path.join(__dirname, "../case-bundles");
     if (!fs.existsSync(directoryPath)) {
       fs.mkdirSync(directoryPath, { recursive: true });
     }
 
-    const pdfBytes = await mergedPdf.save();
-    const filePath = path.join(directoryPath, `bundle.pdf`);
-    fs.writeFileSync(filePath, pdfBytes);
+    const tempFileName = `bundle-${Date.now()}-${Math.random().toString(36).slice(2)}.pdf`;
+    const filePath = path.join(directoryPath, tempFileName);
 
-    // Upload the merged PDF and update the index
-    const tenantId = index.tenantId;
-    const fileStoreResponse = await create_file(
-      filePath,
-      tenantId,
-      "case-bundle",
-      "application/pdf"
-    );
-    const fileStoreId = fileStoreResponse?.data?.files?.[0].fileStoreId;
+    try {
+      // Save the merged PDF
+      const pdfBytes = await mergedPdf.save();
+      fs.writeFileSync(filePath, pdfBytes);
 
-    index.fileStoreId = fileStoreId;
-    index.contentLastModified = Math.floor(Date.now() / 1000);
+      // Upload the merged PDF and update the index
+      const tenantId = index.tenantId;
+      const fileStoreResponse = await create_file(
+        filePath,
+        tenantId,
+        "case-bundle",
+        "application/pdf"
+      );
+      const fileStoreId = fileStoreResponse?.data?.files?.[0].fileStoreId;
 
-    console.log(`PDF created and stored with fileStoreId: ${fileStoreId}`);
+      index.fileStoreId = fileStoreId;
+      index.contentLastModified = Math.floor(Date.now() / 1000);
 
-    fs.unlinkSync(filePath);
+      console.log(`PDF created and stored with fileStoreId: ${fileStoreId}`);
 
-    return { ...index, pageCount: mergedPages.length };
+      return { ...index, pageCount: mergedPages.length };
+    } finally {
+      // Ensure cleanup of the temporary file
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    }
   } catch (error) {
     console.error("Error processing case bundle:", error.message);
     throw error;
