@@ -1,17 +1,24 @@
 package org.pucar.dristi.repository;
 
 
+import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.web.models.CaseBundleTracker;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.client.RestTemplate;
 
 @Repository
 public class CaseBundleRepository {
 
 
+
+    private  final JdbcTemplate jdbcTemplate;
+
     @Autowired
-    private  JdbcTemplate jdbcTemplate;
+    public CaseBundleRepository(JdbcTemplate jdbcTemplate) {
+         this.jdbcTemplate = jdbcTemplate;
+    }
 
     public void insertCaseTracker(CaseBundleTracker caseBundleTracker) {
         String sql = "INSERT INTO case_bundle_tracker (id, startTime, endTime, pageCount, createdBy, lastModifiedBy, createdTime, lastModifiedTime) " +
