@@ -704,15 +704,11 @@ function CaseFileAdmission({ t, path }) {
         status: caseDetails?.status,
         isActive: true,
         statuteSection: { tenantId },
-        documents: [
-          {
-            documentType: delayCondonationDocument.documentType,
-            fileStore: delayCondonationDocument.fileStore,
-            additionalDetails: {
-              name: delayCondonationDocument.fileName,
-            },
-          },
-        ],
+        documents: delayCondonationDocument?.map((item) => ({
+          documentType: item?.documentType,
+          fileStore: item?.fileStore,
+          additionalDetails: { name: item?.fileName },
+        })),
         onBehalfOf: [],
         comment: [],
         workflow: {
