@@ -55,7 +55,46 @@ note right of CBS
     set Item.sourceId = complaintPDF.fileStoreId
     set Item.fileStoreId = streamPDF fileStroreId
     set Item.sortParam = null
+    set Item.content = "complaint";
 end note
+
+
+note right of CBS: filings section of Case Bundle
+CBS->MDS++: get record from case_bundle_master where "filings" = section.name
+return sectionRow
+alt sectionRow.isActive = false
+  note right of CBS: section not to be processed. exit method
+end
+
+note over CBS: the case filing documents are available in Case.Documents and also in Artifacts.Documents. Need to pick from one of these places
+CBS->CBS: create list of attachments (filestoreID and documentType)
+CBS->CBS: sort the list (using sorton field from case_bundle_master master table)
+
+loop for each document in list of attachments
+
+  CBS->CBS: get documentPDF as streamPDF
+  CBS->CBS: create and set values for index LineItem
+  note right of CBS
+    set Item.sourceId = document .fileStoreId
+    set Item.sortParam = arrayindex
+    set Item.createPDF = false
+    set Item.content = "initialfiling;
+  end note
+
+  alt sectionRow.docketPageRequired = true
+    CBS->CBS: get docketTitle
+    CBS->PS++: create docket PDF (item.sourceId, docketTitle)
+    return docketPDF
+    CBS->CBS: streamPDF = merge (append) streamPDF into docketPDF
+    CBS->FS++: store streamPDF
+    return streamPDFId
+    CBS->CBS: set Item.fileStoreId = streamPDFId
+  else
+    CBS->CBS: set Item.fileStoreId = Item.sourceId
+  end
+  CBS->CBS: Append Item to indexJson.sections.name = "fillings"
+end
+
 
 
 note right of CBS: affidavit section  of Case Bundle
@@ -85,6 +124,7 @@ note right of CBS
     set Item.sourceId = affidavitPDF.fileStoreId
     set Item.fileStoreId = streamPDFId
     set Item.sortParam = null
+    set Item.content = "affidavit;
 end note
 
 CBS->CBS: get affidavit 2 from caseDetails as streamPDF where documentType = case.affidavit.225bnss
@@ -115,6 +155,7 @@ loop for each vakalat filestore ID in vakalastList
     set Item.sourceId = vakalat.fileStoreId
     set Item.sortParam = null
     set Item.createPDF = false
+    set Item.content = "vakalat;
   end note
 
   alt sectionRow.docketPageRequired = true
@@ -131,13 +172,6 @@ loop for each vakalat filestore ID in vakalastList
   CBS->CBS: Append Item to indexJson.sections.name = "vakalat"
 end
 
-
-note right of CBS: filings section of Case Bundle
-CBS->MDS++: get record from case_bundle_master where "filings" = section.name
-return sectionRow
-alt sectionRow.isActive = false
-  note right of CBS: section not to be processed. exit method
-end
 CBS->CBS: update indexJson.isRegistered = true
 
 == State - CASE_ADMITTED ==

@@ -63,7 +63,9 @@
                   "enum": [
                     "cover",
                     "complaint",
+                    "initialfilling",
                     "affidavit",
+                    "vakalat",
                     "application",
                     "order",
                     "task",
