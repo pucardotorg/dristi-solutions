@@ -27,6 +27,10 @@ public class CaseBundlePdfRequest   {
     @NonNull
     private Object index = null;
 
+    @JsonProperty("caseObject")
+    @NonNull
+    private Object caseObject = null;
+
     @JsonProperty("caseNumber")
     @NotNull
     @Valid

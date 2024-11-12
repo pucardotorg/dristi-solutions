@@ -121,7 +121,7 @@ public class Configuration {
 	private String caseBundlePdfHost;
 
 	@Value("${egov.dristi.pdf.bundle}")
-	private String caseBundelPdfPath;
+	private String caseBundlePdfPath;
 
 	@Value("${dristi.case.host}")
 	private String caseHost;

@@ -10,9 +10,12 @@ import org.springframework.stereotype.Repository;
 public class CaseBundleRepository {
 
 
-    @Autowired
-    private  JdbcTemplate jdbcTemplate;
+    private  final JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    public CaseBundleRepository(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
     public void insertCaseTracker(CaseBundleTracker caseBundleTracker) {
         String sql = "INSERT INTO case_bundle_tracker (id, startTime, endTime, pageCount, createdBy, lastModifiedBy, createdTime, lastModifiedTime) " +
                 "VALUES (?, ?, ?, ?, ?, ?,  ?, ?)";

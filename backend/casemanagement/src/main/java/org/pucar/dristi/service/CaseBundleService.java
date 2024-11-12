@@ -42,7 +42,8 @@ public class CaseBundleService {
         this.caseBundleRepository = caseBundleRepository;
     }
 
-    public String getCaseNumber(RequestInfo requestInfo, String caseId, String tenantId) {
+    public CaseNumberResponse getCaseNumber(RequestInfo requestInfo, String caseId, String tenantId) {
+        CaseNumberResponse caseNumberResponse = new CaseNumberResponse();
         String caseNumber;
         CaseSearchRequest caseSearchRequest = new CaseSearchRequest();
         caseSearchRequest.setTenantId(tenantId);
@@ -64,6 +65,8 @@ public class CaseBundleService {
             log.error("Error while fetching case data from service request repository", e);
             throw new CustomException("FETCH_RESULT_ERROR", "Error while fetching case data from service request repository");
         }
+
+        caseNumberResponse.setCaseResponse(response);
 
         try {
             Map<String, Object> responseMap = (Map<String, Object>) response;
@@ -101,7 +104,9 @@ public class CaseBundleService {
             throw new CustomException("PROCESSING_ERROR", "Error processing case response");
         }
 
-        return caseNumber;
+        caseNumberResponse.setCaseNumber(caseNumber);
+
+        return caseNumberResponse;
     }
 
     public String getCaseBundle(CaseBundleRequest caseBundleRequest) {
@@ -147,14 +152,15 @@ public class CaseBundleService {
                     fileStoreId = indexJson.path("fileStoreId").asText();
                     return fileStoreId;
                 } else {
-                    String caseNumber = getCaseNumber(caseBundleRequest.getRequestInfo(), caseId, tenantId);
+                    CaseNumberResponse responseCaseNumber = getCaseNumber(caseBundleRequest.getRequestInfo(), caseId, tenantId);
                     CaseBundlePdfRequest caseBundlePdfRequest = new CaseBundlePdfRequest();
                     caseBundlePdfRequest.setRequestInfo(caseBundleRequest.getRequestInfo());
                     caseBundlePdfRequest.setIndex(indexJson);
-                    caseBundlePdfRequest.setCaseNumber(caseNumber);
+                    caseBundlePdfRequest.setCaseNumber(responseCaseNumber.getCaseNumber());
+                    caseBundlePdfRequest.setCaseObject(responseCaseNumber.getCaseResponse());
 
                     StringBuilder url = new StringBuilder();
-                    url.append(configuration.getCaseBundlePdfHost()).append(configuration.getCaseBundelPdfPath());
+                    url.append(configuration.getCaseBundlePdfHost()).append(configuration.getCaseBundlePdfPath());
 
                     Object pdfResponse;
                     try {
