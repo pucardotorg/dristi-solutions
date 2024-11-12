@@ -360,7 +360,7 @@ export const TabFSOSearchConfig = {
                 jsonPath: "caseTitle",
               },
               {
-                label: "CS_SCUTINY_STATUS",
+                label: "CS_SCRUTINY_STATUS",
                 jsonPath: "status",
                 additionalCustomization: true,
               },
