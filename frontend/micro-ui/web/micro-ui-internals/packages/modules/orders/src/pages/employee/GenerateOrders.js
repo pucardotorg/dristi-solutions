@@ -42,7 +42,7 @@ import isEqual from "lodash/isEqual";
 import { OrderWorkflowAction, OrderWorkflowState } from "../../utils/orderWorkflow";
 import { Urls } from "../../hooks/services/Urls";
 import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../utils/submissionWorkflow";
-import { getAdvocates, getuuidNameMap } from "../../utils/caseUtils";
+import { getAdvocates, getFullName, getuuidNameMap } from "../../utils/caseUtils";
 import { HearingWorkflowAction, HearingWorkflowState } from "../../utils/hearingWorkflow";
 import _ from "lodash";
 import { useGetPendingTask } from "../../hooks/orders/useGetPendingTask";
@@ -324,20 +324,30 @@ const GenerateOrders = () => {
     Boolean(filingNumber && cnrNumber)
   );
   const publishedBailOrder = useMemo(() => publishedOrdersData?.list?.find((item) => item?.orderType === "BAIL") || {}, [publishedOrdersData]);
-  const advocateIds = caseDetails.representatives?.map((representative) => {
-    return {
-      id: representative.advocateId,
-    };
-  });
+  const advocateUUIds = useMemo(() => caseDetails?.representatives?.map((representative) => representative?.additionalDetails?.uuid) || [], [
+    caseDetails,
+  ]);
 
-  const { data: advocateDetails } = Digit.Hooks.dristi.useGetIndividualAdvocate(
+  const { data: advocateDetails, isLoading: isLoadingAdvocateDetails } = Digit.Hooks.dristi.useGetIndividualUser(
     {
-      criteria: advocateIds,
+      Individual: {
+        userUuid: advocateUUIds,
+      },
     },
-    { tenantId: tenantId },
-    "DRISTI",
-    cnrNumber + filingNumber,
-    true
+    { tenantId, limit: 1000, offset: 0 },
+    "All-Advocates",
+    "All-Advocates",
+    advocateUUIds?.length > 0
+  );
+
+  const advocateAttendees = useMemo(
+    () =>
+      advocateDetails?.Individual?.map((item) => ({
+        individualId: item?.individualId,
+        name: getFullName(" ", item?.name?.givenName, item?.name?.otherNames, item?.name?.familyName),
+        type: "Advocate",
+      })) || [],
+    [advocateDetails]
   );
 
   const defaultIndex = useMemo(() => {
@@ -2045,13 +2055,6 @@ const GenerateOrders = () => {
       let newhearingId = "";
       setPrevOrder(currentOrder);
       if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(orderType)) {
-        const advocateData = advocateDetails.advocates.map((advocate) => {
-          return {
-            individualId: advocate.responseList[0].individualId,
-            name: advocate.responseList[0].additionalDetails.username,
-            type: "Advocate",
-          };
-        });
         const hearingres = await ordersService.createHearings(
           {
             hearing: {
@@ -2064,7 +2067,7 @@ const GenerateOrders = () => {
                 ...currentOrder?.additionalDetails?.formdata?.namesOfPartiesRequired.map((attendee) => {
                   return { name: attendee.name, individualId: attendee.individualId, type: "Complainant" };
                 }),
-                ...advocateData,
+                ...advocateAttendees,
               ],
               startTime: Date.parse(currentOrder?.additionalDetails?.formdata?.hearingDate),
               endTime: Date.parse(currentOrder?.additionalDetails?.formdata?.hearingDate),
@@ -2368,7 +2371,8 @@ const GenerateOrders = () => {
     isHearingLoading ||
     pendingTasksLoading ||
     isCourtIdsLoading ||
-    isPublishedOrdersLoading
+    isPublishedOrdersLoading ||
+    isLoadingAdvocateDetails
   ) {
     return <Loader />;
   }
