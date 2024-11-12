@@ -61,6 +61,7 @@ const HearingWorkflowState = {
   INPROGRESS: "IN_PROGRESS",
   COMPLETED: "COMPLETED",
   ABATED: "ABATED",
+  SCHEDULED: "SCHEDULED",
 };
 
 const Heading = (props) => {
@@ -764,7 +765,7 @@ const AdmittedCases = () => {
   const handleIssueNotice = async (hearingDate, hearingNumber) => {
     try {
       const orderBody = {
-        createdDate: new Date().getTime(),
+        createdDate: null,
         tenantId,
         cnrNumber: caseDetails?.cnrNumber,
         filingNumber,
@@ -1034,7 +1035,7 @@ const AdmittedCases = () => {
   const handleScheduleNextHearing = () => {
     const reqBody = {
       order: {
-        createdDate: new Date().getTime(),
+        createdDate: null,
         tenantId,
         cnrNumber: updatedCaseDetails?.cnrNumber || caseDetails?.cnrNumber,
         filingNumber: caseDetails?.filingNumber,
@@ -1293,7 +1294,7 @@ const AdmittedCases = () => {
         const date = new Date(hearingDate);
         const requestBody = {
           order: {
-            createdDate: new Date().getTime(),
+            createdDate: null,
             tenantId: tenantId,
             hearingNumber: hearingNumber,
             filingNumber: filingNumber,
@@ -1376,7 +1377,7 @@ const AdmittedCases = () => {
     } else if (option === t("REFER_TO_ADR")) {
       const reqBody = {
         order: {
-          createdDate: new Date().getTime(),
+          createdDate: null,
           tenantId,
           cnrNumber,
           filingNumber: filingNumber,
@@ -1420,7 +1421,7 @@ const AdmittedCases = () => {
     } else if (option === t("MANDATORY_SUBMISSIONS_RESPONSES")) {
       const reqBody = {
         order: {
-          createdDate: new Date().getTime(),
+          createdDate: null,
           tenantId,
           cnrNumber,
           filingNumber: filingNumber,
@@ -1512,7 +1513,7 @@ const AdmittedCases = () => {
     const date = new Date(dateArr.join(" "));
     const reqBody = {
       order: {
-        createdDate: new Date().getTime(),
+        createdDate: null,
         tenantId,
         cnrNumber,
         filingNumber: filingNumber,
@@ -1895,7 +1896,7 @@ const AdmittedCases = () => {
       {showActionBar && !isWorkFlowFetching && (
         <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
           <div style={{ width: "fit-content", display: "flex", gap: 20 }}>
-            {currentHearingStatus !== HearingWorkflowState.OPTOUT &&
+            {currentHearingStatus === HearingWorkflowState.SCHEDULED &&
               (tertiaryAction.action ||
                 [CaseWorkflowState.ADMISSION_HEARING_SCHEDULED, CaseWorkflowState.PENDING_NOTICE, CaseWorkflowState.PENDING_RESPONSE].includes(
                   caseDetails?.status

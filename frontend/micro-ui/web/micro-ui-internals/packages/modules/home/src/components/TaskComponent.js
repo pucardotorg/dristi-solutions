@@ -204,7 +204,7 @@ const TasksComponent = ({
     async ({ cnrNumber, filingNumber, orderType, referenceId }) => {
       let reqBody = {
         order: {
-          createdDate: new Date().getTime(),
+          createdDate: null,
           tenantId,
           cnrNumber,
           filingNumber: filingNumber,
@@ -522,7 +522,9 @@ const TasksComponent = ({
             <React.Fragment>
               <div className="task-filters">
                 <LabelFieldPair>
-                  <CardLabel style={{ fontSize: "16px" }} className={"card-label"}>{`Case Type`}</CardLabel>
+                  <CardLabel style={{ fontSize: "16px" }} className={"card-label"}>
+                    {t("CASE_TYPE")}
+                  </CardLabel>
                   <Dropdown
                     option={caseTypes}
                     selected={caseType}
@@ -534,7 +536,9 @@ const TasksComponent = ({
                   />
                 </LabelFieldPair>
                 <LabelFieldPair>
-                  <CardLabel style={{ fontSize: "16px" }} className={"card-label"}>{`Task Type`}</CardLabel>
+                  <CardLabel style={{ fontSize: "16px" }} className={"card-label"}>
+                    {t("CS_TASK_TYPE")}
+                  </CardLabel>
                   <Dropdown
                     option={taskTypes}
                     optionKey={"name"}

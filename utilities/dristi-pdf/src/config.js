@@ -293,6 +293,7 @@ module.exports = {
   workFlowState: {
     hearing: {
       OPTOUT: "OPT_OUT",
+      SCHEDULED: "SCHEDULED",
     },
   },
 };
