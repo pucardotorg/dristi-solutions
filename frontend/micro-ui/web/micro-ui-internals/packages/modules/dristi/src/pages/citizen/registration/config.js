@@ -46,6 +46,7 @@ export const userTypeOptions = [
       "TASK_VIEWER",
       "CASE_RESPONDER",
       "HEARING_ACCEPTOR",
+      "ADVOCATE_VIEWER",
     ],
     apiDetails: {
       serviceName: "/advocate/v1/_create",
@@ -155,11 +156,6 @@ export const newConfig = [
         withoutLabel: true,
         populators: {
           inputs: [
-            {
-              label: "CS_LOCATION",
-              type: "LocationSearch",
-              name: ["pincode", "state", "district", "city", "coordinates", "locality", "buildingName", "doorNo"],
-            },
             {
               label: "PINCODE",
               type: "text",

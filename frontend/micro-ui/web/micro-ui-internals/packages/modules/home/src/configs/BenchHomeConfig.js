@@ -48,6 +48,7 @@ export const userTypeOptions = [
       "SUBMISSION_RESPONDER",
       "SUBMISSION_DELETE",
       "TASK_VIEWER",
+      "ADVOCATE_VIEWER",
     ],
     apiDetails: {
       serviceName: "/advocate/v1/_create",
@@ -94,7 +95,7 @@ export const TabBenchSearchConfig = {
   showTab: true,
   TabSearchConfig: [
     {
-      label: "All",
+      label: "CS_ALL",
       type: "search",
       apiDetails: {
         serviceName: "/case/v1/_search",
@@ -133,7 +134,7 @@ export const TabBenchSearchConfig = {
             defaultValues: defaultSearchValues,
             fields: [
               {
-                label: "Case Type",
+                label: "CASE_TYPE",
                 isMandatory: false,
                 key: "caseType",
                 type: "dropdown",
@@ -151,7 +152,7 @@ export const TabBenchSearchConfig = {
                 },
               },
               {
-                label: "Stage",
+                label: "CS_STAGE",
                 isMandatory: false,
                 key: "stage",
                 type: "dropdown",
@@ -173,7 +174,7 @@ export const TabBenchSearchConfig = {
                 },
               },
               {
-                label: "Case ID",
+                label: "CS_CASE_ID",
                 type: "text",
                 isMandatory: false,
                 disable: false,
@@ -196,24 +197,24 @@ export const TabBenchSearchConfig = {
           uiConfig: {
             columns: [
               {
-                label: "Case Name",
+                label: "CS_CASE_NAME",
                 jsonPath: "caseTitle",
               },
               {
-                label: "Stage",
+                label: "CS_STAGE",
                 jsonPath: "substage",
               },
               {
-                label: "Case ID",
+                label: "CS_CASE_ID",
                 jsonPath: "filingNumber",
               },
               {
-                label: "Case Type",
+                label: "CASE_TYPE",
                 jsonPath: "",
                 additionalCustomization: true,
               },
               {
-                label: "Filing Date",
+                label: "CS_FILING_DATE",
                 jsonPath: "filingDate",
                 additionalCustomization: true,
               },
@@ -227,7 +228,7 @@ export const TabBenchSearchConfig = {
       },
     },
     {
-      label: "Ongoing",
+      label: "CD_ONGOING",
       type: "search",
       apiDetails: {
         serviceName: "/case/v1/_search",
@@ -266,7 +267,7 @@ export const TabBenchSearchConfig = {
             defaultValues: defaultSearchValues, // Set default values for search fields
             fields: [
               {
-                label: "Case Type",
+                label: "CASE_TYPE",
                 isMandatory: false,
                 key: "caseType",
                 type: "dropdown",
@@ -284,7 +285,7 @@ export const TabBenchSearchConfig = {
                 },
               },
               {
-                label: "Stage",
+                label: "CS_STAGE",
                 isMandatory: false,
                 key: "stage",
                 type: "dropdown",
@@ -306,7 +307,7 @@ export const TabBenchSearchConfig = {
                 },
               },
               {
-                label: "Case ID",
+                label: "CS_CASE_ID",
                 type: "text",
                 isMandatory: false,
                 disable: false,
@@ -329,24 +330,24 @@ export const TabBenchSearchConfig = {
           uiConfig: {
             columns: [
               {
-                label: "Case Name",
+                label: "CS_CASE_NAME",
                 jsonPath: "caseTitle",
               },
               {
-                label: "Stage",
+                label: "CS_STAGE",
                 jsonPath: "substage",
               },
               {
-                label: "Case ID",
+                label: "CS_CASE_ID",
                 jsonPath: "filingNumber",
               },
               {
-                label: "Case Type",
+                label: "CASE_TYPE",
                 jsonPath: "",
                 additionalCustomization: true,
               },
               {
-                label: "Filing Date",
+                label: "CS_FILING_DATE",
                 jsonPath: "filingDate",
                 additionalCustomization: true,
               },
@@ -360,7 +361,7 @@ export const TabBenchSearchConfig = {
       },
     },
     {
-      label: "Registered",
+      label: "CS_REGISTERED",
       type: "search",
       apiDetails: {
         serviceName: "/case/v1/_search",
@@ -413,7 +414,7 @@ export const TabBenchSearchConfig = {
                 populators: {},
               },
               {
-                label: "Case Type",
+                label: "CASE_TYPE",
                 isMandatory: false,
                 key: "caseType",
                 type: "dropdown",
@@ -431,7 +432,7 @@ export const TabBenchSearchConfig = {
                 },
               },
               {
-                label: "Stage",
+                label: "CS_STAGE",
                 isMandatory: false,
                 key: "stage",
                 type: "dropdown",
@@ -453,7 +454,7 @@ export const TabBenchSearchConfig = {
                 },
               },
               {
-                label: "Case ID",
+                label: "CS_CASE_ID",
                 type: "text",
                 isMandatory: false,
                 disable: false,
@@ -475,25 +476,25 @@ export const TabBenchSearchConfig = {
           uiConfig: {
             columns: [
               {
-                label: "Case Name",
+                label: "CS_CASE_NAME",
                 jsonPath: "caseTitle",
               },
               {
-                label: "Stage",
+                label: "CS_STAGE",
                 jsonPath: "substage",
               },
 
               {
-                label: "Case ID",
+                label: "CS_CASE_ID",
                 jsonPath: "filingNumber",
               },
               {
-                label: "Case Type",
+                label: "CASE_TYPE",
                 jsonPath: "",
                 additionalCustomization: true,
               },
               {
-                label: "Filing Date",
+                label: "CS_FILING_DATE",
                 jsonPath: "filingDate",
                 additionalCustomization: true,
               },
@@ -510,7 +511,7 @@ export const TabBenchSearchConfig = {
       },
     },
     {
-      label: "Closed",
+      label: "CD_CLOSED",
       type: "search",
       apiDetails: {
         serviceName: "/case/v1/_search",
@@ -555,7 +556,7 @@ export const TabBenchSearchConfig = {
                 populators: {},
               },
               {
-                label: "Case Type",
+                label: "CASE_TYPE",
                 isMandatory: false,
                 key: "caseType",
                 type: "dropdown",
@@ -573,7 +574,7 @@ export const TabBenchSearchConfig = {
                 },
               },
               {
-                label: "Outcome",
+                label: "CD_OUTCOME",
                 isMandatory: false,
                 key: "outcome",
                 type: "dropdown",
@@ -597,7 +598,7 @@ export const TabBenchSearchConfig = {
                 },
               },
               {
-                label: "Case ID",
+                label: "CS_CASE_ID",
                 type: "text",
                 isMandatory: false,
                 disable: false,
@@ -620,25 +621,25 @@ export const TabBenchSearchConfig = {
           uiConfig: {
             columns: [
               {
-                label: "Case Name",
+                label: "CS_CASE_NAME",
                 jsonPath: "caseTitle",
               },
               {
-                label: "Outcome",
+                label: "CD_OUTCOME",
                 jsonPath: "outcome",
                 additionalCustomization: true,
               },
               {
-                label: "Case ID",
+                label: "CS_CASE_ID",
                 jsonPath: "filingNumber",
               },
               {
-                label: "Case Type",
+                label: "CASE_TYPE",
                 jsonPath: "",
                 additionalCustomization: true,
               },
               {
-                label: "Filing Date",
+                label: "CS_FILING_DATE",
                 jsonPath: "filingDate",
                 additionalCustomization: true,
               },

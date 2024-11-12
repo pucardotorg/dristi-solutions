@@ -83,20 +83,19 @@ const ApplicationDetails = ({ location, match }) => {
     individualData?.Individual,
   ]);
 
+  const isAdvocateViewer = useMemo(() => userRoles?.includes("ADVOCATE_VIEWER"), [userRoles]);
+
   const identifierIdDetails = useMemo(
     () => JSON.parse(individualData?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "identifierIdDetails")?.value || "{}"),
     [individualData?.Individual]
   );
 
   const { data: searchData, isLoading: isSearchLoading } = window?.Digit.Hooks.dristi.useGetAdvocateClerk(
-    {
-      criteria: [applicationNo ? { applicationNumber: applicationNo } : { individualId }],
-      tenantId,
-    },
     {},
+    { tenantId: tenantId, applicationNumber: applicationNo },
     applicationNo + individualId,
     userType,
-    userType === "ADVOCATE" ? "/advocate/v1/_search" : "/advocate/clerk/v1/_search"
+    userType === "ADVOCATE" ? `/advocate/v1/applicationnumber/_search` : `/advocate/clerk/v1/applicationnumber/_search`
   );
 
   const userTypeDetail = useMemo(() => {
@@ -121,7 +120,7 @@ const ApplicationDetails = ({ location, match }) => {
   );
 
   const searchResult = useMemo(() => {
-    return searchData?.[`${userTypeDetail?.apiDetails?.requestKey}s`]?.[0]?.responseList;
+    return searchData?.[`${userTypeDetail?.apiDetails?.requestKey}s`];
   }, [searchData, userTypeDetail?.apiDetails?.requestKey]);
   const fileStoreId = useMemo(() => {
     return searchResult?.[0]?.documents?.[0]?.fileStore;
@@ -232,8 +231,12 @@ const ApplicationDetails = ({ location, match }) => {
   }, [identifierIdDetails?.fileStoreId, identifierIdDetails?.filename, individualData?.Individual, tenantId]);
 
   const header = useMemo(() => {
-    return applicationNo || applicationNumber ? t(`Application Number ${applicationNo || applicationNumber}`) : "My Application";
+    return applicationNo || applicationNumber ? ` ${t("APPLICATION_NUMBER")} ${applicationNo || applicationNumber}` : "My Application";
   }, [applicationNo, applicationNumber, t]);
+
+  if (!isAdvocateViewer) {
+    history.push(`/${window?.contextPath}/citizen/dristi/home`);
+  }
 
   if (isSearchLoading || isGetUserLoading || isWorkFlowLoading) {
     return <Loader />;
