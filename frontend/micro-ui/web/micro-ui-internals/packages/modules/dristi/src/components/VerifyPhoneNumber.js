@@ -384,9 +384,10 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
                       : ""
                   }`}
               </CardLabel>
-              <div className="otp-component">
+              <div className="otp-component" style={{ width: "100%", padding: 0, gridGap: "20px" }}>
                 {input?.type === "text" && (
                   <OTPInput
+                    otpInputStyles={{ gap: "10px" }}
                     length={6}
                     onChange={(otp) => {
                       const updatedValue = otp?.replace(/[^0-9]/g, "");
