@@ -15,7 +15,7 @@ const AuthenticatedLink = ({ t, uri, displayFilename = false }) => {
       })
       .then((response) => {
         if (response.status === 200) {
-          const blob = new Blob([response.data], { type: "application/pdf" });
+          const blob = new Blob([response.data], { type: "application/octet-stream" });
           const blobUrl = URL.createObjectURL(blob);
 
           window.open(blobUrl, "_blank");
