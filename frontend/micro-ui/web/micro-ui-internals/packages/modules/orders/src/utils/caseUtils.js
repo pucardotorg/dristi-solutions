@@ -58,3 +58,7 @@ export const getuuidNameMap = (caseDetails) => {
     return acc;
   }, {});
 };
+
+export const getFullName = (seperator, ...strings) => {
+  return strings.filter(Boolean).join(seperator);
+};
