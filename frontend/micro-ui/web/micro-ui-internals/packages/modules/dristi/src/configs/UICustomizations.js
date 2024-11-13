@@ -657,11 +657,7 @@ export const UICustomizations = {
     },
     additionalCustomizations: (row, key, column, value, t) => {
       const showDocument =
-        userRoles?.includes("APPLICATION_APPROVER") ||
-        userRoles?.includes("DEPOSITION_CREATOR") ||
-        userRoles?.includes("DEPOSITION_ESIGN") ||
-        userRoles?.includes("DEPOSITION_PUBLISHER") ||
-        row.workflow?.action !== "PENDINGREVIEW";
+        userRoles?.includes("APPLICATION_APPROVER") || userRoles?.includes("DEPOSITION_ESIGN") || row.workflow?.action !== "PENDINGREVIEW";
       switch (key) {
         case "Document":
           return showDocument ? <OwnerColumn rowData={row} colData={column} t={t} /> : "";
@@ -674,7 +670,7 @@ export const UICustomizations = {
           const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Month is zero-based
           const year = date.getFullYear();
           const formattedDate = `${day}-${month}-${year}`;
-          return <span>{formattedDate}</span>;
+          return <span>{value && value !== "0" ? formattedDate : ""}</span>;
         case "Parties":
           if (value === null || value === undefined || value === "undefined" || value === "null") {
             return null;
@@ -731,7 +727,7 @@ export const UICustomizations = {
             action: (history) => {
               const requestBody = {
                 order: {
-                  createdDate: new Date().getTime(),
+                  createdDate: null,
                   tenantId: row.tenantId,
                   hearingNumber: row?.hearingId,
                   filingNumber: row.filingNumber[0],

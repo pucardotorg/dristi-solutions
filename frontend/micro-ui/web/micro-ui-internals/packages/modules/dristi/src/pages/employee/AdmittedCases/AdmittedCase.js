@@ -165,6 +165,7 @@ const AdmittedCases = () => {
   const [createAdmissionOrder, setCreateAdmissionOrder] = useState(false);
   const [updatedCaseDetails, setUpdatedCaseDetails] = useState({});
   const [showDismissCaseConfirmation, setShowDismissCaseConfirmation] = useState(false);
+  const [showPendingDelayApplication, setShowPendingDelayApplication] = useState(false);
   const [toastStatus, setToastStatus] = useState({ alreadyShown: false });
   const history = useHistory();
   const isCitizen = userRoles.includes("CITIZEN");
@@ -307,6 +308,16 @@ const AdmittedCases = () => {
           ![SubmissionWorkflowState.DELETED, SubmissionWorkflowState.ABATED].includes(item?.status)
       ) || [],
     [applicationData, onBehalfOfuuid]
+  );
+
+  const isDelayApplicationPending = useMemo(
+    () =>
+      Boolean(
+        applicationData?.applicationList?.some(
+          (item) => item?.applicationType === "DELAY_CONDONATION" && item?.status === SubmissionWorkflowState.PENDINGAPPROVAL
+        )
+      ),
+    [applicationData]
   );
 
   const caseRelatedData = useMemo(
@@ -765,7 +776,7 @@ const AdmittedCases = () => {
   const handleIssueNotice = async (hearingDate, hearingNumber) => {
     try {
       const orderBody = {
-        createdDate: new Date().getTime(),
+        createdDate: null,
         tenantId,
         cnrNumber: caseDetails?.cnrNumber,
         filingNumber,
@@ -1035,7 +1046,7 @@ const AdmittedCases = () => {
   const handleScheduleNextHearing = () => {
     const reqBody = {
       order: {
-        createdDate: new Date().getTime(),
+        createdDate: null,
         tenantId,
         cnrNumber: updatedCaseDetails?.cnrNumber || caseDetails?.cnrNumber,
         filingNumber: caseDetails?.filingNumber,
@@ -1217,6 +1228,10 @@ const AdmittedCases = () => {
       case "REGISTER":
         break;
       case "ADMIT":
+        if (isDelayApplicationPending) {
+          setShowPendingDelayApplication(true);
+          break;
+        }
         if (caseDetails?.status === "ADMISSION_HEARING_SCHEDULED") {
           const { hearingDate, hearingNumber } = await getHearingData();
           if (hearingNumber) {
@@ -1294,7 +1309,7 @@ const AdmittedCases = () => {
         const date = new Date(hearingDate);
         const requestBody = {
           order: {
-            createdDate: new Date().getTime(),
+            createdDate: null,
             tenantId: tenantId,
             hearingNumber: hearingNumber,
             filingNumber: filingNumber,
@@ -1377,7 +1392,7 @@ const AdmittedCases = () => {
     } else if (option === t("REFER_TO_ADR")) {
       const reqBody = {
         order: {
-          createdDate: new Date().getTime(),
+          createdDate: null,
           tenantId,
           cnrNumber,
           filingNumber: filingNumber,
@@ -1421,7 +1436,7 @@ const AdmittedCases = () => {
     } else if (option === t("MANDATORY_SUBMISSIONS_RESPONSES")) {
       const reqBody = {
         order: {
-          createdDate: new Date().getTime(),
+          createdDate: null,
           tenantId,
           cnrNumber,
           filingNumber: filingNumber,
@@ -1513,7 +1528,7 @@ const AdmittedCases = () => {
     const date = new Date(dateArr.join(" "));
     const reqBody = {
       order: {
-        createdDate: new Date().getTime(),
+        createdDate: null,
         tenantId,
         cnrNumber,
         filingNumber: filingNumber,
@@ -1986,6 +2001,23 @@ const AdmittedCases = () => {
           children={<div style={{ margin: "16px 0px" }}>{t("DISMISS_CASE_CONFIRMATION_TEXT")}</div>}
           actionSaveOnSubmit={() => {
             handleActionModal();
+          }}
+        ></Modal>
+      )}
+      {showPendingDelayApplication && (
+        <Modal
+          headerBarMain={<Heading label={t("PENDING_DELAY_CONDONATION_HEADER")} />}
+          headerBarEnd={
+            <CloseBtn
+              onClick={() => {
+                setShowPendingDelayApplication(false);
+              }}
+            />
+          }
+          actionSaveLabel={t("CS_CLOSE")}
+          children={<div style={{ margin: "16px 0px" }}>{t("PENDING_DELAY_CONDONATION_APPLICATION_TEXT")}</div>}
+          actionSaveOnSubmit={() => {
+            setShowPendingDelayApplication(false);
           }}
         ></Modal>
       )}

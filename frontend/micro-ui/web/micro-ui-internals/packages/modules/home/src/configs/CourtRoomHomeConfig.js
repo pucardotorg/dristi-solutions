@@ -36,6 +36,7 @@ export const userTypeOptions = [
       "SUBMISSION_RESPONDER",
       "SUBMISSION_DELETE",
       "TASK_VIEWER",
+      "ADVOCATE_VIEWER",
     ],
     subText: "LITIGANT_SUB_TEXT",
   },
@@ -60,6 +61,8 @@ export const userTypeOptions = [
       "SUBMISSION_RESPONDER",
       "SUBMISSION_DELETE",
       "TASK_VIEWER",
+      "ADVOCATE_VIEWER",
+      "ADVOCATE_APPLICATION_VIEWER",
     ],
     apiDetails: {
       serviceName: "/advocate/v1/_create",
@@ -89,6 +92,7 @@ export const userTypeOptions = [
       "SUBMISSION_RESPONDER",
       "SUBMISSION_DELETE",
       "TASK_VIEWER",
+      "ADVOCATE_VIEWER",
     ],
     apiDetails: {
       serviceName: "/advocate/clerk/v1/_create",
@@ -106,7 +110,7 @@ export const TabCourtRoomSearchConfig = {
   showTab: true,
   TabSearchConfig: [
     {
-      label: "All",
+      label: "CS_ALL",
       type: "search",
       apiDetails: {
         serviceName: "/case/v1/_search",
@@ -145,7 +149,7 @@ export const TabCourtRoomSearchConfig = {
             defaultValues: defaultSearchValues,
             fields: [
               {
-                label: "Case Type",
+                label: "CASE_TYPE",
                 isMandatory: false,
                 key: "caseType",
                 type: "dropdown",
@@ -163,7 +167,7 @@ export const TabCourtRoomSearchConfig = {
                 },
               },
               {
-                label: "Stage",
+                label: "CS_STAGE",
                 isMandatory: false,
                 key: "stage",
                 type: "dropdown",
@@ -185,7 +189,7 @@ export const TabCourtRoomSearchConfig = {
                 },
               },
               {
-                label: "Case ID",
+                label: "CS_CASE_ID",
                 type: "text",
                 isMandatory: false,
                 disable: false,
@@ -208,24 +212,24 @@ export const TabCourtRoomSearchConfig = {
           uiConfig: {
             columns: [
               {
-                label: "Case Name",
+                label: "CS_CASE_NAME",
                 jsonPath: "caseTitle",
               },
               {
-                label: "Stage",
+                label: "CS_STAGE",
                 jsonPath: "substage",
               },
               {
-                label: "Case ID",
+                label: "CS_CASE_ID",
                 jsonPath: "filingNumber",
               },
               {
-                label: "Case Type",
+                label: "CASE_TYPE",
                 jsonPath: "",
                 additionalCustomization: true,
               },
               {
-                label: "Filing Date",
+                label: "CS_FILING_DATE",
                 jsonPath: "filingDate",
                 additionalCustomization: true,
               },
@@ -239,7 +243,7 @@ export const TabCourtRoomSearchConfig = {
       },
     },
     {
-      label: "Ongoing",
+      label: "CD_ONGOING",
       type: "search",
       apiDetails: {
         serviceName: "/case/v1/_search",
@@ -278,7 +282,7 @@ export const TabCourtRoomSearchConfig = {
             defaultValues: defaultSearchValues, // Set default values for search fields
             fields: [
               {
-                label: "Case Type",
+                label: "CASE_TYPE",
                 isMandatory: false,
                 key: "caseType",
                 type: "dropdown",
@@ -296,7 +300,7 @@ export const TabCourtRoomSearchConfig = {
                 },
               },
               {
-                label: "Stage",
+                label: "CS_STAGE",
                 isMandatory: false,
                 key: "stage",
                 type: "dropdown",
@@ -318,7 +322,7 @@ export const TabCourtRoomSearchConfig = {
                 },
               },
               {
-                label: "Case ID",
+                label: "CS_CASE_ID",
                 type: "text",
                 isMandatory: false,
                 disable: false,
@@ -341,24 +345,24 @@ export const TabCourtRoomSearchConfig = {
           uiConfig: {
             columns: [
               {
-                label: "Case Name",
+                label: "CS_CASE_NAME",
                 jsonPath: "caseTitle",
               },
               {
-                label: "Stage",
+                label: "CS_STAGE",
                 jsonPath: "substage",
               },
               {
-                label: "Case ID",
+                label: "CS_CASE_ID",
                 jsonPath: "filingNumber",
               },
               {
-                label: "Case Type",
+                label: "CASE_TYPE",
                 jsonPath: "",
                 additionalCustomization: true,
               },
               {
-                label: "Filing Date",
+                label: "CS_FILING_DATE",
                 jsonPath: "filingDate",
                 additionalCustomization: true,
               },
@@ -372,7 +376,7 @@ export const TabCourtRoomSearchConfig = {
       },
     },
     {
-      label: "Registered",
+      label: "CS_REGISTERED",
       type: "search",
       apiDetails: {
         serviceName: "/case/v1/_search",
@@ -425,7 +429,7 @@ export const TabCourtRoomSearchConfig = {
                 populators: {},
               },
               {
-                label: "Case Type",
+                label: "CASE_TYPE",
                 isMandatory: false,
                 key: "caseType",
                 type: "dropdown",
@@ -443,7 +447,7 @@ export const TabCourtRoomSearchConfig = {
                 },
               },
               {
-                label: "Stage",
+                label: "CS_STAGE",
                 isMandatory: false,
                 key: "stage",
                 type: "dropdown",
@@ -465,7 +469,7 @@ export const TabCourtRoomSearchConfig = {
                 },
               },
               {
-                label: "Case ID",
+                label: "CS_CASE_ID",
                 type: "text",
                 isMandatory: false,
                 disable: false,
@@ -487,25 +491,25 @@ export const TabCourtRoomSearchConfig = {
           uiConfig: {
             columns: [
               {
-                label: "Case Name",
+                label: "CS_CASE_NAME",
                 jsonPath: "caseTitle",
               },
               {
-                label: "Stage",
+                label: "CS_STAGE",
                 jsonPath: "substage",
               },
 
               {
-                label: "Case ID",
+                label: "CS_CASE_ID",
                 jsonPath: "filingNumber",
               },
               {
-                label: "Case Type",
+                label: "CASE_TYPE",
                 jsonPath: "",
                 additionalCustomization: true,
               },
               {
-                label: "Filing Date",
+                label: "CS_FILING_DATE",
                 jsonPath: "filingDate",
                 additionalCustomization: true,
               },
@@ -522,7 +526,7 @@ export const TabCourtRoomSearchConfig = {
       },
     },
     {
-      label: "Closed",
+      label: "CD_CLOSED",
       type: "search",
       apiDetails: {
         serviceName: "/case/v1/_search",
@@ -567,7 +571,7 @@ export const TabCourtRoomSearchConfig = {
                 populators: {},
               },
               {
-                label: "Case Type",
+                label: "CASE_TYPE",
                 isMandatory: false,
                 key: "caseType",
                 type: "dropdown",
@@ -585,7 +589,7 @@ export const TabCourtRoomSearchConfig = {
                 },
               },
               {
-                label: "Outcome",
+                label: "CD_OUTCOME",
                 isMandatory: false,
                 key: "outcome",
                 type: "dropdown",
@@ -609,7 +613,7 @@ export const TabCourtRoomSearchConfig = {
                 },
               },
               {
-                label: "Case ID",
+                label: "CS_CASE_ID",
                 type: "text",
                 isMandatory: false,
                 disable: false,
@@ -632,25 +636,25 @@ export const TabCourtRoomSearchConfig = {
           uiConfig: {
             columns: [
               {
-                label: "Case Name",
+                label: "CS_CASE_NAME",
                 jsonPath: "caseTitle",
               },
               {
-                label: "Outcome",
+                label: "CD_OUTCOME",
                 jsonPath: "outcome",
                 additionalCustomization: true,
               },
               {
-                label: "Case ID",
+                label: "CS_CASE_ID",
                 jsonPath: "filingNumber",
               },
               {
-                label: "Case Type",
+                label: "CASE_TYPE",
                 jsonPath: "",
                 additionalCustomization: true,
               },
               {
-                label: "Filing Date",
+                label: "CS_FILING_DATE",
                 jsonPath: "filingDate",
                 additionalCustomization: true,
               },
