@@ -50,6 +50,9 @@ public class Application {
     @JsonProperty("cmpNumber")
     private String cmpNumber = null;
 
+    @JsonProperty("applicationCMPNumber")
+    private String applicationCMPNumber = null;
+
     @JsonProperty("referenceId")
     @Valid
     private UUID referenceId = null;

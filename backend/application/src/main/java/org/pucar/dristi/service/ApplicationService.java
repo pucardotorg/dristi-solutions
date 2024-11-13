@@ -52,6 +52,10 @@ public class ApplicationService {
             validator.validateOrderDetails(body);
             if(body.getApplication().getWorkflow()!=null)
                 workflowService.updateWorkflowStatus(body);
+
+            if(body.getApplication().getWorkflow()!=null && PENDINGAPPROVAL.equalsIgnoreCase(body.getApplication().getStatus())){
+                enrichmentUtil.enrichApplicationNumberByCMPNumber(body);
+            }
             producer.push(config.getApplicationCreateTopic(), body);
             return body.getApplication();
         } catch (Exception e) {
@@ -70,8 +74,14 @@ public class ApplicationService {
             // Enrich application upon update
             enrichmentUtil.enrichApplicationUponUpdate(applicationRequest);
             validator.validateOrderDetails(applicationRequest);
+
             if (application.getWorkflow()!=null)
                 workflowService.updateWorkflowStatus(applicationRequest);
+
+            if(applicationRequest.getApplication().getWorkflow()!=null && PENDINGAPPROVAL.equalsIgnoreCase(application.getStatus())){
+                enrichmentUtil.enrichApplicationNumberByCMPNumber(applicationRequest);
+            }
+
             producer.push(config.getApplicationUpdateTopic(), applicationRequest);
 
             return applicationRequest.getApplication();
