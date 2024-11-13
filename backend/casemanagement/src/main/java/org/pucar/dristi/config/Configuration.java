@@ -170,6 +170,9 @@ public class Configuration {
 	@Value("${casemanagement.kafka.vc.create.topic}")
 	private String createVc;
 
+	@Value("${casemanagement.kafka.bundle.create.topic}")
+	private String bundleCreateTopic;
+
 	@Value("${generate.vc.code}")
 	private String vcCode;
 

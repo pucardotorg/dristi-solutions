@@ -130,4 +130,12 @@ public class CasemanagerApiController {
         return new ResponseEntity<>(caseBundleResponse, HttpStatus.OK);
     }
 
+    @PostMapping("/casemanager/case/v1/bulk/_buildcasebundle")
+    public ResponseEntity<Object> caseBundleBulk(@Valid @RequestBody CaseBundleBulkRequest caseBundleBulkRequest) {
+        Boolean status = caseBundleService.getBulkCaseBundle(caseBundleBulkRequest);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(caseBundleBulkRequest.getRequestInfo(), true);
+        CaseBundleBulkResponse caseBundleBulkResponse = CaseBundleBulkResponse.builder().responseInfo(responseInfo).status(status).build();
+        return new ResponseEntity<>(caseBundleBulkResponse, HttpStatus.OK);
+    }
+
 }
