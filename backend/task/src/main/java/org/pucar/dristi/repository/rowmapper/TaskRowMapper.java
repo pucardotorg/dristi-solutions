@@ -67,8 +67,10 @@ public class TaskRowMapper implements ResultSetExtractor<List<Task>> {
                             .taskDetails(objectMapper.readValue(rs.getString("taskdetails"), Object.class))
                             .taskType(rs.getString("tasktype"))
                             .status(rs.getString("status"))
-                            .assignedTo(getObjectFromJson(rs.getString("assignedto"), new TypeReference<AssignedTo>() {
-                            }))
+                            .referenceId(rs.getString("referenceId"))
+                            .state(rs.getString("state"))
+//                            .assignedTo(getObjectFromJson(rs.getString("assignedto"), new TypeReference<AssignedTo>() {
+//                            }))
                             .isActive(Boolean.valueOf(rs.getString("isactive")))
                             .auditDetails(auditdetails)
                             .build();
