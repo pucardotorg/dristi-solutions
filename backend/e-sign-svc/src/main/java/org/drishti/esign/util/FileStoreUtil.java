@@ -41,7 +41,9 @@ public class FileStoreUtil {
 
 
     public Resource fetchFileStoreObjectById(String fileStoreId, String tenantId) {
-
+        if (!isValidFileStoreId(fileStoreId) || !isValidTenantId(tenantId)) {
+            throw new CustomException("INVALID_INPUT", "Invalid fileStoreId or tenantId");
+        }
         StringBuilder uri = new StringBuilder();
         uri.append(configs.getFilestoreHost()).append(configs.getFilestoreSearchEndPoint());
         uri = appendQueryParams(uri, "fileStoreId", fileStoreId, "tenantId", tenantId);
@@ -99,6 +101,13 @@ public class FileStoreUtil {
         return fileObject.getString("fileStoreId");
 
 
+    }
+    private boolean isValidFileStoreId(String fileStoreId) {
+        return fileStoreId != null && fileStoreId.matches("[a-zA-Z0-9_-]+");
+    }
+
+    private boolean isValidTenantId(String tenantId) {
+        return tenantId != null && tenantId.matches("[a-zA-Z0-9_-]+");
     }
 
 
