@@ -57,7 +57,7 @@ public class ApplicationRowMapper implements ResultSetExtractor<List<Application
                             .caseId(rs.getString("caseid"))
                             .filingNumber(rs.getString("filingnumber"))
                             .referenceId(toUUID(rs.getString("referenceid")))
-                            .createdDate(rs.getLong("createddate"))
+                            .createdDate(parseDateToLong(rs.getString("createddate")))
                             .createdBy(toUUID(rs.getString("applicationcreatedby")))
                             .tenantId(rs.getString("tenantid"))
                             .reasonForApplication(rs.getString("reason_for_application"))
@@ -138,5 +138,18 @@ public class ApplicationRowMapper implements ResultSetExtractor<List<Application
             throw new CustomException(JSON_PARSE_ERROR, "Failed to parse application type from JSON: " + e.getMessage());
         }
         return list;
+    }
+
+    private Long parseDateToLong(String dateStr) {
+        if (dateStr == null || dateStr.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return Long.valueOf(dateStr);
+        } catch (NumberFormatException e) {
+            log.error("Invalid date format: {}", dateStr);
+            throw new CustomException("INVALID_DATE_FORMAT",
+                    "Date must be a valid timestamp: " + dateStr);
+        }
     }
 }
