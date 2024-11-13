@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.AuditDetails;
 import org.pucar.dristi.config.Configuration;
+import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.CaseBundleRepository;
 import org.pucar.dristi.repository.ElasticSearchRepository;
 import org.pucar.dristi.repository.ServiceRequestRepository;
@@ -20,6 +21,8 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
+import static org.pucar.dristi.config.ServiceConstants.ES_BULK_QUERY;
+
 import java.io.IOException;
 
 @Service
@@ -31,15 +34,17 @@ public class CaseBundleService {
     private final ObjectMapper objectMapper;
     private final ServiceRequestRepository serviceRequestRepository;
     private final CaseBundleRepository caseBundleRepository;
+    private final Producer producer;
 
     @Autowired
     public CaseBundleService(ElasticSearchRepository esRepository, Configuration configuration, ObjectMapper objectMapper, ServiceRequestRepository serviceRequestRepository,
-                             CaseBundleRepository caseBundleRepository) {
+                             CaseBundleRepository caseBundleRepository,Producer producer) {
         this.esRepository = esRepository;
         this.configuration = configuration;
         this.objectMapper = objectMapper;
         this.serviceRequestRepository = serviceRequestRepository;
         this.caseBundleRepository = caseBundleRepository;
+        this.producer = producer;
     }
 
     public CaseNumberResponse getCaseNumber(RequestInfo requestInfo, String caseId, String tenantId) {
@@ -202,6 +207,60 @@ public class CaseBundleService {
         caseBundleRepository.insertCaseTracker(caseBundleTracker);
 
         return fileStoreId;
+    }
+
+    public Boolean getBulkCaseBundle(CaseBundleBulkRequest caseBundleBulkRequest){
+        BulkCaseBundleTracker bulkCaseBundleTracker = new BulkCaseBundleTracker();
+        bulkCaseBundleTracker.setStartTime(System.currentTimeMillis());
+        bulkCaseBundleTracker.setId(UUID.randomUUID().toString());
+        RequestInfo requestInfo = caseBundleBulkRequest.getRequestInfo();
+        String tenantId = caseBundleBulkRequest.getTenantId();
+
+        log.info("Retrieving documents from index", configuration.getCaseBundleIndex());
+        String uri = configuration.getEsHostUrl() + configuration.getCaseBundleIndex() + configuration.getSearchPath();
+        String request = String.format(ES_BULK_QUERY);
+        String response;
+
+        try {
+            response = esRepository.fetchDocuments(uri, request);
+        } catch (Exception e) {
+            log.error("Error while fetching documents from ElasticSearch", e);
+            throw new CustomException("ES_FETCH_ERROR", "Error while fetching documents from ElasticSearch");
+        }
+
+
+        try {
+            JsonNode rootNode = objectMapper.readTree(response);
+            JsonNode hitsNode = rootNode.path("hits").path("hits");
+
+            if (hitsNode.isArray() && hitsNode.isEmpty()) {
+                throw new CustomException("CASE_NOT_FOUND", "No case available to update");
+            } else {
+                bulkCaseBundleTracker.setCaseCount(hitsNode.size());
+                for (JsonNode hit : hitsNode) {
+                    JsonNode indexJson = hit.path("_source");
+                    String caseId = indexJson.path("caseID").asText();
+                    CaseBundleRequest caseBundleRequest = new CaseBundleRequest();
+                    caseBundleRequest.setRequestInfo(requestInfo);
+                    caseBundleRequest.setTenantId(tenantId);
+                    caseBundleRequest.setCaseId(caseId);
+                    producer.push(configuration.getBundleCreateTopic(),caseBundleRequest);
+                }
+
+            }
+        } catch (CustomException e) {
+            throw e;
+        } catch (IOException e) {
+            log.error("Error parsing JSON response", e);
+            throw new CustomException("JSON_PARSE_ERROR", "Error parsing JSON response");
+        } catch (Exception e) {
+            log.error("Unexpected error while processing case bundle", e);
+            throw new CustomException("UNKNOWN_ERROR", "Unexpected error while processing case bundle");
+        }
+
+        bulkCaseBundleTracker.setEndTime(System.currentTimeMillis());
+        caseBundleRepository.insertBulkCaseTracker(bulkCaseBundleTracker);
+        return true;
     }
 }
 
