@@ -217,6 +217,7 @@ async function buildCasePdf(caseNumber, index, requestInfo) {
 
       index.fileStoreId = fileStoreId;
       index.contentLastModified = Math.floor(Date.now() / 1000);
+      index.pdfCreatedDate = Math.floor(Date.now() / 1000);
 
       console.log(`PDF created and stored with fileStoreId: ${fileStoreId}`);
 
