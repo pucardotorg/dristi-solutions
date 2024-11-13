@@ -97,7 +97,7 @@ async function buildCasePdf(caseNumber, index, requestInfo) {
     }
 
     //filtering logic for duplicate items.
-    index = filterDuplicateItems(index, caseNumber);
+    //index = filterDuplicateItems(index, caseNumber);
 
 
     //Todo: fetch data from mdms
