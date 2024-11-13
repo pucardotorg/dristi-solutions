@@ -68,6 +68,26 @@ const caseBundleDesignMock = [
   },
 ];
 
+function filterDuplicateItems(index, caseNumber) {
+  const processedKeys = new Set();
+  const filteredSections = index.sections.map((section) => {
+    if (!section.lineItems) return section;
+
+    const filteredLineItems = section.lineItems.filter((item) => {
+      const uniqueKey = `${item.fileStoreId}-${caseNumber}`;
+      if (processedKeys.has(uniqueKey)) {
+        return false; // Skip duplicates
+      }
+      processedKeys.add(uniqueKey);
+      return true; // Keep unique items
+    });
+
+    return { ...section, lineItems: filteredLineItems };
+  });
+
+  return { ...index, sections: filteredSections };
+}
+
 async function buildCasePdf(caseNumber, index, requestInfo) {
   try {
     const caseBundleDesign = caseBundleDesignMock;
@@ -75,6 +95,14 @@ async function buildCasePdf(caseNumber, index, requestInfo) {
     if (!caseBundleDesign || caseBundleDesign.length === 0) {
       throw new Error("No case bundle design found in MDMS.");
     }
+
+    //filtering logic for duplicate items.
+    //index = filterDuplicateItems(index, caseNumber);
+
+
+    //Todo: fetch data from mdms
+    //Todo: create complaint pdf using caseDetails which is part of the api
+    //Todo: create cover page pdf append those to mergedPdf.
 
     // Create a new PDF document to merge all sections
     const mergedPdf = await PDFDocument.create();
@@ -189,8 +217,12 @@ async function buildCasePdf(caseNumber, index, requestInfo) {
 
       index.fileStoreId = fileStoreId;
       index.contentLastModified = Math.floor(Date.now() / 1000);
+      index.pdfCreatedDate = Math.floor(Date.now() / 1000);
 
       console.log(`PDF created and stored with fileStoreId: ${fileStoreId}`);
+
+      //Todo:update the index field isInProcessing
+      
 
       return { ...index, pageCount: mergedPages.length };
     } finally {
