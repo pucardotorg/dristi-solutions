@@ -1173,9 +1173,9 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                   className={"selector-button-primary"}
                   label={
                     caseDetails?.status === "PENDING_RESPONSE" && selectedParty?.isRespondent
-                      ? "Submit Response"
-                      : !isAttendingHearing && nextHearing
-                      ? "Confirm attendance in summon"
+                      ? t("SUBMIT_RESPONSE_TEXT")
+                      : !isAttendingHearing && nextHearing && selectedParty?.isRespondent
+                      ? t("CONFIRN_SUMMON_NOTICE_RECEIPT")
                       : t(JoinHomeLocalisation.VIEW_CASE_FILE)
                   }
                   onButtonClick={() => {
@@ -1183,7 +1183,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                     if (caseDetails?.status === "PENDING_RESPONSE" && selectedParty?.isRespondent) {
                       if (setShowSubmitResponseModal) setShowSubmitResponseModal(true);
                     } else {
-                      if (!isAttendingHearing && nextHearing) {
+                      if (!isAttendingHearing && nextHearing && selectedParty?.isRespondent) {
                         closeModal();
                         setShowConfirmSummonModal(true);
                       } else
@@ -1273,6 +1273,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
             partyType: index === 0 ? "respondent.primary" : "respondent.additional",
             isRespondent: true,
             individualId: data?.data?.respondentVerification?.individualDetails?.individualId,
+            uuid: response?.Individual?.[0]?.userUuid,
           };
         } catch (error) {
           console.error(error);
@@ -1423,9 +1424,10 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
         if (userType?.value === "Litigant") {
           const isFound = caseDetails?.litigants?.find((item) => item.individualId === individualId);
           if (isFound !== undefined) {
-            setStep(8);
+            setSelectedParty({ isRespondent: isFound?.partyType?.includes("respondent") ? true : false });
             setMessageHeader(t(JoinHomeLocalisation.ALREADY_PART_OF_CASE));
             setSuccess(true);
+            setStep(8);
           } else {
             setStep(step + 1);
           }
@@ -1534,8 +1536,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
       setIsDisabled(true);
       if (userType?.value === "Advocate") {
         const { representative } = searchLitigantInRepresentives();
-        const replaceAdvocate = representative;
-        if (replaceAdvocate !== undefined) {
+        if (representative !== undefined) {
           const nocDocument = await Promise.all(
             replaceAdvocateDocuments?.nocFileUpload?.document?.map(async (document) => {
               if (document) {
@@ -1620,7 +1621,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
               ...caseDetails?.additionalDetails,
               advocateDetails: (() => {
                 const advocateFormdataCopy = structuredClone(caseDetails?.additionalDetails?.advocateDetails?.formdata);
-                const idx = advocateFormdataCopy?.findIndex((adv) => adv?.data?.advocateId === replaceAdvocate?.advocateId);
+                const idx = advocateFormdataCopy?.findIndex((adv) => adv?.data?.advocateId === representative?.advocateId);
                 if (idx !== -1)
                   advocateFormdataCopy[idx] = {
                     data: {
@@ -1660,7 +1661,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
             representative: {
               tenantId: tenantId,
               advocateId: advocateId,
-              id: replaceAdvocate?.id,
+              id: representative?.id,
               caseId: caseDetails?.id,
               representing: [
                 {
@@ -1695,7 +1696,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                     entityType: "case-default",
                     referenceId: `MANUAL_${caseDetails?.filingNumber}`,
                     status: "PENDING_RESPONSE",
-                    assignedTo: [{ uuid: selectedParty?.uuid }, { uuid: replaceAdvocate?.additionalDetails?.uuid }],
+                    assignedTo: [{ uuid: selectedParty?.uuid }, { uuid: representative?.additionalDetails?.uuid }],
                     assignedRole: ["CASE_RESPONDER"],
                     cnrNumber: caseDetails?.cnrNumber,
                     filingNumber: caseDetails?.filingNumber,
@@ -1730,13 +1731,15 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
               } catch (err) {
                 console.error("err :>> ", err);
               }
-            } else {
-              try {
-                const individualData = await searchIndividualUserWithUuid(replaceAdvocate?.additionalDetails?.uuid, tenantId);
-                await removeAttendee(individualData?.Individual?.[0]?.individualId);
-              } catch (err) {
-                console.error("err :>> ", err);
+            }
+            try {
+              const individualData = await searchIndividualUserWithUuid(representative?.additionalDetails?.uuid, tenantId);
+              await removeAttendee(individualData?.Individual?.[0]?.individualId);
+              if (selectedParty?.isComplainant) {
+                await onConfirmAttendee("Complainant");
               }
+            } catch (err) {
+              console.error("err :>> ", err);
             }
 
             setStep(step + 1);
@@ -1866,6 +1869,13 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
               } catch (err) {
                 console.error("err :>> ", err);
               }
+            }
+            try {
+              if (selectedParty?.isComplainant) {
+                await onConfirmAttendee("Complainant");
+              }
+            } catch (err) {
+              console.error("err :>> ", err);
             }
             setStep(step + 1);
             setSuccess(true);
@@ -2153,7 +2163,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
     [caseDetails, selectedParty, t, tenantId]
   );
 
-  const onConfirmAttendee = async () => {
+  const onConfirmAttendee = async (type) => {
     const updatedHearing = structuredClone(nextHearing);
     updatedHearing.attendees = updatedHearing.attendees || [];
     if (updatedHearing?.attendees?.some((attendee) => attendee?.individualId === individualId)) {
@@ -2166,7 +2176,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
       updatedHearing.attendees.push({
         name: formatFullName(name) || "",
         individualId: individualId,
-        type: "Respondent",
+        type: type,
       });
       try {
         const response = await updateAttendees({ body: { hearing: updatedHearing } });
@@ -2411,7 +2421,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
           actionCancelLabel: "No",
           modalBody: <CustomCaseInfoDiv t={t} data={attendanceDetails} column={2} />,
           actionSaveOnSubmit: async () => {
-            const resp = await onConfirmAttendee();
+            const resp = await onConfirmAttendee("Respondent");
             if (resp.continue) setShowConfirmSummonModal(false);
           },
           actionCancelOnSubmit: () => setShowConfirmSummonModal(false),
