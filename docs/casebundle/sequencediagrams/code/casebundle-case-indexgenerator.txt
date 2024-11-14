@@ -183,6 +183,7 @@ CBS->CBS: update indexJson.contentLastModified = current datetime in EPOCH (mill
 
 == State - CASE_REASSIGNED ==
 note across: the case has been sent back to litigant/advocate to fix errors. They can change any file. Hence need to mark complain, affidavit, vakalat and filings section to be redone
+CBS->CBS: update indexJson.isRegistered = false
 
 == Common Processing ==
 return indexJson
