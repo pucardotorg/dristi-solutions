@@ -31,7 +31,7 @@ class PendingTaskTypeTest {
         String workflowModule = "module1";
         List<String> closerAction = Arrays.asList("close1", "close2");
 
-        PendingTaskType pendingTaskType = new PendingTaskType(id, pendingTask, actor, triggerAction, state, workflowModule, closerAction);
+        PendingTaskType pendingTaskType = new PendingTaskType(id, pendingTask, actor,false, triggerAction, state, workflowModule, closerAction);
 
         assertEquals(id, pendingTaskType.getId());
         assertEquals(pendingTask, pendingTaskType.getPendingTask());
