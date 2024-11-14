@@ -119,7 +119,7 @@ class PendingTaskTypeTest {
                 .closerAction(closerAction)
                 .build();
 
-        String expected = "PendingTaskType(id=" + id + ", pendingTask=" + pendingTask + ", actor=" + actor + ", triggerAction=" + triggerAction + ", state=" + state + ", workflowModule=" + workflowModule + ", closerAction=" + closerAction + ")";
+        String expected = "PendingTaskType(id=123, pendingTask=task1, actor=actor1, isgeneric=null, triggerAction=[action1, action2], state=state1, workflowModule=module1, closerAction=[close1, close2])";
         assertEquals(expected, pendingTaskType.toString());
     }
 
