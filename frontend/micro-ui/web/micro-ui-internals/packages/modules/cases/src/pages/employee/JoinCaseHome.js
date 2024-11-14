@@ -1301,8 +1301,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
   }, [name, nextHearing]);
 
   useEffect(() => {
-    if (userType.value === "Litigant") setParties(respondentList?.map((data, index) => ({ ...data, key: index })));
-    else setParties([...complainantList, ...respondentList].map((data, index) => ({ ...data, key: index })));
+    setParties([...complainantList, ...respondentList].map((data, index) => ({ ...data, key: index })));
   }, [complainantList, respondentList, userType]);
 
   useEffect(() => {
@@ -1403,19 +1402,6 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
     setComplainantList([]);
     setRespondentList([]);
     setCaseList([]);
-  };
-
-  const removeAttendee = async (individualId) => {
-    const updatedHearing = structuredClone(nextHearing);
-    updatedHearing.attendees = updatedHearing.attendees || [];
-    if (updatedHearing?.attendees?.some((attendee) => attendee?.individualId === individualId)) {
-      updatedHearing.attendees = updatedHearing.attendees.filter((attendee) => attendee?.individualId !== individualId);
-      try {
-        await updateAttendees({ body: { hearing: updatedHearing } });
-      } catch (error) {
-        console.error("error :>> ", error);
-      }
-    }
   };
 
   const onProceed = useCallback(async () => {
@@ -1734,9 +1720,26 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
             }
             try {
               const individualData = await searchIndividualUserWithUuid(representative?.additionalDetails?.uuid, tenantId);
-              await removeAttendee(individualData?.Individual?.[0]?.individualId);
+
+              // updating hearing attendees silently
+              const updatedHearing = structuredClone(nextHearing);
+              updatedHearing.attendees = updatedHearing.attendees || [];
+              // removing old advocate
+              updatedHearing.attendees = updatedHearing.attendees.filter(
+                (attendee) => attendee?.individualId !== individualData?.Individual?.[0]?.individualId
+              );
+              // adding new advocate
               if (selectedParty?.isComplainant) {
-                await onConfirmAttendee("Complainant");
+                updatedHearing.attendees.push({
+                  name: formatFullName(name) || "",
+                  individualId: individualId,
+                  type: "Complainant",
+                });
+              }
+              try {
+                await updateAttendees({ body: { hearing: updatedHearing } });
+              } catch (error) {
+                console.error("error :>> ", error);
               }
             } catch (err) {
               console.error("err :>> ", err);
