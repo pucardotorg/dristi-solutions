@@ -2557,5 +2557,3 @@ function EFilingCases({ path }) {
 }
 
 export default EFilingCases;
-
-// style={{ marginBottom: `${advocate_styles.marginTop}` }}
