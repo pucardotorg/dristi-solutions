@@ -62,7 +62,7 @@ exports.generateCasePdf = async (req, res, next) => {
     };
 
     console.log("Pdf Request: {}", pdfRequest);
-    await fileService.validateDocuments(cases?.documents);
+    await fileService.validateDocuments(cases?.documents || []);
 
     const pdf = await pdfService.generatePDF(pdfRequest);
 

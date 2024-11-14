@@ -78,7 +78,13 @@ async function appendPdfPagesWithHeader(existingPdfDoc, fileStoreId, header) {
     font: helveticaFont,
   });
 
-  const documentBytes = await fetchDocument(fileStoreId);
+  let documentBytes = null;
+  try {
+    documentBytes = await fetchDocument(fileStoreId);
+  } catch (error) {
+    throw new DocumentError("DOCUMENT_CURRUPTED");
+  }
+
   const fetchedPdfDoc = await PDFDocument.load(documentBytes);
   if (!fetchedPdfDoc) {
     console.error("Failed to load PDF document.");
@@ -354,6 +360,7 @@ async function validateDocuments(docs) {
       throw new DocumentError(doc?.documentType);
     }
   }
+  return;
 }
 
 module.exports = {
