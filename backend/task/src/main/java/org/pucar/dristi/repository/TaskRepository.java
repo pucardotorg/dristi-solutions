@@ -132,7 +132,7 @@ public class TaskRepository {
             if (taskExists.getCnrNumber() == null && taskExists.getFilingNumber() == null && taskExists.getTaskId() == null) {
                 taskExists.setExists(false);
             } else {
-                String taskExistQuery = queryBuilder.checkTaskExistQuery(taskExists.getCnrNumber(), taskExists.getFilingNumber(), taskExists.getTaskId(), preparedStmtList);
+                String taskExistQuery = queryBuilder.checkTaskExistQuery(taskExists.getCnrNumber(), taskExists.getFilingNumber(), taskExists.getTaskId(),taskExists.getReferenceId(),taskExists.getState(), preparedStmtList);
                 log.info("Final task exist query :: {}", taskExistQuery);
                 Integer count = jdbcTemplate.queryForObject(taskExistQuery, Integer.class, preparedStmtList.toArray());
                 taskExists.setExists(count != null && count > 0);
