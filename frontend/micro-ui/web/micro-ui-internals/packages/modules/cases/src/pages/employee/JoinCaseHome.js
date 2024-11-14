@@ -1301,7 +1301,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
   }, [name, nextHearing]);
 
   useEffect(() => {
-    if (userType === "Litigant") setParties(respondentList?.map((data, index) => ({ ...data, key: index })));
+    if (userType.value === "Litigant") setParties(respondentList?.map((data, index) => ({ ...data, key: index })));
     else setParties([...complainantList, ...respondentList].map((data, index) => ({ ...data, key: index })));
   }, [complainantList, respondentList, userType]);
 
