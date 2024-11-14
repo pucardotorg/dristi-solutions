@@ -884,7 +884,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
 
               <React.Fragment>
                 <LabelFieldPair className="case-label-field-pair">
-                  <CardLabel className="case-input-label">{`${"BAR registration"}`}</CardLabel>
+                  <CardLabel className="case-input-label">{`${t("CS_BAR_REGISTRATION")}`}</CardLabel>
                   <div style={{ width: "100%", maxWidth: "960px" }}>
                     <TextInput
                       // t={t}
@@ -1410,7 +1410,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
         if (userType?.value === "Litigant") {
           const isFound = caseDetails?.litigants?.find((item) => item.individualId === individualId);
           if (isFound !== undefined) {
-            setSelectedParty({ isRespondent: isFound?.partyType?.includes("respondent") ? true : false });
+            setSelectedParty({ isRespondent: isFound?.partyType?.includes("respondent") });
             setMessageHeader(t(JoinHomeLocalisation.ALREADY_PART_OF_CASE));
             setSuccess(true);
             setStep(8);
@@ -2179,7 +2179,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
       updatedHearing.attendees.push({
         name: formatFullName(name) || "",
         individualId: individualId,
-        type: type,
+        type,
       });
       try {
         const response = await updateAttendees({ body: { hearing: updatedHearing } });
