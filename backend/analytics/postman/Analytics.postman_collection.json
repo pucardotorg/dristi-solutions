@@ -1,0 +1,97 @@
+{
+	"info": {
+		"_postman_id": "3d8ba547-4e5a-4dc7-a6cd-9efddbe8d6c1",
+		"name": "Analytics",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "15047027",
+		"_collection_link": "https://martian-firefly-796283.postman.co/workspace/Pucar-Service~566e8ca3-55eb-4e5c-a43e-d30c93e12ff2/collection/15047027-3d8ba547-4e5a-4dc7-a6cd-9efddbe8d6c1?action=share&source=collection_link&creator=15047027"
+	},
+	"item": [
+		{
+			"name": "Create pending task",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "accept",
+						"value": "application/json, text/plain, */*"
+					},
+					{
+						"key": "accept-language",
+						"value": "en-GB,en;q=0.9"
+					},
+					{
+						"key": "content-type",
+						"value": "application/json;charset=UTF-8"
+					},
+					{
+						"key": "origin",
+						"value": "https://dristi-kerala-qa.pucar.org"
+					},
+					{
+						"key": "priority",
+						"value": "u=1, i"
+					},
+					{
+						"key": "referer",
+						"value": "https://dristi-kerala-qa.pucar.org/digit-ui/citizen/submissions/submissions-create?filingNumber=KL-000377-2024&applicationNumber=KL-000377-2024-AP2"
+					},
+					{
+						"key": "sec-ch-ua",
+						"value": "\"Not?A_Brand\";v=\"99\", \"Chromium\";v=\"130\""
+					},
+					{
+						"key": "sec-ch-ua-mobile",
+						"value": "?0"
+					},
+					{
+						"key": "sec-ch-ua-platform",
+						"value": "\"Linux\""
+					},
+					{
+						"key": "sec-fetch-dest",
+						"value": "empty"
+					},
+					{
+						"key": "sec-fetch-mode",
+						"value": "cors"
+					},
+					{
+						"key": "sec-fetch-site",
+						"value": "same-origin"
+					},
+					{
+						"key": "user-agent",
+						"value": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"pendingTask\": {\n        \"name\": \"Make payment for Submission\",\n        \"entityType\": \"application-voluntary-submission\",\n        \"referenceId\": \"MANUAL_KL-000377-2024-AP2\",\n        \"status\": \"MAKE_PAYMENT_SUBMISSION\",\n        \"assignedTo\": [\n            {\n                \"uuid\": \"87af9f72-11ad-4a79-bcb6-cbc61560de77\"\n            }\n        ],\n        \"assignedRole\": [],\n        \"cnrNumber\": \"KLKM520001372024\",\n        \"filingNumber\": \"KL-000377-2024\",\n        \"isCompleted\": false,\n        \"stateSla\": 1731240238076,\n        \"additionalDetails\": {},\n        \"tenantId\": \"kl\"\n    },\n    \"RequestInfo\": {\n        \"apiId\": \"Rainmaker\",\n        \"authToken\": \"940dc0d8-d31d-4439-b27b-a78eb11308f8\",\n        \"userInfo\": {\n            \"id\": 306,\n            \"uuid\": \"87af9f72-11ad-4a79-bcb6-cbc61560de77\",\n            \"userName\": \"7100000005\",\n            \"name\": \"Comp ADV null\",\n            \"mobileNumber\": \"7100000005\",\n            \"emailId\": null,\n            \"locale\": null,\n            \"type\": \"CITIZEN\",\n            \"roles\": [\n                {\n                    \"name\": \"HEARING_VIEWER\",\n                    \"code\": \"HEARING_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"CASE_VIEWER\",\n                    \"code\": \"CASE_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"DEPOSITION_VIEWER\",\n                    \"code\": \"DEPOSITION_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"Citizen\",\n                    \"code\": \"CITIZEN\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"ADVOCATE_ROLE\",\n                    \"code\": \"ADVOCATE_ROLE\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"APPLICATION_CREATOR\",\n                    \"code\": \"APPLICATION_CREATOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"SUBMISSION_DELETE\",\n                    \"code\": \"SUBMISSION_DELETE\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"HEARING_ACCEPTOR\",\n                    \"code\": \"HEARING_ACCEPTOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"CASE_RESPONDER\",\n                    \"code\": \"CASE_RESPONDER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"DEPOSITION_CREATOR\",\n                    \"code\": \"DEPOSITION_CREATOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"SUBMISSION_RESPONDER\",\n                    \"code\": \"SUBMISSION_RESPONDER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"ORDER_VIEWER\",\n                    \"code\": \"ORDER_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"CASE_EDITOR\",\n                    \"code\": \"CASE_EDITOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"SUBMISSION_CREATOR\",\n                    \"code\": \"SUBMISSION_CREATOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"APPLICATION_VIEWER\",\n                    \"code\": \"APPLICATION_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"TASK_VIEWER\",\n                    \"code\": \"TASK_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"CASE_CREATOR\",\n                    \"code\": \"CASE_CREATOR\",\n                    \"tenantId\": \"kl\"\n                }\n            ],\n            \"active\": true,\n            \"tenantId\": \"kl\",\n            \"permanentCity\": null\n        },\n        \"msgId\": \"1731067439888|en_IN\",\n        \"plainAccessRequest\": {}\n    }\n}"
+				},
+				"url": {
+					"raw": "https://dristi-kerala-qa.pucar.org/analytics/pending_task/v1/create?_=1731067439888",
+					"protocol": "https",
+					"host": [
+						"dristi-kerala-qa",
+						"pucar",
+						"org"
+					],
+					"path": [
+						"analytics",
+						"pending_task",
+						"v1",
+						"create"
+					],
+					"query": [
+						{
+							"key": "_",
+							"value": "1731067439888"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

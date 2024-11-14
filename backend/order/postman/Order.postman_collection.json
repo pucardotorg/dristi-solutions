@@ -1,9 +1,10 @@
 {
 	"info": {
-		"_postman_id": "7b476c1c-e417-4073-b7dd-1e1cc3fea4eb",
+		"_postman_id": "22cab22a-8c9b-41db-87c1-5ea6d3b9392c",
 		"name": "Order",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "33009635"
+		"_exporter_id": "15047027",
+		"_collection_link": "https://martian-firefly-796283.postman.co/workspace/Pucar-Service~566e8ca3-55eb-4e5c-a43e-d30c93e12ff2/collection/15047027-22cab22a-8c9b-41db-87c1-5ea6d3b9392c?action=share&source=collection_link&creator=15047027"
 	},
 	"item": [
 		{
@@ -12,71 +13,60 @@
 				"method": "POST",
 				"header": [
 					{
+						"key": "sec-ch-ua-platform",
+						"value": "\"Linux\""
+					},
+					{
+						"key": "Referer",
+						"value": "https://dristi-kerala-uat.pucar.org/digit-ui/employee/orders/generate-orders?filingNumber=KL-000105-2024"
+					},
+					{
+						"key": "User-Agent",
+						"value": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+					},
+					{
 						"key": "Accept",
 						"value": "application/json, text/plain, */*"
 					},
 					{
-						"key": "Accept-Language",
-						"value": "en-GB,en-US;q=0.9,en;q=0.8"
-					},
-					{
-						"key": "Connection",
-						"value": "keep-alive"
+						"key": "sec-ch-ua",
+						"value": "\"Not?A_Brand\";v=\"99\", \"Chromium\";v=\"130\""
 					},
 					{
 						"key": "Content-Type",
 						"value": "application/json;charset=UTF-8"
 					},
 					{
-						"key": "Origin",
-						"value": "http://localhost:3000"
-					},
-					{
-						"key": "Referer",
-						"value": "http://localhost:3000/digit-ui/employee/dristi/registration-requests/details/CLERK-2024-04-29-000123?individualId=IND-2024-04-29-000144&isAction=true"
-					},
-					{
-						"key": "Sec-Fetch-Dest",
-						"value": "empty"
-					},
-					{
-						"key": "Sec-Fetch-Mode",
-						"value": "cors"
-					},
-					{
-						"key": "Sec-Fetch-Site",
-						"value": "same-origin"
-					},
-					{
-						"key": "User-Agent",
-						"value": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
-					},
-					{
-						"key": "sec-ch-ua",
-						"value": "\"Google Chrome\";v=\"123\", \"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"123\""
-					},
-					{
 						"key": "sec-ch-ua-mobile",
 						"value": "?0"
-					},
-					{
-						"key": "sec-ch-ua-platform",
-						"value": "\"Linux\""
 					}
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"order\": {\n        \"tenantId\": \"pg\",\n        \"applicationNumber\": [\n           // \"CLERK-2024-04-29-000124\"\n           ]\n        ,\n       // \"hearingNumber\": \"3244d158-c5cb-4769-801f-a0f94f383679\",\n      //  \"cnrNumber\": \"CNR111\",\n      //  \"filingNumber\": \"F-C.1973.002-2024-0018381\",\n        \"statuteSection\": {\n            \"tenantId\": \"pg\",\n            \"auditDetails\": {\n                \"createdBy\": \"3244d158-c5cb-4769-801f-a0f94f383679\",\n                \"lastModifiedBy\": \"3244d158-c5cb-4769-801f-a0f94f383679\",\n                \"createdTime\": 1714384374834,\n                \"lastModifiedTime\": 1714384374834\n            }\n        },\n      //  \"createdDate\":,\n        \"orderType\":\"\",\n        \"orderCategory\":\"ADMINISTRATIVE\",\n        \"status\": \"\",\n        \"isActive\": true,\n        \"issuedBy\":{\n            \"benchID\":\"sadf\",\n            \"judgeID\":[\n                \"bb86207f-6ec0-4314-8260-bcdd4e441e1d\",\n                \"bb86207f-6ec0-4314-8260-bcdd4e441e1d\"\n            ]\n        },\n        \"workflow\": {\n            \"action\": \"SAVE_DRAFT\",\n            \"comments\": \"Creating for order registration\",\n            \"documents\": [{\n                \"id\": \"bb86207f-6ec0-4314-8260-bcdd4e441e1d\",\n                \"documentType\": \"application/pdf\",\n                \"fileStore\": \"349a95a7-d4ef-48d6-889c-4faef7b8289e\",\n                \"documentUid\": \"bb86207f-6ec0-4314-8260-bcdd4e441e1d\",\n                \"additionalDetails\": {}\n            }],\n            \"assignes\": null,\n            \"rating\": null\n        },\n        \"auditDetails\": {\n            \"createdBy\": \"3244d158-c5cb-4769-801f-a0f94f383679\",\n            \"lastModifiedBy\": \"3244d158-c5cb-4769-801f-a0f94f383679\",\n            \"createdTime\": 1714384374834,\n            \"lastModifiedTime\": 1714384374834\n        },\n        \"additionalDetails\": {\n            \"username\": \"nil\"\n        },\n       \"orderDetails\": {\n            \"username\": \"nil\"\n        }\n    },\n     \"tenantId\": \"pg\",\n    \"RequestInfo\": {\n        \"apiId\": \"Rainmaker\",\n         \"authToken\": \"62103a0e-701e-4f4d-b15a-e7a3f0506283\",\n        \"userInfo\": {\n            \"id\": 155,\n            \"uuid\": \"9ebe17e8-487b-4251-b4a1-57434cb9f63c\",\n            \"userName\": \"devorder\",\n            \"name\": \"Ram babu\",\n            \"mobileNumber\": \"3989999999\",\n            \"emailId\": null,\n            \"locale\": null,\n            \"type\": \"EMPLOYEE\",\n            \"roles\": [\n                {\n                    \"code\": \"ORDER_CREATOR\",\n                    \"name\": \"ORDER_CREATOR\",\n                    \"tenantId\": \"pg\"\n                },\n                {\n                    \"code\": \"ORDER_APPROVER\",\n                    \"name\": \"ORDER_APPROVER\"\n                }\n            ],\n            \"active\": true,\n            \"tenantId\": \"pg\",\n            \"permanentCity\": null\n        },\n        \"msgId\": \"1714385569773|en_IN\",\n        \"plainAccessRequest\": {}\n    }\n}"
+					"raw": "{\n    \"order\": {\n        \"createdDate\": 1730977552178,\n        \"tenantId\": \"kl\",\n        \"cnrNumber\": \"KLKM520001742024\",\n        \"filingNumber\": \"KL-000105-2024\",\n        \"statuteSection\": {\n            \"tenantId\": \"kl\"\n        },\n        \"status\": \"\",\n        \"isActive\": true,\n        \"workflow\": {\n            \"action\": \"SAVE_DRAFT\",\n            \"comments\": \"Creating order\",\n            \"assignes\": [],\n            \"rating\": null,\n            \"documents\": [\n                {}\n            ]\n        },\n        \"documents\": [],\n        \"additionalDetails\": {\n            \"formdata\": {\n                \"orderType\": {\n                    \"id\": 4,\n                    \"code\": \"REFERRAL_CASE_TO_ADR\",\n                    \"type\": \"REFERRAL_CASE_TO_ADR\",\n                    \"isactive\": true,\n                    \"name\": \"ORDER_TYPE_REFERRAL_CASE_TO_ADR\"\n                },\n                \"ADRMode\": {\n                    \"code\": 3,\n                    \"name\": \"CONCILIATION\",\n                    \"isActive\": true\n                }\n            }\n        },\n        \"comments\": \"\",\n        \"orderType\": \"REFERRAL_CASE_TO_ADR\",\n        \"orderDetails\": {\n            \"adrMode\": 3,\n            \"parties\": [\n                {\n                    \"partyName\": \"Anandu Menon\",\n                    \"partyType\": \"complainant\"\n                },\n                {\n                    \"partyName\": \"radhesh\",\n                    \"partyType\": \"respondent\"\n                },\n                {\n                    \"partyName\": \"Kane Kaniki\",\n                    \"partyType\": \"witness\"\n                }\n            ]\n        }\n    },\n    \"RequestInfo\": {\n        \"apiId\": \"Rainmaker\",\n        \"authToken\": \"a4202e06-6a46-4602-8f05-21c2f063c129\",\n        \"userInfo\": {\n            \"id\": 143,\n            \"uuid\": \"c1c4a708-afd6-4c9c-91a5-fd6c8517fb39\",\n            \"userName\": \"uatJudge01\",\n            \"name\": \"uatJudge01\",\n            \"mobileNumber\": \"1002335566\",\n            \"emailId\": null,\n            \"locale\": null,\n            \"type\": \"EMPLOYEE\",\n            \"roles\": [\n                {\n                    \"name\": \"HEARING_VIEWER\",\n                    \"code\": \"HEARING_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"DEPOSITION_EDITOR\",\n                    \"code\": \"DEPOSITION_EDITOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"WORKFLOW_ABANDON\",\n                    \"code\": \"WORKFLOW_ABANDON\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"ORDER_ESIGN\",\n                    \"code\": \"ORDER_ESIGN\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"Workflow Admin\",\n                    \"code\": \"WORKFLOW_ADMIN\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"DEPOSITION_PUBLISHER\",\n                    \"code\": \"DEPOSITION_PUBLISHER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"TASK_APPROVER\",\n                    \"code\": \"TASK_APPROVER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"HEARING_START\",\n                    \"code\": \"HEARING_START\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"HEARING_APPROVER\",\n                    \"code\": \"HEARING_APPROVER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"ORDER_VIEWER\",\n                    \"code\": \"ORDER_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"SUBMISSION_RESPONDER\",\n                    \"code\": \"SUBMISSION_RESPONDER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"ORDER_REASSIGN\",\n                    \"code\": \"ORDER_REASSIGN\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"CASE_EDITOR\",\n                    \"code\": \"CASE_EDITOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"APPLICATION_APPROVER\",\n                    \"code\": \"APPLICATION_APPROVER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"TASK_CREATOR\",\n                    \"code\": \"TASK_CREATOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"HEARING_DATE_REQUESTOR\",\n                    \"code\": \"HEARING_DATE_REQUESTOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"Employee\",\n                    \"code\": \"EMPLOYEE\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"ORDER_DELETE\",\n                    \"code\": \"ORDER_DELETE\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"CASE_VIEWER\",\n                    \"code\": \"CASE_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"APPLICATION_REJECTOR\",\n                    \"code\": \"APPLICATION_REJECTOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"TASK_EDITOR\",\n                    \"code\": \"TASK_EDITOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"ORDER_APPROVER\",\n                    \"code\": \"ORDER_APPROVER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"HEARING_CLOSER\",\n                    \"code\": \"HEARING_CLOSER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"ORDER_CREATOR\",\n                    \"code\": \"ORDER_CREATOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"JUDGE_ROLE\",\n                    \"code\": \"JUDGE_ROLE\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"CASE_APPROVER\",\n                    \"code\": \"CASE_APPROVER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"DEPOSITION_CREATOR\",\n                    \"code\": \"DEPOSITION_CREATOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"SUBMISSION_APPROVER\",\n                    \"code\": \"SUBMISSION_APPROVER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"TASK_UPDATOR\",\n                    \"code\": \"TASK_UPDATOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"TASK_VIEWER\",\n                    \"code\": \"TASK_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"HEARING_SCHEDULER\",\n                    \"code\": \"HEARING_SCHEDULER\",\n                    \"tenantId\": \"kl\"\n                }\n            ],\n            \"active\": true,\n            \"tenantId\": \"kl\",\n            \"permanentCity\": null\n        },\n        \"msgId\": \"1730977593276|en_IN\",\n        \"plainAccessRequest\": {}\n    }\n}"
 				},
 				"url": {
-					"raw": "{{local}}/order/v1/create",
+					"raw": "https://dristi-kerala-uat.pucar.org/order/v1/create?tenantId=kl&_=1730977593277",
+					"protocol": "https",
 					"host": [
-						"{{local}}"
+						"dristi-kerala-uat",
+						"pucar",
+						"org"
 					],
 					"path": [
 						"order",
 						"v1",
 						"create"
+					],
+					"query": [
+						{
+							"key": "tenantId",
+							"value": "kl"
+						},
+						{
+							"key": "_",
+							"value": "1730977593277"
+						}
 					]
 				}
 			},
@@ -88,71 +78,60 @@
 				"method": "POST",
 				"header": [
 					{
+						"key": "sec-ch-ua-platform",
+						"value": "\"Linux\""
+					},
+					{
+						"key": "Referer",
+						"value": "https://dristi-kerala-uat.pucar.org/digit-ui/employee/orders/generate-orders?filingNumber=KL-000105-2024"
+					},
+					{
+						"key": "User-Agent",
+						"value": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+					},
+					{
 						"key": "Accept",
 						"value": "application/json, text/plain, */*"
 					},
 					{
-						"key": "Accept-Language",
-						"value": "en-GB,en-US;q=0.9,en;q=0.8"
-					},
-					{
-						"key": "Connection",
-						"value": "keep-alive"
+						"key": "sec-ch-ua",
+						"value": "\"Not?A_Brand\";v=\"99\", \"Chromium\";v=\"130\""
 					},
 					{
 						"key": "Content-Type",
 						"value": "application/json;charset=UTF-8"
 					},
 					{
-						"key": "Origin",
-						"value": "http://localhost:3000"
-					},
-					{
-						"key": "Referer",
-						"value": "http://localhost:3000/digit-ui/employee/dristi/registration-requests/details/CLERK-2024-04-29-000123?individualId=IND-2024-04-29-000144&isAction=true"
-					},
-					{
-						"key": "Sec-Fetch-Dest",
-						"value": "empty"
-					},
-					{
-						"key": "Sec-Fetch-Mode",
-						"value": "cors"
-					},
-					{
-						"key": "Sec-Fetch-Site",
-						"value": "same-origin"
-					},
-					{
-						"key": "User-Agent",
-						"value": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
-					},
-					{
-						"key": "sec-ch-ua",
-						"value": "\"Google Chrome\";v=\"123\", \"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"123\""
-					},
-					{
 						"key": "sec-ch-ua-mobile",
 						"value": "?0"
-					},
-					{
-						"key": "sec-ch-ua-platform",
-						"value": "\"Linux\""
 					}
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n        \"order\": {\n        \"id\": \"151a52d2-934d-4874-8790-bf23c840666d\",\n        \"tenantId\": \"pg\",\n        \"filingNumber\": \"F-C.1973.002-2024-001381\",\n        \"cnrNumber\": null,\n        \"applicationNumber\": [\n            \"CLERK-2024-04-29-000124\"\n        ],\n        \"hearingNumber\": \"3244d158-c5cb-4769-801f-a0f94f383679\",\n        \"orderNumber\": \"ORDER-NO-2024-08-08-003421\",\n        \"linkedOrderNumber\": null,\n       // \"createdDate\": 1723113654007,\n        \"issuedBy\": {\n            \"benchID\": \"sadf\",\n            \"judgeID\": [\n                \"bb86207f-6ec0-4314-8260-bcdd4e441e1d\",\n                \"bb86207f-6ec0-4314-8260-bcdd4e441e1d\"\n            ],\n            \"courtID\": null\n        },\n        \"orderType\": \"2\",\n        \"orderCategory\": \"1\",\n        \"status\": \"DRAFT_IN_PROGRESS\",\n        \"comments\": null,\n        \"isActive\": true,\n        \"statuteSection\": {\n            \"id\": \"1c951517-d21f-462b-b3ef-06b14b5d1356\",\n            \"tenantId\": \"pg\",\n            \"statute\": null,\n            \"sections\": null,\n            \"subsections\": null,\n            \"additionalDetails\": null,\n            \"auditDetails\": {\n                \"createdBy\": \"9ebe17e8-487b-4251-b4a1-57434cb9f63c\",\n                \"lastModifiedBy\": \"9ebe17e8-487b-4251-b4a1-57434cb9f63c\",\n                \"createdTime\": 1723113654007,\n                \"lastModifiedTime\": 1723113654007\n            },\n            \"strSections\": null,\n            \"strSubsections\": null\n        },\n        \"documents\": null,\n        \"orderDetails\": {\n            \"username\": \"nil\"\n        },\n        \"additionalDetails\": {\n            \"username\": \"nil\"\n        },\n        \"auditDetails\": {\n            \"createdBy\": \"9ebe17e8-487b-4251-b4a1-57434cb9f63c\",\n            \"lastModifiedBy\": \"9ebe17e8-487b-4251-b4a1-57434cb9f63c\",\n            \"createdTime\": 1723113654007,\n            \"lastModifiedTime\": 1723113654007\n        },\n        \"workflow\": {\n            \"action\": \"E-SIGN\",\n            \"comments\": \"Creating for order registration\",\n            \"documents\": [\n                {\n                    \"id\": \"bb86207f-6ec0-4314-8260-bcdd4e441e1d\",\n                    \"documentType\": \"application/pdf\",\n                    \"fileStore\": \"349a95a7-d4ef-48d6-889c-4faef7b8289e\",\n                    \"documentUid\": \"bb86207f-6ec0-4314-8260-bcdd4e441e1d\",\n                    \"additionalDetails\": {}\n                }\n            ],\n            \"assignes\": null,\n            \"rating\": null\n        }\n    },\n    \"tenantId\": \"pg\",\n    \"RequestInfo\": {\n        \"apiId\": \"Rainmaker\",\n       \"authToken\": \"7a664d00-ed54-45f5-94b5-60c1a0b3ce66\",\n        \"userInfo\": {\n            \"id\": 805,\n            \"userName\": \"scrutinyuser123\",\n            \"salutation\": \"Ms\",\n            \"name\": \"mustak\",\n            \"gender\": \"MALE\",\n            \"mobileNumber\": \"1234567890\",\n            \"alternatemobilenumber\": null,\n            \"emailId\": \"xyz@egovernments.org\",\n            \"altContactNumber\": \"\",\n            \"pan\": \"VFGGC5624P\",\n            \"aadhaarNumber\": \"96a70\",\n            \"permanentAddress\": \"Dawakhana\",\n            \"permanentCity\": \"Kaikoo\",\n            \"permanentPinCode\": \"111111\",\n            \"correspondenceAddress\": \"correAddress\",\n            \"correspondenceCity\": \"banglore\",\n            \"correspondencePinCode\": \"123456\",\n            \"active\": true,\n            \"locale\": \"string\",\n            \"type\": \"EMPLOYEE\",\n            \"accountLocked\": false,\n            \"accountLockedDate\": null,\n            \"fatherOrHusbandName\": \"Palash\",\n            \"relationship\": null,\n            \"signature\": \"\",\n            \"bloodGroup\": \"O+\",\n            \"photo\": \"a8a6cf1e-c84d-4a0c-b2d5-57ec8711ba25\",\n            \"identificationMark\": \"Wears spects\",\n            \"createdBy\": 32,\n            \"password\": null,\n            \"otpReference\": null,\n            \"lastModifiedBy\": 32,\n            \"tenantId\": \"pg\",\n            \"roles\": [\n                {\n                    \"code\": \"ORDER_APPROVER\",\n                    \"name\": \"ORDER_APPROVER\",\n                    \"tenantId\": \"pg\"\n                },\n                {\n                    \"code\": \"ORDER_CREATOR\",\n                    \"name\": \"ORDER_CREATOR\",\n                    \"tenantId\": \"pg\"\n                }\n            ],\n            \"uuid\": \"8fc6afa4-fb6e-402d-8bd9-f3ac69c12d6e\",\n            \"createdDate\": \"22-05-2024 16:10:18\",\n            \"lastModifiedDate\": \"22-05-2024 16:10:18\",\n            \"dob\": \"08/08/1999\",\n            \"pwdExpiryDate\": \"20-08-2024 16:10:18\"\n        },\n        \"msgId\": \"1714385569773|en_IN\",\n        \"plainAccessRequest\": {}\n    }\n}"
+					"raw": "{\n    \"order\": {\n        \"id\": \"03cbbf4d-42ac-4c99-8bba-2e548a7d2f18\",\n        \"tenantId\": \"kl\",\n        \"filingNumber\": \"KL-000105-2024\",\n        \"cnrNumber\": \"KLKM520001742024\",\n        \"applicationNumber\": [],\n        \"hearingNumber\": \"KL-000105-2024-HR1\",\n        \"orderNumber\": \"KL-000105-2024-OR3\",\n        \"linkedOrderNumber\": null,\n        \"createdDate\": 1730794124145,\n        \"issuedBy\": null,\n        \"orderType\": \"undefined\",\n        \"orderCategory\": null,\n        \"status\": \"DRAFT_IN_PROGRESS\",\n        \"comments\": \"\",\n        \"isActive\": true,\n        \"statuteSection\": {\n            \"id\": \"a0211296-3941-43a9-9433-bc1d6d58d942\",\n            \"tenantId\": \"kl\",\n            \"statute\": null,\n            \"sections\": [\n                \"str\"\n            ],\n            \"subsections\": [\n                \"str\"\n            ],\n            \"additionalDetails\": null,\n            \"auditDetails\": {\n                \"createdBy\": \"c1c4a708-afd6-4c9c-91a5-fd6c8517fb39\",\n                \"lastModifiedBy\": \"c1c4a708-afd6-4c9c-91a5-fd6c8517fb39\",\n                \"createdTime\": 1730794124145,\n                \"lastModifiedTime\": 1730794124145\n            },\n            \"strSections\": null,\n            \"strSubsections\": null\n        },\n        \"documents\": [],\n        \"orderDetails\": {\n            \"parties\": [\n                {\n                    \"partyName\": \"Anandu Menon\",\n                    \"partyType\": \"complainant\"\n                },\n                {\n                    \"partyName\": \"radhesh\",\n                    \"partyType\": \"respondent\"\n                },\n                {\n                    \"partyName\": \"Kane Kaniki\",\n                    \"partyType\": \"witness\"\n                }\n            ]\n        },\n        \"additionalDetails\": {\n            \"formdata\": {\n                \"orderType\": {\n                    \"code\": \"undefined\",\n                    \"name\": \"ORDER_TYPE_undefined\",\n                    \"type\": \"undefined\"\n                }\n            },\n            \"isReIssueSummons\": true\n        },\n        \"auditDetails\": {\n            \"createdBy\": \"c1c4a708-afd6-4c9c-91a5-fd6c8517fb39\",\n            \"lastModifiedBy\": \"c1c4a708-afd6-4c9c-91a5-fd6c8517fb39\",\n            \"createdTime\": 1730794124145,\n            \"lastModifiedTime\": 1730977573629\n        },\n        \"workflow\": {\n            \"action\": \"SAVE_DRAFT\",\n            \"comments\": null,\n            \"documents\": [\n                {}\n            ],\n            \"assignes\": null,\n            \"rating\": null\n        }\n    },\n    \"RequestInfo\": {\n        \"apiId\": \"Rainmaker\",\n        \"authToken\": \"a4202e06-6a46-4602-8f05-21c2f063c129\",\n        \"userInfo\": {\n            \"id\": 143,\n            \"uuid\": \"c1c4a708-afd6-4c9c-91a5-fd6c8517fb39\",\n            \"userName\": \"uatJudge01\",\n            \"name\": \"uatJudge01\",\n            \"mobileNumber\": \"1002335566\",\n            \"emailId\": null,\n            \"locale\": null,\n            \"type\": \"EMPLOYEE\",\n            \"roles\": [\n                {\n                    \"name\": \"HEARING_VIEWER\",\n                    \"code\": \"HEARING_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"DEPOSITION_EDITOR\",\n                    \"code\": \"DEPOSITION_EDITOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"WORKFLOW_ABANDON\",\n                    \"code\": \"WORKFLOW_ABANDON\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"ORDER_ESIGN\",\n                    \"code\": \"ORDER_ESIGN\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"Workflow Admin\",\n                    \"code\": \"WORKFLOW_ADMIN\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"DEPOSITION_PUBLISHER\",\n                    \"code\": \"DEPOSITION_PUBLISHER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"TASK_APPROVER\",\n                    \"code\": \"TASK_APPROVER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"HEARING_START\",\n                    \"code\": \"HEARING_START\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"HEARING_APPROVER\",\n                    \"code\": \"HEARING_APPROVER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"ORDER_VIEWER\",\n                    \"code\": \"ORDER_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"SUBMISSION_RESPONDER\",\n                    \"code\": \"SUBMISSION_RESPONDER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"ORDER_REASSIGN\",\n                    \"code\": \"ORDER_REASSIGN\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"CASE_EDITOR\",\n                    \"code\": \"CASE_EDITOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"APPLICATION_APPROVER\",\n                    \"code\": \"APPLICATION_APPROVER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"TASK_CREATOR\",\n                    \"code\": \"TASK_CREATOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"HEARING_DATE_REQUESTOR\",\n                    \"code\": \"HEARING_DATE_REQUESTOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"Employee\",\n                    \"code\": \"EMPLOYEE\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"ORDER_DELETE\",\n                    \"code\": \"ORDER_DELETE\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"CASE_VIEWER\",\n                    \"code\": \"CASE_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"APPLICATION_REJECTOR\",\n                    \"code\": \"APPLICATION_REJECTOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"TASK_EDITOR\",\n                    \"code\": \"TASK_EDITOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"ORDER_APPROVER\",\n                    \"code\": \"ORDER_APPROVER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"HEARING_CLOSER\",\n                    \"code\": \"HEARING_CLOSER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"ORDER_CREATOR\",\n                    \"code\": \"ORDER_CREATOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"JUDGE_ROLE\",\n                    \"code\": \"JUDGE_ROLE\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"CASE_APPROVER\",\n                    \"code\": \"CASE_APPROVER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"DEPOSITION_CREATOR\",\n                    \"code\": \"DEPOSITION_CREATOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"SUBMISSION_APPROVER\",\n                    \"code\": \"SUBMISSION_APPROVER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"TASK_UPDATOR\",\n                    \"code\": \"TASK_UPDATOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"TASK_VIEWER\",\n                    \"code\": \"TASK_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"HEARING_SCHEDULER\",\n                    \"code\": \"HEARING_SCHEDULER\",\n                    \"tenantId\": \"kl\"\n                }\n            ],\n            \"active\": true,\n            \"tenantId\": \"kl\",\n            \"permanentCity\": null\n        },\n        \"msgId\": \"1730977593273|en_IN\",\n        \"plainAccessRequest\": {}\n    }\n}"
 				},
 				"url": {
-					"raw": "{{local}}/order/v1/update",
+					"raw": "https://dristi-kerala-uat.pucar.org/order/v1/update?tenantId=kl&_=1730977593273",
+					"protocol": "https",
 					"host": [
-						"{{local}}"
+						"dristi-kerala-uat",
+						"pucar",
+						"org"
 					],
 					"path": [
 						"order",
 						"v1",
 						"update"
+					],
+					"query": [
+						{
+							"key": "tenantId",
+							"value": "kl"
+						},
+						{
+							"key": "_",
+							"value": "1730977593273"
+						}
 					]
 				}
 			},
@@ -164,48 +143,32 @@
 				"method": "POST",
 				"header": [
 					{
-						"key": "Accept",
+						"key": "accept",
 						"value": "application/json, text/plain, */*"
 					},
 					{
-						"key": "Accept-Language",
+						"key": "accept-language",
 						"value": "en-GB,en-US;q=0.9,en;q=0.8"
 					},
 					{
-						"key": "Connection",
-						"value": "keep-alive"
-					},
-					{
-						"key": "Content-Type",
+						"key": "content-type",
 						"value": "application/json;charset=UTF-8"
 					},
 					{
-						"key": "Origin",
-						"value": "http://localhost:3000"
+						"key": "origin",
+						"value": "https://dristi-kerala-uat.pucar.org"
 					},
 					{
-						"key": "Referer",
-						"value": "http://localhost:3000/digit-ui/employee/dristi/registration-requests/details/CLERK-2024-04-29-000123?individualId=IND-2024-04-29-000144&isAction=true"
+						"key": "priority",
+						"value": "u=1, i"
 					},
 					{
-						"key": "Sec-Fetch-Dest",
-						"value": "empty"
-					},
-					{
-						"key": "Sec-Fetch-Mode",
-						"value": "cors"
-					},
-					{
-						"key": "Sec-Fetch-Site",
-						"value": "same-origin"
-					},
-					{
-						"key": "User-Agent",
-						"value": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
+						"key": "referer",
+						"value": "https://dristi-kerala-uat.pucar.org/digit-ui/citizen/dristi/home/view-case?caseId=1b1db1f8-670a-449b-86c7-9cd3525a15f8&filingNumber=KL-000105-2024&tab=Overview"
 					},
 					{
 						"key": "sec-ch-ua",
-						"value": "\"Google Chrome\";v=\"123\", \"Not:A-Brand\";v=\"8\", \"Chromium\";v=\"123\""
+						"value": "\"Not?A_Brand\";v=\"99\", \"Chromium\";v=\"130\""
 					},
 					{
 						"key": "sec-ch-ua-mobile",
@@ -214,28 +177,53 @@
 					{
 						"key": "sec-ch-ua-platform",
 						"value": "\"Linux\""
+					},
+					{
+						"key": "sec-fetch-dest",
+						"value": "empty"
+					},
+					{
+						"key": "sec-fetch-mode",
+						"value": "cors"
+					},
+					{
+						"key": "sec-fetch-site",
+						"value": "same-origin"
+					},
+					{
+						"key": "user-agent",
+						"value": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
 					}
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"RequestInfo\": {\n        \"apiId\": \"Rainmaker\",\n        \"authToken\": \"f8b382b0-ed28-450d-98c7-4bf143145992\",\n        \"userInfo\": {\n            \"id\": 805,\n            \"userName\": \"devorder22\",\n            \"salutation\": \"Ms\",\n            \"name\": \"mustak\",\n            \"gender\": \"MALE\",\n            \"mobileNumber\": \"1234567890\",\n            \"alternatemobilenumber\": null,\n            \"emailId\": \"xyz@egovernments.org\",\n            \"altContactNumber\": \"\",\n            \"pan\": \"VFGGC5624P\",\n            \"aadhaarNumber\": \"96a70\",\n            \"permanentAddress\": \"Dawakhana\",\n            \"permanentCity\": \"Kaikoo\",\n            \"permanentPinCode\": \"111111\",\n            \"correspondenceAddress\": \"correAddress\",\n            \"correspondenceCity\": \"banglore\",\n            \"correspondencePinCode\": \"123456\",\n            \"active\": true,\n            \"locale\": \"string\",\n            \"type\": \"EMPLOYEE\",\n            \"accountLocked\": false,\n            \"accountLockedDate\": null,\n            \"fatherOrHusbandName\": \"Palash\",\n            \"relationship\": null,\n            \"signature\": \"\",\n            \"bloodGroup\": \"O+\",\n            \"photo\": \"a8a6cf1e-c84d-4a0c-b2d5-57ec8711ba25\",\n            \"identificationMark\": \"Wears spects\",\n            \"createdBy\": 32,\n            \"password\": null,\n            \"otpReference\": null,\n            \"lastModifiedBy\": 32,\n            \"tenantId\": \"pg\",\n            \"roles\": [\n                {\n                    \"code\": \"ORDER_APPROVER\",\n                    \"name\": \"ORDER_APPROVER\",\n                    \"tenantId\": \"pg\"\n                },\n                {\n                    \"code\": \"ORDER_CREATOR\",\n                    \"name\": \"ORDER_CREATOR\",\n                    \"tenantId\": \"pg\"\n                }\n            ],\n            \"uuid\": \"8fc6afa4-fb6e-402d-8bd9-f3ac69c12d6e\",\n            \"createdDate\": \"22-05-2024 16:10:18\",\n            \"lastModifiedDate\": \"22-05-2024 16:10:18\",\n            \"dob\": \"08/08/1999\",\n            \"pwdExpiryDate\": \"20-08-2024 16:10:18\"\n        },\n        \"msgId\": \"1714385569773|en_IN\",\n        \"plainAccessRequest\": {}\n    },\n    \"tenantId\": \"pg\",\n    \"criteria\": {\n        \"status\":[\n            \"DRAFT_IN_PROGRESS\",\"PUBLISHED\"\n            ]\n       // \"orderNumber\": \"ORDER-NO-2024-07-12-001312\"\n       //   \"filingNumber\": \"F-C.1973.002-2024-001044\"\n           //  \"id\": \"7b28b3de-003f-4dd0-ae20-42a789f2dc64\"\n        // \"applicationNumber\":  \"CLERK-2024-04-29-000124\"\n    },\n    \"pagination\": {\n        \"limit\": 1,\n        \"offset\": 0\n    }\n}"
+					"raw": "{\n    \"criteria\": {\n        \"filingNumber\": \"KL-000105-2024\",\n        \"tenantId\": \"kl\"\n    },\n    \"RequestInfo\": {\n        \"apiId\": \"Rainmaker\",\n        \"authToken\": \"9e737b13-14d2-45e7-8b96-09de66952e81\",\n        \"msgId\": \"1730970507148|en_IN\",\n        \"plainAccessRequest\": {}\n    }\n}"
 				},
 				"url": {
-					"raw": "{{local}}/order/v1/search",
+					"raw": "https://dristi-kerala-uat.pucar.org/order/v1/search?_=1730970507148",
+					"protocol": "https",
 					"host": [
-						"{{local}}"
+						"dristi-kerala-uat",
+						"pucar",
+						"org"
 					],
 					"path": [
 						"order",
 						"v1",
 						"search"
+					],
+					"query": [
+						{
+							"key": "_",
+							"value": "1730970507148"
+						}
 					]
 				}
 			},
 			"response": []
 		},
 		{
-			"name": "Exists Order",
+			"name": "Exist Order",
 			"request": {
 				"method": "POST",
 				"header": [
@@ -294,33 +282,119 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"RequestInfo\": {\n        \"apiId\": \"Rainmaker\",\n      \"authToken\": \"7a664d00-ed54-45f5-94b5-60c1a0b3ce66\",\n        \"userInfo\":         {\n            \"id\": 805,\n            \"userName\": \"devorder22\",\n            \"salutation\": \"Ms\",\n            \"name\": \"mustak\",\n            \"gender\": \"MALE\",\n            \"mobileNumber\": \"1234567890\",\n            \"alternatemobilenumber\": null,\n            \"emailId\": \"xyz@egovernments.org\",\n            \"altContactNumber\": \"\",\n            \"pan\": \"VFGGC5624P\",\n            \"aadhaarNumber\": \"96a70\",\n            \"permanentAddress\": \"Dawakhana\",\n            \"permanentCity\": \"Kaikoo\",\n            \"permanentPinCode\": \"111111\",\n            \"correspondenceAddress\": \"correAddress\",\n            \"correspondenceCity\": \"banglore\",\n            \"correspondencePinCode\": \"123456\",\n            \"active\": true,\n            \"locale\": \"string\",\n            \"type\": \"EMPLOYEE\",\n            \"accountLocked\": false,\n            \"accountLockedDate\": null,\n            \"fatherOrHusbandName\": \"Palash\",\n            \"relationship\": null,\n            \"signature\": \"\",\n            \"bloodGroup\": \"O+\",\n            \"photo\": \"a8a6cf1e-c84d-4a0c-b2d5-57ec8711ba25\",\n            \"identificationMark\": \"Wears spects\",\n            \"createdBy\": 32,\n            \"password\": null,\n            \"otpReference\": null,\n            \"lastModifiedBy\": 32,\n            \"tenantId\": \"pg\",\n            \"roles\": [\n                {\n                    \"code\": \"ORDER_APPROVER\",\n                    \"name\": \"ORDER_APPROVER\",\n                    \"tenantId\": \"pg\"\n                },\n                {\n                    \"code\": \"ORDER_CREATOR\",\n                    \"name\": \"ORDER_CREATOR\",\n                    \"tenantId\": \"pg\"\n                }\n            ],\n            \"uuid\": \"8fc6afa4-fb6e-402d-8bd9-f3ac69c12d6e\",\n            \"createdDate\": \"22-05-2024 16:10:18\",\n            \"lastModifiedDate\": \"22-05-2024 16:10:18\",\n            \"dob\": \"08/08/1999\",\n            \"pwdExpiryDate\": \"20-08-2024 16:10:18\"\n        },\n        \"msgId\": \"1714385569773|en_IN\",\n        \"plainAccessRequest\": {}\n    },\n    \"tenantId\":\"pg\",\n    \"orderList\":[{\n         \"orderId\": \"17c9d921-d67b-4ed6-955a-570a335a7baf\"\n    //   \"filingNumber\":\"F-C.1973.002-2024-000512\",\n    //  \"cnrNumber\":\"F-C.1973.002-2024-000130\",\n  // \"orderNumber\":\"pg\"\n  //    \"applicationNumber\": \"CLERK-2024-04-29-000124\"\n    }]\n}"
+					"raw": "{\n    \"RequestInfo\": {\n        \"apiId\": \"Rainmaker\",\n        \"authToken\": \"a4202e06-6a46-4602-8f05-21c2f063c129\",\n        \"msgId\": \"1730970507148|en_IN\",\n        \"plainAccessRequest\": {}\n    },\n    \"tenantId\": \"kl\",\n    \"orderList\": [\n        {\n            \"filingNumber\": \"KL-000105-2024\",\n            \"tenantId\": \"kl\"\n        }\n    ],\n    \"pagination\": {\n        \"limit\": 10,\n        \"offSet\": 0,\n        \"sortBy\": \"\",\n        \"order\": {}\n    }\n}"
 				},
 				"url": {
-					"raw": "{{local}}/order/v1/exists",
+					"raw": "https://dristi-kerala-uat.pucar.org/order/v1/exists",
+					"protocol": "https",
 					"host": [
-						"{{local}}"
+						"dristi-kerala-uat",
+						"pucar",
+						"org"
 					],
 					"path": [
 						"order",
 						"v1",
 						"exists"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Order Pdf",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "accept",
+						"value": "application/json, text/plain, */*"
+					},
+					{
+						"key": "accept-language",
+						"value": "en-GB,en;q=0.9"
+					},
+					{
+						"key": "content-type",
+						"value": "application/json;charset=UTF-8"
+					},
+					{
+						"key": "origin",
+						"value": "https://dristi-kerala-uat.pucar.org"
+					},
+					{
+						"key": "priority",
+						"value": "u=1, i"
+					},
+					{
+						"key": "referer",
+						"value": "https://dristi-kerala-uat.pucar.org/digit-ui/employee/orders/generate-orders?filingNumber=KL-000105-2024&orderNumber=KL-000105-2024-OR6"
+					},
+					{
+						"key": "sec-ch-ua",
+						"value": "\"Not?A_Brand\";v=\"99\", \"Chromium\";v=\"130\""
+					},
+					{
+						"key": "sec-ch-ua-mobile",
+						"value": "?0"
+					},
+					{
+						"key": "sec-ch-ua-platform",
+						"value": "\"Linux\""
+					},
+					{
+						"key": "sec-fetch-dest",
+						"value": "empty"
+					},
+					{
+						"key": "sec-fetch-mode",
+						"value": "cors"
+					},
+					{
+						"key": "sec-fetch-site",
+						"value": "same-origin"
+					},
+					{
+						"key": "user-agent",
+						"value": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"RequestInfo\": {\n        \"authToken\": \"a4202e06-6a46-4602-8f05-21c2f063c129\",\n        \"userInfo\": {\n            \"id\": 143,\n            \"uuid\": \"c1c4a708-afd6-4c9c-91a5-fd6c8517fb39\",\n            \"userName\": \"uatJudge01\",\n            \"name\": \"uatJudge01\",\n            \"mobileNumber\": \"1002335566\",\n            \"emailId\": null,\n            \"locale\": null,\n            \"type\": \"EMPLOYEE\",\n            \"roles\": [\n                {\n                    \"name\": \"HEARING_VIEWER\",\n                    \"code\": \"HEARING_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"DEPOSITION_EDITOR\",\n                    \"code\": \"DEPOSITION_EDITOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"WORKFLOW_ABANDON\",\n                    \"code\": \"WORKFLOW_ABANDON\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"ORDER_ESIGN\",\n                    \"code\": \"ORDER_ESIGN\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"Workflow Admin\",\n                    \"code\": \"WORKFLOW_ADMIN\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"DEPOSITION_PUBLISHER\",\n                    \"code\": \"DEPOSITION_PUBLISHER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"TASK_APPROVER\",\n                    \"code\": \"TASK_APPROVER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"HEARING_START\",\n                    \"code\": \"HEARING_START\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"HEARING_APPROVER\",\n                    \"code\": \"HEARING_APPROVER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"ORDER_VIEWER\",\n                    \"code\": \"ORDER_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"SUBMISSION_RESPONDER\",\n                    \"code\": \"SUBMISSION_RESPONDER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"ORDER_REASSIGN\",\n                    \"code\": \"ORDER_REASSIGN\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"CASE_EDITOR\",\n                    \"code\": \"CASE_EDITOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"APPLICATION_APPROVER\",\n                    \"code\": \"APPLICATION_APPROVER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"TASK_CREATOR\",\n                    \"code\": \"TASK_CREATOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"HEARING_DATE_REQUESTOR\",\n                    \"code\": \"HEARING_DATE_REQUESTOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"Employee\",\n                    \"code\": \"EMPLOYEE\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"ORDER_DELETE\",\n                    \"code\": \"ORDER_DELETE\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"CASE_VIEWER\",\n                    \"code\": \"CASE_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"APPLICATION_REJECTOR\",\n                    \"code\": \"APPLICATION_REJECTOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"TASK_EDITOR\",\n                    \"code\": \"TASK_EDITOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"ORDER_APPROVER\",\n                    \"code\": \"ORDER_APPROVER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"HEARING_CLOSER\",\n                    \"code\": \"HEARING_CLOSER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"ORDER_CREATOR\",\n                    \"code\": \"ORDER_CREATOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"JUDGE_ROLE\",\n                    \"code\": \"JUDGE_ROLE\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"CASE_APPROVER\",\n                    \"code\": \"CASE_APPROVER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"DEPOSITION_CREATOR\",\n                    \"code\": \"DEPOSITION_CREATOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"SUBMISSION_APPROVER\",\n                    \"code\": \"SUBMISSION_APPROVER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"TASK_UPDATOR\",\n                    \"code\": \"TASK_UPDATOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"TASK_VIEWER\",\n                    \"code\": \"TASK_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"HEARING_SCHEDULER\",\n                    \"code\": \"HEARING_SCHEDULER\",\n                    \"tenantId\": \"kl\"\n                }\n            ],\n            \"active\": true,\n            \"tenantId\": \"kl\",\n            \"permanentCity\": null\n        },\n        \"msgId\": \"1730978016647|en_IN\",\n        \"apiId\": \"Rainmaker\"\n    }\n}"
+				},
+				"url": {
+					"raw": "https://dristi-kerala-uat.pucar.org/egov-pdf/order?tenantId=kl&orderId=bbe8ed4f-0d16-4dd4-ba4c-ef4dac2dfae7&cnrNumber=KLKM520001742024&qrCode=false&orderType=schedule-hearing-date",
+					"protocol": "https",
+					"host": [
+						"dristi-kerala-uat",
+						"pucar",
+						"org"
+					],
+					"path": [
+						"egov-pdf",
+						"order"
 					],
 					"query": [
 						{
-							"key": "applicationNumber",
-							"value": "ORD-2024-04-29-000124",
-							"disabled": true
+							"key": "tenantId",
+							"value": "kl"
 						},
 						{
-							"key": "filingNumber",
-							"value": "Surt-546",
-							"disabled": true
+							"key": "orderId",
+							"value": "bbe8ed4f-0d16-4dd4-ba4c-ef4dac2dfae7"
 						},
 						{
 							"key": "cnrNumber",
-							"value": "Surt-546",
-							"disabled": true
+							"value": "KLKM520001742024"
+						},
+						{
+							"key": "qrCode",
+							"value": "false"
+						},
+						{
+							"key": "orderType",
+							"value": "schedule-hearing-date"
 						}
 					]
 				}
