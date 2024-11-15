@@ -102,8 +102,8 @@ public class TaskQueryBuilder {
             firstCriteria = addTaskCriteria(status, query, firstCriteria, "task.status = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(orderId != null ? orderId.toString() : null, query, firstCriteria, "task.orderid = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(cnrNumber, query, firstCriteria, "task.cnrnumber = ?", preparedStmtList, preparedStmtArgList);
-            firstCriteria = addTaskCriteriaExist(referenceId, query, firstCriteria, "task.referenceid = ?", preparedStmtList);
-            firstCriteria = addTaskCriteriaExist(state, query, firstCriteria, "task.state = ?", preparedStmtList);
+            firstCriteria = addTaskCriteria(referenceId, query, firstCriteria, "task.referenceid = ?", preparedStmtList,preparedStmtArgList);
+            firstCriteria = addTaskCriteria(state, query, firstCriteria, "task.state = ?", preparedStmtList,preparedStmtArgList);
             addTaskCriteria(taskNumber, query, firstCriteria, "task.tasknumber = ?", preparedStmtList, preparedStmtArgList);
 
             return query.toString();
