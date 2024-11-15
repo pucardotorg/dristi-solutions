@@ -50,8 +50,36 @@ router.post(
 );
 
 
+router.post(
+  "/process-case-bundle",
+  asyncMiddleware(async (req, res) => {
+    const { tenantId, caseId, index, state, requestInfo } = req.body;
 
+    // Validate required inputs
+    if (!tenantId || !caseId || !index || !state || !requestInfo) {
+      return res.status(400).json({
+        message: "Missing required fields: 'tenantId', 'caseId', 'index', 'state', or 'requestInfo'.",
+      });
+    }
 
+    try {
+      // Process the case bundle
+      const updatedIndex = await processCaseBundle(tenantId, caseId, index, state, requestInfo);
+
+      // Return the updated index
+      res.status(200).json({
+        message: "Case bundle processed successfully",
+        index: updatedIndex,
+      });
+    } catch (error) {
+      console.error("Error processing case bundle:", error);
+      res.status(500).json({
+        message: "An error occurred while processing the case bundle.",
+        error: error.message,
+      });
+    }
+  })
+);
 
 router.post(
   "/combine-documents",
