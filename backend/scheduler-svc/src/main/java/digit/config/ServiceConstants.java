@@ -64,4 +64,8 @@ public class ServiceConstants {
 
     public static final String INTERNALMICROSERVICEUSER_TYPE = "SYSTEM";
 
+    public static final String FLOW_JAC = "flow_jac";
+
+    public static final String msgId = "1730882648558|en_IN";
+
 }
