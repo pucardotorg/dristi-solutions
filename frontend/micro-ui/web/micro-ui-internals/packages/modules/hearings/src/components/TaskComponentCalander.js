@@ -200,7 +200,7 @@ const TaskComponentCalander = ({ isLitigant, uuid, filingNumber, inCase = false 
           onClick={handleDownload}
         >
           <DownloadIcon />
-          <div style={{ fontWeight: 700, fontSize: "16px", marginLeft: "10px" }}>{t("DOWNLAOD_CAUSE_LIST")}</div>
+          <div style={{ fontWeight: 700, fontSize: "16px", marginLeft: "10px" }}>{t("DOWNLOAD_CAUSE_LIST")}</div>
         </button>
       </div>
       <div style={{ width: "100%", padding: "24px" }}>

@@ -204,7 +204,7 @@ export const taskTypes = [
   { code: "order-default", name: "CS_ORDER" },
   { code: "application-voluntary-submission", name: "VOLUNTARY_SUBMISSION" },
   { code: "application-order-submission-feedback", name: "ORDER_SUBMISSION_FEEDBACK" },
-  { code: "application-order-submission-default", name: "ORDER_SUBMISSSION" },
+  { code: "application-order-submission-default", name: "ORDER_SUBMISSION" },
   { code: "artifact-default", name: "EVIDENCE" },
   { code: "task-summons", name: "TASK_SUMMONS" },
 ];
