@@ -36,6 +36,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static digit.config.ServiceConstants.DELAY_CONDONATION;
 import static digit.models.coremodels.user.enums.UserType.CITIZEN;
 
 @Service
@@ -615,7 +616,8 @@ public class CauseListService {
             if(applicationList != null) {
                 List<String> applicationNumbers = new ArrayList<>();
                 for (JsonNode application : applicationList) {
-                    applicationNumbers.add(application.get("applicationNumber").asText());
+                    if(!DELAY_CONDONATION.equalsIgnoreCase(application.get("applicationType").asText()))
+                     applicationNumbers.add(application.get("applicationNumber").asText());
                 }
                 causeList.setApplicationNumbers(applicationNumbers);
             }
