@@ -757,7 +757,7 @@ const SubmissionsCreate = ({ path }) => {
             },
             filingNumber: response?.application?.filingNumber,
             assignedTo: response?.application?.additionalDetails?.respondingParty?.flatMap((item) => item?.uuid?.map((u) => ({ uuid: u }))),
-            state: "PENDING_REVIEW",
+            state: "PENDINGRESPONSE",
             referenceId: response?.application?.applicationNumber,
             taskType: "PENDING_TASK",
             tenantId: "kl",
@@ -769,6 +769,7 @@ const SubmissionsCreate = ({ path }) => {
     } catch (error) {
       setLoader(false);
     }
+    setLoader(false);
   };
 
   const handleCloseSignaturePopup = () => {
