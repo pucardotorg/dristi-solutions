@@ -189,7 +189,7 @@ public class IndexerUtils {
         if (isGeneric) {
             log.info("creating pending task from generic task");
             Object task = taskUtil.getTask(requestInfo, tenantId, null, referenceId, status);
-            JSONArray assignToList = JsonPath.read(task.toString(), ASSIGN_TO_PATH);
+            net.minidev.json.JSONArray assignToList = JsonPath.read(task.toString(), ASSIGN_TO_PATH);
             assignedTo = assignToList.toString();
             assignedRole =  new JSONArray().toString();
         }
