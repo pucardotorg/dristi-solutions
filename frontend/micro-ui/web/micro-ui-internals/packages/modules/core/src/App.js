@@ -3,7 +3,7 @@ import { Redirect, Route, Switch, useHistory, useLocation } from "react-router-d
 import CitizenApp from "./pages/citizen";
 import EmployeeApp from "./pages/employee";
 import { useTranslation } from "react-i18next";
-
+import TopBarSideBar from "./components/TopBarSideBar";
 const styles = {
   container: {
     display: "flex",
@@ -97,6 +97,16 @@ export const DigitApp = ({ stateCode, modules, appTenants, logoUrl, initData ,de
   if (isMobileView) {
     return  (
       <div style={styles.container}>
+         <TopBarSideBar
+        t={t}
+        stateInfo={stateInfo}
+        userDetails={userDetails}
+        cityDetails={cityDetails}
+        mobileView={false}
+        handleUserDropdownSelection={handleUserDropdownSelection}
+        logoUrl={logoUrl}
+        showSidebar={true}
+      />
        <h1 style={styles.text}>{t("MOBILE_VIEW_ERROR")}</h1>
       </div>
     );
