@@ -129,7 +129,9 @@ public class TaskRepository {
     public TaskExists checkTaskExists(TaskExists taskExists) {
         try {
             List<Object> preparedStmtList = new ArrayList<>();
-            if (taskExists.getCnrNumber() == null && taskExists.getFilingNumber() == null && taskExists.getTaskId() == null) {
+
+            //todo change this to annotation validation
+            if (taskExists.getCnrNumber() == null && taskExists.getFilingNumber() == null && taskExists.getTaskId() == null && taskExists.getReferenceId()==null) {
                 taskExists.setExists(false);
             } else {
                 String taskExistQuery = queryBuilder.checkTaskExistQuery(taskExists.getCnrNumber(), taskExists.getFilingNumber(), taskExists.getTaskId(),taskExists.getReferenceId(),taskExists.getState(), preparedStmtList);
