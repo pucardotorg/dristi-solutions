@@ -65,6 +65,9 @@ public class Configuration {
 	@Value("${egov.mdms.schema.search.endpoint}")
 	private String mdmsSchemaEndPoint;
 
+	@Value("${schemacode.state.master}")
+	private String stateMasterSchema;
+
 
 	//HRMS
 	@Value("${egov.hrms.host}")

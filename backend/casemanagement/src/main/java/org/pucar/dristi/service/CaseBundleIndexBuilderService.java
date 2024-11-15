@@ -62,7 +62,7 @@ public class CaseBundleIndexBuilderService {
         filters.put("moduleName",moduleName);
         filters.put("businessservice",businessService);
 
-        List<Mdms> mdmsData = mdmsV2Util.fetchMdmsV2Data(requestInfo,tenantID,null,null,"schema",true,filters);
+        List<Mdms> mdmsData = mdmsV2Util.fetchMdmsV2Data(requestInfo,tenantID,null,null,configuration.getStateMasterSchema(),true,filters);
 
         if(mdmsData.isEmpty()){
             return false;
