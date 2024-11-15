@@ -20,7 +20,7 @@ public class AssignedTo {
     @JsonProperty("name")
     private String name = null;
 
-    @JsonProperty("userId")
-    private UUID userId = null;
+    @JsonProperty("uuid")
+    private UUID uuid = null;
 
 }

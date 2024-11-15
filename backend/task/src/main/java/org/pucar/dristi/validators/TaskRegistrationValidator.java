@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.tracer.model.CustomException;
-import org.json.JSONObject;
 import org.pucar.dristi.repository.TaskRepository;
 import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.OrderUtil;
@@ -54,8 +53,11 @@ public class TaskRegistrationValidator {
         if (PENDING_TASK.equalsIgnoreCase(task.getTaskType())) {
 
             JsonNode caseDetails = caseUtil.searchCaseDetails(requestInfo, task.getTenantId(), task.getCnrNumber(), task.getFilingNumber(), null);
-            log.error("user is trying to create task which he is not associated, userInfo:{}",requestInfo.getUserInfo());
-            if (caseDetails.isEmpty()) throw new CustomException(CREATE_TASK_ERR,"you are not allowed to create task");
+            if (caseDetails.isEmpty()) {
+                log.error("user is trying to create task which he is not associated, userInfo:{}", requestInfo.getUserInfo());
+                throw new CustomException(CREATE_TASK_ERR, "you are not allowed to create task");
+
+            }
 
         } else {
             if (isPendingTaskRole) {
