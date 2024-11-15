@@ -58,6 +58,7 @@ import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import DocViewerWrapper from "../../employee/docViewerWrapper";
 import CaseLockModal from "./CaseLockModal";
 import ConfirmCaseDetailsModal from "./ConfirmCaseDetailsModal";
+import { DocumentUploadError } from "../../../Utils/errorUtil";
 
 const OutlinedInfoIcon = () => (
   <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: "absolute", right: -22, top: 0 }}>
@@ -1721,7 +1722,9 @@ function EFilingCases({ path }) {
         }
       } catch (error) {
         // If any error occurs in updateCaseDetails or refetching, handle it here
-        if (extractCodeFromErrorMsg(error) === 413) {
+        if (error instanceof DocumentUploadError) {
+          toast.error(`${t("DOCUMENT_CORRUPTED")} : ${error?.documentType}`);
+        } else if (extractCodeFromErrorMsg(error) === 413) {
           toast.error(t("FAILED_TO_UPLOAD_FILE"));
         } else {
           toast.error(t("SOMETHING_WENT_WRONG"));
@@ -1761,7 +1764,9 @@ function EFilingCases({ path }) {
         toast.success(t("CS_SUCCESSFULLY_SAVED_DRAFT"));
       })
       .catch((error) => {
-        if (extractCodeFromErrorMsg(error) === 413) {
+        if (error instanceof DocumentUploadError) {
+          toast.error(`${t("DOCUMENT_CORRUPTED")} : ${error?.documentType}`);
+        } else if (extractCodeFromErrorMsg(error) === 413) {
           toast.error(t("FAILED_TO_UPLOAD_FILE"));
         } else {
           toast.error(t("SOMETHING_WENT_WRONG"));

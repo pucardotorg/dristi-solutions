@@ -2,6 +2,7 @@ import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
 import { getUserDetails } from "../../../hooks/useGetAccessToken";
 import { DRISTIService } from "../../../services";
 import { combineMultipleFiles } from "../../../Utils";
+import { DocumentUploadError } from "../../../Utils/errorUtil";
 
 import { userTypeOptions } from "../registration/config";
 import { efilingDocumentKeyAndTypeMapping } from "./Config/efilingDocumentKeyAndTypeMapping";
@@ -1027,10 +1028,15 @@ export const updateIndividualUser = async ({ data, documentData, tenantId, indiv
   return response;
 };
 
-const onDocumentUpload = async (fileData, filename, tenantId) => {
+const onDocumentUpload = async (documentType = "Document", fileData, filename, tenantId) => {
   if (fileData?.fileStore) return fileData;
-  const fileUploadRes = await window?.Digit.UploadServices.Filestorage("DRISTI", fileData, tenantId);
-  return { file: fileUploadRes?.data, fileType: fileData.type, filename };
+  console.log("tenantId", tenantId);
+  try {
+    const fileUploadRes = await window?.Digit.UploadServices.Filestorage("DRISTI", fileData, tenantId);
+    return { file: fileUploadRes?.data, fileType: fileData.type, filename };
+  } catch (error) {
+    throw new DocumentUploadError(`Document upload failed: ${error.message}`, documentType);
+  }
 };
 
 const sendDocumentForOcr = async (key, fileStoreId, filingNumber, tenantId, document) => {
@@ -1097,7 +1103,7 @@ export const getAdvocates = (caseDetails) => {
   return litigants;
 };
 
-const documentUploadHandler = async (document, index, prevCaseDetails, data, pageConfig, key, selected, tenantId) => {
+const documentUploadHandler = async (document, index, prevCaseDetails, data, pageConfig, key, selected, tenantId, documentType) => {
   const tempDocList = [];
   let tempFile;
   const isMultipleUpload =
@@ -1108,9 +1114,9 @@ const documentUploadHandler = async (document, index, prevCaseDetails, data, pag
   const oldBouncedChequeFileUpload = prevCaseDetails?.caseDetails?.[selected]?.formdata?.[data?.displayindex]?.data?.[key];
 
   if (document && !document?.fileStore) {
-    const uploadedData = await onDocumentUpload(document, document.name, tenantId);
+    const uploadedData = await onDocumentUpload(documentType, document, document.name, tenantId);
     tempFile = {
-      documentType: uploadedData.fileType || document?.documentType,
+      documentType: documentType,
       fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
       documentName: uploadedData.filename || document?.documentName,
       fileName: pageConfig?.selectDocumentName?.[key],
@@ -1147,7 +1153,7 @@ const documentUploadHandler = async (document, index, prevCaseDetails, data, pag
       },
     });
   } else tempFile = document;
-  return { tempDocList: tempDocList, tempFile: tempFile };
+  return { tempData: tempDocList, tempFile: tempFile };
 };
 
 const fetchBasicUserInfo = async (caseDetails, tenantId) => {
@@ -1203,9 +1209,26 @@ export const updateCaseDetails = async ({
   scrutinyObj,
   caseComplaintDocument,
 }) => {
+  let uploadFailed = false;
+
   const data = {};
   setIsDisabled(true);
-  let tempDocList = [];
+  let tempDocList = structuredClone(caseDetails?.documents || []);
+
+  const updateTempDocListMultiForm = (docList, docTypes) => {
+    const indicesToRemove = tempDocList.map((doc, index) => (docTypes.includes(doc.documentType) ? index : -1)).filter((index) => index !== -1);
+
+    for (let i = indicesToRemove.length - 1; i >= 0; i--) {
+      tempDocList.splice(indicesToRemove[i], 1);
+    }
+    if (docList.length > 0) {
+      for (let i = 0; i < docList.length; i++) {
+        tempDocList.push(docList[i]);
+      }
+    }
+    console.log("casedet", caseDetails, tempDocList);
+  };
+
   const individualId = await fetchBasicUserInfo(prevCaseDetails, tenantId);
 
   function cloneFormDataRemoveIcon(originalFormDataArray) {
@@ -1236,11 +1259,34 @@ export const updateCaseDetails = async ({
       });
       await Promise.all(promises);
     } catch (error) {
+      if (error instanceof DocumentUploadError) {
+        throw error;
+      }
       console.error("Error processing form data: ", error);
       throw error;
     }
   }
   await processFormData();
+
+  const updateCaseDocuments = (key, newDocObj) => {
+    debugger;
+    const index = tempDocList.findIndex((item) => item.documentType === key);
+    console.log("key, newDocObj", key, newDocObj, index, tempDocList);
+    if (newDocObj !== false) {
+      if (index !== -1) {
+        tempDocList[index] = newDocObj;
+      } else {
+        tempDocList.push(newDocObj);
+      }
+    } else {
+      if (index !== -1) {
+        console.log("index", index, key, tempDocList);
+        tempDocList.splice(index, 1);
+      }
+    }
+
+    console.log("tempDocList", tempDocList);
+  };
 
   if (selected === "complainantDetails") {
     let litigants = [];
@@ -1266,6 +1312,7 @@ export const updateCaseDetails = async ({
                 )
               ) {
                 const documentData = await onDocumentUpload(
+                  "COMPLAINANT_ID_PROOF",
                   data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file,
                   data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[0],
                   tenantId
@@ -1317,6 +1364,7 @@ export const updateCaseDetails = async ({
               if (data?.data?.complainantId?.complainantId && data?.data?.complainantVerification?.isUserVerified) {
                 if (data?.data?.complainantId?.verificationType !== "AADHAR") {
                   const documentData = await onDocumentUpload(
+                    "COMPLAINANT_ID_PROOF",
                     data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file,
                     data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[0],
                     tenantId
@@ -1454,6 +1502,7 @@ export const updateCaseDetails = async ({
       );
     }
 
+    let docList = [];
     const newFormData = await Promise.all(
       updatedFormData
         .filter((item) => item.isenabled)
@@ -1465,46 +1514,68 @@ export const updateCaseDetails = async ({
             complainantId: { complainantId: { complainantId: {} } },
           };
           const individualDetails = {};
+          console.log("data?.data", data?.data, Boolean(data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file));
           if (data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file) {
+            console.log("here");
             const uploadedData = await onDocumentUpload(
+              "COMPLAINANT_ID_PROOF",
               data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file,
               data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[0],
               tenantId
             );
+            const doc = {
+              documentType: "COMPLAINANT_ID_PROOF",
+              fileStore: uploadedData.file?.files?.[0]?.fileStoreId || uploadedData?.fileStore,
+              documentName: uploadedData.filename || uploadedData?.documentName,
+            };
             idProof.complainantId.complainantId.complainantId = {
               ID_Proof: [
                 [
                   data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[0],
                   {
-                    file: {
-                      documentType: uploadedData.fileType || uploadedData?.documentType,
-                      fileStore: uploadedData.file?.files?.[0]?.fileStoreId || uploadedData?.fileStore,
-                      documentName: uploadedData.filename || uploadedData?.documentName,
-                    },
+                    file: doc,
                     fileStoreId: uploadedData?.file?.files?.[0]?.fileStoreId || uploadedData?.fileStore,
                   },
                 ],
               ],
             };
+            docList.push(doc);
             individualDetails.document = [uploadedData];
           }
+          // console.log(
+          //   "hm",
+          //   data?.data?.complainantId?.complainantId?.ID_Proof,
+          //   Boolean(data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file?.fileStore)
+          // );
+          // if (data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file?.fileStore) {
+          //   console.log("here1");
+          //   const doc = data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file;
+          //   docList.push(doc);
+          // }
           if (data?.data?.companyDetailsUpload?.document) {
             documentData.companyDetailsUpload = {};
             documentData.companyDetailsUpload.document = await Promise.all(
               data?.data?.companyDetailsUpload?.document?.map(async (document) => {
                 if (document) {
-                  const uploadedData = await onDocumentUpload(document, document.name, tenantId);
-                  return {
-                    documentType: uploadedData.fileType || document?.documentType,
+                  const documentType = "AUTHORIZED_COMPLAINANT_COMPANY_REPRESENTATIVE";
+                  const uploadedData = await onDocumentUpload(documentType, document, document.name, tenantId);
+                  const doc = {
+                    documentType,
                     fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
                     documentName: uploadedData.filename || document?.documentName,
                     fileName: "Company documents",
                   };
+                  // updateCaseDocuments("AUTHORIZED_COMPLAINANT_COMPANY_REPRESENTATIVE", doc);
+                  docList.push(doc);
+                  return doc;
                 }
               })
             );
             setFormDataValue("companyDetailsUpload", documentData?.companyDetailsUpload);
           }
+          console.log("docList", docList);
+          const complainantDocTypes = ["COMPLAINANT_ID_PROOF", "AUTHORIZED_COMPLAINANT_COMPANY_REPRESENTATIVE"];
+          updateTempDocListMultiForm(docList, complainantDocTypes);
           return {
             ...data,
             data: {
@@ -1546,6 +1617,7 @@ export const updateCaseDetails = async ({
     };
   }
   if (selected === "respondentDetails") {
+    let docList = [];
     const newFormData = await Promise.all(
       updatedFormData
         .filter((item) => item.isenabled)
@@ -1554,6 +1626,8 @@ export const updateCaseDetails = async ({
             inquiryAffidavitFileUpload: null,
             companyDetailsUpload: null,
           };
+          console.log("data.data", data?.data);
+          // console.log("data?.data?.inquiryAffidavitFileUpload", data?.data?.inquiryAffidavitFileUpload, data?.data?.companyDetailsUpload);
           if (
             data?.data?.inquiryAffidavitFileUpload?.document &&
             Array.isArray(data?.data?.inquiryAffidavitFileUpload?.document) &&
@@ -1563,7 +1637,8 @@ export const updateCaseDetails = async ({
             documentData.inquiryAffidavitFileUpload.document = await Promise.all(
               data?.data?.inquiryAffidavitFileUpload?.document?.map(async (document) => {
                 if (document) {
-                  const uploadedData = await onDocumentUpload(document, document.name, tenantId);
+                  const documentType = "INQUIRY_AFFIDAVIT_S225";
+                  const uploadedData = await onDocumentUpload(documentType, document, document.name, tenantId);
                   if (uploadedData.file?.files?.[0]?.fileStoreId && efilingDocumentKeyAndTypeMapping["inquiryAffidavitFileUpload"]) {
                     sendDocumentForOcr(
                       "inquiryAffidavitFileUpload",
@@ -1573,17 +1648,45 @@ export const updateCaseDetails = async ({
                       document
                     );
                   }
-                  return {
-                    documentType: uploadedData.fileType || document?.documentType,
+                  const doc = {
+                    documentType,
                     fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
                     documentName: uploadedData.filename || document?.documentName,
                     fileName: "Affidavit documents",
                   };
+                  // updateCaseDocuments("INQUIRY_AFFIDAVIT_S225", doc);
+                  docList.push(doc);
+                  return doc;
                 }
               })
             );
             setFormDataValue("inquiryAffidavitFileUpload", documentData?.inquiryAffidavitFileUpload);
           }
+          //  else if (!data?.data?.inquiryAffidavitFileUpload?.document) {
+          //   updateCaseDocuments("INQUIRY_AFFIDAVIT_S225", false);
+          // }
+          // if (
+          //   data?.data?.companyDetailsUpload?.document &&
+          //   Array.isArray(data?.data?.companyDetailsUpload?.document) &&
+          //   data?.data?.companyDetailsUpload?.document.length > 0
+          // ) {
+          //   documentData.companyDetailsUpload = {};
+          //   documentData.companyDetailsUpload.document = await Promise.all(
+          //     data?.data?.companyDetailsUpload?.document?.map(async (document) => {
+          //       if (document) {
+          //         const uploadedData = await onDocumentUpload(document, document.name, tenantId);
+          //         const doc = {
+          //           documentType: "AUTHORIZED_ACCUSED_COMPANY_REPRESENTATIVE",
+          //           fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
+          //           documentName: uploadedData.filename || document?.documentName,
+          //           fileName: "Affidavit documents",
+          //         };
+          //         updateCaseDocuments("AUTHORIZED_ACCUSED_COMPANY_REPRESENTATIVE", doc);
+          //         return doc;
+          //       }
+          //     })
+          //   );
+          // }
           if (
             data?.data?.companyDetailsUpload?.document &&
             Array.isArray(data?.data?.companyDetailsUpload?.document) &&
@@ -1593,38 +1696,27 @@ export const updateCaseDetails = async ({
             documentData.companyDetailsUpload.document = await Promise.all(
               data?.data?.companyDetailsUpload?.document?.map(async (document) => {
                 if (document) {
-                  const uploadedData = await onDocumentUpload(document, document.name, tenantId);
-                  return {
-                    documentType: uploadedData.fileType || document?.documentType,
-                    fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
-                    documentName: uploadedData.filename || document?.documentName,
-                    fileName: "Affidavit documents",
-                  };
-                }
-              })
-            );
-          }
-          if (
-            data?.data?.companyDetailsUpload?.document &&
-            Array.isArray(data?.data?.companyDetailsUpload?.document) &&
-            data?.data?.companyDetailsUpload?.document.length > 0
-          ) {
-            documentData.companyDetailsUpload = {};
-            documentData.companyDetailsUpload.document = await Promise.all(
-              data?.data?.companyDetailsUpload?.document?.map(async (document) => {
-                if (document) {
-                  const uploadedData = await onDocumentUpload(document, document.name, tenantId);
-                  return {
-                    documentType: uploadedData.fileType || document?.documentType,
+                  const documentType = "AUTHORIZED_ACCUSED_COMPANY_REPRESENTATIVE";
+                  const uploadedData = await onDocumentUpload(documentType, document, document.name, tenantId);
+                  const doc = {
+                    documentType,
                     fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
                     documentName: uploadedData.filename || document?.documentName,
                     fileName: "Company documents",
                   };
+                  // updateCaseDocuments("AUTHORIZED_ACCUSED_COMPANY_REPRESENTATIVE", doc);
+                  docList.push(doc);
+                  return doc;
                 }
               })
             );
             setFormDataValue("companyDetailsUpload", documentData?.companyDetailsUpload);
           }
+          // else if (!data?.data?.companyDetailsUpload?.document) {
+          //   updateCaseDocuments("AUTHORIZED_ACCUSED_COMPANY_REPRESENTATIVE", false);
+          // }
+          const respondentDocTypes = ["INQUIRY_AFFIDAVIT_S225", "AUTHORIZED_ACCUSED_COMPANY_REPRESENTATIVE"];
+          updateTempDocListMultiForm(docList, respondentDocTypes);
           return {
             ...data,
             data: {
@@ -1653,6 +1745,7 @@ export const updateCaseDetails = async ({
     };
   }
   if (selected === "chequeDetails") {
+    let docList = [];
     const infoBoxData = {
       header: "CS_YOU_HAVE_CONFIRMED",
       scrutinyHeader: "CS_COMPLAINANT_HAVE_CONFIRMED",
@@ -1668,11 +1761,23 @@ export const updateCaseDetails = async ({
             depositChequeFileUpload: null,
             returnMemoFileUpload: null,
           };
+          const documentTypeMapping = {
+            bouncedChequeFileUpload: "BOUNCED_CHEQUE",
+            depositChequeFileUpload: "CHEQUE_DEPOSIT_PROOF",
+            returnMemoFileUpload: "RETURN_MEMO",
+          };
+
+          const fileNotUploadedKeys = Object.keys(documentData).filter((key) => !data?.data?.[key]?.document);
+
+          for (let key of fileNotUploadedKeys) {
+            // updateCaseDocuments(documentTypeMapping[key], false);
+          }
+          console.log("data?.data?.bouncedChequeFileUpload", data?.data?.bouncedChequeFileUpload);
           if (data?.data?.bouncedChequeFileUpload?.document) {
             documentData.bouncedChequeFileUpload = {};
             documentData.bouncedChequeFileUpload.document = await Promise.all(
               data?.data?.bouncedChequeFileUpload?.document?.map(async (document, index) => {
-                const { tempDocList: tempData, tempFile } = await documentUploadHandler(
+                const { tempData, tempFile } = await documentUploadHandler(
                   document,
                   index,
                   prevCaseDetails,
@@ -1680,9 +1785,12 @@ export const updateCaseDetails = async ({
                   pageConfig,
                   "bouncedChequeFileUpload",
                   selected,
-                  tenantId
+                  tenantId,
+                  "BOUNCED_CHEQUE"
                 );
-                tempDocList = [...tempDocList, ...tempData];
+                // tempDocList = [...tempDocList, ...tempData];
+                // updateCaseDocuments("BOUNCED_CHEQUE", tempFile);
+                docList.push(tempFile);
                 return tempFile;
               })
             );
@@ -1691,7 +1799,7 @@ export const updateCaseDetails = async ({
             documentData.depositChequeFileUpload = {};
             documentData.depositChequeFileUpload.document = await Promise.all(
               data?.data?.depositChequeFileUpload?.document?.map(async (document, index) => {
-                const { tempDocList: tempData, tempFile } = await documentUploadHandler(
+                const { tempData, tempFile } = await documentUploadHandler(
                   document,
                   index,
                   prevCaseDetails,
@@ -1699,9 +1807,13 @@ export const updateCaseDetails = async ({
                   pageConfig,
                   "depositChequeFileUpload",
                   selected,
-                  tenantId
+                  tenantId,
+                  "CHEQUE_DEPOSIT_PROOF"
                 );
-                tempDocList = [...tempDocList, ...tempData];
+                // tempDocList = [...tempDocList, ...tempData];
+                // updateCaseDocuments("CHEQUE_DEPOSIT_PROOF", tempFile);
+                docList.push(tempFile);
+                console.log("error12", tempFile);
                 return tempFile;
               })
             );
@@ -1710,7 +1822,7 @@ export const updateCaseDetails = async ({
             documentData.returnMemoFileUpload = {};
             documentData.returnMemoFileUpload.document = await Promise.all(
               data?.data?.returnMemoFileUpload?.document?.map(async (document, index) => {
-                const { tempDocList: tempData, tempFile } = await documentUploadHandler(
+                const { tempData, tempFile } = await documentUploadHandler(
                   document,
                   index,
                   prevCaseDetails,
@@ -1718,9 +1830,12 @@ export const updateCaseDetails = async ({
                   pageConfig,
                   "returnMemoFileUpload",
                   selected,
-                  tenantId
+                  tenantId,
+                  "RETURN_MEMO"
                 );
-                tempDocList = [...tempDocList, ...tempData];
+                // tempDocList = [...tempDocList, ...tempData];
+                // updateCaseDocuments("RETURN_MEMO", tempFile);
+                docList.push(tempFile);
                 return tempFile;
               })
             );
@@ -1736,6 +1851,10 @@ export const updateCaseDetails = async ({
           ) {
             infoBoxData.data.splice(0, 0, "CS_SIX_MONTH_BEFORE_DEPOSIT_TEXT");
           }
+
+          const chequeDetailsDocTypes = ["BOUNCED_CHEQUE", "CHEQUE_DEPOSIT_PROOF", "RETURN_MEMO"];
+
+          updateTempDocListMultiForm(docList, chequeDetailsDocTypes);
 
           return {
             ...data,
@@ -1779,7 +1898,7 @@ export const updateCaseDetails = async ({
             debtDocumentData.debtLiabilityFileUpload = {};
             debtDocumentData.debtLiabilityFileUpload.document = await Promise.all(
               data?.data?.debtLiabilityFileUpload?.document?.map(async (document, index) => {
-                const { tempDocList: tempData, tempFile } = await documentUploadHandler(
+                const { tempData, tempFile } = await documentUploadHandler(
                   document,
                   index,
                   prevCaseDetails,
@@ -1787,13 +1906,16 @@ export const updateCaseDetails = async ({
                   pageConfig,
                   "debtLiabilityFileUpload",
                   selected,
-                  tenantId
+                  tenantId,
+                  "DEBT_LIABILITY"
                 );
-                tempDocList = [...tempDocList, ...tempData];
+                updateCaseDocuments("DEBT_LIABILITY", tempFile);
                 return tempFile;
               })
             );
             setFormDataValue("debtLiabilityFileUpload", debtDocumentData?.debtLiabilityFileUpload);
+          } else {
+            updateCaseDocuments("DEBT_LIABILITY", false);
           }
           return {
             ...data,
@@ -1835,6 +1957,7 @@ export const updateCaseDetails = async ({
     };
   }
   if (selected === "demandNoticeDetails") {
+    let docList = [];
     const newFormData = await Promise.all(
       updatedFormData
         .filter((item) => item.isenabled)
@@ -1846,6 +1969,13 @@ export const updateCaseDetails = async ({
             proofOfReplyFileUpload: null,
           };
 
+          const documentTypeMapping = {
+            legalDemandNoticeFileUpload: "DEMAND_NOTICE",
+            proofOfDispatchFileUpload: "PROOF_OF_DISPATCH",
+            proofOfAcknowledgmentFileUpload: "PROOF_OF_ACKNOWLEDGEMENT_OF_DEMAND_NOTICE",
+            proofOfReplyFileUpload: "PROOF_OF_REPLY_DEMAND_NOTICE",
+          };
+
           const fileUploadKeys = Object.keys(demandNoticeDocumentData).filter((key) => data?.data?.[key]?.document);
 
           await Promise.all(
@@ -1854,7 +1984,7 @@ export const updateCaseDetails = async ({
                 demandNoticeDocumentData[key] = demandNoticeDocumentData[key] || {};
                 demandNoticeDocumentData[key].document = await Promise.all(
                   data?.data?.[key]?.document?.map(async (document, index) => {
-                    const { tempDocList: tempData, tempFile } = await documentUploadHandler(
+                    const { tempData, tempFile } = await documentUploadHandler(
                       document,
                       index,
                       prevCaseDetails,
@@ -1862,16 +1992,22 @@ export const updateCaseDetails = async ({
                       pageConfig,
                       key,
                       selected,
-                      tenantId
+                      tenantId,
+                      documentTypeMapping[key]
                     );
-                    tempDocList = [...tempDocList, ...tempData];
+                    docList.push(tempFile);
                     return tempFile;
                   })
                 );
                 setFormDataValue(key, demandNoticeDocumentData[key]);
               }
             })
-          ).catch();
+          ).catch((error) => {
+            if (error instanceof DocumentUploadError) {
+              throw error;
+            }
+            console.error(error?.message);
+          });
           return {
             ...data,
             data: {
@@ -1881,6 +2017,8 @@ export const updateCaseDetails = async ({
           };
         })
     );
+    const demandNoticeDocTypes = ["DEMAND_NOTICE", "PROOF_OF_DISPATCH", "PROOF_OF_ACKNOWLEDGEMENT_OF_DEMAND_NOTICE", "PROOF_OF_REPLY_DEMAND_NOTICE"];
+    updateTempDocListMultiForm(docList, demandNoticeDocTypes);
     data.caseDetails = {
       ...caseDetails.caseDetails,
       demandNoticeDetails: {
@@ -1900,16 +2038,21 @@ export const updateCaseDetails = async ({
             condonationDocumentData.condonationFileUpload.document = await Promise.all(
               data?.data?.condonationFileUpload?.document?.map(async (document) => {
                 if (document) {
-                  const uploadedData = await onDocumentUpload(document, document.name, tenantId);
-                  return {
-                    documentType: uploadedData.fileType || document?.documentType,
+                  const documentType = "CONDONATION_DOC";
+                  const uploadedData = await onDocumentUpload(documentType, document, document.name, tenantId);
+                  const doc = {
+                    documentType,
                     fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
                     documentName: uploadedData.filename || document?.documentName,
                     fileName: pageConfig?.selectDocumentName?.["condonationFileUpload"],
                   };
+                  updateCaseDocuments("CONDONATION_DOC", doc);
+                  return doc;
                 }
               })
             );
+          } else {
+            updateCaseDocuments("CONDONATION_DOC", false);
           }
           return {
             ...data,
@@ -1929,6 +2072,7 @@ export const updateCaseDetails = async ({
     };
   }
   if (selected === "prayerSwornStatement") {
+    let additionalDocs = [];
     const newFormData = await Promise.all(
       updatedFormData
         .filter((item) => item.isenabled)
@@ -1938,62 +2082,83 @@ export const updateCaseDetails = async ({
             documentData.SelectUploadDocWithName = await Promise.all(
               data?.data?.SelectUploadDocWithName?.map(async (docWithNameData) => {
                 if (docWithNameData?.document?.[0] && !docWithNameData?.document?.[0]?.fileStore) {
-                  const document = await onDocumentUpload(docWithNameData?.document[0], docWithNameData?.document[0]?.name, tenantId).then(
-                    async (data) => {
-                      const evidenceData = await DRISTIService.createEvidence({
-                        artifact: {
-                          artifactType: "OTHER",
-                          sourceType: "COMPLAINANT",
-                          caseId: caseDetails?.id,
-                          sourceID: individualId,
-                          filingNumber: caseDetails?.filingNumber,
-                          tenantId,
-                          comments: [],
-                          file: {
-                            documentType: data.fileType || data?.documentType,
-                            fileStore: data.file?.files?.[0]?.fileStoreId || data?.fileStore,
-                            additionalDetails: {
-                              name: docWithNameData?.docName,
-                            },
-                          },
-                          workflow: {
-                            action: "TYPE DEPOSITION",
-                            documents: [
-                              {
-                                documentType: data.fileType,
-                                fileName: data.fileName,
-                                fileStoreId: data.file?.files?.[0]?.fileStoreId,
-                              },
-                            ],
-                          },
-                        },
-                      });
-                      return [
-                        {
+                  const documentType = "COMPLAINT_ADDITIONAL_DOCUMENTS";
+                  const document = await onDocumentUpload(
+                    documentType,
+                    docWithNameData?.document[0],
+                    docWithNameData?.document[0]?.name,
+                    tenantId
+                  ).then(async (data) => {
+                    const evidenceData = await DRISTIService.createEvidence({
+                      artifact: {
+                        artifactType: "OTHER",
+                        sourceType: "COMPLAINANT",
+                        caseId: caseDetails?.id,
+                        sourceID: individualId,
+                        filingNumber: caseDetails?.filingNumber,
+                        tenantId,
+                        comments: [],
+                        file: {
                           documentType: data.fileType || data?.documentType,
                           fileStore: data.file?.files?.[0]?.fileStoreId || data?.fileStore,
-                          documentName: data.filename || data?.documentName,
-                          artifactId: evidenceData?.artifact?.id,
-                          fileName: docWithNameData?.document[0]?.name,
+                          additionalDetails: {
+                            name: docWithNameData?.docName,
+                          },
                         },
-                      ];
-                    }
-                  );
+                        workflow: {
+                          action: "TYPE DEPOSITION",
+                          documents: [
+                            {
+                              documentType: data.fileType,
+                              fileName: data.fileName,
+                              fileStoreId: data.file?.files?.[0]?.fileStoreId,
+                            },
+                          ],
+                        },
+                      },
+                    });
+                    const doc = {
+                      documentType, // check here
+                      fileStore: data.file?.files?.[0]?.fileStoreId || data?.fileStore,
+                      documentName: data.filename || data?.documentName,
+                      artifactId: evidenceData?.artifact?.id,
+                      fileName: docWithNameData?.document[0]?.name,
+                    };
+                    additionalDocs.push(doc);
+                    return [doc];
+                  });
                   return {
                     document: document,
                     docName: docWithNameData?.docName,
                   };
                 } else {
+                  if (docWithNameData?.document?.[0]) {
+                    additionalDocs.push(docWithNameData.document[0]);
+                  }
                   return docWithNameData;
                 }
               })
             );
           }
+
+          const indicesToRemove = tempDocList
+            .map((doc, index) => (doc.documentType === "COMPLAINT_ADDITIONAL_DOCUMENTS" ? index : -1))
+            .filter((index) => index !== -1);
+
+          for (let i = indicesToRemove.length - 1; i >= 0; i--) {
+            tempDocList.splice(indicesToRemove[i], 1);
+          }
+          if (additionalDocs.length > 0) {
+            for (let i = 0; i < additionalDocs.length; i++) {
+              tempDocList.push(additionalDocs[i]);
+            }
+          }
+
           if (data?.data?.swornStatement?.document) {
             documentData.swornStatement = documentData.swornStatement || {};
             documentData.swornStatement.document = await Promise.all(
               data?.data?.swornStatement?.document?.map(async (document, index) => {
-                const { tempDocList: tempData, tempFile } = await documentUploadHandler(
+                const { tempData, tempFile } = await documentUploadHandler(
                   document,
                   index,
                   prevCaseDetails,
@@ -2001,13 +2166,18 @@ export const updateCaseDetails = async ({
                   pageConfig,
                   "swornStatement",
                   selected,
-                  tenantId
+                  tenantId,
+                  "AFFIDAVIT_IN_LIEU_EXAM_IN_CHIEF"
                 );
                 tempDocList = [...tempDocList, ...tempData];
+                updateCaseDocuments("AFFIDAVIT_IN_LIEU_EXAM_IN_CHIEF", tempFile);
                 return tempFile;
               })
             );
             setFormDataValue("swornStatement", documentData?.swornStatement);
+          }
+          if (!data?.data?.swornStatement?.document) {
+            updateCaseDocuments("AFFIDAVIT_IN_LIEU_EXAM_IN_CHIEF", false);
           }
           return {
             ...data,
@@ -2038,7 +2208,8 @@ export const updateCaseDetails = async ({
             vakalatnamaDocumentData.vakalatnamaFileUpload.document = await Promise.all(
               data?.data?.vakalatnamaFileUpload?.document?.map(async (document) => {
                 if (document) {
-                  const uploadedData = await onDocumentUpload(document, document.name, tenantId);
+                  const documentType = "VAKALATNAMA_DOC";
+                  const uploadedData = await onDocumentUpload(documentType, document, document.name, tenantId);
                   if (uploadedData.file?.files?.[0]?.fileStoreId && efilingDocumentKeyAndTypeMapping["vakalatnamaFileUpload"]) {
                     sendDocumentForOcr(
                       "vakalatnamaFileUpload",
@@ -2048,16 +2219,20 @@ export const updateCaseDetails = async ({
                       document
                     );
                   }
-                  return {
-                    documentType: uploadedData.fileType || document?.documentType,
+                  const doc = {
+                    documentType,
                     fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
                     documentName: uploadedData.filename || document?.documentName,
                     fileName: pageConfig?.selectDocumentName?.["vakalatnamaFileUpload"],
                   };
+                  updateCaseDocuments(documentType, doc);
+                  return doc;
                 }
               })
             );
             setFormDataValue("vakalatnamaFileUpload", vakalatnamaDocumentData?.vakalatnamaFileUpload);
+          } else {
+            updateCaseDocuments("VAKALATNAMA_DOC", false);
           }
           const advocateDetail = await DRISTIService.searchAdvocateClerk("/advocate/v1/_search", {
             criteria: [
@@ -2184,7 +2359,7 @@ export const updateCaseDetails = async ({
         caseTitle,
         litigants: !caseDetails?.litigants ? [] : caseDetails?.litigants,
         ...data,
-        // documents: tempDocList,
+        documents: tempDocList,
         linkedCases: caseDetails?.linkedCases ? caseDetails?.linkedCases : [],
         courtId: action !== "SAVE_DRAFT" ? window?.globalConfigs?.getConfig("COURT_ID") || "COURT_ID" : null,
         workflow: {
