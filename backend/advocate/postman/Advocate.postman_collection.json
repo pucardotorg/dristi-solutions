@@ -1,0 +1,512 @@
+{
+	"info": {
+		"_postman_id": "d9c714d6-1b7e-4ceb-ad8c-feaa250e1e79",
+		"name": "Advocate",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "15047027",
+		"_collection_link": "https://martian-firefly-796283.postman.co/workspace/Pucar-Service~566e8ca3-55eb-4e5c-a43e-d30c93e12ff2/collection/15047027-d9c714d6-1b7e-4ceb-ad8c-feaa250e1e79?action=share&source=collection_link&creator=15047027"
+	},
+	"item": [
+		{
+			"name": "Advocate",
+			"item": [
+				{
+					"name": "Create Advocate",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json, text/plain, */*"
+							},
+							{
+								"key": "accept-language",
+								"value": "en-GB,en-US;q=0.9,en;q=0.8"
+							},
+							{
+								"key": "content-type",
+								"value": "application/json;charset=UTF-8"
+							},
+							{
+								"key": "origin",
+								"value": "https://dristi-kerala-uat.pucar.org"
+							},
+							{
+								"key": "priority",
+								"value": "u=1, i"
+							},
+							{
+								"key": "referer",
+								"value": "https://dristi-kerala-uat.pucar.org/digit-ui/citizen/dristi/home/registration/terms-condition"
+							},
+							{
+								"key": "sec-ch-ua",
+								"value": "\"Not?A_Brand\";v=\"99\", \"Chromium\";v=\"130\""
+							},
+							{
+								"key": "sec-ch-ua-mobile",
+								"value": "?0"
+							},
+							{
+								"key": "sec-ch-ua-platform",
+								"value": "\"Linux\""
+							},
+							{
+								"key": "sec-fetch-dest",
+								"value": "empty"
+							},
+							{
+								"key": "sec-fetch-mode",
+								"value": "cors"
+							},
+							{
+								"key": "sec-fetch-site",
+								"value": "same-origin"
+							},
+							{
+								"key": "user-agent",
+								"value": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"advocate\": {\n        \"tenantId\": \"kl\",\n        \"individualId\": \"IND-2024-11-07-000663\",\n        \"isActive\": false,\n        \"workflow\": {\n            \"action\": \"REGISTER\",\n            \"comments\": \"Applying for advocate registration\",\n            \"documents\": [\n                {\n                    \"id\": null,\n                    \"documentType\": \"image/png\",\n                    \"fileStore\": \"9af48715-811d-4da7-9ade-e105a131b4da\",\n                    \"documentUid\": \"\",\n                    \"additionalDetails\": {\n                        \"fileName\": \"Screenshot from 2024-04-02 15-57-52.png\"\n                    }\n                }\n            ],\n            \"assignes\": [],\n            \"rating\": null\n        },\n        \"documents\": [\n            {\n                \"id\": null,\n                \"documentType\": \"image/png\",\n                \"fileStore\": \"9af48715-811d-4da7-9ade-e105a131b4da\",\n                \"documentUid\": \"\",\n                \"additionalDetails\": {\n                    \"fileName\": \"Screenshot from 2024-04-02 15-57-52.png\"\n                }\n            }\n        ],\n        \"additionalDetails\": {\n            \"username\": \"radhesh\",\n            \"userType\": {\n                \"clientDetails\": {\n                    \"selectUserType\": {\n                        \"code\": \"ADVOCATE\",\n                        \"name\": \"ADVOCATE_TEXT\",\n                        \"showBarDetails\": true,\n                        \"isVerified\": true,\n                        \"hasBarRegistrationNo\": true,\n                        \"role\": [\n                            \"ADVOCATE_ROLE\",\n                            \"CASE_CREATOR\",\n                            \"CASE_EDITOR\",\n                            \"CASE_VIEWER\",\n                            \"DEPOSITION_CREATOR\",\n                            \"DEPOSITION_VIEWER\",\n                            \"APPLICATION_CREATOR\",\n                            \"APPLICATION_VIEWER\",\n                            \"HEARING_VIEWER\",\n                            \"ORDER_VIEWER\",\n                            \"SUBMISSION_CREATOR\",\n                            \"SUBMISSION_RESPONDER\",\n                            \"SUBMISSION_DELETE\",\n                            \"TASK_VIEWER\",\n                            \"CASE_RESPONDER\",\n                            \"HEARING_ACCEPTOR\"\n                        ],\n                        \"apiDetails\": {\n                            \"serviceName\": \"/advocate/v1/_create\",\n                            \"requestKey\": \"advocate\",\n                            \"AdditionalFields\": [\n                                \"barRegistrationNumber\"\n                            ]\n                        },\n                        \"subText\": \"ADVOCATE_SUB_TEXT\"\n                    }\n                }\n            }\n        },\n        \"barRegistrationNumber\": \"12121212\"\n    },\n    \"RequestInfo\": {\n        \"apiId\": \"Rainmaker\",\n        \"authToken\": \"799cbed8-b702-4483-be3b-d4b2153f554f\",\n        \"userInfo\": {\n            \"id\": 907,\n            \"uuid\": \"1eb59665-f373-4f64-bd52-960ba37d2ce5\",\n            \"userName\": \"6397742293\",\n            \"name\": \"digit-user\",\n            \"mobileNumber\": \"6397742293\",\n            \"emailId\": null,\n            \"locale\": null,\n            \"type\": \"CITIZEN\",\n            \"roles\": [\n                {\n                    \"name\": \"Citizen\",\n                    \"code\": \"CITIZEN\",\n                    \"tenantId\": \"kl\"\n                }\n            ],\n            \"active\": true,\n            \"tenantId\": \"kl\",\n            \"permanentCity\": null\n        },\n        \"msgId\": \"1730963461694|en_IN\",\n        \"plainAccessRequest\": {}\n    }\n}"
+						},
+						"url": {
+							"raw": "https://dristi-kerala-uat.pucar.org/advocate/v1/_create?tenantId=kl&limit=10000&_=1730963461695",
+							"protocol": "https",
+							"host": [
+								"dristi-kerala-uat",
+								"pucar",
+								"org"
+							],
+							"path": [
+								"advocate",
+								"v1",
+								"_create"
+							],
+							"query": [
+								{
+									"key": "tenantId",
+									"value": "kl"
+								},
+								{
+									"key": "limit",
+									"value": "10000"
+								},
+								{
+									"key": "_",
+									"value": "1730963461695"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search Advocate",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json, text/plain, */*"
+							},
+							{
+								"key": "accept-language",
+								"value": "en-GB,en-US;q=0.9,en;q=0.8"
+							},
+							{
+								"key": "content-type",
+								"value": "application/json;charset=UTF-8"
+							},
+							{
+								"key": "origin",
+								"value": "https://dristi-kerala-uat.pucar.org"
+							},
+							{
+								"key": "priority",
+								"value": "u=1, i"
+							},
+							{
+								"key": "referer",
+								"value": "https://dristi-kerala-uat.pucar.org/digit-ui/citizen/dristi/home"
+							},
+							{
+								"key": "sec-ch-ua",
+								"value": "\"Not?A_Brand\";v=\"99\", \"Chromium\";v=\"130\""
+							},
+							{
+								"key": "sec-ch-ua-mobile",
+								"value": "?0"
+							},
+							{
+								"key": "sec-ch-ua-platform",
+								"value": "\"Linux\""
+							},
+							{
+								"key": "sec-fetch-dest",
+								"value": "empty"
+							},
+							{
+								"key": "sec-fetch-mode",
+								"value": "cors"
+							},
+							{
+								"key": "sec-fetch-site",
+								"value": "same-origin"
+							},
+							{
+								"key": "user-agent",
+								"value": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"criteria\": [\n        {\n            \"individualId\": \"IND-2024-11-07-000663\"\n        }\n    ],\n    \"tenantId\": \"kl\",\n    \"RequestInfo\": {\n        \"apiId\": \"Rainmaker\",\n        \"authToken\": \"021e08cb-ac6d-4b86-999f-9f74d5ec0427\",\n        \"userInfo\": {\n            \"id\": 907,\n            \"uuid\": \"1eb59665-f373-4f64-bd52-960ba37d2ce5\",\n            \"userName\": \"6397742293\",\n            \"name\": \"radhesh null\",\n            \"mobileNumber\": \"6397742293\",\n            \"emailId\": null,\n            \"locale\": null,\n            \"type\": \"CITIZEN\",\n            \"roles\": [\n                {\n                    \"name\": \"HEARING_VIEWER\",\n                    \"code\": \"HEARING_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"CASE_VIEWER\",\n                    \"code\": \"CASE_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"DEPOSITION_VIEWER\",\n                    \"code\": \"DEPOSITION_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"Citizen\",\n                    \"code\": \"CITIZEN\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"ADVOCATE_ROLE\",\n                    \"code\": \"ADVOCATE_ROLE\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"APPLICATION_CREATOR\",\n                    \"code\": \"APPLICATION_CREATOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"SUBMISSION_DELETE\",\n                    \"code\": \"SUBMISSION_DELETE\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"HEARING_ACCEPTOR\",\n                    \"code\": \"HEARING_ACCEPTOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"CASE_RESPONDER\",\n                    \"code\": \"CASE_RESPONDER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"DEPOSITION_CREATOR\",\n                    \"code\": \"DEPOSITION_CREATOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"SUBMISSION_RESPONDER\",\n                    \"code\": \"SUBMISSION_RESPONDER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"ORDER_VIEWER\",\n                    \"code\": \"ORDER_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"CASE_EDITOR\",\n                    \"code\": \"CASE_EDITOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"SUBMISSION_CREATOR\",\n                    \"code\": \"SUBMISSION_CREATOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"APPLICATION_VIEWER\",\n                    \"code\": \"APPLICATION_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"TASK_VIEWER\",\n                    \"code\": \"TASK_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"CASE_CREATOR\",\n                    \"code\": \"CASE_CREATOR\",\n                    \"tenantId\": \"kl\"\n                }\n            ],\n            \"active\": true,\n            \"tenantId\": \"kl\",\n            \"permanentCity\": null\n        },\n        \"msgId\": \"1730964612366|en_IN\",\n        \"plainAccessRequest\": {}\n    }\n}"
+						},
+						"url": {
+							"raw": "https://dristi-kerala-uat.pucar.org/advocate/v1/_search?tenantId=kl&_=1730964612366",
+							"protocol": "https",
+							"host": [
+								"dristi-kerala-uat",
+								"pucar",
+								"org"
+							],
+							"path": [
+								"advocate",
+								"v1",
+								"_search"
+							],
+							"query": [
+								{
+									"key": "tenantId",
+									"value": "kl"
+								},
+								{
+									"key": "_",
+									"value": "1730964612366"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Advocate",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json, text/plain, */*"
+							},
+							{
+								"key": "accept-language",
+								"value": "en-GB,en-US;q=0.9,en;q=0.8"
+							},
+							{
+								"key": "content-type",
+								"value": "application/json;charset=UTF-8"
+							},
+							{
+								"key": "origin",
+								"value": "https://dristi-kerala-uat.pucar.org"
+							},
+							{
+								"key": "priority",
+								"value": "u=1, i"
+							},
+							{
+								"key": "referer",
+								"value": "https://dristi-kerala-uat.pucar.org/digit-ui/employee/dristi/registration-requests/details?applicationNo=KL-ADV-000098-2024&individualId=IND-2024-11-07-000665&type=advocate"
+							},
+							{
+								"key": "sec-ch-ua",
+								"value": "\"Not?A_Brand\";v=\"99\", \"Chromium\";v=\"130\""
+							},
+							{
+								"key": "sec-ch-ua-mobile",
+								"value": "?0"
+							},
+							{
+								"key": "sec-ch-ua-platform",
+								"value": "\"Linux\""
+							},
+							{
+								"key": "sec-fetch-dest",
+								"value": "empty"
+							},
+							{
+								"key": "sec-fetch-mode",
+								"value": "cors"
+							},
+							{
+								"key": "sec-fetch-site",
+								"value": "same-origin"
+							},
+							{
+								"key": "user-agent",
+								"value": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"advocate\": {\n        \"id\": \"79958c0a-324c-4cf9-957b-817038b232cd\",\n        \"tenantId\": \"kl\",\n        \"applicationNumber\": \"KL-ADV-000098-2024\",\n        \"status\": \"INWORKFLOW\",\n        \"barRegistrationNumber\": \"22342423\",\n        \"advocateType\": null,\n        \"organisationID\": null,\n        \"individualId\": \"IND-2024-11-07-000665\",\n        \"isActive\": false,\n        \"workflow\": {\n            \"action\": \"APPROVE\",\n            \"comments\": \"Applying for advocate registration\",\n            \"documents\": null,\n            \"assignes\": null,\n            \"rating\": null\n        },\n        \"documents\": [\n            {\n                \"id\": \"63e73136-fdd4-48eb-9787-8e8b9d5867ff\",\n                \"documentType\": \"image/png\",\n                \"fileStore\": \"817463fe-4b18-44be-8495-1e117191fcb7\",\n                \"documentUid\": \"\",\n                \"additionalDetails\": {\n                    \"fileName\": \"Screenshot from 2024-04-02 15-43-36.png\"\n                }\n            }\n        ],\n        \"auditDetails\": {\n            \"createdBy\": \"712456b3-f2d0-4de0-aa74-c2543a3ece27\",\n            \"lastModifiedBy\": \"712456b3-f2d0-4de0-aa74-c2543a3ece27\",\n            \"createdTime\": 1730968273379,\n            \"lastModifiedTime\": 1730968273379\n        },\n        \"additionalDetails\": {\n            \"userType\": {\n                \"clientDetails\": {\n                    \"selectUserType\": {\n                        \"code\": \"ADVOCATE\",\n                        \"name\": \"ADVOCATE_TEXT\",\n                        \"role\": [\n                            \"ADVOCATE_ROLE\",\n                            \"CASE_CREATOR\",\n                            \"CASE_EDITOR\",\n                            \"CASE_VIEWER\",\n                            \"DEPOSITION_CREATOR\",\n                            \"DEPOSITION_VIEWER\",\n                            \"APPLICATION_CREATOR\",\n                            \"APPLICATION_VIEWER\",\n                            \"HEARING_VIEWER\",\n                            \"ORDER_VIEWER\",\n                            \"SUBMISSION_CREATOR\",\n                            \"SUBMISSION_RESPONDER\",\n                            \"SUBMISSION_DELETE\",\n                            \"TASK_VIEWER\",\n                            \"CASE_RESPONDER\",\n                            \"HEARING_ACCEPTOR\"\n                        ],\n                        \"subText\": \"ADVOCATE_SUB_TEXT\",\n                        \"apiDetails\": {\n                            \"requestKey\": \"advocate\",\n                            \"serviceName\": \"/advocate/v1/_create\",\n                            \"AdditionalFields\": [\n                                \"barRegistrationNumber\"\n                            ]\n                        },\n                        \"isVerified\": true,\n                        \"showBarDetails\": true,\n                        \"hasBarRegistrationNo\": true\n                    }\n                }\n            },\n            \"username\": \"radhesh\"\n        }\n    },\n    \"RequestInfo\": {\n        \"apiId\": \"Rainmaker\",\n        \"authToken\": \"2d5f2388-775c-42cd-9d6c-3d1942a302f2\",\n        \"userInfo\": {\n            \"id\": 481,\n            \"uuid\": \"508cedf8-3912-41ca-b5cd-411b4793c54d\",\n            \"userName\": \"uatNyay123\",\n            \"name\": \"nyaymitra\",\n            \"mobileNumber\": \"1002335566\",\n            \"emailId\": null,\n            \"locale\": null,\n            \"type\": \"EMPLOYEE\",\n            \"roles\": [\n                {\n                    \"name\": \"CASE_VIEWER\",\n                    \"code\": \"CASE_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"ADVOCATE_CLERK_APPROVER\",\n                    \"code\": \"ADVOCATE_CLERK_APPROVER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"PAYMENT_COLLECTOR\",\n                    \"code\": \"PAYMENT_COLLECTOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"ORDER_VIEWER\",\n                    \"code\": \"ORDER_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"NYAY_MITRA_ROLE\",\n                    \"code\": \"NYAY_MITRA_ROLE\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"CASE_EDITOR\",\n                    \"code\": \"CASE_EDITOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"Employee\",\n                    \"code\": \"EMPLOYEE\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"ADVOCATE_APPROVER\",\n                    \"code\": \"ADVOCATE_APPROVER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"TASK_VIEWER\",\n                    \"code\": \"TASK_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"CASE_CREATOR\",\n                    \"code\": \"CASE_CREATOR\",\n                    \"tenantId\": \"kl\"\n                }\n            ],\n            \"active\": true,\n            \"tenantId\": \"kl\",\n            \"permanentCity\": null\n        },\n        \"msgId\": \"1730968315716|en_IN\",\n        \"plainAccessRequest\": {}\n    }\n}"
+						},
+						"url": {
+							"raw": "https://dristi-kerala-uat.pucar.org/advocate/v1/_update?tenantId=kl&limit=10000&_=1730968315716",
+							"protocol": "https",
+							"host": [
+								"dristi-kerala-uat",
+								"pucar",
+								"org"
+							],
+							"path": [
+								"advocate",
+								"v1",
+								"_update"
+							],
+							"query": [
+								{
+									"key": "tenantId",
+									"value": "kl"
+								},
+								{
+									"key": "limit",
+									"value": "10000"
+								},
+								{
+									"key": "_",
+									"value": "1730968315716"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Advocate Clerk",
+			"item": [
+				{
+					"name": "Create Clerk",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json, text/plain, */*"
+							},
+							{
+								"key": "accept-language",
+								"value": "en-GB,en-US;q=0.9,en;q=0.8"
+							},
+							{
+								"key": "content-type",
+								"value": "application/json;charset=UTF-8"
+							},
+							{
+								"key": "origin",
+								"value": "https://dristi-kerala-uat.pucar.org"
+							},
+							{
+								"key": "priority",
+								"value": "u=1, i"
+							},
+							{
+								"key": "referer",
+								"value": "https://dristi-kerala-uat.pucar.org/digit-ui/citizen/dristi/home/registration/terms-condition"
+							},
+							{
+								"key": "sec-ch-ua",
+								"value": "\"Not?A_Brand\";v=\"99\", \"Chromium\";v=\"130\""
+							},
+							{
+								"key": "sec-ch-ua-mobile",
+								"value": "?0"
+							},
+							{
+								"key": "sec-ch-ua-platform",
+								"value": "\"Linux\""
+							},
+							{
+								"key": "sec-fetch-dest",
+								"value": "empty"
+							},
+							{
+								"key": "sec-fetch-mode",
+								"value": "cors"
+							},
+							{
+								"key": "sec-fetch-site",
+								"value": "same-origin"
+							},
+							{
+								"key": "user-agent",
+								"value": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"clerk\": {\n        \"tenantId\": \"kl\",\n        \"individualId\": \"IND-2024-11-07-000664\",\n        \"isActive\": false,\n        \"workflow\": {\n            \"action\": \"REGISTER\",\n            \"comments\": \"Applying for clerk registration\",\n            \"documents\": [\n                {\n                    \"id\": null,\n                    \"documentType\": null,\n                    \"fileStore\": null,\n                    \"documentUid\": \"\",\n                    \"additionalDetails\": {}\n                }\n            ],\n            \"assignes\": [],\n            \"rating\": null\n        },\n        \"documents\": [\n            {\n                \"id\": null,\n                \"documentType\": null,\n                \"fileStore\": null,\n                \"documentUid\": \"\",\n                \"additionalDetails\": {}\n            }\n        ],\n        \"additionalDetails\": {\n            \"username\": \"radhesh\",\n            \"userType\": {\n                \"clientDetails\": {\n                    \"selectUserType\": {\n                        \"code\": \"ADVOCATE_CLERK\",\n                        \"name\": \"ADVOCATE_CLERK_TEXT\",\n                        \"showBarDetails\": true,\n                        \"hasStateRegistrationNo\": true,\n                        \"isVerified\": true,\n                        \"role\": [\n                            \"ADVOCATE_CLERK_ROLE\",\n                            \"CASE_CREATOR\",\n                            \"CASE_EDITOR\",\n                            \"CASE_VIEWER\",\n                            \"DEPOSITION_CREATOR\",\n                            \"DEPOSITION_VIEWER\",\n                            \"APPLICATION_CREATOR\",\n                            \"APPLICATION_VIEWER\",\n                            \"HEARING_VIEWER\",\n                            \"ORDER_VIEWER\",\n                            \"SUBMISSION_CREATOR\",\n                            \"SUBMISSION_RESPONDER\",\n                            \"SUBMISSION_DELETE\",\n                            \"TASK_VIEWER\",\n                            \"CASE_RESPONDER\",\n                            \"HEARING_ACCEPTOR\"\n                        ],\n                        \"apiDetails\": {\n                            \"serviceName\": \"/advocate/clerk/v1/_create\",\n                            \"requestKey\": \"clerk\",\n                            \"AdditionalFields\": [\n                                \"stateRegnNumber\"\n                            ]\n                        },\n                        \"subText\": \"ADVOCATE_CLERK_SUB_TEXT\"\n                    }\n                }\n            }\n        },\n        \"stateRegnNumber\": \"DEFAULT_VALUE\"\n    },\n    \"RequestInfo\": {\n        \"apiId\": \"Rainmaker\",\n        \"authToken\": \"d0f70a2c-79f7-4594-95f4-3a1983a1dcf3\",\n        \"userInfo\": {\n            \"id\": 909,\n            \"uuid\": \"a4452f53-2b21-4602-a2ce-adf6d7ab78d4\",\n            \"userName\": \"6397742294\",\n            \"name\": \"digit-user\",\n            \"mobileNumber\": \"6397742294\",\n            \"emailId\": null,\n            \"locale\": null,\n            \"type\": \"CITIZEN\",\n            \"roles\": [\n                {\n                    \"name\": \"Citizen\",\n                    \"code\": \"CITIZEN\",\n                    \"tenantId\": \"kl\"\n                }\n            ],\n            \"active\": true,\n            \"tenantId\": \"kl\",\n            \"permanentCity\": null\n        },\n        \"msgId\": \"1730966769065|en_IN\",\n        \"plainAccessRequest\": {}\n    }\n}"
+						},
+						"url": {
+							"raw": "https://dristi-kerala-uat.pucar.org/advocate/clerk/v1/_create?tenantId=kl&limit=10000&_=1730966769066",
+							"protocol": "https",
+							"host": [
+								"dristi-kerala-uat",
+								"pucar",
+								"org"
+							],
+							"path": [
+								"advocate",
+								"clerk",
+								"v1",
+								"_create"
+							],
+							"query": [
+								{
+									"key": "tenantId",
+									"value": "kl"
+								},
+								{
+									"key": "limit",
+									"value": "10000"
+								},
+								{
+									"key": "_",
+									"value": "1730966769066"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search Clerk",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "accept",
+								"value": "application/json, text/plain, */*"
+							},
+							{
+								"key": "accept-language",
+								"value": "en-GB,en-US;q=0.9,en;q=0.8"
+							},
+							{
+								"key": "content-type",
+								"value": "application/json;charset=UTF-8"
+							},
+							{
+								"key": "origin",
+								"value": "https://dristi-kerala-uat.pucar.org"
+							},
+							{
+								"key": "priority",
+								"value": "u=1, i"
+							},
+							{
+								"key": "referer",
+								"value": "https://dristi-kerala-uat.pucar.org/digit-ui/citizen/dristi/home"
+							},
+							{
+								"key": "sec-ch-ua",
+								"value": "\"Not?A_Brand\";v=\"99\", \"Chromium\";v=\"130\""
+							},
+							{
+								"key": "sec-ch-ua-mobile",
+								"value": "?0"
+							},
+							{
+								"key": "sec-ch-ua-platform",
+								"value": "\"Linux\""
+							},
+							{
+								"key": "sec-fetch-dest",
+								"value": "empty"
+							},
+							{
+								"key": "sec-fetch-mode",
+								"value": "cors"
+							},
+							{
+								"key": "sec-fetch-site",
+								"value": "same-origin"
+							},
+							{
+								"key": "user-agent",
+								"value": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"criteria\": [\n        {\n            \"individualId\": \"IND-2024-11-07-000664\"\n        }\n    ],\n    \"tenantId\": \"kl\",\n    \"RequestInfo\": {\n        \"apiId\": \"Rainmaker\",\n        \"authToken\": \"6a52a4ef-711b-4223-a535-57f8d12a2bdd\",\n        \"userInfo\": {\n            \"id\": 909,\n            \"uuid\": \"a4452f53-2b21-4602-a2ce-adf6d7ab78d4\",\n            \"userName\": \"6397742294\",\n            \"name\": \"radhesh null\",\n            \"mobileNumber\": \"6397742294\",\n            \"emailId\": null,\n            \"locale\": null,\n            \"type\": \"CITIZEN\",\n            \"roles\": [\n                {\n                    \"name\": \"HEARING_VIEWER\",\n                    \"code\": \"HEARING_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"CASE_VIEWER\",\n                    \"code\": \"CASE_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"DEPOSITION_VIEWER\",\n                    \"code\": \"DEPOSITION_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"Citizen\",\n                    \"code\": \"CITIZEN\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"APPLICATION_CREATOR\",\n                    \"code\": \"APPLICATION_CREATOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"SUBMISSION_DELETE\",\n                    \"code\": \"SUBMISSION_DELETE\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"ADVOCATE_CLERK_ROLE\",\n                    \"code\": \"ADVOCATE_CLERK_ROLE\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"HEARING_ACCEPTOR\",\n                    \"code\": \"HEARING_ACCEPTOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"CASE_RESPONDER\",\n                    \"code\": \"CASE_RESPONDER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"DEPOSITION_CREATOR\",\n                    \"code\": \"DEPOSITION_CREATOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"SUBMISSION_RESPONDER\",\n                    \"code\": \"SUBMISSION_RESPONDER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"ORDER_VIEWER\",\n                    \"code\": \"ORDER_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"CASE_EDITOR\",\n                    \"code\": \"CASE_EDITOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"SUBMISSION_CREATOR\",\n                    \"code\": \"SUBMISSION_CREATOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"APPLICATION_VIEWER\",\n                    \"code\": \"APPLICATION_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"TASK_VIEWER\",\n                    \"code\": \"TASK_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"CASE_CREATOR\",\n                    \"code\": \"CASE_CREATOR\",\n                    \"tenantId\": \"kl\"\n                }\n            ],\n            \"active\": true,\n            \"tenantId\": \"kl\",\n            \"permanentCity\": null\n        },\n        \"msgId\": \"1730966769462|en_IN\",\n        \"plainAccessRequest\": {}\n    }\n}"
+						},
+						"url": {
+							"raw": "https://dristi-kerala-uat.pucar.org/advocate/clerk/v1/_search?_=1730966769462",
+							"protocol": "https",
+							"host": [
+								"dristi-kerala-uat",
+								"pucar",
+								"org"
+							],
+							"path": [
+								"advocate",
+								"clerk",
+								"v1",
+								"_search"
+							],
+							"query": [
+								{
+									"key": "_",
+									"value": "1730966769462"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Clerk",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"clerk\": {\n        \"tenantId\": \"kl\",\n        \"individualId\": \"IND-2024-11-07-000664\",\n        \"isActive\": false,\n        \"workflow\": {\n            \"action\": \"APPROVE\",\n            \"comments\": \"Applying for clerk registration\",\n            \"documents\": [\n                {\n                    \"id\": null,\n                    \"documentType\": null,\n                    \"fileStore\": null,\n                    \"documentUid\": \"\",\n                    \"additionalDetails\": {}\n                }\n            ],\n            \"assignes\": [],\n            \"rating\": null\n        },\n        \"documents\": [\n            {\n                \"id\": null,\n                \"documentType\": null,\n                \"fileStore\": null,\n                \"documentUid\": \"\",\n                \"additionalDetails\": {}\n            }\n        ],\n        \"additionalDetails\": {\n            \"username\": \"radhesh\",\n            \"userType\": {\n                \"clientDetails\": {\n                    \"selectUserType\": {\n                        \"code\": \"ADVOCATE_CLERK\",\n                        \"name\": \"ADVOCATE_CLERK_TEXT\",\n                        \"showBarDetails\": true,\n                        \"hasStateRegistrationNo\": true,\n                        \"isVerified\": true,\n                        \"role\": [\n                            \"ADVOCATE_CLERK_ROLE\",\n                            \"CASE_CREATOR\",\n                            \"CASE_EDITOR\",\n                            \"CASE_VIEWER\",\n                            \"DEPOSITION_CREATOR\",\n                            \"DEPOSITION_VIEWER\",\n                            \"APPLICATION_CREATOR\",\n                            \"APPLICATION_VIEWER\",\n                            \"HEARING_VIEWER\",\n                            \"ORDER_VIEWER\",\n                            \"SUBMISSION_CREATOR\",\n                            \"SUBMISSION_RESPONDER\",\n                            \"SUBMISSION_DELETE\",\n                            \"TASK_VIEWER\",\n                            \"CASE_RESPONDER\",\n                            \"HEARING_ACCEPTOR\"\n                        ],\n                        \"apiDetails\": {\n                            \"serviceName\": \"/advocate/clerk/v1/_create\",\n                            \"requestKey\": \"clerk\",\n                            \"AdditionalFields\": [\n                                \"stateRegnNumber\"\n                            ]\n                        },\n                        \"subText\": \"ADVOCATE_CLERK_SUB_TEXT\"\n                    }\n                }\n            }\n        },\n        \"stateRegnNumber\": \"DEFAULT_VALUE\"\n    },\n     \"RequestInfo\": {\n        \"apiId\": \"Rainmaker\",\n        \"authToken\": \"ce653d62-f8c3-48e0-93d5-d30bb60a9f18\",\n        \"userInfo\": {\n            \"id\": 481,\n            \"uuid\": \"508cedf8-3912-41ca-b5cd-411b4793c54d\",\n            \"userName\": \"uatNyay123\",\n            \"name\": \"nyaymitra\",\n            \"mobileNumber\": \"1002335566\",\n            \"emailId\": null,\n            \"locale\": null,\n            \"type\": \"EMPLOYEE\",\n            \"roles\": [\n                {\n                    \"name\": \"CASE_VIEWER\",\n                    \"code\": \"CASE_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"ADVOCATE_CLERK_APPROVER\",\n                    \"code\": \"ADVOCATE_CLERK_APPROVER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"PAYMENT_COLLECTOR\",\n                    \"code\": \"PAYMENT_COLLECTOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"ORDER_VIEWER\",\n                    \"code\": \"ORDER_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"NYAY_MITRA_ROLE\",\n                    \"code\": \"NYAY_MITRA_ROLE\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"CASE_EDITOR\",\n                    \"code\": \"CASE_EDITOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"Employee\",\n                    \"code\": \"EMPLOYEE\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"ADVOCATE_APPROVER\",\n                    \"code\": \"ADVOCATE_APPROVER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"TASK_VIEWER\",\n                    \"code\": \"TASK_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"CASE_CREATOR\",\n                    \"code\": \"CASE_CREATOR\",\n                    \"tenantId\": \"kl\"\n                }\n            ],\n            \"active\": true,\n            \"tenantId\": \"kl\",\n            \"permanentCity\": null\n        },\n        \"msgId\": \"1730968315716|en_IN\",\n        \"plainAccessRequest\": {}\n    }\n}"
+						},
+						"url": {
+							"raw": "https://dristi-kerala-uat.pucar.org/advocate/clerk/v1/_update",
+							"protocol": "https",
+							"host": [
+								"dristi-kerala-uat",
+								"pucar",
+								"org"
+							],
+							"path": [
+								"advocate",
+								"clerk",
+								"v1",
+								"_update"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

@@ -1,0 +1,96 @@
+{
+	"info": {
+		"_postman_id": "27f946db-cf7d-4a75-9a56-2f83358deee5",
+		"name": "Case Management",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "15047027",
+		"_collection_link": "https://martian-firefly-796283.postman.co/workspace/Pucar-Service~566e8ca3-55eb-4e5c-a43e-d30c93e12ff2/collection/15047027-27f946db-cf7d-4a75-9a56-2f83358deee5?action=share&source=collection_link&creator=15047027"
+	},
+	"item": [
+		{
+			"name": "Case History",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "accept",
+						"value": "application/json, text/plain, */*"
+					},
+					{
+						"key": "accept-language",
+						"value": "en-GB,en-US;q=0.9,en;q=0.8"
+					},
+					{
+						"key": "content-type",
+						"value": "application/json;charset=UTF-8"
+					},
+					{
+						"key": "origin",
+						"value": "https://dristi-kerala-uat.pucar.org"
+					},
+					{
+						"key": "priority",
+						"value": "u=1, i"
+					},
+					{
+						"key": "referer",
+						"value": "https://dristi-kerala-uat.pucar.org/digit-ui/citizen/dristi/home/file-case"
+					},
+					{
+						"key": "sec-ch-ua",
+						"value": "\"Not?A_Brand\";v=\"99\", \"Chromium\";v=\"130\""
+					},
+					{
+						"key": "sec-ch-ua-mobile",
+						"value": "?0"
+					},
+					{
+						"key": "sec-ch-ua-platform",
+						"value": "\"Linux\""
+					},
+					{
+						"key": "sec-fetch-dest",
+						"value": "empty"
+					},
+					{
+						"key": "sec-fetch-mode",
+						"value": "cors"
+					},
+					{
+						"key": "sec-fetch-site",
+						"value": "same-origin"
+					},
+					{
+						"key": "user-agent",
+						"value": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"caseId\": \"52ef09b1-98fb-4204-89bb-08f01f77cb4b\",\n    \"filingNumber\": \"KL-000454-2024\",\n    \"tenantId\": \"kl\",\n    \"RequestInfo\": {\n        \"apiId\": \"Rainmaker\",\n        \"authToken\": \"e1be8e68-f294-4a44-ac67-3595c83e92dd\",\n        \"userInfo\": {\n            \"id\": 911,\n            \"uuid\": \"64220357-defd-4abd-bcc3-e4b278203917\",\n            \"userName\": \"6397742296\",\n            \"name\": \"radhesh null\",\n            \"mobileNumber\": \"6397742296\",\n            \"emailId\": null,\n            \"locale\": null,\n            \"type\": \"CITIZEN\",\n            \"roles\": [\n                {\n                    \"name\": \"HEARING_VIEWER\",\n                    \"code\": \"HEARING_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"CASE_VIEWER\",\n                    \"code\": \"CASE_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"DEPOSITION_VIEWER\",\n                    \"code\": \"DEPOSITION_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"Citizen\",\n                    \"code\": \"CITIZEN\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"APPLICATION_CREATOR\",\n                    \"code\": \"APPLICATION_CREATOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"SUBMISSION_DELETE\",\n                    \"code\": \"SUBMISSION_DELETE\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"ADVOCATE_CLERK_ROLE\",\n                    \"code\": \"ADVOCATE_CLERK_ROLE\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"HEARING_ACCEPTOR\",\n                    \"code\": \"HEARING_ACCEPTOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"CASE_RESPONDER\",\n                    \"code\": \"CASE_RESPONDER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"DEPOSITION_CREATOR\",\n                    \"code\": \"DEPOSITION_CREATOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"SUBMISSION_RESPONDER\",\n                    \"code\": \"SUBMISSION_RESPONDER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"ORDER_VIEWER\",\n                    \"code\": \"ORDER_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"CASE_EDITOR\",\n                    \"code\": \"CASE_EDITOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"SUBMISSION_CREATOR\",\n                    \"code\": \"SUBMISSION_CREATOR\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"APPLICATION_VIEWER\",\n                    \"code\": \"APPLICATION_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"TASK_VIEWER\",\n                    \"code\": \"TASK_VIEWER\",\n                    \"tenantId\": \"kl\"\n                },\n                {\n                    \"name\": \"CASE_CREATOR\",\n                    \"code\": \"CASE_CREATOR\",\n                    \"tenantId\": \"kl\"\n                }\n            ],\n            \"active\": true,\n            \"tenantId\": \"kl\",\n            \"permanentCity\": null\n        },\n        \"msgId\": \"1730969353849|en_IN\",\n        \"plainAccessRequest\": {}\n    }\n}"
+				},
+				"url": {
+					"raw": "https://dristi-kerala-uat.pucar.org/case/v1/_create?_=1730969353849",
+					"protocol": "https",
+					"host": [
+						"dristi-kerala-uat",
+						"pucar",
+						"org"
+					],
+					"path": [
+						"case",
+						"v1",
+						"_create"
+					],
+					"query": [
+						{
+							"key": "_",
+							"value": "1730969353849"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
