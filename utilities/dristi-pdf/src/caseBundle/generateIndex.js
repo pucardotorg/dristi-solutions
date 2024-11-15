@@ -1,4 +1,4 @@
-const { create_pdf, search_pdf, create_file } = require("../utils");
+const { search_pdf, create_file } = require("../api"); // Removed create_pdf import
 const fs = require("fs");
 const path = require("path");
 const { PDFDocument } = require("pdf-lib");
@@ -10,37 +10,52 @@ if (!fs.existsSync(TEMP_FILES_DIR)) {
   fs.mkdirSync(TEMP_FILES_DIR);
 }
 
-// Function to process line items in a section
-async function processSectionLineItems(tenantId, section, requestInfo) {
+// Master Data
+const MASTER_DATA = [
+  { name: "Cheque", section: "filings", docType: "case.cheque", active: true, order: 1 },
+  { name: "Cheque Deposit Slip", section: "filings", docType: "case.cheque.depositslip", active: true, order: 2 },
+  { name: "Cheque Return Memo", section: "filings", docType: "case.cheque.returnmemo", active: true, order: 3 },
+  { name: "Demand Notice", section: "filings", docType: "case.demandnotice", active: true, order: 4 },
+  { name: "Proof of Dispatch of Demand Notice", section: "filings", docType: "case.demandnotice.proof", active: true, order: 5 },
+  { name: "Proof of Service of Demand Notice", section: "filings", docType: "case.demandnotice.serviceproof", active: true, order: 6 },
+  { name: "Reply Notice", section: "filings", docType: "case.replynotice", active: true, order: 7 },
+  { name: "Proof of Liability", section: "filings", docType: "case.liabilityproof", active: true, order: 8 },
+  { name: "Proof of Authorization", section: "filings", docType: "case.authorizationproof", active: true, order: 9 },
+  { name: "Affidavit under Section 223 BNSS", section: "affidavit", docType: "case.affidavit.223bnss", active: true, order: 1 },
+  { name: "Affidavit of Proof under Section 225 BNSS", section: "affidavit", docType: "case.affidavit.225bnss", active: true, order: 2 },
+  { name: "Vakalatnama", section: "vakalat", docType: null, active: true },
+];
+
+// Function to retrieve documents from the master data
+function getDocumentsForSection(sectionName) {
+  return MASTER_DATA.filter((doc) => doc.section === sectionName && doc.active);
+}
+
+// Function to process documents for a section
+async function processSectionDocuments(tenantId, section, requestInfo) {
   const fileStoreIds = [];
 
-  if (section.lineItems && section.lineItems.length > 0) {
-    for (const item of section.lineItems) {
-      if (item.createPDF) {
-        // Generate a PDF for this line item
-        const pdfResponse = await create_pdf(tenantId, item.content, {}, requestInfo);
+  console.log(`Processing section: ${section.name}`);
 
-        const tempFilePath = path.join(TEMP_FILES_DIR, `temp-${Date.now()}.pdf`);
-        const fileStream = fs.createWriteStream(tempFilePath);
+  const documents = getDocumentsForSection(section.name);
+  if (documents.length === 0) {
+    console.log(`No active documents found for section: ${section.name}`);
+    return fileStoreIds;
+  }
 
-        pdfResponse.data.pipe(fileStream);
-        await new Promise((resolve) => fileStream.on("finish", resolve));
+  for (const doc of documents) {
+    // Simulate retrieving the fileStoreId (in a real scenario, fetch from the database or service)
+    const fileStoreId = `fileStore-${doc.docType}-${Date.now()}`;
+    console.log(`Validating fileStoreId: ${fileStoreId} for document: ${doc.name}`);
 
-        // Upload the created PDF
-        const uploadedFile = await create_file(tempFilePath, tenantId, "case-bundle", "application/pdf");
-        fs.unlinkSync(tempFilePath);
-
-        item.fileStoreId = uploadedFile.data.files[0].fileStoreId;
-        fileStoreIds.push(item.fileStoreId);
-      } else if (item.fileStoreId) {
-        // Validate existing fileStoreId
-        const pdfResponse = await search_pdf(tenantId, item.fileStoreId);
-        if (pdfResponse.status !== 200) {
-          throw new Error(`Invalid fileStoreId: ${item.fileStoreId}`);
-        }
-        fileStoreIds.push(item.fileStoreId);
-      }
+    // Validate the fileStoreId
+    const pdfResponse = await search_pdf(tenantId, fileStoreId);
+    if (pdfResponse.status !== 200) {
+      console.error(`Invalid fileStoreId: ${fileStoreId} for document: ${doc.name}`);
+      continue;
     }
+
+    fileStoreIds.push(fileStoreId);
   }
 
   return fileStoreIds;
@@ -66,7 +81,7 @@ async function mergePdfs(fileStoreIds, tenantId) {
   return mergedPdf;
 }
 
-// Function to process the case bundle based on state
+// Main Function
 async function processCaseBundle(tenantId, caseId, index, state, requestInfo) {
   console.log(`Processing caseId: ${caseId}, state: ${state}`);
 
@@ -74,35 +89,27 @@ async function processCaseBundle(tenantId, caseId, index, state, requestInfo) {
 
   switch (state.toUpperCase()) {
     case "PENDING_ADMISSION_HEARING":
-      console.log("Processing 'PENDING_ADMISSION_HEARING' state...");
       for (const section of index.sections) {
-        if (
-          section.name === "titlepage" ||
-          section.name === "adiary" ||
-          section.name === "pendingapplications" ||
-          section.name === "complaint"
-        ) {
-          const sectionFileStoreIds = await processSectionLineItems(tenantId, section, requestInfo);
+        if (["filings", "affidavit", "vakalat"].includes(section.name)) {
+          const sectionFileStoreIds = await processSectionDocuments(tenantId, section, requestInfo);
           fileStoreIds.push(...sectionFileStoreIds);
         }
       }
       break;
 
     case "CASE_ADMITTED":
-      console.log("Processing 'CASE_ADMITTED' state...");
       for (const section of index.sections) {
-        if (section.name === "filings" || section.name === "affidavit") {
-          const sectionFileStoreIds = await processSectionLineItems(tenantId, section, requestInfo);
+        if (["filings", "affidavit"].includes(section.name)) {
+          const sectionFileStoreIds = await processSectionDocuments(tenantId, section, requestInfo);
           fileStoreIds.push(...sectionFileStoreIds);
         }
       }
       break;
 
     case "CASE_REASSIGNED":
-      console.log("Processing 'CASE_REASSIGNED' state...");
       for (const section of index.sections) {
-        if (section.name === "vakalat" || section.name === "additionalfilings") {
-          const sectionFileStoreIds = await processSectionLineItems(tenantId, section, requestInfo);
+        if (["vakalat"].includes(section.name)) {
+          const sectionFileStoreIds = await processSectionDocuments(tenantId, section, requestInfo);
           fileStoreIds.push(...sectionFileStoreIds);
         }
       }
@@ -113,10 +120,10 @@ async function processCaseBundle(tenantId, caseId, index, state, requestInfo) {
       throw new Error(`Unknown state: ${state}`);
   }
 
-  // Merge PDFs
+  console.log("Merging PDFs...");
   const mergedPdf = await mergePdfs(fileStoreIds, tenantId);
 
-  // Save and upload the final merged PDF
+  console.log("Uploading merged PDF...");
   const mergedPdfBytes = await mergedPdf.save();
   const mergedFilePath = path.join(TEMP_FILES_DIR, `merged-bundle-${Date.now()}.pdf`);
   fs.writeFileSync(mergedFilePath, mergedPdfBytes);
@@ -124,7 +131,6 @@ async function processCaseBundle(tenantId, caseId, index, state, requestInfo) {
   const finalFileUpload = await create_file(mergedFilePath, tenantId, "case-bundle", "application/pdf");
   fs.unlinkSync(mergedFilePath);
 
-  // Update index with final fileStoreId
   index.fileStoreId = finalFileUpload.data.files[0].fileStoreId;
   index.contentLastModified = Math.floor(Date.now() / 1000);
 

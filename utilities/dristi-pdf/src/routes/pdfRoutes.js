@@ -6,6 +6,9 @@ const { PDFDocument } = require("pdf-lib");
 const fs = require("fs");
 const asyncMiddleware = require("../utils/asyncMiddleware");
 const buildCasePdf = require("../caseBundle/buildCasePdf");
+const processCaseBundle = require("../caseBundle/generateIndex");
+
+
 
 const A4_WIDTH = 595.28; // A4 width in points
 const A4_HEIGHT = 841.89; // A4 height in points
