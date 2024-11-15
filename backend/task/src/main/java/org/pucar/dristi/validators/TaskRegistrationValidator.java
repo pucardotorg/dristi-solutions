@@ -53,9 +53,7 @@ public class TaskRegistrationValidator {
 
         if (PENDING_TASK.equalsIgnoreCase(task.getTaskType())) {
 
-            JSONObject request = new JSONObject();
-            request.put(REQUEST_INFO, requestInfo);
-            JsonNode caseDetails = caseUtil.searchCaseDetails(request, task.getTenantId(), task.getCnrNumber(), task.getFilingNumber(), null);
+            JsonNode caseDetails = caseUtil.searchCaseDetails(requestInfo, task.getTenantId(), task.getCnrNumber(), task.getFilingNumber(), null);
             log.error("user is trying to create task which he is not associated, userInfo:{}",requestInfo.getUserInfo());
             if (caseDetails.isEmpty()) throw new CustomException(CREATE_TASK_ERR,"you are not allowed to create task");
 
