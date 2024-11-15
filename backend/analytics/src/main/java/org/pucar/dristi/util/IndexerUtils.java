@@ -187,8 +187,10 @@ public class IndexerUtils {
         isGeneric = details.containsKey("isGeneric");
 
         if (isGeneric) {
+            log.info("creating pending task from generic task");
             Object task = taskUtil.getTask(requestInfo, tenantId, null, referenceId, status);
-            assignedTo = JsonPath.read(task.toString(), ASSIGN_TO_PATH);
+            JSONArray assignToList = JsonPath.read(task.toString(), ASSIGN_TO_PATH);
+            assignedTo = assignToList.toString();
             assignedRole =  new JSONArray().toString();
         }
 
