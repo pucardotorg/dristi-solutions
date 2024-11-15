@@ -1,12 +1,12 @@
 import { CloseSvg } from "@egovernments/digit-ui-react-components";
-import React, {  useState } from "react";
+import React, { useState } from "react";
 import SelectCustomDragDrop from "./SelectCustomDragDrop";
 import Modal from "./Modal";
 import { useToast } from "./Toast/useToast";
 
 function UploadSignatureModal({ t, setOpenUploadSignatureModal, config, onSelect, formData, name }) {
   const toast = useToast();
-  const [error,setError] = useState({})
+  const [error, setError] = useState({});
   function setValue(value, input) {
     if (Array.isArray(input)) {
       onSelect(config.key, {
@@ -43,16 +43,16 @@ function UploadSignatureModal({ t, setOpenUploadSignatureModal, config, onSelect
   };
 
   const clearError = (key) => {
+    if (!key) return;
     const updatedError = { ...error };
-    delete updatedError[key];     
-    setError(updatedError); 
+    delete updatedError[key];
+    setError(updatedError);
   };
 
-  const setErrors = (key,errorMsg)=>{
-    const oldError = error;
-    oldError[key]=errorMsg;
-    setError(oldError)
-  }
+  const setErrors = (key, errorMsg) => {
+    if (!key) return;
+    setError((prevErrors) => ({ ...prevErrors, [key]: errorMsg }));
+  };
 
   return (
     <Modal
@@ -60,13 +60,21 @@ function UploadSignatureModal({ t, setOpenUploadSignatureModal, config, onSelect
       actionSaveLabel={t("CS_SUBMIT_SIGNATURE")}
       actionSaveOnSubmit={onSubmit}
       formId="modal-action"
-      isDisabled= {!formData?.[config.key] || (Object.keys(error).length > 0)}
+      isDisabled={!formData?.[config.key] || Boolean(Object.keys(error).length)}
       headerBarMain={<Heading label={t("CS_UPLOAD_SIGNATURE")} />}
       className="upload-signature-modal"
       submitTextClassName="upload-signature-button"
     >
       <div className="upload-signature-modal-main">
-        <SelectCustomDragDrop config={config} t={t} onSelect={onSelect} formData={formData} errors={error} setError={setErrors} clearErrors={clearError}/>
+        <SelectCustomDragDrop
+          config={config}
+          t={t}
+          onSelect={onSelect}
+          formData={formData}
+          errors={error}
+          setError={setErrors}
+          clearErrors={clearError}
+        />
       </div>
     </Modal>
   );
