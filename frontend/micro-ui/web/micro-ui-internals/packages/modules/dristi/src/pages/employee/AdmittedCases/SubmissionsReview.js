@@ -184,7 +184,6 @@ const SubmissionReview = ({ caseData, setUpdateCounter, openSubmissionsViewModal
     : applicationRes?.applicationList?.filter((application) => application.status === "PENDINGREVIEW");
 
   const getApplication = async (applicationNumber) => {
-    debugger;
     try {
       const response = await DRISTIService.searchSubmissions({ criteria: { filingNumber, applicationNumber, tenantId }, tenantId }, {}, "", true);
       return response?.applicationList?.[0];
