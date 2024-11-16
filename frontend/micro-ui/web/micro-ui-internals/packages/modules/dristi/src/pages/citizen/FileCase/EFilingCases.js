@@ -1679,7 +1679,6 @@ function EFilingCases({ path }) {
         }
       }
       try {
-        // Await the result of updateCaseDetails
         await updateCaseDetails({
           t,
           isCompleted: true,
@@ -1701,7 +1700,6 @@ function EFilingCases({ path }) {
           scrutinyObj,
         });
 
-        // After successful update, reset form and refetch case data
         if (resetFormData.current) {
           resetFormData.current();
           setIsDisabled(false);
@@ -1721,9 +1719,8 @@ function EFilingCases({ path }) {
           history.push(`?caseId=${caseId}&selected=${nextSelected}`);
         }
       } catch (error) {
-        // If any error occurs in updateCaseDetails or refetching, handle it here
         if (error instanceof DocumentUploadError) {
-          toast.error(`${t("DOCUMENT_CORRUPTED")} : ${error?.documentType}`);
+          toast.error(`${t("DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${error?.documentType}`);
         } else if (extractCodeFromErrorMsg(error) === 413) {
           toast.error(t("FAILED_TO_UPLOAD_FILE"));
         } else {
@@ -1731,7 +1728,7 @@ function EFilingCases({ path }) {
         }
         setIsDisabled(false);
         console.error("An error occurred:", error);
-        throw error; // Re-throw the error to propagate it further if needed
+        throw error;
       }
     }
   };
@@ -1765,7 +1762,7 @@ function EFilingCases({ path }) {
       })
       .catch((error) => {
         if (error instanceof DocumentUploadError) {
-          toast.error(`${t("DOCUMENT_CORRUPTED")} : ${error?.documentType}`);
+          toast.error(`${t("DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${error?.documentType}`);
         } else if (extractCodeFromErrorMsg(error) === 413) {
           toast.error(t("FAILED_TO_UPLOAD_FILE"));
         } else {
@@ -2130,8 +2127,28 @@ function EFilingCases({ path }) {
       setPdfDetails(response?.data);
       setIsModalOpen(true);
     } catch (error) {
-      console.error("Error generating case PDF:", error);
-      toast.error(t("CASE_PDF_GENERATION_ERROR"));
+      if (error.response) {
+        const contentType = error.response.headers["content-type"];
+        // Check if the response is JSON (for error messages)
+        if (contentType && contentType.includes("application/json")) {
+          const errorBlob = error.response.data;
+          // Convert blob to JSON text
+          const errorText = await errorBlob.text();
+          const errorData = JSON.parse(errorText);
+          console.error("Parsed Error Data:", errorData);
+          toast.error(`${t("DOCUMENT_CORRUPTED")} : ${errorData?.documentType || ""}`);
+        } else {
+          toast.error(t("An unexpected error occurred while generating the PDF"));
+        }
+      } else if (error.request) {
+        // No response received
+        console.error("Error Request:", error.request);
+        toast.error(t("No response received from the server"));
+      } else {
+        // Generic fallback
+        console.error("Error:", error);
+        toast.error(t(`Unexpected Error: ${error}`));
+      }
     } finally {
       setIsLoader(false);
     }

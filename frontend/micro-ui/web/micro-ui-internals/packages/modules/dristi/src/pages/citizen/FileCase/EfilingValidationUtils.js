@@ -1030,7 +1030,6 @@ export const updateIndividualUser = async ({ data, documentData, tenantId, indiv
 
 const onDocumentUpload = async (documentType = "Document", fileData, filename, tenantId) => {
   if (fileData?.fileStore) return fileData;
-  console.log("tenantId", tenantId);
   try {
     const fileUploadRes = await window?.Digit.UploadServices.Filestorage("DRISTI", fileData, tenantId);
     return { file: fileUploadRes?.data, fileType: fileData.type, filename };
@@ -1226,7 +1225,6 @@ export const updateCaseDetails = async ({
         tempDocList.push(docList[i]);
       }
     }
-    console.log("casedet", caseDetails, tempDocList);
   };
 
   const individualId = await fetchBasicUserInfo(prevCaseDetails, tenantId);
@@ -1259,9 +1257,6 @@ export const updateCaseDetails = async ({
       });
       await Promise.all(promises);
     } catch (error) {
-      if (error instanceof DocumentUploadError) {
-        throw error;
-      }
       console.error("Error processing form data: ", error);
       throw error;
     }
@@ -1269,9 +1264,7 @@ export const updateCaseDetails = async ({
   await processFormData();
 
   const updateCaseDocuments = (key, newDocObj) => {
-    debugger;
     const index = tempDocList.findIndex((item) => item.documentType === key);
-    console.log("key, newDocObj", key, newDocObj, index, tempDocList);
     if (newDocObj !== false) {
       if (index !== -1) {
         tempDocList[index] = newDocObj;
@@ -1280,12 +1273,9 @@ export const updateCaseDetails = async ({
       }
     } else {
       if (index !== -1) {
-        console.log("index", index, key, tempDocList);
         tempDocList.splice(index, 1);
       }
     }
-
-    console.log("tempDocList", tempDocList);
   };
 
   if (selected === "complainantDetails") {
@@ -1514,9 +1504,7 @@ export const updateCaseDetails = async ({
             complainantId: { complainantId: { complainantId: {} } },
           };
           const individualDetails = {};
-          console.log("data?.data", data?.data, Boolean(data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file));
           if (data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file) {
-            console.log("here");
             const uploadedData = await onDocumentUpload(
               "COMPLAINANT_ID_PROOF",
               data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file,
@@ -1542,16 +1530,17 @@ export const updateCaseDetails = async ({
             docList.push(doc);
             individualDetails.document = [uploadedData];
           }
-          // console.log(
-          //   "hm",
-          //   data?.data?.complainantId?.complainantId?.ID_Proof,
-          //   Boolean(data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file?.fileStore)
-          // );
-          // if (data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file?.fileStore) {
-          //   console.log("here1");
-          //   const doc = data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file;
-          //   docList.push(doc);
-          // }
+          if (
+            !data?.data?.complainantVerification?.isUserVerified &&
+            data?.data?.complainantId?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file?.fileStore
+          ) {
+            const doc = { ...data?.data?.complainantId?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file };
+            docList.push(doc);
+          }
+          if (data?.data?.complainantVerification?.individualDetails?.document?.[0]?.fileStore) {
+            const doc = { ...data?.data?.complainantVerification?.individualDetails?.document?.[0], documentType: "COMPLAINANT_ID_PROOF" };
+            docList.push(doc);
+          }
           if (data?.data?.companyDetailsUpload?.document) {
             documentData.companyDetailsUpload = {};
             documentData.companyDetailsUpload.document = await Promise.all(
@@ -1573,7 +1562,6 @@ export const updateCaseDetails = async ({
             );
             setFormDataValue("companyDetailsUpload", documentData?.companyDetailsUpload);
           }
-          console.log("docList", docList);
           const complainantDocTypes = ["COMPLAINANT_ID_PROOF", "AUTHORIZED_COMPLAINANT_COMPANY_REPRESENTATIVE"];
           updateTempDocListMultiForm(docList, complainantDocTypes);
           return {
@@ -1626,8 +1614,6 @@ export const updateCaseDetails = async ({
             inquiryAffidavitFileUpload: null,
             companyDetailsUpload: null,
           };
-          console.log("data.data", data?.data);
-          // console.log("data?.data?.inquiryAffidavitFileUpload", data?.data?.inquiryAffidavitFileUpload, data?.data?.companyDetailsUpload);
           if (
             data?.data?.inquiryAffidavitFileUpload?.document &&
             Array.isArray(data?.data?.inquiryAffidavitFileUpload?.document) &&
@@ -1772,7 +1758,6 @@ export const updateCaseDetails = async ({
           for (let key of fileNotUploadedKeys) {
             // updateCaseDocuments(documentTypeMapping[key], false);
           }
-          console.log("data?.data?.bouncedChequeFileUpload", data?.data?.bouncedChequeFileUpload);
           if (data?.data?.bouncedChequeFileUpload?.document) {
             documentData.bouncedChequeFileUpload = {};
             documentData.bouncedChequeFileUpload.document = await Promise.all(
@@ -1813,7 +1798,6 @@ export const updateCaseDetails = async ({
                 // tempDocList = [...tempDocList, ...tempData];
                 // updateCaseDocuments("CHEQUE_DEPOSIT_PROOF", tempFile);
                 docList.push(tempFile);
-                console.log("error12", tempFile);
                 return tempFile;
               })
             );
@@ -2002,12 +1986,13 @@ export const updateCaseDetails = async ({
                 setFormDataValue(key, demandNoticeDocumentData[key]);
               }
             })
-          ).catch((error) => {
-            if (error instanceof DocumentUploadError) {
-              throw error;
-            }
-            console.error(error?.message);
-          });
+          );
+          // .catch((error) => {
+          //   if (error instanceof DocumentUploadError) {
+          //     throw error;
+          //   }
+          //   console.error(error?.message);
+          // });
           return {
             ...data,
             data: {

@@ -139,10 +139,15 @@ export const extractFeeMedium = (feeName) => {
   return feeMediums?.[feeName?.toLowerCase()] || "";
 };
 
+const token = localStorage.getItem("token");
+
 export const getFileByFileStoreId = async (uri) => {
   try {
     const response = await axios.get(uri, {
       responseType: "blob", // To treat the response as a binary Blob
+      headers: {
+        "auth-token": `${token}`,
+      },
     });
     // Create a file object from the response Blob
     const file = new File([response.data], "downloaded-file.pdf", {
@@ -178,12 +183,13 @@ export const combineMultipleFiles = async (pdfFilesArray, finalFileName = "combi
 
   try {
     // ${Urls.CombineDocuments} // check- Should use this but it is causing circular dependency, need to relocate Urls
-    const combineDocumentsUrl = `${window.location.origin}/egov-pdf/dristi-pdf/combine-documents`;
+    const combineDocumentsUrl = `${window.location.origin}/egov-pdf/dristi-pdf/combine-documents?tenantId=${tenantId}`;
     const response = await axios.post(combineDocumentsUrl, formData, {
       headers: {
         // "Content-Type": "multipart/form-data",
+        "auth-token": `${token}`,
       },
-      responseType: "blob", // To handle the response as a Blob
+      responseType: "blob",
     });
     const file = new File([response.data], finalFileName, { type: response.data.type });
     return [file];
