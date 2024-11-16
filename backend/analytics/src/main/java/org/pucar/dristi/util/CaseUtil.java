@@ -1,14 +1,23 @@
 package org.pucar.dristi.util;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.tracer.model.CustomException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.ServiceRequestRepository;
+import org.pucar.dristi.web.models.CaseSearchRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.pucar.dristi.config.ServiceConstants.CASE_PATH;
+import static org.pucar.dristi.config.ServiceConstants.ERROR_WHILE_FETCHING_FROM_CASE;
 
 @Slf4j
 @Component
@@ -18,11 +27,17 @@ public class CaseUtil {
 	private final ServiceRequestRepository repository;
 	private final Util util;
 
+	private final RestTemplate restTemplate;
+
+	private final ObjectMapper mapper;
+
 	@Autowired
-	public CaseUtil(Configuration config, ServiceRequestRepository repository, Util util) {
+	public CaseUtil(Configuration config, ServiceRequestRepository repository, Util util, RestTemplate restTemplate, ObjectMapper mapper) {
 		this.config = config;
 		this.repository = repository;
 		this.util = util;
+		this.restTemplate = restTemplate;
+		this.mapper = mapper;
 	}
 
 	public Object getCase(JSONObject request, String tenantId, String cnrNumber, String filingNumber, String caseId) {
@@ -55,6 +70,22 @@ public class CaseUtil {
 		} catch (Exception e) {
 			log.error("Error while processing case response", e);
 			throw new RuntimeException("Error while processing case response", e);
+		}
+	}
+
+	public JsonNode searchCaseDetails(CaseSearchRequest caseSearchRequest) {
+		StringBuilder uri = new StringBuilder();
+		uri.append(config.getCaseHost()).append(config.getCaseSearchPath());
+
+		Object response = new HashMap<>();
+		try {
+			response = restTemplate.postForObject(uri.toString(), caseSearchRequest, Map.class);
+			JsonNode jsonNode = mapper.readTree(mapper.writeValueAsString(response));
+			JsonNode caseList = jsonNode.get("criteria").get(0).get("responseList");
+			return caseList.get(0);
+		} catch (Exception e) {
+			log.error(ERROR_WHILE_FETCHING_FROM_CASE, e);
+			throw new CustomException(ERROR_WHILE_FETCHING_FROM_CASE, e.getMessage());
 		}
 	}
 
