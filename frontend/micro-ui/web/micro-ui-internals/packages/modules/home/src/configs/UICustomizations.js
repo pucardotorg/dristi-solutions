@@ -182,6 +182,9 @@ export const UICustomizations = {
           ...(requestCriteria?.state?.searchForm?.outcome && {
             outcome: [requestCriteria?.state?.searchForm?.outcome?.outcome],
           }),
+          ...(requestCriteria?.state?.searchForm?.substage && {
+            substage: requestCriteria?.state?.searchForm?.substage?.subStage,
+          }),
           pagination: {
             limit: requestCriteria?.state?.tableForm?.limit,
             offSet: requestCriteria?.state?.tableForm?.offset,
@@ -195,6 +198,9 @@ export const UICustomizations = {
         ...requestCriteria,
         body: {
           ...requestCriteria?.body,
+          ...(requestCriteria?.state?.searchForm?.substage && {
+            substage: requestCriteria?.state?.searchForm?.substage?.subStage,
+          }),
           criteria,
           tenantId,
         },
@@ -264,6 +270,9 @@ export const UICustomizations = {
         {
           ...requestCriteria?.body?.criteria[0],
           ...requestCriteria?.state?.searchForm,
+          ...(requestCriteria?.state?.searchForm?.substage && {
+            substage: requestCriteria?.state?.searchForm?.substage?.subStage,
+          }),
           tenantId,
           ...additionalDetails,
           ...("sortBy" in additionalDetails && {
@@ -283,6 +292,9 @@ export const UICustomizations = {
         ...requestCriteria,
         body: {
           ...requestCriteria?.body,
+          ...(requestCriteria?.state?.searchForm?.substage && {
+            substage: requestCriteria?.state?.searchForm?.substage?.subStage,
+          }),
           criteria,
           tenantId,
         },
@@ -359,6 +371,9 @@ export const UICustomizations = {
           ...(requestCriteria?.state?.searchForm?.outcome && {
             outcome: [requestCriteria?.state?.searchForm?.outcome?.outcome],
           }),
+          ...(requestCriteria?.state?.searchForm?.substage && {
+            substage: requestCriteria?.state?.searchForm?.substage?.subStage,
+          }),
           pagination: {
             limit: requestCriteria?.state?.tableForm?.limit,
             offSet: requestCriteria?.state?.tableForm?.offset,
@@ -372,6 +387,9 @@ export const UICustomizations = {
         ...requestCriteria,
         body: {
           ...requestCriteria?.body,
+          ...(requestCriteria?.state?.searchForm?.substage && {
+            substage: requestCriteria?.state?.searchForm?.substage?.subStage,
+          }),
           criteria,
           tenantId,
         },
@@ -468,15 +486,15 @@ export const UICustomizations = {
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       const caseDetails = handleTaskDetails(row?.taskDetails);
       switch (key) {
-        case "Case Name & ID":
+        case "CASE_NAME_ID":
           return `${row?.caseName}, ${value}`;
-        case "Status":
+        case "STATUS":
           return t(value); // document status
-        case "Issued":
+        case "ISSUED":
           return `${formatDateDifference(value)} days ago`;
-        case "Order Type":
+        case "ORDER_TYPE":
           return t(value);
-        case "Delivery Channel":
+        case "DELIEVERY_CHANNEL":
           return caseDetails?.deliveryChannels?.channelName || "N/A";
         default:
           return t("ES_COMMON_NA");

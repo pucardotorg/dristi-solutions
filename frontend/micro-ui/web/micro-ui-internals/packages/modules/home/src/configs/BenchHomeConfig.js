@@ -25,6 +25,7 @@ export const userTypeOptions = [
       "SUBMISSION_DELETE",
       "TASK_VIEWER",
       "ADVOCATE_VIEWER",
+      "PENDING_TASK_CREATOR",
     ],
     subText: "LITIGANT_SUB_TEXT",
   },
@@ -51,6 +52,7 @@ export const userTypeOptions = [
       "TASK_VIEWER",
       "ADVOCATE_VIEWER",
       "ADVOCATE_APPLICATION_VIEWER",
+      "PENDING_TASK_CREATOR",
     ],
     apiDetails: {
       serviceName: "/advocate/v1/_create",
@@ -81,6 +83,7 @@ export const userTypeOptions = [
       "SUBMISSION_DELETE",
       "TASK_VIEWER",
       "ADVOCATE_VIEWER",
+      "PENDING_TASK_CREATOR",
     ],
     apiDetails: {
       serviceName: "/advocate/clerk/v1/_create",
@@ -161,11 +164,11 @@ export const TabBenchSearchConfig = {
                 type: "dropdown",
                 disable: false,
                 populators: {
-                  name: "substage",
+                  optionsKey: "code",
                   mdmsConfig: {
                     masterName: "SubStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item.subStage;});}",
+                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -295,10 +298,11 @@ export const TabBenchSearchConfig = {
                 disable: false,
                 populators: {
                   name: "substage",
+                  optionsKey: "code",
                   mdmsConfig: {
                     masterName: "SubStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item.subStage;});}",
+                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -442,10 +446,11 @@ export const TabBenchSearchConfig = {
                 disable: false,
                 populators: {
                   name: "substage",
+                  optionsKey: "code",
                   mdmsConfig: {
                     masterName: "SubStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item.subStage;});}",
+                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
                   },
                   styles: {
                     maxWidth: "250px",
