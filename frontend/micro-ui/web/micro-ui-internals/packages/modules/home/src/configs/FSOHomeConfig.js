@@ -14,8 +14,8 @@ export const userTypeOptions = [
       "CASE_CREATOR",
       "CASE_EDITOR",
       "CASE_VIEWER",
-      "DEPOSITION_CREATOR",
-      "DEPOSITION_VIEWER",
+      "EVIDENCE_CREATOR",
+      "EVIDENCE_VIEWER",
       "APPLICATION_CREATOR",
       "APPLICATION_VIEWER",
       "HEARING_VIEWER",
@@ -24,6 +24,8 @@ export const userTypeOptions = [
       "SUBMISSION_RESPONDER",
       "SUBMISSION_DELETE",
       "TASK_VIEWER",
+      "ADVOCATE_VIEWER",
+      "PENDING_TASK_CREATOR",
     ],
     subText: "LITIGANT_SUB_TEXT",
   },
@@ -38,8 +40,8 @@ export const userTypeOptions = [
       "CASE_CREATOR",
       "CASE_EDITOR",
       "CASE_VIEWER",
-      "DEPOSITION_CREATOR",
-      "DEPOSITION_VIEWER",
+      "EVIDENCE_CREATOR",
+      "EVIDENCE_VIEWER",
       "APPLICATION_CREATOR",
       "APPLICATION_VIEWER",
       "HEARING_VIEWER",
@@ -48,6 +50,10 @@ export const userTypeOptions = [
       "SUBMISSION_RESPONDER",
       "SUBMISSION_DELETE",
       "TASK_VIEWER",
+      "USER_REGISTER",
+      "ADVOCATE_VIEWER",
+      "ADVOCATE_APPLICATION_VIEWER",
+      "PENDING_TASK_CREATOR",
     ],
     apiDetails: {
       serviceName: "/advocate/v1/_create",
@@ -67,8 +73,8 @@ export const userTypeOptions = [
       "CASE_CREATOR",
       "CASE_EDITOR",
       "CASE_VIEWER",
-      "DEPOSITION_CREATOR",
-      "DEPOSITION_VIEWER",
+      "EVIDENCE_CREATOR",
+      "EVIDENCE_VIEWER",
       "APPLICATION_CREATOR",
       "APPLICATION_VIEWER",
       "HEARING_VIEWER",
@@ -77,6 +83,9 @@ export const userTypeOptions = [
       "SUBMISSION_RESPONDER",
       "SUBMISSION_DELETE",
       "TASK_VIEWER",
+      "USER_REGISTER",
+      "ADVOCATE_VIEWER",
+      "PENDING_TASK_CREATOR",
     ],
     apiDetails: {
       serviceName: "/advocate/clerk/v1/_create",
@@ -94,7 +103,7 @@ export const TabFSOSearchConfig = {
   showTab: true,
   TabSearchConfig: [
     {
-      label: "All",
+      label: "CS_ALL",
       type: "search",
       apiDetails: {
         serviceName: "/case/v1/_search",
@@ -145,7 +154,7 @@ export const TabFSOSearchConfig = {
                 populators: {},
               },
               {
-                label: "Case Type",
+                label: "CASE_TYPE",
                 isMandatory: false,
                 key: "caseType",
                 type: "dropdown",
@@ -163,17 +172,18 @@ export const TabFSOSearchConfig = {
                 },
               },
               {
-                label: "Stage",
+                label: "CS_STAGE",
                 isMandatory: false,
                 key: "stage",
                 type: "dropdown",
                 disable: false,
                 populators: {
                   name: "substage",
+                  optionsKey: "code",
                   mdmsConfig: {
                     masterName: "SubStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item.subStage;});}",
+                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -185,7 +195,7 @@ export const TabFSOSearchConfig = {
                 },
               },
               {
-                label: "Case ID",
+                label: "CS_CASE_ID",
                 type: "text",
                 isMandatory: false,
                 disable: false,
@@ -207,24 +217,24 @@ export const TabFSOSearchConfig = {
           uiConfig: {
             columns: [
               {
-                label: "Case Name",
+                label: "CS_CASE_NAME",
                 jsonPath: "caseTitle",
               },
               {
-                label: "Stage",
+                label: "CS_STAGE",
                 jsonPath: "substage",
               },
               {
-                label: "Case ID",
+                label: "CS_CASE_ID",
                 jsonPath: "filingNumber",
               },
               {
-                label: "Case Type",
+                label: "CASE_TYPE",
                 jsonPath: "",
                 additionalCustomization: true,
               },
               {
-                label: "Days Since Filing",
+                label: "CS_DAYS_FILING",
                 jsonPath: "auditDetails.createdTime",
                 additionalCustomization: true,
               },
@@ -241,7 +251,7 @@ export const TabFSOSearchConfig = {
       },
     },
     {
-      label: "Scrutiny Due",
+      label: "CS_SCRUTINY_DUE",
       type: "search",
       apiDetails: {
         serviceName: "/case/v1/_search",
@@ -292,7 +302,7 @@ export const TabFSOSearchConfig = {
                 populators: {},
               },
               {
-                label: "Case Type",
+                label: "CASE_TYPE",
                 isMandatory: false,
                 key: "caseType",
                 type: "dropdown",
@@ -310,17 +320,18 @@ export const TabFSOSearchConfig = {
                 },
               },
               {
-                label: "Stage",
+                label: "CS_STAGE",
                 isMandatory: false,
                 key: "stage",
                 type: "dropdown",
                 disable: false,
                 populators: {
                   name: "substage",
+                  optionsKey: "code",
                   mdmsConfig: {
                     masterName: "SubStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item.subStage;});}",
+                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -332,7 +343,7 @@ export const TabFSOSearchConfig = {
                 },
               },
               {
-                label: "Case ID",
+                label: "CS_CASE_ID",
                 type: "text",
                 isMandatory: false,
                 disable: false,
@@ -355,25 +366,25 @@ export const TabFSOSearchConfig = {
           uiConfig: {
             columns: [
               {
-                label: "Case Name",
+                label: "CS_CASE_NAME",
                 jsonPath: "caseTitle",
               },
               {
-                label: "Scrutiny Status",
+                label: "CS_SCRUTINY_STATUS",
                 jsonPath: "status",
                 additionalCustomization: true,
               },
               {
-                label: "Case ID",
+                label: "CS_CASE_ID",
                 jsonPath: "filingNumber",
               },
               {
-                label: "Case Type",
+                label: "CASE_TYPE",
                 jsonPath: "",
                 additionalCustomization: true,
               },
               {
-                label: "Days Since Filing",
+                label: "CS_DAYS_FILING",
                 jsonPath: "auditDetails.createdTime",
                 additionalCustomization: true,
               },
