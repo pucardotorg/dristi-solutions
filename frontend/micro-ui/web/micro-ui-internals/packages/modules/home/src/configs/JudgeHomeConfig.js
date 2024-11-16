@@ -33,6 +33,7 @@ export const userTypeOptions = [
       "SUBMISSION_DELETE",
       "TASK_VIEWER",
       "ADVOCATE_VIEWER",
+      "PENDING_TASK_CREATOR",
     ],
     subText: "LITIGANT_SUB_TEXT",
   },
@@ -59,6 +60,7 @@ export const userTypeOptions = [
       "TASK_VIEWER",
       "ADVOCATE_VIEWER",
       "ADVOCATE_APPLICATION_VIEWER",
+      "PENDING_TASK_CREATOR",
     ],
     apiDetails: {
       serviceName: "/advocate/v1/_create",
@@ -89,6 +91,7 @@ export const userTypeOptions = [
       "SUBMISSION_DELETE",
       "TASK_VIEWER",
       "ADVOCATE_VIEWER",
+      "PENDING_TASK_CREATOR",
     ],
     apiDetails: {
       serviceName: "/advocate/clerk/v1/_create",
@@ -170,10 +173,11 @@ export const TabJudgeSearchConfig = {
                 disable: false,
                 populators: {
                   name: "substage",
+                  optionsKey: "code",
                   mdmsConfig: {
                     masterName: "SubStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item.subStage;});}",
+                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -214,6 +218,7 @@ export const TabJudgeSearchConfig = {
               {
                 label: "CS_STAGE",
                 jsonPath: "substage",
+                additionalCustomization: true,
               },
               {
                 label: "CS_CASE_ID",
@@ -303,10 +308,11 @@ export const TabJudgeSearchConfig = {
                 disable: false,
                 populators: {
                   name: "substage",
+                  optionsKey: "code",
                   mdmsConfig: {
                     masterName: "SubStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item.subStage;});}",
+                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -347,6 +353,7 @@ export const TabJudgeSearchConfig = {
               {
                 label: "CS_STAGE",
                 jsonPath: "substage",
+                additionalCustomization: true,
               },
               {
                 label: "CS_CASE_ID",
@@ -464,10 +471,11 @@ export const TabJudgeSearchConfig = {
                 disable: false,
                 populators: {
                   name: "substage",
+                  optionsKey: "code",
                   mdmsConfig: {
                     masterName: "SubStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item.subStage;});}",
+                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -494,6 +502,7 @@ export const TabJudgeSearchConfig = {
               {
                 label: "CS_STAGE",
                 jsonPath: "substage",
+                additionalCustomization: true,
               },
 
               {

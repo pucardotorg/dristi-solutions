@@ -182,6 +182,9 @@ export const UICustomizations = {
           ...(requestCriteria?.state?.searchForm?.outcome && {
             outcome: [requestCriteria?.state?.searchForm?.outcome?.outcome],
           }),
+          ...(requestCriteria?.state?.searchForm?.substage && {
+            substage: requestCriteria?.state?.searchForm?.substage?.subStage,
+          }),
           pagination: {
             limit: requestCriteria?.state?.tableForm?.limit,
             offSet: requestCriteria?.state?.tableForm?.offset,
@@ -195,6 +198,9 @@ export const UICustomizations = {
         ...requestCriteria,
         body: {
           ...requestCriteria?.body,
+          ...(requestCriteria?.state?.searchForm?.substage && {
+            substage: requestCriteria?.state?.searchForm?.substage?.subStage,
+          }),
           criteria,
           tenantId,
         },
@@ -222,7 +228,7 @@ export const UICustomizations = {
         case "CS_OUTCOME":
           return t(value);
         case "CS_STAGE":
-          return t(row?.status);
+          return t(value);
         case "CS_FILING_DATE":
           return <span>{formatDate(new Date(value))}</span>;
         case "CS_LAST_EDITED":
@@ -264,6 +270,9 @@ export const UICustomizations = {
         {
           ...requestCriteria?.body?.criteria[0],
           ...requestCriteria?.state?.searchForm,
+          ...(requestCriteria?.state?.searchForm?.substage && {
+            substage: requestCriteria?.state?.searchForm?.substage?.subStage,
+          }),
           tenantId,
           ...additionalDetails,
           ...("sortBy" in additionalDetails && {
@@ -283,6 +292,9 @@ export const UICustomizations = {
         ...requestCriteria,
         body: {
           ...requestCriteria?.body,
+          ...(requestCriteria?.state?.searchForm?.substage && {
+            substage: requestCriteria?.state?.searchForm?.substage?.subStage,
+          }),
           criteria,
           tenantId,
         },
@@ -300,6 +312,8 @@ export const UICustomizations = {
       switch (key) {
         case "CASE_TYPE":
           return <span>NIA S138</span>;
+        case "CS_STAGE":
+          return t(value);
         case "CS_SCRUTINY_STATUS":
           return t(row?.status === "UNDER_SCRUTINY" ? "IN_PROGRESS" : "NOT_STARTED");
         case "CS_DAYS_FILING":
@@ -359,6 +373,9 @@ export const UICustomizations = {
           ...(requestCriteria?.state?.searchForm?.outcome && {
             outcome: [requestCriteria?.state?.searchForm?.outcome?.outcome],
           }),
+          ...(requestCriteria?.state?.searchForm?.substage && {
+            substage: requestCriteria?.state?.searchForm?.substage?.subStage,
+          }),
           pagination: {
             limit: requestCriteria?.state?.tableForm?.limit,
             offSet: requestCriteria?.state?.tableForm?.offset,
@@ -372,6 +389,9 @@ export const UICustomizations = {
         ...requestCriteria,
         body: {
           ...requestCriteria?.body,
+          ...(requestCriteria?.state?.searchForm?.substage && {
+            substage: requestCriteria?.state?.searchForm?.substage?.subStage,
+          }),
           criteria,
           tenantId,
         },
@@ -392,7 +412,7 @@ export const UICustomizations = {
         case "CD_OUTCOME":
           return t(value);
         case "CS_STAGE":
-          return t(row?.status);
+          return t(value);
         default:
           return t("ES_COMMON_NA");
       }
@@ -468,15 +488,15 @@ export const UICustomizations = {
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       const caseDetails = handleTaskDetails(row?.taskDetails);
       switch (key) {
-        case "Case Name & ID":
+        case "CASE_NAME_ID":
           return `${row?.caseName}, ${value}`;
-        case "Status":
+        case "STATUS":
           return t(value); // document status
-        case "Issued":
+        case "ISSUED":
           return `${formatDateDifference(value)} days ago`;
-        case "Order Type":
+        case "ORDER_TYPE":
           return t(value);
-        case "Delivery Channel":
+        case "DELIEVERY_CHANNEL":
           return caseDetails?.deliveryChannels?.channelName || "N/A";
         default:
           return t("ES_COMMON_NA");
