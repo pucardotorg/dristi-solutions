@@ -116,6 +116,9 @@ public class PaymentUpdateService {
                 applicationRequest.setApplication(application);
                 applicationRequest.setRequestInfo(requestInfo);
 
+                if (PENDINGAPPROVAL.equalsIgnoreCase(application.getStatus())){
+                    enrichment.enrichApplicationNumberByCMPNumber(applicationRequest);
+                }
                 producer.push(configuration.getApplicationUpdateStatusTopic(), applicationRequest);
             }
         } catch (Exception e) {
