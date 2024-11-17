@@ -4,8 +4,6 @@ const {
   search_case_v2,
   create_pdf,
   create_file_v2,
-  search_individual_uuid,
-  search_individual,
 } = require("../api"); // Removed create_pdf import
 const fs = require("fs");
 const path = require("path");
@@ -252,6 +250,7 @@ async function applyDocketToDocument(
     docketNameOfAdvocate,
     docketDateOfSubmission,
   },
+  courtCase,
   tenantId,
   requestInfo
 ) {
@@ -318,7 +317,6 @@ async function processPendingAdmissionCase({
   tenantId,
   caseId,
   index,
-  state,
   requestInfo,
 }) {
   const indexCopy = structuredClone(index);
@@ -460,6 +458,7 @@ async function processPendingAdmissionCase({
               courtCase.registrationDate
             ).toLocaleDateString("en-IN"),
           },
+          courtCase,
           tenantId,
           requestInfo
         );
@@ -534,6 +533,7 @@ async function processPendingAdmissionCase({
               courtCase.registrationDate
             ).toLocaleDateString("en-IN"),
           },
+          courtCase,
           tenantId,
           requestInfo
         );
@@ -557,6 +557,95 @@ async function processPendingAdmissionCase({
     })
   );
 
+  // update index
+
+  const affidavitsIndexSection = indexCopy.sections.find(
+    (section) => section.name === "affidavit"
+  );
+  affidavitsIndexSection.lineItems = affidavitsLineItems.filter(Boolean);
+
+  // update vakalatnamas
+  const vakalatnamaSection = filterCaseBundleBySection(
+    caseBundleMaster,
+    "affidavit"
+  );
+
+  if (vakalatnamaSection) {
+    const vakalats = courtCase.representatives.map((representative) => {
+      const representation = representative.representing[0];
+      return {
+        isActive: representation.isActive,
+        partyType: representation.partyType,
+        fileStoreId:
+          representative.additionalDetails.document[0].vakalatnamaFileUpload
+            .fileStore,
+        representingFullName: representation.additionalDetails.fullName,
+        advocateFullName: representative.additionalDetails.advocateName,
+        dateOfAddition: representative.auditDetails.createdTime,
+      };
+    });
+
+    vakalats.sort((vak1, vak2) => {
+      if (vak1.isActive && vak2.isActive) {
+        if (vak1.partyType.includes("complainant")) {
+          return -1;
+        } else {
+          return 1;
+        }
+      }
+      return vak2.isActive - vak1.isActive;
+    });
+
+    const section = vakalatnamaSection[0];
+
+    const vakalatLineItems = await Promise.all(
+      vakalats.map(async (vakalat) => {
+        if (section.docketPageRequired) {
+          const mergedVakalatDocumentFileStoreId = await applyDocketToDocument(
+            vakalat.fileStoreId,
+            {
+              docketApplicationType: section.name,
+              docketCounselFor: vakalat.partyType.includes("complainant")
+                ? "COMPLAINANT"
+                : "RESPONDENT",
+              docketNameOfFiling: vakalat.representingFullName,
+              docketNameOfAdvocate: vakalat.advocateFullName,
+              docketDateOfSubmission: new Date(
+                vakalat.dateOfAddition
+              ).toLocaleDateString("en-IN"),
+            },
+            courtCase,
+            tenantId,
+            requestInfo
+          );
+          return {
+            sourceId: vakalat.fileStoreId,
+            fileStoreId: mergedVakalatDocumentFileStoreId,
+            createPDF: false,
+            sortParam: null,
+            content: "vakalat",
+          };
+        } else {
+          return {
+            sourceId: vakalat.fileStoreId,
+            fileStoreId: vakalat.fileStoreId,
+            createPDF: false,
+            sortParam: null,
+            content: "vakalat",
+          };
+        }
+      })
+    );
+
+    // update index
+
+    const vakalatsIndexSection = indexCopy.sections.find(
+      (section) => section.name === "vakalat"
+    );
+    vakalatsIndexSection.lineItems = vakalatLineItems.filter(Boolean);
+  }
+
+  indexCopy.isRegistered = true;
 
   return indexCopy;
 }
@@ -568,27 +657,28 @@ async function processCaseBundle(tenantId, caseId, index, state, requestInfo) {
   let fileStoreIds = [];
 
   switch (state.toUpperCase()) {
-    case "PENDING_ADMISSION_HEARING":
+    case "PENDING_ADMISSION_HEARING": {
       const sectionFileStoreIds = await processPendingAdmissionCase({
         tenantId,
         caseId,
         index,
-        state,
         requestInfo,
+        state,
       });
       fileStoreIds.push(...sectionFileStoreIds);
 
-      for (const section of index.sections) {
-        if (["filings", "affidavit", "vakalat"].includes(section.name)) {
-          const sectionFileStoreIds = await processSectionDocuments(
-            tenantId,
-            section,
-            requestInfo
-          );
-          fileStoreIds.push(...sectionFileStoreIds);
-        }
-      }
+      //for (const section of index.sections) {
+      //  if (["filings", "affidavit", "vakalat"].includes(section.name)) {
+      //    const sectionFileStoreIds = await processSectionDocuments(
+      //      tenantId,
+      //      section,
+      //      requestInfo
+      //    );
+      //    fileStoreIds.push(...sectionFileStoreIds);
+      //  }
+      //}
       break;
+    }
 
     case "CASE_ADMITTED":
       for (const section of index.sections) {
