@@ -346,20 +346,8 @@ async function applyDocketToDocument(
   };
   const filingDocketPdfResponse = await create_pdf_v2(
     tenantId,
-    // FIXME: use the correct pdf-key
-    // "docket-page",
-    "causelist",
-
-    // FIXME: use right data
-    // data,
-    {
-      CauseList: [
-        {
-          logoImage: "",
-          causeLists: [],
-        },
-      ],
-    },
+    "docket-page",
+    data,
     { RequestInfo: requestInfo }
   );
   const filingDocketPDFDocument = await PDFDocument.load(
@@ -440,19 +428,8 @@ async function processPendingAdmissionCase({
     const data = { Data: [{ coverCaseName, coverCaseType, coverCaseNumber }] };
     const caseCoverPdfResponse = await create_pdf_v2(
       tenantId,
-      // FIXME: use the correct pdf-key
-      // "cover-page-pdf",
-      "causelist",
-      // FIXME: use correct data
-      // data,
-      {
-        CauseList: [
-          {
-            logoImage: "",
-            causeLists: [],
-          },
-        ],
-      },
+      "cover-page-pdf",
+      data,
       { RequestInfo: requestInfo }
     );
     const caseCoverDoc = await PDFDocument.load(caseCoverPdfResponse.data);
@@ -654,20 +631,25 @@ async function processPendingAdmissionCase({
   );
 
   if (vakalatnamaSection && Array.isArray(courtCase.representatives)) {
-    const vakalats = courtCase.representatives.map((representative) => {
-      const representation = representative.representing[0];
-      return {
-        isActive: representation.isActive,
-        partyType: representation.partyType,
-        fileStoreId:
+    const vakalats = courtCase.representatives
+      .map((representative) => {
+        const representation = representative.representing[0];
+        const fileStoreId =
           representative?.additionalDetails?.document?.[0]
-            ?.vakalatnamaFileUpload?.fileStore ||
-          "1205ccae-1146-4de9-9ac5-74af59c4eb68", // FIXME: remove bogus fall back value
-        representingFullName: representation.additionalDetails.fullName,
-        advocateFullName: representative.additionalDetails.advocateName,
-        dateOfAddition: representative.auditDetails.createdTime,
-      };
-    });
+            ?.vakalatnamaFileUpload?.fileStore;
+        if (!fileStoreId) {
+          return null;
+        }
+        return {
+          isActive: representation.isActive,
+          partyType: representation.partyType,
+          fileStoreId: fileStoreId,
+          representingFullName: representation.additionalDetails.fullName,
+          advocateFullName: representative.additionalDetails.advocateName,
+          dateOfAddition: representative.auditDetails.createdTime,
+        };
+      })
+      .filter(Boolean);
 
     vakalats.sort((vak1, vak2) => {
       if (vak1.isActive && vak2.isActive) {
