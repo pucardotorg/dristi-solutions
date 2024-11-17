@@ -49,7 +49,12 @@ async function search_case_v2(criteria, tenantId, requestinfo) {
       },
     });
   } catch (error) {
-    logger.error(`Error in ${config.paths.case_search}: ${error.message}`);
+    logger.error(
+      `Error in ${config.paths.case_search}: ${JSON.stringify(
+        error.response.data
+      )}`
+    );
+    console.log("AAAAAAAAAAA");
     throw error;
   }
 }
@@ -301,6 +306,24 @@ async function create_pdf(tenantId, key, data, requestinfo) {
   }
 }
 
+async function create_pdf_v2(tenantId, key, data, requestinfo) {
+  try {
+    return await axios({
+      responseType: "arraybuffer",
+      method: "post",
+      url: url.resolve(config.host.pdf, config.paths.pdf_create),
+      data: Object.assign(requestinfo, data),
+      params: {
+        tenantId: tenantId,
+        key: key,
+      },
+    });
+  } catch (error) {
+    logger.error(`Error in ${config.paths.pdf_create}: ${error.response.data}`);
+    throw error;
+  }
+}
+
 async function search_pdf(tenantId, fileStoreId, requestInfo) {
   try {
     const apiUrl = url.resolve(
@@ -317,6 +340,32 @@ async function search_pdf(tenantId, fileStoreId, requestInfo) {
         tenantId: tenantId,
         fileStoreIds: fileStoreId,
       },
+    });
+
+    return response;
+  } catch (error) {
+    logger.error(
+      `Error in ${config.paths.filestore_create + "/url"}: ${error.message}`
+    );
+    throw error;
+  }
+}
+
+async function search_pdf_v2(tenantId, fileStoreId, requestInfo) {
+  try {
+    const apiUrl = url.resolve(
+      config.host.filestore,
+      config.paths.filestore_search_id
+    );
+    const response = await axios.get(apiUrl, {
+      headers: {
+        "auth-token": requestInfo?.authToken || auth_token,
+      },
+      params: {
+        tenantId: tenantId,
+        fileStoreId: fileStoreId,
+      },
+      responseType: "arraybuffer",
     });
 
     return response;
@@ -355,6 +404,7 @@ async function create_file(filePath, tenantId, module, tag) {
     });
     return response;
   } catch (error) {
+    console.error(error);
     throw error;
   }
 }
@@ -363,7 +413,6 @@ async function create_file_v2({
   filePath,
   tenantId,
   module,
-  tag,
   form,
   requestInfo,
 }) {
@@ -379,12 +428,15 @@ async function create_file_v2({
       form.append("file", fs.createReadStream(filePath));
       form.append("tenantId", tenantId);
       form.append("module", module);
-      form.append("tag", tag);
     }
 
     // Prepare URL for the request
-    const url = `${config.host.filestore}${config.paths.filestore_create}`;
-    const response = await axios.post(url, form, {
+    const apiUrl = url.resolve(
+      config.host.filestore,
+      config.paths.filestore_create
+    );
+    console.log(form.getHeaders());
+    const response = await axios.post(apiUrl, form, {
       headers: {
         ...form.getHeaders(), // Adds the required Content-Type header for multipart/form-data
         "auth-token": requestInfo.authToken || auth_token,
@@ -395,6 +447,7 @@ async function create_file_v2({
     });
     return response;
   } catch (error) {
+    console.log(error);
     throw error;
   }
 }
@@ -423,6 +476,7 @@ async function search_message(tenantId, module, locale, requestinfo) {
 module.exports = {
   pool,
   create_pdf,
+  create_pdf_v2,
   search_hrms,
   search_case,
   search_case_v2,
@@ -438,4 +492,5 @@ module.exports = {
   create_file,
   create_file_v2,
   search_pdf,
+  search_pdf_v2,
 };

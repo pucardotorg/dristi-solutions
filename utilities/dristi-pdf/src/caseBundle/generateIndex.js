@@ -1,19 +1,24 @@
 const {
-  search_pdf,
+  search_pdf_v2,
   search_case_v2,
-  create_pdf,
+  create_pdf_v2,
   create_file_v2,
 } = require("../api"); // Removed create_pdf import
 const fs = require("fs");
 const path = require("path");
 const { PDFDocument } = require("pdf-lib");
 const config = require("../config");
+const cloneDeep = require("lodash.clonedeep");
+const sharp = require("sharp");
 
 const TEMP_FILES_DIR = path.join(__dirname, "../temp");
 
 if (!fs.existsSync(TEMP_FILES_DIR)) {
   fs.mkdirSync(TEMP_FILES_DIR);
 }
+
+const A4_WIDTH = 595.28; // A4 width in points
+const A4_HEIGHT = 841.89; // A4 height in points
 
 // Master Data
 const MASTER_DATA = [
@@ -35,6 +40,7 @@ const MASTER_DATA = [
   {
     name: "Cheque",
     section: "filings",
+    docketPageRequired: true,
     docType: "case.cheque",
     isActive: true,
     order: 1,
@@ -42,6 +48,7 @@ const MASTER_DATA = [
   {
     name: "Cheque Deposit Slip",
     section: "filings",
+    docketPageRequired: true,
     docType: "case.cheque.depositslip",
     isActive: true,
     order: 2,
@@ -49,6 +56,7 @@ const MASTER_DATA = [
   {
     name: "Cheque Return Memo",
     section: "filings",
+    docketPageRequired: true,
     docType: "case.cheque.returnmemo",
     isActive: true,
     order: 3,
@@ -56,6 +64,7 @@ const MASTER_DATA = [
   {
     name: "Demand Notice",
     section: "filings",
+    docketPageRequired: true,
     docType: "case.demandnotice",
     isActive: true,
     order: 4,
@@ -63,6 +72,7 @@ const MASTER_DATA = [
   {
     name: "Proof of Dispatch of Demand Notice",
     section: "filings",
+    docketPageRequired: true,
     docType: "case.demandnotice.proof",
     isActive: true,
     order: 5,
@@ -70,6 +80,7 @@ const MASTER_DATA = [
   {
     name: "Proof of Service of Demand Notice",
     section: "filings",
+    docketPageRequired: true,
     docType: "case.demandnotice.serviceproof",
     isActive: true,
     order: 6,
@@ -77,6 +88,7 @@ const MASTER_DATA = [
   {
     name: "Reply Notice",
     section: "filings",
+    docketPageRequired: true,
     docType: "case.replynotice",
     isActive: true,
     order: 7,
@@ -84,6 +96,7 @@ const MASTER_DATA = [
   {
     name: "Proof of Liability",
     section: "filings",
+    docketPageRequired: true,
     docType: "case.liabilityproof",
     isActive: true,
     order: 8,
@@ -91,6 +104,7 @@ const MASTER_DATA = [
   {
     name: "Proof of Authorization",
     section: "filings",
+    docketPageRequired: true,
     docType: "case.authorizationproof",
     isActive: true,
     order: 9,
@@ -184,9 +198,9 @@ const MASTER_DATA = [
  * @returns
  */
 async function mergePDFDocuments(...pdfDocuments) {
-  const pdfDocument = PDFDocument.create();
+  const pdfDocument = await PDFDocument.create();
   for (const pdfDoc of pdfDocuments) {
-    const copiedPages = (await pdfDocument).copyPages(
+    const copiedPages = await pdfDocument.copyPages(
       pdfDoc,
       pdfDoc.getPageIndices()
     );
@@ -204,18 +218,21 @@ async function mergePDFDocuments(...pdfDocuments) {
  */
 async function persistPDF(pdfDoc, tenantId, requestInfo) {
   const pdfBytes = await pdfDoc.save();
-  const form = new FormData();
-  form.append(
-    "file",
-    new Blob([pdfBytes], { type: "application/octet-stream" })
+
+  const mergedFilePath = path.join(
+    TEMP_FILES_DIR,
+    `merged-bundle-${Date.now()}.pdf`
   );
-  form.append("tenantId", tenantId);
-  form.append("module", "case-bundle-case-index");
+  fs.writeFileSync(mergedFilePath, pdfBytes);
+
   const fileStoreResponse = await create_file_v2({
-    form,
+    filePath: mergedFilePath,
     tenantId,
     requestInfo,
+    module: "case-bundle-case-index",
   });
+  fs.unlinkSync(mergedFilePath);
+
   return fileStoreResponse?.data?.files?.[0].fileStoreId;
 }
 
@@ -229,6 +246,15 @@ function filterCaseBundleBySection(caseBundleMasterData, sectionName) {
   return caseBundleMasterData.filter(
     (indexItem) => indexItem.section === sectionName && indexItem.isActive
   );
+}
+
+/**
+ *
+ * @param {*} jpgBuffer
+ * @returns
+ */
+async function fixJpg(jpgBuffer) {
+  return await sharp(jpgBuffer).jpeg().toBuffer();
 }
 
 /**
@@ -255,8 +281,37 @@ async function applyDocketToDocument(
   if (!documentFileStoreId) {
     return null;
   }
-  const stream = await search_pdf(tenantId, documentFileStoreId, requestInfo);
-  const filingPDFDocument = PDFDocument.load(stream);
+  const { data: stream, headers } = await search_pdf_v2(
+    tenantId,
+    documentFileStoreId,
+    requestInfo
+  );
+  const mimeType = headers["content-type"];
+  let filingPDFDocument;
+  if (mimeType === "application/pdf") {
+    filingPDFDocument = await PDFDocument.load(stream);
+  } else if (["image/jpeg", "image/png", "image/jpg"].includes(mimeType)) {
+    filingPDFDocument = await PDFDocument.create();
+    let img;
+    if (mimeType === "image/png") {
+      img = await filingPDFDocument.embedPng(stream);
+    } else {
+      const repairedImage = await fixJpg(stream);
+      img = await filingPDFDocument.embedJpg(repairedImage);
+    }
+
+    const { width, height } = img.scale(1);
+    const scale = Math.min(A4_WIDTH / width, A4_HEIGHT / height);
+    const xOffset = (A4_WIDTH - width * scale) / 2;
+    const yOffset = (A4_HEIGHT - height * scale) / 2;
+    const page = filingPDFDocument.addPage([A4_WIDTH, A4_HEIGHT]);
+    page.drawImage(img, {
+      x: xOffset,
+      y: yOffset,
+      width: width * scale,
+      height: height * scale,
+    });
+  }
 
   const complainant =
     courtCase?.additionalDetails?.complainantDetails?.formdata?.[0]?.data;
@@ -289,17 +344,29 @@ async function applyDocketToDocument(
       },
     ],
   };
-  const filingDocketPdfResponse = await create_pdf(
+  const filingDocketPdfResponse = await create_pdf_v2(
     tenantId,
-    "docket-page",
-    data,
-    requestInfo
+    // FIXME: use the correct pdf-key
+    // "docket-page",
+    "causelist",
+
+    // FIXME: use right data
+    // data,
+    {
+      CauseList: [
+        {
+          logoImage: "",
+          causeLists: [],
+        },
+      ],
+    },
+    { RequestInfo: requestInfo }
   );
   const filingDocketPDFDocument = await PDFDocument.load(
     filingDocketPdfResponse.data
   );
 
-  const mergedDocumentWithDocket = mergePDFDocuments(
+  const mergedDocumentWithDocket = await mergePDFDocuments(
     filingDocketPDFDocument,
     filingPDFDocument
   );
@@ -317,7 +384,7 @@ async function processPendingAdmissionCase({
   index,
   requestInfo,
 }) {
-  const indexCopy = structuredClone(index);
+  const indexCopy = cloneDeep(index);
 
   // TODO: fetch case-bundle-master master data
   const caseBundleMaster = MASTER_DATA;
@@ -333,7 +400,7 @@ async function processPendingAdmissionCase({
   const caseResponse = await search_case_v2(
     [
       {
-        id: caseId,
+        caseId,
       },
     ],
     tenantId,
@@ -343,10 +410,17 @@ async function processPendingAdmissionCase({
   const courtCase = caseResponse?.data?.criteria[0]?.responseList[0];
 
   const complaintFileStoreId = courtCase.documents.find(
-    (doc) => doc.documentType === "case.complaint.signed"
-  ).fileStore;
-  const stream = await search_pdf(tenantId, complaintFileStoreId, requestInfo);
-
+    // (doc) => doc.documentType === "case.complaint.signed"
+    (doc) => doc.documentType === "case.cheque"
+  )?.fileStore;
+  if (!complaintFileStoreId) {
+    throw new Error("no case complaint");
+  }
+  const { data: stream } = await search_pdf_v2(
+    tenantId,
+    complaintFileStoreId,
+    requestInfo
+  );
   let caseBundlePdfDoc = await PDFDocument.create();
   let pdfDoc = await PDFDocument.load(stream);
 
@@ -364,14 +438,25 @@ async function processPendingAdmissionCase({
       courtCase.cmpNumber ||
       courtCase.filingNumber;
     const data = { Data: [{ coverCaseName, coverCaseType, coverCaseNumber }] };
-    const caseCoverPdfResponse = await create_pdf(
+    const caseCoverPdfResponse = await create_pdf_v2(
       tenantId,
-      "cover-page-pdf",
-      data,
-      requestInfo
+      // FIXME: use the correct pdf-key
+      // "cover-page-pdf",
+      "causelist",
+      // FIXME: use correct data
+      // data,
+      {
+        CauseList: [
+          {
+            logoImage: "",
+            causeLists: [],
+          },
+        ],
+      },
+      { RequestInfo: requestInfo }
     );
     const caseCoverDoc = await PDFDocument.load(caseCoverPdfResponse.data);
-    const copiedPages = await caseBundlePdfDoc.copyPages(
+    const copiedPages = await caseCoverDoc.copyPages(
       caseBundlePdfDoc,
       caseBundlePdfDoc.getPageIndices()
     );
@@ -440,7 +525,7 @@ async function processPendingAdmissionCase({
           .filter(Boolean)
           .join(" ");
         const docketNameOfAdvocate = courtCase.representatives?.find((adv) =>
-          adv.representing?.any(
+          adv.representing?.find(
             (party) => party.partyType === "complainant.primary"
           )
         )?.additionalDetails?.advocateName;
@@ -568,15 +653,16 @@ async function processPendingAdmissionCase({
     "affidavit"
   );
 
-  if (vakalatnamaSection) {
+  if (vakalatnamaSection && Array.isArray(courtCase.representatives)) {
     const vakalats = courtCase.representatives.map((representative) => {
       const representation = representative.representing[0];
       return {
         isActive: representation.isActive,
         partyType: representation.partyType,
         fileStoreId:
-          representative.additionalDetails.document[0].vakalatnamaFileUpload
-            .fileStore,
+          representative?.additionalDetails?.document?.[0]
+            ?.vakalatnamaFileUpload?.fileStore ||
+          "1205ccae-1146-4de9-9ac5-74af59c4eb68", // FIXME: remove bogus fall back value
         representingFullName: representation.additionalDetails.fullName,
         advocateFullName: representative.additionalDetails.advocateName,
         dateOfAddition: representative.auditDetails.createdTime,
@@ -680,13 +766,13 @@ async function processCaseBundle(tenantId, caseId, index, state, requestInfo) {
     }
 
     case "CASE_ADMITTED": {
-      updatedIndex = structuredClone(index);
+      updatedIndex = cloneDeep(index);
       updatedIndex.contentLastModified = Date.now();
       break;
     }
 
     case "CASE_REASSIGNED": {
-      updatedIndex = structuredClone(index);
+      updatedIndex = cloneDeep(index);
       updatedIndex.isRegistered = false;
       break;
     }
