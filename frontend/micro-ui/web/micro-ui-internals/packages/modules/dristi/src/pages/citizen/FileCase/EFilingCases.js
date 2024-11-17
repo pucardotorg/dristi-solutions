@@ -1640,6 +1640,7 @@ function EFilingCases({ path }) {
     else {
       let res;
       let caseComplaintDocument = {};
+      let casePdfDocument = [];
       try {
         let casePdfDocument = [];
         if (isCaseLocked) {
