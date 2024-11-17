@@ -1,8 +1,17 @@
-const { search_pdf, create_file } = require("../api"); // Removed create_pdf import
+const {
+  search_pdf,
+  create_file,
+  search_case_v2,
+  create_pdf,
+  create_file_v2,
+  search_individual_uuid,
+  search_individual,
+} = require("../api"); // Removed create_pdf import
 const fs = require("fs");
 const path = require("path");
 const { PDFDocument } = require("pdf-lib");
 const axios = require("axios");
+const config = require("../config");
 
 const TEMP_FILES_DIR = path.join(__dirname, "../temp");
 
@@ -12,23 +21,106 @@ if (!fs.existsSync(TEMP_FILES_DIR)) {
 
 // Master Data
 const MASTER_DATA = [
-  { name: "Cheque", section: "filings", docType: "case.cheque", active: true, order: 1 },
-  { name: "Cheque Deposit Slip", section: "filings", docType: "case.cheque.depositslip", active: true, order: 2 },
-  { name: "Cheque Return Memo", section: "filings", docType: "case.cheque.returnmemo", active: true, order: 3 },
-  { name: "Demand Notice", section: "filings", docType: "case.demandnotice", active: true, order: 4 },
-  { name: "Proof of Dispatch of Demand Notice", section: "filings", docType: "case.demandnotice.proof", active: true, order: 5 },
-  { name: "Proof of Service of Demand Notice", section: "filings", docType: "case.demandnotice.serviceproof", active: true, order: 6 },
-  { name: "Reply Notice", section: "filings", docType: "case.replynotice", active: true, order: 7 },
-  { name: "Proof of Liability", section: "filings", docType: "case.liabilityproof", active: true, order: 8 },
-  { name: "Proof of Authorization", section: "filings", docType: "case.authorizationproof", active: true, order: 9 },
-  { name: "Affidavit under Section 223 BNSS", section: "affidavit", docType: "case.affidavit.223bnss", active: true, order: 1 },
-  { name: "Affidavit of Proof under Section 225 BNSS", section: "affidavit", docType: "case.affidavit.225bnss", active: true, order: 2 },
-  { name: "Vakalatnama", section: "vakalat", docType: null, active: true },
+  {
+    name: "Case Cover Page",
+    section: "titlepage",
+    docType: null,
+    isActive: true,
+    order: 1,
+  },
+  {
+    name: "Complaint",
+    section: "complaint",
+    docType: null,
+    isActive: true,
+    docketPageRequired: true,
+    order: 1,
+  },
+  {
+    name: "Cheque",
+    section: "filings",
+    docType: "case.cheque",
+    isActive: true,
+    order: 1,
+  },
+  {
+    name: "Cheque Deposit Slip",
+    section: "filings",
+    docType: "case.cheque.depositslip",
+    isActive: true,
+    order: 2,
+  },
+  {
+    name: "Cheque Return Memo",
+    section: "filings",
+    docType: "case.cheque.returnmemo",
+    isActive: true,
+    order: 3,
+  },
+  {
+    name: "Demand Notice",
+    section: "filings",
+    docType: "case.demandnotice",
+    isActive: true,
+    order: 4,
+  },
+  {
+    name: "Proof of Dispatch of Demand Notice",
+    section: "filings",
+    docType: "case.demandnotice.proof",
+    isActive: true,
+    order: 5,
+  },
+  {
+    name: "Proof of Service of Demand Notice",
+    section: "filings",
+    docType: "case.demandnotice.serviceproof",
+    isActive: true,
+    order: 6,
+  },
+  {
+    name: "Reply Notice",
+    section: "filings",
+    docType: "case.replynotice",
+    isActive: true,
+    order: 7,
+  },
+  {
+    name: "Proof of Liability",
+    section: "filings",
+    docType: "case.liabilityproof",
+    isActive: true,
+    order: 8,
+  },
+  {
+    name: "Proof of Authorization",
+    section: "filings",
+    docType: "case.authorizationproof",
+    isActive: true,
+    order: 9,
+  },
+  {
+    name: "Affidavit under Section 223 BNSS",
+    section: "affidavit",
+    docType: "case.affidavit.223bnss",
+    isActive: true,
+    order: 1,
+  },
+  {
+    name: "Affidavit of Proof under Section 225 BNSS",
+    section: "affidavit",
+    docType: "case.affidavit.225bnss",
+    isActive: true,
+    order: 2,
+  },
+  { name: "Vakalatnama", section: "vakalat", docType: null, isActive: true },
 ];
 
 // Function to retrieve documents from the master data
 function getDocumentsForSection(sectionName) {
-  return MASTER_DATA.filter((doc) => doc.section === sectionName && doc.active);
+  return MASTER_DATA.filter(
+    (doc) => doc.section === sectionName && doc.isActive
+  );
 }
 
 // Function to process documents for a section
@@ -46,12 +138,16 @@ async function processSectionDocuments(tenantId, section, requestInfo) {
   for (const doc of documents) {
     // Simulate retrieving the fileStoreId (in a real scenario, fetch from the database or service)
     const fileStoreId = `fileStore-${doc.docType}-${Date.now()}`;
-    console.log(`Validating fileStoreId: ${fileStoreId} for document: ${doc.name}`);
+    console.log(
+      `Validating fileStoreId: ${fileStoreId} for document: ${doc.name}`
+    );
 
     // Validate the fileStoreId
-    const pdfResponse = await search_pdf(tenantId, fileStoreId);
+    const pdfResponse = await search_pdf(tenantId, fileStoreId, requestInfo);
     if (pdfResponse.status !== 200) {
-      console.error(`Invalid fileStoreId: ${fileStoreId} for document: ${doc.name}`);
+      console.error(
+        `Invalid fileStoreId: ${fileStoreId} for document: ${doc.name}`
+      );
       continue;
     }
 
@@ -69,16 +165,283 @@ async function mergePdfs(fileStoreIds, tenantId) {
     const pdfResponse = await search_pdf(tenantId, fileStoreId);
     if (pdfResponse.status === 200) {
       const pdfUrl = pdfResponse.data[fileStoreId];
-      const pdfFetchResponse = await axios.get(pdfUrl, { responseType: "arraybuffer" });
+      const pdfFetchResponse = await axios.get(pdfUrl, {
+        responseType: "arraybuffer",
+      });
       const pdfData = pdfFetchResponse.data;
 
       const pdfDoc = await PDFDocument.load(pdfData);
-      const copiedPages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
+      const copiedPages = await mergedPdf.copyPages(
+        pdfDoc,
+        pdfDoc.getPageIndices()
+      );
       copiedPages.forEach((page) => mergedPdf.addPage(page));
     }
   }
 
   return mergedPdf;
+}
+
+/**
+ *
+ * @param  {...PDFDocument} pdfDocuments
+ * @returns
+ */
+async function mergePDFDocuments(...pdfDocuments) {
+  const pdfDocument = PDFDocument.create();
+  for (const pdfDoc of pdfDocuments) {
+    const copiedPages = (await pdfDocument).copyPages(
+      pdfDoc,
+      pdfDoc.getPageIndices()
+    );
+    copiedPages.forEach((page) => pdfDocument.addPage(page));
+  }
+  return pdfDocument;
+}
+
+/**
+ *
+ * @param {PDFDocument} pdfDoc
+ * @param {string} tenantId
+ * @param {*}
+ * @returns {string}
+ */
+async function persistPDF(pdfDoc, tenantId, requestInfo) {
+  const pdfBytes = await pdfDoc.save();
+  const form = new FormData();
+  form.append(
+    "file",
+    new Blob([pdfBytes], { type: "application/octet-stream" })
+  );
+  form.append("tenantId", tenantId);
+  form.append("module", "case-bundle-case-index");
+  const fileStoreResponse = await create_file_v2({
+    form,
+    tenantId,
+    requestInfo,
+  });
+  return fileStoreResponse?.data?.files?.[0].fileStoreId;
+}
+
+/**
+ *
+ * @param {MASTER_DATA} caseBundleMasterData
+ * @param {string} sectionName
+ * @returns
+ */
+function filterCaseBundleBySection(caseBundleMasterData, sectionName) {
+  return caseBundleMasterData.filter(
+    (indexItem) => indexItem.section === sectionName && indexItem.isActive
+  );
+}
+
+async function processPendingAdmissionCase({
+  tenantId,
+  caseId,
+  index,
+  state,
+  requestInfo,
+}) {
+  const indexCopy = structuredClone(index);
+
+  // TODO: fetch case-bundle-master master data
+  const caseBundleMaster = MASTER_DATA;
+
+  const complaintSection = filterCaseBundleBySection(
+    caseBundleMaster,
+    "complaint"
+  )[0];
+  if (!complaintSection) {
+    return null;
+  }
+
+  const caseResponse = await search_case_v2(
+    [
+      {
+        id: caseId,
+      },
+    ],
+    tenantId,
+    requestInfo
+  );
+
+  const courtCase = caseResponse?.data?.criteria[0]?.responseList[0];
+
+  const complaintFileStoreId = courtCase.documents.find(
+    (doc) => doc.documentType === "case.complaint.signed"
+  ).fileStore;
+  const stream = await search_pdf(tenantId, complaintFileStoreId, requestInfo);
+
+  let caseBundlePdfDoc = await PDFDocument.create();
+  let pdfDoc = await PDFDocument.load(stream);
+
+  const copiedPages = await caseBundlePdfDoc.copyPages(
+    pdfDoc,
+    pdfDoc.getPageIndices()
+  );
+  copiedPages.forEach((page) => caseBundlePdfDoc.addPage(page));
+
+  if (complaintSection.docketPageRequired) {
+    const coverCaseName = courtCase.caseTitle;
+    const coverCaseType = courtCase.caseType;
+    const coverCaseNumber =
+      courtCase.courtCaseNumber ||
+      courtCase.cmpNumber ||
+      courtCase.filingNumber;
+    const data = { Data: [{ coverCaseName, coverCaseType, coverCaseNumber }] };
+    const caseCoverPdfResponse = await create_pdf(
+      tenantId,
+      "cover-page-pdf",
+      data,
+      requestInfo
+    );
+    const caseCoverDoc = await PDFDocument.load(caseCoverPdfResponse.data);
+    const copiedPages = await caseBundlePdfDoc.copyPages(
+      caseBundlePdfDoc,
+      caseBundlePdfDoc.getPageIndices()
+    );
+    copiedPages.forEach((page) => caseCoverDoc.addPage(page));
+    caseBundlePdfDoc = caseCoverDoc;
+  }
+
+  // const pdfBytes = await caseBundlePdfDoc.save();
+  // const form = new FormData();
+  // form.append(
+  //   "file",
+  //   new Blob([pdfBytes], { type: "application/octet-stream" })
+  // );
+  // form.append("tenantId", tenantId);
+  // form.append("module", "case-bundle-case-index");
+  // const fileStoreResponse = await create_file_v2({
+  //   form,
+  //   tenantId,
+  //   requestInfo,
+  // });
+  // const complaintNewFileStoreId =
+  //   fileStoreResponse?.data?.files?.[0].fileStoreId;
+
+  const complaintNewFileStoreId = await persistPDF(
+    caseBundlePdfDoc,
+    tenantId,
+    requestInfo
+  );
+
+  // update index
+
+  const complaintIndexSection = indexCopy.sections.find(
+    (section) => section.name === "complaint"
+  );
+  complaintIndexSection.lineItems[0] = {
+    ...complaintIndexSection.lineItems[0],
+    createPDF: false,
+    sourceId: complaintFileStoreId,
+    fileStoreId: complaintNewFileStoreId,
+    content: "complaint",
+    sortParam: null,
+  };
+
+  // move to filings section of case complaint
+
+  const filingsSection = filterCaseBundleBySection(caseBundleMaster, "filings");
+  const sortedFilingSection = [...filingsSection].sort(
+    (secA, secB) => secA.order - secB.order
+  );
+  const lineItems = await Promise.all(
+    sortedFilingSection.map(async (section, index) => {
+      const documentFileStoreId = courtCase.documents.find(
+        (doc) => doc.documentType === section.docType
+      )?.fileStore;
+      const stream = await search_pdf(
+        tenantId,
+        documentFileStoreId,
+        requestInfo
+      );
+      const filingPDFDocument = PDFDocument.load(stream);
+      if (section.docketPageRequired) {
+        const complainant =
+          courtCase?.additionalDetails?.complainantDetails?.formdata?.[0]?.data;
+        const respondent =
+          courtCase?.additionalDetails?.respondentDetails?.formdata?.[0]?.data;
+        const docketComplainantName = [
+          complainant?.firstName,
+          complainant?.middleName,
+          complainant?.lastName,
+        ]
+          .filter(Boolean)
+          .join(" ");
+        const dockerNameOfAdvocate = courtCase.representatives?.find((adv) =>
+          adv.representing?.any(
+            (party) => party.partyType === "complainant.primary"
+          )
+        )?.additionalDetails?.advocateName;
+        const data = {
+          Data: [
+            {
+              docketDateOfSubmission: new Date(
+                courtCase.registrationDate
+              ).toLocaleDateString("en-IN"),
+              docketCourtName: config.constants.mdmsCourtRoom.name,
+              docketComplainantName,
+              docketAccusedName: [
+                respondent.firstName,
+                respondent.middleName,
+                respondent.lastName,
+              ]
+                .filter(Boolean)
+                .join(" "),
+              docketApplicationType: section.name,
+              docketNameOfAdvocate:
+                dockerNameOfAdvocate || docketComplainantName,
+              docketCounselFor: "COMPLAINANT",
+              docketNameOfFiling: docketComplainantName,
+            },
+          ],
+        };
+        const filingDocketPdfResponse = await create_pdf(
+          tenantId,
+          "docket-page",
+          data,
+          requestInfo
+        );
+        const filingDocketPDFDocument = await PDFDocument.load(
+          filingDocketPdfResponse.data
+        );
+
+        const mergedFilingDocument = mergePDFDocuments(
+          filingDocketPDFDocument,
+          filingPDFDocument
+        );
+        const mergedFilingDocumentFileStoreId = await persistPDF(
+          mergedFilingDocument,
+          tenantId,
+          requestInfo
+        );
+        return {
+          sourceId: documentFileStoreId,
+          fileStoreId: mergedFilingDocumentFileStoreId,
+          sortParam: index + 1,
+          createPDF: false,
+          content: "initialFiling",
+        };
+      } else {
+        return {
+          sourceId: documentFileStoreId,
+          fileStoreId: documentFileStoreId,
+          sortParam: index + 1,
+          createPDF: false,
+          content: "initialFiling",
+        };
+      }
+    })
+  );
+
+  // update index
+
+  const filingsIndexSection = indexCopy.sections.find(
+    (section) => section.name === "filings"
+  );
+  filingsIndexSection.lineItems = lineItems;
+  return indexCopy;
 }
 
 // Main Function
@@ -89,9 +452,22 @@ async function processCaseBundle(tenantId, caseId, index, state, requestInfo) {
 
   switch (state.toUpperCase()) {
     case "PENDING_ADMISSION_HEARING":
+      const sectionFileStoreIds = await processPendingAdmissionCase({
+        tenantId,
+        caseId,
+        index,
+        state,
+        requestInfo,
+      });
+      fileStoreIds.push(...sectionFileStoreIds);
+
       for (const section of index.sections) {
         if (["filings", "affidavit", "vakalat"].includes(section.name)) {
-          const sectionFileStoreIds = await processSectionDocuments(tenantId, section, requestInfo);
+          const sectionFileStoreIds = await processSectionDocuments(
+            tenantId,
+            section,
+            requestInfo
+          );
           fileStoreIds.push(...sectionFileStoreIds);
         }
       }
@@ -100,7 +476,11 @@ async function processCaseBundle(tenantId, caseId, index, state, requestInfo) {
     case "CASE_ADMITTED":
       for (const section of index.sections) {
         if (["filings", "affidavit"].includes(section.name)) {
-          const sectionFileStoreIds = await processSectionDocuments(tenantId, section, requestInfo);
+          const sectionFileStoreIds = await processSectionDocuments(
+            tenantId,
+            section,
+            requestInfo
+          );
           fileStoreIds.push(...sectionFileStoreIds);
         }
       }
@@ -109,7 +489,11 @@ async function processCaseBundle(tenantId, caseId, index, state, requestInfo) {
     case "CASE_REASSIGNED":
       for (const section of index.sections) {
         if (["vakalat"].includes(section.name)) {
-          const sectionFileStoreIds = await processSectionDocuments(tenantId, section, requestInfo);
+          const sectionFileStoreIds = await processSectionDocuments(
+            tenantId,
+            section,
+            requestInfo
+          );
           fileStoreIds.push(...sectionFileStoreIds);
         }
       }
@@ -125,10 +509,18 @@ async function processCaseBundle(tenantId, caseId, index, state, requestInfo) {
 
   console.log("Uploading merged PDF...");
   const mergedPdfBytes = await mergedPdf.save();
-  const mergedFilePath = path.join(TEMP_FILES_DIR, `merged-bundle-${Date.now()}.pdf`);
+  const mergedFilePath = path.join(
+    TEMP_FILES_DIR,
+    `merged-bundle-${Date.now()}.pdf`
+  );
   fs.writeFileSync(mergedFilePath, mergedPdfBytes);
 
-  const finalFileUpload = await create_file(mergedFilePath, tenantId, "case-bundle", "application/pdf");
+  const finalFileUpload = await create_file(
+    mergedFilePath,
+    tenantId,
+    "case-bundle",
+    "application/pdf"
+  );
   fs.unlinkSync(mergedFilePath);
 
   index.fileStoreId = finalFileUpload.data.files[0].fileStoreId;

@@ -14,7 +14,7 @@ const pool = new Pool({
   port: config.DB_PORT,
 });
 
-auth_token = config.auth_token;
+const auth_token = config.auth_token;
 
 async function search_case(cnrNumber, tenantId, requestinfo) {
   try {
@@ -29,6 +29,23 @@ async function search_case(cnrNumber, tenantId, requestinfo) {
             cnrNumber: cnrNumber,
           },
         ],
+      },
+    });
+  } catch (error) {
+    logger.error(`Error in ${config.paths.case_search}: ${error.message}`);
+    throw error;
+  }
+}
+
+async function search_case_v2(criteria, tenantId, requestinfo) {
+  try {
+    return await axios({
+      method: "post",
+      url: url.resolve(config.host.case, config.paths.case_search),
+      data: {
+        RequestInfo: requestinfo,
+        tenantId: tenantId,
+        criteria,
       },
     });
   } catch (error) {
@@ -284,28 +301,32 @@ async function create_pdf(tenantId, key, data, requestinfo) {
   }
 }
 
-async function search_pdf(tenantId, fileStoreId) {
+async function search_pdf(tenantId, fileStoreId, requestInfo) {
   try {
-    const apiUrl = url.resolve(config.host.filestore, config.paths.filestore_create + "/url");
+    const apiUrl = url.resolve(
+      config.host.filestore,
+      config.paths.filestore_create + "/url"
+    );
     const response = await axios.get(apiUrl, {
       headers: {
-        'Content-Type': 'application/json',
-        'auth-token': auth_token,
-        'tenantId': tenantId // including tenantId as a header
+        "Content-Type": "application/json",
+        "auth-token": requestInfo?.authToken || auth_token,
+        tenantId: tenantId, // including tenantId as a header
       },
       params: {
         tenantId: tenantId,
-        fileStoreIds: fileStoreId
-      }
+        fileStoreIds: fileStoreId,
+      },
     });
-    
+
     return response;
   } catch (error) {
-    logger.error(`Error in ${config.paths.filestore_create + "/url"}: ${error.message}`);
+    logger.error(
+      `Error in ${config.paths.filestore_create + "/url"}: ${error.message}`
+    );
     throw error;
   }
 }
-
 
 async function create_file(filePath, tenantId, module, tag) {
   try {
@@ -330,7 +351,47 @@ async function create_file(filePath, tenantId, module, tag) {
         tenantId,
       },
       maxContentLength: Infinity, // Optional, in case the file size is large
-      maxBodyLength: Infinity,    // Optional, in case the file size is large
+      maxBodyLength: Infinity, // Optional, in case the file size is large
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+}
+
+async function create_file_v2({
+  filePath,
+  tenantId,
+  module,
+  tag,
+  form,
+  requestInfo,
+}) {
+  try {
+    if (!form) {
+      // Check if file exists
+      if (!fs.existsSync(filePath)) {
+        console.error(`Error: File does not exist at path: ${filePath}`);
+        return;
+      }
+
+      form = new FormData();
+      form.append("file", fs.createReadStream(filePath));
+      form.append("tenantId", tenantId);
+      form.append("module", module);
+      form.append("tag", tag);
+    }
+
+    // Prepare URL for the request
+    const url = `${config.host.filestore}${config.paths.filestore_create}`;
+    const response = await axios.post(url, form, {
+      headers: {
+        ...form.getHeaders(), // Adds the required Content-Type header for multipart/form-data
+        "auth-token": requestInfo.authToken || auth_token,
+        tenantId,
+      },
+      maxContentLength: Infinity, // Optional, in case the file size is large
+      maxBodyLength: Infinity, // Optional, in case the file size is large
     });
     return response;
   } catch (error) {
@@ -339,9 +400,6 @@ async function create_file(filePath, tenantId, module, tag) {
 }
 
 module.exports = create_file;
-
-
-
 
 async function search_message(tenantId, module, locale, requestinfo) {
   try {
@@ -367,6 +425,7 @@ module.exports = {
   create_pdf,
   search_hrms,
   search_case,
+  search_case_v2,
   search_order,
   search_mdms,
   search_individual,
@@ -377,5 +436,6 @@ module.exports = {
   search_advocate,
   search_message,
   create_file,
+  create_file_v2,
   search_pdf,
 };
