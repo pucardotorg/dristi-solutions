@@ -204,7 +204,7 @@ async function mergePDFDocuments(...pdfDocuments) {
  * @param {PDFDocument} pdfDoc
  * @param {string} tenantId
  * @param {*}
- * @returns {string}
+ * @returns {Promise<string>}
  */
 async function persistPDF(pdfDoc, tenantId, requestInfo) {
   const pdfBytes = await pdfDoc.save();
@@ -233,6 +233,85 @@ function filterCaseBundleBySection(caseBundleMasterData, sectionName) {
   return caseBundleMasterData.filter(
     (indexItem) => indexItem.section === sectionName && indexItem.isActive
   );
+}
+
+/**
+ *
+ * @param {string} documentFileStoreId
+ * @param {string} docketApplicationType
+ * @param {string} tenantId
+ * @param {*} requestInfo
+ * @returns {Promise<string>} document [with docket] filestore id
+ */
+async function applyDocketToDocument(
+  documentFileStoreId,
+  {
+    docketApplicationType,
+    docketCounselFor,
+    docketNameOfFiling,
+    docketNameOfAdvocate,
+    docketDateOfSubmission,
+  },
+  tenantId,
+  requestInfo
+) {
+  if (!documentFileStoreId) {
+    return null;
+  }
+  const stream = await search_pdf(tenantId, documentFileStoreId, requestInfo);
+  const filingPDFDocument = PDFDocument.load(stream);
+
+  const complainant =
+    courtCase?.additionalDetails?.complainantDetails?.formdata?.[0]?.data;
+  const respondent =
+    courtCase?.additionalDetails?.respondentDetails?.formdata?.[0]?.data;
+  const docketComplainantName = [
+    complainant?.firstName,
+    complainant?.middleName,
+    complainant?.lastName,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const data = {
+    Data: [
+      {
+        docketDateOfSubmission: docketDateOfSubmission,
+        docketCourtName: config.constants.mdmsCourtRoom.name,
+        docketComplainantName,
+        docketAccusedName: [
+          respondent.firstName,
+          respondent.middleName,
+          respondent.lastName,
+        ]
+          .filter(Boolean)
+          .join(" "),
+        docketApplicationType,
+        docketNameOfAdvocate,
+        docketCounselFor,
+        docketNameOfFiling,
+      },
+    ],
+  };
+  const filingDocketPdfResponse = await create_pdf(
+    tenantId,
+    "docket-page",
+    data,
+    requestInfo
+  );
+  const filingDocketPDFDocument = await PDFDocument.load(
+    filingDocketPdfResponse.data
+  );
+
+  const mergedDocumentWithDocket = mergePDFDocuments(
+    filingDocketPDFDocument,
+    filingPDFDocument
+  );
+  const mergedDocWithDocketFileStoreId = await persistPDF(
+    mergedDocumentWithDocket,
+    tenantId,
+    requestInfo
+  );
+  return mergedDocWithDocketFileStoreId;
 }
 
 async function processPendingAdmissionCase({
@@ -346,22 +425,17 @@ async function processPendingAdmissionCase({
   const sortedFilingSection = [...filingsSection].sort(
     (secA, secB) => secA.order - secB.order
   );
-  const lineItems = await Promise.all(
+  const filingsLineItems = await Promise.all(
     sortedFilingSection.map(async (section, index) => {
       const documentFileStoreId = courtCase.documents.find(
         (doc) => doc.documentType === section.docType
       )?.fileStore;
-      const stream = await search_pdf(
-        tenantId,
-        documentFileStoreId,
-        requestInfo
-      );
-      const filingPDFDocument = PDFDocument.load(stream);
+      if (!documentFileStoreId) {
+        return null;
+      }
       if (section.docketPageRequired) {
         const complainant =
           courtCase?.additionalDetails?.complainantDetails?.formdata?.[0]?.data;
-        const respondent =
-          courtCase?.additionalDetails?.respondentDetails?.formdata?.[0]?.data;
         const docketComplainantName = [
           complainant?.firstName,
           complainant?.middleName,
@@ -369,53 +443,27 @@ async function processPendingAdmissionCase({
         ]
           .filter(Boolean)
           .join(" ");
-        const dockerNameOfAdvocate = courtCase.representatives?.find((adv) =>
+        const docketNameOfAdvocate = courtCase.representatives?.find((adv) =>
           adv.representing?.any(
             (party) => party.partyType === "complainant.primary"
           )
         )?.additionalDetails?.advocateName;
-        const data = {
-          Data: [
-            {
-              docketDateOfSubmission: new Date(
-                courtCase.registrationDate
-              ).toLocaleDateString("en-IN"),
-              docketCourtName: config.constants.mdmsCourtRoom.name,
-              docketComplainantName,
-              docketAccusedName: [
-                respondent.firstName,
-                respondent.middleName,
-                respondent.lastName,
-              ]
-                .filter(Boolean)
-                .join(" "),
-              docketApplicationType: section.name,
-              docketNameOfAdvocate:
-                dockerNameOfAdvocate || docketComplainantName,
-              docketCounselFor: "COMPLAINANT",
-              docketNameOfFiling: docketComplainantName,
-            },
-          ],
-        };
-        const filingDocketPdfResponse = await create_pdf(
+
+        const mergedFilingDocumentFileStoreId = await applyDocketToDocument(
+          documentFileStoreId,
+          {
+            docketApplicationType: section.name,
+            docketCounselFor: "COMPLAINANT",
+            docketNameOfFiling: docketComplainantName,
+            docketNameOfAdvocate: docketNameOfAdvocate || docketComplainantName,
+            docketDateOfSubmission: new Date(
+              courtCase.registrationDate
+            ).toLocaleDateString("en-IN"),
+          },
           tenantId,
-          "docket-page",
-          data,
           requestInfo
-        );
-        const filingDocketPDFDocument = await PDFDocument.load(
-          filingDocketPdfResponse.data
         );
 
-        const mergedFilingDocument = mergePDFDocuments(
-          filingDocketPDFDocument,
-          filingPDFDocument
-        );
-        const mergedFilingDocumentFileStoreId = await persistPDF(
-          mergedFilingDocument,
-          tenantId,
-          requestInfo
-        );
         return {
           sourceId: documentFileStoreId,
           fileStoreId: mergedFilingDocumentFileStoreId,
@@ -440,7 +488,76 @@ async function processPendingAdmissionCase({
   const filingsIndexSection = indexCopy.sections.find(
     (section) => section.name === "filings"
   );
-  filingsIndexSection.lineItems = lineItems;
+  filingsIndexSection.lineItems = filingsLineItems.filter(Boolean);
+
+  // update affidavits
+  const affidavitsSection = filterCaseBundleBySection(
+    caseBundleMaster,
+    "affidavit"
+  );
+  const sortedAffidavitsSection = [...affidavitsSection].sort(
+    (secA, secB) => secA.order - secB.order
+  );
+
+  const affidavitsLineItems = await Promise.all(
+    sortedAffidavitsSection.map(async (section, index) => {
+      const documentFileStoreId = courtCase.documents.find(
+        (doc) => doc.documentType === section.docType
+      )?.fileStore;
+      if (!documentFileStoreId) {
+        return null;
+      }
+      if (section.docketPageRequired) {
+        const complainant =
+          courtCase?.additionalDetails?.complainantDetails?.formdata?.[0]?.data;
+        const docketComplainantName = [
+          complainant?.firstName,
+          complainant?.middleName,
+          complainant?.lastName,
+        ]
+          .filter(Boolean)
+          .join(" ");
+        const docketNameOfAdvocate = courtCase.representatives?.find((adv) =>
+          adv.representing?.any(
+            (party) => party.partyType === "complainant.primary"
+          )
+        )?.additionalDetails?.advocateName;
+
+        const mergedFilingDocumentFileStoreId = await applyDocketToDocument(
+          documentFileStoreId,
+          {
+            docketApplicationType: section.name,
+            docketCounselFor: "COMPLAINANT",
+            docketNameOfFiling: docketComplainantName,
+            docketNameOfAdvocate: docketNameOfAdvocate || docketComplainantName,
+            docketDateOfSubmission: new Date(
+              courtCase.registrationDate
+            ).toLocaleDateString("en-IN"),
+          },
+          tenantId,
+          requestInfo
+        );
+
+        return {
+          sourceId: documentFileStoreId,
+          fileStoreId: mergedFilingDocumentFileStoreId,
+          sortParam: index + 1,
+          createPDF: false,
+          content: "initialFiling",
+        };
+      } else {
+        return {
+          sourceId: documentFileStoreId,
+          fileStoreId: documentFileStoreId,
+          sortParam: index + 1,
+          createPDF: false,
+          content: "initialFiling",
+        };
+      }
+    })
+  );
+
+
   return indexCopy;
 }
 
