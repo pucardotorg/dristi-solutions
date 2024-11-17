@@ -4,20 +4,23 @@ const multer = require("multer");
 const upload = multer({ dest: "uploads/" });
 const { PDFDocument } = require("pdf-lib");
 const fs = require("fs");
+const { renderError } = require("../utils/renderError");
 const asyncMiddleware = require("../utils/asyncMiddleware");
 const buildCasePdf = require("../caseBundle/buildCasePdf");
 const processCaseBundle = require("../caseBundle/generateIndex");
 
-
-
 const A4_WIDTH = 595.28; // A4 width in points
 const A4_HEIGHT = 841.89; // A4 height in points
-
 
 router.post(
   "/case-bundle",
   asyncMiddleware(async (req, res) => {
-    const { index, caseNumber, RequestInfo, caseDetails} = req.body;
+    const {
+      index,
+      caseNumber,
+      RequestInfo,
+      // caseDetails
+    } = req.body;
 
     // Validate required parameters
     if (!index || !caseNumber || !RequestInfo) {
@@ -52,7 +55,6 @@ router.post(
   })
 );
 
-
 router.post(
   "/process-case-bundle",
   asyncMiddleware(async (req, res) => {
@@ -61,13 +63,20 @@ router.post(
     // Validate required inputs
     if (!tenantId || !caseId || !index || !state || !requestInfo) {
       return res.status(400).json({
-        message: "Missing required fields: 'tenantId', 'caseId', 'index', 'state', or 'requestInfo'.",
+        message:
+          "Missing required fields: 'tenantId', 'caseId', 'index', 'state', or 'requestInfo'.",
       });
     }
 
     try {
       // Process the case bundle
-      const updatedIndex = await processCaseBundle(tenantId, caseId, index, state, requestInfo);
+      const updatedIndex = await processCaseBundle(
+        tenantId,
+        caseId,
+        index,
+        state,
+        requestInfo
+      );
 
       // Return the updated index
       res.status(200).json({
@@ -87,7 +96,7 @@ router.post(
 router.post(
   "/combine-documents",
   upload.array("documents"),
-  asyncMiddleware(async function (req, res, next) {
+  asyncMiddleware(async function (req, res) {
     try {
       const mergedPdf = await PDFDocument.create();
 
