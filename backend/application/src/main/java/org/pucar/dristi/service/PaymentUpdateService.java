@@ -101,12 +101,6 @@ public class PaymentUpdateService {
 
                 application.setStatus(state.getState());
 
-                if (PENDINGAPPROVAL.equalsIgnoreCase(application.getStatus())){
-                    ApplicationRequest applicationRequest = new ApplicationRequest();
-                    applicationRequest.setRequestInfo(requestInfo);
-                    applicationRequest.setApplication(application);
-                    enrichment.enrichApplicationNumberByCMPNumber(applicationRequest);
-                }
                 AuditDetails auditDetails = application.getAuditDetails();
                 auditDetails.setLastModifiedBy(paymentDetail.getAuditDetails().getLastModifiedBy());
                 auditDetails.setLastModifiedTime(paymentDetail.getAuditDetails().getLastModifiedTime());
