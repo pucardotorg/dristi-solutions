@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.Clock;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -62,8 +63,11 @@ public class IndexerUtils {
 
     private final AdvocateUtil advocateUtil;
 
+    private final Clock clock;
+
+
     @Autowired
-    public IndexerUtils(RestTemplate restTemplate, Configuration config, CaseUtil caseUtil, EvidenceUtil evidenceUtil, TaskUtil taskUtil, ApplicationUtil applicationUtil, ObjectMapper mapper, MdmsDataConfig mdmsDataConfig, CaseOverallStatusUtil caseOverallStatusUtil, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil) {
+    public IndexerUtils(RestTemplate restTemplate, Configuration config, CaseUtil caseUtil, EvidenceUtil evidenceUtil, TaskUtil taskUtil, ApplicationUtil applicationUtil, ObjectMapper mapper, MdmsDataConfig mdmsDataConfig, CaseOverallStatusUtil caseOverallStatusUtil, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, Clock clock) {
         this.restTemplate = restTemplate;
         this.config = config;
         this.caseUtil = caseUtil;
@@ -76,6 +80,7 @@ public class IndexerUtils {
         this.notificationService = notificationService;
         this.individualService = individualService;
         this.advocateUtil = advocateUtil;
+        this.clock = clock;
     }
 
     public static boolean isNullOrEmpty(String str) {
@@ -188,6 +193,8 @@ public class IndexerUtils {
         boolean isCompleted;
         boolean isGeneric;
 
+        stateSla = getSla(stateSla);
+
         log.info("Inside indexer utils build payload:: entityType: {}, referenceId: {}, status: {}, action: {}, tenantId: {}", entityType, referenceId, status, action, tenantId);
         Object object = caseOverallStatusUtil.checkCaseOverAllStatus(entityType, referenceId, status, action, tenantId, requestInfo);
         Map<String, String> details = processEntity(entityType, referenceId, status, action, object, requestInfo);
@@ -204,6 +211,8 @@ public class IndexerUtils {
             Object task = taskUtil.getTask(requestInfo, tenantId, null, referenceId, status);
             net.minidev.json.JSONArray assignToList = JsonPath.read(task.toString(), ASSIGN_TO_PATH);
             assignedTo = assignToList.toString();
+            Object dueDate = JsonPath.read(jsonItem, DUE_DATE_PATH);
+            stateSla = dueDate != null ? ((Number) dueDate).longValue() : null;
             assignedRole =  new JSONArray().toString();
         }
         if(!isCompleted) {
@@ -465,6 +474,16 @@ public class IndexerUtils {
             log.error("Exception while trying to index the ES documents. Note: ES is not Down.", e);
             throw e;
         }
+    }
+
+    public Long getSla(Long stateSla) {
+        long currentTime = clock.millis();
+        if (stateSla == null || stateSla < ONE_DAY_DURATION_MILLIS) {
+            stateSla = currentTime + ONE_DAY_DURATION_MILLIS;
+        } else {
+            stateSla += currentTime;
+        }
+        return stateSla;
     }
 
 }

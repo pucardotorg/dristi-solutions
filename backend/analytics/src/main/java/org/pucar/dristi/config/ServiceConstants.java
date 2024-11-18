@@ -210,4 +210,8 @@ public class ServiceConstants {
     public static final String INDIVIDUAL_UTILITY_EXCEPTION = "INDIVIDUAL_UTILITY_EXCEPTION";
 
     public static final String ERROR_WHILE_FETCHING_FROM_ADVOCATE = "ERROR_WHILE_FETCHING_FROM_ADVOCATE";
+
+    public static final String DUE_DATE_PATH= "$.duedate";
+
+    public static final long ONE_DAY_DURATION_MILLIS=86400000L;
 }
