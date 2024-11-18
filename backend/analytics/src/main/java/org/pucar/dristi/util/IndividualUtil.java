@@ -13,18 +13,20 @@ import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.web.models.IndividualSearchRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import static org.pucar.dristi.config.ServiceConstants.INDIVIDUAL_UTILITY_EXCEPTION;
+
 
 @Component
 @Slf4j
 public class IndividualUtil {
 
-    private final ServiceRequestRepository serviceRequestRepository;
+
+    private ServiceRequestRepository serviceRequestRepository;
 
     private final ObjectMapper objectMapper;
 
@@ -34,38 +36,6 @@ public class IndividualUtil {
         this.objectMapper = objectMapper;
     }
 
-    /** To call the individual service for searching individualId exists or not
-     * @param individualRequest
-     * @param uri
-     * @param individualUserUUID
-     * @return
-     */
-    public Boolean individualCall(IndividualSearchRequest individualRequest, StringBuilder uri, Map<String, String> individualUserUUID) {
-        try{
-            Object responseMap = serviceRequestRepository.fetchResult(uri, individualRequest);
-            if(responseMap!=null){
-                Gson gson= new Gson();
-                String jsonString=gson.toJson(responseMap);
-                log.info("Response :: {}", jsonString);
-                JsonObject response = JsonParser.parseString(jsonString).getAsJsonObject();
-                JsonArray individualObject=response.getAsJsonArray("Individual");
-                if(!individualObject.isEmpty()) {
-                    String userUUID = individualObject.get(0).getAsJsonObject().get("userUuid").getAsString();
-                    individualUserUUID.put("userUuid", userUUID);
-                }
-                return !individualObject.isEmpty() && individualObject.get(0).getAsJsonObject().get("individualId") != null;
-            }
-            return false;
-        }
-        catch (CustomException e) {
-            log.error("Custom Exception occurred in Individual Utility :: {}", e.toString());
-            throw e;
-        }
-        catch (Exception e){
-            throw new CustomException(INDIVIDUAL_UTILITY_EXCEPTION,"Error in individual utility service: "+e.getMessage());
-        }
-
-    }
 
     public List<Individual> getIndividualByIndividualId(IndividualSearchRequest individualRequest, StringBuilder uri) {
         List<Individual> individuals = new ArrayList<>();
@@ -87,8 +57,48 @@ public class IndividualUtil {
             }
         } catch (Exception e) {
             log.error("Error occurred in individual utility", e);
+            throw new CustomException(INDIVIDUAL_UTILITY_EXCEPTION, "Error in individual utility service: " + e.getMessage());
         }
 
         return individuals;
+    }
+
+    public JsonObject getIndividual(IndividualSearchRequest individualRequest, StringBuilder uri) {
+        try {
+            JsonObject individual = new JsonObject();
+            Object responseMap = serviceRequestRepository.fetchResult(uri, individualRequest);
+            if (responseMap != null) {
+                Gson gson = new Gson();
+                String jsonString = gson.toJson(responseMap);
+                log.info("Individual Response :: {}", jsonString);
+                JsonObject response = JsonParser.parseString(jsonString).getAsJsonObject();
+                JsonArray individualObject = response.getAsJsonArray("Individual");
+                if (!individualObject.isEmpty() && individualObject.get(0).getAsJsonObject() != null) {
+                    individual = individualObject.get(0).getAsJsonObject();
+                }
+            }
+            return individual;
+        } catch (CustomException e) {
+            log.error("Custom Exception occurred in individual Utility :: {}", e.toString());
+            throw e;
+        } catch (Exception e) {
+            throw new CustomException(INDIVIDUAL_UTILITY_EXCEPTION, "Exception in individual utility service: " + e.getMessage());
+        }
+    }
+
+
+    public Boolean individualExists(IndividualSearchRequest individualRequest, StringBuilder uri) {
+
+        return !getIndividualId(individualRequest, uri).isEmpty();
+
+    }
+
+    public String getIndividualId(IndividualSearchRequest individualRequest, StringBuilder uri) {
+        String individualId = "";
+        JsonObject individual = getIndividual(individualRequest, uri);
+        if (!ObjectUtils.isEmpty(individual) && individual.get("individualId") != null) {
+            individualId = individual.get("individualId").getAsString();
+        }
+        return individualId;
     }
 }

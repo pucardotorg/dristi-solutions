@@ -13,15 +13,15 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
-import static org.pucar.dristi.config.ServiceConstants.INDIVIDUAL_SERVICE_EXCEPTION;
 
 @Service
 @Slf4j
 public class IndividualService {
-    private final IndividualUtil individualUtils;
-    private final Configuration config;
+
+    private IndividualUtil individualUtils;
+
+    private Configuration config;
 
     @Autowired
     public IndividualService(IndividualUtil individualUtils, Configuration config) {
@@ -29,25 +29,27 @@ public class IndividualService {
         this.config = config;
     }
 
-    public Boolean searchIndividual(RequestInfo requestInfo , String individualId, Map<String, String> individualUserUUID ){
+
+    public List<Individual> getIndividuals(RequestInfo requestInfo, List<String> uuids) throws CustomException {
         try {
             IndividualSearchRequest individualSearchRequest = new IndividualSearchRequest();
             individualSearchRequest.setRequestInfo(requestInfo);
             IndividualSearch individualSearch = new IndividualSearch();
-            log.info("Individual Id :: {}", individualId);
-            individualSearch.setIndividualId(individualId);
+            individualSearch.setUserUuid(uuids);
             individualSearchRequest.setIndividual(individualSearch);
-            StringBuilder uri = new StringBuilder(config.getIndividualHost()).append(config.getIndividualSearchEndpoint());
-            uri.append("?limit=1000").append("&offset=0").append("&tenantId=").append(requestInfo.getUserInfo().getTenantId()).append("&includeDeleted=true");
-            return individualUtils.individualCall(individualSearchRequest, uri, individualUserUUID);
+            StringBuilder uri = buildIndividualSearchUri(requestInfo, uuids);
+            List<Individual> individual = individualUtils.getIndividualByIndividualId(individualSearchRequest, uri);
+            if (individual != null) {
 
-
-        } catch(CustomException e){
-            throw e;
-        }
-        catch (Exception e){
-            log.error("Error in search individual service :: {}", e.toString());
-            throw new CustomException(INDIVIDUAL_SERVICE_EXCEPTION,"Error in search individual service"+e.getMessage());
+                return individual;
+            } else {
+                log.error("No individuals found");
+                return Collections.emptyList();
+            }
+        } catch (Exception e) {
+            log.error("Error in search individual service: ", e);
+            log.error("Individuals not found");
+            return Collections.emptyList();
         }
     }
 
@@ -81,4 +83,5 @@ public class IndividualService {
                 .append("&tenantId=").append(requestInfo.getUserInfo().getTenantId())
                 .append("&includeDeleted=true");
     }
+
 }
