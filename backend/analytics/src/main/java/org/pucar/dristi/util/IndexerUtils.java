@@ -172,6 +172,10 @@ public class IndexerUtils {
         String tenantId = JsonPath.read(jsonItem, TENANT_ID_PATH);
         String action = JsonPath.read(jsonItem, ACTION_PATH);
         String additionalDetails;
+
+        if (stateSla != null && stateSla > 0) {
+            stateSla = System.currentTimeMillis() + stateSla * 86400000;
+        }
         boolean isCompleted;
         boolean isGeneric;
 
@@ -191,7 +195,10 @@ public class IndexerUtils {
             Object task = taskUtil.getTask(requestInfo, tenantId, null, referenceId, status);
             net.minidev.json.JSONArray assignToList = JsonPath.read(task.toString(), ASSIGN_TO_PATH);
             assignedTo = assignToList.toString();
-            assignedRole =  new JSONArray().toString();
+            Object dueDate = JsonPath.read(jsonItem, DUE_DATE_PATH);
+            stateSla = dueDate != null ? ((Number) dueDate).longValue() : null;
+
+            assignedRole = new JSONArray().toString();
         }
 
         try {

@@ -193,7 +193,7 @@ public class IndexerUtilsTest {
                 + "\"businessService\": \"entityType\","
                 + "\"businessId\": \"referenceId\","
                 + "\"state\": {\"state\":\"status\", \"actions\":[{\"roles\" : [\"role\"]}]},"
-                + "\"stateSla\": 123,"
+                + "\"stateSla\": 0,"
                 + "\"businesssServiceSla\": 456,"
                 + "\"assignes\": [\"user1\"],"
                 + "\"assignedRoles\": [\"role\"],"
@@ -209,7 +209,7 @@ public class IndexerUtilsTest {
 
         String expected = String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                "index", "referenceId", "id", "name", "entityType", "referenceId", "status", "[\"user1\"]", "[\"role\"]", "null", "null", false, 123L, 456L, "{\"key\":\"value\"}"
+                "index", "referenceId", "id", "name", "entityType", "referenceId", "status", "[\"user1\"]", "[\"role\"]", "null", "null", false, 0, 456L, "{\"key\":\"value\"}"
         );
 
         PendingTaskType pendingTaskType = PendingTaskType.builder().isgeneric(false).pendingTask("name").state("status").triggerAction(List.of("action")).build();
