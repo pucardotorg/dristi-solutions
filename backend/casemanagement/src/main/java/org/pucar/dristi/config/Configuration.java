@@ -65,6 +65,9 @@ public class Configuration {
 	@Value("${egov.mdms.schema.search.endpoint}")
 	private String mdmsSchemaEndPoint;
 
+	@Value("${schemacode.state.master}")
+	private String stateMasterSchema;
+
 
 	//HRMS
 	@Value("${egov.hrms.host}")
@@ -122,6 +125,9 @@ public class Configuration {
 
 	@Value("${egov.dristi.pdf.bundle}")
 	private String caseBundlePdfPath;
+
+	@Value("${egov.dristi.pdf.process.bundle}")
+	private String processCaseBundlePdfPath;
 
 	@Value("${dristi.case.host}")
 	private String caseHost;
