@@ -17,6 +17,7 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.CaseRegistrationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.CaseRepository;
+import org.pucar.dristi.util.AdvocateUtil;
 import org.pucar.dristi.util.BillingUtil;
 import org.pucar.dristi.util.EncryptionDecryptionUtil;
 import org.pucar.dristi.validators.CaseRegistrationValidator;
@@ -56,6 +57,8 @@ public class CaseService {
 
     private final IndividualService individualService;
 
+    private final AdvocateUtil advocateUtil;
+
 
     @Autowired
     public CaseService(@Lazy CaseRegistrationValidator validator,
@@ -66,7 +69,7 @@ public class CaseService {
                        Producer producer,
                        BillingUtil billingUtil,
                        EncryptionDecryptionUtil encryptionDecryptionUtil,
-                       ObjectMapper objectMapper, CacheService cacheService, SmsNotificationService notificationService, IndividualService individualService) {
+                       ObjectMapper objectMapper, CacheService cacheService, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.caseRepository = caseRepository;
@@ -79,6 +82,7 @@ public class CaseService {
         this.cacheService = cacheService;
         this.notificationService = notificationService;
         this.individualService = individualService;
+        this.advocateUtil = advocateUtil;
     }
 
 
@@ -213,13 +217,9 @@ public class CaseService {
     public void callNotificationService(CaseRequest caseRequest, String messageCode) {
         try {
             CourtCase courtCase = caseRequest.getCases();
-            Object additionalDetailsObject = courtCase.getAdditionalDetails();
-            String jsonData = objectMapper.writeValueAsString(additionalDetailsObject);
-            JsonNode rootNode = objectMapper.readTree(jsonData);
-
-            List<String> individualIds = extractIndividualIds(rootNode);
-
-            List<String> phonenumbers = callIndividualService(caseRequest.getRequestInfo(), individualIds);
+            Set<String> IndividualIds = getLitigantIndividualId(courtCase);
+            getAdvocateIndividualId(caseRequest, IndividualIds);
+            Set<String> phonenumbers = callIndividualService(caseRequest.getRequestInfo(), IndividualIds);
             SmsTemplateData smsTemplateData = enrichSmsTemplateData(caseRequest.getCases());
             for (String number : phonenumbers) {
                 notificationService.sendNotification(caseRequest.getRequestInfo(), smsTemplateData, messageCode, number);
@@ -230,6 +230,38 @@ public class CaseService {
         }
     }
 
+    private void getAdvocateIndividualId(CaseRequest caseRequest, Set<String> individualIds) {
+
+        Set<String> advocateId = new HashSet<>();
+        CourtCase courtCase = caseRequest.getCases();
+        if (courtCase.getRepresentatives() != null) {
+            advocateId.addAll(
+                    courtCase.getRepresentatives().stream()
+                            .filter(AdvocateMapping::getIsActive)
+                            .map(AdvocateMapping::getAdvocateId)
+                            .collect(Collectors.toSet())
+            );
+        }
+        if(!advocateId.isEmpty()){
+            advocateId = advocateUtil.getAdvocate(caseRequest.getRequestInfo(),advocateId.stream().toList());
+        }
+        individualIds.addAll(advocateId);
+    }
+
+    private Set<String> getLitigantIndividualId(CourtCase courtCase) {
+        Set<String> ids = new HashSet<>();
+
+        if (courtCase.getLitigants() != null) {
+            ids.addAll(
+                    courtCase.getLitigants().stream()
+                            .filter(Party::getIsActive)
+                            .map(Party::getIndividualId)
+                            .collect(Collectors.toSet())
+            );
+        }
+        return ids;
+    }
+
     private SmsTemplateData enrichSmsTemplateData(CourtCase cases) {
         return SmsTemplateData.builder()
                 .courtCaseNumber(cases.getCourtCaseNumber())
@@ -238,9 +270,9 @@ public class CaseService {
                 .tenantId(cases.getTenantId()).build();
     }
 
-    private List<String> callIndividualService(RequestInfo requestInfo, List<String> individualIds) {
+    private Set<String> callIndividualService(RequestInfo requestInfo, Set<String> individualIds) {
 
-        List<String> mobileNumber = new ArrayList<>();
+        Set<String> mobileNumber = new HashSet<>();
         try {
             for(String id : individualIds){
                 List<Individual> individuals = individualService.getIndividualsByIndividualId(requestInfo, id);
@@ -255,55 +287,6 @@ public class CaseService {
         }
 
         return mobileNumber;
-    }
-
-    public static List<String> extractIndividualIds(JsonNode rootNode) {
-        List<String> individualIds = new ArrayList<>();
-
-
-        JsonNode complainantDetailsNode = rootNode.path("complainantDetails")
-                .path("formdata");
-        if (complainantDetailsNode.isArray()) {
-            for (JsonNode complainantNode : complainantDetailsNode) {
-                JsonNode complainantVerificationNode = complainantNode.path("data")
-                        .path("complainantVerification")
-                        .path("individualDetails");
-                if (!complainantVerificationNode.isMissingNode()) {
-                    String individualId = complainantVerificationNode.path("individualId").asText();
-                    if (!individualId.isEmpty()) {
-                        individualIds.add(individualId);
-                    }
-                }
-            }
-        }
-
-        JsonNode advocateDetailsNode = rootNode.path("advocateDetails")
-                .path("formdata");
-        if (advocateDetailsNode.isArray()) {
-            for (JsonNode advocateNode : advocateDetailsNode) {
-                // Check if the advocate is representing
-                JsonNode isAdvocateRepresentingNode = advocateNode.path("data")
-                        .path("isAdvocateRepresenting")
-                        .path("code");
-
-                // Proceed if the value is "YES"
-                if ("YES".equals(isAdvocateRepresentingNode.asText())) {
-                    JsonNode advocateListNode = advocateNode.path("data")
-                            .path("advocateBarRegNumberWithName");
-
-                    if (advocateListNode.isArray()) {
-                        for (JsonNode advocateInfoNode : advocateListNode) {
-                            String individualId = advocateInfoNode.path("individualId").asText();
-                            if (!individualId.isEmpty()) {
-                                individualIds.add(individualId);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        return individualIds;
     }
 
     private String getNotificationStatus(String previousStatus, String updatedStatus) {
@@ -528,8 +511,8 @@ public class CaseService {
                 verifyRepresentativesAndJoinCase(joinCaseRequest, courtCase, caseObj, auditDetails);
 
                 AdvocateMapping advocateMapping = joinCaseRequest.getRepresentative();
-                List<String> individualIds = getIndividualId(advocateMapping);
-                List<String> phonenumbers = callIndividualService(joinCaseRequest.getRequestInfo(), individualIds);
+                Set<String> individualIds = getIndividualId(advocateMapping);
+                Set<String> phonenumbers = callIndividualService(joinCaseRequest.getRequestInfo(), individualIds);
                 LinkedHashMap advocate = ((LinkedHashMap) advocateMapping.getAdditionalDetails());
                 String advocateName = advocate != null ? advocate.get(ADVOCATE_NAME).toString() : "";
 
@@ -552,7 +535,7 @@ public class CaseService {
         }
     }
 
-    private List<String> getIndividualId(AdvocateMapping advocateMapping) {
+    private Set<String> getIndividualId(AdvocateMapping advocateMapping) {
         return Optional.ofNullable(advocateMapping)
                 .map(AdvocateMapping::getRepresenting)
                 .orElse(Collections.emptyList())
@@ -561,8 +544,7 @@ public class CaseService {
                         .map(Party::getIndividualId)
                         .orElse(null))
                 .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-
+                .collect(Collectors.toSet());
     }
 
     private void verifyRepresentativesAndJoinCase(JoinCaseRequest joinCaseRequest, CourtCase courtCase, CourtCase caseObj, AuditDetails auditDetails) {

@@ -28,6 +28,7 @@ import org.pucar.dristi.config.ServiceConstants;
 import org.pucar.dristi.enrichment.CaseRegistrationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.CaseRepository;
+import org.pucar.dristi.util.AdvocateUtil;
 import org.pucar.dristi.util.BillingUtil;
 import org.pucar.dristi.util.EncryptionDecryptionUtil;
 import org.pucar.dristi.validators.CaseRegistrationValidator;
@@ -62,6 +63,9 @@ public class CaseServiceTest {
 
     @Mock
     private IndividualService individualService;
+
+    @Mock
+    private AdvocateUtil advocateUtil;
 
 
     @InjectMocks
@@ -112,7 +116,7 @@ public class CaseServiceTest {
         joinCaseRequest.setAdditionalDetails("form-data");
         courtCase = new CourtCase();
         objectMapper = new ObjectMapper();
-        caseService = new CaseService(validator,enrichmentUtil,caseRepository,workflowService,config,producer,new BillingUtil(new RestTemplate(),config),encryptionDecryptionUtil,objectMapper,cacheService, notificationService, individualService);
+        caseService = new CaseService(validator,enrichmentUtil,caseRepository,workflowService,config,producer,new BillingUtil(new RestTemplate(),config),encryptionDecryptionUtil,objectMapper,cacheService, notificationService, individualService, advocateUtil);
     }
 
     CaseCriteria setupTestCaseCriteria(CourtCase courtCase) {
