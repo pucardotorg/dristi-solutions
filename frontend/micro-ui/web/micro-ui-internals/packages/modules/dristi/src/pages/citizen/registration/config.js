@@ -219,6 +219,8 @@ export const newConfig = [
               name: "locality",
               validation: {
                 isRequired: true,
+                minlength: 2,
+                maxlength: 256,
               },
               isMandatory: true,
             },
