@@ -87,6 +87,7 @@ public class SmsNotificationService {
         smsDetails.put("hearingDate", smsTemplateData.getHearingDate());
         smsDetails.put("tenantId", smsTemplateData.getTenantId());
         smsDetails.put("mobileNumber", mobileNumber);
+        smsDetails.put("efilingNumber", smsTemplateData.getEfilingNumber());
 
         return smsDetails;
     }

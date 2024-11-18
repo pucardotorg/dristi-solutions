@@ -259,7 +259,8 @@ public class IndexerUtils {
 
     private SmsTemplateData enrichSmsTemplateData(Map<String, String> details) {
         return SmsTemplateData.builder()
-                .cmpNumber(details.get("cmpNumber")).build();
+                .cmpNumber(details.get("cmpNumber"))
+                .efilingNumber(details.get("filingNumber")).build();
     }
 
     public CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, String filingNumber) {
