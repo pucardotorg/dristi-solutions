@@ -194,4 +194,6 @@ public class ServiceConstants {
     public static final String ASSIGN_TO_PATH="$.assignedTo";
     public static final String DUE_DATE_PATH= "$.duedate";
 
+    public static final long ONE_DAY_DURATION_MILLIS=86400000L;
+
 }

@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.Clock;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -35,6 +36,7 @@ public class IndexerUtils {
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     private final RestTemplate restTemplate;
+    private final Clock clock;
 
     private final Configuration config;
 
@@ -53,8 +55,9 @@ public class IndexerUtils {
     private final CaseOverallStatusUtil caseOverallStatusUtil;
 
     @Autowired
-    public IndexerUtils(RestTemplate restTemplate, Configuration config, CaseUtil caseUtil, EvidenceUtil evidenceUtil, TaskUtil taskUtil, ApplicationUtil applicationUtil, ObjectMapper mapper, MdmsDataConfig mdmsDataConfig, CaseOverallStatusUtil caseOverallStatusUtil) {
+    public IndexerUtils(RestTemplate restTemplate, Clock clock, Configuration config, CaseUtil caseUtil, EvidenceUtil evidenceUtil, TaskUtil taskUtil, ApplicationUtil applicationUtil, ObjectMapper mapper, MdmsDataConfig mdmsDataConfig, CaseOverallStatusUtil caseOverallStatusUtil) {
         this.restTemplate = restTemplate;
+        this.clock = clock;
         this.config = config;
         this.caseUtil = caseUtil;
         this.evidenceUtil = evidenceUtil;
@@ -173,9 +176,7 @@ public class IndexerUtils {
         String action = JsonPath.read(jsonItem, ACTION_PATH);
         String additionalDetails;
 
-        if (stateSla != null && stateSla > 0) {
-            stateSla = System.currentTimeMillis() + stateSla * 86400000;
-        }
+
         boolean isCompleted;
         boolean isGeneric;
 
@@ -189,6 +190,8 @@ public class IndexerUtils {
         String name = details.get("name");
         isCompleted = isNullOrEmpty(name);
         isGeneric = details.containsKey("isGeneric");
+
+        stateSla = getSla(stateSla);
 
         if (isGeneric) {
             log.info("creating pending task from generic task");
@@ -406,6 +409,16 @@ public class IndexerUtils {
             log.error("Exception while trying to index the ES documents. Note: ES is not Down.", e);
             throw e;
         }
+    }
+
+    public Long getSla(Long stateSla) {
+        long currentTime = clock.millis();
+        if (stateSla == null || stateSla < ONE_DAY_DURATION_MILLIS) {
+            stateSla = currentTime + ONE_DAY_DURATION_MILLIS;
+        } else {
+            stateSla += currentTime;
+        }
+        return stateSla;
     }
 
 }

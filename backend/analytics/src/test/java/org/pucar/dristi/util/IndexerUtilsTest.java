@@ -18,6 +18,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.Clock;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -28,6 +29,8 @@ public class IndexerUtilsTest {
 
     @InjectMocks
     private IndexerUtils indexerUtils;
+    @Mock
+    private Clock clock;
 
     @Mock
     private RestTemplate restTemplate;
@@ -66,6 +69,8 @@ public class IndexerUtilsTest {
     public void setUp() {
         MockitoAnnotations.openMocks(this);
         ReflectionTestUtils.setField(indexerUtils, "mdmsDataConfig", mdmsDataConfig);
+        when(clock.millis()).thenReturn(1000000000L); // Fixed mock time
+
 
     }
 
@@ -193,7 +198,7 @@ public class IndexerUtilsTest {
                 + "\"businessService\": \"entityType\","
                 + "\"businessId\": \"referenceId\","
                 + "\"state\": {\"state\":\"status\", \"actions\":[{\"roles\" : [\"role\"]}]},"
-                + "\"stateSla\": 0,"
+                + "\"stateSla\": 86400,"
                 + "\"businesssServiceSla\": 456,"
                 + "\"assignes\": [\"user1\"],"
                 + "\"assignedRoles\": [\"role\"],"
@@ -202,6 +207,7 @@ public class IndexerUtilsTest {
                 + "}";
         JSONObject requestInfo = new JSONObject();
 
+
         when(config.getIndex()).thenReturn("index");
         when(caseOverallStatusUtil.checkCaseOverAllStatus(anyString(), anyString(), anyString(), anyString(), anyString(), any()))
                 .thenReturn(new Object());
@@ -209,7 +215,7 @@ public class IndexerUtilsTest {
 
         String expected = String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                "index", "referenceId", "id", "name", "entityType", "referenceId", "status", "[\"user1\"]", "[\"role\"]", "null", "null", false, 0, 456L, "{\"key\":\"value\"}"
+                "index", "referenceId", "id", "name", "entityType", "referenceId", "status", "[\"user1\"]", "[\"role\"]", "null", "null", false, ONE_DAY_DURATION_MILLIS+1000000000L, 456L, "{\"key\":\"value\"}"
         );
 
         PendingTaskType pendingTaskType = PendingTaskType.builder().isgeneric(false).pendingTask("name").state("status").triggerAction(List.of("action")).build();
