@@ -518,6 +518,7 @@ public class CaseService {
 
                 SmsTemplateData smsTemplateData = SmsTemplateData.builder()
                         .cmpNumber(courtCase.getCmpNumber())
+                        .efilingNumber(courtCase.getFilingNumber())
                         .advocateName(advocateName).build();
                 for (String number : phonenumbers) {
                     notificationService.sendNotification(joinCaseRequest.getRequestInfo(), smsTemplateData, ADVOCATE_CASE_JOIN, number);
