@@ -16,8 +16,8 @@ const AuthenticatedLink = ({ t, uri, displayFilename = false, pdf = false }) => 
       .then((response) => {
         if (response.status === 200) {
           const blob = new Blob([response.data], { type: pdf ? "application/pdf" : "application/octet-stream" });
-          const mimeType = response.data.type;
-          const extension = mimeType.split("/")[1];
+          const mimeType = response.data.type || "application/octet-stream";
+          const extension = mimeType.includes("/") ? mimeType.split("/")[1] : "bin";
           const blobUrl = URL.createObjectURL(blob);
           const link = document.createElement("a");
           link.href = blobUrl;
