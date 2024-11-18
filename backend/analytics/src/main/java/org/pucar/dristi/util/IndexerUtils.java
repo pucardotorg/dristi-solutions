@@ -1,17 +1,21 @@
 package org.pucar.dristi.util;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
+import org.egov.common.models.individual.Individual;
 import org.egov.tracer.model.CustomException;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.config.MdmsDataConfig;
 import org.pucar.dristi.kafka.consumer.EventConsumerConfig;
-import org.pucar.dristi.web.models.PendingTask;
-import org.pucar.dristi.web.models.PendingTaskType;
+import org.pucar.dristi.service.IndividualService;
+import org.pucar.dristi.service.SmsNotificationService;
+import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -52,8 +56,12 @@ public class IndexerUtils {
 
     private final CaseOverallStatusUtil caseOverallStatusUtil;
 
+    private final SmsNotificationService notificationService;
+
+    private final IndividualService individualService;
+
     @Autowired
-    public IndexerUtils(RestTemplate restTemplate, Configuration config, CaseUtil caseUtil, EvidenceUtil evidenceUtil, TaskUtil taskUtil, ApplicationUtil applicationUtil, ObjectMapper mapper, MdmsDataConfig mdmsDataConfig, CaseOverallStatusUtil caseOverallStatusUtil) {
+    public IndexerUtils(RestTemplate restTemplate, Configuration config, CaseUtil caseUtil, EvidenceUtil evidenceUtil, TaskUtil taskUtil, ApplicationUtil applicationUtil, ObjectMapper mapper, MdmsDataConfig mdmsDataConfig, CaseOverallStatusUtil caseOverallStatusUtil, SmsNotificationService notificationService, IndividualService individualService) {
         this.restTemplate = restTemplate;
         this.config = config;
         this.caseUtil = caseUtil;
@@ -63,6 +71,8 @@ public class IndexerUtils {
         this.mapper = mapper;
         this.mdmsDataConfig = mdmsDataConfig;
         this.caseOverallStatusUtil = caseOverallStatusUtil;
+        this.notificationService = notificationService;
+        this.individualService = individualService;
     }
 
     public static boolean isNullOrEmpty(String str) {
@@ -193,6 +203,24 @@ public class IndexerUtils {
             assignedTo = assignToList.toString();
             assignedRole =  new JSONArray().toString();
         }
+        if(!isCompleted) {
+            try {
+                String jsonString = requestInfo.toString();
+                RequestInfo request = mapper.readValue(jsonString, RequestInfo.class);
+                CaseSearchRequest caseSearchRequest = createCaseSearchRequest(request, filingNumber);
+                JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+                SmsTemplateData smsTemplateData = enrichSmsTemplateData(details);
+                JsonNode rootNode = caseDetails.get("additionalDetails");
+                List<String> individualIds = extractIndividualIds(rootNode);
+                List<String> phonenumbers = callIndividualService(request, individualIds);
+                for (String number : phonenumbers) {
+                    notificationService.sendNotification(request, smsTemplateData, PENDING_TASK_CREATED, number);
+                }
+            } catch (Exception e) {
+                // Log the exception and continue the execution without throwing
+                log.error("Error occurred while sending notification: {}", e.toString());
+            }
+        }
 
         try {
             additionalDetails = mapper.writeValueAsString(new HashMap<String, Object>());
@@ -205,6 +233,71 @@ public class IndexerUtils {
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
                 config.getIndex(), referenceId, id, name, entityType, referenceId, status, assignedTo, assignedRole, cnrNumber, filingNumber, isCompleted, stateSla, businessServiceSla, additionalDetails
         );
+    }
+
+    public static List<String> extractIndividualIds(JsonNode rootNode) {
+        List<String> individualIds = new ArrayList<>();
+
+
+        JsonNode complainantDetailsNode = rootNode.path("complainantDetails")
+                .path("formdata");
+        if (complainantDetailsNode.isArray()) {
+            for (JsonNode complainantNode : complainantDetailsNode) {
+                JsonNode complainantVerificationNode = complainantNode.path("data")
+                        .path("complainantVerification")
+                        .path("individualDetails");
+                if (!complainantVerificationNode.isMissingNode()) {
+                    String individualId = complainantVerificationNode.path("individualId").asText();
+                    if (!individualId.isEmpty()) {
+                        individualIds.add(individualId);
+                    }
+                }
+            }
+        }
+
+        JsonNode advocateDetailsNode = rootNode.path("advocateDetails")
+                .path("formdata");
+        if (advocateDetailsNode.isArray()) {
+            for (JsonNode advocateNode : advocateDetailsNode) {
+                JsonNode advocateListNode = advocateNode.path("data")
+                        .path("advocateBarRegNumberWithName");
+                if (advocateListNode.isArray()) {
+                    for (JsonNode advocateInfoNode : advocateListNode) {
+                        String individualId = advocateInfoNode.path("individualId").asText();
+                        if (!individualId.isEmpty()) {
+                            individualIds.add(individualId);
+                        }
+                    }
+                }
+            }
+        }
+
+        return individualIds;
+    }
+
+    private List<String> callIndividualService(RequestInfo requestInfo, List<String> individualIds) {
+
+        List<String> mobileNumber = new ArrayList<>();
+        for(String id : individualIds){
+            List<Individual> individuals = individualService.getIndividualsByIndividualId(requestInfo, id);
+            if(individuals.get(0).getMobileNumber() != null){
+                mobileNumber.add(individuals.get(0).getMobileNumber());
+            }
+        }
+        return mobileNumber;
+    }
+
+    private SmsTemplateData enrichSmsTemplateData(Map<String, String> details) {
+        return SmsTemplateData.builder()
+                .cmpNumber(details.get("cmpNumber")).build();
+    }
+
+    public CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, String filingNumber) {
+        CaseSearchRequest caseSearchRequest = new CaseSearchRequest();
+        caseSearchRequest.setRequestInfo(requestInfo);
+        CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(filingNumber).defaultFields(false).build();
+        caseSearchRequest.addCriteriaItem(caseCriteria);
+        return caseSearchRequest;
     }
 
 
@@ -302,9 +395,11 @@ public class IndexerUtils {
         Thread.sleep(config.getApiCallDelayInSeconds() * 1000);
         Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, referenceId, null);
         String cnrNumber = JsonPath.read(caseObject.toString(), CNR_NUMBER_PATH);
+        String cmpNumber = JsonPath.read(caseObject.toString(), CMP_NUMBER_PATH);
 
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", referenceId);
+        caseDetails.put("cmpNumber", cmpNumber);
 
         return caseDetails;
     }
