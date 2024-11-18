@@ -52,6 +52,9 @@ public class ServiceConstants {
 
     //ElasticSearch
     public static final String ES_TERM_QUERY = "{\"size\":10000,\"query\":{\"term\":{\"%s\":\"%s\"}},\"sort\":[{\"%s\":{\"order\":\"%s\"}}]}";
+    public static final String ES_IDS_QUERY = "{\"query\":{\"ids\":{\"values\":[\"%s\"]}}}";
+    public static final String ES_UPDATE_QUERY = "{ \"doc\": %s }";
+
 
     public static final String ROOT_PATH = "$.";
     public static final String CASE_BASE_PATH = "Data.caseDetails";
