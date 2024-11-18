@@ -130,7 +130,7 @@ const caseType = {
 
 const complainantWorkflowACTION = {
   UPLOAD_DOCUMENT: "UPLOAD",
-  ADVOCATE_ESIGN_SEND: "E-SIGN-2",
+  ADVOCATE_ESIGN_SEND: "E-SIGN",
   LITIGANT_SUBMIT_CASE: "E-SIGN_PARTY_IN_PERSON",
   ADVOCATE_SUBMIT_CASE: "E-SIGN",
 };
@@ -173,6 +173,8 @@ const ComplainantSignature = ({ path }) => {
   const { handleEsign } = Digit.Hooks.orders.useESign();
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const name = "Signature";
+  const complainantPlaceholder = "Complainant Signature";
+  const advocatePlaceholder = "Advocate Signature";
 
   const uploadModalConfig = useMemo(() => {
     return {
@@ -181,7 +183,7 @@ const ComplainantSignature = ({ path }) => {
         inputs: [
           {
             name: name,
-            documentHeader: "Signature",
+            documentHeader: "CS_ADD_SIGNATURE",
             type: "DragDropComponent",
             uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
             maxFileSize: 5,
@@ -318,7 +320,8 @@ const ComplainantSignature = ({ path }) => {
   };
 
   const handleEsignAction = () => {
-    handleEsign(name, "ci", DocumentFileStoreId);
+    const signPlaceHolder = isLitigantPartyInPerson || !isLitigantEsignCompleted ? complainantPlaceholder : advocatePlaceholder;
+    handleEsign(name, "ci", DocumentFileStoreId, signPlaceHolder);
   };
 
   const handleUploadFile = () => {

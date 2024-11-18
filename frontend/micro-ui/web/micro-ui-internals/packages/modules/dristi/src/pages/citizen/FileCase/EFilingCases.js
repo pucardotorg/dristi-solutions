@@ -58,6 +58,7 @@ import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import DocViewerWrapper from "../../employee/docViewerWrapper";
 import CaseLockModal from "./CaseLockModal";
 import ConfirmCaseDetailsModal from "./ConfirmCaseDetailsModal";
+import { DocumentUploadError } from "../../../Utils/errorUtil";
 
 const OutlinedInfoIcon = () => (
   <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: "absolute", right: -22, top: 0 }}>
@@ -1639,45 +1640,54 @@ function EFilingCases({ path }) {
     else {
       let res;
       let caseComplaintDocument = {};
-      if (isCaseLocked) {
-        setIsDisabled(true);
-        const caseObject = isCaseReAssigned && errorCaseDetails ? errorCaseDetails : caseDetails;
-        const response = await axios.post(
-          "/dristi-case-pdf/v1/fetchCaseComplaintPdf",
-          {
-            cases: caseObject,
-            RequestInfo: {
-              authToken: Digit.UserService.getUser().access_token,
-              userInfo: Digit.UserService.getUser()?.info,
-              msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
-              apiId: "Rainmaker",
-            },
-          },
-          { responseType: "blob" } // Important: Set responseType to handle binary data
-        );
-        const contentDisposition = response.headers["content-disposition"];
-        const filename = contentDisposition ? contentDisposition.split("filename=")[1]?.replace(/['"]/g, "") : "caseCompliantDetails.pdf";
-        const pdfFile = new File([response?.data], filename, { type: "application/pdf" });
-        const document = await onDocumentUpload(pdfFile, pdfFile.name);
-        const fileStoreId = document?.file?.files?.[0]?.fileStoreId;
-
-        if (fileStoreId) {
-          caseComplaintDocument = {
-            documentType: document?.fileType,
-            fileStore: fileStoreId,
-            fileName: filename,
-          };
-        } else {
-          throw new Error("FILE_STORE_ID_MISSING");
-        }
-        res = await refetchCasePDfGeneration();
-        if (res?.status === "error") {
-          setIsDisabled(false);
-          toast.error(t("CASE_PDF_ERROR"));
-          throw new Error("CASE_PDF_ERROR");
-        }
-      }
+      let casePdfDocument = [];
       try {
+        if (isCaseLocked) {
+          setIsDisabled(true);
+          const caseObject = isCaseReAssigned && errorCaseDetails ? errorCaseDetails : caseDetails;
+          const response = await axios.post(
+            "/dristi-case-pdf/v1/fetchCaseComplaintPdf",
+            {
+              cases: {
+                id: caseObject?.id,
+                tenantId: tenantId,
+              },
+              RequestInfo: {
+                authToken: Digit.UserService.getUser().access_token,
+                userInfo: Digit.UserService.getUser()?.info,
+                msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
+                apiId: "Rainmaker",
+              },
+            },
+            { responseType: "blob" } // Important: Set responseType to handle binary data
+          );
+          const contentDisposition = response.headers["content-disposition"];
+          const filename = contentDisposition ? contentDisposition.split("filename=")[1]?.replace(/['"]/g, "") : "caseCompliantDetails.pdf";
+          const pdfFile = new File([response?.data], filename, { type: "application/pdf" });
+          const document = await onDocumentUpload(pdfFile, pdfFile.name);
+          const fileStoreId = document?.file?.files?.[0]?.fileStoreId;
+
+          if (fileStoreId) {
+            caseComplaintDocument = {
+              documentType: "case.complaint.signed",
+              fileStore: fileStoreId,
+              fileName: filename,
+            };
+          } else {
+            throw new Error("FILE_STORE_ID_MISSING");
+          }
+          res = await refetchCasePDfGeneration();
+          casePdfDocument = res?.data?.cases?.[0]?.documents
+            .filter((doc) =>
+              doc.additionalDetails?.fields?.some((field) => field.key === "FILE_CATEGORY" && field.value === "CASE_GENERATED_DOCUMENT")
+            )
+            .map((doc) => doc.fileStore);
+          if (res?.status === "error") {
+            setIsDisabled(false);
+            toast.error(t("CASE_PDF_ERROR"));
+            throw new Error("CASE_PDF_ERROR");
+          }
+        }
         // Await the result of updateCaseDetails
         await updateCaseDetails({
           t,
@@ -1694,13 +1704,12 @@ function EFilingCases({ path }) {
           setErrorCaseDetails,
           isCaseSignedState: isPendingESign || isPendingReESign,
           isSaveDraftEnabled: isCaseReAssigned || isPendingReESign || isPendingESign,
-          ...(res && { fileStoreId: res?.data?.cases?.[0]?.documents?.[0]?.fileStore }),
+          ...(res && { fileStoreId: casePdfDocument?.[0] }),
           ...(caseComplaintDocument && { caseComplaintDocument: caseComplaintDocument }),
           multiUploadList,
           scrutinyObj,
         });
 
-        // After successful update, reset form and refetch case data
         if (resetFormData.current) {
           resetFormData.current();
           setIsDisabled(false);
@@ -1720,15 +1729,15 @@ function EFilingCases({ path }) {
           history.push(`?caseId=${caseId}&selected=${nextSelected}`);
         }
       } catch (error) {
-        // If any error occurs in updateCaseDetails or refetching, handle it here
-        if (extractCodeFromErrorMsg(error) === 413) {
+        if (error instanceof DocumentUploadError) {
+          toast.error(`${t("DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${error?.documentType}`);
+        } else if (extractCodeFromErrorMsg(error) === 413) {
           toast.error(t("FAILED_TO_UPLOAD_FILE"));
         } else {
           toast.error(t("SOMETHING_WENT_WRONG"));
         }
         setIsDisabled(false);
         console.error("An error occurred:", error);
-        throw error; // Re-throw the error to propagate it further if needed
       }
     }
   };
@@ -1760,10 +1769,13 @@ function EFilingCases({ path }) {
       .then(() => {
         toast.success(t("CS_SUCCESSFULLY_SAVED_DRAFT"));
       })
-      .catch((error) => {
-        if (extractCodeFromErrorMsg(error) === 413) {
+      .catch(async (error) => {
+        if (error instanceof DocumentUploadError) {
+          toast.error(`${t("DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${error?.documentType}`);
+        } else if (extractCodeFromErrorMsg(error) === 413) {
           toast.error(t("FAILED_TO_UPLOAD_FILE"));
         } else {
+          console.error("Error:", error);
           toast.error(t("SOMETHING_WENT_WRONG"));
         }
         setIsDisabled(false);
@@ -1834,7 +1846,15 @@ function EFilingCases({ path }) {
           setIsDisabled(false);
         }
       })
-      .catch(() => {
+      .catch(async (error) => {
+        if (error instanceof DocumentUploadError) {
+          toast.error(`${t("DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${error?.documentType}`);
+        } else if (extractCodeFromErrorMsg(error) === 413) {
+          toast.error(t("FAILED_TO_UPLOAD_FILE"));
+        } else {
+          console.error("Error:", error);
+          toast.error(t("SOMETHING_WENT_WRONG"));
+        }
         setIsDisabled(false);
       });
     setPrevSelected(selected);

@@ -6,6 +6,7 @@ import { FileUploadIcon } from "../../../dristi/src/icons/svgIndex";
 import useESign from "../hooks/orders/useESign";
 import { Urls } from "../hooks/services/Urls";
 import useDocumentUpload from "../hooks/orders/useDocumentUpload";
+import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -38,14 +39,15 @@ function OrderSignatureModal({
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${orderPdfFileStoreID}`;
   const { uploadDocuments } = useDocumentUpload();
   const name = "Signature";
-  const uploadModalConfig = useMemo(() => {
+  const judgePlaceholder = "Judge Signature";
+    const uploadModalConfig = useMemo(() => {
     return {
       key: "uploadSignature",
       populators: {
         inputs: [
           {
             name: name,
-            documentHeader: "Signature",
+            documentHeader: "CS_ADD_SIGNATURE",
             type: "DragDropComponent",
             uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
             maxFileSize: 5,
@@ -125,7 +127,7 @@ function OrderSignatureModal({
                   // setOpenAadharModal(true);
                   // setIsSigned(true);
                   localStorage.setItem("orderPDF", orderPdfFileStoreID);
-                  handleEsign(name, pageModule, orderPdfFileStoreID);
+                  handleEsign(name, pageModule, orderPdfFileStoreID, judgePlaceholder);
                 }}
                 className={"aadhar-sign-in"}
                 labelClassName={"aadhar-sign-in"}
@@ -144,9 +146,13 @@ function OrderSignatureModal({
             </div>
             <div className="donwload-submission">
               <h2>{t("WANT_TO_DOWNLOAD")}</h2>
-              <a href={uri} target="_blank" rel="noreferrer" style={{ color: "#007E7E", cursor: "pointer", textDecoration: "underline" }}>
-                {t("CLICK_HERE")}
-              </a>
+              <AuthenticatedLink
+                style={{ color: "#007E7E", background: "white", cursor: "pointer", textDecoration: "underline" }}
+                uri={uri}
+                t={t}
+                displayFilename={"CLICK_HERE"}
+                pdf = {true}
+              />
             </div>
           </div>
         ) : (

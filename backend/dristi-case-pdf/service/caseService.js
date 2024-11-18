@@ -345,16 +345,16 @@ exports.getPrayerSwornStatementDetails = (cases) => {
 };
 
 exports.getComplainantsDetailsForComplaint = async (cases) => {
-    if (!cases.additionalDetails || !cases.additionalDetails.complainantDetails || !cases.additionalDetails.complainantDetails.formdata) {
+    if (!cases?.additionalDetails || !cases?.additionalDetails?.complainantDetails || !cases?.additionalDetails?.complainantDetails?.formdata) {
         return [];
     }
-    return cases.additionalDetails.complainantDetails.formdata.map((formData) => {
-        const data = formData.data;
-        const complainantType = data.complainantType || '';
-        const firstName = data.firstName || '';
-        const middleName = data.middleName || '';
-        const lastName = data.lastName || '';
-        const phoneNumber = (data.complainantVerification && data.complainantVerification.mobileNumber) || '';
+    return cases?.additionalDetails?.complainantDetails?.formdata?.map((formData) => {
+        const data = formData?.data;
+        const complainantType = data?.complainantType || '';
+        const firstName = data?.firstName || '';
+        const middleName = data?.middleName || '';
+        const lastName = data?.lastName || '';
+        const phoneNumber = (data?.complainantVerification && data?.complainantVerification?.mobileNumber) || '';
 
         if (complainantType.code === 'REPRESENTATIVE') {
             const companyDetails = data.addressCompanyDetails || {};
@@ -362,19 +362,20 @@ exports.getComplainantsDetailsForComplaint = async (cases) => {
 
             return {
                 ifIndividual: false,
-                institutionName: data.companyName || '',
+                institutionName: data?.companyName || '',
                 complainantAddress: companyAddress || '',
-                nameOfAuthorizedSignatory: `${firstName} ${middleName} ${lastName}`,
-                designationOfAuthorizedSignatory: data.complainantDesignation || '',
+                nameOfAuthorizedSignatory: `${firstName} ${middleName} ${lastName}` || '',
+                designationOfAuthorizedSignatory: data?.complainantDesignation || '',
+                companyDetailsFileStore: getDocumentFileStore(data?.companyDetailsUpload, 'Authoriastion oF Representative Document') || '',
             };
         } else {
-            const addressDetails = data.complainantVerification && data.complainantVerification.individualDetails && data.complainantVerification.individualDetails.addressDetails || {};
+            const addressDetails = data?.complainantVerification && data?.complainantVerification?.individualDetails && data?.complainantVerification?.individualDetails?.addressDetails || {};
             const address = getStringAddressDetails(addressDetails);
 
             return {
                 ifIndividual: true,
-                complainantName: `${firstName} ${middleName} ${lastName}`,
-                complainantAge: data.complainantAge || '',
+                complainantName: `${firstName} ${middleName} ${lastName}` || '',
+                complainantAge: data?.complainantAge || '',
                 complainantAddress: address || '',
                 phoneNumber: phoneNumber || '',
                 emailId: '',
@@ -399,7 +400,7 @@ exports.getAdvocateDetailsForComplaint = async (cases) => {
                 isPartyInPerson: false,
                 advocateName: data.advocateName || '',
                 barId: data.barRegistrationNumber || '',
-                advocatePhoneNumber : ""
+                advocatePhoneNumber : data.AdvocateNameDetails.advocateMobileNumber || ''
             };
         }
         
@@ -407,44 +408,42 @@ exports.getAdvocateDetailsForComplaint = async (cases) => {
 };
 
 exports.getRespondentsDetailsForComplaint = async (cases) => {
-    if (!cases.additionalDetails || !cases.additionalDetails.respondentDetails || !cases.additionalDetails.respondentDetails.formdata) {
+    if (!cases?.additionalDetails || !cases?.additionalDetails?.respondentDetails || !cases?.additionalDetails?.respondentDetails?.formdata) {
         return [];
     }
-    return cases.additionalDetails.respondentDetails.formdata.map((formData) => {
-        const data = formData.data;
-        const respondentType = data.respondentType || '';
-        const firstName = data.respondentFirstName || '';
-        const middleName = data.respondentMiddleName || '';
-        const lastName = data.respondentLastName || '';
-        const addresses = data.addressDetails.map((addressDetail) => {
-            return getStringAddressDetails(addressDetail.addressDetails);
+    return cases.additionalDetails.respondentDetails.formdata?.map((formData) => {
+        const data = formData?.data;
+        const respondentType = data?.respondentType || '';
+        const firstName = data?.respondentFirstName || '';
+        const middleName = data?.respondentMiddleName || '';
+        const lastName = data?.respondentLastName || '';
+        const addresses = data?.addressDetails?.map((addressDetail) => {
+            return getStringAddressDetails(addressDetail?.addressDetails);
         });
         if (respondentType.code === 'REPRESENTATIVE') {
             return {
                 ifAccusedIndividual: false,
-                accusedInstitutionName: data.respondentCompanyName || '',
-                accusedAddress: addresses && addresses.join(", ") || '',
-                nameOfAccusedAuthorizedSignatory: `${firstName} ${middleName} ${lastName}`,
-                designationOfAccusedAuthorizedSignatory: data.respondentDesignation || '',
+                accusedInstitutionName: data?.respondentCompanyName || '',
+                accusedAddress: addresses && addresses?.join(", ") || '',
+                nameOfAccusedAuthorizedSignatory: `${firstName} ${middleName} ${lastName}` || '',
+                designationOfAccusedAuthorizedSignatory: data?.respondentDesignation || '',
+                inquiryAffidavitFileStore: getDocumentFileStore(data?.inquiryAffidavitFileUpload, 'Inquiry Affidavit Document') || '',
+                companyDetailsUpload: getDocumentFileStore(data?.companyDetailsUpload, 'Accused Company Document') || ''
             };
         } else {
             return {
                 ifAccusedIndividual: true,
-                accusedName: `${firstName} ${middleName} ${lastName}`,
-                accusedAge: data.respondentAge || '',
-                accusedAddress: addresses && addresses.join(", ") || '',
-                accusedPhoneNumber: data.phonenumbers && data.phonenumbers.mobileNumber && data.phonenumbers.mobileNumber.join(", ") || "",
-                accusedEmailId: data.emails && data.emails.emailId && data.emails.emailId.join(", ") || "",
+                accusedName: `${firstName} ${middleName} ${lastName}` || '',
+                accusedAge: data?.respondentAge || '',
+                accusedAddress: addresses && addresses?.join(", ") || '',
+                accusedPhoneNumber: data?.phonenumbers?.mobileNumber?.join(", ") || "",
+                accusedEmailId: data?.emails?.emailId?.join(", ") || "",
             };
         }
     });
 };
 
 exports.getDocumentList = async (cases) => {
-    if (!cases.documents) {
-        return [];
-    }
-
     const newDocumentList = [];
 
     const chequeDetails = this.getChequeDetails(cases);
@@ -530,21 +529,24 @@ exports.generateProofDepositDescriptions = async (chequeDetailsList) => {
 }
 
 exports.generateOptionalDocDescriptions = async (documentList) => {
+    if (!documentList) {
+        return [];
+    }
     return documentList.map((document) => {
         switch (document.documentType) {
             case "AUTHORIZED_COMPLAINANT_COMPANY_REPRESENTATIVE":
                 return `Digital record of proof of authorized representative of the company in complainant`;
-            case "INQUIRY_AFFIDAVIT_S225":
+            case "case.affidavit.225bnss":
                 return `Digital record of Affidavit in-lieu-of inquiry under section 225, Bharatiya Nagarik Suraksha Sanhita, 2024`;
             case "AUTHORIZED_ACCUSED_COMPANY_REPRESENTATIVE":
                 return `Digital record of proof of authorized representative of the company in accused`;
-            case "DEBT_LIABILITY":
+            case "case.liabilityproof":
                 return `Digital record of proof of Debt/Liability`;
             case "COMPLAINANT_ID_PROOF":
                 return `Digital record of proof of Complainant ID Proof`;
             case "CONDONATION_DOC":
                 return `Digital record of proof of Delay Condonation`;
-            case "COMPLAINT_ADDITIONAL_DOCUMENTS":
+            case "case.docs":
                 return `Digital record of proof of Complaint Additional Documents`;
             case "VAKALATNAMA_DOC":
                 return `Digital record of proof of Advocate Vakalatnama`;
@@ -556,27 +558,25 @@ exports.generateOptionalDocDescriptions = async (documentList) => {
 }
 
 exports.getWitnessDetailsForComplaint = async (cases) => {
-    if (!cases.additionalDetails || !cases.additionalDetails.witnessDetails || !cases.additionalDetails.witnessDetails.formdata) {
+    if (!cases?.additionalDetails || !cases?.additionalDetails?.witnessDetails || !cases?.additionalDetails?.witnessDetails?.formdata) {
         return [];
     }
-    return cases.additionalDetails.witnessDetails.formdata.map((formData) => {
-        const data = formData.data;
-        const addresses = data.addressDetails.map((addressDetail) => {
-            return getStringAddressDetails(addressDetail.addressDetails);
+    return cases?.additionalDetails?.witnessDetails?.formdata?.map((formData) => {
+        const data = formData?.data;
+        const addresses = data?.addressDetails?.map((addressDetail) => {
+            return getStringAddressDetails(addressDetail?.addressDetails);
         });
-        const firstName = data.firstName || '';
-        const middleName = data.middleName || '';
-        const lastName = data.lastName || '';
-
-        const additionalDetails = data && data.witnessAdditionalDetails && typeof data.witnessAdditionalDetails === 'object' && data.witnessAdditionalDetails.text ? data.witnessAdditionalDetails.text : '';
+        const firstName = data?.firstName || '';
+        const middleName = data?.middleName || '';
+        const lastName = data?.lastName || '';
 
         return {
-            witnessName: `${firstName} ${middleName} ${lastName}`,
-            witnessOccupation: data.witnessDesignation,
-            witnessPhoneNumber: data.phonenumbers.mobileNumber.join(", ") || "",
-            witnessEmail: data.emails.emailId.join(", ") || "",
-            witnessAddress: addresses,
-            witnessAdditionalDetails: data.witnessAdditionalDetails.text
+            witnessName: `${firstName} ${middleName} ${lastName}` || '',
+            witnessOccupation: data?.witnessDesignation,
+            witnessPhoneNumber: data?.phonenumbers?.mobileNumber?.join(", ") || "",
+            witnessEmail: data?.emails?.emailId?.join(", ") || "",
+            witnessAddress: addresses?.join(", ") || '',
+            witnessAdditionalDetails: data?.witnessAdditionalDetails?.text || ''
         };
     });
 };

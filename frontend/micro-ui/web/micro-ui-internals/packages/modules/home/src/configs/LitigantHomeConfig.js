@@ -33,6 +33,7 @@ export const userTypeOptions = [
       "SUBMISSION_DELETE",
       "TASK_VIEWER",
       "ADVOCATE_VIEWER",
+      "PENDING_TASK_CREATOR",
     ],
     subText: "LITIGANT_SUB_TEXT",
   },
@@ -57,8 +58,10 @@ export const userTypeOptions = [
       "SUBMISSION_RESPONDER",
       "SUBMISSION_DELETE",
       "TASK_VIEWER",
+      "USER_REGISTER",
       "ADVOCATE_VIEWER",
       "ADVOCATE_APPLICATION_VIEWER",
+      "PENDING_TASK_CREATOR",
     ],
     apiDetails: {
       serviceName: "/advocate/v1/_create",
@@ -88,7 +91,9 @@ export const userTypeOptions = [
       "SUBMISSION_RESPONDER",
       "SUBMISSION_DELETE",
       "TASK_VIEWER",
+      "USER_REGISTER",
       "ADVOCATE_VIEWER",
+      "PENDING_TASK_CREATOR",
     ],
     apiDetails: {
       serviceName: "/advocate/clerk/v1/_create",
@@ -203,6 +208,7 @@ export const TabLitigantSearchConfig = {
               {
                 label: "CS_STAGE",
                 jsonPath: "substage",
+                additionalCustomization: true,
               },
               {
                 label: "CS_CASE_ID",

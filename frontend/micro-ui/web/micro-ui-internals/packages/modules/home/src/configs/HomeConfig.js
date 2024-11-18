@@ -33,6 +33,7 @@ export const userTypeOptions = [
       "SUBMISSION_DELETE",
       "TASK_VIEWER",
       "ADVOCATE_VIEWER",
+      "PENDING_TASK_CREATOR",
     ],
     subText: "LITIGANT_SUB_TEXT",
   },
@@ -57,8 +58,10 @@ export const userTypeOptions = [
       "SUBMISSION_RESPONDER",
       "SUBMISSION_DELETE",
       "TASK_VIEWER",
+      "USER_REGISTER",
       "ADVOCATE_VIEWER",
       "ADVOCATE_APPLICATION_VIEWER",
+      "PENDING_TASK_CREATOR",
     ],
     apiDetails: {
       serviceName: "/advocate/v1/_create",
@@ -88,7 +91,9 @@ export const userTypeOptions = [
       "SUBMISSION_RESPONDER",
       "SUBMISSION_DELETE",
       "TASK_VIEWER",
+      "USER_REGISTER",
       "ADVOCATE_VIEWER",
+      "PENDING_TASK_CREATOR",
     ],
     apiDetails: {
       serviceName: "/advocate/clerk/v1/_create",
@@ -601,6 +606,18 @@ export const pendingTaskSubmissionWithResponseActions = {
   ESIGN_THE_SUBMISSION: {
     actorName: ["LITIGANT/ADVOCATE"],
     actionName: "Esign the Submission",
+    redirectDetails: {
+      url: "/submissions/submissions-create",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "applicationNumber", value: "referenceId" },
+      ],
+    },
+  },
+  PENDINGRESPONSE: {
+    actorName: ["LITIGANT/ADVOCATE"],
+    actionName: "Review the submission",
+    customFunction: "handleReviewSubmission",
     redirectDetails: {
       url: "/submissions/submissions-create",
       params: [

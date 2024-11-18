@@ -300,6 +300,7 @@ function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
           >
             <Button
               variation={"secondary"}
+              isDisabled = { true }
               className={"secondary-button-selector"}
               label={t("CS_PRINT_CASE_FILE")}
               labelClassName={"secondary-label-selector"}
