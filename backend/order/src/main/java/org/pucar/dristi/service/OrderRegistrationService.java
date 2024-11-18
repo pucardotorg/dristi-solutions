@@ -12,6 +12,7 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.OrderRegistrationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.OrderRepository;
+import org.pucar.dristi.util.AdvocateUtil;
 import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.WorkflowUtil;
 import org.pucar.dristi.validators.OrderRegistrationValidator;
@@ -50,8 +51,10 @@ public class OrderRegistrationService {
 
     private IndividualService individualService;
 
+    private AdvocateUtil advocateUtil;
+
     @Autowired
-    public OrderRegistrationService(OrderRegistrationValidator validator, Producer producer, Configuration config, WorkflowUtil workflowUtil, OrderRepository orderRepository, OrderRegistrationEnrichment enrichmentUtil, ObjectMapper objectMapper, CaseUtil caseUtil, SmsNotificationService notificationService, IndividualService individualService) {
+    public OrderRegistrationService(OrderRegistrationValidator validator, Producer producer, Configuration config, WorkflowUtil workflowUtil, OrderRepository orderRepository, OrderRegistrationEnrichment enrichmentUtil, ObjectMapper objectMapper, CaseUtil caseUtil, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil) {
         this.validator = validator;
         this.producer = producer;
         this.config = config;
@@ -62,6 +65,7 @@ public class OrderRegistrationService {
         this.caseUtil = caseUtil;
         this.notificationService = notificationService;
         this.individualService = individualService;
+        this.advocateUtil = advocateUtil;
     }
 
     public Order createOrder(OrderRequest body) {
@@ -157,16 +161,20 @@ public class OrderRegistrationService {
         try {
             CaseSearchRequest caseSearchRequest = createCaseSearchRequest(orderRequest.getRequestInfo(), orderRequest.getOrder());
             JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+            JsonNode litigants = caseUtil.getLitigants(caseDetails);
+            Set<String> individualIds = caseUtil.getIndividualIds(litigants);
+            JsonNode representatives = caseUtil.getRepresentatives(caseDetails);
+            Set<String> representativeIds = caseUtil.getAdvocateIds(representatives);
 
-            JsonNode rootNode = caseDetails.get("additionalDetails");
+            if(!representativeIds.isEmpty()){
+                representativeIds = advocateUtil.getAdvocate(orderRequest.getRequestInfo(),representativeIds.stream().toList());
+            }
+            individualIds.addAll(representativeIds);
 
             Object additionalDetailsObject = orderRequest.getOrder().getAdditionalDetails();
             String jsonData = objectMapper.writeValueAsString(additionalDetailsObject);
             JsonNode orderData = objectMapper.readTree(jsonData);
             String hearingDate = orderData.path("formdata").path("hearingDate").asText();
-
-
-            Set<String> individualIds = extractIndividualIds(rootNode);
 
             Set<String> phonenumbers = callIndividualService(orderRequest.getRequestInfo(), individualIds);
 
@@ -228,43 +236,4 @@ public class OrderRegistrationService {
         return mobileNumber;
     }
 
-    public  Set<String> extractIndividualIds(JsonNode rootNode) {
-        Set<String> individualIds = new HashSet<>();
-
-
-        JsonNode complainantDetailsNode = rootNode.path("complainantDetails")
-                .path("formdata");
-        if (complainantDetailsNode.isArray()) {
-            for (JsonNode complainantNode : complainantDetailsNode) {
-                JsonNode complainantVerificationNode = complainantNode.path("data")
-                        .path("complainantVerification")
-                        .path("individualDetails");
-                if (!complainantVerificationNode.isMissingNode()) {
-                    String individualId = complainantVerificationNode.path("individualId").asText();
-                    if (!individualId.isEmpty()) {
-                        individualIds.add(individualId);
-                    }
-                }
-            }
-        }
-
-        JsonNode advocateDetailsNode = rootNode.path("advocateDetails")
-                .path("formdata");
-        if (advocateDetailsNode.isArray()) {
-            for (JsonNode advocateNode : advocateDetailsNode) {
-                JsonNode advocateListNode = advocateNode.path("data")
-                        .path("advocateBarRegNumberWithName");
-                if (advocateListNode.isArray()) {
-                    for (JsonNode advocateInfoNode : advocateListNode) {
-                        String individualId = advocateInfoNode.path("individualId").asText();
-                        if (!individualId.isEmpty()) {
-                            individualIds.add(individualId);
-                        }
-                    }
-                }
-            }
-        }
-
-        return individualIds;
-    }
 }
