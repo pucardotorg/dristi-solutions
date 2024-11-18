@@ -184,6 +184,13 @@ public class Configuration {
 	@Value("${egov.sms.notification.pending.task.created.template.id}")
 	private String smsNotificationPendingTaskCreatedTemplateId;
 
+	// Advocate Config
+	@Value("${egov.advocate.host}")
+	private String advocateHost;
+
+	@Value("${egov.advocate.path}")
+	private String advocatePath;
+
 	@PostConstruct
 	public void init() {
 		hearingBusinessServiceList = Arrays.asList(hearingBusinessServices.split(","));

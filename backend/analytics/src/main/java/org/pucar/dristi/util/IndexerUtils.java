@@ -60,8 +60,10 @@ public class IndexerUtils {
 
     private final IndividualService individualService;
 
+    private final AdvocateUtil advocateUtil;
+
     @Autowired
-    public IndexerUtils(RestTemplate restTemplate, Configuration config, CaseUtil caseUtil, EvidenceUtil evidenceUtil, TaskUtil taskUtil, ApplicationUtil applicationUtil, ObjectMapper mapper, MdmsDataConfig mdmsDataConfig, CaseOverallStatusUtil caseOverallStatusUtil, SmsNotificationService notificationService, IndividualService individualService) {
+    public IndexerUtils(RestTemplate restTemplate, Configuration config, CaseUtil caseUtil, EvidenceUtil evidenceUtil, TaskUtil taskUtil, ApplicationUtil applicationUtil, ObjectMapper mapper, MdmsDataConfig mdmsDataConfig, CaseOverallStatusUtil caseOverallStatusUtil, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil) {
         this.restTemplate = restTemplate;
         this.config = config;
         this.caseUtil = caseUtil;
@@ -73,6 +75,7 @@ public class IndexerUtils {
         this.caseOverallStatusUtil = caseOverallStatusUtil;
         this.notificationService = notificationService;
         this.individualService = individualService;
+        this.advocateUtil = advocateUtil;
     }
 
     public static boolean isNullOrEmpty(String str) {
@@ -209,10 +212,17 @@ public class IndexerUtils {
                 RequestInfo request = mapper.readValue(jsonString, RequestInfo.class);
                 CaseSearchRequest caseSearchRequest = createCaseSearchRequest(request, filingNumber);
                 JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+                JsonNode litigants = caseUtil.getLitigants(caseDetails);
+                Set<String> individualIds = caseUtil.getIndividualIds(litigants);
+                JsonNode representatives = caseUtil.getRepresentatives(caseDetails);
+                Set<String> representativeIds = caseUtil.getAdvocateIds(representatives);
+
+                if(!representativeIds.isEmpty()){
+                    representativeIds = advocateUtil.getAdvocate(request,representativeIds.stream().toList());
+                }
+                individualIds.addAll(representativeIds);
                 SmsTemplateData smsTemplateData = enrichSmsTemplateData(details);
-                JsonNode rootNode = caseDetails.get("additionalDetails");
-                List<String> individualIds = extractIndividualIds(rootNode);
-                List<String> phonenumbers = callIndividualService(request, individualIds);
+                Set<String> phonenumbers = callIndividualService(request, individualIds);
                 for (String number : phonenumbers) {
                     notificationService.sendNotification(request, smsTemplateData, PENDING_TASK_CREATED, number);
                 }
@@ -235,49 +245,9 @@ public class IndexerUtils {
         );
     }
 
-    public static List<String> extractIndividualIds(JsonNode rootNode) {
-        List<String> individualIds = new ArrayList<>();
+    private Set<String> callIndividualService(RequestInfo requestInfo, Set<String> individualIds) {
 
-
-        JsonNode complainantDetailsNode = rootNode.path("complainantDetails")
-                .path("formdata");
-        if (complainantDetailsNode.isArray()) {
-            for (JsonNode complainantNode : complainantDetailsNode) {
-                JsonNode complainantVerificationNode = complainantNode.path("data")
-                        .path("complainantVerification")
-                        .path("individualDetails");
-                if (!complainantVerificationNode.isMissingNode()) {
-                    String individualId = complainantVerificationNode.path("individualId").asText();
-                    if (!individualId.isEmpty()) {
-                        individualIds.add(individualId);
-                    }
-                }
-            }
-        }
-
-        JsonNode advocateDetailsNode = rootNode.path("advocateDetails")
-                .path("formdata");
-        if (advocateDetailsNode.isArray()) {
-            for (JsonNode advocateNode : advocateDetailsNode) {
-                JsonNode advocateListNode = advocateNode.path("data")
-                        .path("advocateBarRegNumberWithName");
-                if (advocateListNode.isArray()) {
-                    for (JsonNode advocateInfoNode : advocateListNode) {
-                        String individualId = advocateInfoNode.path("individualId").asText();
-                        if (!individualId.isEmpty()) {
-                            individualIds.add(individualId);
-                        }
-                    }
-                }
-            }
-        }
-
-        return individualIds;
-    }
-
-    private List<String> callIndividualService(RequestInfo requestInfo, List<String> individualIds) {
-
-        List<String> mobileNumber = new ArrayList<>();
+        Set<String> mobileNumber = new HashSet<>();
         for(String id : individualIds){
             List<Individual> individuals = individualService.getIndividualsByIndividualId(requestInfo, id);
             if(individuals.get(0).getMobileNumber() != null){
