@@ -216,7 +216,7 @@ public class CaseBundleService {
         RequestInfo requestInfo = caseBundleBulkRequest.getRequestInfo();
         String tenantId = caseBundleBulkRequest.getTenantId();
 
-        log.info("Retrieving documents from index", configuration.getCaseBundleIndex());
+        log.info("Retrieving documents from index: {}", configuration.getCaseBundleIndex());
         String uri = configuration.getEsHostUrl() + configuration.getCaseBundleIndex() + configuration.getSearchPath();
         String request = String.format(ES_BULK_QUERY);
         String response;
