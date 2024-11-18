@@ -3,7 +3,7 @@ package org.pucar.dristi.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.pucar.dristi.web.models.ProcessCaseBundlePdfRequest;
+import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
@@ -12,22 +12,15 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.ElasticSearchRepository;
 import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.util.MdmsV2Util;
-import org.pucar.dristi.web.models.CaseCriteria;
-import org.pucar.dristi.web.models.CaseSearchRequest;
-import org.pucar.dristi.web.models.Mdms;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.core.io.Resource;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import static org.pucar.dristi.config.ServiceConstants.ES_IDS_QUERY;
-import static org.pucar.dristi.config.ServiceConstants.ES_UPDATE_QUERY;
+import static org.pucar.dristi.config.ServiceConstants.*;
 
 @Slf4j
 @Component
@@ -99,11 +92,21 @@ public class CaseBundleIndexBuilderService {
             List<Map<String, Object>> criteriaList = (List<Map<String, Object>>) responseMap.get("criteria");
 
             if (criteriaList == null || criteriaList.isEmpty()) {
-                log.error("No case present for given filingNumber");
+                log.error(CASE_ERROR_MESSAGE);
+                throw new CustomException(CASE_NOT_FOUND, CASE_ERROR_MESSAGE);
             }
 
             Map<String, Object> criteria = criteriaList.get(0);
-            caseId = (String) criteria.get("caseId");
+
+            List<Map<String,Object>> responseList  = (List<Map<String,Object>>) criteria.get("responseList");
+
+            if (responseList != null) {
+                caseId = responseList.get(0).get("id").toString();
+            }
+            else {
+                log.error(CASE_ERROR_MESSAGE);
+                throw new CustomException(CASE_NOT_FOUND, CASE_ERROR_MESSAGE);
+            }
 
         } catch (Exception e) {
             log.error("Error processing case response", e);
@@ -201,8 +204,7 @@ public class CaseBundleIndexBuilderService {
     @KafkaListener(topics = {"${casemanagement.kafka.case.application.topic}"})
     public void listenCaseApplication(final HashMap<String, Object> record) throws IOException {
 
-//        TODO
-        String caseId = (String) record.get("TODO PATH FOR CASE");
+        String caseId = ((LinkedHashMap<String, Object>) record.get("cases")).get("id").toString();
 
         JsonNode caseData = objectMapper.readTree(caseDataResource.getInputStream());
 
