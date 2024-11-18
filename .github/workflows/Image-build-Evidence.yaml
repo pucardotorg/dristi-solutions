@@ -70,7 +70,7 @@ jobs:
 
       - name: Build and Push Docker image for Evidence
         run: |
-          docker build --build-arg WORK_DIR="backend/evidence" -t pucarsolutionsdev.azurecr.io/pucar_evidence:${{ env.VERSION }}-${{ env.commit_hash }} -f build/maven/Dockerfile .
+          docker build --build-arg WORK_DIR="backend/evidence" -t pucarsolutionsdev.azurecr.io/pucar_evidence:v1.0.0-${{ env.commit_hash }} -f build/maven/Dockerfile .
           docker push pucarsolutionsdev.azurecr.io/pucar_evidence:${{ env.VERSION }}-${{ env.commit_hash }}
 
       - name: Build and Push Docker image for Evidence_DB

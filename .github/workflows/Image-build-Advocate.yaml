@@ -72,7 +72,7 @@ jobs:
 
       - name: Build and Push Docker image for Advocate
         run: |
-          docker build --build-arg WORK_DIR="backend/advocate" -t pucarsolutionsdev.azurecr.io/pucar_advocate:${{ env.VERSION }}-${{ env.commit_hash }} -f build/maven/Dockerfile .
+          docker build --build-arg WORK_DIR="backend/advocate" -t pucarsolutionsdev.azurecr.io/pucar_advocate:v1.0.0-${{ env.commit_hash }} -f build/maven/Dockerfile .
           docker push pucarsolutionsdev.azurecr.io/pucar_advocate:${{ env.VERSION }}-${{ env.commit_hash }}
 
       - name: Build and Push Docker image for Advocate_DB

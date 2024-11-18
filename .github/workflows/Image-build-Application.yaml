@@ -70,7 +70,7 @@ jobs:
 
       - name: Build and Push Docker image for Application
         run: |
-          docker build --build-arg WORK_DIR="backend/application" -t pucarsolutionsdev.azurecr.io/pucar_application:${{ env.VERSION }}-${{ env.commit_hash }} -f build/maven/Dockerfile .
+          docker build --build-arg WORK_DIR="backend/application" -t pucarsolutionsdev.azurecr.io/pucar_application:v1.0.0-${{ env.commit_hash }} -f build/maven/Dockerfile .
           docker push pucarsolutionsdev.azurecr.io/pucar_application:${{ env.VERSION }}-${{ env.commit_hash }}
 
       - name: Build and Push Docker image for Application_DB
