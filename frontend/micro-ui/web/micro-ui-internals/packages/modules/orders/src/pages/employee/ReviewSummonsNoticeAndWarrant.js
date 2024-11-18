@@ -311,10 +311,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const submissionData = useMemo(() => {
     return [
-      { key: "SUBMISSION_DATE", value: "25-08-2001", copyData: false },
-      { key: "SUBMISSION_ID", value: "875897348579453457", copyData: true },
+      { key: "Issued Date", value: rowData?.createdDate && convertToDateInputFormat(rowData?.createdDate), copyData: false },
+      { key: "E_PROCESS_ID", value: rowData?.taskNumber, copyData: true },
     ];
-  }, []);
+  }, [rowData]);
 
   const successMessage = useMemo(() => {
     let msg = "";
@@ -527,7 +527,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         ></InboxSearchComposer>
         {showActionModal && (
           <DocumentModal
-            config={config?.label === "Pending" ? (actionModalType !== "SIGN_PENDING" ? signedModalConfig : unsignedModalConfig) : sentModalConfig}
+            config={config?.label === "PENDING" ? (actionModalType !== "SIGN_PENDING" ? signedModalConfig : unsignedModalConfig) : sentModalConfig}
             currentStep={step}
           />
         )}
