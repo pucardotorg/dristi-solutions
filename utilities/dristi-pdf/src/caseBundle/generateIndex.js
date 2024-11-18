@@ -34,7 +34,7 @@ const MASTER_DATA = [
     section: "complaint",
     docType: null,
     isActive: true,
-    docketPageRequired: true,
+    docketPageRequired: false,
     order: 1,
   },
   {
@@ -377,14 +377,6 @@ async function processPendingAdmissionCase({
   // TODO: fetch case-bundle-master master data
   const caseBundleMaster = MASTER_DATA;
 
-  const complaintSection = filterCaseBundleBySection(
-    caseBundleMaster,
-    "complaint"
-  )[0];
-  if (!complaintSection) {
-    return null;
-  }
-
   const caseResponse = await search_case_v2(
     [
       {
@@ -394,6 +386,55 @@ async function processPendingAdmissionCase({
     tenantId,
     requestInfo
   );
+
+  const titlepageSection = filterCaseBundleBySection(
+    caseBundleMaster,
+    "titlepage"
+  )[0];
+
+  if (titlepageSection) {
+    const coverCaseName = courtCase.caseTitle;
+    const coverCaseType = courtCase.caseType;
+    const coverCaseNumber =
+      courtCase.courtCaseNumber ||
+      courtCase.cmpNumber ||
+      courtCase.filingNumber;
+    const data = { Data: [{ coverCaseName, coverCaseType, coverCaseNumber }] };
+    const caseCoverPdfResponse = await create_pdf_v2(
+      tenantId,
+      "cover-page-pdf",
+      data,
+      { RequestInfo: requestInfo }
+    );
+    const caseCoverDoc = await PDFDocument.load(caseCoverPdfResponse.data);
+
+    const titlepageFileStoreId = await persistPDF(
+      caseCoverDoc,
+      tenantId,
+      requestInfo
+    );
+
+    // update index
+
+    const titlepageIndexSection = indexCopy.sections.find(
+      (section) => section.name === "titlepage"
+    );
+
+    titlepageIndexSection.lineItems = [
+      {
+        content: "cover",
+        createPDF: false,
+        sourceId: titlepageFileStoreId,
+        fileStoreId: titlepageFileStoreId,
+        sortParam: null,
+      },
+    ];
+  }
+
+  const complaintSection = filterCaseBundleBySection(
+    caseBundleMaster,
+    "complaint"
+  )[0];
 
   const courtCase = caseResponse?.data?.criteria[0]?.responseList[0];
 
@@ -440,22 +481,6 @@ async function processPendingAdmissionCase({
     copiedPages.forEach((page) => caseCoverDoc.addPage(page));
     caseBundlePdfDoc = caseCoverDoc;
   }
-
-  // const pdfBytes = await caseBundlePdfDoc.save();
-  // const form = new FormData();
-  // form.append(
-  //   "file",
-  //   new Blob([pdfBytes], { type: "application/octet-stream" })
-  // );
-  // form.append("tenantId", tenantId);
-  // form.append("module", "case-bundle-case-index");
-  // const fileStoreResponse = await create_file_v2({
-  //   form,
-  //   tenantId,
-  //   requestInfo,
-  // });
-  // const complaintNewFileStoreId =
-  //   fileStoreResponse?.data?.files?.[0].fileStoreId;
 
   const complaintNewFileStoreId = await persistPDF(
     caseBundlePdfDoc,
