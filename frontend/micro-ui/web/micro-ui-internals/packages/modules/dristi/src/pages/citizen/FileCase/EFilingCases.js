@@ -1670,7 +1670,7 @@ function EFilingCases({ path }) {
 
           if (fileStoreId) {
             caseComplaintDocument = {
-              documentType: "CASE_COMPLAINT_PDF",
+              documentType: "case.complaint.signed",
               fileStore: fileStoreId,
               fileName: filename,
             };
