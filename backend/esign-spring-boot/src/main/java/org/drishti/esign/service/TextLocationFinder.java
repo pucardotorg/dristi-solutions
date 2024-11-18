@@ -9,6 +9,8 @@ import lombok.Setter;
 public class TextLocationFinder implements RenderListener {
 
     private String keyword;
+    private StringBuilder currentText = new StringBuilder();
+    private Float lastY;
 
     public TextLocationFinder(String keyword) {
         this.keyword = keyword;
@@ -23,10 +25,19 @@ public class TextLocationFinder implements RenderListener {
     @Override
     public void renderText(TextRenderInfo renderInfo) {
         String text = renderInfo.getText();
-         if (text != null && text.contains(keyword)) {
-            x = renderInfo.getBaseline().getStartPoint().get(0);
-            y = renderInfo.getBaseline().getStartPoint().get(1);
-            found = true;
+        if (text != null) {
+            Float currentY = renderInfo.getBaseline().getStartPoint().get(1);
+            if (lastY != null && !currentY.equals(lastY)) {
+                currentText = new StringBuilder();
+            }
+            lastY = currentY;
+            currentText.append(text);
+            if (currentText.toString().contains(keyword)) {
+                currentText = new StringBuilder();
+                x = renderInfo.getBaseline().getStartPoint().get(0);
+                y = renderInfo.getBaseline().getStartPoint().get(1);
+                found = true;
+            }
         }
     }
 

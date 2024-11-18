@@ -36,7 +36,7 @@ public class PdfEmbedder {
     Decryption decryption;
 
 
-    public MultipartFile signPdfWithDSAndReturnMultipartFile(Resource resource, String response) throws IOException {
+    public MultipartFile signPdfWithDSAndReturnMultipartFile(Resource resource, String response,  String str) throws IOException {
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
@@ -54,7 +54,8 @@ public class PdfEmbedder {
 
             List<TextLocation> resultTextLocation = new ArrayList<>();
 
-            TextLocationFinder finder = new TextLocationFinder("Litigant Sign");
+
+            TextLocationFinder finder = new TextLocationFinder(str);
 
             for (int i = 1; i <= reader.getNumberOfPages(); i++) {
                 PdfContentStreamProcessor processor = new PdfContentStreamProcessor(finder);
@@ -70,9 +71,11 @@ public class PdfEmbedder {
                     float x = finder.getX();
                     float y = finder.getY();
 
+                    int length = str.length();
+
                     // Define the signature rectangle at the coordinates
                     PdfSignatureAppearance signatureAppearance = stamper.getSignatureAppearance();
-                    signatureAppearance.setVisibleSignature(new com.itextpdf.text.Rectangle(x, y, x + 100, y + 50), i, "SignatureField");
+                    signatureAppearance.setVisibleSignature(new com.itextpdf.text.Rectangle(x - length*5, y, x + 100, y + 50), i, null);
 
                     break; // Exit after finding and placing the signature
                 }

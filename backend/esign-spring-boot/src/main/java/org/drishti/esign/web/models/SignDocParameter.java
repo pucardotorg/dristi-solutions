@@ -21,4 +21,7 @@ public class SignDocParameter {
 
     @JsonProperty("tenantId")
     private String tenantId;
+
+    @JsonProperty("placeHolder")
+    private String placeHolder;
 }

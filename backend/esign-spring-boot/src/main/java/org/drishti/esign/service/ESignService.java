@@ -82,12 +82,13 @@ public class ESignService {
         String fileStoreId = eSignParameter.getFileStoreId();
         String tenantId = eSignParameter.getTenantId();
         String response = eSignParameter.getResponse();
+        String placeHolder =eSignParameter.getPlaceHolder();
 
         Resource resource = fileStoreUtil.fetchFileStoreObjectById(fileStoreId, eSignParameter.getTenantId());
         MultipartFile multipartFile;
         try {
             //fixme: get the multipart file and upload into fileStore
-            multipartFile = pdfEmbedder.signPdfWithDSAndReturnMultipartFile(resource, response);
+            multipartFile = pdfEmbedder.signPdfWithDSAndReturnMultipartFile(resource, response,placeHolder);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
