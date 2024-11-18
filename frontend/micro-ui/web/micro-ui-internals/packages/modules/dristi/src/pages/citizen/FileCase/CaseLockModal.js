@@ -77,7 +77,7 @@ function CaseLockModal({
           await createPendingTask({ name: t("PENDING_RE_E_SIGN_FOR_CASE"), status: "PENDING_RE_E-SIGN" }); // check status
           history.push(`${path}/sign-complaint?filingNumber=${filingNumber}`);
         } catch (error) {
-          toast.error(t("SOMETHING_WENT_WRONG"));
+          toast.error(error);
         }
       } else {
         try {
@@ -135,7 +135,7 @@ function CaseLockModal({
       formId="modal-action"
       headerBarMain={<Heading label={isAdvocateFilingCase ? t("CONFIRM_COMPLAINT_DETAILS") : t("CONFIRM_CASE_DETAILS")} />}
       popmoduleClassName={"case-lock-confirm-modal"}
-      // style={{ ...caseLockModalStyle }}
+      style={{ width: "50%", height: "40px" }}
       // textStyle={{ margin: "0px", color: "" }}
       // popupStyles={{ maxWidth: "60%" }}
       popUpStyleMain={{ zIndex: "1000" }}

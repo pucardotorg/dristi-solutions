@@ -120,6 +120,7 @@ var fontDescriptors = {
 
 var defaultFontMapping = {
   en_IN: 'default',
+  ml_IN: 'default',
   hi_IN: 'default',
   pn_IN: 'BalooPaaji',
   od_IN: 'BalooBhaina',
@@ -1086,6 +1087,17 @@ export const fillValues = (variableTovalueMap, formatconfig) => {
       .replace(/"\{/g, "{")
       .replace(/\n/g, "\\n")
       .replace(/\t/g, "\\t")      
+      .replace(/],""]/g, ']]')
+      .replace(/},""}/g, '}}')
+      .replace(/},""]/g, '}]')
+      .replace(/],""}/g, ']}')
+      .replace(/],""]/g, ']]')
+      .replace(/\["",\{/g, '[{')
+      .replace(/\["",\[/g, '[[')
+      .replace(/\{"",\{/g, '{{')
+      .replace(/\{"",\[/g, '{[')
+      .replace(/],"",\[/g, '],[')
+      .replace(/},"",\{/g, '},{')
   );
   return output;
 };

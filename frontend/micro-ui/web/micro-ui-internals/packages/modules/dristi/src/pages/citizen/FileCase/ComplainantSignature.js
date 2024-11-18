@@ -130,7 +130,7 @@ const caseType = {
 
 const complainantWorkflowACTION = {
   UPLOAD_DOCUMENT: "UPLOAD",
-  ADVOCATE_ESIGN_SEND: "E-SIGN-2",
+  ADVOCATE_ESIGN_SEND: "E-SIGN",
   LITIGANT_SUBMIT_CASE: "E-SIGN_PARTY_IN_PERSON",
   ADVOCATE_SUBMIT_CASE: "E-SIGN",
 };
@@ -173,6 +173,8 @@ const ComplainantSignature = ({ path }) => {
   const { handleEsign } = Digit.Hooks.orders.useESign();
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const name = "Signature";
+  const complainantPlaceholder = "Complainant Signature";
+  const advocatePlaceholder = "Advocate Signature";
 
   const uploadModalConfig = useMemo(() => {
     return {
@@ -181,7 +183,7 @@ const ComplainantSignature = ({ path }) => {
         inputs: [
           {
             name: name,
-            documentHeader: "Signature",
+            documentHeader: "CS_ADD_SIGNATURE",
             type: "DragDropComponent",
             uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
             maxFileSize: 5,
@@ -318,7 +320,8 @@ const ComplainantSignature = ({ path }) => {
   };
 
   const handleEsignAction = () => {
-    handleEsign(name, "ci", DocumentFileStoreId);
+    const signPlaceHolder = isLitigantPartyInPerson || !isLitigantEsignCompleted ? complainantPlaceholder : advocatePlaceholder;
+    handleEsign(name, "ci", DocumentFileStoreId, signPlaceHolder);
   };
 
   const handleUploadFile = () => {
@@ -333,6 +336,7 @@ const ComplainantSignature = ({ path }) => {
     const dateOfAccrual = new Date(caseDetails?.caseDetails["demandNoticeDetails"]?.formdata[0]?.data?.dateOfAccrual);
     return today?.getTime() - dateOfAccrual?.getTime();
   }, [caseDetails]);
+
   const chequeDetails = useMemo(() => {
     const debtLiability = caseDetails?.caseDetails?.debtLiabilityDetails?.formdata?.[0]?.data;
     if (debtLiability?.liabilityType?.code === "PARTIAL_LIABILITY") {
@@ -409,6 +413,14 @@ const ComplainantSignature = ({ path }) => {
               delayCondonation: delayCondonation,
             },
           ],
+          additionalDetails: {
+            filingNumber: caseDetails?.filingNumber,
+            chequeDetails: chequeDetails,
+            cnrNumber: caseDetails?.cnrNumber,
+            payer: caseDetails?.litigants?.[0]?.additionalDetails?.fullName,
+            payerMobileNo: caseDetails?.additionalDetails?.payerMobileNo,
+            delayCondonation: delayCondonation,
+          },
         },
       ],
     });
