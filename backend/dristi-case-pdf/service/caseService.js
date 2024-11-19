@@ -69,7 +69,7 @@ const getAddressDetails = (addressObject) => {
   };
 
   const getStringAddressDetails = (addressObject) => {
-    return `${addressObject?.locality || ''} ${addressObject?.city || ''} ${addressObject?.district || ''}  ${addressObject?.state || ''}  ${addressObject?.pincode || ''}`;
+    return `${addressObject?.locality || ''}, ${addressObject?.city || ''}, ${addressObject?.district || ''},  ${addressObject?.state || ''},  ${addressObject?.pincode || ''}`;
   };
 
   exports.formatDate = (date) => {
