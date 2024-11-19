@@ -23,7 +23,7 @@ const stateSla = {
 
 const dayInMillisecond = 24 * 3600 * 1000;
 
-const EvidenceModal = ({ caseData, documentSubmission = [], setShow, userRoles, modalType, setUpdateCounter, showToast, caseId }) => {
+const EvidenceModal = ({ caseData, documentSubmission = [], setShow, userRoles, modalType, setUpdateCounter, showToast, caseId, refetchApplications }) => {
   const [comments, setComments] = useState(documentSubmission[0]?.comments ? documentSubmission[0].comments : []);
   const [showConfirmationModal, setShowConfirmationModal] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(null);
@@ -642,6 +642,7 @@ const EvidenceModal = ({ caseData, documentSubmission = [], setShow, userRoles, 
         counterUpdate();
         setShowSuccessModal(true);
         setShowConfirmationModal(null);
+        refetchApplications?.();
       }
     } catch (error) {}
   };

@@ -271,7 +271,7 @@ const AdmittedCases = () => {
     allAdvocates,
     userInfo?.uuid,
   ]);
-  const { data: applicationData, isloading: isApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
+  const { data: applicationData, refetch: refetchApplications, isloading: isApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
     {
       criteria: {
         filingNumber,
@@ -1863,6 +1863,7 @@ const AdmittedCases = () => {
           showToast={showToast}
           caseData={caseRelatedData}
           caseId={caseId}
+          refetchApplications={refetchApplications}
         />
       )}
       {showOrderReviewModal && (
