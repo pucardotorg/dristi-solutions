@@ -30,6 +30,7 @@ public class ESignService {
     private final HttpServletRequest servletRequest;
     private final FileStoreUtil fileStoreUtil;
 
+
     @Autowired
     public ESignService(PdfEmbedder pdfEmbedder, XmlSigning xmlSigning, Encryption encryption, XmlFormDataSetter formDataSetter, XmlGenerator xmlGenerator, HttpServletRequest servletRequest, FileStoreUtil fileStoreUtil) {
         this.pdfEmbedder = pdfEmbedder;
@@ -54,6 +55,8 @@ public class ESignService {
         String strToEncrypt = xmlGenerator.generateXml(eSignXmlData);  // this method is writing in testing.xml
         log.info(strToEncrypt);
         String xmlData = "";
+
+        log.info("ui make request filestoreId :{}, filehash :{}",fileStoreId ,fileHash);
 
         try {
             PrivateKey rsaPrivateKey = encryption.getPrivateKey("privateKey.pem");
@@ -84,6 +87,11 @@ public class ESignService {
         String response = eSignParameter.getResponse();
 
         Resource resource = fileStoreUtil.fetchFileStoreObjectById(fileStoreId, eSignParameter.getTenantId());
+
+        String fileHash= pdfEmbedder.generateHash(resource);
+
+        log.info("cdac sign doc request filestoreId :{}, filehash :{}",fileStoreId ,fileHash);
+
         MultipartFile multipartFile;
         try {
             //fixme: get the multipart file and upload into fileStore
