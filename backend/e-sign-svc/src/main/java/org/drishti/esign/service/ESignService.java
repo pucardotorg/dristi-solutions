@@ -97,7 +97,7 @@ public class ESignService {
             //fixme: get the multipart file and upload into fileStore
             multipartFile = pdfEmbedder.signPdfWithDSAndReturnMultipartFile(resource, response);
             String signedFileHash= pdfEmbedder.generateHash(multipartFile.getResource());
-            log.info("hash after signing filestoreId :{}, filehash :{}",fileStoreId ,fileHash);
+            log.info("hash after signing filestoreId :{}, filehash :{}",fileStoreId ,signedFileHash);
 
 
         } catch (IOException e) {
