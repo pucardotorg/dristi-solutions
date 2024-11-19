@@ -2142,9 +2142,9 @@ const GenerateOrders = () => {
       if (orderType === "NOTICE") {
         closeManualPendingTask(currentOrder?.hearingNumber || hearingDetails?.hearingId);
         if (caseDetails?.status === "ADMISSION_HEARING_SCHEDULED") {
-          updateCaseDetails("ADMIT").then(() => {
-            refetchCaseData().then(() => {
-              updateCaseDetails("ISSUE_ORDER");
+          await updateCaseDetails("ADMIT").finally(() => {
+            return refetchCaseData().then(() => {
+              return updateCaseDetails("ISSUE_ORDER");
             });
           });
         } else {
