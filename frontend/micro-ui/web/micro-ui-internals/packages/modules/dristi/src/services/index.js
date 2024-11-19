@@ -343,4 +343,12 @@ export const DRISTIService = {
       data,
       params,
     }),
+  downloadCaseBundle: (data, params) =>
+    Request({
+      url: Urls.dristi.downloadCaseBundle,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
 };

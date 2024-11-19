@@ -167,6 +167,7 @@ const AdmittedCases = () => {
   const [showDismissCaseConfirmation, setShowDismissCaseConfirmation] = useState(false);
   const [showPendingDelayApplication, setShowPendingDelayApplication] = useState(false);
   const [toastStatus, setToastStatus] = useState({ alreadyShown: false });
+  const [downloadCasePdfLoading, setDownloadCasePdfLoading] = useState(false);
   const history = useHistory();
   const isCitizen = userRoles.includes("CITIZEN");
   const OrderWorkflowAction = Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {};
@@ -1629,6 +1630,30 @@ const AdmittedCases = () => {
     }
   };
 
+  const handleDownloadPDF = async () => {
+    const caseId = caseDetails?.id;
+    try {
+      setDownloadCasePdfLoading(true);
+      if (!caseId) {
+        throw new Error("Case ID is not available.");
+      }
+      const response = await DRISTIService.downloadCaseBundle({ tenantId, caseId }, { tenantId });
+      const fileStoreId = response?.fileStoreId?.toLowerCase();
+      if (!fileStoreId || ["null", "undefined"].includes(fileStoreId)) {
+        throw new Error("Invalid fileStoreId received in the response.");
+      }
+      downloadPdf(tenantId, response?.fileStoreId);
+    } catch (error) {
+      console.error("Error downloading PDF:dfsdf", error.message || error);
+      showToast({
+        isError: true,
+        message: "UNABLE_CASE_PDF",
+      });
+    } finally {
+      setDownloadCasePdfLoading(false);
+    }
+  };
+
   if (isLoading || isWorkFlowLoading || isApplicationLoading) {
     return <Loader />;
   }
@@ -1641,6 +1666,25 @@ const AdmittedCases = () => {
 
   return (
     <div className="admitted-case" style={{ position: "absolute", width: "100%" }}>
+      {downloadCasePdfLoading && (
+        <div
+          style={{
+            width: "100vw",
+            height: "100vh",
+            zIndex: "9999",
+            position: "fixed",
+            right: "0",
+            display: "flex",
+            top: "0",
+            background: "rgb(234 234 245 / 50%)",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          className="submit-loader"
+        >
+          <Loader />
+        </div>
+      )}
       <div
         className="admitted-case-header"
         style={{ position: "sticky", top: "72px", width: "100%", height: "100%", zIndex: 150, background: "white" }}
@@ -1673,7 +1717,7 @@ const AdmittedCases = () => {
                 variation={"outlined"}
                 label={t("DOWNLOAD_CASE_FILE")}
                 isDisabled={!caseDetails?.additionalDetails?.signedCaseDocument}
-                onButtonClick={() => downloadPdf(tenantId, caseDetails?.additionalDetails?.signedCaseDocument)}
+                onButtonClick={handleDownloadPDF}
               />
             )}
             {showMakeSubmission && <Button label={t("MAKE_SUBMISSION")} onButtonClick={handleMakeSubmission} />}
@@ -1709,14 +1753,7 @@ const AdmittedCases = () => {
                       }}
                     >
                       <CustomThreeDots />
-                      {showOtherMenu && (
-                        <Menu
-                          options={[t("DOWNLOAD_CASE_FILE")]}
-                          onSelect={() => {
-                            downloadPdf(tenantId, caseDetails?.additionalDetails?.signedCaseDocument);
-                          }}
-                        ></Menu>
-                      )}
+                      {showOtherMenu && <Menu options={[t("DOWNLOAD_CASE_FILE")]} onSelect={handleDownloadPDF}></Menu>}
                     </div>
                   </div>
                 </div>
