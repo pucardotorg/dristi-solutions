@@ -211,7 +211,7 @@ public class IndexerUtils {
             Object task = taskUtil.getTask(requestInfo, tenantId, null, referenceId, status);
             net.minidev.json.JSONArray assignToList = JsonPath.read(task.toString(), ASSIGN_TO_PATH);
             assignedTo = assignToList.toString();
-            Object dueDate = JsonPath.read(jsonItem, DUE_DATE_PATH);
+            Object dueDate = JsonPath.read(task.toString(), DUE_DATE_PATH);
             stateSla = dueDate != null ? ((Number) dueDate).longValue() : null;
             assignedRole =  new JSONArray().toString();
         }
