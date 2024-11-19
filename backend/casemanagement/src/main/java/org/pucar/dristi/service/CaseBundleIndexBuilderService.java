@@ -123,7 +123,7 @@ public class CaseBundleIndexBuilderService {
         String businessId =null;
         String tenantId=null ;
         String stateName=null;
-        RequestInfo requestInfo = (RequestInfo) record.get("RequestInfo");
+        RequestInfo requestInfo = objectMapper.convertValue(record.get("RequestInfo"), RequestInfo.class);
 
         if (processInstances != null && !processInstances.isEmpty()) {
             Map<String, Object> processInstance = processInstances.get(0);
