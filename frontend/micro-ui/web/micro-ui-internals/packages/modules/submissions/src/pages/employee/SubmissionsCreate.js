@@ -764,7 +764,7 @@ const SubmissionsCreate = ({ path }) => {
             taskType: "PENDING_TASK",
             tenantId,
             status: "INPROGRESS",
-            duedate: orderDetails?.orderDetails?.dates?.submissionDeadlineDate,
+            duedate: orderDetails?.orderDetails?.dates?.responseDeadlineDate,
           },
           tenantId,
         });
