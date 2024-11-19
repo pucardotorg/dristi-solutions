@@ -2,7 +2,7 @@
 autonumber
 skinparam responseMessageBelowArrow true
 
-title "Case Bundle - Order Index Generator"
+title "Case Bundle - Vakalat Index Generator"
 
 box DRISIT Services
 participant CaseBundleIndexBuilderSvc as CBIBS #gold
@@ -20,15 +20,30 @@ participant PDFSvc as PS #lightgreen
 participant MasterDataSvc as MDS #lightgreen
 end box
 
-== State - PUBLISHED ==
-note across: a new order is available when it gets to published state. this is the time to add it to the case bundle
-CBIBS->CBS ++: processOrder(orderNumber, indexJson, state)
+note across: a new person has joined a case. If advocate, need to get the vakalat to add to the bundle
+CBIBS->CBS++ : processVakalat(topicEntry, indexJson)
 note right of CBS: orders section of Case Bundle
-CBS->MDS++: get record from case_bundle_master where "orders" = section.name
-return sectionRow
-alt sectionRow.isActive = false
+CBS->MDS++: get record from case_bundle_master where section.name = "vakalat"
+return sectionRows
+alt both sectionRows.isActive = false
   note right of CBS: section not to be processed. EXIT method
 end
+
+
+
+CBS->CBS: get application fileStoreID(topicEntry, documentType = application.signed) as appSourceId
+CBS->CBS: search indexJson.sections.items.lineItem.sourceId = appSourceId, get as lineItem
+
+alt lineItem = null
+note right of CBS: unlikely, because you cannot raise an objection, if there is no application
+  CBS->CBS: throw error and exit method
+end
+
+
+alt sectionRow.docketPageRequired = true
+end
+
+
 
 CBS->OS++: search order (orderNumber, tenantID)
 return order

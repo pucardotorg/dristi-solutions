@@ -28,7 +28,7 @@ CBIBS->CBS ++: processApplication(applicationNumber, indexJson, state)
 note right of CBS: Different sections below as per the application states being processed
 
 == State - PENDING_APPROVAL ==
-note across: when application is in pending approval state, it is a new application and it will be added as part of 'pendingapplication' section
+note across: when application is in pending approval state, it is a new application and it will be added as part of 'pendingapplication' section. No objection will be available as yet
 
 note right of CBS: pendingapplication section of Case Bundle
 CBS->MDS++: get record from case_bundle_master where "pendingapplication" = section.name
