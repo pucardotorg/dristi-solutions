@@ -2142,11 +2142,18 @@ const GenerateOrders = () => {
       if (orderType === "NOTICE") {
         closeManualPendingTask(currentOrder?.hearingNumber || hearingDetails?.hearingId);
         if (caseDetails?.status === "ADMISSION_HEARING_SCHEDULED") {
-          await updateCaseDetails("ADMIT").finally(() => {
-            return refetchCaseData().then(() => {
-              return updateCaseDetails("ISSUE_ORDER");
-            });
-          });
+          try {
+            await updateCaseDetails("ADMIT");
+          } catch (error) {
+            console.error("Error during ADMIT case update:", error);
+          } finally {
+            try {
+              await refetchCaseData();
+              await updateCaseDetails("ISSUE_ORDER");
+            } catch (finalError) {
+              console.error("Error during final steps:", finalError);
+            }
+          }
         } else {
           try {
             await updateCaseDetails("ISSUE_ORDER");
