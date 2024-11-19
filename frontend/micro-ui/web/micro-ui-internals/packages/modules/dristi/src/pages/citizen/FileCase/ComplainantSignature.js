@@ -451,18 +451,16 @@ const ComplainantSignature = ({ path }) => {
 
   const updateSignedDocInCaseDoc = () => {
     const tempDocList = structuredClone(caseDetails?.documents || []);
-    const index = tempDocList.map((doc, index) => (doc.documentType === "case.complaint.signed" ? index : -1)).filter((index) => index !== -1)?.[0];
+    const index = tempDocList.findIndex((doc) => doc.documentType === "case.complaint.signed");
     const signedDoc = {
       documentType: "case.complaint.signed",
       fileStore: signatureDocumentId ? signatureDocumentId : DocumentFileStoreId,
       fileName: "case Complaint Signed Document",
     };
-    if (index) {
+    if (index > -1) {
       tempDocList.splice(index, 1);
-      tempDocList.push(signedDoc);
-    } else {
-      tempDocList.push(signedDoc);
     }
+    tempDocList.push(signedDoc);
     return tempDocList;
   };
 

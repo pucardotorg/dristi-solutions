@@ -1191,14 +1191,12 @@ export const getRespondentName = (respondentDetails) => {
 };
 
 const updateComplaintDocInCaseDoc = (docList, complaintDoc) => {
-  const newDocList = structuredClone(docList?.documents || []);
-  const index = newDocList.map((doc, index) => (doc.documentType === "case.complaint.unsigned" ? index : -1)).filter((index) => index !== -1)?.[0];
-  if (index) {
+  const newDocList = structuredClone(docList || []);
+  const index = newDocList.findIndex((doc) => doc.documentType === "case.complaint.unsigned");
+  if (index > -1) {
     newDocList.splice(index, 1);
-    newDocList.push(complaintDoc);
-  } else {
-    newDocList.push(complaintDoc);
   }
+  newDocList.push(complaintDoc);
   return newDocList;
 };
 
