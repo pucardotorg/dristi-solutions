@@ -178,7 +178,7 @@ const AdmittedCases = () => {
   const isJudge = userInfo?.roles?.some((role) => role.code === "JUDGE_ROLE");
   const todayDate = new Date().getTime();
   const { downloadPdf } = useDownloadCasePdf();
-  const { data: caseData, isLoading, refetch: refetchCaseData, isFetching } = useSearchCaseService(
+  const { data: caseData, isLoading, refetch: refetchCaseData, isFetching: isCaseFetching } = useSearchCaseService(
     {
       criteria: [
         {
@@ -271,7 +271,7 @@ const AdmittedCases = () => {
     allAdvocates,
     userInfo?.uuid,
   ]);
-  const { data: applicationData, refetch: refetchApplications, isloading: isApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
+  const { data: applicationData, refetch: refetchApplications, isLoading: isApplicationLoading, isFetching: isApplicationFetching } = Digit.Hooks.submissions.useSearchSubmissionService(
     {
       criteria: {
         filingNumber,
@@ -311,12 +311,12 @@ const AdmittedCases = () => {
   );
 
   const isDelayApplicationPending = useMemo(
-    () =>
-      Boolean(
+    () => {
+      return Boolean(
         applicationData?.applicationList?.some(
           (item) => item?.applicationType === "DELAY_CONDONATION" && item?.status === SubmissionWorkflowState.PENDINGAPPROVAL
         )
-      ),
+      )},
     [applicationData]
   );
 
@@ -914,8 +914,8 @@ const AdmittedCases = () => {
         tenantId,
       },
       tenantId
-    ).then((response) => {
-      refetchCaseData();
+    ).then(async (response) => {
+      await refetchCaseData();
       revalidateWorkflow();
       setUpdatedCaseDetails(response?.cases?.[0]);
     });
@@ -1629,7 +1629,7 @@ const AdmittedCases = () => {
     }
   };
 
-  if (isLoading || isWorkFlowLoading || isApplicationLoading) {
+  if (isLoading || isWorkFlowLoading || isApplicationLoading || isCaseFetching) {
     return <Loader />;
   }
   if (
