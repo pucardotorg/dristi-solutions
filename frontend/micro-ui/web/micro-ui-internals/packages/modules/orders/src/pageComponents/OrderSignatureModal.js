@@ -131,6 +131,7 @@ function OrderSignatureModal({
                 }}
                 className={"aadhar-sign-in"}
                 labelClassName={"aadhar-sign-in"}
+                isDisabled={true}
               />
               <Button
                 icon={<FileUploadIcon />}
@@ -151,7 +152,7 @@ function OrderSignatureModal({
                 uri={uri}
                 t={t}
                 displayFilename={"CLICK_HERE"}
-                pdf = {true}
+                pdf={true}
               />
             </div>
           </div>
