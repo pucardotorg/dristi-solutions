@@ -45,18 +45,18 @@ public class ESignService {
     public ESignXmlForm signDoc(ESignRequest request) {
 
         ESignParameter eSignParameter = request.getESignParameter();
-        String fileStoreId = eSignParameter.getFileStoreId();
         String tenantId = eSignParameter.getTenantId();
         String pageModule = eSignParameter.getPageModule();
-        Resource resource = fileStoreUtil.fetchFileStoreObjectById(fileStoreId, eSignParameter.getTenantId());
-        String fileHash = pdfEmbedder.generateHash(resource);
+        Resource resource = fileStoreUtil.fetchFileStoreObjectById(eSignParameter.getFileStoreId(), eSignParameter.getTenantId());
+        String fileHash = pdfEmbedder.generateHash(resource, eSignParameter);
         ESignXmlData eSignXmlData = formDataSetter.setFormXmlData(fileHash, new ESignXmlData());
-        eSignXmlData.setTxn(tenantId + "-" +  pageModule + "-" + fileStoreId);
+        eSignXmlData.setTxn(tenantId + "-" + pageModule + "-" + eSignParameter.getFileStoreId());
         String strToEncrypt = xmlGenerator.generateXml(eSignXmlData);  // this method is writing in testing.xml
         log.info(strToEncrypt);
         String xmlData = "";
 
-        log.info("ui make request filestoreId :{}, filehash :{}",fileStoreId ,fileHash);
+
+        log.info("ui make request filestoreId :{}, filehash :{}", eSignParameter.getFileStoreId(), fileHash);
 
         try {
             PrivateKey rsaPrivateKey = encryption.getPrivateKey("privateKey.pem");
@@ -88,27 +88,21 @@ public class ESignService {
 
         Resource resource = fileStoreUtil.fetchFileStoreObjectById(fileStoreId, eSignParameter.getTenantId());
 
-        String fileHash= pdfEmbedder.generateHash(resource);
+        String fileHash = pdfEmbedder.generateHashv2(resource);
 
-        log.info("cdac sign doc request filestoreId :{}, filehash :{}",fileStoreId ,fileHash);
+        log.info("cdac sign doc request filestoreId :{}, filehash :{}", fileStoreId, fileHash);
 
         MultipartFile multipartFile;
         try {
             //fixme: get the multipart file and upload into fileStore
             multipartFile = pdfEmbedder.signPdfWithDSAndReturnMultipartFile(resource, response);
-            String signedFileHash= pdfEmbedder.generateHash(multipartFile.getResource());
-            log.info("hash after signing filestoreId :{}, filehash :{}",fileStoreId ,signedFileHash);
-
+            String signedFileHash = pdfEmbedder.generateHashv2(multipartFile.getResource());
+            log.info("hash after signing filestoreId :{}, filehash :{}", fileStoreId, signedFileHash);
 
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        String sigendFileStoreId = null;
+        return fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
 
-            sigendFileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
-
-
-
-        return sigendFileStoreId;
     }
 }
