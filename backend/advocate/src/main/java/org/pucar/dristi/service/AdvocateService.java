@@ -197,7 +197,7 @@ public class AdvocateService {
 
     }
     private String getMessageCode(String updatedStatus) {
-        if (updatedStatus.equalsIgnoreCase(REGISTERED)){
+        if (updatedStatus.equalsIgnoreCase(ACTIVE)){
             return ADVOCATE_REGISTERED;
         }
         return null;
