@@ -1625,7 +1625,6 @@ function EFilingCases({ path }) {
     //   }
     // }
     else {
-      let res;
       let caseComplaintDocument = {};
       try {
         if (isCaseLocked) {
@@ -1661,11 +1660,6 @@ function EFilingCases({ path }) {
             };
           } else {
             throw new Error("FILE_STORE_ID_MISSING");
-          }
-          if (res?.status === "error") {
-            setIsDisabled(false);
-            toast.error(t("CASE_PDF_ERROR"));
-            throw new Error("CASE_PDF_ERROR");
           }
         }
         await updateCaseDetails({
