@@ -52,6 +52,7 @@ public class ByteArrayMultipartFile implements MultipartFile {
         return new ByteArrayInputStream(content);
     }
 
+
     @Override
     public void transferTo(File dest) throws IOException, IllegalStateException {
         FileOutputStream fos = new FileOutputStream(dest);

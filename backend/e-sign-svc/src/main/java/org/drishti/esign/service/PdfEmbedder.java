@@ -112,16 +112,27 @@ public class PdfEmbedder {
             dic.setLocation(appearance.getLocation());
             dic.setDate(new PdfDate(appearance.getSignDate()));
 
-            HashMap<PdfName, Integer> exc = new HashMap<>();
-            appearance.preClose(exc);
 
+            HashMap<PdfName, Integer> exc = new HashMap<>();
             exc.put(PdfName.CONTENTS, 8192 * 2 + 2);
 
-            MultipartFile newFileToSign = new ByteArrayMultipartFile("signedDoc.pdf", bos.toByteArray());
+            appearance.preClose(exc);
+
+            InputStream is = appearance.getRangeStream();
+
+
+            byte[] fileBytes;
+            try {
+                fileBytes = is.readAllBytes();
+            } finally {
+                is.close(); // Ensure the InputStream is closed after reading
+            }
+
+            MultipartFile newFileToSign = new ByteArrayMultipartFile("signedDoc.pdf", fileBytes);
 
             String fileStore = fileStoreUtil.storeFileInFileStore(newFileToSign, eSignParameter.getTenantId());
             eSignParameter.setFileStoreId(fileStore);
-            return DigestUtils.sha256Hex(inputStream);
+            return DigestUtils.sha256Hex(is);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
