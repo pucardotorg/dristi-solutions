@@ -119,7 +119,7 @@ public class PdfEmbedder {
 
             exc.put(PdfName.CONTENTS, contentEstimated * 2 + 2);
 
-            appearance.preClose(exc);
+//            appearance.preClose(exc);
 
             InputStream is = appearance.getRangeStream();
 
