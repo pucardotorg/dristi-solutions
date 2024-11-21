@@ -691,6 +691,11 @@ export const chequeDetailFileValidation = ({ formData, selected, setShowErrorToa
 
 export const advocateDetailsFileValidation = ({ formData, selected, setShowErrorToast, setFormErrors }) => {
   if (selected === "advocateDetails") {
+    if (formData?.numberOfAdvocate === "0") {
+      setFormErrors("numberOfAdvocate", { message: "Number of advocate cannot be zero" });
+      setShowErrorToast(true);
+      return true;
+    }
     if (
       formData?.isAdvocateRepresenting?.code === "YES" &&
       ["vakalatnamaFileUpload"].some((data) => !Object.keys(formData?.[data]?.document || {}).length)

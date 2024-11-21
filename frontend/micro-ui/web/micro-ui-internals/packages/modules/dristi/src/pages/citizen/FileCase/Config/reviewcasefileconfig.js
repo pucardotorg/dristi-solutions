@@ -513,6 +513,10 @@ export const reviewCaseFileFormConfig = [
                   value: "barRegistrationNumber",
                 },
                 {
+                  type: "title",
+                  value: ["numberOfAdvocate"],
+                },
+                {
                   type: "image",
                   label: "VAKALATNAMA",
                   value: ["vakalatnamaFileUpload.document"],
