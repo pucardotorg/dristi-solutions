@@ -88,7 +88,7 @@ public class PdfEmbedder {
 
             PdfStamper stamper = PdfStamper.createSignature(reader, bos, '\0', null, true);
 
-            PdfSignatureAppearance appearance = stamper.getSignatureAppearance();
+            PdfSignatureAppearance appearance ;
             appearance = stamper.getSignatureAppearance();
             appearance.setRenderingMode(PdfSignatureAppearance.RenderingMode.DESCRIPTION);
             appearance.setAcro6Layers(false);
@@ -96,6 +96,7 @@ public class PdfEmbedder {
             Rectangle cropBox = reader.getCropBox(1);
             Rectangle rectangle = new Rectangle(cropBox.getLeft(), cropBox.getBottom(), cropBox.getLeft(100), cropBox.getBottom(90));
             appearance.setVisibleSignature(rectangle, reader.getNumberOfPages(), null);
+            int contentEstimated = 8192;
 
             Font font = new Font();
             font.setSize(6);
@@ -104,17 +105,19 @@ public class PdfEmbedder {
             appearance.setLayer2Font(font);
             Calendar currentDat = Calendar.getInstance();
             appearance.setSignDate(currentDat);
+            HashMap<PdfName, Integer> exc = new HashMap<>();
 
             PdfSignature dic = new PdfSignature(PdfName.ADOBE_PPKLITE, PdfName.ADBE_PKCS7_DETACHED);
-            appearance.setCryptoDictionary(dic);
             appearance.setCertificationLevel(PdfSignatureAppearance.NOT_CERTIFIED);
             dic.setReason(appearance.getReason());
             dic.setLocation(appearance.getLocation());
             dic.setDate(new PdfDate(appearance.getSignDate()));
 
+            appearance.setCryptoDictionary(dic);
 
-            HashMap<PdfName, Integer> exc = new HashMap<>();
-            exc.put(PdfName.CONTENTS, 8192 * 2 + 2);
+
+
+            exc.put(PdfName.CONTENTS, contentEstimated * 2 + 2);
 
             appearance.preClose(exc);
 
