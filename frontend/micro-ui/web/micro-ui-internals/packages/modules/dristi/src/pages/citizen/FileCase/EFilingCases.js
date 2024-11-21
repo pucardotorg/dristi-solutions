@@ -1508,7 +1508,7 @@ function EFilingCases({ path }) {
     if (
       formdata
         .filter((data) => data.isenabled)
-        .some((data) => advocateDetailsFileValidation({ formData: data?.data, selected, setShowErrorToast, setFormErrors: setFormErrors.current }))
+        .some((data) => advocateDetailsFileValidation({ formData: data?.data, selected, setShowErrorToast, setFormErrors: setFormErrors.current, t }))
     ) {
       return;
     }
