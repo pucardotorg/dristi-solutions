@@ -130,6 +130,7 @@ public class PdfEmbedder {
 //            } finally {
 //                is.close(); // Ensure the InputStream is closed after reading
 //            }
+            bos.close();
 
             MultipartFile newFileToSign = new ByteArrayMultipartFile("signedDoc.pdf", bos.toByteArray());
 
@@ -148,5 +149,6 @@ public class PdfEmbedder {
             throw new RuntimeException(e);
         }
     }
+
 }
 
