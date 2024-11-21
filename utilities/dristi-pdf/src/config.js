@@ -282,10 +282,10 @@ module.exports = {
       state: "Kerala",
     },
     judgeDetails: {
-      name: "John Koshy",
+      name: process.env.JUDGE_NAME || "Judge Name",
       judgeSignature: "Judge Signature",
       courtSeal: "Court Seal",
-      designation: "Judicial First Class Magistrate III",
+      designation: process.env.JUDGE_DESIGNATION || "Judge Designation",
     },
   },
   workFlowState: {
