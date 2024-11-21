@@ -56,7 +56,7 @@ jobs:
 
       # Login to Azure Container Registry
       - name: Login to Azure Container Registry
-        if: (github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/develop') || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/') || startsWith(github.ref, 'refs/tags/v'))) || github.event_name == 'workflow_dispatch'
+#        if: (github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/develop') || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/') || startsWith(github.ref, 'refs/tags/v'))) || github.event_name == 'workflow_dispatch'
         run: docker login -u pucarsolutionsdev -p ${{ secrets.ACR_PASSWORD }} pucarsolutionsdev.azurecr.io
 
 #      - name: Set Version from Tag or Branch
@@ -79,14 +79,14 @@ jobs:
       - name: Key for encryption and decryption
         shell: bash
         run: |
-          echo "${{ secrets.PUBLIC_KEY }}" > backend/e-sign-svc/src/main/resources/publicKey.cer
-          echo "${{ secrets.PRIVATE_KEY }}" > backend/e-sign-svc/src/main/resources/privateKey.pem
+          echo "${{ secrets.PUBLIC_KEY }}" > common/esign-spring-boot/src/main/resources/publicKey.cer
+          echo "${{ secrets.PRIVATE_KEY }}" > common/esign-spring-boot/src/main/resources/privateKey.pem
 
-      - name: Build and Push Docker image for e-sign-svc
+      - name: Build and Push Docker image for e-sign-test
 #        if: (github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/develop') || startsWith(github.ref, 'refs/heads/release/') || startsWith(github.ref, 'refs/heads/hotfix/') || startsWith(github.ref, 'refs/tags/v'))) || github.event_name == 'workflow_dispatch'
         run: |
-          docker build --build-arg WORK_DIR="common/esign-spring-boot" -t pucarsolutionsdev.azurecr.io/pucar_e-sign-svc:v0.6.0-test-${{ env.commit_hash }} -f build/maven/Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/pucar_e-sign-svc:v0.6.0-uat-${{ env.commit_hash }}
+          docker build --build-arg WORK_DIR="common/esign-spring-boot" -t pucarsolutionsdev.azurecr.io/pucar_e-sign-test:v0.6.0-test-${{ env.commit_hash }} -f build/maven/Dockerfile .
+          docker push pucarsolutionsdev.azurecr.io/pucar_e-sign-test:v0.6.0-test-${{ env.commit_hash }}
 
 
 #  Workflow_Trigger:
