@@ -34,18 +34,18 @@ public class CaseFeeCalculationServiceTest {
     @Test
     @DisplayName("do calculate case fees")
     public void doCalculateCaseFees() {
-        EFilingParam eFilingParam = EFilingParamTestBuilder.builder().withConfig().withPetitionFee().build();
+        EFilingParam eFilingParam = EFilingParamTestBuilder.builder().withConfig().withPetitionFee().withAdvocateFee().build();
         when(eFillingUtil.getEFillingDefaultData(any(), anyString())).thenReturn(eFilingParam);
 
         EFillingCalculationReq request = EFillingCalculationReq.builder()
                 .calculationCriteria(Collections.singletonList(
-                        EFillingCalculationCriteria.builder().tenantId("pb").numberOfApplication(1).checkAmount(50000.0).delayCondonation(289600000L).build()
+                        EFillingCalculationCriteria.builder().tenantId("pb").numberOfApplication(1).checkAmount(50000.0).delayCondonation(289600000L).noOfAdvocates(1).build()
                 )).build();
 
         List<Calculation> result = caseFeesCalculationService.calculateCaseFees(request);
         assertEquals(request.getCalculationCriteria().size(), result.size());
         Calculation firstCalculation = result.get(0);
-        assertEquals(5, firstCalculation.getBreakDown().size());
+        assertEquals(6, firstCalculation.getBreakDown().size());
 
     }
 

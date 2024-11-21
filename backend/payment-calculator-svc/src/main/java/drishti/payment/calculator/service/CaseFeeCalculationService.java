@@ -3,15 +3,13 @@ package drishti.payment.calculator.service;
 
 import drishti.payment.calculator.util.EFillingUtil;
 import drishti.payment.calculator.web.models.*;
+import io.swagger.models.auth.In;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static drishti.payment.calculator.config.ServiceConstants.*;
 
@@ -37,11 +35,12 @@ public class CaseFeeCalculationService {
 
         Double applicationFee = eFillingDefaultData.getApplicationFee();
         Double vakalathnamaFee = eFillingDefaultData.getVakalathnamaFee();
-        Double advocateWelfareFund = eFillingDefaultData.getAdvocateWelfareFund();
+        Double advocateWelfareFund = 0.0;
         Double advocateClerkWelfareFund = eFillingDefaultData.getAdvocateClerkWelfareFund();
         Double delayCondonationFee = eFillingDefaultData.getDelayCondonationFee();
         Long delayCondonationPeriod = eFillingDefaultData.getDelayCondonationPeriod();
 
+        LinkedHashMap<String, HashMap<String, Integer>> noOfAdvocateFees = eFillingDefaultData.getNoOfAdvocateFees();
         Map<String, Range> petitionFeeRange = eFillingDefaultData.getPetitionFee();
 
 
@@ -53,7 +52,8 @@ public class CaseFeeCalculationService {
             Double petitionFee = getPetitionFee(criteria.getCheckAmount(), petitionFeeRange);
             Double delayFee = isDelayCondonationFeeApplicable(criteria.getDelayCondonation(), delayCondonationPeriod) ? delayCondonationFee : 0.0;
 
-            List<BreakDown> feeBreakdown = getFeeBreakdown(vakalathnamaFee, advocateWelfareFund, advocateClerkWelfareFund, totalApplicationFee, petitionFee, delayFee);
+            double advocateFee = getAdvocateFee(noOfAdvocateFees, criteria.getNoOfAdvocates());
+            List<BreakDown> feeBreakdown = getFeeBreakdown(vakalathnamaFee, advocateWelfareFund, advocateClerkWelfareFund, totalApplicationFee, petitionFee, delayFee, advocateFee);
             Double totalCourtFee = vakalathnamaFee + advocateWelfareFund + advocateClerkWelfareFund + totalApplicationFee + petitionFee + delayFee;
             Calculation calculation = Calculation.builder()
                     .applicationId(criteria.getCaseId())
@@ -69,7 +69,7 @@ public class CaseFeeCalculationService {
 
     }
 
-    public List<BreakDown> getFeeBreakdown(double vakalathnamaFee, double advocateWelfareFund, double advocateClerkWelfareFund, double totalApplicationFee, double petitionFee, double condonationFee) {
+    public List<BreakDown> getFeeBreakdown(double vakalathnamaFee, double advocateWelfareFund, double advocateClerkWelfareFund, double totalApplicationFee, double petitionFee, double condonationFee, double advocateFee) {
         List<BreakDown> feeBreakdowns = new ArrayList<>();
 
         feeBreakdowns.add(new BreakDown(VAKALATHNAMA_FEE, vakalathnamaFee, new HashMap<>()));
@@ -77,6 +77,7 @@ public class CaseFeeCalculationService {
         feeBreakdowns.add(new BreakDown(ADVOCATE_CLERK_WELFARE_FUND, advocateClerkWelfareFund, new HashMap<>()));
         feeBreakdowns.add(new BreakDown(TOTAL_APPLICATION_FEE, totalApplicationFee, new HashMap<>()));
         feeBreakdowns.add(new BreakDown(PETITION_FEE, petitionFee, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown(ADVOCATE_FEE, advocateFee, new HashMap<>()));
         if (condonationFee > 0)
             feeBreakdowns.add(new BreakDown(DELAY_CONDONATION_FEE, condonationFee, new HashMap<>()));
 
@@ -104,4 +105,18 @@ public class CaseFeeCalculationService {
 
     }
 
+    private Double getAdvocateFee(LinkedHashMap<String, HashMap<String, Integer>> noOfAdvocateFees, int noOfAdvocates) {
+        Double advocateFee = 0.0;
+        for (Map.Entry<String, HashMap<String, Integer>> entry : noOfAdvocateFees.entrySet()) {
+            HashMap<String, Integer> value = entry.getValue();
+            Double lowerBound = Double.valueOf(value.get("min"));
+            Double upperBound = Double.valueOf(value.get("max"));
+
+            if (noOfAdvocates >= lowerBound && noOfAdvocates <= upperBound) {
+                advocateFee = Double.valueOf(value.get("advocateFee"));
+                break;
+            }
+        }
+        return advocateFee;
+    }
 }

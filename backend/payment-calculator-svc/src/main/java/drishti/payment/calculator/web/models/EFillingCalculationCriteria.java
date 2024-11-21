@@ -29,4 +29,7 @@ public class EFillingCalculationCriteria {
 
     @JsonProperty("delayCondonation")
     private Long delayCondonation = 0L;
+
+    @JsonProperty("noOfAdvocates")
+    private Integer noOfAdvocates = 0;
 }
