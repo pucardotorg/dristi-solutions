@@ -112,6 +112,9 @@ const Login = ({ config: propsConfig, t, isDisabled }) => {
     config[0].body[2].disable = true;
     config[0].body[2].isMandatory = false;
     config[0].body[2].populators.defaultValue = defaultValue;
+  } else if (config?.[0]?.body?.[2]?.populators?.defaultValue == undefined) {
+    config[0].body[2].isMandatory = false;
+    config[0].body[2].populators.defaultValue = defaultValue;
   }
   return isLoading || isStoreLoading ? (
     <Loader />
