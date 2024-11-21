@@ -183,7 +183,7 @@ public class EsignController {
         formXmalDataAsp.setAuthMode(myUploadForm.getAuthType());
         formXmalDataAsp.setResponseSigType("pkcs7");
         //formXmalDataAsp.setResponseUrl("url");
-        formXmalDataAsp.setResponseUrl("https://dristi-dev.pucar.org/e-sign/finalResponse");
+        formXmalDataAsp.setResponseUrl("https://dristi-dev.pucar.org/e-sign-test/finalResponse");
 
         formXmalDataAsp.setId("1");
         formXmalDataAsp.setHashAlgorithm("SHA256");
