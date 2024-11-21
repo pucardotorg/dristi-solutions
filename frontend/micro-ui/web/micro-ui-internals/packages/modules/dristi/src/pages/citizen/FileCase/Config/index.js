@@ -333,6 +333,7 @@ export const sideMenuConfig = [
         dependentMandatoryFields: [
           { field: "barRegistrationNumber", dependentOn: "isAdvocateRepresenting", dependentOnKey: "showForm" },
           { field: "advocateName", dependentOn: "isAdvocateRepresenting", dependentOnKey: "showForm" },
+          { field: "numberOfAdvocate", dependentOn: "isAdvocateRepresenting", dependentOnKey: "showForm" },
           {
             field: "vakalatnamaFileUpload.document",
             dependentOn: "isAdvocateRepresenting",
