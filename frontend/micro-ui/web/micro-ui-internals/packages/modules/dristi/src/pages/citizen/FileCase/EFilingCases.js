@@ -52,7 +52,6 @@ import cloneDeep from "lodash/cloneDeep";
 import CorrectionsSubmitModal from "../../../components/CorrectionsSubmitModal";
 import { Urls } from "../../../hooks";
 import useGetStatuteSection from "../../../hooks/dristi/useGetStatuteSection";
-import useCasePdfGeneration from "../../../hooks/dristi/useCasePdfGeneration";
 import { getSuffixByBusinessCode, getTaxPeriodByBusinessService } from "../../../Utils";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import DocViewerWrapper from "../../employee/docViewerWrapper";
@@ -193,21 +192,6 @@ function EFilingCases({ path }) {
   const [isLoader, setIsLoader] = useState(false);
   const [pdfDetails, setPdfDetails] = useState(null);
   const { downloadPdf } = useDownloadCasePdf();
-
-  const { data: casePdf, isPdfLoading, refetch: refetchCasePDfGeneration } = useCasePdfGeneration(
-    {
-      criteria: [
-        {
-          caseId: caseId,
-        },
-      ],
-      tenantId,
-    },
-    {},
-    "dristi",
-    caseId,
-    false
-  );
 
   const [{ showSuccessToast, successMsg }, setSuccessToast] = useState({
     showSuccessToast: false,
@@ -1641,11 +1625,8 @@ function EFilingCases({ path }) {
     //   }
     // }
     else {
-      let res;
       let caseComplaintDocument = {};
-      let casePdfDocument = [];
       try {
-        let casePdfDocument = [];
         if (isCaseLocked) {
           setIsDisabled(true);
           const caseObject = isCaseReAssigned && errorCaseDetails ? errorCaseDetails : caseDetails;
@@ -1680,17 +1661,6 @@ function EFilingCases({ path }) {
           } else {
             throw new Error("FILE_STORE_ID_MISSING");
           }
-          res = await refetchCasePDfGeneration();
-          casePdfDocument = res?.data?.cases?.[0]?.documents
-            .filter((doc) =>
-              doc.additionalDetails?.fields?.some((field) => field.key === "FILE_CATEGORY" && field.value === "CASE_GENERATED_DOCUMENT")
-            )
-            .map((doc) => doc.fileStore);
-          if (res?.status === "error") {
-            setIsDisabled(false);
-            toast.error(t("CASE_PDF_ERROR"));
-            throw new Error("CASE_PDF_ERROR");
-          }
         }
         await updateCaseDetails({
           t,
@@ -1707,7 +1677,6 @@ function EFilingCases({ path }) {
           setErrorCaseDetails,
           isCaseSignedState: isPendingESign || isPendingReESign,
           isSaveDraftEnabled: isCaseReAssigned || isPendingReESign || isPendingESign,
-          ...(res && { fileStoreId: casePdfDocument?.[0] }),
           ...(caseComplaintDocument && { caseComplaintDocument: caseComplaintDocument }),
           multiUploadList,
           scrutinyObj,
