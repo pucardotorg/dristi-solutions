@@ -118,11 +118,16 @@ function ViewCaseFile({ t, inViewCase = false }) {
   const caseDetails = useMemo(() => caseFetchResponse?.criteria?.[0]?.responseList?.[0] || null, [caseFetchResponse]);
 
   const defaultScrutinyErrors = useMemo(() => {
-    return caseDetails?.additionalDetails?.scrutiny || {};
+    let scrutinyObj = caseDetails?.additionalDetails?.scrutiny || {};
+    scrutinyObj.data = {
+      ...{litigentDetails:{}, caseSpecificDetails:{}, additionalDetails:{}},
+      ...scrutinyObj.data
+    };
+    return scrutinyObj;
   }, [caseDetails]);
 
   const isPrevScrutiny = useMemo(() => {
-    return Object.keys(defaultScrutinyErrors).length > 0;
+    return Boolean(caseDetails?.additionalDetails?.scrutiny);
   }, [defaultScrutinyErrors]);
 
   function mergeErrors(formdata, defaultScrutinyErrors) {

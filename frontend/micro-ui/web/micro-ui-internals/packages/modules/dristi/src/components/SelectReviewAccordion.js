@@ -300,6 +300,7 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
         };
       }
       setValue(config.key, currentMessage, name);
+      set(formData, [config.key, name], currentMessage);
 
       const dependentFields = inputs?.find((item) => item.name === name)?.config?.find((f) => f.value === fieldName)?.dependentFields || [];
       for (const { configKey, page, field } of dependentFields) {
