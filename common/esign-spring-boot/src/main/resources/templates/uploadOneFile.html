@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorator="layout/adminLayout" lang="en" class="app"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+    <!--        <script src="https://code.jquery.com/jquery-1.9.1.js"></script> -->
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
+
+    <script type="text/javascript">
+			         function submitForm(){
+			        		    // Get form
+			        		    var form = $('#myForm')[0];
+
+			        		    var myUploadForm = new FormData($('#myForm')[0]);
+			        		     $.ajax({
+			        		        type: "POST",
+			        		        url: '/e-sign/esign',
+			        		       data: new FormData($("#myForm")[0]),
+								    enctype: 'multipart/form-data',
+								    processData: false,
+								    contentType: false,
+								   // cache: false,
+								    xhrFields: {
+								        withCredentials: true
+								      },
+								      //crossDomain: true,
+								    success : function(data) {
+							        	 $('#eSignRequest').val(data.eSignRequest);
+							        	 $('#aspTxnID').val(data.aspTxnID);
+							        	$("#formid").submit();
+						        	 },
+							        	 error : function(ts) {
+							        	 alert("Hello frm js err");
+							        	 alert("Error " + ts.responseText);
+						        	 }
+
+							      });
+			        		}
+	</script>
+    <title>Upload One File</title>
+</head>
+<body>
+<br/><br/><br/><br/>
+<h3 style="text-align: center">e-Sign ASP Form</h3>
+
+<!-- MyUploadForm -->
+
+<form name="myForm" id="myForm" th:object="${myUploadForm}" method="POST"
+      action="" enctype="multipart/form-data" >
+    <div><br/><br/></div>
+
+    <div class="col-sm-12">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-7">
+            <div>
+                <div class="col-sm-4">
+                    <label>File to upload:</label>
+                </div>
+                <div class="col-sm-8">
+                    <input th:field="*{fileDatas}" type="file" name="file1" accept="application/pdf" required="required"/>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-12">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-7">
+            <div>
+                <div class="col-sm-4">
+                    <label>Choose Authentication Type:</label>
+                </div>
+                <div class="col-sm-8">
+                    <input type="radio" name="auth" value="1" th:field="*{authType}" style="width:50px;" required="required"/> OTP
+
+                    <input type="radio" name="auth" value="2" th:field="*{authType}" style="width:50px;"/> Biometric
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-12">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-7">
+            <div style="text-align: left">
+                <input type="button" id="tryButtonClick" name="tryButtonClick" onclick="return submitForm();" value="Upload" />
+            </div>
+        </div>
+    </div>
+</form>
+<form id="formid" name="formid" method="POST" action="https://es-staging.cdac.in/esignlevel1/2.1/form/signdoc">
+
+    <input type="hidden" name="eSignRequest" id="eSignRequest" value=""/>
+    <input type="hidden" name="aspTxnID" id="aspTxnID" value=""/>
+    <input type="hidden"  id="Content-Type" name="Content-Type" value="application/xml"/>
+
+    <!-- <button type="Submit" >Submit</button> -->
+
+</form>
+
+</body>
+</html>

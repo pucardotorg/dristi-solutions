@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
+    <script type="text/javascript">
+      	document.getElementById('error').text = '${error}';
+	</script>
+    <title>Download Pdf</title>
+</head>
+<body>
+<!--       <th:block th:include="/_menu"></th:block> -->
+<br/><br/><br/><br/>
+<h3 style="text-align: center">Error in Signing. Check Response</h3>
+
+<!-- MyUploadForm -->
+
+<form  name="error">
+
+    <Label id="error"></Label>
+    <div style="text-align: center">
+        <a th:href="@{/}">Try Again</a>
+    </div>
+</form>
+
+</body>
+</html>
