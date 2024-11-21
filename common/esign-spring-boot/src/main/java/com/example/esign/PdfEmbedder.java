@@ -11,11 +11,15 @@ import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.List;
 
 @Component
 //@Scope("session")
@@ -121,6 +125,16 @@ public class PdfEmbedder {
             String errorCode = response.substring(response.indexOf("errCode"), response.indexOf("errMsg"));
             errorCode = errorCode.trim();
             if (errorCode.contains("NA")) {
+
+                String certString = response.substring(response.indexOf("<UserX509Certificate>"), response.indexOf("</UserX509Certificate>"))
+                        .replaceAll("<UserX509Certificate>", "").replaceAll("</UserX509Certificate>", "");
+                byte[] certBytes = Base64.decodeBase64(certString);
+                ByteArrayInputStream stream = new ByteArrayInputStream(certBytes);
+                CertificateFactory factory = CertificateFactory.getInstance("X.509");
+                Certificate cert = factory.generateCertificate(stream);
+                List<Certificate> certificates = List.of(cert);
+
+                appearance.setCrypto(null, certificates.toArray(new Certificate[0]), null, null);
                 String pkcsResponse = xmlSigning.parseXml(response.trim());
                 byte[] sigbytes = Base64.decodeBase64(pkcsResponse);
                 byte[] paddedSig = new byte[contentEstimated];
