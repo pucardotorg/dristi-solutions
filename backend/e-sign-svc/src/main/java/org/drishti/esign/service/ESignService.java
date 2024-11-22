@@ -42,7 +42,7 @@ public class ESignService {
         this.fileStoreUtil = fileStoreUtil;
     }
 
-    public ESignXmlForm signDoc(ESignRequest request, HttpSession session) {
+    public ESignXmlForm signDoc(ESignRequest request) {
 
         ESignParameter eSignParameter = request.getESignParameter();
         String tenantId = eSignParameter.getTenantId();
@@ -51,7 +51,7 @@ public class ESignService {
 
         String beforeSignField = pdfEmbedder.generateHashv2(resource);
         log.info("before adding signature appearance  {}", beforeSignField);
-        String fileHash = pdfEmbedder.generateHash(resource, eSignParameter, session);
+        String fileHash = pdfEmbedder.generateHash(resource, eSignParameter);
         ESignXmlData eSignXmlData = formDataSetter.setFormXmlData(fileHash, new ESignXmlData());
         eSignXmlData.setTxn(tenantId + "-" + pageModule + "-" + eSignParameter.getFileStoreId());
         String strToEncrypt = xmlGenerator.generateXml(eSignXmlData);  // this method is writing in testing.xml
@@ -82,7 +82,7 @@ public class ESignService {
 
     }
 
-    public String signDocWithDigitalSignature(SignDocRequest request, HttpSession session) {
+    public String signDocWithDigitalSignature(SignDocRequest request) {
 
         SignDocParameter eSignParameter = request.getESignParameter();
         String fileStoreId = eSignParameter.getFileStoreId();
@@ -95,7 +95,7 @@ public class ESignService {
         log.info("cdac sign doc request filestoreId :{}, filehash :{}", fileStoreId, fileHash);
 
         try {
-            pdfEmbedder.signPdfWithDSAndReturnMultipartFile(session, response, fileStoreId);
+            pdfEmbedder.signPdfWithDSAndReturnMultipartFile( response, fileStoreId);
 
         } catch (IOException e) {
             throw new RuntimeException(e);

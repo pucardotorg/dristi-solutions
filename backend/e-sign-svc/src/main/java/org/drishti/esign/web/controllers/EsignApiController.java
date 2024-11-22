@@ -35,9 +35,9 @@ public class EsignApiController {
     }
 
     @PostMapping("/v1/_esign")
-    public ResponseEntity<ESignResponse> eSignDoc(@Parameter(in = ParameterIn.DEFAULT, description = "ESign Doc Details and Request Info", required = true, schema = @Schema()) @Valid @RequestBody ESignRequest request, HttpSession session) {
+    public ResponseEntity<ESignResponse> eSignDoc(@Parameter(in = ParameterIn.DEFAULT, description = "ESign Doc Details and Request Info", required = true, schema = @Schema()) @Valid @RequestBody ESignRequest request) {
         log.info("api=/v1/_esign, result = IN_PROGRESS");
-        ESignXmlForm eSignXmlForm = eSignService.signDoc(request, session);
+        ESignXmlForm eSignXmlForm = eSignService.signDoc(request);
         ESignResponse response = ESignResponse.builder().responseInfo(ResponseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true))
                 .eSignForm(eSignXmlForm).build();
         log.info("api=/v1/_esign, result = SUCCESS");
@@ -46,9 +46,9 @@ public class EsignApiController {
 
 
     @PostMapping("/v1/_signed")
-    public ResponseEntity<String> eSignDOC(@Parameter(in = ParameterIn.DEFAULT, description = "ESign Doc Details and Request Info", required = true, schema = @Schema()) @Valid @RequestBody SignDocRequest request, HttpSession session) {
+    public ResponseEntity<String> eSignDOC(@Parameter(in = ParameterIn.DEFAULT, description = "ESign Doc Details and Request Info", required = true, schema = @Schema()) @Valid @RequestBody SignDocRequest request) {
         log.info("api=/v1/_signed, result = IN_PROGRESS");
-        String fileStoreId = eSignService.signDocWithDigitalSignature(request, session);
+        String fileStoreId = eSignService.signDocWithDigitalSignature(request);
         log.info("api=/v1/_signed, result = SUCCESS");
         return ResponseEntity.accepted().body(fileStoreId);
     }
