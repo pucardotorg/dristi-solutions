@@ -160,7 +160,7 @@ public class CaseBundleIndexBuilderService {
                         JsonNode indexJson = hitsNode.get(0).path("_source");
                         ProcessCaseBundlePdfRequest processCaseBundlePdfRequest = new ProcessCaseBundlePdfRequest();
                         processCaseBundlePdfRequest.setRequestInfo(requestInfo);
-                        processCaseBundlePdfRequest.setCaseId(businessId);
+                        processCaseBundlePdfRequest.setCaseId(caseID);
                         processCaseBundlePdfRequest.setIndex(indexJson);
                         processCaseBundlePdfRequest.setState(stateName);
                         processCaseBundlePdfRequest.setTenantId(tenantId);
