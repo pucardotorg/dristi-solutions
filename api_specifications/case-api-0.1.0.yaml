@@ -461,6 +461,8 @@ components:
           type: integer
           format: int64
           description: date of judgement (will mostly also mean closure of case). this will be same as judgement hearing date
+        advocateCount:
+          type: integer
         registrationDate:
           type: integer
           format: int64
