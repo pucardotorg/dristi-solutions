@@ -3,6 +3,8 @@ package org.drishti.esign.service;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.pdf.*;
+import jakarta.servlet.http.HttpSession;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.drishti.esign.cipher.Decryption;
@@ -23,28 +25,27 @@ import java.util.HashMap;
 
 
 @Component
+@Slf4j
 public class PdfEmbedder {
 
     private final FileStoreUtil fileStoreUtil;
-    private final PdfSignatureService signatureService;
 
 
     @Autowired
     Decryption decryption;
 
     @Autowired
-    public PdfEmbedder(FileStoreUtil fileStoreUtil, PdfSignatureService signatureService) {
+    public PdfEmbedder(FileStoreUtil fileStoreUtil) {
         this.fileStoreUtil = fileStoreUtil;
-        this.signatureService = signatureService;
+
     }
 
-    public MultipartFile signPdfWithDSAndReturnMultipartFile(Resource resource, String response , String txnId) throws IOException {
+    public void signPdfWithDSAndReturnMultipartFile(HttpSession session, String response, String txnId) throws IOException {
 
 
         try {
 
-            PdfSignatureAppearance appearance = (PdfSignatureAppearance) signatureService.retrievePdfSignatureAppearance(txnId);
-
+            PdfSignatureAppearance appearance = (PdfSignatureAppearance) session.getAttribute(txnId);
             int contentEstimated = 8192;
             String errorCode = response.substring(response.indexOf("errCode"), response.indexOf("errMsg"));
             errorCode = errorCode.trim();
@@ -57,94 +58,72 @@ public class PdfEmbedder {
                 dic2.put(PdfName.CONTENTS, new PdfString(paddedSig).setHexWriting(true));
                 appearance.close(dic2);
             } else {
-                // handle error case
+                log.error("something went wrong on server side");
+
             }
 
-            return null;
-
-
-//            return new ByteArrayMultipartFile("signedDoc.pdf", bos.toByteArray());
         } catch (Exception e) {
             throw new RuntimeException(e);
+        } finally {
+            session.removeAttribute(txnId);
         }
     }
 
-    public String generateHash(Resource resource, ESignParameter eSignParameter)  {
+    public String generateHash(Resource resource, ESignParameter eSignParameter, HttpSession session) {
 
         PdfSignatureAppearance appearance;
         PdfReader reader;
 
 
-        try  {
+        try {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             BufferedOutputStream stream = new BufferedOutputStream(bos);
-            // Write data to the stream
             stream.write(resource.getContentAsByteArray());
             stream.close();
 
             reader = new PdfReader(bos.toByteArray());
 
             Rectangle cropBox = reader.getCropBox(1);
-            Rectangle rectangle = null;
-            String user = null;
+            Rectangle rectangle;
             rectangle = new Rectangle(cropBox.getLeft(), cropBox.getBottom(), cropBox.getLeft(100), cropBox.getBottom(90));
-//            fout = new FileOutputStream(destFile);
             PdfStamper stamper = PdfStamper.createSignature(reader, bos, '\0', null, true);
 
             appearance = stamper.getSignatureAppearance();
             appearance.setRenderingMode(PdfSignatureAppearance.RenderingMode.DESCRIPTION);
             appearance.setAcro6Layers(false);
+
             Font font = new Font();
             font.setSize(6);
             font.setFamily("Helvetica");
             font.setStyle("italic");
             appearance.setLayer2Font(font);
             Calendar currentDat = Calendar.getInstance();
-            System.out.println("remove 5 min");
-            currentDat.add(currentDat.MINUTE, 5); //Adding Delta Time of 5 Minutes....
 
             appearance.setSignDate(currentDat);
-
-            if (user == null || user == "null" || user.equals(null) || user.equals("null")) {
-                appearance.setLayer2Text("Signed");
-            } else {
-                appearance.setLayer2Text("Signed by " + user);
-            }
+            appearance.setLayer2Text("Digitally Signed");
             appearance.setCertificationLevel(PdfSignatureAppearance.NOT_CERTIFIED);
 
             appearance.setImage(null);
-            //      appearance.setSignDate(currentDat);
-            appearance.setVisibleSignature(rectangle,
-                    reader.getNumberOfPages(), null);
+            appearance.setVisibleSignature(rectangle, reader.getNumberOfPages(), null);
 
             int contentEstimated = 8192;
-            HashMap<PdfName, Integer> exc = new HashMap();
-            exc.put(PdfName.CONTENTS, contentEstimated * 2 + 2);
+            HashMap<PdfName, Integer> exc = new HashMap<>();
 
-            PdfSignature dic = new PdfSignature(PdfName.ADOBE_PPKLITE,
-                    PdfName.ADBE_PKCS7_DETACHED);
+            exc.put(PdfName.CONTENTS, contentEstimated * 2 + 2);
+            PdfSignature dic = new PdfSignature(PdfName.ADOBE_PPKLITE, PdfName.ADBE_PKCS7_DETACHED);
             dic.setReason(appearance.getReason());
             dic.setLocation(appearance.getLocation());
             dic.setDate(new PdfDate(appearance.getSignDate()));
 
-
             appearance.setCryptoDictionary(dic);
-            //  request.getSession().setAttribute("pdfHash",appearance);
             appearance.preClose(exc);
 
             InputStream is = appearance.getRangeStream();
 
             MultipartFile byteArrayMultipartFile = new ByteArrayMultipartFile("signed.pdf", is.readAllBytes());
-
-            //session=request.getSession();
-
-
             String fileStoreId = fileStoreUtil.storeFileInFileStore(byteArrayMultipartFile, eSignParameter.getTenantId());
-
-            signatureService.storePdfSignatureAppearance(appearance,fileStoreId);
-
+            session.setAttribute(fileStoreId, appearance);
             eSignParameter.setFileStoreId(fileStoreId);
-
 
             return DigestUtils.sha256Hex(byteArrayMultipartFile.getInputStream());
         } catch (Exception e) {

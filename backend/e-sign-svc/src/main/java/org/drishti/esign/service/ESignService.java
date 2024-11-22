@@ -2,6 +2,7 @@ package org.drishti.esign.service;
 
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.drishti.esign.cipher.Encryption;
 import org.drishti.esign.util.FileStoreUtil;
@@ -10,7 +11,6 @@ import org.drishti.esign.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,13 +42,16 @@ public class ESignService {
         this.fileStoreUtil = fileStoreUtil;
     }
 
-    public ESignXmlForm signDoc(ESignRequest request) {
+    public ESignXmlForm signDoc(ESignRequest request, HttpSession session) {
 
         ESignParameter eSignParameter = request.getESignParameter();
         String tenantId = eSignParameter.getTenantId();
         String pageModule = eSignParameter.getPageModule();
         Resource resource = fileStoreUtil.fetchFileStoreObjectById(eSignParameter.getFileStoreId(), eSignParameter.getTenantId());
-        String fileHash = pdfEmbedder.generateHash(resource, eSignParameter);
+
+        String beforeSignField = pdfEmbedder.generateHashv2(resource);
+        log.info("before adding signature appearance  {}", beforeSignField);
+        String fileHash = pdfEmbedder.generateHash(resource, eSignParameter, session);
         ESignXmlData eSignXmlData = formDataSetter.setFormXmlData(fileHash, new ESignXmlData());
         eSignXmlData.setTxn(tenantId + "-" + pageModule + "-" + eSignParameter.getFileStoreId());
         String strToEncrypt = xmlGenerator.generateXml(eSignXmlData);  // this method is writing in testing.xml
@@ -56,7 +59,7 @@ public class ESignService {
         String xmlData = "";
 
 
-        log.info("ui make request filestoreId :{}, filehash :{}", eSignParameter.getFileStoreId(), fileHash);
+        log.info("after signature appearance, fileStoreId :{}, fileHash :{}", eSignParameter.getFileStoreId(), fileHash);
 
         try {
             PrivateKey rsaPrivateKey = encryption.getPrivateKey("privateKey.pem");
@@ -79,26 +82,20 @@ public class ESignService {
 
     }
 
-    public String signDocWithDigitalSignature(SignDocRequest request) {
+    public String signDocWithDigitalSignature(SignDocRequest request, HttpSession session) {
 
         SignDocParameter eSignParameter = request.getESignParameter();
         String fileStoreId = eSignParameter.getFileStoreId();
-        String tenantId = eSignParameter.getTenantId();
         String response = eSignParameter.getResponse();
 
 
         Resource resource = fileStoreUtil.fetchFileStoreObjectById(fileStoreId, eSignParameter.getTenantId());
-
         String fileHash = pdfEmbedder.generateHashv2(resource);
 
         log.info("cdac sign doc request filestoreId :{}, filehash :{}", fileStoreId, fileHash);
 
-        MultipartFile multipartFile;
         try {
-            //fixme: get the multipart file and upload into fileStore
-             pdfEmbedder.signPdfWithDSAndReturnMultipartFile(resource, response,fileStoreId);
-//            String signedFileHash = pdfEmbedder.generateHashv2(multipartFile.getResource());
-//            log.info("hash after signing filestoreId :{}, filehash :{}", fileStoreId, signedFileHash);
+            pdfEmbedder.signPdfWithDSAndReturnMultipartFile(session, response, fileStoreId);
 
         } catch (IOException e) {
             throw new RuntimeException(e);
