@@ -29,23 +29,24 @@ import java.util.HashMap;
 public class PdfEmbedder {
 
     private final FileStoreUtil fileStoreUtil;
+    private final HttpSession httpSession;
 
 
     @Autowired
     Decryption decryption;
 
     @Autowired
-    public PdfEmbedder(FileStoreUtil fileStoreUtil) {
+    public PdfEmbedder(FileStoreUtil fileStoreUtil, HttpSession httpSession) {
         this.fileStoreUtil = fileStoreUtil;
-
+        this.httpSession = httpSession;
     }
 
-    public void signPdfWithDSAndReturnMultipartFile(HttpSession session, String response, String txnId) throws IOException {
+    public void signPdfWithDSAndReturnMultipartFile( String response, String txnId) throws IOException {
 
 
         try {
 
-            PdfSignatureAppearance appearance = (PdfSignatureAppearance) session.getAttribute(txnId);
+            PdfSignatureAppearance appearance = (PdfSignatureAppearance) httpSession.getAttribute(txnId);
             int contentEstimated = 8192;
             String errorCode = response.substring(response.indexOf("errCode"), response.indexOf("errMsg"));
             errorCode = errorCode.trim();
@@ -65,11 +66,11 @@ public class PdfEmbedder {
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
-            session.removeAttribute(txnId);
+            httpSession.removeAttribute(txnId);
         }
     }
 
-    public String generateHash(Resource resource, ESignParameter eSignParameter, HttpSession session) {
+    public String generateHash(Resource resource, ESignParameter eSignParameter) {
 
         PdfSignatureAppearance appearance;
         PdfReader reader;
@@ -122,7 +123,7 @@ public class PdfEmbedder {
 
             MultipartFile byteArrayMultipartFile = new ByteArrayMultipartFile("signed.pdf", is.readAllBytes());
             String fileStoreId = fileStoreUtil.storeFileInFileStore(byteArrayMultipartFile, eSignParameter.getTenantId());
-            session.setAttribute(fileStoreId, appearance);
+            httpSession.setAttribute(fileStoreId, appearance);
             eSignParameter.setFileStoreId(fileStoreId);
 
             return DigestUtils.sha256Hex(byteArrayMultipartFile.getInputStream());
