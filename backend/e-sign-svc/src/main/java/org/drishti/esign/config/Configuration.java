@@ -64,4 +64,8 @@ public class Configuration {
     @Value("${esing.ekyc.id.type}")
     private String ekycIdType;
 
+
+    @Value("${spring.redis.timeout}")
+    private Long redisTimeout;
+
 }

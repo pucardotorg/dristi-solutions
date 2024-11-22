@@ -14,6 +14,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,35 +25,25 @@ import java.util.HashMap;
 @Component
 public class PdfEmbedder {
 
-    PdfSignatureAppearance appearance;
     private final FileStoreUtil fileStoreUtil;
+    private final PdfSignatureService signatureService;
 
 
     @Autowired
     Decryption decryption;
 
     @Autowired
-    public PdfEmbedder(FileStoreUtil fileStoreUtil) {
+    public PdfEmbedder(FileStoreUtil fileStoreUtil, PdfSignatureService signatureService) {
         this.fileStoreUtil = fileStoreUtil;
+        this.signatureService = signatureService;
     }
 
-    public MultipartFile signPdfWithDSAndReturnMultipartFile(Resource resource, String response) throws IOException {
+    public MultipartFile signPdfWithDSAndReturnMultipartFile(Resource resource, String response , String txnId) throws IOException {
 
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
 
         try {
-//            InputStream inputStream = resource.getInputStream();
 
-
-//            String certString = response.substring(response.indexOf("<UserX509Certificate>"), response.indexOf("</UserX509Certificate>"))
-//                    .replaceAll("<UserX509Certificate>", "").replaceAll("</UserX509Certificate>", "");
-//            byte[] certBytes = Base64.decodeBase64(certString);
-//            ByteArrayInputStream stream = new ByteArrayInputStream(certBytes);
-//            CertificateFactory factory = CertificateFactory.getInstance("X.509");
-//            Certificate cert = factory.generateCertificate(stream);
-//            List<Certificate> certificates = List.of(cert);
-//            appearance.setCrypto(null, certificates.toArray(new Certificate[0]), null, null);
-
+            PdfSignatureAppearance appearance = (PdfSignatureAppearance) signatureService.retrievePdfSignatureAppearance(txnId);
 
             int contentEstimated = 8192;
             String errorCode = response.substring(response.indexOf("errCode"), response.indexOf("errMsg"));
@@ -64,79 +55,98 @@ public class PdfEmbedder {
                 System.arraycopy(sigbytes, 0, paddedSig, 0, sigbytes.length);
                 PdfDictionary dic2 = new PdfDictionary();
                 dic2.put(PdfName.CONTENTS, new PdfString(paddedSig).setHexWriting(true));
-//                appearance.preClose(exc);
                 appearance.close(dic2);
             } else {
                 // handle error case
             }
 
+            return null;
 
-            bos.close();
 
-            return new ByteArrayMultipartFile("signedDoc.pdf", bos.toByteArray());
+//            return new ByteArrayMultipartFile("signedDoc.pdf", bos.toByteArray());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    public String generateHash(Resource resource, ESignParameter eSignParameter) {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    public String generateHash(Resource resource, ESignParameter eSignParameter)  {
 
-        try (InputStream inputStream = resource.getInputStream()) {
+        PdfSignatureAppearance appearance;
+        PdfReader reader;
 
-            PdfReader reader = new PdfReader(inputStream);
 
+        try  {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            BufferedOutputStream stream = new BufferedOutputStream(bos);
+            // Write data to the stream
+            stream.write(resource.getContentAsByteArray());
+            stream.close();
+
+            reader = new PdfReader(bos.toByteArray());
+
+            Rectangle cropBox = reader.getCropBox(1);
+            Rectangle rectangle = null;
+            String user = null;
+            rectangle = new Rectangle(cropBox.getLeft(), cropBox.getBottom(), cropBox.getLeft(100), cropBox.getBottom(90));
+//            fout = new FileOutputStream(destFile);
             PdfStamper stamper = PdfStamper.createSignature(reader, bos, '\0', null, true);
 
-            PdfSignatureAppearance appearance ;
             appearance = stamper.getSignatureAppearance();
             appearance.setRenderingMode(PdfSignatureAppearance.RenderingMode.DESCRIPTION);
             appearance.setAcro6Layers(false);
-
-            Rectangle cropBox = reader.getCropBox(1);
-            Rectangle rectangle = new Rectangle(cropBox.getLeft(), cropBox.getBottom(), cropBox.getLeft(100), cropBox.getBottom(90));
-            appearance.setVisibleSignature(rectangle, reader.getNumberOfPages(), null);
-            int contentEstimated = 8192;
-
             Font font = new Font();
             font.setSize(6);
             font.setFamily("Helvetica");
             font.setStyle("italic");
             appearance.setLayer2Font(font);
             Calendar currentDat = Calendar.getInstance();
-            appearance.setSignDate(currentDat);
-            HashMap<PdfName, Integer> exc = new HashMap<>();
+            System.out.println("remove 5 min");
+            currentDat.add(currentDat.MINUTE, 5); //Adding Delta Time of 5 Minutes....
 
-            PdfSignature dic = new PdfSignature(PdfName.ADOBE_PPKLITE, PdfName.ADBE_PKCS7_DETACHED);
+            appearance.setSignDate(currentDat);
+
+            if (user == null || user == "null" || user.equals(null) || user.equals("null")) {
+                appearance.setLayer2Text("Signed");
+            } else {
+                appearance.setLayer2Text("Signed by " + user);
+            }
             appearance.setCertificationLevel(PdfSignatureAppearance.NOT_CERTIFIED);
+
+            appearance.setImage(null);
+            //      appearance.setSignDate(currentDat);
+            appearance.setVisibleSignature(rectangle,
+                    reader.getNumberOfPages(), null);
+
+            int contentEstimated = 8192;
+            HashMap<PdfName, Integer> exc = new HashMap();
+            exc.put(PdfName.CONTENTS, contentEstimated * 2 + 2);
+
+            PdfSignature dic = new PdfSignature(PdfName.ADOBE_PPKLITE,
+                    PdfName.ADBE_PKCS7_DETACHED);
             dic.setReason(appearance.getReason());
             dic.setLocation(appearance.getLocation());
             dic.setDate(new PdfDate(appearance.getSignDate()));
 
+
             appearance.setCryptoDictionary(dic);
+            //  request.getSession().setAttribute("pdfHash",appearance);
+            appearance.preClose(exc);
+
+            InputStream is = appearance.getRangeStream();
+
+            MultipartFile byteArrayMultipartFile = new ByteArrayMultipartFile("signed.pdf", is.readAllBytes());
+
+            //session=request.getSession();
 
 
+            String fileStoreId = fileStoreUtil.storeFileInFileStore(byteArrayMultipartFile, eSignParameter.getTenantId());
 
-            exc.put(PdfName.CONTENTS, contentEstimated * 2 + 2);
+            signatureService.storePdfSignatureAppearance(appearance,fileStoreId);
 
-//            appearance.preClose(exc);
+            eSignParameter.setFileStoreId(fileStoreId);
 
-//            InputStream is = appearance.getRangeStream();
 
-//
-//            byte[] fileBytes;
-//            try {
-//                fileBytes = is.readAllBytes();
-//            } finally {
-//                is.close(); // Ensure the InputStream is closed after reading
-//            }
-            bos.close();
-
-            MultipartFile newFileToSign = new ByteArrayMultipartFile("signedDoc.pdf", bos.toByteArray());
-
-            String fileStore = fileStoreUtil.storeFileInFileStore(newFileToSign, eSignParameter.getTenantId());
-            eSignParameter.setFileStoreId(fileStore);
-            return DigestUtils.sha256Hex(newFileToSign.getInputStream());
+            return DigestUtils.sha256Hex(byteArrayMultipartFile.getInputStream());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

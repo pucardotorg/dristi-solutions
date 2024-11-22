@@ -86,6 +86,7 @@ public class ESignService {
         String tenantId = eSignParameter.getTenantId();
         String response = eSignParameter.getResponse();
 
+
         Resource resource = fileStoreUtil.fetchFileStoreObjectById(fileStoreId, eSignParameter.getTenantId());
 
         String fileHash = pdfEmbedder.generateHashv2(resource);
@@ -95,14 +96,14 @@ public class ESignService {
         MultipartFile multipartFile;
         try {
             //fixme: get the multipart file and upload into fileStore
-            multipartFile = pdfEmbedder.signPdfWithDSAndReturnMultipartFile(resource, response);
-            String signedFileHash = pdfEmbedder.generateHashv2(multipartFile.getResource());
-            log.info("hash after signing filestoreId :{}, filehash :{}", fileStoreId, signedFileHash);
+             pdfEmbedder.signPdfWithDSAndReturnMultipartFile(resource, response,fileStoreId);
+//            String signedFileHash = pdfEmbedder.generateHashv2(multipartFile.getResource());
+//            log.info("hash after signing filestoreId :{}, filehash :{}", fileStoreId, signedFileHash);
 
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        return fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
+        return fileStoreId;
 
     }
 }
