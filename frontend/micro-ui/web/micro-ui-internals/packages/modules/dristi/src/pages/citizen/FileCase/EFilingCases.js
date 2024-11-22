@@ -1633,10 +1633,7 @@ function EFilingCases({ path }) {
           const response = await axios.post(
             "/dristi-case-pdf/v1/fetchCaseComplaintPdf",
             {
-              cases: {
-                id: caseObject?.id,
-                tenantId: tenantId,
-              },
+              cases: caseObject,
               RequestInfo: {
                 authToken: Digit.UserService.getUser().access_token,
                 userInfo: Digit.UserService.getUser()?.info,
