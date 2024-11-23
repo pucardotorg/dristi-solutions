@@ -3,13 +3,14 @@ info:
   title: All Public/Open APIs supported by the platform
   description: This API specification defines the various APIs that are open to external world
   version: 0.1.0
-servers:
-  - url: https://api.server.test/v1
+tags:
+  - name: Open APIs
+    description: APIs for the platform that are exposed to external world. Anyone can call these. These are unauthenticated APIs
 paths:
   /openapi/{tenantID}/case/cnr/{cnrNumber}:
     get:
       tags:
-        - Open API
+        - Open APIs
       summary: get case summary by cnr number
       description: The API is used to get case summary details using the case CNR Number within a specific tenant
       operationId: getCaseByCNR
@@ -34,20 +35,20 @@ paths:
         '200':
           description: ResponseInfo with case summary
           content:
-            '*/*':
+            'application/json':
               schema:
                 $ref: '#/components/schemas/CaseSummaryResponse'
         '400':
           description: querying case summary failed
           content:
-            '*/*':
+            'application/json':
               schema:
                 $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes
 
   /openapi/{tenantID}/case/{year}/{caseType}/{caseNumber}:
     get:
       tags:
-        - Open API
+        - Open APIs
       summary: get case summary by cse number for a specific year
       description: The API is used to get case summary details within a specific tenant. The parameters are year, type of the case (CMP or ST) and the case number
       operationId: getCaseByCaseNumber
@@ -62,7 +63,7 @@ paths:
             minLength: 2
         - name: year
           in: path
-          description: the year in which the case was registered case, whose summary is requested
+          description: the year in which the case was registered case, whose summary is requested. The minimum year is set to 2024 as this is the year the system has gone live and the first case in the system is from 2024. No earlier cases exist.
           required: true
           schema:
             type: integer
@@ -95,7 +96,7 @@ paths:
           content:
             'application/json':
               schema:
-                  $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes
+                $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes
 
 components:
   schemas:
@@ -122,8 +123,7 @@ components:
           example: "KL-000075-2024"
         filingDate:
           type: string
-          format: date
-          description: filing date in 'MM DDDDD YYYY' format
+          description: filing date in long date format
           example: "22 November 2024"
         registrationNumber:
           type: string
@@ -133,8 +133,7 @@ components:
           maxLength: 18
         registrationDate:
           type: string
-          format: date
-          description: registration date in 'MM DDDDD YYYY' format
+          description: registration date in long date format
           example: "22 November 2024"
         caseType:
           type: string
@@ -142,9 +141,19 @@ components:
           minLength: 5
           maxLength: 20
         statutesAndSections:
-          type: string
-          description: A string of statute and sections, concatenated into a single string. Format - first statute + all sections comma separated, then semicolon followed by second statute + all sections comma separated and so on
-          example: "NIA S138, S142(1)(a), S145; CrPC 100, S402(a)"
+          type: array
+          items:
+            type: object
+            properties:
+              statute:
+                type: string
+                example: "NIA"
+              sections:
+                type: array
+                items:
+                  type: string
+                example: ["S138", "S142(1)(a)", "S145"]
+          description: An array of statute and sections for the case
         subStage:
           type: string
           description: this will be returned as "<stage> - <sub stage>"
@@ -152,15 +161,30 @@ components:
         judgeName:
           type: string
           description: full name of the Judge
+          minLength: 1
+          maxLength: 100
+          pattern: ^[A-Za-z\s.]+$
         complainant:
           type: string
           description: full name of the primary complainant
+          minLength: 1
+          maxLength: 100
+          pattern: ^[A-Za-z\s.]+$
         respondent:
           type: string
           description: full name of the primary respondent
+          minLength: 1
+          maxLength: 100
+          pattern: ^[A-Za-z\s.]+$
         advocateComplainant:
           type: string
           description: full name of the primary advocate of complainant
+          minLength: 1
+          maxLength: 100
+          pattern: ^[A-Za-z\s.]+$
         advocateRespondent:
           type: string
           description: full name of the primary advocate of respondent
+          minLength: 1
+          maxLength: 100
+          pattern: ^[A-Za-z\s.]+$
