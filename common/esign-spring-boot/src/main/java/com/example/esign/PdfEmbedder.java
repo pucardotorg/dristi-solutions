@@ -165,7 +165,7 @@ public class PdfEmbedder {
             // Load the original PDF
             PdfReader reader = new PdfReader(srcFile);
 
-            PdfSigner signer = new PdfSigner(reader, new FileOutputStream(destFile), new StampingProperties().useAppendMode());
+            signer = new PdfSigner(reader, new FileOutputStream(destFile), new StampingProperties().useAppendMode());
             System.out.println("hash of dest file :" + calculateSha256Hash(destFile));
             // Create a rectangle for the signature
             Rectangle rect = new Rectangle(36, 748, 200, 100);
