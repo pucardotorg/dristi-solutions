@@ -181,7 +181,8 @@ public class PdfEmbedder {
 
             System.out.println("hash of dest file after signature appearance :" + calculateSha256Hash(destFile));
 
-            return DigestUtils.sha256Hex(resource.getInputStream());
+
+            return calculateSha256Hash(destFile);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
