@@ -105,8 +105,8 @@ public class EsignController {
                 //
                 uploadedFiles.add(serverFile);
                 //fileHash = calculateFileHash(uploadRootDir.getAbsolutePath() + File.separator + name);
-                fileHash = pdfEmbedder.generateHash(fileData.getResource(), serverFile.getAbsolutePath(), serverFile.getName());
-
+//                fileHash = pdfEmbedder.generateHash(fileData.getResource(), serverFile.getAbsolutePath(), serverFile.getName());
+                fileHash = pdfEmbedder.pdfSigner(serverFile, request, session);
                 System.out.println(" hash for siging send to cdac " + fileHash);
                 request.getSession().setAttribute("pdfEmbedder", pdfEmbedder);
                 System.out.println("Write file: " + serverFile);
@@ -189,23 +189,22 @@ public class EsignController {
         System.out.println("**************************************" + response);
 
         List<Certificate> certificates = new ArrayList<>();
-        String filename = "Error";
-        try {
-            PrivateKey rsaPrivateKey = encryption.getPrivateKey("testasp.pem");
+//        try {
+//            PrivateKey rsaPrivateKey = encryption.getPrivateKey("testasp.pem");
+//
+//            String certString = response.substring(response.indexOf("<UserX509Certificate>"), response.indexOf("</UserX509Certificate>"))
+//                    .replaceAll("<UserX509Certificate>", "").replaceAll("</UserX509Certificate>", "");
+//            byte[] certBytes = Base64.decodeBase64(certString);
+//            ByteArrayInputStream stream = new ByteArrayInputStream(certBytes);
+//            CertificateFactory factory = CertificateFactory.getInstance("X.509");
+//            Certificate cert = factory.generateCertificate(stream);
+//            certificates = List.of(cert);
+//            filename = pdfEmbedder.addVisibleSignature(certificates.toArray(new Certificate[0]), rsaPrivateKey);
+            String filename = pdfEmbedder.signPdfwithDS(response, request, session);
 
-            String certString = response.substring(response.indexOf("<UserX509Certificate>"), response.indexOf("</UserX509Certificate>"))
-                    .replaceAll("<UserX509Certificate>", "").replaceAll("</UserX509Certificate>", "");
-            byte[] certBytes = Base64.decodeBase64(certString);
-            ByteArrayInputStream stream = new ByteArrayInputStream(certBytes);
-            CertificateFactory factory = CertificateFactory.getInstance("X.509");
-            Certificate cert = factory.generateCertificate(stream);
-            certificates = List.of(cert);
-            filename = pdfEmbedder.addVisibleSignature(certificates.toArray(new Certificate[0]), rsaPrivateKey);
-
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
         System.out.println(" Response--->" + response + "ESP ID" + espId);
         if (filename.equals("Error")) {
             String error = response.substring(response.indexOf("errCode"), response.indexOf("resCode"));
