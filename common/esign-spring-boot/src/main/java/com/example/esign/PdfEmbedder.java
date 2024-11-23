@@ -167,14 +167,14 @@ public class PdfEmbedder {
         PdfSigner signer = new PdfSigner(reader, new FileOutputStream(destFile), new StampingProperties());
 
         // Create a rectangle for the signature
-        Rectangle rect = new Rectangle(36, 748, 200, 100);
+//        Rectangle rect = new Rectangle(36, 748, 200, 100);
 
-        PdfSignatureAppearance appearance = signer.getSignatureAppearance()
-                .setReason("Document signing")
-                .setLocation("Location")
-                .setPageRect(rect)
-                .setPageNumber(1);
-        signer.setFieldName("sig");
+//        PdfSignatureAppearance appearance = signer.getSignatureAppearance()
+//                .setReason("Document signing")
+//                .setLocation("Location")
+//                .setPageRect(rect)
+//                .setPageNumber(1);
+//        signer.setFieldName("sig");
 
         // Sign the document
         IExternalSignature pks = new PrivateKeySignature(pk, DigestAlgorithms.SHA256, "BC");
