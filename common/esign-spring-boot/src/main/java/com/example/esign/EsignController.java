@@ -1,10 +1,9 @@
 package com.example.esign;
 
+import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -16,14 +15,15 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.GeneralSecurityException;
 import java.security.PrivateKey;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -73,50 +73,6 @@ public class EsignController {
     @ResponseBody
     public RequestXmlForm esignRequest(@ModelAttribute @Valid MyUploadForm myUploadForm, Model model, HttpServletRequest request, HttpSession session) {
 
-//        try {
-//            // Generate unique transaction ID
-//            String transactionId = UUID.randomUUID().toString();
-//
-//            // Calculate the hash of the uploaded file
-//            InputStream inputStream = myUploadForm.getFileDatas().getInputStream();
-//            String hash = DigestUtils.md5DigestAsHex(inputStream);
-//
-//            // Create EsignRequest object
-//            EsignRequest esignRequest = new EsignRequest();
-//            esignRequest.setAspId(aspId);
-//            esignRequest.setTransactionId(transactionId);
-//            esignRequest.setResponseUrl(responseUrl);
-//            esignRequest.setHash(hash);
-//            esignRequest.setResponseType(responseType);
-//
-//            // Convert the EsignRequest object to XML
-//            JAXBContext jaxbContext = JAXBContext.newInstance(EsignRequest.class);
-//            Marshaller marshaller = jaxbContext.createMarshaller();
-//            StringWriter sw = new StringWriter();
-//            marshaller.marshal(esignRequest, sw);
-//            String xmlString = sw.toString();
-//
-//            // Send the XML to CDAC's eSign URL
-//            RestTemplate restTemplate = new RestTemplate();
-//            HttpHeaders headers = new HttpHeaders();
-//            headers.setContentType(MediaType.APPLICATION_XML);
-//            HttpEntity<String> entity = new HttpEntity<>(xmlString, headers);
-//            ResponseEntity<String> response = restTemplate.postForEntity(cdacEsignUrl, entity, String.class);
-//
-//            // Add response to the model to display it on the response page
-//            model.addAttribute("responseXml", response.getBody());
-//
-//            return "response";
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            return "error";
-//        }
-//    }
-
-
-        // PdfEmbedder pdfEmbedder = new PdfEmbedder();
-
-
         // Root Directory.
         String uploadRootPath = request.getServletContext().getRealPath("upload");
         System.out.println("uploadRootPath=" + uploadRootPath);
@@ -149,7 +105,7 @@ public class EsignController {
                 //
                 uploadedFiles.add(serverFile);
                 //fileHash = calculateFileHash(uploadRootDir.getAbsolutePath() + File.separator + name);
-                fileHash = pdfEmbedder.pdfSigner(serverFile, request, session);
+                fileHash = pdfEmbedder.generateHash(fileData.getResource(), serverFile.getAbsolutePath(), serverFile.getName());
                 request.getSession().setAttribute("pdfEmbedder", pdfEmbedder);
                 System.out.println("Write file: " + serverFile);
             } catch (Exception e) {
@@ -229,7 +185,25 @@ public class EsignController {
         //PdfEmbedder pdfEmbedder = (PdfEmbedder)request.getSession().getAttribute("pdfEmbedder");
 //        System.out.println("**************************************"+session.getId());
         System.out.println("**************************************" + response);
-        String filename = pdfEmbedder.signPdfwithDS(response, request, session);
+
+        List<Certificate> certificates = new ArrayList<>();
+        String filename = "Error";
+        try {
+            PrivateKey rsaPrivateKey = encryption.getPrivateKey("testasp.pem");
+
+            String certString = response.substring(response.indexOf("<UserX509Certificate>"), response.indexOf("</UserX509Certificate>"))
+                    .replaceAll("<UserX509Certificate>", "").replaceAll("</UserX509Certificate>", "");
+            byte[] certBytes = Base64.decodeBase64(certString);
+            ByteArrayInputStream stream = new ByteArrayInputStream(certBytes);
+            CertificateFactory factory = CertificateFactory.getInstance("X.509");
+            Certificate cert = factory.generateCertificate(stream);
+            certificates = List.of(cert);
+            filename = pdfEmbedder.addVisibleSignature(certificates.toArray(new Certificate[0]), rsaPrivateKey);
+
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         System.out.println(" Response--->" + response + "ESP ID" + espId);
         if (filename.equals("Error")) {
             String error = response.substring(response.indexOf("errCode"), response.indexOf("resCode"));
