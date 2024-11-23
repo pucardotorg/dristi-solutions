@@ -1,0 +1,166 @@
+openapi: "3.0.0"
+info:
+  title: All Public/Open APIs supported by the platform
+  description: This API specification defines the various APIs that are open to external world
+  version: 0.1.0
+servers:
+  - url: https://api.server.test/v1
+paths:
+  /openapi/{tenantID}/case/cnr/{cnrNumber}:
+    get:
+      tags:
+        - Open API
+      summary: get case summary by cnr number
+      description: The API is used to get case summary details using the case CNR Number within a specific tenant
+      operationId: getCaseByCNR
+      parameters:
+        - name: tenantID
+          in: path
+          description: tenant ID
+          required: true
+          schema:
+            type: string
+            maxLength: 2
+            minLength: 2
+        - name: cnrNumber
+          in: path
+          description: the CNR number of the case, whose summary is requested
+          required: true
+          schema:
+            type: string
+            maxLength: 16
+            minLength: 16
+      responses:
+        '200':
+          description: ResponseInfo with case summary
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CaseSummaryResponse'
+        '400':
+          description: querying case summary failed
+          content:
+            '*/*':
+              schema:
+                $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes
+
+  /openapi/{tenantID}/case/{year}/{caseType}/{caseNumber}:
+    get:
+      tags:
+        - Open API
+      summary: get case summary by cse number for a specific year
+      description: The API is used to get case summary details within a specific tenant. The parameters are year, type of the case (CMP or ST) and the case number
+      operationId: getCaseByCaseNumber
+      parameters:
+        - name: tenantID
+          in: path
+          description: tenant ID
+          required: true
+          schema:
+            type: string
+            maxLength: 2
+            minLength: 2
+        - name: year
+          in: path
+          description: the year in which the case was registered case, whose summary is requested
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 2024
+        - name: caseNumber
+          in: path
+          description: the case number (CMP or ST) of the case, whose summary is requested
+          required: true
+          schema:
+            type: string
+            maxLength: 18
+            minLength: 9
+        - name: caseType
+          in: path
+          description: the type of the case CMP/CC/ST
+          required: true
+          schema:
+            type: string
+            enum: [CMP, CC, ST]
+      responses:
+        '200':
+          description: ResponseInfo with case summary
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/CaseSummaryResponse'
+        '400':
+          description: querying case summary failed
+          content:
+            'application/json':
+              schema:
+                  $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes
+
+components:
+  schemas:
+    CaseSummaryResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo
+        caseSummary:
+          $ref: '#/components/schemas/CaseSummary'
+
+    CaseSummary:
+      type: object
+      properties:
+        cnrNumber:
+          type: string
+          maxLength: 16
+          minLength: 16
+          example: "KLKM521235562024"
+        filingNumber:
+          type: string
+          maxLength: 14
+          minLength: 14
+          example: "KL-000075-2024"
+        filingDate:
+          type: string
+          format: date
+          description: filing date in 'MM DDDDD YYYY' format
+          example: "22 November 2024"
+        registrationNumber:
+          type: string
+          description: CMP number. null is not available
+          example: "CMP/1/2024"
+          minLength: 10
+          maxLength: 18
+        registrationDate:
+          type: string
+          format: date
+          description: registration date in 'MM DDDDD YYYY' format
+          example: "22 November 2024"
+        caseType:
+          type: string
+          example: "Summary Trail"
+          minLength: 5
+          maxLength: 20
+        statutesAndSections:
+          type: string
+          description: A string of statute and sections, concatenated into a single string. Format - first statute + all sections comma separated, then semicolon followed by second statute + all sections comma separated and so on
+          example: "NIA S138, S142(1)(a), S145; CrPC 100, S402(a)"
+        subStage:
+          type: string
+          description: this will be returned as "<stage> - <sub stage>"
+          example: "Pre-Trail - Appearance"
+        judgeName:
+          type: string
+          description: full name of the Judge
+        complainant:
+          type: string
+          description: full name of the primary complainant
+        respondent:
+          type: string
+          description: full name of the primary respondent
+        advocateComplainant:
+          type: string
+          description: full name of the primary advocate of complainant
+        advocateRespondent:
+          type: string
+          description: full name of the primary advocate of respondent
