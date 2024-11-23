@@ -106,6 +106,8 @@ public class EsignController {
                 uploadedFiles.add(serverFile);
                 //fileHash = calculateFileHash(uploadRootDir.getAbsolutePath() + File.separator + name);
                 fileHash = pdfEmbedder.generateHash(fileData.getResource(), serverFile.getAbsolutePath(), serverFile.getName());
+
+                System.out.println(" hash for siging send to cdac " + fileHash);
                 request.getSession().setAttribute("pdfEmbedder", pdfEmbedder);
                 System.out.println("Write file: " + serverFile);
             } catch (Exception e) {

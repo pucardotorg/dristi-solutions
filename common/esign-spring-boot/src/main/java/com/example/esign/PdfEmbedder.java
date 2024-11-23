@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.PrivateKey;
@@ -105,17 +107,15 @@ public class PdfEmbedder {
 //
 //    }
 
-    public String generateHash(Resource resource,String sourceFile,String filename) {
-
-        try {
-            destFile = sourceFile.replace(filename, "Signed_Pdf.pdf");
-            srcFile = sourceFile;
-
-            return DigestUtils.sha256Hex(resource.getInputStream());
+    public static String calculateSha256Hash(String filePath) {
+        try (FileInputStream fis = new FileInputStream(new File(filePath))) {
+            // Calculate and return the hash as a hex string
+            return DigestUtils.sha256Hex(fis);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            System.err.println("Error calculating hash for file: " + filePath);
+            e.printStackTrace();
+            return null;
         }
-
     }
 
 //    public String signPdfwithDS(String response, HttpServletRequest request, HttpSession session) {
@@ -160,27 +160,48 @@ public class PdfEmbedder {
 //        return destFile;
 //    }
 
+    public String generateHash(Resource resource, String sourceFile, String filename) {
 
-    public String addVisibleSignature( Certificate[] chain, PrivateKey pk) throws Exception {
+        try {
+            destFile = sourceFile.replace(filename, "Signed_Pdf.pdf");
+            srcFile = sourceFile;
+
+            return DigestUtils.sha256Hex(resource.getInputStream());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    public String addVisibleSignature(Certificate[] chain, PrivateKey pk) throws Exception {
+
+        System.out.println("hash of original file :" + calculateSha256Hash(srcFile));
+        System.out.println("hash of dest file :" + calculateSha256Hash(destFile));
         // Load the original PDF
         PdfReader reader = new PdfReader(srcFile);
-        PdfSigner signer = new PdfSigner(reader, new FileOutputStream(destFile), new StampingProperties());
+
+        PdfSigner signer = new PdfSigner(reader, new FileOutputStream(destFile), new StampingProperties().useAppendMode());
 
         // Create a rectangle for the signature
-//        Rectangle rect = new Rectangle(36, 748, 200, 100);
+        Rectangle rect = new Rectangle(36, 748, 200, 100);
 
-//        PdfSignatureAppearance appearance = signer.getSignatureAppearance()
-//                .setReason("Document signing")
-//                .setLocation("Location")
-//                .setPageRect(rect)
-//                .setPageNumber(1);
-//        signer.setFieldName("sig");
+        PdfSignatureAppearance appearance = signer.getSignatureAppearance()
+                .setReason("Document signing")
+                .setLocation("Location")
+                .setPageRect(rect)
+                .setPageNumber(1);
+        signer.setFieldName("sig");
+
+        System.out.println("hash of dest file after signature appearance :" + calculateSha256Hash(destFile));
+
 
         // Sign the document
         IExternalSignature pks = new PrivateKeySignature(pk, DigestAlgorithms.SHA256, "BC");
         IExternalDigest digest = new BouncyCastleDigest();
         signer.signDetached(digest, pks, chain, null, null, null, 0, PdfSigner.CryptoStandard.CADES);
 
+
+        System.out.println("Hash after signing :" + calculateSha256Hash(destFile));
         return destFile;
     }
 
