@@ -1,6 +1,5 @@
 package com.example.esign;
 
-import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -15,13 +14,15 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
-import java.security.cert.CertificateFactory;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -103,8 +104,10 @@ public class EsignController {
                 //
                 uploadedFiles.add(serverFile);
                 //fileHash = calculateFileHash(uploadRootDir.getAbsolutePath() + File.separator + name);
-                fileHash = pdfEmbedder.generateHash(fileData.getResource(), serverFile.getAbsolutePath(), serverFile.getName());
+//                fileHash = pdfEmbedder.generateHash(fileData.getResource(), serverFile.getAbsolutePath(), serverFile.getName());
 //                fileHash = pdfEmbedder.pdfSigner(serverFile, request, session);
+                fileHash = pdfEmbedder.preparePdfForSigning(uploadRootDir.getAbsolutePath() + File.separator + name, name);
+
                 System.out.println(" hash for siging send to cdac " + fileHash);
                 request.getSession().setAttribute("pdfEmbedder", pdfEmbedder);
                 System.out.println("Write file: " + serverFile);
@@ -189,50 +192,51 @@ public class EsignController {
         List<Certificate> certificates = new ArrayList<>();
         String filename = "Error";
         try {
-            PrivateKey rsaPrivateKey = encryption.getPrivateKey("testasp.pem");
-
-            String certString = response.substring(response.indexOf("<UserX509Certificate>"), response.indexOf("</UserX509Certificate>"))
-                    .replaceAll("<UserX509Certificate>", "").replaceAll("</UserX509Certificate>", "");
-            byte[] certBytes = Base64.decodeBase64(certString);
-            ByteArrayInputStream stream = new ByteArrayInputStream(certBytes);
-            CertificateFactory factory = CertificateFactory.getInstance("X.509");
-            Certificate cert = factory.generateCertificate(stream);
-            certificates = List.of(cert);
-            filename = pdfEmbedder.addVisibleSignature(certificates.toArray(new Certificate[0]), rsaPrivateKey);
+//            PrivateKey rsaPrivateKey = encryption.getPrivateKey("testasp.pem");
+//
+//            String certString = response.substring(response.indexOf("<UserX509Certificate>"), response.indexOf("</UserX509Certificate>"))
+//                    .replaceAll("<UserX509Certificate>", "").replaceAll("</UserX509Certificate>", "");
+//            byte[] certBytes = Base64.decodeBase64(certString);
+//            ByteArrayInputStream stream = new ByteArrayInputStream(certBytes);
+//            CertificateFactory factory = CertificateFactory.getInstance("X.509");
+//            Certificate cert = factory.generateCertificate(stream);
+//            certificates = List.of(cert);
+//            filename = pdfEmbedder.addVisibleSignature(certificates.toArray(new Certificate[0]), rsaPrivateKey);
 //            String filename = pdfEmbedder.signPdfwithDS(response, request, session);
+            filename = pdfEmbedder.applySignature(response);
 
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-            System.out.println(" Response--->" + response + "ESP ID" + espId);
-            if (filename.equals("Error")) {
-                String error = response.substring(response.indexOf("errCode"), response.indexOf("resCode"));
-                ModelAndView model = new ModelAndView();
-                model.addObject("error", error);
+        System.out.println(" Response--->" + response + "ESP ID" + espId);
+        if (filename.equals("Error")) {
+            String error = response.substring(response.indexOf("errCode"), response.indexOf("resCode"));
+            ModelAndView model = new ModelAndView();
+            model.addObject("error", error);
 //            System.out.println("**************************************" + session.getId());
-                return "errorFile";
-            } else {
-                return "downloadPdf";
-            }
+            return "errorFile";
+        } else {
+            return "downloadPdf";
         }
-
-        @RequestMapping("/downloadPdfLocally")
-        public void downloadPDFResource (HttpServletRequest request, HttpServletResponse response) throws IOException {
-            //If user is not authorized - he should be thrown out from here itself
-
-            //Authorized user will download the file
-            String dataDirectory = request.getServletContext().getRealPath("upload");
-            Path file = Paths.get(dataDirectory, "Signed_Pdf.pdf");
-            if (Files.exists(file)) {
-                response.setContentType("application/pdf");
-                response.addHeader("Content-Disposition", "attachment; filename=" + "Signed_Pdf.pdf");
-                try {
-                    Files.copy(file, response.getOutputStream());
-                    response.getOutputStream().flush();
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                }
-            }
-        }
-
     }
+
+    @RequestMapping("/downloadPdfLocally")
+    public void downloadPDFResource(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        //If user is not authorized - he should be thrown out from here itself
+
+        //Authorized user will download the file
+        String dataDirectory = request.getServletContext().getRealPath("upload");
+        Path file = Paths.get(dataDirectory, "final_Signed_Pdf.pdf");
+        if (Files.exists(file)) {
+            response.setContentType("application/pdf");
+            response.addHeader("Content-Disposition", "attachment; filename=" + "final_Signed_Pdf.pdf");
+            try {
+                Files.copy(file, response.getOutputStream());
+                response.getOutputStream().flush();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+}

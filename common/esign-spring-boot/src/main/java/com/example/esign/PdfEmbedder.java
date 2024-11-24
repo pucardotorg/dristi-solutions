@@ -5,31 +5,24 @@ package com.example.esign;
 //import com.itextpdf.kernel.pdf.StampingProperties;
 //import com.itextpdf.signatures.*;
 
-import com.itextpdf.kernel.geom.Rectangle;
-import com.itextpdf.kernel.pdf.PdfReader;
-import com.itextpdf.kernel.pdf.StampingProperties;
-import com.itextpdf.signatures.*;
+import com.itextpdf.text.Rectangle;
+import com.itextpdf.text.pdf.*;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.security.PrivateKey;
-import java.security.cert.Certificate;
+import java.io.*;
 
 @Component
 //@Scope("session")
 public class PdfEmbedder {
     String destFile = null;
+    String finalDestFile = null;
 
     String srcFile = null;
     // HttpSession session = null;
     FileOutputStream fout;
-    PdfSigner signer;
     @Autowired
     private XmlSigning xmlSigning;
 
@@ -157,50 +150,102 @@ public class PdfEmbedder {
 //        return destFile;
 //    }
 
-    public String generateHash(Resource resource, String sourceFile, String filename) {
+//    public String generateHash(Resource resource, String sourceFile, String filename) {
+//
+//        try {
+//            destFile = sourceFile.replace(filename, "Signed_Pdf.pdf");
+//            srcFile = sourceFile;
+//            // Load the original PDF
+//            PdfReader reader = new PdfReader(srcFile);
+//
+//            signer = new PdfSigner(reader, new FileOutputStream(destFile), new StampingProperties().useAppendMode());
+//            System.out.println("hash of dest file :" + calculateSha256Hash(destFile));
+//            // Create a rectangle for the signature
+//            Rectangle rect = new Rectangle(36, 748, 200, 100);
+//
+//            PdfSignatureAppearance appearance = signer.getSignatureAppearance()
+//                    .setReason("Document signing")
+//                    .setLocation("Location")
+//                    .setPageRect(rect)
+//                    .setPageNumber(1)
+//                    .setRenderingMode(PdfSignatureAppearance.RenderingMode.DESCRIPTION);
+//
+//            signer.setFieldName("sig");
+//
+//            System.out.println("hash of dest file after signature appearance :" + calculateSha256Hash(destFile));
+//
+//
+//            return calculateSha256Hash(destFile);
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
+//
+//    }
 
-        try {
-            destFile = sourceFile.replace(filename, "Signed_Pdf.pdf");
-            srcFile = sourceFile;
-            // Load the original PDF
-            PdfReader reader = new PdfReader(srcFile);
+    public String applySignature(String response) throws Exception {
+        PdfReader reader = new PdfReader(destFile);
+        finalDestFile = destFile.replace("Signed_Pdf.pdf", "final_Signed_Pdf.pdf");
 
-            signer = new PdfSigner(reader, new FileOutputStream(destFile), new StampingProperties().useAppendMode());
-            System.out.println("hash of dest file :" + calculateSha256Hash(destFile));
-            // Create a rectangle for the signature
-            Rectangle rect = new Rectangle(36, 748, 200, 100);
+        FileOutputStream os = new FileOutputStream(finalDestFile);
+        PdfStamper stamper = new PdfStamper(reader, os);
+        PdfSignatureAppearance appearance = stamper.getSignatureAppearance();
 
-            PdfSignatureAppearance appearance = signer.getSignatureAppearance()
-                    .setReason("Document signing")
-                    .setLocation("Location")
-                    .setPageRect(rect)
-                    .setPageNumber(1)
-                    .setRenderingMode(PdfSignatureAppearance.RenderingMode.DESCRIPTION);
+        String pkcsResponse = xmlSigning.parseXml(response.trim());
+        byte[] signatureBytes = Base64.decodeBase64(pkcsResponse);
 
-            signer.setFieldName("sig");
+        // Create the signature dictionary with the received signature bytes
+        PdfDictionary dictionary = new PdfDictionary();
+        dictionary.put(PdfName.CONTENTS, new PdfString(signatureBytes).setHexWriting(true));
 
-            System.out.println("hash of dest file after signature appearance :" + calculateSha256Hash(destFile));
+        // Close the appearance and apply the signature
+        appearance.close(dictionary);
+        stamper.close();
+        reader.close();
 
-
-            return calculateSha256Hash(destFile);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
+        return finalDestFile;
     }
 
-    public String addVisibleSignature(Certificate[] chain, PrivateKey pk) throws Exception {
 
-        System.out.println("hash of original file :" + calculateSha256Hash(srcFile));
+    public String preparePdfForSigning(String inputFile, String filename) throws Exception {
+        PdfReader reader = new PdfReader(inputFile);
+        destFile = inputFile.replace(filename, "Signed_Pdf.pdf");
+        FileOutputStream os = new FileOutputStream(destFile);
+        PdfStamper stamper = PdfStamper.createSignature(reader, os, '\0', null, true); // true for append mode
+        PdfSignatureAppearance appearance = stamper.getSignatureAppearance();
 
-        // Sign the document
-        IExternalSignature pks = new PrivateKeySignature(pk, DigestAlgorithms.SHA256, "BC");
-        IExternalDigest digest = new BouncyCastleDigest();
-        signer.signDetached(digest, pks, chain, null, null, null, 0, PdfSigner.CryptoStandard.CADES);
+        // Set up signature appearance for the first signature field
+        appearance.setReason("Document Signing");
+        appearance.setLocation("My Location");
+        appearance.setVisibleSignature(new Rectangle(100, 100, 200, 150), 1, "sigField1");
 
+        // Pre-close the appearance to generate the document hash
+        appearance.preClose();
 
-        System.out.println("Hash after signing :" + calculateSha256Hash(destFile));
-        return destFile;
+        // Create the hash of the PDF content (hash will not include the signature field content yet)
+        InputStream data = appearance.getRangeStream();
+        String hashDocument = DigestUtils.sha256Hex(data);
+
+        // Close resources (stamper remains partially open for signing)
+        stamper.getWriter().setCloseStream(false); // Prevents stream from being closed prematurely
+        reader.close();
+
+        // Return the hash (or send it to another endpoint)
+        return hashDocument;
     }
+
+
+//    public String addVisibleSignature(Certificate[] chain, PrivateKey pk) throws Exception {
+//
+//        System.out.println("hash of original file :" + calculateSha256Hash(srcFile));
+//
+//        // Sign the document
+//        IExternalSignature pks = new PrivateKeySignature(pk, DigestAlgorithms.SHA256, "BC");
+//        IExternalDigest digest = new BouncyCastleDigest();
+//        signer.signDetached(digest, pks, chain, null, null, null, 0, PdfSigner.CryptoStandard.CADES);
+//
+//
+//        System.out.println("Hash after signing :" + calculateSha256Hash(destFile));
+//        return destFile;
+//    }
 
 }
