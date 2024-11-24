@@ -1,11 +1,10 @@
 openapi: "3.0.0"
 info:
   title: All Public/Open APIs supported by the platform
-  description: This API specification defines the various APIs that are open to external world
+  description: This API specification defines the various APIs that are open to external world. Anyone can call these. These are unauthenticated APIs. These need to managed via rate limiting settings at the gateway level to limit access
   version: 0.1.0
 tags:
   - name: Open APIs
-    description: APIs for the platform that are exposed to external world. Anyone can call these. These are unauthenticated APIs
 paths:
   /openapi/{tenantID}/case/cnr/{cnrNumber}:
     get:
@@ -49,8 +48,8 @@ paths:
     get:
       tags:
         - Open APIs
-      summary: get case summary by cse number for a specific year
-      description: The API is used to get case summary details within a specific tenant. The parameters are year, type of the case (CMP or ST) and the case number
+      summary: get case summary by case number for a specific year
+      description: The API is used to get case summary details within a specific tenant. The parameters are year, type of the case (CMP, CC or ST) and the case number
       operationId: getCaseByCaseNumber
       parameters:
         - name: tenantID
@@ -110,6 +109,7 @@ components:
 
     CaseSummary:
       type: object
+      description: this is a summary representation of CourtCase object. A limited set of fields, formatted appropriately are returned. Since the object already exists, there are no field level rules set for this summary object
       properties:
         cnrNumber:
           type: string
@@ -123,8 +123,9 @@ components:
           example: "KL-000075-2024"
         filingDate:
           type: string
-          description: filing date in long date format
-          example: "22 November 2024"
+          format: date
+          description: filing date in YYYY-MM-DD format, in IST time zone
+          example: "2024-11-24"
         registrationNumber:
           type: string
           description: CMP number. null is not available
@@ -133,8 +134,9 @@ components:
           maxLength: 18
         registrationDate:
           type: string
-          description: registration date in long date format
-          example: "22 November 2024"
+          format: date
+          description: registration date in YYYY-MM-DD format, in IST time zone
+          example: "2024-11-24"
         caseType:
           type: string
           example: "Summary Trail"
@@ -161,30 +163,15 @@ components:
         judgeName:
           type: string
           description: full name of the Judge
-          minLength: 1
-          maxLength: 100
-          pattern: ^[A-Za-z\s.]+$
         complainant:
           type: string
           description: full name of the primary complainant
-          minLength: 1
-          maxLength: 100
-          pattern: ^[A-Za-z\s.]+$
         respondent:
           type: string
           description: full name of the primary respondent
-          minLength: 1
-          maxLength: 100
-          pattern: ^[A-Za-z\s.]+$
         advocateComplainant:
           type: string
           description: full name of the primary advocate of complainant
-          minLength: 1
-          maxLength: 100
-          pattern: ^[A-Za-z\s.]+$
         advocateRespondent:
           type: string
           description: full name of the primary advocate of respondent
-          minLength: 1
-          maxLength: 100
-          pattern: ^[A-Za-z\s.]+$
