@@ -87,10 +87,8 @@ const getStyles = () => ({
     justifyContent: "center",
     backgroundColor: "#007E7E",
     border: "none",
-    // cursor: "pointer",
+    cursor: "pointer",
     padding: "0 20px",
-    opacity: 0.5,
-    cursor: "default",
   },
   uploadButton: {
     marginBottom: "16px",
@@ -732,7 +730,7 @@ const ComplainantSignature = ({ path }) => {
             <p style={styles.signatureDescription}>{t("EITHER_ESIGN_UPLOAD")}</p>
             {isSelectedEsign &&
               (!(isAdvocateFilingCase && !isLitigantEsignCompleted) ? (
-                <button style={styles.esignButton} disabled={true} onClick={handleEsignAction}>
+                <button style={styles.esignButton} onClick={handleEsignAction}>
                   {t("CS_ESIGN")}
                 </button>
               ) : (
