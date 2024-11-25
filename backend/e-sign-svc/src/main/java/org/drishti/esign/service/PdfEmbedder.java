@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.drishti.esign.cipher.Decryption;
+import org.drishti.esign.config.PdfSignatureAppearanceCache;
 import org.drishti.esign.util.ByteArrayMultipartFile;
 import org.drishti.esign.util.FileStoreUtil;
 import org.drishti.esign.web.models.ESignParameter;
@@ -46,7 +47,7 @@ public class PdfEmbedder {
 
         try {
 
-            PdfSignatureAppearance appearance = (PdfSignatureAppearance) httpSession.getAttribute(txnId);
+            PdfSignatureAppearance appearance = PdfSignatureAppearanceCache.get(txnId);
             int contentEstimated = 8192;
             String errorCode = response.substring(response.indexOf("errCode"), response.indexOf("errMsg"));
             errorCode = errorCode.trim();
@@ -58,15 +59,15 @@ public class PdfEmbedder {
                 PdfDictionary dic2 = new PdfDictionary();
                 dic2.put(PdfName.CONTENTS, new PdfString(paddedSig).setHexWriting(true));
                 appearance.close(dic2);
+
             } else {
                 log.error("something went wrong on server side");
-
             }
 
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
-            httpSession.removeAttribute(txnId);
+            PdfSignatureAppearanceCache.remove(txnId);
         }
     }
 
@@ -123,7 +124,7 @@ public class PdfEmbedder {
 
             MultipartFile byteArrayMultipartFile = new ByteArrayMultipartFile("signed.pdf", is.readAllBytes());
             String fileStoreId = fileStoreUtil.storeFileInFileStore(byteArrayMultipartFile, eSignParameter.getTenantId());
-            httpSession.setAttribute(fileStoreId, appearance);
+            PdfSignatureAppearanceCache.put(fileStoreId, appearance);
             eSignParameter.setFileStoreId(fileStoreId);
 
             return DigestUtils.sha256Hex(byteArrayMultipartFile.getInputStream());
