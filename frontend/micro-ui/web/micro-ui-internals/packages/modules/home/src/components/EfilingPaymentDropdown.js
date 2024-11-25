@@ -265,7 +265,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
                     fontSize: "16px",
                     fontWeight: "700",
                     paddingTop: "12px",
-                    paddingRight: "28px",
+                    paddingRight: paymentCalculation.length >6 ? "28px" : "16px"
                   }}
                 >
                   <span>{item.key}</span>
