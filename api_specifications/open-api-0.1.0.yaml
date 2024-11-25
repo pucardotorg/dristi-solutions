@@ -11,7 +11,8 @@ paths:
       tags:
         - Open APIs
       summary: get case summary by cnr number
-      description: The API is used to get case summary details using the case CNR Number within a specific tenant
+      description: The API is used to get case summary details using the case CNR Number within a specific tenant. 
+                  example - GET /openapi/KL/case/cnr/KLKM520008652024
       operationId: getCaseByCNR
       parameters:
         - name: tenantID
@@ -20,6 +21,7 @@ paths:
           required: true
           schema:
             type: string
+            pattern: "^[a-zA-Z]{2}$"
             maxLength: 2
             minLength: 2
         - name: cnrNumber
@@ -44,12 +46,14 @@ paths:
               schema:
                 $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes
 
-  /openapi/{tenantID}/case/{year}/{caseType}/{caseNumber}:
+  /openapi/{tenantID}/case/{year}/{caseType}:
     get:
       tags:
         - Open APIs
       summary: get case summary by case number for a specific year
-      description: The API is used to get case summary details within a specific tenant. The parameters are year, type of the case (CMP, CC or ST) and the case number
+      description: The API is used to get case summary details within a specific tenant. The parameters are year, type of the case (CMP, CC or ST) and the case number. 
+          example -  1. GET /openapi/{tenantID}/case/2024/CMP/?page=1&size=10&sort=registrationDate,desc
+                  -  2. GET /openapi/{tenantID}/case/2024/CMP/?caseNumber=CMP/15/2024
       operationId: getCaseByCaseNumber
       parameters:
         - name: tenantID
@@ -58,6 +62,7 @@ paths:
           required: true
           schema:
             type: string
+            pattern: "^[a-zA-Z]{2}$"
             maxLength: 2
             minLength: 2
         - name: year
@@ -68,14 +73,6 @@ paths:
             type: integer
             format: int32
             minimum: 2024
-        - name: caseNumber
-          in: path
-          description: the case number (CMP or ST) of the case, whose summary is requested
-          required: true
-          schema:
-            type: string
-            maxLength: 18
-            minLength: 9
         - name: caseType
           in: path
           description: the type of the case CMP/CC/ST
@@ -83,13 +80,44 @@ paths:
           schema:
             type: string
             enum: [CMP, CC, ST]
+        - name: caseNumber
+          in: query
+          description: the case number (CMP or ST) of the case, whose summary is requested. This optional parameter. If not specified, system will return all CMP/CC/ST cases for the specified tenant and year
+          required: false
+          schema:
+            type: string
+            maxLength: 18
+            minLength: 9
+        - name: offset
+          in: query
+          description: Page number to retrieve (0-based index)
+          required: false
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: limit
+          in: query
+          description: Number of items per page
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+        - name: sort
+          in: query
+          description: Sorting criteria in the format `field,asc` or `field,desc`
+          required: false
+          schema:
+            type: string
       responses:
         '200':
           description: ResponseInfo with case summary
           content:
             'application/json':
               schema:
-                $ref: '#/components/schemas/CaseSummaryResponse'
+                $ref: '#/components/schemas/CaseListSummaryResponse'
         '400':
           description: querying case summary failed
           content:
@@ -106,6 +134,19 @@ components:
           $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo
         caseSummary:
           $ref: '#/components/schemas/CaseSummary'
+
+    CaseListSummaryResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo
+        caseSummary:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseSummary'
+        pagination:
+          $ref: >-
+            https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Pagination
 
     CaseSummary:
       type: object
