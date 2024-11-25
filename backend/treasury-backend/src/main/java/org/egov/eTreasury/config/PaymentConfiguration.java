@@ -103,5 +103,5 @@ public class PaymentConfiguration {
     private boolean isTest;
 
     @Value("${challan.amount}")
-    private String challanAmount;
+    private String challanTestAmount;
 }

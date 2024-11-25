@@ -33,7 +33,7 @@ public class TreasuryEnrichment {
 
         String challanAmount;
         if (config.isTest()) {
-            challanAmount = String.valueOf(config.getChallanAmount());
+            challanAmount = String.valueOf(config.getChallanTestAmount());
         } else {
             challanAmount = String.valueOf(challanData.getTotalDue());
         }
