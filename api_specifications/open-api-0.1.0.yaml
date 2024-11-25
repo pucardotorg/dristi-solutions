@@ -67,7 +67,7 @@ paths:
             minLength: 2
         - name: year
           in: path
-          description: the year in which the case was registered case, whose summary is requested. The minimum year is set to 2024 as this is the year the system has gone live and the first case in the system is from 2024. No earlier cases exist.
+          description: if type= CMP, then year in which the case was registered. Can check based on registration date also. If type = CC/ST, then check against CourtCase.courtCaseNumber(year). The minimum year is set to 2024 as this is the year the system has gone live and the first case in the system is from 2024. No earlier cases exist.
           required: true
           schema:
             type: integer
