@@ -157,7 +157,7 @@ function AdvocateClerkAdditionalDetail({ params, setParams, path, config, pathOn
       ...params,
       formData: formData,
     });
-    if (!params?.Individual?.[0]?.individualId) history.push(`/digit-ui/citizen/dristi/home/registration/terms-condition`);
+    history.push(`/digit-ui/citizen/dristi/home/registration/terms-condition`);
   };
   if (!params?.IndividualPayload) {
     history.push(pathOnRefresh);
