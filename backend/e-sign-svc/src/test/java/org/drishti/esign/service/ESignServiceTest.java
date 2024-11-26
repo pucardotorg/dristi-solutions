@@ -9,6 +9,7 @@ import org.drishti.esign.cipher.Encryption;
 import org.drishti.esign.util.FileStoreUtil;
 import org.drishti.esign.util.XmlFormDataSetter;
 import org.drishti.esign.web.models.*;
+import org.drishti.esign.web.models.File;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.*;
 import java.security.PrivateKey;
 import java.util.Calendar;
+import java.util.HashMap;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -144,6 +146,8 @@ public class ESignServiceTest {
         assertEquals(originalAcro6Layers, deserializedDTO.isAcro6Layers(), "Acro6Layers flag mismatch");
         applyAppearanceFromDTO(appearance, deserializedDTO);
 
+        recreateSignedPDF(deserializedDTO);
+
         // Print deserialized data
         System.out.println("Deserialized Rendering Mode: " + deserializedDTO.getRenderingMode());
         System.out.println("Deserialized Layer2Text: " + deserializedDTO.getLayer2Text());
@@ -151,6 +155,39 @@ public class ESignServiceTest {
         System.out.println("Deserialized Location: " + deserializedDTO.getLocation());
         reader.close();
         outputStream.close();
+    }
+
+
+    void recreateSignedPDF(PdfSignatureAppearanceDTO deserializedDTO) throws Exception{
+        // Step 1: Open the original unsigned PDF
+        PdfReader reader = new PdfReader("C:\\Users\\Haritha\\Downloads\\sample.pdf");
+        FileOutputStream outputStream = new FileOutputStream("recreated_signed_sample.pdf");
+        PdfStamper stamper = PdfStamper.createSignature(reader, outputStream, '\0');
+
+
+
+        // Step 3: Reapply the deserialized DTO to a new PdfSignatureAppearance
+        PdfSignatureAppearance newAppearance = stamper.getSignatureAppearance();
+        applyAppearanceFromDTO(newAppearance, deserializedDTO);
+
+        // Step 4: Add placeholders and preClose()
+        int estimatedSize = 8192; // Estimated signature size
+        HashMap<PdfName, Integer> exclusionSizes = new HashMap<>();
+        exclusionSizes.put(PdfName.CONTENTS, estimatedSize * 2 + 2);
+        newAppearance.preClose(exclusionSizes);
+
+        // Step 5: Close the signature with an empty placeholder
+        PdfDictionary dic2 = new PdfDictionary();
+        byte[] emptySig = new byte[estimatedSize];
+        dic2.put(PdfName.CONTENTS, new PdfString(emptySig).setHexWriting(true));
+        newAppearance.close(dic2);
+
+
+        // Close resources
+        reader.close();
+        outputStream.close();
+
+
     }
 
     static class PdfSignatureAppearanceDTO implements Serializable {
