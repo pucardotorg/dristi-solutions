@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import drishti.payment.calculator.util.CaseUtil;
 import drishti.payment.calculator.util.EFillingUtil;
 import drishti.payment.calculator.web.models.*;
-import io.swagger.models.auth.In;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,7 +60,7 @@ public class CaseFeeCalculationService {
             double advocateFee = noOfAdvocates == 0 ? 0.0 : getAdvocateFee(noOfAdvocateFees, noOfAdvocates);
 
             List<BreakDown> feeBreakdown = getFeeBreakdown(vakalathnamaFee, advocateClerkWelfareFund, totalApplicationFee, petitionFee, delayFee, advocateFee);
-            Double totalCourtFee = vakalathnamaFee + advocateClerkWelfareFund + totalApplicationFee + petitionFee + delayFee + advocateFee;
+            Double totalCourtFee = Math.ceil(vakalathnamaFee + advocateClerkWelfareFund + totalApplicationFee + petitionFee + delayFee + advocateFee);
             Calculation calculation = Calculation.builder()
                     .applicationId(criteria.getCaseId())
                     .totalAmount(totalCourtFee)
