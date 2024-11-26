@@ -311,7 +311,7 @@ public class PaymentService {
             if (config.isTest()) {
                 totalAmountPaid = BigDecimal.valueOf(request.getTreasuryPaymentData().getTotalDue());
             }
-            else if(paymentStatus.equals("N") && !config.isTest()){
+            else if(paymentStatus.equals("N")){
                 return;
             }
 
