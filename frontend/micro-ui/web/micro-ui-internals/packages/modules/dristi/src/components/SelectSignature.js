@@ -98,7 +98,7 @@ function SelectSignature({ t, config, onSelect, formData = {}, errors }) {
         localStorage.setItem("eSignWindowObject", JSON.stringify(eSignData));
         const form = document.createElement("form");
         form.method = "POST";
-        form.action = "https://es-staging.cdac.in/esignlevel1/2.1/form/signdoc";
+        form.action = "https://es-staging.cdac.in/esignlevel2/2.1/form/signdoc";
         const eSignRequestInput = document.createElement("input");
         eSignRequestInput.type = "hidden";
         eSignRequestInput.name = "eSignRequest";
