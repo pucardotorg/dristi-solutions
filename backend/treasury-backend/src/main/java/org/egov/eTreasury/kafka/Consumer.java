@@ -35,6 +35,7 @@ public class Consumer {
         try {
             TreasuryPaymentRequest request = objectMapper.convertValue(recordMap, TreasuryPaymentRequest.class);
             log.info("received payload {} :",request);
+            log.info("received record {} :",recordMap);
             paymentService.callCollectionServiceAndUpdatePayment(request);
         } catch (final Exception e) {
             log.error("Error while listening to value: {}: ", recordMap, e);

@@ -311,6 +311,12 @@ public class PaymentService {
             if (config.isTest()) {
                 totalAmountPaid = BigDecimal.valueOf(request.getTreasuryPaymentData().getTotalDue());
             }
+            else if(paymentStatus.equals("N")){
+                return;
+            }
+            log.info("Total Amount Paid : {} ",totalAmountPaid);
+            log.info("Total Due : {} ",request.getTreasuryPaymentData().getTotalDue());
+            log.info("Is Test : {} ",config.isTest());
 
         PaymentDetail paymentDetail = PaymentDetail.builder()
                 .billId(request.getTreasuryPaymentData().getBillId())

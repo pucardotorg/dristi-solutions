@@ -37,6 +37,8 @@ public class TreasuryEnrichment {
         } else {
             challanAmount = String.valueOf(challanData.getTotalDue());
         }
+        log.info("Challan Amount: {}", challanAmount);
+        log.info("Is Test: {}", config.isTest());
         String noOfHeads = String.valueOf(1);
         List<HeadDetails> headDetailsList = new ArrayList<>();
         HeadDetails headDetails  = HeadDetails.builder()
