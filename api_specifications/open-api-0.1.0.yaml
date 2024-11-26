@@ -6,13 +6,13 @@ info:
 tags:
   - name: Open APIs
 paths:
-  /openapi/{tenantID}/case/cnr/{cnrNumber}:
+  /openapi/v1/{tenantID}/case/cnr/{cnrNumber}:
     get:
       tags:
         - Open APIs
       summary: get case summary by cnr number
       description: The API is used to get case summary details using the case CNR Number within a specific tenant. 
-                  example - GET /openapi/KL/case/cnr/KLKM520008652024
+                  example - GET /openapi/v1/KL/case/cnr/KLKM520008652024
       operationId: getCaseByCNR
       parameters:
         - name: tenantID
@@ -46,14 +46,14 @@ paths:
               schema:
                 $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes
 
-  /openapi/{tenantID}/case/{year}/{caseType}:
+  /openapi/v1/{tenantID}/case/{year}/{caseType}:
     get:
       tags:
         - Open APIs
       summary: get case summary by case number for a specific year
       description: The API is used to get case summary details within a specific tenant. The parameters are year, type of the case (CMP, CC or ST) and the case number. 
-          example -  1. GET /openapi/{tenantID}/case/2024/CMP/?page=1&size=10&sort=registrationDate,desc
-                  -  2. GET /openapi/{tenantID}/case/2024/CMP/?caseNumber=CMP/15/2024
+          example -  1. GET /openapi/v1/KL/case/2024/CMP/?page=1&size=10&sort=registrationDate,desc
+                  -  2. GET /openapi/v1/KL/case/2024/CMP/?caseNumber=CMP/15/2024
       operationId: getCaseByCaseNumber
       parameters:
         - name: tenantID
