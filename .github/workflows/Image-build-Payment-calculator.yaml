@@ -50,11 +50,11 @@ jobs:
         with:
           sarif_file: reports/dependency-check-report.sarif
         if: always()
-      # - name: Build and analyze for payment-calculator-svc
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GHUB_TOKEN }}
-      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      #   run: mvn -B -f backend/payment-calculator-svc/pom.xml package org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=solutions_payment-calculator-svc -Dsonar.organization=solutions -Dsonar.host.url=https://sonarcloud.io/ -Dsonar.qualitygate.wait=true
+      - name: Build and analyze for payment-calculator-svc
+        env:
+          GITHUB_TOKEN: ${{ secrets.GHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: mvn -B -f backend/payment-calculator-svc/pom.xml package org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=solutions_payment-calculator-svc -Dsonar.organization=solutions -Dsonar.host.url=https://sonarcloud.io/ -Dsonar.qualitygate.wait=true
 
       # Login to Azure Container Registry
       - name: Login to Azure Container Registry
