@@ -241,7 +241,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     breakupResponse,
   ]);
 
-  const { openPaymentPortal, paymentLoader } = usePaymentProcess({
+  const { fetchBill, openPaymentPortal, paymentLoader } = usePaymentProcess({
     tenantId,
     consumerCode: `${taskNumber}_${suffix}`,
     service: businessService,
@@ -261,20 +261,12 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     }
   }, [channelId]);
 
-  const { data: billResponse, isLoading: isBillLoading } = Digit.Hooks.dristi.useBillSearch(
-    {},
-    {
-      tenantId,
-      consumerCode: `${taskNumber}_${suffix}`,
-      service: businessService,
-    },
-    `billResponse-${businessService}${taskNumber}`,
-    Boolean(taskNumber && businessService)
-  );
+  // const { data: billResponse, isLoading: isBillLoading } = fetchBill(`${taskNumber}_${suffix}`, tenantId, businessService);
 
   const feeOptions = useMemo(() => {
     const onPayOnline = async () => {
       try {
+        const billResponse = await fetchBill(`${taskNumber}_${suffix}`, tenantId, businessService);
         if (!billResponse?.Bill?.length) {
           console.log("Bill not found");
           return null;
@@ -382,8 +374,8 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     };
   }, [
     courtFeeAmount,
-    billResponse,
     openPaymentPortal,
+    businessService,
     tenantId,
     mockSubmitModalInfo,
     caseDetails?.caseTitle,
@@ -475,7 +467,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       ),
     };
   }, [channelId, feeOptions, history, infos, isCaseAdmitted, links, orderDate, orderType, paymentLoader, isUserAdv]);
-  if (isOrdersLoading || isPaymentTypeLoading || isSummonsBreakUpLoading || isBillLoading) {
+  if (isOrdersLoading || isPaymentTypeLoading || isSummonsBreakUpLoading) {
     return <Loader />;
   }
   return <DocumentModal config={paymentForSummonModalConfig} />;

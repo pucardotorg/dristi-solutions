@@ -205,16 +205,6 @@ const PaymentForRPADModal = ({ path }) => {
 
   const service = useMemo(() => (orderType === "SUMMONS" ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE), [orderType]);
   const taskType = useMemo(() => getTaskType(service), [service]);
-  const { data: courtBillResponse, isLoading: isCourtBillLoading } = Digit.Hooks.dristi.useBillSearch(
-    {},
-    {
-      tenantId,
-      consumerCode: `${taskNumber}_EPOST_COURT`,
-      service: service,
-    },
-    `courtBillResponse-${service}${taskNumber}`,
-    Boolean(taskNumber)
-  );
 
   const summonsPincode = useMemo(() => filteredTasks?.[0]?.taskDetails?.respondentDetails?.address?.pincode, [filteredTasks]);
   const channelId = useMemo(() => extractFeeMedium(filteredTasks?.[0]?.taskDetails?.deliveryChannels?.channelName || ""), [filteredTasks]);
@@ -240,7 +230,7 @@ const PaymentForRPADModal = ({ path }) => {
     breakupResponse,
   ]);
 
-  const { openPaymentPortal, paymentLoader } = usePaymentProcess({
+  const { fetchBill, openPaymentPortal, paymentLoader } = usePaymentProcess({
     tenantId,
     consumerCode: consumerCode,
     service: service,
@@ -265,6 +255,7 @@ const PaymentForRPADModal = ({ path }) => {
 
     const onPayOnline = async () => {
       try {
+        const courtBillResponse = await fetchBill(`${taskNumber}_EPOST_COURT`, tenantId, service);
         if (!courtBillResponse?.Bill?.length) {
           console.error("Bill not found");
           return null;
@@ -370,8 +361,8 @@ const PaymentForRPADModal = ({ path }) => {
   }, [
     caseDetails?.caseTitle,
     caseDetails?.filingNumber,
-    courtBillResponse,
     courtFeeAmount,
+    service,
     dayInMillisecond,
     filingNumber,
     filteredTasks,
@@ -448,7 +439,7 @@ const PaymentForRPADModal = ({ path }) => {
     };
   }, [orderType, infos, links, feeOptions, orderDate, paymentLoader, isCaseAdmitted, isUserAdv, history]);
 
-  if (isOrdersLoading || isSummonsBreakUpLoading || isCourtBillLoading) {
+  if (isOrdersLoading || isSummonsBreakUpLoading) {
     return <Loader />;
   }
 
