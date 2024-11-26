@@ -176,6 +176,8 @@ public class PdfEmbedder {
             appearance.setCryptoDictionary(dic);
             appearance.preClose(exc);
 
+            PdfSignatureAppearanceCache.put(eSignParameter.getFileStoreId(), appearance);
+
             InputStream is = appearance.getRangeStream();
             hashDocument = DigestUtils.sha256Hex(is);
 
