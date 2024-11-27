@@ -344,7 +344,7 @@ async function search_pdf(tenantId, fileStoreId, requestInfo) {
 
     return response;
   } catch (error) {
-    console.log(error);
+    console.log(error.response.data);
     logger.error(
       `Error in ${config.paths.filestore_create + "/url"}: ${error.message}`
     );
