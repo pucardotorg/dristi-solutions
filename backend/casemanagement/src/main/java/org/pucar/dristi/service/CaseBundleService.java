@@ -163,6 +163,7 @@ public class CaseBundleService {
                     caseBundlePdfRequest.setIndex(indexJson);
                     caseBundlePdfRequest.setCaseNumber(responseCaseNumber.getCaseNumber());
                     caseBundlePdfRequest.setCaseObject(responseCaseNumber.getCaseResponse());
+                    caseBundlePdfRequest.setTenantId(tenantId);
 
                     StringBuilder url = new StringBuilder();
                     url.append(configuration.getCaseBundlePdfHost()).append(configuration.getCaseBundlePdfPath());

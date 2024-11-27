@@ -207,10 +207,16 @@ public class CaseBundleIndexBuilderService {
 
         String caseId = ((LinkedHashMap<String, Object>) record.get("cases")).get("id").toString();
 
+        String tenantId = ((LinkedHashMap<String, Object>) record.get("cases")).get("tenantId").toString();
+
         JsonNode caseData = objectMapper.readTree(caseDataResource.getInputStream());
 
         if (caseData.has("caseID") && caseData instanceof ObjectNode) {
             ((ObjectNode) caseData).put("caseID", caseId);
+        }
+
+        if (caseData.has("tenantId") && caseData instanceof ObjectNode) {
+            ((ObjectNode) caseData).put("tenantId", tenantId);
         }
 
         String esUpdateUrl = configuration.getEsHostUrl() + configuration.getCaseBundleIndex() + "/_doc/" + caseId;

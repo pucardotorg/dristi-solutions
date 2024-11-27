@@ -36,5 +36,9 @@ public class CaseBundlePdfRequest   {
     @Valid
     private String caseNumber = null;
 
+    @JsonProperty("tenantId")
+    @NotNull
+    private String tenantId = null;
+
 
 }
