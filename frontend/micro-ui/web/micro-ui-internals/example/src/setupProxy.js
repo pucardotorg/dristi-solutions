@@ -123,5 +123,7 @@ module.exports = function (app) {
   ].forEach((location) => app.use(location, createProxy));
   ["/pb-egov-assets"].forEach((location) => app.use(location, assetsProxy));
   ["/mdms-v2/v2/_create"].forEach((location) => app.use(location, mdmsProxy));
-  ["/pucar-filestore/kl/ScrutinyCheckList.pdf"].forEach((location) => app.use(location, pucarAssetProxy));
+  ["/pucar-filestore/kl/ScrutinyCheckList.pdf", "/pucar-filestore/kl/RequiredDocumentsList.pdf"].forEach((location) =>
+    app.use(location, pucarAssetProxy)
+  );
 };

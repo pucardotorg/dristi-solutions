@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import axios from "axios";
 
 const useDownloadPdfWithLink = () => {
-  const downloadPdfWithLink = useCallback(async (url) => {
+  const downloadPdfWithLink = useCallback(async (url, fileName) => {
     if (!Boolean(url)) {
       return;
     }
@@ -19,7 +19,7 @@ const useDownloadPdfWithLink = () => {
 
       const link = document.createElement("a");
       link.href = blobUrl;
-      link.download = `downloadedFile.${extension}`;
+      link.download = `${fileName}.${extension}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

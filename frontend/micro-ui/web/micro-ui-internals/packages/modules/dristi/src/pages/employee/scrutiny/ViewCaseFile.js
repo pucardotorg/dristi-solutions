@@ -68,7 +68,7 @@ function ViewCaseFile({ t, inViewCase = false }) {
 
   const { downloadPdfWithLink } = useDownloadPdfWithLink();
 
-  const url = "/pucar-filestore/kl/ScrutinyCheckList.pdf";
+  const checkListLink = "/pucar-filestore/kl/ScrutinyCheckList.pdf";
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     if (JSON.stringify(formData) !== JSON.stringify(formdata.data)) {
@@ -603,7 +603,10 @@ function ViewCaseFile({ t, inViewCase = false }) {
                   </div>
                   <h3 className="item-text">
                     {t("CS_REFERENCE_RELATED_FIELDS")}{" "}
-                    <span onClick={() => downloadPdfWithLink(url)} style={{ color: "#007e7e", textDecoration: "underline", cursor: "pointer" }}>
+                    <span
+                      onClick={() => downloadPdfWithLink(checkListLink, "ScrutinyCheckList")}
+                      style={{ color: "#007e7e", textDecoration: "underline", cursor: "pointer" }}
+                    >
                       {t("CS_HERE")}
                     </span>
                   </h3>
