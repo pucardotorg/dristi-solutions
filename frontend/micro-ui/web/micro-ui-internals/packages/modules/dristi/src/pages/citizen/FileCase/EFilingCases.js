@@ -269,9 +269,9 @@ function EFilingCases({ path }) {
       tenantId,
     },
     {},
-    "dristi",
+    `dristi-${caseId}`,
     caseId,
-    caseId
+    Boolean(caseId)
   );
 
   const getAllKeys = useMemo(() => {

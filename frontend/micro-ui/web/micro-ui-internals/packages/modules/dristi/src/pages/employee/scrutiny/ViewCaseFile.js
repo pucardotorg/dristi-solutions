@@ -114,7 +114,7 @@ function ViewCaseFile({ t, inViewCase = false }) {
       tenantId,
     },
     {},
-    "dristi",
+    `dristi-${caseId}`,
     caseId,
     Boolean(caseId)
   );

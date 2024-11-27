@@ -39,9 +39,9 @@ function SelectSignature({ t, config, onSelect, formData = {}, errors }) {
       tenantId,
     },
     {},
-    "dristi",
-    true,
-    true
+    `dristi-${caseId}`,
+    caseId,
+    Boolean(caseId)
   );
 
   function setValue(configkey, value, input) {
