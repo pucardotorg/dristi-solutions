@@ -109,9 +109,15 @@ async function buildCasePdf(caseNumber, index, requestInfo, tenantId) {
 
         try {
           // Fetch PDF from fileStoreId
-          const pdfResponse = await search_pdf(tenantId, item.fileStoreId, requestInfo);
-          console.log(pdfResponse);
-          if (pdfResponse.status === 200 && pdfResponse.data[item.fileStoreId]) {
+          const pdfResponse = await search_pdf(
+            tenantId,
+            item.fileStoreId,
+            requestInfo
+          );
+          if (
+            pdfResponse.status === 200 &&
+            pdfResponse.data[item.fileStoreId]
+          ) {
             const pdfUrl = pdfResponse.data[item.fileStoreId];
             const pdfFetchResponse = await axios.get(pdfUrl, {
               responseType: "arraybuffer",
@@ -139,9 +145,13 @@ async function buildCasePdf(caseNumber, index, requestInfo, tenantId) {
             );
             copiedPages.forEach((page) => mergedPdf.addPage(page));
 
-            console.log(`Successfully appended pages from fileStoreId: ${item.fileStoreId}`);
+            console.log(
+              `Successfully appended pages from fileStoreId: ${item.fileStoreId}`
+            );
           } else {
-            console.error(`Failed to fetch PDF for fileStoreId: ${item.fileStoreId}`);
+            console.error(
+              `Failed to fetch PDF for fileStoreId: ${item.fileStoreId}`
+            );
           }
         } catch (error) {
           console.error(
@@ -165,12 +175,15 @@ async function buildCasePdf(caseNumber, index, requestInfo, tenantId) {
     });
 
     // Create a temporary directory and unique file name
-    const directoryPath = process.env.TEMP_FILES_DIR || path.join(__dirname, "../case-bundles");
+    const directoryPath =
+      process.env.TEMP_FILES_DIR || path.join(__dirname, "../case-bundles");
     if (!fs.existsSync(directoryPath)) {
       fs.mkdirSync(directoryPath, { recursive: true });
     }
 
-    const tempFileName = `bundle-${Date.now()}-${Math.random().toString(36).slice(2)}.pdf`;
+    const tempFileName = `bundle-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2)}.pdf`;
     const filePath = path.join(directoryPath, tempFileName);
 
     try {
@@ -179,7 +192,6 @@ async function buildCasePdf(caseNumber, index, requestInfo, tenantId) {
       fs.writeFileSync(filePath, pdfBytes);
 
       // Upload the merged PDF and update the index
-      const tenantId = index.tenantId;
       const fileStoreResponse = await create_file(
         filePath,
         tenantId,
