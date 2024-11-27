@@ -15,7 +15,7 @@ import { reviewCaseFileFormConfig } from "../../citizen/FileCase/Config/reviewca
 
 import Button from "../../../components/Button";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
-import useDownloadPdfWithLink from "../../../hooks/dristi/useDownloadPdfWithLink";
+import downloadPdfWithLink from "../../../Utils/downloadPdfWithLink";
 
 const downloadButtonStyle = {
   backgroundColor: "white",
@@ -65,8 +65,6 @@ function ViewCaseFile({ t, inViewCase = false }) {
   const [highlightChecklist, setHighlightChecklist] = useState(false);
 
   const { downloadPdf } = useDownloadCasePdf();
-
-  const { downloadPdfWithLink } = useDownloadPdfWithLink();
 
   const checkListLink = "/pucar-filestore/kl/ScrutinyCheckList.pdf";
 
@@ -604,7 +602,7 @@ function ViewCaseFile({ t, inViewCase = false }) {
                   <h3 className="item-text">
                     {t("CS_REFERENCE_RELATED_FIELDS")}{" "}
                     <span
-                      onClick={() => downloadPdfWithLink(checkListLink, "ScrutinyCheckList")}
+                      onClick={async () => await downloadPdfWithLink(checkListLink, "ScrutinyCheckList")}
                       style={{ color: "#007e7e", textDecoration: "underline", cursor: "pointer" }}
                     >
                       {t("CS_HERE")}

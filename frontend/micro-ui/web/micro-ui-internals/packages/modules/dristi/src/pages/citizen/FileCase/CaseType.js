@@ -11,7 +11,7 @@ import { userTypeOptions } from "../registration/config";
 import SelectCustomNote from "../../../components/SelectCustomNote";
 import _ from "lodash";
 import useGetStatuteSection from "../../../hooks/dristi/useGetStatuteSection";
-import useDownloadPdfWithLink from "../../../hooks/dristi/useDownloadPdfWithLink";
+import downloadPdfWithLink from "../../../Utils/downloadPdfWithLink";
 const customNoteConfig = {
   populators: {
     inputs: [
@@ -37,7 +37,6 @@ function CaseType({ t }) {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [page, setPage] = useState(0);
   const [isDisabled, setIsDisabled] = useState(false);
-  const { downloadPdfWithLink } = useDownloadPdfWithLink();
   const requiredDocumentsListLink = "/pucar-filestore/kl/RequiredDocumentsList.pdf";
 
   const onCancel = () => {
@@ -150,7 +149,7 @@ function CaseType({ t }) {
           icon={<FileDownloadIcon />}
           className="download-button"
           label={t("CS_COMMON_DOWNLOAD")}
-          onButtonClick={() => downloadPdfWithLink(requiredDocumentsListLink, "RequiredDocuments")}
+          onButtonClick={async () => await downloadPdfWithLink(requiredDocumentsListLink, "RequiredDocuments")}
         />
         <div className="right-div">
           <Button

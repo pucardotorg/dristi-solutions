@@ -29,7 +29,6 @@ import useWorkflowDetails from "./dristi/useWorkflowDetails.js";
 import useSummonsPaymentBreakUp from "./dristi/useSummonsPaymentBreakUp.js";
 import { extractFeeMedium, getTaskType, combineMultipleFiles } from "../Utils/index.js";
 import useRepondentPincodeDetails from "./dristi/useRepondentPincodeDetails.js";
-import useDownloadPdfWithLink from "./dristi/useDownloadPdfWithLink.js";
 
 export const Urls = {
   Authenticate: "/user/oauth/token",
@@ -107,7 +106,6 @@ const dristi = {
   useJudgeAvailabilityDates,
   useGetOCRData,
   useDownloadCasePdf,
-  useDownloadPdfWithLink,
   useSummonsPaymentBreakUp,
   useRepondentPincodeDetails,
 };
