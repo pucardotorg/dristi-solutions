@@ -41,6 +41,7 @@ language = input("Enter language code (default: en_IN): ").strip() or "en_IN"
 headers = {
     'accept': 'application/json, text/plain, */*',
     'accept-language': 'en-US,en;q=0.7',
+    "Authorization": "Basic ZWdvdi11c2VyLWNsaWVudDo=",
     'content-type': 'application/x-www-form-urlencoded',
     'user-agent': 'Mozilla/5.0'
 }
@@ -77,6 +78,7 @@ for index, env in enumerate(env_list):
     env_url = f"https://{env['url']}/user/oauth/token"
     data['username'] = env['username']
     data['password'] = env['password']
+    data['tenantId'] = env['tenantId']
     print(f"Fetching token for environment: {env['url']}")
     token = get_auth_token(env_url, headers, data)
     if token:
