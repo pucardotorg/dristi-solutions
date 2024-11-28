@@ -116,15 +116,15 @@ var fontDescriptors = {
     normal: "src/fonts/BalooPaaji2-Regular.ttf",
     bold: "src/fonts/BalooPaaji2-Bold.ttf"
   },
-  KartikaMalyalam:{
-    normal: "src/fonts/kartika-regular-unicode-font.ttf",
-    bold: "src/fonts/kartika-bold-unicode-font.ttf"
+  AnekMalayalam:{
+    normal: "src/fonts/AnekMalayalam-Regular.ttf",
+    bold: "src/fonts/AnekMalayalam-SemiBold.ttf"
   }
 };
 
 var defaultFontMapping = {
-  en_IN: 'KartikaMalyalam',
-  ml_IN: 'KartikaMalyalam',
+  en_IN: 'AnekMalayalam',
+  ml_IN: 'AnekMalayalam',
   hi_IN: 'default',
   pn_IN: 'BalooPaaji',
   od_IN: 'BalooBhaina',
