@@ -124,7 +124,7 @@ async function search_mdms(
         MdmsCriteria: {
           tenantId: tenantID,
           schemaCode: schemaCode,
-          uniqueIdentifiers: [uniqueIdentifier],
+          ...(uniqueIdentifier && { uniqueIdentifiers: [uniqueIdentifier] }),
         },
       },
     });

@@ -3,6 +3,7 @@ const {
   search_case_v2,
   create_pdf_v2,
   create_file_v2,
+  search_mdms,
 } = require("../api"); // Removed create_pdf import
 const fs = require("fs");
 const path = require("path");
@@ -127,72 +128,6 @@ const MASTER_DATA = [
   { name: "Vakalatnama", section: "vakalat", docType: null, isActive: true },
 ];
 
-// // Function to retrieve documents from the master data
-// function getDocumentsForSection(sectionName) {
-//   return MASTER_DATA.filter(
-//     (doc) => doc.section === sectionName && doc.isActive
-//   );
-// }
-
-// // Function to process documents for a section
-// async function processSectionDocuments(tenantId, section, requestInfo) {
-//   const fileStoreIds = [];
-
-//   console.log(`Processing section: ${section.name}`);
-
-//   const documents = getDocumentsForSection(section.name);
-//   if (documents.length === 0) {
-//     console.log(`No active documents found for section: ${section.name}`);
-//     return fileStoreIds;
-//   }
-
-//   for (const doc of documents) {
-//     // Simulate retrieving the fileStoreId (in a real scenario, fetch from the database or service)
-//     const fileStoreId = `fileStore-${doc.docType}-${Date.now()}`;
-//     console.log(
-//       `Validating fileStoreId: ${fileStoreId} for document: ${doc.name}`
-//     );
-
-//     // Validate the fileStoreId
-//     const pdfResponse = await search_pdf(tenantId, fileStoreId, requestInfo);
-//     if (pdfResponse.status !== 200) {
-//       console.error(
-//         `Invalid fileStoreId: ${fileStoreId} for document: ${doc.name}`
-//       );
-//       continue;
-//     }
-
-//     fileStoreIds.push(fileStoreId);
-//   }
-
-//   return fileStoreIds;
-// }
-
-// // Function to merge PDFs
-// async function mergePdfs(fileStoreIds, tenantId) {
-//   const mergedPdf = await PDFDocument.create();
-
-//   for (const fileStoreId of fileStoreIds) {
-//     const pdfResponse = await search_pdf(tenantId, fileStoreId);
-//     if (pdfResponse.status === 200) {
-//       const pdfUrl = pdfResponse.data[fileStoreId];
-//       const pdfFetchResponse = await axios.get(pdfUrl, {
-//         responseType: "arraybuffer",
-//       });
-//       const pdfData = pdfFetchResponse.data;
-
-//       const pdfDoc = await PDFDocument.load(pdfData);
-//       const copiedPages = await mergedPdf.copyPages(
-//         pdfDoc,
-//         pdfDoc.getPageIndices()
-//       );
-//       copiedPages.forEach((page) => mergedPdf.addPage(page));
-//     }
-//   }
-
-//   return mergedPdf;
-// }
-
 /**
  *
  * @param  {...PDFDocument} pdfDocuments
@@ -239,13 +174,13 @@ async function persistPDF(pdfDoc, tenantId, requestInfo) {
 
 /**
  *
- * @param {MASTER_DATA} caseBundleMasterData
+ * @param {import("./buildCasePdf").CaseBundleMaster[]} caseBundleMasterData
  * @param {string} sectionName
  * @returns
  */
 function filterCaseBundleBySection(caseBundleMasterData, sectionName) {
   return caseBundleMasterData.filter(
-    (indexItem) => indexItem.section === sectionName && indexItem.isActive
+    (indexItem) => indexItem.name === sectionName && indexItem.isactive
   );
 }
 
@@ -374,9 +309,17 @@ async function processPendingAdmissionCase({
   requestInfo,
 }) {
   const indexCopy = cloneDeep(index);
-
-  // TODO: fetch case-bundle-master master data
-  const caseBundleMaster = MASTER_DATA;
+  /**
+   * @type {import("./buildCasePdf").CaseBundleMaster[]}
+   */
+  const caseBundleMaster = await search_mdms(
+    null,
+    "CaseManagement.case_bundle_master",
+    tenantId,
+    requestInfo
+  ).then((mdmsRes) => {
+    return mdmsRes.data.mdms.filter((x) => x.isActive).map((x) => x.data);
+  });
 
   const caseResponse = await search_case_v2(
     [

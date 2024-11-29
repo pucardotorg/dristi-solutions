@@ -1,76 +1,35 @@
-const { search_pdf, create_file } = require("../api");
+const { search_pdf, create_file, search_mdms } = require("../api");
 const { PDFDocument, rgb } = require("pdf-lib");
 const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
 
-// Mock Case Bundle Design
-const caseBundleDesignMock = [
-  {
-    section_name: "Case Cover Page",
-    isEnabled: true,
-    title: "Case Cover Page",
-    hasHeader: false,
-    hasFooter: true,
-    name: "titlepage",
-    doctype: null,
-    docketpagerequired: "no",
-    sorton: null,
-    isactive: "yes",
-  },
-  {
-    section_name: "Case History",
-    isEnabled: true,
-    title: "Case History",
-    hasHeader: false,
-    hasFooter: false,
-    name: "adiary",
-    doctype: null,
-    docketpagerequired: "no",
-    sorton: null,
-    isactive: "no",
-  },
-  {
-    section_name: "Pending Applications",
-    isEnabled: true,
-    title: "Pending Applications",
-    hasHeader: true,
-    hasFooter: true,
-    name: "pendingapplications",
-    doctype: "applicationNumber",
-    docketpagerequired: "yes",
-    sorton: "applicationNumber",
-    isactive: "yes",
-  },
-  {
-    section_name: "Complaint",
-    isEnabled: true,
-    title: "Complaint",
-    hasHeader: false,
-    hasFooter: true,
-    name: "complaint",
-    doctype: null,
-    docketpagerequired: "yes",
-    sorton: null,
-    isactive: "yes",
-  },
-  {
-    section_name: "Affidavit",
-    isEnabled: true,
-    title: "Affidavit",
-    hasHeader: false,
-    hasFooter: true,
-    name: "affidavit",
-    doctype: null,
-    docketpagerequired: "yes",
-    sorton: null,
-    isactive: "yes",
-  },
-];
+/**
+ * @typedef CaseBundleMaster
+ * @type {object}
+ * @property {string} Items
+ * @property {string} docketpagerequired
+ * @property {string} doctypeid
+ * @property {string} id
+ * @property {string} isactive
+ * @property {string} name
+ * @property {string} section
+ * @property {string} sorton
+ */
 
 async function buildCasePdf(caseNumber, index, requestInfo, tenantId) {
   try {
-    const caseBundleDesign = caseBundleDesignMock;
+    /**
+     * @type {CaseBundleMaster[]}
+     */
+    const caseBundleDesign = await search_mdms(
+      null,
+      "CaseManagement.case_bundle_master",
+      tenantId,
+      requestInfo
+    ).then((mdmsRes) => {
+      return mdmsRes.data.mdms.filter((x) => x.isActive).map((x) => x.data);
+    });
 
     if (!caseBundleDesign || caseBundleDesign.length === 0) {
       throw new Error("No case bundle design found in MDMS.");
@@ -87,7 +46,7 @@ async function buildCasePdf(caseNumber, index, requestInfo, tenantId) {
       }
 
       const sectionConfig = caseBundleDesign.find(
-        (design) => design.name === section.name && design.isEnabled
+        (design) => design.name === section.name && design.isactive
       );
 
       if (!sectionConfig) {
