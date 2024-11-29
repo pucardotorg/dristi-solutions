@@ -269,9 +269,9 @@ function EFilingCases({ path }) {
       tenantId,
     },
     {},
-    "dristi",
+    `dristi-${caseId}`,
     caseId,
-    caseId
+    Boolean(caseId)
   );
 
   const getAllKeys = useMemo(() => {
@@ -638,14 +638,42 @@ function EFilingCases({ path }) {
                         input?.key === "advocateDetails"
                           ? caseDetails?.additionalDetails?.[input?.key]?.formdata?.[0]?.data?.advocateName
                             ? caseDetails?.additionalDetails?.[input?.key]?.formdata
-                            : [{ data: { advocateName: "", barRegistrationNumber: "", vakalatnamaFileUpload: {} } }]
+                            : [
+                                {
+                                  data: {
+                                    advocateName: "",
+                                    barRegistrationNumber: "",
+                                    vakalatnamaFileUpload: {},
+                                    isAdvocateRepresenting: {
+                                      code: "NO",
+                                      name: "No",
+                                      showForm: true,
+                                      isEnabled: true,
+                                    },
+                                  },
+                                },
+                              ]
                           : caseDetails?.additionalDetails?.[input?.key]?.formdata || caseDetails?.caseDetails?.[input?.key]?.formdata || {};
                       if (isCaseReAssigned) {
                         dataobj =
                           input?.key === "advocateDetails"
                             ? errorCaseDetails?.additionalDetails?.[input?.key]?.formdata?.[0]?.data?.advocateName
                               ? errorCaseDetails?.additionalDetails?.[input?.key]?.formdata
-                              : [{ data: { advocateName: "", barRegistrationNumber: "", vakalatnamaFileUpload: {} } }]
+                              : [
+                                  {
+                                    data: {
+                                      advocateName: "",
+                                      barRegistrationNumber: "",
+                                      vakalatnamaFileUpload: {},
+                                      isAdvocateRepresenting: {
+                                        code: "NO",
+                                        name: "No",
+                                        showForm: true,
+                                        isEnabled: true,
+                                      },
+                                    },
+                                  },
+                                ]
                             : errorCaseDetails?.additionalDetails?.[input?.key]?.formdata ||
                               errorCaseDetails?.caseDetails?.[input?.key]?.formdata ||
                               {};
@@ -1887,6 +1915,7 @@ function EFilingCases({ path }) {
             tenantId: tenantId,
             caseId: caseId,
             delayCondonation: delayCondonation,
+            filingNumber: caseDetails?.filingNumber,
           },
         ],
       },
