@@ -116,15 +116,15 @@ var fontDescriptors = {
     normal: "src/fonts/BalooPaaji2-Regular.ttf",
     bold: "src/fonts/BalooPaaji2-Bold.ttf"
   },
-  AnekMalayalam:{
-    normal: "src/fonts/AnekMalayalam-Regular.ttf",
-    bold: "src/fonts/AnekMalayalam-SemiBold.ttf"
+  MalayalamSangamMn:{
+    normal: "src/fonts/malayalam-sangam-mn.ttf",
+    bold: "src/fonts/malayalam-sangam-mn-bold.ttf"
   }
 };
 
 var defaultFontMapping = {
-  en_IN: 'AnekMalayalam',
-  ml_IN: 'AnekMalayalam',
+  en_IN: 'MalayalamSangamMn',
+  ml_IN: 'MalayalamSangamMn',
   hi_IN: 'default',
   pn_IN: 'BalooPaaji',
   od_IN: 'BalooBhaina',
