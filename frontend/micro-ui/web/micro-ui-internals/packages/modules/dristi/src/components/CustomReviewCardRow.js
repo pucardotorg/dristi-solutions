@@ -670,7 +670,7 @@ const CustomReviewCardRow = ({
         }
 
         return (
-          <div className={`address-main ${bgclassname}`}>
+          <div className={`address-main ${bgclassname}`} style={{ borderBottom: "1px #e8e8e8 solid" }}>
             <div className="address">
               <div className="label">{t(label)}</div>
               <div className={`value ${!isScrutiny ? "column" : ""}`}>

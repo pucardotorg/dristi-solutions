@@ -430,6 +430,11 @@ export const reviewCaseFileFormConfig = [
                   value: "witnessAge",
                 },
                 {
+                  type: "text",
+                  label: "WITNESS_DESIGNATION",
+                  value: "witnessDesignation",
+                },
+                {
                   type: "address",
                   label: "ADDRESS",
                   value: "addressDetails",
