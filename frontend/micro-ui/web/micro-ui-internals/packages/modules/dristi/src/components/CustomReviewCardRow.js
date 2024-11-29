@@ -726,7 +726,7 @@ const CustomReviewCardRow = ({
           <div>
             <div className="text">
               <div className="label">{t(label)}</div>
-              <div className="value" >
+              <div className="value">
                 {Array.isArray(defaulValue) && defaulValue.map((text) => <div> {text || t("")} </div>)}
                 {(!Array.isArray(defaulValue) && defaulValue) || t("")}
               </div>
