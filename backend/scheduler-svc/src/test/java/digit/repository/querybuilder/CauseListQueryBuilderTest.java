@@ -19,8 +19,13 @@ public class CauseListQueryBuilderTest {
     @InjectMocks
     private CauseListQueryBuilder queryBuilder;
 
+    private List<Object> preparedStmtList;
+    private List<Integer> preparedStmtArgsList;
+
     @BeforeEach
     void setUp() {
+        preparedStmtList = new ArrayList<>();
+        preparedStmtArgsList = new ArrayList<>();
         MockitoAnnotations.openMocks(this);
     }
 
@@ -32,8 +37,7 @@ public class CauseListQueryBuilderTest {
         criteria.setCaseIds(Arrays.asList("case1", "case2"));
         criteria.setSearchDate(LocalDate.of(2023, 1, 1));
 
-        List<String> preparedStmtList = new ArrayList<>();
-        String query = queryBuilder.getCauseListQuery(criteria, preparedStmtList);
+        String query = queryBuilder.getCauseListQuery(criteria, preparedStmtList, preparedStmtArgsList);
 
         assertNotNull(query);
         assertEquals(6, preparedStmtList.size());
@@ -43,8 +47,7 @@ public class CauseListQueryBuilderTest {
     void testGetCauseListQuery_EmptyCriteria() {
         CauseListSearchCriteria criteria = new CauseListSearchCriteria();
 
-        List<String> preparedStmtList = new ArrayList<>();
-        String query = queryBuilder.getCauseListQuery(criteria, preparedStmtList);
+        String query = queryBuilder.getCauseListQuery(criteria, preparedStmtList, preparedStmtArgsList);
 
         assertNotNull(query);
         assertEquals(1, preparedStmtList.size());
@@ -55,8 +58,7 @@ public class CauseListQueryBuilderTest {
         CauseListSearchCriteria criteria = new CauseListSearchCriteria();
         criteria.setCourtId("court1");
 
-        List<String> preparedStmtList = new ArrayList<>();
-        String query = queryBuilder.getCauseListQuery(criteria, preparedStmtList);
+        String query = queryBuilder.getCauseListQuery(criteria, preparedStmtList, preparedStmtArgsList);
 
         assertNotNull(query);
         assertEquals(2, preparedStmtList.size());
@@ -67,8 +69,7 @@ public class CauseListQueryBuilderTest {
         CauseListSearchCriteria criteria = new CauseListSearchCriteria();
         criteria.setJudgeIds(Arrays.asList("judge1", "judge2"));
 
-        List<String> preparedStmtList = new ArrayList<>();
-        String query = queryBuilder.getCauseListQuery(criteria, preparedStmtList);
+        String query = queryBuilder.getCauseListQuery(criteria, preparedStmtList, preparedStmtArgsList);
 
         assertNotNull(query);
         assertEquals(3, preparedStmtList.size());
@@ -79,8 +80,7 @@ public class CauseListQueryBuilderTest {
         CauseListSearchCriteria criteria = new CauseListSearchCriteria();
         criteria.setCaseIds(Arrays.asList("case1", "case2"));
 
-        List<String> preparedStmtList = new ArrayList<>();
-        String query = queryBuilder.getCauseListQuery(criteria, preparedStmtList);
+        String query = queryBuilder.getCauseListQuery(criteria, preparedStmtList, preparedStmtArgsList);
 
         assertNotNull(query);
         assertEquals(3, preparedStmtList.size());
@@ -91,8 +91,7 @@ public class CauseListQueryBuilderTest {
         CauseListSearchCriteria criteria = new CauseListSearchCriteria();
         criteria.setSearchDate(LocalDate.of(2023, 1, 1));
 
-        List<String> preparedStmtList = new ArrayList<>();
-        String query = queryBuilder.getCauseListQuery(criteria, preparedStmtList);
+        String query = queryBuilder.getCauseListQuery(criteria, preparedStmtList, preparedStmtArgsList);
 
         assertNotNull(query);
         assertEquals(1, preparedStmtList.size());

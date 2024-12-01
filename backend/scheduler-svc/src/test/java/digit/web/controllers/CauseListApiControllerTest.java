@@ -46,8 +46,8 @@ public class CauseListApiControllerTest {
         ResponseEntity<CauseListResponse> responseEntity = causeListApiController.viewCauseList(searchRequest);
 
         assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode());
-        assertEquals(1, responseEntity.getBody().getCauseList().size());
-        assertEquals(causeList, responseEntity.getBody().getCauseList().get(0));
+        assertEquals(1, responseEntity.getBody().getCauseLists().size());
+        assertEquals(causeList, responseEntity.getBody().getCauseLists().get(0));
     }
 
     @Test

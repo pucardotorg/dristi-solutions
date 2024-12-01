@@ -48,6 +48,12 @@ public class CauseList {
     @JsonProperty("caseDate")
     private String caseDate = null;
 
+    @JsonProperty("applicationNumber")
+    private String applicationNumber = null;
+
+    @JsonProperty("caseNumber")
+    private String caseNumber = null;
+
     public CauseList addLitigantNamesItem(String litigantNamesItem) {
         if (this.litigantNames == null) {
             this.litigantNames = new ArrayList<>();

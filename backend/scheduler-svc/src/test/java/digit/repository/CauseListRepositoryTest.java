@@ -50,26 +50,26 @@ public class CauseListRepositoryTest {
         searchCriteria.setSearchDate(LocalDate.now());
         searchCriteria.setCourtId("court");
 
-        when(queryBuilder.getCauseListQuery(searchCriteria, List.of())).thenReturn("SELECT * FROM cause_list");
+        when(queryBuilder.getCauseListQuery(searchCriteria, List.of(), List.of())).thenReturn("SELECT * FROM cause_list");
         when(jdbcTemplate.query(anyString(), any(Object[].class), any(CauseListRowMapper.class))).thenReturn(causeLists);
 
         causeLists = causeListRepository.getCauseLists(searchCriteria);
 
         assertEquals(1, causeLists.size());
-        verify(queryBuilder).getCauseListQuery(searchCriteria, List.of());
+        verify(queryBuilder).getCauseListQuery(searchCriteria, List.of(), List.of());
         verify(jdbcTemplate).query(anyString(), any(Object[].class), any(CauseListRowMapper.class));
 
     }
 
     @Test
     public void getCauseList_Empty(){
-        when(queryBuilder.getCauseListQuery(searchCriteria, List.of())).thenReturn("SELECT * FROM cause_list");
+        when(queryBuilder.getCauseListQuery(searchCriteria, List.of(), List.of())).thenReturn("SELECT * FROM cause_list");
         when(jdbcTemplate.query(anyString(), any(Object[].class), any(CauseListRowMapper.class))).thenReturn(List.of());
 
         causeLists = causeListRepository.getCauseLists(searchCriteria);
 
         assertEquals(0, causeLists.size());
-        verify(queryBuilder).getCauseListQuery(searchCriteria, List.of());
+        verify(queryBuilder).getCauseListQuery(searchCriteria, List.of(), List.of());
         verify(jdbcTemplate).query(anyString(), any(Object[].class), any(CauseListRowMapper.class));
     }
 

@@ -6,6 +6,7 @@ import digit.util.ResponseInfoFactory;
 import digit.web.models.CauseList;
 import digit.web.models.CauseListSearchRequest;
 import digit.web.models.CauseListResponse;
+import digit.web.models.SlotList;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2024-04-25T11:13:21.813391200+05:30[Asia/Calcutta]")
@@ -44,7 +46,7 @@ public class CauseListApiController {
         List<CauseList> causeLists = causeListService.viewCauseListForTomorrow(searchRequest);
         CauseListResponse causeListResponse = CauseListResponse.builder()
                 .responseInfo(ResponseInfoFactory.createResponseInfo(searchRequest.getRequestInfo(), true))
-                .causeList(causeLists)
+                .causeLists(causeLists)
                 .build();
         log.info("api = /causelist/v1/_view, result = SUCCESS");
         return new ResponseEntity<>(causeListResponse, HttpStatus.CREATED);
