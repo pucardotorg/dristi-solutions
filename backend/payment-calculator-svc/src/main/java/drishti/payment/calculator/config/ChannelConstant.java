@@ -16,6 +16,7 @@ public class ChannelConstant {
 
     private static final Map<String, String> CONSTANTS = new HashMap<>();
 
+
     public static String getConstant(String key) {
         return CONSTANTS.get(key);
     }
