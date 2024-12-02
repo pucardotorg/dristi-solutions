@@ -277,6 +277,22 @@ public class CaseService {
             }
         }
 
+        JsonNode respondentDetailsNode = rootNode.path("respondentDetails")
+                .path("formdata");
+        if (respondentDetailsNode.isArray()) {
+            for (JsonNode respondentNode : respondentDetailsNode) {
+                JsonNode respondentVerificationNode = respondentNode.path("data")
+                        .path("respondentVerification")
+                        .path("individualDetails");
+                if (!respondentVerificationNode.isMissingNode()) {
+                    String individualId = respondentVerificationNode.path("individualId").asText();
+                    if (!individualId.isEmpty()) {
+                        individualIds.add(individualId);
+                    }
+                }
+            }
+        }
+
         JsonNode advocateDetailsNode = rootNode.path("advocateDetails")
                 .path("formdata");
         if (advocateDetailsNode.isArray()) {
@@ -327,6 +343,9 @@ public class CaseService {
         }
         else if(previousStatus.equalsIgnoreCase(PENDING_ADMISSION_HEARING) && updatedStatus.equalsIgnoreCase(ADMISSION_HEARING_SCHEDULED)){
             return ADMISSION_HEARING_SCHEDULED;
+        }
+        else if(previousStatus.equalsIgnoreCase(PENDING_RESPONSE) && updatedStatus.equalsIgnoreCase(CASE_ADMITTED)){
+            return CASE_ADMITTED;
         }
         return null;
     }
