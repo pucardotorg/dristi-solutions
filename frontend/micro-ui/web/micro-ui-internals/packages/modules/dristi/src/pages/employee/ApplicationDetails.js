@@ -83,7 +83,9 @@ const ApplicationDetails = ({ location, match }) => {
     individualData?.Individual,
   ]);
 
-  const isAdvocateViewer = useMemo(() => userRoles?.includes("ADVOCATE_APPLICATION_VIEWER"), [userRoles]);
+  const isAdvocateApplicationViewer = useMemo(() => userRoles?.includes("ADVOCATE_APPLICATION_VIEWER"), [userRoles]);
+
+  const isAdvocateViewer = useMemo(() => userRoles?.includes("ADVOCATE_VIEWER"), [userRoles]);
 
   const identifierIdDetails = useMemo(
     () => JSON.parse(individualData?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "identifierIdDetails")?.value || "{}"),
@@ -234,7 +236,7 @@ const ApplicationDetails = ({ location, match }) => {
     return applicationNo || applicationNumber ? ` ${t("APPLICATION_NUMBER")} ${applicationNo || applicationNumber}` : "My Application";
   }, [applicationNo, applicationNumber, t]);
 
-  if (!isAdvocateViewer) {
+  if (!isAdvocateApplicationViewer) {
     history.push(`/${window?.contextPath}/citizen/dristi/home`);
   }
 
@@ -251,7 +253,7 @@ const ApplicationDetails = ({ location, match }) => {
             <DocumentDetailCard cardData={personalData} />
             {type === "advocate" && userType !== "ADVOCATE_CLERK" && <DocumentDetailCard cardData={barDetails} />}
           </div>
-          {!applicationNo && (
+          {isAdvocateViewer && (
             <div className="action-button-application">
               <SubmitBar
                 label={t("Go_Back_Home")}
