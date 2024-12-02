@@ -132,6 +132,9 @@ public class Configuration {
     @Value("${egov.case.path}")
     private String casePath;
 
+    @Value("${egov.case.search.path}")
+    private String caseSearchPath;
+
     // Order Config
     @Value("${egov.order.host}")
     private String orderHost;
@@ -173,4 +176,27 @@ public class Configuration {
 
     @Value("${role.system.admin}")
     private String systemAdmin;
+
+    //Localization
+    @Value("${egov.localization.host}")
+    private String localizationHost;
+
+    @Value("${egov.localization.context.path}")
+    private String localizationContextPath;
+
+    @Value("${egov.localization.search.endpoint}")
+    private String localizationSearchEndpoint;
+
+    @Value("${egov.sms.notification.notice.delivered.template.id}")
+    private String smsNotificationNoticeDeliveredTemplateId;
+
+    @Value("${egov.sms.notification.notice.delivery.failed.template.id}")
+    private String smsNotificationNoticeNotDeliveredTemplateId;
+
+    //Individual Service
+    @Value("${egov.individual.host}")
+    private String individualHost;
+
+    @Value("${egov.individual.search.path}")
+    private String individualSearchEndpoint;
 }
