@@ -272,7 +272,7 @@ const AdmittedCases = () => {
     allAdvocates,
     userInfo?.uuid,
   ]);
-  const { data: applicationData, isloading: isApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
+  const { data: applicationData, isLoading: isApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
     {
       criteria: {
         filingNumber,
@@ -311,15 +311,17 @@ const AdmittedCases = () => {
     [applicationData, onBehalfOfuuid]
   );
 
-  const isDelayApplicationPending = useMemo(
-    () =>
+  const [isDelayApplicationPending, setIsDelayApplicationPending] = useState(false);
+
+  useMemo(() => {
+    setIsDelayApplicationPending(
       Boolean(
         applicationData?.applicationList?.some(
           (item) => item?.applicationType === "DELAY_CONDONATION" && item?.status === SubmissionWorkflowState.PENDINGAPPROVAL
         )
-      ),
-    [applicationData]
-  );
+      )
+    );
+  }, [applicationData]);
 
   const caseRelatedData = useMemo(
     () => ({
@@ -1900,6 +1902,7 @@ const AdmittedCases = () => {
           showToast={showToast}
           caseData={caseRelatedData}
           caseId={caseId}
+          setIsDelayApplicationPending={setIsDelayApplicationPending}
         />
       )}
       {showOrderReviewModal && (
