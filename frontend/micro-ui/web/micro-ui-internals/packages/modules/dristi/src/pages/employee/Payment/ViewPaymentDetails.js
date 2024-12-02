@@ -2,7 +2,6 @@ import { Loader, SubmitBar, ActionBar, CustomDropdown, CardLabel, LabelFieldPair
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
-import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
 import { useToast } from "../../../components/Toast/useToast";
 import { DRISTIService } from "../../../services";
 import { Urls } from "../../../hooks";
@@ -132,6 +131,7 @@ const ViewPaymentDetails = ({ location, match }) => {
           numberOfApplication: 1,
           tenantId: tenantId,
           caseId: caseId,
+          filingNumber: filingNumber,
           delayCondonation: demandBill?.additionalDetails?.delayCondonation,
         },
       ],
