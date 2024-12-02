@@ -20,7 +20,7 @@ router.post(
       index,
       caseNumber,
       RequestInfo,
-      tenantId = "kl", // FIXME: remove default
+      tenantId,
       // caseDetails
     } = req.body;
 
@@ -75,10 +75,12 @@ router.post(
       });
     }
 
-    logger.info(
-      "recd request to process case bundle for:",
-      JSON.stringify({ caseId, index, state, requestInfo })
-    );
+    logger.info("recd request to process case bundle for:", {
+      caseId,
+      index,
+      state,
+      requestInfo,
+    });
 
     try {
       // Process the case bundle
