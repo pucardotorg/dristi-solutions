@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
-import java.io.IOException;
 import java.security.PrivateKey;
 import java.util.UUID;
 
@@ -73,7 +72,9 @@ public class ESignService {
         Resource resource = fileStoreUtil.fetchFileStoreObjectById(fileStoreId, eSignParameter.getTenantId());
         File destFile = new File(uploadRootDir.getAbsolutePath() + File.separator + fileStoreId);
         eSignParameter.setFilePath(destFile.getAbsolutePath());
-        String fileHash = pdfEmbedder.pdfSigner(resource, destFile, eSignParameter);
+//        String fileHash = pdfEmbedder.pdfSigner(resource, destFile, eSignParameter);
+        String fileHash = pdfEmbedder.pdfSignerV2(resource, eSignParameter);
+
         ESignXmlData eSignXmlData = formDataSetter.setFormXmlData(fileHash, new ESignXmlData());
         eSignXmlData.setTxn(tenantId + "-" + pageModule + "-" + eSignParameter.getId());
         String strToEncrypt = xmlGenerator.generateXml(eSignXmlData);  // this method is writing in testing.xml
@@ -123,17 +124,14 @@ public class ESignService {
         String fileStoreId = eSignDetails.getFileStoreId();
         String tenantId = eSignParameter.getTenantId();
         String response = eSignParameter.getResponse();
-        String filePath =eSignDetails.getFilePath();
+        String filePath = eSignDetails.getFilePath();
+
+        Resource resource = fileStoreUtil.fetchFileStoreObjectById(fileStoreId, tenantId);
 
         MultipartFile multipartFile;
-        try {
-            multipartFile = pdfEmbedder.signPdfWithDSAndReturnMultipartFile(filePath, response, fileStoreId);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        String signedFileStoreId;
-
-        signedFileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
+        multipartFile = pdfEmbedder.signPdfWithDSAndReturnMultipartFileV2(resource, response, eSignDetails);
+//            multipartFile = pdfEmbedder.signPdfWithDSAndReturnMultipartFile(filePath, response, fileStoreId);
+        String signedFileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
 
         eSignDetails.setSignedFileStoreId(signedFileStoreId);
         eSignDetails.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());

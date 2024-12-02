@@ -1,27 +1,29 @@
 package org.drishti.esign.service;
 
+import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.pdf.*;
 import com.itextpdf.text.pdf.parser.PdfContentStreamProcessor;
+import com.itextpdf.text.pdf.security.MakeSignature;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.drishti.esign.config.PdfSignatureAppearanceCache;
 import org.drishti.esign.util.ByteArrayMultipartFile;
+import org.drishti.esign.util.FileStoreUtil;
 import org.drishti.esign.util.TextLocationFinder;
 import org.drishti.esign.web.models.Coordinate;
 import org.drishti.esign.web.models.ESignParameter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.GeneralSecurityException;
 import java.util.Calendar;
 import java.util.HashMap;
 
@@ -32,8 +34,15 @@ import static org.drishti.esign.config.ServiceConstants.*;
 @Slf4j
 public class PdfEmbedder {
 
+    private final FileStoreUtil fileStoreUtil;
 
-    public MultipartFile signPdfWithDSAndReturnMultipartFile(String filepath, String response,String fileStoreId) throws IOException {
+    @Autowired
+    public PdfEmbedder(FileStoreUtil fileStoreUtil) {
+        this.fileStoreUtil = fileStoreUtil;
+    }
+
+
+    public MultipartFile signPdfWithDSAndReturnMultipartFile(String filepath, String response, String fileStoreId) throws IOException {
 
         PdfSignatureAppearance appearance = PdfSignatureAppearanceCache.get(fileStoreId);
 
@@ -92,7 +101,7 @@ public class PdfEmbedder {
         coordinate.setFound(false);
         coordinate.setPageNumber(reader.getNumberOfPages());
 
-        if (signaturePlace == null || signaturePlace.isEmpty() || signaturePlace.isBlank()) {
+        if (signaturePlace == null || signaturePlace.isBlank()) {
             return coordinate;
         }
         TextLocationFinder finder = new TextLocationFinder(signaturePlace);
@@ -135,6 +144,7 @@ public class PdfEmbedder {
     public String pdfSigner(Resource resource, File destFile, ESignParameter eSignParameter) {
 
         String signPlaceHolder = eSignParameter.getSignPlaceHolder();
+
 
         PdfSignatureAppearance appearance;
         String hashDocument = null;
@@ -185,6 +195,80 @@ public class PdfEmbedder {
             log.error("Something went wrong");
         }
         return hashDocument;
+    }
+
+    public MultipartFile signPdfWithDSAndReturnMultipartFileV2(Resource resource, String response, ESignParameter eSignParameter) {
+        try {
+
+            PdfReader reader = new PdfReader(resource.getInputStream());
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+            String pkcsResponse = new XmlSigning().parseXml(response.trim());
+            byte[] sigbytes = Base64.decodeBase64(pkcsResponse);
+            MyExternalSignatureContainer container = new MyExternalSignatureContainer(sigbytes);
+
+            MakeSignature.signDeferred(reader, eSignParameter.getSignPlaceHolder(), baos, container);
+
+            return new ByteArrayMultipartFile(FILE_NAME, baos.toByteArray());
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    public String pdfSignerV2(Resource resource, ESignParameter eSignParameter) {
+        String hashDocument = null;
+
+        try {
+            PdfReader reader = new PdfReader(resource.getInputStream());
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+            String signPlaceHolder = eSignParameter.getSignPlaceHolder();
+
+            PdfStamper stamper = PdfStamper.createSignature(reader, baos, '\0', null, true);
+            PdfSignatureAppearance appearance = stamper.getSignatureAppearance();
+            appearance.setRenderingMode(PdfSignatureAppearance.RenderingMode.DESCRIPTION);
+            appearance.setAcro6Layers(false);// deprecated
+
+            Coordinate locationToSign = findLocationToSign(reader, signPlaceHolder);
+            Rectangle rectangle = new Rectangle(locationToSign.getX(), locationToSign.getY(), locationToSign.getX() + (100), locationToSign.getY() + (50));
+
+            Font font = new Font();
+            font.setSize(6);
+            font.setFamily(FONT_FAMILY);
+            font.setStyle(FONT_STYLE);
+
+            appearance.setLayer2Font(font);
+            Calendar currentDat = Calendar.getInstance();
+            appearance.setSignDate(currentDat);
+            appearance.setLayer2Text("Digitally Signed");
+
+            appearance.setCertificationLevel(PdfSignatureAppearance.NOT_CERTIFIED);
+            appearance.setImage(null);
+            appearance.setVisibleSignature(rectangle,
+                    locationToSign.getPageNumber(), signPlaceHolder);
+            int contentEstimated = 8192;
+
+            InputStream is = appearance.getRangeStream();
+            hashDocument = DigestUtils.sha256Hex(is);
+
+            MyExternalSignatureContainer container = new MyExternalSignatureContainer(new byte[]{0});
+            MakeSignature.signExternalContainer(appearance, container, contentEstimated);
+            MultipartFile dummySignedPdf = new ByteArrayMultipartFile(FILE_NAME, baos.toByteArray());
+
+            String dummyFileStoreId = fileStoreUtil.storeFileInFileStore(dummySignedPdf, "kl");
+
+            eSignParameter.setFileStoreId(dummyFileStoreId);
+            stamper.close();
+
+        } catch (IOException | GeneralSecurityException | DocumentException e) {
+            throw new RuntimeException(e);
+        }
+
+
+        return hashDocument;
+
     }
 }
 
