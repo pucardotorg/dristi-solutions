@@ -199,13 +199,17 @@ public class PdfEmbedder {
 
     public MultipartFile signPdfWithDSAndReturnMultipartFileV2(Resource resource, String response, ESignParameter eSignParameter) {
         try {
+            int contentEstimated = 8192;
+
 
             PdfReader reader = new PdfReader(resource.getInputStream());
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
             String pkcsResponse = new XmlSigning().parseXml(response.trim());
             byte[] sigbytes = Base64.decodeBase64(pkcsResponse);
-            MyExternalSignatureContainer container = new MyExternalSignatureContainer(sigbytes);
+            byte[] paddedSig = new byte[contentEstimated];
+            System.arraycopy(sigbytes, 0, paddedSig, 0, sigbytes.length);
+            MyExternalSignatureContainer container = new MyExternalSignatureContainer(paddedSig);
 
             MakeSignature.signDeferred(reader, eSignParameter.getSignPlaceHolder(), baos, container);
 
