@@ -9,7 +9,7 @@ const path = require("path");
  * @type {object}
  * @property {string} Items
  * @property {string} docketpagerequired
- * @property {string} doctypeid
+ * @property {string} doctype
  * @property {string} id
  * @property {string} isactive
  * @property {string} name

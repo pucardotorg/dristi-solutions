@@ -55,7 +55,7 @@ router.post(
       renderError(
         res,
         "An error occurred while creating the case bundle PDF.",
-        500,
+        400,
         error
       );
     }
@@ -97,7 +97,7 @@ router.post(
       });
     } catch (error) {
       console.error("Error processing case bundle:", error);
-      res.status(500).json({
+      res.status(400).json({
         message: "An error occurred while processing the case bundle.",
         error: error.message,
       });
@@ -158,7 +158,7 @@ router.post(
     } catch (error) {
       console.error("Error during PDF merging:", error?.message);
 
-      res.status(500).json({
+      res.status(400).json({
         message: "Error creating merged PDF",
         error: error.message,
       });

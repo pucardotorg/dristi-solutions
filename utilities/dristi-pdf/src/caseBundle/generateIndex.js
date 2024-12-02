@@ -22,111 +22,6 @@ if (!fs.existsSync(TEMP_FILES_DIR)) {
 const A4_WIDTH = 595.28; // A4 width in points
 const A4_HEIGHT = 841.89; // A4 height in points
 
-// Master Data
-const MASTER_DATA = [
-  {
-    name: "Case Cover Page",
-    section: "titlepage",
-    docType: null,
-    isActive: true,
-    order: 1,
-  },
-  {
-    name: "Complaint",
-    section: "complaint",
-    docType: null,
-    isActive: true,
-    docketPageRequired: false,
-    order: 1,
-  },
-  {
-    name: "Cheque",
-    section: "filings",
-    docketPageRequired: true,
-    docType: "case.cheque",
-    isActive: true,
-    order: 1,
-  },
-  {
-    name: "Cheque Deposit Slip",
-    section: "filings",
-    docketPageRequired: true,
-    docType: "case.cheque.depositslip",
-    isActive: true,
-    order: 2,
-  },
-  {
-    name: "Cheque Return Memo",
-    section: "filings",
-    docketPageRequired: true,
-    docType: "case.cheque.returnmemo",
-    isActive: true,
-    order: 3,
-  },
-  {
-    name: "Demand Notice",
-    section: "filings",
-    docketPageRequired: true,
-    docType: "case.demandnotice",
-    isActive: true,
-    order: 4,
-  },
-  {
-    name: "Proof of Dispatch of Demand Notice",
-    section: "filings",
-    docketPageRequired: true,
-    docType: "case.demandnotice.proof",
-    isActive: true,
-    order: 5,
-  },
-  {
-    name: "Proof of Service of Demand Notice",
-    section: "filings",
-    docketPageRequired: true,
-    docType: "case.demandnotice.serviceproof",
-    isActive: true,
-    order: 6,
-  },
-  {
-    name: "Reply Notice",
-    section: "filings",
-    docketPageRequired: true,
-    docType: "case.replynotice",
-    isActive: true,
-    order: 7,
-  },
-  {
-    name: "Proof of Liability",
-    section: "filings",
-    docketPageRequired: true,
-    docType: "case.liabilityproof",
-    isActive: true,
-    order: 8,
-  },
-  {
-    name: "Proof of Authorization",
-    section: "filings",
-    docketPageRequired: true,
-    docType: "case.authorizationproof",
-    isActive: true,
-    order: 9,
-  },
-  {
-    name: "Affidavit under Section 223 BNSS",
-    section: "affidavit",
-    docType: "case.affidavit.223bnss",
-    isActive: true,
-    order: 1,
-  },
-  {
-    name: "Affidavit of Proof under Section 225 BNSS",
-    section: "affidavit",
-    docType: "case.affidavit.225bnss",
-    isActive: true,
-    order: 2,
-  },
-  { name: "Vakalatnama", section: "vakalat", docType: null, isActive: true },
-];
 
 /**
  *
@@ -385,14 +280,15 @@ async function processPendingAdmissionCase({
     ];
   }
 
+  console.debug(caseBundleMaster);
   const complaintSection = filterCaseBundleBySection(
     caseBundleMaster,
     "complaint"
   )[0];
 
   const complaintFileStoreId = courtCase.documents.find(
-    // (doc) => doc.documentType === "case.complaint.signed"
-    (doc) => doc.documentType === "case.cheque"
+     (doc) => doc.documentType === "case.complaint.signed"
+    //(doc) => doc.documentType === "case.cheque"
   )?.fileStore;
   if (!complaintFileStoreId) {
     throw new Error("no case complaint");
@@ -441,7 +337,7 @@ async function processPendingAdmissionCase({
   );
   copiedPages.forEach((page) => caseBundlePdfDoc.addPage(page));
 
-  if (complaintSection.docketPageRequired) {
+  if (complaintSection.docketpagerequired) {
     const coverCaseName = courtCase.caseTitle;
     const coverCaseType = courtCase.caseType;
     const coverCaseNumber =
@@ -493,20 +389,20 @@ async function processPendingAdmissionCase({
   };
 
   // move to filings section of case complaint
-
+  logger.info(caseBundleMaster);
   const filingsSection = filterCaseBundleBySection(caseBundleMaster, "filings");
   const sortedFilingSection = [...filingsSection].sort(
-    (secA, secB) => secA.order - secB.order
+    (secA, secB) => secA.sorton - secB.sorton
   );
   const filingsLineItems = await Promise.all(
     sortedFilingSection.map(async (section, index) => {
       const documentFileStoreId = courtCase.documents.find(
-        (doc) => doc.documentType === section.docType
+        (doc) => doc.documentType === section.doctype
       )?.fileStore;
       if (!documentFileStoreId) {
         return null;
       }
-      if (section.docketPageRequired) {
+      if (section.docketpagerequired) {
         const complainant =
           courtCase?.additionalDetails?.complainantDetails?.formdata?.[0]?.data;
         const docketComplainantName = [
@@ -570,18 +466,18 @@ async function processPendingAdmissionCase({
     "affidavit"
   );
   const sortedAffidavitsSection = [...affidavitsSection].sort(
-    (secA, secB) => secA.order - secB.order
+    (secA, secB) => secA.sorton - secB.sorton
   );
 
   const affidavitsLineItems = await Promise.all(
     sortedAffidavitsSection.map(async (section, index) => {
       const documentFileStoreId = courtCase.documents.find(
-        (doc) => doc.documentType === section.docType
+        (doc) => doc.documentType === section.doctype
       )?.fileStore;
       if (!documentFileStoreId) {
         return null;
       }
-      if (section.docketPageRequired) {
+      if (section.docketpagerequired) {
         const complainant =
           courtCase?.additionalDetails?.complainantDetails?.formdata?.[0]?.data;
         const docketComplainantName = [
@@ -681,7 +577,7 @@ async function processPendingAdmissionCase({
 
     const vakalatLineItems = await Promise.all(
       vakalats.map(async (vakalat) => {
-        if (section.docketPageRequired) {
+        if (section.docketpagerequired) {
           const mergedVakalatDocumentFileStoreId = await applyDocketToDocument(
             vakalat.fileStoreId,
             {
@@ -734,7 +630,7 @@ async function processPendingAdmissionCase({
 
 // Main Function
 async function processCaseBundle(tenantId, caseId, index, state, requestInfo) {
-  console.log(`Processing caseId: ${caseId}, state: ${state}`);
+  logger.info(`Processing caseId: ${caseId}, state: ${state}`);
 
   // let fileStoreIds = [];
 
@@ -776,35 +672,11 @@ async function processCaseBundle(tenantId, caseId, index, state, requestInfo) {
     }
 
     default:
-      console.error(`Unknown state: ${state}`);
+      logger.error(`Unknown state: ${state}`);
       throw new Error(`Unknown state: ${state}`);
   }
 
   return updatedIndex;
-
-  // console.log("Merging PDFs...");
-  // const mergedPdf = await mergePdfs(fileStoreIds, tenantId);
-
-  // console.log("Uploading merged PDF...");
-  // const mergedPdfBytes = await mergedPdf.save();
-  // const mergedFilePath = path.join(
-  //   TEMP_FILES_DIR,
-  //   `merged-bundle-${Date.now()}.pdf`
-  // );
-  // fs.writeFileSync(mergedFilePath, mergedPdfBytes);
-
-  // const finalFileUpload = await create_file(
-  //   mergedFilePath,
-  //   tenantId,
-  //   "case-bundle",
-  //   "application/pdf"
-  // );
-  // fs.unlinkSync(mergedFilePath);
-
-  // index.fileStoreId = finalFileUpload.data.files[0].fileStoreId;
-  // index.contentLastModified = Math.floor(Date.now() / 1000);
-
-  // return index;
 }
 
 module.exports = processCaseBundle;
