@@ -249,12 +249,14 @@ public class PdfEmbedder {
             appearance.setVisibleSignature(rectangle,
                     locationToSign.getPageNumber(), signPlaceHolder);
             int contentEstimated = 8192;
+            MyExternalSignatureContainer container = new MyExternalSignatureContainer(new byte[]{0});
+
+            MakeSignature.signExternalContainer(appearance, container, contentEstimated);
+
 
             InputStream is = appearance.getRangeStream();
             hashDocument = DigestUtils.sha256Hex(is);
 
-            MyExternalSignatureContainer container = new MyExternalSignatureContainer(new byte[]{0});
-            MakeSignature.signExternalContainer(appearance, container, contentEstimated);
             MultipartFile dummySignedPdf = new ByteArrayMultipartFile(FILE_NAME, baos.toByteArray());
 
             String dummyFileStoreId = fileStoreUtil.storeFileInFileStore(dummySignedPdf, "kl");
