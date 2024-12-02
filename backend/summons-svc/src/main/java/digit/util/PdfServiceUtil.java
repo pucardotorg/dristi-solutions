@@ -203,6 +203,9 @@ public class PdfServiceUtil {
                 .respondentAddress(respondentAddress)
                 .complainantName(complainantName)
                 .complainantAddress(complainantAddress)
+                .courtUrl(config.getCourtUrl())
+                .courtContact(config.getCourtContact())
+                .barCouncilUrl(config.getBarCouncilUrl())
                 .build();
     }
 
