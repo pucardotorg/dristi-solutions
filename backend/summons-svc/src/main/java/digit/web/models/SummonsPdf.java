@@ -18,6 +18,9 @@ public class SummonsPdf  {
     @JsonProperty("cnrNumber")
     private String cnrNumber;
 
+    @JsonProperty("cmpNumber")
+    private String cmpNumber;
+
     @JsonProperty("filingNumber")
     private String filingNumber;
 

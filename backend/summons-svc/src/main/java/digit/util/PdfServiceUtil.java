@@ -93,8 +93,10 @@ public class PdfServiceUtil {
                 JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
                 String accessCode = caseDetails.has("accessCode") ? caseDetails.get("accessCode").asText() : "";
                 String courtCaseNumber = caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").asText() : "";
+                String cmpNumber = caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").asText() : "";
                 summonsPdf.setAccessCode(accessCode);
                 summonsPdf.setCourtCaseNumber(courtCaseNumber);
+                summonsPdf.setCmpNumber(cmpNumber);
             }
             if (qrCode && taskRequest.getTask().getDocuments() != null && !taskRequest.getTask().getDocuments().isEmpty()) {
                 List<Document> documents = taskRequest.getTask().getDocuments();
