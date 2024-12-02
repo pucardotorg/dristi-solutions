@@ -63,8 +63,8 @@ paths:
       tags:
         - Open APIs
       summary: get case summary by case number for a specific year
-      description: The API is used to get case summary details within a specific tenant. The parameters are year, type of the case (CMP, CC or ST) and the case number. example - (1) GET /openapi/v1/KL/case/2024/CMP/?page=1&size=10&sort=registrationDate,desc. (2) GET /openapi/v1/KL/case/2024/CMP/?caseNumber=CMP/15/2024
-      operationId: getCaseByCaseNumber
+      description: The API is used to get a list of cases (case number and title) within a specific tenant, year, and type of the case (CMP, CC or ST). The API supports pagination. example - (1) GET /openapi/v1/KL/case/2024/CMP/?page=1&size=10&sort=registrationDate,desc
+      operationId: getCaseListByCaseType
       parameters:
         - name: tenantID
           in: path
@@ -90,18 +90,6 @@ paths:
           schema:
             type: string
             enum: [CMP, CC, ST]
-        - name: caseNumber
-          in: query
-          description: Optional case number in format <type>/<number>/<year>. If not specified, returns all cases matching the year and type.
-          required: false
-          schema:
-            type: string
-            maxLength: 18
-            minLength: 9
-          example:
-            - CMP/123/2024 (for CMP type)
-            - CC/456/2024 (for CC type)
-            - ST/789/2024 (for ST type)
         - name: offset
           in: query
           description: Page number to retrieve (0-based index)
@@ -146,13 +134,86 @@ paths:
           content:
             'application/json':
               schema:
-                $ref: '#/components/schemas/CaseListSummaryResponse'
+                $ref: '#/components/schemas/CaseListResponse'
         '400':
           description: querying case summary failed
           content:
             'application/json':
               schema:
                 $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes
+
+  /openapi/v1/{tenantID}/case/{year}/{caseType}/{caseNumber}:
+    get:
+      tags:
+        - Open APIs
+      summary: get case summary by case number for a specific year
+      description: The API is used to get case summary details within a specific tenant. The parameters are year, type of the case (CMP, CC or ST) and the case number. example - (1) GET /openapi/v1/KL/case/2024/CMP/?page=1&size=10&sort=registrationDate,desc. (2) GET /openapi/v1/KL/case/2024/CMP/?caseNumber=CMP/15/2024
+      operationId: getCaseByCaseNumber
+      parameters:
+        - name: tenantID
+          in: path
+          description: tenant ID
+          required: true
+          schema:
+            type: string
+            pattern: "^[a-zA-Z]{2}$"
+            maxLength: 2
+            minLength: 2
+        - name: year
+          in: path
+          description: if type= CMP, then year in which the case was registered. Can check based on registration date also. If type = CC/ST, then check against CourtCase.courtCaseNumber(year). The minimum year is set to 2024 as this is the year the system has gone live and the first case in the system is from 2024. No earlier cases exist.
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 2024
+        - name: caseType
+          in: path
+          description: the type of the case CMP/CC/ST
+          required: true
+          schema:
+            type: string
+            enum: [CMP, CC, ST]
+        - name: caseNumber
+          in: query
+          description: Number part of CMP/CC/ST case number in format <type>/<number>/<year>
+          required: true
+          schema:
+            type: integer
+            format: int32
+            maximum: 99999999
+            minimum: 1
+          example:
+            - 123 for case number CMP/123/2024 (for CMP type)
+            - 456 for case number CC/456/2024 (for CC type)
+            - 789 for case number ST/789/2024 (for ST type)
+      responses:
+        '200':
+          description: ResponseInfo with case number and title
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+              description: |
+                Caching directive for clients:
+                - max-age=300 (5 minutes)
+                - must-revalidate
+              example: "max-age=300, must-revalidate"
+            ETag:
+              schema:
+                type: string
+              description: Entity tag for cache validation
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/CaseListResponse'
+        '400':
+          description: querying case summary failed
+          content:
+            'application/json':
+              schema:
+                $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes
+
 
 components:
   schemas:
@@ -164,7 +225,7 @@ components:
         caseSummary:
           $ref: '#/components/schemas/CaseSummary'
 
-    CaseListSummaryResponse:
+    CaseListResponse:
       type: object
       properties:
         ResponseInfo:
@@ -172,7 +233,7 @@ components:
         caseSummary:
           type: array
           items:
-            $ref: '#/components/schemas/CaseSummary'
+            $ref: '#/components/schemas/CaseListLineItem'
         pagination:
           $ref: >-
             https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Pagination
@@ -223,7 +284,8 @@ components:
           example: "2024-11-24+05:30"
         caseType:
           type: string
-          example: "Summary Trail"
+          description: fixed value based on case type
+          enum: ["Criminal Miscellaneous Petition", "Summary Trail"]
           minLength: 5
           maxLength: 20
         statutesAndSections:
@@ -240,6 +302,9 @@ components:
                   type: string
                 example: ["S138", "S142(1)(a)", "S145"]
           description: An array of statute and sections for the case
+        status:
+          type: string
+          description: the workflow status. However if the case has become an ST case, i.e. has been admitted, and someone queries using the CMP number, then this field should read "Disposed Off"
         subStage:
           type: string
           description: this will be returned as "<stage> - <sub stage>"
@@ -259,3 +324,17 @@ components:
         advocateRespondent:
           type: string
           description: full name of the primary advocate of respondent
+
+    CaseListLineItem:
+      type: object
+      properties:
+        caseId:
+          type: string
+          format: uuid
+          description: the primary key of the case. will be useful in further queries
+        caseNumber:
+          type: string
+          description: CMP/CC/ST number of the case based on the input query caseType. Sorted on case Number in reverse chronological order, i.e. the latest case at the top and earliest at the bottom
+          example: "CMP/1/2024"
+        caseTitle:
+          type: string
