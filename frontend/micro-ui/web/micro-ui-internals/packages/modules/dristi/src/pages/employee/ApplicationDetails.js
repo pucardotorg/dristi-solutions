@@ -303,11 +303,11 @@ const ApplicationDetails = ({ location, match }) => {
             <Modal
               headerBarMain={<Heading label={t("CONFIRM_APPROVE_ADVOCATE_APPLICATION_HEADER")} />}
               headerBarEnd={<CloseBtn onClick={() => setShowApproveModal(false)} />}
-              actionCancelLabel={t("NO")} 
+              actionCancelLabel={t("CS_BACK")} 
               actionCancelOnSubmit={() => {
                 setShowApproveModal(false);
               }}
-              actionSaveLabel={t("YES")}
+              actionSaveLabel={t("CS_COMMON_CONFIRM")}
               actionSaveOnSubmit={() => {
                 takeAction("APPROVE");
               }}
