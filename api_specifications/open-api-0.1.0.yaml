@@ -230,7 +230,7 @@ components:
       properties:
         ResponseInfo:
           $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo
-        caseSummary:
+        caseList:
           type: array
           items:
             $ref: '#/components/schemas/CaseListLineItem'
@@ -267,10 +267,9 @@ components:
           minLength: 14
           example: "KL-000075-2024"
         filingDate:
-          type: string
-          format: date
-          description: filing date in YYYY-MM-DD format (UTC+05:30/IST)
-          example: "2024-11-24+05:30"
+          type: integer
+          format: int64
+          description: filing date in EPOCH time (milliseconds) format
         registrationNumber:
           type: string
           description: CMP number. null is not available
@@ -278,16 +277,17 @@ components:
           minLength: 10
           maxLength: 18
         registrationDate:
-          type: string
-          format: date
-          description: registration date in YYYY-MM-DD format (UTC+05:30/IST)
-          example: "2024-11-24+05:30"
+          type: integer
+          format: int64
+          description: registration date in EPOCH time (milliseconds) format
+        nextHearingDate:
+          type: integer
+          format: int64
+          description: date of next scheduled hearing in EPOCH time (milliseconds) format
         caseType:
           type: string
           description: fixed value based on case type
           enum: ["Criminal Miscellaneous Petition", "Summary Trail"]
-          minLength: 5
-          maxLength: 20
         statutesAndSections:
           type: array
           items:
@@ -304,7 +304,8 @@ components:
           description: An array of statute and sections for the case
         status:
           type: string
-          description: the workflow status. However if the case has become an ST case, i.e. has been admitted, and someone queries using the CMP number, then this field should read "Disposed Off"
+          description: CMP case not yet admitted, response will be Pending. ST Case already admitted, response will be Pending. ST case already registered, but queried using CMP, response will be Disposed.
+          enum: ["Pending", "Disposed"]
         subStage:
           type: string
           description: this will be returned as "<stage> - <sub stage>"
@@ -328,10 +329,6 @@ components:
     CaseListLineItem:
       type: object
       properties:
-        caseId:
-          type: string
-          format: uuid
-          description: the primary key of the case. will be useful in further queries
         caseNumber:
           type: string
           description: CMP/CC/ST number of the case based on the input query caseType. Sorted on case Number in reverse chronological order, i.e. the latest case at the top and earliest at the bottom
