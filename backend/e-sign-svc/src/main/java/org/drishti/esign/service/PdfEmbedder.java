@@ -1,6 +1,5 @@
 package org.drishti.esign.service;
 
-import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.pdf.*;
@@ -23,7 +22,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.GeneralSecurityException;
 import java.util.Calendar;
 import java.util.HashMap;
 
@@ -209,7 +207,7 @@ public class PdfEmbedder {
             byte[] sigbytes = Base64.decodeBase64(pkcsResponse);
             byte[] paddedSig = new byte[contentEstimated];
             System.arraycopy(sigbytes, 0, paddedSig, 0, sigbytes.length);
-            MyExternalSignatureContainer container = new MyExternalSignatureContainer(paddedSig);
+            MyExternalSignatureContainer container = new MyExternalSignatureContainer(paddedSig, null, null);
 
             MakeSignature.signDeferred(reader, eSignParameter.getSignPlaceHolder(), baos, container);
 
@@ -253,7 +251,7 @@ public class PdfEmbedder {
             appearance.setVisibleSignature(rectangle,
                     locationToSign.getPageNumber(), signPlaceHolder);
             int contentEstimated = 8192;
-            MyExternalSignatureContainer container = new MyExternalSignatureContainer(new byte[]{0});
+            MyExternalSignatureContainer container = new MyExternalSignatureContainer(new byte[]{0}, PdfName.ADOBE_PPKLITE, PdfName.ADBE_PKCS7_DETACHED);
 
             MakeSignature.signExternalContainer(appearance, container, contentEstimated);
 
@@ -268,7 +266,7 @@ public class PdfEmbedder {
             eSignParameter.setFileStoreId(dummyFileStoreId);
             stamper.close();
 
-        } catch (IOException | GeneralSecurityException | DocumentException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
