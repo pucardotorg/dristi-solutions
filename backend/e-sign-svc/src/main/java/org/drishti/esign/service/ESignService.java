@@ -77,13 +77,13 @@ public class ESignService {
         ESignXmlData eSignXmlData = formDataSetter.setFormXmlData(fileHash, new ESignXmlData());
         eSignXmlData.setTxn(tenantId + "-" + pageModule + "-" + eSignParameter.getId());
         String strToEncrypt = xmlGenerator.generateXml(eSignXmlData);  // this method is writing in testing.xml
-        log.info(strToEncrypt);
+        log.info("request before encrypting with private key :{}", strToEncrypt);
         String xmlData = "";
 
         try {
             PrivateKey rsaPrivateKey = encryption.getPrivateKey(PRIVATE_KEY_FILE_NAME);
             xmlData = xmlSigning.signXmlStringNew(servletRequest.getServletContext().getRealPath("upload") + File.separator + "Testing.xml", rsaPrivateKey);
-            log.info(xmlData);
+            log.info("request before encrypting with private key :{}",xmlData);
             xmlGenerator.writeToXmlFile(xmlData, servletRequest.getServletContext().getRealPath("upload") + File.separator + "Testing.xml");
         } catch (Exception e) {
             log.error("");
@@ -123,7 +123,7 @@ public class ESignService {
         String fileStoreId = eSignDetails.getFileStoreId();
         String tenantId = eSignParameter.getTenantId();
         String response = eSignParameter.getResponse();
-        String filePath =eSignDetails.getFilePath();
+        String filePath = eSignDetails.getFilePath();
 
         MultipartFile multipartFile;
         try {
