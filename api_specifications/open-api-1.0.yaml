@@ -328,6 +328,9 @@ components:
 
     CaseListLineItem:
       type: object
+      required:
+        - caseNumber
+        - caseTitle
       properties:
         caseNumber:
           type: string
