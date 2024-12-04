@@ -8,6 +8,7 @@ const { renderError } = require("../utils/renderError");
 const asyncMiddleware = require("../utils/asyncMiddleware");
 const buildCasePdf = require("../caseBundle/buildCasePdf");
 const processCaseBundle = require("../caseBundle/generateIndex");
+const { logger } = require("../logger");
 
 const A4_WIDTH = 595.28; // A4 width in points
 const A4_HEIGHT = 841.89; // A4 height in points
@@ -19,21 +20,27 @@ router.post(
       index,
       caseNumber,
       RequestInfo,
+      tenantId,
       // caseDetails
     } = req.body;
 
     // Validate required parameters
-    if (!index || !caseNumber || !RequestInfo) {
+    if (!index || !caseNumber || !RequestInfo || !tenantId) {
       return renderError(
         res,
-        "Missing required fields: 'index', 'caseNumber', or 'RequestInfo'.",
+        "Missing required fields: 'index', 'caseNumber', 'tenantId' or 'RequestInfo'.",
         400
       );
     }
 
     try {
       // Call buildCasePdf and get updated index with pageCount
-      const result = await buildCasePdf(caseNumber, index, RequestInfo);
+      const result = await buildCasePdf(
+        caseNumber,
+        index,
+        RequestInfo,
+        tenantId
+      );
 
       // Extract pageCount and remove it from updatedIndex
       const { pageCount, ...updatedIndex } = result;
@@ -48,7 +55,7 @@ router.post(
       renderError(
         res,
         "An error occurred while creating the case bundle PDF.",
-        500,
+        400,
         error
       );
     }
@@ -68,6 +75,13 @@ router.post(
       });
     }
 
+    logger.info("recd request to process case bundle for:", {
+      caseId,
+      index,
+      state,
+      requestInfo,
+    });
+
     try {
       // Process the case bundle
       const updatedIndex = await processCaseBundle(
@@ -85,7 +99,7 @@ router.post(
       });
     } catch (error) {
       console.error("Error processing case bundle:", error);
-      res.status(500).json({
+      res.status(400).json({
         message: "An error occurred while processing the case bundle.",
         error: error.message,
       });
@@ -146,7 +160,7 @@ router.post(
     } catch (error) {
       console.error("Error during PDF merging:", error?.message);
 
-      res.status(500).json({
+      res.status(400).json({
         message: "Error creating merged PDF",
         error: error.message,
       });
