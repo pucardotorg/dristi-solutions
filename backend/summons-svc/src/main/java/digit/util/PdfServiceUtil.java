@@ -93,6 +93,8 @@ public class PdfServiceUtil {
                 JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
                 String accessCode = caseDetails.has("accessCode") ? caseDetails.get("accessCode").asText() : "";
                 String courtCaseNumber = caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").asText() : "";
+                String cmpNumber = caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").asText() : "";
+                summonsPdf.setCmpNumber(cmpNumber);
                 summonsPdf.setAccessCode(accessCode);
                 summonsPdf.setCourtCaseNumber(courtCaseNumber);
             }
@@ -201,6 +203,10 @@ public class PdfServiceUtil {
                 .respondentAddress(respondentAddress)
                 .complainantName(complainantName)
                 .complainantAddress(complainantAddress)
+                .courtUrl(config.getCourtUrl())
+                .courtContact(config.getCourtContact())
+                .barCouncilUrl(config.getBarCouncilUrl())
+                .courtAddress(config.getCourtAddress())
                 .build();
     }
 
@@ -253,7 +259,7 @@ public class PdfServiceUtil {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM yyyy", Locale.ENGLISH);
             String formattedMonthYear = dateTime.format(formatter);
 
-            return String.format("%s day of %s", day, formattedMonthYear);
+            return String.format("%sth day of %s", day, formattedMonthYear);
         } catch (Exception e) {
             log.error("Failed to get Date in String format from : {}", millis);
             return "";

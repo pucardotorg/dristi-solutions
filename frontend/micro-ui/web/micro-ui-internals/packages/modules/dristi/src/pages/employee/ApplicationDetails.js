@@ -67,6 +67,8 @@ const ApplicationDetails = ({ location, match }) => {
   const [message, setMessage] = useState(null);
   const [reasons, setReasons] = useState(null);
   const [isAction, setIsAction] = useState(false);
+  const [showApproveModal, setShowApproveModal] = useState(false);
+
   const { data: individualData, isLoading: isGetUserLoading } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
@@ -159,13 +161,14 @@ const ApplicationDetails = ({ location, match }) => {
       })
       .catch(() => {
         setShowModal(false);
+        setShowApproveModal(false);
         setShowInfoModal({ isOpen: true, status: "ES_API_ERROR" });
       });
   }
 
   function onActionSelect(action) {
     if (action === "APPROVE") {
-      takeAction(action);
+      setShowApproveModal(true);
     }
     if (action === "REJECT") {
       setShowModal(true);
@@ -294,6 +297,22 @@ const ApplicationDetails = ({ location, match }) => {
                 <CardText style={{ margin: "2px 0px" }}>{t(`REASON_FOR_REJECTION`)}</CardText>
                 <TextArea rows={"3"} onChange={(e) => setReasons(e.target.value)} style={{ maxWidth: "100%", height: "auto" }}></TextArea>
               </Card>
+            </Modal>
+          )}
+          {showApproveModal && (
+            <Modal
+              headerBarMain={<Heading label={t("CONFIRM_APPROVE_ADVOCATE_APPLICATION_HEADER")} />}
+              headerBarEnd={<CloseBtn onClick={() => setShowApproveModal(false)} />}
+              actionCancelLabel={t("CS_BACK")} 
+              actionCancelOnSubmit={() => {
+                setShowApproveModal(false);
+              }}
+              actionSaveLabel={t("CS_COMMON_CONFIRM")}
+              actionSaveOnSubmit={() => {
+                takeAction("APPROVE");
+              }}
+            >
+              <div style={{padding:"20px 0px"}}>{t(`CONFIRM_APPROVE_ADVOCATE_APPLICATION_TEXT`)}</div>
             </Modal>
           )}
           {showInfoModal?.isOpen && (
