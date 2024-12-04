@@ -63,7 +63,7 @@ paths:
       tags:
         - Open APIs
       summary: get a list of cases for a specific year based on specified case type
-      description: The API is used to get a list of cases (case number and title) within a specific tenant, year, and type of the case (CMP, CC or ST). The API supports pagination. example - (1) GET /openapi/v1/KL/case/2024/CMP/?page=1&size=10&sort=registrationDate,desc
+      description: The API is used to get a list of cases (case number and title) within a specific tenant, year, and type of the case (CMP, ST). The API supports pagination. example - (1) GET /openapi/v1/KL/case/2024/CMP/?offset=1&limit=10&sort=registrationDate,desc
       operationId: getCaseListByCaseType
       parameters:
         - name: tenantID
@@ -77,7 +77,7 @@ paths:
             minLength: 2
         - name: year
           in: path
-          description: if type= CMP, then year in which the case was registered. Can check based on registration date also. If type = CC/ST, then check against CourtCase.courtCaseNumber(year). The minimum year is set to 2024 as this is the year the system has gone live and the first case in the system is from 2024. No earlier cases exist.
+          description: if type= CMP, then year in which the case was registered. Can check based on registration date also. If type = ST, then check against CourtCase.courtCaseNumber(year). The minimum year is set to 2024 as this is the year the system has gone live and the first case in the system is from 2024. No earlier cases exist.
           required: true
           schema:
             type: integer
@@ -85,11 +85,11 @@ paths:
             minimum: 2024
         - name: caseType
           in: path
-          description: the type of the case CMP/CC/ST
+          description: the type of the case CMP/ST
           required: true
           schema:
             type: string
-            enum: [CMP, CC, ST]
+            enum: [CMP, ST]
         - name: offset
           in: query
           description: Page number to retrieve (0-based index)
@@ -147,7 +147,7 @@ paths:
       tags:
         - Open APIs
       summary: get case summary by case number for a specific year
-      description: The API is used to get case summary details within a specific tenant. The parameters are year, type of the case (CMP, CC or ST) and the case number. example - (1) GET /openapi/v1/KL/case/2024/CMP/?page=1&size=10&sort=registrationDate,desc. (2) GET /openapi/v1/KL/case/2024/CMP/?caseNumber=CMP/15/2024
+      description: The API is used to get case summary details within a specific tenant. The parameters are year, type of the case (CMP, ST) and the case number. example - (1) GET /openapi/v1/KL/case/2024/CMP/?page=1&size=10&sort=registrationDate,desc. (2) GET /openapi/v1/KL/case/2024/CMP/?caseNumber=CMP/15/2024
       operationId: getCaseByCaseNumber
       parameters:
         - name: tenantID
@@ -161,7 +161,7 @@ paths:
             minLength: 2
         - name: year
           in: path
-          description: if type= CMP, then year in which the case was registered. Can check based on registration date also. If type = CC/ST, then check against CourtCase.courtCaseNumber(year). The minimum year is set to 2024 as this is the year the system has gone live and the first case in the system is from 2024. No earlier cases exist.
+          description: if type= CMP, then year in which the case was registered. Can check based on registration date also. If type = ST, then check against CourtCase.courtCaseNumber(year). The minimum year is set to 2024 as this is the year the system has gone live and the first case in the system is from 2024. No earlier cases exist.
           required: true
           schema:
             type: integer
@@ -169,14 +169,14 @@ paths:
             minimum: 2024
         - name: caseType
           in: path
-          description: the type of the case CMP/CC/ST
+          description: the type of the case CMP/ST
           required: true
           schema:
             type: string
-            enum: [CMP, CC, ST]
+            enum: [CMP, ST]
         - name: caseNumber
           in: path
-          description: Number part of CMP/CC/ST case number in format <type>/<number>/<year>
+          description: Number part of CMP/ST case number in format <type>/<number>/<year>
           required: true
           schema:
             type: integer
@@ -185,7 +185,6 @@ paths:
             minimum: 1
           example:
             - 123 for case number CMP/123/2024 (for CMP type)
-            - 456 for case number CC/456/2024 (for CC type)
             - 789 for case number ST/789/2024 (for ST type)
       responses:
         '200':
