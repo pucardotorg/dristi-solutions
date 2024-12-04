@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: All Public/Open APIs supported by the platform
   description: This API specification defines the various APIs that are open to external world. Anyone can call these. These are unauthenticated APIs. These need to managed via rate limiting settings at the gateway level to limit access
-  version: 0.1.0
+  version: 1.0.0
 tags:
   - name: Open APIs
 paths:
