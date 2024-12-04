@@ -205,6 +205,11 @@ components:
           type: boolean
           description: when a judge marks a document submission void. false by default
           default: false
+        reason:
+          type: string
+          description: the reason for marking as void.
+          minLength: 0
+          maxLength: 256
         status:
           type: string
           description: The current status of the case as pulled from the Workflow service. Workflow service will hold the entire history of the case.
