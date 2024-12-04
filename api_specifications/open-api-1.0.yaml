@@ -214,8 +214,6 @@ paths:
               schema:
                 $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes
 
-
-
 components:
   schemas:
     CaseSummaryResponse:
