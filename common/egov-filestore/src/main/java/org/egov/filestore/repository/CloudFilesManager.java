@@ -28,4 +28,6 @@ public interface CloudFilesManager {
 	 */
 	public Map<String, String> getFiles(List<org.egov.filestore.persistence.entity.Artifact> artifacts);
 
+	public void deleteFiles(List<org.egov.filestore.persistence.entity.Artifact> artifacts);
+
 }
