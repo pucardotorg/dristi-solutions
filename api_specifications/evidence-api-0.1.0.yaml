@@ -52,14 +52,14 @@ paths:
         required: true
       responses:
         '201':
-          description: ResponseInfo with case(s) updated successfully
+          description: ResponseInfo with artifact(s) updated successfully
           content:
             '*/*':
               schema:
                 $ref: >-
                  #/components/schemas/EvidenceResponse
         '400':
-          description: Case(s) update failed
+          description: artifact(s) update failed
           content:
             '*/*':
               schema:
@@ -347,8 +347,10 @@ components:
           type: string
         sourceId:
           type: string
+          description: ID of the source (e.g., individual, organization) who provided the evidence
         sourceName:
           type: string
+          description: Name of the source when formal ID is not available
         status:
           type: string
         artifactNumber:
