@@ -18,7 +18,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
     @Value("${service.name}")
     private String serviceName;
 
-    @Value("${service.key}")
+    @Value("${service.ky}")
     private String serviceKey;
 
     @Value("${auth.type}")
