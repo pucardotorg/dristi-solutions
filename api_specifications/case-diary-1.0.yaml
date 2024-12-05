@@ -1,0 +1,65 @@
+openapi: "3.0.2"
+info:
+  title: Case A and B Diary related APIs
+  description: This API specification defines the various APIs that are used to manage the A and B diaries. A diary is daily diary for everything happening in a Judge's court. So is specific to a judge and date. B diary is a diary specific to a Judge and a case. It tracks all actions happening in a case.
+  version: "1.0"
+tags:
+  - name: Case Diaries
+paths:
+  /case/dairy/v1/create:
+    get:
+      responses:
+        '200':
+          description: OK
+  /case/diary/v1/update:
+  /case/diary/v1/{tenantID}/pdf:
+    get:
+      tags:
+        - Case Diaries
+      summary: get the fileStoreID for case dairy PDF
+      description: The API is used to get the fileStoreID of the PDF for the case diary. example - GET /case/diary/v1/KL/pdf?
+      operationId: getCaseDairyPDF
+      parameters:
+        - name: tenantID
+          in: path
+          description: tenant ID
+          required: true
+          schema:
+            type: string
+            pattern: "^[a-zA-Z]{2}$"
+            maxLength: 2
+            minLength: 2
+      responses:
+        '200':
+          description: ResponseInfo with case diary PDF fileStoreId
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/CaseDiaryResponse'
+        '400':
+          description: querying case summary failed
+          content:
+            'application/json':
+              schema:
+                $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes
+
+components:
+  schemas:
+    CaseDiaryResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo
+        caseSummary:
+          $ref: '#/components/schemas/CaseDiary'
+
+    CaseDiary:
+      type: object
+      properties:
+        ID:
+          type: string
+          format: uuid
+          minLength: 36
+          maxLength: 36
+          readOnly: true
+
