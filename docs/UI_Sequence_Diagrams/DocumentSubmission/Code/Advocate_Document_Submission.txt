@@ -57,8 +57,8 @@ else single PDF uploaded
 note right of DRU: PDF already available. can use for preview directly
 end
 DRU->FS++: save document
-return filestoreID
-DRU->ARS++: updateArtifact (filestoreID)
+return fileStoreID
+DRU->ARS++: updateArtifact (fileStoreID)
 DRU->DRU: Preview PDF
 A->DRU: E-sign document
 DRU->ES++: e-sign document
