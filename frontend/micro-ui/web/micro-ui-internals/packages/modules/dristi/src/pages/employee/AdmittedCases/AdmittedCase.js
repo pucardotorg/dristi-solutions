@@ -594,7 +594,7 @@ const AdmittedCases = () => {
                 uiConfig: {
                   ...tabConfig.sections.searchResult.uiConfig,
                   columns: tabConfig.sections.searchResult.uiConfig.columns.map((column) => {
-                    return column.label === "FILE" || column.label === "DOCUMENT_TYPE"
+                    return column.label === "FILE" || column.label === "FILING_NAME"
                       ? {
                           ...column,
                           clickFunc: docSetFunc,
