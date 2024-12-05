@@ -71,5 +71,5 @@ W->K: post state transition event
 return "SUBMITTED"
 return 200 (artifact updated)
 ARS->NS++: send notification to other parties
-return
+return success
 @endum
