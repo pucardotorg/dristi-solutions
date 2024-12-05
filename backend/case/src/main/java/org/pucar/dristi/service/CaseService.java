@@ -218,18 +218,33 @@ public class CaseService {
 
         try {
             CourtCase courtCase = searchRedisCache(caseRequest.getRequestInfo(), String.valueOf(caseRequest.getCases().getId()));
+
             if (courtCase == null) {
+
                 log.debug("CourtCase not found in Redis cache for caseId :: {}", caseRequest.getCases().getId());
                 List<CaseCriteria> existingApplications = caseRepository.getCases(Collections.singletonList(CaseCriteria.builder().caseId(String.valueOf(caseRequest.getCases().getId())).build()), caseRequest.getRequestInfo());
+
                 if (existingApplications.get(0).getResponseList().isEmpty()){
                     log.debug("CourtCase not found in DB for caseId :: {}", caseRequest.getCases().getId());
                     throw new CustomException(VALIDATION_ERR, "Case Application does not exist");
+                }else{
+                    courtCase = existingApplications.get(0).getResponseList().get(0);
                 }
             }
 
             log.info("Encrypting :: {}", caseRequest);
+            AuditDetails auditDetails = courtCase.getAuditdetails();
+            auditDetails.setLastModifiedTime(System.currentTimeMillis());
+            auditDetails.setLastModifiedBy(caseRequest.getRequestInfo().getUserInfo().getUuid());
+
+            courtCase.setAdditionalDetails(caseRequest.getCases().getAdditionalDetails());
+            courtCase.setCaseTitle(caseRequest.getCases().getCaseTitle());
+            courtCase.setAuditdetails(auditDetails);
+
+            caseRequest.setCases(courtCase);
+
             caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), "CourtCase", CourtCase.class));
-            cacheService.save(caseRequest.getCases().getTenantId() + ":" + caseRequest.getCases().getId(), caseRequest.getCases());
+            cacheService.save(caseRequest.getCases().getTenantId() + ":" + caseRequest.getCases().getId(), courtCase);
 
             producer.push(config.getCaseEditTopic(), caseRequest);
 
