@@ -67,6 +67,11 @@ public class CaseConsumer {
         fetchAndPublishCaseForOverAllStatus(payload, transformerProperties.getUpdateCaseTopic());
     }
 
+    @KafkaListener(topics = {"${transformer.consumer.edit.case.topic}"})
+    public void editCase(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        fetchAndPublishEditCase(payload, transformerProperties.getUpdateCaseTopic());
+    }
+
     @KafkaListener(topics = {"${transformer.consumer.case.outcome.topic}"})
     public void updateCaseOutcome(ConsumerRecord<String, Object> payload,
                                   @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
@@ -111,6 +116,22 @@ public class CaseConsumer {
             caseRequest.setCases(courtCase);
             logger.info("Transformed Object: {} ", objectMapper.writeValueAsString(courtCase));
             producer.push(updateCaseTopic, caseRequest);
+        } catch (Exception exception) {
+            log.error("error in saving case", exception);
+        }
+    }
+
+    private void fetchAndPublishEditCase(ConsumerRecord<String, Object> payload, String updateCaseTopic) {
+        try {
+            CaseRequest caseRequest = (objectMapper.readValue((String) payload.value(), new TypeReference<CaseRequest>() {}));
+            logger.info("Received Object: {} ", objectMapper.writeValueAsString(caseRequest.getCases()));
+            CourtCase courtCase = caseService.fetchCase(caseRequest.getCases().getFilingNumber());
+            courtCase.setAdditionalDetails(caseRequest.getCases().getAdditionalDetails());
+            courtCase.setCaseTitle(caseRequest.getCases().getCaseTitle());
+            CaseRequest caseRequest2 = new CaseRequest();
+            caseRequest2.setCases(courtCase);
+            logger.info("Transformed Object: {} ", objectMapper.writeValueAsString(courtCase));
+            producer.push(updateCaseTopic, caseRequest2);
         } catch (Exception exception) {
             log.error("error in saving case", exception);
         }
