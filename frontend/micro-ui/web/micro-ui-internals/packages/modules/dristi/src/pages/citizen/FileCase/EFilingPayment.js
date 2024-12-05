@@ -10,6 +10,7 @@ import { DRISTIService } from "../../../services";
 import { Urls } from "../../../hooks";
 import usePaymentProcess from "../../../../../home/src/hooks/usePaymentProcess";
 import { getSuffixByBusinessCode } from "../../../Utils";
+import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 
 const mockSubmitModalInfo = {
   header: "CS_HEADER_FOR_E_FILING_PAYMENT",
@@ -147,6 +148,8 @@ function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
     mockSubmitModalInfo,
     scenario,
   });
+  const { downloadPdf } = useDownloadCasePdf();
+
   const onSubmitCase = async () => {
     try {
       const bill = await fetchBill(caseDetails?.filingNumber + `_${suffix}`, tenantId, "case-default");
@@ -284,30 +287,17 @@ function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
               history.push(`/${window?.contextPath}/citizen/dristi/home`);
             }}
           />
-          <a
-            href={uri}
-            target="_blank"
-            rel="noreferrer"
-            style={{
-              display: "flex",
-              color: "#505A5F",
-              textDecoration: "none",
-              // width: 250,
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
+          <Button
+            variation={"secondary"}
+            className={"secondary-button-selector"}
+            label={t("CS_PRINT_CASE_FILE")}
+            labelClassName={"secondary-label-selector"}
+            style={{ minWidth: "30%" }}
+            onButtonClick={() => {
+              downloadPdf(tenantId, fileStoreIdToUse);
+              localStorage.removeItem("fileStoreId");
             }}
-          >
-            <Button
-              variation={"secondary"}
-              className={"secondary-button-selector"}
-              label={t("CS_PRINT_CASE_FILE")}
-              labelClassName={"secondary-label-selector"}
-              onButtonClick={() => {
-                localStorage.removeItem("fileStoreId");
-              }}
-            />
-          </a>
+          />
           <Button
             className={"tertiary-button-selector"}
             label={t("CS_MAKE_PAYMENT")}
@@ -345,31 +335,53 @@ function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
                 <span style={{ fontWeight: 700 }}>Rs {totalAmount}/-.</span>
                 {` ${t("CS_MANDATORY_STEP_TO_FILE_CASE")}`}
               </div>
+              <div className="payment-calculator-wrapper" style={{ display: "flex", flexDirection: "column", maxHeight: "150px", overflowY: "auto" }}>
+                {paymentCalculation
+                  .filter((item) => !item.isTotalFee)
+                  .map((item) => (
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        paddingRight: "16px",
+                      }}
+                    >
+                      <span>{item.key}</span>
+                      <span>
+                        {item.currency} {parseFloat(item.value).toFixed(2)}
+                      </span>
+                    </div>
+                  ))}
+              </div>
               <div className="payment-calculator-wrapper" style={{ display: "flex", flexDirection: "column" }}>
-                {paymentCalculation.map((item) => (
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      borderTop: item.isTotalFee && "1px solid #BBBBBD",
-                      fontSize: item.isTotalFee && "16px",
-                      fontWeight: item.isTotalFee && "700",
-                      paddingTop: item.isTotalFee && "12px",
-                    }}
-                  >
-                    <span>{item.key}</span>
-                    <span>
-                      {item.currency} {parseFloat(item.value).toFixed(2)}
-                    </span>
-                  </div>
-                ))}
+                {paymentCalculation
+                  .filter((item) => item.isTotalFee)
+                  .map((item) => (
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        borderTop: "1px solid #BBBBBD",
+                        fontSize: "16px",
+                        fontWeight: "700",
+                        paddingTop: "12px",
+                        paddingRight: paymentCalculation.length >6 ? "28px" : "16px",
+                      }}
+                    >
+                      <span>{item.key}</span>
+                      <span>
+                        {item.currency} {parseFloat(item.value).toFixed(2)}
+                      </span>
+                    </div>
+                  ))}
               </div>
               <div>
                 <InfoCard
                   variant={"default"}
                   label={t("CS_COMMON_NOTE")}
-                  style={{ margin: "100px 0 0 0", backgroundColor: "#ECF3FD" }}
+                  style={{ backgroundColor: "#ECF3FD" }}
                   additionalElements={[
                     <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                       <span>{t("CS_OFFLINE_PAYMENT_STEP_TEXT")}</span>

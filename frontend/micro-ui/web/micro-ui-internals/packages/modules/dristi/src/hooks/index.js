@@ -34,6 +34,7 @@ export const Urls = {
   Authenticate: "/user/oauth/token",
   dristi: {
     individual: "/individual/v1/_create",
+    updateIndividual: "/individual/v1/_update",
     searchIndividual: "/individual/v1/_search",
     searchIndividualAdvocate: "/advocate/v1/_search",
     searchIndividualClerk: "/advocate/clerk/v1/_search",
@@ -57,6 +58,7 @@ export const Urls = {
     addEvidenceComment: "/evidence/v1/addcomment",
     pendingTask: "/analytics/pending_task/v1/create",
     getPendingTaskFields: "/inbox/v2/_getFields",
+    applicationCreate: "/application/v1/create",
 
     //Solutions
     billFileStoreId: "/etreasury/payment/v1/_getPaymentReceipt",

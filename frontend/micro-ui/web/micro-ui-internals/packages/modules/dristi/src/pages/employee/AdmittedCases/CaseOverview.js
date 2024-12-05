@@ -51,7 +51,7 @@ const CaseOverview = ({
   const showMakeSubmission = useMemo(() => {
     return (
       isAdvocatePresent &&
-      userRoles?.includes("APPLICATION_CREATOR") &&
+      userRoles?.includes("SUBMISSION_CREATOR") &&
       [
         CaseWorkflowState.PENDING_ADMISSION_HEARING,
         CaseWorkflowState.ADMISSION_HEARING_SCHEDULED,
@@ -147,7 +147,9 @@ const CaseOverview = ({
                   gap: "16px",
                 }}
               >
-                <Button variation={"outlined"} label={t("SCHEDULE_HEARING")} onButtonClick={openHearingModule} />
+                {userRoles.includes("HEARING_CREATOR") && (
+                  <Button variation={"outlined"} label={t("SCHEDULE_HEARING")} onButtonClick={openHearingModule} />
+                )}
                 {userRoles.includes("ORDER_CREATOR") && (
                   <Button variation={"outlined"} label={t("GENERATE_ORDERS_LINK")} onButtonClick={() => navigateOrdersGenerate()} />
                 )}

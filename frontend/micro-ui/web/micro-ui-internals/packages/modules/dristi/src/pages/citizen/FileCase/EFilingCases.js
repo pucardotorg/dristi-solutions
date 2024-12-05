@@ -44,6 +44,7 @@ import {
   signatureValidation,
   updateCaseDetails,
   validateDateForDelayApplication,
+  witnessDetailsValidation,
 } from "./EfilingValidationUtils";
 import isEqual from "lodash/isEqual";
 import isMatch from "lodash/isMatch";
@@ -57,6 +58,7 @@ import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import DocViewerWrapper from "../../employee/docViewerWrapper";
 import CaseLockModal from "./CaseLockModal";
 import ConfirmCaseDetailsModal from "./ConfirmCaseDetailsModal";
+import { DocumentUploadError } from "../../../Utils/errorUtil";
 
 const OutlinedInfoIcon = () => (
   <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: "absolute", right: -22, top: 0 }}>
@@ -1082,7 +1084,7 @@ function EFilingCases({ path }) {
                     key = formComponent.key + "." + formComponent.populators?.inputs?.[0]?.name;
                   }
                   if (formComponent.component === "VerifyPhoneNumber") {
-                    key = formComponent.key + "." + formComponent.name;
+                    key = formComponent.key + "." + formComponent?.name;
                   }
                 }
                 if (selected === "demandNoticeDetails" && formComponent.component === "SelectUserTypeComponent") {
@@ -1097,6 +1099,9 @@ function EFilingCases({ path }) {
                 }
                 if (selected === "complainantDetails" && formComponent.component === "CustomRadioInfoComponent") {
                   key = formComponent.key + "." + formComponent?.populators?.optionsKey;
+                }
+                if (selected === "complainantDetails" && formComponent.component === "VerificationComponent") {
+                  key = "complainantVerification.individualDetails.document";
                 }
                 const modifiedFormComponent = cloneDeep(formComponent);
                 if (modifiedFormComponent?.labelChildren === "optional") {
@@ -1138,7 +1143,13 @@ function EFilingCases({ path }) {
                   ) {
                     modifiedFormComponent.disable = false;
                   }
+                  if (selected === "chequeDetails" && key === "policeStation") {
+                    key = key + "." + formComponent?.populators?.optionsKey;
+                  }
                   if (key in scrutiny?.[selected]?.form?.[index] && scrutiny?.[selected]?.form?.[index]?.[key]?.FSOError) {
+                    if (key === "complainantVerification.individualDetails.document") {
+                      modifiedFormComponent.isScrutiny = true;
+                    }
                     modifiedFormComponent.disable = false;
                     modifiedFormComponent.withoutLabel = true;
                     modifiedFormComponent.disableScrutinyHeader = true;
@@ -1274,7 +1285,7 @@ function EFilingCases({ path }) {
       ]);
     }
     checkIfscValidation({ formData, setValue, selected });
-    checkNameValidation({ formData, setValue, selected, formdata, index, reset });
+    checkNameValidation({ formData, setValue, selected, formdata, index, reset, clearErrors, formState });
     checkOnlyCharInCheque({ formData, setValue, selected });
     if (!isEqual(formData, formdata[index].data)) {
       chequeDateValidation({ formData, setError, clearErrors, selected });
@@ -1386,9 +1397,9 @@ function EFilingCases({ path }) {
         }
 
         if ("ifMultipleAddressLocations" in currentPage) {
-          const arrayValue = currentIndexData?.data[currentPage?.ifDataKeyHasValueAsArray?.dataKey] || [];
+          const arrayValue = currentIndexData?.data[currentPage?.ifMultipleAddressLocations?.dataKey] || [];
           for (let i = 0; i < arrayValue.length; i++) {
-            const mandatoryFields = currentPage?.ifDataKeyHasValueAsArray?.mandatoryFields || [];
+            const mandatoryFields = currentPage?.ifMultipleAddressLocations?.mandatoryFields || [];
             for (let j = 0; j < mandatoryFields.length; j++) {
               const value = extractValue(arrayValue[i], mandatoryFields[j]);
               const isValueEmpty = isEmptyValue(value);
@@ -1437,6 +1448,16 @@ function EFilingCases({ path }) {
     };
     return obj;
   };
+  const onDocumentUpload = async (fileData, filename) => {
+    try {
+      const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", fileData, Digit.ULBService.getCurrentTenantId());
+      return { file: fileUploadRes?.data, fileType: fileData.type, filename };
+    } catch (error) {
+      console.error("Failed to upload document:", error);
+      throw error; // or handle error appropriately
+    }
+  };
+
   const onSubmit = async (action, isCaseLocked = false) => {
     if (isDisableAllFieldsMode) {
       history.push(homepagePath);
@@ -1548,6 +1569,24 @@ function EFilingCases({ path }) {
       formdata
         .filter((data) => data.isenabled)
         .some((data) =>
+          witnessDetailsValidation({
+            formData: data?.data,
+            t,
+            caseDetails,
+            selected,
+            setShowErrorToast,
+            toast,
+            setFormErrors: setFormErrors.current,
+            clearFormDataErrors: clearFormDataErrors.current,
+          })
+        )
+    ) {
+      return;
+    }
+    if (
+      formdata
+        .filter((data) => data.isenabled)
+        .some((data) =>
           prayerAndSwornValidation({
             t,
             formData: data?.data,
@@ -1603,16 +1642,55 @@ function EFilingCases({ path }) {
     // }
     else {
       let res;
-      if (isCaseLocked) {
-        setIsDisabled(true);
-        res = await refetchCasePDfGeneration();
-        if (res?.status === "error") {
-          setIsDisabled(false);
-          toast.error(t("CASE_PDF_ERROR"));
-          throw new Error("CASE_PDF_ERROR");
-        }
-      }
+      let caseComplaintDocument = {};
+      let casePdfDocument = [];
       try {
+        if (isCaseLocked) {
+          setIsDisabled(true);
+          const caseObject = isCaseReAssigned && errorCaseDetails ? errorCaseDetails : caseDetails;
+          const response = await axios.post(
+            "/dristi-case-pdf/v1/fetchCaseComplaintPdf",
+            {
+              cases: {
+                id: caseObject?.id,
+                tenantId: tenantId,
+              },
+              RequestInfo: {
+                authToken: Digit.UserService.getUser().access_token,
+                userInfo: Digit.UserService.getUser()?.info,
+                msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
+                apiId: "Rainmaker",
+              },
+            },
+            { responseType: "blob" } // Important: Set responseType to handle binary data
+          );
+          const contentDisposition = response.headers["content-disposition"];
+          const filename = contentDisposition ? contentDisposition.split("filename=")[1]?.replace(/['"]/g, "") : "caseCompliantDetails.pdf";
+          const pdfFile = new File([response?.data], filename, { type: "application/pdf" });
+          const document = await onDocumentUpload(pdfFile, pdfFile?.name);
+          const fileStoreId = document?.file?.files?.[0]?.fileStoreId;
+
+          if (fileStoreId) {
+            caseComplaintDocument = {
+              documentType: "case.complaint.unsigned",
+              fileStore: fileStoreId,
+              fileName: filename,
+            };
+          } else {
+            throw new Error("FILE_STORE_ID_MISSING");
+          }
+          res = await refetchCasePDfGeneration();
+          casePdfDocument = res?.data?.cases?.[0]?.documents
+            .filter((doc) =>
+              doc.additionalDetails?.fields?.some((field) => field.key === "FILE_CATEGORY" && field.value === "CASE_GENERATED_DOCUMENT")
+            )
+            .map((doc) => doc.fileStore);
+          if (res?.status === "error") {
+            setIsDisabled(false);
+            toast.error(t("CASE_PDF_ERROR"));
+            throw new Error("CASE_PDF_ERROR");
+          }
+        }
         // Await the result of updateCaseDetails
         await updateCaseDetails({
           t,
@@ -1629,11 +1707,12 @@ function EFilingCases({ path }) {
           setErrorCaseDetails,
           isCaseSignedState: isPendingESign || isPendingReESign,
           isSaveDraftEnabled: isCaseReAssigned || isPendingReESign || isPendingESign,
-          ...(res && { fileStoreId: res?.data?.cases?.[0]?.documents?.[0]?.fileStore }),
+          ...(res && { fileStoreId: casePdfDocument?.[0] }),
+          ...(caseComplaintDocument && { caseComplaintDocument: caseComplaintDocument }),
           multiUploadList,
+          scrutinyObj,
         });
 
-        // After successful update, reset form and refetch case data
         if (resetFormData.current) {
           resetFormData.current();
           setIsDisabled(false);
@@ -1653,15 +1732,15 @@ function EFilingCases({ path }) {
           history.push(`?caseId=${caseId}&selected=${nextSelected}`);
         }
       } catch (error) {
-        // If any error occurs in updateCaseDetails or refetching, handle it here
-        if (extractCodeFromErrorMsg(error) === 413) {
-          toast.error(t("FAILED_TO_UPLOAD_FILE"));
-        } else {
-          toast.error(t("SOMETHING_WENT_WRONG"));
+        let message = t("SOMETHING_WENT_WRONG");
+        if (error instanceof DocumentUploadError) {
+          message = `${t("DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${error?.documentType}`;
+        } else if (extractCodeFromErrorMsg(error) === 413) {
+          message = t("FAILED_TO_UPLOAD_FILE");
         }
         setIsDisabled(false);
         console.error("An error occurred:", error);
-        throw error; // Re-throw the error to propagate it further if needed
+        throw new Error(message);
       }
     }
   };
@@ -1680,6 +1759,7 @@ function EFilingCases({ path }) {
       tenantId,
       setErrorCaseDetails,
       multiUploadList,
+      scrutinyObj,
     })
       .then(() => {
         refetchCaseData().then(() => {
@@ -1692,10 +1772,13 @@ function EFilingCases({ path }) {
       .then(() => {
         toast.success(t("CS_SUCCESSFULLY_SAVED_DRAFT"));
       })
-      .catch((error) => {
-        if (extractCodeFromErrorMsg(error) === 413) {
+      .catch(async (error) => {
+        if (error instanceof DocumentUploadError) {
+          toast.error(`${t("DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${error?.documentType}`);
+        } else if (extractCodeFromErrorMsg(error) === 413) {
           toast.error(t("FAILED_TO_UPLOAD_FILE"));
         } else {
+          console.error("Error:", error);
           toast.error(t("SOMETHING_WENT_WRONG"));
         }
         setIsDisabled(false);
@@ -1750,6 +1833,7 @@ function EFilingCases({ path }) {
       setErrorCaseDetails,
       isSaveDraftEnabled: isCaseReAssigned || isPendingReESign || isPendingESign,
       multiUploadList,
+      scrutinyObj,
     })
       .then(() => {
         if (!isCaseReAssigned) {
@@ -1765,7 +1849,15 @@ function EFilingCases({ path }) {
           setIsDisabled(false);
         }
       })
-      .catch(() => {
+      .catch(async (error) => {
+        if (error instanceof DocumentUploadError) {
+          toast.error(`${t("DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${error?.documentType}`);
+        } else if (extractCodeFromErrorMsg(error) === 413) {
+          toast.error(t("FAILED_TO_UPLOAD_FILE"));
+        } else {
+          console.error("Error:", error);
+          toast.error(t("SOMETHING_WENT_WRONG"));
+        }
         setIsDisabled(false);
       });
     setPrevSelected(selected);
@@ -1854,6 +1946,14 @@ function EFilingCases({ path }) {
               delayCondonation: delayCondonation,
             },
           ],
+          additionalDetails: {
+            filingNumber: caseDetails?.filingNumber,
+            chequeDetails: chequeDetails,
+            cnrNumber: caseDetails?.cnrNumber,
+            payer: caseDetails?.litigants?.[0]?.additionalDetails?.fullName,
+            payerMobileNo: caseDetails?.additionalDetails?.payerMobileNo,
+            delayCondonation: delayCondonation,
+          },
         },
       ],
     });
@@ -1980,7 +2080,7 @@ function EFilingCases({ path }) {
     act: "Negotiable Instruments Act",
     section: "138",
     courtName: "Kollam S-138 Special Court",
-    href: "https://districts.ecourts.gov.in/sites/default/files/study%20circles.pdf",
+    href: "https://www.indiacode.nic.in/bitstream/123456789/2189/1/a1881-26.pdf",
   };
 
   const takeUserToRemainingMandatoryFieldsPage = () => {
@@ -2055,8 +2155,15 @@ function EFilingCases({ path }) {
     }
   };
 
+  const customStyles = `
+  .action-bar-wrap.e-filing-action-bar header {
+    margin-top:0 !important;
+  }
+`;
+
   return (
     <div className="file-case">
+      <style>{customStyles}</style>
       <div className="file-case-side-stepper">
         {isDraftInProgress && (
           <div className="side-stepper-info">
@@ -2164,7 +2271,12 @@ function EFilingCases({ path }) {
                 {`${t(pageConfig.header)}`}
                 {pageConfig?.showOptionalInHeader && <span style={{ color: "#77787B", fontWeight: 100 }}>&nbsp;(optional)</span>}
                 {selected === "reviewCaseFile" && (
-                  <Button className="border-none dristi-font-bold" onButtonClick={handleViewCasePdf} label={t("View PDF")} variation={"secondary"} />
+                  <Button
+                    className="border-none dristi-font-bold"
+                    onButtonClick={handleViewCasePdf}
+                    label={t("CS_VIEW_PDF")}
+                    variation={"secondary"}
+                  />
                 )}
               </Header>
               <div

@@ -9,6 +9,7 @@ import OverlayDropdown from "../components/OverlayDropdown";
 import CustomChip from "../components/CustomChip";
 import ReactTooltip from "react-tooltip";
 import { removeInvalidNameParts } from "../Utils";
+import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
 
 const businessServiceMap = {
   "muster roll": "MR",
@@ -196,6 +197,7 @@ export const UICustomizations = {
                 advocateId: adv?.id,
                 barRegistrationNumberOriginal: adv?.barRegistrationNumber,
                 advocateUuid: adv?.auditDetails?.createdBy,
+                individualId: adv?.individualId,
               };
             });
           },
@@ -279,7 +281,7 @@ export const UICustomizations = {
     MobileDetailsOnClick: (row, tenantId) => {
       let link;
       Object.keys(row).map((key) => {
-        if (key === "Application No") link = ``;
+        if (key === "APPLICATION_NO") link = ``;
       });
       return link;
     },
@@ -293,7 +295,7 @@ export const UICustomizations = {
       const formattedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
       switch (key) {
-        case "Application No":
+        case "APPLICATION_NO":
           return (
             <span className="link">
               <Link
@@ -303,30 +305,30 @@ export const UICustomizations = {
               </Link>
             </span>
           );
-        case "Action":
+        case "ACTION":
           return (
             <Link
               to={`/digit-ui/employee/dristi/registration-requests/details?applicationNo=${applicationNumber}&individualId=${value}&type=${usertype}`}
             >
-              <span className="action-link"> {t("Verify")}</span>
+              <span className="action-link"> {t("CS_VERIFY")}</span>
             </Link>
           );
-        case "User Type":
-          return usertype === "clerk" ? "Advocate Clerk" : "Advocate";
-        case "Date Created":
+        case "USER_TYPE":
+          return usertype === "clerk" ? t("ADVOCATE CLERK") : t("ADVOCATE");
+        case "DATE_CREATED":
           const date = new Date(value);
           const day = date.getDate().toString().padStart(2, "0");
           const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Month is zero-based
           const year = date.getFullYear();
           const formattedDate = `${day}-${month}-${year}`;
           return <span>{formattedDate}</span>;
-        case "Due Since (no of days)":
+        case "DUE_SINCE_IN_DAYS":
           const createdAt = new Date(row?.businessObject?.auditDetails?.createdTime);
           const formattedCreatedAt = new Date(createdAt.getFullYear(), createdAt.getMonth(), createdAt.getDate());
           const differenceInTime = formattedToday.getTime() - formattedCreatedAt.getTime();
           const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
           return <span>{differenceInDays}</span>;
-        case "User Name":
+        case "USER_NAME":
           const displayName = `${value?.givenName || ""} ${value?.familyName || ""} ${value?.otherNames || ""}`;
           return displayName;
         default:
@@ -451,7 +453,7 @@ export const UICustomizations = {
       const billStatus = row?.businessObject?.billDetails?.billStatus;
       const paymentType = row?.businessObject?.billDetails?.paymentType;
       switch (key) {
-        case "Case Name & ID":
+        case "CASE_NAME_ID":
           return billStatus === "ACTIVE" ? (
             <span className="link">
               <Link
@@ -463,9 +465,9 @@ export const UICustomizations = {
           ) : (
             billStatus === "PAID" && <span>{String(value || t("ES_COMMON_NA"))}</span>
           );
-        case "Amount Due":
+        case "AMOUNT_DUE":
           return <span>{`Rs. ${value}/-`}</span>;
-        case "Action":
+        case "ACTION":
           return billStatus === "ACTIVE" ? (
             <span className="action-link">
               <Link
@@ -655,25 +657,21 @@ export const UICustomizations = {
     },
     additionalCustomizations: (row, key, column, value, t) => {
       const showDocument =
-        userRoles?.includes("APPLICATION_APPROVER") ||
-        userRoles?.includes("DEPOSITION_CREATOR") ||
-        userRoles?.includes("DEPOSITION_ESIGN") ||
-        userRoles?.includes("DEPOSITION_PUBLISHER") ||
-        row.workflow?.action !== "PENDINGREVIEW";
+        userRoles?.includes("APPLICATION_APPROVER") || userRoles?.includes("DEPOSITION_ESIGN") || row.workflow?.action !== "PENDINGREVIEW";
       switch (key) {
-        case "Document":
+        case "DOCUMENT_TEXT":
           return showDocument ? <OwnerColumn rowData={row} colData={column} t={t} /> : "";
-        case "File":
+        case "FILE":
           return showDocument ? <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} /> : "";
-        case "Date Added":
-        case "Date":
+        case "DATE_ADDED":
+        case "DATE":
           const date = new Date(value);
           const day = date.getDate().toString().padStart(2, "0");
           const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Month is zero-based
           const year = date.getFullYear();
           const formattedDate = `${day}-${month}-${year}`;
-          return <span>{formattedDate}</span>;
-        case "Parties":
+          return <span>{value && value !== "0" ? formattedDate : ""}</span>;
+        case "PARTIES":
           if (value === null || value === undefined || value === "undefined" || value === "null") {
             return null;
           }
@@ -688,20 +686,22 @@ export const UICustomizations = {
                 ?.join(", ")}${value?.length > 2 ? `+${value?.length - 2}` : ""}`}</span>
             </div>
           );
-        case "Order Type":
+        case "ORDER_TYPE":
           return <OrderName rowData={row} colData={column} value={value} />;
-        case "Submission Type":
+        case "SUBMISSION_TYPE":
           return <OwnerColumn rowData={row} colData={column} t={t} value={value} showAsHeading={true} />;
-        case "Document Type":
+        case "DOCUMENT_TYPE":
           return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} value={value} showAsHeading={true} />;
-        case "Hearing Type":
-        case "Source":
-        case "Status":
+        case "HEARING_TYPE":
+        case "SOURCE":
+        case "STATUS":
           //Need to change the shade as per the value
           return <CustomChip text={t(value)} shade={value === "PUBLISHED" ? "green" : "orange"} />;
-        case "Owner":
+        case "OWNER":
           return removeInvalidNameParts(value);
-        case "Actions":
+        case "SUBMISSION_ID":
+          return value ? value : "-";
+        case "CS_ACTIONS":
           return (
             <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="SearchIndividualConfig" />
           );
@@ -729,7 +729,7 @@ export const UICustomizations = {
             action: (history) => {
               const requestBody = {
                 order: {
-                  createdDate: new Date().getTime(),
+                  createdDate: null,
                   tenantId: row.tenantId,
                   hearingNumber: row?.hearingId,
                   filingNumber: row.filingNumber[0],
@@ -850,14 +850,46 @@ export const UICustomizations = {
         ];
       }
 
+      if (![HearingWorkflowState?.SCHEDULED, HearingWorkflowState?.ABATED, HearingWorkflowState?.OPTOUT].includes(row.status)) {
+        return [
+          {
+            label: "View transcript",
+            id: "view_transcript",
+            hide: false,
+            disabled: false,
+            action: (history, column, row) => {
+              column.clickFunc(row);
+            },
+          },
+          {
+            label: "View witness deposition",
+            id: "view_witness",
+            hide: false,
+            disabled: true,
+            action: (history) => {
+              alert("Not Yet Implemented");
+            },
+          },
+          {
+            label: "View pending task",
+            id: "view_pending_tasks",
+            hide: true,
+            disabled: true,
+            action: (history) => {
+              alert("Not Yet Implemented");
+            },
+          },
+        ];
+      }
+
       return [
         {
           label: "View transcript",
           id: "view_transcript",
           hide: false,
-          disabled: false,
-          action: (history, column, row) => {
-            column.clickFunc(row);
+          disabled: true,
+          action: (history) => {
+            alert("Not Yet Implemented");
           },
         },
         {
@@ -993,16 +1025,16 @@ export const UICustomizations = {
     },
     additionalCustomizations: (row, key, column, value, t) => {
       switch (key) {
-        case "Party Name":
+        case "PARTY_NAME":
           return removeInvalidNameParts(value) || "N.A.";
-        case "Date Added":
+        case "DATE_ADDED":
           const date = new Date(value);
           const day = date.getDate().toString().padStart(2, "0");
           const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Month is zero-based
           const year = date.getFullYear();
           const formattedDate = `${day}-${month}-${year}`;
           return <span>{formattedDate || "N.A."}</span>;
-        case "Party Type":
+        case "PARTY_TYPE":
           return partyTypes[value] ? partyTypes[value] : value;
         default:
           break;

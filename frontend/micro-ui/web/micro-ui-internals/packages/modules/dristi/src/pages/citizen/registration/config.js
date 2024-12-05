@@ -8,8 +8,8 @@ export const userTypeOptions = [
       "CASE_CREATOR",
       "CASE_EDITOR",
       "CASE_VIEWER",
-      "DEPOSITION_CREATOR",
-      "DEPOSITION_VIEWER",
+      "EVIDENCE_CREATOR",
+      "EVIDENCE_VIEWER",
       "APPLICATION_CREATOR",
       "APPLICATION_VIEWER",
       "HEARING_VIEWER",
@@ -20,6 +20,8 @@ export const userTypeOptions = [
       "TASK_VIEWER",
       "CASE_RESPONDER",
       "HEARING_ACCEPTOR",
+      "ADVOCATE_VIEWER",
+      "PENDING_TASK_CREATOR",
     ],
     subText: "LITIGANT_SUB_TEXT",
   },
@@ -34,8 +36,8 @@ export const userTypeOptions = [
       "CASE_CREATOR",
       "CASE_EDITOR",
       "CASE_VIEWER",
-      "DEPOSITION_CREATOR",
-      "DEPOSITION_VIEWER",
+      "EVIDENCE_CREATOR",
+      "EVIDENCE_VIEWER",
       "APPLICATION_CREATOR",
       "APPLICATION_VIEWER",
       "HEARING_VIEWER",
@@ -46,6 +48,9 @@ export const userTypeOptions = [
       "TASK_VIEWER",
       "CASE_RESPONDER",
       "HEARING_ACCEPTOR",
+      "ADVOCATE_VIEWER",
+      "ADVOCATE_APPLICATION_VIEWER",
+      "PENDING_TASK_CREATOR",
     ],
     apiDetails: {
       serviceName: "/advocate/v1/_create",
@@ -65,8 +70,8 @@ export const userTypeOptions = [
       "CASE_CREATOR",
       "CASE_EDITOR",
       "CASE_VIEWER",
-      "DEPOSITION_CREATOR",
-      "DEPOSITION_VIEWER",
+      "EVIDENCE_CREATOR",
+      "EVIDENCE_VIEWER",
       "APPLICATION_CREATOR",
       "APPLICATION_VIEWER",
       "HEARING_VIEWER",
@@ -77,6 +82,9 @@ export const userTypeOptions = [
       "TASK_VIEWER",
       "CASE_RESPONDER",
       "HEARING_ACCEPTOR",
+      "USER_REGISTER",
+      "ADVOCATE_VIEWER",
+      "PENDING_TASK_CREATOR",
     ],
     apiDetails: {
       serviceName: "/advocate/clerk/v1/_create",
@@ -156,11 +164,6 @@ export const newConfig = [
         populators: {
           inputs: [
             {
-              label: "CS_LOCATION",
-              type: "LocationSearch",
-              name: ["pincode", "state", "district", "city", "coordinates", "locality", "buildingName", "doorNo"],
-            },
-            {
               label: "PINCODE",
               type: "text",
               name: "pincode",
@@ -217,6 +220,8 @@ export const newConfig = [
               name: "locality",
               validation: {
                 isRequired: true,
+                minlength: 2,
+                maxlength: 256,
               },
               isMandatory: true,
             },
@@ -226,7 +231,7 @@ export const newConfig = [
               name: "buildingName",
               validation: {
                 errMsg: "ADDRESS_BUILDING_NAME_INVALID",
-                minlength: 2,
+                minlength: 1,
                 title: "",
               },
             },
@@ -464,12 +469,12 @@ export const newConfig = [
               },
             },
             {
-              label: "Upload ID Proof",
+              label: "CS_UPLOAD_PROOF",
               type: "documentUpload",
               name: "ID_Proof",
               validation: {},
               clearFields: { aadharNumber: "" },
-              allowedFileTypes: /(.*?)(png|jpg|pdf)$/i,
+              allowedFileTypes: /(.*?)(png|jpg|pdf|jpeg)$/i,
               isMandatory: true,
               disableMandatoryFieldFor: ["aadharNumber"],
               errorMessage: "CUSTOM_DOCUMENT_ERROR_MSG",
@@ -491,8 +496,8 @@ export const newConfig = [
         populators: {
           inputs: [
             {
-              label: "Terms and Conditions",
-              subLabel: "Before diving in, we'll need to verify your identity for account setup.",
+              label: "ES_COMMON_USER_TERMS_AND_CONDITIONS",
+              subLabel: "CS_VERFIY_IDENTITY_SUB_TEXT",
               type: "multiple",
               name: "terms_condition",
               optionsKey: "name",
@@ -503,22 +508,22 @@ export const newConfig = [
                 {
                   code: "AGREE_MESSAGE",
                   name:
-                    "By using this app, you agree to abide by our community guidelines, fostering a respectful and inclusive environment for all users",
+                    "FIRST_TERMS_AND_CONDITIONS",
                 },
                 {
                   code: "PRIVACY_MESSAGE",
                   name:
-                    "Your privacy is paramount. Rest assured, your data is securely handled and never shared with third parties without your consent",
+                    "SECOND_TERMS_AND_CONDITIONS",
                 },
                 {
                   code: "LAWFUL_MESSAGE",
                   name:
-                    "Please refrain from engaging in any unlawful activities while using our app, ensuring a safe and compliant platform for everyone",
+                    "THIRD_TERMS_AND_CONDITIONS",
                 },
                 {
                   code: "MODIFICATION_MESSAGE",
                   name:
-                    "We reserve the right to modify our services and terms at any time, keeping you informed of any updates through our communication channels",
+                    "FOURTH_TERMS_AND_CONDITIONS",
                 },
               ],
             },
@@ -565,10 +570,10 @@ export const advocateClerkConfig = [
               name: "barRegistrationNumber",
               validation: {
                 isRequired: true,
-                pattern: "[A-Z]/\\d{6}/\\d{4}",
+                // pattern: "[A-Z]/\\d{6}/\\d{4}",
                 errMsg: "BAR_REGISTRATION_NUMBER_INVALID_PATTERN",
-                maxlength: 13,
-                minlength: 13,
+                maxlength: 20,
+                minlength: 1,
               },
               isMandatory: true,
               isDependentOn: "selectUserType",

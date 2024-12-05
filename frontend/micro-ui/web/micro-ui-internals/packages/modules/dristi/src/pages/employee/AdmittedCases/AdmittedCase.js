@@ -56,6 +56,14 @@ const caseSecondaryActions = [
 ];
 const caseTertiaryActions = [];
 
+const HearingWorkflowState = {
+  OPTOUT: "OPT_OUT",
+  INPROGRESS: "IN_PROGRESS",
+  COMPLETED: "COMPLETED",
+  ABATED: "ABATED",
+  SCHEDULED: "SCHEDULED",
+};
+
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
 };
@@ -132,6 +140,7 @@ const AdmittedCases = () => {
   const caseId = urlParams.get("caseId");
   const roles = Digit.UserService.getUser()?.info?.roles;
   const isFSO = roles.some((role) => role.code === "FSO_ROLE");
+  const isCourtRoomManager = roles.some((role) => role.code === "COURT_ROOM_MANAGER");
   const activeTab = isFSO ? "Complaints" : urlParams.get("tab") || "Overview";
   const filingNumber = urlParams.get("filingNumber");
   const [show, setShow] = useState(false);
@@ -156,6 +165,8 @@ const AdmittedCases = () => {
   const [createAdmissionOrder, setCreateAdmissionOrder] = useState(false);
   const [updatedCaseDetails, setUpdatedCaseDetails] = useState({});
   const [showDismissCaseConfirmation, setShowDismissCaseConfirmation] = useState(false);
+  const [showPendingDelayApplication, setShowPendingDelayApplication] = useState(false);
+  const [toastStatus, setToastStatus] = useState({ alreadyShown: false });
   const history = useHistory();
   const isCitizen = userRoles.includes("CITIZEN");
   const OrderWorkflowAction = Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {};
@@ -260,7 +271,7 @@ const AdmittedCases = () => {
     allAdvocates,
     userInfo?.uuid,
   ]);
-  const { data: applicationData, isloading: isApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
+  const { data: applicationData, isLoading: isApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
     {
       criteria: {
         filingNumber,
@@ -299,6 +310,18 @@ const AdmittedCases = () => {
     [applicationData, onBehalfOfuuid]
   );
 
+  const [isDelayApplicationPending, setIsDelayApplicationPending] = useState(false);
+
+  useMemo(() => {
+    setIsDelayApplicationPending(
+      Boolean(
+        applicationData?.applicationList?.some(
+          (item) => item?.applicationType === "DELAY_CONDONATION" && item?.status === SubmissionWorkflowState.PENDINGAPPROVAL
+        )
+      )
+    );
+  }, [applicationData]);
+
   const caseRelatedData = useMemo(
     () => ({
       caseId,
@@ -317,7 +340,7 @@ const AdmittedCases = () => {
   const showMakeSubmission = useMemo(() => {
     return (
       isAdvocatePresent &&
-      userRoles?.includes("APPLICATION_CREATOR") &&
+      userRoles?.includes("SUBMISSION_CREATOR") &&
       [
         CaseWorkflowState.PENDING_ADMISSION_HEARING,
         CaseWorkflowState.ADMISSION_HEARING_SCHEDULED,
@@ -431,7 +454,7 @@ const AdmittedCases = () => {
                   ...tabConfig.sections.search.uiConfig,
                   fields: [
                     {
-                      label: "Parties",
+                      label: "PARTIES",
                       isMandatory: false,
                       key: "parties",
                       type: "dropdown",
@@ -452,7 +475,7 @@ const AdmittedCases = () => {
                 uiConfig: {
                   ...tabConfig.sections.searchResult.uiConfig,
                   columns: tabConfig.sections.searchResult.uiConfig.columns.map((column) => {
-                    return column.label === "Order Type"
+                    return column.label === "ORDER_TYPE"
                       ? {
                           ...column,
                           clickFunc: orderSetFunc,
@@ -484,7 +507,7 @@ const AdmittedCases = () => {
                   ...tabConfig.sections.search.uiConfig,
                   fields: [
                     {
-                      label: "Parties",
+                      label: "PARTIES",
                       isMandatory: false,
                       key: "parties",
                       type: "dropdown",
@@ -505,7 +528,7 @@ const AdmittedCases = () => {
                 uiConfig: {
                   ...tabConfig.sections.searchResult.uiConfig,
                   columns: tabConfig.sections.searchResult.uiConfig.columns.map((column) => {
-                    return column.label === "Actions"
+                    return column.label === "CS_ACTIONS"
                       ? {
                           ...column,
                           clickFunc: takeActionFunc,
@@ -528,7 +551,7 @@ const AdmittedCases = () => {
               },
             },
           }
-        : tabConfig.label === "Documents"
+        : tabConfig.label === "Filings"
         ? {
             ...tabConfig,
             apiDetails: {
@@ -550,7 +573,7 @@ const AdmittedCases = () => {
                   ...tabConfig.sections.search.uiConfig,
                   fields: [
                     {
-                      label: "Owner",
+                      label: "OWNER",
                       isMandatory: false,
                       key: "owner",
                       type: "dropdown",
@@ -571,7 +594,7 @@ const AdmittedCases = () => {
                 uiConfig: {
                   ...tabConfig.sections.searchResult.uiConfig,
                   columns: tabConfig.sections.searchResult.uiConfig.columns.map((column) => {
-                    return column.label === "File" || column.label === "Document Type"
+                    return column.label === "FILE" || column.label === "DOCUMENT_TYPE"
                       ? {
                           ...column,
                           clickFunc: docSetFunc,
@@ -582,7 +605,7 @@ const AdmittedCases = () => {
               },
             },
           }
-        : tabConfig.label === "Submissions"
+        : tabConfig.label === "Applications"
         ? {
             ...tabConfig,
             apiDetails: {
@@ -603,7 +626,7 @@ const AdmittedCases = () => {
                   ...tabConfig.sections.search.uiConfig,
                   fields: [
                     {
-                      label: "Owner",
+                      label: "OWNER",
                       isMandatory: false,
                       key: "owner",
                       type: "dropdown",
@@ -628,12 +651,12 @@ const AdmittedCases = () => {
                 uiConfig: {
                   ...tabConfig.sections.searchResult.uiConfig,
                   columns: tabConfig.sections.searchResult.uiConfig.columns.map((column) => {
-                    return column.label === "Document" || column.label === "Submission Type"
+                    return column.label === "DOCUMENT_TEXT" || column.label === "SUBMISSION_TYPE"
                       ? {
                           ...column,
                           clickFunc: docSetFunc,
                         }
-                      : column.label === "Owner"
+                      : column.label === "OWNER"
                       ? {
                           ...column,
                           parties: caseRelatedData.parties,
@@ -676,6 +699,7 @@ const AdmittedCases = () => {
       key: index,
       label: configItem.label,
       active: index === indexOfActiveTab ? true : false,
+      displayLabel: configItem?.displayLabel,
     }));
   }, [indexOfActiveTab, newTabSearchConfig?.TabSearchconfig]); // setting number of tab component and making first index enable as default
   const [updateCounter, setUpdateCounter] = useState(0);
@@ -701,7 +725,7 @@ const AdmittedCases = () => {
   }, [history?.location]);
 
   useEffect(() => {
-    if (history?.location?.state?.from && history?.location?.state?.from === "orderSuccessModal") {
+    if (history?.location?.state?.from === "orderSuccessModal" && !toastStatus?.alreadyShown) {
       showToast(true);
       setToastDetails({
         isError: false,
@@ -755,7 +779,7 @@ const AdmittedCases = () => {
   const handleIssueNotice = async (hearingDate, hearingNumber) => {
     try {
       const orderBody = {
-        createdDate: new Date().getTime(),
+        createdDate: null,
         tenantId,
         cnrNumber: caseDetails?.cnrNumber,
         filingNumber,
@@ -844,27 +868,27 @@ const AdmittedCases = () => {
   const caseBasicDetails = useMemo(() => {
     return [
       {
-        key: "Filing No.",
+        key: "CS_FILING_NO",
         value: getDefaultValue(caseDetails?.filingNumber),
       },
       {
-        key: "Complaint / CMP No.",
+        key: "CS_COMPLAINT_NO",
         value: getDefaultValue(caseDetails?.cmpNumber),
       },
       {
-        key: "CNR No.",
+        key: "CS_CNR",
         value: getDefaultValue(caseDetails?.cnrNumber),
       },
       {
-        key: "CCST No.",
+        key: "CS_CCST",
         value: getDefaultValue(caseDetails?.courtCaseNumber),
       },
       {
-        key: "Submitted on",
+        key: "SUBMITTED_ON",
         value: formatDateOrDefault(caseDetails?.filingDate),
       },
       {
-        key: "Registered on",
+        key: "REGISTERED_ON",
         value: formatDateOrDefault(caseDetails?.registrationDate),
       },
     ];
@@ -1025,7 +1049,7 @@ const AdmittedCases = () => {
   const handleScheduleNextHearing = () => {
     const reqBody = {
       order: {
-        createdDate: new Date().getTime(),
+        createdDate: null,
         tenantId,
         cnrNumber: updatedCaseDetails?.cnrNumber || caseDetails?.cnrNumber,
         filingNumber: caseDetails?.filingNumber,
@@ -1139,6 +1163,15 @@ const AdmittedCases = () => {
     [hearingDetails?.HearingList]
   );
 
+  const currentHearingStatus = useMemo(
+    () =>
+      hearingDetails?.HearingList?.find(
+        (list) =>
+          list?.hearingType === "ADMISSION" && !(list?.status === HearingWorkflowState.COMPLETED || list?.status === HearingWorkflowState.ABATED)
+      )?.status,
+    [hearingDetails?.HearingList]
+  );
+
   const { data: ordersData } = useSearchOrdersService(
     { criteria: { tenantId: tenantId, filingNumber } },
     { tenantId },
@@ -1198,6 +1231,10 @@ const AdmittedCases = () => {
       case "REGISTER":
         break;
       case "ADMIT":
+        if (isDelayApplicationPending) {
+          setShowPendingDelayApplication(true);
+          break;
+        }
         if (caseDetails?.status === "ADMISSION_HEARING_SCHEDULED") {
           const { hearingDate, hearingNumber } = await getHearingData();
           if (hearingNumber) {
@@ -1275,7 +1312,7 @@ const AdmittedCases = () => {
         const date = new Date(hearingDate);
         const requestBody = {
           order: {
-            createdDate: new Date().getTime(),
+            createdDate: null,
             tenantId: tenantId,
             hearingNumber: hearingNumber,
             filingNumber: filingNumber,
@@ -1347,6 +1384,14 @@ const AdmittedCases = () => {
     history.push(`/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}`);
   };
 
+  const handleCitizenAction = (option) => {
+    if (option.value === "RAISE_APPLICATION") {
+      history.push(`/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}`);
+    } else if (option.value === "SUBMIT_DOCUMENTS") {
+      // to do
+    }
+  };
+
   const handleSelect = (option) => {
     if (option === t("MAKE_SUBMISSION")) {
       history.push(`/digit-ui/employee/submissions/submissions-create?filingNumber=${filingNumber}&applicationType=DOCUMENT`);
@@ -1358,7 +1403,7 @@ const AdmittedCases = () => {
     } else if (option === t("REFER_TO_ADR")) {
       const reqBody = {
         order: {
-          createdDate: new Date().getTime(),
+          createdDate: null,
           tenantId,
           cnrNumber,
           filingNumber: filingNumber,
@@ -1402,7 +1447,7 @@ const AdmittedCases = () => {
     } else if (option === t("MANDATORY_SUBMISSIONS_RESPONSES")) {
       const reqBody = {
         order: {
-          createdDate: new Date().getTime(),
+          createdDate: null,
           tenantId,
           cnrNumber,
           filingNumber: filingNumber,
@@ -1452,7 +1497,7 @@ const AdmittedCases = () => {
     setToastDetails(details);
     setTimeout(() => {
       setToast(false);
-      history.replace(history.location.pathname + history.location.search, { from: "" });
+      setToastStatus({ alreadyShown: true });
     }, duration);
   };
 
@@ -1494,7 +1539,7 @@ const AdmittedCases = () => {
     const date = new Date(dateArr.join(" "));
     const reqBody = {
       order: {
-        createdDate: new Date().getTime(),
+        createdDate: null,
         tenantId,
         cnrNumber,
         filingNumber: filingNumber,
@@ -1565,9 +1610,24 @@ const AdmittedCases = () => {
         showToast({ isError: true, message: "ORDER_CREATION_FAILED" });
       });
   };
+
+  const citizenActionOptions = useMemo(
+    () => [
+      {
+        value: "RAISE_APPLICATION",
+        label: "Raise Application",
+      },
+      {
+        value: "SUBMIT_DOCUMENTS",
+        label: "Submit Documents",
+      },
+    ],
+    []
+  );
+
   const takeActionOptions = useMemo(
     () => [
-      ...(userRoles?.includes("SUBMISSION_CREATOR") || userRoles?.includes("APPLICATION_CREATOR") ? [t("MAKE_SUBMISSION")] : []),
+      ...(userRoles?.includes("SUBMISSION_CREATOR") ? [t("MAKE_SUBMISSION")] : []),
       t("GENERATE_ORDER_HOME"),
       t("SCHEDULE_HEARING"),
       t("REFER_TO_ADR"),
@@ -1577,13 +1637,14 @@ const AdmittedCases = () => {
 
   const showActionBar = useMemo(
     () =>
-      primaryAction.action ||
-      secondaryAction.action ||
-      tertiaryAction.action ||
-      ([CaseWorkflowState.ADMISSION_HEARING_SCHEDULED, CaseWorkflowState.PENDING_NOTICE, CaseWorkflowState.PENDING_RESPONSE].includes(
-        caseDetails?.status
-      ) &&
-        !isCitizen),
+      (primaryAction.action ||
+        secondaryAction.action ||
+        tertiaryAction.action ||
+        ([CaseWorkflowState.ADMISSION_HEARING_SCHEDULED, CaseWorkflowState.PENDING_NOTICE, CaseWorkflowState.PENDING_RESPONSE].includes(
+          caseDetails?.status
+        ) &&
+          !isCitizen)) &&
+      !isCourtRoomManager,
     [caseDetails, primaryAction.action, secondaryAction.action, tertiaryAction.action, isCitizen]
   );
 
@@ -1640,25 +1701,52 @@ const AdmittedCases = () => {
                 onButtonClick={() => downloadPdf(tenantId, caseDetails?.additionalDetails?.signedCaseDocument)}
               />
             )}
-            {showMakeSubmission && <Button label={t("MAKE_SUBMISSION")} onButtonClick={handleMakeSubmission} />}
-          </div>
-          {showTakeAction && (
-            <div className="judge-action-block" style={{ display: "flex" }}>
+            {showMakeSubmission && (
               <div className="evidence-header-wrapper">
                 <div className="evidence-hearing-header" style={{ background: "transparent" }}>
                   <div className="evidence-actions" style={{ ...(isTabDisabled ? { pointerEvents: "none" } : {}) }}>
                     <ActionButton
                       variation={"primary"}
-                      label={t("TAKE_ACTION_LABEL")}
+                      label={t("CS_CASE_MAKE_FILINGS")}
                       icon={showMenu ? "ExpandLess" : "ExpandMore"}
                       isSuffix={true}
                       onClick={handleTakeAction}
                       className={"take-action-btn-class"}
                     ></ActionButton>
-                    {showMenu && <Menu options={takeActionOptions} onSelect={(option) => handleSelect(option)}></Menu>}
+                    {showMenu && (
+                      <Menu
+                        t={t}
+                        optionKey={"label"}
+                        localeKeyPrefix={"CS_CASE"}
+                        options={citizenActionOptions}
+                        onSelect={(option) => handleCitizenAction(option)}
+                      ></Menu>
+                    )}
                   </div>
                 </div>
               </div>
+            )}
+          </div>
+          {showTakeAction && (
+            <div className="judge-action-block" style={{ display: "flex" }}>
+              {!isCourtRoomManager && (
+                <div className="evidence-header-wrapper">
+                  <div className="evidence-hearing-header" style={{ background: "transparent" }}>
+                    <div className="evidence-actions" style={{ ...(isTabDisabled ? { pointerEvents: "none" } : {}) }}>
+                      <ActionButton
+                        variation={"primary"}
+                        label={t("TAKE_ACTION_LABEL")}
+                        icon={showMenu ? "ExpandLess" : "ExpandMore"}
+                        isSuffix={true}
+                        onClick={handleTakeAction}
+                        className={"take-action-btn-class"}
+                      ></ActionButton>
+                      {showMenu && <Menu options={takeActionOptions} onSelect={(option) => handleSelect(option)}></Menu>}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="evidence-header-wrapper">
                 <div className="evidence-hearing-header" style={{ background: "transparent" }}>
                   <div className="evidence-actions">
@@ -1710,7 +1798,7 @@ const AdmittedCases = () => {
                 }}
                 disabled={["Complaint", "Overview"].includes(i?.label) ? false : isTabDisabled}
               >
-                {t(i?.label)}
+                {t(i?.displayLabel)}
               </button>
             ))}
           </div>
@@ -1747,7 +1835,7 @@ const AdmittedCases = () => {
               </div> */}
             </div>
           )}
-          {userRoles.includes("ORDER_CREATOR") && config?.label === "Submissions" && (
+          {userRoles.includes("ORDER_CREATOR") && config?.label === "Applications" && (
             <div style={{ display: "flex", gap: "10px" }}>
               <div
                 onClick={() => handleSelect(t("MANDATORY_SUBMISSIONS_RESPONSES"))}
@@ -1760,7 +1848,7 @@ const AdmittedCases = () => {
               </div> */}
             </div>
           )}
-          {isCitizen && config?.label === "Submissions" && (
+          {isCitizen && config?.label === "Applications" && (
             <div style={{ display: "flex", gap: "10px" }}>
               {showMakeSubmission && (
                 <div
@@ -1812,7 +1900,6 @@ const AdmittedCases = () => {
           <ViewCaseFile t={t} inViewCase={true} />
         </div>
       )}
-
       {show && (
         <EvidenceModal
           documentSubmission={documentSubmission}
@@ -1824,6 +1911,7 @@ const AdmittedCases = () => {
           showToast={showToast}
           caseData={caseRelatedData}
           caseId={caseId}
+          setIsDelayApplicationPending={setIsDelayApplicationPending}
         />
       )}
       {showOrderReviewModal && (
@@ -1839,11 +1927,9 @@ const AdmittedCases = () => {
           handleOrdersTab={handleOrdersTab}
         />
       )}
-
       {showHearingTranscriptModal && (
         <HearingTranscriptModal t={t} hearing={currentHearing} setShowHearingTranscriptModal={setShowHearingTranscriptModal} />
       )}
-
       {showScheduleHearingModal && (
         <ScheduleHearing
           setUpdateCounter={setUpdateCounter}
@@ -1856,7 +1942,6 @@ const AdmittedCases = () => {
           createAdmissionOrder={createAdmissionOrder}
         />
       )}
-
       {orderDraftModal && <ViewAllOrderDrafts t={t} setShow={setOrderDraftModal} draftOrderList={draftOrderList} filingNumber={filingNumber} />}
       {submissionsViewModal && (
         <ViewAllSubmissions
@@ -1873,23 +1958,24 @@ const AdmittedCases = () => {
       {showActionBar && !isWorkFlowFetching && (
         <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
           <div style={{ width: "fit-content", display: "flex", gap: 20 }}>
-            {(tertiaryAction.action ||
-              [CaseWorkflowState.ADMISSION_HEARING_SCHEDULED, CaseWorkflowState.PENDING_NOTICE, CaseWorkflowState.PENDING_RESPONSE].includes(
-                caseDetails?.status
-              )) && (
-              <Button
-                className="previous-button"
-                variation="secondary"
-                label={
-                  [CaseWorkflowState.ADMISSION_HEARING_SCHEDULED, CaseWorkflowState.PENDING_NOTICE, CaseWorkflowState.PENDING_RESPONSE].includes(
-                    caseDetails?.status
-                  ) && !isCitizen
-                    ? t("RESCHEDULE_ADMISSION_HEARING")
-                    : t(tertiaryAction.label)
-                }
-                onButtonClick={onSaveDraft}
-              />
-            )}
+            {currentHearingStatus === HearingWorkflowState.SCHEDULED &&
+              (tertiaryAction.action ||
+                [CaseWorkflowState.ADMISSION_HEARING_SCHEDULED, CaseWorkflowState.PENDING_NOTICE, CaseWorkflowState.PENDING_RESPONSE].includes(
+                  caseDetails?.status
+                )) && (
+                <Button
+                  className="previous-button"
+                  variation="secondary"
+                  label={
+                    [CaseWorkflowState.ADMISSION_HEARING_SCHEDULED, CaseWorkflowState.PENDING_NOTICE, CaseWorkflowState.PENDING_RESPONSE].includes(
+                      caseDetails?.status
+                    ) && !isCitizen
+                      ? t("RESCHEDULE_ADMISSION_HEARING")
+                      : t(tertiaryAction.label)
+                  }
+                  onButtonClick={onSaveDraft}
+                />
+              )}
             {primaryAction.action && (
               <SubmitBar
                 label={t(
@@ -1962,6 +2048,23 @@ const AdmittedCases = () => {
           children={<div style={{ margin: "16px 0px" }}>{t("DISMISS_CASE_CONFIRMATION_TEXT")}</div>}
           actionSaveOnSubmit={() => {
             handleActionModal();
+          }}
+        ></Modal>
+      )}
+      {showPendingDelayApplication && (
+        <Modal
+          headerBarMain={<Heading label={t("PENDING_DELAY_CONDONATION_HEADER")} />}
+          headerBarEnd={
+            <CloseBtn
+              onClick={() => {
+                setShowPendingDelayApplication(false);
+              }}
+            />
+          }
+          actionSaveLabel={t("CS_CLOSE")}
+          children={<div style={{ margin: "16px 0px" }}>{t("PENDING_DELAY_CONDONATION_APPLICATION_TEXT")}</div>}
+          actionSaveOnSubmit={() => {
+            setShowPendingDelayApplication(false);
           }}
         ></Modal>
       )}

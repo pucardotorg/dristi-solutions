@@ -1,5 +1,5 @@
 const defaultSearchValues = {
-  filingNumber: "",
+  caseSearchText: "",
   caseType: "NIA S138",
   substage: "",
 };
@@ -22,8 +22,8 @@ export const userTypeOptions = [
       "CASE_CREATOR",
       "CASE_EDITOR",
       "CASE_VIEWER",
-      "DEPOSITION_CREATOR",
-      "DEPOSITION_VIEWER",
+      "EVIDENCE_CREATOR",
+      "EVIDENCE_VIEWER",
       "APPLICATION_CREATOR",
       "APPLICATION_VIEWER",
       "HEARING_VIEWER",
@@ -32,6 +32,8 @@ export const userTypeOptions = [
       "SUBMISSION_RESPONDER",
       "SUBMISSION_DELETE",
       "TASK_VIEWER",
+      "ADVOCATE_VIEWER",
+      "PENDING_TASK_CREATOR",
     ],
     subText: "LITIGANT_SUB_TEXT",
   },
@@ -46,8 +48,8 @@ export const userTypeOptions = [
       "CASE_CREATOR",
       "CASE_EDITOR",
       "CASE_VIEWER",
-      "DEPOSITION_CREATOR",
-      "DEPOSITION_VIEWER",
+      "EVIDENCE_CREATOR",
+      "EVIDENCE_VIEWER",
       "APPLICATION_CREATOR",
       "APPLICATION_VIEWER",
       "HEARING_VIEWER",
@@ -56,6 +58,10 @@ export const userTypeOptions = [
       "SUBMISSION_RESPONDER",
       "SUBMISSION_DELETE",
       "TASK_VIEWER",
+      "USER_REGISTER",
+      "ADVOCATE_VIEWER",
+      "ADVOCATE_APPLICATION_VIEWER",
+      "PENDING_TASK_CREATOR",
     ],
     apiDetails: {
       serviceName: "/advocate/v1/_create",
@@ -75,8 +81,8 @@ export const userTypeOptions = [
       "CASE_CREATOR",
       "CASE_EDITOR",
       "CASE_VIEWER",
-      "DEPOSITION_CREATOR",
-      "DEPOSITION_VIEWER",
+      "EVIDENCE_CREATOR",
+      "EVIDENCE_VIEWER",
       "APPLICATION_CREATOR",
       "APPLICATION_VIEWER",
       "HEARING_VIEWER",
@@ -85,6 +91,9 @@ export const userTypeOptions = [
       "SUBMISSION_RESPONDER",
       "SUBMISSION_DELETE",
       "TASK_VIEWER",
+      "USER_REGISTER",
+      "ADVOCATE_VIEWER",
+      "PENDING_TASK_CREATOR",
     ],
     apiDetails: {
       serviceName: "/advocate/clerk/v1/_create",
@@ -153,10 +162,11 @@ export const TabLitigantSearchConfig = {
                 disable: false,
                 populators: {
                   name: "substage",
+                  optionsKey: "code",
                   mdmsConfig: {
                     masterName: "SubStage",
                     moduleName: "case",
-                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item.subStage;});}",
+                    select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
                   },
                   styles: {
                     maxWidth: "250px",
@@ -173,7 +183,7 @@ export const TabLitigantSearchConfig = {
                 isMandatory: false,
                 disable: false,
                 populators: {
-                  name: "filingNumber",
+                  name: "caseSearchText",
                   error: "BR_PATTERN_ERR_MSG",
                   style: { maxWidth: "250px", minWidth: "200px", width: "220px" },
                   validation: {
@@ -191,20 +201,21 @@ export const TabLitigantSearchConfig = {
           uiConfig: {
             columns: [
               {
-                label: "Case Name",
+                label: "CS_CASE_NAME",
                 jsonPath: "caseTitle",
                 additionalCustomization: true,
               },
               {
-                label: "Stage",
+                label: "CS_STAGE",
                 jsonPath: "substage",
+                additionalCustomization: true,
               },
               {
-                label: "Case ID",
+                label: "CS_CASE_ID",
                 jsonPath: "filingNumber",
               },
               {
-                label: "Case Type",
+                label: "CASE_TYPE",
                 jsonPath: "",
                 additionalCustomization: true,
               },
@@ -255,7 +266,7 @@ export const TabLitigantSearchConfig = {
                 isMandatory: false,
                 disable: false,
                 populators: {
-                  name: "filingNumber",
+                  name: "caseSearchText",
                   error: "BR_PATTERN_ERR_MSG",
                   style: { maxWidth: "250px", minWidth: "200px", width: "220px" },
                   validation: {
@@ -274,22 +285,22 @@ export const TabLitigantSearchConfig = {
           uiConfig: {
             columns: [
               {
-                label: "Case Name",
+                label: "CS_CASE_NAME",
                 jsonPath: "caseTitle",
                 additionalCustomization: true,
               },
               {
-                label: "Stage",
+                label: "CS_STAGE",
                 jsonPath: "status",
                 additionalCustomization: true,
               },
               {
-                label: "Case Type",
+                label: "CASE_TYPE",
                 jsonPath: "",
                 additionalCustomization: true,
               },
               {
-                label: "Last Edited",
+                label: "CS_LAST_EDITED",
                 jsonPath: "auditDetails.lastModifiedTime",
                 additionalCustomization: true,
               },
@@ -379,7 +390,7 @@ export const TabLitigantSearchConfig = {
                 isMandatory: false,
                 disable: false,
                 populators: {
-                  name: "filingNumber",
+                  name: "caseSearchText",
                   error: "BR_PATTERN_ERR_MSG",
                   validation: {
                     pattern: {},
@@ -397,25 +408,25 @@ export const TabLitigantSearchConfig = {
           uiConfig: {
             columns: [
               {
-                label: "Case Name",
+                label: "CS_CASE_NAME",
                 jsonPath: "caseTitle",
               },
               {
-                label: "Stage",
+                label: "CS_STAGE",
                 jsonPath: "outcome",
                 additionalCustomization: true,
               },
               {
-                label: "Case ID",
+                label: "CS_CASE_ID",
                 jsonPath: "filingNumber",
               },
               {
-                label: "Case Type",
+                label: "CASE_TYPE",
                 jsonPath: "",
                 additionalCustomization: true,
               },
               {
-                label: "Filing Date",
+                label: "CS_FILING_DATE",
                 jsonPath: "filingDate",
                 additionalCustomization: true,
               },

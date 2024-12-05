@@ -42,6 +42,7 @@ const TasksComponent = ({
   const history = useHistory();
   const { t } = useTranslation();
   const roles = useMemo(() => Digit.UserService.getUser()?.info?.roles?.map((role) => role?.code) || [], []);
+  const isCourtRoomManager = roles.includes("COURT_ROOM_MANAGER");
   const taskTypeCode = useMemo(() => taskType?.code, [taskType]);
   const [searchCaseLoading, setSearchCaseLoading] = useState(false);
   const userInfo = Digit.UserService.getUser()?.info;
@@ -203,7 +204,7 @@ const TasksComponent = ({
     async ({ cnrNumber, filingNumber, orderType, referenceId }) => {
       let reqBody = {
         order: {
-          createdDate: new Date().getTime(),
+          createdDate: null,
           tenantId,
           cnrNumber,
           filingNumber: filingNumber,
@@ -294,14 +295,11 @@ const TasksComponent = ({
           const individualId = data?.fields?.find((field) => field.key === "additionalDetails.individualId")?.value;
           const caseId = data?.fields?.find((field) => field.key === "additionalDetails.caseId")?.value;
           const updateReferenceId = referenceId.split("_").pop();
-          const isManual = referenceId?.includes("MANUAL_");
           const defaultObj = { referenceId: updateReferenceId, ...caseDetail };
           const pendingTaskActions = selectTaskType?.[entityType || taskTypeCode];
           const isCustomFunction = Boolean(pendingTaskActions?.[status]?.customFunction);
           const dayCount = stateSla
-            ? isManual
-              ? Math.abs(Math.ceil((Number(stateSla) - todayDate) / dayInMillisecond))
-              : stateSla
+            ? Math.abs(Math.ceil((Number(stateSla) - todayDate) / dayInMillisecond))
             : dueInSec
             ? Math.abs(Math.ceil(dueInSec / dayInMillisecond))
             : null;
@@ -335,7 +333,13 @@ const TasksComponent = ({
           };
         })
       );
-      setPendingTasks(tasks);
+      const filteredTasks = tasks.filter((task) => {
+        if (isCourtRoomManager) {
+          // TODO: For court room manager,show only summons pending task, have to confirm which are those and include here.
+          return false;
+        } else return true;
+      });
+      setPendingTasks(filteredTasks);
     },
     [
       getCaseDetailByFilingNumber,
@@ -423,6 +427,7 @@ const TasksComponent = ({
     return {
       handleClose: () => {
         setShowSubmitResponseModal(false);
+        setJoinCaseShowSubmitResponseModal(false);
       },
       heading: { label: "" },
       actionSaveLabel: "",
@@ -506,16 +511,23 @@ const TasksComponent = ({
   if (isLoading) {
     return <Loader />;
   }
+  const customStyles = `
+  .digit-dropdown-select-wrap .digit-dropdown-options-card span {
+    height:unset !important;
+  }`;
   return (
     <div className="tasks-component">
       {!hideTaskComponent && (
         <React.Fragment>
-          <h2>{!isLitigant ? "Your Tasks" : t("ALL_PENDING_TASK_TEXT")}</h2>
+          <h2>{!isLitigant ? t("YOUR_TASK") : t("ALL_PENDING_TASK_TEXT")}</h2>
           {totalPendingTask !== undefined && totalPendingTask > 0 ? (
             <React.Fragment>
               <div className="task-filters">
+                <style>{customStyles}</style>
                 <LabelFieldPair>
-                  <CardLabel style={{ fontSize: "16px" }} className={"card-label"}>{`Case Type`}</CardLabel>
+                  <CardLabel style={{ fontSize: "16px" }} className={"card-label"}>
+                    {t("CASE_TYPE")}
+                  </CardLabel>
                   <Dropdown
                     option={caseTypes}
                     selected={caseType}
@@ -527,8 +539,11 @@ const TasksComponent = ({
                   />
                 </LabelFieldPair>
                 <LabelFieldPair>
-                  <CardLabel style={{ fontSize: "16px" }} className={"card-label"}>{`Task Type`}</CardLabel>
+                  <CardLabel style={{ fontSize: "16px" }} className={"card-label"}>
+                    {t("CS_TASK_TYPE")}
+                  </CardLabel>
                   <Dropdown
+                    t={t}
                     option={taskTypes}
                     optionKey={"name"}
                     selected={taskType}

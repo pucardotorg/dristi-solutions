@@ -19,7 +19,6 @@ const selectCompMultiConfig = {
         name: "typeOfAddress",
         options: [],
       },
-      { label: "CS_LOCATION", type: "LocationSearch", name: ["pincode", "state", "district", "city", "coordinates", "locality"] },
       {
         label: "PINCODE",
         type: "text",
@@ -78,13 +77,11 @@ const selectCompMultiConfig = {
         type: "text",
         name: "locality",
         validation: {
-          isRequired: true,
           minlength: 2,
           maxlength: 256,
           pattern: /^[^\$\"<>?\\\\~`!@$%^()={}\[\]*:;“”‘’]{2,256}$/i,
           errMsg: "CORE_COMMON_APPLICANT_ADDRESS_INVALID",
         },
-        isMandatory: true,
       },
     ],
     validation: {},
@@ -208,7 +205,7 @@ const SelectComponentsMulti = ({ t, config, onSelect, formData, errors, setError
         <Button
           isDisabled={config?.disable || (config?.state && config?.state !== CaseWorkflowState.DRAFT_IN_PROGRESS)}
           className={"add-location-btn"}
-          label={"Add Location"}
+          label={t("ADD_LOCATION")}
           style={{ alignItems: "center", margin: "10px 0px" }}
           onButtonClick={() => {
             handleAdd();

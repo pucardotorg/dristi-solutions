@@ -16,14 +16,24 @@ import DocViewerWrapper from "../docViewerWrapper";
 import SelectCustomDocUpload from "../../../components/SelectCustomDocUpload";
 import ESignSignatureModal from "../../../components/ESignSignatureModal";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
-import { removeInvalidNameParts } from "../../../Utils";
+import { cleanString, removeInvalidNameParts } from "../../../Utils";
 const stateSla = {
   DRAFT_IN_PROGRESS: 2,
 };
 
 const dayInMillisecond = 24 * 3600 * 1000;
 
-const EvidenceModal = ({ caseData, documentSubmission = [], setShow, userRoles, modalType, setUpdateCounter, showToast, caseId }) => {
+const EvidenceModal = ({
+  caseData,
+  documentSubmission = [],
+  setShow,
+  userRoles,
+  modalType,
+  setUpdateCounter,
+  showToast,
+  caseId,
+  setIsDelayApplicationPending,
+}) => {
   const [comments, setComments] = useState(documentSubmission[0]?.comments ? documentSubmission[0].comments : []);
   const [showConfirmationModal, setShowConfirmationModal] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(null);
@@ -41,6 +51,8 @@ const EvidenceModal = ({ caseData, documentSubmission = [], setShow, userRoles, 
   const userInfo = Digit.UserService.getUser()?.info;
   const user = Digit.UserService.getUser()?.info?.name;
   const isLitigent = useMemo(() => !userInfo?.roles?.some((role) => ["ADVOCATE_ROLE", "ADVOCATE_CLERK"].includes(role?.code)), [userInfo?.roles]);
+  const isCourtRoomManager = useMemo(() => userInfo?.roles?.some((role) => ["COURT_ROOM_MANAGER"].includes(role?.code)), [userInfo?.roles]);
+  const isJudge = useMemo(() => userInfo?.roles?.some((role) => ["JUDGE_ROLE"].includes(role?.code)), [userInfo?.roles]);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const todayDate = new Date().getTime();
   const [formData, setFormData] = useState({});
@@ -71,6 +83,9 @@ const EvidenceModal = ({ caseData, documentSubmission = [], setShow, userRoles, 
 
   const showSubmit = useMemo(() => {
     if (userType === "employee") {
+      if (!isJudge) {
+        return false;
+      }
       if (modalType === "Documents") {
         return true;
       }
@@ -298,10 +313,12 @@ const EvidenceModal = ({ caseData, documentSubmission = [], setShow, userRoles, 
         message = "";
       }
     }
-    showToast({
-      isError: false,
-      message,
-    });
+    if (message) {
+      showToast({
+        isError: false,
+        message,
+      });
+    }
     counterUpdate();
     handleBack();
   };
@@ -575,7 +592,7 @@ const EvidenceModal = ({ caseData, documentSubmission = [], setShow, userRoles, 
       if (generateOrder) {
         const reqbody = {
           order: {
-            createdDate: new Date().getTime(),
+            createdDate: null,
             tenantId,
             cnrNumber,
             filingNumber,
@@ -632,7 +649,12 @@ const EvidenceModal = ({ caseData, documentSubmission = [], setShow, userRoles, 
           await handleRejectApplication();
         }
         if (showConfirmationModal.type === "accept") {
-          await handleAcceptApplication();
+          try {
+            await handleAcceptApplication();
+            if (setIsDelayApplicationPending) setIsDelayApplicationPending(false);
+          } catch (error) {
+            console.error("error :>> ", error);
+          }
         }
         counterUpdate();
         setShowSuccessModal(true);
@@ -676,6 +698,21 @@ const EvidenceModal = ({ caseData, documentSubmission = [], setShow, userRoles, 
         try {
         } catch (error) {}
         await handleRespondApplication();
+        try {
+          DRISTIService.customApiService(Urls.dristi.pendingTask, {
+            pendingTask: {
+              entityType: "application-order-submission-feedback",
+              status: "RESPOND_TO_PRODUCTION_DOCUMENTS",
+              referenceId: `MANUAL_${signedSubmission?.applicationList?.applicationNumber}`,
+              cnrNumber,
+              filingNumber,
+              isCompleted: true,
+              tenantId,
+            },
+          });
+        } catch (error) {
+          console.error("error :>> ", error);
+        }
       }
       ///show a toast message
       counterUpdate();
@@ -762,8 +799,8 @@ const EvidenceModal = ({ caseData, documentSubmission = [], setShow, userRoles, 
           headerBarEnd={<CloseBtn onClick={handleBack} />}
           actionSaveLabel={actionSaveLabel}
           actionSaveOnSubmit={actionSaveOnSubmit}
-          hideSubmit={!showSubmit}
-          actionCancelLabel={actionCancelLabel}
+          hideSubmit={!showSubmit} // Not allowing submit action for court room manager
+          actionCancelLabel={!isJudge ? false : actionCancelLabel} // Not allowing cancel action for court room manager
           actionCancelOnSubmit={actionCancelOnSubmit}
           formId="modal-action"
           headerBarMain={
@@ -824,7 +861,7 @@ const EvidenceModal = ({ caseData, documentSubmission = [], setShow, userRoles, 
               </div>
             </div>
             {(userRoles.includes("SUBMISSION_RESPONDER") || userRoles.includes("JUDGE_ROLE")) && (
-              <div className="application-comment">
+              <div className={`application-comment ${isCourtRoomManager && "disabled"}`}>
                 <div className="comment-section">
                   <h1 className="comment-xyzoo">{t("DOC_COMMENTS")}</h1>
                   <div className="comment-main">
@@ -855,7 +892,7 @@ const EvidenceModal = ({ caseData, documentSubmission = [], setShow, userRoles, 
                         <div
                           className="send-comment-btn"
                           onClick={async () => {
-                            if (currentComment !== "") {
+                            if (cleanString(currentComment) !== "") {
                               let newComment =
                                 modalType === "Submissions"
                                   ? {
@@ -863,7 +900,7 @@ const EvidenceModal = ({ caseData, documentSubmission = [], setShow, userRoles, 
                                       comment: [
                                         {
                                           tenantId,
-                                          comment: currentComment,
+                                          comment: cleanString(currentComment),
                                           individualId: "",
                                           commentDocumentId: "",
                                           commentDocumentName: "",
@@ -925,9 +962,15 @@ const EvidenceModal = ({ caseData, documentSubmission = [], setShow, userRoles, 
                                 }
                               }
                               setComments((prev) => [...prev, ...newComment.comment]);
-                              setCurrentComment("");
                               setFormData({});
-                              handleSubmitComment(newComment);
+                              try {
+                                await handleSubmitComment(newComment);
+                                setCurrentComment("");
+                              } catch (error) {
+                                console.log("error :>> ", error);
+                              }
+                            } else {
+                              setCurrentComment("");
                             }
                           }}
                         >

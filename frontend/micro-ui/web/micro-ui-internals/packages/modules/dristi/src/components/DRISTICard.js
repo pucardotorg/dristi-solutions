@@ -15,7 +15,7 @@ const DRISTICard = () => {
   const isCourtOfficer = useMemo(() => roles.some((role) => role.code === "HEARING_CREATOR"), [roles]);
   const isBenchClerk = useMemo(() => roles.some((role) => role.code === "BENCHCLERK_ROLE"), [roles]);
   const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
-  const isNyayMitra = ["CASE_CREATOR", "CASE_EDITOR", "CASE_VIEWER", "ADVOCATE_APPROVER", "ADVOCATE_CLERK_APPROVER"].reduce((res, curr) => {
+  const isNyayMitra = ["ADVOCATE_APPLICATION_VIEWER", "ADVOCATE_APPROVER", "ADVOCATE_CLERK_APPROVER"].reduce((res, curr) => {
     if (!res) return res;
     res = roles.some((role) => role.code === curr);
     return res;
@@ -41,7 +41,7 @@ const DRISTICard = () => {
           default:
             return (
               <Card className="main-card-home">
-                <Header className="main-card-header">{"What do you wish to do?"}</Header>
+                <Header className="main-card-header">{t("WHAT_DO_YOU_WISH_TO_DO")}</Header>
                 <div className="main-inner-div">
                   <CustomCard
                     label={t("CS_VIEW_REGISTRATION")}

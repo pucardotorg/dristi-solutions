@@ -14,7 +14,7 @@ import { convertToDateInputFormat } from "../../utils/index";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { useHistory } from "react-router-dom";
 import isEqual from "lodash/isEqual";
-
+import axios from "axios";
 const defaultSearchValues = {
   eprocess: "",
   caseId: "",
@@ -68,13 +68,36 @@ const ReviewSummonsNoticeAndWarrant = () => {
   // };
 
   const handleDownload = useCallback(() => {
-    const fileStoreId = rowData?.documents?.filter((data) => data?.documentType === "SIGNED")?.[0]?.fileStore;
-    const url = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${fileStoreId}`;
-    const link = document.createElement("a");
-    link.href = url;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const fileStoreId = rowData?.documents?.filter((data) => data?.documentType === "SIGNED_TASK_DOCUMENT")?.[0]?.fileStore;
+    const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${fileStoreId}`;
+    const authToken = localStorage.getItem("token");
+    axios
+      .get(uri, {
+        headers: {
+          "auth-token": `${authToken}`,
+        },
+        responseType: "blob",
+      })
+      .then((response) => {
+        if (response.status === 200) {
+          const blob = new Blob([response.data], { type: "application/octet-stream" });
+          const blobUrl = URL.createObjectURL(blob);
+          const mimeType = response.data.type || "application/octet-stream";
+          const extension = mimeType.includes("/") ? mimeType.split("/")[1] : "bin";
+          const link = document.createElement("a");
+          link.href = blobUrl;
+          link.download = `downloadedFile.${extension}`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(blobUrl);
+        } else {
+          console.error("Failed to fetch the PDF:", response.statusText);
+        }
+      })
+      .catch((error) => {
+        console.error("Error during the API request:", error);
+      });
   }, [rowData, tenantId]);
 
   const { data: fetchedTasksData, refetch } = Digit.Hooks.hearings.useGetTaskList(
@@ -273,8 +296,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
     if (rowData?.taskDetails || nextHearingDate) {
       const caseDetails = handleTaskDetails(rowData?.taskDetails);
       return [
-        { key: "Issued to", value: caseDetails?.respondentDetails?.name },
-        { key: "Issued Date", value: convertToDateInputFormat(rowData?.createdDate) },
+        { key: "ISSUE_TO", value: caseDetails?.respondentDetails?.name },
+        { key: "ISSUE_DATE", value: convertToDateInputFormat(rowData?.createdDate) },
         // { key: "Next Hearing Date", value: nextHearingDate?.startTime ? formatDate(nextHearingDate?.startTime) : "N/A" },
         { key: "AMOUNT_PAID_TEXT", value: `Rs. ${caseDetails?.deliveryChannels?.fees || 100}` },
         { key: "CHANNEL_DETAILS_TEXT", value: caseDetails?.deliveryChannels?.channelName },
@@ -419,7 +442,12 @@ const ReviewSummonsNoticeAndWarrant = () => {
       actionSaveLabel: t("MARK_AS_SENT"),
       isStepperModal: false,
       modalBody: (
-        <PrintAndSendDocumentComponent infos={infos} documents={documents?.filter((docs) => docs.documentType === "SIGNED")} links={links} t={t} />
+        <PrintAndSendDocumentComponent
+          infos={infos}
+          documents={documents?.filter((docs) => docs.documentType === "SIGNED_TASK_DOCUMENT")}
+          links={links}
+          t={t}
+        />
       ),
       actionSaveOnSubmit: handleSubmit,
     };
@@ -454,7 +482,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     // if (rowData?.id) getTaskDocuments();
     if (rowData?.filingNumber) getHearingFromCaseId();
     setSelectedDelievery(
-      rowData?.status === "NOTICE_SENT" || rowData?.status === "SUMMON_SENT" || rowData?.status === "DELIVERED"
+      rowData?.status === "NOTICE_SENT" || rowData?.status === "SUMMON_SENT" || rowData?.status === "WARRANT_SENT" || rowData?.status === "DELIVERED"
         ? {
             key: "DELIVERED",
             value: "Delivered",
@@ -464,7 +492,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   }, [rowData]);
 
   const handleRowClick = (props) => {
-    if (props?.original?.status === "DELIVERED") {
+    if (["DELIVERED", "UNDELIVERED", "EXECUTED"].includes(props?.original?.status)) {
       return; // Do nothing if the row's status is 'Completed'
     }
 
@@ -506,7 +534,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         ></InboxSearchComposer>
         {showActionModal && (
           <DocumentModal
-            config={config?.label === "Pending" ? (actionModalType !== "SIGN_PENDING" ? signedModalConfig : unsignedModalConfig) : sentModalConfig}
+            config={config?.label === "PENDING" ? (actionModalType !== "SIGN_PENDING" ? signedModalConfig : unsignedModalConfig) : sentModalConfig}
             currentStep={step}
           />
         )}

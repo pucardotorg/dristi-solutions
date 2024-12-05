@@ -69,6 +69,7 @@ public class ServiceConstants {
     public static final Long TAX_PERIOD_TO = 1711909799000l;
     public static final BigDecimal TAX_AMOUNT = BigDecimal.valueOf(2000.00);
     public static final String CREATE_DEMAND_STATUS = "PENDINGPAYMENT";
+    public static final String PENDINGAPPROVAL = "PENDINGAPPROVAL";
 
     public static final String TAX_HEADMASTER_CODE = "APPLICATION_ADVANCE_CARRYFORWARD";
     public static final String VALIDATION_ERR = "VALIDATION_ERR";
@@ -79,5 +80,6 @@ public class ServiceConstants {
     public static final String COMMENT_ADD_ERR = "COMMENT_ADD_ERR";
     public static final String INVALID_FILESTORE_ID = "INVALID_FILESTORE_ID";
     public static final String INVALID_DOCUMENT_DETAILS = "Invalid document details";
+    public static final String DELAY_CONDONATION = "DELAY_CONDONATION";
 
 }

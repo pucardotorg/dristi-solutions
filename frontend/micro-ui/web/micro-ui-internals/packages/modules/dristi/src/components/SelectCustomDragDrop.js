@@ -38,15 +38,15 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
     () =>
       config?.populators?.inputs || [
         {
-          documentHeader: "Aadhar",
+          documentHeader: "AADHAR",
           documentSubText: "subtext",
           isOptional: "CS_IS_OPTIONAL",
-          infoTooltipMessage: "Tooltip",
+          infoTooltipMessage: "AADHAR",
           type: "DragDropComponent",
           uploadGuidelines: t("UPLOAD_DOC_50"),
           maxFileSize: 50,
           maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
-          fileTypes: ["JPG", "PDF"],
+          fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
           isMultipleUpload: true,
         },
       ],
@@ -102,6 +102,8 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
     const maxFileSize = input?.maxFileSize * 1024 * 1024;
     if (file.size > maxFileSize) {
       setError(config.key, { message: `${t("CS_YOUR_FILE_EXCEEDED_THE")} ${input?.maxFileSize}${t("CS_COMMON_LIMIT_MB")}` });
+    }else if(clearErrors){
+      clearErrors(config.key)
     }
     setValue(currentValue, input?.name, file.size > maxFileSize);
   };
@@ -133,7 +135,7 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
                     {t(input?.documentHeader)}
                   </h1>
                   {input?.isOptional && <span style={{ color: "#77787B" }}>&nbsp;{`${t(input?.isOptional)}`}</span>}
-                  <CustomErrorTooltip message={t(input?.documentHeader)} showTooltip={Boolean(input?.infoTooltipMessage)} icon />
+                  <CustomErrorTooltip message={t(input?.infoTooltipMessage)} showTooltip={Boolean(input?.infoTooltipMessage)} icon />
                 </div>
               )}
               {input.documentSubText && <p className="custom-document-sub-header">{t(input.documentSubText)}</p>}

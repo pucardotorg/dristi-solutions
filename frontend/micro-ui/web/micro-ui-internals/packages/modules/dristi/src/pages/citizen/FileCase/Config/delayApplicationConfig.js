@@ -83,7 +83,7 @@ const delayApplicationFormConfig = [
             {
               infoHeader: "CS_COMMON_NOTE",
               infoText: "CS_NOTE_DELAY_APPLICATION",
-              infoTooltipMessage: "Tooltip",
+              infoTooltipMessage: "CS_NOTE_DELAY_APPLICATION",
               type: "InfoComponent",
             },
           ],
@@ -104,12 +104,12 @@ const delayApplicationFormConfig = [
             {
               name: "document",
               documentHeader: "CS_DELAY_CONDONATION_APPLICATION",
-              infoTooltipMessage: "Tooltip",
+              infoTooltipMessage: "CS_DELAY_CONDONATION_APPLICATION",
               type: "DragDropComponent",
               uploadGuidelines: "UPLOAD_DOC_50",
               maxFileSize: 50,
               maxFileErrorMessage: "CS_FILE_LIMIT_1_MB",
-              fileTypes: ["JPG", "PDF"],
+              fileTypes: ["JPG", "PDF", "PNG"],
             },
           ],
         },
