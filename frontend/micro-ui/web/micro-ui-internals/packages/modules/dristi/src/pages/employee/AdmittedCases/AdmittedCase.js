@@ -1389,6 +1389,7 @@ const AdmittedCases = () => {
       history.push(`/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}`);
     } else if (option.value === "SUBMIT_DOCUMENTS") {
       // to do
+      history.push(`/digit-ui/citizen/submissions/submissions-document?filingNumber=${filingNumber}`);
     }
   };
 
