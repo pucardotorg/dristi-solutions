@@ -985,6 +985,106 @@ export const UICustomizations = {
       }
     },
   },
+  FilingsConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const filterList = Object.keys(requestCriteria.state.searchForm)
+        .map((key) => {
+          if (requestCriteria.state.searchForm[key]?.type) {
+            return { [key]: requestCriteria.state.searchForm[key]?.type };
+          } else if (requestCriteria.state.searchForm[key]?.value) {
+            return { [key]: requestCriteria.state.searchForm[key]?.value };
+          } else if (typeof requestCriteria.state.searchForm[key] === "string") {
+            return { [key]: requestCriteria.state.searchForm[key] };
+          }
+        })
+        ?.filter((filter) => filter)
+        .reduce(
+          (fieldObj, item) => ({
+            ...fieldObj,
+            ...item,
+          }),
+          {}
+        );
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
+      const status = !filterList?.status || filterList?.status === "PUBLISHED" ? "PUBLISHED" : "EMPTY";
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria.body,
+          criteria: {
+            ...requestCriteria.body.criteria,
+            ...filterList,
+            status: userRoles.includes("CITIZEN") && requestCriteria.url.split("/").includes("order") ? status : filterList?.status,
+          },
+          tenantId,
+          pagination: {
+            limit: requestCriteria?.state?.tableForm?.limit,
+            offSet: requestCriteria?.state?.tableForm?.offset,
+          },
+        },
+        config: {
+          ...requestCriteria.config,
+          select: (data) => {
+            // if (requestCriteria.url.split("/").includes("order")) {
+            return userRoles.includes("CITIZEN") && requestCriteria.url.split("/").includes("order")
+              ? { ...data, list: data.list?.filter((order) => order.status !== "DRAFT_IN_PROGRESS") }
+              : userRoles.includes("JUDGE_ROLE") && requestCriteria.url.split("/").includes("application")
+              ? {
+                  ...data,
+                  applicationList: data.applicationList?.filter((application) => !["PENDINGESIGN", "PENDINGPAYMENT"].includes(application.status)),
+                }
+              : data;
+            // }
+          },
+        },
+      };
+    },
+    additionalCustomizations: (row, key, column, value, t) => {
+
+      switch (key) {
+        case "FILING_NAME":
+          return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} value={value} showAsHeading={true} />;
+        case "TYPE":
+          return "To add";
+        case "STAGE":
+          return "To add";
+        case "FILE":
+          return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} /> : "";
+        case "STATUS":
+          //Need to change the shade as per the value
+          return <CustomChip text={t("value")} shade={"green"} />;
+        case "OWNER":
+          return removeInvalidNameParts(value);
+        case "CS_ACTIONS":
+          return <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="FilingsConfig" />;
+        default:
+          return "N/A";
+      }
+    },
+    dropDownItems: (row) => {
+      return [
+        {
+          label: "Mark as Void",
+          id: "mark_as_void",
+          hide: false,
+          disabled: false,
+          action: (history) => {
+            alert("Not Yet Implemented");
+          },
+        },
+        {
+          label: "Mark as Evidence",
+          id: "mark_as_evidence",
+          hide: false,
+          disabled: false,
+          action: (history) => {
+            alert("Not Yet Implemented");
+          },
+        },
+      ];
+    },
+  },
   PartiesConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
       return {
