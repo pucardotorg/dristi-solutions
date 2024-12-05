@@ -1041,7 +1041,6 @@ export const UICustomizations = {
       };
     },
     additionalCustomizations: (row, key, column, value, t) => {
-
       switch (key) {
         case "FILING_NAME":
           return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} value={value} showAsHeading={true} />;
@@ -1050,7 +1049,7 @@ export const UICustomizations = {
         case "STAGE":
           return "To add";
         case "FILE":
-          return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} /> : "";
+          return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} />;
         case "STATUS":
           //Need to change the shade as per the value
           return <CustomChip text={t("value")} shade={"green"} />;
