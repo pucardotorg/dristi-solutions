@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.egov.common.contract.models.AuditDetails;
 import org.egov.transformer.config.TransformerProperties;
 import org.egov.transformer.models.*;
 import org.egov.transformer.producer.TransformerProducer;
@@ -128,6 +129,12 @@ public class CaseConsumer {
             CourtCase courtCase = caseService.fetchCase(caseRequest.getCases().getFilingNumber());
             courtCase.setAdditionalDetails(caseRequest.getCases().getAdditionalDetails());
             courtCase.setCaseTitle(caseRequest.getCases().getCaseTitle());
+
+            AuditDetails auditDetails = courtCase.getAuditdetails();
+            auditDetails.setLastModifiedTime(System.currentTimeMillis());
+            auditDetails.setLastModifiedBy(caseRequest.getRequestInfo().getUserInfo().getUuid());
+            courtCase.setAuditdetails(auditDetails);
+
             CaseRequest caseRequest2 = new CaseRequest();
             caseRequest2.setCases(courtCase);
             logger.info("Transformed Object: {} ", objectMapper.writeValueAsString(courtCase));
