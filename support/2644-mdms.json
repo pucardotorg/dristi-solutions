@@ -1,0 +1,28 @@
+{
+  "role":
+    {
+      "code": "SUPPORT_ADMIN",
+      "name": "Support Admin"
+    },
+
+  "actions-test":
+   {
+    "id": 1,
+    "name": "Edit Case",
+    "url": "/case/v1/admin/edit_case",
+    "displayName": "Edit Case",
+    "orderNumber": 0,
+    "enabled": false,
+    "serviceCode": "case",
+    "code": "null",
+    "path": ""
+    },
+
+    "roleactions":
+      {
+        "rolecode": "SUPERUSER",
+        "actionid": 1,
+        "actioncode": "",
+        "tenantId": "kl"
+      }
+}
