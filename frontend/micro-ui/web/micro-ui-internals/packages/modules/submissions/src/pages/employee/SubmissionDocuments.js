@@ -9,10 +9,23 @@ const fieldStyle = { marginRight: 0, width: "100%" };
 const SubmissionDocuments = ({ path }) => {
   const { t } = useTranslation();
   const [formdata, setFormdata] = useState({});
+  const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
+    if (formData?.submissionDocuments?.uploadedDocs && Object.keys(formState?.errors).includes("uploadedDocs")) {
+      clearErrors("uploadedDocs");
+    } else if (formState?.submitCount && !formData?.submissionDocuments?.uploadedDocs && !Object.keys(formState?.errors).includes("uploadedDocs")) {
+      setError("uploadedDocs", { message: t("CORE_REQUIRED_FIELD_ERROR") });
+    }
+
     if (!isEqual(formdata, formData)) {
       setFormdata(formData);
+    }
+
+    if (Object.keys(formState?.errors).length) {
+      setIsSubmitDisabled(true);
+    } else {
+      setIsSubmitDisabled(false);
     }
   };
 
@@ -49,6 +62,7 @@ const SubmissionDocuments = ({ path }) => {
             fieldStyle={fieldStyle}
             // key={formKey}
             className={"formComposer"}
+            isDisabled={isSubmitDisabled}
           />
         </div>
       </div>

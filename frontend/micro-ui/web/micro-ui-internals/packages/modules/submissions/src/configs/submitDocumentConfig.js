@@ -84,17 +84,24 @@ const submissionDocumentConfig = [
       },
       {
         type: "component",
-        key: "uploadedDocuments",
+        key: "submissionDocuments",
         component: "SelectMultiUpload",
         disable: false,
         populators: {
           inputs: [
             {
-              name: "documents",
+              name: "uploadedDocs",
+              isMandatory: true,
+              textAreaHeader: "Documents",
               fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
               uploadGuidelines: "UPLOAD_DOC_50",
               maxFileSize: 50,
               maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+              textAreaStyle: {
+                fontSize: "16px",
+                fontWeight: 400,
+                marginBottom: "8px",
+              },
             },
           ],
         },
