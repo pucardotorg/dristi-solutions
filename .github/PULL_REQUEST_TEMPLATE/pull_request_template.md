@@ -8,7 +8,9 @@
 - [ ] I performed a self-review of my own code
 - [ ] New and existing unit tests pass locally with my changes
 - [ ] I have added proper logs and comments for the developed code
-- [ ] Does my work involve mdms data and workflow data change, if yes Please check in the data inside support folder with file name  githubissunumber-mdms, githubissunumber-worfklow.
+- [ ] If this PR includes MDMS or workflow data changes:
+  - [ ] I have added MDMS data changes to `support/<issue-number>-mdms.json`
+  - [ ] I have added workflow data changes to `support/<issue-number>-workflow.json`
 
 
 
