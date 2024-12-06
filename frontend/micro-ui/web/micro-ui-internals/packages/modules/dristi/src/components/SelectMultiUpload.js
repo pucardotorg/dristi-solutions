@@ -1,21 +1,51 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { FileUploader } from "react-drag-drop-files";
 import { UploadIcon } from "../icons/svgIndex";
 import DocViewerWrapper from "../pages/employee/docViewerWrapper";
-import { CardLabelError, TextInput } from "@egovernments/digit-ui-react-components";
+import { CardLabelError, TextInput, CloseSvg, Toast } from "@egovernments/digit-ui-react-components";
+import Button from "./Button";
+
+const CloseBtn = (props) => {
+  return (
+    <div
+      onClick={props?.onClick}
+      style={{
+        height: "100%",
+        display: "flex",
+        alignItems: "center",
+        cursor: "pointer",
+      }}
+    >
+      <CloseSvg />
+    </div>
+  );
+};
 
 const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setError, clearErrors }) => {
+  const [showErrorToast, setShowErrorToast] = useState(null);
+
+  const closeToast = () => {
+    setShowErrorToast(null);
+  };
+
   const inputs = useMemo(
     () =>
       config?.populators?.inputs || [
         {
           name: "uploadedDocs",
           isMandatory: true,
+          textAreaHeader: "CS_DOCUMENT",
           fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
           uploadGuidelines: "UPLOAD_DOC_50",
           maxFileSize: 50,
           maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+          textAreaStyle: {
+            fontSize: "16px",
+            fontWeight: 400,
+            marginBottom: "8px",
+          },
         },
+        ,
       ],
     [config?.populators?.inputs]
   );
@@ -45,9 +75,18 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
           color: "#007E7E",
         }}
       />
-      <span style={{ color: "#007E7E", fontWeight: 600 }}>Upload More</span>
+      <span style={{ color: "#007E7E", fontWeight: 600 }}>{t("UPLOAD_MORE")}</span>
     </div>
   );
+
+  useEffect(() => {
+    if (showErrorToast) {
+      const timer = setTimeout(() => {
+        setShowErrorToast(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [showErrorToast]);
 
   function setValue(value, input) {
     if (Array.isArray(input)) {
@@ -62,9 +101,20 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
   }
 
   function handleAddFiles(data, input, currentValue) {
+    const maxFileSize = input?.maxFileSize * 1024 * 1024;
+    if (data.size > maxFileSize) {
+      setShowErrorToast({ label: t("FILE_SIZE_EXCEEDS"), error: true });
+      return;
+    }
+
     const upadatedDocuments = [...currentValue, data];
     setValue(upadatedDocuments, input?.name);
   }
+
+  const handleRemoveFile = (file, index, currentValue, input) => {
+    const updatedValue = currentValue.filter((item, idx) => idx !== index);
+    setValue(updatedValue, input?.name);
+  };
 
   return inputs?.map((input) => {
     const currentValue = formData?.[config.key]?.[input?.name] || [];
@@ -81,6 +131,9 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
         }
         label{
           width : "122px"
+        }
+        .file-uploader-div-main .toast-success.error h2 {
+          color: white !important;
         }
         `}
         </style>
@@ -120,10 +173,11 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
               overflowX: "auto",
               display: "flex",
               gap: "10px",
+              position: "relative",
             }}
           >
-            {currentValue?.map((file) => (
-              <div key={file.id}>
+            {currentValue?.map((file, index) => (
+              <div key={file.name + index} style={{ position: "relative", display: "inline-block" }}>
                 <DocViewerWrapper
                   selectedDocs={[file]}
                   showDownloadOption={false}
@@ -131,6 +185,32 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
                   style={{ flexShrink: 0 }}
                 />
                 <p style={{ marginTop: "10px", fontSize: "14px", color: "#888" }}>{file.name}</p>
+
+                <Button
+                  key={file.name + index}
+                  onButtonClick={() => {
+                    handleRemoveFile(file, index, currentValue, input);
+                  }}
+                  children={<CloseBtn />}
+                  label=""
+                  style={{
+                    position: "absolute",
+                    top: "5px",
+                    right: "5px",
+                    background: "none",
+                    color: "#FF0000",
+                    fontSize: "16px",
+                    width: "20px",
+                    height: "20px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    padding: "0",
+                    border: "none",
+                    boxShadow: "none",
+                  }}
+                />
               </div>
             ))}
           </div>
@@ -139,6 +219,7 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
               {errors[input.name]?.message ? errors[input.name]?.message : t(errors[input.name]) || t(input.error)}
             </CardLabelError>
           )}
+          {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
         </div>
       </React.Fragment>
     );

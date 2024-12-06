@@ -5,7 +5,7 @@ const submissionDocumentConfig = [
         isMandatory: true,
         key: "documentType",
         type: "dropdown",
-        label: "Document Type",
+        label: "DOCUMENT_TYPE",
         populators: {
           name: "documentType",
           optionsKey: "name",
@@ -39,44 +39,7 @@ const submissionDocumentConfig = [
         },
       },
       {
-        isMandatory: true,
-        key: "documentSubType",
-        type: "dropdown",
-        label: "Document Sub Type",
-        populators: {
-          name: "documentSubType",
-          optionsKey: "name",
-          error: "CORE_REQUIRED_FIELD_ERROR",
-          styles: { maxWidth: "100%" },
-          required: true,
-          isMandatory: true,
-          options: [
-            {
-              code: "MEMO",
-              name: "MEMO",
-            },
-            {
-              code: "RECIEPT",
-              name: "RECIEPT",
-            },
-            {
-              code: "XYZ",
-              name: "XYZ",
-            },
-            {
-              code: "ABC",
-              name: "ABC",
-            },
-            {
-              code: "CDE",
-              name: "CDE",
-            },
-          ],
-          customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
-        },
-      },
-      {
-        label: "Document Title (Optional)",
+        label: "DOCUMENT_TITLE_OPTIONAL",
         isMandatory: false,
         key: "documentTitle",
         type: "text",
@@ -92,7 +55,7 @@ const submissionDocumentConfig = [
             {
               name: "uploadedDocs",
               isMandatory: true,
-              textAreaHeader: "Documents",
+              textAreaHeader: "CS_DOCUMENT",
               fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
               uploadGuidelines: "UPLOAD_DOC_50",
               maxFileSize: 50,
@@ -116,7 +79,7 @@ const submissionDocumentConfig = [
           inputs: [
             {
               name: "text",
-              textAreaHeader: "Reason For Filing",
+              textAreaHeader: "REASON_FOR_FILING",
               placeholder: "TYPE_HERE_PLACEHOLDER",
               type: "TextAreaComponent",
               textAreaStyle: {
@@ -141,7 +104,7 @@ const submissionDocumentConfig = [
 
 export const submissionDocumentDetailsConfig = {
   formConfig: submissionDocumentConfig,
-  header: "Submit Documents",
-  subText1: "Use this form to submit Memos, Affidavits, and other documents regarding your case to the court.",
-  subText2: "Upload all related documents (e.g., Affidavit, ID card etc ) under the same document head. The system will merge them.",
+  header: "SUBMIT_DOCUMENTS",
+  subText1: "SUBMIT_DOC_SUB_TEXT",
+  subText2: "SUBMIT_DOC_SUB_TEXT_HELP",
 };

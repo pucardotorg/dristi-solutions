@@ -12,9 +12,13 @@ const SubmissionDocuments = ({ path }) => {
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
-    if (formData?.submissionDocuments?.uploadedDocs && Object.keys(formState?.errors).includes("uploadedDocs")) {
+    if (formData?.submissionDocuments?.uploadedDocs?.length > 0 && Object.keys(formState?.errors).includes("uploadedDocs")) {
       clearErrors("uploadedDocs");
-    } else if (formState?.submitCount && !formData?.submissionDocuments?.uploadedDocs && !Object.keys(formState?.errors).includes("uploadedDocs")) {
+    } else if (
+      formState?.submitCount &&
+      !formData?.submissionDocuments?.uploadedDocs?.length &&
+      !Object.keys(formState?.errors).includes("uploadedDocs")
+    ) {
       setError("uploadedDocs", { message: t("CORE_REQUIRED_FIELD_ERROR") });
     }
 
@@ -54,7 +58,7 @@ const SubmissionDocuments = ({ path }) => {
         <div style={{ marginBottom: "10px" }}> {t(submissionDocumentDetailsConfig.subText2)}</div>
         <div style={{ minHeight: "550px", overflowY: "auto", marginTop: "15px" }}>
           <FormComposerV2
-            label={t("Review Submission")}
+            label={t("REVIEW_SUBMISSION_DOCS")}
             config={submissionDocumentDetailsConfig.formConfig}
             // defaultValues={defaultFormValue}
             onFormValueChange={onFormValueChange}
