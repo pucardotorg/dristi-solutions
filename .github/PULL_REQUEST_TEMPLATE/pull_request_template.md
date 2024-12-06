@@ -27,4 +27,11 @@
 
 
 ## Other
-<!-- Anything not covered above -->
+<!-- 
+Include any additional information such as:
+- Breaking changes
+- Dependencies added/removed
+- Configuration changes
+- Performance implications
+- Security considerations
+-->
