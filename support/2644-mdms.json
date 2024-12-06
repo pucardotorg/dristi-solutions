@@ -7,7 +7,7 @@
 
   "actions-test":
    {
-    "id": 1,
+    "id": 2700,
     "name": "Edit Case",
     "url": "/case/v1/admin/edit_case",
     "displayName": "Edit Case",
@@ -20,8 +20,8 @@
 
     "roleactions":
       {
-        "rolecode": "SUPERUSER",
-        "actionid": 1,
+        "rolecode": "SUPPORT_ADMIN",
+        "actionid": 2700,
         "actioncode": "",
         "tenantId": "kl"
       }
