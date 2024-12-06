@@ -28,7 +28,7 @@
         "data": {
           "rolecode": "SUPPORT_ADMIN",
           "actionid": 2700,
-          "actioncode": "",
+          "actioncode": "2700",
           "tenantId": "kl"
         },
         "isActive": true
