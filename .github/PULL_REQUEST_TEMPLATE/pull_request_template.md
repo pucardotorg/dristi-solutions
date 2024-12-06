@@ -23,7 +23,12 @@
 
 
 
-## MDMS data and workflow update if any please reference here and check it in the support folder
+## Data Changes
+<!-- 
+For MDMS or workflow changes, list the following:
+- [ ] Files modified: `support/<issue-number>-mdms.json`
+- [ ] Migration steps (if any):
+-->
 
 
 
