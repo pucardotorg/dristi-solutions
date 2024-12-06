@@ -232,7 +232,6 @@ public class CaseService {
                 }
             }
 
-            log.info("Encrypting :: {}", caseRequest);
             AuditDetails auditDetails = courtCase.getAuditdetails();
             auditDetails.setLastModifiedTime(System.currentTimeMillis());
             auditDetails.setLastModifiedBy(caseRequest.getRequestInfo().getUserInfo().getUuid());
@@ -242,6 +241,8 @@ public class CaseService {
             courtCase.setAuditdetails(auditDetails);
 
             caseRequest.setCases(courtCase);
+
+            log.info("Encrypting :: {}", caseRequest);
 
             caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), "CourtCase", CourtCase.class));
             cacheService.save(caseRequest.getCases().getTenantId() + ":" + caseRequest.getCases().getId(), courtCase);
