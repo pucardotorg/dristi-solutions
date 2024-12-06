@@ -126,19 +126,19 @@ public class CaseConsumer {
         try {
             CaseRequest caseRequest = (objectMapper.readValue((String) payload.value(), new TypeReference<CaseRequest>() {}));
             logger.info("Received Object: {} ", objectMapper.writeValueAsString(caseRequest.getCases()));
-            CourtCase courtCase = caseService.fetchCase(caseRequest.getCases().getFilingNumber());
-            courtCase.setAdditionalDetails(caseRequest.getCases().getAdditionalDetails());
-            courtCase.setCaseTitle(caseRequest.getCases().getCaseTitle());
+            CourtCase courtCaseElasticSearch = caseService.fetchCase(caseRequest.getCases().getFilingNumber());
+            courtCaseElasticSearch.setAdditionalDetails(caseRequest.getCases().getAdditionalDetails());
+            courtCaseElasticSearch.setCaseTitle(caseRequest.getCases().getCaseTitle());
 
-            AuditDetails auditDetails = courtCase.getAuditdetails();
-            auditDetails.setLastModifiedTime(System.currentTimeMillis());
+            AuditDetails auditDetails = courtCaseElasticSearch.getAuditdetails();
+            auditDetails.setLastModifiedTime(caseRequest.getCases().getAuditdetails().getLastModifiedTime());
             auditDetails.setLastModifiedBy(caseRequest.getRequestInfo().getUserInfo().getUuid());
-            courtCase.setAuditdetails(auditDetails);
+            courtCaseElasticSearch.setAuditdetails(auditDetails);
 
-            CaseRequest caseRequest2 = new CaseRequest();
-            caseRequest2.setCases(courtCase);
-            logger.info("Transformed Object: {} ", objectMapper.writeValueAsString(courtCase));
-            producer.push(updateCaseTopic, caseRequest2);
+            CaseRequest updatedElasticSearchCaseRequest = new CaseRequest();
+            updatedElasticSearchCaseRequest.setCases(courtCaseElasticSearch);
+            logger.info("Transformed Object: {} ", objectMapper.writeValueAsString(courtCaseElasticSearch));
+            producer.push(updateCaseTopic, updatedElasticSearchCaseRequest);
         } catch (Exception exception) {
             log.error("error in saving case", exception);
         }
