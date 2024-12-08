@@ -80,11 +80,19 @@ public class ServiceConstants {
     public static final String ORDER_ISSUED = "ORDER_ISSUED";
 
     public static final String SCHEDULE_OF_HEARING_DATE = "SCHEDULE_OF_HEARING_DATE";
+    public static final String INITIATING_RESCHEDULING_OF_HEARING_DATE = "SCHEDULE_OF_HEARING_DATE";
+    public static final String HEARING_RESCHEDULED = "HEARING_RESCHEDULED";
 
     public static final String INDIVIDUAL_UTILITY_EXCEPTION = "INDIVIDUAL_UTILITY_EXCEPTION";
 
     public static final String WARRANT = "WARRANT";
     public static final String WARRANT_ISSUED = "WARRANT_ISSUED";
+    public static final String SUMMONS = "SUMMONS";
+    public static final String SUMMONS_ISSUED = "SUMMONS_ISSUED";
+    public static final String ORDER_PUBLISHED = "ORDER_PUBLISHED";
+    public static final String REJECTION_RESCHEDULE_REQUEST = "REJECTION_RESCHEDULE_REQUEST";
+    public static final String RESCHEDULE_REQUEST_REJECTED = "RESCHEDULE_REQUEST_REJECTED";
+    public static final String PARTY_TYPE_COMPLAINANT = "complainant";
 
     public static final String NOTICE = "NOTICE";
     public static final String NOTICE_ISSUED = "NOTICE_ISSUED";

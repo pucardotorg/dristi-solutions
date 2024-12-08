@@ -137,7 +137,7 @@ public class OrderRegistrationService {
         caseSearchRequest.addCriteriaItem(caseCriteria);
         return caseSearchRequest;
     }
-    private String getMessageCode(String orderType, String updatedStatus, String caseStatus) {
+    private String getMessageCode(String orderType, String updatedStatus, String caseStatus, Boolean hearingCompleted) {
 
         if(caseStatus.equalsIgnoreCase(CASE_ADMITTED) && orderType.equalsIgnoreCase(SCHEDULE_OF_HEARING_DATE) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
             return NEXT_HEARING_SCHEDULED;
@@ -145,8 +145,20 @@ public class OrderRegistrationService {
         if(orderType.equalsIgnoreCase(SCHEDULE_OF_HEARING_DATE) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
             return ADMISSION_HEARING_SCHEDULED;
         }
+        if(orderType.equalsIgnoreCase(INITIATING_RESCHEDULING_OF_HEARING_DATE) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
+            return HEARING_RESCHEDULED;
+        }
         if(orderType.equalsIgnoreCase(WARRANT) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
             return WARRANT_ISSUED;
+        }
+        if(orderType.equalsIgnoreCase(SUMMONS) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
+            return SUMMONS_ISSUED;
+        }
+        if(hearingCompleted && updatedStatus.equalsIgnoreCase(PUBLISHED)){
+            return ORDER_PUBLISHED;
+        }
+        if(orderType.equalsIgnoreCase(REJECTION_RESCHEDULE_REQUEST) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
+            return RESCHEDULE_REQUEST_REJECTED;
         }
 //        if(orderType.equalsIgnoreCase(NOTICE) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
 //            return NOTICE_ISSUED;
@@ -164,20 +176,23 @@ public class OrderRegistrationService {
             JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
             String caseStatus = caseDetails.has("status") ? caseDetails.get("status").asText() : "";
 
-            String messageCode = updatedState != null ? getMessageCode(orderType, updatedState, caseStatus) : null;
+            Object additionalDetailsObject = orderRequest.getOrder().getAdditionalDetails();
+            String jsonData = objectMapper.writeValueAsString(additionalDetailsObject);
+            JsonNode additionalData = objectMapper.readTree(jsonData);
+            boolean lastHearingTranscriptExists = additionalData.has("lastHearingTranscript");
+
+            String messageCode = updatedState != null ? getMessageCode(orderType, updatedState, caseStatus, lastHearingTranscriptExists) : null;
             assert messageCode != null;
 
             JsonNode rootNode = caseDetails.get("additionalDetails");
 
-            Object additionalDetailsObject = orderRequest.getOrder().getAdditionalDetails();
-            String jsonData = objectMapper.writeValueAsString(additionalDetailsObject);
-            JsonNode orderData = objectMapper.readTree(jsonData);
-            String hearingDate = orderData.path("formdata").path("hearingDate").asText();
+            String hearingDate = additionalData.path("formdata").path("hearingDate").asText();
 
-            String receiver = null;
-            if(messageCode.equalsIgnoreCase(NOTICE_ISSUED) || messageCode.equalsIgnoreCase(WARRANT_ISSUED)) {
-                receiver = ACCUSED;
-            }
+            Object orderDetailsObject = orderRequest.getOrder().getOrderDetails();
+            JsonNode orderDetails = objectMapper.readTree(objectMapper.writeValueAsString(orderDetailsObject));
+            String partyType = orderDetails.path("parties").path("partyType").asText();
+
+            String receiver = getReceiverParty(messageCode, partyType);
 
             Set<String> individualIds = extractIndividualIds(rootNode, receiver);
 
@@ -197,6 +212,20 @@ public class OrderRegistrationService {
             // Log the exception and continue the execution without throwing
             log.error("Error occurred while sending notification: {}", e.toString());
         }
+    }
+
+    private static String getReceiverParty(String messageCode, String partyType) {
+        if(messageCode.equalsIgnoreCase(NOTICE_ISSUED) || messageCode.equalsIgnoreCase(WARRANT_ISSUED) || messageCode.equalsIgnoreCase(SUMMONS_ISSUED)) {
+            return ACCUSED;
+        }
+        if(messageCode.equalsIgnoreCase(RESCHEDULE_REQUEST_REJECTED)) {
+            if(partyType.equalsIgnoreCase(PARTY_TYPE_COMPLAINANT)) {
+                return ACCUSED;
+            } else {
+                return COMPLAINANT;
+            }
+        }
+        return null;
     }
 
 
