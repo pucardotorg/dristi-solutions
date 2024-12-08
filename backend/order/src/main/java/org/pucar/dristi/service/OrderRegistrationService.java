@@ -1,13 +1,18 @@
 package org.pucar.dristi.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.models.individual.Individual;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.OrderRegistrationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.OrderRepository;
+import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.WorkflowUtil;
 import org.pucar.dristi.validators.OrderRegistrationValidator;
 import org.pucar.dristi.web.models.*;
@@ -16,7 +21,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -35,15 +42,26 @@ public class OrderRegistrationService {
     private Configuration config;
 
     private Producer producer;
+    private ObjectMapper objectMapper;
+
+    private CaseUtil caseUtil;
+
+    private SmsNotificationService notificationService;
+
+    private IndividualService individualService;
 
     @Autowired
-    public OrderRegistrationService(OrderRegistrationValidator validator, Producer producer, Configuration config, WorkflowUtil workflowUtil, OrderRepository orderRepository, OrderRegistrationEnrichment enrichmentUtil) {
+    public OrderRegistrationService(OrderRegistrationValidator validator, Producer producer, Configuration config, WorkflowUtil workflowUtil, OrderRepository orderRepository, OrderRegistrationEnrichment enrichmentUtil, ObjectMapper objectMapper, CaseUtil caseUtil, SmsNotificationService notificationService, IndividualService individualService) {
         this.validator = validator;
         this.producer = producer;
         this.config = config;
         this.workflowUtil = workflowUtil;
         this.orderRepository = orderRepository;
         this.enrichmentUtil = enrichmentUtil;
+        this.objectMapper = objectMapper;
+        this.caseUtil = caseUtil;
+        this.notificationService = notificationService;
+        this.individualService = individualService;
     }
 
     public Order createOrder(OrderRequest body) {
@@ -95,8 +113,14 @@ public class OrderRegistrationService {
             enrichmentUtil.enrichOrderRegistrationUponUpdate(body);
 
             workflowUpdate(body);
-
+            String updatedState = body.getOrder().getStatus();
+            String orderType = body.getOrder().getOrderType();
             producer.push(config.getUpdateOrderKafkaTopic(), body);
+
+            String messageCode = updatedState != null ? getMessageCode(orderType, updatedState) : null;
+            if(messageCode != null){
+                callNotificationService(body, messageCode);
+            }
 
             return body.getOrder();
 
@@ -109,6 +133,59 @@ public class OrderRegistrationService {
         }
 
     }
+
+    public CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, Order order) {
+        CaseSearchRequest caseSearchRequest = new CaseSearchRequest();
+        caseSearchRequest.setRequestInfo(requestInfo);
+        CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(order.getFilingNumber()).defaultFields(false).build();
+        caseSearchRequest.addCriteriaItem(caseCriteria);
+        return caseSearchRequest;
+    }
+    private String getMessageCode(String orderType, String updatedStatus) {
+
+         if(orderType.equalsIgnoreCase(SCHEDULE_OF_HEARING_DATE) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
+            return ADMISSION_HEARING_SCHEDULED;
+        }
+         if (updatedStatus.equalsIgnoreCase(PUBLISHED)){
+             return ORDER_ISSUED;
+         }
+        return null;
+    }
+
+    private void callNotificationService(OrderRequest orderRequest, String messageCode) {
+
+        try {
+            CaseSearchRequest caseSearchRequest = createCaseSearchRequest(orderRequest.getRequestInfo(), orderRequest.getOrder());
+            JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+
+            JsonNode rootNode = caseDetails.get("additionalDetails");
+
+            Object additionalDetailsObject = orderRequest.getOrder().getAdditionalDetails();
+            String jsonData = objectMapper.writeValueAsString(additionalDetailsObject);
+            JsonNode orderData = objectMapper.readTree(jsonData);
+            String hearingDate = orderData.path("formdata").path("hearingDate").asText();
+
+
+            Set<String> individualIds = extractIndividualIds(rootNode);
+
+            Set<String> phonenumbers = callIndividualService(orderRequest.getRequestInfo(), individualIds);
+
+            SmsTemplateData smsTemplateData = SmsTemplateData.builder()
+                    .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").asText() : "")
+                    .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").asText() : "")
+                    .hearingDate(hearingDate)
+                    .tenantId(orderRequest.getOrder().getTenantId()).build();
+
+            for (String number : phonenumbers) {
+                notificationService.sendNotification(orderRequest.getRequestInfo(), smsTemplateData, messageCode, number);
+            }
+        }
+        catch (Exception e) {
+            // Log the exception and continue the execution without throwing
+            log.error("Error occurred while sending notification: {}", e.toString());
+        }
+    }
+
 
     public List<OrderExists> existsOrder(OrderExistsRequest orderExistsRequest) {
         try {
@@ -137,5 +214,57 @@ public class OrderRegistrationService {
         order.setStatus(status);
         if (PUBLISHED.equalsIgnoreCase(status))
             order.setCreatedDate(System.currentTimeMillis());
+    }
+
+    private Set<String> callIndividualService(RequestInfo requestInfo, Set<String> individualIds) {
+
+        Set<String> mobileNumber = new HashSet<>();
+        for(String id : individualIds){
+            List<Individual> individuals = individualService.getIndividualsByIndividualId(requestInfo, id);
+            if(individuals.get(0).getMobileNumber() != null){
+                mobileNumber.add(individuals.get(0).getMobileNumber());
+            }
+        }
+        return mobileNumber;
+    }
+
+    public  Set<String> extractIndividualIds(JsonNode rootNode) {
+        Set<String> individualIds = new HashSet<>();
+
+
+        JsonNode complainantDetailsNode = rootNode.path("complainantDetails")
+                .path("formdata");
+        if (complainantDetailsNode.isArray()) {
+            for (JsonNode complainantNode : complainantDetailsNode) {
+                JsonNode complainantVerificationNode = complainantNode.path("data")
+                        .path("complainantVerification")
+                        .path("individualDetails");
+                if (!complainantVerificationNode.isMissingNode()) {
+                    String individualId = complainantVerificationNode.path("individualId").asText();
+                    if (!individualId.isEmpty()) {
+                        individualIds.add(individualId);
+                    }
+                }
+            }
+        }
+
+        JsonNode advocateDetailsNode = rootNode.path("advocateDetails")
+                .path("formdata");
+        if (advocateDetailsNode.isArray()) {
+            for (JsonNode advocateNode : advocateDetailsNode) {
+                JsonNode advocateListNode = advocateNode.path("data")
+                        .path("advocateBarRegNumberWithName");
+                if (advocateListNode.isArray()) {
+                    for (JsonNode advocateInfoNode : advocateListNode) {
+                        String individualId = advocateInfoNode.path("individualId").asText();
+                        if (!individualId.isEmpty()) {
+                            individualIds.add(individualId);
+                        }
+                    }
+                }
+            }
+        }
+
+        return individualIds;
     }
 }
