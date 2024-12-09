@@ -15,7 +15,7 @@ const CloseBtn = (props) => {
 function OrderSucessModal({ order, t, handleDownloadOrders, handleClose, actionSaveLabel, handleCloseSuccessModal }) {
   const getFormattedDate = () => {
     const currentDate = new Date();
-    const year = String(currentDate.getFullYear()).slice(-2);
+    const year = String(currentDate.getFullYear());
     const month = String(currentDate.getMonth() + 1).padStart(2, "0");
     const day = String(currentDate.getDate()).padStart(2, "0");
     return `${month}/${day}/${year}`;
