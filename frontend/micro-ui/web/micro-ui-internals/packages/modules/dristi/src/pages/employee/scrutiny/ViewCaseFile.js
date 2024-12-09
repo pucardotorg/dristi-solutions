@@ -119,7 +119,9 @@ function ViewCaseFile({ t, inViewCase = false }) {
     {},
     `dristi-${caseId}`,
     caseId,
-    Boolean(caseId)
+    Boolean(caseId),
+    true,
+    false
   );
   const caseDetails = useMemo(() => caseFetchResponse?.criteria?.[0]?.responseList?.[0] || null, [caseFetchResponse]);
 
