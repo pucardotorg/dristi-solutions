@@ -6,7 +6,7 @@ const downloadPdfWithLink = async (url, fileName) => {
   }
 
   try {
-    const response = await axios.get(url, {
+    const response = await axios.get("https://pucarfilestore.blob.core.windows.net" + url, {
       responseType: "blob",
     });
     const mimeType = response.data.type;
