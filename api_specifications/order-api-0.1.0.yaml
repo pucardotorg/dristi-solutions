@@ -293,6 +293,11 @@ components:
         comments:
           type: string
           description: any additional comments with regards the order, the judge may want to write
+        businessOfDay:
+          type: string
+          minLength: 0
+          maxLength: 256
+          description: the business of the day that. linked to master data to initially populate, but then is converted and stored as string, as Judge can update it
         isActive:
           type: boolean
           description: to handle soft delete

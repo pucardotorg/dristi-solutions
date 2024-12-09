@@ -58,8 +58,63 @@ components:
       properties:
         ID:
           type: string
+          description: primary key to identify the entity
           format: uuid
           minLength: 36
           maxLength: 36
           readOnly: true
+        entries:
+          type: array
+          description: individual row for the A/B diary
+          items:
+            $ref: "#/components/schemas/CaseDiaryEntry"
+
+    CaseDiaryEntry:
+      type: object
+      required:
+        - ID
+        - diaryID
+        - date
+      properties:
+        ID:
+          type: string
+          description: primary key to identify the entity
+          format: uuid
+          minLength: 36
+          maxLength: 36
+          readOnly: true
+        diaryID:
+          type: string
+          description: reference ID of the diary to which this diary entry belongs to
+          format: uuid
+          minLength: 36
+          maxLength: 36
+        date:
+          type: integer
+          format: int64
+          description: EPOCH date time (in milliseconds) when the entry was created. While we store date time, but while displaying, we will mostly only use the Date part of it
+        businessOfDay:
+          type: string
+          description: the business of the day that is being recorded for the diary
+        hearingDate:
+          type: integer
+          format: int64
+          description: EPOCH date time (in milliseconds) of the next hearing date
+
+
+    CaseDiaryHistory:
+      type: object
+      properties:
+        ID:
+          type: string
+          description: primary key to identify the entity
+          format: uuid
+          minLength: 36
+          maxLength: 36
+          readOnly: true
+        date:
+          type: integer
+          format: int64
+          description: EPOCH date time (in milliseconds) for the diary
+
 
