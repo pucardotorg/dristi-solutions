@@ -33,9 +33,11 @@ import {
 } from "../../citizen/FileCase/Config/admissionActionConfig";
 import Modal from "../../../components/Modal";
 import CustomCaseInfoDiv from "../../../components/CustomCaseInfoDiv";
-import { removeInvalidNameParts } from "../../../Utils";
+import { getDate, removeInvalidNameParts } from "../../../Utils";
 import useWorkflowDetails from "../../../hooks/dristi/useWorkflowDetails";
 import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersService";
+import VoidSubmissionBody from "./VoidSubmissionBody";
+import DocumentModal from "@egovernments/digit-ui-module-orders/src/components/DocumentModal";
 
 const defaultSearchValues = {};
 
@@ -143,11 +145,12 @@ const AdmittedCases = () => {
   const isCourtRoomManager = roles.some((role) => role.code === "COURT_ROOM_MANAGER");
   const activeTab = isFSO ? "Complaints" : urlParams.get("tab") || "Overview";
   const filingNumber = urlParams.get("filingNumber");
+  const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
+  const tenantId = window?.Digit.ULBService.getCurrentTenantId();
+
   const [show, setShow] = useState(false);
   const [openAdmitCaseModal, setOpenAdmitCaseModal] = useState(true);
-  const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
   const [documentSubmission, setDocumentSubmission] = useState();
-  const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [showOrderReviewModal, setShowOrderReviewModal] = useState(false);
   const [showHearingTranscriptModal, setShowHearingTranscriptModal] = useState(false);
   const [currentOrder, setCurrentOrder] = useState();
@@ -167,6 +170,7 @@ const AdmittedCases = () => {
   const [showDismissCaseConfirmation, setShowDismissCaseConfirmation] = useState(false);
   const [showPendingDelayApplication, setShowPendingDelayApplication] = useState(false);
   const [toastStatus, setToastStatus] = useState({ alreadyShown: false });
+  const [showVoidModal, setShowVoidModal] = useState(false);
   const [downloadCasePdfLoading, setDownloadCasePdfLoading] = useState(false);
   const history = useHistory();
   const isCitizen = userRoles.includes("CITIZEN");
@@ -417,6 +421,40 @@ const AdmittedCases = () => {
       setShowHearingTranscriptModal(true);
     };
 
+    const handleFilingAction = (history, column, row, item) => {
+      const docObj = [
+        {
+          itemType: item.id,
+          status: row.workflow?.action,
+          details: {
+            applicationType: row.artifactType,
+            applicationSentOn: getDate(parseInt(row.auditdetails.createdTime)),
+            sender: row.owner,
+            additionalDetails: row.additionalDetails,
+            applicationId: row.id,
+            auditDetails: row.auditDetails,
+          },
+          applicationContent: {
+            tenantId: row.tenantId,
+            fileStoreId: row.file?.fileStore,
+            id: row.file?.id,
+            documentType: row.file?.documentType,
+            documentUid: row.file?.documentUid,
+            additionalDetails: row.file?.additionalDetails,
+          },
+          comments: row.comments,
+          artifactList: row,
+        },
+      ];
+      if ("mark_as_evidence" === item.id) {
+        docSetFunc(docObj);
+      } else if ("mark_as_void" === item.id || "view_reason_for_voiding" === item.id) {
+        setShowVoidModal(true);
+        setDocumentSubmission(docObj);
+      }
+      console.log("item :>> ", item);
+    };
+
     return TabSearchconfig?.TabSearchconfig.map((tabConfig) => {
       return tabConfig.label === "Parties"
         ? {
@@ -599,6 +637,11 @@ const AdmittedCases = () => {
                           ...column,
                           clickFunc: docSetFunc,
                         }
+                      : column.label === "CS_ACTIONS"
+                      ? {
+                          ...column,
+                          clickFunc: handleFilingAction,
+                        }
                       : column;
                   }),
                 },
@@ -693,6 +736,41 @@ const AdmittedCases = () => {
   const config = useMemo(() => {
     return newTabSearchConfig?.TabSearchconfig?.[indexOfActiveTab];
   }, [indexOfActiveTab, newTabSearchConfig?.TabSearchconfig]); // initially setting first index config as default from jsonarray
+
+  const voidModalConfig = useMemo(() => {
+    if (!showVoidModal) return {};
+    const handleClose = () => {
+      setShowVoidModal(false);
+    };
+
+    return {
+      handleClose: handleClose,
+      heading: {
+        label: "view_reason_for_voiding" === documentSubmission?.[0]?.itemType ? "Reason for Voiding" : `Are you sure you wish to Mark as Void`,
+      },
+      isStepperModal: false,
+      actionSaveLabel:
+        userType === "citizen"
+          ? undefined
+          : "view_reason_for_voiding" === documentSubmission?.[0]?.itemType
+          ? `Unmark as Void`
+          : "unmark_void_submission" === documentSubmission?.[0]?.itemType
+          ? "Confirm"
+          : `Mark as Void`,
+      actionCancelLabel: t("Cancel"),
+      actionCancelOnSubmit: handleClose,
+      actionSaveOnSubmit: () => {
+        if (documentSubmission[0].itemType === "view_reason_for_voiding") {
+          setDocumentSubmission(
+            documentSubmission?.map((item) => {
+              return { ...item, itemType: "unmark_void_submission" };
+            })
+          );
+        }
+      },
+      modalBody: <VoidSubmissionBody t={t} documentSubmission={documentSubmission} />,
+    };
+  }, [documentSubmission, showVoidModal, t, userType]);
 
   const tabData = useMemo(() => {
     return newTabSearchConfig?.TabSearchconfig?.map((configItem, index) => ({
@@ -1678,7 +1756,6 @@ const AdmittedCases = () => {
     }
   };
 
- 
   if (isLoading || isWorkFlowLoading || isApplicationLoading || isCaseFetching) {
     return <Loader />;
   }
@@ -2114,6 +2191,8 @@ const AdmittedCases = () => {
           }}
         />
       )}
+
+      {showVoidModal && <DocumentModal config={voidModalConfig} />}
     </div>
   );
 };
