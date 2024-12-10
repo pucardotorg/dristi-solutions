@@ -45,7 +45,6 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
             marginBottom: "8px",
           },
         },
-        ,
       ],
     [config?.populators?.inputs]
   );

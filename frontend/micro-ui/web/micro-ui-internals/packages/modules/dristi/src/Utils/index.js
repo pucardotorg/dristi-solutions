@@ -157,6 +157,7 @@ export const documentsTypeMapping = {
   swornStatement: "case.affidavit.223bnss",
   SelectUploadDocWithName: "case.docs",
   vakalatnamaFileUpload: "VAKALATNAMA_DOC",
+  submissionDocuments: "SUBMISSION_DOCUMENTS",
 };
 
 export const getFileByFileStoreId = async (uri) => {
