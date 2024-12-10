@@ -248,7 +248,7 @@ public class CaseService {
             log.info("Encrypting :: {}", caseRequest);
 
             caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), "CourtCase", CourtCase.class));
-            cacheService.save(caseRequest.getCases().getTenantId() + ":" + caseRequest.getCases().getId(), courtCase);
+            cacheService.save(caseRequest.getCases().getTenantId() + ":" + caseRequest.getCases().getId(), caseRequest.getCases());
 
             producer.push(config.getCaseEditTopic(), caseRequest);
 
