@@ -60,11 +60,10 @@ public class EvidenceService {
 
             String filingType = getFilingTypeMdms(body.getRequestInfo(), body.getArtifact());
 
-            // Initiate workflow for the new application-
-            if ((filingType.equalsIgnoreCase(CASE_FILING) &&
-                    body.getArtifact().getArtifactType() != null &&
+            // Initiate workflow for the new application- //todo witness deposition is part of case filing or not
+            if ((body.getArtifact().getArtifactType() != null &&
                     body.getArtifact().getArtifactType().equals(DEPOSITION)) ||
-                    filingType.equalsIgnoreCase(SUBMISSION)) {
+                    (body.getArtifact().getWorkflow() != null && filingType.equalsIgnoreCase(SUBMISSION))) {
                 workflowService.updateWorkflowStatus(body, filingType);
                 producer.push(config.getEvidenceCreateTopic(), body);
             } else {
@@ -87,8 +86,8 @@ public class EvidenceService {
              String filingType = null;
              for(Object obj : jsonArray) {
                  JSONObject jsonObject = objectMapper.convertValue(obj, JSONObject.class);
-                 if(jsonObject.get("uuid").equals(artifact.getFilingType())) {
-                     filingType = jsonObject.get("filingType").toString();
+                 if(jsonObject.get("code").equals(artifact.getFilingType())) {
+                     filingType = jsonObject.get("displayName").toString();
                  }
              }
              return filingType;
@@ -131,10 +130,9 @@ public class EvidenceService {
 
             String filingType = getFilingTypeMdms(evidenceRequest.getRequestInfo(), evidenceRequest.getArtifact());
 
-            if ((filingType.equalsIgnoreCase(CASE_FILING) &&
-                    evidenceRequest.getArtifact().getArtifactType() != null &&
+            if ((evidenceRequest.getArtifact().getArtifactType() != null &&
                     evidenceRequest.getArtifact().getArtifactType().equals(DEPOSITION)) ||
-                    filingType.equalsIgnoreCase(SUBMISSION)) {
+                    (evidenceRequest.getArtifact().getWorkflow() != null && filingType.equalsIgnoreCase(SUBMISSION))) {
                 workflowService.updateWorkflowStatus(evidenceRequest, filingType);
                 enrichBasedOnStatus(evidenceRequest);
                 producer.push(config.getUpdateEvidenceKafkaTopic(), evidenceRequest);

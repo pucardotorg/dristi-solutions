@@ -92,22 +92,19 @@ public class WorkflowService {
     }
 
     private String getBusinessModule(String filingType) {
-        if(filingType.equalsIgnoreCase(CASE_FILING)){
-            return config.getBusinessServiceModule();
-        } else if (filingType.equalsIgnoreCase(SUBMISSION)){
+        if (filingType.equalsIgnoreCase(SUBMISSION)){
             return config.getSubmissionBusinessServiceModule();
+        } else {
+            return config.getBusinessServiceModule();
         }
-        return null;
-
     }
 
     private String getBusinessServiceName(String filingType) {
-        if(filingType.equalsIgnoreCase(CASE_FILING)){
-            return config.getBusinessServiceName();
-        } else if (filingType.equalsIgnoreCase(SUBMISSION)){
+        if (filingType.equalsIgnoreCase(SUBMISSION)){
             return config.getSubmissionBusinessServiceName();
+        } else {
+            return config.getBusinessServiceName();
         }
-        return null;
     }
 
     public Workflow getWorkflowFromProcessInstance(ProcessInstance processInstance) {
