@@ -1061,25 +1061,45 @@ export const UICustomizations = {
           return "N/A";
       }
     },
-    dropDownItems: (row) => {
+    dropDownItems: (row, column) => {
+      const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+      // row.status === "Submitted" &&
       return [
+        ...(userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE") || userInfo.roles.map((role) => role.code).includes("COURT_ROOM_MANAGER")
+          ? [
+              {
+                label: "Mark as Void",
+                id: "mark_as_void",
+                hide: false,
+                disabled: false,
+                action: column.clickFunc,
+              },
+            ]
+          : []),
+        ...(userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE")
+          ? [
+              {
+                label: "Mark as Evidence",
+                id: "mark_as_evidence",
+                hide: false,
+                disabled: false,
+                action: column.clickFunc,
+              },
+            ]
+          : []),
         {
-          label: "Mark as Void",
-          id: "mark_as_void",
+          label: "View Reason for Voiding",
+          id: "view_reason_for_voiding",
           hide: false,
           disabled: false,
-          action: (history) => {
-            alert("Not Yet Implemented");
-          },
+          action: column.clickFunc,
         },
         {
-          label: "Mark as Evidence",
-          id: "mark_as_evidence",
+          label: "Download Filing",
+          id: "download_filing",
           hide: false,
           disabled: false,
-          action: (history) => {
-            alert("Not Yet Implemented");
-          },
+          action: column.clickFunc,
         },
       ];
     },
