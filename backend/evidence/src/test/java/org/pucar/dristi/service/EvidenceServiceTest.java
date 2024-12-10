@@ -77,8 +77,8 @@ class EvidenceServiceTest {
         lenient().when(config.getFilingTypeMaster()).thenReturn("FilingTypeMaster");
         JSONArray filingTypeArray = new JSONArray();
         JSONObject filingType1 = new JSONObject();
-        filingType1.put("filingType", "caseFiling");
-        filingType1.put("uuid", "123e4567-e89b-12d3-a456-426614174000");
+        filingType1.put("displayName", "caseFiling");
+        filingType1.put("code", "CASE_FILING");
 
         filingTypeArray.add(filingType1);
 
