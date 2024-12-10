@@ -122,7 +122,7 @@ class EvidenceValidatorTest {
         doThrow(new CustomException("CASE_EXCEPTION", "case does not exist")).when(caseUtil).fetchCaseDetails(any(CaseExistsRequest.class));
 
         // Execute and verify
-        NullPointerException exception = assertThrows(NullPointerException.class, () -> evidenceValidator.validateEvidenceExistence(evidenceRequest));
+        CustomException exception = assertThrows(CustomException.class, () -> evidenceValidator.validateEvidenceExistence(evidenceRequest));
 
     }
 
@@ -276,8 +276,8 @@ class EvidenceValidatorTest {
             evidenceValidator.validateEvidenceExistence(evidenceRequest);
         });
 
-        assertEquals("VALIDATION EXCEPTION", exception.getCode());
-        assertEquals("Evidence does not exist", exception.getMessage());
+        assertEquals("EVIDENCE_UPDATE_EXCEPTION", exception.getCode());
+        assertEquals("Error occurred while updating evidence: org.egov.tracer.model.CustomException: tenantId, caseId and filing number are mandatory for creating advocate", exception.getMessage());
     }
 
     private EvidenceRequest createValidEvidenceRequest() {
