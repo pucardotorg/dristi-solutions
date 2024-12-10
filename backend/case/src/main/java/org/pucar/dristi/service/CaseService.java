@@ -218,9 +218,8 @@ public class CaseService {
     public CourtCase editCase(CaseRequest caseRequest) {
 
         try {
-            if(ObjectUtils.isEmpty(caseRequest.getCases().getCaseTitle()) || ObjectUtils.isEmpty(caseRequest.getCases().getAdditionalDetails())){
-                throw new CustomException(VALIDATION_ERR, "caseTitle or additionalDetails cannot be empty");
-            }
+            validator.validateEditCase(caseRequest);
+
             CourtCase courtCase = searchRedisCache(caseRequest.getRequestInfo(), String.valueOf(caseRequest.getCases().getId()));
 
             if (courtCase == null) {
