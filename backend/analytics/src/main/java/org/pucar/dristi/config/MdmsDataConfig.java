@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.request.RequestInfo;
+import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.util.MdmsUtil;
 import org.pucar.dristi.web.models.CaseOutcomeType;
 import org.pucar.dristi.web.models.CaseOverallStatusType;

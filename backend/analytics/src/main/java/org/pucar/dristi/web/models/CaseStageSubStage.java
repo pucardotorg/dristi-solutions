@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.egov.common.contract.request.RequestInfo;
 import org.json.JSONObject;
+import org.pucar.dristi.web.models.CaseOverallStatus;
 import org.springframework.validation.annotation.Validated;
 
 

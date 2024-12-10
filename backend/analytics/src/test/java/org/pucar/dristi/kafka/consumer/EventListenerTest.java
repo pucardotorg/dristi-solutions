@@ -11,6 +11,7 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.config.ServiceConstants;
+import org.pucar.dristi.kafka.consumer.EventListener;
 import org.pucar.dristi.service.BillingService;
 import org.pucar.dristi.service.IndexerService;
 import org.slf4j.MDC;
