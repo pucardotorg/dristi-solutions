@@ -8,33 +8,17 @@ const submissionDocumentConfig = [
         label: "DOCUMENT_TYPE",
         populators: {
           name: "documentType",
-          optionsKey: "name",
+          optionsKey: "code",
           error: "CORE_REQUIRED_FIELD_ERROR",
           styles: { maxWidth: "100%" },
           required: true,
           isMandatory: true,
-          options: [
-            {
-              code: "MEMO",
-              name: "MEMO",
-            },
-            {
-              code: "RECIEPT",
-              name: "RECIEPT",
-            },
-            {
-              code: "XYZ",
-              name: "XYZ",
-            },
-            {
-              code: "ABC",
-              name: "ABC",
-            },
-            {
-              code: "CDE",
-              name: "CDE",
-            },
-          ],
+          mdmsConfig: {
+            moduleName: "Submission",
+            masterName: "SubmissionDocumentType",
+            select: "(data) => {return data['Submission'].SubmissionDocumentType?.map((item) => {return item;});}",
+
+          },
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
         },
       },
