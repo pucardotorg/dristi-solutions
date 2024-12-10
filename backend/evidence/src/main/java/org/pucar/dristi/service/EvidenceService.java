@@ -1,6 +1,9 @@
 package org.pucar.dristi.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import net.minidev.json.JSONArray;
+import net.minidev.json.JSONObject;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
@@ -8,14 +11,14 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.EvidenceEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.EvidenceRepository;
+import org.pucar.dristi.util.MdmsUtil;
 import org.pucar.dristi.validators.EvidenceValidator;
 import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -28,15 +31,19 @@ public class EvidenceService {
     private final EvidenceRepository repository;
     private final Producer producer;
     private final Configuration config;
+    private final MdmsUtil mdmsUtil;
+    private final ObjectMapper objectMapper;
 
     @Autowired
-    public EvidenceService(EvidenceValidator validator, EvidenceEnrichment evidenceEnrichment, WorkflowService workflowService, EvidenceRepository repository, Producer producer, Configuration config) {
+    public EvidenceService(EvidenceValidator validator, EvidenceEnrichment evidenceEnrichment, WorkflowService workflowService, EvidenceRepository repository, Producer producer, Configuration config, MdmsUtil mdmsUtil, ObjectMapper objectMapper) {
         this.validator = validator;
         this.evidenceEnrichment = evidenceEnrichment;
         this.workflowService = workflowService;
         this.repository = repository;
         this.producer = producer;
         this.config = config;
+        this.mdmsUtil = mdmsUtil;
+        this.objectMapper = objectMapper;
     }
 
     public Artifact createEvidence(EvidenceRequest body) {
@@ -50,9 +57,15 @@ public class EvidenceService {
             if (body.getArtifact().getIsEvidence().equals(true)) {
                 evidenceEnrichment.enrichEvidenceNumber(body);
             }
+
+            String filingType = getFilingTypeMdms(body.getRequestInfo(), body.getArtifact());
+
             // Initiate workflow for the new application-
-            if (body.getArtifact().getArtifactType() != null && body.getArtifact().getArtifactType().equals(DEPOSITION)) {
-                workflowService.updateWorkflowStatus(body);
+            if ((filingType.equalsIgnoreCase(CASE_FILING) &&
+                    body.getArtifact().getArtifactType() != null &&
+                    body.getArtifact().getArtifactType().equals(DEPOSITION)) ||
+                    filingType.equalsIgnoreCase(SUBMISSION)) {
+                workflowService.updateWorkflowStatus(body, filingType);
                 producer.push(config.getEvidenceCreateTopic(), body);
             } else {
                 producer.push(config.getEvidenceCreateWithoutWorkflowTopic(), body);
@@ -65,6 +78,24 @@ public class EvidenceService {
             log.error("Error occurred while creating evidence");
             throw new CustomException(EVIDENCE_CREATE_EXCEPTION, e.toString());
         }
+    }
+
+    private String getFilingTypeMdms(RequestInfo requestInfo, Artifact artifact) {
+         try{
+             Map<String, Map<String, JSONArray>> mdmsData = mdmsUtil.fetchMdmsData(requestInfo, artifact.getTenantId(), config.getFilingTypeModule(), Collections.singletonList(config.getFilingTypeMaster()));
+             JSONArray jsonArray = mdmsData.get(config.getFilingTypeModule()).get(config.getFilingTypeMaster());
+             String filingType = null;
+             for(Object obj : jsonArray) {
+                 JSONObject jsonObject = objectMapper.convertValue(obj, JSONObject.class);
+                 if(jsonObject.get("uuid").equals(artifact.getFilingType())) {
+                     filingType = jsonObject.get("filingType").toString();
+                 }
+             }
+             return filingType;
+         } catch (Exception e){
+                log.error("Error fetching filing type from mdms: {}", e.toString());
+                throw new CustomException("MDMS_FETCH_ERR", "Error fetching filing type from mdms: " + e.toString());
+         }
     }
 
     public List<Artifact> searchEvidence(RequestInfo requestInfo, EvidenceSearchCriteria evidenceSearchCriteria, Pagination pagination) {
@@ -98,8 +129,13 @@ public class EvidenceService {
                 evidenceEnrichment.enrichEvidenceNumber(evidenceRequest);
             }
 
-            if (evidenceRequest.getArtifact().getArtifactType() != null && evidenceRequest.getArtifact().getArtifactType().equals(DEPOSITION)) {
-                workflowService.updateWorkflowStatus(evidenceRequest);
+            String filingType = getFilingTypeMdms(evidenceRequest.getRequestInfo(), evidenceRequest.getArtifact());
+
+            if ((filingType.equalsIgnoreCase(CASE_FILING) &&
+                    evidenceRequest.getArtifact().getArtifactType() != null &&
+                    evidenceRequest.getArtifact().getArtifactType().equals(DEPOSITION)) ||
+                    filingType.equalsIgnoreCase(SUBMISSION)) {
+                workflowService.updateWorkflowStatus(evidenceRequest, filingType);
                 enrichBasedOnStatus(evidenceRequest);
                 producer.push(config.getUpdateEvidenceKafkaTopic(), evidenceRequest);
             } else {
@@ -127,9 +163,11 @@ public class EvidenceService {
 
     void enrichBasedOnStatus(EvidenceRequest evidenceRequest) {
         String status = evidenceRequest.getArtifact().getStatus();
-        if (PUBLISHED_STATE.equalsIgnoreCase(status)) {
+        if (PUBLISHED_STATE.equalsIgnoreCase(status) || SUBMITTED_STATE.equalsIgnoreCase(status)) {
             evidenceEnrichment.enrichEvidenceNumber(evidenceRequest);
         } else if (ABATED_STATE.equalsIgnoreCase(status)) {
+            evidenceEnrichment.enrichIsActive(evidenceRequest);
+        } else if(DELETED_STATE.equalsIgnoreCase(status)){
             evidenceEnrichment.enrichIsActive(evidenceRequest);
         }
     }

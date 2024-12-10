@@ -74,13 +74,13 @@ public class EvidenceValidator {
     }
 
     public Artifact validateEvidenceExistence(EvidenceRequest evidenceRequest) {
-        try {
-            validateEvidenceRegistration(evidenceRequest);
-        }
-        catch (Exception e) {
-            log.error("Error occurred while updating evidence", e);
-            throw new CustomException("EVIDENCE_UPDATE_EXCEPTION", "Error occurred while updating evidence: " + e.toString());
-        }
+//        try {
+//            validateEvidenceRegistration(evidenceRequest);
+//        }
+//        catch (Exception e) {
+//            log.error("Error occurred while updating evidence", e);
+//            throw new CustomException("EVIDENCE_UPDATE_EXCEPTION", "Error occurred while updating evidence: " + e.toString());
+//        }
 
         EvidenceSearchCriteria evidenceSearchCriteria = createEvidenceSearchCriteria(evidenceRequest);
 
