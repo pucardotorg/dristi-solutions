@@ -234,6 +234,12 @@ public class CaseRegistrationValidator {
 		return true;
 	}
 
+	public void validateEditCase(CaseRequest caseRequest) throws CustomException {
+		if (ObjectUtils.isEmpty(caseRequest.getCases().getCaseTitle()) || ObjectUtils.isEmpty(caseRequest.getCases().getAdditionalDetails())) {
+			throw new CustomException(VALIDATION_ERR, "caseTitle or additionalDetails cannot be empty");
+		}
+	}
+
 	private List<String> createMasterDetails() {
 		List<String> masterList = new ArrayList<>();
 		masterList.add("ComplainantType");
