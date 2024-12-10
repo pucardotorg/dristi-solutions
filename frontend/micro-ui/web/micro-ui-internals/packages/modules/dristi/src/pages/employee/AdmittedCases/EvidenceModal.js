@@ -86,7 +86,7 @@ const EvidenceModal = ({
       if (!isJudge) {
         return false;
       }
-      if (modalType === "Documents") {
+      if (modalType === "Filings") {
         return true;
       }
       return (
@@ -94,7 +94,7 @@ const EvidenceModal = ({
         [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationStatus)
       );
     } else {
-      if (modalType === "Documents") {
+      if (modalType === "Filings") {
         return false;
       }
       if (userInfo?.uuid === createdBy) {
@@ -298,7 +298,7 @@ const EvidenceModal = ({
 
   const onSuccess = async () => {
     let message = "";
-    if (modalType === "Documents") {
+    if (modalType === "Filings") {
       message = documentSubmission?.[0].artifactList?.isEvidence ? "SUCCESSFULLY_UNMARKED_MESSAGE" : "SUCCESSFULLY_MARKED_MESSAGE";
     } else {
       if (showConfirmationModal?.type === "reject") {
@@ -324,7 +324,7 @@ const EvidenceModal = ({
   };
 
   const onError = async (result) => {
-    if (modalType === "Documents") {
+    if (modalType === "Filings") {
       showToast({
         isError: true,
         message: documentSubmission?.[0].artifactList?.isEvidence ? "UNSUCCESSFULLY_UNMARKED_MESSAGE" : "UNSUCCESSFULLY_MARKED_MESSAGE",
@@ -692,7 +692,7 @@ const EvidenceModal = ({
       return;
     }
     if (userType === "employee") {
-      modalType === "Documents" ? setShowConfirmationModal({ type: "documents-confirmation" }) : setShowConfirmationModal({ type: "accept" });
+      modalType === "Filings" ? setShowConfirmationModal({ type: "documents-confirmation" }) : setShowConfirmationModal({ type: "accept" });
     } else {
       if (actionSaveLabel === t("ADD_COMMENT")) {
         try {
@@ -807,14 +807,10 @@ const EvidenceModal = ({
             <Heading
               label={t("DOCUMENT_SUBMISSION")}
               status={
-                modalType === "Documents"
-                  ? documentSubmission?.[0]?.artifactList?.isEvidence
-                    ? "Accepeted"
-                    : "Action Pending"
-                  : t(applicationStatus)
+                modalType === "Filings" ? (documentSubmission?.[0]?.artifactList?.isEvidence ? "Accepeted" : "Action Pending") : t(applicationStatus)
               }
-              showStatus={modalType === "Documents" ? false : true}
-              isStatusRed={modalType === "Documents" ? !documentSubmission?.[0]?.artifactList?.isEvidence : applicationStatus}
+              showStatus={modalType === "Filings" ? false : true}
+              isStatusRed={modalType === "Filings" ? !documentSubmission?.[0]?.artifactList?.isEvidence : applicationStatus}
             />
           }
           className="evidence-modal"
@@ -878,7 +874,7 @@ const EvidenceModal = ({
                     SubmissionWorkflowState.COMPLETED,
                     SubmissionWorkflowState.REJECTED,
                   ].includes(applicationStatus)) ||
-                  modalType === "Documents") && (
+                  modalType === "Filings") && (
                   <div className="comment-send">
                     <div className="comment-input-wrapper">
                       <div style={{ display: "flex" }}>
@@ -1006,7 +1002,7 @@ const EvidenceModal = ({
           disableCheckBox={isMandatoryOrderCreation}
         />
       )}
-      {showConfirmationModal && !showSuccessModal && modalType === "Documents" && (
+      {showConfirmationModal && !showSuccessModal && modalType === "Filings" && (
         <ConfirmEvidenceAction
           t={t}
           setShowConfirmationModal={setShowConfirmationModal}
