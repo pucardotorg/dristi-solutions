@@ -1,0 +1,21 @@
+{
+  "tenantId": "kl",
+  "schemaCode": "common-masters.FilingType",
+  "Mdms": [
+    {
+      "id": 1,
+      "filingType":"caseFiling",
+      "uuid":"123e4567-e89b-12d3-a456-426614174000"
+    },
+    {
+      "id": 2,
+      "filingType":"application",
+      "uuid":"456e1234-b78d-90a3-c123-789012345678"
+    },
+    {
+      "id": 3,
+      "filingType":"direct",
+      "uuid":"987e6543-e21b-34c2-b567-123456789abc"
+    }
+  ]
+}
