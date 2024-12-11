@@ -1211,6 +1211,16 @@ const updateComplaintDocInCaseDoc = (docList, complaintDoc) => {
   return newDocList;
 };
 
+const calculateTotalChequeAmount = (formData) => {
+  let totalChequeAmount = 0;
+  for (let i = 0; i < formData?.length; i++) {
+    if (formData[i]?.data?.chequeAmount) {
+      totalChequeAmount = totalChequeAmount + parseInt(formData[i].data.chequeAmount);
+    }
+  }
+  return totalChequeAmount.toString();
+};
+
 export const updateCaseDetails = async ({
   t,
   isCompleted,
@@ -1837,12 +1847,13 @@ export const updateCaseDetails = async ({
       debtLiabilityDetails: {
         ...caseDetails?.caseDetails?.debtLiabilityDetails,
         formdata: caseDetails?.caseDetails?.debtLiabilityDetails?.formdata?.map((data) => {
-          if (data?.data?.liabilityType?.code === "FULL_LIABILITY" && newFormData?.[0]) {
+          if (data?.data?.liabilityType?.code === "FULL_LIABILITY" && newFormData) {
+            const totalChequeAmount = calculateTotalChequeAmount(newFormData);
             return {
               ...data,
               data: {
                 ...data.data,
-                totalAmount: newFormData[0].data.chequeAmount,
+                totalAmount: totalChequeAmount,
               },
             };
           } else return data;
@@ -1880,13 +1891,14 @@ export const updateCaseDetails = async ({
           } else {
             updateCaseDocuments(docType, false);
           }
+          const totalChequeAmount = calculateTotalChequeAmount(caseDetails?.caseDetails?.chequeDetails?.formdata);
           return {
             ...data,
             data: {
               ...data.data,
               ...debtDocumentData,
               ...(data?.data?.liabilityType?.code === "FULL_LIABILITY" && {
-                totalAmount: caseDetails?.caseDetails?.chequeDetails?.formdata?.[0]?.data?.chequeAmount,
+                totalAmount: totalChequeAmount,
               }),
             },
           };
