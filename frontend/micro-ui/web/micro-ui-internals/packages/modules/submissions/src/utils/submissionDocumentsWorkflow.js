@@ -4,6 +4,6 @@ export const SubmissionDocumentWorflowAction = {
 };
 
 export const SubmissionDocumentWorflowState = {
-  PENDING_ESIGN: "PENDING_ESIGN",
+  PENDING_ESIGN: "PENDING_E-SIGN",
   SUBMITTED: "SUBMITTED",
 };

@@ -42,12 +42,12 @@ export const submissionService = {
       data,
       params,
     }),
-  searchEvidence: (data) => {
+  searchEvidence: (data, params) =>
     Request({
-      url: Urls.dristi.evidenceSearch,
+      url: Urls.evidence.evidenceSearch,
       useCache: false,
       userService: false,
       data,
-    });
-  },
+      params,
+    }),
 };

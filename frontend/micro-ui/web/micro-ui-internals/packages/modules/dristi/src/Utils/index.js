@@ -140,6 +140,11 @@ export const extractFeeMedium = (feeName) => {
   return feeMediums?.[feeName?.toLowerCase()] || "";
 };
 
+export const getFilingType = (filingTypes, displayName) => {
+  const filingType = filingTypes?.find((type) => type?.displayName === displayName);
+  return filingType ? filingType?.code : null;
+};
+
 export const documentsTypeMapping = {
   complainantId: "COMPLAINANT_ID_PROOF",
   complainantCompanyDetailsUpload: "AUTHORIZED_COMPLAINANT_COMPANY_REPRESENTATIVE",

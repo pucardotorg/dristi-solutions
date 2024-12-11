@@ -7,7 +7,7 @@ function useSearchEvidenceService(reqData, params, key, enabled) {
     `GET_SUBMISSION_DETAILS_${key}`,
     () => submissionService.searchEvidence(reqData, params),
     {
-      cacheTime: 5 * 60,
+      cacheTime: 0,
       enabled: Boolean(enabled),
     }
   );

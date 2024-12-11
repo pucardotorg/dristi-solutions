@@ -106,8 +106,8 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
       return;
     }
 
-    const upadatedDocuments = [...currentValue, data];
-    setValue(upadatedDocuments, input?.name);
+    const updatedDocuments = [...currentValue, data];
+    setValue(updatedDocuments, input?.name);
   }
 
   const handleRemoveFile = (file, index, currentValue, input) => {
