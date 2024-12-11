@@ -33,9 +33,11 @@ import {
 } from "../../citizen/FileCase/Config/admissionActionConfig";
 import Modal from "../../../components/Modal";
 import CustomCaseInfoDiv from "../../../components/CustomCaseInfoDiv";
-import { removeInvalidNameParts } from "../../../Utils";
+import { getDate, removeInvalidNameParts } from "../../../Utils";
 import useWorkflowDetails from "../../../hooks/dristi/useWorkflowDetails";
 import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersService";
+import VoidSubmissionBody from "./VoidSubmissionBody";
+import DocumentModal from "@egovernments/digit-ui-module-orders/src/components/DocumentModal";
 
 const defaultSearchValues = {};
 
@@ -143,11 +145,12 @@ const AdmittedCases = () => {
   const isCourtRoomManager = roles.some((role) => role.code === "COURT_ROOM_MANAGER");
   const activeTab = isFSO ? "Complaints" : urlParams.get("tab") || "Overview";
   const filingNumber = urlParams.get("filingNumber");
+  const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
+  const tenantId = window?.Digit.ULBService.getCurrentTenantId();
+
   const [show, setShow] = useState(false);
   const [openAdmitCaseModal, setOpenAdmitCaseModal] = useState(true);
-  const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
   const [documentSubmission, setDocumentSubmission] = useState();
-  const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [showOrderReviewModal, setShowOrderReviewModal] = useState(false);
   const [showHearingTranscriptModal, setShowHearingTranscriptModal] = useState(false);
   const [currentOrder, setCurrentOrder] = useState();
@@ -167,6 +170,7 @@ const AdmittedCases = () => {
   const [showDismissCaseConfirmation, setShowDismissCaseConfirmation] = useState(false);
   const [showPendingDelayApplication, setShowPendingDelayApplication] = useState(false);
   const [toastStatus, setToastStatus] = useState({ alreadyShown: false });
+  const [showVoidModal, setShowVoidModal] = useState(false);
   const [downloadCasePdfLoading, setDownloadCasePdfLoading] = useState(false);
   const history = useHistory();
   const isCitizen = userRoles.includes("CITIZEN");
@@ -179,6 +183,18 @@ const AdmittedCases = () => {
   const isJudge = userInfo?.roles?.some((role) => role.code === "JUDGE_ROLE");
   const todayDate = new Date().getTime();
   const { downloadPdf } = useDownloadCasePdf();
+
+  const reqEvidenceUpdate = {
+    url: Urls.dristi.evidenceUpdate,
+    params: {},
+    body: {},
+    config: {
+      enable: false,
+    },
+  };
+
+  const evidenceUpdateMutation = Digit.Hooks.useCustomAPIMutationHook(reqEvidenceUpdate);
+
   const { data: caseData, isLoading, refetch: refetchCaseData, isFetching: isCaseFetching } = useSearchCaseService(
     {
       criteria: [
@@ -367,12 +383,54 @@ const AdmittedCases = () => {
     setShowOtherMenu(false);
   };
 
+  const handleMarkEvidence = async (documentSubmission, isEvidence) => {
+    try {
+      await evidenceUpdateMutation.mutate(
+        {
+          url: Urls.dristi.evidenceUpdate,
+          params: {},
+          body: {
+            artifact: {
+              ...documentSubmission?.[0].artifactList,
+              isEvidence,
+              filingNumber: filingNumber,
+            },
+          },
+          config: {
+            enable: true,
+          },
+        },
+        {}
+      );
+      showToast(true);
+      setToastDetails({
+        isError: false,
+        message: isEvidence ? "SUCCESSFULLY_UNMARKED_MESSAGE" : "SUCCESSFULLY_MARKED_MESSAGE",
+      });
+    } catch (error) {
+      showToast(true);
+      setToastDetails({
+        isError: true,
+        message: isEvidence ? "UNSUCCESSFULLY_UNMARKED_MESSAGE" : "UNSUCCESSFULLY_MARKED_MESSAGE",
+      });
+    }
+  };
+  console.debug(documentSubmission);
   const configList = useMemo(() => {
     const docSetFunc = (docObj) => {
       const applicationNumber = docObj?.[0]?.applicationList?.applicationNumber;
       const status = docObj?.[0]?.applicationList?.status;
       const createdByUuid = docObj?.[0]?.applicationList?.statuteSection?.auditdetails?.createdBy;
+      const documentCreatedByUuid = docObj?.[0]?.artifactList.auditdetails.createdBy
+      const artifactNumber = docObj?.[0]?.artifactList?.artifactNumber
+      const documentStatus = docObj?.[0]?.artifactList?.status
+      console.debug(docObj)
       if (isCitizen) {
+        if(documentStatus==="PENDING_E-SIGN" &&documentCreatedByUuid === userInfo?.uuid ){
+          history.push(
+            `/digit-ui/citizen/submissions/submissions-document?filingNumber=${filingNumber}&artifactNumber=${artifactNumber}`
+          );
+        }
         if (
           [SubmissionWorkflowState.PENDINGPAYMENT, SubmissionWorkflowState.PENDINGESIGN, SubmissionWorkflowState.PENDINGSUBMISSION].includes(status)
         ) {
@@ -415,6 +473,40 @@ const AdmittedCases = () => {
     const takeActionFunc = (hearingData) => {
       setCurrentHearing(hearingData);
       setShowHearingTranscriptModal(true);
+    };
+
+    const handleFilingAction = async (history, column, row, item) => {
+      const docObj = [
+        {
+          itemType: item.id,
+          status: row.workflow?.action,
+          details: {
+            applicationType: row.artifactType,
+            applicationSentOn: getDate(parseInt(row.auditdetails.createdTime)),
+            sender: row.owner,
+            additionalDetails: row.additionalDetails,
+            applicationId: row.id,
+            auditDetails: row.auditDetails,
+          },
+          applicationContent: {
+            tenantId: row.tenantId,
+            fileStoreId: row.file?.fileStore,
+            id: row.file?.id,
+            documentType: row.file?.documentType,
+            documentUid: row.file?.documentUid,
+            additionalDetails: row.file?.additionalDetails,
+          },
+          comments: row.comments,
+          artifactList: row,
+        },
+      ];
+      if ("mark_as_evidence" === item.id || "unmark_as_evidence" === item.id) {
+        await handleMarkEvidence(docObj, documentSubmission?.[0].artifactList?.isEvidence);
+        setUpdateCounter((prevCount) => prevCount + 1);
+      } else if ("mark_as_void" === item.id || "view_reason_for_voiding" === item.id) {
+        setShowVoidModal(true);
+        setDocumentSubmission(docObj);
+      }
     };
 
     return TabSearchconfig?.TabSearchconfig.map((tabConfig) => {
@@ -594,12 +686,24 @@ const AdmittedCases = () => {
                 uiConfig: {
                   ...tabConfig.sections.searchResult.uiConfig,
                   columns: tabConfig.sections.searchResult.uiConfig.columns.map((column) => {
-                    return column.label === "FILE" || column.label === "DOCUMENT_TYPE"
-                      ? {
+                    switch (column.label) {
+                      case "FILE":
+                      case "FILING_NAME": {
+                        return {
                           ...column,
                           clickFunc: docSetFunc,
-                        }
-                      : column;
+                        };
+                      }
+                      case "CS_ACTIONS": {
+                        return {
+                          ...column,
+                          clickFunc: handleFilingAction,
+                        };
+                      }
+                      default: {
+                        return column;
+                      }
+                    }
                   }),
                 },
               },
@@ -689,10 +793,94 @@ const AdmittedCases = () => {
 
   const indexOfActiveTab = newTabSearchConfig?.TabSearchconfig?.findIndex((tabData) => tabData.label === activeTab);
 
+  const [voidReason, setVoidReason] = useState("");
   const [defaultValues, setDefaultValues] = useState(defaultSearchValues); // State to hold default values for search fields
   const config = useMemo(() => {
     return newTabSearchConfig?.TabSearchconfig?.[indexOfActiveTab];
   }, [indexOfActiveTab, newTabSearchConfig?.TabSearchconfig]); // initially setting first index config as default from jsonarray
+
+  const voidModalConfig = useMemo(() => {
+    const handleMarkAsVoid = async (documentSubmission, isVoid) => {
+      try {
+        await evidenceUpdateMutation.mutate(
+          {
+            url: Urls.dristi.evidenceUpdate,
+            params: {},
+            body: {
+              artifact: {
+                ...documentSubmission?.[0].artifactList,
+                filingNumber: filingNumber,
+                isVoid,
+                reason: voidReason,
+                workflow: null,
+              },
+            },
+            config: {
+              enable: true,
+            },
+          },
+          {}
+        );
+        showToast(true);
+        setToastDetails({
+          isError: false,
+          message: isVoid ? "SUCCESSFULLY_UNMARKED_AS_VOID_MESSAGE" : "SUCCESSFULLY_MARKED_AS_VOID_MESSAGE",
+        });
+        setShowVoidModal(false);
+      } catch (error) {
+        showToast(true);
+        setToastDetails({
+          isError: true,
+          message: isVoid ? "UNSUCCESSFULLY_UNMARKED_AS_VOID_MESSAGE" : "UNSUCCESSFULLY_MARKED_AS_VOID_MESSAGE",
+        });
+        setShowVoidModal(false);
+      }
+    };
+
+    if (!showVoidModal) return {};
+    const handleClose = () => {
+      setShowVoidModal(false);
+    };
+
+    return {
+      handleClose: handleClose,
+      heading: {
+        label: "view_reason_for_voiding" === documentSubmission?.[0]?.itemType ? "Reason for Voiding" : `Are you sure you wish to Mark as Void`,
+      },
+      isStepperModal: false,
+      actionSaveLabel:
+        userType === "citizen"
+          ? undefined
+          : "view_reason_for_voiding" === documentSubmission?.[0]?.itemType
+          ? `Unmark as Void`
+          : "unmark_void_submission" === documentSubmission?.[0]?.itemType
+          ? "Confirm"
+          : `Mark as Void`,
+      actionCancelLabel: t("Cancel"),
+      actionCancelOnSubmit: handleClose,
+      actionSaveOnSubmit: () => {
+        if (documentSubmission[0].itemType === "view_reason_for_voiding") {
+          handleMarkAsVoid(documentSubmission, false);
+          setDocumentSubmission(
+            documentSubmission?.map((item) => {
+              return { ...item, itemType: "unmark_void_submission" };
+            })
+          );
+        } else {
+          handleMarkAsVoid(documentSubmission, true);
+        }
+      },
+      modalBody: (
+        <VoidSubmissionBody
+          t={t}
+          documentSubmission={documentSubmission}
+          setVoidReason={setVoidReason}
+          voidReason={documentSubmission[0].itemType === "view_reason_for_voiding" ? documentSubmission?.[0]?.artifactList?.reason : voidReason}
+          disabled={documentSubmission[0].itemType === "view_reason_for_voiding"}
+        />
+      ),
+    };
+  }, [documentSubmission, evidenceUpdateMutation, filingNumber, showVoidModal, t, userType, voidReason]);
 
   const tabData = useMemo(() => {
     return newTabSearchConfig?.TabSearchconfig?.map((configItem, index) => ({
@@ -1388,7 +1576,7 @@ const AdmittedCases = () => {
     if (option.value === "RAISE_APPLICATION") {
       history.push(`/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}`);
     } else if (option.value === "SUBMIT_DOCUMENTS") {
-      // to do
+      history.push(`/digit-ui/citizen/submissions/submissions-document?filingNumber=${filingNumber}`);
     }
   };
 
@@ -1678,7 +1866,6 @@ const AdmittedCases = () => {
     }
   };
 
- 
   if (isLoading || isWorkFlowLoading || isApplicationLoading || isCaseFetching) {
     return <Loader />;
   }
@@ -2114,6 +2301,8 @@ const AdmittedCases = () => {
           }}
         />
       )}
+
+      {showVoidModal && <DocumentModal config={voidModalConfig} />}
     </div>
   );
 };
