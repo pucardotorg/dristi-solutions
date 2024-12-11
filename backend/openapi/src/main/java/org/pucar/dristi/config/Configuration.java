@@ -89,4 +89,19 @@ public class Configuration {
     //SMSNotification
     @Value("${egov.sms.notification.topic}")
     private String smsNotificationTopic;
+
+    @Value("${is.elasticsearch.enabled}")
+    private Boolean isElasticSearchEnabled;
+
+    @Value("${case.service.host}")
+    private String caseServiceHost;
+
+    @Value("${case.service.searchbycnrnumber.endpoint}")
+    private String caseServiceSearchEndpoint;
+
+    @Value("${case.sevice.searchbycasetype.endpoint}")
+    private String caseServiceSearchByCaseTypeEndpoint;
+
+    @Value("${app.zone.id}")
+    private String zoneId;
 }
