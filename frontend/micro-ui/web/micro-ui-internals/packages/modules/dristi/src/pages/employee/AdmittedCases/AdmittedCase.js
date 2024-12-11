@@ -383,43 +383,6 @@ const AdmittedCases = () => {
     setShowOtherMenu(false);
   };
 
-  const handleMarkAsVoid = async (documentSubmission, isVoid) => {
-    try {
-      await evidenceUpdateMutation.mutate(
-        {
-          url: Urls.dristi.evidenceUpdate,
-          params: {},
-          body: {
-            artifact: {
-              ...documentSubmission?.[0].artifactList,
-              filingNumber: filingNumber,
-              // void marking workflow changes
-              isVoid,
-              workflow: {
-                action: isVoid ? "UNMARK_AS_VOID" : "MARK_AS_VOID",
-              },
-            },
-          },
-          config: {
-            enable: true,
-          },
-        },
-        {}
-      );
-      showToast(true);
-      setToastDetails({
-        isError: false,
-        message: isVoid ? "SUCCESSFULLY_UNMARKED_AS_VOID_MESSAGE" : "SUCCESSFULLY_MARKED_AS_VOID_MESSAGE",
-      });
-    } catch (error) {
-      showToast(true);
-      setToastDetails({
-        isError: true,
-        message: isVoid ? "UNSUCCESSFULLY_UNMARKED_AS_VOID_MESSAGE" : "UNSUCCESSFULLY_MARKED_AS_VOID_MESSAGE",
-      });
-    }
-  };
-
   const handleMarkEvidence = async (documentSubmission, isEvidence) => {
     try {
       await evidenceUpdateMutation.mutate(
@@ -452,7 +415,7 @@ const AdmittedCases = () => {
       });
     }
   };
-
+  console.debug(documentSubmission);
   const configList = useMemo(() => {
     const docSetFunc = (docObj) => {
       const applicationNumber = docObj?.[0]?.applicationList?.applicationNumber;
@@ -814,12 +777,50 @@ const AdmittedCases = () => {
 
   const indexOfActiveTab = newTabSearchConfig?.TabSearchconfig?.findIndex((tabData) => tabData.label === activeTab);
 
+  const [voidReason, setVoidReason] = useState("");
   const [defaultValues, setDefaultValues] = useState(defaultSearchValues); // State to hold default values for search fields
   const config = useMemo(() => {
     return newTabSearchConfig?.TabSearchconfig?.[indexOfActiveTab];
   }, [indexOfActiveTab, newTabSearchConfig?.TabSearchconfig]); // initially setting first index config as default from jsonarray
 
   const voidModalConfig = useMemo(() => {
+    const handleMarkAsVoid = async (documentSubmission, isVoid) => {
+      try {
+        await evidenceUpdateMutation.mutate(
+          {
+            url: Urls.dristi.evidenceUpdate,
+            params: {},
+            body: {
+              artifact: {
+                ...documentSubmission?.[0].artifactList,
+                filingNumber: filingNumber,
+                isVoid,
+                reason: voidReason,
+                workflow: null,
+              },
+            },
+            config: {
+              enable: true,
+            },
+          },
+          {}
+        );
+        showToast(true);
+        setToastDetails({
+          isError: false,
+          message: isVoid ? "SUCCESSFULLY_UNMARKED_AS_VOID_MESSAGE" : "SUCCESSFULLY_MARKED_AS_VOID_MESSAGE",
+        });
+        setShowVoidModal(false);
+      } catch (error) {
+        showToast(true);
+        setToastDetails({
+          isError: true,
+          message: isVoid ? "UNSUCCESSFULLY_UNMARKED_AS_VOID_MESSAGE" : "UNSUCCESSFULLY_MARKED_AS_VOID_MESSAGE",
+        });
+        setShowVoidModal(false);
+      }
+    };
+
     if (!showVoidModal) return {};
     const handleClose = () => {
       setShowVoidModal(false);
@@ -843,19 +844,27 @@ const AdmittedCases = () => {
       actionCancelOnSubmit: handleClose,
       actionSaveOnSubmit: () => {
         if (documentSubmission[0].itemType === "view_reason_for_voiding") {
-          handleMarkAsVoid(documentSubmission, true);
+          handleMarkAsVoid(documentSubmission, false);
           setDocumentSubmission(
             documentSubmission?.map((item) => {
               return { ...item, itemType: "unmark_void_submission" };
             })
           );
         } else {
-          handleMarkAsVoid(documentSubmission, false);
+          handleMarkAsVoid(documentSubmission, true);
         }
       },
-      modalBody: <VoidSubmissionBody t={t} documentSubmission={documentSubmission} />,
+      modalBody: (
+        <VoidSubmissionBody
+          t={t}
+          documentSubmission={documentSubmission}
+          setVoidReason={setVoidReason}
+          voidReason={documentSubmission[0].itemType === "view_reason_for_voiding" ? documentSubmission?.[0]?.artifactList?.reason : voidReason}
+          disabled={documentSubmission[0].itemType === "view_reason_for_voiding"}
+        />
+      ),
     };
-  }, [documentSubmission, showVoidModal, t, userType]);
+  }, [documentSubmission, evidenceUpdateMutation, filingNumber, showVoidModal, t, userType, voidReason]);
 
   const tabData = useMemo(() => {
     return newTabSearchConfig?.TabSearchconfig?.map((configItem, index) => ({
