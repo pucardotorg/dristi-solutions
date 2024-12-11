@@ -123,7 +123,7 @@ class EvidenceValidatorTest {
 
         // Execute and verify
         CustomException exception = assertThrows(CustomException.class, () -> evidenceValidator.validateEvidenceExistence(evidenceRequest));
-
+        assertEquals("EVIDENCE_UPDATE_EXCEPTION", exception.getCode());
     }
 
     @Test

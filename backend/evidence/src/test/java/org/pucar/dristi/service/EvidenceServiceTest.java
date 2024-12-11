@@ -69,7 +69,7 @@ class EvidenceServiceTest {
         artifact = new Artifact();
         artifact.setArtifactType("DEPOSITION");
         artifact.setIsEvidence(true);
-        artifact.setFilingType("123e4567-e89b-12d3-a456-426614174000");
+        artifact.setFilingType("CASE_FILING");
         evidenceRequest = new EvidenceRequest();
         evidenceRequest.setArtifact(artifact);
 

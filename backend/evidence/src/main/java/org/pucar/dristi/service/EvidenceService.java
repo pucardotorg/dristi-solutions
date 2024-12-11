@@ -63,7 +63,7 @@ public class EvidenceService {
             // Initiate workflow for the new application- //todo witness deposition is part of case filing or not
             if ((body.getArtifact().getArtifactType() != null &&
                     body.getArtifact().getArtifactType().equals(DEPOSITION)) ||
-                    (body.getArtifact().getWorkflow() != null && filingType.equalsIgnoreCase(SUBMISSION))) {
+                    (filingType != null && body.getArtifact().getWorkflow() != null && filingType.equalsIgnoreCase(SUBMISSION))) {
                 workflowService.updateWorkflowStatus(body, filingType);
                 producer.push(config.getEvidenceCreateTopic(), body);
             } else {
@@ -87,8 +87,11 @@ public class EvidenceService {
              for(Object obj : jsonArray) {
                  JSONObject jsonObject = objectMapper.convertValue(obj, JSONObject.class);
                  if(jsonObject.get("code").equals(artifact.getFilingType())) {
-                     filingType = jsonObject.get("displayName").toString();
+                     filingType = jsonObject.get("code").toString();
                  }
+             }
+             if(filingType == null) {
+                 throw new CustomException(MDMS_DATA_NOT_FOUND, "Filing type not found in mdms");
              }
              return filingType;
          } catch (Exception e){
@@ -132,7 +135,7 @@ public class EvidenceService {
 
             if ((evidenceRequest.getArtifact().getArtifactType() != null &&
                     evidenceRequest.getArtifact().getArtifactType().equals(DEPOSITION)) ||
-                    (evidenceRequest.getArtifact().getWorkflow() != null && filingType.equalsIgnoreCase(SUBMISSION))) {
+                    (filingType!= null && evidenceRequest.getArtifact().getWorkflow() != null && filingType.equalsIgnoreCase(SUBMISSION))) {
                 workflowService.updateWorkflowStatus(evidenceRequest, filingType);
                 enrichBasedOnStatus(evidenceRequest);
                 producer.push(config.getUpdateEvidenceKafkaTopic(), evidenceRequest);
