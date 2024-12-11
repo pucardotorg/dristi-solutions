@@ -158,7 +158,7 @@ const SubmissionDocuments = ({ path }) => {
           };
           evidenceReqBody = {
             artifact: {
-              artifactType: "DOCUMENTARY",
+              artifactType: formdata?.documentType?.code,
               caseId: caseDetails?.id,
               filingNumber,
               tenantId,
