@@ -236,7 +236,7 @@ public class CaseRegistrationValidator {
 
 	public void validateEditCase(CaseRequest caseRequest) throws CustomException {
 		if (ObjectUtils.isEmpty(caseRequest.getCases().getCaseTitle()) || ObjectUtils.isEmpty(caseRequest.getCases().getAdditionalDetails())
-	      || caseRequest.getCases().getCaseTitle().trim().isEmpty()) {
+	       || caseRequest.getCases().getCaseTitle().trim().isEmpty()) {
 			throw new CustomException(VALIDATION_ERR, "caseTitle or additionalDetails cannot be empty");
 		}
 	}
