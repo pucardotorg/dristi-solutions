@@ -115,7 +115,7 @@ const EvidenceModal = ({
 
   const actionSaveLabel = useMemo(() => {
     let label = "";
-    if (modalType === "Submissions") {
+    if (modalType === "Applications") {
       if (userType === "employee") {
         label = t("Approve");
       } else {
@@ -140,7 +140,7 @@ const EvidenceModal = ({
     if (
       userRoles.includes("SUBMISSION_APPROVER") &&
       [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationStatus) &&
-      modalType === "Submissions"
+      modalType === "Applications"
     ) {
       return t("REJECT");
     }
@@ -664,7 +664,7 @@ const EvidenceModal = ({
   };
 
   const handleBack = () => {
-    if (modalType === "Submissions" && history.location?.state?.applicationDocObj) {
+    if (modalType === "Applications" && history.location?.state?.applicationDocObj) {
       history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Submissions`);
     } else {
       setShow(false);
@@ -674,7 +674,7 @@ const EvidenceModal = ({
   };
 
   const handleSubmitComment = async (newComment) => {
-    if (modalType === "Submissions") {
+    if (modalType === "Applications") {
       await submitCommentApplication(newComment);
       setShowFileIcon(false);
     } else {
@@ -866,7 +866,7 @@ const EvidenceModal = ({
                     ))}
                   </div>
                 </div>
-                {((modalType === "Submissions" &&
+                {((modalType === "Applications" &&
                   [
                     SubmissionWorkflowState.PENDINGAPPROVAL,
                     SubmissionWorkflowState.PENDINGREVIEW,
@@ -890,7 +890,7 @@ const EvidenceModal = ({
                           onClick={async () => {
                             if (cleanString(currentComment) !== "") {
                               let newComment =
-                                modalType === "Submissions"
+                                modalType === "Applications"
                                   ? {
                                       tenantId,
                                       comment: [
@@ -992,7 +992,7 @@ const EvidenceModal = ({
           </div>
         </Modal>
       )}
-      {showConfirmationModal && !showSuccessModal && modalType === "Submissions" && (
+      {showConfirmationModal && !showSuccessModal && modalType === "Applications" && (
         <ConfirmSubmissionAction
           t={t}
           setShowConfirmationModal={setShowConfirmationModal}
@@ -1012,7 +1012,7 @@ const EvidenceModal = ({
           isEvidence={documentSubmission?.[0]?.artifactList?.isEvidence}
         />
       )}
-      {showSuccessModal && modalType === "Submissions" && <SubmissionSuccessModal t={t} handleBack={handleBack} />}
+      {showSuccessModal && modalType === "Applications" && <SubmissionSuccessModal t={t} handleBack={handleBack} />}
     </React.Fragment>
   );
 };

@@ -53,7 +53,7 @@ const OverlayDropdown = ({ column, row, master, module }) => {
                   return !item.disabled && item.action(history, column, row, item);
                 }}
               >
-                {item.label}
+                {t(item.label)}
               </li>
             ))}
         </ul>

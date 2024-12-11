@@ -183,6 +183,18 @@ const AdmittedCases = () => {
   const isJudge = userInfo?.roles?.some((role) => role.code === "JUDGE_ROLE");
   const todayDate = new Date().getTime();
   const { downloadPdf } = useDownloadCasePdf();
+
+  const reqEvidenceUpdate = {
+    url: Urls.dristi.evidenceUpdate,
+    params: {},
+    body: {},
+    config: {
+      enable: false,
+    },
+  };
+
+  const evidenceUpdateMutation = Digit.Hooks.useCustomAPIMutationHook(reqEvidenceUpdate);
+
   const { data: caseData, isLoading, refetch: refetchCaseData, isFetching: isCaseFetching } = useSearchCaseService(
     {
       criteria: [
@@ -371,6 +383,76 @@ const AdmittedCases = () => {
     setShowOtherMenu(false);
   };
 
+  const handleMarkAsVoid = async (documentSubmission, isVoid) => {
+    try {
+      await evidenceUpdateMutation.mutate(
+        {
+          url: Urls.dristi.evidenceUpdate,
+          params: {},
+          body: {
+            artifact: {
+              ...documentSubmission?.[0].artifactList,
+              filingNumber: filingNumber,
+              // void marking workflow changes
+              isVoid,
+              workflow: {
+                action: isVoid ? "UNMARK_AS_VOID" : "MARK_AS_VOID",
+              },
+            },
+          },
+          config: {
+            enable: true,
+          },
+        },
+        {}
+      );
+      showToast(true);
+      setToastDetails({
+        isError: false,
+        message: isVoid ? "SUCCESSFULLY_UNMARKED_AS_VOID_MESSAGE" : "SUCCESSFULLY_MARKED_AS_VOID_MESSAGE",
+      });
+    } catch (error) {
+      showToast(true);
+      setToastDetails({
+        isError: true,
+        message: isVoid ? "UNSUCCESSFULLY_UNMARKED_AS_VOID_MESSAGE" : "UNSUCCESSFULLY_MARKED_AS_VOID_MESSAGE",
+      });
+    }
+  };
+
+  const handleMarkEvidence = async (documentSubmission, isEvidence) => {
+    try {
+      await evidenceUpdateMutation.mutate(
+        {
+          url: Urls.dristi.evidenceUpdate,
+          params: {},
+          body: {
+            artifact: {
+              ...documentSubmission?.[0].artifactList,
+              isEvidence,
+              filingNumber: filingNumber,
+            },
+          },
+          config: {
+            enable: true,
+          },
+        },
+        {}
+      );
+      showToast(true);
+      setToastDetails({
+        isError: false,
+        message: isEvidence ? "SUCCESSFULLY_UNMARKED_MESSAGE" : "SUCCESSFULLY_MARKED_MESSAGE",
+      });
+    } catch (error) {
+      showToast(true);
+      setToastDetails({
+        isError: true,
+        message: isEvidence ? "UNSUCCESSFULLY_UNMARKED_MESSAGE" : "UNSUCCESSFULLY_MARKED_MESSAGE",
+      });
+    }
+  };
+
   const configList = useMemo(() => {
     const docSetFunc = (docObj) => {
       const applicationNumber = docObj?.[0]?.applicationList?.applicationNumber;
@@ -421,7 +503,7 @@ const AdmittedCases = () => {
       setShowHearingTranscriptModal(true);
     };
 
-    const handleFilingAction = (history, column, row, item) => {
+    const handleFilingAction = async (history, column, row, item) => {
       const docObj = [
         {
           itemType: item.id,
@@ -446,13 +528,13 @@ const AdmittedCases = () => {
           artifactList: row,
         },
       ];
-      if ("mark_as_evidence" === item.id) {
-        docSetFunc(docObj);
+      if ("mark_as_evidence" === item.id || "unmark_as_evidence" === item.id) {
+        await handleMarkEvidence(docObj, documentSubmission?.[0].artifactList?.isEvidence);
+        setUpdateCounter((prevCount) => prevCount + 1);
       } else if ("mark_as_void" === item.id || "view_reason_for_voiding" === item.id) {
         setShowVoidModal(true);
         setDocumentSubmission(docObj);
       }
-      console.log("item :>> ", item);
     };
 
     return TabSearchconfig?.TabSearchconfig.map((tabConfig) => {
@@ -761,11 +843,14 @@ const AdmittedCases = () => {
       actionCancelOnSubmit: handleClose,
       actionSaveOnSubmit: () => {
         if (documentSubmission[0].itemType === "view_reason_for_voiding") {
+          handleMarkAsVoid(documentSubmission, true);
           setDocumentSubmission(
             documentSubmission?.map((item) => {
               return { ...item, itemType: "unmark_void_submission" };
             })
           );
+        } else {
+          handleMarkAsVoid(documentSubmission, false);
         }
       },
       modalBody: <VoidSubmissionBody t={t} documentSubmission={documentSubmission} />,

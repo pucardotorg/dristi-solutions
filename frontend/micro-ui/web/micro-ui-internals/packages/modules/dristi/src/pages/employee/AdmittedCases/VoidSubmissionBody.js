@@ -15,7 +15,7 @@ const pStyle = {
 
 const VoidSubmissionBody = ({ t, documentSubmission }) => {
   const [errors, setErrors] = useState({});
-  const [voidReason, setVoidReason] = useState("second");
+  const [voidReason, setVoidReason] = useState("");
   return (
     <div className="void-submission-main" style={voidMainStyle}>
       {"view_reason_for_voiding" !== documentSubmission?.[0]?.itemType && (
