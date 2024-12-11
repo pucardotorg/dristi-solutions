@@ -421,7 +421,16 @@ const AdmittedCases = () => {
       const applicationNumber = docObj?.[0]?.applicationList?.applicationNumber;
       const status = docObj?.[0]?.applicationList?.status;
       const createdByUuid = docObj?.[0]?.applicationList?.statuteSection?.auditdetails?.createdBy;
+      const documentCreatedByUuid = docObj?.[0]?.artifactList.auditdetails.createdBy
+      const artifactNumber = docObj?.[0]?.artifactList?.artifactNumber
+      const documentStatus = docObj?.[0]?.artifactList?.status
+      console.debug(docObj)
       if (isCitizen) {
+        if(documentStatus==="PENDING_E-SIGN" &&documentCreatedByUuid === userInfo?.uuid ){
+          history.push(
+            `/digit-ui/citizen/submissions/submissions-document?filingNumber=${filingNumber}&artifactNumber=${artifactNumber}`
+          );
+        }
         if (
           [SubmissionWorkflowState.PENDINGPAYMENT, SubmissionWorkflowState.PENDINGESIGN, SubmissionWorkflowState.PENDINGSUBMISSION].includes(status)
         ) {
@@ -677,17 +686,24 @@ const AdmittedCases = () => {
                 uiConfig: {
                   ...tabConfig.sections.searchResult.uiConfig,
                   columns: tabConfig.sections.searchResult.uiConfig.columns.map((column) => {
-                    return column.label === "FILE" || column.label === "FILING_NAME"
-                      ? {
+                    switch (column.label) {
+                      case "FILE":
+                      case "FILING_NAME": {
+                        return {
                           ...column,
                           clickFunc: docSetFunc,
-                        }
-                      : column.label === "CS_ACTIONS"
-                      ? {
+                        };
+                      }
+                      case "CS_ACTIONS": {
+                        return {
                           ...column,
                           clickFunc: handleFilingAction,
-                        }
-                      : column;
+                        };
+                      }
+                      default: {
+                        return column;
+                      }
+                    }
                   }),
                 },
               },
