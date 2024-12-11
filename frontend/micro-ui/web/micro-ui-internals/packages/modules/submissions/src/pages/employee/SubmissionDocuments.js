@@ -4,12 +4,13 @@ import { FormComposerV2, Header, Loader, Toast } from "@egovernments/digit-ui-re
 import { useTranslation } from "react-i18next";
 import isEqual from "lodash/isEqual";
 import ReviewDocumentSubmissionModal from "../../components/ReviewDocumentSubmissionModal";
-import { combineMultipleFiles } from "@egovernments/digit-ui-module-dristi/src/Utils";
-import { SubmissionDocumentWorflowState } from "../../utils/submissionDocumentsWorkflow";
+import { combineMultipleFiles, getFilingType } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { SubmissionDocumentWorflowAction, SubmissionDocumentWorflowState } from "../../utils/submissionDocumentsWorkflow";
 import SubmissionDocumentSuccessModal from "../../components/SubmissionDocumentSuccessModal";
 import { getAdvocates } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/EfilingValidationUtils";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import useSearchEvidenceService from "../../hooks/submissions/useSearchEvidenceService";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 
@@ -38,10 +39,16 @@ const SubmissionDocuments = ({ path }) => {
   const [showErrorToast, setShowErrorToast] = useState(null);
   const [combinedDocumentFile, setCombinedDocumentFile] = useState(null);
   const [combinedFileStoreId, setCombinedFileStoreId] = useState(null);
-  const [signedDoucumentUploadedID, setSignedDocumentUploadID] = useState("");
+  const [signedDocumentUploadedID, setSignedDocumentUploadID] = useState("");
   const [currentSubmissionStatus, setCurrentSubmissionStatus] = useState("");
 
   const [loader, setLoader] = useState(false);
+
+  const { data: filingTypeData, isLoading: isFilingTypeLoading } = Digit.Hooks.dristi.useGetStatuteSection("common-masters", [
+    { name: "FilingType" },
+  ]);
+
+  const filingType = useMemo(() => getFilingType(filingTypeData?.FilingType, "Direct"), [filingTypeData?.FilingType]);
 
   const { data: individualData } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
@@ -88,7 +95,7 @@ const SubmissionDocuments = ({ path }) => {
     [onBehalfOfLitigent, isCitizen]
   );
 
-  const { data: evidenceData, isloading: isEvidenceLoading, refetch: evidenceRefetch } = Digit.Hooks.submissions.useSearchEvidenceService(
+  const { data: evidenceData, isloading: isEvidenceLoading, refetch: evidenceRefetch } = useSearchEvidenceService(
     {
       criteria: {
         filingNumber,
@@ -102,8 +109,7 @@ const SubmissionDocuments = ({ path }) => {
     Boolean(artifactNumber)
   );
 
-  const evidenceDetails = evidenceData?.artifacts?.[0];
-
+  const evidenceDetails = useMemo(() => evidenceData?.artifacts?.[0], [evidenceData]);
   useEffect(() => {
     if (evidenceDetails) {
       if (evidenceDetails?.status === SubmissionDocumentWorflowState.PENDING_ESIGN) {
@@ -133,74 +139,107 @@ const SubmissionDocuments = ({ path }) => {
     }
   }, [showErrorToast]);
 
+  const handleNextSubmission = () => {
+    history.replace(`/digit-ui/citizen/submissions/submissions-document?filingNumber=${filingNumber}`);
+  };
   const handleGoToSign = async () => {
     try {
-      setLoader(true);
-      const documentFile = (await Promise.all(combinedDocumentFile?.map((doc) => onDocumentUpload(doc, doc?.name)))) || [];
-      let file = null;
       let evidenceReqBody = {};
       let evidence = {};
-      for (let res of documentFile) {
-        const fileStoreId = res?.file?.files?.[0]?.fileStoreId;
-        file = {
-          documentType: res?.fileType,
-          fileStore: res?.fileStore || fileStoreId,
-          additionalDetails: { name: res?.filename || res?.additionalDetails?.name },
-        };
+      if (![SubmissionDocumentWorflowState.PENDING_ESIGN, SubmissionDocumentWorflowState.SUBMITTED].includes(currentSubmissionStatus)) {
+        const documentFile = (await Promise.all(combinedDocumentFile?.map((doc) => onDocumentUpload(doc, doc?.name)))) || [];
+        let file = null;
+        for (let res of documentFile) {
+          const fileStoreId = res?.file?.files?.[0]?.fileStoreId;
+          file = {
+            documentType: res?.fileType,
+            fileStore: res?.fileStore || fileStoreId,
+            additionalDetails: { name: res?.filename || res?.additionalDetails?.name },
+          };
+          evidenceReqBody = {
+            artifact: {
+              artifactType: "DOCUMENTARY",
+              caseId: caseDetails?.id,
+              filingNumber,
+              tenantId,
+              comments: [],
+              file,
+              sourceType,
+              sourceID: individualId,
+              filingType: filingType,
+              additionalDetails: {
+                uuid: userInfo?.uuid,
+                formdata,
+              },
+              workflow: {
+                action: SubmissionDocumentWorflowAction.CREATE,
+              },
+            },
+          };
+          evidence = await DRISTIService.createEvidence(evidenceReqBody);
+        }
+        history.replace(
+          `/digit-ui/citizen/submissions/submissions-document?filingNumber=${filingNumber}&artifactNumber=${evidence?.artifact?.artifactNumber}`
+        );
+      } else {
+        const localStorageID = localStorage.getItem("fileStoreId");
+        const documentsFile =
+          signedDocumentUploadedID !== "" || localStorageID
+            ? {
+                documentType: "SIGNED",
+                fileStore: signedDocumentUploadedID || localStorageID,
+              }
+            : null;
+
+        localStorage.removeItem("fileStoreId");
+
         evidenceReqBody = {
           artifact: {
-            artifactType: "DOCUMENTARY",
-            caseId: caseDetails?.id,
-            filingNumber,
-            tenantId,
-            comments: [],
-            file,
-            sourceType,
-            sourceID: individualId,
-            additionalDetails: {
-              uuid: userInfo?.uuid,
-              formdata,
+            ...evidenceDetails,
+            file: documentsFile,
+            workflow: {
+              action: SubmissionDocumentWorflowAction.E_SIGN,
             },
           },
         };
-        evidence = await DRISTIService.createEvidence(evidenceReqBody);
+        evidence = await DRISTIService.updateEvidence(evidenceReqBody);
+        setShowReviewModal(false);
+        setShowSubmissionSuccessModal(true);
       }
-      setLoader(false);
-      history.push(
-        `/digit-ui/citizen/submissions/submissions-document?filingNumber=${filingNumber}&artifactNumber=${evidence?.artifact?.artifactNumber}`
-      );
     } catch (error) {
       console.log("Error occured", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
-      setLoader(false);
     }
   };
 
   const handleOpenReview = async () => {
     try {
-      setLoader(true);
-      const combinedDocumentFile = await combineMultipleFiles(
-        formdata?.submissionDocuments?.uploadedDocs,
-        `${t("COMBINED_DOC")}.pdf`,
-        "submissionDocuments"
-      );
-      setCombinedDocumentFile(combinedDocumentFile);
+      if (![SubmissionDocumentWorflowState.PENDING_ESIGN, SubmissionDocumentWorflowState.SUBMITTED].includes(currentSubmissionStatus)) {
+        const combinedDocumentFile = await combineMultipleFiles(
+          formdata?.submissionDocuments?.uploadedDocs,
+          `${t("COMBINED_DOC")}.pdf`,
+          "submissionDocuments"
+        );
+        setCombinedDocumentFile(combinedDocumentFile);
+      }
       setShowReviewModal(true);
-      setLoader(false);
     } catch (error) {
       console.log("Error occured", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
-      setLoader(false);
     }
   };
 
   const handleGoBack = async () => {
-    if (currentSubmissionStatus === SubmissionDocumentWorflowState.PENDING_ESIGN) {
-      history.replace(`/digit-ui/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`);
+    if ([SubmissionDocumentWorflowState.PENDING_ESIGN, SubmissionDocumentWorflowState.SUBMITTED].includes(currentSubmissionStatus)) {
+      history.replace(`/digit-ui/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Filings`);
     } else {
       setShowReviewModal(false);
     }
   };
+
+  if (!artifactNumber && evidenceDetails) {
+    handleGoBack();
+  }
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     if (formData?.submissionDocuments?.uploadedDocs?.length > 0 && Object.keys(formState?.errors).includes("uploadedDocs")) {
@@ -236,7 +275,7 @@ const SubmissionDocuments = ({ path }) => {
     }
   }, []);
 
-  if (loader) {
+  if (loader || isFilingTypeLoading || isEvidenceLoading) {
     return <Loader />;
   }
   return (
@@ -287,7 +326,7 @@ const SubmissionDocuments = ({ path }) => {
             setShowReviewModal={setShowReviewModal}
           />
         )}
-        {showSubmissionSuccessModal && <SubmissionDocumentSuccessModal t={t} />}
+        {showSubmissionSuccessModal && <SubmissionDocumentSuccessModal t={t} handleClose={handleNextSubmission} />}
       </div>
       {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
     </React.Fragment>

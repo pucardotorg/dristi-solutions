@@ -2328,6 +2328,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                     "CASE_VIEWER",
                     "EVIDENCE_CREATOR",
                     "EVIDENCE_VIEWER",
+                    "EVIDENCE_EDITOR",
                     "APPLICATION_CREATOR",
                     "APPLICATION_VIEWER",
                     "HEARING_VIEWER",

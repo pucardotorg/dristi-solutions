@@ -41,7 +41,7 @@ function SubmissionDocumentSuccessModal({
     <Modal
       actionCancelLabel={t("DOWNLOAD_DOCUMENT_SUBMISSION")}
       actionCancelOnSubmit={handleDownloadOrders}
-      actionSaveLabel={"DOCUMENT_SUBMISSION_NEXT"}
+      actionSaveLabel={t("DOCUMENT_SUBMISSION_NEXT")}
       actionSaveOnSubmit={handleClose}
       className={"orders-success-modal"}
       popupStyles={{ width: "50%" }}
