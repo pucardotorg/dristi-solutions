@@ -1065,10 +1065,13 @@ export const UICustomizations = {
       const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
       // row.status === "Submitted" &&
       return [
-        ...(userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE") || userInfo.roles.map((role) => role.code).includes("COURT_ROOM_MANAGER")
+        ...((userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE") ||
+          userInfo.roles.map((role) => role.code).includes("COURT_ROOM_MANAGER")) &&
+        row.status === "SUBMITTED" &&
+        !Boolean(row?.isVoid)
           ? [
               {
-                label: "Mark as Void",
+                label: "MARK_AS_VOID",
                 id: "mark_as_void",
                 hide: false,
                 disabled: false,
@@ -1076,10 +1079,10 @@ export const UICustomizations = {
               },
             ]
           : []),
-        ...(userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE")
+        ...(userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE") && !row.isEvidence
           ? [
               {
-                label: "Mark as Evidence",
+                label: "MARK_AS_EVIDENCE",
                 id: "mark_as_evidence",
                 hide: false,
                 disabled: false,
@@ -1087,15 +1090,31 @@ export const UICustomizations = {
               },
             ]
           : []),
+        ...(userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE") && row.isEvidence
+          ? [
+              {
+                label: "UNMARK_AS_EVIDENCE",
+                id: "unmark_as_evidence",
+                hide: false,
+                disabled: false,
+                action: column.clickFunc,
+              },
+            ]
+          : []),
+        ...(row?.isVoid
+          ? [
+              {
+                label: "VIEW_REASON_FOR_VOIDING",
+                id: "view_reason_for_voiding",
+                hide: false,
+                disabled: false,
+                action: column.clickFunc,
+              },
+            ]
+          : []),
+
         {
-          label: "View Reason for Voiding",
-          id: "view_reason_for_voiding",
-          hide: false,
-          disabled: false,
-          action: column.clickFunc,
-        },
-        {
-          label: "Download Filing",
+          label: "DOWNLOAD_FILING",
           id: "download_filing",
           hide: false,
           disabled: false,

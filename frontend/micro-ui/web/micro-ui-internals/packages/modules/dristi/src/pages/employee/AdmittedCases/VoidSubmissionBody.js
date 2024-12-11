@@ -13,9 +13,8 @@ const pStyle = {
   margin: "0px",
 };
 
-const VoidSubmissionBody = ({ t, documentSubmission }) => {
+const VoidSubmissionBody = ({ t, documentSubmission, setVoidReason, voidReason, disabled }) => {
   const [errors, setErrors] = useState({});
-  const [voidReason, setVoidReason] = useState("second");
   return (
     <div className="void-submission-main" style={voidMainStyle}>
       {"view_reason_for_voiding" !== documentSubmission?.[0]?.itemType && (
@@ -36,7 +35,7 @@ const VoidSubmissionBody = ({ t, documentSubmission }) => {
             rows={5}
             className="custom-textarea-style"
             placeholder={t("Type here...")}
-            disabled={"view_reason_for_voiding" === documentSubmission?.[0]?.itemType}
+            disabled={disabled}
           ></textarea>
           {errors?.voidReason && <CardLabelError> {t(errors?.voidReason?.message)} </CardLabelError>}
           {}
