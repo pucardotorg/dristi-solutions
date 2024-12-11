@@ -928,6 +928,7 @@ export const createIndividualUser = async ({ data, documentData, tenantId }) => 
             "CASE_VIEWER",
             "EVIDENCE_CREATOR",
             "EVIDENCE_VIEWER",
+            "EVIDENCE_EDITOR",
             "APPLICATION_CREATOR",
             "APPLICATION_VIEWER",
             "HEARING_VIEWER",
