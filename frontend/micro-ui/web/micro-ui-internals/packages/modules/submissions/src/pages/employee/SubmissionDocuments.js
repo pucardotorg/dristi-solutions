@@ -163,6 +163,7 @@ const SubmissionDocuments = ({ path }) => {
   }, [showErrorToast]);
 
   const handleNextSubmission = () => {
+    localStorage.removeItem("fileStoreId");
     history.replace(`/digit-ui/citizen/submissions/submissions-document?filingNumber=${filingNumber}`);
   };
 
@@ -262,8 +263,6 @@ const SubmissionDocuments = ({ path }) => {
               fileStore: signedDocumentUploadedID || localStorageID,
             }
             : null;
-
-        localStorage.removeItem("fileStoreId");
 
         evidenceReqBody = {
           artifact: {
