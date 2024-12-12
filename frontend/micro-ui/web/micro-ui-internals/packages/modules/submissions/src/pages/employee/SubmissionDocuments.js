@@ -252,7 +252,7 @@ const SubmissionDocuments = ({ path }) => {
           });
         }
         history.replace(
-          `/digit-ui/citizen/submissions/submissions-document?filingNumber=${filingNumber}&artifactNumber=${evidence?.artifact?.artifactNumber}`
+          `/digit-ui/citizen/submissions/submit-document?filingNumber=${filingNumber}&artifactNumber=${evidence?.artifact?.artifactNumber}`
         );
       } else {
         const localStorageID = localStorage.getItem("fileStoreId");
