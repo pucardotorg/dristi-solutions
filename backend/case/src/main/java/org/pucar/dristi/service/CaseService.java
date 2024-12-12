@@ -180,7 +180,7 @@ public class CaseService {
             enrichmentUtil.enrichCaseApplicationUponUpdate(caseRequest, existingApplications.get(0).getResponseList());
 
             String previousStatus = caseRequest.getCases().getStatus();
-           // workflowService.updateWorkflowStatus(caseRequest);
+            workflowService.updateWorkflowStatus(caseRequest);
 
             if (CASE_ADMIT_STATUS.equals(caseRequest.getCases().getStatus())) {
                 enrichmentUtil.enrichAccessCode(caseRequest);
