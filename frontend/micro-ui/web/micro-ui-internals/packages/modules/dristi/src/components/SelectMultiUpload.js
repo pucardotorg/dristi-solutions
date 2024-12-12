@@ -23,6 +23,7 @@ const CloseBtn = (props) => {
 
 const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setError, clearErrors }) => {
   const [showErrorToast, setShowErrorToast] = useState(null);
+  const tenantId = Digit.ULBService.getCurrentTenantId();
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -145,7 +146,7 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
           <div className="file-uploader" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <TextInput
               disable={true}
-              value={currentValue?.length > 0 ? `${currentValue?.length} Documents(s) Selected` : "No Document(s) Selected"}
+              value={currentValue?.length > 0 ? `${currentValue?.length} Documents(s) Uploaded` : "No Document(s) Uploaded"}
               style={{
                 border: "1px solid black",
                 fontSize: "14px",
@@ -153,14 +154,16 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
                 margin: "0px",
               }}
             />
-            <FileUploader
-              disabled={config?.disable}
-              handleChange={(data) => handleAddFiles(data, input, currentValue)}
-              name="file"
-              types={input?.fileTypes}
-              children={dragDropJSX}
-              key={input?.name}
-            />
+            {!config?.disable && (
+              <FileUploader
+                disabled={config?.disable}
+                handleChange={(data) => handleAddFiles(data, input, currentValue)}
+                name="file"
+                types={input?.fileTypes}
+                children={dragDropJSX}
+                key={input?.name}
+              />
+            )}
           </div>
           <div className="upload-guidelines-div">
             {" "}
@@ -176,40 +179,44 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
             }}
           >
             {currentValue?.map((file, index) => (
-              <div key={file.name + index} style={{ position: "relative", display: "inline-block" }}>
+              <div key={(file?.additionalDetails?.name || file?.name) + index} style={{ position: "relative", display: "inline-block" }}>
                 <DocViewerWrapper
+                  fileStoreId={file?.fileStore}
                   selectedDocs={[file]}
                   showDownloadOption={false}
                   docViewerCardClassName="doc-viewer-card-style"
                   style={{ flexShrink: 0 }}
+                  tenantId={tenantId}
                 />
-                <p style={{ marginTop: "10px", fontSize: "14px", color: "#888" }}>{file.name}</p>
+                <p style={{ marginTop: "10px", fontSize: "14px", color: "#888" }}>{file?.additionalDetails?.name || file?.name}</p>
 
-                <Button
-                  key={file.name + index}
-                  onButtonClick={() => {
-                    handleRemoveFile(file, index, currentValue, input);
-                  }}
-                  children={<CloseBtn />}
-                  label=""
-                  style={{
-                    position: "absolute",
-                    top: "5px",
-                    right: "5px",
-                    background: "none",
-                    color: "#FF0000",
-                    fontSize: "16px",
-                    width: "20px",
-                    height: "20px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    cursor: "pointer",
-                    padding: "0",
-                    border: "none",
-                    boxShadow: "none",
-                  }}
-                />
+                {!config?.disable && (
+                  <Button
+                    key={(file?.additionalDetails?.name || file?.name) + index}
+                    onButtonClick={() => {
+                      handleRemoveFile(file, index, currentValue, input);
+                    }}
+                    children={<CloseBtn />}
+                    label=""
+                    style={{
+                      position: "absolute",
+                      top: "5px",
+                      right: "5px",
+                      background: "none",
+                      color: "#FF0000",
+                      fontSize: "16px",
+                      width: "20px",
+                      height: "20px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: "pointer",
+                      padding: "0",
+                      border: "none",
+                      boxShadow: "none",
+                    }}
+                  />
+                )}
               </div>
             ))}
           </div>

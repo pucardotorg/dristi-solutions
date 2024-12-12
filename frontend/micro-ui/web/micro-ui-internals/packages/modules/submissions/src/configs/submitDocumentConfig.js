@@ -17,7 +17,6 @@ const submissionDocumentConfig = [
             moduleName: "Submission",
             masterName: "SubmissionDocumentType",
             select: "(data) => {return data['Submission'].SubmissionDocumentType?.map((item) => {return item;});}",
-
           },
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
         },

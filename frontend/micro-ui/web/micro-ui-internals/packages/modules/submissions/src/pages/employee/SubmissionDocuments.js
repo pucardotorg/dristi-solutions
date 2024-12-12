@@ -110,6 +110,21 @@ const SubmissionDocuments = ({ path }) => {
   );
 
   const evidenceDetails = useMemo(() => evidenceData?.artifacts?.[0], [evidenceData]);
+  const defaultFormValue = useMemo(() => {
+    const formData = evidenceDetails?.additionalDetails?.formdata || {};
+    const updatedFormData = {
+      ...formData,
+      submissionDocuments: {
+        ...formData.submissionDocuments,
+        uploadedDocs: evidenceDetails?.file ? [evidenceDetails?.file] : [],
+      },
+    };
+
+    return updatedFormData;
+  }, [evidenceDetails]);
+
+  const formKey = useMemo(() => (evidenceDetails ? "default-values" : ""), [evidenceDetails]);
+
   useEffect(() => {
     if (evidenceDetails) {
       if (evidenceDetails?.status === SubmissionDocumentWorflowState.PENDING_ESIGN) {
@@ -186,9 +201,9 @@ const SubmissionDocuments = ({ path }) => {
         const documentsFile =
           signedDocumentUploadedID !== "" || localStorageID
             ? {
-                documentType: "SIGNED",
-                fileStore: signedDocumentUploadedID || localStorageID,
-              }
+              documentType: "SIGNED",
+              fileStore: signedDocumentUploadedID || localStorageID,
+            }
             : null;
 
         localStorage.removeItem("fileStoreId");
@@ -275,6 +290,24 @@ const SubmissionDocuments = ({ path }) => {
     }
   }, []);
 
+  const modifiedFormConfig = useMemo(() => {
+    if (!artifactNumber) {
+      return submissionDocumentDetailsConfig.formConfig;
+    } else {
+      const formConfig = JSON.parse(JSON.stringify(submissionDocumentDetailsConfig.formConfig));
+
+      formConfig.forEach((config) => {
+        if (config.body && Array.isArray(config.body)) {
+          config.body.forEach((item) => {
+            item.disable = true;
+          });
+        }
+      });
+
+      return formConfig;
+    }
+  }, [artifactNumber]);
+
   if (loader || isFilingTypeLoading || isEvidenceLoading) {
     return <Loader />;
   }
@@ -304,12 +337,12 @@ const SubmissionDocuments = ({ path }) => {
         <div style={{ minHeight: "550px", overflowY: "auto", marginTop: "15px" }}>
           <FormComposerV2
             label={t("REVIEW_SUBMISSION_DOCS")}
-            config={submissionDocumentDetailsConfig.formConfig}
-            // defaultValues={defaultFormValue}
+            config={modifiedFormConfig}
+            defaultValues={defaultFormValue}
             onFormValueChange={onFormValueChange}
             onSubmit={handleOpenReview}
             fieldStyle={fieldStyle}
-            // key={formKey}
+            key={formKey}
             className={"formComposer"}
             isDisabled={isSubmitDisabled}
           />
