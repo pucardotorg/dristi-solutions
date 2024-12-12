@@ -19,12 +19,11 @@ const VoidSubmissionBody = ({ t, documentSubmission, setVoidReason, voidReason, 
     <div className="void-submission-main" style={voidMainStyle}>
       {"view_reason_for_voiding" !== documentSubmission?.[0]?.itemType && (
         <p className="void-submission-message" style={pStyle}>
-          This action cannot be reversed. If the document has been marked as evidence, it will automatically be unmarked. Please review the filing
-          carefully.
+          {t("MARK_VOID_SUBMISSION_MESSAGE")}
         </p>
       )}
       <LabelFieldPair className="case-label-field-pair">
-        <CardLabel className="case-input-label">{`${"Reason for not consideration:"}`}</CardLabel>
+        <CardLabel className="case-input-label">{`${t("REASON_FOR_NOT_CONSIDERATION")}`}</CardLabel>
         <div style={{ width: "100%", maxWidth: "960px" }}>
           <textarea
             value={voidReason}
@@ -34,7 +33,7 @@ const VoidSubmissionBody = ({ t, documentSubmission, setVoidReason, voidReason, 
             }}
             rows={5}
             className="custom-textarea-style"
-            placeholder={t("Type here...")}
+            placeholder={t("TYPE_HERE_PLACEHOLDER")}
             disabled={disabled}
           ></textarea>
           {errors?.voidReason && <CardLabelError> {t(errors?.voidReason?.message)} </CardLabelError>}

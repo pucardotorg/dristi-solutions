@@ -1225,6 +1225,7 @@ export const updateCaseDetails = async ({
   multiUploadList,
   scrutinyObj,
   caseComplaintDocument,
+  filingType,
 }) => {
   const data = {};
   setIsDisabled(true);
@@ -2056,6 +2057,7 @@ export const updateCaseDetails = async ({
                             name: docWithNameData?.docName,
                           },
                         },
+                        filingType: filingType,
                         workflow: {
                           action: "TYPE DEPOSITION",
                           documents: [

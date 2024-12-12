@@ -1,18 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Modal from "../../../dristi/src/components/Modal";
-import Axios from "axios";
 import { CloseSvg } from "@egovernments/digit-ui-components";
 import { Toast } from "@egovernments/digit-ui-react-components";
-
-import { Urls } from "../hooks/services/Urls";
-import { useQuery } from "react-query";
-import { convertToDateInputFormat } from "../utils/index";
 import SubmissionDocumentEsign from "./SubmissionDocumentEsign";
-import { combineMultipleFiles } from "@egovernments/digit-ui-module-dristi/src/Utils";
-import downloadPdfFromFile from "@egovernments/digit-ui-module-dristi/src/Utils/downloadPdfFromFile";
 import Button from "@egovernments/digit-ui-module-dristi/src/components/Button";
-import { FileDownloadIcon, FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
-import { SubmissionDocumentWorflowState } from "../utils/submissionDocumentsWorkflow";
+import { FileDownloadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
+import { SubmissionDocumentWorkflowState } from "../utils/submissionDocumentsWorkflow";
 
 const downloadSvgStyle = {
   margin: "0px 12px 0px 0px",
@@ -35,7 +28,7 @@ const CloseBtn = (props) => {
         icon={<FileDownloadIcon svgStyle={downloadSvgStyle} pathStyle={downloadPathStyle} />}
         label={""}
         onButtonClick={() => {
-          props.handleDownload(props.document);
+          props.handleDownload();
         }}
         style={{ boxShadow: "none", background: "none", border: "none", padding: "20px 10px", maxWidth: "fit-content" }}
         textStyles={{
@@ -63,7 +56,6 @@ const CloseBtn = (props) => {
 };
 
 function ReviewDocumentSubmissionModal({
-  setShowReviewModal,
   t,
   combinedFileStoreId,
   handleGoToSign,
@@ -71,11 +63,14 @@ function ReviewDocumentSubmissionModal({
   setSignedDocumentUploadID,
   currentSubmissionStatus,
   combinedDocumentFile,
+  handleDownloadReviewModal,
 }) {
   const DocViewerWrapper = window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const [showErrorToast, setShowErrorToast] = useState(null);
   const [isSignedHeading, setIsSignedHeading] = useState(false);
+  const [signedId, setSignedId] = useState(null);
   const tenantId = Digit.ULBService.getCurrentTenantId();
+  const signedDisplayFileStoreId = useMemo(() => signedId || localStorage.getItem("fileStoreId"), [signedId]);
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -90,50 +85,47 @@ function ReviewDocumentSubmissionModal({
   }, [showErrorToast]);
 
   const showDocument = useMemo(() => {
-    console.log("documents", combinedDocumentFile);
     return (
       <React.Fragment>
-        {combinedDocumentFile || combinedFileStoreId ? (
+        {combinedDocumentFile || combinedFileStoreId || signedId ? (
           <DocViewerWrapper
             docWidth={"100%"}
             docHeight={"fit-content"}
             tenantId={tenantId}
             showDownloadOption={false}
             docViewerStyle={{ maxWidth: "100%", width: "100%" }}
-            {...(currentSubmissionStatus === SubmissionDocumentWorflowState.PENDING_ESIGN
-              ? { fileStoreId: combinedFileStoreId }
-              : { selectedDocs: [combinedDocumentFile] })}
+            fileStoreId={
+              currentSubmissionStatus === SubmissionDocumentWorkflowState.PENDING_ESIGN && (signedDisplayFileStoreId || combinedFileStoreId)
+            }
+            selectedDocs={[combinedDocumentFile]}
           />
         ) : (
           <h2>{t("PREVIEW_DOC_NOT_AVAILABLE")}</h2>
         )}
       </React.Fragment>
     );
-  }, [combinedDocumentFile, combinedFileStoreId, currentSubmissionStatus, t, tenantId]);
+  }, [combinedDocumentFile, combinedFileStoreId, currentSubmissionStatus, signedDisplayFileStoreId, signedId, t, tenantId]);
 
-  const handleDownloadBeforeEsign = async (documents) => {
-    for (const document of documents || []) {
-      await downloadPdfFromFile(document);
-    }
-  };
   return (
     <Modal
       headerBarMain={<Heading label={!isSignedHeading ? t("REVIEW_SUBMISSION_DOCUMENT_HEADING") : t("VIEW_SIGNED_SUBMISSION")} />}
-      headerBarEnd={<CloseBtn onClick={handleGoBack} t={t} handleDownload={handleDownloadBeforeEsign} document={combinedDocumentFile} />}
-      actionCancelLabel={currentSubmissionStatus !== SubmissionDocumentWorflowState.PENDING_ESIGN && t("SUBMISSION_DOCUMENT_BACK")}
+      headerBarEnd={<CloseBtn t={t} onClick={handleGoBack} handleDownload={handleDownloadReviewModal} />}
+      actionCancelLabel={currentSubmissionStatus !== SubmissionDocumentWorkflowState.PENDING_ESIGN && t("SUBMISSION_DOCUMENT_BACK")}
       actionCancelOnSubmit={handleGoBack}
       actionSaveLabel={
         !isSignedHeading
-          ? currentSubmissionStatus !== SubmissionDocumentWorflowState.PENDING_ESIGN
+          ? currentSubmissionStatus !== SubmissionDocumentWorkflowState.PENDING_ESIGN
             ? t("SUBMISSION_DOCUMENT_SIGN")
             : t("SUBMISSION_DOCUMENT_NEXT")
           : t("SUBMISSION_DOCUMENT_FINISH")
       }
-      isDisabled={false}
+      isDisabled={currentSubmissionStatus === SubmissionDocumentWorkflowState.PENDING_ESIGN && !isSignedHeading}
       actionSaveOnSubmit={() => {
         handleGoToSign();
       }}
       className={"review-submission-appl-modal"}
+      textStyle={{ color: "#FFFFFF", margin: 0 }}
+      style={{ backgroundColor: "#007E7E" }}
     >
       <div className="review-submission-appl-body-main" style={{ display: "flex", justifyContent: "space-between", flexDirection: "column" }}>
         <div className="application-details" style={{ alignItems: "center" }}>
@@ -141,11 +133,12 @@ function ReviewDocumentSubmissionModal({
             {showDocument}
           </div>
         </div>
-        {currentSubmissionStatus === SubmissionDocumentWorflowState.PENDING_ESIGN && (
+        {currentSubmissionStatus === SubmissionDocumentWorkflowState.PENDING_ESIGN && (
           <SubmissionDocumentEsign
             t={t}
             setSignedDocumentUploadID={setSignedDocumentUploadID}
-            combinedFileStoreId={"bfda48db-5b17-471d-bd0f-c1cc3a929db2"}
+            combinedFileStoreId={combinedFileStoreId}
+            setSignedId={setSignedId}
             setIsSignedHeading={setIsSignedHeading}
           />
         )}

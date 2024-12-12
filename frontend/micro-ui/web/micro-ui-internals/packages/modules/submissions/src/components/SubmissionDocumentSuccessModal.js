@@ -4,15 +4,7 @@ import CustomCopyTextDiv from "../../../dristi/src/components/CustomCopyTextDiv"
 import { FileDownloadIcon } from "../../../dristi/src/icons/svgIndex";
 import { Banner, CardLabel } from "@egovernments/digit-ui-react-components";
 
-function SubmissionDocumentSuccessModal({
-  documentSubmissionNumber,
-  documentSubmissionDate,
-  t,
-  handleDownloadOrders,
-  handleClose,
-  actionSaveLabel,
-  handleCloseSuccessModal,
-}) {
+function SubmissionDocumentSuccessModal({ documentSubmissionNumber, t, handleSuccessDownloadSubmission, handleClose }) {
   const getFormattedDate = () => {
     const currentDate = new Date();
     const year = String(currentDate.getFullYear()).slice(-2);
@@ -40,7 +32,7 @@ function SubmissionDocumentSuccessModal({
   return (
     <Modal
       actionCancelLabel={t("DOWNLOAD_DOCUMENT_SUBMISSION")}
-      actionCancelOnSubmit={handleDownloadOrders}
+      actionCancelOnSubmit={handleSuccessDownloadSubmission}
       actionSaveLabel={t("DOCUMENT_SUBMISSION_NEXT")}
       actionSaveOnSubmit={handleClose}
       className={"orders-success-modal"}

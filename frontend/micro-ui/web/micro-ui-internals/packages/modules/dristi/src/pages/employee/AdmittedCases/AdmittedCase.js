@@ -421,15 +421,12 @@ const AdmittedCases = () => {
       const applicationNumber = docObj?.[0]?.applicationList?.applicationNumber;
       const status = docObj?.[0]?.applicationList?.status;
       const createdByUuid = docObj?.[0]?.applicationList?.statuteSection?.auditdetails?.createdBy;
-      const documentCreatedByUuid = docObj?.[0]?.artifactList.auditdetails.createdBy
-      const artifactNumber = docObj?.[0]?.artifactList?.artifactNumber
-      const documentStatus = docObj?.[0]?.artifactList?.status
-      console.debug(docObj)
+      const documentCreatedByUuid = docObj?.[0]?.artifactList.auditdetails.createdBy;
+      const artifactNumber = docObj?.[0]?.artifactList?.artifactNumber;
+      const documentStatus = docObj?.[0]?.artifactList?.status;
       if (isCitizen) {
-        if(documentStatus==="PENDING_E-SIGN" &&documentCreatedByUuid === userInfo?.uuid ){
-          history.push(
-            `/digit-ui/citizen/submissions/submissions-document?filingNumber=${filingNumber}&artifactNumber=${artifactNumber}`
-          );
+        if (documentStatus === "PENDING_E-SIGN" && documentCreatedByUuid === userInfo?.uuid) {
+          history.push(`/digit-ui/citizen/submissions/submissions-document?filingNumber=${filingNumber}&artifactNumber=${artifactNumber}`);
         }
         if (
           [SubmissionWorkflowState.PENDINGPAYMENT, SubmissionWorkflowState.PENDINGESIGN, SubmissionWorkflowState.PENDINGSUBMISSION].includes(status)
@@ -845,18 +842,18 @@ const AdmittedCases = () => {
     return {
       handleClose: handleClose,
       heading: {
-        label: "view_reason_for_voiding" === documentSubmission?.[0]?.itemType ? "Reason for Voiding" : `Are you sure you wish to Mark as Void`,
+        label: "view_reason_for_voiding" === documentSubmission?.[0]?.itemType ? t("REASON_FOR_VOIDING") : t("ARE_YOU_SURE_TO_MARK_AS_VOID"),
       },
       isStepperModal: false,
       actionSaveLabel:
         userType === "citizen"
           ? undefined
           : "view_reason_for_voiding" === documentSubmission?.[0]?.itemType
-          ? `Unmark as Void`
+          ? t("UNMARK_AS_VOID")
           : "unmark_void_submission" === documentSubmission?.[0]?.itemType
-          ? "Confirm"
-          : `Mark as Void`,
-      actionCancelLabel: t("Cancel"),
+          ? t("MARK_VOID_CONFIRM")
+          : t("MARK_AS_VOID"),
+      actionCancelLabel: t("MARK_VOID_CANCEL"),
       actionCancelOnSubmit: handleClose,
       actionSaveOnSubmit: () => {
         if (documentSubmission[0].itemType === "view_reason_for_voiding") {

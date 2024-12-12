@@ -5,16 +5,7 @@ import { FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/s
 import { Urls } from "../hooks/services/Urls";
 import Button from "@egovernments/digit-ui-module-dristi/src/components/Button";
 
-function SubmissionDocumentEsign({
-  t,
-  order,
-  handleIssueOrder,
-  handleGoBackSignatureModal,
-  saveOnsubmitLabel,
-  setIsSignedHeading,
-  setSignedDocumentUploadID,
-  combinedFileStoreId,
-}) {
+function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSignedDocumentUploadID, combinedFileStoreId }) {
   const [isSigned, setIsSigned] = useState(false);
   const { handleEsign, checkSignStatus } = useESign();
   const [formData, setFormData] = useState({}); // storing the file upload data
@@ -53,6 +44,8 @@ function SubmissionDocumentEsign({
       setFormData({});
       setIsSigned(false);
       setIsSignedHeading(false);
+      setSignedDocumentUploadID(null);
+      setSignedId(null);
     } else {
       setFormData((prevData) => ({
         ...prevData,
@@ -61,12 +54,20 @@ function SubmissionDocumentEsign({
     }
   };
 
+  const cleanString = (input) => {
+    return input
+      .replace(/\b(null|undefined)\b/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  };
+
   // check the data from upload
   useEffect(() => {
     const upload = async () => {
       if (formData?.uploadSignature?.Signature?.length > 0) {
         const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
         setSignedDocumentUploadID(uploadedFileId?.[0]?.fileStoreId);
+        setSignedId(uploadedFileId?.[0]?.fileStoreId);
         setIsSigned(true);
         setIsSignedHeading(true);
       }
@@ -80,7 +81,7 @@ function SubmissionDocumentEsign({
   }, [checkSignStatus]);
 
   return !openUploadSignatureModal ? (
-    <div style={{ padding: "30px 30px 5px 30px", width: "50%" }}>
+    <div style={{ padding: "30px 30px 5px 30px", width: "80%" }}>
       {!isSigned ? (
         <div>
           <h1 style={{ fontFamily: "Roboto", fontSize: "24px", fontWeight: 700, lineHeight: "28.13px", textAlign: "left" }}>
@@ -169,7 +170,7 @@ function SubmissionDocumentEsign({
               paddingBottom: "10px",
             }}
           >
-            {userInfo?.name}
+            {cleanString(userInfo?.name)}
           </div>
           {isAdvocate && <div>{t("ADVOCATE_KERALA_HIGH_COURT")}</div>}
         </div>
