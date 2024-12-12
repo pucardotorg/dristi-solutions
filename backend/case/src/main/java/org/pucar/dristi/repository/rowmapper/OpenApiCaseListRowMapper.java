@@ -44,7 +44,7 @@ public class OpenApiCaseListRowMapper implements ResultSetExtractor<List<CaseLis
         return new ArrayList<>(openApiCaseSummaryMap.values());
     }
 
-    private String getCaseNumber(ResultSet rs) throws SQLException {
+    public String getCaseNumber(ResultSet rs) throws SQLException {
 
         String caseType = rs.getString("casetype");
         return switch (caseType) {

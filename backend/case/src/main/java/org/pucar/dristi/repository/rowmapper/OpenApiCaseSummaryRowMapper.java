@@ -104,7 +104,7 @@ public class OpenApiCaseSummaryRowMapper implements ResultSetExtractor<List<Open
         return new ArrayList<>(openApiCaseSummaryMap.values());
     }
 
-    private OpenApiCaseSummary.CaseTypeEnum getCaseType(ResultSet rs) {
+    public OpenApiCaseSummary.CaseTypeEnum getCaseType(ResultSet rs) {
         try {
 
             return OpenApiCaseSummary.CaseTypeEnum.valueOf(rs.getString("casetype"));
@@ -114,7 +114,7 @@ public class OpenApiCaseSummaryRowMapper implements ResultSetExtractor<List<Open
         }
     }
 
-    private OpenApiCaseSummary.StatusEnum getStatus(ResultSet rs) {
+    public OpenApiCaseSummary.StatusEnum getStatus(ResultSet rs) {
         try {
             if (Objects.equals(rs.getString("casetype"), "CMP")) {
                 if (rs.getString("courtcasenumber") == null) {
@@ -155,7 +155,7 @@ public class OpenApiCaseSummaryRowMapper implements ResultSetExtractor<List<Open
         return list;
     }
 
-    private String getNameForLitigant(@NotNull ResultSet rs) {
+    public String getNameForLitigant(@NotNull ResultSet rs) {
         String additionalDetails;
         String fullName = null;
         try {
