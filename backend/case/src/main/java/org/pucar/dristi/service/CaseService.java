@@ -21,6 +21,7 @@ import org.pucar.dristi.util.AdvocateUtil;
 import org.pucar.dristi.util.BillingUtil;
 import org.pucar.dristi.util.EncryptionDecryptionUtil;
 import org.pucar.dristi.validators.CaseRegistrationValidator;
+import org.pucar.dristi.web.OpenApiCaseSummary;
 import org.pucar.dristi.web.models.*;
 import org.pucar.dristi.web.models.analytics.CaseOutcome;
 import org.pucar.dristi.web.models.analytics.CaseOverallStatus;
@@ -837,5 +838,23 @@ public class CaseService {
                 .cases(courtCase)
                 .build();
         producer.push(config.getJoinCaseTopicIndexer(), caseRequest);
+    }
+
+    public OpenApiCaseSummary searchByCnrNumber(@Valid OpenApiCaseSummaryRequest request) {
+
+        OpenApiCaseSummary openApiCaseSummary = caseRepository.getCaseSummaryByCnrNumber(request);
+        return openApiCaseSummary;
+    }
+
+    public List<CaseListLineItem> searchByCaseType(@Valid OpenApiCaseSummaryRequest request) {
+
+        return caseRepository.getCaseSummaryListByCaseType(request);
+    }
+
+    public OpenApiCaseSummary searchByCaseNumber(@Valid OpenApiCaseSummaryRequest request) {
+
+        OpenApiCaseSummary openApiCaseSummary = caseRepository.getCaseSummaryByCaseNumber(request);
+        return openApiCaseSummary;
+
     }
 }
