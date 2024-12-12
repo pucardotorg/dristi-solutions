@@ -243,7 +243,6 @@ const SubmissionDocuments = ({ path }) => {
             },
           };
           evidence = await DRISTIService.createEvidence(evidenceReqBody);
-          debugger;
           await createPendingTask({
             name: t("PENDINGESIGN_SUBMIT_DOCUMENT"),
             status: "PENDINGESIGN_SUBMIT_DOCUMENT",
@@ -259,9 +258,9 @@ const SubmissionDocuments = ({ path }) => {
         const documentsFile =
           signedDocumentUploadedID !== "" || localStorageID
             ? {
-                documentType: "SIGNED",
-                fileStore: signedDocumentUploadedID || localStorageID,
-              }
+              documentType: "SIGNED",
+              fileStore: signedDocumentUploadedID || localStorageID,
+            }
             : null;
 
         localStorage.removeItem("fileStoreId");
@@ -287,7 +286,7 @@ const SubmissionDocuments = ({ path }) => {
         setShowSubmissionSuccessModal(true);
       }
     } catch (error) {
-      console.log("Error occured", error);
+      console.error("Error occured", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
     }
   };
@@ -304,7 +303,7 @@ const SubmissionDocuments = ({ path }) => {
       }
       setShowReviewModal(true);
     } catch (error) {
-      console.log("Error occured", error);
+      console.error("Error occured", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
     }
   };

@@ -64,7 +64,7 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
         color: "#007E7E",
         height: "40px",
         gap: "4px",
-        widht: "100%",
+        width: "100%",
       }}
     >
       <UploadIcon

@@ -221,7 +221,7 @@ const AdmittedCases = () => {
   const {
     isLoading: isWorkFlowLoading,
     data: workFlowDetails,
-    revalidate: revalidateWorkflow = () => {},
+    revalidate: revalidateWorkflow = () => { },
     isFetching: isWorkFlowFetching,
   } = useWorkflowDetails({
     tenantId,
@@ -257,9 +257,9 @@ const AdmittedCases = () => {
 
     return section && subsection
       ? `${section
-          ?.split(" ")
-          ?.map((splitString) => splitString.charAt(0))
-          ?.join("")} S${subsection}`
+        ?.split(" ")
+        ?.map((splitString) => splitString.charAt(0))
+        ?.join("")} S${subsection}`
       : "";
   }, [caseDetails?.statutesAndSections]);
 
@@ -405,17 +405,17 @@ const AdmittedCases = () => {
       showToast(true);
       setToastDetails({
         isError: false,
-        message: isEvidence ? "SUCCESSFULLY_UNMARKED_MESSAGE" : "SUCCESSFULLY_MARKED_MESSAGE",
+        message: isEvidence ? t("SUCCESSFULLY_UNMARKED_MESSAGE") : t("SUCCESSFULLY_MARKED_MESSAGE"),
       });
     } catch (error) {
       showToast(true);
       setToastDetails({
         isError: true,
-        message: isEvidence ? "UNSUCCESSFULLY_UNMARKED_MESSAGE" : "UNSUCCESSFULLY_MARKED_MESSAGE",
+        message: isEvidence ? t("UNSUCCESSFULLY_UNMARKED_MESSAGE") : t("UNSUCCESSFULLY_MARKED_MESSAGE"),
       });
     }
   };
-  console.debug(documentSubmission);
+
   const configList = useMemo(() => {
     const docSetFunc = (docObj) => {
       const applicationNumber = docObj?.[0]?.applicationList?.applicationNumber;
@@ -433,8 +433,7 @@ const AdmittedCases = () => {
         ) {
           if (createdByUuid === userInfo?.uuid) {
             history.push(
-              `/digit-ui/${
-                isCitizen ? "citizen" : "employee"
+              `/digit-ui/${isCitizen ? "citizen" : "employee"
               }/submissions/submissions-create?filingNumber=${filingNumber}&applicationNumber=${applicationNumber}`
             );
           }
@@ -509,21 +508,21 @@ const AdmittedCases = () => {
     return TabSearchconfig?.TabSearchconfig.map((tabConfig) => {
       return tabConfig.label === "Parties"
         ? {
-            ...tabConfig,
-            apiDetails: {
-              ...tabConfig.apiDetails,
-              requestBody: {
-                ...tabConfig.apiDetails.requestBody,
-                criteria: [
-                  {
-                    filingNumber: filingNumber,
-                  },
-                ],
-              },
+          ...tabConfig,
+          apiDetails: {
+            ...tabConfig.apiDetails,
+            requestBody: {
+              ...tabConfig.apiDetails.requestBody,
+              criteria: [
+                {
+                  filingNumber: filingNumber,
+                },
+              ],
             },
-          }
+          },
+        }
         : tabConfig.label === "Orders"
-        ? {
+          ? {
             ...tabConfig,
             apiDetails: {
               ...tabConfig.apiDetails,
@@ -566,220 +565,220 @@ const AdmittedCases = () => {
                   columns: tabConfig.sections.searchResult.uiConfig.columns.map((column) => {
                     return column.label === "ORDER_TYPE"
                       ? {
-                          ...column,
-                          clickFunc: orderSetFunc,
-                        }
+                        ...column,
+                        clickFunc: orderSetFunc,
+                      }
                       : column;
                   }),
                 },
               },
             },
           }
-        : tabConfig.label === "Hearings"
-        ? {
-            ...tabConfig,
-            apiDetails: {
-              ...tabConfig.apiDetails,
-              requestBody: {
-                ...tabConfig.apiDetails.requestBody,
-                criteria: {
-                  filingNumber: filingNumber,
-                  tenantId: tenantId,
+          : tabConfig.label === "Hearings"
+            ? {
+              ...tabConfig,
+              apiDetails: {
+                ...tabConfig.apiDetails,
+                requestBody: {
+                  ...tabConfig.apiDetails.requestBody,
+                  criteria: {
+                    filingNumber: filingNumber,
+                    tenantId: tenantId,
+                  },
                 },
               },
-            },
-            sections: {
-              ...tabConfig.sections,
-              search: {
-                ...tabConfig.sections.search,
-                uiConfig: {
-                  ...tabConfig.sections.search.uiConfig,
-                  fields: [
-                    {
-                      label: "PARTIES",
-                      isMandatory: false,
-                      key: "parties",
-                      type: "dropdown",
-                      populators: {
-                        name: "parties",
-                        optionsKey: "name",
-                        options: caseRelatedData.parties.map((party) => {
-                          return { code: removeInvalidNameParts(party.name), name: removeInvalidNameParts(party.name) };
-                        }),
+              sections: {
+                ...tabConfig.sections,
+                search: {
+                  ...tabConfig.sections.search,
+                  uiConfig: {
+                    ...tabConfig.sections.search.uiConfig,
+                    fields: [
+                      {
+                        label: "PARTIES",
+                        isMandatory: false,
+                        key: "parties",
+                        type: "dropdown",
+                        populators: {
+                          name: "parties",
+                          optionsKey: "name",
+                          options: caseRelatedData.parties.map((party) => {
+                            return { code: removeInvalidNameParts(party.name), name: removeInvalidNameParts(party.name) };
+                          }),
+                        },
                       },
-                    },
-                    ...tabConfig.sections.search.uiConfig.fields,
-                  ],
+                      ...tabConfig.sections.search.uiConfig.fields,
+                    ],
+                  },
                 },
-              },
-              searchResult: {
-                ...tabConfig.sections.searchResult,
-                uiConfig: {
-                  ...tabConfig.sections.searchResult.uiConfig,
-                  columns: tabConfig.sections.searchResult.uiConfig.columns.map((column) => {
-                    return column.label === "CS_ACTIONS"
-                      ? {
+                searchResult: {
+                  ...tabConfig.sections.searchResult,
+                  uiConfig: {
+                    ...tabConfig.sections.searchResult.uiConfig,
+                    columns: tabConfig.sections.searchResult.uiConfig.columns.map((column) => {
+                      return column.label === "CS_ACTIONS"
+                        ? {
                           ...column,
                           clickFunc: takeActionFunc,
                         }
-                      : column;
-                  }),
+                        : column;
+                    }),
+                  },
                 },
               },
-            },
-          }
-        : tabConfig.label === "History"
-        ? {
-            ...tabConfig,
-            apiDetails: {
-              ...tabConfig.apiDetails,
-              requestBody: {
-                ...tabConfig.apiDetails.requestBody,
-                filingNumber: filingNumber,
-                tenantId: tenantId,
-              },
-            },
-          }
-        : tabConfig.label === "Filings"
-        ? {
-            ...tabConfig,
-            apiDetails: {
-              ...tabConfig.apiDetails,
-              requestBody: {
-                ...tabConfig.apiDetails.requestBody,
-                criteria: {
-                  caseId: caseId,
-                  filingNumber: filingNumber,
-                  tenantId: tenantId,
+            }
+            : tabConfig.label === "History"
+              ? {
+                ...tabConfig,
+                apiDetails: {
+                  ...tabConfig.apiDetails,
+                  requestBody: {
+                    ...tabConfig.apiDetails.requestBody,
+                    filingNumber: filingNumber,
+                    tenantId: tenantId,
+                  },
                 },
-              },
-            },
-            sections: {
-              ...tabConfig.sections,
-              search: {
-                ...tabConfig.sections.search,
-                uiConfig: {
-                  ...tabConfig.sections.search.uiConfig,
-                  fields: [
-                    {
-                      label: "OWNER",
-                      isMandatory: false,
-                      key: "owner",
-                      type: "dropdown",
-                      populators: {
-                        name: "owner",
-                        optionsKey: "name",
-                        options: caseRelatedData.parties.map((party) => {
-                          return { code: removeInvalidNameParts(party.name), name: removeInvalidNameParts(party.name), value: party.individualId };
+              }
+              : tabConfig.label === "Filings"
+                ? {
+                  ...tabConfig,
+                  apiDetails: {
+                    ...tabConfig.apiDetails,
+                    requestBody: {
+                      ...tabConfig.apiDetails.requestBody,
+                      criteria: {
+                        caseId: caseId,
+                        filingNumber: filingNumber,
+                        tenantId: tenantId,
+                      },
+                    },
+                  },
+                  sections: {
+                    ...tabConfig.sections,
+                    search: {
+                      ...tabConfig.sections.search,
+                      uiConfig: {
+                        ...tabConfig.sections.search.uiConfig,
+                        fields: [
+                          {
+                            label: "OWNER",
+                            isMandatory: false,
+                            key: "owner",
+                            type: "dropdown",
+                            populators: {
+                              name: "owner",
+                              optionsKey: "name",
+                              options: caseRelatedData.parties.map((party) => {
+                                return { code: removeInvalidNameParts(party.name), name: removeInvalidNameParts(party.name), value: party.individualId };
+                              }),
+                            },
+                          },
+                          ...tabConfig.sections.search.uiConfig.fields,
+                        ],
+                      },
+                    },
+                    searchResult: {
+                      ...tabConfig.sections.searchResult,
+                      uiConfig: {
+                        ...tabConfig.sections.searchResult.uiConfig,
+                        columns: tabConfig.sections.searchResult.uiConfig.columns.map((column) => {
+                          switch (column.label) {
+                            case "FILE":
+                            case "FILING_NAME": {
+                              return {
+                                ...column,
+                                clickFunc: docSetFunc,
+                              };
+                            }
+                            case "CS_ACTIONS": {
+                              return {
+                                ...column,
+                                clickFunc: handleFilingAction,
+                              };
+                            }
+                            default: {
+                              return column;
+                            }
+                          }
                         }),
                       },
                     },
-                    ...tabConfig.sections.search.uiConfig.fields,
-                  ],
-                },
-              },
-              searchResult: {
-                ...tabConfig.sections.searchResult,
-                uiConfig: {
-                  ...tabConfig.sections.searchResult.uiConfig,
-                  columns: tabConfig.sections.searchResult.uiConfig.columns.map((column) => {
-                    switch (column.label) {
-                      case "FILE":
-                      case "FILING_NAME": {
-                        return {
-                          ...column,
-                          clickFunc: docSetFunc,
-                        };
-                      }
-                      case "CS_ACTIONS": {
-                        return {
-                          ...column,
-                          clickFunc: handleFilingAction,
-                        };
-                      }
-                      default: {
-                        return column;
-                      }
-                    }
-                  }),
-                },
-              },
-            },
-          }
-        : tabConfig.label === "Applications"
-        ? {
-            ...tabConfig,
-            apiDetails: {
-              ...tabConfig.apiDetails,
-              requestBody: {
-                ...tabConfig.apiDetails.requestBody,
-                criteria: {
-                  filingNumber: filingNumber,
-                  tenantId: tenantId,
-                },
-              },
-            },
-            sections: {
-              ...tabConfig.sections,
-              search: {
-                ...tabConfig.sections.search,
-                uiConfig: {
-                  ...tabConfig.sections.search.uiConfig,
-                  fields: [
-                    {
-                      label: "OWNER",
-                      isMandatory: false,
-                      key: "owner",
-                      type: "dropdown",
-                      populators: {
-                        name: "owner",
-                        optionsKey: "name",
-                        options: caseRelatedData.parties.map((party) => {
-                          return {
-                            code: removeInvalidNameParts(party.name),
-                            name: removeInvalidNameParts(party.name),
-                            value: party.additionalDetails?.uuid,
-                          };
-                        }),
+                  },
+                }
+                : tabConfig.label === "Applications"
+                  ? {
+                    ...tabConfig,
+                    apiDetails: {
+                      ...tabConfig.apiDetails,
+                      requestBody: {
+                        ...tabConfig.apiDetails.requestBody,
+                        criteria: {
+                          filingNumber: filingNumber,
+                          tenantId: tenantId,
+                        },
                       },
                     },
-                    ...tabConfig.sections.search.uiConfig.fields,
-                  ],
-                },
-              },
-              searchResult: {
-                ...tabConfig.sections.searchResult,
-                uiConfig: {
-                  ...tabConfig.sections.searchResult.uiConfig,
-                  columns: tabConfig.sections.searchResult.uiConfig.columns.map((column) => {
-                    return column.label === "DOCUMENT_TEXT" || column.label === "SUBMISSION_TYPE"
-                      ? {
-                          ...column,
-                          clickFunc: docSetFunc,
-                        }
-                      : column.label === "OWNER"
-                      ? {
-                          ...column,
-                          parties: caseRelatedData.parties,
-                        }
-                      : column;
-                  }),
-                },
-              },
-            },
-          }
-        : {
-            ...tabConfig,
-            apiDetails: {
-              ...tabConfig.apiDetails,
-              requestParam: {
-                ...tabConfig.apiDetails?.requestParam,
-                filingNumber: filingNumber,
-                cnrNumber,
-                applicationNumber: "",
-              },
-            },
-          };
+                    sections: {
+                      ...tabConfig.sections,
+                      search: {
+                        ...tabConfig.sections.search,
+                        uiConfig: {
+                          ...tabConfig.sections.search.uiConfig,
+                          fields: [
+                            {
+                              label: "OWNER",
+                              isMandatory: false,
+                              key: "owner",
+                              type: "dropdown",
+                              populators: {
+                                name: "owner",
+                                optionsKey: "name",
+                                options: caseRelatedData.parties.map((party) => {
+                                  return {
+                                    code: removeInvalidNameParts(party.name),
+                                    name: removeInvalidNameParts(party.name),
+                                    value: party.additionalDetails?.uuid,
+                                  };
+                                }),
+                              },
+                            },
+                            ...tabConfig.sections.search.uiConfig.fields,
+                          ],
+                        },
+                      },
+                      searchResult: {
+                        ...tabConfig.sections.searchResult,
+                        uiConfig: {
+                          ...tabConfig.sections.searchResult.uiConfig,
+                          columns: tabConfig.sections.searchResult.uiConfig.columns.map((column) => {
+                            return column.label === "DOCUMENT_TEXT" || column.label === "SUBMISSION_TYPE"
+                              ? {
+                                ...column,
+                                clickFunc: docSetFunc,
+                              }
+                              : column.label === "OWNER"
+                                ? {
+                                  ...column,
+                                  parties: caseRelatedData.parties,
+                                }
+                                : column;
+                          }),
+                        },
+                      },
+                    },
+                  }
+                  : {
+                    ...tabConfig,
+                    apiDetails: {
+                      ...tabConfig.apiDetails,
+                      requestParam: {
+                        ...tabConfig.apiDetails?.requestParam,
+                        filingNumber: filingNumber,
+                        cnrNumber,
+                        applicationNumber: "",
+                      },
+                    },
+                  };
     });
   }, [caseId, caseRelatedData, cnrNumber, filingNumber, history, isCitizen, tenantId, userInfo]);
 
@@ -849,10 +848,10 @@ const AdmittedCases = () => {
         userType === "citizen"
           ? undefined
           : "view_reason_for_voiding" === documentSubmission?.[0]?.itemType
-          ? t("UNMARK_AS_VOID")
-          : "unmark_void_submission" === documentSubmission?.[0]?.itemType
-          ? t("MARK_VOID_CONFIRM")
-          : t("MARK_AS_VOID"),
+            ? t("UNMARK_AS_VOID")
+            : "unmark_void_submission" === documentSubmission?.[0]?.itemType
+              ? t("MARK_VOID_CONFIRM")
+              : t("MARK_AS_VOID"),
       actionCancelLabel: t("MARK_VOID_CANCEL"),
       actionCancelOnSubmit: handleClose,
       actionSaveOnSubmit: () => {
@@ -1021,7 +1020,7 @@ const AdmittedCases = () => {
           console.error("Error while creating order", error);
           showToast({ isError: true, message: "ORDER_CREATION_FAILED" });
         });
-    } catch (error) {}
+    } catch (error) { }
   };
 
   const caseInfo = [
@@ -1524,9 +1523,8 @@ const AdmittedCases = () => {
                   code: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
                   name: "ORDER_TYPE_INITIATING_RESCHEDULING_OF_HEARING_DATE",
                 },
-                originalHearingDate: `${date.getFullYear()}-${date.getMonth() < 9 ? `0${date.getMonth() + 1}` : date.getMonth() + 1}-${
-                  date.getDate() < 10 ? `0${date.getDate()}` : date.getDate()
-                }`,
+                originalHearingDate: `${date.getFullYear()}-${date.getMonth() < 9 ? `0${date.getMonth() + 1}` : date.getMonth() + 1}-${date.getDate() < 10 ? `0${date.getDate()}` : date.getDate()
+                  }`,
               },
             },
           },
@@ -1539,7 +1537,7 @@ const AdmittedCases = () => {
               tab: "Orders",
             });
           })
-          .catch((err) => {});
+          .catch((err) => { });
       }
     } else {
       setShowModal(true);

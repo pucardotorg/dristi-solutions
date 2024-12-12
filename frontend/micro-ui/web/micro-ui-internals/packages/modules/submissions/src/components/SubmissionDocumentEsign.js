@@ -55,6 +55,7 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
   };
 
   const cleanString = (input) => {
+    if (typeof input !== "string") return "";
     return input
       .replace(/\b(null|undefined)\b/g, "")
       .replace(/\s+/g, " ")
