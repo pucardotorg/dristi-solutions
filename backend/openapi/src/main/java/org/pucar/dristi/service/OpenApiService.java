@@ -32,22 +32,25 @@ public class OpenApiService {
     public CaseSummaryResponse getCaseByCnrNumber(String tenantId, String cnrNumber) {
         if (configuration.getIsElasticSearchEnabled()) {
             log.info("Fetching case summary from elastic search");
+            throw new RuntimeException("Elastic search is not enabled for case summary");
         } else {
             log.info("Fetching cases from Case Service");
-            StringBuilder uri = new StringBuilder(configuration.getCaseServiceHost()).append(configuration.getCaseServiceSearchEndpoint());
+            StringBuilder uri = new StringBuilder(configuration.getCaseServiceHost()).append(configuration.getCaseServiceSearchByCnrNumberEndpoint());
              OpenApiCaseSummaryRequest request = OpenApiCaseSummaryRequest.builder().tenantId(tenantId).cnrNumber(cnrNumber).build();
             Object response = serviceRequestRepository.fetchResult(uri, request);
             CaseSummaryResponse caseSummaryResponse = objectMapper.convertValue(response, CaseSummaryResponse.class);
             CaseSummary caseSummary = caseSummaryResponse.getCaseSummary();
+            caseSummary.setJudgeName(configuration.getJudgeName());
             caseSummary.setNextHearingDate(enrichNextHearingDate(caseSummary.getFilingNumber()));
-            return objectMapper.convertValue(response, CaseSummaryResponse.class);
+            caseSummaryResponse.setCaseSummary(caseSummary);
+            return caseSummaryResponse;
         }
-        return null;
     }
 
     public CaseListResponse getCaseListByCaseType(String tenantId, Integer year, String caseType, Integer offset, Integer limit, String sort) {
         if (configuration.getIsElasticSearchEnabled()) {
             log.info("Fetching case list from elastic search");
+            throw new RuntimeException("Elastic search is not enabled for case list");
         } else {
             log.info("Fetching cases from Case Service");
             StringBuilder uri = new StringBuilder(configuration.getCaseServiceHost()).append(configuration.getCaseServiceSearchByCaseTypeEndpoint());
@@ -65,22 +68,24 @@ public class OpenApiService {
             Object response = serviceRequestRepository.fetchResult(uri, request);
             return objectMapper.convertValue(response, CaseListResponse.class);
         }
-        return null;
     }
 
     public CaseSummaryResponse getCaseByCaseNumber(String tenantID, Integer year, String caseType, Integer caseNumber) {
         if (configuration.getIsElasticSearchEnabled()) {
             log.info("Fetching case summary from elastic search");
+            throw new RuntimeException("Elastic search is not enabled for case summary");
         } else {
             log.info("Fetching cases from Case Service");
-            StringBuilder uri = new StringBuilder(configuration.getCaseServiceHost()).append(configuration.getCaseServiceSearchEndpoint());
+            StringBuilder uri = new StringBuilder(configuration.getCaseServiceHost()).append(configuration.getCaseServiceSearchByCaseNumberEndpoint());
             OpenApiCaseSummaryRequest request = OpenApiCaseSummaryRequest.builder().tenantId(tenantID).year(year).caseType(caseType).caseNumber(caseNumber).build();
             Object response = serviceRequestRepository.fetchResult(uri, request);
             CaseSummaryResponse caseSummaryResponse = objectMapper.convertValue(response, CaseSummaryResponse.class);
             CaseSummary caseSummary = caseSummaryResponse.getCaseSummary();
+            caseSummary.setJudgeName(configuration.getJudgeName());
             caseSummary.setNextHearingDate(enrichNextHearingDate(caseSummary.getFilingNumber()));
+            caseSummaryResponse.setCaseSummary(caseSummary);
+            return caseSummaryResponse;
         }
-        return null;
     }
 
     public Long enrichNextHearingDate(String filingNumber) {
@@ -100,7 +105,6 @@ public class OpenApiService {
                 }
             }
         }
-
         return null;
     }
 }

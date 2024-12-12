@@ -97,10 +97,13 @@ public class Configuration {
     private String caseServiceHost;
 
     @Value("${case.service.searchbycnrnumber.endpoint}")
-    private String caseServiceSearchEndpoint;
+    private String caseServiceSearchByCnrNumberEndpoint;
 
     @Value("${case.sevice.searchbycasetype.endpoint}")
     private String caseServiceSearchByCaseTypeEndpoint;
+
+    @Value("${case.sevice.searchbycasenumber.endpoint}")
+    private String caseServiceSearchByCaseNumberEndpoint;
 
     @Value("${app.zone.id}")
     private String zoneId;
@@ -110,4 +113,7 @@ public class Configuration {
 
     @Value("${hearing.service.search.endpoint}")
     private String hearingSearchEndpoint;
+
+    @Value("${judge.name}")
+    private String judgeName;
 }

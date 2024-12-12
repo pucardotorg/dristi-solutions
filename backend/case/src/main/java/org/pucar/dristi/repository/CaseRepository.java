@@ -455,7 +455,7 @@ public class CaseRepository {
 
     }
 
-    public OpenApiCaseSummary getCaseByCnrNumber(OpenApiCaseSummaryRequest request) {
+    public OpenApiCaseSummary getCaseSummaryByCnrNumber(OpenApiCaseSummaryRequest request) {
 
         try {
             List<Object> preparedStmtList = new ArrayList<>();
@@ -463,13 +463,6 @@ public class CaseRepository {
 
             String caseBaseQuery = "";
             caseBaseQuery = openApiCaseSummaryQueryBuilder.getCaseBaseQuery(request, preparedStmtList, preparedStmtArgList);
-//            caseBaseQuery = openApiCaseSummaryQueryBuilder.addOrderByQuery(caseBaseQuery, request.getPagination());
-//            if (request.getPagination() != null) {
-//                Integer totalRecords = getTotalCount(caseBaseQuery, preparedStmtList);
-//                request.getPagination().setTotalCount(Double.valueOf(totalRecords));
-//                caseBaseQuery = openApiCaseSummaryQueryBuilder.addPaginationQuery(caseBaseQuery, preparedStmtList, request.getPagination(), preparedStmtArgList);
-//            }
-
             String OpenApiCaseSummaryQuery = openApiCaseSummaryQueryBuilder.getCaseSummarySearchQuery(caseBaseQuery);
             log.info("Final case base query :: {}", OpenApiCaseSummaryQuery);
             if (preparedStmtList.size() != preparedStmtArgList.size()) {
@@ -494,7 +487,7 @@ public class CaseRepository {
         return null;
     }
 
-    public List<CaseListLineItem> getCaseListByCaseType(OpenApiCaseSummaryRequest request) {
+    public List<CaseListLineItem> getCaseSummaryListByCaseType(OpenApiCaseSummaryRequest request) {
 
         try {
             List<Object> preparedStmtList = new ArrayList<>();
@@ -517,5 +510,36 @@ public class CaseRepository {
         } catch (Exception e) {
             throw new CustomException(CASE_SUMMARY_SEARCH_QUERY_EXCEPTION, "Error occurred while retrieving data from the database");
         }
+    }
+
+    public OpenApiCaseSummary getCaseSummaryByCaseNumber(OpenApiCaseSummaryRequest request) {
+        try {
+            List<Object> preparedStmtList = new ArrayList<>();
+            List<Integer> preparedStmtArgList = new ArrayList<>();
+
+            String caseBaseQuery = "";
+            caseBaseQuery = openApiCaseSummaryQueryBuilder.getCaseBaseQuery(request, preparedStmtList, preparedStmtArgList);
+            String OpenApiCaseSummaryQuery = openApiCaseSummaryQueryBuilder.getCaseSummarySearchQuery(caseBaseQuery);
+            log.info("Final case base query :: {}", OpenApiCaseSummaryQuery);
+            if (preparedStmtList.size() != preparedStmtArgList.size()) {
+                log.info("Arg size :: {}, and ArgType size :: {}", preparedStmtList.size(), preparedStmtArgList.size());
+                throw new CustomException(CASE_SUMMARY_SEARCH_QUERY_EXCEPTION, "Arg and ArgType size mismatch ");
+            }
+
+            List<OpenApiCaseSummary> list = jdbcTemplate.query(OpenApiCaseSummaryQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), openApiCaseSummaryRowMapper);
+
+            if (list != null && !list.isEmpty()) {
+                if (list.size() > 1) {
+                    throw new CustomException(CASE_SUMMARY_SEARCH_QUERY_EXCEPTION, "Multiple cases found for the given CNR number");
+                }
+                else {
+                    return list.get(0);
+                }
+            }
+
+        } catch (Exception e) {
+            throw new CustomException(CASE_SUMMARY_SEARCH_QUERY_EXCEPTION, "Error occurred while retrieving data from the database");
+        }
+        return null;
     }
 }

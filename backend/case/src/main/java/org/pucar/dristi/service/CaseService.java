@@ -842,13 +842,19 @@ public class CaseService {
 
     public OpenApiCaseSummary searchByCnrNumber(@Valid OpenApiCaseSummaryRequest request) {
 
-        OpenApiCaseSummary openApiCaseSummary = caseRepository.getCaseByCnrNumber(request);
-        openApiCaseSummary.setJudgeName(config.getJudgeName());
+        OpenApiCaseSummary openApiCaseSummary = caseRepository.getCaseSummaryByCnrNumber(request);
         return openApiCaseSummary;
     }
 
     public List<CaseListLineItem> searchByCaseType(@Valid OpenApiCaseSummaryRequest request) {
 
-        return caseRepository.getCaseListByCaseType(request);
+        return caseRepository.getCaseSummaryListByCaseType(request);
+    }
+
+    public OpenApiCaseSummary searchByCaseNumber(@Valid OpenApiCaseSummaryRequest request) {
+
+        OpenApiCaseSummary openApiCaseSummary = caseRepository.getCaseSummaryByCaseNumber(request);
+        return openApiCaseSummary;
+
     }
 }

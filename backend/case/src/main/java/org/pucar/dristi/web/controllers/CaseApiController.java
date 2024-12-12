@@ -168,4 +168,12 @@ public class CaseApiController {
         return new ResponseEntity<>(caseSummaryResponse, HttpStatus.OK);
     }
 
+    @PostMapping(value = "/v1/search/caseNumber")
+    public ResponseEntity<OpenApiCaseSummaryResponse> caseV1SearchCaseNumber(@Parameter(in = ParameterIn.DEFAULT, description = "Details for the new court case + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody OpenApiCaseSummaryRequest body) {
+        OpenApiCaseSummary cases = caseService.searchByCaseNumber(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(RequestInfo.builder().build(), true);
+        OpenApiCaseSummaryResponse caseSummaryResponse = OpenApiCaseSummaryResponse.builder().caseSummary(cases).responseInfo(responseInfo).build();
+        return new ResponseEntity<>(caseSummaryResponse, HttpStatus.OK);
+    }
+
 }

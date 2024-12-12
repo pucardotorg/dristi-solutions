@@ -293,6 +293,4 @@ public class Configuration {
 	@Value("${indexer.join.case.kafka.topic}")
 	private String joinCaseTopicIndexer;
 
-	@Value("${judge.name}")
-	private String judgeName;
 }

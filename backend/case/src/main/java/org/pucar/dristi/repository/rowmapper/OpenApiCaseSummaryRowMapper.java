@@ -46,7 +46,6 @@ public class OpenApiCaseSummaryRowMapper implements ResultSetExtractor<List<Open
                             .filingDate(rs.getLong("filingdate"))
                             .registrationDate(rs.getLong("registrationdate"))
                             .registrationNumber(rs.getString("cmpnumber"))
-//                        .nextHearingDate(rs.getLong("nexthearingdate")) // TODO: Check this (hearing search)
                             .caseType(getCaseType(rs))
                             .status(getStatus(rs))
                             .subStage(rs.getString("stage") + " - " + rs.getString("substage"))
