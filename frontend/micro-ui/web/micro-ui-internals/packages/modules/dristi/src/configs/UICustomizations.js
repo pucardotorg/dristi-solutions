@@ -1043,13 +1043,13 @@ export const UICustomizations = {
     additionalCustomizations: (row, key, column, value, t) => {
       switch (key) {
         case "FILING_NAME":
-          return  <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} value={value} showAsHeading={true} />;
+          return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} value={value} showAsHeading={true} />;
         case "TYPE":
-          return row?.filingType || "";
+          return t(row?.filingType) || "";
         case "STAGE":
           return "";
         case "FILE":
-          return  <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} />;
+          return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} />;
         case "STATUS":
           //Need to change the shade as per the value
           return row?.status ? <CustomChip text={t(row?.status)} shade={"green"} /> : "";
