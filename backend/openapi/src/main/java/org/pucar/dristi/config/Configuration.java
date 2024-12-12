@@ -104,4 +104,10 @@ public class Configuration {
 
     @Value("${app.zone.id}")
     private String zoneId;
+
+    @Value("${hearing.service.host}")
+    private String hearingServiceHost;
+
+    @Value("${hearing.service.search.endpoint}")
+    private String hearingSearchEndpoint;
 }

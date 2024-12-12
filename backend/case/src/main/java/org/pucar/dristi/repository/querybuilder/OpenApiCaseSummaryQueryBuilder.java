@@ -78,7 +78,7 @@ public class OpenApiCaseSummaryQueryBuilder {
                     " ) ON uc.id = rep.case_id ";
 
     private static final String ORDERBY_CLAUSE = " ORDER BY cases.{orderBy} {sortingOrder} ";
-    private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY cases.lastmodifiedtime DESC ";
+    private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY cases DESC ";
 
 
 

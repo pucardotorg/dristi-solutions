@@ -46,10 +46,10 @@ public class OpenApiCaseSummaryRowMapper implements ResultSetExtractor<List<Open
                             .filingDate(rs.getLong("filingdate"))
                             .registrationDate(rs.getLong("registrationdate"))
                             .registrationNumber(rs.getString("cmpnumber"))
-//                        .nextHearingDate(rs.getLong("nexthearingdate")) // TODO: Check this
+//                        .nextHearingDate(rs.getLong("nexthearingdate")) // TODO: Check this (hearing search)
                             .caseType(getCaseType(rs))
-//                            .status(getStatus(rs))  // TODO: Check this
-                            .subStage(rs.getString("substage"))
+                            .status(getStatus(rs))
+                            .subStage(rs.getString("stage") + " - " + rs.getString("substage"))
                             .build();
 
                     openApiCaseSummaryMap.put(caseId, openApiCaseSummary);
@@ -117,10 +117,30 @@ public class OpenApiCaseSummaryRowMapper implements ResultSetExtractor<List<Open
 
     private OpenApiCaseSummary.StatusEnum getStatus(ResultSet rs) {
         try {
-            return OpenApiCaseSummary.StatusEnum.valueOf(rs.getString("status"));
+            if (Objects.equals(rs.getString("casetype"), "CMP")) {
+                if (rs.getString("courtcasenumber") == null) {
+                    return OpenApiCaseSummary.StatusEnum.PENDING;
+                } else {
+                    return OpenApiCaseSummary.StatusEnum.DISPOSED;
+                }
+            } else if (Objects.equals(rs.getString("casetype"), "ST")) {
+                if (rs.getString("outcome") == null) {
+                    return OpenApiCaseSummary.StatusEnum.PENDING;
+                } else {
+                    return OpenApiCaseSummary.StatusEnum.DISPOSED;
+                }
+            }
+            else {
+                if (rs.getString("courtcasenumber") == null) {
+                    return OpenApiCaseSummary.StatusEnum.PENDING;
+                } else {
+                    return OpenApiCaseSummary.StatusEnum.DISPOSED;
+                }
+            }
         } catch (Exception e) {
             log.error("Error while fetching status from result set", e);
-            return null;
+            throw new CustomException("ERROR_FETCHING_STATUS", "Error while fetching status from result set") {
+            };
         }
     }
 

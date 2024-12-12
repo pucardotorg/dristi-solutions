@@ -1,17 +1,13 @@
 package org.pucar.dristi.web.controllers;
 
 
-import org.egov.common.contract.response.ResponseInfo;
 import org.pucar.dristi.service.OpenApiService;
-import org.pucar.dristi.web.models.CaseListLineItem;
 import org.pucar.dristi.web.models.CaseListResponse;
 import org.pucar.dristi.web.models.CaseSummaryResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,9 +16,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestMapping;
-
-import java.io.IOException;
-import java.util.List;
 
 import jakarta.validation.constraints.*;
 import jakarta.validation.Valid;
@@ -52,7 +45,7 @@ public class OpenapiApiController {
         return new ResponseEntity<>(caseSummaryResponse, HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/openapi/v1/{tenantId}/case/{year}/{caseType}/caseNumber", method = RequestMethod.GET)
+    @RequestMapping(value = "/openapi/v1/{tenantId}/case/{year}/{caseType}/{caseNumber}", method = RequestMethod.GET)
     public ResponseEntity<CaseSummaryResponse> getCaseByCaseNumber(@Pattern(regexp = "^[a-zA-Z]{2}$") @Size(min = 2, max = 2) @Parameter(in = ParameterIn.PATH, description = "tenant ID", required = true, schema = @Schema()) @PathVariable("tenantId") String tenantId, @Min(2024) @Parameter(in = ParameterIn.PATH, description = "if type= CMP, then year in which the case was registered. Can check based on registration date also. If type = CC/ST, then check against CourtCase.courtCaseNumber(year). The minimum year is set to 2024 as this is the year the system has gone live and the first case in the system is from 2024. No earlier cases exist.", required = true, schema = @Schema(allowableValues = "")) @PathVariable("year") Integer year, @Parameter(in = ParameterIn.PATH, description = "the type of the case CMP/CC/ST", required = true, schema = @Schema(allowableValues = "")) @PathVariable("caseType") String caseType, @NotNull @Min(1) @Max(99999999) @Parameter(in = ParameterIn.QUERY, description = "Number part of CMP/CC/ST case number in format <type>/<number>/<year>", required = true, schema = @Schema(allowableValues = "")) @Valid @RequestParam(value = "caseNumber", required = true) Integer caseNumber) {
         CaseSummaryResponse caseSummaryResponse = openApiService.getCaseByCaseNumber(tenantId, year, caseType, caseNumber);
         return new ResponseEntity<>(caseSummaryResponse, HttpStatus.OK);
