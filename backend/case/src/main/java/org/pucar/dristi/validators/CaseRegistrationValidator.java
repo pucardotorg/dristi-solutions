@@ -25,12 +25,7 @@ import org.pucar.dristi.service.IndividualService;
 import org.pucar.dristi.util.AdvocateUtil;
 import org.pucar.dristi.util.FileStoreUtil;
 import org.pucar.dristi.util.MdmsUtil;
-import org.pucar.dristi.web.models.AdvocateMapping;
-import org.pucar.dristi.web.models.CaseCriteria;
-import org.pucar.dristi.web.models.CaseRequest;
-import org.pucar.dristi.web.models.CourtCase;
-import org.pucar.dristi.web.models.JoinCaseRequest;
-import org.pucar.dristi.web.models.Party;
+import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
@@ -88,7 +83,10 @@ public class CaseRegistrationValidator {
 		}
 	}
 
-	public Boolean validateUpdateRequest(CaseRequest caseRequest) {
+	public boolean validateUpdateRequest(CaseRequest caseRequest, List<CourtCase> existingCourtCaseList) {
+		if(existingCourtCaseList.isEmpty()){
+			return false;
+		}
 		validateCaseRegistration(caseRequest);
 		CourtCase courtCase = caseRequest.getCases();
 		RequestInfo requestInfo = caseRequest.getRequestInfo();
@@ -99,19 +97,13 @@ public class CaseRegistrationValidator {
 				throw new CustomException(VALIDATION_ERR, "filingDate is mandatory for updating case");
 		}
 
-		List<CaseCriteria> existingApplications = repository.getCases(Collections.singletonList(CaseCriteria
-				.builder().filingNumber(courtCase.getFilingNumber()).caseId(String.valueOf(courtCase.getId()))
-				.cnrNumber(courtCase.getCnrNumber()).courtCaseNumber(courtCase.getCourtCaseNumber()).build()),
-				requestInfo);
-		if (existingApplications.get(0).getResponseList().isEmpty())
-			return false;
 		//For not allowing certain fields to update
-		setUnEditableOnUpdate(existingApplications.get(0).getResponseList().get(0), caseRequest);
+		setUnEditableOnUpdate(existingCourtCaseList.get(0), caseRequest);
 
 		validateMDMSData(requestInfo,courtCase);
 		validateDocuments(courtCase);
 		validateRepresentative(requestInfo,courtCase);
-		validateLinkedCase(courtCase,existingApplications.get(0).getResponseList());
+		validateLinkedCase(courtCase,existingCourtCaseList);
 
 		return true;
 	}
