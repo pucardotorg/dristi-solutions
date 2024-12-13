@@ -1067,7 +1067,7 @@ export const UICustomizations = {
       return [
         ...((userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE") ||
           userInfo.roles.map((role) => role.code).includes("COURT_ROOM_MANAGER")) &&
-        row.status === "SUBMITTED" &&
+        !row.isVoid &&
         !Boolean(row?.isVoid)
           ? [
               {

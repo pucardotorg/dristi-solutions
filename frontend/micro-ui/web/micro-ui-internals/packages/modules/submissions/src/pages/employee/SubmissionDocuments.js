@@ -259,9 +259,9 @@ const SubmissionDocuments = ({ path }) => {
         const documentsFile =
           signedDocumentUploadedID !== "" || localStorageID
             ? {
-              documentType: "SIGNED",
-              fileStore: signedDocumentUploadedID || localStorageID,
-            }
+                documentType: "SIGNED",
+                fileStore: signedDocumentUploadedID || localStorageID,
+              }
             : null;
 
         evidenceReqBody = {
@@ -309,7 +309,7 @@ const SubmissionDocuments = ({ path }) => {
 
   const handleGoBack = async () => {
     if ([SubmissionDocumentWorkflowState.PENDING_ESIGN, SubmissionDocumentWorkflowState.SUBMITTED].includes(currentSubmissionStatus)) {
-      history.replace(`/digit-ui/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Filings`);
+      history.replace(`/digit-ui/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Documents`);
     } else {
       setShowReviewModal(false);
     }
