@@ -292,5 +292,4 @@ public class Configuration {
 	//Indexer
 	@Value("${indexer.join.case.kafka.topic}")
 	private String joinCaseTopicIndexer;
-
 }
