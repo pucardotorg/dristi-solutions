@@ -128,7 +128,9 @@ public class CaseService {
             for (CaseCriteria criteria : caseCriteriaList) {
                 CourtCase courtCase = null;
                 if (!criteria.getDefaultFields() && criteria.getCaseId() != null) {
+                    log.info("Searching in redis :: {}",criteria.getCaseId());
                     courtCase = searchRedisCache(caseSearchRequests.getRequestInfo(), criteria.getCaseId());
+                    log.info("Redis Response :: {}",courtCase);
                 }
                 if (courtCase != null) {
                     criteria.setResponseList(Collections.singletonList(courtCase));
@@ -223,7 +225,6 @@ public class CaseService {
             CourtCase courtCase = searchRedisCache(caseRequest.getRequestInfo(), String.valueOf(caseRequest.getCases().getId()));
 
             if (courtCase == null) {
-
                 log.debug("CourtCase not found in Redis cache for caseId :: {}", caseRequest.getCases().getId());
                 List<CaseCriteria> existingApplications = caseRepository.getCases(Collections.singletonList(CaseCriteria.builder().caseId(String.valueOf(caseRequest.getCases().getId())).build()), caseRequest.getRequestInfo());
 
@@ -235,15 +236,17 @@ public class CaseService {
                 }
             }
 
+            CourtCase decryptedCourtCase = encryptionDecryptionUtil.decryptObject(courtCase, CASE_DECRYPT_SELF, CourtCase.class, caseRequest.getRequestInfo());
+
             AuditDetails auditDetails = courtCase.getAuditdetails();
             auditDetails.setLastModifiedTime(System.currentTimeMillis());
             auditDetails.setLastModifiedBy(caseRequest.getRequestInfo().getUserInfo().getUuid());
 
-            courtCase.setAdditionalDetails(caseRequest.getCases().getAdditionalDetails());
-            courtCase.setCaseTitle(caseRequest.getCases().getCaseTitle());
-            courtCase.setAuditdetails(auditDetails);
+            decryptedCourtCase.setAdditionalDetails(caseRequest.getCases().getAdditionalDetails());
+            decryptedCourtCase.setCaseTitle(caseRequest.getCases().getCaseTitle());
+            decryptedCourtCase.setAuditdetails(auditDetails);
 
-            caseRequest.setCases(courtCase);
+            caseRequest.setCases(decryptedCourtCase);
 
             log.info("Encrypting :: {}", caseRequest);
 
@@ -744,6 +747,7 @@ public class CaseService {
     public CourtCase searchRedisCache(RequestInfo requestInfo, String caseId) {
         try {
             Object value = cacheService.findById(getRedisKey(requestInfo, caseId));
+            log.info("Redis data received :: {}",value);
             if (value != null) {
                 String caseObject = objectMapper.writeValueAsString(value);
                 return objectMapper.readValue(caseObject, CourtCase.class);
