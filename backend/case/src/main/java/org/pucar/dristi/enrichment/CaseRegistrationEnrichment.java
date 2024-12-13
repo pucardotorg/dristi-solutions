@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -243,18 +244,17 @@ public class CaseRegistrationEnrichment {
     }
 
     private void enrichDocument(CaseRequest caseRequest, List<CourtCase> existingCourtCaseList) {
-            for (Document exsitingDocument : existingCourtCaseList.get(0).getDocuments()){
-                boolean flag = false;
-                for (Document document : caseRequest.getCases().getDocuments()){
-                    if (Objects.equals(document.getId(), exsitingDocument.getId())) {
-                        flag = true;
-                        break;
-                    }
-                }
-                if(!flag){
-                    exsitingDocument.setActive(false);
-                }
+        // Extract IDs from documents in the caseRequest
+        List<String> documentIds = caseRequest.getCases().getDocuments().stream()
+                .map(Document::getId)
+                .toList();
+
+        // Iterate through existing documents and compare IDs
+        existingCourtCaseList.get(0).getDocuments().forEach(existingDocument -> {
+            if (!documentIds.contains(existingDocument.getId())) {
+                existingDocument.setIsActive(false);
             }
+        });
     }
 
     public void enrichCourtCaseNumber(CaseRequest caseRequest) {
