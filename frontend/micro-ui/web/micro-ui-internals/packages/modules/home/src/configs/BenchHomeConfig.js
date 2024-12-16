@@ -111,7 +111,7 @@ export const TabBenchSearchConfig = {
           tenantId: "pg",
           criteria: [
             {
-              stage: [],
+              stage: ["Pre-Trial", "Trial", "Post-Trial"],
               status: [
                 "PENDING_REGISTRATION",
                 "PENDING_ADMISSION",
@@ -123,9 +123,6 @@ export const TabBenchSearchConfig = {
               ],
             },
           ],
-          limit: 10,
-          caseType: "NIA S138",
-          offset: 0,
         },
         masterName: "commonUiConfig",
         moduleName: "homeJudgeUIConfig",
@@ -417,7 +414,7 @@ export const TabBenchSearchConfig = {
                 component: "CustomSortComponent",
                 isMandatory: false,
                 disable: false,
-                name: "Sort by",
+                name: "Filed",
                 key: "sortCaseListByDate",
                 sortBy: "createdtime",
                 ascText: "First",
@@ -426,6 +423,20 @@ export const TabBenchSearchConfig = {
                 showIcon: true,
                 icon: "UpDownArrowIcon",
                 populators: {},
+              },
+              {
+                label: "CS_CASE_ID",
+                type: "text",
+                isMandatory: false,
+                disable: false,
+                populators: {
+                  name: "caseSearchText",
+                  error: "BR_PATTERN_ERR_MSG",
+                  validation: {
+                    pattern: {},
+                    minlength: 2,
+                  },
+                },
               },
               {
                 label: "CASE_TYPE",
@@ -465,20 +476,6 @@ export const TabBenchSearchConfig = {
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
-                  },
-                },
-              },
-              {
-                label: "CS_CASE_ID",
-                type: "text",
-                isMandatory: false,
-                disable: false,
-                populators: {
-                  name: "caseSearchText",
-                  error: "BR_PATTERN_ERR_MSG",
-                  validation: {
-                    pattern: {},
-                    minlength: 2,
                   },
                 },
               },
@@ -572,6 +569,20 @@ export const TabBenchSearchConfig = {
                 populators: {},
               },
               {
+                label: "CS_CASE_ID",
+                type: "text",
+                isMandatory: false,
+                disable: false,
+                populators: {
+                  name: "caseSearchText",
+                  error: "BR_PATTERN_ERR_MSG",
+                  validation: {
+                    pattern: {},
+                    minlength: 2,
+                  },
+                },
+              },
+              {
                 label: "CASE_TYPE",
                 isMandatory: false,
                 key: "caseType",
@@ -610,20 +621,6 @@ export const TabBenchSearchConfig = {
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
-                  },
-                },
-              },
-              {
-                label: "CS_CASE_ID",
-                type: "text",
-                isMandatory: false,
-                disable: false,
-                populators: {
-                  name: "caseSearchText",
-                  error: "BR_PATTERN_ERR_MSG",
-                  validation: {
-                    pattern: {},
-                    minlength: 2,
                   },
                 },
               },

@@ -123,7 +123,7 @@ export const TabCourtRoomSearchConfig = {
           tenantId: "pg",
           criteria: [
             {
-              stage: [],
+              stage: ["Pre-Trial", "Trial", "Post-Trial"],
               status: [
                 "PENDING_REGISTRATION",
                 "PENDING_ADMISSION",
@@ -426,7 +426,7 @@ export const TabCourtRoomSearchConfig = {
                 component: "CustomSortComponent",
                 isMandatory: false,
                 disable: false,
-                name: "Sort by",
+                name: "Filed",
                 key: "sortCaseListByDate",
                 sortBy: "createdtime",
                 ascText: "First",
@@ -435,6 +435,20 @@ export const TabCourtRoomSearchConfig = {
                 showIcon: true,
                 icon: "UpDownArrowIcon",
                 populators: {},
+              },
+              {
+                label: "CS_CASE_ID",
+                type: "text",
+                isMandatory: false,
+                disable: false,
+                populators: {
+                  name: "caseSearchText",
+                  error: "BR_PATTERN_ERR_MSG",
+                  validation: {
+                    pattern: {},
+                    minlength: 2,
+                  },
+                },
               },
               {
                 label: "CASE_TYPE",
@@ -477,22 +491,9 @@ export const TabCourtRoomSearchConfig = {
                   },
                 },
               },
-              {
-                label: "CS_CASE_ID",
-                type: "text",
-                isMandatory: false,
-                disable: false,
-                populators: {
-                  name: "caseSearchText",
-                  error: "BR_PATTERN_ERR_MSG",
-                  validation: {
-                    pattern: {},
-                    minlength: 2,
-                  },
-                },
-              },
             ],
           },
+
           show: true,
         },
         searchResult: {
@@ -581,6 +582,20 @@ export const TabCourtRoomSearchConfig = {
                 populators: {},
               },
               {
+                label: "CS_CASE_ID",
+                type: "text",
+                isMandatory: false,
+                disable: false,
+                populators: {
+                  name: "caseSearchText",
+                  error: "BR_PATTERN_ERR_MSG",
+                  validation: {
+                    pattern: {},
+                    minlength: 2,
+                  },
+                },
+              },
+              {
                 label: "CASE_TYPE",
                 isMandatory: false,
                 key: "caseType",
@@ -619,20 +634,6 @@ export const TabCourtRoomSearchConfig = {
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
-                  },
-                },
-              },
-              {
-                label: "CS_CASE_ID",
-                type: "text",
-                isMandatory: false,
-                disable: false,
-                populators: {
-                  name: "caseSearchText",
-                  error: "BR_PATTERN_ERR_MSG",
-                  validation: {
-                    pattern: {},
-                    minlength: 2,
                   },
                 },
               },
