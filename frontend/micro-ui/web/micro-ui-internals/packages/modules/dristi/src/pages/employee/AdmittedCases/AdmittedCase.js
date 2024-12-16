@@ -408,7 +408,7 @@ const AdmittedCases = () => {
         body: {
           artifact: {
             ...documentSubmission?.[0].artifactList,
-            isEvidence: isEvidence ? false : true,
+            isEvidence: !isEvidence,
             isVoid: false,
             reason: "",
             filingNumber: filingNumber,
@@ -874,6 +874,7 @@ const AdmittedCases = () => {
       actionCancelOnSubmit: handleClose,
       steps: [
         {
+          actionSaveLableType: "mark_as_void" === documentSubmission?.[0]?.itemType ? "WARNING" : null,
           modalBody: (
             <VoidSubmissionBody
               t={t}
@@ -1045,7 +1046,10 @@ const AdmittedCases = () => {
           console.error("Error while creating order", error);
           showToast({ isError: true, message: "ORDER_CREATION_FAILED" });
         });
-    } catch (error) {}
+    } catch (error) {
+      console.error("Error while fetching Hearing Data", error);
+      showToast({ isError: true, message: "ERROR_WHILE_FETCH_HEARING_DETAILS" });
+    }
   };
 
   const caseInfo = [
@@ -1563,7 +1567,10 @@ const AdmittedCases = () => {
               tab: "Orders",
             });
           })
-          .catch((err) => {});
+          .catch((err) => {
+            console.error("Error while creating order", err);
+            showToast({ isError: true, message: "ORDER_CREATION_FAILED" });
+          });
       }
     } else {
       setShowModal(true);

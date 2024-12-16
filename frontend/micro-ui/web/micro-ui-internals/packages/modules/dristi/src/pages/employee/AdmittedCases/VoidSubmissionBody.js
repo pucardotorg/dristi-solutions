@@ -15,6 +15,17 @@ const pStyle = {
 
 const VoidSubmissionBody = ({ t, documentSubmission, setVoidReason, voidReason, disabled }) => {
   const [errors, setErrors] = useState({});
+
+  const getLabel = () => {
+    const itemType = documentSubmission?.[0]?.itemType;
+    const showLabel = itemType === "mark_as_void" || itemType === "unmark_void_submission";
+    if (!showLabel) return null;
+
+    const labelText = itemType === "unmark_void_submission" ? t("ORIGINAL_REASON_FOR_VOIDING") : t("REASON_FOR_NOT_CONSIDERATION");
+
+    return <CardLabel className="case-input-label">{labelText}</CardLabel>;
+  };
+
   return (
     <div className="void-submission-main" style={voidMainStyle}>
       {"mark_as_void" === documentSubmission?.[0]?.itemType && (
@@ -22,17 +33,13 @@ const VoidSubmissionBody = ({ t, documentSubmission, setVoidReason, voidReason, 
           {t("MARK_VOID_SUBMISSION_MESSAGE")}
         </p>
       )}
-      {documentSubmission[0].itemType === "unmark_void_submission" && (
+      {"unmark_void_submission" === documentSubmission?.[0]?.itemType && (
         <p className="void-submission-message" style={pStyle}>
           {t("DOCUMENT_WILL_BE_PART")}
         </p>
       )}
       <LabelFieldPair className="case-label-field-pair">
-        {("mark_as_void" === documentSubmission?.[0]?.itemType || "unmark_void_submission" === documentSubmission[0].itemType) && (
-          <CardLabel className="case-input-label">
-            {"unmark_void_submission" === documentSubmission[0].itemType ? t("ORIGINAL_REASON_FOR_VOIDING") : `${t("REASON_FOR_NOT_CONSIDERATION")}`}
-          </CardLabel>
-        )}
+        {getLabel()}
         <div style={{ width: "100%", maxWidth: "960px" }}>
           <textarea
             value={voidReason}

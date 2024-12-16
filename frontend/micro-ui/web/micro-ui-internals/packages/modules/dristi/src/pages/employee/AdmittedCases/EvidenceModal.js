@@ -347,6 +347,7 @@ const EvidenceModal = ({
             artifact: {
               ...documentSubmission?.[0].artifactList,
               isEvidence: !documentSubmission?.[0]?.artifactList?.isEvidence,
+              isVoid: false,
               workflow: {
                 ...documentSubmission?.[0].artifactList.workflow,
                 action: "SIGN DEPOSITION",
@@ -371,6 +372,7 @@ const EvidenceModal = ({
             artifact: {
               ...documentSubmission?.[0].artifactList,
               isEvidence: !documentSubmission?.[0]?.artifactList?.isEvidence,
+              isVoid: false,
               filingNumber: filingNumber,
             },
           },
