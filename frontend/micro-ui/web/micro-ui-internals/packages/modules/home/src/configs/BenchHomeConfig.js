@@ -111,7 +111,7 @@ export const TabBenchSearchConfig = {
           tenantId: "pg",
           criteria: [
             {
-              stage: [],
+              stage: ["Pre-Trial", "Trial", "Post-Trial"],
               status: [
                 "PENDING_REGISTRATION",
                 "PENDING_ADMISSION",
@@ -123,9 +123,6 @@ export const TabBenchSearchConfig = {
               ],
             },
           ],
-          limit: 10,
-          caseType: "NIA S138",
-          offset: 0,
         },
         masterName: "commonUiConfig",
         moduleName: "homeJudgeUIConfig",
@@ -417,7 +414,7 @@ export const TabBenchSearchConfig = {
                 component: "CustomSortComponent",
                 isMandatory: false,
                 disable: false,
-                name: "Sort by",
+                name: "Filed",
                 key: "sortCaseListByDate",
                 sortBy: "createdtime",
                 ascText: "First",
