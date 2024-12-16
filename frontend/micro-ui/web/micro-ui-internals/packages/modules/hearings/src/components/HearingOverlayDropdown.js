@@ -11,12 +11,14 @@ const OverlayDropdown = ({ styles, textStyle, column, row, master, module }) => 
   const dropdownRef = useRef(null);
   const roles = Digit.UserService.getUser()?.info?.roles;
   const isCourtRoomManager = roles.some((role) => role.code === "COURT_ROOM_MANAGER");
-
   const dropdownItems =
     Digit.Customizations[master]?.[module]?.dropDownItems?.(row).filter((item) => {
-      if (isCourtRoomManager && item?.id === "view_case") {
-        return true;
-      } else return false;
+      if (isCourtRoomManager) {
+        if (item?.id === "view_case") {
+          return true;
+        } else return false;
+      }
+      return true;
     }) || [];
 
   const toggleDropdown = (e) => {
