@@ -437,20 +437,6 @@ export const TabCourtRoomSearchConfig = {
                 populators: {},
               },
               {
-                label: "CS_CASE_ID",
-                type: "text",
-                isMandatory: false,
-                disable: false,
-                populators: {
-                  name: "caseSearchText",
-                  error: "BR_PATTERN_ERR_MSG",
-                  validation: {
-                    pattern: {},
-                    minlength: 2,
-                  },
-                },
-              },
-              {
                 label: "CASE_TYPE",
                 isMandatory: false,
                 key: "caseType",
@@ -488,6 +474,20 @@ export const TabCourtRoomSearchConfig = {
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
+                  },
+                },
+              },
+              {
+                label: "CS_CASE_ID",
+                type: "text",
+                isMandatory: false,
+                disable: false,
+                populators: {
+                  name: "caseSearchText",
+                  error: "BR_PATTERN_ERR_MSG",
+                  validation: {
+                    pattern: {},
+                    minlength: 2,
                   },
                 },
               },
@@ -582,20 +582,6 @@ export const TabCourtRoomSearchConfig = {
                 populators: {},
               },
               {
-                label: "CS_CASE_ID",
-                type: "text",
-                isMandatory: false,
-                disable: false,
-                populators: {
-                  name: "caseSearchText",
-                  error: "BR_PATTERN_ERR_MSG",
-                  validation: {
-                    pattern: {},
-                    minlength: 2,
-                  },
-                },
-              },
-              {
                 label: "CASE_TYPE",
                 isMandatory: false,
                 key: "caseType",
@@ -634,6 +620,20 @@ export const TabCourtRoomSearchConfig = {
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
+                  },
+                },
+              },
+              {
+                label: "CS_CASE_ID",
+                type: "text",
+                isMandatory: false,
+                disable: false,
+                populators: {
+                  name: "caseSearchText",
+                  error: "BR_PATTERN_ERR_MSG",
+                  validation: {
+                    pattern: {},
+                    minlength: 2,
                   },
                 },
               },
