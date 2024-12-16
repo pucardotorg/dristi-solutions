@@ -82,10 +82,10 @@ const OverlayDropdown = ({ styles, textStyle, column, row, master, module }) => 
             .map((item) => (
               <li
                 key={item.id}
-                style={{ padding: "10px", cursor: "pointer" }}
+                style={{ padding: "10px", cursor: "pointer", color: item.disabled ? "grey" : "black" }}
                 onClick={() => {
                   setIsDropdownOpen(false);
-                  return item.action(history, column);
+                  return !item.disabled && item.action(history, column);
                 }}
               >
                 {item.label}
