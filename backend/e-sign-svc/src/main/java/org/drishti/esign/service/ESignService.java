@@ -70,9 +70,6 @@ public class ESignService {
         String tenantId = eSignParameter.getTenantId();
         String pageModule = eSignParameter.getPageModule();
         Resource resource = fileStoreUtil.fetchFileStoreObjectById(fileStoreId, eSignParameter.getTenantId());
-        File destFile = new File(uploadRootDir.getAbsolutePath() + File.separator + fileStoreId);
-        eSignParameter.setFilePath(destFile.getAbsolutePath());
-//        String fileHash = pdfEmbedder.pdfSigner(resource, destFile, eSignParameter);
         String fileHash = pdfEmbedder.pdfSignerV2(resource, eSignParameter);
 
         ESignXmlData eSignXmlData = formDataSetter.setFormXmlData(fileHash, new ESignXmlData());
@@ -124,13 +121,11 @@ public class ESignService {
         String fileStoreId = eSignDetails.getFileStoreId();
         String tenantId = eSignParameter.getTenantId();
         String response = eSignParameter.getResponse();
-        String filePath = eSignDetails.getFilePath();
 
         Resource resource = fileStoreUtil.fetchFileStoreObjectById(fileStoreId, tenantId);
 
         MultipartFile multipartFile;
         multipartFile = pdfEmbedder.signPdfWithDSAndReturnMultipartFileV2(resource, response, eSignDetails);
-//            multipartFile = pdfEmbedder.signPdfWithDSAndReturnMultipartFile(filePath, response, fileStoreId);
         String signedFileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
 
         eSignDetails.setSignedFileStoreId(signedFileStoreId);

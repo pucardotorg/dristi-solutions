@@ -15,13 +15,6 @@ import org.springframework.stereotype.Component;
 @Getter
 public class Configuration {
 
-    //MDMS
-    @Value("${egov.mdms.host}")
-    private String mdmsHost;
-
-    @Value("${egov.mdms.search.endpoint}")
-    private String mdmsEndPoint;
-
     //filestore
     @Value("${egov.filestore.host}")
     private String filestoreHost;

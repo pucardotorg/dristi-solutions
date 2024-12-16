@@ -4,7 +4,6 @@ package org.drishti.esign.util;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.drishti.esign.config.Configuration;
 import org.drishti.esign.repository.ServiceRequestRepository;
-import org.drishti.esign.web.models.StorageResponse;
 import org.egov.tracer.model.CustomException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
