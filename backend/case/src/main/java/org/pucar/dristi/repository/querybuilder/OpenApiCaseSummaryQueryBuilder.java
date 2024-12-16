@@ -2,6 +2,7 @@ package org.pucar.dristi.repository.querybuilder;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.pucar.dristi.web.OpenApiCaseSummary;
 import org.pucar.dristi.web.models.OpenApiCaseSummaryRequest;
 import org.pucar.dristi.web.models.Pagination;
 import org.springframework.stereotype.Component;
@@ -105,13 +106,13 @@ public class OpenApiCaseSummaryQueryBuilder {
 
         if (searchCriteria.getCaseType() != null) {
             addWhereClause(query, firstCriteria);
-            query.append("cases.caseType IN (?)");
+            query.append("cases.caseType = ?");
             preparedStatementValues.add(searchCriteria.getCaseType());
             preparedStatementValueTypes.add(Types.VARCHAR);
             firstCriteria = false;
         }
 
-        if (Objects.equals(searchCriteria.getCaseType(), "CMP")) {
+        if (Objects.equals(searchCriteria.getCaseType(), OpenApiCaseSummary.CaseTypeEnum.CMP.name())) {
             if (searchCriteria.getYear() != null && searchCriteria.getStartYear() != null && searchCriteria.getEndYear() != null) {
                 addWhereClause(query, firstCriteria);
                 query.append("cases.registrationdate BETWEEN ? AND ?");
@@ -129,7 +130,7 @@ public class OpenApiCaseSummaryQueryBuilder {
                 firstCriteria = false;
             }
         }
-        else if (Objects.equals(searchCriteria.getCaseType(), "ST")) {
+        else if (Objects.equals(searchCriteria.getCaseType(), OpenApiCaseSummary.CaseTypeEnum.ST.name())) {
             if (searchCriteria.getYear() != null) {
                 addWhereClause(query, firstCriteria);
                 query.append("cases.courtcasenumber LIKE 'ST/%/").append(searchCriteria.getYear()).append("'");

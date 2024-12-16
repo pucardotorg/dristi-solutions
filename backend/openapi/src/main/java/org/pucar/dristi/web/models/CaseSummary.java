@@ -105,9 +105,9 @@ public class CaseSummary {
      * fixed value based on case type
      */
     public enum CaseTypeEnum {
-        CRIMINAL_MISCELLANEOUS_PETITION("Criminal Miscellaneous Petition"),
+        CMP("Criminal Miscellaneous Petition"),
 
-        SUMMARY_TRAIL("Summary Trail");
+        ST("Summary Trail");
 
         private String value;
 

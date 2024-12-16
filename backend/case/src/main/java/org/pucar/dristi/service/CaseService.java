@@ -842,8 +842,7 @@ public class CaseService {
 
     public OpenApiCaseSummary searchByCnrNumber(@Valid OpenApiCaseSummaryRequest request) {
 
-        OpenApiCaseSummary openApiCaseSummary = caseRepository.getCaseSummaryByCnrNumber(request);
-        return openApiCaseSummary;
+        return caseRepository.getCaseSummaryByCnrNumber(request);
     }
 
     public List<CaseListLineItem> searchByCaseType(@Valid OpenApiCaseSummaryRequest request) {
@@ -853,8 +852,7 @@ public class CaseService {
 
     public OpenApiCaseSummary searchByCaseNumber(@Valid OpenApiCaseSummaryRequest request) {
 
-        OpenApiCaseSummary openApiCaseSummary = caseRepository.getCaseSummaryByCaseNumber(request);
-        return openApiCaseSummary;
+        return caseRepository.getCaseSummaryByCaseNumber(request);
 
     }
 }
