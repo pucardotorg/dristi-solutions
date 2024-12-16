@@ -163,7 +163,7 @@ class OpenApiCaseSummaryRowMapperTest {
 
         CustomException exception = assertThrows(CustomException.class, () -> rowMapper.getNameForLitigant(resultSet));
 
-        assertEquals("JSON_PROCESSING_EXCEPTION", exception.getCode());
+        assertEquals("ERROR_FETCHING_LITIGANT_NAME", exception.getCode());
         verify(resultSet, times(1)).getString("litigant_additionaldetails");
         verify(objectMapper, times(1)).readTree(additionalDetails);
     }

@@ -150,7 +150,7 @@ public class WorkflowUtil {
                 .action(processInstance.getAction())
                 .assignes(userIds)
                 .comments(processInstance.getComment())
-                .documents(processInstance.getDocuments())
+                .documents(processInstance.getDocuments() != null ? processInstance.getDocuments() : Collections.emptyList())
                 .build();
 
             businessIdToWorkflow.put(processInstance.getBusinessId(), workflow);

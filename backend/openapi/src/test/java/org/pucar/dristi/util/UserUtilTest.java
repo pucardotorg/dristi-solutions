@@ -1,5 +1,6 @@
 package org.pucar.dristi.util;
 
+import org.egov.tracer.model.CustomException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -198,5 +199,18 @@ public class UserUtilTest {
 
         // Assert
         assertEquals("state", result);
+    }
+
+    @Test
+    public void testUserCallWithInvalidResponse() {
+        Object userRequest = new Object();
+        StringBuilder uri = new StringBuilder("http://example.com/user-search");
+
+        when(configs.getUserSearchEndpoint()).thenReturn("/user-search");
+        when(serviceRequestRepository.fetchResult(eq(uri), eq(userRequest)))
+                .thenThrow(new IllegalArgumentException("Invalid response"));
+
+        assertThrows(CustomException.class, () ->
+                userUtil.userCall(userRequest, uri));
     }
 }

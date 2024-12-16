@@ -1,6 +1,7 @@
 package org.pucar.dristi.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -28,6 +29,7 @@ public class OpenApiCaseSummaryRequest {
     private String caseType;
 
     @JsonProperty("year")
+    @Min(2024)
     private Integer year;
 
     @JsonProperty("startYear")

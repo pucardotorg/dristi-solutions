@@ -530,7 +530,7 @@ public class CaseRepository {
 
             if (list != null && !list.isEmpty()) {
                 if (list.size() > 1) {
-                    throw new CustomException(CASE_SUMMARY_SEARCH_QUERY_EXCEPTION, "Multiple cases found for the given CNR number");
+                    throw new CustomException(CASE_SUMMARY_SEARCH_QUERY_EXCEPTION, "Multiple cases found for the given case number");
                 }
                 else {
                     return list.get(0);

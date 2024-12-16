@@ -168,8 +168,7 @@ public class OpenApiCaseSummaryRowMapper implements ResultSetExtractor<List<Open
                 }
             }
         } catch (SQLException | JsonProcessingException e) {
-            throw new CustomException("JSON_PROCESSING_EXCEPTION", "Error processing litigant additional details") {
-            };
+            throw new CustomException("ERROR_FETCHING_LITIGANT_NAME", "Error while fetching litigant name from result set");
         }
 
         return fullName;

@@ -1,20 +1,12 @@
 package org.pucar.dristi.web.models;
 
-import java.util.Objects;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import io.swagger.v3.oas.annotations.media.Schema;
-
 import java.util.ArrayList;
 import java.util.List;
 
-import org.pucar.dristi.web.models.CaseListLineItem;
-import org.pucar.dristi.web.models.Pagination;
 import org.egov.common.contract.response.ResponseInfo;
 import org.springframework.validation.annotation.Validated;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.Data;
@@ -30,19 +22,19 @@ import lombok.Builder;
 @NoArgsConstructor
 @Builder
 public class CaseListResponse {
-    @JsonProperty("ResponseInfo")
+    @JsonProperty("responseInfo")
 
     @Valid
-    private ResponseInfo responseInfo = null;
+    private ResponseInfo responseInfo;
 
     @JsonProperty("caseList")
     @Valid
-    private List<CaseListLineItem> caseList = null;
+    private List<CaseListLineItem> caseList;
 
     @JsonProperty("pagination")
 
     @Valid
-    private Pagination pagination = null;
+    private Pagination pagination;
 
 
     public CaseListResponse addCaseListItem(CaseListLineItem caseListItem) {

@@ -73,7 +73,7 @@ class OpenApiCaseSummaryQueryBuilderTest {
     }
 
     @Test
-    void testGetCaseBaseQuery_WithCaseType1() {
+    void testGetCaseBaseQuery_WithCaseTypeAndYearRange() {
         searchCriteria.setCaseType("CMP");
         searchCriteria.setYear(2020);
         searchCriteria.setStartYear(2020L);
@@ -83,9 +83,12 @@ class OpenApiCaseSummaryQueryBuilderTest {
 
         assertNotNull(query);
         assertTrue(query.contains("cases.caseType IN (?)"));
+        assertTrue(query.contains("cases.registrationdate BETWEEN ? AND ?"));
         assertEquals(3, preparedStatementValues.size());
         assertEquals("CMP", preparedStatementValues.get(0));
         assertEquals(Types.VARCHAR, preparedStatementValueTypes.get(0));
+        assertEquals(2020L, preparedStatementValues.get(1));
+        assertEquals(2021L, preparedStatementValues.get(2));
     }
 
     @Test
@@ -105,7 +108,8 @@ class OpenApiCaseSummaryQueryBuilderTest {
 
     @Test
     void testGetCaseSummarySearchQuery() {
-        String baseQuery = "SELECT * FROM cases WHERE ...";
+        searchCriteria.setTenantId("tenant-123");
+        String baseQuery = queryBuilder.getCaseBaseQuery(searchCriteria, preparedStatementValues, preparedStatementValueTypes);
 
         String query = queryBuilder.getCaseSummarySearchQuery(baseQuery);
 
@@ -131,7 +135,7 @@ class OpenApiCaseSummaryQueryBuilderTest {
         String query = queryBuilder.addOrderByQuery("SELECT * FROM cases", null);
 
         assertNotNull(query);
-        assertTrue(query.contains("ORDER BY cases DESC"));
+        assertTrue(query.contains("ORDER BY cases.registrationDate DESC"));
     }
 
     @Test

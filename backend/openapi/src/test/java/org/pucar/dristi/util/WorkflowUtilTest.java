@@ -56,12 +56,25 @@ public class WorkflowUtilTest {
     private String businessServiceCode;
     private Workflow workflow;
 
+    private static class TestData {
+        private static final String TEST_TENANT_ID = "tenantId";
+        private static final String TEST_BUSINESS_SERVICE_CODE = "businessServiceCode";
+        static RequestInfo createRequestInfo() {
+            return new RequestInfo();
+        }
+        static Workflow createWorkflow() {
+            return Workflow.builder()
+            .action("APPROVE")
+            .build();
+        }
+    }
+
     @BeforeEach
     public void setUp() {
-        requestInfo = new RequestInfo();
-        tenantId = "tenantId";
-        businessServiceCode = "businessServiceCode";
-        workflow = Workflow.builder().action("APPROVE").build();
+        requestInfo = TestData.createRequestInfo();
+        tenantId = TestData.TEST_TENANT_ID;
+        businessServiceCode = TestData.TEST_BUSINESS_SERVICE_CODE;
+        workflow = TestData.createWorkflow();
     }
 
     @Test

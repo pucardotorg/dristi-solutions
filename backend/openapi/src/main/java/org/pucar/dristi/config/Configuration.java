@@ -99,10 +99,10 @@ public class Configuration {
     @Value("${case.service.searchbycnrnumber.endpoint}")
     private String caseServiceSearchByCnrNumberEndpoint;
 
-    @Value("${case.sevice.searchbycasetype.endpoint}")
+    @Value("${case.service.searchbycasetype.endpoint}")
     private String caseServiceSearchByCaseTypeEndpoint;
 
-    @Value("${case.sevice.searchbycasenumber.endpoint}")
+    @Value("${case.service.searchbycasenumber.endpoint}")
     private String caseServiceSearchByCaseNumberEndpoint;
 
     @Value("${app.zone.id}")

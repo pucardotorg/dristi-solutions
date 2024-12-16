@@ -1,6 +1,7 @@
 package org.pucar.dristi.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.egov.common.contract.response.ResponseInfo;
 import org.pucar.dristi.web.OpenApiCaseSummary;
@@ -21,6 +22,7 @@ public class OpenApiCaseSummaryResponse {
     private ResponseInfo responseInfo;
 
     @JsonProperty("caseSummary")
+    @Valid
     private OpenApiCaseSummary caseSummary;
 
 }

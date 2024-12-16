@@ -32,7 +32,7 @@ public class OpenApiService {
     public CaseSummaryResponse getCaseByCnrNumber(String tenantId, String cnrNumber) {
         if (configuration.getIsElasticSearchEnabled()) {
             log.info("Fetching case summary from elastic search");
-            throw new RuntimeException("Elastic search is not enabled for case summary");
+            throw new RuntimeException("Fetching from ElasticSearch is not yet implemented for case summary");
         } else {
             log.info("Fetching cases from Case Service");
             StringBuilder uri = new StringBuilder(configuration.getCaseServiceHost()).append(configuration.getCaseServiceSearchByCnrNumberEndpoint());
@@ -50,16 +50,20 @@ public class OpenApiService {
     public CaseListResponse getCaseListByCaseType(String tenantId, Integer year, String caseType, Integer offset, Integer limit, String sort) {
         if (configuration.getIsElasticSearchEnabled()) {
             log.info("Fetching case list from elastic search");
-            throw new RuntimeException("Elastic search is not enabled for case list");
+            throw new RuntimeException("Fetching from ElasticSearch is not yet implemented for case summary");
         } else {
             log.info("Fetching cases from Case Service");
             StringBuilder uri = new StringBuilder(configuration.getCaseServiceHost()).append(configuration.getCaseServiceSearchByCaseTypeEndpoint());
             Pagination pagination = Pagination.builder().offSet(Double.valueOf(offset)).limit(Double.valueOf(limit)).build();
             if (sort != null) {
-                pagination.setSortBy(sort);
                 List<String> sortList = List.of(sort.split(","));
-                pagination.setSortBy(sortList.get(0));
-                pagination.setOrder(Order.fromValue(sortList.get(1)));
+                if (sortList.size() == 2) {
+                    pagination.setSortBy(sortList.get(0));
+                    pagination.setOrder(Order.fromValue(sortList.get(1)));
+                }
+                else {
+                    throw new RuntimeException("Invalid sort parameter format. Expected format: 'field,asc|desc'");
+                }
            }
             OpenApiCaseSummaryRequest request = OpenApiCaseSummaryRequest.builder().tenantId(tenantId).year(year).caseType(caseType).pagination(pagination).build();
             List<Long> years = dateUtil.getYearInSeconds(year);
@@ -73,7 +77,7 @@ public class OpenApiService {
     public CaseSummaryResponse getCaseByCaseNumber(String tenantID, Integer year, String caseType, Integer caseNumber) {
         if (configuration.getIsElasticSearchEnabled()) {
             log.info("Fetching case summary from elastic search");
-            throw new RuntimeException("Elastic search is not enabled for case summary");
+            throw new RuntimeException("Fetching from ElasticSearch is not yet implemented for case summary");
         } else {
             log.info("Fetching cases from Case Service");
             StringBuilder uri = new StringBuilder(configuration.getCaseServiceHost()).append(configuration.getCaseServiceSearchByCaseNumberEndpoint());

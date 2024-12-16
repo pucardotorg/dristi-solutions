@@ -16,14 +16,19 @@ public class ResponseInfoFactoryTest {
         responseInfoFactory = new ResponseInfoFactory();
     }
 
-    @Test
-    public void testCreateResponseInfoFromRequestInfo_Success() {
-        // Arrange
+    private RequestInfo createTestRequestInfo() {
         RequestInfo requestInfo = new RequestInfo();
         requestInfo.setApiId("apiId");
         requestInfo.setVer("v1");
         requestInfo.setTs(123456789L);
         requestInfo.setMsgId("msgId");
+        return requestInfo;
+    }
+
+    @Test
+    public void testCreateResponseInfoFromRequestInfo_Success() {
+        // Arrange
+        RequestInfo requestInfo = createTestRequestInfo();
 
         // Act
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(requestInfo, true);
@@ -41,11 +46,7 @@ public class ResponseInfoFactoryTest {
     @Test
     public void testCreateResponseInfoFromRequestInfo_Failure() {
         // Arrange
-        RequestInfo requestInfo = new RequestInfo();
-        requestInfo.setApiId("apiId");
-        requestInfo.setVer("v1");
-        requestInfo.setTs(123456789L);
-        requestInfo.setMsgId("msgId");
+        RequestInfo requestInfo = createTestRequestInfo();
 
         // Act
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(requestInfo, false);
@@ -61,7 +62,7 @@ public class ResponseInfoFactoryTest {
     }
 
     @Test
-    public void testCreateResponseInfoFromRequestInfo_NullRequestInfo() {
+    public void testCreateResponseInfoFromRequestInfo_NullRequestInfo_ShouldReturnDefaultValues() {
         // Act
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(null, true);
 

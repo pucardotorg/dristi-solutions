@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.egov.tracer.model.CustomException;
 import org.egov.tracer.model.ServiceCallException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,6 +53,16 @@ public class ServiceRequestRepositoryTest {
         when(restTemplate.postForObject(uri, request, Map.class)).thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST, "Bad Request"));
 
         assertThrows(ServiceCallException.class, () -> serviceRequestRepository.fetchResult(new StringBuilder(uri), request));
+    }
+
+    @Test
+    void fetchResult_throwsCustomException_whenGenericExceptionOccurs() {
+        String uri = "http://localhost:8080/test";
+        Object request = new Object();
+        String errorMessage = "Connection timeout";
+        when(restTemplate.postForObject(uri, request, Map.class)).thenThrow(new RuntimeException(errorMessage));
+        CustomException exception = assertThrows(CustomException.class, () -> serviceRequestRepository.fetchResult(new StringBuilder(uri), request));
+        assertEquals(errorMessage, exception.getMessage());
     }
 
 }

@@ -6,6 +6,8 @@ import org.egov.common.contract.idgen.IdGenerationResponse;
 import org.egov.common.contract.idgen.IdRequest;
 import org.egov.common.contract.idgen.IdResponse;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.User;
+import org.egov.common.contract.response.ResponseInfo;
 import org.egov.tracer.model.CustomException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,10 +48,14 @@ public class IdgenUtilTest {
     public void setup() {
         // Setup mock RequestInfo
         mockRequestInfo = new RequestInfo();
-        mockRequestInfo.setUserInfo(null);  // You might want to mock this more specifically if needed
+        User userInfo = new User();
+        userInfo.setUuid("test-uuid");
+        userInfo.setId(1L);
+        mockRequestInfo.setUserInfo(userInfo);
 
         // Setup mock ID Generation Response
         mockIdGenerationResponse = new IdGenerationResponse();
+        mockIdGenerationResponse.setResponseInfo(new ResponseInfo());
     }
 
     @Test
@@ -229,4 +235,12 @@ public class IdgenUtilTest {
         // Verify interactions
         verify(restRepo).fetchResult(any(StringBuilder.class), any(IdGenerationRequest.class));
     }
+
+    @Test
+    public void testGetIdList_EmptyTenantId_ThrowsException() {
+        String tenantId = "";
+        assertThrows(NullPointerException.class, () ->
+                idgenUtil.getIdList(mockRequestInfo, tenantId, "test-id", "test-format", 1));
+    }
+
 }
