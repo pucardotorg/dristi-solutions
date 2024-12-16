@@ -66,7 +66,7 @@ class OpenApiCaseSummaryQueryBuilderTest {
         String query = queryBuilder.getCaseBaseQuery(searchCriteria, preparedStatementValues, preparedStatementValueTypes);
 
         assertNotNull(query);
-        assertTrue(query.contains("cases.caseType IN (?)"));
+        assertTrue(query.contains("cases.caseType = ?"));
         assertEquals(2, preparedStatementValues.size());
         assertEquals("CMP", preparedStatementValues.get(0));
         assertEquals(Types.VARCHAR, preparedStatementValueTypes.get(0));
@@ -82,7 +82,7 @@ class OpenApiCaseSummaryQueryBuilderTest {
         String query = queryBuilder.getCaseBaseQuery(searchCriteria, preparedStatementValues, preparedStatementValueTypes);
 
         assertNotNull(query);
-        assertTrue(query.contains("cases.caseType IN (?)"));
+        assertTrue(query.contains("cases.caseType = ?"));
         assertTrue(query.contains("cases.registrationdate BETWEEN ? AND ?"));
         assertEquals(3, preparedStatementValues.size());
         assertEquals("CMP", preparedStatementValues.get(0));
@@ -100,7 +100,7 @@ class OpenApiCaseSummaryQueryBuilderTest {
         String query = queryBuilder.getCaseBaseQuery(searchCriteria, preparedStatementValues, preparedStatementValueTypes);
 
         assertNotNull(query);
-        assertTrue(query.contains("cases.caseType IN (?)"));
+        assertTrue(query.contains("cases.caseType = ?"));
         assertEquals(1, preparedStatementValues.size());
         assertEquals("ST", preparedStatementValues.get(0));
         assertEquals(Types.VARCHAR, preparedStatementValueTypes.get(0));

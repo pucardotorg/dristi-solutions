@@ -140,7 +140,7 @@ public class OpenapiApiControllerTest {
         String caseType = "CMP";
         CaseListResponse mockResponse = new CaseListResponse();
 
-        when(openApiService.getCaseListByCaseType(tenantId, year, caseType, 0, 10, null))
+        when(openApiService.getCaseListByCaseType(tenantId, year, caseType, 0, 10, "registrationDate,desc"))
                 .thenReturn(mockResponse);
 
         // Act & Assert
@@ -149,7 +149,7 @@ public class OpenapiApiControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON));
 
-        verify(openApiService).getCaseListByCaseType(tenantId, year, caseType, 0, 10, null);
+        verify(openApiService).getCaseListByCaseType(tenantId, year, caseType, 0, 10, "registrationDate,desc");
     }
 
     @Test
