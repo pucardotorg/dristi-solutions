@@ -123,6 +123,9 @@ export const TabBenchSearchConfig = {
               ],
             },
           ],
+          limit: 10,
+          caseType: "NIA S138",
+          offset: 0,
         },
         masterName: "commonUiConfig",
         moduleName: "homeJudgeUIConfig",
@@ -165,6 +168,7 @@ export const TabBenchSearchConfig = {
                 type: "dropdown",
                 disable: false,
                 populators: {
+                  name: "substage",
                   optionsKey: "code",
                   mdmsConfig: {
                     masterName: "SubStage",
@@ -186,7 +190,7 @@ export const TabBenchSearchConfig = {
                 isMandatory: false,
                 disable: false,
                 populators: {
-                  name: "filingNumber",
+                  name: "caseSearchText",
                   error: "BR_PATTERN_ERR_MSG",
                   validation: {
                     pattern: {},
@@ -321,7 +325,7 @@ export const TabBenchSearchConfig = {
                 isMandatory: false,
                 disable: false,
                 populators: {
-                  name: "filingNumber",
+                  name: "caseSearchText",
                   error: "BR_PATTERN_ERR_MSG",
                   validation: {
                     pattern: {},
@@ -470,7 +474,7 @@ export const TabBenchSearchConfig = {
                 isMandatory: false,
                 disable: false,
                 populators: {
-                  name: "filingNumber",
+                  name: "caseSearchText",
                   error: "BR_PATTERN_ERR_MSG",
                   validation: {
                     pattern: {},
@@ -615,7 +619,7 @@ export const TabBenchSearchConfig = {
                 isMandatory: false,
                 disable: false,
                 populators: {
-                  name: "filingNumber",
+                  name: "caseSearchText",
                   error: "BR_PATTERN_ERR_MSG",
                   validation: {
                     pattern: {},
