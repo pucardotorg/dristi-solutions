@@ -2123,7 +2123,7 @@ const AdmittedCases = () => {
           )}
         </div>
       )}
-      <div className="inbox-search-wrapper">
+      <div className="inbox-search-wrapper" style={showActionBar && !isWorkFlowFetching ? { marginBottom: "56px" } : {}}>
         {/* Pass defaultValues as props to InboxSearchComposer */}
         <InboxSearchComposer
           key={`${config?.label}-${updateCounter}`}
