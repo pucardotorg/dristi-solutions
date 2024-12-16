@@ -859,7 +859,12 @@ const AdmittedCases = () => {
     return {
       handleClose: handleClose,
       heading: {
-        label: "view_reason_for_voiding" === documentSubmission?.[0]?.itemType ? t("REASON_FOR_VOIDING") : t("ARE_YOU_SURE_TO_MARK_AS_VOID"),
+        label:
+          "view_reason_for_voiding" === documentSubmission?.[0]?.itemType
+            ? t("REASON_FOR_VOIDING")
+            : "unmark_void_submission" === documentSubmission?.[0]?.itemType
+            ? t("ARE_YOU_SURE_TO_UNMARK_AS_VOID")
+            : t("ARE_YOU_SURE_TO_MARK_AS_VOID"),
       },
       isStepperModal: true,
       actionSaveLabel:
@@ -871,9 +876,9 @@ const AdmittedCases = () => {
           ? t("MARK_VOID_CONFIRM")
           : t("MARK_AS_VOID"),
       actionCancelLabel: t("MARK_VOID_CANCEL"),
-      actionCancelOnSubmit: handleClose,
       steps: [
         {
+          actionCancelOnSubmit: handleClose,
           actionSaveLableType: "mark_as_void" === documentSubmission?.[0]?.itemType ? "WARNING" : null,
           modalBody: (
             <VoidSubmissionBody
