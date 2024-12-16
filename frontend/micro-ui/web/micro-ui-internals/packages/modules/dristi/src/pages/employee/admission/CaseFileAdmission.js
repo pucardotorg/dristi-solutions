@@ -362,14 +362,15 @@ function CaseFileAdmission({ t, path }) {
             } catch (error) {
               setShowErrorToast("INTERNAL_ERROR_OCCURRED");
               setIsDisabled(false);
-              throw error;
+              throw new Error("Delay condonation application creation failed: " + error.message);
             }
           }
           await handleRegisterCase();
           setCreateAdmissionOrder(true);
           setLoader(false);
         } catch (error) {
-          console.error(error);
+          setShowErrorToast("INTERNAL_ERROR_OCCURRED");
+          console.error("some error occurred:", error);
           setLoader(false);
         }
         break;
