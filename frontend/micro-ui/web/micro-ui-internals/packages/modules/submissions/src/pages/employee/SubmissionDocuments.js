@@ -164,7 +164,7 @@ const SubmissionDocuments = ({ path }) => {
 
   const handleNextSubmission = () => {
     localStorage.removeItem("fileStoreId");
-    history.replace(`/digit-ui/citizen/submissions/submissions-document?filingNumber=${filingNumber}`);
+    history.replace(`/digit-ui/citizen/submissions/submit-document?filingNumber=${filingNumber}`);
   };
 
   const handleSuccessDownloadSubmission = () => {
