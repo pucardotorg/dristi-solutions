@@ -1,13 +1,13 @@
 openapi: "3.0.2"
 info:
   title: Case A and B Diary related APIs
-  description: This API specification defines the various APIs that are used to manage the A and B diaries. A diary is daily diary for everything happening in a Judge's court. So is specific to a judge and date. B diary is a diary specific to a Judge and a case. It tracks all actions happening in a case.
+  description: This API specification defines the various APIs that are used to manage the A and B diaries. A diary is daily diary for everything happening in a Judge's court, across cases. It is specific to a judge and date and is generated daily and signed. B diary is a diary specific to a Judge and a case and is generated only once at the end of the case. It tracks all actions happening in a case.
   version: "1.0"
 tags:
   - name: Case Diaries
 paths:
 
-  /case/dairy/v1/addDiaryEntry:
+  /case/diary/v1/addDiaryEntry:
     post:
       tags:
         - Case Diaries
@@ -20,13 +20,13 @@ paths:
               $ref: '#/components/schemas/CaseDiaryRequest'
       responses:
         "201":
-          description: ResponseInfo with order(s) updated successfully
+          description: ResponseInfo with diary entry added successfully
           content:
             'application/json':
               schema:
                 $ref: '#/components/schemas/CaseDiaryResponse'
         "400":
-          description: order(s) creation failed
+          description: addition of diary entry filed
           content:
             'application/json':
               schema:
@@ -51,32 +51,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/CaseDiaryListResponse'
         "400":
-          description: failed to find order(s)
+          description: failed to find case diary
           content:
             'application/json':
               schema:
                 $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
 
 
-  /case/diary/v1/{tenantId}/{judgeID}/{diaryType}:
+  /case/diary/v1/{tenantId}/{judgeId}/{diaryType}:
     get:
       tags:
         - Case Diaries
-      description: The API is used to get the fileStoreID of the published (signed) PDF for the case A diary. example - GET /case/diary/v1/KL/pdf?
+      description: The API is used to get the fileStoreId of the published (signed) PDF for the case A diary. example - GET /case/diary/v1/KL/pdf?
       operationId: getCaseDairyStoreId
       parameters:
-        - name: tenantID
+        - name: tenantId
           in: path
-          description: tenant ID
+          description: tenant Id
           required: true
           schema:
             type: string
             pattern: "^[a-zA-Z]{2}$"
             maxLength: 2
             minLength: 2
-        - name: judgeID
+        - name: judgeId
           in: path
-          description: the ID of the Judge, whose diary is being queried
+          description: the Id of the Judge, whose diary is being queried
           required: true
           schema:
             type: string
@@ -95,10 +95,10 @@ paths:
           schema:
             type: integer
             format: int64
-        - name: caseID
+        - name: caseId
           in: query
           required: false
-          description: the caseID for which we want the diary. This will be mostly used in case we are searching for B diary
+          description: the caseId for which we want the diary. This will be mostly used in case we are searching for B diary
           schema:
             type: string
             format: uuid
@@ -116,7 +116,7 @@ paths:
               schema:
                 $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes
 
-  /case/dairy/v1/generate:
+  /case/diary/v1/generate:
     post:
       tags:
         - Case Diaries
@@ -129,13 +129,13 @@ paths:
               $ref: '#/components/schemas/CaseDiaryRequest'
       responses:
         "201":
-          description: ResponseInfo with order(s) updated successfully
+          description: ResponseInfo with filestore ID of the case PDF generated
           content:
             'application/json':
               schema:
                 $ref: '#/components/schemas/CaseDiaryResponse'
         "400":
-          description: order(s) creation failed
+          description: case diary PDF generation failed
           content:
             'application/json':
               schema:
@@ -154,13 +154,13 @@ paths:
               $ref: '#/components/schemas/CaseDiaryRequest'
       responses:
         "201":
-          description: ResponseInfo with order(s) updated successfully
+          description: ResponseInfo with diary updated successfully
           content:
             'application/json':
               schema:
                 $ref: '#/components/schemas/CaseDiaryResponse'
         "400":
-          description: order(s) creation failed
+          description: diary update failed
           content:
             'application/json':
               schema:
@@ -256,13 +256,13 @@ components:
     CaseDiaryEntry:
       type: object
       required:
-        - ID
+        - Id
         - tenantId
         - diaryID
         - date
         - businessOfDay
       properties:
-        ID:
+        Id:
           type: string
           description: primary key to identify the entity
           format: uuid
@@ -272,7 +272,7 @@ components:
         tenantId:
           type: string
           description: This is tenantId of the case
-        diaryID:
+        diaryId:
           type: string
           description: reference ID of the CaseDiary entity to which this diary entry belongs to
           format: uuid
@@ -284,6 +284,8 @@ components:
           description: EPOCH date (time is 00:00:00) when the entry was created. All diary operations are only with date, and we don't need time. Setting time to 0, helps compare two values for same date.
         businessOfDay:
           type: string
+          minLength: 0
+          maxLength: 1024
           description: the business of the day that is being recorded for the diary
         hearingDate:
           type: integer
@@ -300,7 +302,7 @@ components:
       type: object
       description: this entity is only for use by API. it is not stored in DB, but is filled by getting data from DB
       properties:
-        dairyID:
+        dairyId:
           type: string
           description: primary key to identify the entity
           format: uuid

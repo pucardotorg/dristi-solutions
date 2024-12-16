@@ -4,7 +4,7 @@
       "tenantId": "kl",
       "business": "case",
       "businessService": "case-a-diary",
-      "businessServiceSla": null,
+      "businessServiceSla": 86400000,
       "states": [
         {
           "sla": null,

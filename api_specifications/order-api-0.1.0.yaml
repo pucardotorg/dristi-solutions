@@ -296,8 +296,8 @@ components:
         businessOfDay:
           type: string
           minLength: 0
-          maxLength: 256
-          description: the business of the day that. linked to master data to initially populate, but then is converted and stored as string, as Judge can update it
+          maxLength: 1024
+          description: the business of the day that. initially populated from master data based on order type, but judge is allowed to edit the text. The value is finally stored as a string
         isActive:
           type: boolean
           description: to handle soft delete

@@ -16,6 +16,7 @@ CREATE TABLE dristi_casediary (
 );
 
 CREATE INDEX idx_dristi_casediary_type_judge ON dristi_casediary(tenant_id, diary_type, judge_id);
+CREATE INDEX idx_dristi_casediary_date ON dristi_casediary(tenant_id, judge_id, diary_date);
 
 CREATE TABLE dristi_casediary_documents (
     id varchar(36) NOT NULL PRIMARY KEY,
@@ -31,13 +32,13 @@ CREATE TABLE dristi_casediary_documents (
     last_modified_by varchar(36) NOT NULL,
     created_time int8 NOT NULL,
     last_modified_time int8 NOT NULL,
-    CONSTRAINT fk_case_documents_case
+    CONSTRAINT fk_case_documents_casediary
         FOREIGN KEY(casediary_id)
         REFERENCES dristi_casediary(id)
 );
 
 CREATE INDEX idx_dristi_casediary_documents_casedairy_id ON dristi_casediary_documents(tenant_id, casediary_id);
-CREATE UNIQUE INDEX idx_dristi_casediary_documents_casedairy_id ON dristi_casediary_documents(tenant_id, filestore_id);
+CREATE UNIQUE INDEX idx_dristi_casediary_documents_casedairy_id ON dristi_casediary_filestoreid(tenant_id, filestore_id);
 
 CREATE TABLE dristi_diaryentries (
     id varchar(36) NOT NULL PRIMARY KEY,
@@ -51,6 +52,9 @@ CREATE TABLE dristi_diaryentries (
     last_modified_by varchar(36) NOT NULL,
     created_time int8 NOT NULL,
     last_modified_time int8 NOT NULL,
-)
+    CONSTRAINT fk_case_diaryentries_casediary
+        FOREIGN KEY(casediary_id)
+        REFERENCES dristi_casediary(id)
+);
 
 CREATE INDEX idx_dristi_diaryentries_casedairy_id ON dristi_diaryentries(tenant_id, casediary_id);
