@@ -19,14 +19,14 @@ paths:
             schema:
               $ref: '#/components/schemas/CaseDiaryRequest'
       responses:
-        "201":
+        "200":
           description: ResponseInfo with diary entry added successfully
           content:
             'application/json':
               schema:
                 $ref: '#/components/schemas/CaseDiaryResponse'
         "400":
-          description: addition of diary entry filed
+          description: addition of diary entry failed
           content:
             'application/json':
               schema:
@@ -63,7 +63,7 @@ paths:
       tags:
         - Case Diaries
       description: The API is used to get the fileStoreId of the published (signed) PDF for the case A diary. example - GET /case/diary/v1/KL/pdf?
-      operationId: getCaseDairyStoreId
+      operationId: getCaseDiaryStoreId
       parameters:
         - name: tenantId
           in: path
@@ -80,7 +80,6 @@ paths:
           required: true
           schema:
             type: string
-            enum: [ "ADiary", "BDiary" ]
         - name: diaryType
           in: path
           description: the type of the diary i.e. A diary or B diary
@@ -153,7 +152,7 @@ paths:
             schema:
               $ref: '#/components/schemas/CaseDiaryRequest'
       responses:
-        "201":
+        "200":
           description: ResponseInfo with diary updated successfully
           content:
             'application/json':
@@ -200,7 +199,7 @@ components:
       properties:
         ResponseInfo:
           $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo
-        caseSummary:
+        diaries:
           type: array
           items:
             $ref: '#/components/schemas/CaseDiaryItem'
@@ -284,7 +283,6 @@ components:
           description: EPOCH date (time is 00:00:00) when the entry was created. All diary operations are only with date, and we don't need time. Setting time to 0, helps compare two values for same date.
         businessOfDay:
           type: string
-          minLength: 0
           maxLength: 1024
           description: the business of the day that is being recorded for the diary
         hearingDate:
@@ -302,7 +300,7 @@ components:
       type: object
       description: this entity is only for use by API. it is not stored in DB, but is filled by getting data from DB
       properties:
-        dairyId:
+        diaryId:
           type: string
           description: primary key to identify the entity
           format: uuid
