@@ -47,7 +47,7 @@ public class EvidenceQueryBuilder {
             String sourceId = criteria.getSourceId();
             String sourceName = criteria.getSourceName();
             String artifactNumber = criteria.getArtifactNumber();
-
+            String status = criteria.getStatus();
             // Build the query using the extracted fields
             firstCriteria = addArtifactCriteria(id, query, preparedStmtList, firstCriteria, "art.id = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(caseId, query, preparedStmtList, firstCriteria, "art.caseId = ?",preparedStmtArgList);
@@ -60,6 +60,9 @@ public class EvidenceQueryBuilder {
             firstCriteria = addArtifactCriteria(sourceId, query, preparedStmtList, firstCriteria, "art.sourceId = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(owner != null ? owner.toString() : null, query, preparedStmtList, firstCriteria, "art.createdBy = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(sourceName, query, preparedStmtList, firstCriteria, "art.sourceName = ?",preparedStmtArgList);
+            if(status != null && status.equals(PENDING_E_SIGN)){
+                firstCriteria = addArtifactCriteria(status, query, preparedStmtList, firstCriteria, "art.status <> ?",preparedStmtArgList);
+            }
             addArtifactPartialCriteria(artifactNumber, query, preparedStmtList, firstCriteria,preparedStmtArgList);
 
             return query.toString();

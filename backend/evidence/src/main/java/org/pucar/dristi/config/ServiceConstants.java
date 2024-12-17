@@ -65,6 +65,7 @@ public class ServiceConstants {
 	public static final String DEPOSITION = "DEPOSITION";
 	public static final String SUBMISSION = "DIRECT";
 	public static final String CASE_FILING = "CASE_FILING";
+	public static final String PENDING_E_SIGN= "PENDING_E-SIGN";
 	public static final String CASE_EXCEPTION = "CASE_EXCEPTION";
 	public static final String ORDER_EXCEPTION = "ORDER_EXCEPTION";
 	public static final String APPLICATION_EXCEPTION = "APPLICATION_EXCEPTION";
