@@ -10,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
-import org.egov.common.models.individual.Individual;
 import org.egov.tracer.model.CustomException;
 import org.jetbrains.annotations.NotNull;
 import org.pucar.dristi.config.Configuration;
@@ -267,6 +266,7 @@ public class CaseService {
         return SmsTemplateData.builder()
                 .courtCaseNumber(cases.getCourtCaseNumber())
                 .cnrNumber(cases.getCnrNumber())
+                .cmpNumber(cases.getCmpNumber())
                 .efilingNumber(cases.getFilingNumber())
                 .tenantId(cases.getTenantId()).build();
     }
@@ -311,6 +311,9 @@ public class CaseService {
         }
         else if(previousStatus.equalsIgnoreCase(PENDING_ADMISSION_HEARING) && updatedStatus.equalsIgnoreCase(ADMISSION_HEARING_SCHEDULED)){
             return ADMISSION_HEARING_SCHEDULED;
+        }
+        else if(previousStatus.equalsIgnoreCase(PENDING_RESPONSE) && updatedStatus.equalsIgnoreCase(CASE_ADMITTED)){
+            return CASE_ADMITTED;
         }
         return null;
     }

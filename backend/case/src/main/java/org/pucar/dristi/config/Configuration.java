@@ -224,6 +224,8 @@ public class Configuration {
 	@Value("${egov.sms.notification.advocate.join.case.template.id}")
 	private String smsNotificationAdvocateJoinCaseTemplateId;
 
+	@Value("${egov.sms.notification.case.admitted.template.id}")
+	private String smsNotificationCaseAdmittedTemplateId;
 
 	@Value("${notification.sms.enabled}")
 	private Boolean isSMSEnabled;
