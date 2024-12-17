@@ -103,6 +103,7 @@ public class EvidenceService {
     public List<Artifact> searchEvidence(RequestInfo requestInfo, EvidenceSearchCriteria evidenceSearchCriteria, Pagination pagination) {
         try {
             // Fetch applications from database according to the given search criteria
+            enrichSearchCriteria(requestInfo, evidenceSearchCriteria);
             List<Artifact> artifacts = repository.getArtifacts(evidenceSearchCriteria, pagination);
 
             // If no applications are found matching the given criteria, return an empty list
@@ -117,6 +118,13 @@ public class EvidenceService {
         }
     }
 
+    private void enrichSearchCriteria(RequestInfo requestInfo, EvidenceSearchCriteria evidenceSearchCriteria) {
+        if(requestInfo.getUserInfo() != null &&
+                requestInfo.getUserInfo().getType().equals("EMPLOYEE") &&
+                requestInfo.getUserInfo().getRoles().stream().anyMatch(role -> role.getCode().equals("JUDGE_ROLE"))) {
+            evidenceSearchCriteria.setStatus(PENDING_E_SIGN);
+        }
+    }
     public Artifact updateEvidence(EvidenceRequest evidenceRequest) {
         try {
             Artifact existingApplication = validateExistingEvidence(evidenceRequest);

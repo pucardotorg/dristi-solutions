@@ -62,9 +62,10 @@ public class EvidenceQueryBuilder {
             firstCriteria = addArtifactCriteria(sourceName, query, preparedStmtList, firstCriteria, "art.sourceName = ?",preparedStmtArgList);
             if(status != null && status.equals(PENDING_E_SIGN)){
                 firstCriteria = addArtifactCriteria(status, query, preparedStmtList, firstCriteria, "art.status <> ?",preparedStmtArgList);
+            } else {
+                firstCriteria = addArtifactCriteria(status, query, preparedStmtList, firstCriteria, "art.status = ?",preparedStmtArgList);
             }
             addArtifactPartialCriteria(artifactNumber, query, preparedStmtList, firstCriteria,preparedStmtArgList);
-
             return query.toString();
         } catch (Exception e) {
             log.error("Error while building artifact search query", e);
