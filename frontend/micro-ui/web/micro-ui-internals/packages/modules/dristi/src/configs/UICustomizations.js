@@ -24,8 +24,8 @@ const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.co
 const partyTypes = {
   "complainant.primary": "Complainant",
   "complainant.additional": "Complainant",
-  "respondent.primary": "Respondent",
-  "respondent.additional": "Respondent",
+  "respondent.primary": "Accused",
+  "respondent.additional": "Accused",
 };
 
 export const UICustomizations = {
