@@ -1,21 +1,28 @@
 package org.pucar.dristi.service;
 
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.models.individual.Individual;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.HearingRegistrationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.HearingRepository;
+import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.validator.HearingRegistrationValidator;
 import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
-import static org.pucar.dristi.config.ServiceConstants.WITNESS_DEPOSITION_UPDATE_EXCEPTION;
+import static org.pucar.dristi.config.ServiceConstants.COMPLAINANT;
 
 @Service
 @Slf4j
@@ -27,6 +34,10 @@ public class HearingService {
     private final HearingRepository hearingRepository;
     private final Producer producer;
     private final Configuration config;
+    private final CaseUtil caseUtil;
+    private final ObjectMapper objectMapper;
+    private final IndividualService individualService;
+    private final SmsNotificationService notificationService;
 
     @Autowired
     public HearingService(
@@ -35,13 +46,17 @@ public class HearingService {
             WorkflowService workflowService,
             HearingRepository hearingRepository,
             Producer producer,
-            Configuration config) {
+            Configuration config, CaseUtil caseUtil, ObjectMapper objectMapper, IndividualService individualService, SmsNotificationService notificationService) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.workflowService = workflowService;
         this.hearingRepository = hearingRepository;
         this.producer = producer;
         this.config = config;
+        this.caseUtil = caseUtil;
+        this.objectMapper = objectMapper;
+        this.individualService = individualService;
+        this.notificationService = notificationService;
     }
 
     public Hearing createHearing(HearingRequest body) {
@@ -106,7 +121,10 @@ public class HearingService {
             // Enrich application upon update
             enrichmentUtil.enrichHearingApplicationUponUpdate(hearingRequest);
 
+            String updatedState = hearingRequest.getHearing().getStatus();
             producer.push(config.getHearingUpdateTopic(), hearingRequest);
+
+            callNotificationService(hearingRequest, updatedState);
 
             return hearingRequest.getHearing();
 
@@ -210,5 +228,132 @@ public class HearingService {
             throw new CustomException(WITNESS_DEPOSITION_UPDATE_EXCEPTION, "Error occurred while uploading witness deposition pdf: " + e.getMessage());
         }
 
+    }
+
+    private void callNotificationService(HearingRequest hearingRequest, String updatedState) {
+
+        try {
+            CaseSearchRequest caseSearchRequest = createCaseSearchRequest(hearingRequest.getRequestInfo(), hearingRequest.getHearing());
+            JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+
+            Object additionalDetailsObject = hearingRequest.getHearing().getAdditionalDetails();
+            String jsonData = objectMapper.writeValueAsString(additionalDetailsObject);
+            JsonNode additionalData = objectMapper.readTree(jsonData);
+            boolean caseAdjourned = additionalData.has("purposeOfAdjournment");
+
+            String messageCode = updatedState != null ? getMessageCode(updatedState, caseAdjourned) : null;
+            assert messageCode != null;
+
+            JsonNode rootNode = caseDetails.get("additionalDetails");
+
+            String hearingDate = hearingRequest.getHearing().getStartTime().toString();
+
+            Set<String> individualIds = extractIndividualIds(rootNode, null);
+
+            Set<String> phoneNumbers = callIndividualService(hearingRequest.getRequestInfo(), individualIds);
+
+            SmsTemplateData smsTemplateData = SmsTemplateData.builder()
+                    .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").asText() : "")
+                    .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").asText() : "")
+                    .hearingDate(hearingDate)
+                    .tenantId(hearingRequest.getHearing().getTenantId()).build();
+
+            for (String number : phoneNumbers) {
+                notificationService.sendNotification(hearingRequest.getRequestInfo(), smsTemplateData, messageCode, number);
+            }
+        }
+        catch (Exception e) {
+            // Log the exception and continue the execution without throwing
+            log.error("Error occurred while sending notification: {}", e.toString());
+        }
+    }
+
+    public CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, Hearing hearing) {
+        CaseSearchRequest caseSearchRequest = new CaseSearchRequest();
+        caseSearchRequest.setRequestInfo(requestInfo);
+        CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(hearing.getFilingNumber().get(0)).defaultFields(false).build();
+        caseSearchRequest.addCriteriaItem(caseCriteria);
+        return caseSearchRequest;
+    }
+    private String getMessageCode(String updatedStatus, Boolean hearingAdjourned) {
+
+        if(hearingAdjourned && updatedStatus.equalsIgnoreCase(COMPLETED)){
+            return HEARING_ADJOURNED;
+        }
+        return null;
+    }
+
+    public  Set<String> extractIndividualIds(JsonNode rootNode, String receiver) {
+        Set<String> individualIds = new HashSet<>();
+
+        JsonNode respondentDetailsNode = rootNode.path("respondentDetails")
+                .path("formdata");
+        if (respondentDetailsNode.isArray()) {
+            for (JsonNode respondentNode : respondentDetailsNode) {
+                JsonNode respondentVerificationNode = respondentNode.path("data")
+                        .path("respondentVerification")
+                        .path("individualDetails");
+                if (!respondentVerificationNode.isMissingNode()) {
+                    String individualId = respondentVerificationNode.path("individualId").asText();
+                    if (!individualId.isEmpty() && (null == receiver || receiver.equalsIgnoreCase(ACCUSED))) {
+                        individualIds.add(individualId);
+                    }
+                }
+            }
+        }
+
+        JsonNode complainantDetailsNode = rootNode.path("complainantDetails")
+                .path("formdata");
+        if (complainantDetailsNode.isArray()) {
+            for (JsonNode complainantNode : complainantDetailsNode) {
+                JsonNode complainantVerificationNode = complainantNode.path("data")
+                        .path("complainantVerification")
+                        .path("individualDetails");
+                if (!complainantVerificationNode.isMissingNode()) {
+                    String individualId = complainantVerificationNode.path("individualId").asText();
+                    if (!individualId.isEmpty() && (null == receiver || receiver.equalsIgnoreCase(COMPLAINANT))) {
+                        individualIds.add(individualId);
+                    }
+                }
+            }
+        }
+
+        JsonNode advocateDetailsNode = rootNode.path("advocateDetails")
+                .path("formdata");
+        if (advocateDetailsNode.isArray()) {
+            for (JsonNode advocateNode : advocateDetailsNode) {
+                JsonNode isAdvocateRepresentingNode = advocateNode.path("data")
+                        .path("isAdvocateRepresenting")
+                        .path("code");
+
+                if ("YES".equals(isAdvocateRepresentingNode.asText())) {
+                    JsonNode advocateListNode = advocateNode.path("data")
+                            .path("advocateBarRegNumberWithName");
+
+                    if (advocateListNode.isArray()) {
+                        for (JsonNode advocateInfoNode : advocateListNode) {
+                            String individualId = advocateInfoNode.path("individualId").asText();
+                            if (!individualId.isEmpty()) {
+                                individualIds.add(individualId);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return individualIds;
+    }
+
+    private Set<String> callIndividualService(RequestInfo requestInfo, Set<String> individualIds) {
+
+        Set<String> mobileNumber = new HashSet<>();
+        for(String id : individualIds){
+            List<Individual> individuals = individualService.getIndividualsByIndividualId(requestInfo, id);
+            if(individuals.get(0).getMobileNumber() != null){
+                mobileNumber.add(individuals.get(0).getMobileNumber());
+            }
+        }
+        return mobileNumber;
     }
 }
