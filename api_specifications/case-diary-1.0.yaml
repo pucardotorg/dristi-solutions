@@ -11,6 +11,7 @@ paths:
     post:
       tags:
         - Case Diaries
+      operationId: addDiaryEntry
       summary: add an entry to the diary. If no diary exists, first create an entry and then insert diary entry. Mostly to be used for A Diary
       requestBody:
         description: Details for the new diary entry + RequestInfo meta data.
@@ -35,6 +36,7 @@ paths:
     post:
       tags:
         - Case Diaries
+      operationId: search
       summary: get the list of diaries based on input parameters
       requestBody:
         description: Details for the search of diaries + RequestInfo meta data.
@@ -63,7 +65,7 @@ paths:
       tags:
         - Case Diaries
       description: The API is used to get the fileStoreId of the published (signed) PDF for the case diary. example - GET /case/diary/v1/KL/<judgeid>/ADiary?
-      operationId: getCaseDiaryStoreId
+      operationId: getStoreId
       parameters:
         - name: tenantId
           in: path
@@ -113,12 +115,13 @@ paths:
           content:
             'application/json':
               schema:
-                $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
 
   /case/diary/v1/generate:
     post:
       tags:
         - Case Diaries
+      operationId: generate
       summary: Generate the PDF for the diary, store it and return the PDF's file store ID. This will be the unsigned PDF
       requestBody:
         description: Details for diary whose PDF is being created + RequestInfo meta data.
@@ -179,7 +182,7 @@ components:
       type: object
       properties:
         ResponseInfo:
-          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
         fileStoreID:
           type: string
           description: file store ID of the case diary. it will be regular PDF ID when responding to addDiaryEntry API, but will be signed PDF ID when responding to update method
@@ -198,7 +201,7 @@ components:
       type: object
       properties:
         ResponseInfo:
-          $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
         diaries:
           type: array
           items:
@@ -211,9 +214,10 @@ components:
       required:
         - tenantId
         - diaryDate
+        - diaryType
         - judgeId
       properties:
-        ID:
+        id:
           type: string
           description: primary key to identify the entity
           format: uuid
@@ -242,7 +246,7 @@ components:
           description: array of PDF document fileStore IDs, where documentType will have help identify if it is signed or unsigned
           example: documentType = casediary.signed / casediary.unsigned
           items:
-            $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Document
+            $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Document'
         diaryEntries:
           type: array
           items:
@@ -257,13 +261,13 @@ components:
     CaseDiaryEntry:
       type: object
       required:
-        - Id
+        - id
         - tenantId
         - diaryID
         - date
         - businessOfDay
       properties:
-        Id:
+        id:
           type: string
           description: primary key to identify the entity
           format: uuid
