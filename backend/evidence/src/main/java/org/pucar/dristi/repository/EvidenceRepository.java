@@ -43,6 +43,10 @@ public class    EvidenceRepository {
 
             // Artifact query building
             String artifactQuery = queryBuilder.getArtifactSearchQuery(preparedStmtList,preparedStmtArgList,evidenceSearchCriteria);
+            if(evidenceSearchCriteria.getIsCitizen()){
+                String citizenQuery = queryBuilder.getArtifactOwnerQuery(evidenceSearchCriteria, preparedStmtList, preparedStmtArgList);
+                artifactQuery += citizenQuery;
+            }
             artifactQuery = queryBuilder.addOrderByQuery(artifactQuery, pagination);
             log.info("Final artifact query: {}", artifactQuery);
 

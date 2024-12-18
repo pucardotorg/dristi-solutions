@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component;
 
 import java.sql.Types;
 import java.util.List;
-import java.util.UUID;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -35,7 +34,6 @@ public class EvidenceQueryBuilder {
             boolean firstCriteria = true; // To check if it's the first criteria
 
             // Extract fields from EvidenceSearchCriteria
-            UUID owner = criteria.getOwner();
             String artifactType = criteria.getArtifactType();
             Boolean evidenceStatus = criteria.getEvidenceStatus();
             String id = criteria.getId();
@@ -58,8 +56,11 @@ public class EvidenceQueryBuilder {
             firstCriteria = addArtifactCriteria(hearing, query, preparedStmtList, firstCriteria, "art.hearing = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(order, query, preparedStmtList, firstCriteria, "art.orders = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(sourceId, query, preparedStmtList, firstCriteria, "art.sourceId = ?",preparedStmtArgList);
-            firstCriteria = addArtifactCriteria(owner != null ? owner.toString() : null, query, preparedStmtList, firstCriteria, "art.createdBy = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(sourceName, query, preparedStmtList, firstCriteria, "art.sourceName = ?",preparedStmtArgList);
+            if(criteria.getIsCourtEmployee()) {
+                criteria.setStatus(PENDING_E_SIGN);
+                firstCriteria = addArtifactCriteria(criteria.getStatus(), query, preparedStmtList, firstCriteria, "art.status <> ?",preparedStmtArgList);
+            }
             addArtifactPartialCriteria(artifactNumber, query, preparedStmtList, firstCriteria,preparedStmtArgList);
 
             return query.toString();
@@ -69,6 +70,29 @@ public class EvidenceQueryBuilder {
         }
     }
 
+    public String getArtifactOwnerQuery(EvidenceSearchCriteria searchCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+        StringBuilder query = new StringBuilder();
+        query.append(" OR (");
+        addOwnerCriteria(searchCriteria.getOwner().toString(), query, "art.createdBy <> ? ", preparedStmtList, preparedStmtArgList);
+        addOwnerCriteria(PENDING_E_SIGN, query, "AND (art.status <> ? OR art.status IS NULL)", preparedStmtList, preparedStmtArgList);
+        addVoidCriteria(query, preparedStmtList, preparedStmtArgList);
+        addArtifactCriteria(searchCriteria.getFilingNumber(), query, preparedStmtList, false, " art.filingNumber = ?",preparedStmtArgList);
+        query.append(" )");
+        return query.toString();
+    }
+
+    void addVoidCriteria(StringBuilder query, List<Object> preparedStmtList, List<Integer> preparedStmtArgsList) {
+        query.append("AND art.isVoid = ? ");
+        preparedStmtList.add(false);
+        preparedStmtArgsList.add(Types.BOOLEAN);
+    }
+    void addOwnerCriteria(String criteria, StringBuilder query, String clause, List<Object> preparedStmtList, List<Integer> preparedStmtArgsList) {
+        if (criteria != null && !criteria.isEmpty()) {
+            query.append(clause);
+            preparedStmtList.add(criteria);
+            preparedStmtArgsList.add(Types.VARCHAR);
+        }
+    }
     void addArtifactPartialCriteria(String criteria, StringBuilder query, List<Object> preparedStmtList, boolean firstCriteria, List<Integer> preparedStmtArgList) {
         if (criteria != null && !criteria.isEmpty()) {
             addClauseIfRequired(query, firstCriteria);
