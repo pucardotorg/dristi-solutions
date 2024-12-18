@@ -26,10 +26,10 @@
         },
         {
           "sla": 86400000,
-          "state": "PENDING_ESIGN",
+          "state": "PENDING_E-SIGN",
           "applicationStatus": "INWORKFLOW",
           "docUploadRequired": false,
-          "isStartState": true,
+          "isStartState": false,
           "isTerminateState": false,
           "isStateUpdatable": true,
           "actions": [
