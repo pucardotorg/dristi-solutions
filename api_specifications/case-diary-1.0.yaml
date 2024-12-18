@@ -111,7 +111,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/CaseDiaryResponse'
         '400':
-          description: querying case summary failed
+          description: querying case diary failed
           content:
             'application/json':
               schema:
