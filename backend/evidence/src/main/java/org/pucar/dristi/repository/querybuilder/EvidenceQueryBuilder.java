@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import java.sql.Types;
 import java.util.List;
+import java.util.UUID;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -34,6 +35,7 @@ public class EvidenceQueryBuilder {
             boolean firstCriteria = true; // To check if it's the first criteria
 
             // Extract fields from EvidenceSearchCriteria
+            UUID owner = criteria.getOwner();
             String artifactType = criteria.getArtifactType();
             Boolean evidenceStatus = criteria.getEvidenceStatus();
             String id = criteria.getId();
@@ -56,6 +58,7 @@ public class EvidenceQueryBuilder {
             firstCriteria = addArtifactCriteria(hearing, query, preparedStmtList, firstCriteria, "art.hearing = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(order, query, preparedStmtList, firstCriteria, "art.orders = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(sourceId, query, preparedStmtList, firstCriteria, "art.sourceId = ?",preparedStmtArgList);
+            firstCriteria = addArtifactCriteria(owner != null ? owner.toString() : null, query, preparedStmtList, firstCriteria, "art.createdBy = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(sourceName, query, preparedStmtList, firstCriteria, "art.sourceName = ?",preparedStmtArgList);
             if(criteria.getIsCourtEmployee()) {
                 criteria.setStatus(PENDING_E_SIGN);
