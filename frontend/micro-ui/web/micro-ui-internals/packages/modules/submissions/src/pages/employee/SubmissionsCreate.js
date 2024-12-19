@@ -15,6 +15,7 @@ import {
   configsSettlement,
   configsSurety,
   submissionTypeConfig,
+  requestForBail,
 } from "../../configs/submissionsCreateConfig";
 import ReviewSubmissionModal from "../../components/ReviewSubmissionModal";
 import SubmissionSignatureModal from "../../components/SubmissionSignatureModal";
@@ -174,7 +175,8 @@ const SubmissionsCreate = ({ path }) => {
       BAIL_BOND: configsBailBond,
       SURETY: configsSurety,
       CHECKOUT_REQUEST: configsCheckoutRequest,
-      OTHERS: configsOthers,
+      // REQUEST_FOR_BAIL :requestForBail,
+      OTHERS: requestForBail, // need to chnage here
     };
     const applicationConfigKeysForEmployee = {
       DOCUMENT: configsDocumentSubmission,
@@ -189,7 +191,7 @@ const SubmissionsCreate = ({ path }) => {
             if (body?.populators?.validation?.customValidationFn) {
               const customValidations =
                 Digit.Customizations[body.populators.validation.customValidationFn.moduleName][
-                  body.populators.validation.customValidationFn.masterName
+                body.populators.validation.customValidationFn.masterName
                 ];
 
               if (customValidations) {
@@ -630,8 +632,8 @@ const SubmissionsCreate = ({ path }) => {
             partyType: "complainant.primary",
             ...(orderDetails &&
               orderDetails?.orderDetails.isResponseRequired?.code === true && {
-                respondingParty: orderDetails?.additionalDetails?.formdata?.responseInfo?.respondingParty,
-              }),
+              respondingParty: orderDetails?.additionalDetails?.formdata?.responseInfo?.respondingParty,
+            }),
             isResponseRequired: orderDetails && !isExtension ? orderDetails?.orderDetails.isResponseRequired?.code === true : true,
             ...(hearingId && { hearingId }),
             owner: cleanString(userInfo?.name),
@@ -664,9 +666,9 @@ const SubmissionsCreate = ({ path }) => {
       const documentsFile =
         signedDoucumentUploadedID !== "" || localStorageID
           ? {
-              documentType: "SIGNED",
-              fileStore: signedDoucumentUploadedID || localStorageID,
-            }
+            documentType: "SIGNED",
+            fileStore: signedDoucumentUploadedID || localStorageID,
+          }
           : null;
 
       localStorage.removeItem("fileStoreId");

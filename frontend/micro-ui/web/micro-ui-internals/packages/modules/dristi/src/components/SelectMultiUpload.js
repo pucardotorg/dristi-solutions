@@ -231,7 +231,7 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
               </div>
             ))}
           </div>
-          {errors[input.name] && (
+          {errors[input?.name] && (
             <CardLabelError style={{ width: "70%", marginLeft: "30%", fontSize: "12px" }}>
               {errors[input.name]?.message ? errors[input.name]?.message : t(errors[input.name]) || t(input.error)}
             </CardLabelError>
