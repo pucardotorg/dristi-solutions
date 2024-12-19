@@ -74,11 +74,10 @@ public class EvidenceQueryBuilder {
         String loggedInUserUuid = searchCriteria.getUserUuid();
 
         if (searchCriteria.getOwner() == null) {
-            queryBuilder.append(addCitizenCriteria(searchCriteria.getUserUuid(), " AND art.createdBy = ? ", preparedStmtList, preparedStmtArgList));
-            queryBuilder.append(addCitizenCriteria(searchCriteria.getUserUuid(), " OR (art.createdBy <> ? ", preparedStmtList, preparedStmtArgList));
-            queryBuilder.append(addCitizenCriteria(searchCriteria.getFilingNumber(), " AND art.filingNumber = ?", preparedStmtList, preparedStmtArgList));
+            queryBuilder.append(" AND ( ");
+            queryBuilder.append(addCitizenCriteria(loggedInUserUuid, searchCriteria.getFilingNumber(), preparedStmtList, preparedStmtArgList));
             queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList));
-            queryBuilder.append(" ) ");
+            queryBuilder.append(" )) ");
         }
 
         else if(!searchCriteria.getOwner().toString().equals(loggedInUserUuid)) {
@@ -88,13 +87,20 @@ public class EvidenceQueryBuilder {
         return queryBuilder.toString();
     }
 
-    private String addCitizenCriteria(String criteria, String clause, List<Object> preparedStmtList, List<Integer> prepareStmtArgsList) {
+    private String addCitizenCriteria(String loggedInUserUuid, String filingNumber, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         StringBuilder queryBuilder = new StringBuilder();
-        if (criteria != null && !criteria.isEmpty()) {
-            queryBuilder.append(clause);
-            preparedStmtList.add(criteria);
-            prepareStmtArgsList.add(Types.VARCHAR);
-        }
+        queryBuilder.append(" art.createdBy = ? ");
+        preparedStmtList.add(loggedInUserUuid);
+        preparedStmtArgList.add(Types.VARCHAR);
+
+        queryBuilder.append(" OR ( art.createdBy <> ? ");
+        preparedStmtList.add(loggedInUserUuid);
+        preparedStmtArgList.add(Types.VARCHAR);
+
+        queryBuilder.append(" AND art.filingNumber = ? ");
+        preparedStmtList.add(filingNumber);
+        preparedStmtArgList.add(Types.VARCHAR);
+
         return queryBuilder.toString();
     }
 
