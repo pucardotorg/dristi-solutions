@@ -10,6 +10,7 @@ export const userTypeOptions = [
       "CASE_VIEWER",
       "EVIDENCE_CREATOR",
       "EVIDENCE_VIEWER",
+      "EVIDENCE_EDITOR",
       "APPLICATION_CREATOR",
       "APPLICATION_VIEWER",
       "HEARING_VIEWER",
@@ -18,7 +19,6 @@ export const userTypeOptions = [
       "SUBMISSION_RESPONDER",
       "SUBMISSION_DELETE",
       "TASK_VIEWER",
-      "CASE_RESPONDER",
       "HEARING_ACCEPTOR",
       "ADVOCATE_VIEWER",
       "PENDING_TASK_CREATOR",
@@ -38,6 +38,7 @@ export const userTypeOptions = [
       "CASE_VIEWER",
       "EVIDENCE_CREATOR",
       "EVIDENCE_VIEWER",
+      "EVIDENCE_EDITOR",
       "APPLICATION_CREATOR",
       "APPLICATION_VIEWER",
       "HEARING_VIEWER",
@@ -46,8 +47,8 @@ export const userTypeOptions = [
       "SUBMISSION_RESPONDER",
       "SUBMISSION_DELETE",
       "TASK_VIEWER",
-      "CASE_RESPONDER",
       "HEARING_ACCEPTOR",
+      "USER_REGISTER",
       "ADVOCATE_VIEWER",
       "ADVOCATE_APPLICATION_VIEWER",
       "PENDING_TASK_CREATOR",
@@ -59,41 +60,44 @@ export const userTypeOptions = [
     },
     subText: "ADVOCATE_SUB_TEXT",
   },
-  {
-    code: "ADVOCATE_CLERK",
-    name: "ADVOCATE_CLERK_TEXT",
-    showBarDetails: true,
-    hasStateRegistrationNo: true,
-    isVerified: true,
-    role: [
-      "ADVOCATE_CLERK_ROLE",
-      "CASE_CREATOR",
-      "CASE_EDITOR",
-      "CASE_VIEWER",
-      "EVIDENCE_CREATOR",
-      "EVIDENCE_VIEWER",
-      "APPLICATION_CREATOR",
-      "APPLICATION_VIEWER",
-      "HEARING_VIEWER",
-      "ORDER_VIEWER",
-      "SUBMISSION_CREATOR",
-      "SUBMISSION_RESPONDER",
-      "SUBMISSION_DELETE",
-      "TASK_VIEWER",
-      "CASE_RESPONDER",
-      "HEARING_ACCEPTOR",
-      "USER_REGISTER",
-      "ADVOCATE_VIEWER",
-      "PENDING_TASK_CREATOR",
-    ],
-    apiDetails: {
-      serviceName: "/advocate/clerk/v1/_create",
-      requestKey: "clerk",
-      AdditionalFields: ["stateRegnNumber"],
-    },
+  // DO NOT REMOVE THE BELOW COMMENTED CODE.
+  // Disabled advocate clerk option from user registration as per production side demand.
+  // {
+  //   code: "ADVOCATE_CLERK",
+  //   name: "ADVOCATE_CLERK_TEXT",
+  //   showBarDetails: true,
+  //   hasStateRegistrationNo: true,
+  //   isVerified: true,
+  //   role: [
+  //     "ADVOCATE_CLERK_ROLE",
+  //     "CASE_CREATOR",
+  //     "CASE_EDITOR",
+  //     "CASE_VIEWER",
+  //     "EVIDENCE_CREATOR",
+  //     "EVIDENCE_VIEWER",
+  //     "EVIDENCE_EDITOR",
+  //     "APPLICATION_CREATOR",
+  //     "APPLICATION_VIEWER",
+  //     "HEARING_VIEWER",
+  //     "ORDER_VIEWER",
+  //     "SUBMISSION_CREATOR",
+  //     "SUBMISSION_RESPONDER",
+  //     "SUBMISSION_DELETE",
+  //     "TASK_VIEWER",
+  //     "HEARING_ACCEPTOR",
+  //     "USER_REGISTER",
+  //     "ADVOCATE_VIEWER",
+  //     "ADVOCATE_APPLICATION_VIEWER",
+  //     "PENDING_TASK_CREATOR",
+  //   ],
+  //   apiDetails: {
+  //     serviceName: "/advocate/clerk/v1/_create",
+  //     requestKey: "clerk",
+  //     AdditionalFields: ["stateRegnNumber"],
+  //   },
 
-    subText: "ADVOCATE_CLERK_SUB_TEXT",
-  },
+  //   subText: "ADVOCATE_CLERK_SUB_TEXT",
+  // },
 ];
 
 export const newConfig = [
@@ -220,6 +224,8 @@ export const newConfig = [
               name: "locality",
               validation: {
                 isRequired: true,
+                minlength: 2,
+                maxlength: 256,
               },
               isMandatory: true,
             },
@@ -467,7 +473,7 @@ export const newConfig = [
               },
             },
             {
-              label: "Upload ID Proof",
+              label: "CS_UPLOAD_PROOF",
               type: "documentUpload",
               name: "ID_Proof",
               validation: {},
@@ -494,8 +500,8 @@ export const newConfig = [
         populators: {
           inputs: [
             {
-              label: "Terms and Conditions",
-              subLabel: "Before diving in, we'll need to verify your identity for account setup.",
+              label: "ES_COMMON_USER_TERMS_AND_CONDITIONS",
+              subLabel: "CS_VERFIY_IDENTITY_SUB_TEXT",
               type: "multiple",
               name: "terms_condition",
               optionsKey: "name",
@@ -505,23 +511,19 @@ export const newConfig = [
               options: [
                 {
                   code: "AGREE_MESSAGE",
-                  name:
-                    "By using this app, you agree to abide by our community guidelines, fostering a respectful and inclusive environment for all users",
+                  name: "FIRST_TERMS_AND_CONDITIONS",
                 },
                 {
                   code: "PRIVACY_MESSAGE",
-                  name:
-                    "Your privacy is paramount. Rest assured, your data is securely handled and never shared with third parties without your consent",
+                  name: "SECOND_TERMS_AND_CONDITIONS",
                 },
                 {
                   code: "LAWFUL_MESSAGE",
-                  name:
-                    "Please refrain from engaging in any unlawful activities while using our app, ensuring a safe and compliant platform for everyone",
+                  name: "THIRD_TERMS_AND_CONDITIONS",
                 },
                 {
                   code: "MODIFICATION_MESSAGE",
-                  name:
-                    "We reserve the right to modify our services and terms at any time, keeping you informed of any updates through our communication channels",
+                  name: "FOURTH_TERMS_AND_CONDITIONS",
                 },
               ],
             },

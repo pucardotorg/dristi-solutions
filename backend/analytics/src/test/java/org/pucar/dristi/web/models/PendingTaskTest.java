@@ -2,6 +2,7 @@ package org.pucar.dristi.web.models;
 
 import org.egov.common.contract.request.User;
 import org.junit.jupiter.api.Test;
+import org.pucar.dristi.web.models.PendingTask;
 
 import java.util.ArrayList;
 import java.util.List;

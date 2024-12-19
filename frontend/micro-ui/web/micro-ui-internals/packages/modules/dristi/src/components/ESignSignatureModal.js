@@ -4,6 +4,7 @@ import Modal from "./Modal";
 import { Button } from "@egovernments/digit-ui-react-components";
 import { FileUploadIcon } from "../icons/svgIndex";
 import { Urls } from "../hooks";
+import AuthenticatedLink from "../Utils/authenticatedLink";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -45,7 +46,6 @@ function ESignSignatureModal({
         inputs: [
           {
             name: name,
-            documentHeader: "CS_ADD_SIGNATURE",
             type: "DragDropComponent",
             uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
             maxFileSize: 5,
@@ -176,9 +176,13 @@ function ESignSignatureModal({
             </div>
             <div className="donwload-submission">
               <h2>{t("WANT_TO_DOWNLOAD")}</h2>
-              <a href={uri} target="_blank" rel="noreferrer" style={{ color: "#007E7E", cursor: "pointer", textDecoration: "underline" }}>
-                {t("CLICK_HERE")}
-              </a>
+              <AuthenticatedLink
+                uri={uri}
+                style={{ color: "#007E7E", cursor: "pointer", textDecoration: "underline" }}
+                displayFilename={"CLICK_HERE"}
+                t={t}
+                pdf={true}
+              ></AuthenticatedLink>
             </div>
           </div>
         ) : (

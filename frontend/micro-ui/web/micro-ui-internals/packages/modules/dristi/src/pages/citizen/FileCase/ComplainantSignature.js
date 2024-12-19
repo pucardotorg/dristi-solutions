@@ -183,7 +183,6 @@ const ComplainantSignature = ({ path }) => {
         inputs: [
           {
             name: name,
-            documentHeader: "CS_ADD_SIGNATURE",
             type: "DragDropComponent",
             uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
             maxFileSize: 5,
@@ -234,7 +233,7 @@ const ComplainantSignature = ({ path }) => {
     {},
     `case-details-${filingNumber}`,
     filingNumber,
-    filingNumber
+    Boolean(filingNumber)
   );
 
   const caseDetails = useMemo(
@@ -388,6 +387,7 @@ const ComplainantSignature = ({ path }) => {
             tenantId: tenantId,
             caseId: caseId,
             delayCondonation: delayCondonation,
+            filingNumber: caseDetails?.filingNumber,
           },
         ],
       },
@@ -449,11 +449,28 @@ const ComplainantSignature = ({ path }) => {
     return true;
   };
 
+  const updateSignedDocInCaseDoc = () => {
+    const tempDocList = structuredClone(caseDetails?.documents || []);
+    const index = tempDocList.findIndex((doc) => doc.documentType === "case.complaint.signed");
+    const signedDoc = {
+      documentType: "case.complaint.signed",
+      fileStore: signatureDocumentId ? signatureDocumentId : DocumentFileStoreId,
+      fileName: "case Complaint Signed Document",
+    };
+    if (index > -1) {
+      tempDocList.splice(index, 1);
+    }
+    tempDocList.push(signedDoc);
+    return tempDocList;
+  };
+
   const handleSubmit = async (state) => {
     setLoader(true);
 
     let calculationResponse = {};
     const assignees = getAllAssignees(caseDetails);
+
+    const caseDocList = updateSignedDocInCaseDoc();
 
     if (isSubmit(state)) {
       try {
@@ -465,6 +482,7 @@ const ComplainantSignature = ({ path }) => {
                 ...caseDetails?.additionalDetails,
                 signedCaseDocument: signatureDocumentId ? signatureDocumentId : DocumentFileStoreId,
               },
+              documents: caseDocList,
               workflow: {
                 ...caseDetails?.workflow,
                 action: isSelectedUploadDoc

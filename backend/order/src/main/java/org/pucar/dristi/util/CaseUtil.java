@@ -14,10 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static org.pucar.dristi.config.ServiceConstants.ERROR_WHILE_FETCHING_FROM_CASE;
 
 import static org.pucar.dristi.config.ServiceConstants.ERROR_WHILE_FETCHING_FROM_CASE;
 
@@ -70,15 +69,74 @@ public class CaseUtil {
 		uri.append(configs.getCaseHost()).append(configs.getCaseSearchPath());
 
 		Object response = new HashMap<>();
+		JsonNode caseList = null;
 		try {
 			response = restTemplate.postForObject(uri.toString(), caseSearchRequest, Map.class);
 			JsonNode jsonNode = mapper.readTree(mapper.writeValueAsString(response));
-			JsonNode caseList = jsonNode.get("criteria").get(0).get("responseList");
-			return caseList.get(0);
+			caseList = jsonNode.get("criteria").get(0).get("responseList");
 		} catch (Exception e) {
 			log.error(ERROR_WHILE_FETCHING_FROM_CASE, e);
 			throw new CustomException(ERROR_WHILE_FETCHING_FROM_CASE, e.getMessage());
 		}
+		return caseList;
+	}
+
+	public JsonNode getLitigants(JsonNode caseList) {
+
+		log.info("operation = getLitigants, result = IN_PROGRESS");
+
+		if (caseList != null && caseList.isArray() && !caseList.isEmpty()) {
+			log.info("operation = getLitigants, result = SUCCESS");
+			return caseList.get(0).get("litigants");
+		} else {
+			log.error("operation = getLitigants, result = FAILURE");
+			throw new CustomException("DK_RR_CASE_ERR", "case not found");
+		}
+
+	}
+
+	public Set<String> getIndividualIds(JsonNode nodeArray) {
+		log.info("operation = getIndividualIds, result = IN_PROGRESS");
+		Set<String> response = new HashSet<>();
+		if (nodeArray != null && nodeArray.isArray()) {
+			for (JsonNode node : nodeArray) {
+				JsonNode id = node.get("individualId");
+				if (id != null) {
+					response.add(String.valueOf(id.asText()));
+				}
+
+			}
+		}
+		log.info("operation = getIndividualIds, result = SUCCESS");
+		return response;
+	}
+
+	public JsonNode getRepresentatives(JsonNode caseRes) {
+
+		log.info("operation = getRepresentatives, result = IN_PROGRESS");
+
+		if (caseRes != null && caseRes.isArray() && !caseRes.isEmpty()) {
+			log.info("operation = getRepresentatives, result = SUCCESS");
+			return caseRes.get(0).get("representatives");
+		} else {
+			log.error("operation = getRepresentatives, result = FAILURE");
+			throw new CustomException("DK_RR_CASE_ERR", "case not found");
+		}
+	}
+
+	public Set<String> getAdvocateIds(JsonNode nodeArray) {
+		log.info("operation = getAdvocateIds, result = IN_PROGRESS");
+		Set<String> response = new HashSet<>();
+		if (nodeArray != null && nodeArray.isArray()) {
+			for (JsonNode node : nodeArray) {
+				JsonNode id = node.get("advocateId");
+				if (id != null) {
+					response.add(String.valueOf(id.asText()));
+				}
+			}
+		}
+		log.info("operation = getAdvocateIds, result = SUCCESS");
+		return response;
 	}
 
 }

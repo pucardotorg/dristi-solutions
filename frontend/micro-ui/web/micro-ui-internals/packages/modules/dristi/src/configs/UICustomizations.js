@@ -329,7 +329,7 @@ export const UICustomizations = {
           const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
           return <span>{differenceInDays}</span>;
         case "USER_NAME":
-          const displayName = `${value?.givenName || ""} ${value?.familyName || ""} ${value?.otherNames || ""}`;
+          const displayName = `${value?.givenName || ""} ${value?.otherNames || ""} ${value?.familyName || ""}`;
           return displayName;
         default:
           return t("ES_COMMON_NA");
@@ -447,13 +447,13 @@ export const UICustomizations = {
       return link;
     },
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
-      const caseId = row?.businessObject?.billDetails?.caseTitleFilingNumber.split(",")[1];
+      const caseId = row?.businessObject?.billDetails?.caseTitleFilingNumber.split(",")[1].trim();
       const consumerCode = row?.businessObject?.billDetails?.consumerCode;
       const service = row?.businessObject?.billDetails?.service;
       const billStatus = row?.businessObject?.billDetails?.billStatus;
       const paymentType = row?.businessObject?.billDetails?.paymentType;
       switch (key) {
-        case "Case Name & ID":
+        case "CASE_NAME_ID":
           return billStatus === "ACTIVE" ? (
             <span className="link">
               <Link
@@ -465,9 +465,9 @@ export const UICustomizations = {
           ) : (
             billStatus === "PAID" && <span>{String(value || t("ES_COMMON_NA"))}</span>
           );
-        case "Amount Due":
+        case "AMOUNT_DUE":
           return <span>{`Rs. ${value}/-`}</span>;
-        case "Action":
+        case "ACTION":
           return billStatus === "ACTIVE" ? (
             <span className="action-link">
               <Link
@@ -985,6 +985,159 @@ export const UICustomizations = {
       }
     },
   },
+  FilingsConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const filterList = Object.keys(requestCriteria.state.searchForm)
+        .map((key) => {
+          if (requestCriteria.state.searchForm[key]?.type) {
+            return { [key]: requestCriteria.state.searchForm[key]?.type };
+          } else if (requestCriteria.state.searchForm[key]?.value) {
+            return { [key]: requestCriteria.state.searchForm[key]?.value };
+          } else if (typeof requestCriteria.state.searchForm[key] === "string") {
+            return { [key]: requestCriteria.state.searchForm[key] };
+          }
+        })
+        ?.filter((filter) => filter)
+        .reduce(
+          (fieldObj, item) => ({
+            ...fieldObj,
+            ...item,
+          }),
+          {}
+        );
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
+      const status = !filterList?.status || filterList?.status === "PUBLISHED" ? "PUBLISHED" : "EMPTY";
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria.body,
+          criteria: {
+            ...requestCriteria.body.criteria,
+            ...filterList,
+            status: userRoles.includes("CITIZEN") && requestCriteria.url.split("/").includes("order") ? status : filterList?.status,
+          },
+          tenantId,
+          pagination: {
+            limit: requestCriteria?.state?.tableForm?.limit,
+            offSet: requestCriteria?.state?.tableForm?.offset,
+          },
+        },
+        config: {
+          ...requestCriteria.config,
+          select: (data) => {
+            return {
+              ...data,
+              TotalCount: data?.TotalCount ? data?.TotalCount : data?.pagination?.totalCount,
+            };
+            // }
+          },
+        },
+      };
+    },
+    additionalCustomizations: (row, key, column, value, t) => {
+      switch (key) {
+        case "FILING_NAME":
+          return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} value={value} showAsHeading={true} />;
+        case "TYPE":
+          return t(row?.filingType) || "";
+        case "STAGE":
+          return "";
+        case "FILE":
+          return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} />;
+        case "STATUS":
+          //Need to change the shade as per the value
+          return row?.isVoid ? (
+            <div
+              style={{
+                padding: "5px 10px",
+                fontFamily: "Roboto",
+                fontSize: "14px",
+                fontWeight: 400,
+                lineHeight: "16.41px",
+                color: "#231F20",
+              }}
+            >
+              {t("VOID")}
+            </div>
+          ) : row?.status ? (
+            <CustomChip text={t(row?.status)} shade={"green"} />
+          ) : (
+            ""
+          );
+        case "OWNER":
+          return removeInvalidNameParts(value);
+        case "CS_ACTIONS":
+          return <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="FilingsConfig" />;
+        default:
+          return "N/A";
+      }
+    },
+    dropDownItems: (row, column) => {
+      const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+      // row.status === "Submitted" &&
+      return [
+        ...((userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE") ||
+          userInfo.roles.map((role) => role.code).includes("COURT_ROOM_MANAGER")) &&
+        !row?.isVoid &&
+        row?.filingType === "DIRECT"
+          ? [
+              {
+                label: "MARK_AS_VOID",
+                id: "mark_as_void",
+                hide: false,
+                disabled: row?.status !== "SUBMITTED",
+                action: column.clickFunc,
+              },
+            ]
+          : []),
+        ...(userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE") &&
+        !row.isEvidence &&
+        !row?.isVoid &&
+        !(row?.status !== "SUBMITTED" && row?.filingType === "DIRECT")
+          ? [
+              {
+                label: "MARK_AS_EVIDENCE",
+                id: "mark_as_evidence",
+                hide: false,
+                disabled: false,
+                action: column.clickFunc,
+              },
+            ]
+          : []),
+        ...(userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE") && row.isEvidence
+          ? [
+              {
+                label: "UNMARK_AS_EVIDENCE",
+                id: "unmark_as_evidence",
+                hide: false,
+                disabled: false,
+                action: column.clickFunc,
+              },
+            ]
+          : []),
+        ...(row?.isVoid && row?.filingType === "DIRECT"
+          ? [
+              {
+                label: "VIEW_REASON_FOR_VOIDING",
+                id: "view_reason_for_voiding",
+                hide: false,
+                disabled: false,
+                action: column.clickFunc,
+              },
+            ]
+          : []),
+
+        {
+          label: "DOWNLOAD_FILING",
+          id: "download_filing",
+          hide: false,
+          disabled: row?.status !== "SUBMITTED" && row?.filingType === "DIRECT",
+          action: column.clickFunc,
+        },
+      ];
+    },
+  },
   PartiesConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
       return {
@@ -1051,6 +1204,8 @@ export const UICustomizations = {
         return /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,}$/i;
       case "address":
         return /^[^\$\"<>?\\\\~`!@$%^()={}\[\]*:;“”‘’]{2,256}$/i;
+      case "nonNumericString":
+        return /^[^0-9]{1,}$/i;
       default:
         return;
     }

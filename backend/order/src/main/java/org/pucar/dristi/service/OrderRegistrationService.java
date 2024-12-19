@@ -1,5 +1,6 @@
 package org.pucar.dristi.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +12,7 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.OrderRegistrationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.OrderRepository;
+import org.pucar.dristi.util.AdvocateUtil;
 import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.WorkflowUtil;
 import org.pucar.dristi.validators.OrderRegistrationValidator;
@@ -49,8 +51,10 @@ public class OrderRegistrationService {
 
     private IndividualService individualService;
 
+    private AdvocateUtil advocateUtil;
+
     @Autowired
-    public OrderRegistrationService(OrderRegistrationValidator validator, Producer producer, Configuration config, WorkflowUtil workflowUtil, OrderRepository orderRepository, OrderRegistrationEnrichment enrichmentUtil, ObjectMapper objectMapper, CaseUtil caseUtil, SmsNotificationService notificationService, IndividualService individualService) {
+    public OrderRegistrationService(OrderRegistrationValidator validator, Producer producer, Configuration config, WorkflowUtil workflowUtil, OrderRepository orderRepository, OrderRegistrationEnrichment enrichmentUtil, ObjectMapper objectMapper, CaseUtil caseUtil, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil) {
         this.validator = validator;
         this.producer = producer;
         this.config = config;
@@ -61,6 +65,7 @@ public class OrderRegistrationService {
         this.caseUtil = caseUtil;
         this.notificationService = notificationService;
         this.individualService = individualService;
+        this.advocateUtil = advocateUtil;
     }
 
     public Order createOrder(OrderRequest body) {
