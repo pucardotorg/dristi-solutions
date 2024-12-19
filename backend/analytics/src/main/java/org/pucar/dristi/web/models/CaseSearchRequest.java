@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.egov.common.contract.request.RequestInfo;
+import org.pucar.dristi.web.models.CaseCriteria;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.ArrayList;

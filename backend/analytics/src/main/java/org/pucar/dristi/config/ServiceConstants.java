@@ -23,7 +23,7 @@ public class ServiceConstants {
                     + "\"billDetails\": {"
                     + "\"id\": \"%s\","
                     + "\"tenantId\": \"%s\","
-                    + "\"caseTitleFilingNumber\": \"%s,%s\","
+                    + "\"caseTitleFilingNumber\": \"%s, %s\","
                     + "\"stage\": \"%s\","
                     + "\"caseType\": \"%s\","
                     + "\"paymentType\": \"%s\","
@@ -193,6 +193,9 @@ public class ServiceConstants {
 
     public static final String NO_PAYMENT_TYPE_FOUND_MSG = "No payment type found for the given service code.";
 
+    public static final String ASSIGN_TO_PATH="$.assignedTo";
+
+
     public static final String NOTIFICATION_ENG_LOCALE_CODE = "en_IN";
 
     public static final String NOTIFICATION_MODULE_CODE = "notification";
@@ -205,4 +208,10 @@ public class ServiceConstants {
     public static final String ERROR_WHILE_FETCHING_FROM_CASE = "ERROR_WHILE_FETCHING_FROM_CASE";
 
     public static final String INDIVIDUAL_UTILITY_EXCEPTION = "INDIVIDUAL_UTILITY_EXCEPTION";
+
+    public static final String ERROR_WHILE_FETCHING_FROM_ADVOCATE = "ERROR_WHILE_FETCHING_FROM_ADVOCATE";
+
+    public static final String DUE_DATE_PATH= "$.duedate";
+
+    public static final long ONE_DAY_DURATION_MILLIS=86400000L;
 }

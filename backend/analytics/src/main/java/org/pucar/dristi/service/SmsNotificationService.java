@@ -87,6 +87,7 @@ public class SmsNotificationService {
         smsDetails.put("hearingDate", smsTemplateData.getHearingDate());
         smsDetails.put("tenantId", smsTemplateData.getTenantId());
         smsDetails.put("mobileNumber", mobileNumber);
+        smsDetails.put("efilingNumber", smsTemplateData.getEfilingNumber());
 
         return smsDetails;
     }
@@ -96,7 +97,7 @@ public class SmsNotificationService {
      * Gets the message from localization
      *
      * @param requestInfo
-     * @param courtCase
+     * @param templateData
      * @param msgCode
      * @return
      */
@@ -142,7 +143,7 @@ public class SmsNotificationService {
         StringBuilder uri = new StringBuilder();
         RequestInfoWrapper requestInfoWrapper = new RequestInfoWrapper();
         requestInfoWrapper.setRequestInfo(requestInfo);
-        uri.append(config.getLocalizationHost()).append(config.getLocalizationSearchEndpoint())
+        uri.append(config.getLocalizationHost()).append(config.getLocalizationContextPath()).append(config.getLocalizationSearchEndpoint())
                 .append("?tenantId=" + rootTenantId).append("&module=" + module).append("&locale=" + locale);
         List<String> codes = null;
         List<String> messages = null;

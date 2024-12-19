@@ -4,11 +4,13 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.response.ResponseInfo;
 import org.pucar.dristi.service.CasePdfService;
 import org.pucar.dristi.service.CaseService;
 import org.pucar.dristi.service.WitnessService;
 import org.pucar.dristi.util.ResponseInfoFactory;
+import org.pucar.dristi.web.OpenApiCaseSummary;
 import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -101,6 +103,16 @@ public class CaseApiController {
         return new ResponseEntity<>(addWitnessResponse, HttpStatus.OK);
     }
 
+    @PostMapping(value = "/v1/admin/edit_case")
+    public ResponseEntity<CaseResponse> caseV1Edit(
+            @Parameter(in = ParameterIn.DEFAULT, description = "Details for editing few fields in the court case + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody CaseRequest body) {
+
+        CourtCase cases = caseService.editCase(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
+        CaseResponse caseResponse = CaseResponse.builder().cases(Collections.singletonList(cases)).responseInfo(responseInfo).build();
+        return new ResponseEntity<>(caseResponse, HttpStatus.OK);
+    }
+
     @PostMapping(value = "/witness/v1/_create")
     public ResponseEntity<WitnessResponse> caseWitnessV1CreatePost(
             @Parameter(in = ParameterIn.DEFAULT, description = "Details for the witness + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody WitnessRequest body) {
@@ -147,6 +159,30 @@ public class CaseApiController {
         List<CaseSummary> caseSummaries = caseService.getCaseSummary(body);
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
         CaseSummaryResponse caseSummaryResponse = CaseSummaryResponse.builder().cases(caseSummaries).pagination(body.getPagination()).responseInfo(responseInfo).build();
+        return new ResponseEntity<>(caseSummaryResponse, HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/v1/search/cnrNumber")
+    public ResponseEntity<OpenApiCaseSummaryResponse> caseV1SearchCnrNumber(@Parameter(in = ParameterIn.DEFAULT, description = "Details for the new court case + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody OpenApiCaseSummaryRequest body) {
+        OpenApiCaseSummary cases = caseService.searchByCnrNumber(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(RequestInfo.builder().build(), true);
+        OpenApiCaseSummaryResponse caseSummaryResponse = OpenApiCaseSummaryResponse.builder().caseSummary(cases).responseInfo(responseInfo).build();
+        return new ResponseEntity<>(caseSummaryResponse, HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/v1/search/caseType")
+    public ResponseEntity<OpenApiCaseListResponse> caseV1SearchCaseType(@Parameter(in = ParameterIn.DEFAULT, description = "Details for the new court case + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody OpenApiCaseSummaryRequest body) {
+        List<CaseListLineItem> cases = caseService.searchByCaseType(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(RequestInfo.builder().build(), true);
+        OpenApiCaseListResponse caseSummaryResponse = OpenApiCaseListResponse.builder().caseList(cases).responseInfo(responseInfo).pagination(body.getPagination()).build();
+        return new ResponseEntity<>(caseSummaryResponse, HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/v1/search/caseNumber")
+    public ResponseEntity<OpenApiCaseSummaryResponse> caseV1SearchCaseNumber(@Parameter(in = ParameterIn.DEFAULT, description = "Details for the new court case + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody OpenApiCaseSummaryRequest body) {
+        OpenApiCaseSummary cases = caseService.searchByCaseNumber(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(RequestInfo.builder().build(), true);
+        OpenApiCaseSummaryResponse caseSummaryResponse = OpenApiCaseSummaryResponse.builder().caseSummary(cases).responseInfo(responseInfo).build();
         return new ResponseEntity<>(caseSummaryResponse, HttpStatus.OK);
     }
 

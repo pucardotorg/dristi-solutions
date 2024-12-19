@@ -64,9 +64,9 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
       tenantId,
     },
     {},
-    "dristi",
+    `dristi-${caseId}`,
     caseId,
-    caseId
+    Boolean(caseId)
   );
 
   const caseDetails = useMemo(
@@ -318,6 +318,7 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
               [type ? type : "FSOError"]: trimmedError,
             }
           );
+          set(formData, [configKey, page], scrutinyMessage);
           setValue(configKey, scrutinyMessage, page);
         }
       }
@@ -343,7 +344,8 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
       formDataLoad &&
       ocrDataList &&
       ocrDataList?.length > 0 &&
-      groupedByDocumentType
+      groupedByDocumentType &&
+      !isPrevScrutiny
     ) {
       setFormDataLoad(false);
       let clonedFormData = structuredClone(formData);

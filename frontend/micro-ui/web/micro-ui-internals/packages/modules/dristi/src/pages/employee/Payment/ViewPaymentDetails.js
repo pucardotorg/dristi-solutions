@@ -2,7 +2,6 @@ import { Loader, SubmitBar, ActionBar, CustomDropdown, CardLabel, LabelFieldPair
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
-import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
 import { useToast } from "../../../components/Toast/useToast";
 import { DRISTIService } from "../../../services";
 import { Urls } from "../../../hooks";
@@ -132,6 +131,7 @@ const ViewPaymentDetails = ({ location, match }) => {
           numberOfApplication: 1,
           tenantId: tenantId,
           caseId: caseId,
+          filingNumber: filingNumber,
           delayCondonation: demandBill?.additionalDetails?.delayCondonation,
         },
       ],
@@ -164,13 +164,17 @@ const ViewPaymentDetails = ({ location, match }) => {
   const courtFeeBreakup = useMemo(() => breakupResponse?.Calculation?.[0]?.breakDown?.filter((data) => data?.type === "Court Fee"), [
     breakupResponse?.Calculation,
   ]);
+  const processFeeBreakup = useMemo(() => breakupResponse?.Calculation?.[0]?.breakDown?.filter((data) => data?.type !== "Court Fee"), [
+    breakupResponse?.Calculation,
+  ]);
   const totalAmount = useMemo(() => {
     const totalAmount = calculationResponse?.Calculation?.[0]?.totalAmount || currentBillDetails?.totalAmount || 0;
     return parseFloat(totalAmount).toFixed(2);
   }, [calculationResponse?.Calculation, currentBillDetails]);
 
   const paymentCalculation = useMemo(() => {
-    const breakdown = calculationResponse?.Calculation?.[0]?.breakDown || courtFeeBreakup || [];
+    const breakdown =
+      calculationResponse?.Calculation?.[0]?.breakDown || (paymentType?.includes("Court") ? courtFeeBreakup : processFeeBreakup) || [];
     const updatedCalculation = breakdown.map((item) => ({
       key: item?.type,
       value: item?.amount,
@@ -178,7 +182,7 @@ const ViewPaymentDetails = ({ location, match }) => {
     }));
 
     updatedCalculation.push({
-      key: "Total amount",
+      key: "TOTAL_AMOUNT",
       value: totalAmount,
       currency: "Rs",
       isTotalFee: true,
@@ -354,7 +358,7 @@ const ViewPaymentDetails = ({ location, match }) => {
                   paddingTop: item.isTotalFee && "20px",
                 }}
               >
-                <span>{item.key}</span>
+                <span>{t(item.key)}</span>
                 <span>
                   {item.currency} {parseFloat(item.value).toFixed(2)}
                 </span>

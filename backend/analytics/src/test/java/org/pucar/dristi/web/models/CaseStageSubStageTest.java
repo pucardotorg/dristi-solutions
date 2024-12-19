@@ -2,6 +2,8 @@ package org.pucar.dristi.web.models;
 
 import org.egov.common.contract.request.RequestInfo;
 import org.junit.jupiter.api.Test;
+import org.pucar.dristi.web.models.CaseOverallStatus;
+import org.pucar.dristi.web.models.CaseStageSubStage;
 
 import static org.junit.jupiter.api.Assertions.*;
 
