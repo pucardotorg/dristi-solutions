@@ -80,7 +80,10 @@ public class SmsNotificationService {
             pushNotification(courtCase, message, mobileNumber, config.getSmsNotificationCaseJudgeSendBackTemplateId());
         }
         else if(messageCode.equalsIgnoreCase(ADVOCATE_CASE_JOIN)){
-            pushNotification(courtCase, message, mobileNumber, config.getSmsNotificationCaseJudgeSendBackTemplateId());
+            pushNotification(courtCase, message, mobileNumber, config.getSmsNotificationAdvocateJoinCaseTemplateId());
+        }
+        else if(messageCode.equalsIgnoreCase(CASE_ADMITTED)){
+            pushNotification(courtCase, message, mobileNumber, config.getSmsNotificationCaseAdmittedTemplateId());
         }
     }
 
