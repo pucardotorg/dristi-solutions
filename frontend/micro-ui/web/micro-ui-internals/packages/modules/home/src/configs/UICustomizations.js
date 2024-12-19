@@ -183,7 +183,7 @@ export const UICustomizations = {
             outcome: [requestCriteria?.state?.searchForm?.outcome?.outcome],
           }),
           ...(requestCriteria?.state?.searchForm?.substage && {
-            substage: requestCriteria?.state?.searchForm?.substage?.subStage,
+            substage: requestCriteria?.state?.searchForm?.substage?.code,
           }),
           pagination: {
             limit: requestCriteria?.state?.tableForm?.limit,
@@ -199,7 +199,7 @@ export const UICustomizations = {
         body: {
           ...requestCriteria?.body,
           ...(requestCriteria?.state?.searchForm?.substage && {
-            substage: requestCriteria?.state?.searchForm?.substage?.subStage,
+            substage: requestCriteria?.state?.searchForm?.substage?.code,
           }),
           criteria,
           tenantId,
@@ -228,7 +228,7 @@ export const UICustomizations = {
         case "CS_OUTCOME":
           return t(value);
         case "CS_STAGE":
-          return t(row?.status);
+          return t(value);
         case "CS_FILING_DATE":
           return <span>{formatDate(new Date(value))}</span>;
         case "CS_LAST_EDITED":
@@ -271,7 +271,7 @@ export const UICustomizations = {
           ...requestCriteria?.body?.criteria[0],
           ...requestCriteria?.state?.searchForm,
           ...(requestCriteria?.state?.searchForm?.substage && {
-            substage: requestCriteria?.state?.searchForm?.substage?.subStage,
+            substage: requestCriteria?.state?.searchForm?.substage?.code,
           }),
           tenantId,
           ...additionalDetails,
@@ -293,7 +293,7 @@ export const UICustomizations = {
         body: {
           ...requestCriteria?.body,
           ...(requestCriteria?.state?.searchForm?.substage && {
-            substage: requestCriteria?.state?.searchForm?.substage?.subStage,
+            substage: requestCriteria?.state?.searchForm?.substage?.code,
           }),
           criteria,
           tenantId,
@@ -312,6 +312,8 @@ export const UICustomizations = {
       switch (key) {
         case "CASE_TYPE":
           return <span>NIA S138</span>;
+        case "CS_STAGE":
+          return t(value);
         case "CS_SCRUTINY_STATUS":
           return t(row?.status === "UNDER_SCRUTINY" ? "IN_PROGRESS" : "NOT_STARTED");
         case "CS_DAYS_FILING":
@@ -372,7 +374,7 @@ export const UICustomizations = {
             outcome: [requestCriteria?.state?.searchForm?.outcome?.outcome],
           }),
           ...(requestCriteria?.state?.searchForm?.substage && {
-            substage: requestCriteria?.state?.searchForm?.substage?.subStage,
+            substage: requestCriteria?.state?.searchForm?.substage?.code,
           }),
           pagination: {
             limit: requestCriteria?.state?.tableForm?.limit,
@@ -388,7 +390,7 @@ export const UICustomizations = {
         body: {
           ...requestCriteria?.body,
           ...(requestCriteria?.state?.searchForm?.substage && {
-            substage: requestCriteria?.state?.searchForm?.substage?.subStage,
+            substage: requestCriteria?.state?.searchForm?.substage?.code,
           }),
           criteria,
           tenantId,
@@ -410,7 +412,7 @@ export const UICustomizations = {
         case "CD_OUTCOME":
           return t(value);
         case "CS_STAGE":
-          return t(row?.status);
+          return t(value);
         default:
           return t("ES_COMMON_NA");
       }

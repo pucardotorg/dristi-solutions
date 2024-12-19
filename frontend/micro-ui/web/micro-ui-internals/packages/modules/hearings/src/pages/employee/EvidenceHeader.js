@@ -55,7 +55,7 @@ const EvidenceHearingHeader = ({ hearing, caseData, filingNumber, setActiveTab, 
   );
 
   const showMakeSubmission = useMemo(() => {
-    return isAdvocatePresent && userRoles?.includes("APPLICATION_CREATOR");
+    return isAdvocatePresent && userRoles?.includes("SUBMISSION_CREATOR");
   }, [userRoles, isAdvocatePresent]);
 
   return (
@@ -66,11 +66,11 @@ const EvidenceHearingHeader = ({ hearing, caseData, filingNumber, setActiveTab, 
           <Header>
             {t(hearing.hearingType)} {t("HEARING")}
           </Header>
-          <div className="sub-details-text">{caseData?.caseTitle || " "}</div>
+          <div className="sub-details-text">{caseData?.caseTitle || ""}</div>
           <div className="vertical-line"></div>
-          <div className="sub-details-text">{caseData?.caseType || "Section 138 of Negotiable Instruments Act"}</div>
+          <div className="sub-details-text">{t(caseData?.stage || "")}</div>
           <div className="vertical-line"></div>
-          <div className="sub-details-text">{caseData?.substage || "Trial"}</div>
+          <div className="sub-details-text">{t(caseData?.substage || "")}</div>
         </div>
         <div className="judge-action-block">
           <div className="evidence-header-wrapper">

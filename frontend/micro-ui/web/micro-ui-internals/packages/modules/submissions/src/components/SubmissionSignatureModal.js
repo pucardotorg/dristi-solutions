@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import Modal from "../../../dristi/src/components/Modal";
 import { Urls } from "../hooks/services/Urls";
 import { FileUploadIcon } from "../../../dristi/src/icons/svgIndex";
+import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
 
 function SubmissionSignatureModal({ t, handleProceed, handleCloseSignaturePopup, setSignedDocumentUploadID, applicationPdfFileStoreId }) {
   const [isSigned, setIsSigned] = useState(false);
@@ -16,6 +17,7 @@ function SubmissionSignatureModal({ t, handleProceed, handleCloseSignaturePopup,
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${applicationPdfFileStoreId}`;
   const name = "Signature";
+  const advocatePlaceholder = "Advocate Signature";
 
   const uploadModalConfig = useMemo(() => {
     return {
@@ -24,7 +26,6 @@ function SubmissionSignatureModal({ t, handleProceed, handleCloseSignaturePopup,
         inputs: [
           {
             name: name,
-            documentHeader: "CS_ADD_SIGNATURE",
             type: "DragDropComponent",
             uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
             maxFileSize: 5,
@@ -102,7 +103,7 @@ function SubmissionSignatureModal({ t, handleProceed, handleCloseSignaturePopup,
                   // setOpenAadharModal(true);
                   // setIsSigned(true);
                   localStorage.setItem("applicationPDF", applicationPdfFileStoreId);
-                  handleEsign(name, pageModule, applicationPdfFileStoreId);
+                  handleEsign(name, pageModule, applicationPdfFileStoreId, advocatePlaceholder);
                 }}
                 className={"aadhar-sign-in"}
                 labelClassName={"submission-aadhar-sign-in"}
@@ -121,9 +122,13 @@ function SubmissionSignatureModal({ t, handleProceed, handleCloseSignaturePopup,
             </div>
             <div className="click-for-download">
               <h2>{t("WANT_TO_DOWNLOAD")}</h2>
-              <a href={uri} target="_blank" rel="noreferrer" style={{ color: "#007E7E", cursor: "pointer", textDecoration: "underline" }}>
-                {t("CLICK_HERE")}
-              </a>
+              <AuthenticatedLink
+                style={{ color: "#007E7E", cursor: "pointer", textDecoration: "underline" }}
+                uri={uri}
+                t={t}
+                displayFilename={"CLICK_HERE"}
+                pdf={true}
+              />
             </div>
           </div>
         ) : (

@@ -134,6 +134,9 @@ public class Configuration {
 	@Value("${case.kafka.status.update.topic}")
 	private String caseUpdateStatusTopic;
 
+	@Value("${case.kafka.edit.topic}")
+	private String caseEditTopic;
+
 	@Value("${witness.kafka.create.topic}")
 	private String witnessCreateTopic;
 
@@ -215,14 +218,18 @@ public class Configuration {
 	@Value("${egov.sms.notification.case.judge.send.back.template.id}")
 	private String smsNotificationCaseJudgeSendBackTemplateId;
 
+	@Value("${egov.sms.notification.case.judge.register.template.id}")
+	private String smsNotificationCaseJudgeRegisterTemplateId;
+
 	@Value("${egov.sms.notification.admission.hearing.scheduled.template.id}")
 	private String smsNotificationAdmissionHearingScheduledTemplateId;
 
 	@Value("${egov.sms.notification.advocate.join.case.template.id}")
 	private String smsNotificationAdvocateJoinCaseTemplateId;
 
-	@Value("${egov.sms.notification.case.admitted.template.id}")
-	private String smsNotificationCaseAdmittedTemplateId;
+    @Value("${egov.sms.notification.case.admitted.template.id}")
+    private String smsNotificationCaseAdmittedTemplateId;
+
 
 	@Value("${notification.sms.enabled}")
 	private Boolean isSMSEnabled;
@@ -288,4 +295,7 @@ public class Configuration {
 	@Value("${egov.idgen.cmpFormat}")
 	private String cmpFormat;
 
+	//Indexer
+	@Value("${indexer.join.case.kafka.topic}")
+	private String joinCaseTopicIndexer;
 }

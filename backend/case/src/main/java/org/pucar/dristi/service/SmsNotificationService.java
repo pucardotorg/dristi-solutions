@@ -40,15 +40,15 @@ public class SmsNotificationService {
     }
 
 
-    public void sendNotification(RequestInfo requestInfo, SmsTemplateData courtCase, String notificationStatus, String mobileNumber) {
+    public void sendNotification(RequestInfo requestInfo, SmsTemplateData smsTemplateData, String notificationStatus, String mobileNumber) {
         try {
 
-            String message = getMessage(requestInfo,courtCase, notificationStatus);
+            String message = getMessage(requestInfo,smsTemplateData, notificationStatus);
             if (StringUtils.isEmpty(message)) {
                 log.info("SMS content has not been configured for this case");
                 return;
             }
-            pushNotificationBasedOnNotificationStatus(courtCase, notificationStatus, message, mobileNumber);
+            pushNotificationBasedOnNotificationStatus(smsTemplateData, notificationStatus, message, mobileNumber);
 
         } catch (Exception e){
             log.error("Error in Sending Message To Notification Service: " , e);
@@ -56,43 +56,40 @@ public class SmsNotificationService {
 
     }
 
-    private void pushNotificationBasedOnNotificationStatus(SmsTemplateData courtCase, String messageCode, String message, String mobileNumber) {
+    private void pushNotificationBasedOnNotificationStatus(SmsTemplateData smsTemplateData, String messageCode, String message, String mobileNumber) {
 
         if(messageCode.equalsIgnoreCase(ESIGN_PENDING)){
-            pushNotification(courtCase, message, mobileNumber, config.getSmsNotificationEsignPendingTemplateId());
+            pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationEsignPendingTemplateId());
         }
         else if(messageCode.equalsIgnoreCase(CASE_SUBMITTED)) {
-            pushNotification(courtCase, message, mobileNumber, config.getSmsNotificationCaseSubmittedTemplateId());
+            pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationCaseSubmittedTemplateId());
         }
         else if(messageCode.equalsIgnoreCase(CASE_PAYMENT_COMPLETED)){
-            pushNotification(courtCase, message, mobileNumber, config.getSmsNotificationCasePaymentCompletionTemplateId());
+            pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationCasePaymentCompletionTemplateId());
         }
         else if(messageCode.equalsIgnoreCase(FSO_VALIDATED)){
-            pushNotification(courtCase, message, mobileNumber, config.getSmsNotificationCaseFsoValidationTemplateId());
+            pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationCaseFsoValidationTemplateId());
         }
         else if(messageCode.equalsIgnoreCase(FSO_SEND_BACK)){
-            pushNotification(courtCase, message, mobileNumber, config.getSmsNotificationCaseFsoSendBackTemplateId());
+            pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationCaseFsoSendBackTemplateId());
         }
         else if(messageCode.equalsIgnoreCase(CASE_REGISTERED)){
-            pushNotification(courtCase, message, mobileNumber, config.getSmsNotificationCaseFsoSendBackTemplateId());
+            pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationCaseJudgeRegisterTemplateId());
         }
         else if(messageCode.equalsIgnoreCase(JUDGE_SEND_BACK)){
-            pushNotification(courtCase, message, mobileNumber, config.getSmsNotificationCaseJudgeSendBackTemplateId());
+            pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationCaseJudgeSendBackTemplateId());
         }
         else if(messageCode.equalsIgnoreCase(ADVOCATE_CASE_JOIN)){
-            pushNotification(courtCase, message, mobileNumber, config.getSmsNotificationAdvocateJoinCaseTemplateId());
-        }
-        else if(messageCode.equalsIgnoreCase(CASE_ADMITTED)){
-            pushNotification(courtCase, message, mobileNumber, config.getSmsNotificationCaseAdmittedTemplateId());
+            pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationAdvocateJoinCaseTemplateId());
         }
     }
 
-    private void pushNotification(SmsTemplateData courtCase, String message, String mobileNumber, String templateId) {
+    private void pushNotification(SmsTemplateData smsTemplateData, String message, String mobileNumber, String templateId) {
         //get individual name, id, mobileNumber
         log.info("get case e filing number, id, cnr");
-        Map<String, String> smsDetails = getDetailsForSMS(courtCase, mobileNumber);
+        Map<String, String> smsDetails = getDetailsForSMS(smsTemplateData, mobileNumber);
 
-        log.info("building Notification Request for case filing number {}", courtCase.getEfilingNumber());
+        log.info("building Notification Request for case filing number {}", smsTemplateData.getEfilingNumber());
         message = buildMessage(smsDetails, message);
         SMSRequest smsRequest = SMSRequest.builder()
                 .mobileNumber(smsDetails.get("mobileNumber"))
@@ -108,16 +105,17 @@ public class SmsNotificationService {
         producer.push(config.getSmsNotificationTopic(), smsRequest);
     }
 
-    private Map<String, String> getDetailsForSMS(SmsTemplateData courtCase, String mobileNumber) {
+    private Map<String, String> getDetailsForSMS(SmsTemplateData smsTemplateData, String mobileNumber) {
         Map<String, String> smsDetails = new HashMap<>();
 
-        smsDetails.put("efilingNumber", courtCase.getEfilingNumber());
-        smsDetails.put("cnr", courtCase.getCnrNumber());
-        smsDetails.put("cmpNumber", courtCase.getCmpNumber());
-        smsDetails.put("advocateName", courtCase.getAdvocateName());
+        smsDetails.put("efilingNumber", smsTemplateData.getEfilingNumber());
+        smsDetails.put("cnr", smsTemplateData.getCnrNumber());
+        smsDetails.put("cmpNumber", smsTemplateData.getCmpNumber());
+        smsDetails.put("advocateName", smsTemplateData.getAdvocateName());
+        smsDetails.put("courtCaseNumber", smsTemplateData.getCourtCaseNumber());
         smsDetails.put("date", "");
         smsDetails.put("link", "");
-        smsDetails.put("tenantId", courtCase.getTenantId().split("\\.")[0]);
+        smsDetails.put("tenantId", smsTemplateData.getTenantId().split("\\.")[0]);
         smsDetails.put("mobileNumber", mobileNumber);
 
         return smsDetails;
@@ -128,13 +126,13 @@ public class SmsNotificationService {
      * Gets the message from localization
      *
      * @param requestInfo
-     * @param courtCase
+     * @param smsTemplateData
      * @param msgCode
      * @return
      */
 
-    public String getMessage(RequestInfo requestInfo, SmsTemplateData courtCase, String msgCode) {
-        String rootTenantId = courtCase.getTenantId().split("\\.")[0];
+    public String getMessage(RequestInfo requestInfo, SmsTemplateData smsTemplateData, String msgCode) {
+        String rootTenantId = smsTemplateData.getTenantId().split("\\.")[0];
         Map<String, Map<String, String>> localizedMessageMap = getLocalisedMessages(requestInfo, rootTenantId,
                 NOTIFICATION_ENG_LOCALE_CODE, NOTIFICATION_MODULE_CODE);
         if (localizedMessageMap.isEmpty()) {
@@ -155,7 +153,10 @@ public class SmsNotificationService {
                 .replace("{{efilingNumber}}", Optional.ofNullable(userDetailsForSMS.get("efilingNumber")).orElse(""))
                 .replace("{{cnr}}", Optional.ofNullable(userDetailsForSMS.get("cnr")).orElse(""))
                 .replace("{{link}}", Optional.ofNullable(userDetailsForSMS.get("link")).orElse(""))
-                .replace("{{date}}", Optional.ofNullable(userDetailsForSMS.get("date")).orElse(""));
+                .replace("{{date}}", Optional.ofNullable(userDetailsForSMS.get("date")).orElse(""))
+                .replace("{{cmpNumber}}", Optional.ofNullable(userDetailsForSMS.get("cmpNumber")).orElse(""))
+                .replace("{{courtCaseNumber}}", Optional.ofNullable(userDetailsForSMS.get("courtCaseNumber")).orElse(""))
+                .replace("{{advocateName}}", Optional.ofNullable(userDetailsForSMS.get("advocateName")).orElse(""));
         return message;
     }
 

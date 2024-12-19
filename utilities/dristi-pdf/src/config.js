@@ -1,7 +1,7 @@
 // config.js
 // const env = process.env.NODE_ENV; // 'dev' or 'test'
 
-HOST = process.env.EGOV_HOST || "localhost";
+const HOST = process.env.EGOV_HOST || "localhost";
 
 if (!HOST) {
   console.log("You need to set the HOST variable");
@@ -270,7 +270,8 @@ module.exports = {
       "/sunbirdrc-credential-service/qrcode/_get",
     message_search: "/localization/messages/v1/_search",
     filestore_create: "/filestore/v1/files",
-    filestore_search: "/filestore/v1/files/url"
+    filestore_search: "/filestore/v1/files/url",
+    filestore_search_id: "/filestore/v1/files/id",
   },
 
   constraints: {
@@ -279,15 +280,20 @@ module.exports = {
 
   constants: {
     mdmsCourtRoom: {
-      name: "Court Centre, Kollam",
+      name:
+        process.env.ORDER_HEADING ||
+        'In The Special Court Of Judicial Magistrate of the First Class , for the trial of cases under section 138 of NI Act , 1881 at Kollam ( "24X7 ON Court" )',
       place: "Kollam",
       state: "Kerala",
+      orderHeading: process.env.ORDER_HEADING || "Order Heading",
     },
     judgeDetails: {
-      name: "John Koshy",
-      judgeSignature: "Judge Signature",
+      name: process.env.JUDGE_NAME || "Judge Name",
+      judgeSignature: "Signature",
       courtSeal: "Court Seal",
-      designation: "Judicial First Class Magistrate III",
+      designation: process.env.JUDGE_DESIGNATION || "Judge Designation",
+      judgeDesignation:
+        process.env.JUDGE_DESIGNATION_HEADER || "Judge Designation Header",
     },
   },
   workFlowState: {

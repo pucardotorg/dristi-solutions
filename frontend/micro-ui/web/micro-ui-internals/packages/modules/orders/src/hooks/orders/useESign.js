@@ -4,6 +4,7 @@ const useESign = () => {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const storedObj = useMemo(() => localStorage.getItem("signStatus"), []);
   const parsedObj = JSON.parse(storedObj) || [];
+  const esignUrl = window?.globalConfigs?.getConfig("ESIGN_URL") || "https://es-staging.cdac.in/esignlevel2/2.1/form/signdoc";
 
   const handleEsign = useCallback(
     async (name, pageModule, fileStoreId, signPlaceHolder) => {
@@ -33,7 +34,7 @@ const useESign = () => {
           localStorage.setItem("esignProcess", true);
           const form = document.createElement("form");
           form.method = "POST";
-          form.action = "https://es-staging.cdac.in/esignlevel1/2.1/form/signdoc";
+          form.action = esignUrl;
           const eSignRequestInput = document.createElement("input");
           eSignRequestInput.type = "hidden";
           eSignRequestInput.name = "eSignRequest";
@@ -60,7 +61,7 @@ const useESign = () => {
     [parsedObj]
   );
 
-  const checkSignStatus = (name, formData, uploadModalConfig, onSelect, setIsSigned) => {
+  const checkSignStatus = (name, formData, uploadModalConfig, onSelect, setIsSigned, setIsSignedHeading) => {
     const setValue = (value, input) => {
       if (Array.isArray(input)) {
         onSelect(uploadModalConfig.key, {
@@ -84,12 +85,13 @@ const useESign = () => {
       if (isSignSuccess === "success" && matchedSignStatus) {
         setValue({ aadharsignature: name }, ["aadharsignature"]);
         setIsSigned(true);
+        setIsSignedHeading && setIsSignedHeading(true);
       }
 
       localStorage.removeItem("signStatus");
       localStorage.removeItem("name");
       localStorage.removeItem("isSignSuccess");
-      localStorage.removeItem("signStatus");
+      localStorage.removeItem("esignProcess");
     }
   };
 
@@ -122,6 +124,7 @@ const useESign = () => {
       localStorage.removeItem("signStatus");
       localStorage.removeItem("name");
       localStorage.removeItem("isSignSuccess");
+      localStorage.removeItem("esignProcess");
     }
   };
 

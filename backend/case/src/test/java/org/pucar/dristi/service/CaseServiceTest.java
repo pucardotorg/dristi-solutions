@@ -28,9 +28,11 @@ import org.pucar.dristi.config.ServiceConstants;
 import org.pucar.dristi.enrichment.CaseRegistrationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.CaseRepository;
+import org.pucar.dristi.util.AdvocateUtil;
 import org.pucar.dristi.util.BillingUtil;
 import org.pucar.dristi.util.EncryptionDecryptionUtil;
 import org.pucar.dristi.validators.CaseRegistrationValidator;
+import org.pucar.dristi.web.OpenApiCaseSummary;
 import org.pucar.dristi.web.models.*;
 import org.springframework.web.client.RestTemplate;
 
@@ -62,6 +64,9 @@ public class CaseServiceTest {
 
     @Mock
     private IndividualService individualService;
+
+    @Mock
+    private AdvocateUtil advocateUtil;
 
 
     @InjectMocks
@@ -112,7 +117,7 @@ public class CaseServiceTest {
         joinCaseRequest.setAdditionalDetails("form-data");
         courtCase = new CourtCase();
         objectMapper = new ObjectMapper();
-        caseService = new CaseService(validator,enrichmentUtil,caseRepository,workflowService,config,producer,new BillingUtil(new RestTemplate(),config),encryptionDecryptionUtil,objectMapper,cacheService, notificationService, individualService);
+        caseService = new CaseService(validator,enrichmentUtil,caseRepository,workflowService,config,producer,new BillingUtil(new RestTemplate(),config),encryptionDecryptionUtil,objectMapper,cacheService, notificationService, individualService, advocateUtil);
     }
 
     CaseCriteria setupTestCaseCriteria(CourtCase courtCase) {
@@ -903,6 +908,42 @@ public class CaseServiceTest {
         caseCriteria.setResponseList(Collections.singletonList(courtCase));
 
         List<CaseSummary> response = caseService.getCaseSummary(caseSummaryRequest);
+
+        assertNotNull(response);
+    }
+
+    @Test
+    void testSearchByCnrNumber() {
+        OpenApiCaseSummaryRequest openApiCaseSummaryRequest = new OpenApiCaseSummaryRequest();
+
+        when(caseRepository.getCaseSummaryByCnrNumber(openApiCaseSummaryRequest)).thenReturn(new OpenApiCaseSummary());
+
+        OpenApiCaseSummary response = caseService.searchByCnrNumber(openApiCaseSummaryRequest);
+
+        assertNotNull(response);
+    }
+
+    @Test
+    void testSearchByCaseType() {
+        OpenApiCaseSummaryRequest openApiCaseSummaryRequest = new OpenApiCaseSummaryRequest();
+
+        List<CaseListLineItem> caseListLineItems = new ArrayList<>();
+
+        when(caseRepository.getCaseSummaryListByCaseType(openApiCaseSummaryRequest)).thenReturn(caseListLineItems);
+
+        List<CaseListLineItem> response = caseService.searchByCaseType(openApiCaseSummaryRequest);
+
+        assertNotNull(response);
+    }
+
+    @Test
+    void testSearchByCaseNumber() {
+
+        OpenApiCaseSummaryRequest openApiCaseSummaryRequest = new OpenApiCaseSummaryRequest();
+
+        when(caseRepository.getCaseSummaryByCaseNumber(openApiCaseSummaryRequest)).thenReturn(new OpenApiCaseSummary());
+
+        OpenApiCaseSummary response = caseService.searchByCaseNumber(openApiCaseSummaryRequest);
 
         assertNotNull(response);
     }

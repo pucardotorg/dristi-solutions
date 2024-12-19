@@ -49,6 +49,7 @@ public class ServiceConstants {
     public static final String CREATE_CASE_ERR = "CREATE_CASE_ERR";
     public static final String SEARCH_CASE_ERR = "CASE_NOT_FOUND";
     public static final String UPDATE_CASE_ERR = "UPDATE_CASE_ERR";
+    public static final String EDIT_CASE_ERR = "EDIT_CASE_ERR";
     public static final String ADD_WITNESS_TO_CASE_ERR = "ADD_WITNESS_TO_CASE_ERR";
     public static final String CREATE_WITNESS_ERR = "CREATE_WITNESS_ERR";
     public static final String SEARCH_WITNESS_ERR = "WITNESS_NOT_FOUND";
@@ -104,6 +105,7 @@ public class ServiceConstants {
     public static final String PURPOSE = "purpose";
     // Roles required for decryption
     public static final String JUDGE_ROLE = "JUDGE_ROLE";
+    public static final String BENCH_CLERK = "BENCH_CLERK";
     public static final String FSO_ROLE = "FSO_ROLE";
     public static final String BENCH_CLERK_ROLE = "BENCHCLERK_ROLE";
     public static final String NYAY_MITRA_ROLE = "NYAY_MITRA_ROLE";
@@ -144,6 +146,8 @@ public class ServiceConstants {
 
 
     public static final String ADVOCATE_ESIGN_PENDING = "ADVOCATE_ESIGN_PENDING";
+
+    public static final String PENDING_SIGN = "PENDING_SIGN";
     public static final String CASE_SUBMISSION = "CASE_SUBMISSION";
     public static final String CASE_FILED = "CASE_FILED";
     public static final String SCRUTINY_COMPLETE_CASE_REGISTERED = "SCRUTINY_COMPLETE_CASE_REGISTERED";
