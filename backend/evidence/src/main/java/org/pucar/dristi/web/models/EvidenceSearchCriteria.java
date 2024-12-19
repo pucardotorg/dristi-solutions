@@ -31,6 +31,9 @@ public class EvidenceSearchCriteria {
     private UUID owner;
 
     @JsonIgnore
+    private String userUuid;
+
+    @JsonIgnore
     private boolean isCitizen = false;
 
     @JsonIgnore

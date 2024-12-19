@@ -126,7 +126,7 @@ public class EvidenceService {
             switch (userType.toUpperCase()) {
                 case CITIZEN_UPPER -> {
                     searchCriteria.setIsCitizen(true);
-                    searchCriteria.setOwner(UUID.fromString(userInfo.getUuid()));
+                    searchCriteria.setUserUuid(userInfo.getUuid());
                 }
                 case EMPLOYEE_UPPER -> {
                     searchCriteria.setIsCourtEmployee(true);
