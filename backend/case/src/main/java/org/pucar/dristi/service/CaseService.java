@@ -271,21 +271,21 @@ public class CaseService {
 
     }
 
-    public void callNotificationService(CaseRequest caseRequest, String messageCode) {
-        try {
-            CourtCase courtCase = caseRequest.getCases();
-            Set<String> IndividualIds = getLitigantIndividualId(courtCase);
-            getAdvocateIndividualId(caseRequest, IndividualIds);
-            Set<String> phonenumbers = callIndividualService(caseRequest.getRequestInfo(), IndividualIds);
-            SmsTemplateData smsTemplateData = enrichSmsTemplateData(caseRequest.getCases());
-            for (String number : phonenumbers) {
-                notificationService.sendNotification(caseRequest.getRequestInfo(), smsTemplateData, messageCode, number);
-            }
-        } catch (Exception e) {
-            // Log the exception and continue the execution without throwing
-            log.error("Error occurred while sending notification: {}", e.toString());
-        }
-    }
+//    public void callNotificationService(CaseRequest caseRequest, String messageCode) {
+//        try {
+//            CourtCase courtCase = caseRequest.getCases();
+//            Set<String> IndividualIds = getLitigantIndividualId(courtCase);
+//            getAdvocateIndividualId(caseRequest, IndividualIds);
+//            Set<String> phonenumbers = callIndividualService(caseRequest.getRequestInfo(), IndividualIds);
+//            SmsTemplateData smsTemplateData = enrichSmsTemplateData(caseRequest.getCases());
+//            for (String number : phonenumbers) {
+//                notificationService.sendNotification(caseRequest.getRequestInfo(), smsTemplateData, messageCode, number);
+//            }
+//        } catch (Exception e) {
+//            // Log the exception and continue the execution without throwing
+//            log.error("Error occurred while sending notification: {}", e.toString());
+//        }
+//    }
 
     private void getAdvocateIndividualId(CaseRequest caseRequest, Set<String> individualIds) {
 
@@ -319,14 +319,6 @@ public class CaseService {
         return ids;
     }
 
-    private SmsTemplateData enrichSmsTemplateData(CourtCase cases) {
-        return SmsTemplateData.builder()
-                .courtCaseNumber(cases.getCourtCaseNumber())
-                .cnrNumber(cases.getCnrNumber())
-                .efilingNumber(cases.getFilingNumber())
-                .tenantId(cases.getTenantId()).build();
-    }
-
     private Set<String> callIndividualService(RequestInfo requestInfo, Set<String> individualIds) {
 
         Set<String> mobileNumber = new HashSet<>();
@@ -344,31 +336,6 @@ public class CaseService {
         }
 
         return mobileNumber;
-    }
-
-    private String getNotificationStatus(String previousStatus, String updatedStatus) {
-        if (updatedStatus.equalsIgnoreCase(PENDING_E_SIGN) || updatedStatus.equalsIgnoreCase(PENDING_SIGN)){
-            return ESIGN_PENDING;
-        }
-        else if(updatedStatus.equalsIgnoreCase(PAYMENT_PENDING)){
-            return CASE_SUBMITTED;
-        }
-        else if(previousStatus.equalsIgnoreCase(UNDER_SCRUTINY) && updatedStatus.equalsIgnoreCase(PENDING_REGISTRATION)){
-            return  FSO_VALIDATED;
-        }
-        else if(previousStatus.equalsIgnoreCase(UNDER_SCRUTINY) && updatedStatus.equalsIgnoreCase(CASE_REASSIGNED)){
-            return FSO_SEND_BACK;
-        }
-        else if (previousStatus.equalsIgnoreCase(PENDING_REGISTRATION) && updatedStatus.equalsIgnoreCase(PENDING_ADMISSION_HEARING)){
-            return  CASE_REGISTERED;
-        }
-        else if(previousStatus.equalsIgnoreCase(PENDING_REGISTRATION) && updatedStatus.equalsIgnoreCase(CASE_REASSIGNED)){
-            return JUDGE_SEND_BACK;
-        }
-        else if(previousStatus.equalsIgnoreCase(PENDING_ADMISSION_HEARING) && updatedStatus.equalsIgnoreCase(ADMISSION_HEARING_SCHEDULED)){
-            return ADMISSION_HEARING_SCHEDULED;
-        }
-        return null;
     }
 
     public void callNotificationService(CaseRequest caseRequest, String messageCode) {
