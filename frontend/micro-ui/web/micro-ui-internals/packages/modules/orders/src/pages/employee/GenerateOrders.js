@@ -29,6 +29,7 @@ import {
   configsScheduleHearingDate,
   configsScheduleNextHearingDate,
   configsVoluntarySubmissionStatus,
+  configsIssueBailAcceptance
 } from "../../configs/ordersCreateConfig";
 import { CustomDeleteIcon } from "../../../../dristi/src/icons/svgIndex";
 import OrderReviewModal from "../../pageComponents/OrderReviewModal";
@@ -66,7 +67,7 @@ const configKeys = {
   ASSIGNING_NEW_HEARING_DATE: configsAssignNewHearingDate,
   CASE_TRANSFER: configsCaseTransfer,
   SETTLEMENT: configsCaseSettlement,
-  SUMMONS: configsIssueSummons,
+  SUMMONS: configsIssueBailAcceptance,
   NOTICE: configsIssueNotice,
   BAIL: configsBail,
   WARRANT: configsCreateOrderWarrant,
