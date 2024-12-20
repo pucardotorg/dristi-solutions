@@ -3,6 +3,7 @@ import React from "react";
 import { useForm } from "react-hook-form";
 
 function CustomInput({ onChange, value, isDisabled, componentInFront, config, _defaultValues = {}, canAdd, handleAdd, handleRemove, chipList, t }) {
+  console.log("HIIIIIII");
   const { register, watch, errors, handleSubmit } = useForm({
     defaultValues: _defaultValues,
   });

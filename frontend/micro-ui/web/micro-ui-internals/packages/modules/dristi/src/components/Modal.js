@@ -12,6 +12,7 @@ const Modal = ({
   actionCancelLabel,
   actionCancelOnSubmit,
   actionSaveLabel,
+  actionNewLabel,
   actionSaveOnSubmit,
   error,
   setError,
@@ -67,6 +68,18 @@ const Modal = ({
             ) : (
               <div></div>
             )}
+            {actionNewLabel ? (
+              <ButtonSelector
+                textStyles={textStyle}
+                label={actionNewLabel}
+                onSubmit={actionSaveOnSubmit}
+                formId={formId}
+                isDisabled={isDisabled}
+                style={style}
+                textClassName={submitTextClassName}
+              />
+            ) : null}
+
             {actionSaveLabel && !hideSubmit
               ? (console.log(style),
                 (

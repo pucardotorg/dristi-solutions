@@ -136,7 +136,15 @@ const EvidenceModal = ({
     }
     return label;
   }, [allAdvocates, applicationStatus, createdBy, documentSubmission, isLitigent, modalType, respondingUuids, t, userInfo?.uuid, userType]);
-
+  const actionNewLabel = useMemo(() => {
+    let label = "";
+    if (modalType === "Submissions") {
+      if (userType === "employee") {
+        label = t("SET_TERMS_OF_BAIL");
+      }
+    }
+    return label;
+  }, [allAdvocates, applicationStatus, createdBy, documentSubmission, isLitigent, modalType, respondingUuids, t, userInfo?.uuid, userType]);
   const actionCancelLabel = useMemo(() => {
     if (
       userRoles.includes("SUBMISSION_APPROVER") &&
@@ -803,6 +811,7 @@ const EvidenceModal = ({
           actionSaveLabel={actionSaveLabel}
           actionSaveOnSubmit={actionSaveOnSubmit}
           hideSubmit={!showSubmit} // Not allowing submit action for court room manager
+          actionNewLabel={!isJudge ? false : actionNewLabel} // Not allowing cancel action for court room manager
           actionCancelLabel={!isJudge ? false : actionCancelLabel} // Not allowing cancel action for court room manager
           actionCancelOnSubmit={actionCancelOnSubmit}
           formId="modal-action"

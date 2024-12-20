@@ -25,3 +25,7 @@ export const SubmissionDocumentsWorkflowState = {
   PENDING_ESIGN: "PENDING_E-SIGN",
   SUBMITTED: "SUBMITTED",
 };
+
+const applicationType = {
+  BAIL: "bail",
+};
