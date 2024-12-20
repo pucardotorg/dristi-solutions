@@ -155,14 +155,16 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
                 margin: "0px",
               }}
             />
-            <FileUploader
-              disabled={config?.disable}
-              handleChange={(data) => handleAddFiles(data, input, currentValue)}
-              name="file"
-              types={input?.fileTypes}
-              children={dragDropJSX}
-              key={input?.name}
-            />
+            {!config?.disable && (
+              <FileUploader
+                disabled={config?.disable}
+                handleChange={(data) => handleAddFiles(data, input, currentValue)}
+                name="file"
+                types={input?.fileTypes}
+                children={dragDropJSX}
+                key={input?.name}
+              />
+            )}
           </div>
           <div className="upload-guidelines-div">
             {input?.fileTypes && input?.maxFileSize ? (
