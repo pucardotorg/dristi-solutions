@@ -29,7 +29,9 @@ import {
   configsScheduleHearingDate,
   configsScheduleNextHearingDate,
   configsVoluntarySubmissionStatus,
-  configsIssueBailAcceptance
+  configsIssueBailAcceptance,
+  configsIssueBailReject,
+  configsSetTermBail,
 } from "../../configs/ordersCreateConfig";
 import { CustomDeleteIcon } from "../../../../dristi/src/icons/svgIndex";
 import OrderReviewModal from "../../pageComponents/OrderReviewModal";
@@ -76,6 +78,10 @@ const configKeys = {
   APPROVE_VOLUNTARY_SUBMISSIONS: configsVoluntarySubmissionStatus,
   REJECT_VOLUNTARY_SUBMISSIONS: configRejectSubmission,
   JUDGEMENT: configsJudgement,
+  // key to be addes in mdms
+  REJECT_BAIL: configsIssueBailReject,
+  ACCEPT_BAIL: configsIssueBailAcceptance,
+  SET_BAIL_TERMS: configsSetTermBail,
 };
 
 function applyMultiSelectDropdownFix(setValue, formData, keys) {
@@ -769,6 +775,7 @@ const GenerateOrders = () => {
         },
       };
     }
+    console.log(orderType, "ORDERTYPE");
     let updatedFormdata = structuredClone(currentOrder?.additionalDetails?.formdata || {});
     if (orderType === "JUDGEMENT") {
       const complainantPrimary = caseDetails?.litigants?.filter((item) => item?.partyType?.includes("complainant.primary"))?.[0];
@@ -2374,6 +2381,15 @@ const GenerateOrders = () => {
       <div className="orders-list-main">
         <div className="add-order-button" onClick={handleAddOrder}>{`+ ${t("CS_ADD_ORDER")}`}</div>
         <React.Fragment>
+          <style>
+            {` .view-order .generate-orders .employeeCard .label-field-pair .field .field-container .component-in-front {
+                border-top:1px solid #000 !important ;
+                border-bottom:1px solid #000 !important ;
+                border-left:1px solid #000 !important ;
+                margin-top: 0px; 
+          }`}
+          </style>
+
           {formList?.map((item, index) => {
             return (
               <div className={`order-item-main ${selectedOrder === index ? "selected-order" : ""}`}>

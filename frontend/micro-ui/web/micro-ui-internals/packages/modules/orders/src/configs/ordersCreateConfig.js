@@ -3993,9 +3993,10 @@ export const configsIssueBailAcceptance = [
       },
       {
         type: "amount",
-        component: "CustomInput",
         label: "CS_CHEQUE_AMOUNT",
+        isMandatory: true,
         populators: {
+          error: "CORE_REQUIRED_FIELD_ERROR",
           componentInFront: "₹",
           name: "chequeAmount",
         },
@@ -4118,6 +4119,91 @@ export const configsIssueBailReject = [
                 fontSize: "16px",
                 fontWeight: 400,
                 marginBottom: "8px",
+              },
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
+export const configsSetTermBail = [
+  {
+    body: [
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "bailSummaryCircumstances",
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "ADDITIONAL_NOTES",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              isOptional: true,
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+      {
+        label: "DEADLINE_TO_RESPOND",
+        isMandatory: false,
+        key: "deadlineToRespond",
+        type: "date",
+        disable: false,
+        populators: {
+          name: "respondDeadlineDate",
+          error: "Required",
+          mdmsConfig: {
+            moduleName: "Order",
+            masterName: "", // TO DO: ADD MDMS CONFIG
+            localePrefix: "",
+          },
+        },
+      },
+      {
+        type: "component",
+        key: "supportingDocuments",
+        component: "SupportingDocsComponent",
+        header: "ADDITIONAL_DOCUMENT_SPECIFICATIONS",
+        name: "DOCUMENT",
+        disable: false,
+        populators: {
+          inputs: [
+            {
+              isMandatory: true,
+              key: "documentType",
+              type: "dropdown",
+              label: "DOCUMENT_TYPE",
+              populators: {
+                name: "documentType",
+                optionsKey: "code",
+                error: "CORE_REQUIRED_FIELD_ERROR",
+                styles: { maxWidth: "100%" },
+                required: true,
+                isMandatory: true,
+                // need to change mdms as pr
+                mdmsConfig: {
+                  moduleName: "Application",
+                  masterName: "DocumentType",
+                  select: "(data) => {return data['Application'].DocumentType?.map((item) => {return item;});}",
+                },
+                customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
+              },
+            },
+            {
+              label: "DOCUMENT_TITLE_OPTIONAL",
+              labelChildren: "optional",
+              isMandatory: false,
+              key: "documentTitle",
+              type: "text",
+              name: "documentTitle",
+              validation: {
+                isRequired: false,
+                pattern: /^[0-9A-Z/]{0,20}$/,
+                errMsg: "",
               },
             },
           ],
