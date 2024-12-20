@@ -3949,3 +3949,180 @@ export const configsJudgement = [
     ],
   },
 ];
+
+export const configsIssueBailAcceptance = [
+  {
+    body: [
+      {
+        isMandatory: true,
+        key: "bailParty",
+        type: "dropdown",
+        label: "BAIL_PARTY",
+        disable: false,
+        populators: {
+          name: "bailParty",
+          optionsKey: "name",
+          styles: { maxWidth: "100%" },
+          error: "required ",
+          // need to update with bail parties mdms config
+          mdmsConfig: {
+            moduleName: "Order",
+            masterName: "OrderType",
+            localePrefix: "ORDER_TYPE",
+          },
+        },
+      },
+      {
+        isMandatory: true,
+        key: "bailType",
+        type: "dropdown",
+        label: "BAIL_TYPE",
+        disable: false,
+        populators: {
+          name: "BailType",
+          optionsKey: "name",
+          styles: { maxWidth: "100%" },
+          error: "required ",
+          // need to update with bail type mdms config
+          mdmsConfig: {
+            moduleName: "Order",
+            masterName: "OrderType",
+            localePrefix: "ORDER_TYPE",
+          },
+        },
+      },
+      {
+        type: "amount",
+        component: "CustomInput",
+        label: "CS_CHEQUE_AMOUNT",
+        populators: {
+          componentInFront: "₹",
+          name: "chequeAmount",
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "bailSummary",
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "CS_BAIL_SUMMARY",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              isOptional: false,
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "otherConditions",
+        isMandatory: false,
+
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "CS_OTHER_CONDITIONS",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              isOptional: true,
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        key: "Documents",
+        component: "SelectMultiUpload",
+        disable: true,
+        populators: {
+          inputs: [
+            {
+              name: "uploadedDocs",
+              isMandatory: true,
+              textAreaHeader: "CS_DOCUMENT_ATTACHED",
+              fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
+              textAreaStyle: {
+                fontSize: "16px",
+                fontWeight: 400,
+                marginBottom: "8px",
+              },
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
+
+export const configsIssueBailReject = [
+  {
+    body: [
+      {
+        isMandatory: true,
+        key: "bailParty",
+        type: "dropdown",
+        label: "BAIL_PARTY",
+        disable: false,
+        populators: {
+          name: "bailParty",
+          optionsKey: "name",
+          styles: { maxWidth: "100%" },
+          error: "required ",
+          // need to update with bail parties mdms config
+          mdmsConfig: {
+            moduleName: "Order",
+            masterName: "OrderType",
+            localePrefix: "ORDER_TYPE",
+          },
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "bailSummaryCircumstances",
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "CS_BAIL_SUMMARY_CIRCUMSTANCES",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              isOptional: false,
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        key: "Documents",
+        component: "SelectMultiUpload",
+        disable: false,
+        populators: {
+          inputs: [
+            {
+              name: "uploadedDocs",
+              isMandatory: true,
+              textAreaHeader: "CS_DOCUMENT",
+              fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
+              uploadGuidelines: "UPLOAD_DOC_50",
+              maxFileSize: 50,
+              maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+              textAreaStyle: {
+                fontSize: "16px",
+                fontWeight: 400,
+                marginBottom: "8px",
+              },
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
