@@ -1719,8 +1719,9 @@ export const requestForBail = [
       },
       {
         type: "component",
-        key: "supportingDocs",
+        key: "supportingDocuments",
         component: "SupportingDocsComponent",
+        name: "SUPPORTING_DOCS",
         disable: false,
         populators: {
           inputs: [
