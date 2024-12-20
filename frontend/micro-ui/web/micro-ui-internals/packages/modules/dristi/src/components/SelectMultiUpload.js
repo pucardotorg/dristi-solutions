@@ -169,14 +169,13 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
           <div className="upload-guidelines-div">
             {input?.fileTypes && input?.maxFileSize ? (
               <p>
-                {`${t("CS_COMMON_CHOOSE_FILE")} ${
-                  input?.fileTypes.length > 1
+                {`${t("CS_COMMON_CHOOSE_FILE")} ${input?.fileTypes.length > 1
                     ? `${input?.fileTypes
-                        .slice(0, -1)
-                        .map((type) => `.${type.toLowerCase()}`)
-                        .join(", ")} ${t("CS_COMMON_OR")} .${input?.fileTypes[input?.fileTypes.length - 1].toLowerCase()}`
+                      .slice(0, -1)
+                      .map((type) => `.${type.toLowerCase()}`)
+                      .join(", ")} ${t("CS_COMMON_OR")} .${input?.fileTypes[input?.fileTypes.length - 1].toLowerCase()}`
                     : `.${input?.fileTypes[0].toLowerCase()}`
-                }. ${t("CS_MAX_UPLOAD")} ${input.maxFileSize}MB`}
+                  }. ${t("CS_MAX_UPLOAD")} ${input.maxFileSize}MB`}
               </p>
             ) : (
               <p>{input.uploadGuidelines}</p>
