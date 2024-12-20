@@ -67,7 +67,7 @@ const configKeys = {
   ASSIGNING_NEW_HEARING_DATE: configsAssignNewHearingDate,
   CASE_TRANSFER: configsCaseTransfer,
   SETTLEMENT: configsCaseSettlement,
-  SUMMONS: configsIssueBailAcceptance,
+  SUMMONS: configsIssueSummons,
   NOTICE: configsIssueNotice,
   BAIL: configsBail,
   WARRANT: configsCreateOrderWarrant,
