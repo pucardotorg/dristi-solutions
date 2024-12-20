@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import SelectMultiUpload from "./SelectMultiUpload";
-import { CardLabel, TextInput, CardLabelError, CustomDropdown } from "@egovernments/digit-ui-react-components";
+import { TextInput, CustomDropdown, Header } from "@egovernments/digit-ui-react-components";
 
 const CloseBtn = () => {
   return (
@@ -18,7 +18,6 @@ const SupportingDocsComponent = ({ t, config, onSelect, formData = {}, errors, s
 
   const inputs = useMemo(
     () =>
-
       config?.populators?.inputs || [
         {
           isMandatory: true,
@@ -39,7 +38,7 @@ const SupportingDocsComponent = ({ t, config, onSelect, formData = {}, errors, s
             },
             customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
           },
-        }
+        },
       ],
     [config?.populators?.inputs]
   );
@@ -60,7 +59,6 @@ const SupportingDocsComponent = ({ t, config, onSelect, formData = {}, errors, s
     setFormInstances(updatedFormInstances);
     updateFormData(updatedFormInstances);
   };
-
 
   function setValue(value, name, input, index) {
     const updatedFormInstances = [...formInstances];
@@ -87,6 +85,7 @@ const SupportingDocsComponent = ({ t, config, onSelect, formData = {}, errors, s
 
   return (
     <React.Fragment>
+      {config.header && <Header>{t(config.header)}</Header>}
       {formInstances.map((formInstance, formIndex) => (
         <div key={formIndex}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
@@ -100,7 +99,6 @@ const SupportingDocsComponent = ({ t, config, onSelect, formData = {}, errors, s
 
           {inputs?.map((input, inputIndex) => {
             const obj = formInstances?.[formIndex]?.supportingDocuments ? formInstances[formIndex]?.supportingDocuments : formInstances[formIndex];
-
 
             return (
               <React.Fragment key={inputIndex}>
@@ -154,17 +152,12 @@ const SupportingDocsComponent = ({ t, config, onSelect, formData = {}, errors, s
         </div>
       ))}
       {!disable && (
-        <button
-          type="button"
-          onClick={addAnotherForm}
-          style={{ background: "none", fontSize: "16px", fontWeight: 700, color: "#007E7E" }}
-        >
+        <button type="button" onClick={addAnotherForm} style={{ background: "none", fontSize: "16px", fontWeight: 700, color: "#007E7E" }}>
           {formInstances.length < 1 ? `+ ${t("ADD_SUBMISSION_DOCUMENTS")}` : `+ ${t("ADD_ANOTHER")}`}
         </button>
       )}
     </React.Fragment>
   );
-
 };
 
 export default SupportingDocsComponent;
