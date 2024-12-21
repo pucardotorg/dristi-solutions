@@ -1,0 +1,31 @@
+package org.pucar.dristi.evidence_enrichment.models;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.validation.annotation.Validated;
+import java.util.UUID;
+
+@Validated
+@jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2024-05-16T15:17:16.225735+05:30[Asia/Kolkata]")
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class EvidenceSearchCriteria {
+    private String id;
+    private String caseId;
+    private String applicationNumber;
+    private String artifactType;
+    private Boolean evidenceStatus;
+    private String hearing;
+    private String order;
+    private String sourceId;
+    private String sourceName;
+    private String status;
+    private String artifactNumber;
+    private String filingNumber;
+    private UUID owner;
+}
+
