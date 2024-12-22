@@ -13,7 +13,7 @@ const CloseBtn = () => {
   );
 };
 const SupportingDocsComponent = ({ t, config, onSelect, formData = {}, errors, setError, clearErrors }) => {
-  const [formInstances, setFormInstances] = useState(formData?.[config?.key]?.submissionDocuments || [{}]);
+  const [formInstances, setFormInstances] = useState(formData?.[config?.key] || [{}]);
   const disable = config?.disable;
 
   const inputs = useMemo(
@@ -48,11 +48,12 @@ const SupportingDocsComponent = ({ t, config, onSelect, formData = {}, errors, s
   };
 
   const updateFormData = (updatedFormInstances) => {
-    onSelect(config.key, {
-      ...formData[config.key],
-      supportingDocs: updatedFormInstances.map((instance) => instance[config.key]),
-    });
+    onSelect(
+      config.key,
+      updatedFormInstances.map((instance) => instance[config.key])
+    );
   };
+
   const deleteForm = (index) => {
     const updatedFormInstances = [...formInstances];
     updatedFormInstances.splice(index, 1);
@@ -73,18 +74,24 @@ const SupportingDocsComponent = ({ t, config, onSelect, formData = {}, errors, s
 
   function uploadedDocs(value, inputDocs, name, index) {
     const updatedFormInstances = [...formInstances];
+
     if (!updatedFormInstances[index][config.key]) {
       updatedFormInstances[index][config.key] = {};
     }
-    debugger;
-    updatedFormInstances[index][config.key][name] = inputDocs;
-
+    updatedFormInstances[index][config.key][value] = inputDocs;
     setFormInstances(updatedFormInstances);
     updateFormData(updatedFormInstances);
   }
 
   return (
     <React.Fragment>
+      <style>
+        {`
+          .text-Input .text-input-width {
+          max-width : none
+          }
+          `}
+      </style>
       {config.header && <Header>{t(config.header)}</Header>}
       {formInstances.map((formInstance, formIndex) => (
         <div key={formIndex}>
@@ -98,17 +105,17 @@ const SupportingDocsComponent = ({ t, config, onSelect, formData = {}, errors, s
           </div>
 
           {inputs?.map((input, inputIndex) => {
-            const obj = formInstances?.[formIndex]?.supportingDocuments ? formInstances[formIndex]?.supportingDocuments : formInstances[formIndex];
+            const obj = formInstances?.[formIndex]?.[config?.key] ? formInstances[formIndex]?.[config?.key] : formInstances[formIndex];
 
             return (
               <React.Fragment key={inputIndex}>
                 {input?.type === "text" && (
-                  <div>
+                  <div className="text-Input">
                     <div>{t(input.label)}</div>
                     <TextInput
                       className="field desktop-w-full"
                       key={input?.key}
-                      value={obj?.documentTitle ? obj?.documentTitle : ""}
+                      value={obj?.[input?.name] ? obj?.[input?.name] : ""}
                       onChange={(e) => {
                         setValue(e.target.value, input.key, input, formIndex);
                       }}
@@ -118,7 +125,6 @@ const SupportingDocsComponent = ({ t, config, onSelect, formData = {}, errors, s
                       errMsg={input?.validation?.errMsg}
                       maxlength={input?.validation?.maxlength}
                       minlength={input?.validation?.minlength}
-                      style={{ minWidth: "500px" }}
                     />
                   </div>
                 )}
@@ -126,7 +132,7 @@ const SupportingDocsComponent = ({ t, config, onSelect, formData = {}, errors, s
                   <SelectMultiUpload
                     config={input}
                     t={t}
-                    formData={formInstances[formIndex]}
+                    formData={formInstances[formIndex]?.[config?.key]}
                     onSelect={(value, inputDocs) => uploadedDocs(value, inputDocs, input.key, formIndex)}
                     errors={errors}
                   />
@@ -137,7 +143,7 @@ const SupportingDocsComponent = ({ t, config, onSelect, formData = {}, errors, s
                     <CustomDropdown
                       label={input.key}
                       type={input.type}
-                      value={""}
+                      value={obj?.[input?.key] ? obj?.[input?.key] : {}}
                       onChange={(e) => {
                         setValue(e, input.key, input, formIndex);
                       }}

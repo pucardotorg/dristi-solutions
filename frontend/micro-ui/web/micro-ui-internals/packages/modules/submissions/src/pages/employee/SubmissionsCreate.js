@@ -31,7 +31,7 @@ import { Urls } from "../../hooks/services/Urls";
 import { getAdvocates } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/EfilingValidationUtils";
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
 import { getSuffixByBusinessCode, getTaxPeriodByBusinessService, getCourtFeeAmountByPaymentType } from "../../utils";
-import { getFilingType } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { combineMultipleFiles, getFilingType } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 
@@ -191,7 +191,7 @@ const SubmissionsCreate = ({ path }) => {
             if (body?.populators?.validation?.customValidationFn) {
               const customValidations =
                 Digit.Customizations[body.populators.validation.customValidationFn.moduleName][
-                body.populators.validation.customValidationFn.masterName
+                  body.populators.validation.customValidationFn.masterName
                 ];
 
               if (customValidations) {
@@ -632,8 +632,8 @@ const SubmissionsCreate = ({ path }) => {
             partyType: "complainant.primary",
             ...(orderDetails &&
               orderDetails?.orderDetails.isResponseRequired?.code === true && {
-              respondingParty: orderDetails?.additionalDetails?.formdata?.responseInfo?.respondingParty,
-            }),
+                respondingParty: orderDetails?.additionalDetails?.formdata?.responseInfo?.respondingParty,
+              }),
             isResponseRequired: orderDetails && !isExtension ? orderDetails?.orderDetails.isResponseRequired?.code === true : true,
             ...(hearingId && { hearingId }),
             owner: cleanString(userInfo?.name),
@@ -666,9 +666,9 @@ const SubmissionsCreate = ({ path }) => {
       const documentsFile =
         signedDoucumentUploadedID !== "" || localStorageID
           ? {
-            documentType: "SIGNED",
-            fileStore: signedDoucumentUploadedID || localStorageID,
-          }
+              documentType: "SIGNED",
+              fileStore: signedDoucumentUploadedID || localStorageID,
+            }
           : null;
 
       localStorage.removeItem("fileStoreId");
@@ -716,8 +716,34 @@ const SubmissionsCreate = ({ path }) => {
     setLoader(false);
   };
 
+  // move to utils
+  const replaceUploadedDocsWithCombinedFile = async (formData) => {
+    if (formData?.supportingDocuments?.length) {
+      for (let doc of formData.supportingDocuments) {
+        if (doc?.submissionDocuments?.uploadedDocs?.length) {
+          try {
+            const combinedDocumentFile = await combineMultipleFiles(
+              doc.submissionDocuments.uploadedDocs,
+              `${t("COMBINED_DOC")}.pdf`,
+              "submissionDocuments"
+            );
+            // need to add upload doc as well ( not sure )
+            doc.submissionDocuments.uploadedDocs = combinedDocumentFile;
+          } catch (error) {
+            console.error("Error combining documents:", error);
+            throw new Error("Failed to combine and update uploaded documents.");
+          }
+        }
+      }
+    }
+    return formData;
+  };
+
   const handleOpenReview = async () => {
     setLoader(true);
+    // need to work on updatedForm Data
+    const updatedFormData = await replaceUploadedDocsWithCombinedFile(formdata);
+
     const res = await createSubmission();
     const newapplicationNumber = res?.application?.applicationNumber;
     if (newapplicationNumber) {
