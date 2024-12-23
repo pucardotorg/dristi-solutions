@@ -1742,11 +1742,6 @@ export const updateCaseDetails = async ({
   }
   if (selected === "chequeDetails") {
     let docList = [];
-    const infoBoxData = {
-      header: "CS_YOU_HAVE_CONFIRMED",
-      scrutinyHeader: "CS_COMPLAINANT_HAVE_CONFIRMED",
-      data: ["CS_CHEQUE_RETURNED_INSUFFICIENT_FUND"],
-    };
 
     const newFormData = await Promise.all(
       updatedFormData
@@ -1756,6 +1751,11 @@ export const updateCaseDetails = async ({
             bouncedChequeFileUpload: null,
             depositChequeFileUpload: null,
             returnMemoFileUpload: null,
+          };
+          const infoBoxData = {
+            header: "CS_YOU_HAVE_CONFIRMED",
+            scrutinyHeader: "CS_COMPLAINANT_HAVE_CONFIRMED",
+            data: ["CS_CHEQUE_RETURNED_INSUFFICIENT_FUND"],
           };
           if (data?.data?.bouncedChequeFileUpload?.document) {
             documentData.bouncedChequeFileUpload = {};
