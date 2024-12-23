@@ -22,7 +22,6 @@ if (!fs.existsSync(TEMP_FILES_DIR)) {
 const A4_WIDTH = 595.28; // A4 width in points
 const A4_HEIGHT = 841.89; // A4 height in points
 
-
 /**
  *
  * @param  {...PDFDocument} pdfDocuments
@@ -75,7 +74,8 @@ async function persistPDF(pdfDoc, tenantId, requestInfo) {
  */
 function filterCaseBundleBySection(caseBundleMasterData, sectionName) {
   return caseBundleMasterData.filter(
-    (indexItem) => indexItem.name === sectionName && indexItem.isactive
+    (indexItem) =>
+      indexItem.name === sectionName && indexItem.isactive === "yes"
   );
 }
 
@@ -162,9 +162,9 @@ async function applyDocketToDocument(
         docketCourtName: config.constants.mdmsCourtRoom.name,
         docketComplainantName,
         docketAccusedName: [
-          respondent.firstName,
-          respondent.middleName,
-          respondent.lastName,
+          respondent.respondentFirstName,
+          respondent.respondentMiddleName,
+          respondent.respondentLastName,
         ]
           .filter(Boolean)
           .join(" "),
@@ -240,7 +240,12 @@ async function processPendingAdmissionCase({
       courtCase.courtCaseNumber ||
       courtCase.cmpNumber ||
       courtCase.filingNumber;
-    const data = { Data: [{ coverCaseName, coverCaseType, coverCaseNumber }] };
+    const coverYear = (
+      courtCase?.filingDate ? new Date(courtCase?.filingDate) : new Date()
+    )?.getFullYear();
+    const data = {
+      Data: [{ coverCaseName, coverCaseType, coverCaseNumber, coverYear }],
+    };
     const caseCoverPdfResponse = await create_pdf_v2(
       tenantId,
       "cover-page-pdf",
@@ -287,7 +292,7 @@ async function processPendingAdmissionCase({
   )[0];
 
   const complaintFileStoreId = courtCase.documents.find(
-     (doc) => doc.documentType === "case.complaint.signed"
+    (doc) => doc.documentType === "case.complaint.signed"
     //(doc) => doc.documentType === "case.cheque"
   )?.fileStore;
   if (!complaintFileStoreId) {
@@ -337,7 +342,7 @@ async function processPendingAdmissionCase({
   );
   copiedPages.forEach((page) => caseBundlePdfDoc.addPage(page));
 
-  if (complaintSection.docketpagerequired) {
+  if (complaintSection.docketpagerequired === "yes") {
     const coverCaseName = courtCase.caseTitle;
     const coverCaseType = courtCase.caseType;
     const coverCaseNumber =
@@ -402,7 +407,7 @@ async function processPendingAdmissionCase({
       if (!documentFileStoreId) {
         return null;
       }
-      if (section.docketpagerequired) {
+      if (section.docketpagerequired === "yes") {
         const complainant =
           courtCase?.additionalDetails?.complainantDetails?.formdata?.[0]?.data;
         const docketComplainantName = [
@@ -421,7 +426,7 @@ async function processPendingAdmissionCase({
         const mergedFilingDocumentFileStoreId = await applyDocketToDocument(
           documentFileStoreId,
           {
-            docketApplicationType: section.name,
+            docketApplicationType: `${section.name.toUpperCase()} - ${section.Items}`,
             docketCounselFor: "COMPLAINANT",
             docketNameOfFiling: docketComplainantName,
             docketNameOfAdvocate: docketNameOfAdvocate || docketComplainantName,
@@ -477,7 +482,7 @@ async function processPendingAdmissionCase({
       if (!documentFileStoreId) {
         return null;
       }
-      if (section.docketpagerequired) {
+      if (section.docketpagerequired === "yes") {
         const complainant =
           courtCase?.additionalDetails?.complainantDetails?.formdata?.[0]?.data;
         const docketComplainantName = [
@@ -488,7 +493,7 @@ async function processPendingAdmissionCase({
           .filter(Boolean)
           .join(" ");
         const docketNameOfAdvocate = courtCase.representatives?.find((adv) =>
-          adv.representing?.any(
+          adv.representing?.some(
             (party) => party.partyType === "complainant.primary"
           )
         )?.additionalDetails?.advocateName;
@@ -496,7 +501,7 @@ async function processPendingAdmissionCase({
         const mergedFilingDocumentFileStoreId = await applyDocketToDocument(
           documentFileStoreId,
           {
-            docketApplicationType: section.name,
+            docketApplicationType: `${section.name.toUpperCase()} - ${section.Items}`,
             docketCounselFor: "COMPLAINANT",
             docketNameOfFiling: docketComplainantName,
             docketNameOfAdvocate: docketNameOfAdvocate || docketComplainantName,
@@ -538,16 +543,14 @@ async function processPendingAdmissionCase({
   // update vakalatnamas
   const vakalatnamaSection = filterCaseBundleBySection(
     caseBundleMaster,
-    "affidavit"
+    "vakalat"
   );
 
   if (vakalatnamaSection && Array.isArray(courtCase.representatives)) {
     const vakalats = courtCase.representatives
       .map((representative) => {
         const representation = representative.representing[0];
-        const fileStoreId =
-          representative?.additionalDetails?.document?.[0]
-            ?.vakalatnamaFileUpload?.fileStore;
+        const fileStoreId = representative?.documents?.[0]?.fileStore;
         if (!fileStoreId) {
           return null;
         }
@@ -577,11 +580,11 @@ async function processPendingAdmissionCase({
 
     const vakalatLineItems = await Promise.all(
       vakalats.map(async (vakalat) => {
-        if (section.docketpagerequired) {
+        if (section.docketpagerequired === "yes") {
           const mergedVakalatDocumentFileStoreId = await applyDocketToDocument(
             vakalat.fileStoreId,
             {
-              docketApplicationType: section.name,
+              docketApplicationType: `${section.name.toUpperCase()} - ${section.Items}`,
               docketCounselFor: vakalat.partyType.includes("complainant")
                 ? "COMPLAINANT"
                 : "RESPONDENT",

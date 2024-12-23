@@ -57,6 +57,12 @@ public class Configuration {
 	@Value("${egov.mdms.search.endpoint}")
 	private String mdmsEndPoint;
 
+	@Value("${egov.mdms.filingtype.module}")
+	private String filingTypeModule;
+
+	@Value("${egov.mdms.filingtype.master}")
+	private String filingTypeMaster;
+
 	// HRMS
 	@Value("${egov.hrms.host}")
 	private String hrmsHost;
@@ -95,12 +101,21 @@ public class Configuration {
 	@Value("${egov.workflow.businessservice.name}")
 	private String businessServiceName;
 
+	@Value("${egov.workflow.submission.businessservice.name}")
+	private String submissionBusinessServiceName;
+
+	@Value("${egov.workflow.submission.businessservice.module}")
+	private String submissionBusinessServiceModule;
+
 	// Case Config
 	@Value("${egov.case.host}")
 	private String caseHost;
 
 	@Value("${egov.case.path}")
 	private String caseExistsPath;
+
+	@Value("${egov.case.search.path}")
+	private String caseSearchPath;
 
 	// Application Config
 	@Value("${egov.application.host}")
@@ -173,5 +188,25 @@ public class Configuration {
 
 	@Value("${egov.idgen.artifactConfig}")
 	private String artifactConfig;
+
+	//Localization
+	@Value("${egov.localization.host}")
+	private String localizationHost;
+
+	@Value("${egov.localization.context.path}")
+	private String localizationContextPath;
+
+	@Value("${egov.localization.search.endpoint}")
+	private String localizationSearchEndpoint;
+
+	//Individual Service
+	@Value("${egov.individual.host}")
+	private String individualHost;
+
+	@Value("${egov.individual.search.path}")
+	private String individualSearchEndpoint;
+
+	@Value("${egov.sms.notification.document.marked.exhibit.template.id}")
+	private String smsNotificationDocumentMarkedExhibitTemplateId;
 
 }

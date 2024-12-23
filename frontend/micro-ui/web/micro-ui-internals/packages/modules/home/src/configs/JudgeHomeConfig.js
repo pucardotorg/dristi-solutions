@@ -24,6 +24,7 @@ export const userTypeOptions = [
       "CASE_VIEWER",
       "EVIDENCE_CREATOR",
       "EVIDENCE_VIEWER",
+      "EVIDENCE_EDITOR",
       "APPLICATION_CREATOR",
       "APPLICATION_VIEWER",
       "HEARING_VIEWER",
@@ -50,6 +51,7 @@ export const userTypeOptions = [
       "CASE_VIEWER",
       "EVIDENCE_CREATOR",
       "EVIDENCE_VIEWER",
+      "EVIDENCE_EDITOR",
       "APPLICATION_CREATOR",
       "APPLICATION_VIEWER",
       "HEARING_VIEWER",
@@ -83,6 +85,7 @@ export const userTypeOptions = [
       "CASE_VIEWER",
       "EVIDENCE_CREATOR",
       "EVIDENCE_VIEWER",
+      "EVIDENCE_EDITOR",
       "APPLICATION_CREATOR",
       "APPLICATION_VIEWER",
       "HEARING_VIEWER",
@@ -93,6 +96,7 @@ export const userTypeOptions = [
       "TASK_VIEWER",
       "USER_REGISTER",
       "ADVOCATE_VIEWER",
+      "ADVOCATE_APPLICATION_VIEWER",
       "PENDING_TASK_CREATOR",
     ],
     apiDetails: {
@@ -434,20 +438,6 @@ export const TabJudgeSearchConfig = {
                 populators: {},
               },
               {
-                label: "CS_CASE_ID",
-                type: "text",
-                isMandatory: false,
-                disable: false,
-                populators: {
-                  name: "caseSearchText",
-                  error: "BR_PATTERN_ERR_MSG",
-                  validation: {
-                    pattern: {},
-                    minlength: 2,
-                  },
-                },
-              },
-              {
                 label: "CASE_TYPE",
                 isMandatory: false,
                 key: "caseType",
@@ -485,6 +475,20 @@ export const TabJudgeSearchConfig = {
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
+                  },
+                },
+              },
+              {
+                label: "CS_CASE_ID",
+                type: "text",
+                isMandatory: false,
+                disable: false,
+                populators: {
+                  name: "caseSearchText",
+                  error: "BR_PATTERN_ERR_MSG",
+                  validation: {
+                    pattern: {},
+                    minlength: 2,
                   },
                 },
               },
@@ -579,20 +583,6 @@ export const TabJudgeSearchConfig = {
                 populators: {},
               },
               {
-                label: "CS_CASE_ID",
-                type: "text",
-                isMandatory: false,
-                disable: false,
-                populators: {
-                  name: "caseSearchText",
-                  error: "BR_PATTERN_ERR_MSG",
-                  validation: {
-                    pattern: {},
-                    minlength: 2,
-                  },
-                },
-              },
-              {
                 label: "CASE_TYPE",
                 isMandatory: false,
                 key: "caseType",
@@ -631,6 +621,20 @@ export const TabJudgeSearchConfig = {
                   },
                   optionsCustomStyle: {
                     overflowX: "hidden",
+                  },
+                },
+              },
+              {
+                label: "CS_CASE_ID",
+                type: "text",
+                isMandatory: false,
+                disable: false,
+                populators: {
+                  name: "caseSearchText",
+                  error: "BR_PATTERN_ERR_MSG",
+                  validation: {
+                    pattern: {},
+                    minlength: 2,
                   },
                 },
               },

@@ -30,6 +30,7 @@ import { Urls } from "../../hooks/services/Urls";
 import { getAdvocates } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/EfilingValidationUtils";
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
 import { getSuffixByBusinessCode, getTaxPeriodByBusinessService, getCourtFeeAmountByPaymentType } from "../../utils";
+import { getFilingType } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 
@@ -120,6 +121,12 @@ const SubmissionsCreate = ({ path }) => {
       },
     }
   );
+
+  const { data: filingTypeData, isLoading: isFilingTypeLoading } = Digit.Hooks.dristi.useGetStatuteSection("common-masters", [
+    { name: "FilingType" },
+  ]);
+
+  const filingType = useMemo(() => getFilingType(filingTypeData?.FilingType, "Application"), [filingTypeData?.FilingType]);
 
   const { data: documentTypeData } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "Application", [{ name: "DocumentType" }], {
     select: (data) => {
@@ -529,7 +536,12 @@ const SubmissionsCreate = ({ path }) => {
       },
     });
   };
-
+  const cleanString = (input) => {
+    return input
+      .replace(/\b(null|undefined)\b/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  };
   const createSubmission = async () => {
     try {
       let documentsList = [];
@@ -573,6 +585,7 @@ const SubmissionsCreate = ({ path }) => {
             file,
             sourceType,
             sourceID: individualId,
+            filingType: filingType,
             additionalDetails: {
               uuid: userInfo?.uuid,
             },
@@ -621,7 +634,7 @@ const SubmissionsCreate = ({ path }) => {
               }),
             isResponseRequired: orderDetails && !isExtension ? orderDetails?.orderDetails.isResponseRequired?.code === true : true,
             ...(hearingId && { hearingId }),
-            owner: caseDetails?.additionalDetails?.payerName,
+            owner: cleanString(userInfo?.name),
           },
           documents,
           onBehalfOf: [isCitizen ? onBehalfOfuuid : userInfo?.uuid],
@@ -800,7 +813,7 @@ const SubmissionsCreate = ({ path }) => {
     service: entityType,
     path,
     caseDetails,
-    totalAmount: "4",
+    totalAmount: "2",
     scenario,
   });
 
@@ -826,7 +839,7 @@ const SubmissionsCreate = ({ path }) => {
             demandDetails: [
               {
                 taxHeadMasterCode: taxHeadMasterCode,
-                taxAmount: 4,
+                taxAmount: 2,
                 collectionAmount: 0,
               },
             ],

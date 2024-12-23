@@ -9,17 +9,19 @@ import org.egov.common.contract.workflow.ProcessInstanceRequest;
 import org.egov.common.contract.workflow.State;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
+import org.pucar.dristi.enrichment.ApplicationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.ApplicationRepository;
+import org.pucar.dristi.util.SmsNotificationUtil;
 import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static org.pucar.dristi.config.ServiceConstants.PENDINGAPPROVAL;
 
 @Slf4j
 @Service
@@ -30,19 +32,24 @@ public class PaymentUpdateService {
     private final ApplicationRepository repository;
     private final Producer producer;
     private final Configuration configuration;
+    private final ApplicationEnrichment enrichment;
     private final List<String> allowedBusinessServices;
+    private final SmsNotificationUtil smsNotificationUtil;
+
     @Autowired
-    public PaymentUpdateService(WorkflowService workflowService, ObjectMapper mapper, ApplicationRepository repository, Producer producer, Configuration configuration) {
+    public PaymentUpdateService(WorkflowService workflowService, ObjectMapper mapper, ApplicationRepository repository, Producer producer, Configuration configuration, ApplicationEnrichment enrichment, SmsNotificationUtil smsNotificationUtil) {
         this.workflowService = workflowService;
         this.mapper = mapper;
         this.repository = repository;
         this.producer = producer;
         this.configuration = configuration;
+        this.enrichment = enrichment;
        this.allowedBusinessServices= Arrays.asList(
                 configuration.getAsyncOrderSubBusinessServiceName(),
                 configuration.getAsyncOrderSubWithResponseBusinessServiceName(),
                 configuration.getAsyncVoluntarySubBusinessServiceName()
         );
+        this.smsNotificationUtil = smsNotificationUtil;
     }
 
     public void process(Map<String, Object> record) {
@@ -105,6 +112,13 @@ public class PaymentUpdateService {
                 applicationRequest.setApplication(application);
                 applicationRequest.setRequestInfo(requestInfo);
 
+                if (PENDINGAPPROVAL.equalsIgnoreCase(application.getStatus())){
+                    enrichment.enrichApplicationNumberByCMPNumber(applicationRequest);
+                }
+
+                String applicationType = application.getApplicationType();
+
+                smsNotificationUtil.callNotificationService(applicationRequest, state.getState(), applicationType);
                 producer.push(configuration.getApplicationUpdateStatusTopic(), applicationRequest);
             }
         } catch (Exception e) {

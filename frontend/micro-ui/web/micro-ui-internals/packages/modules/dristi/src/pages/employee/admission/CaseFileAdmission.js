@@ -20,7 +20,7 @@ import {
 import { reviewCaseFileFormConfig } from "../../citizen/FileCase/Config/reviewcasefileconfig";
 import { getAllAssignees } from "../../citizen/FileCase/EfilingValidationUtils";
 import AdmissionActionModal from "./AdmissionActionModal";
-import { generateUUID } from "../../../Utils";
+import { generateUUID, getFilingType } from "../../../Utils";
 import { documentTypeMapping } from "../../citizen/FileCase/Config";
 import ScheduleHearing from "../AdmittedCases/ScheduleHearing";
 import { SubmissionWorkflowAction } from "../../../Utils/submissionWorkflow";
@@ -42,6 +42,7 @@ const caseSecondaryActions = [
 const caseTertiaryActions = [{ action: "ISSUE_ORDER", label: "ISSUE_NOTICE" }];
 
 function CaseFileAdmission({ t, path }) {
+  const [isDisabled, setIsDisabled] = useState(false);
   const history = useHistory();
   const [showErrorToast, setShowErrorToast] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -74,7 +75,7 @@ function CaseFileAdmission({ t, path }) {
       tenantId,
     },
     {},
-    "dristi",
+    `dristi-${caseId}`,
     caseId,
     Boolean(caseId)
   );
@@ -95,6 +96,12 @@ function CaseFileAdmission({ t, path }) {
   });
 
   const filingNumber = useMemo(() => caseDetails?.filingNumber, [caseDetails?.filingNumber]);
+
+  const { data: filingTypeData, isLoading: isFilingTypeLoading } = Digit.Hooks.dristi.useGetStatuteSection("common-masters", [
+    { name: "FilingType" },
+  ]);
+
+  const filingType = useMemo(() => getFilingType(filingTypeData?.FilingType, "CaseFiling"), [filingTypeData?.FilingType]);
 
   const { data: hearingDetails } = Digit.Hooks.hearings.useGetHearings(
     {
@@ -129,8 +136,6 @@ function CaseFileAdmission({ t, path }) {
     () => caseTertiaryActions?.find((action) => nextActions?.some((data) => data.action === action?.action)) || { action: "", label: "" },
     [nextActions]
   );
-
-  console.log(workFlowDetails, nextActions);
 
   const formConfig = useMemo(() => {
     if (!caseDetails) return null;
@@ -354,19 +359,26 @@ function CaseFileAdmission({ t, path }) {
   const onSubmit = async () => {
     switch (primaryAction.action) {
       case "REGISTER":
-        if (isDelayCondonation) {
-          try {
-            setLoader(true);
-            await handleCreateDelayCondonation();
-            setLoader(false);
-          } catch (error) {
-            setShowErrorToast("INTERNAL_ERROR_OCCURRED");
-            setLoader(false);
-            break;
+        try {
+          if (isDelayCondonation) {
+            try {
+              setLoader(true);
+              setIsDisabled(true);
+              await handleCreateDelayCondonation();
+            } catch (error) {
+              setShowErrorToast("INTERNAL_ERROR_OCCURRED");
+              setIsDisabled(false);
+              throw new Error("Delay condonation application creation failed: " + error.message);
+            }
           }
+          await handleRegisterCase();
+          setCreateAdmissionOrder(true);
+          setLoader(false);
+        } catch (error) {
+          setShowErrorToast("INTERNAL_ERROR_OCCURRED");
+          console.error("some error occurred:", error);
+          setLoader(false);
         }
-        handleRegisterCase();
-        setCreateAdmissionOrder(true);
         break;
       case "ADMIT":
         if (caseDetails?.status === "ADMISSION_HEARING_SCHEDULED") {
@@ -539,6 +551,7 @@ function CaseFileAdmission({ t, path }) {
   };
 
   const handleRegisterCase = async () => {
+    setIsDisabled(true);
     setCaseADmitLoader(true);
     const individualId = await fetchBasicUserInfo();
     let documentList = [];
@@ -614,6 +627,7 @@ function CaseFileAdmission({ t, path }) {
                         fileName: docFile?.fileName,
                         documentName: docFile?.documentName,
                       },
+                      filingType: filingType,
                       workflow: {
                         action: "TYPE DEPOSITION",
                         documents: [
@@ -651,6 +665,7 @@ function CaseFileAdmission({ t, path }) {
         ],
       });
       setModalInfo({ ...modalInfo, page: 4 });
+      setIsDisabled(false);
       setShowModal(true);
     });
   };
@@ -701,7 +716,7 @@ function CaseFileAdmission({ t, path }) {
     caseDetails,
   ]);
 
-  const isDisabled = useMemo(() => isLoading || isWorkFlowLoading || caseAdmitLoader || isLoader, [
+  const isButtonDisabled = useMemo(() => isLoading || isWorkFlowLoading || caseAdmitLoader || isLoader, [
     isLoading,
     isWorkFlowLoading,
     caseAdmitLoader,
@@ -969,7 +984,7 @@ function CaseFileAdmission({ t, path }) {
                 defaultValues={{}}
                 onFormValueChange={onFormValueChange}
                 cardStyle={{ minWidth: "100%" }}
-                isDisabled={isDisabled}
+                isDisabled={isButtonDisabled}
                 cardClassName={`e-filing-card-form-style review-case-file`}
                 secondaryLabel={
                   [CaseWorkflowState.ADMISSION_HEARING_SCHEDULED, CaseWorkflowState.PENDING_RESPONSE, CaseWorkflowState.PENDING_NOTICE].includes(

@@ -183,7 +183,6 @@ const ComplainantSignature = ({ path }) => {
         inputs: [
           {
             name: name,
-            documentHeader: "CS_ADD_SIGNATURE",
             type: "DragDropComponent",
             uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
             maxFileSize: 5,
@@ -234,7 +233,7 @@ const ComplainantSignature = ({ path }) => {
     {},
     `case-details-${filingNumber}`,
     filingNumber,
-    filingNumber
+    Boolean(filingNumber)
   );
 
   const caseDetails = useMemo(
@@ -388,6 +387,7 @@ const ComplainantSignature = ({ path }) => {
             tenantId: tenantId,
             caseId: caseId,
             delayCondonation: delayCondonation,
+            filingNumber: caseDetails?.filingNumber,
           },
         ],
       },

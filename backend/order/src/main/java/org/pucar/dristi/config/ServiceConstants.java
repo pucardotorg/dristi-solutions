@@ -34,6 +34,7 @@ public class ServiceConstants {
     public static final String SUCCESSFUL = "successful";
     public static final String FAILED = "failed";
 
+
     public static final String URL = "url";
     public static final String URL_SHORTENING_ERROR_CODE = "URL_SHORTENING_ERROR";
     public static final String URL_SHORTENING_ERROR_MESSAGE = "Unable to shorten url: ";
@@ -67,4 +68,35 @@ public class ServiceConstants {
 
     public static final String PUBLISHED = "PUBLISHED";
 
+    public static final String ADMISSION_HEARING_SCHEDULED = "ADMISSION_HEARING_SCHEDULED";
+
+    public static final String NOTIFICATION_ENG_LOCALE_CODE = "en_IN";
+
+    public static final String NOTIFICATION_MODULE_CODE = "notification";
+
+    public static final String NOTIFICATION_LOCALIZATION_CODES_JSONPATH = "$.messages.*.code";
+    public static final String NOTIFICATION_LOCALIZATION_MSGS_JSONPATH = "$.messages.*.message";
+
+    public static final String ORDER_ISSUED = "ORDER_ISSUED";
+
+    public static final String SCHEDULE_OF_HEARING_DATE = "SCHEDULE_OF_HEARING_DATE";
+    public static final String INITIATING_RESCHEDULING_OF_HEARING_DATE = "INITIATING_RESCHEDULING_OF_HEARING_DATE";
+    public static final String HEARING_RESCHEDULED = "HEARING_RESCHEDULED";
+
+    public static final String INDIVIDUAL_UTILITY_EXCEPTION = "INDIVIDUAL_UTILITY_EXCEPTION";
+
+    public static final String WARRANT = "WARRANT";
+    public static final String WARRANT_ISSUED = "WARRANT_ISSUED";
+    public static final String SUMMONS = "SUMMONS";
+    public static final String SUMMONS_ISSUED = "SUMMONS_ISSUED";
+    public static final String ORDER_PUBLISHED = "ORDER_PUBLISHED";
+    public static final String MANDATORY_SUBMISSIONS_RESPONSES = "MANDATORY_SUBMISSIONS_RESPONSES";
+    public static final String EVIDENCE_REQUESTED = "EVIDENCE_REQUESTED";
+    public static final String EVIDENCE = "Evidence";
+    public static final String NOTICE = "NOTICE";
+    public static final String NOTICE_ISSUED = "NOTICE_ISSUED";
+    public static final String CASE_ADMITTED = "CASE_ADMITTED";
+    public static final String NEXT_HEARING_SCHEDULED = "NEXT_HEARING_SCHEDULED";
+    public static final String RESPONDENT = "RESPONDENT";
+    public static final String COMPLAINANT = "COMPLAINANT";
 }

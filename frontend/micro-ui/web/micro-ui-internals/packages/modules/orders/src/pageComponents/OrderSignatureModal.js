@@ -39,15 +39,15 @@ function OrderSignatureModal({
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${orderPdfFileStoreID}`;
   const { uploadDocuments } = useDocumentUpload();
   const name = "Signature";
-  const judgePlaceholder = "Judge Signature";
-    const uploadModalConfig = useMemo(() => {
+  const judgePlaceholder = "Signature";
+  const uploadModalConfig = useMemo(() => {
     return {
       key: "uploadSignature",
       populators: {
         inputs: [
           {
             name: name,
-            documentHeader: "CS_ADD_SIGNATURE",
+            // documentHeader: "CS_ADD_SIGNATURE",
             type: "DragDropComponent",
             uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
             maxFileSize: 5,
@@ -151,7 +151,7 @@ function OrderSignatureModal({
                 uri={uri}
                 t={t}
                 displayFilename={"CLICK_HERE"}
-                pdf = {true}
+                pdf={true}
               />
             </div>
           </div>

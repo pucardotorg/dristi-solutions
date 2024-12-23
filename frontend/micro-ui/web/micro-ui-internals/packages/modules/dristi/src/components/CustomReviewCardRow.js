@@ -5,6 +5,8 @@ import { FlagIcon } from "../icons/svgIndex";
 import DocViewerWrapper from "../pages/employee/docViewerWrapper";
 import ReactTooltip from "react-tooltip";
 
+const MemoDocViewerWrapper = React.memo(DocViewerWrapper);
+
 const LocationIcon = () => (
   <svg width="10" height="14" viewBox="0 0 10 14" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path
@@ -46,6 +48,22 @@ const badgeStyle = {
   textAlign: "center",
 };
 
+const convertToIndianCurrency = (amount, locale, currency) => {
+  if (typeof amount !== "number" && typeof amount !== "string") return "";
+
+  const number = Number(amount);
+  if (isNaN(number)) return "";
+
+  return new Intl.NumberFormat(locale, {
+    style: "currency",
+    currency: currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  })
+    .format(number)
+    .toString();
+};
+
 const CustomReviewCardRow = ({
   isScrutiny,
   isJudge,
@@ -73,6 +91,7 @@ const CustomReviewCardRow = ({
     badgeType = null,
     textDependentOn = null,
     textDependentValue = null,
+    isLocalizationRequired = false,
     notAvailable = null,
     enableScrutinyField = false,
   } = config;
@@ -253,14 +272,16 @@ const CustomReviewCardRow = ({
           <div className={`text-main ${bgclassname}`}>
             <div className="text">
               <div className="label">{t(label)}</div>
-              <div className="value">
+              <div className="value" style={{ overflowY: "auto", maxHeight: "310px" }}>
                 {Array.isArray(textValue)
                   ? textValue.length > 0
                     ? textValue.map((text, index) => <div key={index}>{t(text) || t("")}</div>)
                     : t("")
                   : textValue && typeof textValue === "object"
-                  ? t(textValue?.text) || ""
-                  : t(textValue) || (dependentOnValue && t(textDependentValue)) || t(notAvailable) || t("")}
+                  ? textValue?.text || ""
+                  : isLocalizationRequired
+                  ? t(textValue)
+                  : textValue || (dependentOnValue && t(textDependentValue)) || t(notAvailable) || t("")}
               </div>
               {showFlagIcon && (
                 <div
@@ -331,7 +352,7 @@ const CustomReviewCardRow = ({
 
       case "amount":
         let amountValue = extractValue(data, value);
-        amountValue = amountValue ? `₹${amountValue}` : t("");
+        amountValue = amountValue ? convertToIndianCurrency(amountValue, "en-IN", "INR") : t("");
         return (
           <div className={`amount-main ${bgclassname}`}>
             <div className="amount">
@@ -494,7 +515,7 @@ const CustomReviewCardRow = ({
                                     });
                                 }}
                               >
-                                <DocViewerWrapper
+                                <MemoDocViewerWrapper
                                   key={`${file.fileStore}-${index}`}
                                   fileStoreId={data?.fileStore}
                                   displayFilename={data?.fileName}
@@ -527,7 +548,7 @@ const CustomReviewCardRow = ({
                                       });
                                   }}
                                 >
-                                  <DocViewerWrapper
+                                  <MemoDocViewerWrapper
                                     key={`${file.fileStore}-${index}`}
                                     fileStoreId={data?.fileStore}
                                     displayFilename={data?.fileName}
@@ -551,7 +572,7 @@ const CustomReviewCardRow = ({
                             handleImageClick(configKey, name, dataIndex, value[fileIndex], data, [value[fileIndex]], dataError);
                           }}
                         >
-                          <DocViewerWrapper
+                          <MemoDocViewerWrapper
                             key={`${value}-${file?.name}`}
                             fileStoreId={file?.fileStore}
                             displayFilename={file?.fileName}
@@ -670,7 +691,7 @@ const CustomReviewCardRow = ({
         }
 
         return (
-          <div className={`address-main ${bgclassname}`}>
+          <div className={`address-main ${bgclassname}`} style={{ borderBottom: "1px #e8e8e8 solid" }}>
             <div className="address">
               <div className="label">{t(label)}</div>
               <div className={`value ${!isScrutiny ? "column" : ""}`}>
@@ -783,6 +804,7 @@ const CustomReviewCardRow = ({
     textDependentOn,
     label,
     textDependentValue,
+    isLocalizationRequired,
     notAvailable,
     enableScrutinyField,
     isJudge,
