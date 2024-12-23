@@ -28,6 +28,7 @@ export const userTypeOptions = [
       "CASE_VIEWER",
       "EVIDENCE_CREATOR",
       "EVIDENCE_VIEWER",
+      "EVIDENCE_EDITOR",
       "APPLICATION_CREATOR",
       "APPLICATION_VIEWER",
       "HEARING_VIEWER",
@@ -54,6 +55,7 @@ export const userTypeOptions = [
       "CASE_VIEWER",
       "EVIDENCE_CREATOR",
       "EVIDENCE_VIEWER",
+      "EVIDENCE_EDITOR",
       "APPLICATION_CREATOR",
       "APPLICATION_VIEWER",
       "HEARING_VIEWER",
@@ -87,6 +89,7 @@ export const userTypeOptions = [
       "CASE_VIEWER",
       "EVIDENCE_CREATOR",
       "EVIDENCE_VIEWER",
+      "EVIDENCE_EDITOR",
       "APPLICATION_CREATOR",
       "APPLICATION_VIEWER",
       "HEARING_VIEWER",
@@ -97,6 +100,7 @@ export const userTypeOptions = [
       "TASK_VIEWER",
       "USER_REGISTER",
       "ADVOCATE_VIEWER",
+      "ADVOCATE_APPLICATION_VIEWER",
       "PENDING_TASK_CREATOR",
     ],
     apiDetails: {
@@ -124,7 +128,7 @@ export const TabCourtRoomSearchConfig = {
           tenantId: "pg",
           criteria: [
             {
-              stage: [],
+              stage: ["Pre-Trial", "Trial", "Post-Trial"],
               status: [
                 "PENDING_REGISTRATION",
                 "PENDING_ADMISSION",
@@ -427,7 +431,7 @@ export const TabCourtRoomSearchConfig = {
                 component: "CustomSortComponent",
                 isMandatory: false,
                 disable: false,
-                name: "Sort by",
+                name: "Filed",
                 key: "sortCaseListByDate",
                 sortBy: "createdtime",
                 ascText: "First",

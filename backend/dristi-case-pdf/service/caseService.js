@@ -35,12 +35,21 @@ exports.getCaseSectionNumber = async (cases) => {
 const getDocumentFileStore = (fileUploadDocuments, fileName) => {
     const documents = fileUploadDocuments?.document;
     if (Array.isArray(documents)) {
-      const document = documents.find(doc => doc?.fileName === fileName);
+      const document = documents.find(doc => doc?.fileName === fileName || doc?.name === fileName);
       return document?.fileStore ?? null;
     } else if (documents && documents?.fileName) {
       return documents.fileName === fileName ? documents?.fileStore ?? null : null;
     }
     return null;
+};
+
+const getComplaintAdditionalDocumentFileStore = (fileUploadDocuments) => {
+  if (!Array.isArray(fileUploadDocuments)) return [];
+
+  return fileUploadDocuments
+    .flatMap(doc => doc?.document || [])
+    .map(item => item?.fileStore)
+    .filter(fileStore => fileStore);
 };
 
 /**
@@ -60,7 +69,7 @@ const getAddressDetails = (addressObject) => {
   };
 
   const getStringAddressDetails = (addressObject) => {
-    return `${addressObject?.locality || ''} ${addressObject?.city || ''} ${addressObject?.district || ''}  ${addressObject?.state || ''}  ${addressObject?.pincode || ''}`;
+    return `${addressObject?.locality || ''}, ${addressObject?.city || ''}, ${addressObject?.district || ''},  ${addressObject?.state || ''},  ${addressObject?.pincode || ''}`;
   };
 
   exports.formatDate = (date) => {
@@ -68,6 +77,27 @@ const getAddressDetails = (addressObject) => {
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = date.getFullYear();
     return `${day}-${month}-${year}`;
+  };
+
+  exports.convertDateToDDMMYYYY = (dateString) => {
+    if (!dateString) return "";
+  
+    const [year, month, day] = dateString?.split("-");
+    return `${day}-${month}-${year}`;
+  };
+  
+  exports.convertToIndianCurrency = (amount, locale, currency) => {
+    if (typeof amount !== "number" && typeof amount !== "string") return "";
+  
+    const number = Number(amount);
+    if (isNaN(number)) return "";
+  
+    return new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency: currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(number).toString();
   };
 
 /**
@@ -337,7 +367,8 @@ exports.getPrayerSwornStatementDetails = (cases) => {
             prayerForReliefFileStore: getDocumentFileStore(swornStatementData.prayerForRelief, 'CS_PRAYER_FOR_RELIEF_HEADER'),
             swornStatement: getDocumentFileStore(swornStatementData.swornStatement, 'CS_SWORN_STATEMENT_HEADER') || '',
             additionalDetails: swornStatementData.additionalDetails && swornStatementData.additionalDetails.text || null,
-            additionalActsSectionsToChargeWith: swornStatementData.additionalActsSections && swornStatementData.additionalActsSections.text || null
+            additionalActsSectionsToChargeWith: swornStatementData.additionalActsSections && swornStatementData.additionalActsSections.text || null,
+            complaintAdditionalDocumentFileStore: getComplaintAdditionalDocumentFileStore(swornStatementData?.SelectUploadDocWithName),
         };
     });
 
@@ -345,16 +376,16 @@ exports.getPrayerSwornStatementDetails = (cases) => {
 };
 
 exports.getComplainantsDetailsForComplaint = async (cases) => {
-    if (!cases.additionalDetails || !cases.additionalDetails.complainantDetails || !cases.additionalDetails.complainantDetails.formdata) {
+    if (!cases?.additionalDetails || !cases?.additionalDetails?.complainantDetails || !cases?.additionalDetails?.complainantDetails?.formdata) {
         return [];
     }
-    return cases.additionalDetails.complainantDetails.formdata.map((formData) => {
-        const data = formData.data;
-        const complainantType = data.complainantType || '';
-        const firstName = data.firstName || '';
-        const middleName = data.middleName || '';
-        const lastName = data.lastName || '';
-        const phoneNumber = (data.complainantVerification && data.complainantVerification.mobileNumber) || '';
+    return cases?.additionalDetails?.complainantDetails?.formdata?.map((formData) => {
+        const data = formData?.data;
+        const complainantType = data?.complainantType || '';
+        const firstName = data?.firstName || '';
+        const middleName = data?.middleName || '';
+        const lastName = data?.lastName || '';
+        const phoneNumber = (data?.complainantVerification && data?.complainantVerification?.mobileNumber) || '';
 
         if (complainantType.code === 'REPRESENTATIVE') {
             const companyDetails = data.addressCompanyDetails || {};
@@ -362,22 +393,24 @@ exports.getComplainantsDetailsForComplaint = async (cases) => {
 
             return {
                 ifIndividual: false,
-                institutionName: data.companyName || '',
+                institutionName: data?.complainantCompanyName || '',
                 complainantAddress: companyAddress || '',
                 nameOfAuthorizedSignatory: `${firstName} ${middleName} ${lastName}` || '',
-                designationOfAuthorizedSignatory: data.complainantDesignation || '',
+                designationOfAuthorizedSignatory: data?.complainantDesignation || '',
+                companyDetailsFileStore: getDocumentFileStore(data?.companyDetailsUpload, 'Company documents') || '',
             };
         } else {
-            const addressDetails = data.complainantVerification && data.complainantVerification.individualDetails && data.complainantVerification.individualDetails.addressDetails || {};
+            const addressDetails = data?.complainantVerification && data?.complainantVerification?.individualDetails && data?.complainantVerification?.individualDetails?.addressDetails || {};
             const address = getStringAddressDetails(addressDetails);
 
             return {
                 ifIndividual: true,
                 complainantName: `${firstName} ${middleName} ${lastName}` || '',
-                complainantAge: data.complainantAge || '',
+                complainantAge: data?.complainantAge || '',
                 complainantAddress: address || '',
                 phoneNumber: phoneNumber || '',
                 emailId: '',
+                complainantIdProofFileStore: getDocumentFileStore(data?.complainantVerification?.individualDetails) || ''
             };
         }
     });
@@ -399,7 +432,8 @@ exports.getAdvocateDetailsForComplaint = async (cases) => {
                 isPartyInPerson: false,
                 advocateName: data.advocateName || '',
                 barId: data.barRegistrationNumber || '',
-                advocatePhoneNumber : data.AdvocateNameDetails.advocateMobileNumber || ''
+                advocatePhoneNumber : data.AdvocateNameDetails.advocateMobileNumber || '',
+                vakalatnamaFileStore: getDocumentFileStore(data.vakalatnamaFileUpload, 'VAKALATNAMA') || '',
             };
         }
         
@@ -407,34 +441,37 @@ exports.getAdvocateDetailsForComplaint = async (cases) => {
 };
 
 exports.getRespondentsDetailsForComplaint = async (cases) => {
-    if (!cases.additionalDetails || !cases.additionalDetails.respondentDetails || !cases.additionalDetails.respondentDetails.formdata) {
+    if (!cases?.additionalDetails || !cases?.additionalDetails?.respondentDetails || !cases?.additionalDetails?.respondentDetails?.formdata) {
         return [];
     }
-    return cases.additionalDetails.respondentDetails.formdata.map((formData) => {
-        const data = formData.data;
-        const respondentType = data.respondentType || '';
-        const firstName = data.respondentFirstName || '';
-        const middleName = data.respondentMiddleName || '';
-        const lastName = data.respondentLastName || '';
-        const addresses = data.addressDetails.map((addressDetail) => {
-            return getStringAddressDetails(addressDetail.addressDetails);
+    return cases.additionalDetails.respondentDetails.formdata?.map((formData) => {
+        const data = formData?.data;
+        const respondentType = data?.respondentType || '';
+        const firstName = data?.respondentFirstName || '';
+        const middleName = data?.respondentMiddleName || '';
+        const lastName = data?.respondentLastName || '';
+        const addresses = data?.addressDetails?.map((addressDetail) => {
+            return getStringAddressDetails(addressDetail?.addressDetails);
         });
         if (respondentType.code === 'REPRESENTATIVE') {
             return {
                 ifAccusedIndividual: false,
-                accusedInstitutionName: data.respondentCompanyName || '',
-                accusedAddress: addresses && addresses.join(", ") || '',
+                accusedInstitutionName: data?.respondentCompanyName || '',
+                accusedAddress: addresses && addresses?.join(", ") || '',
                 nameOfAccusedAuthorizedSignatory: `${firstName} ${middleName} ${lastName}` || '',
-                designationOfAccusedAuthorizedSignatory: data.respondentDesignation || '',
+                designationOfAccusedAuthorizedSignatory: data?.respondentDesignation || '',
+                inquiryAffidavitFileStore: getDocumentFileStore(data?.inquiryAffidavitFileUpload, 'Affidavit documents') || '',
+                companyDetailsUpload: getDocumentFileStore(data?.companyDetailsUpload, 'Company documents') || ''
             };
         } else {
             return {
                 ifAccusedIndividual: true,
                 accusedName: `${firstName} ${middleName} ${lastName}` || '',
-                accusedAge: data.respondentAge || '',
-                accusedAddress: addresses && addresses.join(", ") || '',
-                accusedPhoneNumber: data.phonenumbers && data.phonenumbers.mobileNumber && data.phonenumbers.mobileNumber.join(", ") || "",
-                accusedEmailId: data.emails && data.emails.emailId && data.emails.emailId.join(", ") || "",
+                accusedAge: data?.respondentAge || '',
+                accusedAddress: addresses && addresses?.join(", ") || '',
+                accusedPhoneNumber: data?.phonenumbers?.mobileNumber?.join(", ") || "",
+                accusedEmailId: data?.emails?.emailId?.join(", ") || "",
+                inquiryAffidavitFileStore: getDocumentFileStore(data?.inquiryAffidavitFileUpload, 'Affidavit documents') || '',
             };
         }
     });
@@ -450,10 +487,10 @@ exports.getDocumentList = async (cases) => {
     const returnMemo = await this.generateChequeReturnMemoDescriptions(chequeDetails);
     const statutoryNotice = await this.generateDemandNoticeDescriptions(demandNoticeDetails);
     const proofOfDispatch = await this.generateProofDispatchDescriptions(demandNoticeDetails);
-    const proofOfService = demandNoticeDetails.proofOfAcknowledgmentFileStore ? await this.generateProofServiceDescriptions(demandNoticeDetails) : [];
-    const affidavitInLieuComplaint = ["Digital record of proof of Affidavit in-lieu-of inquiry under section 225, Bharatiya Nagarik Suraksha Sanhita, 2024"];
-    const proofOfReply = demandNoticeDetails.proofOfReplyFileStore ? await this.generateProofReplyDescriptions(demandNoticeDetails) : [];
-    const proofOfDeposit = await this.generateProofDepositDescriptions(chequeDetails);
+    const proofOfService = demandNoticeDetails?.[0]?.proofOfAcknowledgmentFileStore ? await this.generateProofServiceDescriptions(demandNoticeDetails) : [];
+    const affidavitInLieuComplaint = ["Digital record of proof of Affidavit under section 223 of BNSS"];
+    const proofOfReply = demandNoticeDetails?.[0]?.proofOfReplyFileStore ? await this.generateProofReplyDescriptions(demandNoticeDetails) : [];
+    const proofOfDeposit = chequeDetails?.[0]?.depositChequeFileStore ? await this.generateProofDepositDescriptions(chequeDetails) : [];
     const optionalDocs = await this.generateOptionalDocDescriptions(cases.documents);
 
     newDocumentList.push(
@@ -472,23 +509,23 @@ exports.getDocumentList = async (cases) => {
 
 exports.generateBounceChequeDescriptions = async (chequeDetailsList) => {
     return chequeDetailsList.map((chequeDetails) => {
-        const chequeNumber = chequeDetails.chequeNumber || "[Cheque Number]";
-        const dateOfIssuance = chequeDetails.dateOfIssuance || "[Date of Issue of Cheque]";
-        const chequeAmount = chequeDetails.chequeAmount || "[Amount of Cheque]";
+        const chequeNumber = chequeDetails.chequeNumber || '';
+        const dateOfIssuance = this.convertDateToDDMMYYYY(chequeDetails.dateOfIssuance);
+        const chequeAmount = this.convertToIndianCurrency(chequeDetails.chequeAmount, 'en-IN', 'INR') || '';
         return `Digital record of cheque no. ${chequeNumber} dated ${dateOfIssuance} for ${chequeAmount}`;
     });
 }
 
 exports.generateChequeReturnMemoDescriptions = async (chequeDetailsList) => {
     return chequeDetailsList.map(chequeDetails => {
-        const dateOfDishonorCheque = chequeDetails.dateOfDeposit || "[Date of dishonor of cheque]"
+        const dateOfDishonorCheque = this.convertDateToDDMMYYYY(chequeDetails.dateOfDeposit);
         return `Digital record of cheque return memo dated ${dateOfDishonorCheque}.`
     });
 }
 
 exports.generateDemandNoticeDescriptions = async (demandNoticeList) => {
     return demandNoticeList.map(demandNotice => {
-        const dateOfIssuance = demandNotice.dateOfIssuance;
+        const dateOfIssuance = this.convertDateToDDMMYYYY(demandNotice.dateOfIssuance);
         if (dateOfIssuance) {
             return `Digital record of the statutory notice dated ${dateOfIssuance}.`;
         } else {
@@ -499,28 +536,28 @@ exports.generateDemandNoticeDescriptions = async (demandNoticeList) => {
 
 exports.generateProofDispatchDescriptions = async (demandNoticeList) => {
     return demandNoticeList.map(demandNotice => {
-        const dateOfDispatch = demandNotice.dateOfDispatch;
+        const dateOfDispatch = this.convertDateToDDMMYYYY(demandNotice.dateOfDispatch);
         return `Digital record of proof of dispatch dated ${dateOfDispatch}.`;
     });
 }
 
 exports.generateProofServiceDescriptions = async (demandNoticeList) => {
     return demandNoticeList.map(demandNotice => {
-        const dateOfDeemedService = demandNotice.dateOfDeemedService;
+        const dateOfDeemedService = this.convertDateToDDMMYYYY(demandNotice.dateOfDeemedService);
         return `Digital record of proof of service- ${dateOfDeemedService}.`;
     });
 }
 
 exports.generateProofReplyDescriptions = async (demandNoticeList) => {
     return demandNoticeList.map(demandNotice => {
-        const dateOfReply = demandNotice.dateOfReply;
+        const dateOfReply = this.convertDateToDDMMYYYY(demandNotice.dateOfReply);
         return `Digital record of proof of reply dated ${dateOfReply}.`;
     });
 }
 
 exports.generateProofDepositDescriptions = async (chequeDetailsList) => {
     return chequeDetailsList.map(chequeDetails => {
-        const dateOfDeposit = chequeDetails.dateOfDeposit;
+        const dateOfDeposit = this.convertDateToDDMMYYYY(chequeDetails.dateOfDeposit);
         return `Digital record of proof of deposit dated ${dateOfDeposit}.`;
     });
 }
@@ -539,8 +576,6 @@ exports.generateOptionalDocDescriptions = async (documentList) => {
                 return `Digital record of proof of authorized representative of the company in accused`;
             case "case.liabilityproof":
                 return `Digital record of proof of Debt/Liability`;
-            case "COMPLAINANT_ID_PROOF":
-                return `Digital record of proof of Complainant ID Proof`;
             case "CONDONATION_DOC":
                 return `Digital record of proof of Delay Condonation`;
             case "case.docs":
@@ -555,27 +590,25 @@ exports.generateOptionalDocDescriptions = async (documentList) => {
 }
 
 exports.getWitnessDetailsForComplaint = async (cases) => {
-    if (!cases.additionalDetails || !cases.additionalDetails.witnessDetails || !cases.additionalDetails.witnessDetails.formdata) {
+    if (!cases?.additionalDetails || !cases?.additionalDetails?.witnessDetails || !cases?.additionalDetails?.witnessDetails?.formdata) {
         return [];
     }
-    return cases.additionalDetails.witnessDetails.formdata.map((formData) => {
-        const data = formData.data;
-        const addresses = data.addressDetails.map((addressDetail) => {
-            return getStringAddressDetails(addressDetail.addressDetails);
+    return cases?.additionalDetails?.witnessDetails?.formdata?.map((formData) => {
+        const data = formData?.data;
+        const addresses = data?.addressDetails?.map((addressDetail) => {
+            return getStringAddressDetails(addressDetail?.addressDetails);
         });
-        const firstName = data.firstName || '';
-        const middleName = data.middleName || '';
-        const lastName = data.lastName || '';
-
-        const additionalDetails = data && data.witnessAdditionalDetails && typeof data.witnessAdditionalDetails === 'object' && data.witnessAdditionalDetails.text ? data.witnessAdditionalDetails.text : '';
+        const firstName = data?.firstName || '';
+        const middleName = data?.middleName || '';
+        const lastName = data?.lastName || '';
 
         return {
             witnessName: `${firstName} ${middleName} ${lastName}` || '',
-            witnessOccupation: data.witnessDesignation,
-            witnessPhoneNumber: data.phonenumbers && data.phonenumbers.mobileNumber && data.phonenumbers.mobileNumber.join(", ") || "",
-            witnessEmail: data.emails && data.emails.emailId && data.emails.emailId.join(", ") || "",
-            witnessAddress: addresses && addresses.join(", ") || '',
-            witnessAdditionalDetails: data.witnessAdditionalDetails.text || ''
+            witnessOccupation: data?.witnessDesignation,
+            witnessPhoneNumber: data?.phonenumbers?.mobileNumber?.join(", ") || "",
+            witnessEmail: data?.emails?.emailId?.join(", ") || "",
+            witnessAddress: addresses?.join(", ") || '',
+            witnessAdditionalDetails: data?.witnessAdditionalDetails?.text || ''
         };
     });
 };

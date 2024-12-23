@@ -260,7 +260,7 @@ const TasksComponent = ({
 
   const fetchPendingTasks = useCallback(
     async function () {
-      if (isLoading) return;
+      if (isLoading || pendingTaskActionDetails?.length === 0) return;
       const listOfFilingNumber = [
         ...new Set(pendingTaskActionDetails?.map((data) => data?.fields?.find((field) => field.key === "filingNumber")?.value)),
       ]?.map((data) => ({
@@ -295,14 +295,11 @@ const TasksComponent = ({
           const individualId = data?.fields?.find((field) => field.key === "additionalDetails.individualId")?.value;
           const caseId = data?.fields?.find((field) => field.key === "additionalDetails.caseId")?.value;
           const updateReferenceId = referenceId.split("_").pop();
-          const isManual = referenceId?.includes("MANUAL_");
           const defaultObj = { referenceId: updateReferenceId, ...caseDetail };
           const pendingTaskActions = selectTaskType?.[entityType || taskTypeCode];
           const isCustomFunction = Boolean(pendingTaskActions?.[status]?.customFunction);
           const dayCount = stateSla
-            ? isManual
-              ? Math.abs(Math.ceil((Number(stateSla) - todayDate) / dayInMillisecond))
-              : stateSla
+            ? Math.abs(Math.ceil((Number(stateSla) - todayDate) / dayInMillisecond))
             : dueInSec
             ? Math.abs(Math.ceil(dueInSec / dayInMillisecond))
             : null;
@@ -514,6 +511,10 @@ const TasksComponent = ({
   if (isLoading) {
     return <Loader />;
   }
+  const customStyles = `
+  .digit-dropdown-select-wrap .digit-dropdown-options-card span {
+    height:unset !important;
+  }`;
   return (
     <div className="tasks-component">
       {!hideTaskComponent && (
@@ -522,6 +523,7 @@ const TasksComponent = ({
           {totalPendingTask !== undefined && totalPendingTask > 0 ? (
             <React.Fragment>
               <div className="task-filters">
+                <style>{customStyles}</style>
                 <LabelFieldPair>
                   <CardLabel style={{ fontSize: "16px" }} className={"card-label"}>
                     {t("CASE_TYPE")}

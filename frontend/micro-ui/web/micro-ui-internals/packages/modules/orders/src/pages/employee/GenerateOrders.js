@@ -165,6 +165,7 @@ const GenerateOrders = () => {
   const roles = Digit.UserService.getUser()?.info?.roles;
   const canESign = roles?.some((role) => role.code === "ORDER_ESIGN");
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
+  const judgeName = window?.globalConfigs?.getConfig("JUDGE_NAME");
   const setSelectedOrder = (orderIndex) => {
     _setSelectedOrder(orderIndex);
   };
@@ -249,7 +250,7 @@ const GenerateOrders = () => {
           const fullName = removeInvalidNameParts(item?.additionalDetails?.fullName);
           return {
             code: fullName,
-            name: fullName,
+            name: `${fullName} (Complainant)`,
             uuid: allAdvocates[item?.additionalDetails?.uuid],
             individualId: item?.individualId,
             isJoined: true,
@@ -267,7 +268,7 @@ const GenerateOrders = () => {
           const fullName = removeInvalidNameParts(item?.additionalDetails?.fullName);
           return {
             code: fullName,
-            name: fullName,
+            name: `${fullName} (Accused)`,
             uuid: allAdvocates[item?.additionalDetails?.uuid],
             isJoined: true,
             partyType: "respondent",
@@ -282,7 +283,7 @@ const GenerateOrders = () => {
         ?.filter((data) => !data?.data?.respondentVerification?.individualDetails?.individualId)
         ?.map((data) => {
           const fullName = constructFullName(data?.data?.respondentFirstName, data?.data?.respondentMiddleName, data?.data?.respondentLastName);
-          return { code: fullName, name: fullName, uuid: data?.data?.uuid, isJoined: false, partyType: "respondent" };
+          return { code: fullName, name: `${fullName} (Accused)`, uuid: data?.data?.uuid, isJoined: false, partyType: "respondent" };
         }) || []
     );
   }, [caseDetails]);
@@ -291,7 +292,7 @@ const GenerateOrders = () => {
     return (
       caseDetails?.additionalDetails?.witnessDetails?.formdata?.map((data) => {
         const fullName = constructFullName(data?.data?.firstName, data?.data?.middleName, data?.data?.lastName);
-        return { code: fullName, name: fullName, uuid: data?.data?.uuid, partyType: "witness" };
+        return { code: fullName, name: `${fullName} (Witness)`, uuid: data?.data?.uuid, partyType: "witness" };
       }) || []
     );
   }, [caseDetails]);
@@ -1613,7 +1614,7 @@ const GenerateOrders = () => {
             courtPhone: courtDetails?.phone,
             courtId: caseDetails?.courtId,
             hearingNumber: orderData?.hearingNumber,
-            judgeName: "John Koshy",
+            judgeName: judgeName,
           },
           deliveryChannels: {
             channelName: "",
@@ -1647,7 +1648,7 @@ const GenerateOrders = () => {
             courtPhone: courtDetails?.phone,
             courtId: caseDetails?.courtId,
             hearingNumber: orderData?.hearingNumber,
-            judgeName: "John Koshy",
+            judgeName: judgeName,
           },
           deliveryChannels: {
             channelName: "",
@@ -1680,7 +1681,7 @@ const GenerateOrders = () => {
             caseTitle: caseDetails?.caseTitle,
             year: new Date(caseDetails).getFullYear(),
             hearingDate: new Date(orderData?.additionalDetails?.formdata?.dateOfHearing || "").getTime(),
-            judgeName: "John Koshy",
+            judgeName: judgeName,
             courtName: courtDetails?.name,
             courtAddress: courtDetails?.address,
             courtPhone: courtDetails?.phone,
@@ -1939,11 +1940,6 @@ const GenerateOrders = () => {
   };
 
   const updateCaseDetails = async (action) => {
-    const assignee = [...(respondents?.map((data) => data?.uuid[0]) || [])];
-    const advocateUuid =
-      Object.keys(allAdvocates)
-        .filter((data) => assignee?.includes(allAdvocates?.[data]?.[0]))
-        ?.flat() || [];
     return await DRISTIService.caseUpdateService(
       {
         cases: {
@@ -1952,7 +1948,6 @@ const GenerateOrders = () => {
           workflow: {
             ...caseDetails?.workflow,
             action,
-            ...(action === "ISSUE_ORDER" && { assignes: [...assignee, ...advocateUuid] }),
           },
         },
         tenantId,
@@ -2001,25 +1996,18 @@ const GenerateOrders = () => {
         ? [{}]
         : currentOrder?.additionalDetails?.formdata?.namesOfPartiesRequired?.filter((data) => data?.partyType === "respondent");
       const promiseList = summonsArray?.map((data) =>
-        ordersService
-          .createOrder(
-            {
-              order: {
-                ...orderbody,
-                additionalDetails: {
-                  ...orderbody?.additionalDetails,
-                  selectedParty: data,
-                },
+        ordersService.createOrder(
+          {
+            order: {
+              ...orderbody,
+              additionalDetails: {
+                ...orderbody?.additionalDetails,
+                selectedParty: data,
               },
             },
-            { tenantId }
-          )
-          .then((res) => {
-            if (caseDetails?.status === "ADMISSION_HEARING_SCHEDULED") {
-              updateCaseDetails("ADMIT");
-            }
-            return res;
-          })
+          },
+          { tenantId }
+        )
       );
 
       const resList = await Promise.all(promiseList);
@@ -2062,7 +2050,7 @@ const GenerateOrders = () => {
               status: true,
               attendees: [
                 ...currentOrder?.additionalDetails?.formdata?.namesOfPartiesRequired.map((attendee) => {
-                  return { name: attendee.name, individualId: attendee.individualId, type: "Complainant" };
+                  return { name: attendee.name, individualId: attendee.individualId, type: attendee.partyType };
                 }),
                 ...advocateData,
               ],
@@ -2155,11 +2143,18 @@ const GenerateOrders = () => {
       if (orderType === "NOTICE") {
         closeManualPendingTask(currentOrder?.hearingNumber || hearingDetails?.hearingId);
         if (caseDetails?.status === "ADMISSION_HEARING_SCHEDULED") {
-          updateCaseDetails("ADMIT").then(() => {
-            refetchCaseData().then(() => {
-              updateCaseDetails("ISSUE_ORDER");
-            });
-          });
+          try {
+            await updateCaseDetails("ADMIT");
+          } catch (error) {
+            console.error("Error during ADMIT case update:", error);
+          } finally {
+            try {
+              await refetchCaseData();
+              await updateCaseDetails("ISSUE_ORDER");
+            } catch (finalError) {
+              console.error("Error during final steps:", finalError);
+            }
+          }
         } else {
           try {
             await updateCaseDetails("ISSUE_ORDER");

@@ -1,5 +1,5 @@
 import { BackButton, CheckSvg, CloseSvg, EditIcon, FormComposerV2, Header, Loader, TextInput, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Redirect, useHistory, useLocation } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
 import { CaseWorkflowAction } from "../../../Utils/caseWorkflow";
@@ -15,6 +15,10 @@ import { reviewCaseFileFormConfig } from "../../citizen/FileCase/Config/reviewca
 
 import Button from "../../../components/Button";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
+import downloadPdfWithLink from "../../../Utils/downloadPdfWithLink";
+const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
+const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "COURT_ID";
+const benchId = window?.globalConfigs?.getConfig("BENCH_ID") || "BENCH_ID";
 
 const downloadButtonStyle = {
   backgroundColor: "white",
@@ -65,6 +69,8 @@ function ViewCaseFile({ t, inViewCase = false }) {
 
   const { downloadPdf } = useDownloadCasePdf();
 
+  const checkListLink = "/pucar-filestore/kl/ScrutinyCheckList.pdf";
+
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     if (JSON.stringify(formData) !== JSON.stringify(formdata.data)) {
       setFormdata((prev) => {
@@ -111,7 +117,7 @@ function ViewCaseFile({ t, inViewCase = false }) {
       tenantId,
     },
     {},
-    "dristi",
+    `dristi-${caseId}`,
     caseId,
     Boolean(caseId)
   );
@@ -157,7 +163,10 @@ function ViewCaseFile({ t, inViewCase = false }) {
   }
 
   const fileStoreId = useMemo(() => {
-    return caseDetails?.documents?.[0]?.fileStore;
+    return (
+      caseDetails?.documents?.filter((doc) => doc?.key === "case.complaint.signed")?.map((doc) => doc?.fileStore)?.[0] ||
+      caseDetails?.additionalDetails?.signedCaseDocument
+    );
   }, [caseDetails]);
 
   const newScrutinyData = useMemo(() => {
@@ -316,6 +325,7 @@ function ViewCaseFile({ t, inViewCase = false }) {
             action,
             ...(action === CaseWorkflowAction.SEND_BACK && { assignes: assignees }),
           },
+          ...(action === CaseWorkflowAction.VALIDATE && { judgeId, courtId, benchId }),
         },
         tenantId,
       },
@@ -596,7 +606,7 @@ function ViewCaseFile({ t, inViewCase = false }) {
                   <h3 className="item-text">
                     {t("CS_REFERENCE_RELATED_FIELDS")}{" "}
                     <span
-                      onClick={() => downloadPdf(tenantId, fileStoreId)}
+                      onClick={async () => await downloadPdfWithLink(checkListLink, "ScrutinyCheckList")}
                       style={{ color: "#007e7e", textDecoration: "underline", cursor: "pointer" }}
                     >
                       {t("CS_HERE")}

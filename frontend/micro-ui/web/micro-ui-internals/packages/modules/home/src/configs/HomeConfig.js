@@ -24,6 +24,7 @@ export const userTypeOptions = [
       "CASE_VIEWER",
       "EVIDENCE_CREATOR",
       "EVIDENCE_VIEWER",
+      "EVIDENCE_EDITOR",
       "APPLICATION_CREATOR",
       "APPLICATION_VIEWER",
       "HEARING_VIEWER",
@@ -50,6 +51,7 @@ export const userTypeOptions = [
       "CASE_VIEWER",
       "EVIDENCE_CREATOR",
       "EVIDENCE_VIEWER",
+      "EVIDENCE_EDITOR",
       "APPLICATION_CREATOR",
       "APPLICATION_VIEWER",
       "HEARING_VIEWER",
@@ -83,6 +85,7 @@ export const userTypeOptions = [
       "CASE_VIEWER",
       "EVIDENCE_CREATOR",
       "EVIDENCE_VIEWER",
+      "EVIDENCE_EDITOR",
       "APPLICATION_CREATOR",
       "APPLICATION_VIEWER",
       "HEARING_VIEWER",
@@ -93,6 +96,7 @@ export const userTypeOptions = [
       "TASK_VIEWER",
       "USER_REGISTER",
       "ADVOCATE_VIEWER",
+      "ADVOCATE_APPLICATION_VIEWER",
       "PENDING_TASK_CREATOR",
     ],
     apiDetails: {
@@ -146,7 +150,7 @@ export const rolesToConfigMapping = [
     },
   },
   {
-    roles: ["CASE_VIEWER", "BENCHCLERK_ROLE"],
+    roles: ["CASE_VIEWER", "BENCH_CLERK"],
     config: TabBenchSearchConfig,
     isCourtOfficer: true,
     onRowClickRoute: {
@@ -410,6 +414,7 @@ export const pendingTaskOrderActions = {
       params: [
         { key: "filingNumber", value: "filingNumber" },
         { key: "hearingId", value: "referenceId" },
+        { key: "taskOrderType", defaultValue: "SUMMONS" },
       ],
     },
   },
@@ -499,7 +504,7 @@ export const pendingTaskOrderActions = {
         { key: "filingNumber", value: "filingNumber" },
         { key: "cnrNumber", value: "cnrNumber" },
         { key: "hearingId", value: "referenceId" },
-        { key: "orderType", value: "SUMMONS" },
+        { key: "orderType", defaultValue: "SUMMONS" },
       ],
     },
   },
@@ -511,7 +516,7 @@ export const pendingTaskOrderActions = {
         { key: "filingNumber", value: "filingNumber" },
         { key: "cnrNumber", value: "cnrNumber" },
         { key: "hearingId", value: "referenceId" },
-        { key: "orderType", value: "NOTICE" },
+        { key: "orderType", defaultValue: "NOTICE" },
       ],
     },
   },
@@ -689,6 +694,20 @@ export const pendingTaskForNoticeActions = {
   },
 };
 
+export const pendingTaskForDocumentSubmissionActions = {
+  PENDINGESIGN_SUBMIT_DOCUMENT: {
+    actorName: ["LITIGANT/ADVOCATE"],
+    actionName: "Esign the Document Submission",
+    redirectDetails: {
+      url: "/submissions/submit-document",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "artifactNumber", value: "referenceId" },
+      ],
+    },
+  },
+};
+
 export const selectTaskType = {
   "case-default": pendingTaskCaseActions,
   "hearing-default": pendingTaskHearingActions,
@@ -699,4 +718,5 @@ export const selectTaskType = {
   "artifact-default": pendingTaskForArtifactActions,
   "task-summons": pendingTaskForSummonsActions,
   "task-notice": pendingTaskForNoticeActions,
+  "voluntary-document-submission": pendingTaskForDocumentSubmissionActions,
 };

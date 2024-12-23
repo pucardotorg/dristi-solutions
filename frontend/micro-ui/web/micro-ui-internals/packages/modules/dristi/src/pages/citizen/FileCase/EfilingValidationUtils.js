@@ -10,6 +10,7 @@ import { efilingDocumentKeyAndTypeMapping } from "./Config/efilingDocumentKeyAnd
 export const showDemandNoticeModal = ({ selected, setValue, formData, setError, clearErrors, index, setServiceOfDemandNoticeModal, caseDetails }) => {
   if (selected === "demandNoticeDetails") {
     const totalCheques = caseDetails?.caseDetails?.["chequeDetails"]?.formdata && caseDetails?.caseDetails?.["chequeDetails"]?.formdata.length;
+    const chequeDetails = caseDetails?.caseDetails?.["chequeDetails"]?.formdata?.[0]?.data;
     for (const key in formData) {
       switch (key) {
         case "dateOfService":
@@ -42,6 +43,12 @@ export const showDemandNoticeModal = ({ selected, setValue, formData, setError, 
         case "dateOfDispatch":
           if (new Date(formData?.dateOfDispatch).getTime() > new Date().getTime()) {
             setError("dateOfDispatch", { message: "CS_DATE_ERROR_MSG" });
+          } else if (
+            formData?.dateOfDispatch &&
+            chequeDetails?.issuanceDate &&
+            new Date(chequeDetails?.issuanceDate).getTime() > new Date(formData?.dateOfDispatch).getTime()
+          ) {
+            setError("dateOfDispatch", { message: "CS_DISPATCH_DATE_ERROR_MSG" });
           } else {
             clearErrors("dateOfDispatch");
           }
@@ -78,7 +85,7 @@ export const validateDateForDelayApplication = ({ selected, setValue, caseDetail
     }
     if (
       caseDetails?.caseDetails?.["demandNoticeDetails"]?.formdata?.some(
-        (data) => new Date(data?.data?.dateOfAccrual).getTime() + 30 * 24 * 60 * 60 * 1000 < new Date().getTime()
+        (data) => new Date(data?.data?.dateOfAccrual).getTime() + 31 * 24 * 60 * 60 * 1000 < new Date().getTime()
       )
     ) {
       setValue("delayCondonationType", {
@@ -89,7 +96,7 @@ export const validateDateForDelayApplication = ({ selected, setValue, caseDetail
       });
     } else if (
       caseDetails?.caseDetails?.["demandNoticeDetails"]?.formdata?.some(
-        (data) => new Date(data?.data?.dateOfAccrual).getTime() + 30 * 24 * 60 * 60 * 1000 >= new Date().getTime()
+        (data) => new Date(data?.data?.dateOfAccrual).getTime() + 31 * 24 * 60 * 60 * 1000 >= new Date().getTime()
       )
     ) {
       setValue("delayCondonationType", {
@@ -624,6 +631,10 @@ export const respondentValidation = ({
         return false;
       }
     }
+    if (!formDataCopy?.respondentType?.code) {
+      setShowErrorToast(true);
+      return true;
+    }
   }
 
   const respondentMobileNUmbers = formData?.phonenumbers?.textfieldValue;
@@ -689,8 +700,13 @@ export const chequeDetailFileValidation = ({ formData, selected, setShowErrorToa
   }
 };
 
-export const advocateDetailsFileValidation = ({ formData, selected, setShowErrorToast, setFormErrors }) => {
+export const advocateDetailsFileValidation = ({ formData, selected, setShowErrorToast, setFormErrors, t }) => {
   if (selected === "advocateDetails") {
+    if (formData?.numberOfAdvocate < 0) {
+      setFormErrors("numberOfAdvocate", { message: t("NUMBER_OF_ADVOCATE_ERROR") });
+      setShowErrorToast(true);
+      return true;
+    }
     if (
       formData?.isAdvocateRepresenting?.code === "YES" &&
       ["vakalatnamaFileUpload"].some((data) => !Object.keys(formData?.[data]?.document || {}).length)
@@ -923,6 +939,7 @@ export const createIndividualUser = async ({ data, documentData, tenantId }) => 
             "CASE_VIEWER",
             "EVIDENCE_CREATOR",
             "EVIDENCE_VIEWER",
+            "EVIDENCE_EDITOR",
             "APPLICATION_CREATOR",
             "APPLICATION_VIEWER",
             "HEARING_VIEWER",
@@ -1190,6 +1207,26 @@ export const getRespondentName = (respondentDetails) => {
   return respondentDetails?.respondentCompanyName || "";
 };
 
+const updateComplaintDocInCaseDoc = (docList, complaintDoc) => {
+  const newDocList = structuredClone(docList || []);
+  const index = newDocList.findIndex((doc) => doc.documentType === "case.complaint.unsigned");
+  if (index > -1) {
+    newDocList.splice(index, 1);
+  }
+  newDocList.push(complaintDoc);
+  return newDocList;
+};
+
+const calculateTotalChequeAmount = (formData) => {
+  let totalChequeAmount = 0;
+  for (let i = 0; i < formData?.length; i++) {
+    if (formData[i]?.data?.chequeAmount) {
+      totalChequeAmount = totalChequeAmount + parseInt(formData[i].data.chequeAmount);
+    }
+  }
+  return totalChequeAmount.toString();
+};
+
 export const updateCaseDetails = async ({
   t,
   isCompleted,
@@ -1202,13 +1239,13 @@ export const updateCaseDetails = async ({
   pageConfig,
   setFormDataValue,
   action = "SAVE_DRAFT",
-  fileStoreId,
   isSaveDraftEnabled = false,
   isCaseSignedState = false,
   setErrorCaseDetails = () => {},
   multiUploadList,
   scrutinyObj,
   caseComplaintDocument,
+  filingType,
 }) => {
   const data = {};
   setIsDisabled(true);
@@ -1817,12 +1854,13 @@ export const updateCaseDetails = async ({
       debtLiabilityDetails: {
         ...caseDetails?.caseDetails?.debtLiabilityDetails,
         formdata: caseDetails?.caseDetails?.debtLiabilityDetails?.formdata?.map((data) => {
-          if (data?.data?.liabilityType?.code === "FULL_LIABILITY" && newFormData?.[0]) {
+          if (data?.data?.liabilityType?.code === "FULL_LIABILITY" && newFormData) {
+            const totalChequeAmount = calculateTotalChequeAmount(newFormData);
             return {
               ...data,
               data: {
                 ...data.data,
-                totalAmount: newFormData[0].data.chequeAmount,
+                totalAmount: totalChequeAmount,
               },
             };
           } else return data;
@@ -1860,13 +1898,14 @@ export const updateCaseDetails = async ({
           } else {
             updateCaseDocuments(docType, false);
           }
+          const totalChequeAmount = calculateTotalChequeAmount(caseDetails?.caseDetails?.chequeDetails?.formdata);
           return {
             ...data,
             data: {
               ...data.data,
               ...debtDocumentData,
               ...(data?.data?.liabilityType?.code === "FULL_LIABILITY" && {
-                totalAmount: caseDetails?.caseDetails?.chequeDetails?.formdata?.[0]?.data?.chequeAmount,
+                totalAmount: totalChequeAmount,
               }),
             },
           };
@@ -2040,6 +2079,7 @@ export const updateCaseDetails = async ({
                             name: docWithNameData?.docName,
                           },
                         },
+                        filingType: filingType,
                         workflow: {
                           action: "TYPE DEPOSITION",
                           documents: [
@@ -2202,8 +2242,8 @@ export const updateCaseDetails = async ({
         })
     );
     let representatives = [];
-    if (updatedFormData?.filter((item) => item.isenabled).some((data) => data?.data?.isAdvocateRepresenting?.code === "YES")) {
-      representatives = updatedFormData
+    if (newFormData?.filter((item) => item.isenabled).some((data) => data?.data?.isAdvocateRepresenting?.code === "YES")) {
+      representatives = newFormData
         .filter((item) => item.isenabled)
         .map((data, index) => {
           return {
@@ -2229,6 +2269,7 @@ export const updateCaseDetails = async ({
                 ]
               : [],
             advocateId: data?.data?.advocateBarRegNumberWithName?.[0]?.advocateId,
+            documents: data?.data?.vakalatnamaFileUpload?.document,
             additionalDetails: {
               advocateName: data?.data?.advocateBarRegNumberWithName?.[0]?.advocateName,
               uuid: advocateDetails?.[data?.data?.advocateBarRegNumberWithName?.[0]?.advocateId],
@@ -2248,7 +2289,7 @@ export const updateCaseDetails = async ({
   }
   if (selected === "reviewCaseFile") {
     if (caseComplaintDocument) {
-      tempDocList = [...tempDocList, caseComplaintDocument];
+      tempDocList = updateComplaintDocInCaseDoc(tempDocList, caseComplaintDocument);
     }
 
     data.additionalDetails = {
@@ -2257,7 +2298,7 @@ export const updateCaseDetails = async ({
         formdata: updatedFormData,
         isCompleted: isCompleted === "PAGE_CHANGE" ? caseDetails.caseDetails?.[selected]?.isCompleted : isCompleted,
       },
-      ...(fileStoreId && { signedCaseDocument: fileStoreId }),
+      ...(caseComplaintDocument && { signedCaseDocument: caseComplaintDocument?.fileStore }),
     };
   }
   const caseTitle = ["DRAFT_IN_PROGRESS", "CASE_REASSIGNED"].includes(caseDetails?.status)
@@ -2270,6 +2311,7 @@ export const updateCaseDetails = async ({
 
   setErrorCaseDetails({
     ...caseDetails,
+    documents: tempDocList,
     litigants: !caseDetails?.litigants ? [] : caseDetails?.litigants,
     ...data,
     caseTitle,
@@ -2295,8 +2337,9 @@ export const updateCaseDetails = async ({
         litigants: !caseDetails?.litigants ? [] : caseDetails?.litigants,
         ...data,
         documents: tempDocList,
+        advocateCount:
+          formdata?.[0]?.data?.numberOfAdvocate || caseDetails?.additionalDetails?.advocateDetails?.formdata[0]?.data?.numberOfAdvocate || 0,
         linkedCases: caseDetails?.linkedCases ? caseDetails?.linkedCases : [],
-        courtId: action !== "SAVE_DRAFT" ? window?.globalConfigs?.getConfig("COURT_ID") || "COURT_ID" : null,
         workflow: {
           ...caseDetails?.workflow,
           action: action,

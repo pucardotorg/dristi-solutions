@@ -17,6 +17,7 @@ const mdmsProxy = createProxyMiddleware({
   changeOrigin: true,
   secure: false,
 });
+
 module.exports = function (app) {
   ["/mdms-v2/v2/_create"].forEach((location) => app.use(location, mdmsProxy));
   [
@@ -113,6 +114,7 @@ module.exports = function (app) {
     "/scheduler",
     "/sbi-backend",
     "/dristi-case-pdf",
+    "/casemanagement/casemanager/case/v1/_buildcasebundle",
   ].forEach((location) => app.use(location, createProxy));
   ["/pb-egov-assets"].forEach((location) => app.use(location, assetsProxy));
   ["/mdms-v2/v2/_create"].forEach((location) => app.use(location, mdmsProxy));

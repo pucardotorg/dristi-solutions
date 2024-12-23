@@ -25,7 +25,6 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
         inputs: [
           {
             name: name,
-            documentHeader: "CS_ADD_SIGNATURE",
             type: "DragDropComponent",
             uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
             maxFileSize: 5,
@@ -152,7 +151,7 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
                   style={{ color: "#007E7E", cursor: "pointer", textDecoration: "underline" }}
                   t={t}
                   displayFilename={"CLICK_HERE"}
-                  pdf = { true }
+                  pdf={true}
                 />
               </div>
             </div>

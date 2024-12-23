@@ -14,7 +14,7 @@ import { convertToDateInputFormat } from "../../utils/index";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { useHistory } from "react-router-dom";
 import isEqual from "lodash/isEqual";
-
+import axios from "axios";
 const defaultSearchValues = {
   eprocess: "",
   caseId: "",
@@ -68,7 +68,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   // };
 
   const handleDownload = useCallback(() => {
-    const fileStoreId = rowData?.documents?.filter((data) => data?.documentType === "SIGNED")?.[0]?.fileStore;
+    const fileStoreId = rowData?.documents?.filter((data) => data?.documentType === "SIGNED_TASK_DOCUMENT")?.[0]?.fileStore;
     const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${fileStoreId}`;
     const authToken = localStorage.getItem("token");
     axios
@@ -82,8 +82,15 @@ const ReviewSummonsNoticeAndWarrant = () => {
         if (response.status === 200) {
           const blob = new Blob([response.data], { type: "application/octet-stream" });
           const blobUrl = URL.createObjectURL(blob);
-
-          window.open(blobUrl, "_blank");
+          const mimeType = response.data.type || "application/octet-stream";
+          const extension = mimeType.includes("/") ? mimeType.split("/")[1] : "bin";
+          const link = document.createElement("a");
+          link.href = blobUrl;
+          link.download = `downloadedFile.${extension}`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(blobUrl);
         } else {
           console.error("Failed to fetch the PDF:", response.statusText);
         }
@@ -311,10 +318,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const submissionData = useMemo(() => {
     return [
-      { key: "SUBMISSION_DATE", value: "25-08-2001", copyData: false },
-      { key: "SUBMISSION_ID", value: "875897348579453457", copyData: true },
+      { key: "Issued Date", value: rowData?.createdDate && convertToDateInputFormat(rowData?.createdDate), copyData: false },
+      { key: "E_PROCESS_ID", value: rowData?.taskNumber, copyData: true },
     ];
-  }, []);
+  }, [rowData]);
 
   const successMessage = useMemo(() => {
     let msg = "";
@@ -435,7 +442,12 @@ const ReviewSummonsNoticeAndWarrant = () => {
       actionSaveLabel: t("MARK_AS_SENT"),
       isStepperModal: false,
       modalBody: (
-        <PrintAndSendDocumentComponent infos={infos} documents={documents?.filter((docs) => docs.documentType === "SIGNED")} links={links} t={t} />
+        <PrintAndSendDocumentComponent
+          infos={infos}
+          documents={documents?.filter((docs) => docs.documentType === "SIGNED_TASK_DOCUMENT")}
+          links={links}
+          t={t}
+        />
       ),
       actionSaveOnSubmit: handleSubmit,
     };
@@ -470,7 +482,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     // if (rowData?.id) getTaskDocuments();
     if (rowData?.filingNumber) getHearingFromCaseId();
     setSelectedDelievery(
-      rowData?.status === "NOTICE_SENT" || rowData?.status === "SUMMON_SENT" || rowData?.status === "DELIVERED"
+      rowData?.status === "NOTICE_SENT" || rowData?.status === "SUMMON_SENT" || rowData?.status === "WARRANT_SENT" || rowData?.status === "DELIVERED"
         ? {
             key: "DELIVERED",
             value: "Delivered",
@@ -480,7 +492,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   }, [rowData]);
 
   const handleRowClick = (props) => {
-    if (props?.original?.status === "DELIVERED") {
+    if (["DELIVERED", "UNDELIVERED", "EXECUTED", "NOT_EXECUTED"].includes(props?.original?.status)) {
       return; // Do nothing if the row's status is 'Completed'
     }
 
