@@ -16,6 +16,7 @@ import {
   configsSurety,
   submissionTypeConfig,
   requestForBail,
+  submitDocsForBail,
 } from "../../configs/submissionsCreateConfig";
 import ReviewSubmissionModal from "../../components/ReviewSubmissionModal";
 import SubmissionSignatureModal from "../../components/SubmissionSignatureModal";
@@ -175,8 +176,9 @@ const SubmissionsCreate = ({ path }) => {
       BAIL_BOND: configsBailBond,
       SURETY: configsSurety,
       CHECKOUT_REQUEST: configsCheckoutRequest,
-      // REQUEST_FOR_BAIL :requestForBail,
-      OTHERS: requestForBail, // need to chnage here
+      REQUEST_FOR_BAIL: requestForBail,
+      SUBMIT_BAIL_DOCUMENTS: submitDocsForBail,
+      OTHERS: configsOthers, // need to chnage here
     };
     const applicationConfigKeysForEmployee = {
       DOCUMENT: configsDocumentSubmission,
@@ -191,7 +193,7 @@ const SubmissionsCreate = ({ path }) => {
             if (body?.populators?.validation?.customValidationFn) {
               const customValidations =
                 Digit.Customizations[body.populators.validation.customValidationFn.moduleName][
-                  body.populators.validation.customValidationFn.masterName
+                body.populators.validation.customValidationFn.masterName
                 ];
 
               if (customValidations) {
@@ -478,7 +480,8 @@ const SubmissionsCreate = ({ path }) => {
   const formKey = useMemo(() => applicationType + (defaultFormValue?.initialSubmissionDate || ""), [applicationType, defaultFormValue]);
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
-    if (applicationType && !["OTHERS", "DOCUMENT"].includes(applicationType) && !formData?.applicationDate) {
+
+    if (applicationType && !["OTHERS", "DOCUMENT", "REQUEST_FOR_BAIL", "SUBMIT_BAIL_DOCUMENTS"].includes(applicationType) && !formData?.applicationDate) {
       setValue("applicationDate", formatDate(new Date()));
     }
     // if (applicationType && applicationType === "TRANSFER" && !formData?.requestedCourt) {
@@ -559,6 +562,16 @@ const SubmissionsCreate = ({ path }) => {
       if (formdata?.othersDocument?.documents?.length > 0) {
         documentsList = [...documentsList, ...formdata?.othersDocument?.documents];
       }
+      if (formdata?.supportingDocuments?.length > 0) {
+        formdata?.supportingDocuments?.map((docs) => {
+          if (docs?.submissionDocuments?.uploadedDocs?.length > 0) {
+            documentsList = [
+              ...documentsList,
+              ...docs.submissionDocuments.uploadedDocs
+            ];
+          }
+        })
+      }
       const applicationDocuments =
         formdata?.submissionDocuments?.submissionDocuments?.map((item) => ({
           fileType: item?.document?.documentType,
@@ -632,8 +645,8 @@ const SubmissionsCreate = ({ path }) => {
             partyType: "complainant.primary",
             ...(orderDetails &&
               orderDetails?.orderDetails.isResponseRequired?.code === true && {
-                respondingParty: orderDetails?.additionalDetails?.formdata?.responseInfo?.respondingParty,
-              }),
+              respondingParty: orderDetails?.additionalDetails?.formdata?.responseInfo?.respondingParty,
+            }),
             isResponseRequired: orderDetails && !isExtension ? orderDetails?.orderDetails.isResponseRequired?.code === true : true,
             ...(hearingId && { hearingId }),
             owner: cleanString(userInfo?.name),
@@ -666,9 +679,9 @@ const SubmissionsCreate = ({ path }) => {
       const documentsFile =
         signedDoucumentUploadedID !== "" || localStorageID
           ? {
-              documentType: "SIGNED",
-              fileStore: signedDoucumentUploadedID || localStorageID,
-            }
+            documentType: "SIGNED",
+            fileStore: signedDoucumentUploadedID || localStorageID,
+          }
           : null;
 
       localStorage.removeItem("fileStoreId");
@@ -719,15 +732,16 @@ const SubmissionsCreate = ({ path }) => {
   // move to utils
   const replaceUploadedDocsWithCombinedFile = async (formData) => {
     if (formData?.supportingDocuments?.length) {
-      for (let doc of formData.supportingDocuments) {
+      for (let index = 0; index < formData.supportingDocuments.length; index++) {
+        const doc = formData.supportingDocuments[index];
         if (doc?.submissionDocuments?.uploadedDocs?.length) {
           try {
+            const combinedDocName = `SUPPORTING_DOCS_${index + 1}.pdf`;
             const combinedDocumentFile = await combineMultipleFiles(
               doc.submissionDocuments.uploadedDocs,
-              `${t("COMBINED_DOC")}.pdf`,
+              combinedDocName,
               "submissionDocuments"
             );
-            // need to add upload doc as well ( not sure )
             doc.submissionDocuments.uploadedDocs = combinedDocumentFile;
           } catch (error) {
             console.error("Error combining documents:", error);
@@ -739,10 +753,14 @@ const SubmissionsCreate = ({ path }) => {
     return formData;
   };
 
+
   const handleOpenReview = async () => {
     setLoader(true);
-    // need to work on updatedForm Data
-    const updatedFormData = await replaceUploadedDocsWithCombinedFile(formdata);
+
+    if (applicationType && ["REQUEST_FOR_BAIL", "SUBMIT_BAIL_DOCUMENTS"].includes(applicationType)) {
+      const updatedFormData = await replaceUploadedDocsWithCombinedFile(formdata);
+      setFormdata(updatedFormData)
+    }
 
     const res = await createSubmission();
     const newapplicationNumber = res?.application?.applicationNumber;

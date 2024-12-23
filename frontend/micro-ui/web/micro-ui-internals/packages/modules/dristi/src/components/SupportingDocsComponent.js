@@ -111,8 +111,9 @@ const SupportingDocsComponent = ({ t, config, onSelect, formData = {}, errors, s
               <React.Fragment key={inputIndex}>
                 {input?.type === "text" && (
                   <div className="text-Input">
-                    <div>{t(input.label)}</div>
+                    <div style={{ marginBottom: "8px" }}>{t(input.label)}</div>
                     <TextInput
+                      t={t}
                       className="field desktop-w-full"
                       key={input?.key}
                       value={obj?.[input?.name] ? obj?.[input?.name] : ""}
@@ -139,8 +140,9 @@ const SupportingDocsComponent = ({ t, config, onSelect, formData = {}, errors, s
                 )}
                 {input?.type === "dropdown" && (
                   <div>
-                    <div>{t(input.label)}</div>
+                    <div style={{ marginBottom: "8px" }}>{t(input.label)}</div>
                     <CustomDropdown
+                      t={t}
                       label={input.key}
                       type={input.type}
                       value={obj?.[input?.key] ? obj?.[input?.key] : {}}
