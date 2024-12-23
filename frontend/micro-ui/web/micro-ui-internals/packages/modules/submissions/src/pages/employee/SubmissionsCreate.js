@@ -61,6 +61,7 @@ const SubmissionsCreate = ({ path }) => {
   const [signedDoucumentUploadedID, setSignedDocumentUploadID] = useState("");
   const [applicationPdfFileStoreId, setApplicationPdfFileStoreId] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState();
+  const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
   const scenario = "applicationSubmission";
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
@@ -504,6 +505,41 @@ const SubmissionsCreate = ({ path }) => {
         clearErrors("changedHearingDate");
       }
     }
+
+    if (applicationType && ["REQUEST_FOR_BAIL", "SUBMIT_BAIL_DOCUMENTS"].includes(applicationType) && formState?.submitCount) {
+      if (!formData?.supportingDocuments && !Object.keys(formState?.errors).includes("supportingDocuments")) {
+        setValue("supportingDocuments", [{}]);
+        setError("supportingDocuments", { message: t("CORE_REQUIRED_FIELD_ERROR") });
+      } else if (formData?.supportingDocuments?.length > 0 && !Object.keys(formState?.errors).includes("supportingDocuments")) {
+        formData?.supportingDocuments?.forEach((docs, index) => {
+
+          if (!docs?.documentType && !Object.keys(formState?.errors).includes(`documentType_${index}`)) {
+            setError(`documentType_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
+          } else if (docs?.documentType && Object.keys(formState?.errors).includes(`documentType_${index}`)) {
+            clearErrors(`documentType_${index}`);
+          }
+          if (!docs?.documentSubType && !Object.keys(formState?.errors).includes(`documentSubType_${index}`)) {
+            setError(`documentSubType_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
+          } else if (docs?.documentSubType && Object.keys(formState?.errors).includes(`documentSubType_${index}`)) {
+            clearErrors(`documentSubType_${index}`);
+          }
+          if (!docs?.submissionDocuments?.uploadedDocs?.length && !Object.keys(formState?.errors).includes(`submissionDocuments_${index}`)) {
+            setError(`submissionDocuments_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
+          } else if (docs?.submissionDocuments?.uploadedDocs?.length && Object.keys(formState?.errors).includes(`submissionDocuments_${index}`)) {
+            clearErrors(`submissionDocuments_${index}`);
+          }
+        });
+      } else if (formData?.supportingDocuments?.length > 0 && Object.keys(formState?.errors).includes("supportingDocuments")) {
+        clearErrors("supportingDocuments");
+      }
+    }
+
+    if (Object.keys(formState?.errors).length) {
+      setIsSubmitDisabled(true);
+    } else {
+      setIsSubmitDisabled(false);
+    }
+
     if (!isEqual(formdata, formData)) {
       setFormdata(formData);
     }
@@ -955,6 +991,7 @@ const SubmissionsCreate = ({ path }) => {
           onSubmit={handleOpenReview}
           fieldStyle={fieldStyle}
           key={formKey}
+          isDisabled={isSubmitDisabled}
         />
       </div>
       {showReviewModal && (

@@ -1620,7 +1620,7 @@ export const requestForBail = [
           inputs: [
             {
               name: "text",
-              textAreaHeader: "Grounds and reasons for Application of Bail",
+              textAreaSubHeader: "GROUND_REASON_BAIL",
               placeholder: "TYPE_HERE_PLACEHOLDER",
               type: "TextAreaComponent",
               textAreaStyle: {
@@ -1649,7 +1649,7 @@ export const requestForBail = [
           inputs: [
             {
               name: "text",
-              textAreaHeader: "Prayer",
+              textAreaSubHeader: "PRAYER",
               placeholder: "TYPE_HERE_PLACEHOLDER",
               type: "TextAreaComponent",
               textAreaStyle: {
@@ -1678,7 +1678,8 @@ export const requestForBail = [
           inputs: [
             {
               name: "text",
-              textAreaHeader: "Any additional information you would like to provide (optional)",
+              textAreaSubHeader: "ADDITIONAL_INFO",
+              isOptional: true,
               placeholder: "TYPE_HERE_PLACEHOLDER",
               type: "TextAreaComponent",
               textAreaStyle: {
@@ -1750,7 +1751,7 @@ export const requestForBail = [
               isMandatory: true,
               key: "documentSubType",
               type: "dropdown",
-              label: "Document Sub Type",
+              label: "DOCUMENT_SUB_TYPE",
               populators: {
                 name: "documentSubType",
                 optionsKey: "code",
@@ -1769,7 +1770,7 @@ export const requestForBail = [
             },
             {
               label: "DOCUMENT_TITLE_OPTIONAL",
-              labelChildren: "optional",
+              isOptional: true,
               isMandatory: false,
               key: "documentTitle",
               type: "text",
@@ -1824,7 +1825,8 @@ export const submitDocsForBail = [
           inputs: [
             {
               name: "text",
-              textAreaHeader: "Any additional information you would like to provide (optional)",
+              textAreaSubHeader: "ADDITIONAL_INFO",
+              isOptional: true,
               placeholder: "TYPE_HERE_PLACEHOLDER",
               type: "TextAreaComponent",
               textAreaStyle: {
@@ -1896,7 +1898,7 @@ export const submitDocsForBail = [
               isMandatory: true,
               key: "documentSubType",
               type: "dropdown",
-              label: "Document Sub Type",
+              label: "DOCUMENT_SUB_TYPE",
               populators: {
                 name: "documentSubType",
                 optionsKey: "code",

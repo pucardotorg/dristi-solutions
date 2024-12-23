@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import SelectMultiUpload from "./SelectMultiUpload";
-import { TextInput, CustomDropdown, Header } from "@egovernments/digit-ui-react-components";
+import { CardLabelError, TextInput, CustomDropdown, Header } from "@egovernments/digit-ui-react-components";
 
 const CloseBtn = () => {
   return (
@@ -44,15 +44,18 @@ const SupportingDocsComponent = ({ t, config, onSelect, formData = {}, errors, s
   );
 
   const addAnotherForm = () => {
-    setFormInstances([...formInstances, {}]);
+    const newFormInstances = [...formInstances, {}];
+    setFormInstances(newFormInstances);
+    updateFormData(newFormInstances);
   };
 
   const updateFormData = (updatedFormInstances) => {
     onSelect(
       config.key,
-      updatedFormInstances.map((instance) => instance[config.key])
+      updatedFormInstances.map((instance) => instance[config.key] || {})
     );
   };
+
 
   const deleteForm = (index) => {
     const updatedFormInstances = [...formInstances];
@@ -111,7 +114,7 @@ const SupportingDocsComponent = ({ t, config, onSelect, formData = {}, errors, s
               <React.Fragment key={inputIndex}>
                 {input?.type === "text" && (
                   <div className="text-Input">
-                    <div style={{ marginBottom: "8px" }}>{t(input.label)}</div>
+                    <div style={{ marginBottom: "8px" }}>{t(input.label)} {input?.isOptional && <span style={{ color: "#77787B" }}>&nbsp;{t("CS_IS_OPTIONAL")}</span>}</div>
                     <TextInput
                       t={t}
                       className="field desktop-w-full"
@@ -153,6 +156,11 @@ const SupportingDocsComponent = ({ t, config, onSelect, formData = {}, errors, s
                       config={input.populators}
                     />
                   </div>
+                )}
+                {errors[`${input?.key}_${formIndex}`] && (
+                  <CardLabelError style={{ width: "70%", marginLeft: "30%", fontSize: "12px" }}>
+                    {errors[`${input?.key}_${formIndex}`]?.message ? errors[`${input?.key}_${formIndex}`]?.message : t(errors[`${input?.key}_${formIndex}`]) || t(input.error)}
+                  </CardLabelError>
                 )}
               </React.Fragment>
             );
