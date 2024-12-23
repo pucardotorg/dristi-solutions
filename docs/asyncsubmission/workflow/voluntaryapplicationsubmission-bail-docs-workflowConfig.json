@@ -3,7 +3,7 @@
     {
       "tenantId": "kl",
       "business": "application",
-      "businessService": "voluntary-application-submission-bail",
+      "businessService": "voluntary-application-submission-bail-documents",
       "businessServiceSla": 518400000,
       "states": [
         {
@@ -35,33 +35,6 @@
           "actions": [
             {
               "action": "E-SIGN",
-              "nextState": "PENDING_PAYMENT",
-              "roles": [
-                "SUBMISSION_CREATOR",
-                "SYSTEM",
-                "SYSTEM_ADMIN"
-              ]
-            },
-            {
-              "action": "DELETE",
-              "nextState": "DELETED",
-              "roles": [
-                "SUBMISSION_CREATOR"
-              ]
-            }
-          ]
-        },
-        {
-          "sla": 172800000,
-          "state": "PENDING_PAYMENT",
-          "applicationStatus": "INWORKFLOW",
-          "docUploadRequired": false,
-          "isStartState": false,
-          "isTerminateState": false,
-          "isStateUpdatable": true,
-          "actions": [
-            {
-              "action": "MAKE_PAYMENT",
               "nextState": "PENDING_APPROVAL",
               "roles": [
                 "SUBMISSION_CREATOR",
@@ -96,13 +69,6 @@
               ]
             },
             {
-              "action": "SEND_BACK",
-              "nextState": "DOCUMENT_UPLOAD",
-              "roles": [
-                "SUBMISSION_APPROVER"
-              ]
-            },
-            {
               "action": "DELETE",
               "nextState": "DELETED",
               "roles": [
@@ -114,48 +80,6 @@
               "nextState": "REJECTED",
               "roles": [
                 "SUBMISSION_APPROVER"
-              ]
-            },
-            {
-              "action": "ABANDON",
-              "nextState": "ABATED",
-              "roles": [
-                "SYSTEM",
-                "SYSTEM_ADMIN"
-              ]
-            }
-          ]
-        },
-        {
-          "sla": 172800000,
-          "state": "DOCUMENT_UPLOAD",
-          "applicationStatus": "INWORKFLOW",
-          "docUploadRequired": true,
-          "isStartState": false,
-          "isTerminateState": false,
-          "isStateUpdatable": true,
-          "actions": [
-            {
-              "action": "APPROVE",
-              "nextState": "COMPLETED",
-              "roles": [
-                "SYSTEM",
-                "SYSTEM_ADMIN"
-              ]
-            },
-            {
-              "action": "REJECT",
-              "nextState": "REJECTED",
-              "roles": [
-                "SYSTEM",
-                "SYSTEM_ADMIN"
-              ]
-            },
-            {
-              "action": "DELETE",
-              "nextState": "DELETED",
-              "roles": [
-                "SUBMISSION_CREATOR"
               ]
             },
             {
