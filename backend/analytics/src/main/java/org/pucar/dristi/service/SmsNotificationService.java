@@ -97,7 +97,7 @@ public class SmsNotificationService {
      * Gets the message from localization
      *
      * @param requestInfo
-     * @param templateData
+     * @param courtCase
      * @param msgCode
      * @return
      */

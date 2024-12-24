@@ -5,11 +5,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.models.individual.Individual;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.OrderRegistrationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.OrderRepository;
+import org.pucar.dristi.util.AdvocateUtil;
 import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.WorkflowUtil;
 import org.pucar.dristi.validators.OrderRegistrationValidator;
@@ -48,8 +50,10 @@ public class OrderRegistrationService {
 
     private IndividualService individualService;
 
+    private AdvocateUtil advocateUtil;
+
     @Autowired
-    public OrderRegistrationService(OrderRegistrationValidator validator, Producer producer, Configuration config, WorkflowUtil workflowUtil, OrderRepository orderRepository, OrderRegistrationEnrichment enrichmentUtil, ObjectMapper objectMapper, CaseUtil caseUtil, SmsNotificationService notificationService, IndividualService individualService) {
+    public OrderRegistrationService(OrderRegistrationValidator validator, Producer producer, Configuration config, WorkflowUtil workflowUtil, OrderRepository orderRepository, OrderRegistrationEnrichment enrichmentUtil, ObjectMapper objectMapper, CaseUtil caseUtil, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil) {
         this.validator = validator;
         this.producer = producer;
         this.config = config;
@@ -60,6 +64,7 @@ public class OrderRegistrationService {
         this.caseUtil = caseUtil;
         this.notificationService = notificationService;
         this.individualService = individualService;
+        this.advocateUtil = advocateUtil;
     }
 
     public Order createOrder(OrderRequest body) {
@@ -115,7 +120,10 @@ public class OrderRegistrationService {
             String orderType = body.getOrder().getOrderType();
             producer.push(config.getUpdateOrderKafkaTopic(), body);
 
-            callNotificationService(body, updatedState, orderType);
+            String messageCode = updatedState != null ? getMessageCode(orderType, updatedState) : null;
+            if(messageCode != null){
+                callNotificationService(body, messageCode);
+            }
 
             return body.getOrder();
 
@@ -136,31 +144,9 @@ public class OrderRegistrationService {
         caseSearchRequest.addCriteriaItem(caseCriteria);
         return caseSearchRequest;
     }
-    private String getMessageCode(String orderType, String updatedStatus, String caseStatus, Boolean hearingCompleted, String submissionType) {
-
-        if(caseStatus.equalsIgnoreCase(CASE_ADMITTED) && orderType.equalsIgnoreCase(SCHEDULE_OF_HEARING_DATE) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
-            return NEXT_HEARING_SCHEDULED;
-        }
+    private String getMessageCode(String orderType, String updatedStatus) {
         if(orderType.equalsIgnoreCase(SCHEDULE_OF_HEARING_DATE) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
             return ADMISSION_HEARING_SCHEDULED;
-        }
-        if(orderType.equalsIgnoreCase(INITIATING_RESCHEDULING_OF_HEARING_DATE) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
-            return HEARING_RESCHEDULED;
-        }
-        if(orderType.equalsIgnoreCase(WARRANT) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
-            return WARRANT_ISSUED;
-        }
-        if(orderType.equalsIgnoreCase(SUMMONS) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
-            return SUMMONS_ISSUED;
-        }
-        if(hearingCompleted && updatedStatus.equalsIgnoreCase(PUBLISHED)){
-            return ORDER_PUBLISHED;
-        }
-        if(orderType.equalsIgnoreCase(MANDATORY_SUBMISSIONS_RESPONSES) && submissionType.equalsIgnoreCase(EVIDENCE) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
-            return EVIDENCE_REQUESTED;
-        }
-        if(orderType.equalsIgnoreCase(NOTICE) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
-            return NOTICE_ISSUED;
         }
         if (updatedStatus.equalsIgnoreCase(PUBLISHED)){
              return ORDER_ISSUED;
@@ -168,38 +154,32 @@ public class OrderRegistrationService {
         return null;
     }
 
-    private void callNotificationService(OrderRequest orderRequest, String updatedState, String orderType) {
+    private void callNotificationService(OrderRequest orderRequest,String messageCode) {
 
         try {
             CaseSearchRequest caseSearchRequest = createCaseSearchRequest(orderRequest.getRequestInfo(), orderRequest.getOrder());
             JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
-            String caseStatus = caseDetails.has("status") ? caseDetails.get("status").asText() : "";
+            JsonNode litigants = caseUtil.getLitigants(caseDetails);
+            Set<String> individualIds = caseUtil.getIndividualIds(litigants);
+            JsonNode representatives = caseUtil.getRepresentatives(caseDetails);
+            Set<String> representativeIds = caseUtil.getAdvocateIds(representatives);
+
+            if(!representativeIds.isEmpty()){
+                representativeIds = advocateUtil.getAdvocate(orderRequest.getRequestInfo(),representativeIds.stream().toList());
+            }
+            individualIds.addAll(representativeIds);
 
             Object additionalDetailsObject = orderRequest.getOrder().getAdditionalDetails();
             String jsonData = objectMapper.writeValueAsString(additionalDetailsObject);
-            JsonNode additionalData = objectMapper.readTree(jsonData);
-            JsonNode formData = additionalData.path("formdata");
-            String submissionType = formData.has("documentType") ? formData.path("documentType").path("value").asText() : "";
-            boolean hearingCompleted = formData.has("lastHearingTranscript");
-
-
-            String messageCode = updatedState != null ? getMessageCode(orderType, updatedState, caseStatus, hearingCompleted, submissionType) : null;
-            assert messageCode != null;
-
-            Object orderDetailsObject = orderRequest.getOrder().getOrderDetails();
-            JsonNode orderDetails = objectMapper.readTree(objectMapper.writeValueAsString(orderDetailsObject));
-
-            String receiver = getReceiverParty(messageCode);
-
-            Set<String> individualIds = extractIndividualIds(caseDetails, receiver);
+            JsonNode orderData = objectMapper.readTree(jsonData);
+            String hearingDate = orderData.path("formdata").path("hearingDate").asText();
 
             Set<String> phonenumbers = callIndividualService(orderRequest.getRequestInfo(), individualIds);
 
             SmsTemplateData smsTemplateData = SmsTemplateData.builder()
                     .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").asText() : "")
                     .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").asText() : "")
-                    .hearingDate(formData.has("hearingDate") ? formData.get("hearingDate").asText() : "")
-                    .submissionDate(orderDetails.has("dates") ? formData.get("dates").get("submissionDeadlineDate").asText() : "")
+                    .hearingDate(hearingDate)
                     .tenantId(orderRequest.getOrder().getTenantId()).build();
 
             for (String number : phonenumbers) {
@@ -211,14 +191,6 @@ public class OrderRegistrationService {
             log.error("Error occurred while sending notification: {}", e.toString());
         }
     }
-
-    private static String getReceiverParty(String messageCode) {
-        if(messageCode.equalsIgnoreCase(NOTICE_ISSUED) || messageCode.equalsIgnoreCase(WARRANT_ISSUED) || messageCode.equalsIgnoreCase(SUMMONS_ISSUED)) {
-            return RESPONDENT;
-        }
-        return null;
-    }
-
 
     public List<OrderExists> existsOrder(OrderExistsRequest orderExistsRequest) {
         try {
@@ -249,51 +221,15 @@ public class OrderRegistrationService {
             order.setCreatedDate(System.currentTimeMillis());
     }
 
-    private Set<String> callIndividualService(RequestInfo requestInfo, Set<String> ids) {
+    private Set<String> callIndividualService(RequestInfo requestInfo, Set<String> individualIds) {
 
         Set<String> mobileNumber = new HashSet<>();
-
-        List<Individual> individuals = individualService.getIndividuals(requestInfo, new ArrayList<>(ids));
-        for(Individual individual : individuals) {
-            if (individual.getMobileNumber() != null) {
-                mobileNumber.add(individual.getMobileNumber());
+        for (String id : individualIds) {
+            List<Individual> individuals = individualService.getIndividualsByIndividualId(requestInfo, id);
+            if (individuals.get(0).getMobileNumber() != null) {
+                mobileNumber.add(individuals.get(0).getMobileNumber());
             }
         }
-        return mobileNumber;
-    }
-
-    public  Set<String> extractIndividualIds(JsonNode caseDetails, String receiver) {
-        JsonNode litigantNode = caseDetails.get("litigants");
-        JsonNode representativeNode = caseDetails.get("representatives");
-        String partyTypeToMatch = (receiver != null) ? receiver.toLowerCase() : "";
-        Set<String> uuids = new HashSet<>();
-
-        if (litigantNode.isArray()) {
-            for (JsonNode node : litigantNode) {
-                String partyType = node.get("partyType").asText().toLowerCase();
-                if (partyType.contains(partyTypeToMatch)) {
-                    String uuid = node.path("additionalDetails").get("uuid").asText();
-                    if (!uuid.isEmpty()) {
-                        uuids.add(uuid);
-                    }
-                }
-            }
-        }
-
-        if (representativeNode.isArray()) {
-            for (JsonNode advocateNode : representativeNode) {
-                JsonNode representingNode = advocateNode.get("representing");
-                if (representingNode.isArray()) {
-                    String partyType = representingNode.get(0).get("partyType").asText().toLowerCase();
-                    if (partyType.contains(partyTypeToMatch)) {
-                        String uuid = advocateNode.path("additionalDetails").get("uuid").asText();
-                        if (!uuid.isEmpty()) {
-                            uuids.add(uuid);
-                        }
-                    }
-                }
-            }
-        }
-        return uuids;
+            return mobileNumber;
     }
 }

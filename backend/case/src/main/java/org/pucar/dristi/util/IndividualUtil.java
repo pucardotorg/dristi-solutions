@@ -4,8 +4,8 @@ import static org.pucar.dristi.config.ServiceConstants.INDIVIDUAL_UTILITY_EXCEPT
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.egov.tracer.model.CustomException;
+import org.egov.common.models.individual.Individual;
 import org.pucar.dristi.repository.ServiceRequestRepository;
-import org.pucar.dristi.web.models.Individual;
 import org.pucar.dristi.web.models.IndividualSearchRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

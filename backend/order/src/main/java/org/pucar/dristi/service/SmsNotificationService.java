@@ -62,27 +62,6 @@ public class SmsNotificationService {
         if(messageCode.equalsIgnoreCase(ORDER_ISSUED)){
             pushNotification(templateData, message, mobileNumber, config.getSmsNotificationJudgeIssueOrderTemplateId());
         }
-        if(messageCode.equalsIgnoreCase(NOTICE_ISSUED)){
-            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationNoticeIssuedTemplateId());
-        }
-        if(messageCode.equalsIgnoreCase(WARRANT_ISSUED)){
-            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationWarrantIssuedTemplateId());
-        }
-        if(messageCode.equalsIgnoreCase(HEARING_RESCHEDULED)){
-            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationHearingReScheduledTemplateId());
-        }
-        if(messageCode.equalsIgnoreCase(SUMMONS_ISSUED)){
-            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationSummonsIssuedTemplateId());
-        }
-        if(messageCode.equalsIgnoreCase(ORDER_PUBLISHED)){
-            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationOrderPublishedTemplateId());
-        }
-        if(messageCode.equalsIgnoreCase(EVIDENCE_REQUESTED)){
-            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationEvidenceRequestedTemplateId());
-        }
-        if(messageCode.equalsIgnoreCase(NEXT_HEARING_SCHEDULED)){
-            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationNextHearingScheduledTemplateId());
-        }
     }
 
     private void pushNotification(SmsTemplateData templateData, String message, String mobileNumber, String templateId) {
@@ -113,7 +92,6 @@ public class SmsNotificationService {
         smsDetails.put("cmpNumber", smsTemplateData.getCmpNumber());
         smsDetails.put("hearingDate", smsTemplateData.getHearingDate());
         smsDetails.put("tenantId", smsTemplateData.getTenantId());
-        smsDetails.put("submissionDate", smsTemplateData.getSubmissionDate());
         smsDetails.put("mobileNumber", mobileNumber);
 
         return smsDetails;
@@ -124,7 +102,7 @@ public class SmsNotificationService {
      * Gets the message from localization
      *
      * @param requestInfo
-     * @param templateData
+     * @param courtCase
      * @param msgCode
      * @return
      */
