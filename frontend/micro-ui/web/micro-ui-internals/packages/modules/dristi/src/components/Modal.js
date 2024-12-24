@@ -12,8 +12,8 @@ const Modal = ({
   actionCancelLabel,
   actionCancelOnSubmit,
   actionSaveLabel,
-  actionNewOrderOnSubmit,
-  actionNewLabel,
+  actionCustomLabelSubmit,
+  actionCustomLabel,
   actionSaveOnSubmit,
   error,
   setError,
@@ -69,11 +69,11 @@ const Modal = ({
             ) : (
               <div></div>
             )}
-            {actionNewLabel ? (
+            {actionCustomLabel ? (
               <ButtonSelector
                 textStyles={textStyle}
-                label={actionNewLabel}
-                onSubmit={actionNewOrderOnSubmit}
+                label={actionCustomLabel}
+                onSubmit={actionCustomLabelSubmit}
                 formId={formId}
                 isDisabled={isDisabled}
                 style={style}

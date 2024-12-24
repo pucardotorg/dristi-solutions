@@ -136,7 +136,7 @@ const EvidenceModal = ({
     }
     return label;
   }, [allAdvocates, applicationStatus, createdBy, documentSubmission, isLitigent, modalType, respondingUuids, t, userInfo?.uuid, userType]);
-  const actionNewLabel = useMemo(() => {
+  const actionCustomLabel = useMemo(() => {
     let label = "";
     if (modalType === "Submissions") {
       if (userType === "employee") {
@@ -512,9 +512,10 @@ const EvidenceModal = ({
         return "BAIL";
       // to be mapped with correct type, used for reference
       case "SURETY":
+        return "BAIL";
+      case "REQUEST_FOR_BAIL":
+      case "SUBMIT_BAIL_DOCUMENTS": // correct mapping to be done
         return type === "reject" ? "REJECT_BAIL" : type === "setTerms" ? "SET_BAIL_TERMS" : "ACCEPT_BAIL";
-      // case "BAIL": // correct mapping to be done
-      //   return type === "reject" ? "REJECT_BAIL" : type === "setTerms" ? "SET_BAIL_TERMS" : "ACCEPT_BAIL";
 
       case "EXTENSION_SUBMISSION_DEADLINE":
         return "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE";
@@ -567,7 +568,7 @@ const EvidenceModal = ({
     }
   }, [documentSubmission, showConfirmationModal?.type]);
   const isBail = useMemo(() => {
-    return documentSubmission?.[0]?.applicationList?.applicationType === "SURETY";
+    return ["SUBMIT_BAIL_DOCUMENTS", "REQUEST_FOR_BAIL"].includes(documentSubmission?.[0]?.applicationList?.applicationType);
   }, [documentSubmission]);
   const showDocument = useMemo(() => {
     return (
@@ -645,7 +646,7 @@ const EvidenceModal = ({
         };
         try {
           const res = await ordersService.createOrder(reqbody, { tenantId });
-          const name = getOrderActionName(documentSubmission?.[0]?.applicationList?.applicationType, showConfirmationModal.type);
+          const name = getOrderActionName(documentSubmission?.[0]?.applicationList?.applicationType, isBail ? type : showConfirmationModal.type);
           DRISTIService.customApiService(Urls.dristi.pendingTask, {
             pendingTask: {
               name: t(name),
@@ -714,11 +715,9 @@ const EvidenceModal = ({
     if (userType === "employee") {
       console.log("IF 2");
 
-      // to be replaced
-      // if (isBail) {
-      //   await handleApplicationAction(true, "accept");
-      // } else
-      modalType === "Documents" ? setShowConfirmationModal({ type: "documents-confirmation" }) : setShowConfirmationModal({ type: "accept" });
+      if (isBail) {
+        await handleApplicationAction(true, "accept");
+      } else modalType === "Documents" ? setShowConfirmationModal({ type: "documents-confirmation" }) : setShowConfirmationModal({ type: "accept" });
     } else {
       if (actionSaveLabel === t("ADD_COMMENT")) {
         try {
@@ -750,10 +749,9 @@ const EvidenceModal = ({
 
   const actionCancelOnSubmit = async () => {
     if (userType === "employee") {
-      // if (isBail) {
-      //   await handleApplicationAction(true, "reject");
-      // } else
-      setShowConfirmationModal({ type: "reject" });
+      if (isBail) {
+        await handleApplicationAction(true, "reject");
+      } else setShowConfirmationModal({ type: "reject" });
     } else {
       try {
         await handleDeleteApplication();
@@ -762,11 +760,9 @@ const EvidenceModal = ({
       } catch (error) {}
     }
   };
-  const actionNewOrderOnSubmit = async () => {
+  const actionCustomLabelSubmit = async () => {
     if (userType === "employee") {
       await handleApplicationAction(true, "setTerms");
-
-      // setShowConfirmationModal({ type: "setTerms" });
     } else {
       setShow(false);
     }
@@ -839,9 +835,11 @@ const EvidenceModal = ({
           actionSaveOnSubmit={actionSaveOnSubmit}
           hideSubmit={!showSubmit} // Not allowing submit action for court room manager
           actionCancelLabel={!isJudge ? false : actionCancelLabel} // Not allowing cancel action for court room manager
-          actionNewLabel={!isJudge || !isBail ? false : actionNewLabel} // Not allowing cancel action for court room manager
+          actionCustomLabel={
+            !isJudge || !["REQUEST_FOR_BAIL"].includes(documentSubmission?.[0]?.applicationList?.applicationType) ? false : actionCustomLabel
+          } // Not allowing cancel action for court room manager
           actionCancelOnSubmit={actionCancelOnSubmit}
-          actionNewOrderOnSubmit={actionNewOrderOnSubmit}
+          actionCustomLabelSubmit={actionCustomLabelSubmit}
           formId="modal-action"
           headerBarMain={
             <Heading
