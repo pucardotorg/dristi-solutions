@@ -143,7 +143,7 @@ public class ApplicationService {
             }
 
         } else {
-            log.info("No relatedApplication found.");
+            log.info("No relatedApplication found in applicationDetails.");
         }
 
 
