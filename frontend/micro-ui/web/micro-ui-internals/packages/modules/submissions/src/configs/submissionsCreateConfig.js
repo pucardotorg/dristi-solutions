@@ -1615,6 +1615,8 @@ export const requestForBail = [
         type: "component",
         component: "SelectCustomTextArea",
         key: "reasonForApplicationOfBail",
+        schemaKeyPath: "applicationDetails.reasonForApplicationOfBail",
+        transformer: "customTextArea",
         isMandatory: true,
         populators: {
           inputs: [
@@ -1644,6 +1646,8 @@ export const requestForBail = [
         type: "component",
         component: "SelectCustomTextArea",
         key: "prayer",
+        schemaKeyPath: "applicationDetails.prayer",
+        transformer: "customTextArea",
         isMandatory: true,
         populators: {
           inputs: [
@@ -1673,6 +1677,8 @@ export const requestForBail = [
         type: "component",
         component: "SelectCustomTextArea",
         key: "additionalInformation",
+        schemaKeyPath: "applicationDetails.additionalInformation",
+        transformer: "customTextArea",
         isMandatory: false,
         populators: {
           inputs: [
@@ -1722,8 +1728,11 @@ export const requestForBail = [
         type: "component",
         key: "supportingDocuments",
         component: "SupportingDocsComponent",
+        schemaKeyPath: "applicationDetails.applicationDocuments",
+        transformer: "applicationDocuments",
         name: "SUPPORTING_DOCS",
         disable: false,
+        isMandatory: true,
         populators: {
           inputs: [
             {
@@ -1820,6 +1829,8 @@ export const submitDocsForBail = [
         type: "component",
         component: "SelectCustomTextArea",
         key: "additionalInformation",
+        schemaKeyPath: "applicationDetails.additionalInformation",
+        transformer: "customTextArea",
         isMandatory: false,
         populators: {
           inputs: [
@@ -1869,8 +1880,11 @@ export const submitDocsForBail = [
         type: "component",
         key: "supportingDocuments",
         component: "SupportingDocsComponent",
+        schemaKeyPath: "applicationDetails.applicationDocuments",
+        transformer: "applicationDocuments",
         name: "SUPPORTING_DOCS",
         disable: false,
+        isMandatory: true,
         populators: {
           inputs: [
             {

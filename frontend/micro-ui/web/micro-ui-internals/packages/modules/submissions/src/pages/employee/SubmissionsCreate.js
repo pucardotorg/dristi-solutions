@@ -481,8 +481,11 @@ const SubmissionsCreate = ({ path }) => {
   const formKey = useMemo(() => applicationType + (defaultFormValue?.initialSubmissionDate || ""), [applicationType, defaultFormValue]);
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
-
-    if (applicationType && !["OTHERS", "DOCUMENT", "REQUEST_FOR_BAIL", "SUBMIT_BAIL_DOCUMENTS"].includes(applicationType) && !formData?.applicationDate) {
+    if (
+      applicationType &&
+      !["OTHERS", "DOCUMENT", "REQUEST_FOR_BAIL", "SUBMIT_BAIL_DOCUMENTS"].includes(applicationType) &&
+      !formData?.applicationDate
+    ) {
       setValue("applicationDate", formatDate(new Date()));
     }
     // if (applicationType && applicationType === "TRANSFER" && !formData?.requestedCourt) {
@@ -512,7 +515,6 @@ const SubmissionsCreate = ({ path }) => {
         setError("supportingDocuments", { message: t("CORE_REQUIRED_FIELD_ERROR") });
       } else if (formData?.supportingDocuments?.length > 0 && !Object.keys(formState?.errors).includes("supportingDocuments")) {
         formData?.supportingDocuments?.forEach((docs, index) => {
-
           if (!docs?.documentType && !Object.keys(formState?.errors).includes(`documentType_${index}`)) {
             setError(`documentType_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
           } else if (docs?.documentType && Object.keys(formState?.errors).includes(`documentType_${index}`)) {
@@ -598,22 +600,19 @@ const SubmissionsCreate = ({ path }) => {
       if (formdata?.othersDocument?.documents?.length > 0) {
         documentsList = [...documentsList, ...formdata?.othersDocument?.documents];
       }
-      if (formdata?.supportingDocuments?.length > 0) {
-        formdata?.supportingDocuments?.map((docs) => {
-          if (docs?.submissionDocuments?.uploadedDocs?.length > 0) {
-            documentsList = [
-              ...documentsList,
-              ...docs.submissionDocuments.uploadedDocs
-            ];
-          }
-        })
-      }
-      const applicationDocuments =
-        formdata?.submissionDocuments?.submissionDocuments?.map((item) => ({
+
+      const applicationDocuments = ["REQUEST_FOR_BAIL", "SUBMIT_BAIL_DOCUMENTS"].includes(applicationType)
+        ? formdata?.supportingDocuments?.map((supportDocs) => ({
+          fileType: supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.documentType,
+          fileStore: supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.fileStore,
+          additionalDetails: supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.additionalDetails,
+        })) || []
+        : formdata?.submissionDocuments?.submissionDocuments?.map((item) => ({
           fileType: item?.document?.documentType,
           fileStore: item?.document?.fileStore,
           additionalDetails: item?.document?.additionalDetails,
         })) || [];
+
       const documentres = (await Promise.all(documentsList?.map((doc) => onDocumentUpload(doc, doc?.name)))) || [];
       let documents = [];
       let file = null;
@@ -773,14 +772,16 @@ const SubmissionsCreate = ({ path }) => {
         if (doc?.submissionDocuments?.uploadedDocs?.length) {
           try {
             const combinedDocName = `SUPPORTING_DOCS_${index + 1}.pdf`;
-            const combinedDocumentFile = await combineMultipleFiles(
-              doc.submissionDocuments.uploadedDocs,
-              combinedDocName,
-              "submissionDocuments"
-            );
-            doc.submissionDocuments.uploadedDocs = combinedDocumentFile;
+            const combinedDocumentFile = await combineMultipleFiles(doc.submissionDocuments.uploadedDocs, combinedDocName, "submissionDocuments");
+            const docs = await onDocumentUpload(combinedDocumentFile?.[0], combinedDocName);
+            const file = {
+              documentType: docs?.fileType,
+              fileStore: docs?.file?.files?.[0]?.fileStoreId,
+              additionalDetails: { name: docs?.filename || combinedDocName },
+            };
+            doc.submissionDocuments.uploadedDocs = [file];
           } catch (error) {
-            console.error("Error combining documents:", error);
+            console.error("Error combining or uploading documents for index:", index, error);
             throw new Error("Failed to combine and update uploaded documents.");
           }
         }
@@ -789,13 +790,12 @@ const SubmissionsCreate = ({ path }) => {
     return formData;
   };
 
-
   const handleOpenReview = async () => {
     setLoader(true);
 
     if (applicationType && ["REQUEST_FOR_BAIL", "SUBMIT_BAIL_DOCUMENTS"].includes(applicationType)) {
       const updatedFormData = await replaceUploadedDocsWithCombinedFile(formdata);
-      setFormdata(updatedFormData)
+      setFormdata(updatedFormData);
     }
 
     const res = await createSubmission();
