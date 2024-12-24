@@ -73,7 +73,7 @@ public class ApplicationService {
         }
     }
 
-    public Application updateApplication(ApplicationRequest applicationRequest) {
+    public Application updateApplication(ApplicationRequest applicationRequest, Boolean isFromRelatedUpdate) {
         try {
             Application application = applicationRequest.getApplication();
 
@@ -90,7 +90,7 @@ public class ApplicationService {
                 enrichmentUtil.enrichApplicationNumberByCMPNumber(applicationRequest);
             }
 
-            if (application.getWorkflow() != null && SUBMIT_BAIL_DOCUMENTS.equalsIgnoreCase(application.getApplicationType()) && (APPROVE.equalsIgnoreCase(application.getWorkflow().getAction()) || REJECT.equalsIgnoreCase(application.getWorkflow().getAction()))) {
+            if (application.getWorkflow() != null && SUBMIT_BAIL_DOCUMENTS.equalsIgnoreCase(application.getApplicationType()) && (APPROVE.equalsIgnoreCase(application.getWorkflow().getAction()) || REJECT.equalsIgnoreCase(application.getWorkflow().getAction())) && !isFromRelatedUpdate) {
 
                 updateRelatedApplication(application, applicationRequest.getRequestInfo());
 
@@ -132,7 +132,7 @@ public class ApplicationService {
                         Application parentApplication = relatedApplications.get(0);
                         parentApplication.setWorkflow(application.getWorkflow());
                         updateApplication(ApplicationRequest.builder().application(parentApplication)
-                                .requestInfo(requestInfo).build());
+                                .requestInfo(requestInfo).build(),true);
 
                     } else {
                         log.info("Application with id : {} not found in DB", applicationId);
