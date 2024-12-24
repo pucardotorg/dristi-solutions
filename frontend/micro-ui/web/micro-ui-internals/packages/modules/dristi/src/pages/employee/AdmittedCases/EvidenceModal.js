@@ -515,8 +515,7 @@ const EvidenceModal = ({
         return "BAIL";
       case "REQUEST_FOR_BAIL":
       case "SUBMIT_BAIL_DOCUMENTS": // correct mapping to be done
-        return type === "reject" ? "REJECT_BAIL" : type === "setTerms" ? "SET_BAIL_TERMS" : "ACCEPT_BAIL";
-
+        return type === "reject" ? "REJECT_BAIL" : type === "SET_TERM_BAIL" ? "SET_BAIL_TERMS" : "ACCEPT_BAIL";
       case "EXTENSION_SUBMISSION_DEADLINE":
         return "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE";
       case "CHECKOUT_REQUEST":
@@ -542,6 +541,9 @@ const EvidenceModal = ({
         return "ORDER_FOR_BAIL";
       case "EXTENSION_SUBMISSION_DEADLINE":
         return "ORDER_EXTENSION_SUBMISSION_DEADLINE";
+      case "REQUEST_FOR_BAIL":
+      case "SUBMIT_BAIL_DOCUMENTS":
+        return type === "reject" ? "REJECT_BAIL" : type === "SET_TERM_BAIL" ? "SET_BAIL_TERMS" : "ACCEPT_BAIL";
       case "CHECKOUT_REQUEST":
         return type === "reject" ? "REJECT_CHECKOUT_REQUEST" : "ACCEPT_CHECKOUT_REQUEST";
       default:
@@ -607,7 +609,13 @@ const EvidenceModal = ({
           name: `ORDER_TYPE_${orderType}`,
         },
         refApplicationId: documentSubmission?.[0]?.applicationList?.applicationNumber,
-        applicationStatus: type === "accept" ? t("APPROVED") : t("REJECTED"),
+        applicationStatus: isBail
+          ? type === "SET_TERM_BAIL"
+            ? t("SET_TERM_OF_BAIL")
+            : type === "accept"
+            ? t("APPROVED")
+            : t("REJECTED")
+          : t("NO_STATUS"),
       };
       const linkedOrderNumber = documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.refOrderId;
       if (generateOrder) {
@@ -617,6 +625,7 @@ const EvidenceModal = ({
             tenantId,
             cnrNumber,
             filingNumber,
+            applicationNumber: [documentSubmission?.[0]?.applicationList?.applicationNumber],
             statuteSection: {
               tenantId,
             },
@@ -633,7 +642,13 @@ const EvidenceModal = ({
             documents: [],
             additionalDetails: {
               formdata,
-              applicationStatus: type === "accept" ? t("APPROVED") : t("REJECTED"),
+              applicationStatus: isBail
+                ? type === "SET_TERM_BAIL"
+                  ? t("SET_TERM_OF_BAIL")
+                  : type === "accept"
+                  ? t("APPROVED")
+                  : t("REJECTED")
+                : t("NO_STATUS"),
             },
             ...(documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName && {
               orderDetails: { parties: [{ partyName: documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName }] },
@@ -713,8 +728,6 @@ const EvidenceModal = ({
       return;
     }
     if (userType === "employee") {
-      console.log("IF 2");
-
       if (isBail) {
         await handleApplicationAction(true, "accept");
       } else modalType === "Documents" ? setShowConfirmationModal({ type: "documents-confirmation" }) : setShowConfirmationModal({ type: "accept" });
@@ -762,7 +775,7 @@ const EvidenceModal = ({
   };
   const actionCustomLabelSubmit = async () => {
     if (userType === "employee") {
-      await handleApplicationAction(true, "setTerms");
+      await handleApplicationAction(true, "SET_TERM_BAIL");
     } else {
       setShow(false);
     }
