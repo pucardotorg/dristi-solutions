@@ -12,7 +12,6 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.ApplicationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.ApplicationRepository;
-import org.pucar.dristi.util.SmsNotificationUtil;
 import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -34,10 +33,9 @@ public class PaymentUpdateService {
     private final Configuration configuration;
     private final ApplicationEnrichment enrichment;
     private final List<String> allowedBusinessServices;
-    private final SmsNotificationUtil smsNotificationUtil;
 
     @Autowired
-    public PaymentUpdateService(WorkflowService workflowService, ObjectMapper mapper, ApplicationRepository repository, Producer producer, Configuration configuration, ApplicationEnrichment enrichment, SmsNotificationUtil smsNotificationUtil) {
+    public PaymentUpdateService(WorkflowService workflowService, ObjectMapper mapper, ApplicationRepository repository, Producer producer, Configuration configuration, ApplicationEnrichment enrichment) {
         this.workflowService = workflowService;
         this.mapper = mapper;
         this.repository = repository;
@@ -49,7 +47,6 @@ public class PaymentUpdateService {
                 configuration.getAsyncOrderSubWithResponseBusinessServiceName(),
                 configuration.getAsyncVoluntarySubBusinessServiceName()
         );
-        this.smsNotificationUtil = smsNotificationUtil;
     }
 
     public void process(Map<String, Object> record) {
@@ -116,9 +113,6 @@ public class PaymentUpdateService {
                     enrichment.enrichApplicationNumberByCMPNumber(applicationRequest);
                 }
 
-                String applicationType = application.getApplicationType();
-
-                smsNotificationUtil.callNotificationService(applicationRequest, state.getState(), applicationType);
                 producer.push(configuration.getApplicationUpdateStatusTopic(), applicationRequest);
             }
         } catch (Exception e) {

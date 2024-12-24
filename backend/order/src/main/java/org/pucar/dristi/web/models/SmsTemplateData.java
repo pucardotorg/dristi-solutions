@@ -19,7 +19,5 @@ public class SmsTemplateData {
 
     private String hearingDate;
 
-    private String submissionDate;
-
     private String cmpNumber;
 }

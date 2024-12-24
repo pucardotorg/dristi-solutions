@@ -18,7 +18,6 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.ApplicationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.ApplicationRepository;
-import org.pucar.dristi.util.SmsNotificationUtil;
 import org.pucar.dristi.validator.ApplicationValidator;
 import org.pucar.dristi.web.models.*;
 
@@ -43,9 +42,6 @@ class ApplicationServiceTest {
 
     @Mock
     private WorkflowService workflowService;
-
-    @Mock
-    private SmsNotificationUtil smsNotificationUtil;
 
     @Mock
     private Configuration config;
@@ -155,7 +151,6 @@ class ApplicationServiceTest {
         // Mock config topic
         when(config.getApplicationUpdateTopic()).thenReturn("application-update-topic");
 
-        doNothing().when(smsNotificationUtil).callNotificationService(any(), any(), any());
         // Act
         Application result = applicationService.updateApplication(mockRequest);
 
