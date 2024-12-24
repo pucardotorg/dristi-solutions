@@ -94,7 +94,7 @@
         },
         {
           "sla": null,
-          "state": "APPROVED",
+          "state": "COMPLETED",
           "applicationStatus": "ACTIVE",
           "isStateUpdatable": false,
           "docUploadRequired": false,
