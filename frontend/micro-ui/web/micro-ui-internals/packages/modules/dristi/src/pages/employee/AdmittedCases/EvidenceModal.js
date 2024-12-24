@@ -136,7 +136,15 @@ const EvidenceModal = ({
     }
     return label;
   }, [allAdvocates, applicationStatus, createdBy, documentSubmission, isLitigent, modalType, respondingUuids, t, userInfo?.uuid, userType]);
-
+  const actionNewLabel = useMemo(() => {
+    let label = "";
+    if (modalType === "Submissions") {
+      if (userType === "employee") {
+        label = t("SET_TERMS_OF_BAIL");
+      }
+    }
+    return label;
+  }, [allAdvocates, applicationStatus, createdBy, documentSubmission, isLitigent, modalType, respondingUuids, t, userInfo?.uuid, userType]);
   const actionCancelLabel = useMemo(() => {
     if (
       userRoles.includes("SUBMISSION_APPROVER") &&
@@ -502,8 +510,12 @@ const EvidenceModal = ({
         return "SETTLEMENT";
       case "BAIL_BOND":
         return "BAIL";
+      // to be mapped with correct type, used for reference
       case "SURETY":
-        return "BAIL";
+        return type === "reject" ? "REJECT_BAIL" : type === "setTerms" ? "SET_BAIL_TERMS" : "ACCEPT_BAIL";
+      // case "BAIL": // correct mapping to be done
+      //   return type === "reject" ? "REJECT_BAIL" : type === "setTerms" ? "SET_BAIL_TERMS" : "ACCEPT_BAIL";
+
       case "EXTENSION_SUBMISSION_DEADLINE":
         return "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE";
       case "CHECKOUT_REQUEST":
@@ -554,7 +566,9 @@ const EvidenceModal = ({
       return acceptedApplicationTypes.includes(applicationType);
     }
   }, [documentSubmission, showConfirmationModal?.type]);
-
+  const isBail = useMemo(() => {
+    return documentSubmission?.[0]?.applicationList?.applicationType === "SURETY";
+  }, [documentSubmission]);
   const showDocument = useMemo(() => {
     return (
       <React.Fragment>
@@ -579,9 +593,12 @@ const EvidenceModal = ({
       </React.Fragment>
     );
   }, [documentSubmission]);
+  console.log(documentSubmission?.[0]?.applicationList?.applicationType, "APP TYPEE >>>");
   const handleApplicationAction = async (generateOrder, type) => {
+    console.log(generateOrder, type, "FVFVFD");
     try {
       const orderType = getOrderTypes(documentSubmission?.[0]?.applicationList?.applicationType, type);
+      console.log(orderType, "ORDER Tpye");
       const formdata = {
         orderType: {
           code: orderType,
@@ -695,6 +712,12 @@ const EvidenceModal = ({
       return;
     }
     if (userType === "employee") {
+      console.log("IF 2");
+
+      // to be replaced
+      // if (isBail) {
+      //   await handleApplicationAction(true, "accept");
+      // } else
       modalType === "Documents" ? setShowConfirmationModal({ type: "documents-confirmation" }) : setShowConfirmationModal({ type: "accept" });
     } else {
       if (actionSaveLabel === t("ADD_COMMENT")) {
@@ -727,6 +750,9 @@ const EvidenceModal = ({
 
   const actionCancelOnSubmit = async () => {
     if (userType === "employee") {
+      // if (isBail) {
+      //   await handleApplicationAction(true, "reject");
+      // } else
       setShowConfirmationModal({ type: "reject" });
     } else {
       try {
@@ -734,6 +760,15 @@ const EvidenceModal = ({
         setShow(false);
         counterUpdate();
       } catch (error) {}
+    }
+  };
+  const actionNewOrderOnSubmit = async () => {
+    if (userType === "employee") {
+      await handleApplicationAction(true, "setTerms");
+
+      // setShowConfirmationModal({ type: "setTerms" });
+    } else {
+      setShow(false);
     }
   };
 
@@ -804,7 +839,9 @@ const EvidenceModal = ({
           actionSaveOnSubmit={actionSaveOnSubmit}
           hideSubmit={!showSubmit} // Not allowing submit action for court room manager
           actionCancelLabel={!isJudge ? false : actionCancelLabel} // Not allowing cancel action for court room manager
+          actionNewLabel={!isJudge || !isBail ? false : actionNewLabel} // Not allowing cancel action for court room manager
           actionCancelOnSubmit={actionCancelOnSubmit}
+          actionNewOrderOnSubmit={actionNewOrderOnSubmit}
           formId="modal-action"
           headerBarMain={
             <Heading

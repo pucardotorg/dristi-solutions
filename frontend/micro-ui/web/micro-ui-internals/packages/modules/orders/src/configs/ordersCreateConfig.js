@@ -3973,21 +3973,23 @@ export const configsIssueBailAcceptance = [
         },
       },
       {
+        label: "BAIL_TYPE",
         isMandatory: true,
         key: "bailType",
-        type: "dropdown",
-        label: "BAIL_TYPE",
         disable: false,
+        type: "dropdown",
         populators: {
-          name: "BailType",
-          optionsKey: "name",
           styles: { maxWidth: "100%" },
-          error: "required ",
-          // need to update with bail type mdms config
+
+          name: "bailType",
+          optionsKey: "type",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          required: true,
+          isMandatory: true,
           mdmsConfig: {
+            masterName: "BailType",
             moduleName: "Order",
-            masterName: "OrderType",
-            localePrefix: "ORDER_TYPE",
+            localePrefix: "BAIL_TYPE",
           },
         },
       },
