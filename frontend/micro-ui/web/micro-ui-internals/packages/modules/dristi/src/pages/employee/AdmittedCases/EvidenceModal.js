@@ -611,7 +611,7 @@ const EvidenceModal = ({
         refApplicationId: documentSubmission?.[0]?.applicationList?.applicationNumber,
         applicationStatus: isBail
           ? type === "SET_TERM_BAIL"
-            ? t("SET_TERM_OF_BAIL")
+            ? t("SET_TERM_BAIL")
             : type === "accept"
             ? t("APPROVED")
             : t("REJECTED")
@@ -644,7 +644,7 @@ const EvidenceModal = ({
               formdata,
               applicationStatus: isBail
                 ? type === "SET_TERM_BAIL"
-                  ? t("SET_TERM_OF_BAIL")
+                  ? t("SET_TERM_BAIL")
                   : type === "accept"
                   ? t("APPROVED")
                   : t("REJECTED")

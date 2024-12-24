@@ -3954,6 +3954,14 @@ export const configsIssueBailAcceptance = [
   {
     body: [
       {
+        label: "REF_APPLICATION_ID",
+        isMandatory: false,
+        key: "refApplicationId",
+        disable: true,
+        type: "text",
+        populators: { name: "refApplicationId" },
+      },
+      {
         isMandatory: true,
         key: "bailParty",
         type: "dropdown",
@@ -4067,6 +4075,14 @@ export const configsIssueBailReject = [
   {
     body: [
       {
+        label: "REF_APPLICATION_ID",
+        isMandatory: false,
+        key: "refApplicationId",
+        disable: true,
+        type: "text",
+        populators: { name: "refApplicationId" },
+      },
+      {
         isMandatory: true,
         key: "bailParty",
         type: "dropdown",
@@ -4133,6 +4149,14 @@ export const configsSetTermBail = [
   {
     body: [
       {
+        label: "REF_APPLICATION_ID",
+        isMandatory: false,
+        key: "refApplicationId",
+        disable: true,
+        type: "text",
+        populators: { name: "refApplicationId" },
+      },
+      {
         type: "component",
         component: "SelectCustomTextArea",
         key: "bailSummaryCircumstances",
@@ -4152,7 +4176,7 @@ export const configsSetTermBail = [
       {
         type: "component",
         component: "SelectCustomTextArea",
-        key: "bailSummaryCircumstances",
+        key: "additionalComments",
         isMandatory: true,
         populators: {
           inputs: [

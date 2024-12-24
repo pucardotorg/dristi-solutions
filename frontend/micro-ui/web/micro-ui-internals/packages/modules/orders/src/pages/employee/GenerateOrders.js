@@ -130,6 +130,9 @@ const stateSlaMap = {
   OTHERS: 3,
   APPROVE_VOLUNTARY_SUBMISSIONS: 3,
   REJECT_VOLUNTARY_SUBMISSIONS: 3,
+  REJECT_BAIL: 3,
+  ACCEPT_BAIL: 3,
+  SET_BAIL_TERMS: 3,
   JUDGEMENT: 3,
   CHECKOUT_ACCEPTANCE: 1,
   CHECKOUT_REJECT: 1,
@@ -1416,6 +1419,17 @@ const GenerateOrders = () => {
     }
   };
 
+  const applicationStatusType = (Type) => {
+    switch (Type) {
+      case "APPROVED":
+        return SubmissionWorkflowAction.APPROVE;
+      case "SET_TERM_BAIL":
+        return SubmissionWorkflowAction.SET_TERM_BAIL;
+      default:
+        return SubmissionWorkflowAction.REJECT;
+    }
+  };
+
   const handleApplicationAction = async (order) => {
     try {
       return await ordersService.customApiService(
@@ -1426,8 +1440,7 @@ const GenerateOrders = () => {
             cmpNumber: caseDetails?.cmpNumber,
             workflow: {
               ...applicationDetails.workflow,
-              action:
-                order?.additionalDetails?.applicationStatus === t("APPROVED") ? SubmissionWorkflowAction.APPROVE : SubmissionWorkflowAction.REJECT,
+              action: applicationStatusType(order?.additionalDetails?.applicationStatus),
             },
           },
         },
