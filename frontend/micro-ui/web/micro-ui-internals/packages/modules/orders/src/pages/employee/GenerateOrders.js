@@ -806,6 +806,9 @@ const GenerateOrders = () => {
       updatedFormdata.submissionDocuments = applicationDetails?.additionalDetails?.formdata?.submissionDocuments;
       updatedFormdata.bailOf = applicationDetails?.additionalDetails?.onBehalOfName;
     }
+    if (orderType === "SET_BAIL_TERMS") {
+      updatedFormdata.respondantId = applicationDetails?.createdBy;
+    }
     // if (orderType === "CASE_TRANSFER") {
     //   updatedFormdata.caseTransferredTo = applicationDetails?.applicationDetails?.selectRequestedCourt;
     //   updatedFormdata.grounds = { text: applicationDetails?.applicationDetails?.groundsForSeekingTransfer };
@@ -1314,6 +1317,31 @@ const GenerateOrders = () => {
           isCompleted: false,
           stateSla: stateSlaMap?.[order?.orderType || orderType] * dayInMillisecond + todayDate,
           additionalDetails: { ...additionalDetails, applicationNumber: order?.additionalDetails?.formdata?.refApplicationId },
+          tenantId,
+        },
+      });
+    }
+
+    // TODO : need to check
+    if (order?.orderType === "SET_BAIL_TERMS") {
+      create = true;
+      status = "CREATE_SUBMISSION";
+      name = t("SUBMIT_BAIL_DOCUMENTS");
+      entityType = "voluntary-application-submission-bail-documents";
+      const assignee = order?.additionalDetails?.formData?.respondantId;
+      return ordersService.customApiService(Urls.orders.pendingTask, {
+        pendingTask: {
+          name,
+          entityType,
+          referenceId: `MANUAL_${assignee?.uuid}_${order?.orderNumber}`,
+          status,
+          assignedTo: [assignee],
+          assignedRole,
+          cnrNumber: cnrNumber,
+          filingNumber: filingNumber,
+          isCompleted: false,
+          stateSla,
+          additionalDetails,
           tenantId,
         },
       });

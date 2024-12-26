@@ -836,10 +836,12 @@ const EvidenceModal = ({
   };
 
   const customLabelShow = useMemo(() => {
-    return !isJudge || 
-      (!["REQUEST_FOR_BAIL"].includes(documentSubmission?.[0]?.applicationList?.applicationType) && 
-      documentSubmission?.[0]?.applicationList?.status === SubmissionWorkflowState.PENDINGAPPROVAL);
-  }, [isJudge, documentSubmission]);  
+    return (
+      !isJudge ||
+      (!["REQUEST_FOR_BAIL"].includes(documentSubmission?.[0]?.applicationList?.applicationType) &&
+        documentSubmission?.[0]?.applicationList?.status === SubmissionWorkflowState.PENDINGAPPROVAL)
+    );
+  }, [isJudge, documentSubmission]);
 
   return (
     <React.Fragment>
@@ -850,9 +852,7 @@ const EvidenceModal = ({
           actionSaveOnSubmit={actionSaveOnSubmit}
           hideSubmit={!showSubmit} // Not allowing submit action for court room manager
           actionCancelLabel={!isJudge ? false : actionCancelLabel} // Not allowing cancel action for court room manager
-          actionCustomLabel={
-            customLabelShow ? false : actionCustomLabel
-          } // Not allowing cancel action for court room manager
+          actionCustomLabel={customLabelShow ? false : actionCustomLabel} // Not allowing cancel action for court room manager
           actionCancelOnSubmit={actionCancelOnSubmit}
           actionCustomLabelSubmit={actionCustomLabelSubmit}
           formId="modal-action"

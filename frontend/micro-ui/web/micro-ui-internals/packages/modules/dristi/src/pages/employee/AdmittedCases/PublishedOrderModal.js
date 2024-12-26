@@ -38,9 +38,13 @@ function PublishedOrderModal({
     if (productionOfDocumentApplications?.some((item) => item?.referenceId === order?.id)) {
       return false;
     }
-    const submissionParty = order?.additionalDetails?.formdata?.submissionParty?.map((item) => item.uuid).flat();
+
+    //TODO : need to ask
+    const isAuthority = order?.additionalDetails?.formdata?.respondantId;
+    const submissionParty = order?.additionalDetails?.formdata?.submissionParty?.map((item) => item.uuid) || [];
+    const allSubmissionParty = [...submissionParty, isAuthority].filter(Boolean);
     return (
-      submissionParty?.includes(userInfo?.uuid) &&
+      allSubmissionParty?.includes(userInfo?.uuid) &&
       userRoles.includes("SUBMISSION_CREATOR") &&
       [
         CaseWorkflowState.PENDING_ADMISSION_HEARING,
@@ -54,7 +58,10 @@ function PublishedOrderModal({
   }, [caseStatus, order, userInfo?.uuid, userRoles, productionOfDocumentApplications]);
   const showSubmitDocumentButton = useMemo(() => showSubmissionButtons, [showSubmissionButtons]);
   const showExtensionButton = useMemo(
-    () => showSubmissionButtons && !extensionApplications?.some((item) => item?.additionalDetails?.formdata?.refOrderId === order?.orderNumber),
+    () =>
+      showSubmissionButtons &&
+      !extensionApplications?.some((item) => item?.additionalDetails?.formdata?.refOrderId === order?.orderNumber) &&
+      order?.orderType !== "SET_BAIL_TERMS",
     [extensionApplications, order, showSubmissionButtons]
   );
 

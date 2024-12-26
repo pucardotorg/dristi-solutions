@@ -4157,6 +4157,13 @@ export const configsSetTermBail = [
         populators: { name: "refApplicationId" },
       },
       {
+        key: "respondantId",
+        type: "component",
+        withoutLabel: true,
+        component: "SelectEmptyComponent",
+        populators: {},
+      },
+      {
         type: "component",
         component: "SelectCustomTextArea",
         key: "bailSummaryCircumstances",

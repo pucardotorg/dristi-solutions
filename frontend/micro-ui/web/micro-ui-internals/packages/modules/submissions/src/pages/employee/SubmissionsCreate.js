@@ -440,6 +440,19 @@ const SubmissionsCreate = ({ path }) => {
           refOrderId: orderDetails?.orderNumber,
           applicationDate: formatDate(new Date()),
         };
+      } else if (orderDetails?.orderType === orderTypes.SET_BAIL_TERMS) {
+        return {
+          submissionType: {
+            code: "APPLICATION",
+            name: "APPLICATION",
+          },
+          applicationType: {
+            type: "SUBMIT_BAIL_DOCUMENTS",
+            name: "APPLICATION_TYPE_SUBMIT_BAIL_DOCUMENTS",
+          },
+          refOrderId: orderDetails?.orderNumber,
+          applicationDate: formatDate(new Date()),
+        };
       } else {
         return {
           submissionType: {
@@ -744,27 +757,25 @@ const SubmissionsCreate = ({ path }) => {
       };
 
       const submissionResponse = await submissionService.updateApplication(reqBody, { tenantId });
-      if (isCitizen) {
-        await createPendingTask({ name: t("ESIGN_THE_SUBMISSION"), status: "ESIGN_THE_SUBMISSION", isCompleted: true });
-        await createPendingTask({
-          name: t("MAKE_PAYMENT_SUBMISSION"),
-          status: "MAKE_PAYMENT_SUBMISSION",
-          stateSla: todayDate + stateSla.MAKE_PAYMENT_SUBMISSION,
-        });
-      } else if (hasSubmissionRole) {
+      if (isCitizen || hasSubmissionRole) {
         await createPendingTask({
           name: t("ESIGN_THE_SUBMISSION"),
           status: "ESIGN_THE_SUBMISSION",
           isCompleted: true,
-          isAssignedRole: true,
-          assignedRole: ["SUBMISSION_CREATOR", "SUBMISSION_RESPONDER"],
+          ...(hasSubmissionRole && { isAssignedRole: true, assignedRole: ["SUBMISSION_CREATOR", "SUBMISSION_RESPONDER"] }),
         });
+
+        if (applicationType === "SUBMIT_BAIL_DOCUMENTS") {
+          applicationRefetch();
+          setShowSuccessModal(true);
+          return submissionResponse;
+        }
+
         await createPendingTask({
           name: t("MAKE_PAYMENT_SUBMISSION"),
           status: "MAKE_PAYMENT_SUBMISSION",
-          isAssignedRole: true,
-          assignedRole: ["SUBMISSION_CREATOR", "SUBMISSION_RESPONDER"],
           stateSla: todayDate + stateSla.MAKE_PAYMENT_SUBMISSION,
+          ...(hasSubmissionRole && { isAssignedRole: true, assignedRole: ["SUBMISSION_CREATOR", "SUBMISSION_RESPONDER"] }),
         });
       }
       applicationRefetch();
@@ -855,7 +866,9 @@ const SubmissionsCreate = ({ path }) => {
   const handleAddSignature = async () => {
     setLoader(true);
     try {
-      await createDemand();
+      if (applicationType !== "SUBMIT_BAIL_DOCUMENTS") {
+        await createDemand();
+      }
       const response = await updateSubmission(SubmissionWorkflowAction.ESIGN);
       if (response && response?.application?.additionalDetails?.isResponseRequired) {
         await submissionService.customApiService(Urls.application.taskCreate, {
