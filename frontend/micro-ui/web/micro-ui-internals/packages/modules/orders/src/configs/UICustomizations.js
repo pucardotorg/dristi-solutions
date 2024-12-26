@@ -256,7 +256,6 @@ export const UICustomizations = {
               fileName: item?.submissionDocuments?.uploadedDocs?.[0]?.additionalDetails?.name,
               fileStore: item?.submissionDocuments?.uploadedDocs?.[0]?.fileStore,
               documentType: item?.documentType?.code,
-              documentSubType: item?.documentSubType?.code,
               documentTitle: item?.documentTitle,
             })) ||
             []

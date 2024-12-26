@@ -1606,7 +1606,6 @@ export const configsOthers = [
   },
 ];
 
-
 export const requestForBail = [
   {
     body: [
@@ -1757,27 +1756,6 @@ export const requestForBail = [
               },
             },
             {
-              isMandatory: true,
-              key: "documentSubType",
-              type: "dropdown",
-              label: "DOCUMENT_SUB_TYPE",
-              populators: {
-                name: "documentSubType",
-                optionsKey: "code",
-                error: "CORE_REQUIRED_FIELD_ERROR",
-                styles: { maxWidth: "100%" },
-                required: true,
-                isMandatory: true,
-                //need to change
-                mdmsConfig: {
-                  moduleName: "Application",
-                  masterName: "DocumentType",
-                  select: "(data) => {return data['Application'].DocumentType?.map((item) => {return item;});}",
-                },
-                customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
-              },
-            },
-            {
               label: "DOCUMENT_TITLE_OPTIONAL",
               isOptional: true,
               isMandatory: false,
@@ -1819,7 +1797,7 @@ export const requestForBail = [
       },
     ],
   },
-]
+];
 
 export const submitDocsForBail = [
   {
@@ -1909,27 +1887,6 @@ export const submitDocsForBail = [
               },
             },
             {
-              isMandatory: true,
-              key: "documentSubType",
-              type: "dropdown",
-              label: "DOCUMENT_SUB_TYPE",
-              populators: {
-                name: "documentSubType",
-                optionsKey: "code",
-                error: "CORE_REQUIRED_FIELD_ERROR",
-                styles: { maxWidth: "100%" },
-                required: true,
-                isMandatory: true,
-                // need to change
-                mdmsConfig: {
-                  moduleName: "Application",
-                  masterName: "DocumentType",
-                  select: "(data) => {return data['Application'].DocumentType?.map((item) => {return item;});}",
-                },
-                customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
-              },
-            },
-            {
               label: "DOCUMENT_TITLE_OPTIONAL",
               labelChildren: "optional",
               isMandatory: false,
@@ -1971,4 +1928,4 @@ export const submitDocsForBail = [
       },
     ],
   },
-]
+];

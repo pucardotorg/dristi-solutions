@@ -194,7 +194,7 @@ const SubmissionsCreate = ({ path }) => {
             if (body?.populators?.validation?.customValidationFn) {
               const customValidations =
                 Digit.Customizations[body.populators.validation.customValidationFn.moduleName][
-                body.populators.validation.customValidationFn.masterName
+                  body.populators.validation.customValidationFn.masterName
                 ];
 
               if (customValidations) {
@@ -349,11 +349,18 @@ const SubmissionsCreate = ({ path }) => {
           : "APPLICATION_ORDER_SUBMISSION_DEFAULT_ADVANCE_CARRY_FORWARD",
       };
     }
+    // need Specific for request for bail
+    if (applicationType === "REQUEST_FOR_BAIL") {
+      return {
+        entityType: "voluntary-application-submission-bail",
+        taxHeadMasterCode: "APPLICATION_VOLUNTARY_BAIL_SUBMISSION_ADVANCE_CARRY_FORWARD",
+      };
+    }
     return {
       entityType: "application-voluntary-submission",
       taxHeadMasterCode: "APPLICATION_VOLUNTARY_SUBMISSION_ADVANCE_CARRY_FORWARD",
     };
-  }, [orderDetails, orderNumber, orderRefNumber, referenceId]);
+  }, [applicationType, orderDetails?.orderDetails.isResponseRequired?.code, orderNumber, orderRefNumber, referenceId]);
 
   const defaultFormValue = useMemo(() => {
     if (applicationDetails?.additionalDetails?.formdata) {
@@ -603,15 +610,15 @@ const SubmissionsCreate = ({ path }) => {
 
       const applicationDocuments = ["REQUEST_FOR_BAIL", "SUBMIT_BAIL_DOCUMENTS"].includes(applicationType)
         ? formdata?.supportingDocuments?.map((supportDocs) => ({
-          fileType: supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.documentType,
-          fileStore: supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.fileStore,
-          additionalDetails: supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.additionalDetails,
-        })) || []
+            fileType: supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.documentType,
+            fileStore: supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.fileStore,
+            additionalDetails: supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.additionalDetails,
+          })) || []
         : formdata?.submissionDocuments?.submissionDocuments?.map((item) => ({
-          fileType: item?.document?.documentType,
-          fileStore: item?.document?.fileStore,
-          additionalDetails: item?.document?.additionalDetails,
-        })) || [];
+            fileType: item?.document?.documentType,
+            fileStore: item?.document?.fileStore,
+            additionalDetails: item?.document?.additionalDetails,
+          })) || [];
 
       const documentres = (await Promise.all(documentsList?.map((doc) => onDocumentUpload(doc, doc?.name)))) || [];
       let documents = [];
@@ -656,6 +663,7 @@ const SubmissionsCreate = ({ path }) => {
           applicationType,
           status: caseDetails?.status,
           isActive: true,
+          createdBy: userInfo?.uuid,
           statuteSection: { tenantId },
           additionalDetails: {
             formdata,
@@ -665,8 +673,8 @@ const SubmissionsCreate = ({ path }) => {
             partyType: sourceType?.toLowerCase(),
             ...(orderDetails &&
               orderDetails?.orderDetails.isResponseRequired?.code === true && {
-              respondingParty: orderDetails?.additionalDetails?.formdata?.responseInfo?.respondingParty,
-            }),
+                respondingParty: orderDetails?.additionalDetails?.formdata?.responseInfo?.respondingParty,
+              }),
             isResponseRequired: orderDetails && !isExtension ? orderDetails?.orderDetails.isResponseRequired?.code === true : true,
             ...(hearingId && { hearingId }),
             owner: cleanString(userInfo?.name),
@@ -684,7 +692,7 @@ const SubmissionsCreate = ({ path }) => {
         },
       };
       const res = await submissionService.createApplication(applicationReqBody, { tenantId });
-      documents?.forEach((docs)=>{
+      documents?.forEach((docs) => {
         evidenceReqBody = {
           artifact: {
             artifactType: "DOCUMENTARY",
@@ -693,7 +701,7 @@ const SubmissionsCreate = ({ path }) => {
             filingNumber,
             tenantId,
             comments: [],
-            file : docs,
+            file: docs,
             sourceType,
             sourceID: individualId,
             filingType: filingType,
@@ -703,7 +711,7 @@ const SubmissionsCreate = ({ path }) => {
           },
         };
         DRISTIService.createEvidence(evidenceReqBody);
-      })
+      });
       setLoader(false);
       return res;
     } catch (error) {
@@ -719,9 +727,9 @@ const SubmissionsCreate = ({ path }) => {
       const documentsFile =
         signedDoucumentUploadedID !== "" || localStorageID
           ? {
-            documentType: "SIGNED",
-            fileStore: signedDoucumentUploadedID || localStorageID,
-          }
+              documentType: "SIGNED",
+              fileStore: signedDoucumentUploadedID || localStorageID,
+            }
           : null;
 
       localStorage.removeItem("fileStoreId");
