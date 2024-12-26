@@ -61,6 +61,8 @@ public class PaymentUpdateService {
             String tenantId = paymentRequest.getPayment().getTenantId();
 
             for (PaymentDetail paymentDetail : paymentDetails) {
+
+                log.info("inside payment update, currently checking for {}",paymentDetail.getBusinessService());
                 if (allowedBusinessServices.contains(paymentDetail.getBusinessService())) {
                     updateWorkflowForApplicationPayment(requestInfo, tenantId, paymentDetail);
                 }
@@ -74,6 +76,7 @@ public class PaymentUpdateService {
         try {
             Bill bill = paymentDetail.getBill();
             String consumerCode = bill.getConsumerCode();
+            log.info("updating payment for consumer code {}",consumerCode);
             String[] consumerCodeSplitArray = consumerCode.split("_", 2);
             String applicationNumber = consumerCodeSplitArray[0];
             ApplicationCriteria criteria = ApplicationCriteria.builder()
