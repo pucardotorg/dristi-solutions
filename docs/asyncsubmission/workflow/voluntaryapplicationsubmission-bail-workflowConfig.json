@@ -130,7 +130,7 @@
           "sla": 172800000,
           "state": "DOCUMENT_UPLOAD",
           "applicationStatus": "INWORKFLOW",
-          "docUploadRequired": true,
+          "docUploadRequired": false,
           "isStartState": false,
           "isTerminateState": false,
           "isStateUpdatable": true,
