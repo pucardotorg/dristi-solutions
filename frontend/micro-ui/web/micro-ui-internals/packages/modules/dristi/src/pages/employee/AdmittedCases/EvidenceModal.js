@@ -510,11 +510,10 @@ const EvidenceModal = ({
         return "SETTLEMENT";
       case "BAIL_BOND":
         return "BAIL";
-      // to be mapped with correct type, used for reference
       case "SURETY":
         return "BAIL";
       case "REQUEST_FOR_BAIL":
-      case "SUBMIT_BAIL_DOCUMENTS": // correct mapping to be done
+      case "SUBMIT_BAIL_DOCUMENTS":
         return type === "reject" ? "REJECT_BAIL" : type === "SET_TERM_BAIL" ? "SET_BAIL_TERMS" : "ACCEPT_BAIL";
       case "EXTENSION_SUBMISSION_DEADLINE":
         return "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE";
@@ -596,12 +595,9 @@ const EvidenceModal = ({
       </React.Fragment>
     );
   }, [documentSubmission]);
-  console.log(documentSubmission?.[0]?.applicationList?.applicationType, "APP TYPEE >>>");
   const handleApplicationAction = async (generateOrder, type) => {
-    console.log(generateOrder, type, "FVFVFD");
     try {
       const orderType = getOrderTypes(documentSubmission?.[0]?.applicationList?.applicationType, type);
-      console.log(orderType, "ORDER Tpye");
       const formdata = {
         orderType: {
           code: orderType,
