@@ -55,6 +55,8 @@ public class PaymentUpdateService {
 
     public void process(Map<String, Object> record) {
         try {
+
+            log.info("allowed business service for payment {}", allowedBusinessServices);
             PaymentRequest paymentRequest = mapper.convertValue(record, PaymentRequest.class);
             RequestInfo requestInfo = paymentRequest.getRequestInfo();
             List<PaymentDetail> paymentDetails = paymentRequest.getPayment().getPaymentDetails();
