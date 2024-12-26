@@ -224,10 +224,13 @@ const orderBailRejection = async (req, res, qrCode) => {
           state: mdmsCourtRoom.state,
           caseNumber: caseNumber,
           caseYear: caseYear,
+          caseName: courtCase.caseTitle,
           applicantName: advocateName || partyName,
           partyName,
           dateOfApplication: applicationDate,
-          briefSummaryOfBail: order?.comments || "",
+          briefSummaryOfBail:
+            order?.additionalDetails?.formdata?.bailSummaryCircumstances
+              ?.text || "",
           date: formattedToday,
           documentList,
           bailType,
@@ -238,6 +241,7 @@ const orderBailRejection = async (req, res, qrCode) => {
           courtSeal: judgeDetails.courtSeal,
           orderHeading: mdmsCourtRoom.orderHeading,
           judgeDesignation: judgeDetails.judgeDesignation,
+          qrCodeUrl: base64Url,
         },
       ],
     };

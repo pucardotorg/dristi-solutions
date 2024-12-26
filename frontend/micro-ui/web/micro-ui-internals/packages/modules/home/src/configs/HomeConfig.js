@@ -150,7 +150,7 @@ export const rolesToConfigMapping = [
     },
   },
   {
-    roles: ["CASE_VIEWER", "BENCHCLERK_ROLE"],
+    roles: ["CASE_VIEWER", "BENCH_CLERK"],
     config: TabBenchSearchConfig,
     isCourtOfficer: true,
     onRowClickRoute: {
@@ -713,6 +713,7 @@ export const selectTaskType = {
   "hearing-default": pendingTaskHearingActions,
   "order-default": pendingTaskOrderActions,
   "application-voluntary-submission": pendingTaskVoluntarySubmissionActions,
+  "delay-condonation-submission": pendingTaskVoluntarySubmissionActions,
   "application-order-submission-feedback": pendingTaskSubmissionWithResponseActions,
   "application-order-submission-default": pendingTaskSubmissionWithoutResponseActions,
   "artifact-default": pendingTaskForArtifactActions,

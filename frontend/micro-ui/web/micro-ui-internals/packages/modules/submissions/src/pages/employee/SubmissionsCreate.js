@@ -536,7 +536,12 @@ const SubmissionsCreate = ({ path }) => {
       },
     });
   };
-
+  const cleanString = (input) => {
+    return input
+      .replace(/\b(null|undefined)\b/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  };
   const createSubmission = async () => {
     try {
       let documentsList = [];
@@ -622,14 +627,14 @@ const SubmissionsCreate = ({ path }) => {
             ...(orderDetails && { orderDate: formatDate(new Date(orderDetails?.auditDetails?.lastModifiedTime)) }),
             ...(orderDetails?.additionalDetails?.formdata?.documentName && { documentName: orderDetails?.additionalDetails?.formdata?.documentName }),
             onBehalOfName: onBehalfOfLitigent?.additionalDetails?.fullName,
-            partyType: "complainant.primary",
+            partyType: sourceType?.toLowerCase(),
             ...(orderDetails &&
               orderDetails?.orderDetails.isResponseRequired?.code === true && {
                 respondingParty: orderDetails?.additionalDetails?.formdata?.responseInfo?.respondingParty,
               }),
             isResponseRequired: orderDetails && !isExtension ? orderDetails?.orderDetails.isResponseRequired?.code === true : true,
             ...(hearingId && { hearingId }),
-            owner: caseDetails?.additionalDetails?.payerName,
+            owner: cleanString(userInfo?.name),
           },
           documents,
           onBehalfOf: [isCitizen ? onBehalfOfuuid : userInfo?.uuid],

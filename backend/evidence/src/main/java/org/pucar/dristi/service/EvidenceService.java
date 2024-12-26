@@ -1,16 +1,19 @@
 package org.pucar.dristi.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.EvidenceEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.EvidenceRepository;
+import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.MdmsUtil;
 import org.pucar.dristi.validators.EvidenceValidator;
 import org.pucar.dristi.web.models.*;
@@ -33,9 +36,12 @@ public class EvidenceService {
     private final Configuration config;
     private final MdmsUtil mdmsUtil;
     private final ObjectMapper objectMapper;
+    private final CaseUtil caseUtil;
+    private final SmsNotificationService notificationService;
+    private final IndividualService individualService;
 
     @Autowired
-    public EvidenceService(EvidenceValidator validator, EvidenceEnrichment evidenceEnrichment, WorkflowService workflowService, EvidenceRepository repository, Producer producer, Configuration config, MdmsUtil mdmsUtil, ObjectMapper objectMapper) {
+    public EvidenceService(EvidenceValidator validator, EvidenceEnrichment evidenceEnrichment, WorkflowService workflowService, EvidenceRepository repository, Producer producer, Configuration config, MdmsUtil mdmsUtil, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService) {
         this.validator = validator;
         this.evidenceEnrichment = evidenceEnrichment;
         this.workflowService = workflowService;
@@ -44,6 +50,9 @@ public class EvidenceService {
         this.config = config;
         this.mdmsUtil = mdmsUtil;
         this.objectMapper = objectMapper;
+        this.caseUtil = caseUtil;
+        this.notificationService = notificationService;
+        this.individualService = individualService;
     }
 
     public Artifact createEvidence(EvidenceRequest body) {
@@ -103,6 +112,7 @@ public class EvidenceService {
     public List<Artifact> searchEvidence(RequestInfo requestInfo, EvidenceSearchCriteria evidenceSearchCriteria, Pagination pagination) {
         try {
             // Fetch applications from database according to the given search criteria
+            enrichEvidenceSearch(requestInfo, evidenceSearchCriteria);
             List<Artifact> artifacts = repository.getArtifacts(evidenceSearchCriteria, pagination);
 
             // If no applications are found matching the given criteria, return an empty list
@@ -117,6 +127,21 @@ public class EvidenceService {
         }
     }
 
+    private void enrichEvidenceSearch(RequestInfo requestInfo, EvidenceSearchCriteria searchCriteria) {
+        if(requestInfo.getUserInfo() != null) {
+            User userInfo = requestInfo.getUserInfo();
+            String userType = userInfo.getType();
+            switch (userType.toUpperCase()) {
+                case CITIZEN_UPPER -> {
+                    searchCriteria.setIsCitizen(true);
+                    searchCriteria.setUserUuid(userInfo.getUuid());
+                }
+                case EMPLOYEE_UPPER -> {
+                    searchCriteria.setIsCourtEmployee(true);
+                }
+            }
+        }
+    }
     public Artifact updateEvidence(EvidenceRequest evidenceRequest) {
         try {
             Artifact existingApplication = validateExistingEvidence(evidenceRequest);
@@ -140,6 +165,7 @@ public class EvidenceService {
                 enrichBasedOnStatus(evidenceRequest);
                 producer.push(config.getUpdateEvidenceKafkaTopic(), evidenceRequest);
             } else {
+                callNotificationService(evidenceRequest);
                 producer.push(config.getUpdateEvidenceWithoutWorkflowKafkaTopic(), evidenceRequest);
             }
             return evidenceRequest.getArtifact();
@@ -210,4 +236,98 @@ public class EvidenceService {
         return AuditDetails.builder().createdBy(requestInfo.getUserInfo().getUuid()).createdTime(System.currentTimeMillis()).lastModifiedBy(requestInfo.getUserInfo().getUuid()).lastModifiedTime(System.currentTimeMillis()).build();
     }
 
+    private void callNotificationService(EvidenceRequest evidenceRequest) {
+
+        try {
+            CaseSearchRequest caseSearchRequest = createCaseSearchRequest(evidenceRequest.getRequestInfo(), evidenceRequest.getArtifact().getFilingNumber());
+            JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+
+            Artifact artifact = evidenceRequest.getArtifact();
+            String smsTopic = null;
+            if(artifact.getIsEvidence() && null != artifact.getEvidenceNumber()) {
+                smsTopic = "DOCUMENT_MARKED_EXHIBIT";
+            }
+            Set<String> individualIds = extractIndividualIds(caseDetails);
+
+            Set<String> phoneNumbers = callIndividualService(evidenceRequest.getRequestInfo(), individualIds);
+
+            SmsTemplateData smsTemplateData = SmsTemplateData.builder()
+                    .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").asText() : "")
+                    .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").asText() : "")
+                    .artifactNumber(artifact.getArtifactNumber())
+                    .tenantId(artifact.getTenantId()).build();
+
+
+            for (String number : phoneNumbers) {
+                notificationService.sendNotification(evidenceRequest.getRequestInfo(), smsTemplateData, smsTopic, number);
+            }
+        }
+        catch (Exception e) {
+            // Log the exception and continue the execution without throwing
+            log.error("Error occurred while sending notification: {}", e.toString());
+        }
+    }
+
+    public static String getPartyTypeByName(JsonNode litigants, String name) {
+        for (JsonNode litigant : litigants) {
+            JsonNode additionalDetails = litigant.get("additionalDetails");
+            if (additionalDetails != null && additionalDetails.has("fullName")) {
+                String fullName = additionalDetails.get("fullName").asText();
+                if (name.equals(fullName)) {
+                    return litigant.get("partyType").asText();
+                }
+            }
+        }
+        return null;
+    }
+
+    private CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, String fillingNUmber) {
+        CaseSearchRequest caseSearchRequest = new CaseSearchRequest();
+        caseSearchRequest.setRequestInfo(requestInfo);
+        CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(fillingNUmber).defaultFields(false).build();
+        caseSearchRequest.addCriteriaItem(caseCriteria);
+        return caseSearchRequest;
+    }
+
+    private Set<String> callIndividualService(RequestInfo requestInfo, Set<String> ids) {
+        Set<String> mobileNumber = new HashSet<>();
+
+        List<Individual> individuals = individualService.getIndividualsBylId(requestInfo, new ArrayList<>(ids));
+        for(Individual individual : individuals) {
+            if (individual.getMobileNumber() != null) {
+                mobileNumber.add(individual.getMobileNumber());
+            }
+        }
+
+        return mobileNumber;
+    }
+
+    public  Set<String> extractIndividualIds(JsonNode caseDetails) {
+
+        JsonNode litigantNode = caseDetails.get("litigants");
+        JsonNode representativeNode = caseDetails.get("representatives");
+        Set<String> uuids = new HashSet<>();
+
+        if (litigantNode.isArray()) {
+            for (JsonNode node : litigantNode) {
+                String uuid = node.path("additionalDetails").get("uuid").asText();
+                if (!uuid.isEmpty() ) {
+                    uuids.add(uuid);
+                }
+            }
+        }
+
+        if (representativeNode.isArray()) {
+            for (JsonNode advocateNode : representativeNode) {
+                JsonNode representingNode = advocateNode.get("representing");
+                if (representingNode.isArray()) {
+                    String uuid = advocateNode.path("additionalDetails").get("uuid").asText();
+                    if (!uuid.isEmpty() ) {
+                        uuids.add(uuid);
+                    }
+                }
+            }
+        }
+        return uuids;
+    }
 }
