@@ -3966,18 +3966,11 @@ export const configsIssueBailAcceptance = [
         key: "bailParty",
         type: "dropdown",
         label: "BAIL_PARTY",
-        disable: false,
+        disable: true,
         populators: {
           name: "bailParty",
-          optionsKey: "name",
           styles: { maxWidth: "100%" },
           error: "required ",
-          // need to update with bail parties mdms config
-          mdmsConfig: {
-            moduleName: "Order",
-            masterName: "OrderType",
-            localePrefix: "ORDER_TYPE",
-          },
         },
       },
       {
@@ -4009,6 +4002,7 @@ export const configsIssueBailAcceptance = [
           error: "CORE_REQUIRED_FIELD_ERROR",
           componentInFront: "₹",
           name: "chequeAmount",
+          prefix: "",
         },
       },
       {
@@ -4048,9 +4042,10 @@ export const configsIssueBailAcceptance = [
       },
       {
         type: "component",
-        key: "Documents",
+        key: "submissionDocuments",
         component: "SelectMultiUpload",
         disable: true,
+        isMandatory: true,
         populators: {
           inputs: [
             {
@@ -4078,6 +4073,7 @@ export const configsIssueBailReject = [
         label: "REF_APPLICATION_ID",
         isMandatory: false,
         key: "refApplicationId",
+        schemaKeyPath: "orderDetails.refApplicationId",
         disable: true,
         type: "text",
         populators: { name: "refApplicationId" },
@@ -4087,18 +4083,11 @@ export const configsIssueBailReject = [
         key: "bailParty",
         type: "dropdown",
         label: "BAIL_PARTY",
-        disable: false,
+        disable: true,
         populators: {
           name: "bailParty",
-          optionsKey: "name",
           styles: { maxWidth: "100%" },
           error: "required ",
-          // need to update with bail parties mdms config
-          mdmsConfig: {
-            moduleName: "Order",
-            masterName: "OrderType",
-            localePrefix: "ORDER_TYPE",
-          },
         },
       },
       {
@@ -4120,9 +4109,10 @@ export const configsIssueBailReject = [
       },
       {
         type: "component",
-        key: "Documents",
+        key: "submissionDocuments",
         component: "SelectMultiUpload",
-        disable: false,
+        disable: true,
+        isMandatory: true,
         populators: {
           inputs: [
             {

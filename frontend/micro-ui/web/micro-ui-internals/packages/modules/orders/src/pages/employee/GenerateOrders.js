@@ -809,6 +809,12 @@ const GenerateOrders = () => {
     if (orderType === "SET_BAIL_TERMS") {
       updatedFormdata.respondantId = applicationDetails?.createdBy;
     }
+    if (orderType === "ACCEPT_BAIL" || orderType === "REJECT_BAIL") {
+      updatedFormdata.bailParty = applicationDetails?.additionalDetails?.onBehalOfName;
+      updatedFormdata.submissionDocuments = applicationDetails?.additionalDetails?.formdata?.supportingDocuments?.map(
+        (doc) => doc.submissionDocuments
+      )?.[0];
+    }
     // if (orderType === "CASE_TRANSFER") {
     //   updatedFormdata.caseTransferredTo = applicationDetails?.applicationDetails?.selectRequestedCourt;
     //   updatedFormdata.grounds = { text: applicationDetails?.applicationDetails?.groundsForSeekingTransfer };
