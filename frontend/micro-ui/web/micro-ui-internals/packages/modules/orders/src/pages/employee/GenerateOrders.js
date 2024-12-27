@@ -778,7 +778,6 @@ const GenerateOrders = () => {
         },
       };
     }
-    console.log(orderType, "ORDERTYPE");
     let updatedFormdata = structuredClone(currentOrder?.additionalDetails?.formdata || {});
     if (orderType === "JUDGEMENT") {
       const complainantPrimary = caseDetails?.litigants?.filter((item) => item?.partyType?.includes("complainant.primary"))?.[0];
@@ -811,9 +810,10 @@ const GenerateOrders = () => {
     }
     if (orderType === "ACCEPT_BAIL" || orderType === "REJECT_BAIL") {
       updatedFormdata.bailParty = applicationDetails?.additionalDetails?.onBehalOfName;
-      updatedFormdata.submissionDocuments = applicationDetails?.additionalDetails?.formdata?.supportingDocuments?.map(
-        (doc) => doc.submissionDocuments
-      )?.[0];
+      updatedFormdata.submissionDocuments = {
+        uploadedDocs:
+          applicationDetails?.additionalDetails?.formdata?.supportingDocuments?.flatMap((doc) => doc.submissionDocuments?.uploadedDocs || []) || [],
+      };
     }
     // if (orderType === "CASE_TRANSFER") {
     //   updatedFormdata.caseTransferredTo = applicationDetails?.applicationDetails?.selectRequestedCourt;
@@ -1328,7 +1328,6 @@ const GenerateOrders = () => {
       });
     }
 
-    // TODO : need to check
     if (order?.orderType === "SET_BAIL_TERMS") {
       create = true;
       status = "CREATE_SUBMISSION";
@@ -1341,7 +1340,7 @@ const GenerateOrders = () => {
           entityType,
           referenceId: `MANUAL_${assigneeUuid}_${order?.orderNumber}`,
           status,
-          assignedTo: [{uuid : assigneeUuid}],
+          assignedTo: [{ uuid: assigneeUuid }],
           assignedRole,
           cnrNumber: cnrNumber,
           filingNumber: filingNumber,
@@ -2422,6 +2421,8 @@ const GenerateOrders = () => {
   ) {
     return <Loader />;
   }
+
+  console.log(currentFormData, "lll");
 
   return (
     <div className="generate-orders">
