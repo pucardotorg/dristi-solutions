@@ -4147,7 +4147,7 @@ export const configsSetTermBail = [
         populators: { name: "refApplicationId" },
       },
       {
-        key: "respondantId",
+        key: "partyId",
         type: "component",
         withoutLabel: true,
         component: "SelectEmptyComponent",

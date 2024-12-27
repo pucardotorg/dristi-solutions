@@ -807,7 +807,7 @@ const GenerateOrders = () => {
       updatedFormdata.bailOf = applicationDetails?.additionalDetails?.onBehalOfName;
     }
     if (orderType === "SET_BAIL_TERMS") {
-      updatedFormdata.respondantId = applicationDetails?.createdBy;
+      updatedFormdata.partyId = applicationDetails?.createdBy;
     }
     if (orderType === "ACCEPT_BAIL" || orderType === "REJECT_BAIL") {
       updatedFormdata.bailParty = applicationDetails?.additionalDetails?.onBehalOfName;
@@ -1334,14 +1334,14 @@ const GenerateOrders = () => {
       status = "CREATE_SUBMISSION";
       name = t("SUBMIT_BAIL_DOCUMENTS");
       entityType = "voluntary-application-submission-bail-documents";
-      const assignee = order?.additionalDetails?.formData?.respondantId;
+      const assigneeUuid = order?.additionalDetails?.formdata?.partyId;
       return ordersService.customApiService(Urls.orders.pendingTask, {
         pendingTask: {
           name,
           entityType,
-          referenceId: `MANUAL_${assignee?.uuid}_${order?.orderNumber}`,
+          referenceId: `MANUAL_${assigneeUuid}_${order?.orderNumber}`,
           status,
-          assignedTo: [assignee],
+          assignedTo: [{uuid : assigneeUuid}],
           assignedRole,
           cnrNumber: cnrNumber,
           filingNumber: filingNumber,

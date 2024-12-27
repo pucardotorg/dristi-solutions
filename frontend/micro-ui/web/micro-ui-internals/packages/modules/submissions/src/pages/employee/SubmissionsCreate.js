@@ -662,6 +662,13 @@ const SubmissionsCreate = ({ path }) => {
         };
       }
 
+      if (applicationType === "SUBMIT_BAIL_DOCUMENTS") {
+        applicationSchema = {
+          ...applicationSchema,
+          applicationDetails: { ...applicationSchema?.applicationDetails, relatedApplication: orderDetails?.applicationNumber },
+        };
+      }
+
       const applicationReqBody = {
         tenantId,
         application: {
@@ -842,12 +849,13 @@ const SubmissionsCreate = ({ path }) => {
           assignedRole: ["SUBMISSION_CREATOR", "SUBMISSION_RESPONDER"],
         });
       }
-      applicationType === "PRODUCTION_DOCUMENTS" &&
+      ["PRODUCTION_DOCUMENTS", "SUBMIT_BAIL_DOCUMENTS"].includes(applicationType) &&
         (orderNumber || orderRefNumber) &&
         createPendingTask({
           refId: `${userInfo?.uuid}_${orderNumber || orderRefNumber}`,
           isCompleted: true,
           status: "Completed",
+          ...(applicationType === "SUBMIT_BAIL_DOCUMENTS" && { name : t("SUBMIT_BAIL_DOCUMENTS") }),
         });
       history.push(
         orderNumber

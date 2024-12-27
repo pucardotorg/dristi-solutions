@@ -837,11 +837,13 @@ const EvidenceModal = ({
 
   const customLabelShow = useMemo(() => {
     return (
-      !isJudge ||
-      (!["REQUEST_FOR_BAIL"].includes(documentSubmission?.[0]?.applicationList?.applicationType) &&
-        documentSubmission?.[0]?.applicationList?.status === SubmissionWorkflowState.PENDINGAPPROVAL)
+      isJudge &&
+      ["REQUEST_FOR_BAIL"].includes(documentSubmission?.[0]?.applicationList?.applicationType) &&
+      userRoles.includes("SUBMISSION_APPROVER") &&
+      [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationStatus) &&
+      modalType === "Submissions"
     );
-  }, [isJudge, documentSubmission]);
+  }, [isJudge, documentSubmission, userRoles, applicationStatus, modalType]);
 
   return (
     <React.Fragment>
@@ -852,7 +854,7 @@ const EvidenceModal = ({
           actionSaveOnSubmit={actionSaveOnSubmit}
           hideSubmit={!showSubmit} // Not allowing submit action for court room manager
           actionCancelLabel={!isJudge ? false : actionCancelLabel} // Not allowing cancel action for court room manager
-          actionCustomLabel={customLabelShow ? false : actionCustomLabel} // Not allowing cancel action for court room manager
+          actionCustomLabel={!customLabelShow ? false : actionCustomLabel} // Not allowing cancel action for court room manager
           actionCancelOnSubmit={actionCancelOnSubmit}
           actionCustomLabelSubmit={actionCustomLabelSubmit}
           formId="modal-action"
@@ -930,6 +932,7 @@ const EvidenceModal = ({
                     SubmissionWorkflowState.PENDINGRESPONSE,
                     SubmissionWorkflowState.COMPLETED,
                     SubmissionWorkflowState.REJECTED,
+                    SubmissionWorkflowState.DOC_UPLOAD,
                   ].includes(applicationStatus)) ||
                   modalType === "Documents") && (
                   <div className="comment-send">
