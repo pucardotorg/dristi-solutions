@@ -712,6 +712,7 @@ const SubmissionsCreate = ({ path }) => {
         },
       };
       const res = await submissionService.createApplication(applicationReqBody, { tenantId });
+      
       documents?.forEach((docs) => {
         evidenceReqBody = {
           artifact: {
