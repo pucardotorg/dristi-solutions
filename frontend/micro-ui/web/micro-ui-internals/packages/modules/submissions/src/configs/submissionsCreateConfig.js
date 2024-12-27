@@ -1810,6 +1810,13 @@ export const submitDocsForBail = [
   {
     body: [
       {
+        key: "refOrderId",
+        type: "component",
+        withoutLabel: true,
+        component: "SelectEmptyComponent",
+        populators: {},
+      },
+      {
         inline: true,
         type: "component",
         component: "SelectCustomTextArea",
