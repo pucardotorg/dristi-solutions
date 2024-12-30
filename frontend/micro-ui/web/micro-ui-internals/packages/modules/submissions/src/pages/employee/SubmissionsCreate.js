@@ -15,6 +15,8 @@ import {
   configsSettlement,
   configsSurety,
   submissionTypeConfig,
+  requestForBail,
+  submitDocsForBail,
 } from "../../configs/submissionsCreateConfig";
 import ReviewSubmissionModal from "../../components/ReviewSubmissionModal";
 import SubmissionSignatureModal from "../../components/SubmissionSignatureModal";
@@ -30,7 +32,7 @@ import { Urls } from "../../hooks/services/Urls";
 import { getAdvocates } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/EfilingValidationUtils";
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
 import { getSuffixByBusinessCode, getTaxPeriodByBusinessService, getCourtFeeAmountByPaymentType } from "../../utils";
-import { getFilingType } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { combineMultipleFiles, getFilingType } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 
@@ -59,6 +61,7 @@ const SubmissionsCreate = ({ path }) => {
   const [signedDoucumentUploadedID, setSignedDocumentUploadID] = useState("");
   const [applicationPdfFileStoreId, setApplicationPdfFileStoreId] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState();
+  const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
   const scenario = "applicationSubmission";
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
@@ -174,7 +177,9 @@ const SubmissionsCreate = ({ path }) => {
       BAIL_BOND: configsBailBond,
       SURETY: configsSurety,
       CHECKOUT_REQUEST: configsCheckoutRequest,
-      OTHERS: configsOthers,
+      REQUEST_FOR_BAIL: requestForBail,
+      SUBMIT_BAIL_DOCUMENTS: submitDocsForBail,
+      OTHERS: configsOthers, // need to chnage here
     };
     const applicationConfigKeysForEmployee = {
       DOCUMENT: configsDocumentSubmission,
@@ -344,11 +349,18 @@ const SubmissionsCreate = ({ path }) => {
           : "APPLICATION_ORDER_SUBMISSION_DEFAULT_ADVANCE_CARRY_FORWARD",
       };
     }
+    // need Specific for request for bail
+    if (applicationType === "REQUEST_FOR_BAIL") {
+      return {
+        entityType: "voluntary-application-submission-bail",
+        taxHeadMasterCode: "APPLICATION_VOLUNTARY_BAIL_SUBMISSION_ADVANCE_CARRY_FORWARD",
+      };
+    }
     return {
       entityType: "application-voluntary-submission",
       taxHeadMasterCode: "APPLICATION_VOLUNTARY_SUBMISSION_ADVANCE_CARRY_FORWARD",
     };
-  }, [orderDetails, orderNumber, orderRefNumber, referenceId]);
+  }, [applicationType, orderDetails?.orderDetails.isResponseRequired?.code, orderNumber, orderRefNumber, referenceId]);
 
   const defaultFormValue = useMemo(() => {
     if (applicationDetails?.additionalDetails?.formdata) {
@@ -428,6 +440,19 @@ const SubmissionsCreate = ({ path }) => {
           refOrderId: orderDetails?.orderNumber,
           applicationDate: formatDate(new Date()),
         };
+      } else if (orderDetails?.orderType === orderTypes.SET_BAIL_TERMS) {
+        return {
+          submissionType: {
+            code: "APPLICATION",
+            name: "APPLICATION",
+          },
+          applicationType: {
+            type: "SUBMIT_BAIL_DOCUMENTS",
+            name: "APPLICATION_TYPE_SUBMIT_BAIL_DOCUMENTS",
+          },
+          refOrderId: orderDetails?.orderNumber,
+          applicationDate: formatDate(new Date()),
+        };
       } else {
         return {
           submissionType: {
@@ -476,7 +501,11 @@ const SubmissionsCreate = ({ path }) => {
   const formKey = useMemo(() => applicationType + (defaultFormValue?.initialSubmissionDate || ""), [applicationType, defaultFormValue]);
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
-    if (applicationType && !["OTHERS", "DOCUMENT"].includes(applicationType) && !formData?.applicationDate) {
+    if (
+      applicationType &&
+      !["OTHERS", "DOCUMENT", "REQUEST_FOR_BAIL", "SUBMIT_BAIL_DOCUMENTS"].includes(applicationType) &&
+      !formData?.applicationDate
+    ) {
       setValue("applicationDate", formatDate(new Date()));
     }
     // if (applicationType && applicationType === "TRANSFER" && !formData?.requestedCourt) {
@@ -499,6 +528,35 @@ const SubmissionsCreate = ({ path }) => {
         clearErrors("changedHearingDate");
       }
     }
+
+    if (applicationType && ["REQUEST_FOR_BAIL", "SUBMIT_BAIL_DOCUMENTS"].includes(applicationType) && formState?.submitCount) {
+      if (!formData?.supportingDocuments && !Object.keys(formState?.errors).includes("supportingDocuments")) {
+        setValue("supportingDocuments", [{}]);
+        setError("supportingDocuments", { message: t("CORE_REQUIRED_FIELD_ERROR") });
+      } else if (formData?.supportingDocuments?.length > 0 && !Object.keys(formState?.errors).includes("supportingDocuments")) {
+        formData?.supportingDocuments?.forEach((docs, index) => {
+          if (!docs?.documentType && !Object.keys(formState?.errors).includes(`documentType_${index}`)) {
+            setError(`documentType_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
+          } else if (docs?.documentType && Object.keys(formState?.errors).includes(`documentType_${index}`)) {
+            clearErrors(`documentType_${index}`);
+          }
+          if (!docs?.submissionDocuments?.uploadedDocs?.length && !Object.keys(formState?.errors).includes(`submissionDocuments_${index}`)) {
+            setError(`submissionDocuments_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
+          } else if (docs?.submissionDocuments?.uploadedDocs?.length && Object.keys(formState?.errors).includes(`submissionDocuments_${index}`)) {
+            clearErrors(`submissionDocuments_${index}`);
+          }
+        });
+      } else if (formData?.supportingDocuments?.length > 0 && Object.keys(formState?.errors).includes("supportingDocuments")) {
+        clearErrors("supportingDocuments");
+      }
+    }
+
+    if (Object.keys(formState?.errors).length) {
+      setIsSubmitDisabled(true);
+    } else {
+      setIsSubmitDisabled(false);
+    }
+
     if (!isEqual(formdata, formData)) {
       setFormdata(formData);
     }
@@ -557,17 +615,26 @@ const SubmissionsCreate = ({ path }) => {
       if (formdata?.othersDocument?.documents?.length > 0) {
         documentsList = [...documentsList, ...formdata?.othersDocument?.documents];
       }
-      const applicationDocuments =
-        formdata?.submissionDocuments?.submissionDocuments?.map((item) => ({
-          fileType: item?.document?.documentType,
-          fileStore: item?.document?.fileStore,
-          additionalDetails: item?.document?.additionalDetails,
-        })) || [];
+
+      const applicationDocuments = ["REQUEST_FOR_BAIL", "SUBMIT_BAIL_DOCUMENTS"].includes(applicationType)
+        ? formdata?.supportingDocuments?.map((supportDocs) => ({
+            fileType: supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.documentType,
+            fileStore: supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.fileStore,
+            additionalDetails: supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.additionalDetails,
+          })) || []
+        : formdata?.submissionDocuments?.submissionDocuments?.map((item) => ({
+            fileType: item?.document?.documentType,
+            fileStore: item?.document?.fileStore,
+            additionalDetails: item?.document?.additionalDetails,
+          })) || [];
+
       const documentres = (await Promise.all(documentsList?.map((doc) => onDocumentUpload(doc, doc?.name)))) || [];
       let documents = [];
       let file = null;
       let evidenceReqBody = {};
       const uploadedDocumentList = [...(documentres || []), ...applicationDocuments];
+
+      // evidence we are creating after create application (each evidenece need application Number)
       uploadedDocumentList.forEach((res) => {
         file = {
           documentType: res?.fileType,
@@ -575,23 +642,6 @@ const SubmissionsCreate = ({ path }) => {
           additionalDetails: { name: res?.filename || res?.additionalDetails?.name },
         };
         documents.push(file);
-        evidenceReqBody = {
-          artifact: {
-            artifactType: "DOCUMENTARY",
-            caseId: caseDetails?.id,
-            filingNumber,
-            tenantId,
-            comments: [],
-            file,
-            sourceType,
-            sourceID: individualId,
-            filingType: filingType,
-            additionalDetails: {
-              uuid: userInfo?.uuid,
-            },
-          },
-        };
-        DRISTIService.createEvidence(evidenceReqBody);
       });
 
       let applicationSchema = {};
@@ -604,6 +654,13 @@ const SubmissionsCreate = ({ path }) => {
         applicationSchema = {
           ...applicationSchema,
           applicationDetails: { ...applicationSchema?.applicationDetails, advocateIndividualId: individualId },
+        };
+      }
+
+      if (applicationType === "SUBMIT_BAIL_DOCUMENTS") {
+        applicationSchema = {
+          ...applicationSchema,
+          applicationDetails: { ...applicationSchema?.applicationDetails, relatedApplication: orderDetails?.applicationNumber },
         };
       }
 
@@ -621,6 +678,7 @@ const SubmissionsCreate = ({ path }) => {
           applicationType,
           status: caseDetails?.status,
           isActive: true,
+          createdBy: userInfo?.uuid,
           statuteSection: { tenantId },
           additionalDetails: {
             formdata,
@@ -649,6 +707,27 @@ const SubmissionsCreate = ({ path }) => {
         },
       };
       const res = await submissionService.createApplication(applicationReqBody, { tenantId });
+
+      documents?.forEach((docs) => {
+        evidenceReqBody = {
+          artifact: {
+            artifactType: "DOCUMENTARY",
+            caseId: caseDetails?.id,
+            application: res?.application?.applicationNumber,
+            filingNumber,
+            tenantId,
+            comments: [],
+            file: docs,
+            sourceType,
+            sourceID: individualId,
+            filingType: filingType,
+            additionalDetails: {
+              uuid: userInfo?.uuid,
+            },
+          },
+        };
+        DRISTIService.createEvidence(evidenceReqBody);
+      });
       setLoader(false);
       return res;
     } catch (error) {
@@ -666,6 +745,7 @@ const SubmissionsCreate = ({ path }) => {
           ? {
               documentType: "SIGNED",
               fileStore: signedDoucumentUploadedID || localStorageID,
+              additionalDetails: { name: "Signed_Doc.pdf" },
             }
           : null;
 
@@ -681,27 +761,25 @@ const SubmissionsCreate = ({ path }) => {
       };
 
       const submissionResponse = await submissionService.updateApplication(reqBody, { tenantId });
-      if (isCitizen) {
-        await createPendingTask({ name: t("ESIGN_THE_SUBMISSION"), status: "ESIGN_THE_SUBMISSION", isCompleted: true });
-        await createPendingTask({
-          name: t("MAKE_PAYMENT_SUBMISSION"),
-          status: "MAKE_PAYMENT_SUBMISSION",
-          stateSla: todayDate + stateSla.MAKE_PAYMENT_SUBMISSION,
-        });
-      } else if (hasSubmissionRole) {
+      if (isCitizen || hasSubmissionRole) {
         await createPendingTask({
           name: t("ESIGN_THE_SUBMISSION"),
           status: "ESIGN_THE_SUBMISSION",
           isCompleted: true,
-          isAssignedRole: true,
-          assignedRole: ["SUBMISSION_CREATOR", "SUBMISSION_RESPONDER"],
+          ...(hasSubmissionRole && { isAssignedRole: true, assignedRole: ["SUBMISSION_CREATOR", "SUBMISSION_RESPONDER"] }),
         });
+
+        if (applicationType === "SUBMIT_BAIL_DOCUMENTS") {
+          applicationRefetch();
+          setShowSuccessModal(true);
+          return submissionResponse;
+        }
+
         await createPendingTask({
           name: t("MAKE_PAYMENT_SUBMISSION"),
           status: "MAKE_PAYMENT_SUBMISSION",
-          isAssignedRole: true,
-          assignedRole: ["SUBMISSION_CREATOR", "SUBMISSION_RESPONDER"],
           stateSla: todayDate + stateSla.MAKE_PAYMENT_SUBMISSION,
+          ...(hasSubmissionRole && { isAssignedRole: true, assignedRole: ["SUBMISSION_CREATOR", "SUBMISSION_RESPONDER"] }),
         });
       }
       applicationRefetch();
@@ -714,8 +792,40 @@ const SubmissionsCreate = ({ path }) => {
     setLoader(false);
   };
 
+  // move to utils
+  const replaceUploadedDocsWithCombinedFile = async (formData) => {
+    if (formData?.supportingDocuments?.length) {
+      for (let index = 0; index < formData.supportingDocuments.length; index++) {
+        const doc = formData.supportingDocuments[index];
+        if (doc?.submissionDocuments?.uploadedDocs?.length) {
+          try {
+            const combinedDocName = `SUPPORTING_DOCS_${index + 1}.pdf`;
+            const combinedDocumentFile = await combineMultipleFiles(doc.submissionDocuments.uploadedDocs, combinedDocName, "submissionDocuments");
+            const docs = await onDocumentUpload(combinedDocumentFile?.[0], combinedDocName);
+            const file = {
+              documentType: docs?.fileType,
+              fileStore: docs?.file?.files?.[0]?.fileStoreId,
+              additionalDetails: { name: docs?.filename || combinedDocName },
+            };
+            doc.submissionDocuments.uploadedDocs = [file];
+          } catch (error) {
+            console.error("Error combining or uploading documents for index:", index, error);
+            throw new Error("Failed to combine and update uploaded documents.");
+          }
+        }
+      }
+    }
+    return formData;
+  };
+
   const handleOpenReview = async () => {
     setLoader(true);
+
+    if (applicationType && ["REQUEST_FOR_BAIL", "SUBMIT_BAIL_DOCUMENTS"].includes(applicationType)) {
+      const updatedFormData = await replaceUploadedDocsWithCombinedFile(formdata);
+      setFormdata(updatedFormData);
+    }
+
     const res = await createSubmission();
     const newapplicationNumber = res?.application?.applicationNumber;
     if (newapplicationNumber) {
@@ -736,12 +846,13 @@ const SubmissionsCreate = ({ path }) => {
           assignedRole: ["SUBMISSION_CREATOR", "SUBMISSION_RESPONDER"],
         });
       }
-      applicationType === "PRODUCTION_DOCUMENTS" &&
+      ["PRODUCTION_DOCUMENTS", "SUBMIT_BAIL_DOCUMENTS"].includes(applicationType) &&
         (orderNumber || orderRefNumber) &&
         createPendingTask({
           refId: `${userInfo?.uuid}_${orderNumber || orderRefNumber}`,
           isCompleted: true,
           status: "Completed",
+          ...(applicationType === "SUBMIT_BAIL_DOCUMENTS" && { name: t("SUBMIT_BAIL_DOCUMENTS") }),
         });
       history.push(
         orderNumber
@@ -760,7 +871,9 @@ const SubmissionsCreate = ({ path }) => {
   const handleAddSignature = async () => {
     setLoader(true);
     try {
-      await createDemand();
+      if (applicationType !== "SUBMIT_BAIL_DOCUMENTS") {
+        await createDemand();
+      }
       const response = await updateSubmission(SubmissionWorkflowAction.ESIGN);
       if (response && response?.application?.additionalDetails?.isResponseRequired) {
         await submissionService.customApiService(Urls.application.taskCreate, {
@@ -909,6 +1022,7 @@ const SubmissionsCreate = ({ path }) => {
           onSubmit={handleOpenReview}
           fieldStyle={fieldStyle}
           key={formKey}
+          isDisabled={isSubmitDisabled}
         />
       </div>
       {showReviewModal && (
