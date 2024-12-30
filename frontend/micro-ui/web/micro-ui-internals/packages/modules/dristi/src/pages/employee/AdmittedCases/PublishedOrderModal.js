@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import Modal from "../../../components/Modal";
 import { Button, SubmitBar } from "@egovernments/digit-ui-react-components";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
-import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/useGetAllDocuments";
+import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/useGetAllOrderApplicationRelatedDocuments";
 
 function PublishedOrderModal({
   t,

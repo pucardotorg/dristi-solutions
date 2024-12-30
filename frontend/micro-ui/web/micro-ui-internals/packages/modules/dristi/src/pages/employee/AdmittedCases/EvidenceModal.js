@@ -17,7 +17,7 @@ import SelectCustomDocUpload from "../../../components/SelectCustomDocUpload";
 import ESignSignatureModal from "../../../components/ESignSignatureModal";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import { cleanString, removeInvalidNameParts } from "../../../Utils";
-import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/useGetAllDocuments";
+import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/useGetAllOrderApplicationRelatedDocuments";
 const stateSla = {
   DRAFT_IN_PROGRESS: 2,
 };
