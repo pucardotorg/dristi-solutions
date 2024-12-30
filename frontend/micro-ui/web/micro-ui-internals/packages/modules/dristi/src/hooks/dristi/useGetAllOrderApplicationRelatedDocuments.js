@@ -20,7 +20,6 @@ const useGetAllOrderApplicationRelatedDocuments = () => {
 
     while (currentResponse?.additionalDetails?.formdata?.refApplicationId || currentResponse?.additionalDetails?.formdata?.refOrderId) {
       let nextResponse;
-      debugger;
 
       if (currentResponse?.additionalDetails?.formdata?.refApplicationId) {
         const applicationData = await DRISTIService.searchSubmissions(
