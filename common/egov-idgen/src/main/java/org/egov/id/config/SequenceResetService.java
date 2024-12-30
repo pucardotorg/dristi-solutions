@@ -16,8 +16,8 @@ public class SequenceResetService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    @Value("${dristi.court.id}")
-    private String COURT_ID;
+    @Value("${dristi.kollam.court.id}")
+    private String KOLLAM_COURT_ID;
 
     private static final String ADVOCATE_SEQUENCE = "SEQ_REG_ADV";
     private static final String CLERK_SEQUENCE = "SEQ_REG_CLERK";
@@ -67,7 +67,7 @@ public class SequenceResetService {
     @Scheduled(cron = "0 0 0 1 1 *", zone = TIME_ZONE)
     public void resetCNRSequence() {
         try {
-            String sql = "ALTER SEQUENCE " + CNR_SEQUENCE + COURT_ID + " RESTART WITH 1;";
+            String sql = "ALTER SEQUENCE " + CNR_SEQUENCE + KOLLAM_COURT_ID + " RESTART WITH 1;";
             log.error("Executing Restart query for CNR sequence");
             jdbcTemplate.execute(sql);
         } catch (Exception ex) {
@@ -78,7 +78,7 @@ public class SequenceResetService {
     @Scheduled(cron = "0 0 0 1 1 *", zone = TIME_ZONE)
     public void resetCourtCaseSequence() {
         try {
-            String sql = "ALTER SEQUENCE " + COURT_CASE_SEQUENCE + COURT_ID + " RESTART WITH 1;";
+            String sql = "ALTER SEQUENCE " + COURT_CASE_SEQUENCE + KOLLAM_COURT_ID + " RESTART WITH 1;";
             log.error("Executing Restart query for Court Case sequence");
             jdbcTemplate.execute(sql);
         } catch (Exception ex) {
@@ -89,7 +89,7 @@ public class SequenceResetService {
     @Scheduled(cron = "0 0 0 1 1 *", zone = TIME_ZONE)
     public void resetCMPSequence() {
         try {
-            String sql = "ALTER SEQUENCE " + CMP_SEQUENCE + COURT_ID + " RESTART WITH 1;";
+            String sql = "ALTER SEQUENCE " + CMP_SEQUENCE + KOLLAM_COURT_ID + " RESTART WITH 1;";
             log.error("Executing Restart query for CMP sequence");
             jdbcTemplate.execute(sql);
         } catch (Exception ex) {
