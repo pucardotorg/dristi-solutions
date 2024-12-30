@@ -71,7 +71,20 @@ export const showDemandNoticeModal = ({ selected, setValue, formData, setError, 
   }
 };
 
-export const validateDateForDelayApplication = ({ selected, setValue, caseDetails, toast, t, history, caseId }) => {
+export const validateDateForDelayApplication = ({
+  formData,
+  selected,
+  setValue,
+  caseDetails,
+  toast,
+  t,
+  history,
+  caseId,
+  setShowConfirmDcaSkipModal,
+  showConfirmDcaSkipModal,
+  shouldShowConfirmDcaModal,
+  setShouldShowConfirmDcaModal,
+}) => {
   if (selected === "delayApplications") {
     if (
       !caseDetails?.caseDetails ||
@@ -105,6 +118,14 @@ export const validateDateForDelayApplication = ({ selected, setValue, caseDetail
         showForm: false,
         isEnabled: true,
       });
+    }
+    if (formData?.isDcaSkippedInEFiling?.code === "YES" && shouldShowConfirmDcaModal) {
+      setShowConfirmDcaSkipModal(true);
+      setShouldShowConfirmDcaModal(false);
+    }
+    if (formData?.isDcaSkippedInEFiling?.code === "NO") {
+      setShowConfirmDcaSkipModal(false);
+      setShouldShowConfirmDcaModal(true);
     }
   }
 };
@@ -842,6 +863,7 @@ export const delayApplicationValidation = ({ t, formData, selected, setShowError
   if (selected === "delayApplications") {
     if (
       formData?.delayCondonationType?.code === "NO" &&
+      formData?.isDcaSkippedInEFiling?.code === "NO" &&
       (!formData?.condonationFileUpload?.document || formData?.condonationFileUpload?.document.length === 0)
     ) {
       setFormErrors("condonationFileUpload", { type: "required" });

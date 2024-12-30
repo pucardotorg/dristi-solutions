@@ -1,3 +1,5 @@
+import { delayApplicationConfig } from "./delayApplicationConfig";
+
 export const sideMenuConfig = [
   {
     isOpen: false,
@@ -212,23 +214,24 @@ export const sideMenuConfig = [
         checked: false,
         isCompleted: false,
         isDisabled: false,
-        pageConfig: [
-          {
-            moduleName: "commonUiConfig",
-            masterDetails: [
-              {
-                name: "delayApplicationFormConfig",
-              },
-            ],
-          },
-        ],
+        pageConfig: delayApplicationConfig,
+        // pageConfig: [
+        //   {
+        //     moduleName: "commonUiConfig",
+        //     masterDetails: [
+        //       {
+        //         name: "delayApplicationFormConfig",
+        //       },
+        //     ],
+        //   },
+        // ],
         mandatoryFields: ["delayCondonationType"],
         initialMandatoryFieldCount: 1,
         dependentMandatoryFields: [
           {
             field: "condonationFileUpload.document",
-            dependentOn: "delayCondonationType",
-            dependentOnKey: "showForm",
+            dependentOn: "isDcaSkippedInEFiling",
+            dependentOnKey: "showDcaFileUpload",
           },
         ],
         optionalFields: [],
