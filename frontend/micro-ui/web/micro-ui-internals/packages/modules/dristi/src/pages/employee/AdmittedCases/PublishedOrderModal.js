@@ -4,6 +4,7 @@ import Modal from "../../../components/Modal";
 import { Button, SubmitBar } from "@egovernments/digit-ui-react-components";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/useGetAllOrderApplicationRelatedDocuments";
+import { useGetPendingTask } from "../../../hooks/dristi/useGetPendingTask";
 
 function PublishedOrderModal({
   t,
@@ -40,9 +41,13 @@ function PublishedOrderModal({
     if (productionOfDocumentApplications?.some((item) => item?.referenceId === order?.id)) {
       return false;
     }
-    const submissionParty = order?.additionalDetails?.formdata?.submissionParty?.map((item) => item.uuid).flat();
+
+    //TODO : need to ask
+    const isAuthority = order?.additionalDetails?.formdata?.partyId;
+    const submissionParty = order?.additionalDetails?.formdata?.submissionParty?.map((item) => item.uuid) || [];
+    const allSubmissionParty = [...submissionParty, isAuthority].filter(Boolean);
     return (
-      submissionParty?.includes(userInfo?.uuid) &&
+      allSubmissionParty?.includes(userInfo?.uuid) &&
       userRoles.includes("SUBMISSION_CREATOR") &&
       [
         CaseWorkflowState.PENDING_ADMISSION_HEARING,
@@ -54,9 +59,12 @@ function PublishedOrderModal({
       ].includes(caseStatus)
     );
   }, [caseStatus, order, userInfo?.uuid, userRoles, productionOfDocumentApplications]);
-  const showSubmitDocumentButton = useMemo(() => showSubmissionButtons, [showSubmissionButtons]);
+
   const showExtensionButton = useMemo(
-    () => showSubmissionButtons && !extensionApplications?.some((item) => item?.additionalDetails?.formdata?.refOrderId === order?.orderNumber),
+    () =>
+      showSubmissionButtons &&
+      !extensionApplications?.some((item) => item?.additionalDetails?.formdata?.refOrderId === order?.orderNumber) &&
+      order?.orderType !== "SET_BAIL_TERMS",
     [extensionApplications, order, showSubmissionButtons]
   );
 
@@ -86,6 +94,42 @@ function PublishedOrderModal({
       }
     }
   }, [order, tenantId]);
+
+  // tracking of appliction based on order Generated for bail
+  const { data: pendingTaskDetails = [] } = useGetPendingTask({
+    data: {
+      SearchCriteria: {
+        tenantId,
+        moduleName: "Pending Tasks Service",
+        moduleSearchCriteria: {
+          filingNumber: order?.filingNumber,
+          isCompleted: true,
+          referenceId: `MANUAL_${userInfo?.uuid}_${order?.orderNumber}`,
+        },
+        limit: 10000,
+        offset: 0,
+      },
+    },
+    params: { tenantId },
+    key: `MANUAL_${userInfo?.uuid}_${order?.orderType}`,
+    config: {
+      enabled: Boolean(order && tenantId),
+    },
+  });
+
+  const completedTask = useMemo(() => {
+    return pendingTaskDetails?.data?.some((task) => {
+      const refIdField = task?.fields?.find((field) => field?.key === "referenceId");
+      const isCompletedField = task?.fields?.find((field) => field?.key === "isCompleted");
+
+      return refIdField?.value === `MANUAL_${userInfo?.uuid}_${order?.orderNumber}` && isCompletedField?.value === true;
+    });
+  }, [pendingTaskDetails?.data, userInfo?.uuid, order?.orderNumber]);
+
+  const showSubmitDocumentButton = useMemo(
+    () => (order?.orderType === "SET_BAIL_TERMS" ? showSubmissionButtons && !completedTask : showSubmissionButtons),
+    [completedTask, order?.orderType, showSubmissionButtons]
+  );
 
   const showDocument = useMemo(() => {
     return (

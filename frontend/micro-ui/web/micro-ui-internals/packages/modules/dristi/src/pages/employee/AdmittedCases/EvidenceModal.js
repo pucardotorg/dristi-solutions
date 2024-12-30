@@ -138,7 +138,15 @@ const EvidenceModal = ({
     }
     return label;
   }, [allAdvocates, applicationStatus, createdBy, documentSubmission, isLitigent, modalType, respondingUuids, t, userInfo?.uuid, userType]);
-
+  const actionCustomLabel = useMemo(() => {
+    let label = "";
+    if (modalType === "Submissions") {
+      if (userType === "employee") {
+        label = t("SET_TERMS_OF_BAIL");
+      }
+    }
+    return label;
+  }, [allAdvocates, applicationStatus, createdBy, documentSubmission, isLitigent, modalType, respondingUuids, t, userInfo?.uuid, userType]);
   const actionCancelLabel = useMemo(() => {
     if (
       userRoles.includes("SUBMISSION_APPROVER") &&
@@ -506,6 +514,9 @@ const EvidenceModal = ({
         return "BAIL";
       case "SURETY":
         return "BAIL";
+      case "REQUEST_FOR_BAIL":
+      case "SUBMIT_BAIL_DOCUMENTS":
+        return type === "reject" ? "REJECT_BAIL" : type === "SET_TERM_BAIL" ? "SET_BAIL_TERMS" : "ACCEPT_BAIL";
       case "EXTENSION_SUBMISSION_DEADLINE":
         return "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE";
       case "CHECKOUT_REQUEST":
@@ -531,6 +542,9 @@ const EvidenceModal = ({
         return "ORDER_FOR_BAIL";
       case "EXTENSION_SUBMISSION_DEADLINE":
         return "ORDER_EXTENSION_SUBMISSION_DEADLINE";
+      case "REQUEST_FOR_BAIL":
+      case "SUBMIT_BAIL_DOCUMENTS":
+        return type === "reject" ? "REJECT_BAIL" : type === "SET_TERM_BAIL" ? "SET_BAIL_TERMS" : "ACCEPT_BAIL";
       case "CHECKOUT_REQUEST":
         return type === "reject" ? "REJECT_CHECKOUT_REQUEST" : "ACCEPT_CHECKOUT_REQUEST";
       default:
@@ -556,7 +570,9 @@ const EvidenceModal = ({
       return acceptedApplicationTypes.includes(applicationType);
     }
   }, [documentSubmission, showConfirmationModal?.type]);
-
+  const isBail = useMemo(() => {
+    return ["SUBMIT_BAIL_DOCUMENTS", "REQUEST_FOR_BAIL"].includes(documentSubmission?.[0]?.applicationList?.applicationType);
+  }, [documentSubmission]);
   const showDocument = useMemo(() => {
     return (
       <React.Fragment>
@@ -611,7 +627,13 @@ const EvidenceModal = ({
           name: `ORDER_TYPE_${orderType}`,
         },
         refApplicationId: documentSubmission?.[0]?.applicationList?.applicationNumber,
-        applicationStatus: type === "accept" ? t("APPROVED") : t("REJECTED"),
+        applicationStatus: isBail
+          ? type === "SET_TERM_BAIL"
+            ? t("SET_TERM_BAIL")
+            : type === "accept"
+            ? t("APPROVED")
+            : t("REJECTED")
+          : t("NO_STATUS"),
       };
       const linkedOrderNumber = documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.refOrderId;
       if (generateOrder) {
@@ -621,6 +643,7 @@ const EvidenceModal = ({
             tenantId,
             cnrNumber,
             filingNumber,
+            applicationNumber: [documentSubmission?.[0]?.applicationList?.applicationNumber],
             statuteSection: {
               tenantId,
             },
@@ -637,7 +660,13 @@ const EvidenceModal = ({
             documents: [],
             additionalDetails: {
               formdata,
-              applicationStatus: type === "accept" ? t("APPROVED") : t("REJECTED"),
+              applicationStatus: isBail
+                ? type === "SET_TERM_BAIL"
+                  ? t("SET_TERM_BAIL")
+                  : type === "accept"
+                  ? t("APPROVED")
+                  : t("REJECTED")
+                : t("NO_STATUS"),
             },
             ...(documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName && {
               orderDetails: { parties: [{ partyName: documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName }] },
@@ -650,7 +679,7 @@ const EvidenceModal = ({
         };
         try {
           const res = await ordersService.createOrder(reqbody, { tenantId });
-          const name = getOrderActionName(documentSubmission?.[0]?.applicationList?.applicationType, showConfirmationModal.type);
+          const name = getOrderActionName(documentSubmission?.[0]?.applicationList?.applicationType, isBail ? type : showConfirmationModal.type);
           DRISTIService.customApiService(Urls.dristi.pendingTask, {
             pendingTask: {
               name: t(name),
@@ -717,7 +746,9 @@ const EvidenceModal = ({
       return;
     }
     if (userType === "employee") {
-      modalType === "Documents" ? setShowConfirmationModal({ type: "documents-confirmation" }) : setShowConfirmationModal({ type: "accept" });
+      if (isBail) {
+        await handleApplicationAction(true, "accept");
+      } else modalType === "Documents" ? setShowConfirmationModal({ type: "documents-confirmation" }) : setShowConfirmationModal({ type: "accept" });
     } else {
       if (actionSaveLabel === t("ADD_COMMENT")) {
         try {
@@ -749,13 +780,22 @@ const EvidenceModal = ({
 
   const actionCancelOnSubmit = async () => {
     if (userType === "employee") {
-      setShowConfirmationModal({ type: "reject" });
+      if (isBail) {
+        await handleApplicationAction(true, "reject");
+      } else setShowConfirmationModal({ type: "reject" });
     } else {
       try {
         await handleDeleteApplication();
         setShow(false);
         counterUpdate();
       } catch (error) {}
+    }
+  };
+  const actionCustomLabelSubmit = async () => {
+    if (userType === "employee") {
+      await handleApplicationAction(true, "SET_TERM_BAIL");
+    } else {
+      setShow(false);
     }
   };
 
@@ -821,6 +861,16 @@ const EvidenceModal = ({
     fetchRecursiveData(documentSubmission?.[0]?.applicationList);
   }, [documentSubmission, fetchRecursiveData]);
 
+  const customLabelShow = useMemo(() => {
+    return (
+      isJudge &&
+      ["REQUEST_FOR_BAIL"].includes(documentSubmission?.[0]?.applicationList?.applicationType) &&
+      userRoles.includes("SUBMISSION_APPROVER") &&
+      [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationStatus) &&
+      modalType === "Submissions"
+    );
+  }, [isJudge, documentSubmission, userRoles, applicationStatus, modalType]);
+
   return (
     <React.Fragment>
       {!showConfirmationModal && !showSuccessModal && (
@@ -830,7 +880,9 @@ const EvidenceModal = ({
           actionSaveOnSubmit={actionSaveOnSubmit}
           hideSubmit={!showSubmit} // Not allowing submit action for court room manager
           actionCancelLabel={!isJudge ? false : actionCancelLabel} // Not allowing cancel action for court room manager
+          actionCustomLabel={!customLabelShow ? false : actionCustomLabel} // Not allowing cancel action for court room manager
           actionCancelOnSubmit={actionCancelOnSubmit}
+          actionCustomLabelSubmit={actionCustomLabelSubmit}
           formId="modal-action"
           headerBarMain={
             <Heading
@@ -906,6 +958,7 @@ const EvidenceModal = ({
                     SubmissionWorkflowState.PENDINGRESPONSE,
                     SubmissionWorkflowState.COMPLETED,
                     SubmissionWorkflowState.REJECTED,
+                    SubmissionWorkflowState.DOC_UPLOAD,
                   ].includes(applicationStatus)) ||
                   modalType === "Documents") && (
                   <div className="comment-send">
