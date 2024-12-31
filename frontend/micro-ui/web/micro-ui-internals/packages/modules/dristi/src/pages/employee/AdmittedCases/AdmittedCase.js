@@ -1220,46 +1220,78 @@ const AdmittedCases = () => {
     });
   };
 
+  const handleAdmitDismissCaseOrder = async (generateOrder, type) => {
+    try {
+      const orderType = "ADMIT_DISMISS_CASE";
+      const formdata = {
+        orderType: {
+          code: orderType,
+          type: orderType,
+          name: `ORDER_TYPE_${orderType}`,
+        },
+        isCaseAdmittedOrDismissed: {
+          code: type === "reject" ? "DISMISSED" : type === "accept" ? "ADMITTED" : null,
+          name: type === "reject" ? "DISMISSED" : type === "accept" ? "ADMITTED" : null,
+        },
+      };
+      if (generateOrder) {
+        const reqbody = {
+          order: {
+            createdDate: null,
+            tenantId,
+            cnrNumber,
+            filingNumber,
+            statuteSection: {
+              tenantId,
+            },
+            orderType,
+            status: "",
+            isActive: true,
+            workflow: {
+              action: OrderWorkflowAction.SAVE_DRAFT,
+              comments: "Creating order",
+              assignes: null,
+              rating: null,
+              documents: [{}],
+            },
+            documents: [],
+            additionalDetails: {
+              formdata,
+            },
+            ...(documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName && {
+              orderDetails: { parties: [{ partyName: documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName }] },
+            }),
+          },
+        };
+        try {
+          const res = await ordersService.createOrder(reqbody, { tenantId });
+          const name = "ADMIT_DISMISS_CASE";
+          DRISTIService.customApiService(Urls.dristi.pendingTask, {
+            pendingTask: {
+              name: t(name),
+              entityType: "order-default",
+              referenceId: `MANUAL_${res?.order?.orderNumber}`,
+              status: "DRAFT_IN_PROGRESS",
+              assignedTo: [],
+              assignedRole: ["JUDGE_ROLE"],
+              cnrNumber,
+              filingNumber,
+              isCompleted: false,
+              // stateSla: stateSla.DRAFT_IN_PROGRESS * dayInMillisecond + todayDate,
+              additionalDetails: { orderType },
+              tenantId,
+            },
+          });
+          history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
+        } catch (error) {}
+      }
+    } catch (error) {}
+  };
+
   const handleAdmitCase = async () => {
     setCaseAdmitLoader(true);
     setOpenAdmitCaseModal(false);
-    updateCaseDetails("ADMIT", caseDetails).then(async (res) => {
-      setModalInfo({ ...modalInfo, page: 1 });
-      setCaseAdmitLoader(false);
-      const { HearingList = [] } = await Digit.HearingService.searchHearings({
-        hearing: { tenantId },
-        criteria: {
-          tenantID: tenantId,
-          filingNumber: filingNumber,
-        },
-      });
-      const hearingData =
-        HearingList?.find((list) => list?.hearingType === "ADMISSION" && !(list?.status === "COMPLETED" || list?.status === "ABATED")) || {};
-      if (hearingData.hearingId) {
-        hearingData.workflow = hearingData.workflow || {};
-        hearingData.workflow.action = "ABANDON";
-        await Digit.HearingService.updateHearings(
-          { tenantId, hearing: hearingData, hearingType: "", status: "" },
-          { applicationNumber: "", cnrNumber: "" }
-        );
-      }
-      DRISTIService.customApiService(Urls.dristi.pendingTask, {
-        pendingTask: {
-          name: "Schedule Hearing",
-          entityType: "case-default",
-          referenceId: `MANUAL_${caseDetails?.filingNumber}`,
-          status: "SCHEDULE_HEARING",
-          assignedTo: [],
-          assignedRole: ["JUDGE_ROLE"],
-          cnrNumber: updatedCaseDetails?.cnrNumber,
-          filingNumber: caseDetails?.filingNumber,
-          isCompleted: false,
-          stateSla: todayDate + stateSla.SCHEDULE_HEARING,
-          additionalDetails: {},
-          tenantId,
-        },
-      });
-    });
+    await handleAdmitDismissCaseOrder(true, "accept");
   };
 
   const scheduleHearing = async ({ purpose, participant, date }) => {
@@ -1414,7 +1446,7 @@ const AdmittedCases = () => {
 
   const updatedConfig = caseDetails && updateConfigWithCaseDetails(selectParticipantConfig, caseDetails);
 
-  const onSendBack = () => {
+  const onSendBack = async () => {
     switch (secondaryAction.action) {
       case "SEND_BACK":
         setSubmitModalInfo({
@@ -1426,7 +1458,7 @@ const AdmittedCases = () => {
         break;
 
       case "REJECT":
-        setShowDismissCaseConfirmation(true);
+        await handleAdmitDismissCaseOrder(true, "reject");
         break;
 
       default:
@@ -2031,7 +2063,7 @@ const AdmittedCases = () => {
             {delayCondonationData?.delayCondonationType?.code === "NO" && isJudge && (
               <div className="delay-condonation-chip" style={delayCondonationStylsMain}>
                 <p style={delayCondonationTextStyle}>
-                  {delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" || isDelayApplicationPending
+                  {(delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" && isDelayApplicationPending) || isDelayApplicationPending
                     ? t("DELAY_CONDONATION_FILED")
                     : t("DELAY_CONDONATION_NOT_FILED")}
                 </p>

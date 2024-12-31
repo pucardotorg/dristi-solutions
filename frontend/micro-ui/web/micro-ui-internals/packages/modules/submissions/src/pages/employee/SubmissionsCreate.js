@@ -190,7 +190,6 @@ const SubmissionsCreate = ({ path }) => {
             [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(item?.status)
         )
       );
-      debugger;
       if (orderNumber || (hearingId && applicationTypeUrl) || !isCitizen) {
         const tempData = submissionConfigKeys[submissionType]?.map((item) => {
           return {
@@ -684,7 +683,7 @@ const SubmissionsCreate = ({ path }) => {
       try {
         applicationSchema = Digit.Customizations.dristiOrders.ApplicationFormSchemaUtils.formToSchema(formdata, modifiedFormConfig);
       } catch (error) {
-        console.log(error);
+        console.error(error);
       }
       if (userTypeCitizen === "ADVOCATE") {
         applicationSchema = {

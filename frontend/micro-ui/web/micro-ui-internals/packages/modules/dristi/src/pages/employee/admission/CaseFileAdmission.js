@@ -160,8 +160,6 @@ function CaseFileAdmission({ t, path }) {
     [applicationData]
   );
 
-  console.log("isDelayApplicationPending :>> ", isDelayApplicationPending);
-
   const currentHearingId = useMemo(
     () =>
       hearingDetails?.HearingList?.find((list) => list?.hearingType === "ADMISSION" && !(list?.status === "COMPLETED" || list?.status === "ABATED"))
@@ -798,7 +796,7 @@ function CaseFileAdmission({ t, path }) {
             },
           });
         } catch (error) {
-          console.log("error", error);
+          console.error("error", error);
           throw new Error(error);
         }
       }
@@ -1057,7 +1055,7 @@ function CaseFileAdmission({ t, path }) {
                   {delayCondonationData?.delayCondonationType?.code === "NO" && (
                     <div className="delay-condonation-chip" style={delayCondonationStylsMain}>
                       <p style={delayCondonationTextStyle}>
-                        {delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" || isDelayApplicationPending
+                        {(delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" && isDelayApplicationPending) || isDelayApplicationPending
                           ? t("DELAY_CONDONATION_FILED")
                           : t("DELAY_CONDONATION_NOT_FILED")}
                       </p>
