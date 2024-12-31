@@ -24,6 +24,9 @@ public class Configuration {
     @Value("${sequence.list}")
     private List<String> sequenceList;
 
+    @Value("${sequence.list.require.court-id}")
+    private List<String> sequenceListRequireCourtId;
+
     @Value("${schedule.cron.expression}")
     private String cronExpression;
 

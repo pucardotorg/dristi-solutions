@@ -6,6 +6,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
 @Slf4j
 public class SequenceResetService {
@@ -25,7 +28,10 @@ public class SequenceResetService {
     public void resetSequence() {
         log.info("Starting cron job for resetting sequences");
 
-        configuration.getSequenceList().forEach(sequence -> {
+        List<String> finalSequnceList = configuration.getSequenceList();
+        configuration.getSequenceListRequireCourtId().forEach(seq-> finalSequnceList.add(seq+configuration.getKollamCourtId()));
+
+        finalSequnceList.forEach(sequence -> {
             try {
                 runQuery(sequence);
             } catch (Exception ex) {
