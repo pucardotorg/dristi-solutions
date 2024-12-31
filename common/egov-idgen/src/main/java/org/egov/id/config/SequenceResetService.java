@@ -28,10 +28,10 @@ public class SequenceResetService {
 
     private static final String TIME_ZONE = "Asia/Kolkata";
 
-    // This runs at midnight on January 1st every year
-    //0 0 0 1 1 *
+    // This runs at midnight on December 31st. One second before transitioning to january 1st every year
+    //59 59 23 31 12 *
 
-    @Scheduled(cron = "0 0 0 1 1 *", zone = TIME_ZONE)
+    @Scheduled(cron = "59 59 23 31 12 *", zone = TIME_ZONE)
     public void resetAdvocateSequence() {
         try {
             String sql = "ALTER SEQUENCE " + ADVOCATE_SEQUENCE + " RESTART WITH 1;";
@@ -42,7 +42,7 @@ public class SequenceResetService {
         }
     }
 
-    @Scheduled(cron = "0 0 0 1 1 *", zone = TIME_ZONE)
+    @Scheduled(cron = "59 59 23 31 12 *", zone = TIME_ZONE)
     public void resetClerkSequence() {
         try {
             String sql = "ALTER SEQUENCE " + CLERK_SEQUENCE + " RESTART WITH 1;";
@@ -53,7 +53,7 @@ public class SequenceResetService {
         }
     }
 
-    @Scheduled(cron = "0 0 0 1 1 *", zone = TIME_ZONE)
+    @Scheduled(cron = "59 59 23 31 12 *", zone = TIME_ZONE)
     public void resetFilingSequence() {
         try {
             String sql = "ALTER SEQUENCE " + FILING_SEQUENCE + " RESTART WITH 1;";
@@ -64,7 +64,7 @@ public class SequenceResetService {
         }
     }
 
-    @Scheduled(cron = "0 0 0 1 1 *", zone = TIME_ZONE)
+    @Scheduled(cron = "59 59 23 31 12 *", zone = TIME_ZONE)
     public void resetCNRSequence() {
         try {
             String sql = "ALTER SEQUENCE " + CNR_SEQUENCE + KOLLAM_COURT_ID + " RESTART WITH 1;";
@@ -75,7 +75,7 @@ public class SequenceResetService {
         }
     }
 
-    @Scheduled(cron = "0 0 0 1 1 *", zone = TIME_ZONE)
+    @Scheduled(cron = "59 59 23 31 12 *", zone = TIME_ZONE)
     public void resetCourtCaseSequence() {
         try {
             String sql = "ALTER SEQUENCE " + COURT_CASE_SEQUENCE + KOLLAM_COURT_ID + " RESTART WITH 1;";
@@ -86,7 +86,7 @@ public class SequenceResetService {
         }
     }
 
-    @Scheduled(cron = "0 0 0 1 1 *", zone = TIME_ZONE)
+    @Scheduled(cron = "59 59 23 31 12 *", zone = TIME_ZONE)
     public void resetCMPSequence() {
         try {
             String sql = "ALTER SEQUENCE " + CMP_SEQUENCE + KOLLAM_COURT_ID + " RESTART WITH 1;";
