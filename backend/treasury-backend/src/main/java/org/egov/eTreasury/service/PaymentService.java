@@ -165,15 +165,15 @@ public class PaymentService {
                 .build();
     }
 
-    public String printPayInSlipPdf(TreasuryPaymentRequest request) {
-        try {
-            ByteArrayResource byteArrayResource = pdfServiceUtil.generatePdfFromPdfService(request);
-            return fileStorageUtil.saveDocumentToFileStore(byteArrayResource.getByteArray()).getFileStore();
-        } catch (Exception e) {
-            log.error("Error occurred when creating pdf for payment", e);
-            return null;
-        }
-    }
+//    public String printPayInSlipPdf(TreasuryPaymentRequest request) {
+//        try {
+//            ByteArrayResource byteArrayResource = pdfServiceUtil.generatePdfFromPdfService(request);
+//            return fileStorageUtil.saveDocumentToFileStore(byteArrayResource.getByteArray()).getFileStore();
+//        } catch (Exception e) {
+//            log.error("Error occurred when creating pdf for payment", e);
+//            return null;
+//        }
+//    }
 
     public TreasuryPaymentData decryptAndProcessTreasuryPayload(TreasuryParams treasuryParams, RequestInfo requestInfo) {
         log.info("Decrypting Treasury Payload for authToken: {}", treasuryParams.getAuthToken());
@@ -199,13 +199,18 @@ public class PaymentService {
 
             log.info("Request info: {}", requestInfo);
 
+            String fileStoreId = null;
+            if (treasuryParams.getStatus()) {
+                PrintDetails printDetails = new PrintDetails(transactionDetails.getGrn());
+                Document document = printPayInSlip(printDetails, requestInfo);
+                fileStoreId = document.getFileStore();
+            }
+            data.setFileStoreId(fileStoreId);
+
             TreasuryPaymentRequest request = TreasuryPaymentRequest.builder()
                     .requestInfo(requestInfo)
                     .treasuryPaymentData(data)
                     .build();
-
-            String fileStore = printPayInSlipPdf(request);
-            data.setFileStoreId(fileStore);
 
             log.info("Saving Payment Data: {}", data);
 
@@ -380,37 +385,37 @@ public class PaymentService {
 //        }
 //    }
 
-//    public Document printPayInSlip(PrintDetails printDetails, RequestInfo requestInfo) {
-//        try {
-//            // Authenticate and get secret map
-//            Map<String, String> secretMap = authenticate();
-//
-//            // Decrypt the SEK using the appKey
-//            String decryptedSek = encryptionUtil.decryptAES(secretMap.get("sek"), secretMap.get("appKey"));
-//
-//            // Prepare the request body
-//            String postBody = generatePostBody(decryptedSek, objectMapper.writeValueAsString(printDetails));
-//
-//            // Prepare headers
-//            Headers headers = new Headers();
-//            headers.setClientId(config.getClientId());
-//            headers.setAuthToken(secretMap.get("authToken"));
-//            String headersData = objectMapper.writeValueAsString(headers);
-//
-//            // Call the service
-//            ResponseEntity<byte[]> responseEntity = callService(headersData, postBody, config.getPrintSlipUrl(), byte[].class, MediaType.MULTIPART_FORM_DATA);
-//
-//            // Process the response
-//            if (responseEntity.getStatusCode().is2xxSuccessful() && responseEntity.getBody() != null) {
-//                 return fileStorageUtil.saveDocumentToFileStore(responseEntity.getBody());
-//            } else {
-//                throw new CustomException("PRINT_SLIP_FAILED", "Pay in slip request failed");
-//            }
-//        } catch (Exception e) {
-//            log.error("Print slip generation Error: ", e);
-//            throw new CustomException("PRINT_SLIP_ERROR", "Error occurred during pay in slip generation");
-//        }
-//    }
+    public Document printPayInSlip(PrintDetails printDetails, RequestInfo requestInfo) {
+        try {
+            // Authenticate and get secret map
+            Map<String, String> secretMap = authenticate();
+
+            // Decrypt the SEK using the appKey
+            String decryptedSek = encryptionUtil.decryptAES(secretMap.get("sek"), secretMap.get("appKey"));
+
+            // Prepare the request body
+            String postBody = generatePostBody(decryptedSek, objectMapper.writeValueAsString(printDetails));
+
+            // Prepare headers
+            Headers headers = new Headers();
+            headers.setClientId(config.getClientId());
+            headers.setAuthToken(secretMap.get("authToken"));
+            String headersData = objectMapper.writeValueAsString(headers);
+
+            // Call the service
+            ResponseEntity<byte[]> responseEntity = callService(headersData, postBody, config.getPrintSlipUrl(), byte[].class, MediaType.MULTIPART_FORM_DATA);
+
+            // Process the response
+            if (responseEntity.getStatusCode().is2xxSuccessful() && responseEntity.getBody() != null) {
+                 return fileStorageUtil.saveDocumentToFileStore(responseEntity.getBody());
+            } else {
+                throw new CustomException("PRINT_SLIP_FAILED", "Pay in slip request failed");
+            }
+        } catch (Exception e) {
+            log.error("Print slip generation Error: ", e);
+            throw new CustomException("PRINT_SLIP_ERROR", "Error occurred during pay in slip generation");
+        }
+    }
 
 
 //    public TransactionDetails fetchTransactionDetails(TransactionDetails transactionDetails, RequestInfo requestInfo) {
@@ -490,9 +495,9 @@ public class PaymentService {
 //    }
 
 
-//    private <T> ResponseEntity<T> callService(String headersData, String postBody, String url, Class<T> responseType, MediaType mediaType) {
-//        return treasuryUtil.callService(headersData, postBody, url, responseType, mediaType);
-//    }
+    private <T> ResponseEntity<T> callService(String headersData, String postBody, String url, Class<T> responseType, MediaType mediaType) {
+        return treasuryUtil.callService(headersData, postBody, url, responseType, mediaType);
+    }
 
 
 
