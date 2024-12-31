@@ -31,7 +31,7 @@ public class SequenceResetService {
         try {
             configuration.getSequenceList().forEach(this::runQuery);
         } catch (Exception ex) {
-            log.error("Error restarting Advocate sequence", ex);
+            log.error("Error restarting sequence", ex);
         }
     }
 
@@ -49,7 +49,7 @@ public class SequenceResetService {
             log.error("Execution Successful for alter sequence query :: {}", alterSeqSql);
 
         } catch (Exception ex) {
-            log.error("Error restarting sequence", ex);
+            log.error("Error restarting sequence :: {}", sequence, ex);
         }
     }
 }
