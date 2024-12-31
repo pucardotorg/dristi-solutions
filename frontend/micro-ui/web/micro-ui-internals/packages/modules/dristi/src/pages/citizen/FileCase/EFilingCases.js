@@ -2197,6 +2197,7 @@ function EFilingCases({ path }) {
     margin-top:0 !important;
   }
 `;
+  const isDcaNotSkipped = caseDetails?.caseDetails?.["delayApplications"]?.formdata?.[0]?.data?.isDcaSkippedInEFiling?.code === "NO";
 
   return (
     <div className="file-case">
@@ -2612,7 +2613,8 @@ function EFilingCases({ path }) {
       {showConfirmCaseDetailsModal && (
         <ConfirmCaseDetailsModal t={t} setShowConfirmCaseDetailsModal={setShowConfirmCaseDetailsModal}></ConfirmCaseDetailsModal>
       )}
-      {showConfirmDcaSkipModal && shouldShowConfirmDcaModal && selected === "delayApplications" && (
+      {console.log("check1", caseDetails?.caseDetails?.["delayApplications"]?.formdata?.[0]?.data?.isDcaSkippedInEFiling)}
+      {showConfirmDcaSkipModal && isDcaNotSkipped && selected === "delayApplications" && (
         // This modal asks to confirm if the user wants to skip submitting Delay condonation Application.
         <ConfirmDcaSkipModal
           t={t}

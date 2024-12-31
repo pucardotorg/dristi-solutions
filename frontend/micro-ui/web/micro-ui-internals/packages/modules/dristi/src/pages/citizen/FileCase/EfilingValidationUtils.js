@@ -107,6 +107,13 @@ export const validateDateForDelayApplication = ({
         showForm: true,
         isEnabled: true,
       });
+      if (!caseDetails?.caseDetails?.["delayApplications"]?.formdata?.[0]?.data?.isDcaSkippedInEFiling) {
+        setValue("isDcaSkippedInEFiling", {
+          code: "NO",
+          name: "NO",
+          showDcaFileUpload: true,
+        });
+      }
     } else if (
       caseDetails?.caseDetails?.["demandNoticeDetails"]?.formdata?.some(
         (data) => new Date(data?.data?.dateOfAccrual).getTime() + 31 * 24 * 60 * 60 * 1000 >= new Date().getTime()
