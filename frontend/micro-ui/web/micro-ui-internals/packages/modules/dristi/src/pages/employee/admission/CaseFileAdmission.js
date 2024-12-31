@@ -23,7 +23,7 @@ import AdmissionActionModal from "./AdmissionActionModal";
 import { generateUUID, getFilingType } from "../../../Utils";
 import { documentTypeMapping } from "../../citizen/FileCase/Config";
 import ScheduleHearing from "../AdmittedCases/ScheduleHearing";
-import { SubmissionWorkflowAction } from "../../../Utils/submissionWorkflow";
+import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../../Utils/submissionWorkflow";
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
@@ -134,6 +134,33 @@ function CaseFileAdmission({ t, path }) {
     filingNumber,
     Boolean(filingNumber)
   );
+
+  const { data: applicationData, isLoading: isApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
+    {
+      criteria: {
+        filingNumber,
+        tenantId,
+      },
+      tenantId,
+    },
+    {},
+    filingNumber + "allApplications",
+    filingNumber
+  );
+
+  const isDelayApplicationPending = useMemo(
+    () =>
+      Boolean(
+        applicationData?.applicationList?.some(
+          (item) =>
+            item?.applicationType === "DELAY_CONDONATION" &&
+            [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(item?.status)
+        )
+      ),
+    [applicationData]
+  );
+
+  console.log("isDelayApplicationPending :>> ", isDelayApplicationPending);
 
   const currentHearingId = useMemo(
     () =>
@@ -1030,7 +1057,7 @@ function CaseFileAdmission({ t, path }) {
                   {delayCondonationData?.delayCondonationType?.code === "NO" && (
                     <div className="delay-condonation-chip" style={delayCondonationStylsMain}>
                       <p style={delayCondonationTextStyle}>
-                        {delayCondonationData?.delayCondonationType?.isDcaSkippedInEFiling
+                        {delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" || isDelayApplicationPending
                           ? t("DELAY_CONDONATION_FILED")
                           : t("DELAY_CONDONATION_NOT_FILED")}
                       </p>

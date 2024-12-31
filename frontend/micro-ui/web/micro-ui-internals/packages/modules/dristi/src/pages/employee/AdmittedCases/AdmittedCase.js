@@ -58,7 +58,6 @@ const delayCondonationTextStyle = {
   fontSize: "14px",
   fontWeight: 400,
   lineHeight: "16.41px",
-  textAlign: "center",
   color: "#231F20",
 };
 
@@ -150,6 +149,16 @@ const styles = {
   },
 };
 
+const formatDate = (date) => {
+  if (date instanceof Date && !isNaN(date)) {
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  }
+  return "";
+};
+
 const AdmittedCases = () => {
   const { t } = useTranslation();
   const { path } = useRouteMatch();
@@ -190,6 +199,7 @@ const AdmittedCases = () => {
   const [downloadCasePdfLoading, setDownloadCasePdfLoading] = useState(false);
   const [voidReason, setVoidReason] = useState("");
   const [isDelayApplicationPending, setIsDelayApplicationPending] = useState(false);
+  const [isOpenDCA, setIsOpenDCA] = useState(false);
 
   const history = useHistory();
   const isCitizen = userRoles.includes("CITIZEN");
@@ -256,23 +266,21 @@ const AdmittedCases = () => {
   const nextActions = useMemo(() => workFlowDetails?.nextActions || [{}], [workFlowDetails]);
 
   const primaryAction = useMemo(() => {
-    const action = casePrimaryActions?.find((action) => nextActions?.some((data) => data.action === action?.action)) || { action: "", label: "" };
-    if (isDelayApplicationPending && action.action === "ADMIT") {
-      action.label = "CS_ADMIT_APPROVE_DCA";
-    }
-    return action;
-  }, [nextActions, isDelayApplicationPending]);
+    return casePrimaryActions?.find((action) => nextActions?.some((data) => data.action === action?.action)) || { action: "", label: "" };
+  }, [nextActions]);
 
   const secondaryAction = useMemo(() => {
-    const action = caseSecondaryActions?.find((action) => nextActions?.some((data) => data.action === action?.action)) || { action: "", label: "" };
-    if (isDelayApplicationPending && action.action === "REJECT") {
-      action.label = "CS_REJECT_APPROVE_DCA";
-    }
-    return action;
-  }, [nextActions, isDelayApplicationPending]);
+    return caseSecondaryActions?.find((action) => nextActions?.some((data) => data.action === action?.action)) || { action: "", label: "" };
+  }, [nextActions]);
+
   const tertiaryAction = useMemo(
     () => caseTertiaryActions?.find((action) => nextActions?.some((data) => data.action === action?.action)) || { action: "", label: "" },
     [nextActions]
+  );
+
+  const isDelayCondonationApplicable = useMemo(
+    () => caseDetails?.caseDetails?.delayApplications?.formdata[0]?.data?.delayCondonationType?.code === "NO" || undefined,
+    [caseDetails]
   );
 
   const statue = useMemo(() => {
@@ -358,7 +366,9 @@ const AdmittedCases = () => {
     setIsDelayApplicationPending(
       Boolean(
         applicationData?.applicationList?.some(
-          (item) => item?.applicationType === "DELAY_CONDONATION" && item?.status === SubmissionWorkflowState.PENDINGAPPROVAL
+          (item) =>
+            item?.applicationType === "DELAY_CONDONATION" &&
+            [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(item?.status)
         )
       )
     );
@@ -448,6 +458,32 @@ const AdmittedCases = () => {
       }
     );
   };
+
+  const caseInfo = useMemo(
+    () => [
+      {
+        key: "CASE_NUMBER",
+        value: caseDetails?.filingNumber,
+      },
+      {
+        key: "CASE_CATEGORY",
+        value: caseDetails?.caseCategory,
+      },
+      {
+        key: "CASE_TYPE",
+        value: "NIA S138",
+      },
+      {
+        key: "COURT_NAME",
+        value: t(`COMMON_MASTERS_COURT_R00M_${caseDetails?.courtId}`),
+      },
+      {
+        key: "SUBMITTED_ON",
+        value: formatDate(new Date(caseDetails?.filingDate)),
+      },
+    ],
+    [caseDetails?.caseCategory, caseDetails?.courtId, caseDetails?.filingDate, caseDetails?.filingNumber, t]
+  );
 
   const configList = useMemo(() => {
     const docSetFunc = (docObj) => {
@@ -933,6 +969,46 @@ const AdmittedCases = () => {
     };
   }, [documentSubmission, evidenceUpdateMutation, filingNumber, refetchCaseData, showVoidModal, t, userType, voidReason]);
 
+  const dcaConfirmModalConfig = useMemo(() => {
+    if (!isDelayCondonationApplicable) return;
+    return {
+      handleClose: () => {
+        setIsOpenDCA(false);
+      },
+      heading: { label: "" },
+      actionSaveLabel: "",
+      isStepperModal: true,
+      actionSaveOnSubmit: () => {},
+      steps: [
+        {
+          heading: { label: isDelayApplicationPending ? t("DELAY_CONDONATION_APPLICATION_OPEN") : t("DCA_NOT_FILED") },
+          ...(isDelayCondonationApplicable &&
+            !isDelayApplicationPending && {
+              actionSaveLabel: t("DCA_PROCEED_ANYWAY"),
+              actionSaveOnSubmit: () => {
+                setIsOpenDCA(false);
+                setSubmitModalInfo({ ...admitCaseSubmitConfig, caseInfo: caseInfo });
+                setModalInfo({ type: "admitCase", page: 0 });
+                setShowModal(true);
+              },
+            }),
+          modalBody: (
+            <div style={{ width: "527px", padding: "12px 16px" }}>
+              <p style={delayCondonationTextStyle}>
+                {isDelayApplicationPending ? t("DELAY_CONDONATION_APPLICATION_OPEN_MESSAGE") : t("DCA_NOT_FILED_MESSAGE")}
+              </p>
+            </div>
+          ),
+
+          actionCancelLabel: "BACK",
+          actionCancelOnSubmit: () => {
+            setIsOpenDCA(false);
+          },
+        },
+      ],
+    };
+  }, [caseInfo, isDelayApplicationPending, isDelayCondonationApplicable, t]);
+
   const tabData = useMemo(() => {
     return newTabSearchConfig?.TabSearchconfig?.map((configItem, index) => ({
       key: index,
@@ -955,13 +1031,19 @@ const AdmittedCases = () => {
   }, [caseDetails?.status]);
 
   useEffect(() => {
-    if (history?.location?.state?.triggerAdmitCase && openAdmitCaseModal) {
-      setSubmitModalInfo({ ...admitCaseSubmitConfig, caseInfo: caseInfo });
-      setModalInfo({ type: "admitCase", page: 0 });
-      setShowModal(true);
-      setOpenAdmitCaseModal(false);
+    if (history?.location?.state?.triggerAdmitCase && openAdmitCaseModal && isDelayCondonationApplicable !== undefined) {
+      if (isDelayCondonationApplicable) {
+        setIsOpenDCA(true);
+        setShowModal(false);
+        setOpenAdmitCaseModal(false);
+      } else {
+        setSubmitModalInfo({ ...admitCaseSubmitConfig, caseInfo: caseInfo });
+        setModalInfo({ type: "admitCase", page: 0 });
+        setShowModal(true);
+        setOpenAdmitCaseModal(false);
+      }
     }
-  }, [history?.location]);
+  }, [caseInfo, history?.location, isDelayCondonationApplicable, openAdmitCaseModal]);
 
   useEffect(() => {
     if (history?.location?.state?.from === "orderSuccessModal" && !toastStatus?.alreadyShown) {
@@ -1003,16 +1085,6 @@ const AdmittedCases = () => {
   const onTabChange = (n) => {
     history.replace(`${path}?caseId=${caseId}&filingNumber=${filingNumber}&tab=${newTabSearchConfig?.TabSearchconfig?.[n].label}`);
     // urlParams.set("tab", newTabSearchConfig?.TabSearchconfig?.[n].label);
-  };
-
-  const formatDate = (date) => {
-    if (date instanceof Date && !isNaN(date)) {
-      const day = String(date.getDate()).padStart(2, "0");
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const year = date.getFullYear();
-      return `${day}-${month}-${year}`;
-    }
-    return "";
   };
 
   const handleIssueNotice = async (hearingDate, hearingNumber) => {
@@ -1080,29 +1152,6 @@ const AdmittedCases = () => {
       showToast({ isError: true, message: "ERROR_WHILE_FETCH_HEARING_DETAILS" });
     }
   };
-
-  const caseInfo = [
-    {
-      key: "CASE_NUMBER",
-      value: caseDetails?.filingNumber,
-    },
-    {
-      key: "CASE_CATEGORY",
-      value: caseDetails?.caseCategory,
-    },
-    {
-      key: "CASE_TYPE",
-      value: "NIA S138",
-    },
-    {
-      key: "COURT_NAME",
-      value: t(`COMMON_MASTERS_COURT_R00M_${caseDetails?.courtId}`),
-    },
-    {
-      key: "SUBMITTED_ON",
-      value: formatDate(new Date(caseDetails?.filingDate)),
-    },
-  ];
 
   const getDefaultValue = (value) => value || "N.A.";
   const formatDateOrDefault = (date) => (date ? formatDate(new Date(date)) : "N.A.");
@@ -1473,10 +1522,6 @@ const AdmittedCases = () => {
       case "REGISTER":
         break;
       case "ADMIT":
-        // if (isDelayApplicationPending) {
-        //   setShowPendingDelayApplication(true);
-        //   break;
-        // }
         if (caseDetails?.status === "ADMISSION_HEARING_SCHEDULED") {
           const { hearingDate, hearingNumber } = await getHearingData();
           if (hearingNumber) {
@@ -1508,9 +1553,13 @@ const AdmittedCases = () => {
             }
           }
         } else {
-          setSubmitModalInfo({ ...admitCaseSubmitConfig, caseInfo: caseInfo });
-          setModalInfo({ type: "admitCase", page: 0 });
-          setShowModal(true);
+          if (isDelayApplicationPending || isDelayCondonationApplicable) {
+            setIsOpenDCA(true);
+          } else {
+            setSubmitModalInfo({ ...admitCaseSubmitConfig, caseInfo: caseInfo });
+            setModalInfo({ type: "admitCase", page: 0 });
+            setShowModal(true);
+          }
         }
         break;
       case "ISSUE_ORDER":
@@ -1982,7 +2031,7 @@ const AdmittedCases = () => {
             {delayCondonationData?.delayCondonationType?.code === "NO" && isJudge && (
               <div className="delay-condonation-chip" style={delayCondonationStylsMain}>
                 <p style={delayCondonationTextStyle}>
-                  {delayCondonationData?.delayCondonationType?.isDcaSkippedInEFiling || isDelayApplicationPending
+                  {delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" || isDelayApplicationPending
                     ? t("DELAY_CONDONATION_FILED")
                     : t("DELAY_CONDONATION_NOT_FILED")}
                 </p>
@@ -2296,6 +2345,8 @@ const AdmittedCases = () => {
           )}
         </ActionBar>
       )}
+      {isOpenDCA && <DocumentModal config={dcaConfirmModalConfig} />}
+
       {showModal && (
         <AdmissionActionModal
           t={t}
