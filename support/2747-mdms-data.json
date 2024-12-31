@@ -1,7 +1,7 @@
 {
     "tenantId": "kl",
-    "masterName": "Application",
-    "moduleName": "ApplicationType",
+    "masterName": "Notice",
+    "moduleName": "NoticeType",
     "mdmsPaylod": [
       {
         "tenantId": "kl",
