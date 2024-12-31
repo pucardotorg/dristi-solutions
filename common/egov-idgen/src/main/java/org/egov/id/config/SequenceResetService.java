@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -16,85 +18,89 @@ public class SequenceResetService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    @Value("${dristi.kollam.court.id}")
-    private String KOLLAM_COURT_ID;
+    @Autowired
+    private Configuration configuration;
 
-    private static final String ADVOCATE_SEQUENCE = "SEQ_REG_ADV";
-    private static final String CLERK_SEQUENCE = "SEQ_REG_CLERK";
-    private static final String FILING_SEQUENCE = "SEQ_FILING_NUMBER";
-    private static final String CNR_SEQUENCE = "SEQ_CNR_";
-    private static final String COURT_CASE_SEQUENCE = "SEQ_CCST_";
-    private static final String CMP_SEQUENCE = "SEQ_CMP_";
+    private final Object lock = new Object();
 
     private static final String TIME_ZONE = "Asia/Kolkata";
+
+    private static final String CRON_EXPRESSION = "#{@scheduleCronExpression}";
 
     // This runs at midnight on December 31st. One second before transitioning to january 1st every year
     //59 59 23 31 12 *
 
-    @Scheduled(cron = "59 59 23 31 12 *", zone = TIME_ZONE)
+    @Scheduled(cron = CRON_EXPRESSION, zone = TIME_ZONE)
     public void resetAdvocateSequence() {
         try {
-            String sql = "ALTER SEQUENCE " + ADVOCATE_SEQUENCE + " RESTART WITH 1;";
-            log.error("Executing Restart query for Advocate sequence");
-            jdbcTemplate.execute(sql);
+            resetSequence(configuration.getAdvocateSequence());
         } catch (Exception ex) {
             log.error("Error restarting Advocate sequence", ex);
         }
     }
 
-    @Scheduled(cron = "59 59 23 31 12 *", zone = TIME_ZONE)
+    @Scheduled(cron = CRON_EXPRESSION, zone = TIME_ZONE)
     public void resetClerkSequence() {
         try {
-            String sql = "ALTER SEQUENCE " + CLERK_SEQUENCE + " RESTART WITH 1;";
-            log.error("Executing Restart query for Clerk sequence");
-            jdbcTemplate.execute(sql);
+            resetSequence(configuration.getClerkSequence());
         } catch (Exception ex) {
             log.error("Error restarting Clerk sequence", ex);
         }
     }
 
-    @Scheduled(cron = "59 59 23 31 12 *", zone = TIME_ZONE)
+    @Scheduled(cron = CRON_EXPRESSION, zone = TIME_ZONE)
     public void resetFilingSequence() {
         try {
-            String sql = "ALTER SEQUENCE " + FILING_SEQUENCE + " RESTART WITH 1;";
-            log.error("Executing Restart query for Filing sequence");
-            jdbcTemplate.execute(sql);
+            resetSequence(configuration.getFilingSequence());
         } catch (Exception ex) {
             log.error("Error restarting Filing sequence", ex);
         }
     }
 
-    @Scheduled(cron = "59 59 23 31 12 *", zone = TIME_ZONE)
+    @Scheduled(cron = CRON_EXPRESSION, zone = TIME_ZONE)
     public void resetCNRSequence() {
         try {
-            String sql = "ALTER SEQUENCE " + CNR_SEQUENCE + KOLLAM_COURT_ID + " RESTART WITH 1;";
-            log.error("Executing Restart query for CNR sequence");
-            jdbcTemplate.execute(sql);
+            resetSequence(configuration.getCnrSequence() + configuration.getKollamCourtId());
         } catch (Exception ex) {
             log.error("Error restarting CNR sequence", ex);
         }
     }
 
-    @Scheduled(cron = "59 59 23 31 12 *", zone = TIME_ZONE)
+    @Scheduled(cron = CRON_EXPRESSION, zone = TIME_ZONE)
     public void resetCourtCaseSequence() {
         try {
-            String sql = "ALTER SEQUENCE " + COURT_CASE_SEQUENCE + KOLLAM_COURT_ID + " RESTART WITH 1;";
-            log.error("Executing Restart query for Court Case sequence");
-            jdbcTemplate.execute(sql);
+            resetSequence(configuration.getCourtCaseSequence() + configuration.getKollamCourtId());
         } catch (Exception ex) {
             log.error("Error restarting Court Case sequence", ex);
         }
     }
 
-    @Scheduled(cron = "59 59 23 31 12 *", zone = TIME_ZONE)
+    @Scheduled(cron = CRON_EXPRESSION, zone = TIME_ZONE)
     public void resetCMPSequence() {
         try {
-            String sql = "ALTER SEQUENCE " + CMP_SEQUENCE + KOLLAM_COURT_ID + " RESTART WITH 1;";
-            log.error("Executing Restart query for CMP sequence");
-            jdbcTemplate.execute(sql);
+            resetSequence(configuration.getCmpSequence() + configuration.getKollamCourtId());
         } catch (Exception ex) {
             log.error("Error restarting CMP sequence", ex);
         }
     }
 
+    public void resetSequence(String sequence) {
+        synchronized (lock) {
+            try {
+                String curValueSql = "SELECT last_value FROM " + sequence + ";";
+                log.error("Executing current value query :: {}", curValueSql);
+
+                Integer currentValue = jdbcTemplate.queryForObject(curValueSql, Integer.class);
+                log.error("Current value for Sequence:: {}, is {}", sequence, currentValue);
+
+                String alterSeqSql = "ALTER SEQUENCE " + sequence + " RESTART WITH 1;";
+                log.error("Executing alter sequence query :: {}", alterSeqSql);
+                jdbcTemplate.execute(alterSeqSql);
+                log.error("Execution Successful for alter sequence query :: {}", alterSeqSql);
+
+            } catch (Exception ex) {
+                log.error("Error restarting sequence", ex);
+            }
+        }
+    }
 }
