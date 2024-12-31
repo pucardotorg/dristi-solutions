@@ -78,13 +78,13 @@ async function orderAcceptanceRejectionCase(req, res, qrCode) {
       "Failed to query order service"
     );
 
-    const noticeList = listOfAllOrder.map((item) => {
+    const noticeList = listOfAllOrder.data.list.map((item) => {
       return {
         dateOfNotice: formatDate(new Date(item.createdDate), "DD-MM-YYYY"),
       };
     });
 
-    const chequeNumber = courtCase.chequeDetails.formdata
+    const chequeNumber = courtCase.caseDetails.chequeDetails.formdata
       .map((item) => item.data?.chequeNumber || "")
       .filter((number) => number)
       .join(",");
@@ -148,15 +148,20 @@ async function orderAcceptanceRejectionCase(req, res, qrCode) {
           chequeNumber: chequeNumber,
           filingNumber: courtCase.filingNumber,
           partyName: complainantName,
-          isExamined: order?.additionalDetails?.formdata?.isExamined,
+          isExamined:
+            order?.orderDetails?.wasAccusedExamined === "YES"
+              ? "examined"
+              : "not examined",
           noticeList: noticeList,
-          response: order?.additionalDetails?.formdata?.isRejected
-            ? "rejected"
-            : "granted",
-          isRejected: order?.additionalDetails?.formdata?.isRejected,
-          rejectionReason: order?.additionalDetails?.formdata?.rejectionReason,
+          response:
+            order?.orderDetails?.isCaseAdmittedOrDismissed.toLowerCase(),
+          isRejected:
+            order?.orderDetails?.isCaseAdmittedOrDismissed === "DISMISSED"
+              ? true
+              : false,
+          rejectionReason: order?.orderDetails?.reasonForAdmitDismissCase,
           additionalComments:
-            order?.additionalDetails?.formdata?.comments?.text || "",
+            order?.orderDetails?.additionalCommentsAdmitDismissCase || "",
           judgeSignature: judgeDetails.judgeSignature,
           judgeName: judgeDetails.name,
           judgeDesignation: judgeDetails.judgeDesignation,
