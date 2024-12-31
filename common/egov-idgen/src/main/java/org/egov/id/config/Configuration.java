@@ -7,6 +7,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Component
 @Data
 @Import({TracerConfiguration.class})
@@ -19,23 +21,8 @@ public class Configuration {
     @Value("${dristi.kollam.court.id}")
     private String kollamCourtId;
 
-    @Value("${sequence.advocate}")
-    private String advocateSequence;
-
-    @Value("${sequence.clerk}")
-    private String clerkSequence;
-
-    @Value("${sequence.filing}")
-    private String filingSequence;
-
-    @Value("${sequence.cnr}")
-    private String cnrSequence;
-
-    @Value("${sequence.court-case}")
-    private String courtCaseSequence;
-
-    @Value("${sequence.cmp}")
-    private String cmpSequence;
+    @Value("${sequence.list}")
+    private List<String> sequenceList;
 
     @Value("${schedule.cron.expression}")
     private String cronExpression;

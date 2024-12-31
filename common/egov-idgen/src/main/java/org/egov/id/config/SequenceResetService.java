@@ -16,25 +16,12 @@ public class SequenceResetService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
     private Configuration configuration;
-
-    private List<String> sequenceList;
 
     private static final String TIME_ZONE = "Asia/Kolkata";
 
     private static final String CRON_EXPRESSION = "#{@scheduleCronExpression}";
-
-    public SequenceResetService(Configuration configuration) {
-        this.configuration = configuration;
-        this.sequenceList = Arrays.asList(
-                configuration.getAdvocateSequence(),
-                configuration.getClerkSequence(),
-                configuration.getFilingSequence(),
-                configuration.getCnrSequence() + configuration.getKollamCourtId(),
-                configuration.getCourtCaseSequence() + configuration.getKollamCourtId(),
-                configuration.getCmpSequence() + configuration.getKollamCourtId()
-        );
-    }
 
     // This runs at midnight on December 31st. One second before transitioning to january 1st every year
     //59 59 23 31 12 *
@@ -42,7 +29,7 @@ public class SequenceResetService {
     @Scheduled(cron = CRON_EXPRESSION, zone = TIME_ZONE)
     public void resetSequence() {
         try {
-            sequenceList.forEach(this::runQuery);
+            configuration.getSequenceList().forEach(this::runQuery);
         } catch (Exception ex) {
             log.error("Error restarting Advocate sequence", ex);
         }
