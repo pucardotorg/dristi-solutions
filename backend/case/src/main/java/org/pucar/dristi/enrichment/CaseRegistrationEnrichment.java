@@ -248,11 +248,13 @@ public class CaseRegistrationEnrichment {
                 .toList();
 
         // Iterate through existing documents and compare IDs
-        existingCourtCaseList.get(0).getDocuments().forEach(existingDocument -> {
-            if (!documentIds.contains(existingDocument.getId())) {
-                existingDocument.setIsActive(false);
-            }
-        });
+        if (existingCourtCaseList.get(0).getDocuments() != null) {
+            existingCourtCaseList.get(0).getDocuments().forEach(existingDocument -> {
+                if (!documentIds.contains(existingDocument.getId())) {
+                    existingDocument.setIsActive(false);
+                }
+            });
+        }
     }
 
     public void enrichCourtCaseNumber(CaseRequest caseRequest) {
