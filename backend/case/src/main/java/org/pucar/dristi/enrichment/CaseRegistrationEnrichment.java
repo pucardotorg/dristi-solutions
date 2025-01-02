@@ -233,6 +233,7 @@ public class CaseRegistrationEnrichment {
             auditDetails.setLastModifiedTime(caseUtil.getCurrentTimeMil());
             auditDetails.setLastModifiedBy(caseRequest.getRequestInfo().getUserInfo().getUuid());
             enrichCaseRegistrationUponCreateAndUpdate(courtCase, auditDetails);
+            enrichDocument(caseRequest, existingCourtCaseList);
 
         } catch (Exception e) {
             log.error("Error enriching case application upon update :: {}", e.toString());
