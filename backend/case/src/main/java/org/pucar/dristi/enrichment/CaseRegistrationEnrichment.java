@@ -259,6 +259,10 @@ public class CaseRegistrationEnrichment {
                 if (documentIds.isEmpty() || !documentIds.contains(existingDocument.getId())) {
                     log.info("Setting isActive false for document Id :: {}",existingDocument.getId());
                     existingDocument.setIsActive(false);
+
+                    if (caseRequest.getCases().getDocuments() == null) {
+                        caseRequest.getCases().setDocuments(new ArrayList<>());
+                    }
                     caseRequest.getCases().getDocuments().add(existingDocument);
                 }
             });
