@@ -247,13 +247,19 @@ public class CaseRegistrationEnrichment {
                 .orElse(Collections.emptyList())
                 .stream()
                 .map(Document::getId)
+                .filter(Objects::nonNull)
                 .toList();
 
         // Iterate through existing documents and compare IDs
         if (existingCourtCaseList.get(0).getDocuments() != null) {
             existingCourtCaseList.get(0).getDocuments().forEach(existingDocument -> {
-                if (!documentIds.contains(existingDocument.getId())) {
+                log.info("Checking for existing document Id :: {}",existingDocument.getId());
+
+                // If documentIds is empty or the ID is not in the list, deactivate the document
+                if (documentIds.isEmpty() || !documentIds.contains(existingDocument.getId())) {
+                    log.info("Setting isActive false for document Id :: {}",existingDocument.getId());
                     existingDocument.setIsActive(false);
+                    caseRequest.getCases().getDocuments().add(existingDocument);
                 }
             });
         }
