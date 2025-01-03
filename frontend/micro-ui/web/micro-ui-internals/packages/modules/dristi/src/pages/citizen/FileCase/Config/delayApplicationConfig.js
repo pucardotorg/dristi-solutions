@@ -62,7 +62,7 @@ const delayApplicationFormConfig = [
         type: "radio",
         label: "SKIP_DELAY_APPLICATION_CONFIRM",
         populators: {
-          name: "isDcaSkipped",
+          name: "isDcaSkippedInEFiling",
           type: "radioButton",
           optionsKey: "name",
           error: "CORE_REQUIRED_FIELD_ERROR",

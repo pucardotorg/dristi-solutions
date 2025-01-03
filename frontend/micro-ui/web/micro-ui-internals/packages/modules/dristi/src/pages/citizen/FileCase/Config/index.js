@@ -214,17 +214,16 @@ export const sideMenuConfig = [
         checked: false,
         isCompleted: false,
         isDisabled: false,
-        pageConfig: delayApplicationConfig,
-        // pageConfig: [
-        //   {
-        //     moduleName: "commonUiConfig",
-        //     masterDetails: [
-        //       {
-        //         name: "delayApplicationFormConfig",
-        //       },
-        //     ],
-        //   },
-        // ],
+        pageConfig: [
+          {
+            moduleName: "commonUiConfig",
+            masterDetails: [
+              {
+                name: "delayApplicationFormConfig",
+              },
+            ],
+          },
+        ],
         mandatoryFields: ["delayCondonationType"],
         initialMandatoryFieldCount: 1,
         dependentMandatoryFields: [
