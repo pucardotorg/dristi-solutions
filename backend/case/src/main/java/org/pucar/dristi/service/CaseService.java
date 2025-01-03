@@ -203,7 +203,11 @@ public class CaseService {
             producer.push(config.getCaseUpdateTopic(), caseRequest);
 
             log.info("Updating cache");
-            List<Document> isActiveTrueDocuments = caseRequest.getCases().getDocuments().stream().filter(Document::getIsActive).toList();
+            List<Document> isActiveTrueDocuments = Optional.ofNullable(caseRequest.getCases().getDocuments())
+                    .orElse(Collections.emptyList())
+                    .stream()
+                    .filter(Document::getIsActive)
+                    .toList();
             caseRequest.getCases().setDocuments(isActiveTrueDocuments);
             cacheService.save(caseRequest.getCases().getTenantId() + ":" + caseRequest.getCases().getId(), caseRequest.getCases());
 
