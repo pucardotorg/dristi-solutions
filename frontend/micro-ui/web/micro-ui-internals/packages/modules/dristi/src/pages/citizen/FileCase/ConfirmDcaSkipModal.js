@@ -1,7 +1,7 @@
 import { CloseSvg, Modal } from "@egovernments/digit-ui-react-components";
 import React from "react";
 
-function ConfirmDcaSkipModal({ t, setFormDataValue, setShowConfirmDcaSkipModal }) {
+function ConfirmDcaSkipModal({ t, setFormDataValue, setShowConfirmDcaSkipModal, prevIsDcaSkipped, setPrevIsDcaSkipped }) {
   const CloseBtn = (props) => {
     return (
       <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>

@@ -84,6 +84,8 @@ export const validateDateForDelayApplication = ({
   showConfirmDcaSkipModal,
   shouldShowConfirmDcaModal,
   setShouldShowConfirmDcaModal,
+  prevIsDcaSkipped,
+  setPrevIsDcaSkipped,
 }) => {
   if (selected === "delayApplications") {
     if (
@@ -96,43 +98,15 @@ export const validateDateForDelayApplication = ({
         history.push(`?caseId=${caseId}&selected=demandNoticeDetails`);
       }, 3000);
     }
-    if (
-      caseDetails?.caseDetails?.["demandNoticeDetails"]?.formdata?.some(
-        (data) => new Date(data?.data?.dateOfAccrual).getTime() + 31 * 24 * 60 * 60 * 1000 < new Date().getTime()
-      )
-    ) {
-      setValue("delayCondonationType", {
-        code: "NO",
-        name: "NO",
-        showForm: true,
-        isEnabled: true,
-      });
-      if (!caseDetails?.caseDetails?.["delayApplications"]?.formdata?.[0]?.data?.isDcaSkippedInEFiling) {
-        setValue("isDcaSkippedInEFiling", {
-          code: "NO",
-          name: "NO",
-          showDcaFileUpload: true,
-        });
-      }
-    } else if (
-      caseDetails?.caseDetails?.["demandNoticeDetails"]?.formdata?.some(
-        (data) => new Date(data?.data?.dateOfAccrual).getTime() + 31 * 24 * 60 * 60 * 1000 >= new Date().getTime()
-      )
-    ) {
-      setValue("delayCondonationType", {
-        code: "YES",
-        name: "YES",
-        showForm: false,
-        isEnabled: true,
-      });
-    }
-    if (formData?.isDcaSkippedInEFiling?.code === "YES" && shouldShowConfirmDcaModal) {
+    if (formData?.isDcaSkippedInEFiling?.code === "YES" && shouldShowConfirmDcaModal && formData?.isDcaSkippedInEFiling?.code !== prevIsDcaSkipped) {
       setShowConfirmDcaSkipModal(true);
       setShouldShowConfirmDcaModal(false);
+      setPrevIsDcaSkipped("YES");
     }
     if (formData?.isDcaSkippedInEFiling?.code === "NO") {
       setShowConfirmDcaSkipModal(false);
       setShouldShowConfirmDcaModal(true);
+      setPrevIsDcaSkipped("NO");
     }
   }
 };

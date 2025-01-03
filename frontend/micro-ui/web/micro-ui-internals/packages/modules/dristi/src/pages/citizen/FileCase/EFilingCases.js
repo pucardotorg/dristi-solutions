@@ -185,6 +185,7 @@ function EFilingCases({ path }) {
   const [showCaseLockingModal, setShowCaseLockingModal] = useState(false);
   const [showConfirmDcaSkipModal, setShowConfirmDcaSkipModal] = useState(false);
   const [shouldShowConfirmDcaModal, setShouldShowConfirmDcaModal] = useState(false);
+  const [prevIsDcaSkipped, setPrevIsDcaSkipped] = useState("");
 
   const [showConfirmCaseDetailsModal, setShowConfirmCaseDetailsModal] = useState(false);
 
@@ -469,6 +470,13 @@ function EFilingCases({ path }) {
   const courtRooms = useMemo(() => courtRoomDetails?.Court_Rooms || [], [courtRoomDetails]);
 
   useEffect(() => {
+    const isDcaSkipped = caseDetails?.caseDetails?.["delayApplications"]?.formdata?.[0]?.data?.isDcaSkippedInEFiling?.code;
+    if (isDcaSkipped !== prevIsDcaSkipped) {
+      setPrevIsDcaSkipped(isDcaSkipped);
+    }
+  }, [caseDetails, prevIsDcaSkipped]);
+
+  useEffect(() => {
     setParentOpen(sideMenuConfig.findIndex((parent) => parent.children.some((child) => child.key === selected)));
   }, [selected]);
 
@@ -550,13 +558,57 @@ function EFilingCases({ path }) {
         );
       }
 
+      if (caseDetails?.status === "DRAFT_IN_PROGRESS" && selected === "delayApplications") {
+        if (
+          caseDetails?.caseDetails?.["demandNoticeDetails"]?.formdata?.some(
+            (data) => new Date(data?.data?.dateOfAccrual).getTime() + 31 * 24 * 60 * 60 * 1000 < new Date().getTime()
+          )
+        ) {
+          return {
+            delayCondonationType: {
+              code: "NO",
+              name: "NO",
+              showForm: true,
+              isEnabled: true,
+            },
+            ...caseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data,
+            isDcaSkippedInEFiling: caseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data?.isDcaSkippedInEFiling
+              ? caseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data?.isDcaSkippedInEFiling
+              : {
+                  code: "NO",
+                  name: "NO",
+                  showDcaFileUpload: true,
+                },
+          };
+        } else {
+          return {
+            ...caseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data,
+            delayCondonationType: {
+              code: "YES",
+              name: "YES",
+              showForm: false,
+              isEnabled: true,
+            },
+          };
+        }
+      }
+
       return (
         caseDetails?.additionalDetails?.[selected]?.formdata?.[index]?.data ||
         caseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data ||
         formdata[index]?.data
       );
     },
-    [caseDetails?.additionalDetails, caseDetails?.caseDetails, errorCaseDetails, formdata, isCaseReAssigned, selected, scrutinyObj]
+    [
+      caseDetails?.status,
+      caseDetails?.additionalDetails,
+      caseDetails?.caseDetails,
+      errorCaseDetails,
+      formdata,
+      isCaseReAssigned,
+      selected,
+      scrutinyObj,
+    ]
   );
 
   const accordion = useMemo(() => {
@@ -1359,6 +1411,8 @@ function EFilingCases({ path }) {
         showConfirmDcaSkipModal,
         shouldShowConfirmDcaModal,
         setShouldShowConfirmDcaModal,
+        prevIsDcaSkipped,
+        setPrevIsDcaSkipped,
       });
       showToastForComplainant({ formData, setValue, selected, setSuccessToast, formState, clearErrors });
       setFormdata(
@@ -2613,13 +2667,14 @@ function EFilingCases({ path }) {
       {showConfirmCaseDetailsModal && (
         <ConfirmCaseDetailsModal t={t} setShowConfirmCaseDetailsModal={setShowConfirmCaseDetailsModal}></ConfirmCaseDetailsModal>
       )}
-      {console.log("check1", caseDetails?.caseDetails?.["delayApplications"]?.formdata?.[0]?.data?.isDcaSkippedInEFiling)}
-      {showConfirmDcaSkipModal && isDcaNotSkipped && selected === "delayApplications" && (
+      {showConfirmDcaSkipModal && selected === "delayApplications" && (
         // This modal asks to confirm if the user wants to skip submitting Delay condonation Application.
         <ConfirmDcaSkipModal
           t={t}
           setFormDataValue={setFormDataValue.current}
           setShowConfirmDcaSkipModal={setShowConfirmDcaSkipModal}
+          prevIsDcaSkipped={prevIsDcaSkipped}
+          setPrevIsDcaSkipped={setPrevIsDcaSkipped}
         ></ConfirmDcaSkipModal>
       )}
     </div>
