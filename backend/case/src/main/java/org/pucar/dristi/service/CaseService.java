@@ -167,12 +167,19 @@ public class CaseService {
     public CourtCase updateCase(CaseRequest caseRequest) {
 
         try {
+            //Search and validate case Exist
+            List<CaseCriteria> existingApplications = caseRepository.getCases(Collections.singletonList(CaseCriteria
+                            .builder().filingNumber(caseRequest.getCases().getFilingNumber()).caseId(String.valueOf(caseRequest.getCases().getId()))
+                            .cnrNumber(caseRequest.getCases().getCnrNumber()).courtCaseNumber(caseRequest.getCases().getCourtCaseNumber()).build()),
+                    caseRequest.getRequestInfo());
+
             // Validate whether the application that is being requested for update indeed exists
-            if (!validator.validateUpdateRequest(caseRequest))
+            if(!validator.validateUpdateRequest(caseRequest, existingApplications.get(0).getResponseList())) {
                 throw new CustomException(VALIDATION_ERR, "Case Application does not exist");
+            }
 
             // Enrich application upon update
-            enrichmentUtil.enrichCaseApplicationUponUpdate(caseRequest);
+            enrichmentUtil.enrichCaseApplicationUponUpdate(caseRequest, existingApplications.get(0).getResponseList());
 
             String previousStatus = caseRequest.getCases().getStatus();
             workflowService.updateWorkflowStatus(caseRequest);
@@ -193,9 +200,16 @@ public class CaseService {
 
             log.info("Encrypting: {}", caseRequest);
             caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), "CourtCase", CourtCase.class));
-            cacheService.save(caseRequest.getCases().getTenantId() + ":" + caseRequest.getCases().getId(), caseRequest.getCases());
-
             producer.push(config.getCaseUpdateTopic(), caseRequest);
+
+            log.info("Updating cache");
+            List<Document> isActiveTrueDocuments = Optional.ofNullable(caseRequest.getCases().getDocuments())
+                    .orElse(Collections.emptyList())
+                    .stream()
+                    .filter(Document::getIsActive)
+                    .toList();
+            caseRequest.getCases().setDocuments(isActiveTrueDocuments);
+            cacheService.save(caseRequest.getCases().getTenantId() + ":" + caseRequest.getCases().getId(), caseRequest.getCases());
 
             CourtCase cases = encryptionDecryptionUtil.decryptObject(caseRequest.getCases(), null, CourtCase.class, caseRequest.getRequestInfo());
             cases.setAccessCode(null);

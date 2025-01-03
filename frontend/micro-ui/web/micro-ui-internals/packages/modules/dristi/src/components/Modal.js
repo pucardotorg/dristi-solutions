@@ -12,6 +12,8 @@ const Modal = ({
   actionCancelLabel,
   actionCancelOnSubmit,
   actionSaveLabel,
+  actionCustomLabelSubmit,
+  actionCustomLabel,
   actionSaveOnSubmit,
   error,
   setError,
@@ -67,20 +69,28 @@ const Modal = ({
             ) : (
               <div></div>
             )}
-            {actionSaveLabel && !hideSubmit
-              ? (console.log(style),
-                (
-                  <ButtonSelector
-                    textStyles={textStyle}
-                    label={actionSaveLabel}
-                    onSubmit={actionSaveOnSubmit}
-                    formId={formId}
-                    isDisabled={isDisabled}
-                    style={style}
-                    textClassName={submitTextClassName}
-                  />
-                ))
-              : null}
+            {actionCustomLabel ? (
+              <ButtonSelector
+                textStyles={textStyle}
+                label={actionCustomLabel}
+                onSubmit={actionCustomLabelSubmit}
+                formId={formId}
+                isDisabled={isDisabled}
+                style={style}
+                textClassName={submitTextClassName}
+              />
+            ) : null}
+            {actionSaveLabel && !hideSubmit ? (
+              <ButtonSelector
+                textStyles={textStyle}
+                label={actionSaveLabel}
+                onSubmit={actionSaveOnSubmit}
+                formId={formId}
+                isDisabled={isDisabled}
+                style={style}
+                textClassName={submitTextClassName}
+              />
+            ) : null}
           </div>
         </div>
       </div>

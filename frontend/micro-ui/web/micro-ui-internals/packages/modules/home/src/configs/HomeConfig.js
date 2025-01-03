@@ -525,6 +525,17 @@ export const pendingTaskOrderActions = {
 export const pendingTaskOrderOfJudgementActions = {};
 
 export const pendingTaskVoluntarySubmissionActions = {
+  CREATE_DCA_SUBMISSION: {
+    actorName: ["LITIGANT/ADVOCATE"],
+    actionName: "Create DCA Application",
+    redirectDetails: {
+      url: "/submissions/submissions-create",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "applicationType", defaultValue: "DELAY_CONDONATION" },
+      ],
+    },
+  },
   MAKE_PAYMENT_SUBMISSION: {
     actorName: ["LITIGANT/ADVOCATE"],
     actionName: "Payment for Submission",
@@ -708,6 +719,48 @@ export const pendingTaskForDocumentSubmissionActions = {
   },
 };
 
+export const pendingTaskVoluntarySubmissionBailDocumentsActions = {
+  CREATE_SUBMISSION: {
+    actorName: ["LITIGANT/ADVOCATE"],
+    actionName: "Application for Submit Bail Documents",
+    customFunction: "handleReviewOrder",
+    redirectDetails: {
+      url: "/submissions/submissions-create",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "orderNumber", value: "referenceId" },
+      ],
+    },
+  },
+  PENDINGAPPROVAL: {
+    actorName: ["JUDGE"],
+    actionName: "Review the submission",
+    customFunction: "handleReviewSubmission",
+    redirectDetails: {
+      url: "/submissions/submissions-create",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "applicationNumber", value: "referenceId" },
+      ],
+    },
+  },
+};
+
+export const pendingTaskVoluntarySubmissionBailActions = {
+  PENDINGAPPROVAL: {
+    actorName: ["JUDGE"],
+    actionName: "Review the submission",
+    customFunction: "handleReviewSubmission",
+    redirectDetails: {
+      url: "/submissions/submissions-create",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "applicationNumber", value: "referenceId" },
+      ],
+    },
+  },
+};
+
 export const selectTaskType = {
   "case-default": pendingTaskCaseActions,
   "hearing-default": pendingTaskHearingActions,
@@ -720,4 +773,6 @@ export const selectTaskType = {
   "task-summons": pendingTaskForSummonsActions,
   "task-notice": pendingTaskForNoticeActions,
   "voluntary-document-submission": pendingTaskForDocumentSubmissionActions,
+  "voluntary-application-submission-bail-documents": pendingTaskVoluntarySubmissionBailDocumentsActions,
+  "voluntary-application-submission-bail": pendingTaskVoluntarySubmissionBailActions,
 };
