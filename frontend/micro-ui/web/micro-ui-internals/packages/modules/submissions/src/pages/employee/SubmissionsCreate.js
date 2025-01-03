@@ -375,7 +375,7 @@ const SubmissionsCreate = ({ path }) => {
   const latestExtensionOrder = useMemo(() => extensionOrders?.[0], [extensionOrders]);
 
   const { entityType, taxHeadMasterCode } = useMemo(() => {
-    const isResponseRequired = orderDetails?.orderDetails.isResponseRequired?.code === true;
+    const isResponseRequired = orderDetails?.orderDetails?.isResponseRequired?.code === true;
     if ((orderNumber || orderRefNumber) && referenceId) {
       return {
         entityType: isResponseRequired ? "application-order-submission-feedback" : "application-order-submission-default",
@@ -395,7 +395,7 @@ const SubmissionsCreate = ({ path }) => {
       entityType: "application-voluntary-submission",
       taxHeadMasterCode: "APPLICATION_VOLUNTARY_SUBMISSION_ADVANCE_CARRY_FORWARD",
     };
-  }, [applicationType, orderDetails?.orderDetails.isResponseRequired?.code, orderNumber, orderRefNumber, referenceId]);
+  }, [applicationType, orderDetails?.orderDetails?.isResponseRequired?.code, orderNumber, orderRefNumber, referenceId]);
 
   const defaultFormValue = useMemo(() => {
     if (applicationDetails?.additionalDetails?.formdata) {
@@ -729,10 +729,10 @@ const SubmissionsCreate = ({ path }) => {
             onBehalOfName: onBehalfOfLitigent?.additionalDetails?.fullName,
             partyType: sourceType?.toLowerCase(),
             ...(orderDetails &&
-              orderDetails?.orderDetails.isResponseRequired?.code === true && {
+              orderDetails?.orderDetails?.isResponseRequired?.code === true && {
                 respondingParty: orderDetails?.additionalDetails?.formdata?.responseInfo?.respondingParty,
               }),
-            isResponseRequired: orderDetails && !isExtension ? orderDetails?.orderDetails.isResponseRequired?.code === true : true,
+            isResponseRequired: orderDetails && !isExtension ? orderDetails?.orderDetails?.isResponseRequired?.code === true : true,
             ...(hearingId && { hearingId }),
             owner: cleanString(userInfo?.name),
           },
@@ -1023,6 +1023,13 @@ const SubmissionsCreate = ({ path }) => {
           setShowPaymentModal(false);
           setShowSuccessModal(true);
           createPendingTask({ name: t("MAKE_PAYMENT_SUBMISSION"), status: "MAKE_PAYMENT_SUBMISSION", isCompleted: true });
+          if (applicationDetails?.applicationType === "DELAY_CONDONATION")
+            createPendingTask({
+              name: "Create DCA Applications",
+              status: "CREATE_DCA_SUBMISSION",
+              refId: applicationDetails?.filingNumber,
+              isCompleted: true,
+            });
         } else {
           setMakePaymentLabel(true);
           setShowPaymentModal(false);

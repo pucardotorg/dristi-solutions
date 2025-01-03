@@ -8,7 +8,7 @@ import ConfirmSubmissionAction from "../../../components/ConfirmSubmissionAction
 import Modal from "../../../components/Modal";
 import SubmissionSuccessModal from "../../../components/SubmissionSuccessModal";
 import { Urls } from "../../../hooks";
-import { RightArrow } from "../../../icons/svgIndex";
+import { RightArrow, WarningInfoIconYellow } from "../../../icons/svgIndex";
 import { DRISTIService } from "../../../services";
 import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../../Utils/submissionWorkflow";
 import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
@@ -921,6 +921,28 @@ const EvidenceModal = ({
           <div className="evidence-modal-main">
             <div className={"application-details"}>
               <div style={{ display: "flex", flexDirection: "column" }}>
+                {isJudge && documentSubmission?.[0]?.applicationList?.applicationType === "DELAY_CONDONATION" && (
+                  <div
+                    className="dca-infobox-message"
+                    style={{
+                      display: "flex",
+                      gap: "8px",
+                      backgroundColor: "#FEF4F4",
+                      border: "1px",
+                      borderColor: "#FCE8E8",
+                      padding: "8px",
+                      borderRadius: "8px",
+                      marginBottom: "24px",
+                    }}
+                  >
+                    <div className="dca-infobox-icon" style={{}}>
+                      <WarningInfoIconYellow />{" "}
+                    </div>
+                    <div className="dca-infobox-me" style={{}}>
+                      {t("ENSURE_DUE_PROCESS") + ": " + t("CONDUCT_HEARING_BEFORE_ACTING_DCA")}
+                    </div>
+                  </div>
+                )}
                 <div className="application-info" style={{ display: "flex", flexDirection: "column" }}>
                   <div className="info-row">
                     <div className="info-key">

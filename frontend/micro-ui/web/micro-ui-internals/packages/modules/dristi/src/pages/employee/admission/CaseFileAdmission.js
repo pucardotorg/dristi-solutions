@@ -783,7 +783,7 @@ function CaseFileAdmission({ t, path }) {
           DRISTIService.customApiService(Urls.dristi.pendingTask, {
             pendingTask: {
               name: "Create DCA Applications",
-              entityType: "application-order-submission-default",
+              entityType: "delay-condonation-submission",
               referenceId: `MANUAL_${caseDetails?.filingNumber}`,
               status: "CREATE_DCA_SUBMISSION",
               assignedTo: representativesUuid?.map((uuid) => ({ uuid })),
