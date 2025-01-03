@@ -676,6 +676,10 @@ const EvidenceModal = ({
                   : type === "accept"
                   ? t("APPROVED")
                   : t("REJECTED")
+                : documentSubmission?.[0]?.applicationList?.applicationType === "DELAY_CONDONATION"
+                ? type === "accept"
+                  ? "APPROVED"
+                  : "REJECTED"
                 : t("NO_STATUS"),
             },
             ...(documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName && {
