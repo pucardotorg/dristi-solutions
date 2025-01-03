@@ -2,7 +2,7 @@
     "tenantId": "kl",
     "masterName": "Application",
     "moduleName": "ApplicationStatus",
-    "mdmsPaylod": [
+    "mdmsPayload": [
         {
             "tenantId": "kl",
             "schemaCode": "Application.ApplicationStatus",
