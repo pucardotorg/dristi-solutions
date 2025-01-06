@@ -84,7 +84,7 @@ public class EvidenceStatusUpdateServiceTest {
 
     @Test
     @DisplayName("update evidence json processing exception")
-    void update() throws JsonProcessingException {
+    void updateEvidenceJsonProcessingException() throws JsonProcessingException {
         Map<String, Object> record = new HashMap<>();
         when(objectMapper.writeValueAsString(record)).thenThrow(new JsonProcessingException("Test Exception") {});
 
@@ -93,7 +93,8 @@ public class EvidenceStatusUpdateServiceTest {
     }
 
     @Test
-    void testUpdateEvidenceStatus_OtherException() {
+    @DisplayName("update evidence general exception")
+    void updateEvidenceGeneralException() {
         Map<String, Object> record = new HashMap<>();
 
         assertDoesNotThrow(() -> evidenceStatusUpdateService.updateEvidenceStatus(record));

@@ -12,12 +12,12 @@ import java.util.Map;
 
 @Component
 @Slf4j
-public class Consumer {
+public class EvidenceStatusUpdateConsumer {
 
     private final EvidenceStatusUpdateService evidenceStatusUpdateService;
 
     @Autowired
-    public Consumer(EvidenceStatusUpdateService evidenceStatusUpdateService) {
+    public EvidenceStatusUpdateConsumer(EvidenceStatusUpdateService evidenceStatusUpdateService) {
         this.evidenceStatusUpdateService = evidenceStatusUpdateService;
     }
 
