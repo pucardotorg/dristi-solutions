@@ -49,7 +49,7 @@ class EvidenceRowMapperTest {
         when(rs.getString("applicableTo")).thenReturn("[\"applicable1\"]");
         when(rs.getString("comments")).thenReturn("[{\"id\":\"123e4567-e89b-12d3-a456-556642440002\",\"tenantId\":\"tenant1\",\"artifactId\":\"123e4567-e89b-12d3-a456-556642440000\",\"individualId\":\"individual1\",\"comment\":\"This is a comment\",\"isActive\":true,\"additionalDetails\":{\"key\":\"value\"},\"auditdetails\":{\"createdBy\":\"user1\",\"createdTime\":1609459200000,\"lastModifiedBy\":\"user2\",\"lastModifiedTime\":1609545600000}}]");
         when(rs.getString("file")).thenReturn("{\"id\":\"123e4567-e89b-12d3-a456-556642440003\",\"documentType\":\"type1\",\"fileStore\":\"fileStore1\",\"documentUid\":\"documentUid1\",\"additionalDetails\":{\"key\":\"value\"}}");
-        when(rs.getLong("createdDate")).thenReturn(20210101l);
+        when(rs.getString("createdDate")).thenReturn("20210101");
         when(rs.getBoolean("isActive")).thenReturn(true);
         when(rs.getBoolean("isEvidence")).thenReturn(true);
         when(rs.getString("status")).thenReturn("status1");
