@@ -51,7 +51,7 @@
     "request": "^2.88.0",
     "resource-router-middleware": "^0.6.0",
     "uuid": "^3.3.3",
-    "winston": "^3.2.1",
+    "winston": "^3.17.0",
     "pdf-merger-js": "3.2.1",
     "base64-stream": "1.0.0",
     "node-cache": "5.1.2",
