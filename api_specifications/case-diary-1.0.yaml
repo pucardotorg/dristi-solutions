@@ -59,13 +59,39 @@ paths:
               schema:
                 $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
 
+  /case/diary/entries/v1/search:
+    post:
+      tags:
+        - Case Diaries
+      operationId: search
+      summary: get the list of diary entries based on input parameters
+      requestBody:
+        description: Details for the search of diary entries + RequestInfo meta data.
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/CaseDiarySearchRequest'
+        required: true
+      responses:
+        "200":
+          description: ResponseInfo with Case Diary list
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/CaseDiaryEntryListResponse'
+        "400":
+          description: failed to find case diary
+          content:
+            'application/json':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
 
   /case/diary/v1/{tenantId}/{judgeId}/{diaryType}:
     get:
       tags:
         - Case Diaries
       description: The API is used to get the fileStoreId of the published (signed) PDF for the case diary. example - GET /case/diary/v1/KL/<judgeid>/ADiary?
-      operationId: getStoreId
+      operationId: getDiaryStoreId
       parameters:
         - name: tenantId
           in: path
@@ -111,7 +137,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/CaseDiaryResponse'
         '400':
-          description: querying case diary failed
+          description: querying case summary failed
           content:
             'application/json':
               schema:
@@ -128,14 +154,14 @@ paths:
         content:
           'application/json':
             schema:
-              $ref: '#/components/schemas/CaseDiaryRequest'
+              $ref: '#/components/schemas/CaseDiaryGenerateRequest'
       responses:
         "201":
-          description: ResponseInfo with filestore ID of the case PDF generated
+          description: ResponseInfo with file store ID of the case PDF generated
           content:
             'application/json':
               schema:
-                $ref: '#/components/schemas/CaseDiaryResponse'
+                $ref: '#/components/schemas/CaseDiaryFile'
         "400":
           description: case diary PDF generation failed
           content:
@@ -147,9 +173,9 @@ paths:
     post:
       tags:
         - Case Diaries
-      summary: update the case diary. In most cases the update call will be to update the signed fileStore ID
+      summary: update the case diary entry. this is mostly done before the signed PDF is created
       requestBody:
-        description: Details for diary whose PDF is being created + RequestInfo meta data.
+        description: updated diary line item + RequestInfo meta data.
         content:
           'application/json':
             schema:
@@ -175,10 +201,26 @@ components:
       properties:
         RequestInfo:
           $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
-        diaryUpdate:
-          $ref: '#/components/schemas/CaseDiary'
+        diaryEntry:
+          $ref: '#/components/schemas/CaseDiaryEntry'
 
     CaseDiaryResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        diaryEntry:
+          $ref: '#/components/schemas/CaseDiaryEntry'
+
+    CaseDiaryGenerateRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        diary:
+          $ref: '#/components/schemas/CaseDiary'
+
+    CaseDiaryFile:
       type: object
       properties:
         ResponseInfo:
@@ -205,12 +247,25 @@ components:
         diaries:
           type: array
           items:
-            $ref: '#/components/schemas/CaseDiaryItem'
+            $ref: '#/components/schemas/CaseDiaryListItem'
+        pagination:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Pagination'
+
+    CaseDiaryEntryListResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseDiaryEntry'
         pagination:
           $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Pagination'
 
     CaseDiary:
       type: object
+      description: the PDF for the case diary. Mostly will be storing the signed PDF, but there is a provision to store unsigned PDF also
       required:
         - tenantId
         - diaryDate
@@ -247,10 +302,6 @@ components:
           example: documentType = casediary.signed / casediary.unsigned
           items:
             $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Document'
-        diaryEntries:
-          type: array
-          items:
-            $ref: "#/components/schemas/CaseDiaryEntry"
         additionalDetails:
           type: object
           description: This field is meant to hold any extra information that we want to store from V2 version. It is not meant to be used in V1.
@@ -260,11 +311,13 @@ components:
 
     CaseDiaryEntry:
       type: object
+      description: individual diary line item i.e. business of the day. A set of these are picked up to create the final A or B diary. If items are picked up using tenant, JudgeId and date, then it forms A diary. If they are picked up using tenant, JudgeId and caseId, then it forms B diary
       required:
         - id
         - tenantId
-        - diaryID
-        - date
+        - entryDate
+        - caseId
+        - judgeId
         - businessOfDay
       properties:
         id:
@@ -277,24 +330,31 @@ components:
         tenantId:
           type: string
           description: This is tenantId of the case
-        diaryId:
-          type: string
-          description: reference ID of the CaseDiary entity to which this diary entry belongs to
-          format: uuid
-          minLength: 36
-          maxLength: 36
         entryDate:
           type: integer
           format: int64
           description: EPOCH date (time is 00:00:00) when the entry was created. All diary operations are only with date, and we don't need time. Setting time to 0, helps compare two values for same date.
+        caseId:
+          type: string
+          description: UUID of the case for which the entry is being made
+        judgeId:
+          type: string
+          description: ID is the Judge for whom this diary entry is being made
         businessOfDay:
           type: string
           maxLength: 1024
           description: the business of the day that is being recorded for the diary
+        referenceId:
+          type: string
+          description: UUID of the entity from where business of the day has come, like Order ID. could be null as well
+        referenceType:
+          type: string
+          description: master data ID for difference entities/services from which business of the day has come. will have a value if referenceId is not null.
+          example: order, hearing, evidence etc.
         hearingDate:
           type: integer
           format: int64
-          description: EPOCH date time (in milliseconds) of the next hearing date. This will come from the Order or Hearing object (depending on where the API will get called)
+          description: EPOCH date time (in milliseconds) of the next hearing date. This will come from the Order or Hearing object (depending on where the API will get called). A value of 0 will mean no hearing date
         additionalDetails:
           type: object
           description: This field is meant to hold any extra information that we want to store from V2 version. It is not meant to be used in V1.
@@ -302,9 +362,9 @@ components:
           $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/AuditDetails'
 
 
-    CaseDiaryItem:
+    CaseDiaryListItem:
       type: object
-      description: this entity is only for use by API. it is not stored in DB, but is filled by getting data from DB
+      description: this entity is only for use by get API to return a list of items. it is not stored in DB, but is filled by getting data from DB. This will mostly be used for A Diary to show a list of A diaries across dates
       properties:
         diaryId:
           type: string
@@ -330,6 +390,11 @@ components:
 
     CaseDiarySearchCriteria:
       type: object
+      required:
+        - tenantId
+        - judgeId
+      oneOf:
+        - required: [date, caseId]
       properties:
         tenantId:
           type: string
@@ -337,7 +402,10 @@ components:
         date:
           type: integer
           format: int64
-          description: EPOCH date, with time as 00:00:00 for the diary
+          description: EPOCH date, with time as 00:00:00 for the diary. To be filled for A diary. For B diary, this can be set to 0
+        caseId:
+          type: string
+          description: The case for which this diary is created in case of B Diary. For A diary this field will be null
         diaryType:
           type: string
           description: Master data ID the type of diary -A or B or something else in future
