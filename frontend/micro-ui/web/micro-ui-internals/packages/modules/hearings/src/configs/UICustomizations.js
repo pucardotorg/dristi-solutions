@@ -273,8 +273,6 @@ export const UICustomizations = {
             const taskData = data?.list
               ?.filter((data) => data?.filingNumber === additionalDetails?.filingNumber && data?.orderId === additionalDetails?.orderId)
               ?.map((data) => {
-                console.log(data,"data");
-                
                 let taskDetail = structuredClone(data?.taskDetails);
                 taskDetail = normalizeData(taskDetail);
                 const channelDetailsEnum = {
