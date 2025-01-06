@@ -43,8 +43,9 @@ CREATE UNIQUE INDEX idx_dristi_casediary_documents_casedairy_id ON dristi_casedi
 CREATE TABLE dristi_diaryentries (
     id varchar(36) NOT NULL PRIMARY KEY,
     tenant_id varchar(64) NOT NULL,
-    casediary_id varchar(36) NOT NULL,
     entry_date int8 NOT NULL,
+    case_id varchar(36),
+    judge_id varchar(36),
     businessOfDay varchar(1024) NOT NULL,
     hearingDate int8 NOT NULL,
     additional_details jsonb,
@@ -52,9 +53,6 @@ CREATE TABLE dristi_diaryentries (
     last_modified_by varchar(36) NOT NULL,
     created_time int8 NOT NULL,
     last_modified_time int8 NOT NULL,
-    CONSTRAINT fk_case_diaryentries_casediary
-        FOREIGN KEY(casediary_id)
-        REFERENCES dristi_casediary(id)
 );
 
-CREATE INDEX idx_dristi_diaryentries_casedairy_id ON dristi_diaryentries(tenant_id, casediary_id);
+CREATE INDEX idx_dristi_diaryentries_judge_id ON dristi_diaryentries(tenant_id, judge_id);
