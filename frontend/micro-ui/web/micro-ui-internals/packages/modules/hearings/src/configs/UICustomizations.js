@@ -273,6 +273,8 @@ export const UICustomizations = {
             const taskData = data?.list
               ?.filter((data) => data?.filingNumber === additionalDetails?.filingNumber && data?.orderId === additionalDetails?.orderId)
               ?.map((data) => {
+                console.log(data,"data");
+                
                 let taskDetail = structuredClone(data?.taskDetails);
                 taskDetail = normalizeData(taskDetail);
                 const channelDetailsEnum = {
@@ -287,7 +289,7 @@ export const UICustomizations = {
                   deliveryChannel: taskDetail?.deliveryChannels?.channelName,
                   channelDetails: typeof channelDetails === "object" ? generateAddress({ ...channelDetails }) : channelDetails,
                   status: data?.status,
-                  remarks: taskDetail?.deliveryChannels?.status,
+                  remarks: taskDetail?.remarks?.remark,
                 };
               });
             return { list: taskData };
