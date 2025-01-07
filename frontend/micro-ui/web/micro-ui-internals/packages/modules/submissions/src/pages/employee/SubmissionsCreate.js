@@ -321,10 +321,15 @@ const SubmissionsCreate = ({ path }) => {
     true
   );
 
-  const applicationDetails = useMemo(() => (applicationNumber ? applicationData?.applicationList?.[0] : undefined), [
-    applicationData?.applicationList,
-    applicationNumber,
-  ]);
+  const applicationDetails = useMemo(
+    () =>
+      applicationNumber
+        ? applicationData?.applicationList?.[0]
+        : "DELAY_CONDONATION" === formdata?.applicationType?.type
+        ? applicationData?.applicationList?.find((application) => "DELAY_CONDONATION" === application?.applicationType)
+        : undefined,
+    [applicationData?.applicationList, formdata?.applicationType?.type]
+  );
 
   useEffect(() => {
     if (applicationDetails) {
@@ -886,11 +891,11 @@ const SubmissionsCreate = ({ path }) => {
           refId: newapplicationNumber,
           stateSla: todayDate + stateSla.ESIGN_THE_SUBMISSION,
         });
-        if (applicationDetails?.applicationType === "DELAY_CONDONATION")
+        if (applicationType === "DELAY_CONDONATION")
           createPendingTask({
             name: "Create DCA Applications",
             status: "CREATE_DCA_SUBMISSION",
-            refId: applicationDetails?.filingNumber,
+            refId: filingNumber,
             isCompleted: true,
           });
       } else if (hasSubmissionRole) {
