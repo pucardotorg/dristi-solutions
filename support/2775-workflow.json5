@@ -384,8 +384,8 @@
               "action": "RESPOND",
               "nextState": "PENDING_ADMISSION",
               "roles": [
-                "CASE_EDITOR",
-                // added this role (CASE_EDITOR)
+                // added this role (CITIZEN) In place of CASE_EDITOR
+                "CITIZEN",
                 "SYSTEM",
                 "SYSTEM_ADMIN"
               ]
