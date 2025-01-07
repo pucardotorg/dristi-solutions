@@ -35,7 +35,7 @@ import {
   configsAcceptRejectDelayCondonation,
   configsAdmitDismissCase,
 } from "../../configs/ordersCreateConfig";
-import { CustomDeleteIcon } from "../../../../dristi/src/icons/svgIndex";
+import { CustomDeleteIcon, WarningInfoIconYellow } from "../../../../dristi/src/icons/svgIndex";
 import OrderReviewModal from "../../pageComponents/OrderReviewModal";
 import OrderSignatureModal from "../../pageComponents/OrderSignatureModal";
 import OrderDeleteModal from "../../pageComponents/OrderDeleteModal";
@@ -327,6 +327,23 @@ const GenerateOrders = () => {
     filingNumber + OrderWorkflowState.DRAFT_IN_PROGRESS,
     Boolean(filingNumber)
   );
+
+  const { data: noticeOrdersData } = useSearchOrdersService(
+    {
+      tenantId,
+      criteria: { filingNumber, applicationNumber: "", cnrNumber, orderType: "NOTICE", status: "PUBLISHED" },
+      pagination: { limit: 1000, offset: 0 },
+    },
+    { tenantId },
+    filingNumber,
+    Boolean(filingNumber)
+  );
+
+  const isDCANoticeGenerated = useMemo(
+    () => noticeOrdersData?.list?.some((notice) => "DCA Notice" === notice?.additionalDetails?.formdata?.noticeType.code),
+    [noticeOrdersData]
+  );
+
   const { data: publishedOrdersData, isLoading: isPublishedOrdersLoading } = useSearchOrdersService(
     {
       tenantId,
@@ -2318,6 +2335,25 @@ const GenerateOrders = () => {
   };
 
   const handleReviewOrderClick = () => {
+    if (
+      referenceId &&
+      "ACCEPTANCE_REJECTION_DCA" === orderType &&
+      [SubmissionWorkflowState.COMPLETED, SubmissionWorkflowState.REJECTED].includes(applicationDetails?.status)
+    ) {
+      setShowErrorToast({
+        label: applicationDetails?.status === SubmissionWorkflowState.COMPLETED ? t("DCA_APPLICATION_ACCEPTED") : t("DCA_APPLICATION_REJECTED"),
+        error: true,
+      });
+      return;
+    }
+    if ("ADMIT_DISMISS_CASE" === orderType && ["CASE_DISMISSED", "CASE_ADMITTED"].includes(caseDetails?.status)) {
+      setShowErrorToast({
+        label: "CASE_ADMITTED" === caseDetails?.status ? t("CASE_ALREADY_ADMITTED") : t("CASE_ALREADY_REJECTED"),
+        error: true,
+      });
+      return;
+    }
+
     if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(orderType) && (isHearingScheduled || isHearingOptout)) {
       setShowErrorToast({
         label: isHearingScheduled ? t("HEARING_IS_ALREADY_SCHEDULED_FOR_THIS_CASE") : t("CURRENTLY_A_HEARING_IS_IN_OPTOUT_STATE"),
@@ -2470,6 +2506,32 @@ const GenerateOrders = () => {
       </div>
       <div className="view-order">
         {<Header className="order-header">{`${t("CS_ORDER")} ${selectedOrder + 1}`}</Header>}
+        {"NO" === caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code &&
+          "NOTICE" === currentFormData?.orderType?.code &&
+          "Section 223 Notice" === currentFormData?.noticeType?.code &&
+          !isDCANoticeGenerated && (
+            <div
+              className="dca-infobox-message"
+              style={{
+                display: "flex",
+                gap: "8px",
+                backgroundColor: "#FEF4F4",
+                border: "1px",
+                borderColor: "#FCE8E8",
+                padding: "8px",
+                borderRadius: "8px",
+                marginBottom: "24px",
+                width: "fit-content",
+              }}
+            >
+              <div className="dca-infobox-icon" style={{}}>
+                <WarningInfoIconYellow />{" "}
+              </div>
+              <div className="dca-infobox-me" style={{}}>
+                {t("DCA_NOTICE_NOT_SENT") + ": " + t("DCA_NOTICE_NOT_SENT_MESSAGE")}
+              </div>
+            </div>
+          )}
         {modifiedFormConfig && (
           <FormComposerV2
             className={"generate-orders"}
