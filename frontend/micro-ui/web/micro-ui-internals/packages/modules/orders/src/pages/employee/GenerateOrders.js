@@ -501,37 +501,28 @@ const GenerateOrders = () => {
       tenantId,
     },
     {},
-    referenceId,
-    referenceId
-  );
-
-  const { data: completeApplicationData, isLoading: iscompleteApplicationDetailsLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
-    {
-      criteria: {
-        filingNumber,
-        tenantId,
-      },
-      tenantId,
-    },
-    {},
-    filingNumber + "allApplications",
-    filingNumber
+    referenceId + filingNumber,
+    Boolean(referenceId + filingNumber)
   );
   const applicationDetails = useMemo(() => applicationData?.applicationList?.[0], [applicationData]);
 
-  const isDelayApplicationPending = useMemo(
+  const isDelayApplicationSubmitted = useMemo(
     () =>
       Boolean(
-        completeApplicationData?.applicationList?.some(
+        applicationData?.applicationList?.some(
           (item) =>
             item?.applicationType === "DELAY_CONDONATION" &&
-            [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(item?.status)
+            [
+              SubmissionWorkflowState.PENDINGAPPROVAL,
+              SubmissionWorkflowState.PENDINGREVIEW,
+              SubmissionWorkflowState.PENDINGRESPONSE,
+              SubmissionWorkflowState.COMPLETED,
+            ].includes(item?.status)
         )
       ),
-    [completeApplicationData]
+    [applicationData]
   );
 
-  const delayCondonationData = useMemo(() => caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data, [caseDetails]);
   const hearingId = useMemo(() => currentOrder?.hearingNumber || applicationDetails?.additionalDetails?.hearingId || "", [
     applicationDetails,
     currentOrder,
@@ -2489,6 +2480,7 @@ const GenerateOrders = () => {
   ) {
     return <Loader />;
   }
+  console.log(isDelayApplicationSubmitted, "is",applicationData);
 
   return (
     <div className="generate-orders">
@@ -2534,8 +2526,8 @@ const GenerateOrders = () => {
         {<Header className="order-header">{`${t("CS_ORDER")} ${selectedOrder + 1}`}</Header>}
         {"NO" === caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code &&
           "NOTICE" === currentFormData?.orderType?.code &&
-          "Section 223 Notice" === currentFormData?.noticeType?.code &&
-          !isDCANoticeGenerated && (
+          (("Section 223 Notice" === currentFormData?.noticeType?.code && !isDCANoticeGenerated) ||
+            (!isDelayApplicationSubmitted && currentFormData?.noticeType?.code === "DCA Notice")) && (
             <div
               className="dca-infobox-message"
               style={{
@@ -2554,33 +2546,11 @@ const GenerateOrders = () => {
                 <WarningInfoIconYellow />{" "}
               </div>
               <div className="dca-infobox-me" style={{}}>
-                {t("DCA_NOTICE_NOT_SENT") + ": " + t("DCA_NOTICE_NOT_SENT_MESSAGE")}
-              </div>
-            </div>
-          )}
-        {currentFormData?.orderType?.code === "NOTICE" &&
-          currentFormData?.noticeType?.code === "DCA Notice" &&
-          delayCondonationData?.delayCondonationType?.code === "NO" &&
-          isDelayApplicationPending && (
-            <div
-              className="dca-infobox-message"
-              style={{
-                display: "flex",
-                gap: "8px",
-                backgroundColor: "#FEF4F4",
-                border: "1px",
-                borderColor: "#FCE8E8",
-                padding: "8px",
-                borderRadius: "8px",
-                marginBottom: "24px",
-                width: "fit-content",
-              }}
-            >
-              <div className="dca-infobox-icon" style={{}}>
-                <WarningInfoIconYellow />{" "}
-              </div>
-              <div className="dca-infobox-me" style={{}}>
-                {t("DELAY_APPLICATION_NOT_SUBMITTED")}
+                {"Section 223 Notice" === currentFormData?.noticeType?.code && !isDCANoticeGenerated
+                  ? t("DCA_NOTICE_NOT_SENT") + ": " + t("DCA_NOTICE_NOT_SENT_MESSAGE")
+                  : !isDelayApplicationSubmitted && currentFormData?.noticeType?.code === "DCA Notice"
+                  ? t("DELAY_APPLICATION_NOT_SUBMITTED")
+                  : ""}
               </div>
             </div>
           )}
