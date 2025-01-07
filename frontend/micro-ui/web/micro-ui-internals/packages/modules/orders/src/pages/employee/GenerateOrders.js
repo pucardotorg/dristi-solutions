@@ -2480,7 +2480,6 @@ const GenerateOrders = () => {
   ) {
     return <Loader />;
   }
-  console.log(isDelayApplicationSubmitted, "is",applicationData);
 
   return (
     <div className="generate-orders">
