@@ -326,7 +326,9 @@ const SubmissionsCreate = ({ path }) => {
       applicationNumber
         ? applicationData?.applicationList?.[0]
         : "DELAY_CONDONATION" === formdata?.applicationType?.type
-        ? applicationData?.applicationList?.find((application) => "DELAY_CONDONATION" === application?.applicationType)
+        ? applicationData?.applicationList?.find(
+            (application) => !["REJECTED", "COMPLETED"].includes(application?.status) && "DELAY_CONDONATION" === application?.applicationType
+          )
         : undefined,
     [applicationData?.applicationList, formdata?.applicationType?.type]
   );
