@@ -1,1 +1,1 @@
-CREATE INDEX IF NOT EXISTS idx_dristi_hearing_tenant_id ON dristi_hearing (tenantId);
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_dristi_hearing_tenant_id ON dristi_hearing (tenantId);
