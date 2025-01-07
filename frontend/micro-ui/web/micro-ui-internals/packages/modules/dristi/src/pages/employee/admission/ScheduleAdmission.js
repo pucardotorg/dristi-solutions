@@ -51,7 +51,6 @@ function ScheduleAdmission({
       return Boolean(hearingDetails?.HearingList?.find((hearing) => hearing?.hearingType === "ADMISSION"));
     }
   }, [hearingDetails]);
-  console.log("delayCondonationData", delayCondonationData, isDelayApplicationPending, isDelayApplicationCompleted);
 
   const isDcaHearingScheduled = useMemo(() => {
     debugger;
@@ -84,7 +83,11 @@ function ScheduleAdmission({
       if (!isAdmissionHearingScheduled) {
         return hearingTypeData?.HearingType?.filter((type) => ["ADMISSION"].includes(type?.code)) || [];
       }
-      return hearingTypeData?.HearingType || [];
+      return (
+        hearingTypeData?.HearingType?.filter(
+          (type) => !["DELAY_CONDONATION_HEARING", "ADMISSION", "DELAY_CONDONATION_AND_ADMISSION"].includes(type?.code)
+        ) || []
+      );
     }
   }, [hearingTypeData, isDelayApplicationPending, isDelayApplicationCompleted, isAdmissionHearingScheduled, isDcaHearingScheduled]);
 
