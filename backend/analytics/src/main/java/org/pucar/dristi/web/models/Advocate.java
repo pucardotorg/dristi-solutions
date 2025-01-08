@@ -1,4 +1,8 @@
 package org.pucar.dristi.web.models;
+<<<<<<<< HEAD:backend/analytics/src/main/java/org/pucar/dristi/web/models/Advocate.java
+========
+
+>>>>>>>> 96dbae175a73541f0862f940e0b491e4ee7ccb5a:backend/case/src/main/java/org/pucar/dristi/web/models/Advocate.java
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
@@ -40,8 +44,15 @@ public class Advocate {
 	@JsonProperty("applicationNumber")
 	@Size(min = 2, max = 64)
 	private String applicationNumber = null;
+<<<<<<<< HEAD:backend/analytics/src/main/java/org/pucar/dristi/web/models/Advocate.java
 	@JsonProperty("status")
 	private String status=null;
+========
+
+	@JsonProperty("status")
+	private String status=null;
+
+>>>>>>>> 96dbae175a73541f0862f940e0b491e4ee7ccb5a:backend/case/src/main/java/org/pucar/dristi/web/models/Advocate.java
 	@JsonProperty("barRegistrationNumber")
 	@Size(min = 2, max = 64)
 	private String barRegistrationNumber = null;
