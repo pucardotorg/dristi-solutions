@@ -18,6 +18,7 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.ApplicationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.ApplicationRepository;
+import org.pucar.dristi.util.SmsNotificationUtil;
 import org.pucar.dristi.validator.ApplicationValidator;
 import org.pucar.dristi.web.models.*;
 
@@ -42,6 +43,9 @@ class ApplicationServiceTest {
 
     @Mock
     private WorkflowService workflowService;
+
+    @Mock
+    private SmsNotificationUtil smsNotificationUtil;
 
     @Mock
     private Configuration config;
@@ -118,7 +122,7 @@ class ApplicationServiceTest {
         when(config.getApplicationUpdateTopic()).thenReturn("update-application");
 
         // Act
-        Application result = applicationService.updateApplication(applicationRequest);
+        Application result = applicationService.updateApplication(applicationRequest,false);
 
         // Assert
         verify(validator).validateApplicationExistence(requestInfo, application);
@@ -151,8 +155,9 @@ class ApplicationServiceTest {
         // Mock config topic
         when(config.getApplicationUpdateTopic()).thenReturn("application-update-topic");
 
+        doNothing().when(smsNotificationUtil).callNotificationService(any(), any(), any());
         // Act
-        Application result = applicationService.updateApplication(mockRequest);
+        Application result = applicationService.updateApplication(mockRequest,false);
 
 
         // Assert
@@ -171,7 +176,7 @@ class ApplicationServiceTest {
 
         // Act & Assert
         CustomException exception = assertThrows(CustomException.class, () -> {
-            applicationService.updateApplication(applicationRequest);
+            applicationService.updateApplication(applicationRequest,false);
         });
 
         assertEquals("Error occurred while updating application: Validation failed", exception.getMessage());
@@ -189,7 +194,7 @@ class ApplicationServiceTest {
 
         // Act & Assert
         CustomException exception = assertThrows(CustomException.class, () -> {
-            applicationService.updateApplication(applicationRequest);
+            applicationService.updateApplication(applicationRequest,false);
         });
 
         assertEquals("Error occurred while validating existing application", exception.getMessage());
@@ -208,7 +213,7 @@ class ApplicationServiceTest {
 
         // Act & Assert
         CustomException exception = assertThrows(CustomException.class, () -> {
-            applicationService.updateApplication(applicationRequest);
+            applicationService.updateApplication(applicationRequest,false);
         });
 
         assertEquals("Error occurred while updating application: Unexpected error", exception.getMessage());

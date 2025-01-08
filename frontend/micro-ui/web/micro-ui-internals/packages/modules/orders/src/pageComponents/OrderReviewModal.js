@@ -36,12 +36,22 @@ const OrderPreviewOrderTypeMap = {
   SECTION_202_CRPC: "order-202-crpc",
   CHECKOUT_ACCEPTANCE: "order-accept-checkout-request",
   CHECKOUT_REJECT: "order-reject-checkout-request",
+  ADMIT_DISMISS_CASE: "order-acceptance-rejection-case",
+  ACCEPTANCE_REJECTION_DCA: "order-acceptance-rejection-dca",
+  SET_BAIL_TERMS: "order-set-terms-of-bail",
+  REJECT_BAIL: "order-bail-rejection",
+  ACCEPT_BAIL: "order-bail-acceptance",
 };
 
 const orderPDFMap = {
   BAIL: {
     APPROVED: "BAIL_APPROVED",
     REJECTED: "BAIL_REJECT",
+  },
+  BAILREQUEST: {
+    APPROVED: "ACCEPT_BAIL",
+    REJECTED: "REJECT_BAIL",
+    SET_TERM_BAIL: "SET_BAIL_TERMS",
   },
   SETTLEMENT: {
     APPROVED: "SETTLEMENT_ACCEPT",
@@ -67,6 +77,17 @@ const onDocumentUpload = async (fileData, filename) => {
   }
 };
 
+const applicationStatusType = (Type) => {
+  switch (Type) {
+    case "APPROVED":
+      return "APPROVED";
+    case "SET_TERM_BAIL":
+      return "SET_TERM_BAIL";
+    default:
+      return "REJECTED";
+  }
+};
+
 function OrderReviewModal({ setShowReviewModal, t, order, setShowsignatureModal, showActions = true, setOrderPdfFileStoreID }) {
   const [fileStoreId, setFileStoreID] = useState(null);
   const [fileName, setFileName] = useState();
@@ -88,7 +109,7 @@ function OrderReviewModal({ setShowReviewModal, t, order, setShowsignatureModal,
     }
   }, [showErrorToast]);
 
-  const applicationStatus = order?.additionalDetails?.applicationStatus === t("APPROVED") ? "APPROVED" : "REJECTED";
+  const applicationStatus = applicationStatusType(order?.additionalDetails?.applicationStatus);
   const orderType = order?.orderType;
   let orderPreviewKey = orderPDFMap?.[orderType]?.[applicationStatus] || orderType;
   orderPreviewKey = OrderPreviewOrderTypeMap[orderPreviewKey];

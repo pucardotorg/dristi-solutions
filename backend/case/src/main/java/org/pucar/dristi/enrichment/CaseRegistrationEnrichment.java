@@ -3,7 +3,7 @@ package org.pucar.dristi.enrichment;
 
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
-import org.egov.common.contract.models.Document;
+import org.pucar.dristi.web.models.Document;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
@@ -18,8 +18,8 @@ import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -225,7 +225,7 @@ public class CaseRegistrationEnrichment {
         return stB.toString();
     }
 
-    public void enrichCaseApplicationUponUpdate(CaseRequest caseRequest) {
+    public void enrichCaseApplicationUponUpdate(CaseRequest caseRequest, List<CourtCase> existingCourtCaseList) {
         try {
             // Enrich lastModifiedTime and lastModifiedBy in case of update
             CourtCase courtCase = caseRequest.getCases();
@@ -233,10 +233,39 @@ public class CaseRegistrationEnrichment {
             auditDetails.setLastModifiedTime(caseUtil.getCurrentTimeMil());
             auditDetails.setLastModifiedBy(caseRequest.getRequestInfo().getUserInfo().getUuid());
             enrichCaseRegistrationUponCreateAndUpdate(courtCase, auditDetails);
+            enrichDocument(caseRequest, existingCourtCaseList);
 
         } catch (Exception e) {
             log.error("Error enriching case application upon update :: {}", e.toString());
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in case enrichment service during case update process: " + e.getMessage());
+        }
+    }
+
+    private void enrichDocument(CaseRequest caseRequest, List<CourtCase> existingCourtCaseList) {
+        // Extract IDs from documents in the caseRequest
+        List<String> documentIds = Optional.ofNullable(caseRequest.getCases().getDocuments())
+                .orElse(Collections.emptyList())
+                .stream()
+                .map(Document::getId)
+                .filter(Objects::nonNull)
+                .toList();
+
+        // Iterate through existing documents and compare IDs
+        if (existingCourtCaseList.get(0).getDocuments() != null) {
+            existingCourtCaseList.get(0).getDocuments().forEach(existingDocument -> {
+                log.info("Checking for existing document Id :: {}",existingDocument.getId());
+
+                // If documentIds is empty or the ID is not in the list, deactivate the document
+                if (documentIds.isEmpty() || !documentIds.contains(existingDocument.getId())) {
+                    log.info("Setting isActive false for document Id :: {}",existingDocument.getId());
+                    existingDocument.setIsActive(false);
+
+                    if (caseRequest.getCases().getDocuments() == null) {
+                        caseRequest.getCases().setDocuments(new ArrayList<>());
+                    }
+                    caseRequest.getCases().getDocuments().add(existingDocument);
+                }
+            });
         }
     }
 

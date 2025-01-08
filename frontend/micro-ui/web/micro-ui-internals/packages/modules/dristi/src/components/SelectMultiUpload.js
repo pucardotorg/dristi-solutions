@@ -135,9 +135,11 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
               max-width: calc(100% - 138px);
               flex: 1;
             }
+
             .file-uploader input[type="file"] {
               width: 100%;
             }
+
             .file-uploader label {
               width: 130px;
               display: flex;
@@ -166,14 +168,16 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
                 margin: "0px",
               }}
             />
-            <FileUploader
-              disabled={config?.disable}
-              handleChange={(data) => handleAddFiles(data, input, currentValue)}
-              name="file"
-              types={input?.fileTypes}
-              children={<DragDropComponent config={config} label={currentValue?.length > 0 ? t("UPLOAD_MORE") : t("UPLOAD")} />}
-              key={input?.name}
-            />
+            {!config?.disable && (
+              <FileUploader
+                disabled={config?.disable}
+                handleChange={(data) => handleAddFiles(data, input, currentValue)}
+                name="file"
+                types={input?.fileTypes}
+                children={<DragDropComponent config={config} label={currentValue?.length > 0 ? t("UPLOAD_MORE") : t("UPLOAD")} />}
+                key={input?.name}
+              />
+            )}
           </div>
           <div className="upload-guidelines-div">
             {input?.fileTypes && input?.maxFileSize ? (
@@ -242,7 +246,7 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
               </div>
             ))}
           </div>
-          {errors[input.name] && (
+          {errors[input?.name] && (
             <CardLabelError style={{ width: "70%", marginLeft: "30%", fontSize: "12px" }}>
               {errors[input.name]?.message ? errors[input.name]?.message : t(errors[input.name]) || t(input.error)}
             </CardLabelError>

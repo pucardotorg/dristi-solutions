@@ -19,7 +19,6 @@ import org.pucar.dristi.repository.CaseRepository;
 import org.pucar.dristi.util.AdvocateUtil;
 import org.pucar.dristi.util.BillingUtil;
 import org.pucar.dristi.util.EncryptionDecryptionUtil;
-import org.egov.common.models.individual.Individual;
 import org.pucar.dristi.validators.CaseRegistrationValidator;
 import org.pucar.dristi.web.OpenApiCaseSummary;
 import org.pucar.dristi.web.models.*;
@@ -168,12 +167,19 @@ public class CaseService {
     public CourtCase updateCase(CaseRequest caseRequest) {
 
         try {
+            //Search and validate case Exist
+            List<CaseCriteria> existingApplications = caseRepository.getCases(Collections.singletonList(CaseCriteria
+                            .builder().filingNumber(caseRequest.getCases().getFilingNumber()).caseId(String.valueOf(caseRequest.getCases().getId()))
+                            .cnrNumber(caseRequest.getCases().getCnrNumber()).courtCaseNumber(caseRequest.getCases().getCourtCaseNumber()).build()),
+                    caseRequest.getRequestInfo());
+
             // Validate whether the application that is being requested for update indeed exists
-            if (!validator.validateUpdateRequest(caseRequest))
+            if(!validator.validateUpdateRequest(caseRequest, existingApplications.get(0).getResponseList())) {
                 throw new CustomException(VALIDATION_ERR, "Case Application does not exist");
+            }
 
             // Enrich application upon update
-            enrichmentUtil.enrichCaseApplicationUponUpdate(caseRequest);
+            enrichmentUtil.enrichCaseApplicationUponUpdate(caseRequest, existingApplications.get(0).getResponseList());
 
             String previousStatus = caseRequest.getCases().getStatus();
             workflowService.updateWorkflowStatus(caseRequest);
@@ -194,9 +200,16 @@ public class CaseService {
 
             log.info("Encrypting: {}", caseRequest);
             caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), "CourtCase", CourtCase.class));
-            cacheService.save(caseRequest.getCases().getTenantId() + ":" + caseRequest.getCases().getId(), caseRequest.getCases());
-
             producer.push(config.getCaseUpdateTopic(), caseRequest);
+
+            log.info("Updating cache");
+            List<Document> isActiveTrueDocuments = Optional.ofNullable(caseRequest.getCases().getDocuments())
+                    .orElse(Collections.emptyList())
+                    .stream()
+                    .filter(Document::getIsActive)
+                    .toList();
+            caseRequest.getCases().setDocuments(isActiveTrueDocuments);
+            cacheService.save(caseRequest.getCases().getTenantId() + ":" + caseRequest.getCases().getId(), caseRequest.getCases());
 
             CourtCase cases = encryptionDecryptionUtil.decryptObject(caseRequest.getCases(), null, CourtCase.class, caseRequest.getRequestInfo());
             cases.setAccessCode(null);
@@ -319,14 +332,6 @@ public class CaseService {
         return ids;
     }
 
-    private SmsTemplateData enrichSmsTemplateData(CourtCase cases) {
-        return SmsTemplateData.builder()
-                .courtCaseNumber(cases.getCourtCaseNumber())
-                .cnrNumber(cases.getCnrNumber())
-                .efilingNumber(cases.getFilingNumber())
-                .tenantId(cases.getTenantId()).build();
-    }
-
     private Set<String> callIndividualService(RequestInfo requestInfo, Set<String> individualIds) {
 
         Set<String> mobileNumber = new HashSet<>();
@@ -346,8 +351,121 @@ public class CaseService {
         return mobileNumber;
     }
 
+//    public void callNotificationService(CaseRequest caseRequest, String messageCode) {
+//        try {
+//            CourtCase courtCase = caseRequest.getCases();
+//            Object additionalDetailsObject = courtCase.getAdditionalDetails();
+//            String jsonData = objectMapper.writeValueAsString(additionalDetailsObject);
+//            JsonNode rootNode = objectMapper.readTree(jsonData);
+//
+//            List<String> individualIds = extractIndividualIds(rootNode);
+//
+//            List<String> phonenumbers = callIndividualService(caseRequest.getRequestInfo(), individualIds);
+//            SmsTemplateData smsTemplateData = enrichSmsTemplateData(caseRequest.getCases());
+//            for (String number : phonenumbers) {
+//                notificationService.sendNotification(caseRequest.getRequestInfo(), smsTemplateData, messageCode, number);
+//            }
+//        } catch (Exception e) {
+//            // Log the exception and continue the execution without throwing
+//            log.error("Error occurred while sending notification: {}", e.toString());
+//        }
+//    }
+
+    private SmsTemplateData enrichSmsTemplateData(CourtCase cases) {
+        return SmsTemplateData.builder()
+                .courtCaseNumber(cases.getCourtCaseNumber())
+                .cnrNumber(cases.getCnrNumber())
+                .cmpNumber(cases.getCmpNumber())
+                .efilingNumber(cases.getFilingNumber())
+                .tenantId(cases.getTenantId()).build();
+    }
+
+    private List<String> callIndividualService(RequestInfo requestInfo, List<String> individualIds) {
+
+        List<String> mobileNumber = new ArrayList<>();
+        try {
+            for(String id : individualIds){
+                List<Individual> individuals = individualService.getIndividualsByIndividualId(requestInfo, id);
+                if(individuals != null && individuals.get(0).getMobileNumber() != null){
+                    mobileNumber.add(individuals.get(0).getMobileNumber());
+                }
+            }
+        }
+        catch (Exception e) {
+            // Log the exception and continue the execution without throwing
+            log.error("Error occurred while sending notification: {}", e.toString());
+        }
+
+        return mobileNumber;
+    }
+
+    public static List<String> extractIndividualIds(JsonNode rootNode) {
+        List<String> individualIds = new ArrayList<>();
+
+
+        JsonNode complainantDetailsNode = rootNode.path("complainantDetails")
+                .path("formdata");
+        if (complainantDetailsNode.isArray()) {
+            for (JsonNode complainantNode : complainantDetailsNode) {
+                JsonNode complainantVerificationNode = complainantNode.path("data")
+                        .path("complainantVerification")
+                        .path("individualDetails");
+                if (!complainantVerificationNode.isMissingNode()) {
+                    String individualId = complainantVerificationNode.path("individualId").asText();
+                    if (!individualId.isEmpty()) {
+                        individualIds.add(individualId);
+                    }
+                }
+            }
+        }
+
+        JsonNode respondentDetailsNode = rootNode.path("respondentDetails")
+                .path("formdata");
+        if (respondentDetailsNode.isArray()) {
+            for (JsonNode respondentNode : respondentDetailsNode) {
+                JsonNode respondentVerificationNode = respondentNode.path("data")
+                        .path("respondentVerification")
+                        .path("individualDetails");
+                if (!respondentVerificationNode.isMissingNode()) {
+                    String individualId = respondentVerificationNode.path("individualId").asText();
+                    if (!individualId.isEmpty()) {
+                        individualIds.add(individualId);
+                    }
+                }
+            }
+        }
+
+        JsonNode advocateDetailsNode = rootNode.path("advocateDetails")
+                .path("formdata");
+        if (advocateDetailsNode.isArray()) {
+            for (JsonNode advocateNode : advocateDetailsNode) {
+                // Check if the advocate is representing
+                JsonNode isAdvocateRepresentingNode = advocateNode.path("data")
+                        .path("isAdvocateRepresenting")
+                        .path("code");
+
+                // Proceed if the value is "YES"
+                if ("YES".equals(isAdvocateRepresentingNode.asText())) {
+                    JsonNode advocateListNode = advocateNode.path("data")
+                            .path("advocateBarRegNumberWithName");
+
+                    if (advocateListNode.isArray()) {
+                        for (JsonNode advocateInfoNode : advocateListNode) {
+                            String individualId = advocateInfoNode.path("individualId").asText();
+                            if (!individualId.isEmpty()) {
+                                individualIds.add(individualId);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return individualIds;
+    }
+
     private String getNotificationStatus(String previousStatus, String updatedStatus) {
-        if (updatedStatus.equalsIgnoreCase(PENDING_E_SIGN) || updatedStatus.equalsIgnoreCase(PENDING_SIGN)){
+        if (updatedStatus.equalsIgnoreCase(PENDING_E_SIGN)){
             return ESIGN_PENDING;
         }
         else if(updatedStatus.equalsIgnoreCase(PAYMENT_PENDING)){
@@ -367,6 +485,9 @@ public class CaseService {
         }
         else if(previousStatus.equalsIgnoreCase(PENDING_ADMISSION_HEARING) && updatedStatus.equalsIgnoreCase(ADMISSION_HEARING_SCHEDULED)){
             return ADMISSION_HEARING_SCHEDULED;
+        }
+        else if(previousStatus.equalsIgnoreCase(PENDING_RESPONSE) && updatedStatus.equalsIgnoreCase(CASE_ADMITTED)){
+            return CASE_ADMITTED;
         }
         return null;
     }

@@ -208,13 +208,9 @@ const orderBailRejection = async (req, res, qrCode) => {
 
     const ordinalSuffix = getOrdinalSuffix(day);
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
-    let bailType = "Cash";
-    if (application?.applicationType === "SURETY") {
-      bailType = "In Person Surety";
-    }
-    if (application?.applicationType === "BAIL_BOND") {
-      bailType = "Bail Bond";
-    }
+    let bailType =
+      messagesMap?.[order?.orderDetails?.bailType] ||
+      order?.orderDetails?.bailType;
     const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
     const data = {
       Data: [
@@ -224,10 +220,12 @@ const orderBailRejection = async (req, res, qrCode) => {
           state: mdmsCourtRoom.state,
           caseNumber: caseNumber,
           caseYear: caseYear,
+          caseName: courtCase.caseTitle,
           applicantName: advocateName || partyName,
           partyName,
           dateOfApplication: applicationDate,
-          briefSummaryOfBail: order?.comments || "",
+          briefSummaryOfBail:
+            order?.orderDetails?.bailSummaryCircumstancesReject || "",
           date: formattedToday,
           documentList,
           bailType,
@@ -238,6 +236,7 @@ const orderBailRejection = async (req, res, qrCode) => {
           courtSeal: judgeDetails.courtSeal,
           orderHeading: mdmsCourtRoom.orderHeading,
           judgeDesignation: judgeDetails.judgeDesignation,
+          qrCodeUrl: base64Url,
         },
       ],
     };

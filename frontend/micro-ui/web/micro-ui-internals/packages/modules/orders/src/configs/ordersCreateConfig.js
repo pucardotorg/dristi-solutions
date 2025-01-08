@@ -3949,3 +3949,452 @@ export const configsJudgement = [
     ],
   },
 ];
+
+export const configsIssueBailAcceptance = [
+  {
+    body: [
+      {
+        label: "REF_APPLICATION_ID",
+        isMandatory: false,
+        key: "refApplicationId",
+        disable: true,
+        schemaKeyPath: "orderDetails.refApplicationId",
+        type: "text",
+        populators: { name: "refApplicationId" },
+      },
+      {
+        isMandatory: true,
+        key: "bailParty",
+        type: "dropdown",
+        label: "BAIL_PARTY",
+        disable: true,
+        schemaKeyPath: "orderDetails.bailParty",
+        populators: {
+          name: "bailParty",
+          styles: { maxWidth: "100%" },
+          error: "required ",
+        },
+      },
+      {
+        label: "BAIL_TYPE",
+        isMandatory: true,
+        key: "bailType",
+        disable: false,
+        schemaKeyPath: "orderDetails.bailType",
+        transformer: "mdmsDropdown",
+        type: "dropdown",
+        populators: {
+          styles: { maxWidth: "100%" },
+          name: "bailType",
+          optionsKey: "type",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          required: true,
+          isMandatory: true,
+          mdmsConfig: {
+            masterName: "BailType",
+            moduleName: "Order",
+            localePrefix: "BAIL_TYPE",
+            select: "(data) => {return data['Order'].BailType?.map((item) => {return {...item, code: item.type};});}",
+          },
+        },
+      },
+      {
+        type: "amount",
+        label: "CS_CHEQUE_AMOUNT",
+        isMandatory: true,
+        schemaKeyPath: "orderDetails.chequeAmount",
+        populators: {
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          componentInFront: "₹",
+          name: "chequeAmount",
+          prefix: "",
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "bailSummary",
+        schemaKeyPath: "orderDetails.bailSummary",
+        transformer: "customTextArea",
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "CS_BAIL_SUMMARY",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              isOptional: false,
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "otherConditions",
+        isMandatory: false,
+        schemaKeyPath: "orderDetails.otherConditions",
+        transformer: "customTextArea",
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "CS_OTHER_CONDITIONS",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              isOptional: true,
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        key: "submissionDocuments",
+        component: "SelectMultiUpload",
+        disable: true,
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "uploadedDocs",
+              isMandatory: true,
+              textAreaHeader: "CS_DOCUMENT_ATTACHED",
+              fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
+              textAreaStyle: {
+                fontSize: "16px",
+                fontWeight: 400,
+                marginBottom: "8px",
+              },
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
+
+export const configsIssueBailReject = [
+  {
+    body: [
+      {
+        label: "REF_APPLICATION_ID",
+        isMandatory: false,
+        key: "refApplicationId",
+        schemaKeyPath: "orderDetails.refApplicationId",
+        disable: true,
+        type: "text",
+        populators: { name: "refApplicationId" },
+      },
+      {
+        isMandatory: true,
+        key: "bailParty",
+        type: "dropdown",
+        label: "BAIL_PARTY",
+        schemaKeyPath: "orderDetails.bailParty",
+        disable: true,
+        populators: {
+          name: "bailParty",
+          styles: { maxWidth: "100%" },
+          error: "required ",
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "bailSummaryCircumstancesReject",
+        schemaKeyPath: "orderDetails.bailSummaryCircumstancesReject",
+        transformer: "customTextArea",
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "CS_BAIL_SUMMARY_CIRCUMSTANCES",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              isOptional: false,
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        key: "submissionDocuments",
+        component: "SelectMultiUpload",
+        disable: true,
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "uploadedDocs",
+              isMandatory: true,
+              textAreaHeader: "CS_DOCUMENT",
+              fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
+              uploadGuidelines: "UPLOAD_DOC_50",
+              maxFileSize: 50,
+              maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+              textAreaStyle: {
+                fontSize: "16px",
+                fontWeight: 400,
+                marginBottom: "8px",
+              },
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
+export const configsSetTermBail = [
+  {
+    body: [
+      {
+        label: "REF_APPLICATION_ID",
+        isMandatory: false,
+        key: "refApplicationId",
+        disable: true,
+        schemaKeyPath: "orderDetails.refApplicationId",
+        type: "text",
+        populators: { name: "refApplicationId" },
+      },
+      {
+        key: "partyId",
+        type: "component",
+        withoutLabel: true,
+        component: "SelectEmptyComponent",
+        populators: {},
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "bailSummaryCircumstancesTerms",
+        isMandatory: true,
+        schemaKeyPath: "orderDetails.bailSummaryCircumstancesTerms",
+        transformer: "customTextArea",
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "CS_BAIL_SUMMARY",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              isOptional: false,
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "additionalCommentsTermsOfBail",
+        isMandatory: true,
+        schemaKeyPath: "orderDetails.additionalCommentsTermsOfBail",
+        transformer: "customTextArea",
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "ADDITIONAL_DOCUMENTS",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              isOptional: false,
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
+
+export const configsAcceptRejectDelayCondonation = [
+  {
+    body: [
+      {
+        label: "REF_APPLICATION_ID",
+        isMandatory: false,
+        key: "refApplicationId",
+        disable: true,
+        schemaKeyPath: "orderDetails.refApplicationId",
+        type: "text",
+        populators: { name: "refApplicationId" },
+      },
+      {
+        label: "IS_DELAY_CONDONATION_ACCEPTED_OR_REJECTED",
+        isMandatory: true,
+        key: "isDcaAcceptedOrRejected",
+        schemaKeyPath: "orderDetails.isDcaAcceptedOrRejected",
+        transformer: "customDropdown",
+        type: "radio",
+        disable: true,
+        populators: {
+          name: "isDcaAcceptedOrRejected",
+          optionsKey: "name",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          required: true,
+          isMandatory: true,
+          options: [
+            {
+              code: "ACCEPTED",
+              name: "ACCEPTED",
+            },
+            {
+              code: "REJECTED",
+              name: "REJECTED",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "reasonForSeekingDca",
+        schemaKeyPath: "orderDetails.reasonForSeekingDca",
+        transformer: "customTextArea",
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "REASON_FOR_SEEKING_DELAY_CONDONATION",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "reasonForAcceptanceOrRejectionDca",
+        schemaKeyPath: "orderDetails.reasonForAcceptanceOrRejectionDca",
+        transformer: "customTextArea",
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "REASON_FOR_ACCEPTANCE_REJECTION",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "additionalCommentsDca",
+        schemaKeyPath: "orderDetails.additionalCommentsDca",
+        transformer: "customTextArea",
+        isMandatory: false,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "DCA_ADDITIONAL_COMMENTS",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              isOptional: true,
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
+
+export const configsAdmitDismissCase = [
+  {
+    body: [
+      {
+        label: "IS_CASE_ADMITTED_OR_DISMISSED",
+        isMandatory: true,
+        key: "isCaseAdmittedOrDismissed",
+        schemaKeyPath: "orderDetails.isCaseAdmittedOrDismissed",
+        transformer: "customDropdown",
+        type: "radio",
+        disable: true,
+        populators: {
+          name: "isDelayConAcceptedOrRejected",
+          optionsKey: "name",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          required: true,
+          isMandatory: true,
+          options: [
+            {
+              code: "ADMITTED",
+              name: "ADMITTED",
+            },
+            {
+              code: "DISMISSED",
+              name: "DISMISSED",
+            },
+          ],
+        },
+      },
+      {
+        label: "WAS_ACCUSED_EXAMINED",
+        isMandatory: true,
+        key: "wasAccusedExamined",
+        schemaKeyPath: "orderDetails.wasAccusedExamined",
+        transformer: "customDropdown",
+        type: "radio",
+        populators: {
+          name: "wasAccusedExamined",
+          optionsKey: "name",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          required: true,
+          isMandatory: true,
+          options: [
+            {
+              code: "YES",
+              name: "YES",
+            },
+            {
+              code: "NO",
+              name: "NO",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "reasonForAdmitDismissCase",
+        schemaKeyPath: "orderDetails.reasonForAdmitDismissCase",
+        transformer: "customTextArea",
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "REASON_ADMIT_DISMISS",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "additionalCommentsAdmitDismissCase",
+        schemaKeyPath: "orderDetails.additionalCommentsAdmitDismissCase",
+        transformer: "customTextArea",
+        isMandatory: false,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "ADMIT_DISMISS_ADDITIONAL_COMMENTS",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+              isOptional: true,
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
