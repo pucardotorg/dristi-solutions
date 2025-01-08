@@ -2127,9 +2127,8 @@ function EFilingCases({ path }) {
     if (formdata && formdata?.[0]?.data?.advocateBarRegNumberWithName?.[0]?.isDisable) {
       return "disable-form";
     }
-
     return "";
-  }, [formdata, selected]);
+  }, [formdata]);
 
   const handleConfirmDeleteForm = () => {
     const index = deleteFormIndex;
@@ -2258,7 +2257,6 @@ function EFilingCases({ path }) {
     margin-top:0 !important;
   }
 `;
-  const isDcaNotSkipped = caseDetails?.caseDetails?.["delayApplications"]?.formdata?.[0]?.data?.isDcaSkippedInEFiling?.code === "NO";
 
   return (
     <div className="file-case">
