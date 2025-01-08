@@ -1501,6 +1501,17 @@ const AdmittedCases = () => {
     Boolean(filingNumber)
   );
 
+  const isDcaHearingScheduled = useMemo(() => {
+    const isDcaHearingScheduled = Boolean(
+      hearingDetails?.HearingList?.find(
+        (hearing) =>
+          ["DELAY_CONDONATION_HEARING", "DELAY_CONDONATION_AND_ADMISSION"].includes(hearing?.hearingType) &&
+          [HearingWorkflowState?.INPROGRESS, HearingWorkflowState?.SCHEDULED].includes(hearing?.status)
+      )
+    );
+    return isDcaHearingScheduled;
+  }, [hearingDetails]);
+
   const currentHearingId = useMemo(
     () =>
       hearingDetails?.HearingList?.find((list) => list?.hearingType === "ADMISSION" && !(list?.status === "COMPLETED" || list?.status === "ABATED"))
@@ -2335,6 +2346,10 @@ const AdmittedCases = () => {
           caseAdmittedSubmit={caseAdmittedSubmit}
           isCaseAdmitted={isCaseAdmitted}
           createAdmissionOrder={createAdmissionOrder}
+          delayCondonationData={delayCondonationData}
+          hearingDetails={hearingDetails}
+          isDelayApplicationPending={isDelayApplicationPending}
+          isDelayApplicationCompleted={isDelayApplicationCompleted}
         />
       )}
       {orderDraftModal && <ViewAllOrderDrafts t={t} setShow={setOrderDraftModal} draftOrderList={draftOrderList} filingNumber={filingNumber} />}
@@ -2371,7 +2386,7 @@ const AdmittedCases = () => {
                   onButtonClick={onSaveDraft}
                 />
               )}
-            {primaryAction.action && (
+            {primaryAction.action && !isDcaHearingScheduled && (
               <SubmitBar
                 label={t(
                   [CaseWorkflowState.ADMISSION_HEARING_SCHEDULED].includes(caseDetails?.status) && primaryAction?.action === "ADMIT"
@@ -2422,6 +2437,10 @@ const AdmittedCases = () => {
           caseDetails={caseDetails}
           isAdmissionHearingAvailable={Boolean(currentHearingId)}
           setOpenAdmitCaseModal={setOpenAdmitCaseModal}
+          delayCondonationData={delayCondonationData}
+          hearingDetails={hearingDetails}
+          isDelayApplicationPending={isDelayApplicationPending}
+          isDelayApplicationCompleted={isDelayApplicationCompleted}
         ></AdmissionActionModal>
       )}
       {showDismissCaseConfirmation && (

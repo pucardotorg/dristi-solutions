@@ -135,7 +135,7 @@ function CaseFileAdmission({ t, path }) {
     Boolean(filingNumber)
   );
 
-  const { data: applicationData, isLoading: isApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
+  const { data: applicationData, isLoading: isApplicationLoading, refetch: applicationRefetch } = Digit.Hooks.submissions.useSearchSubmissionService(
     {
       criteria: {
         filingNumber,
@@ -426,6 +426,7 @@ function CaseFileAdmission({ t, path }) {
             }
           }
           await handleRegisterCase();
+          await applicationRefetch();
           setCreateAdmissionOrder(true);
           setLoader(false);
         } catch (error) {
@@ -794,7 +795,7 @@ function CaseFileAdmission({ t, path }) {
             pendingTask: {
               name: "Create DCA Applications",
               entityType: "delay-condonation-submission",
-              referenceId: `MANUAL_${caseDetails?.filingNumber}`,
+              referenceId: `MANUAL_DCA_${caseDetails?.filingNumber}`,
               status: "CREATE_DCA_SUBMISSION",
               assignedTo: representativesUuid?.map((uuid) => ({ uuid })),
               assignedRole: [],
@@ -1065,7 +1066,8 @@ function CaseFileAdmission({ t, path }) {
                   {delayCondonationData?.delayCondonationType?.code === "NO" && (
                     <div className="delay-condonation-chip" style={delayCondonationStylsMain}>
                       <p style={delayCondonationTextStyle}>
-                        {(delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" && isDelayApplicationPending) ||
+                        {(delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" && "PENDING_REGISTRATION" === caseDetails?.status) ||
+                        (delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" && isDelayApplicationPending) ||
                         isDelayApplicationPending ||
                         isDelayApplicationCompleted
                           ? t("DELAY_CONDONATION_FILED")
@@ -1114,6 +1116,10 @@ function CaseFileAdmission({ t, path }) {
                   caseAdmittedSubmit={caseAdmittedSubmit}
                   isCaseAdmitted={false}
                   createAdmissionOrder={createAdmissionOrder}
+                  delayCondonationData={delayCondonationData}
+                  hearingDetails={hearingDetails}
+                  isDelayApplicationPending={isDelayApplicationPending}
+                  isDelayApplicationCompleted={isDelayApplicationPending}
                 />
               )}
               {showModal && (
@@ -1136,6 +1142,10 @@ function CaseFileAdmission({ t, path }) {
                   caseAdmittedSubmit={caseAdmittedSubmit}
                   createAdmissionOrder={createAdmissionOrder}
                   isAdmissionHearingAvailable={Boolean(currentHearingId)}
+                  delayCondonationData={delayCondonationData}
+                  hearingDetails={hearingDetails}
+                  isDelayApplicationPending={isDelayApplicationPending}
+                  isDelayApplicationCompleted={isDelayApplicationPending}
                 ></AdmissionActionModal>
               )}
             </div>
