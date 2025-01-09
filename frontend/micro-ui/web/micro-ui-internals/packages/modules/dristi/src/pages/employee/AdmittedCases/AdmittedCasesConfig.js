@@ -551,6 +551,10 @@ export const TabSearchconfig = {
                 additionalCustomization: true,
               },
               {
+                label: "STAGE",
+                additionalCustomization: true,
+              },
+              {
                 label: "STATUS",
                 additionalCustomization: true,
               },

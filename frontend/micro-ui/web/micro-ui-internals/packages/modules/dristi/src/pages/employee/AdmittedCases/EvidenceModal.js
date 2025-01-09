@@ -8,7 +8,7 @@ import ConfirmSubmissionAction from "../../../components/ConfirmSubmissionAction
 import Modal from "../../../components/Modal";
 import SubmissionSuccessModal from "../../../components/SubmissionSuccessModal";
 import { Urls } from "../../../hooks";
-import { RightArrow } from "../../../icons/svgIndex";
+import { RightArrow, WarningInfoIconYellow } from "../../../icons/svgIndex";
 import { DRISTIService } from "../../../services";
 import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../../Utils/submissionWorkflow";
 import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
@@ -17,6 +17,8 @@ import SelectCustomDocUpload from "../../../components/SelectCustomDocUpload";
 import ESignSignatureModal from "../../../components/ESignSignatureModal";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import { cleanString, removeInvalidNameParts } from "../../../Utils";
+import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/useGetAllOrderApplicationRelatedDocuments";
+
 const stateSla = {
   DRAFT_IN_PROGRESS: 2,
 };
@@ -58,6 +60,7 @@ const EvidenceModal = ({
   const [formData, setFormData] = useState({});
   const [showFileIcon, setShowFileIcon] = useState(false);
   const { downloadPdf } = useDownloadCasePdf();
+  const { documents: allCombineDocs, isLoading, fetchRecursiveData } = useGetAllOrderApplicationRelatedDocuments();
   const setData = (data) => {
     setFormData(data);
   };
@@ -136,7 +139,15 @@ const EvidenceModal = ({
     }
     return label;
   }, [allAdvocates, applicationStatus, createdBy, documentSubmission, isLitigent, modalType, respondingUuids, t, userInfo?.uuid, userType]);
-
+  const actionCustomLabel = useMemo(() => {
+    let label = "";
+    if (modalType === "Submissions") {
+      if (userType === "employee") {
+        label = t("SET_TERMS_OF_BAIL");
+      }
+    }
+    return label;
+  }, [allAdvocates, applicationStatus, createdBy, documentSubmission, isLitigent, modalType, respondingUuids, t, userInfo?.uuid, userType]);
   const actionCancelLabel = useMemo(() => {
     if (
       userRoles.includes("SUBMISSION_APPROVER") &&
@@ -504,10 +515,15 @@ const EvidenceModal = ({
         return "BAIL";
       case "SURETY":
         return "BAIL";
+      case "REQUEST_FOR_BAIL":
+      case "SUBMIT_BAIL_DOCUMENTS":
+        return type === "reject" ? "REJECT_BAIL" : type === "SET_TERM_BAIL" ? "SET_BAIL_TERMS" : "ACCEPT_BAIL";
       case "EXTENSION_SUBMISSION_DEADLINE":
         return "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE";
       case "CHECKOUT_REQUEST":
         return type === "reject" ? "CHECKOUT_REJECT" : "CHECKOUT_ACCEPTANCE";
+      case "DELAY_CONDONATION":
+        return "ACCEPTANCE_REJECTION_DCA";
       default:
         return type === "reject" ? "REJECT_VOLUNTARY_SUBMISSIONS" : "APPROVE_VOLUNTARY_SUBMISSIONS";
     }
@@ -529,8 +545,13 @@ const EvidenceModal = ({
         return "ORDER_FOR_BAIL";
       case "EXTENSION_SUBMISSION_DEADLINE":
         return "ORDER_EXTENSION_SUBMISSION_DEADLINE";
+      case "REQUEST_FOR_BAIL":
+      case "SUBMIT_BAIL_DOCUMENTS":
+        return type === "reject" ? "REJECT_BAIL" : type === "SET_TERM_BAIL" ? "SET_BAIL_TERMS" : "ACCEPT_BAIL";
       case "CHECKOUT_REQUEST":
         return type === "reject" ? "REJECT_CHECKOUT_REQUEST" : "ACCEPT_CHECKOUT_REQUEST";
+      case "DELAY_CONDONATION":
+        return "ACCEPTANCE_REJECTION_DCA";
       default:
         return type === "reject" ? "REJECT_ORDER_VOLUNTARY_SUBMISSIONS" : "APPROVE_ORDER_VOLUNTARY_SUBMISSIONS";
     }
@@ -554,31 +575,63 @@ const EvidenceModal = ({
       return acceptedApplicationTypes.includes(applicationType);
     }
   }, [documentSubmission, showConfirmationModal?.type]);
-
+  const isBail = useMemo(() => {
+    return ["SUBMIT_BAIL_DOCUMENTS", "REQUEST_FOR_BAIL"].includes(documentSubmission?.[0]?.applicationList?.applicationType);
+  }, [documentSubmission]);
   const showDocument = useMemo(() => {
     return (
       <React.Fragment>
-        {documentSubmission?.map((docSubmission, index) => (
-          <React.Fragment>
-            {docSubmission.applicationContent && (
+        {modalType !== "Submissions" ? (
+          documentSubmission?.map((docSubmission, index) => (
+            <React.Fragment key={index}>
+              {docSubmission.applicationContent && (
+                <div className="application-view">
+                  <DocViewerWrapper
+                    fileStoreId={docSubmission.applicationContent.fileStoreId}
+                    displayFilename={docSubmission.applicationContent.fileName}
+                    tenantId={docSubmission.applicationContent.tenantId}
+                    docWidth={"calc(80vw * 62 / 100)"}
+                    docHeight={"60vh"}
+                    showDownloadOption={false}
+                    documentName={docSubmission.applicationContent.fileName}
+                  />
+                </div>
+              )}
+            </React.Fragment>
+          ))
+        ) : allCombineDocs?.length > 0 ? (
+          allCombineDocs.map((docs, index) => (
+            <React.Fragment key={index}>
               <div className="application-view">
                 <DocViewerWrapper
-                  key={docSubmission.applicationContent.fileStoreId}
-                  fileStoreId={docSubmission.applicationContent.fileStoreId}
-                  displayFilename={docSubmission.applicationContent.fileName}
-                  tenantId={docSubmission.applicationContent.tenantId}
-                  docWidth={"calc(80vw* 62/ 100)"}
+                  fileStoreId={docs?.fileStore}
+                  displayFilename={docs?.additionalDetails?.name}
+                  tenantId={tenantId}
+                  docWidth={"calc(80vw * 62 / 100)"}
                   docHeight={"60vh"}
                   showDownloadOption={false}
-                  documentName={docSubmission.applicationContent.fileName}
+                  documentName={docs?.additionalDetails?.name}
                 />
               </div>
-            )}
-          </React.Fragment>
-        ))}
+            </React.Fragment>
+          ))
+        ) : (
+          <h2>{isLoading ? t("Loading.....") : t("PREVIEW_DOC_NOT_AVAILABLE")}</h2>
+        )}
       </React.Fragment>
     );
-  }, [documentSubmission]);
+  }, [allCombineDocs, documentSubmission, modalType, tenantId, isLoading, t]);
+
+  const setApplicationStatus = (type, applicationType) =>{
+    if(["SUBMIT_BAIL_DOCUMENTS", "REQUEST_FOR_BAIL"].includes(applicationType)){
+      return type === "SET_TERM_BAIL" ? "SET_TERM_BAIL" : type === "accept" ? "APPROVED" : "REJECTED";
+    }
+    if(["DELAY_CONDONATION"].includes(applicationType)){
+      return type === "accept" ? "APPROVED" : "REJECTED"
+    }
+    return type === "accept" ? "APPROVED" : "REJECTED"
+  }
+
   const handleApplicationAction = async (generateOrder, type) => {
     try {
       const orderType = getOrderTypes(documentSubmission?.[0]?.applicationList?.applicationType, type);
@@ -589,7 +642,13 @@ const EvidenceModal = ({
           name: `ORDER_TYPE_${orderType}`,
         },
         refApplicationId: documentSubmission?.[0]?.applicationList?.applicationNumber,
-        applicationStatus: type === "accept" ? t("APPROVED") : t("REJECTED"),
+        applicationStatus: documentSubmission?.[0]?.applicationList?.applicationType ? setApplicationStatus(type, documentSubmission[0].applicationList.applicationType) : null,
+        ...(documentSubmission?.[0]?.applicationList?.applicationType === "DELAY_CONDONATION" && {
+          isDcaAcceptedOrRejected: {
+            code: type === "reject" ? "REJECTED" : type === "accept" ? "ACCEPTED" : null,
+            name: type === "reject" ? "REJECTED" : type === "accept" ? "ACCEPTED" : null,
+          },
+        }),
       };
       const linkedOrderNumber = documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.refOrderId;
       if (generateOrder) {
@@ -599,6 +658,7 @@ const EvidenceModal = ({
             tenantId,
             cnrNumber,
             filingNumber,
+            applicationNumber: [documentSubmission?.[0]?.applicationList?.applicationNumber],
             statuteSection: {
               tenantId,
             },
@@ -615,7 +675,7 @@ const EvidenceModal = ({
             documents: [],
             additionalDetails: {
               formdata,
-              applicationStatus: type === "accept" ? t("APPROVED") : t("REJECTED"),
+              applicationStatus: documentSubmission?.[0]?.applicationList?.applicationType ? setApplicationStatus(type, documentSubmission[0].applicationList.applicationType) : null,
             },
             ...(documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName && {
               orderDetails: { parties: [{ partyName: documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName }] },
@@ -628,7 +688,7 @@ const EvidenceModal = ({
         };
         try {
           const res = await ordersService.createOrder(reqbody, { tenantId });
-          const name = getOrderActionName(documentSubmission?.[0]?.applicationList?.applicationType, showConfirmationModal.type);
+          const name = getOrderActionName(documentSubmission?.[0]?.applicationList?.applicationType, isBail ? type : showConfirmationModal?.type);
           DRISTIService.customApiService(Urls.dristi.pendingTask, {
             pendingTask: {
               name: t(name),
@@ -695,7 +755,11 @@ const EvidenceModal = ({
       return;
     }
     if (userType === "employee") {
-      modalType === "Documents" ? setShowConfirmationModal({ type: "documents-confirmation" }) : setShowConfirmationModal({ type: "accept" });
+      if (isBail) {
+        await handleApplicationAction(true, "accept");
+      } else if (modalType === "Submissions" && documentSubmission?.[0]?.applicationList?.applicationType === "DELAY_CONDONATION") {
+        await handleApplicationAction(true, "accept");
+      } else modalType === "Documents" ? setShowConfirmationModal({ type: "documents-confirmation" }) : setShowConfirmationModal({ type: "accept" });
     } else {
       if (actionSaveLabel === t("ADD_COMMENT")) {
         try {
@@ -727,13 +791,24 @@ const EvidenceModal = ({
 
   const actionCancelOnSubmit = async () => {
     if (userType === "employee") {
-      setShowConfirmationModal({ type: "reject" });
+      if (isBail) {
+        await handleApplicationAction(true, "reject");
+      } else if (modalType === "Submissions" && documentSubmission?.[0]?.applicationList?.applicationType === "DELAY_CONDONATION") {
+        await handleApplicationAction(true, "reject");
+      } else setShowConfirmationModal({ type: "reject" });
     } else {
       try {
         await handleDeleteApplication();
         setShow(false);
         counterUpdate();
       } catch (error) {}
+    }
+  };
+  const actionCustomLabelSubmit = async () => {
+    if (userType === "employee") {
+      await handleApplicationAction(true, "SET_TERM_BAIL");
+    } else {
+      setShow(false);
     }
   };
 
@@ -795,6 +870,20 @@ const EvidenceModal = ({
     return { file: fileUploadRes?.data, fileType: fileData.type, filename };
   };
 
+  useEffect(() => {
+    fetchRecursiveData(documentSubmission?.[0]?.applicationList);
+  }, [documentSubmission, fetchRecursiveData]);
+
+  const customLabelShow = useMemo(() => {
+    return (
+      isJudge &&
+      ["REQUEST_FOR_BAIL"].includes(documentSubmission?.[0]?.applicationList?.applicationType) &&
+      userRoles.includes("SUBMISSION_APPROVER") &&
+      [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationStatus) &&
+      modalType === "Submissions"
+    );
+  }, [isJudge, documentSubmission, userRoles, applicationStatus, modalType]);
+
   return (
     <React.Fragment>
       {!showConfirmationModal && !showSuccessModal && (
@@ -804,7 +893,9 @@ const EvidenceModal = ({
           actionSaveOnSubmit={actionSaveOnSubmit}
           hideSubmit={!showSubmit} // Not allowing submit action for court room manager
           actionCancelLabel={!isJudge ? false : actionCancelLabel} // Not allowing cancel action for court room manager
+          actionCustomLabel={!customLabelShow ? false : actionCustomLabel} // Not allowing cancel action for court room manager
           actionCancelOnSubmit={actionCancelOnSubmit}
+          actionCustomLabelSubmit={actionCustomLabelSubmit}
           formId="modal-action"
           headerBarMain={
             <Heading
@@ -825,6 +916,28 @@ const EvidenceModal = ({
           <div className="evidence-modal-main">
             <div className={"application-details"}>
               <div style={{ display: "flex", flexDirection: "column" }}>
+                {isJudge && documentSubmission?.[0]?.applicationList?.applicationType === "DELAY_CONDONATION" && (
+                  <div
+                    className="dca-infobox-message"
+                    style={{
+                      display: "flex",
+                      gap: "8px",
+                      backgroundColor: "#FEF4F4",
+                      border: "1px",
+                      borderColor: "#FCE8E8",
+                      padding: "8px",
+                      borderRadius: "8px",
+                      marginBottom: "24px",
+                    }}
+                  >
+                    <div className="dca-infobox-icon" style={{}}>
+                      <WarningInfoIconYellow />{" "}
+                    </div>
+                    <div className="dca-infobox-me" style={{}}>
+                      {t("ENSURE_DUE_PROCESS") + ": " + t("CONDUCT_HEARING_BEFORE_ACTING_DCA")}
+                    </div>
+                  </div>
+                )}
                 <div className="application-info" style={{ display: "flex", flexDirection: "column" }}>
                   <div className="info-row">
                     <div className="info-key">
@@ -880,6 +993,7 @@ const EvidenceModal = ({
                     SubmissionWorkflowState.PENDINGRESPONSE,
                     SubmissionWorkflowState.COMPLETED,
                     SubmissionWorkflowState.REJECTED,
+                    SubmissionWorkflowState.DOC_UPLOAD,
                   ].includes(applicationStatus)) ||
                   modalType === "Documents") && (
                   <div className="comment-send">
@@ -970,7 +1084,7 @@ const EvidenceModal = ({
                                 await handleSubmitComment(newComment);
                                 setCurrentComment("");
                               } catch (error) {
-                                console.log("error :>> ", error);
+                                console.error("error :>> ", error);
                               }
                             } else {
                               setCurrentComment("");

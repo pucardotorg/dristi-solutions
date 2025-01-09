@@ -1,5 +1,6 @@
 package org.pucar.dristi.web.models;
 
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -40,8 +41,10 @@ public class Advocate {
 	@JsonProperty("applicationNumber")
 	@Size(min = 2, max = 64)
 	private String applicationNumber = null;
+
 	@JsonProperty("status")
 	private String status=null;
+
 	@JsonProperty("barRegistrationNumber")
 	@Size(min = 2, max = 64)
 	private String barRegistrationNumber = null;

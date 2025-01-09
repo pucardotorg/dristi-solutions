@@ -32,8 +32,10 @@ public class EvidenceSearchCriteria {
 
     @JsonIgnore
     private String userUuid;
+
     @JsonIgnore
     private boolean isCitizen = false;
+
     @JsonIgnore
     private boolean isCourtEmployee = false;
     // Getters and setters
@@ -119,7 +121,6 @@ public class EvidenceSearchCriteria {
     public void setArtifactNumber(String artifactNumber) {
         this.artifactNumber = artifactNumber;
     }
-
 
     public void setIsCitizen(boolean isCitizen) {
         this.isCitizen = isCitizen;

@@ -37,6 +37,8 @@ public class TaskService {
     private final Producer producer;
     private final CaseUtil caseUtil;
     private final ObjectMapper objectMapper;
+    private final SmsNotificationService notificationService;
+    private final IndividualService individualService;
 
     @Autowired
     public TaskService(TaskRegistrationValidator validator,
@@ -44,7 +46,7 @@ public class TaskService {
                        TaskRepository taskRepository,
                        WorkflowUtil workflowUtil,
                        Configuration config,
-                       Producer producer, CaseUtil caseUtil, ObjectMapper objectMapper) {
+                       Producer producer, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.taskRepository = taskRepository;
@@ -53,6 +55,8 @@ public class TaskService {
         this.producer = producer;
         this.caseUtil = caseUtil;
         this.objectMapper = objectMapper;
+        this.notificationService = notificationService;
+        this.individualService = individualService;
     }
 
     @Autowired
@@ -114,6 +118,11 @@ public class TaskService {
                 producer.push(config.getTaskIssueSummonTopic(), body);
 
             producer.push(config.getTaskUpdateTopic(), body);
+
+            String messageCode = status != null ? getMessageCode(taskType, status) : null;
+            if(messageCode != null){
+                callNotificationService(body, messageCode);
+            }
 
             return body.getTask();
 
@@ -189,5 +198,98 @@ public class TaskService {
     public List<TaskCase> searchCaseTask(TaskCaseSearchRequest request) {
         return taskRepository.getTaskWithCaseDetails(request);
 
+    }
+
+    private void callNotificationService(TaskRequest taskRequest, String messageCode) {
+        try {
+            JsonNode caseList = caseUtil.searchCaseDetails(taskRequest.getRequestInfo(), taskRequest.getTask().getTenantId(), null, taskRequest.getTask().getFilingNumber(), null);
+            if(caseList.isEmpty()) {
+                throw new CustomException(ERROR_WHILE_FETCHING_FROM_CASE, "Case Not Found!");
+            }
+            JsonNode caseDetails = caseList.get(0);
+            Object taskDetailsObject = taskRequest.getTask().getTaskDetails();
+            JsonNode taskDetails = objectMapper.readTree(objectMapper.writeValueAsString(taskDetailsObject));
+
+            Set<String> individualIds = extractComplainantIndividualIds(caseDetails);
+
+            Set<String> phoneNumbers = callIndividualService(taskRequest.getRequestInfo(), individualIds);
+
+            SmsTemplateData smsTemplateData = SmsTemplateData.builder()
+                    .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").asText() : "")
+                    .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").asText() : "")
+                    .accusedName(taskDetails.has("respondentDetails") ? taskDetails.path("respondentDetails").path("name").asText() : "")
+                    .tenantId(taskRequest.getTask().getTenantId()).build();
+
+            for (String number : phoneNumbers) {
+                notificationService.sendNotification(taskRequest.getRequestInfo(), smsTemplateData, messageCode, number);
+            }
+        }
+        catch (Exception e) {
+            log.error("Error occurred while sending notification: {}", e.toString());
+        }
+    }
+
+    public  Set<String> extractComplainantIndividualIds(JsonNode caseDetails) {
+
+        JsonNode litigantNode = caseDetails.get("litigants");
+        JsonNode representativeNode = caseDetails.get("representatives");
+        Set<String> uuids = new HashSet<>();
+
+        if (litigantNode.isArray()) {
+            for (JsonNode node : litigantNode) {
+                if (!node.get("partyType").asText().contains("complainant")) {
+                    String uuid = node.path("additionalDetails").get("uuid").asText();
+                    if (!uuid.isEmpty() ) {
+                        uuids.add(uuid);
+                    }
+                }
+            }
+        }
+
+        if (representativeNode.isArray()) {
+            for (JsonNode advocateNode : representativeNode) {
+                JsonNode representingNode = advocateNode.get("representing");
+                if (representingNode.isArray()) {
+                    if(representingNode.get(0).get("partyType").asText().contains("complainant")) {
+                        String uuid = advocateNode.path("additionalDetails").get("uuid").asText();
+                        if (!uuid.isEmpty() ) {
+                            uuids.add(uuid);
+                        }
+
+                    }
+                }
+            }
+        }
+        return uuids;
+    }
+
+    private Set<String> callIndividualService(RequestInfo requestInfo, Set<String> ids) {
+
+        Set<String> mobileNumber = new HashSet<>();
+
+        List<Individual> individuals = individualService.getIndividuals(requestInfo, new ArrayList<>(ids));
+        for(Individual individual : individuals) {
+            if (individual.getMobileNumber() != null) {
+                mobileNumber.add(individual.getMobileNumber());
+            }
+        }
+        return mobileNumber;
+    }
+
+    private String getMessageCode(String taskType, String status) {
+
+        if (NOTICE.equalsIgnoreCase(taskType) && DELIVERED.equalsIgnoreCase(status)) {
+            return NOTICE_DELIVERED;
+        }
+        if (NOTICE.equalsIgnoreCase(taskType) && RE_ISSUE.equalsIgnoreCase(status)) {
+            return NOTICE_NOT_DELIVERED;
+        }
+        if (SUMMON.equalsIgnoreCase(taskType) && DELIVERED.equalsIgnoreCase(status)) {
+            return SUMMONS_DELIVERED;
+        }
+        if (SUMMON.equalsIgnoreCase(taskType) && RE_ISSUE.equalsIgnoreCase(status)) {
+            return SUMMONS_NOT_DELIVERED;
+        }
+        return null;
     }
 }

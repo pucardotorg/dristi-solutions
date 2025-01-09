@@ -1,8 +1,10 @@
 import { CloseSvg } from "@egovernments/digit-ui-components";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Modal from "../../../components/Modal";
 import { Button, SubmitBar } from "@egovernments/digit-ui-react-components";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
+import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/useGetAllOrderApplicationRelatedDocuments";
+import { DRISTIService } from "../../../services";
 
 function PublishedOrderModal({
   t,
@@ -17,9 +19,12 @@ function PublishedOrderModal({
 }) {
   const [fileStoreId, setFileStoreID] = useState(null);
   const [fileName, setFileName] = useState();
+  const [isTaskCompleted, setIsTaskCompleted] = useState(false);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
+  const { documents, isLoading, fetchRecursiveData } = useGetAllOrderApplicationRelatedDocuments();
+  const [loading, setLoading] = useState(false);
   const Heading = (props) => {
     return <h1 className="heading-m">{props.label}</h1>;
   };
@@ -38,9 +43,13 @@ function PublishedOrderModal({
     if (productionOfDocumentApplications?.some((item) => item?.referenceId === order?.id)) {
       return false;
     }
-    const submissionParty = order?.additionalDetails?.formdata?.submissionParty?.map((item) => item.uuid).flat();
+
+    //TODO : need to ask
+    const isAuthority = order?.additionalDetails?.formdata?.partyId;
+    const submissionParty = order?.additionalDetails?.formdata?.submissionParty?.map((item) => item.uuid) || [];
+    const allSubmissionParty = [...submissionParty, isAuthority].filter(Boolean);
     return (
-      submissionParty?.includes(userInfo?.uuid) &&
+      allSubmissionParty?.includes(userInfo?.uuid) &&
       userRoles.includes("SUBMISSION_CREATOR") &&
       [
         CaseWorkflowState.PENDING_ADMISSION_HEARING,
@@ -52,9 +61,12 @@ function PublishedOrderModal({
       ].includes(caseStatus)
     );
   }, [caseStatus, order, userInfo?.uuid, userRoles, productionOfDocumentApplications]);
-  const showSubmitDocumentButton = useMemo(() => showSubmissionButtons, [showSubmissionButtons]);
+
   const showExtensionButton = useMemo(
-    () => showSubmissionButtons && !extensionApplications?.some((item) => item?.additionalDetails?.formdata?.refOrderId === order?.orderNumber),
+    () =>
+      showSubmissionButtons &&
+      !extensionApplications?.some((item) => item?.additionalDetails?.formdata?.refOrderId === order?.orderNumber) &&
+      order?.orderType !== "SET_BAIL_TERMS",
     [extensionApplications, order, showSubmissionButtons]
   );
 
@@ -85,6 +97,53 @@ function PublishedOrderModal({
     }
   }, [order, tenantId]);
 
+  // tracking of appliction based on order Generated for bail
+  const fetchAndCheckTasks = useCallback(
+    async function () {
+      try {
+        setLoading(true);
+        const pendingTasks = await DRISTIService.getPendingTaskService(
+          {
+            SearchCriteria: {
+              tenantId,
+              moduleName: "Pending Tasks Service",
+              moduleSearchCriteria: {
+                filingNumber: order?.filingNumber,
+                isCompleted: true,
+                referenceId: `MANUAL_${userInfo?.uuid}_${order?.orderNumber}`,
+              },
+              limit: 10000,
+              offset: 0,
+            },
+          },
+          { tenantId }
+        );
+
+        const taskCompleted = pendingTasks?.data?.some((task) => {
+          const refIdField = task?.fields?.find((field) => field?.key === "referenceId");
+          const isCompletedField = task?.fields?.find((field) => field?.key === "isCompleted");
+
+          return refIdField?.value === `MANUAL_${userInfo?.uuid}_${order?.orderNumber}` && isCompletedField?.value === true;
+        });
+
+        setIsTaskCompleted(taskCompleted);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching pending tasks:", error);
+      }
+    },
+    [order?.filingNumber, order?.orderNumber, tenantId, userInfo?.uuid]
+  );
+
+  useEffect(() => {
+    fetchAndCheckTasks();
+  }, [tenantId, order.filingNumber, order.orderNumber, userInfo.uuid, fetchAndCheckTasks]);
+
+  const showSubmitDocumentButton = useMemo(
+    () => (order?.orderType === "SET_BAIL_TERMS" ? showSubmissionButtons && !isTaskCompleted : showSubmissionButtons),
+    [isTaskCompleted, order?.orderType, showSubmissionButtons]
+  );
+
   const showDocument = useMemo(() => {
     return (
       <div
@@ -93,27 +152,35 @@ function PublishedOrderModal({
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          height: "100%",
           width: "100%",
-          maxHeight: "100%",
+          maxHeight: "60vh",
           maxWidth: "100%",
+          overflowY: "auto",
+          overflowX: "hidden",
         }}
       >
-        {signedOrder ? (
-          <DocViewerWrapper
-            docWidth={"calc(80vw* 62/ 100)"}
-            docHeight={"60vh"}
-            fileStoreId={signedOrder?.fileStore}
-            tenantId={tenantId}
-            displayFilename={fileName}
-            showDownloadOption={false}
-          />
+        {documents?.length > 0 ? (
+          documents.map((docs) => (
+            <DocViewerWrapper
+              key={docs?.fileStore}
+              docWidth={"calc(80vw * 62 / 100)"}
+              docHeight={"60vh"}
+              fileStoreId={docs?.fileStore}
+              tenantId={tenantId}
+              displayFilename={fileName}
+              showDownloadOption={false}
+            />
+          ))
         ) : (
-          <h2>{t("PREVIEW_DOC_NOT_AVAILABLE")}</h2>
+          <h2>{isLoading ? t("Loading.....") : t("PREVIEW_DOC_NOT_AVAILABLE")}</h2>
         )}
       </div>
     );
-  }, [fileName, fileStoreId, t, tenantId]);
+  }, [documents, fileName, isLoading, t, tenantId]);
+
+  useEffect(() => {
+    fetchRecursiveData(order);
+  }, [fetchRecursiveData, order]);
 
   return (
     <Modal
@@ -147,7 +214,7 @@ function PublishedOrderModal({
               label={t("EXTENSION_REQUEST_LABEL")}
             />
           )}
-          {showSubmitDocumentButton && (
+          {!loading && showSubmitDocumentButton && (
             <SubmitBar
               variation="primary"
               onSubmit={() => {
