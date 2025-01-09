@@ -40,7 +40,6 @@ public class CaseFeeCalculationService {
         Double vakalathnamaFee = eFillingDefaultData.getVakalathnamaFee();
         Double advocateClerkWelfareFund = eFillingDefaultData.getAdvocateClerkWelfareFund();
         Double delayCondonationFee = eFillingDefaultData.getDelayCondonationFee();
-        Long delayCondonationPeriod = eFillingDefaultData.getDelayCondonationPeriod();
 
         LinkedHashMap<String, HashMap<String, Integer>> noOfAdvocateFees = eFillingDefaultData.getNoOfAdvocateFees();
         Map<String, Range> petitionFeeRange = eFillingDefaultData.getPetitionFee();
