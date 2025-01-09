@@ -2,13 +2,31 @@
   "BusinessServices": [
     {
       "tenantId": "kl",
-      "business": "hearing",
-      "businessService": "hearing-default",
-      "businessServiceSla": null,
+      "business": "submission", //current=application
+      "businessService": "submission-order-submission-default", //current=application-order-submission-default
+      "businessServiceSla": 86400000,
       "states": [
         {
           "sla": null,
           "state": null,
+          "applicationStatus": null,
+          "docUploadRequired": true,
+          "isStartState": true,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "CREATE",
+              "nextState": "PENDING_E-SIGN", //current=PENDINGSUBMISSION
+              "roles": [
+                "SUBMISSION_CREATOR"
+              ]
+            }
+          ]
+        },
+        {
+          "sla": 86400000,
+          "state": "PENDING_E-SIGN",//current=PENDINGSUBMISSION
           "applicationStatus": null,
           "docUploadRequired": false,
           "isStartState": true,
@@ -16,71 +34,19 @@
           "isStateUpdatable": true,
           "actions": [
             {
-              "action": "CREATE",
-              "nextState": "SCHEDULED",
+              "action": "E-SIGN",//current=ESIGN
+              "nextState": "PENDING_PAYMENT",
               "roles": [
-                "HEARING_CREATOR"
-              ]
-            }
-          ]
-        },
-        {
-          "sla": null,
-          "state": "SCHEDULED",
-          "applicationStatus": "INWORKFLOW",
-          "docUploadRequired": false,
-          "isStartState": false,
-          "isTerminateState": false,
-          "isStateUpdatable": true,
-          "actions": [
-            {
-              "action": "RESCHEDULE",
-              "nextState": "OPT_OUT",
-              "roles": [
-                "HEARING_EDITOR"
-              ]
-            },
-            {
-              "action": "BULK_RESCHEDULE",
-              "nextState": "SCHEDULED",
-              "roles": [
-                "HEARING_SCHEDULER"
-              ]
-            },
-            {
-              "action": "START",
-              "nextState": "IN_PROGRESS",
-              "roles": [
-                "HEARING_EDITOR"
-              ]
-            },
-            {
-              "action": "ABANDON",
-              "nextState": "ABATED",
-              "roles": [
+                "SUBMISSION_CREATOR",
                 "SYSTEM",
                 "SYSTEM_ADMIN"
               ]
-            }
-          ]
-        },
-        {
-          "sla": null,
-          "state": "OPT_OUT",
-          "applicationStatus": "INWORKFLOW",
-          "docUploadRequired": false,
-          "isStartState": false,
-          "isTerminateState": false,
-          "isStateUpdatable": true,
-          "actions": [
+            },
             {
-              "action": "SET_DATE",
-              "nextState": "SCHEDULED",
+              "action": "DELETE",
+              "nextState": "DELETED",
               "roles": [
-                "HEARING_EDITOR",
-                "SYSTEM",
-                "SYSTEM_ADMIN",
-                "AUTO_ESCALATE"
+                "SUBMISSION_CREATOR"
               ]
             },
             {
@@ -95,25 +61,25 @@
         },
         {
           "sla": 86400000,
-          "state": "IN_PROGRESS",
+          "state": "PENDING_PAYMENT", //current=PENDINGPAYMENT
           "applicationStatus": "INWORKFLOW",
           "docUploadRequired": false,
-          "isStartState": false,
+          "isStartState": true,
           "isTerminateState": false,
           "isStateUpdatable": true,
           "actions": [
             {
-              "action": "CLOSE",
-              "nextState": "HEARD",
+              "action": "MAKE_PAYMENT",//current=PAY
+              "nextState": "COMPLETED",
               "roles": [
-                "HEARING_EDITOR"
+                "SYSTEM_ADMIN"
               ]
             },
             {
-              "action": "ADJOURN",
-              "nextState": "ADJOURNED",
+              "action": "DELETE",
+              "nextState": "DELETED",
               "roles": [
-                "HEARING_EDITOR"
+                "SUBMISSION_CREATOR"
               ]
             },
             {
@@ -128,7 +94,7 @@
         },
         {
           "sla": null,
-          "state": "HEARD",
+          "state": "COMPLETED",
           "applicationStatus": "ACTIVE",
           "isStateUpdatable": false,
           "docUploadRequired": false,
@@ -137,8 +103,8 @@
         },
         {
           "sla": null,
-          "state": "ADJOURNED",
-          "applicationStatus": "ACTIVE",
+          "state": "DELETED",
+          "applicationStatus": "INACTIVE",
           "isStateUpdatable": false,
           "docUploadRequired": false,
           "isStartState": false,

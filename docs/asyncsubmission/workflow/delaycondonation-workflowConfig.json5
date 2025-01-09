@@ -2,56 +2,66 @@
   "BusinessServices": [
     {
       "tenantId": "kl",
-      "business": "user-registration",
-      "businessService": "user-registration-advocate",
-      "businessServiceSla": 172800000,
+      "business": "application",
+      "businessService": "delay-condonation-submission",
+      "businessServiceSla": 432000000,
       "states": [
         {
           "sla": null,
           "state": null,
           "applicationStatus": null,
-          "docUploadRequired": true,
+          "docUploadRequired": false,
           "isStartState": true,
           "isTerminateState": false,
           "isStateUpdatable": true,
           "actions": [
             {
-              "action": "REGISTER",
-              "nextState": "VERIFICATION_REQUESTED",
+              "action": "CREATE",
+              "nextState": "PENDING_APPROVAL",//current=PENDINGAPPROVAL
               "roles": [
-                "USER_REGISTER"
+                "SUBMISSION_CREATOR",
+                "APPLICATION_CREATOR"
               ]
             }
           ]
         },
         {
-          "sla": null,
-          "state": "VERIFICATIONREQUESTED",
+          "sla": 259200000,
+          "state": "PENDING_APPROVAL",//current=PENDINGAPPROVAL
           "applicationStatus": "INWORKFLOW",
           "docUploadRequired": false,
           "isStartState": false,
           "isTerminateState": false,
-          "isStateUpdatable": true,
+          "isStateUpdatable": false,
           "actions": [
             {
               "action": "APPROVE",
-              "nextState": "REGISTERED",
+              "nextState": "COMPLETED",
               "roles": [
-                "ADVOCATE_APPROVER"
+                "SUBMISSION_APPROVER"
               ]
             },
             {
               "action": "REJECT",
               "nextState": "REJECTED",
               "roles": [
-                "ADVOCATE_APPROVER"
+                "SUBMISSION_APPROVER"
+              ]
+            },
+            {
+              "action": "ABANDON",
+              "nextState": "ABATED",
+              "roles": [
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+                //current=WORKFLOW_ABANDON
               ]
             }
           ]
         },
         {
-          "sla": 5,
-          "state": "REGISTERED",
+          "sla": null,
+          "state": "COMPLETED",
           "applicationStatus": "ACTIVE",
           "isStateUpdatable": false,
           "docUploadRequired": false,
@@ -59,8 +69,17 @@
           "isTerminateState": true
         },
         {
-          "sla": 5,
+          "sla": null,
           "state": "REJECTED",
+          "applicationStatus": "INACTIVE",
+          "isStateUpdatable": false,
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true
+        },
+        {
+          "sla": null,
+          "state": "ABATED",
           "applicationStatus": "INACTIVE",
           "isStateUpdatable": false,
           "docUploadRequired": false,

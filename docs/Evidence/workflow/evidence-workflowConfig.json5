@@ -2,12 +2,12 @@
   "BusinessServices": [
     {
       "tenantId": "kl",
-      "business": "order",
-      "businessService": "order-default",
-      "businessServiceSla": 432000000,
+      "business": "evidence",
+      "businessService": "evidence-default", //current = artifact-default
+      "businessServiceSla": 518400000,
       "states": [
         {
-          "sla": null,
+          "sla": 172800000,
           "state": null,
           "applicationStatus": null,
           "docUploadRequired": true,
@@ -16,17 +16,17 @@
           "isStateUpdatable": true,
           "actions": [
             {
-              "action": "SAVE_DRAFT",
-              "nextState": "DRAFT_IN_PROGRESS",
+              "action": "SUBMIT_EVIDENCE", //current = TYPE DEPOSITION
+              "nextState": "PENDING_SIGNATURE", //current = PENDINGSIGNATURE
               "roles": [
-                "ORDER_CREATOR"
+                "EVIDENCE_CREATOR" //current = DEPOSITION_CREATOR
               ]
             }
           ]
         },
         {
-          "sla": null,
-          "state": "DRAFT_IN_PROGRESS",
+          "sla": 172800000,
+          "state": "PENDING_SIGNATURE", //current = PENDINGSIGNATURE
           "applicationStatus": "INWORKFLOW",
           "docUploadRequired": true,
           "isStartState": false,
@@ -34,20 +34,10 @@
           "isStateUpdatable": true,
           "actions": [
             {
-              "action": "E-SIGN",
-              "nextState": "PUBLISHED",
+              "action": "E-SIGN", //current=SIGN DEPOSITION
+              "nextState": "PENDING_APPROVAL", //current=PENDINGAPPROVAL
               "roles": [
-                "ORDER_APPROVER",
-                "SYSTEM",
-                "SYSTEM_ADMIN"
-              ]
-            },
-            {
-              "action": "DELETE",
-              "nextState": "DELETED",
-              "roles": [
-                "ORDER_CREATOR",
-                "ORDER_APPROVER"
+                "EVIDENCE_CREATOR" //current=DEPOSITION_ESIGN
               ]
             },
             {
@@ -56,6 +46,34 @@
               "roles": [
                 "SYSTEM",
                 "SYSTEM_ADMIN"
+                //current=WORKFLOW_ABANDON
+              ]
+            }
+          ]
+        },
+        {
+          "sla": 172800000,
+          "state": "PENDING_APPROVAL", //current=
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "E-SIGN", //current=SIGN DEPOSITION
+              "nextState": "PUBLISHED",
+              "roles": [
+                "EVIDENCE_APPROVER" //current=DEPOSITION_PUBLISHER
+              ]
+            },
+            {
+              "action": "ABANDON",
+              "nextState": "ABATED",
+              "roles": [
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+                //current=WORKFLOW_ABANDON
               ]
             }
           ]
@@ -64,15 +82,6 @@
           "sla": null,
           "state": "PUBLISHED",
           "applicationStatus": "ACTIVE",
-          "isStateUpdatable": false,
-          "docUploadRequired": false,
-          "isStartState": false,
-          "isTerminateState": true
-        },
-        {
-          "sla": null,
-          "state": "DELETED",
-          "applicationStatus": "INACTIVE",
           "isStateUpdatable": false,
           "docUploadRequired": false,
           "isStartState": false,

@@ -40,6 +40,7 @@
                 "TASK_CREATOR",
                 "SYSTEM",
                 "SYSTEM_ADMIN"
+                //current= TASK_CREATOR,SYSTEM,CITIZEN,SYSTEM_ADMIN
               ]
             },
             {

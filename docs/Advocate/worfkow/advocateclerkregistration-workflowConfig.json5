@@ -17,16 +17,17 @@
           "actions": [
             {
               "action": "REGISTER",
-              "nextState": "VERIFICATION_REQUESTED",
+              "nextState": "VERIFICATION_REQUESTED",//current = VERIFICATIONREQUESTED
               "roles": [
                 "USER_REGISTER"
+                //current = CITIZEN, EMPLOYEE
               ]
             }
           ]
         },
         {
           "sla": null,
-          "state": "VERIFICATION_REQUESTED",
+          "state": "VERIFICATION_REQUESTED",//current = VERIFICATIONREQUESTED
           "applicationStatus": "INWORKFLOW",
           "docUploadRequired": false,
           "isStartState": false,
