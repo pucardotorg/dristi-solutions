@@ -972,12 +972,7 @@ function EFilingCases({ path }) {
                 body.withoutLabelFieldPair = false;
               }
               if (selected === "delayApplications") {
-                if (
-                  caseDetails?.caseDetails?.["demandNoticeDetails"]?.formdata?.some(
-                    (data) => new Date(data?.data?.dateOfAccrual).getTime() + 31 * 24 * 60 * 60 * 1000 < new Date().getTime()
-                  ) &&
-                  body?.key === "delayCondonationType"
-                ) {
+                if (isDelayCondonation && body?.key === "delayCondonationType") {
                   body.disable = true;
                 }
               }
