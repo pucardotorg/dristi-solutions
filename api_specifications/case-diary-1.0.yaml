@@ -336,7 +336,7 @@ components:
           description: EPOCH date (time is 00:00:00) when the entry was created. All diary operations are only with date, and we don't need time. Setting time to 0, helps compare two values for same date.
         caseId:
           type: string
-          description: UUID of the case for which the entry is being made
+          description: CMP/ST number of the case for which the entry is being made
         judgeId:
           type: string
           description: ID is the Judge for whom this diary entry is being made
