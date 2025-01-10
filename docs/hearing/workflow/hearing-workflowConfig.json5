@@ -78,11 +78,11 @@
               "action": "SET_DATE",
               "nextState": "SCHEDULED",
               "roles": [
-                "HEARING_EDITOR", //Court room manager don't have this role
+                "HEARING_EDITOR",
                 "SYSTEM",
                 "SYSTEM_ADMIN",
-                "AUTO_ESCALATE"
-                //current = HEARING_APPROVER
+                "AUTO_ESCALATE",
+                "HEARING_APPROVER"
               ]
             },
             {

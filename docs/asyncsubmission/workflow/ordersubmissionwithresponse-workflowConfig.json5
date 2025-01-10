@@ -37,10 +37,10 @@
               "action": "E-SIGN",
               "nextState": "PENDING_PAYMENT",
               "roles": [
-                "SUBMISSION_CREATOR",
+                "SUBMISSION_CREATOR",//to be reviewed
+                "SUBMISSION_RESPONDER",
                 "SYSTEM",
                 "SYSTEM_ADMIN"
-                //current=SUBMISSION_RESPONDER
               ]
             },
             {
