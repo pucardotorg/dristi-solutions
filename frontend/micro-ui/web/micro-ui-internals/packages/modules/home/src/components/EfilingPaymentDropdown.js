@@ -81,7 +81,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
       return 0;
     }
     const today = new Date();
-    const dateOfAccrual = new Date(caseDetails?.caseDetails["demandNoticeDetails"]?.formdata[0]?.data?.dateOfAccrual);
+    const dateOfAccrual = new Date(caseDetails?.caseDetails?.["demandNoticeDetails"]?.formdata[0]?.data?.dateOfAccrual);
     return today?.getTime() - dateOfAccrual?.getTime();
   }, [caseDetails]);
   // check for partial Liability
