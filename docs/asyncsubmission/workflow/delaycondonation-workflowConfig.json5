@@ -17,7 +17,7 @@
           "actions": [
             {
               "action": "CREATE",
-              "nextState": "PENDING_APPROVAL",//current=PENDINGAPPROVAL
+              "nextState": "PENDING_APPROVAL",
               "roles": [
                 "SUBMISSION_CREATOR",
                 "APPLICATION_CREATOR"
@@ -27,7 +27,7 @@
         },
         {
           "sla": 259200000,
-          "state": "PENDING_APPROVAL",//current=PENDINGAPPROVAL
+          "state": "PENDING_APPROVAL",
           "applicationStatus": "INWORKFLOW",
           "docUploadRequired": false,
           "isStartState": false,
@@ -53,8 +53,8 @@
               "nextState": "ABATED",
               "roles": [
                 "SYSTEM",
-                "SYSTEM_ADMIN"
-                //current=WORKFLOW_ABANDON //check with ui
+                "SYSTEM_ADMIN",
+                "WORKFLOW_ABANDON"
               ]
             }
           ]

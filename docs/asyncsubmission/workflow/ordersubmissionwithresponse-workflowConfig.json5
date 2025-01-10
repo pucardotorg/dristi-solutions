@@ -3,7 +3,7 @@
     {
       "tenantId": "kl",
       "business": "submission", //current=application
-      "businessService": "submission-order-submission-feedback", //current=application-order-submission-feedback
+      "businessService": "submission-order-submission-feedback", //current=application-order-submission-feedback //To be changed later
       "businessServiceSla": 345600000,
       "states": [
         {
@@ -17,7 +17,7 @@
           "actions": [
             {
               "action": "CREATE",
-              "nextState": "PENDING_E-SIGN", //current=PENDINGSUBMISSION
+              "nextState": "PENDING_E-SIGN",
               "roles": [
                 "SUBMISSION_CREATOR"
               ]
@@ -26,7 +26,7 @@
         },
         {
           "sla": 86400000,
-          "state": "PENDING_E-SIGN", //current=PENDINGSUBMISSION
+          "state": "PENDING_E-SIGN",
           "applicationStatus": "INWORKFLOW",
           "docUploadRequired": false,
           "isStartState": false,
@@ -34,8 +34,8 @@
           "isStateUpdatable": true,
           "actions": [
             {
-              "action": "E-SIGN",//current=ESIGN
-              "nextState": "PENDING_PAYMENT",//current=PENDINGPAYMENT
+              "action": "E-SIGN",
+              "nextState": "PENDING_PAYMENT",
               "roles": [
                 "SUBMISSION_CREATOR",
                 "SYSTEM",
@@ -47,8 +47,7 @@
               "action": "DELETE",
               "nextState": "DELETED",
               "roles": [
-                "SUBMISSION_CREATOR"
-                //current=SUBMISSION_DELETE
+                "SUBMISSION_DELETE"
               ]
             },
             {
@@ -56,23 +55,15 @@
               "nextState": "ABATED",
               "roles": [
                 "SYSTEM",
-                "SYSTEM_ADMIN"
-                //current=WORKFLOW_ABANDON
-              ]
-            },
-            //to be reviwed
-            {
-              "action": "DELAY",
-              "nextState": "REQUESTDELAY",
-              "roles": [
-                "SUBMISSION_RESPONDER"
+                "SYSTEM_ADMIN",
+                "WORKFLOW_ABANDON"
               ]
             }
           ]
         },
         {
           "sla": null,
-          "state": "PENDING_PAYMENT", //current=PENDINGPAYMENT
+          "state": "PENDING_PAYMENT",
           "applicationStatus": "INWORKFLOW",
           "docUploadRequired": false,
           "isStartState": true,
@@ -80,8 +71,8 @@
           "isStateUpdatable": true,
           "actions": [
             {
-              "action": "MAKE_PAYMENT",//current=PAY
-              "nextState": "PENDING_RESPONSE",//current=PENDINGRESPONSE
+              "action": "MAKE_PAYMENT",
+              "nextState": "PENDING_RESPONSE",
               "roles": [
                 "SYSTEM",
                 "SYSTEM_ADMIN"
@@ -92,46 +83,6 @@
               "nextState": "DELETED",
               "roles": [
                 "SUBMISSION_DELETE"
-              ]
-            }
-          ]
-        },
-        //to be reviewed
-        {
-          "sla": 10,
-          "state": "REQUESTDELAY",
-          "applicationStatus": "INWORKFLOW",
-          "docUploadRequired": false,
-          "isStartState": false,
-          "isTerminateState": false,
-          "isStateUpdatable": false,
-          "actions": [
-            {
-              "action": "REJECT",
-              "nextState": "PENDINGSUBMISSION",
-              "roles": [
-                "SUBMISSION_APPROVER"
-              ]
-            },
-            {
-              "action": "APPROVE",
-              "nextState": "PENDINGSUBMISSION",
-              "roles": [
-                "SUBMISSION_APPROVER"
-              ]
-            },
-            {
-              "action": "DELETE",
-              "nextState": "DELETED",
-              "roles": [
-                "SUBMISSION_DELETE"
-              ]
-            },
-            {
-              "action": "ABANDON",
-              "nextState": "ABATED",
-              "roles": [
-                "WORKFLOW_ABANDON"
               ]
             }
           ]
@@ -163,21 +114,13 @@
                 "SUBMISSION_DELETE"
               ]
             },
-            //to be reviwed
-            {
-              "action": "AUTOESCALATE",
-              "nextState": "COMPLETED",
-              "roles": [
-                "WORKFLOW_AUTOAPPROVE"
-              ]
-            },
             {
               "action": "ABANDON",
               "nextState": "ABATED",
               "roles": [
                 "SYSTEM",
-                "SYSTEM_ADMIN"
-                //current=WORKFLOW_ABANDON
+                "SYSTEM_ADMIN",
+                "WORKFLOW_ABANDON"
               ]
             }
           ]

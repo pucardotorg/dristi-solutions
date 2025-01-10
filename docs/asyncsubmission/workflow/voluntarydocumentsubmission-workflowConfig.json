@@ -54,7 +54,8 @@
               "nextState": "ABATED",
               "roles": [
                 "SYSTEM",
-                "SYSTEM_ADMIN"
+                "SYSTEM_ADMIN",
+                "WORKFLOW_ABANDON"
               ]
             }
           ]

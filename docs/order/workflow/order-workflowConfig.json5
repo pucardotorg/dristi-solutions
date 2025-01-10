@@ -40,16 +40,13 @@
                 "ORDER_APPROVER",
                 "SYSTEM",
                 "SYSTEM_ADMIN"
-                //current=ORDER_APPROVER
               ]
             },
             {
               "action": "DELETE",
               "nextState": "DELETED",
               "roles": [
-                "ORDER_CREATOR",
-                "ORDER_APPROVER" //need to check
-                //current=ORDER_DELETE
+                "ORDER_DELETE"
               ]
             },
             {
@@ -57,8 +54,8 @@
               "nextState": "ABATED",
               "roles": [
                 "SYSTEM",
-                "SYSTEM_ADMIN"
-                //current=WORKFLOW_ABANDON
+                "SYSTEM_ADMIN",
+                "WORKFLOW_ABANDON"
               ]
             }
           ]

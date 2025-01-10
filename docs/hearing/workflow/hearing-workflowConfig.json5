@@ -59,8 +59,8 @@
               "nextState": "ABATED",
               "roles": [
                 "SYSTEM",
-                "SYSTEM_ADMIN"
-                //current=WORKFLOW_ABANDON
+                "SYSTEM_ADMIN",
+                "WORKFLOW_ABANDON"
               ]
             }
           ]
@@ -78,11 +78,11 @@
               "action": "SET_DATE",
               "nextState": "SCHEDULED",
               "roles": [
-                "HEARING_EDITOR", //check who has this role judge , empployees
+                "HEARING_EDITOR", //Court room manager don't have this role
                 "SYSTEM",
                 "SYSTEM_ADMIN",
                 "AUTO_ESCALATE"
-                //current = HEARING_APPROVER, AUTO_ESCALATE
+                //current = HEARING_APPROVER
               ]
             },
             {
@@ -90,8 +90,8 @@
               "nextState": "ABATED",
               "roles": [
                 "SYSTEM",
-                "SYSTEM_ADMIN"
-                //current=WORKFLOW_ABANDON
+                "SYSTEM_ADMIN",
+                "WORKFLOW_ABANDON"
               ]
             }
           ]
@@ -125,8 +125,8 @@
               "nextState": "ABATED",
               "roles": [
                 "SYSTEM",
-                "SYSTEM_ADMIN"
-                //current = WORKFLOW_ABANDON
+                "SYSTEM_ADMIN",
+                "WORKFLOW_ABANDON"
               ]
             }
           ]

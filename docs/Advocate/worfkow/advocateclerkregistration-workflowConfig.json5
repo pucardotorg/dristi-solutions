@@ -17,7 +17,7 @@
           "actions": [
             {
               "action": "REGISTER",
-              "nextState": "VERIFICATION_REQUESTED",//current = VERIFICATIONREQUESTED
+              "nextState": "VERIFICATION_REQUESTED",
               "roles": [
                 "CITIZEN",
                 "EMPLOYEE"
@@ -27,7 +27,7 @@
         },
         {
           "sla": null,
-          "state": "VERIFICATION_REQUESTED",//current = VERIFICATIONREQUESTED
+          "state": "VERIFICATION_REQUESTED",
           "applicationStatus": "INWORKFLOW",
           "docUploadRequired": false,
           "isStartState": false,
