@@ -78,7 +78,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
       dcaData?.delayCondonationType?.code === "YES" ||
       (dcaData?.delayCondonationType?.code === "NO" && dcaData?.isDcaSkippedInEFiling?.code === "YES")
     ) {
-      return null;
+      return 0;
     }
     const today = new Date();
     const dateOfAccrual = new Date(caseDetails?.caseDetails["demandNoticeDetails"]?.formdata[0]?.data?.dateOfAccrual);
