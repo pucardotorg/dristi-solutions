@@ -46,7 +46,7 @@
               "action": "DELETE",
               "nextState": "DELETED",
               "roles": [
-                "SUBMISSION_CREATOR"
+                "SUBMISSION_DELETE"
               ]
             },
             {
@@ -80,7 +80,7 @@
               "action": "DELETE",
               "nextState": "DELETED",
               "roles": [
-                "SUBMISSION_CREATOR"
+                "SUBMISSION_DELETE"
               ]
             },
             {
