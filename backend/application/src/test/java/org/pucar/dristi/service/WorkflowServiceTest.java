@@ -22,6 +22,7 @@ import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.util.UserUtil;
 import org.pucar.dristi.web.models.*;
 
+import static org.pucar.dristi.config.ServiceConstants.*;
 
 import java.util.Collections;
 import java.util.List;
@@ -255,7 +256,7 @@ public class WorkflowServiceTest {
         assertEquals("Payment for Application processed", processInstance.getComment());
         assertEquals(businessName, processInstance.getModuleName());
         assertEquals(tenantId, processInstance.getTenantId());
-        assertEquals("PAY", processInstance.getAction());
+        assertEquals(MAKE_PAYMENT, processInstance.getAction());
     }
 
     @Test

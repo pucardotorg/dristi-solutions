@@ -183,7 +183,7 @@ public class WorkflowService {
                 .comment("Payment for Application processed")
                 .moduleName(businessName) // Use the retrieved business name
                 .tenantId(tenantId)
-                .action("PAY")
+                .action(MAKE_PAYMENT)
                 .build();
 
         return ProcessInstanceRequest.builder()
