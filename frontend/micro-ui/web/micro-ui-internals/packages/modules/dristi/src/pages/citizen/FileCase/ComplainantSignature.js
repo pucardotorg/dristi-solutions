@@ -330,7 +330,7 @@ const ComplainantSignature = ({ path }) => {
   const delayCondonation = useMemo(() => {
     const today = new Date();
     if (!caseDetails?.caseDetails?.["demandNoticeDetails"]?.formdata) {
-      return null;
+      return 0;
     }
     const dateOfAccrual = new Date(caseDetails?.caseDetails["demandNoticeDetails"]?.formdata[0]?.data?.dateOfAccrual);
     return today?.getTime() - dateOfAccrual?.getTime();
