@@ -31,10 +31,11 @@ const Modal = ({
   cancelButtonBody,
   popUpStyleMain = {},
   actionCancelStyle,
-  actionCustomStyle,
+  customActionStyle,
+  customActionTextStyle,
+  customActionTextClassName,
   actionCancelTextStyle,
-  customTextClassName,
-  cancelTextClassName
+  cancelTextClassName,
 }) => {
   /**
    * TODO: It needs to be done from the desgin changes
@@ -77,18 +78,18 @@ const Modal = ({
             )}
             {actionCustomLabel ? (
               <ButtonSelector
-                textStyles={textStyle}
+                textStyles={{ margin: "0px", ...(customActionTextStyle ? customActionTextStyle : {}) }}
                 label={actionCustomLabel}
                 onSubmit={actionCustomLabelSubmit}
                 formId={formId}
                 isDisabled={isDisabled}
-                style={actionCustomStyle}
-                textClassName={customTextClassName}
+                style={customActionStyle}
+                textClassName={customActionTextClassName}
               />
             ) : null}
             {actionSaveLabel && !hideSubmit ? (
               <ButtonSelector
-                textStyles={textStyle}
+                textStyles={{ margin: "0px", ...(textStyle ? textStyle : {}) }}
                 label={actionSaveLabel}
                 onSubmit={actionSaveOnSubmit}
                 formId={formId}
