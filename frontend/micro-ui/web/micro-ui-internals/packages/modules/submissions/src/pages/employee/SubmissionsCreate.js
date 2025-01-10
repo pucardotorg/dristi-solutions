@@ -893,6 +893,7 @@ const SubmissionsCreate = ({ path }) => {
             };
             doc.submissionDocuments.uploadedDocs = [file];
           } catch (error) {
+            setLoader(false);
             console.error("Error combining or uploading documents for index:", index, error);
             throw new Error("Failed to combine and update uploaded documents.");
           }
