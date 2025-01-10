@@ -37,7 +37,7 @@
               "action": "E-SIGN", //current=SIGN DEPOSITION
               "nextState": "PENDING_APPROVAL", //current=PENDINGAPPROVAL
               "roles": [
-                "EVIDENCE_CREATOR" //current=DEPOSITION_ESIGN
+                "EVIDENCE_EDITOR" //current=DEPOSITION_ESIGN
               ]
             },
             {
@@ -53,7 +53,7 @@
         },
         {
           "sla": 172800000,
-          "state": "PENDING_APPROVAL", //current=
+          "state": "PENDING_APPROVAL", //current=PENDINGAPPROVAL
           "applicationStatus": "INWORKFLOW",
           "docUploadRequired": false,
           "isStartState": false,

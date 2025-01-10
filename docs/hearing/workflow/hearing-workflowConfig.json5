@@ -78,7 +78,7 @@
               "action": "SET_DATE",
               "nextState": "SCHEDULED",
               "roles": [
-                "HEARING_EDITOR",
+                "HEARING_EDITOR", //check who has this role judge , empployees
                 "SYSTEM",
                 "SYSTEM_ADMIN",
                 "AUTO_ESCALATE"
@@ -133,7 +133,7 @@
         },
         {
           "sla": null,
-          "state": "HEARD",//current=COMPLETED
+          "state": "HEARD",//current=COMPLETED  //to be reviewed by atul
           "applicationStatus": "ACTIVE",
           "isStateUpdatable": false,
           "docUploadRequired": false,

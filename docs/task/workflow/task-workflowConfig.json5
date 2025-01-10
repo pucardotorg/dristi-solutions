@@ -20,9 +20,9 @@
               "nextState": "IN_PROGRESS",
               "roles": [
                 "TASK_CREATOR",
+                "PENDING_TASK_CREATOR",
                 "SYSTEM",
                 "SYSTEM_ADMIN"
-                //current=TASK_CREATOR,PENDING_TASK_CREATOR
               ]
             }
           ]
@@ -43,7 +43,6 @@
                 "TASK_EDITOR",
                 "SYSTEM",
                 "SYSTEM_ADMIN"
-                //current=TASK_EDITOR
               ]
             },
             {

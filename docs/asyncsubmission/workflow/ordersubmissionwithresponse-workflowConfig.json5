@@ -59,6 +59,14 @@
                 "SYSTEM_ADMIN"
                 //current=WORKFLOW_ABANDON
               ]
+            },
+            //to be reviwed
+            {
+              "action": "DELAY",
+              "nextState": "REQUESTDELAY",
+              "roles": [
+                "SUBMISSION_RESPONDER"
+              ]
             }
           ]
         },
@@ -75,6 +83,7 @@
               "action": "MAKE_PAYMENT",//current=PAY
               "nextState": "PENDING_RESPONSE",//current=PENDINGRESPONSE
               "roles": [
+                "SYSTEM",
                 "SYSTEM_ADMIN"
               ]
             },
@@ -83,6 +92,46 @@
               "nextState": "DELETED",
               "roles": [
                 "SUBMISSION_DELETE"
+              ]
+            }
+          ]
+        },
+        //to be reviewed
+        {
+          "sla": 10,
+          "state": "REQUESTDELAY",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": false,
+          "actions": [
+            {
+              "action": "REJECT",
+              "nextState": "PENDINGSUBMISSION",
+              "roles": [
+                "SUBMISSION_APPROVER"
+              ]
+            },
+            {
+              "action": "APPROVE",
+              "nextState": "PENDINGSUBMISSION",
+              "roles": [
+                "SUBMISSION_APPROVER"
+              ]
+            },
+            {
+              "action": "DELETE",
+              "nextState": "DELETED",
+              "roles": [
+                "SUBMISSION_DELETE"
+              ]
+            },
+            {
+              "action": "ABANDON",
+              "nextState": "ABATED",
+              "roles": [
+                "WORKFLOW_ABANDON"
               ]
             }
           ]
@@ -103,16 +152,23 @@
                 "SUBMISSION_EDITOR",
                 "SYSTEM",
                 "SYSTEM_ADMIN",
-                "AUTO_ESCALATE"
-                //current=SUBMISSION_RESPONDER
+                "AUTO_ESCALATE",
+                "SUBMISSION_RESPONDER"//To be removed/reviewed later
               ]
             },
             {
               "action": "DELETE",
               "nextState": "DELETED",
               "roles": [
-                "SUBMISSION_CREATOR"
-                //current=SUBMISSION_DELETE
+                "SUBMISSION_DELETE"
+              ]
+            },
+            //to be reviwed
+            {
+              "action": "AUTOESCALATE",
+              "nextState": "COMPLETED",
+              "roles": [
+                "WORKFLOW_AUTOAPPROVE"
               ]
             },
             {

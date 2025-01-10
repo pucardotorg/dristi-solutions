@@ -19,8 +19,8 @@
               "action": "REGISTER",
               "nextState": "VERIFICATION_REQUESTED",//current = VERIFICATIONREQUESTED
               "roles": [
-                "USER_REGISTER"
-                //current = CITIZEN, EMPLOYEE
+                "CITIZEN",
+                "EMPLOYEE"
               ]
             }
           ]

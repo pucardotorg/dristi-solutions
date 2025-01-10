@@ -54,7 +54,7 @@
               "roles": [
                 "SYSTEM",
                 "SYSTEM_ADMIN"
-                //current=WORKFLOW_ABANDON
+                //current=WORKFLOW_ABANDON //check with ui
               ]
             }
           ]

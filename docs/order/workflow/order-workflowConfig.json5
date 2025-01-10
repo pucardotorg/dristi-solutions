@@ -48,7 +48,7 @@
               "nextState": "DELETED",
               "roles": [
                 "ORDER_CREATOR",
-                "ORDER_APPROVER"
+                "ORDER_APPROVER" //need to check
                 //current=ORDER_DELETE
               ]
             },

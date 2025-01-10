@@ -39,16 +39,15 @@
               "roles": [
                 "SUBMISSION_CREATOR",
                 "SYSTEM",
-                "SYSTEM_ADMIN"
-                //current=SUBMISSION_RESPONDER
+                "SYSTEM_ADMIN",
+                "SUBMISSION_RESPONDER"//to be reviewed
               ]
             },
             {
               "action": "DELETE",
               "nextState": "DELETED",
               "roles": [
-                "SUBMISSION_CREATOR"
-                //current=SUBMISSION_DELETE
+                "SUBMISSION_DELETE"
               ]
             }
           ]
@@ -66,18 +65,15 @@
               "action": "MAKE_PAYMENT",//current=PAY
               "nextState": "PENDING_REVIEW",//current=PENDINGREVIEW
               "roles": [
-                "SUBMISSION_CREATOR",
                 "SYSTEM",
                 "SYSTEM_ADMIN"
-                //current=SYSTEM_ADMIN
               ]
             },
             {
               "action": "DELETE",
               "nextState": "DELETED",
               "roles": [
-                "SUBMISSION_CREATOR"
-                //current=SUBMISSION_DELETE
+                "SUBMISSION_DELETE"
               ]
             }
           ]
@@ -100,6 +96,14 @@
                 //current=WORKFLOW_ABANDON
               ]
             },
+            //to be reviewed
+            {
+              "action": "AUTOESCALATE",
+              "nextState": "PENDINGAPPROVAL",
+              "roles": [
+                "WORKFLOW_AUTOAPPROVE"
+              ]
+            },
             {
               "action": "RESPOND",
               "nextState": "PENDING_APPROVAL",//current=PENDINGAPPROVAL
@@ -118,8 +122,7 @@
               "action": "DELETE",
               "nextState": "DELETED",
               "roles": [
-                "SUBMISSION_CREATOR"
-                //current=SUBMISSION_DELETE
+                "SUBMISSION_DELETE"
               ]
             },
             {
@@ -151,8 +154,7 @@
               "action": "DELETE",
               "nextState": "DELETED",
               "roles": [
-                "SUBMISSION_CREATOR"
-                //current=SUBMISSION_DELETE
+                "SUBMISSION_DELETE"
               ]
             },
             {
