@@ -204,7 +204,7 @@ function PublishedOrderModal({
           {t("DOWNLOAD_ORDER_LINK")}
         </div>
         <div style={{ display: "flex", width: "50%", gap: "20px", justifyContent: "end" }}>
-          {true && (
+          {showExtensionButton && (
             <Button
               variation="secondary"
               onButtonClick={() => {
