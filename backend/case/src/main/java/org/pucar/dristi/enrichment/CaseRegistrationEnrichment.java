@@ -175,7 +175,7 @@ public class CaseRegistrationEnrichment {
 
         enrichRepresentativesOnCreateAndUpdate(courtCase, auditDetails);
 
-        enrichCaseRegistrationFillingDate(courtCase);
+//        enrichCaseRegistrationFillingDate(courtCase);
 
         if (courtCase.getDocuments() != null) {
             List<Document> documentsListToCreate = courtCase.getDocuments().stream().filter(document -> document.getId() == null).toList();
