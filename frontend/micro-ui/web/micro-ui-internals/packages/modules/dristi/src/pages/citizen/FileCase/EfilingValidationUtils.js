@@ -81,11 +81,12 @@ export const validateDateForDelayApplication = ({
   history,
   caseId,
   setShowConfirmDcaSkipModal,
-  showConfirmDcaSkipModal,
   shouldShowConfirmDcaModal,
   setShouldShowConfirmDcaModal,
   prevIsDcaSkipped,
   setPrevIsDcaSkipped,
+  isDcaPageRefreshed,
+  setIsDcaPageRefreshed,
 }) => {
   if (selected === "delayApplications") {
     if (
@@ -102,6 +103,11 @@ export const validateDateForDelayApplication = ({
       setShowConfirmDcaSkipModal(true);
       setShouldShowConfirmDcaModal(false);
       setPrevIsDcaSkipped("YES");
+    } else if (prevIsDcaSkipped === "NO" && !shouldShowConfirmDcaModal && formData?.isDcaSkippedInEFiling?.code === "YES" && isDcaPageRefreshed) {
+      setShowConfirmDcaSkipModal(true);
+      setShouldShowConfirmDcaModal(false);
+      setPrevIsDcaSkipped("YES");
+      setIsDcaPageRefreshed(false);
     }
     if (formData?.isDcaSkippedInEFiling?.code === "NO") {
       setShowConfirmDcaSkipModal(false);
@@ -2311,7 +2317,6 @@ export const updateCaseDetails = async ({
         data?.additionalDetails?.respondentDetails?.formdata?.[0]?.data || caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data
       )}`
     : caseDetails?.caseTitle;
-
   setErrorCaseDetails({
     ...caseDetails,
     documents: tempDocList,
