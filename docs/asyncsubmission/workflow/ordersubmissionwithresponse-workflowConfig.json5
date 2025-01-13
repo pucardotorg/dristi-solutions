@@ -2,125 +2,31 @@
   "BusinessServices": [
     {
       "tenantId": "kl",
-      "business": "task",
-      "businessService": "task-notice",
-      "businessServiceSla": 4320000000,
+      "business": "submission", //current=application
+      "businessService": "submission-order-submission-feedback", //current=application-order-submission-feedback //To be changed later
+      "businessServiceSla": 345600000,
       "states": [
         {
           "sla": null,
           "state": null,
           "applicationStatus": null,
-          "docUploadRequired": true,
+          "docUploadRequired": false,
           "isStartState": true,
           "isTerminateState": false,
           "isStateUpdatable": true,
           "actions": [
             {
               "action": "CREATE",
-              "nextState": "PENDING_PAYMENT",
+              "nextState": "PENDING_E-SIGN",
               "roles": [
-                "TASK_CREATOR"
-              ]
-            }
-          ]
-        },
-        {
-          "sla": 172800000,
-          "state": "PENDING_PAYMENT",
-          "applicationStatus": "INWORKFLOW",
-          "docUploadRequired": true,
-          "isStartState": false,
-          "isTerminateState": false,
-          "isStateUpdatable": true,
-          "actions": [
-            {
-              "action": "MAKE_PAYMENT",
-              "nextState": "ISSUE_NOTICE",
-              "roles": [
-                "TASK_CREATOR",
-                "SYSTEM",
-                "SYSTEM_ADMIN"
-              ]
-            },
-            {
-              "action": "ABANDON",
-              "nextState": "ABATED",
-              "roles": [
-                "SYSTEM",
-                "SYSTEM_ADMIN"
-              ]
-            }
-          ]
-        },
-        {
-          "sla": 172800000,
-          "state": "ISSUE_NOTICE",
-          "applicationStatus": "INWORKFLOW",
-          "docUploadRequired": false,
-          "isStartState": false,
-          "isTerminateState": false,
-          "isStateUpdatable": true,
-          "actions": [
-            {
-              "action": "SEND",
-              "nextState": "NOTICE_SENT",
-              "roles": [
-                "TASK_EDITOR",
-                "SYSTEM",
-                "SYSTEM_ADMIN"
-              ]
-            },
-            {
-              "action": "ABANDON",
-              "nextState": "ABATED",
-              "roles": [
-                "SYSTEM",
-                "SYSTEM_ADMIN"
-              ]
-            }
-          ]
-        },
-        {
-          "sla": 3888000000,
-          "state": "NOTICE_SENT",
-          "applicationStatus": "INWORKFLOW",
-          "docUploadRequired": false,
-          "isStartState": false,
-          "isTerminateState": false,
-          "isStateUpdatable": true,
-          "actions": [
-            {
-              "action": "SERVED",
-              "nextState": "DELIVERED",
-              "roles": [
-                "TASK_EDITOR",
-                "SYSTEM",
-                "SYSTEM_ADMIN"
-              ]
-            },
-            {
-              "action": "NOT_SERVED",
-              "nextState": "RE_ISSUE",
-              "roles": [
-                "TASK_EDITOR",
-                "SYSTEM",
-                "SYSTEM_ADMIN",
-                "AUTO_ESCALATE"
-              ]
-            },
-            {
-              "action": "ABANDON",
-              "nextState": "ABATED",
-              "roles": [
-                "SYSTEM",
-                "SYSTEM_ADMIN"
+                "SUBMISSION_CREATOR"
               ]
             }
           ]
         },
         {
           "sla": 86400000,
-          "state": "RE_ISSUE",
+          "state": "PENDING_E-SIGN",
           "applicationStatus": "INWORKFLOW",
           "docUploadRequired": false,
           "isStartState": false,
@@ -128,20 +34,100 @@
           "isStateUpdatable": true,
           "actions": [
             {
-              "action": "NEW_NOTICE",
-              "nextState": "UNDELIVERED",
+              "action": "E-SIGN",
+              "nextState": "PENDING_PAYMENT",
               "roles": [
-                "TASK_CREATOR",
-                "TASK_EDITOR",
+                "SUBMISSION_CREATOR",//to be reviewed
+                "SUBMISSION_RESPONDER",
                 "SYSTEM",
                 "SYSTEM_ADMIN"
+              ]
+            },
+            {
+              "action": "DELETE",
+              "nextState": "DELETED",
+              "roles": [
+                "SUBMISSION_DELETE"
+              ]
+            },
+            {
+              "action": "ABANDON",
+              "nextState": "ABATED",
+              "roles": [
+                "SYSTEM",
+                "SYSTEM_ADMIN",
+                "WORKFLOW_ABANDON"
               ]
             }
           ]
         },
         {
           "sla": null,
-          "state": "DELIVERED",
+          "state": "PENDING_PAYMENT",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": false,
+          "isStartState": true,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "MAKE_PAYMENT",
+              "nextState": "PENDING_RESPONSE",
+              "roles": [
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            },
+            {
+              "action": "DELETE",
+              "nextState": "DELETED",
+              "roles": [
+                "SUBMISSION_DELETE"
+              ]
+            }
+          ]
+        },
+        {
+          "sla": 259200000,
+          "state": "PENDING_RESPONSE",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "RESPOND",
+              "nextState": "COMPLETED",
+              "roles": [
+                "SUBMISSION_EDITOR",
+                "SYSTEM",
+                "SYSTEM_ADMIN",
+                "AUTO_ESCALATE",
+                "SUBMISSION_RESPONDER"//To be removed/reviewed later
+              ]
+            },
+            {
+              "action": "DELETE",
+              "nextState": "DELETED",
+              "roles": [
+                "SUBMISSION_DELETE"
+              ]
+            },
+            {
+              "action": "ABANDON",
+              "nextState": "ABATED",
+              "roles": [
+                "SYSTEM",
+                "SYSTEM_ADMIN",
+                "WORKFLOW_ABANDON"
+              ]
+            }
+          ]
+        },
+        {
+          "sla": null,
+          "state": "COMPLETED",
           "applicationStatus": "ACTIVE",
           "isStateUpdatable": false,
           "docUploadRequired": false,
@@ -150,7 +136,7 @@
         },
         {
           "sla": null,
-          "state": "UNDELIVERED",
+          "state": "DELETED",
           "applicationStatus": "INACTIVE",
           "isStateUpdatable": false,
           "docUploadRequired": false,

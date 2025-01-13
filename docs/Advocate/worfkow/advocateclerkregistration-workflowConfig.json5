@@ -2,9 +2,9 @@
   "BusinessServices": [
     {
       "tenantId": "kl",
-      "business": "order",
-      "businessService": "order-default",
-      "businessServiceSla": 432000000,
+      "business": "user-registration",
+      "businessService": "user-registration-advocate-clerk",
+      "businessServiceSla": 172800000,
       "states": [
         {
           "sla": null,
@@ -16,53 +16,43 @@
           "isStateUpdatable": true,
           "actions": [
             {
-              "action": "SAVE_DRAFT",
-              "nextState": "DRAFT_IN_PROGRESS",
+              "action": "REGISTER",
+              "nextState": "VERIFICATION_REQUESTED",
               "roles": [
-                "ORDER_CREATOR"
+                "CITIZEN",
+                "EMPLOYEE"
               ]
             }
           ]
         },
         {
           "sla": null,
-          "state": "DRAFT_IN_PROGRESS",
+          "state": "VERIFICATION_REQUESTED",
           "applicationStatus": "INWORKFLOW",
-          "docUploadRequired": true,
+          "docUploadRequired": false,
           "isStartState": false,
           "isTerminateState": false,
           "isStateUpdatable": true,
           "actions": [
             {
-              "action": "E-SIGN",
-              "nextState": "PUBLISHED",
+              "action": "APPROVE",
+              "nextState": "REGISTERED",
               "roles": [
-                "ORDER_APPROVER",
-                "SYSTEM",
-                "SYSTEM_ADMIN"
+                "ADVOCATE_CLERK_APPROVER"
               ]
             },
             {
-              "action": "DELETE",
-              "nextState": "DELETED",
+              "action": "REJECT",
+              "nextState": "REJECTED",
               "roles": [
-                "ORDER_CREATOR",
-                "ORDER_APPROVER"
-              ]
-            },
-            {
-              "action": "ABANDON",
-              "nextState": "ABATED",
-              "roles": [
-                "SYSTEM",
-                "SYSTEM_ADMIN"
+                "ADVOCATE_CLERK_APPROVER"
               ]
             }
           ]
         },
         {
-          "sla": null,
-          "state": "PUBLISHED",
+          "sla": 5,
+          "state": "REGISTERED",
           "applicationStatus": "ACTIVE",
           "isStateUpdatable": false,
           "docUploadRequired": false,
@@ -70,17 +60,8 @@
           "isTerminateState": true
         },
         {
-          "sla": null,
-          "state": "DELETED",
-          "applicationStatus": "INACTIVE",
-          "isStateUpdatable": false,
-          "docUploadRequired": false,
-          "isStartState": false,
-          "isTerminateState": true
-        },
-        {
-          "sla": null,
-          "state": "ABATED",
+          "sla": 5,
+          "state": "REJECTED",
           "applicationStatus": "INACTIVE",
           "isStateUpdatable": false,
           "docUploadRequired": false,

@@ -2,31 +2,31 @@
   "BusinessServices": [
     {
       "tenantId": "kl",
-      "business": "task",
-      "businessService": "task-bail",
-      "businessServiceSla": 518400000,
+      "business": "hearing",
+      "businessService": "hearing-default",
+      "businessServiceSla": null,
       "states": [
         {
           "sla": null,
           "state": null,
           "applicationStatus": null,
-          "docUploadRequired": true,
+          "docUploadRequired": false,
           "isStartState": true,
           "isTerminateState": false,
           "isStateUpdatable": true,
           "actions": [
             {
               "action": "CREATE",
-              "nextState": "PENDING_PAYMENT",
+              "nextState": "SCHEDULED",
               "roles": [
-                "TASK_CREATOR"
+                "HEARING_CREATOR"
               ]
             }
           ]
         },
         {
-          "sla": 172800000,
-          "state": "PENDING_PAYMENT",
+          "sla": null,
+          "state": "SCHEDULED",
           "applicationStatus": "INWORKFLOW",
           "docUploadRequired": false,
           "isStartState": false,
@@ -34,11 +34,24 @@
           "isStateUpdatable": true,
           "actions": [
             {
-              "action": "MAKE_PAYMENT",
-              "nextState": "BAIL_DOCUMENT_UPLOAD",
+              "action": "RESCHEDULE",
+              "nextState": "OPT_OUT",
               "roles": [
-                "SYSTEM",
-                "SYSTEM_ADMIN"
+                "HEARING_EDITOR"
+              ]
+            },
+            {
+              "action": "BULK_RESCHEDULE",
+              "nextState": "SCHEDULED",
+              "roles": [
+                "HEARING_SCHEDULER"
+              ]
+            },
+            {
+              "action": "START",
+              "nextState": "IN_PROGRESS",
+              "roles": [
+                "HEARING_EDITOR"
               ]
             },
             {
@@ -46,73 +59,91 @@
               "nextState": "ABATED",
               "roles": [
                 "SYSTEM",
-                "SYSTEM_ADMIN"
-              ]
-            }
-          ]
-        },
-        {
-          "sla": 172800000,
-          "state": "BAIL_DOCUMENT_UPLOAD",
-          "applicationStatus": "INWORKFLOW",
-          "docUploadRequired": true,
-          "isStartState": false,
-          "isTerminateState": false,
-          "isStateUpdatable": true,
-          "actions": [
-            {
-              "action": "UPLOAD",
-              "nextState": "PENDING_REVIEW",
-              "roles": [
-                "TASK_CREATOR"
-              ]
-            },
-            {
-              "action": "ABANDON",
-              "nextState": "ABATED",
-              "roles": [
-                "SYSTEM",
-                "SYSTEM_ADMIN"
-              ]
-            }
-          ]
-        },
-        {
-          "sla": 172800000,
-          "state": "PENDING_REVIEW",
-          "applicationStatus": "INWORKFLOW",
-          "docUploadRequired": true,
-          "isStartState": false,
-          "isTerminateState": false,
-          "isStateUpdatable": true,
-          "actions": [
-            {
-              "action": "APPROVE",
-              "nextState": "BAIL_GRANTED",
-              "roles": [
-                "TASK_EDITOR"
-              ]
-            },
-            {
-              "action": "SEND_BACK",
-              "nextState": "BAIL_DOCUMENT_UPLOAD",
-              "roles": [
-                "TASK_EDITOR"
-              ]
-            },
-            {
-              "action": "ABANDON",
-              "nextState": "ABATED",
-              "roles": [
-                "SYSTEM",
-                "SYSTEM_ADMIN"
+                "SYSTEM_ADMIN",
+                "WORKFLOW_ABANDON"
               ]
             }
           ]
         },
         {
           "sla": null,
-          "state": "BAIL_GRANTED",
+          "state": "OPT_OUT",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "SET_DATE",
+              "nextState": "SCHEDULED",
+              "roles": [
+                "HEARING_EDITOR",
+                "SYSTEM",
+                "SYSTEM_ADMIN",
+                "AUTO_ESCALATE",
+                "HEARING_APPROVER"
+              ]
+            },
+            {
+              "action": "ABANDON",
+              "nextState": "ABATED",
+              "roles": [
+                "SYSTEM",
+                "SYSTEM_ADMIN",
+                "WORKFLOW_ABANDON"
+              ]
+            }
+          ]
+        },
+        {
+          "sla": 86400000,
+          "state": "IN_PROGRESS",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "CLOSE",
+              "nextState": "HEARD", //current=COMPLETED
+              "roles": [
+                "HEARING_EDITOR"
+              ]
+            },
+            //current= action not present
+            {
+              "action": "ADJOURN",
+              "nextState": "ADJOURNED",
+              "roles": [
+                "HEARING_EDITOR"
+              ]
+            },
+            {
+              "action": "ABANDON",
+              "nextState": "ABATED",
+              "roles": [
+                "SYSTEM",
+                "SYSTEM_ADMIN",
+                "WORKFLOW_ABANDON"
+              ]
+            }
+          ]
+        },
+        {
+          "sla": null,
+          "state": "HEARD",//current=COMPLETED  //to be reviewed by atul
+          "applicationStatus": "ACTIVE",
+          "isStateUpdatable": false,
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true
+        },
+        //current= state not present
+        {
+          "sla": null,
+          "state": "ADJOURNED",
           "applicationStatus": "ACTIVE",
           "isStateUpdatable": false,
           "docUploadRequired": false,
