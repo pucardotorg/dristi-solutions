@@ -186,6 +186,7 @@ function EFilingCases({ path }) {
   const [showConfirmDcaSkipModal, setShowConfirmDcaSkipModal] = useState(false);
   const [shouldShowConfirmDcaModal, setShouldShowConfirmDcaModal] = useState(false);
   const [prevIsDcaSkipped, setPrevIsDcaSkipped] = useState("");
+  const [isDcaPageRefreshed, setIsDcaPageRefreshed] = useState(true);
 
   const [showConfirmCaseDetailsModal, setShowConfirmCaseDetailsModal] = useState(false);
 
@@ -472,7 +473,9 @@ function EFilingCases({ path }) {
   useEffect(() => {
     const isDcaSkipped = caseDetails?.caseDetails?.["delayApplications"]?.formdata?.[0]?.data?.isDcaSkippedInEFiling?.code;
     if (isDcaSkipped !== prevIsDcaSkipped) {
-      setPrevIsDcaSkipped(isDcaSkipped);
+      if (!isCaseReAssigned || (isCaseReAssigned && isDcaSkipped === "NO")) {
+        setPrevIsDcaSkipped(isDcaSkipped);
+      }
     }
   }, [caseDetails, prevIsDcaSkipped]);
 
@@ -551,6 +554,14 @@ function EFilingCases({ path }) {
         if (selected === "reviewCaseFile") {
           return scrutinyObj;
         }
+        if (selected === "delayApplications") {
+          if (caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload && prevIsDcaSkipped === "NO") {
+            setFormDataValue.current?.(
+              "condonationFileUpload",
+              caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload
+            );
+          }
+        }
         return (
           errorCaseDetails?.additionalDetails?.[selected]?.formdata?.[index]?.data ||
           errorCaseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data ||
@@ -580,7 +591,15 @@ function EFilingCases({ path }) {
                   name: "NO",
                   showDcaFileUpload: true,
                 },
+            condonationFileUpload: caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload,
           };
+          if (caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload) {
+            setFormDataValue.current?.(
+              "condonationFileUpload",
+              caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload
+            );
+          }
+
           return data;
         } else {
           return {
@@ -1415,11 +1434,12 @@ function EFilingCases({ path }) {
         history,
         caseId,
         setShowConfirmDcaSkipModal,
-        showConfirmDcaSkipModal,
         shouldShowConfirmDcaModal,
         setShouldShowConfirmDcaModal,
         prevIsDcaSkipped,
         setPrevIsDcaSkipped,
+        isDcaPageRefreshed,
+        setIsDcaPageRefreshed,
       });
       showToastForComplainant({ formData, setValue, selected, setSuccessToast, formState, clearErrors });
       setFormdata(
@@ -1808,6 +1828,7 @@ function EFilingCases({ path }) {
           multiUploadList,
           scrutinyObj,
           filingType: filingType,
+          setShouldShowConfirmDcaModal,
         });
 
         if (resetFormData.current) {
@@ -1859,6 +1880,7 @@ function EFilingCases({ path }) {
       multiUploadList,
       scrutinyObj,
       filingType: filingType,
+      setShouldShowConfirmDcaModal,
     })
       .then(() => {
         refetchCaseData().then(() => {
@@ -1934,6 +1956,7 @@ function EFilingCases({ path }) {
       multiUploadList,
       scrutinyObj,
       filingType: filingType,
+      setShouldShowConfirmDcaModal,
     })
       .then(() => {
         if (!isCaseReAssigned) {
