@@ -1,0 +1,188 @@
+[
+  {
+    "tenantId": "kl",
+    "moduleName": "Application",
+    "masterName": "ApplicationStatus",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "Application.ApplicationStatus",
+        "uniqueIdentifier": "14",
+        "data": {
+          "id": 14,
+          "code": "PENDING_E-SIGN",//previously PENDINGESIGN
+          "type": "PENDING_E-SIGN",
+          "isactive": true
+        }
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "Application.ApplicationStatus",
+        "uniqueIdentifier": "13",
+        "data": {
+          "id": 13,
+          "code": "PENDING_PAYMENT",//previously PENDINGPAYMENT
+          "type": "PENDING_PAYMENT",
+          "isactive": true
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "Application.ApplicationStatus",
+        "uniqueIdentifier": "9",
+        "data": {
+          "id": 9,
+          "code": "PENDING_APPROVAL",//previously PENDINGAPPROVAL
+          "type": "PENDING_APPROVAL",
+          "isactive": true
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "Application.ApplicationStatus",
+        "uniqueIdentifier": "3",
+        "data": {
+          "id": 3,
+          "code": "PENDING_RESPONSE",//previously PENDINGRESPONSE
+          "type": "PENDING_RESPONSE",
+          "isactive": true
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "Application.ApplicationStatus",
+        "uniqueIdentifier": "1",
+        "data": {
+          "id": 1,
+          "code": "PENDING_REVIEW",//previously PENDINGREVIEW
+          "type": "PENDING_REVIEW",
+          "isactive": true
+        },
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "common-masters",
+    "masterName": "PendingTaskType",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "common-masters.PendingTaskType",
+        "uniqueIdentifier": "20",
+        "data": {
+          "id": "20",
+          "actor": "Judge/CourtStaff",
+          "state": "PENDING_APPROVAL",//previously PENDINGAPPROVAL
+          "isgeneric": false,
+          "pendingTask": "Review Bail Documents",
+          "closerAction": [
+            "APPROVE",
+            "DELETE",
+            "REJECT",
+            "ABANDON"
+          ],
+          "triggerAction": [
+            "E-SIGN"////previously ESIGN
+          ],
+          "workflowModule": "voluntary-application-submission-bail-documents"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "common-masters.PendingTaskType",
+        "uniqueIdentifier": "19",
+        "data": {
+          "id": "19",
+          "actor": "Judge/CourtStaff",
+          "state": "PENDING_APPROVAL",//previously PENDINGAPPROVAL
+          "isgeneric": false,
+          "pendingTask": "Review of Bail Application",
+          "closerAction": [
+            "APPROVE",
+            "SEND_BACK",
+            "DELETE",
+            "REJECT",
+            "ABANDON"
+          ],
+          "triggerAction": [
+            "MAKE_PAYMENT"//previously PAY
+          ],
+          "workflowModule": "voluntary-application-submission-bail"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "common-masters.PendingTaskType",
+        "uniqueIdentifier": "18",
+        "data": {
+          "id": "18",
+          "actor": "Judge/CMO",
+          "state": "PENDING_APPROVAL",//previously PENDINGAPPROVAL
+          "isgeneric": false,
+          "pendingTask": "Review Delay Condonation application",
+          "closerAction": [
+            "REJECT",
+            "APPROVE",
+            "ABANDON"
+          ],
+          "triggerAction": [
+            "CREATE"
+          ],
+          "workflowModule": "delay-condonation-submission"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "common-masters.PendingTaskType",
+        "uniqueIdentifier": "17",
+        "data": {
+          "id": "17",
+          "actor": "ADVOCATE/LITIGANT",
+          "state": "PENDING_RESPONSE",//previously PENDINGRESPONSE
+          "isgeneric": true,
+          "pendingTask": "Response",
+          "closerAction": [
+            "ABANDON",
+            "AUTOESCALATE",
+            "RESPOND",
+            "DELETE"
+          ],
+          "triggerAction": [
+            "MAKE_PAYMENT"//previously PAY
+          ],
+          "workflowModule": "application-order-submission-feedback"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "common-masters.PendingTaskType",
+        "uniqueIdentifier": "6",
+        "data": {
+          "id": "6",
+          "actor": "Nyay Mitra",
+          "state": "VERIFICATION_REQUESTED",//previously VERIFICATIONREQUESTED
+          "isgeneric": false,
+          "pendingTask": "Verify Registration",
+          "closerAction": [
+            "APPROVE",
+            "REJECT"
+          ],
+          "triggerAction": [
+            "REGISTER"
+          ],
+          "workflowModule": "user-registration-advocate"
+        },
+        "isActive": true
+      }
+    ]
+  }
+]

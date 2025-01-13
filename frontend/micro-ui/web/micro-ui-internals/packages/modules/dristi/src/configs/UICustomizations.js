@@ -647,7 +647,7 @@ export const UICustomizations = {
               : userRoles.includes("JUDGE_ROLE") && requestCriteria.url.split("/").includes("application")
               ? {
                   ...data,
-                  applicationList: data.applicationList?.filter((application) => !["PENDINGESIGN", "PENDINGPAYMENT"].includes(application.status)),
+                  applicationList: data.applicationList?.filter((application) => !["PENDING_E-SIGN", "PENDING_PAYMENT"].includes(application.status)),
                 }
               : data;
             // }
@@ -657,7 +657,7 @@ export const UICustomizations = {
     },
     additionalCustomizations: (row, key, column, value, t) => {
       const showDocument =
-        userRoles?.includes("APPLICATION_APPROVER") || userRoles?.includes("DEPOSITION_ESIGN") || row.workflow?.action !== "PENDINGREVIEW";
+        userRoles?.includes("APPLICATION_APPROVER") || userRoles?.includes("EVIDENCE_EDITOR") || row.workflow?.action !== "PENDING_REVIEW";
       switch (key) {
         case "DOCUMENT_TEXT":
           return showDocument ? <OwnerColumn rowData={row} colData={column} t={t} /> : "";
