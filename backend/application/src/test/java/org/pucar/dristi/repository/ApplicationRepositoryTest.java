@@ -1,6 +1,5 @@
 package org.pucar.dristi.repository;
 
-import org.egov.common.contract.models.Document;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.junit.jupiter.api.BeforeEach;

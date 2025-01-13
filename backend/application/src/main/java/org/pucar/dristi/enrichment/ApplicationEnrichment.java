@@ -60,9 +60,9 @@ public class ApplicationEnrichment {
                     application.getStatuteSection().setAuditdetails(auditDetails);
                 }
                 if (application.getDocuments() != null) {
-                    application.getDocuments().forEach(document -> {
+                    for (Document document : application.getDocuments()) {
                         document.setId(String.valueOf(UUID.randomUUID()));
-                    });
+                    }
                 }
             }
         } catch (CustomException e) {
@@ -117,10 +117,12 @@ public class ApplicationEnrichment {
             application.getAuditDetails().setLastModifiedBy(applicationRequest.getRequestInfo().getUserInfo().getUuid());
 
             if (application.getDocuments() != null) {
-                application.getDocuments().forEach(document -> {
-                    if (document.getId() == null)
+
+                for (Document document : application.getDocuments()) {
+                    if (document.getId() == null) {
                         document.setId(String.valueOf(UUID.randomUUID()));
-                });
+                    }
+                }
             }
         } catch (Exception e) {
             log.error("Error enriching application upon update: {}", e.getMessage());

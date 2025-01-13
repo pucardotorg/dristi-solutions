@@ -1,7 +1,6 @@
 package org.pucar.dristi.repository;
 
 import lombok.extern.slf4j.Slf4j;
-import org.egov.common.contract.models.Document;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.repository.queryBuilder.ApplicationQueryBuilder;
 import org.pucar.dristi.repository.rowMapper.ApplicationRowMapper;
