@@ -1596,7 +1596,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                     },
                     filingType: filingType,
                     workflow: {
-                      action: "TYPE DEPOSITION",
+                      action: "SUBMIT_EVIDENCE",
                       documents: [
                         {
                           documentType: data?.documentType,
@@ -1803,7 +1803,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                     },
                     filingType: filingType,
                     workflow: {
-                      action: "TYPE DEPOSITION",
+                      action: "SUBMIT_EVIDENCE",
                       documents: [
                         {
                           documentType: data?.documentType,

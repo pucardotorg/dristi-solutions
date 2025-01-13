@@ -684,7 +684,7 @@ function CaseFileAdmission({ t, path }) {
                       },
                       filingType: filingType,
                       workflow: {
-                        action: "TYPE DEPOSITION",
+                        action: "SUBMIT_EVIDENCE",
                         documents: [
                           {
                             documentType: docFile?.fileType || docFile?.documentType,
