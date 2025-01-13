@@ -71,8 +71,9 @@ public class ServiceConstants {
     public static final Long TAX_PERIOD_FROM = 1680287400000l;
     public static final Long TAX_PERIOD_TO = 1711909799000l;
     public static final BigDecimal TAX_AMOUNT = BigDecimal.valueOf(2000.00);
-    public static final String CREATE_DEMAND_STATUS = "PENDINGPAYMENT";
-    public static final String PENDINGAPPROVAL = "PENDINGAPPROVAL";
+    public static final String CREATE_DEMAND_STATUS = "PENDING_PAYMENT";
+    public static final String PENDING_APPROVAL = "PENDING_APPROVAL";
+    public static final String MAKE_PAYMENT = "MAKE_PAYMENT";
 
     public static final String TAX_HEADMASTER_CODE = "APPLICATION_ADVANCE_CARRYFORWARD";
     public static final String VALIDATION_ERR = "VALIDATION_ERR";
@@ -92,8 +93,8 @@ public class ServiceConstants {
     public static final String NOTIFICATION_LOCALIZATION_MSGS_JSONPATH = "$.messages.*.message";
     public static final String RESPONDENT = "RESPONDENT";
     public static final String COMPLAINANT = "COMPLAINANT";
-    public static final String PENDINGREVIEW = "PENDINGREVIEW";
-    public static final String PENDINGRESPONSE = "PENDINGRESPONSE";
+    public static final String PENDINGREVIEW = "PENDING_REVIEW";
+    public static final String PENDINGRESPONSE = "PENDING_RESPONSE";
     public static final String RE_SCHEDULE = "RE_SCHEDULE";
     public static final String RESCHEDULE_REQUEST_SUBMITTED = "RESCHEDULE_REQUEST_SUBMITTED";
     public static final String CHECKOUT_REQUEST = "CHECKOUT_REQUEST";
