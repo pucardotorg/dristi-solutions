@@ -183,11 +183,8 @@ public class CaseRegistrationEnrichment {
         }
     }
 
-    private void enrichCaseRegistrationFillingDate(CourtCase courtCase) {
-        if (courtCase.getWorkflow() != null && (courtCase.getWorkflow().getAction().equalsIgnoreCase(ServiceConstants.SUBMIT_CASE_WORKFLOW_ACTION)
-                || courtCase.getWorkflow().getAction().equalsIgnoreCase(ServiceConstants.SUBMIT_CASE_ADVOCATE_WORKFLOW_ACTION))) {
+    public void enrichCaseRegistrationFillingDate(CourtCase courtCase) {
             courtCase.setFilingDate(caseUtil.getCurrentTimeMil());
-        }
     }
 
     private void enrichStatuteAndSectionsOnCreateAndUpdate(CourtCase courtCase, AuditDetails auditDetails) {
