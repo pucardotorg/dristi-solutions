@@ -165,6 +165,164 @@
       {
         "tenantId": "kl",
         "schemaCode": "common-masters.PendingTaskType",
+        "uniqueIdentifier": "7",
+        "data": {
+          "id": "7",
+          "actor": "Nyay Mitra",
+          "state": "VERIFICATION_REQUESTED",//previously VERIFICATIONREQUESTED
+          "isgeneric": false,
+          "pendingTask": "Verify Registration",
+          "closerAction": [
+            "APPROVE",
+            "REJECT"
+          ],
+          "triggerAction": [
+            "REGISTER"
+          ],
+          "workflowModule": "user-registration-advocate-clerk"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "common-masters.PendingTaskType",
+        "uniqueIdentifier": "12",
+        "data": {
+          "id": "12",
+          "actor": "Advocate/Litigant",
+          "state": "PENDING_PAYMENT",//previously PENDINGPAYMENT
+          "isgeneric": false,
+          "pendingTask": "Complete Submission",
+          "closerAction": [
+            "MAKE_PAYMENT",//previously PAY
+            "DELETE"
+          ],
+          "triggerAction": [
+            "E-SIGN"//previously ESIGN
+          ],
+          "workflowModule": "application-voluntary-submission"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "common-masters.PendingTaskType",
+        "uniqueIdentifier": "15",
+        "data": {
+          "id": "15",
+          "actor": "Judge/CMO",
+          "state": "PENDING_APPROVAL",
+          "isgeneric": false,
+          "pendingTask": "Accept Document Submission",
+          "closerAction": [
+            "APPROVE",
+            "REJECT",
+            "DELETE",
+            "ABANDON"
+          ],
+          "triggerAction": [
+            "RESPONSE",
+            "AUTO ESCALATE"
+          ],
+          "workflowModule": "application-voluntary-submission"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "common-masters.PendingTaskType",
+        "uniqueIdentifier": "14",
+        "data": {
+          "id": "14",
+          "actor": "Judge/CMO",
+          "state": "PENDING_REVIEW",
+          "isgeneric": false,
+          "pendingTask": "Review Document Submission",
+          "closerAction": [
+            "APPROVE",
+            "REJECT",
+            "AUTOESCALATE",
+            "DELETE",
+            "RESPOND",
+            "ABANDON"
+          ],
+          "triggerAction": [
+            "MAKE_PAYMENT"
+          ],
+          "workflowModule": "application-voluntary-submission"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "common-masters.PendingTaskType",
+        "uniqueIdentifier": "13",
+        "data": {
+          "id": "13",
+          "actor": "Advocate",
+          "state": "PENDING_APPROVAL",
+          "isgeneric": false,
+          "pendingTask": "Update Response",
+          "closerAction": [
+            "APPROVE",
+            "DELETE",
+            "REJECT",
+            "ABANDON"
+          ],
+          "triggerAction": [
+            "RESPOND"
+          ],
+          "workflowModule": "application-voluntary-submission"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "common-masters.PendingTaskType",
+        "uniqueIdentifier": "9",
+        "data": {
+          "id": "9",
+          "actor": "Advocate",
+          "state": "PENDING_RESPONSE",//previously PENDINGRESPONSE
+          "isgeneric": false,
+          "pendingTask": "Update Response (ONLY IF RESPONSE IS REQUESTED BY JUDGE)",
+          "closerAction": [
+            "RESPOND",
+            "AUTOESCALATE",
+            "DELETE",
+            "ABANDON"
+          ],
+          "triggerAction": [
+            "MAKE_PAYMENT"
+          ],
+          "workflowModule": "application-order-submission-feedback"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "common-masters.PendingTaskType",
+        "uniqueIdentifier": "11",
+        "data": {
+          "id": "11",
+          "actor": "Advocate/Litigant",
+          "state": "PENDING_E-SIGN",//previously PENDINGESIGN
+          "isgeneric": false,
+          "pendingTask": "Complete Submission",
+          "closerAction": [
+            "E-SIGN",
+            "DELETE"
+          ],
+          "triggerAction": [
+            "CREATE"
+          ],
+          "workflowModule": "application-voluntary-submission"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "common-masters.PendingTaskType",
         "uniqueIdentifier": "6",
         "data": {
           "id": "6",
