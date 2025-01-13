@@ -19,6 +19,7 @@
               "action": "CREATE",
               "nextState": "PENDING_SIGN",
               "roles": [
+                "DIARY_EDITOR"
                 "SYSTEM",
                 "SYSTEM_ADMIN"
               ]
@@ -38,7 +39,7 @@
               "action": "SIGN",
               "nextState": "COMPLETED",
               "roles": [
-                "DIARY_SIGNATORY",
+                "DIARY_APPROVER",
                 "SYSTEM",
                 "SYSTEM_ADMIN"
               ]
