@@ -712,10 +712,11 @@ const SubmissionsCreate = ({ path }) => {
       const uploadedDocumentList = [...(documentres || []), ...applicationDocuments];
 
       // evidence we are creating after create application (each evidenece need application Number)
-      uploadedDocumentList.forEach((res) => {
+      uploadedDocumentList.forEach((res, index) => {
         file = {
           documentType: res?.fileType,
           fileStore: res?.fileStore || res?.file?.files?.[0]?.fileStoreId,
+          documentOrder: index,
           additionalDetails: { name: res?.filename || res?.additionalDetails?.name },
         };
         documents.push(file);
@@ -829,6 +830,7 @@ const SubmissionsCreate = ({ path }) => {
           ? {
               documentType: "SIGNED",
               fileStore: signedDoucumentUploadedID || localStorageID,
+              documentOrder: documents?.length > 0 ? documents.length + 1 : 1,
               additionalDetails: { name: `Application: ${t(applicationType)}.pdf` },
             }
           : null;
