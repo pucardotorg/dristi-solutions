@@ -742,6 +742,17 @@ export const pendingTaskVoluntarySubmissionBailDocumentsActions = {
       ],
     },
   },
+  ESIGN_THE_SUBMISSION: {
+    actorName: ["LITIGANT/ADVOCATE"],
+    actionName: "Esign the Submission",
+    redirectDetails: {
+      url: "/submissions/submissions-create",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "applicationNumber", value: "referenceId" },
+      ],
+    },
+  },
 };
 
 export const pendingTaskVoluntarySubmissionBailActions = {
@@ -749,6 +760,28 @@ export const pendingTaskVoluntarySubmissionBailActions = {
     actorName: ["JUDGE"],
     actionName: "Review the submission",
     customFunction: "handleReviewSubmission",
+    redirectDetails: {
+      url: "/submissions/submissions-create",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "applicationNumber", value: "referenceId" },
+      ],
+    },
+  },
+  MAKE_PAYMENT_SUBMISSION: {
+    actorName: ["LITIGANT/ADVOCATE"],
+    actionName: "Payment for Submission",
+    redirectDetails: {
+      url: "/submissions/submissions-create",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "applicationNumber", value: "referenceId" },
+      ],
+    },
+  },
+  ESIGN_THE_SUBMISSION: {
+    actorName: ["LITIGANT/ADVOCATE"],
+    actionName: "Esign the Submission",
     redirectDetails: {
       url: "/submissions/submissions-create",
       params: [

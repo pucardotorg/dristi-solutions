@@ -890,6 +890,14 @@ const EvidenceModal = ({
 
   return (
     <React.Fragment>
+      <style>
+        {`.popup-module.evidence-modal .popup-module-main .selector-button-border {
+          border-color: #BB2C2F !important;
+        }
+        .popup-module.evidence-modal .popup-module-main .selector-button-border h2 {
+          color: #BB2C2F !important;
+        }`}
+      </style>
       {!showConfirmationModal && !showSuccessModal && (
         <Modal
           headerBarEnd={<CloseBtn onClick={handleBack} />}
@@ -916,6 +924,19 @@ const EvidenceModal = ({
             />
           }
           className="evidence-modal"
+          style={{
+            backgroundColor: "#007e7e",
+          }}
+          textStyle={{
+            color: "#fff",
+          }}
+          actionCancelTextStyle={
+            customLabelShow
+              ? {
+                  color: "#BB2C2F",
+                }
+              : {}
+          }
         >
           <div className="evidence-modal-main">
             <div className={"application-details"}>

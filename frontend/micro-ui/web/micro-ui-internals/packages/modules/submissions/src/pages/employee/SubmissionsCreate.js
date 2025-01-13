@@ -829,7 +829,7 @@ const SubmissionsCreate = ({ path }) => {
           ? {
               documentType: "SIGNED",
               fileStore: signedDoucumentUploadedID || localStorageID,
-              additionalDetails: { name: "Signed_Doc.pdf" },
+              additionalDetails: { name: `Application: ${t(applicationType)}.pdf` },
             }
           : null;
 
@@ -883,7 +883,8 @@ const SubmissionsCreate = ({ path }) => {
         const doc = formData.supportingDocuments[index];
         if (doc?.submissionDocuments?.uploadedDocs?.length) {
           try {
-            const combinedDocName = `${t("SUPPORTING_DOCS")} ${index + 1}.pdf`;
+            const docTitle = doc?.documentTitle;
+            const combinedDocName = docTitle ? `${docTitle}.pdf` : `${t("SUPPORTING_DOCS")} ${index + 1}.pdf`;
             const combinedDocumentFile = await combineMultipleFiles(doc.submissionDocuments.uploadedDocs, combinedDocName, "submissionDocuments");
             const docs = await onDocumentUpload(combinedDocumentFile?.[0], combinedDocName);
             const file = {
@@ -893,6 +894,7 @@ const SubmissionsCreate = ({ path }) => {
             };
             doc.submissionDocuments.uploadedDocs = [file];
           } catch (error) {
+            setLoader(false);
             console.error("Error combining or uploading documents for index:", index, error);
             throw new Error("Failed to combine and update uploaded documents.");
           }
