@@ -1148,6 +1148,7 @@ const GenerateOrders = () => {
           ? {
               documentType: "SIGNED",
               fileStore: signedDoucumentUploadedID || localStorageID,
+              additionalDetails: { name: `Order: ${t(orderType)}.pdf` },
             }
           : null;
       let orderSchema = {};
