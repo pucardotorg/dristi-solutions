@@ -10,6 +10,7 @@ import { efilingDocumentKeyAndTypeMapping } from "./Config/efilingDocumentKeyAnd
 export const showDemandNoticeModal = ({ selected, setValue, formData, setError, clearErrors, index, setServiceOfDemandNoticeModal, caseDetails }) => {
   if (selected === "demandNoticeDetails") {
     const totalCheques = caseDetails?.caseDetails?.["chequeDetails"]?.formdata && caseDetails?.caseDetails?.["chequeDetails"]?.formdata.length;
+    const chequeDetails = caseDetails?.caseDetails?.["chequeDetails"]?.formdata?.[0]?.data;
     for (const key in formData) {
       switch (key) {
         case "dateOfService":
@@ -42,6 +43,12 @@ export const showDemandNoticeModal = ({ selected, setValue, formData, setError, 
         case "dateOfDispatch":
           if (new Date(formData?.dateOfDispatch).getTime() > new Date().getTime()) {
             setError("dateOfDispatch", { message: "CS_DATE_ERROR_MSG" });
+          } else if (
+            formData?.dateOfDispatch &&
+            chequeDetails?.issuanceDate &&
+            new Date(chequeDetails?.issuanceDate).getTime() > new Date(formData?.dateOfDispatch).getTime()
+          ) {
+            setError("dateOfDispatch", { message: "CS_DISPATCH_DATE_ERROR_MSG" });
           } else {
             clearErrors("dateOfDispatch");
           }
@@ -64,7 +71,22 @@ export const showDemandNoticeModal = ({ selected, setValue, formData, setError, 
   }
 };
 
-export const validateDateForDelayApplication = ({ selected, setValue, caseDetails, toast, t, history, caseId }) => {
+export const validateDateForDelayApplication = ({
+  formData,
+  selected,
+  setValue,
+  caseDetails,
+  toast,
+  t,
+  history,
+  caseId,
+  setShowConfirmDcaSkipModal,
+  showConfirmDcaSkipModal,
+  shouldShowConfirmDcaModal,
+  setShouldShowConfirmDcaModal,
+  prevIsDcaSkipped,
+  setPrevIsDcaSkipped,
+}) => {
   if (selected === "delayApplications") {
     if (
       !caseDetails?.caseDetails ||
@@ -76,28 +98,15 @@ export const validateDateForDelayApplication = ({ selected, setValue, caseDetail
         history.push(`?caseId=${caseId}&selected=demandNoticeDetails`);
       }, 3000);
     }
-    if (
-      caseDetails?.caseDetails?.["demandNoticeDetails"]?.formdata?.some(
-        (data) => new Date(data?.data?.dateOfAccrual).getTime() + 30 * 24 * 60 * 60 * 1000 < new Date().getTime()
-      )
-    ) {
-      setValue("delayCondonationType", {
-        code: "NO",
-        name: "NO",
-        showForm: true,
-        isEnabled: true,
-      });
-    } else if (
-      caseDetails?.caseDetails?.["demandNoticeDetails"]?.formdata?.some(
-        (data) => new Date(data?.data?.dateOfAccrual).getTime() + 30 * 24 * 60 * 60 * 1000 >= new Date().getTime()
-      )
-    ) {
-      setValue("delayCondonationType", {
-        code: "YES",
-        name: "YES",
-        showForm: false,
-        isEnabled: true,
-      });
+    if (formData?.isDcaSkippedInEFiling?.code === "YES" && shouldShowConfirmDcaModal && formData?.isDcaSkippedInEFiling?.code !== prevIsDcaSkipped) {
+      setShowConfirmDcaSkipModal(true);
+      setShouldShowConfirmDcaModal(false);
+      setPrevIsDcaSkipped("YES");
+    }
+    if (formData?.isDcaSkippedInEFiling?.code === "NO") {
+      setShowConfirmDcaSkipModal(false);
+      setShouldShowConfirmDcaModal(true);
+      setPrevIsDcaSkipped("NO");
     }
   }
 };
@@ -835,6 +844,7 @@ export const delayApplicationValidation = ({ t, formData, selected, setShowError
   if (selected === "delayApplications") {
     if (
       formData?.delayCondonationType?.code === "NO" &&
+      formData?.isDcaSkippedInEFiling?.code === "NO" &&
       (!formData?.condonationFileUpload?.document || formData?.condonationFileUpload?.document.length === 0)
     ) {
       setFormErrors("condonationFileUpload", { type: "required" });
@@ -1210,6 +1220,16 @@ const updateComplaintDocInCaseDoc = (docList, complaintDoc) => {
   return newDocList;
 };
 
+const calculateTotalChequeAmount = (formData) => {
+  let totalChequeAmount = 0;
+  for (let i = 0; i < formData?.length; i++) {
+    if (formData[i]?.data?.chequeAmount) {
+      totalChequeAmount = totalChequeAmount + parseInt(formData[i].data.chequeAmount);
+    }
+  }
+  return totalChequeAmount.toString();
+};
+
 export const updateCaseDetails = async ({
   t,
   isCompleted,
@@ -1222,7 +1242,6 @@ export const updateCaseDetails = async ({
   pageConfig,
   setFormDataValue,
   action = "SAVE_DRAFT",
-  fileStoreId,
   isSaveDraftEnabled = false,
   isCaseSignedState = false,
   setErrorCaseDetails = () => {},
@@ -1838,12 +1857,13 @@ export const updateCaseDetails = async ({
       debtLiabilityDetails: {
         ...caseDetails?.caseDetails?.debtLiabilityDetails,
         formdata: caseDetails?.caseDetails?.debtLiabilityDetails?.formdata?.map((data) => {
-          if (data?.data?.liabilityType?.code === "FULL_LIABILITY" && newFormData?.[0]) {
+          if (data?.data?.liabilityType?.code === "FULL_LIABILITY" && newFormData) {
+            const totalChequeAmount = calculateTotalChequeAmount(newFormData);
             return {
               ...data,
               data: {
                 ...data.data,
-                totalAmount: newFormData[0].data.chequeAmount,
+                totalAmount: totalChequeAmount,
               },
             };
           } else return data;
@@ -1881,13 +1901,14 @@ export const updateCaseDetails = async ({
           } else {
             updateCaseDocuments(docType, false);
           }
+          const totalChequeAmount = calculateTotalChequeAmount(caseDetails?.caseDetails?.chequeDetails?.formdata);
           return {
             ...data,
             data: {
               ...data.data,
               ...debtDocumentData,
               ...(data?.data?.liabilityType?.code === "FULL_LIABILITY" && {
-                totalAmount: caseDetails?.caseDetails?.chequeDetails?.formdata?.[0]?.data?.chequeAmount,
+                totalAmount: totalChequeAmount,
               }),
             },
           };

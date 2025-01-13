@@ -5,6 +5,8 @@ import { FlagIcon } from "../icons/svgIndex";
 import DocViewerWrapper from "../pages/employee/docViewerWrapper";
 import ReactTooltip from "react-tooltip";
 
+const MemoDocViewerWrapper = React.memo(DocViewerWrapper);
+
 const LocationIcon = () => (
   <svg width="10" height="14" viewBox="0 0 10 14" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path
@@ -154,6 +156,7 @@ const CustomReviewCardRow = ({
         return (
           <div className={`text-main ${bgclassname}`}>
             <div className="text">
+              {value === "dateOfDispatch" && <div> {`${dataIndex + 1}. `}</div>}
               <div className="label">{t(label)}</div>
               <div className="value">{formattedDate}</div>
               {showFlagIcon && (
@@ -263,7 +266,7 @@ const CustomReviewCardRow = ({
       case "text":
         const textValue = extractValue(data, value);
         const dependentOnValue = extractValue(data, textDependentOn);
-        if (showFlagIcon && dependentOnValue && t(textDependentValue)) {
+        if ((showFlagIcon && dependentOnValue && t(textDependentValue)) || value === "delayCondonationType.name") {
           showFlagIcon = false;
         }
         return (
@@ -513,7 +516,7 @@ const CustomReviewCardRow = ({
                                     });
                                 }}
                               >
-                                <DocViewerWrapper
+                                <MemoDocViewerWrapper
                                   key={`${file.fileStore}-${index}`}
                                   fileStoreId={data?.fileStore}
                                   displayFilename={data?.fileName}
@@ -546,7 +549,7 @@ const CustomReviewCardRow = ({
                                       });
                                   }}
                                 >
-                                  <DocViewerWrapper
+                                  <MemoDocViewerWrapper
                                     key={`${file.fileStore}-${index}`}
                                     fileStoreId={data?.fileStore}
                                     displayFilename={data?.fileName}
@@ -570,7 +573,7 @@ const CustomReviewCardRow = ({
                             handleImageClick(configKey, name, dataIndex, value[fileIndex], data, [value[fileIndex]], dataError);
                           }}
                         >
-                          <DocViewerWrapper
+                          <MemoDocViewerWrapper
                             key={`${value}-${file?.name}`}
                             fileStoreId={file?.fileStore}
                             displayFilename={file?.fileName}

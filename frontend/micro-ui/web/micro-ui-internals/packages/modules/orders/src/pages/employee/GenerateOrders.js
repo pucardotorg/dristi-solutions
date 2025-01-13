@@ -29,8 +29,13 @@ import {
   configsScheduleHearingDate,
   configsScheduleNextHearingDate,
   configsVoluntarySubmissionStatus,
+  configsIssueBailAcceptance,
+  configsIssueBailReject,
+  configsSetTermBail,
+  configsAcceptRejectDelayCondonation,
+  configsAdmitDismissCase,
 } from "../../configs/ordersCreateConfig";
-import { CustomDeleteIcon } from "../../../../dristi/src/icons/svgIndex";
+import { CustomDeleteIcon, WarningInfoIconYellow } from "../../../../dristi/src/icons/svgIndex";
 import OrderReviewModal from "../../pageComponents/OrderReviewModal";
 import OrderSignatureModal from "../../pageComponents/OrderSignatureModal";
 import OrderDeleteModal from "../../pageComponents/OrderDeleteModal";
@@ -75,6 +80,11 @@ const configKeys = {
   APPROVE_VOLUNTARY_SUBMISSIONS: configsVoluntarySubmissionStatus,
   REJECT_VOLUNTARY_SUBMISSIONS: configRejectSubmission,
   JUDGEMENT: configsJudgement,
+  REJECT_BAIL: configsIssueBailReject,
+  ACCEPT_BAIL: configsIssueBailAcceptance,
+  SET_BAIL_TERMS: configsSetTermBail,
+  ACCEPTANCE_REJECTION_DCA: configsAcceptRejectDelayCondonation,
+  ADMIT_DISMISS_CASE: configsAdmitDismissCase,
 };
 
 function applyMultiSelectDropdownFix(setValue, formData, keys) {
@@ -123,6 +133,9 @@ const stateSlaMap = {
   OTHERS: 3,
   APPROVE_VOLUNTARY_SUBMISSIONS: 3,
   REJECT_VOLUNTARY_SUBMISSIONS: 3,
+  REJECT_BAIL: 3,
+  ACCEPT_BAIL: 3,
+  SET_BAIL_TERMS: 3,
   JUDGEMENT: 3,
   CHECKOUT_ACCEPTANCE: 1,
   CHECKOUT_REJECT: 1,
@@ -250,7 +263,7 @@ const GenerateOrders = () => {
           const fullName = removeInvalidNameParts(item?.additionalDetails?.fullName);
           return {
             code: fullName,
-            name: fullName,
+            name: `${fullName} (Complainant)`,
             uuid: allAdvocates[item?.additionalDetails?.uuid],
             individualId: item?.individualId,
             isJoined: true,
@@ -268,7 +281,7 @@ const GenerateOrders = () => {
           const fullName = removeInvalidNameParts(item?.additionalDetails?.fullName);
           return {
             code: fullName,
-            name: fullName,
+            name: `${fullName} (Accused)`,
             uuid: allAdvocates[item?.additionalDetails?.uuid],
             isJoined: true,
             partyType: "respondent",
@@ -283,7 +296,7 @@ const GenerateOrders = () => {
         ?.filter((data) => !data?.data?.respondentVerification?.individualDetails?.individualId)
         ?.map((data) => {
           const fullName = constructFullName(data?.data?.respondentFirstName, data?.data?.respondentMiddleName, data?.data?.respondentLastName);
-          return { code: fullName, name: fullName, uuid: data?.data?.uuid, isJoined: false, partyType: "respondent" };
+          return { code: fullName, name: `${fullName} (Accused)`, uuid: data?.data?.uuid, isJoined: false, partyType: "respondent" };
         }) || []
     );
   }, [caseDetails]);
@@ -292,7 +305,7 @@ const GenerateOrders = () => {
     return (
       caseDetails?.additionalDetails?.witnessDetails?.formdata?.map((data) => {
         const fullName = constructFullName(data?.data?.firstName, data?.data?.middleName, data?.data?.lastName);
-        return { code: fullName, name: fullName, uuid: data?.data?.uuid, partyType: "witness" };
+        return { code: fullName, name: `${fullName} (Witness)`, uuid: data?.data?.uuid, partyType: "witness" };
       }) || []
     );
   }, [caseDetails]);
@@ -314,6 +327,23 @@ const GenerateOrders = () => {
     filingNumber + OrderWorkflowState.DRAFT_IN_PROGRESS,
     Boolean(filingNumber)
   );
+
+  const { data: noticeOrdersData } = useSearchOrdersService(
+    {
+      tenantId,
+      criteria: { filingNumber, applicationNumber: "", cnrNumber, orderType: "NOTICE", status: "PUBLISHED" },
+      pagination: { limit: 1000, offset: 0 },
+    },
+    { tenantId },
+    filingNumber,
+    Boolean(filingNumber)
+  );
+
+  const isDCANoticeGenerated = useMemo(
+    () => noticeOrdersData?.list?.some((notice) => "DCA Notice" === notice?.additionalDetails?.formdata?.noticeType.code),
+    [noticeOrdersData]
+  );
+
   const { data: publishedOrdersData, isLoading: isPublishedOrdersLoading } = useSearchOrdersService(
     {
       tenantId,
@@ -471,10 +501,30 @@ const GenerateOrders = () => {
       tenantId,
     },
     {},
-    referenceId,
-    referenceId
+    referenceId + filingNumber,
+    Boolean(referenceId + filingNumber)
   );
   const applicationDetails = useMemo(() => applicationData?.applicationList?.[0], [applicationData]);
+
+  const isDelayApplicationSubmitted = useMemo(
+    () =>
+      Boolean(
+        applicationData?.applicationList?.some(
+          (item) =>
+            item?.applicationType === "DELAY_CONDONATION" &&
+            [
+              SubmissionWorkflowState.PENDINGAPPROVAL,
+              SubmissionWorkflowState.PENDINGREVIEW,
+              SubmissionWorkflowState.PENDINGRESPONSE,
+              SubmissionWorkflowState.COMPLETED,
+            ].includes(item?.status)
+        )
+      ),
+    [applicationData]
+  );
+  const isDcaFiled = useMemo(() => {
+    return caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.isDcaSkippedInEFiling === "NO" || isDelayApplicationSubmitted;
+  }, [caseDetails, isDelayApplicationSubmitted]);
 
   const hearingId = useMemo(() => currentOrder?.hearingNumber || applicationDetails?.additionalDetails?.hearingId || "", [
     applicationDetails,
@@ -561,6 +611,22 @@ const GenerateOrders = () => {
                     !isCaseAdmitted && {
                       disable: true,
                     }),
+                  populators: {
+                    ...field.populators,
+                    mdmsConfig: {
+                      ...field.populators?.mdmsConfig,
+                      select: `(data) => {
+                        return (
+                          data?.Hearing?.HearingType?.filter((h) => {
+                            if (${!isDcaFiled}) {
+                              return !["DELAY_CONDONATION_HEARING", "DELAY_CONDONATION_AND_ADMISSION"].includes(h?.code);
+                            }
+                            return true;
+                          }) || []
+                        );
+                      }`,
+                    },
+                  },
                 };
               }
               if (field.key === "unjoinedPartiesNote") {
@@ -794,6 +860,16 @@ const GenerateOrders = () => {
       updatedFormdata.bailType = { type: applicationDetails?.applicationType };
       updatedFormdata.submissionDocuments = applicationDetails?.additionalDetails?.formdata?.submissionDocuments;
       updatedFormdata.bailOf = applicationDetails?.additionalDetails?.onBehalOfName;
+    }
+    if (orderType === "SET_BAIL_TERMS") {
+      updatedFormdata.partyId = applicationDetails?.createdBy;
+    }
+    if (orderType === "ACCEPT_BAIL" || orderType === "REJECT_BAIL") {
+      updatedFormdata.bailParty = applicationDetails?.additionalDetails?.onBehalOfName;
+      updatedFormdata.submissionDocuments = {
+        uploadedDocs:
+          applicationDetails?.additionalDetails?.formdata?.supportingDocuments?.flatMap((doc) => doc.submissionDocuments?.uploadedDocs || []) || [],
+      };
     }
     // if (orderType === "CASE_TRANSFER") {
     //   updatedFormdata.caseTransferredTo = applicationDetails?.applicationDetails?.selectRequestedCourt;
@@ -1308,6 +1384,30 @@ const GenerateOrders = () => {
       });
     }
 
+    if (order?.orderType === "SET_BAIL_TERMS") {
+      create = true;
+      status = "CREATE_SUBMISSION";
+      name = t("SUBMIT_BAIL_DOCUMENTS");
+      entityType = "voluntary-application-submission-bail-documents";
+      const assigneeUuid = order?.additionalDetails?.formdata?.partyId;
+      return ordersService.customApiService(Urls.orders.pendingTask, {
+        pendingTask: {
+          name,
+          entityType,
+          referenceId: `MANUAL_${assigneeUuid}_${order?.orderNumber}`,
+          status,
+          assignedTo: [{ uuid: assigneeUuid }],
+          assignedRole,
+          cnrNumber: cnrNumber,
+          filingNumber: filingNumber,
+          isCompleted: false,
+          stateSla,
+          additionalDetails,
+          tenantId,
+        },
+      });
+    }
+
     if (isAssignedRole) {
       assignees = [];
       assignedRole = ["JUDGE_ROLE"];
@@ -1408,6 +1508,17 @@ const GenerateOrders = () => {
     }
   };
 
+  const applicationStatusType = (Type) => {
+    switch (Type) {
+      case "APPROVED":
+        return SubmissionWorkflowAction.APPROVE;
+      case "SET_TERM_BAIL":
+        return SubmissionWorkflowAction.SET_TERM_BAIL;
+      default:
+        return SubmissionWorkflowAction.REJECT;
+    }
+  };
+
   const handleApplicationAction = async (order) => {
     try {
       return await ordersService.customApiService(
@@ -1418,8 +1529,7 @@ const GenerateOrders = () => {
             cmpNumber: caseDetails?.cmpNumber,
             workflow: {
               ...applicationDetails.workflow,
-              action:
-                order?.additionalDetails?.applicationStatus === t("APPROVED") ? SubmissionWorkflowAction.APPROVE : SubmissionWorkflowAction.REJECT,
+              action: applicationStatusType(order?.additionalDetails?.applicationStatus),
             },
           },
         },
@@ -2196,6 +2306,9 @@ const GenerateOrders = () => {
           }
         }
       }
+      if (orderType === "ADMIT_DISMISS_CASE") {
+        updateCaseDetails(currentOrder.additionalDetails?.formdata?.isCaseAdmittedOrDismissed?.code === "DISMISSED" ? "REJECT" : "ADMIT");
+      }
       createTask(orderType, caseDetails, orderResponse);
       setLoader(false);
       setShowSuccessModal(true);
@@ -2258,6 +2371,25 @@ const GenerateOrders = () => {
   };
 
   const handleReviewOrderClick = () => {
+    if (
+      referenceId &&
+      "ACCEPTANCE_REJECTION_DCA" === orderType &&
+      [SubmissionWorkflowState.COMPLETED, SubmissionWorkflowState.REJECTED].includes(applicationDetails?.status)
+    ) {
+      setShowErrorToast({
+        label: applicationDetails?.status === SubmissionWorkflowState.COMPLETED ? t("DCA_APPLICATION_ACCEPTED") : t("DCA_APPLICATION_REJECTED"),
+        error: true,
+      });
+      return;
+    }
+    if ("ADMIT_DISMISS_CASE" === orderType && ["CASE_DISMISSED", "CASE_ADMITTED"].includes(caseDetails?.status)) {
+      setShowErrorToast({
+        label: "CASE_ADMITTED" === caseDetails?.status ? t("CASE_ALREADY_ADMITTED") : t("CASE_ALREADY_REJECTED"),
+        error: true,
+      });
+      return;
+    }
+
     if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(orderType) && (isHearingScheduled || isHearingOptout)) {
       setShowErrorToast({
         label: isHearingScheduled ? t("HEARING_IS_ALREADY_SCHEDULED_FOR_THIS_CASE") : t("CURRENTLY_A_HEARING_IS_IN_OPTOUT_STATE"),
@@ -2373,6 +2505,15 @@ const GenerateOrders = () => {
       <div className="orders-list-main">
         <div className="add-order-button" onClick={handleAddOrder}>{`+ ${t("CS_ADD_ORDER")}`}</div>
         <React.Fragment>
+          <style>
+            {` .view-order .generate-orders .employeeCard .label-field-pair .field .field-container .component-in-front {
+                border-top:1px solid #000 !important ;
+                border-bottom:1px solid #000 !important ;
+                border-left:1px solid #000 !important ;
+                margin-top: 0px; 
+          }`}
+          </style>
+
           {formList?.map((item, index) => {
             return (
               <div className={`order-item-main ${selectedOrder === index ? "selected-order" : ""}`}>
@@ -2401,6 +2542,36 @@ const GenerateOrders = () => {
       </div>
       <div className="view-order">
         {<Header className="order-header">{`${t("CS_ORDER")} ${selectedOrder + 1}`}</Header>}
+        {"NO" === caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code &&
+          "NOTICE" === currentFormData?.orderType?.code &&
+          (("Section 223 Notice" === currentFormData?.noticeType?.code && !isDCANoticeGenerated) ||
+            (!isDelayApplicationSubmitted && currentFormData?.noticeType?.code === "DCA Notice")) && (
+            <div
+              className="dca-infobox-message"
+              style={{
+                display: "flex",
+                gap: "8px",
+                backgroundColor: "#FEF4F4",
+                border: "1px",
+                borderColor: "#FCE8E8",
+                padding: "8px",
+                borderRadius: "8px",
+                marginBottom: "24px",
+                width: "fit-content",
+              }}
+            >
+              <div className="dca-infobox-icon" style={{}}>
+                <WarningInfoIconYellow />{" "}
+              </div>
+              <div className="dca-infobox-me" style={{}}>
+                {"Section 223 Notice" === currentFormData?.noticeType?.code && !isDCANoticeGenerated
+                  ? t("DCA_NOTICE_NOT_SENT") + ": " + t("DCA_NOTICE_NOT_SENT_MESSAGE")
+                  : !isDelayApplicationSubmitted && currentFormData?.noticeType?.code === "DCA Notice"
+                  ? t("DELAY_APPLICATION_NOT_SUBMITTED")
+                  : ""}
+              </div>
+            </div>
+          )}
         {modifiedFormConfig && (
           <FormComposerV2
             className={"generate-orders"}

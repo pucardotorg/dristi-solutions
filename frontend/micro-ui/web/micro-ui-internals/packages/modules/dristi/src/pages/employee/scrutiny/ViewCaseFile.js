@@ -2,20 +2,20 @@ import { BackButton, CheckSvg, CloseSvg, EditIcon, FormComposerV2, Header, Loade
 import React, { useMemo, useState } from "react";
 import { Redirect, useHistory, useLocation } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
-import Button from "../../../components/Button";
+import { CaseWorkflowAction } from "../../../Utils/caseWorkflow";
 import CustomCaseInfoDiv from "../../../components/CustomCaseInfoDiv";
 import Modal from "../../../components/Modal";
 import SendCaseBackModal from "../../../components/SendCaseBackModal";
 import SuccessModal from "../../../components/SuccessModal";
-import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
 import { CustomArrowDownIcon, FileDownloadIcon, FlagIcon } from "../../../icons/svgIndex";
 import { DRISTIService } from "../../../services";
-import { CaseWorkflowAction } from "../../../Utils/caseWorkflow";
-import downloadPdfWithLink from "../../../Utils/downloadPdfWithLink";
 import { formatDate } from "../../citizen/FileCase/CaseType";
 import { reviewCaseFileFormConfig } from "../../citizen/FileCase/Config/reviewcasefileconfig";
 
+import Button from "../../../components/Button";
+import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
+import downloadPdfWithLink from "../../../Utils/downloadPdfWithLink";
 const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
 const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "COURT_ID";
 const benchId = window?.globalConfigs?.getConfig("BENCH_ID") || "BENCH_ID";
@@ -51,6 +51,23 @@ const downloadPathStyle = {
   fill: "#007e7e",
 };
 
+const delayCondonationStylsMain = {
+  padding: "6px 8px",
+  borderRadius: "999px",
+  backgroundColor: "#E9A7AA",
+  width: "fit-content",
+};
+
+const delayCondonationTextStyle = {
+  margin: "0px",
+  fontFamily: "Roboto",
+  fontSize: "14px",
+  fontWeight: 400,
+  lineHeight: "16.41px",
+  textAlign: "center",
+  color: "#231F20",
+};
+
 function ViewCaseFile({ t, inViewCase = false }) {
   const history = useHistory();
   const roles = Digit.UserService.getUser()?.info?.roles;
@@ -69,7 +86,7 @@ function ViewCaseFile({ t, inViewCase = false }) {
 
   const { downloadPdf } = useDownloadCasePdf();
 
-  const checkListLink = "/pucar-filestore/kl/ScrutinyCheckList.pdf";
+  const checkListLink = window?.globalConfigs?.getConfig("SCRUTINY_CHECK_LIST");
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     if (JSON.stringify(formData) !== JSON.stringify(formdata.data)) {
@@ -209,6 +226,8 @@ function ViewCaseFile({ t, inViewCase = false }) {
     };
   }, [scrutinyErrors]);
   const isDisabled = useMemo(() => totalErrors?.total > 0);
+
+  const delayCondonationData = useMemo(() => caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data, [caseDetails]);
 
   const state = useMemo(() => caseDetails?.status, [caseDetails]);
   const formConfig = useMemo(() => {
@@ -552,6 +571,15 @@ function ViewCaseFile({ t, inViewCase = false }) {
                         <CustomArrowDownIcon />
                       </div>
                     </div>
+                    {delayCondonationData?.delayCondonationType?.code === "NO" && (
+                      <div className="delay-condonation-chip" style={{ ...delayCondonationStylsMain }}>
+                        <p style={delayCondonationTextStyle}>
+                          {delayCondonationData?.isDcaSkippedInEFiling?.code === "NO"
+                            ? t("DELAY_CONDONATION_FILED")
+                            : t("DELAY_CONDONATION_NOT_FILED")}
+                        </p>
+                      </div>
+                    )}
                     <CustomCaseInfoDiv data={caseInfo} t={t} />
                   </div>
                 </div>

@@ -183,7 +183,6 @@ const ComplainantSignature = ({ path }) => {
         inputs: [
           {
             name: name,
-            documentHeader: "CS_ADD_SIGNATURE",
             type: "DragDropComponent",
             uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
             maxFileSize: 5,
@@ -328,13 +327,15 @@ const ComplainantSignature = ({ path }) => {
     setDocumentUpload(true);
   };
 
-  const delayCondonation = useMemo(() => {
-    const today = new Date();
-    if (!caseDetails?.caseDetails?.["demandNoticeDetails"]?.formdata) {
-      return null;
+  const isDelayCondonation = useMemo(() => {
+    const dcaData = caseDetails?.caseDetails?.["delayApplications"]?.formdata[0]?.data;
+    if (
+      dcaData?.delayCondonationType?.code === "YES" ||
+      (dcaData?.delayCondonationType?.code === "NO" && dcaData?.isDcaSkippedInEFiling?.code === "YES")
+    ) {
+      return false;
     }
-    const dateOfAccrual = new Date(caseDetails?.caseDetails["demandNoticeDetails"]?.formdata[0]?.data?.dateOfAccrual);
-    return today?.getTime() - dateOfAccrual?.getTime();
+    return true;
   }, [caseDetails]);
 
   const chequeDetails = useMemo(() => {
@@ -387,7 +388,7 @@ const ComplainantSignature = ({ path }) => {
             numberOfApplication: 1,
             tenantId: tenantId,
             caseId: caseId,
-            delayCondonation: delayCondonation,
+            isDelayCondonation: isDelayCondonation,
             filingNumber: caseDetails?.filingNumber,
           },
         ],
@@ -411,7 +412,7 @@ const ComplainantSignature = ({ path }) => {
               taxHeadMasterCode: "CASE_ADVANCE_CARRYFORWARD",
               taxAmount: calculationResponse?.Calculation?.[0]?.totalAmount,
               collectionAmount: 0,
-              delayCondonation: delayCondonation,
+              isDelayCondonation: isDelayCondonation,
             },
           ],
           additionalDetails: {
@@ -420,7 +421,7 @@ const ComplainantSignature = ({ path }) => {
             cnrNumber: caseDetails?.cnrNumber,
             payer: caseDetails?.litigants?.[0]?.additionalDetails?.fullName,
             payerMobileNo: caseDetails?.additionalDetails?.payerMobileNo,
-            delayCondonation: delayCondonation,
+            isDelayCondonation: isDelayCondonation,
           },
         },
       ],

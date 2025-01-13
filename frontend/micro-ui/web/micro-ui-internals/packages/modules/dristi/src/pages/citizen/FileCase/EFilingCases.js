@@ -58,6 +58,7 @@ import DocViewerWrapper from "../../employee/docViewerWrapper";
 import CaseLockModal from "./CaseLockModal";
 import ConfirmCaseDetailsModal from "./ConfirmCaseDetailsModal";
 import { DocumentUploadError } from "../../../Utils/errorUtil";
+import ConfirmDcaSkipModal from "./ConfirmDcaSkipModal";
 
 const OutlinedInfoIcon = () => (
   <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: "absolute", right: -22, top: 0 }}>
@@ -182,6 +183,10 @@ function EFilingCases({ path }) {
   const [showReviewCorrectionModal, setShowReviewCorrectionModal] = useState(false);
   const [showReviewConfirmationModal, setShowReviewConfirmationModal] = useState(false);
   const [showCaseLockingModal, setShowCaseLockingModal] = useState(false);
+  const [showConfirmDcaSkipModal, setShowConfirmDcaSkipModal] = useState(false);
+  const [shouldShowConfirmDcaModal, setShouldShowConfirmDcaModal] = useState(false);
+  const [prevIsDcaSkipped, setPrevIsDcaSkipped] = useState("");
+
   const [showConfirmCaseDetailsModal, setShowConfirmCaseDetailsModal] = useState(false);
 
   const [caseResubmitSuccess, setCaseResubmitSuccess] = useState(false);
@@ -465,6 +470,13 @@ function EFilingCases({ path }) {
   const courtRooms = useMemo(() => courtRoomDetails?.Court_Rooms || [], [courtRoomDetails]);
 
   useEffect(() => {
+    const isDcaSkipped = caseDetails?.caseDetails?.["delayApplications"]?.formdata?.[0]?.data?.isDcaSkippedInEFiling?.code;
+    if (isDcaSkipped !== prevIsDcaSkipped) {
+      setPrevIsDcaSkipped(isDcaSkipped);
+    }
+  }, [caseDetails, prevIsDcaSkipped]);
+
+  useEffect(() => {
     setParentOpen(sideMenuConfig.findIndex((parent) => parent.children.some((child) => child.key === selected)));
   }, [selected]);
 
@@ -533,6 +545,23 @@ function EFilingCases({ path }) {
     }
   }, [caseDetails, errorCaseDetails]);
 
+  const isDelayCondonation = useMemo(() => {
+    return caseDetails?.caseDetails?.["demandNoticeDetails"]?.formdata?.some((data) => {
+      const dateObj = new Date(data?.data?.dateOfAccrual);
+      const currentDate = new Date();
+      const monthDifference = currentDate.getMonth() - dateObj.getMonth() + (currentDate.getFullYear() - dateObj.getFullYear()) * 12;
+      if (monthDifference > 1) {
+        return true;
+      } else if (monthDifference === 0) {
+        return false;
+      } else if (currentDate.getDate() > dateObj.getDate()) {
+        return true;
+      } else {
+        return false;
+      }
+    });
+  }, [caseDetails]);
+
   const getDefaultValues = useCallback(
     (index) => {
       if (isCaseReAssigned && errorCaseDetails) {
@@ -546,13 +575,55 @@ function EFilingCases({ path }) {
         );
       }
 
+      if (caseDetails?.status === "DRAFT_IN_PROGRESS" && selected === "delayApplications") {
+        if (isDelayCondonation) {
+          const data = {
+            ...caseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data,
+            delayCondonationType: {
+              code: "NO",
+              name: "NO",
+              showForm: true,
+              isEnabled: true,
+            },
+
+            isDcaSkippedInEFiling: caseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data?.isDcaSkippedInEFiling
+              ? caseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data?.isDcaSkippedInEFiling
+              : {
+                  code: "NO",
+                  name: "NO",
+                  showDcaFileUpload: true,
+                },
+          };
+          return data;
+        } else {
+          return {
+            ...caseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data,
+            delayCondonationType: {
+              code: "YES",
+              name: "YES",
+              showForm: false,
+              isEnabled: true,
+            },
+          };
+        }
+      }
+
       return (
         caseDetails?.additionalDetails?.[selected]?.formdata?.[index]?.data ||
         caseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data ||
         formdata[index]?.data
       );
     },
-    [caseDetails?.additionalDetails, caseDetails?.caseDetails, errorCaseDetails, formdata, isCaseReAssigned, selected, scrutinyObj]
+    [
+      caseDetails?.status,
+      caseDetails?.additionalDetails,
+      caseDetails?.caseDetails,
+      errorCaseDetails,
+      formdata,
+      isCaseReAssigned,
+      selected,
+      scrutinyObj,
+    ]
   );
 
   const accordion = useMemo(() => {
@@ -901,12 +972,7 @@ function EFilingCases({ path }) {
                 body.withoutLabelFieldPair = false;
               }
               if (selected === "delayApplications") {
-                if (
-                  caseDetails?.caseDetails?.["demandNoticeDetails"]?.formdata?.some(
-                    (data) => new Date(data?.data?.dateOfAccrual).getTime() + 30 * 24 * 60 * 60 * 1000 < new Date().getTime()
-                  ) &&
-                  body?.key === "delayCondonationType"
-                ) {
+                if (isDelayCondonation && body?.key === "delayCondonationType") {
                   body.disable = true;
                 }
               }
@@ -1062,9 +1128,19 @@ function EFilingCases({ path }) {
                   ](body?.populators?.validation?.max?.patternType);
                 }
 
+                let disableDelayCondonationType = false;
+
+                if (selected === "delayApplications") {
+                  if (body?.key === "delayCondonationType") {
+                    disableDelayCondonationType = true;
+                  }
+                  if (body?.key === "isDcaSkippedInEFiling" && !isDelayCondonation) {
+                    return {};
+                  }
+                }
                 return {
                   ...body,
-                  disable: disableConfigFields.some((field) => field === body?.populators?.name),
+                  disable: disableConfigFields.some((field) => field === body?.populators?.name) || disableDelayCondonationType,
                   populators: {
                     ...body?.populators,
                     validation: {
@@ -1109,7 +1185,7 @@ function EFilingCases({ path }) {
                   key =
                     formComponent.key + "." + formComponent.populators?.inputs?.[0]?.name + "." + formComponent.populators?.inputs?.[0]?.optionsKey;
                 }
-                if (selected === "debtLiabilityDetails" && ["dropdown", "radio"].includes(formComponent.type)) {
+                if (["debtLiabilityDetails", "delayApplications"].includes(selected) && ["dropdown", "radio"].includes(formComponent.type)) {
                   key = formComponent.key + "." + formComponent?.populators?.optionsKey;
                 }
                 if (selected === "delayApplications" && formComponent.component === "CustomRadioInfoComponent") {
@@ -1163,6 +1239,9 @@ function EFilingCases({ path }) {
                   }
                   if (selected === "chequeDetails" && key === "policeStation") {
                     key = key + "." + formComponent?.populators?.optionsKey;
+                  }
+                  if (selected === "delayApplications" && key === "delayCondonationType.name") {
+                    modifiedFormComponent.disable = true;
                   }
                   if (key in scrutiny?.[selected]?.form?.[index] && scrutiny?.[selected]?.form?.[index]?.[key]?.FSOError) {
                     if (key === "complainantVerification.individualDetails.document") {
@@ -1329,7 +1408,22 @@ function EFilingCases({ path }) {
         caseDetails,
         currentDisplayIndex,
       });
-      validateDateForDelayApplication({ setValue, caseDetails, selected, toast, t, history, caseId });
+      validateDateForDelayApplication({
+        formData,
+        setValue,
+        caseDetails,
+        selected,
+        toast,
+        t,
+        history,
+        caseId,
+        setShowConfirmDcaSkipModal,
+        showConfirmDcaSkipModal,
+        shouldShowConfirmDcaModal,
+        setShouldShowConfirmDcaModal,
+        prevIsDcaSkipped,
+        setPrevIsDcaSkipped,
+      });
       showToastForComplainant({ formData, setValue, selected, setSuccessToast, formState, clearErrors });
       setFormdata(
         formdata.map((item, i) => {
@@ -1873,14 +1967,6 @@ function EFilingCases({ path }) {
     history.push(`?caseId=${caseId}&selected=${key}`);
   };
 
-  const delayCondonation = useMemo(() => {
-    const today = new Date();
-    if (!caseDetails?.caseDetails?.["demandNoticeDetails"]?.formdata) {
-      return null;
-    }
-    const dateOfAccrual = new Date(caseDetails?.caseDetails["demandNoticeDetails"]?.formdata[0]?.data?.dateOfAccrual);
-    return today?.getTime() - dateOfAccrual?.getTime();
-  }, [caseDetails]);
   const chequeDetails = useMemo(() => {
     const debtLiability = caseDetails?.caseDetails?.debtLiabilityDetails?.formdata?.[0]?.data;
     if (debtLiability?.liabilityType?.code === "PARTIAL_LIABILITY") {
@@ -1929,7 +2015,7 @@ function EFilingCases({ path }) {
             numberOfApplication: 1,
             tenantId: tenantId,
             caseId: caseId,
-            delayCondonation: delayCondonation,
+            isDelayCondonation: isDelayCondonation,
             filingNumber: caseDetails?.filingNumber,
           },
         ],
@@ -1953,7 +2039,7 @@ function EFilingCases({ path }) {
               taxHeadMasterCode: "CASE_ADVANCE_CARRYFORWARD",
               taxAmount: 4, // amount to be replaced with calculationResponse
               collectionAmount: 0,
-              delayCondonation: delayCondonation,
+              isDelayCondonation: isDelayCondonation,
             },
           ],
           additionalDetails: {
@@ -1962,7 +2048,7 @@ function EFilingCases({ path }) {
             cnrNumber: caseDetails?.cnrNumber,
             payer: caseDetails?.litigants?.[0]?.additionalDetails?.fullName,
             payerMobileNo: caseDetails?.additionalDetails?.payerMobileNo,
-            delayCondonation: delayCondonation,
+            isDelayCondonation: isDelayCondonation,
           },
         },
       ],
@@ -2036,12 +2122,8 @@ function EFilingCases({ path }) {
     if (formdata && formdata?.[0]?.data?.advocateBarRegNumberWithName?.[0]?.isDisable) {
       return "disable-form";
     }
-
-    if (selected === "delayApplications" && formdata?.[0]?.data?.delayCondonationType?.code) {
-      return "disable-form";
-    }
     return "";
-  }, [formdata, selected]);
+  }, [formdata]);
 
   const handleConfirmDeleteForm = () => {
     const index = deleteFormIndex;
@@ -2584,6 +2666,16 @@ function EFilingCases({ path }) {
       )}
       {showConfirmCaseDetailsModal && (
         <ConfirmCaseDetailsModal t={t} setShowConfirmCaseDetailsModal={setShowConfirmCaseDetailsModal}></ConfirmCaseDetailsModal>
+      )}
+      {showConfirmDcaSkipModal && selected === "delayApplications" && (
+        // This modal asks to confirm if the user wants to skip submitting Delay condonation Application.
+        <ConfirmDcaSkipModal
+          t={t}
+          setFormDataValue={setFormDataValue.current}
+          setShowConfirmDcaSkipModal={setShowConfirmDcaSkipModal}
+          prevIsDcaSkipped={prevIsDcaSkipped}
+          setPrevIsDcaSkipped={setPrevIsDcaSkipped}
+        ></ConfirmDcaSkipModal>
       )}
     </div>
   );

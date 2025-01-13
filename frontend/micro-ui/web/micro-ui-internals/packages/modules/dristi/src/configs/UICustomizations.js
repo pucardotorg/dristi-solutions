@@ -329,7 +329,7 @@ export const UICustomizations = {
           const differenceInDays = Math.ceil(differenceInTime / (1000 * 3600 * 24));
           return <span>{differenceInDays}</span>;
         case "USER_NAME":
-          const displayName = `${value?.givenName || ""} ${value?.familyName || ""} ${value?.otherNames || ""}`;
+          const displayName = `${value?.givenName || ""} ${value?.otherNames || ""} ${value?.familyName || ""}`;
           return displayName;
         default:
           return t("ES_COMMON_NA");
@@ -1026,15 +1026,10 @@ export const UICustomizations = {
         config: {
           ...requestCriteria.config,
           select: (data) => {
-            // if (requestCriteria.url.split("/").includes("order")) {
-            return userRoles.includes("CITIZEN") && requestCriteria.url.split("/").includes("order")
-              ? { ...data, list: data.list?.filter((order) => order.status !== "DRAFT_IN_PROGRESS") }
-              : userRoles.includes("JUDGE_ROLE") && requestCriteria.url.split("/").includes("application")
-              ? {
-                  ...data,
-                  applicationList: data.applicationList?.filter((application) => !["PENDINGESIGN", "PENDINGPAYMENT"].includes(application.status)),
-                }
-              : data;
+            return {
+              ...data,
+              TotalCount: data?.TotalCount ? data?.TotalCount : data?.pagination?.totalCount,
+            };
             // }
           },
         },

@@ -1,6 +1,6 @@
 import { InfoBannerIcon } from "@egovernments/digit-ui-components";
 import { CustomArrowDownIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 // import { CustomArrowDownIcon, CustomArrowUpIcon } from "../icons/svgIndex";
 
@@ -18,10 +18,15 @@ function PendingTaskAccordion({
   isAccordionOpen = false,
   setShowSubmitResponseModal,
   setResponsePendingTask,
+  allPendingTasks,
 }) {
   const history = useHistory();
   const [isOpen, setIsOpen] = useState(isAccordionOpen);
   const [check, setCheck] = useState(false);
+
+  const roles = useMemo(() => Digit.UserService.getUser()?.info?.roles?.map((role) => role?.code) || [], []);
+  const isJudge = roles.includes("JUDGE_ROLE");
+
   const handleAccordionClick = () => {
     setIsOpen(!isOpen);
   };
@@ -90,7 +95,7 @@ function PendingTaskAccordion({
               style={{ cursor: "pointer" }}
               onClick={() => {
                 if (item?.status === "PENDING_RESPONSE") {
-                  if (item?.actionName === "Admit-Case") {
+                  if (isJudge) {
                     const caseId = item?.params?.caseId;
                     const filingNumber = item?.params?.filingNumber;
                     history.push(`/${window.contextPath}/employee/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview`, {

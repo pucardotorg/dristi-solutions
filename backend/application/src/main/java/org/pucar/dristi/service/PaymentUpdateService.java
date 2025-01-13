@@ -12,15 +12,14 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.ApplicationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.ApplicationRepository;
+import org.pucar.dristi.util.SmsNotificationUtil;
 import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.pucar.dristi.config.ServiceConstants.PENDINGAPPROVAL;
 
@@ -35,8 +34,10 @@ public class PaymentUpdateService {
     private final Configuration configuration;
     private final ApplicationEnrichment enrichment;
     private final List<String> allowedBusinessServices;
+    private final SmsNotificationUtil smsNotificationUtil;
+
     @Autowired
-    public PaymentUpdateService(WorkflowService workflowService, ObjectMapper mapper, ApplicationRepository repository, Producer producer, Configuration configuration, ApplicationEnrichment enrichment) {
+    public PaymentUpdateService(WorkflowService workflowService, ObjectMapper mapper, ApplicationRepository repository, Producer producer, Configuration configuration, ApplicationEnrichment enrichment, SmsNotificationUtil smsNotificationUtil) {
         this.workflowService = workflowService;
         this.mapper = mapper;
         this.repository = repository;
@@ -46,18 +47,24 @@ public class PaymentUpdateService {
        this.allowedBusinessServices= Arrays.asList(
                 configuration.getAsyncOrderSubBusinessServiceName(),
                 configuration.getAsyncOrderSubWithResponseBusinessServiceName(),
-                configuration.getAsyncVoluntarySubBusinessServiceName()
+                configuration.getAsyncVoluntarySubBusinessServiceName(),
+                configuration.getBailVoluntarySubBusinessServiceName()
         );
+        this.smsNotificationUtil = smsNotificationUtil;
     }
 
     public void process(Map<String, Object> record) {
         try {
+
+            log.info("allowed business service for payment {}", allowedBusinessServices);
             PaymentRequest paymentRequest = mapper.convertValue(record, PaymentRequest.class);
             RequestInfo requestInfo = paymentRequest.getRequestInfo();
             List<PaymentDetail> paymentDetails = paymentRequest.getPayment().getPaymentDetails();
             String tenantId = paymentRequest.getPayment().getTenantId();
 
             for (PaymentDetail paymentDetail : paymentDetails) {
+
+                log.info("inside payment update, currently checking for {}",paymentDetail.getBusinessService());
                 if (allowedBusinessServices.contains(paymentDetail.getBusinessService())) {
                     updateWorkflowForApplicationPayment(requestInfo, tenantId, paymentDetail);
                 }
@@ -71,6 +78,7 @@ public class PaymentUpdateService {
         try {
             Bill bill = paymentDetail.getBill();
             String consumerCode = bill.getConsumerCode();
+            log.info("updating payment for consumer code {}",consumerCode);
             String[] consumerCodeSplitArray = consumerCode.split("_", 2);
             String applicationNumber = consumerCodeSplitArray[0];
             ApplicationCriteria criteria = ApplicationCriteria.builder()
@@ -113,6 +121,10 @@ public class PaymentUpdateService {
                 if (PENDINGAPPROVAL.equalsIgnoreCase(application.getStatus())){
                     enrichment.enrichApplicationNumberByCMPNumber(applicationRequest);
                 }
+
+                String applicationType = application.getApplicationType();
+
+                smsNotificationUtil.callNotificationService(applicationRequest, state.getState(), applicationType);
                 producer.push(configuration.getApplicationUpdateStatusTopic(), applicationRequest);
             }
         } catch (Exception e) {

@@ -4,10 +4,11 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class ServiceConstants {
-	private ServiceConstants() {
-	}
-	public static final String EXTERNAL_SERVICE_EXCEPTION = "External Service threw an Exception: ";
-	public static final String SEARCHER_SERVICE_EXCEPTION = "Exception while fetching from searcher: ";
+    private ServiceConstants() {
+    }
+
+    public static final String EXTERNAL_SERVICE_EXCEPTION = "External Service threw an Exception: ";
+    public static final String SEARCHER_SERVICE_EXCEPTION = "Exception while fetching from searcher: ";
 
 	public static final String IDGEN_ERROR = "IDGEN ERROR";
 	public static final String NO_IDS_FOUND_ERROR = "No ids returned from idgen Service";
@@ -35,6 +36,8 @@ public class ServiceConstants {
 	public static final String INVALID_DATE_FORMAT_MESSAGE = "Failed to parse date format in user";
 	public static final String CITIZEN_UPPER = "CITIZEN";
 	public static final String CITIZEN_LOWER = "Citizen";
+	public static final String EMPLOYEE_UPPER = "EMPLOYEE";
+	public static final String PENDING_E_SIGN = "PENDING_E-SIGN";
 	public static final String USER = "user";
 	public static final String COMMENT_ADD_ERR = "COMMENT_ADD_ERR";
 	public static final String COMPLAINANT = "COMPLAINANT";
@@ -75,5 +78,16 @@ public class ServiceConstants {
 	public static final String ERROR_WHILE_FETCHING_FROM_APPLICATION_SERVICE = "ERROR_WHILE_FETCHING_FROM_APPLICATION_SERVICE";
 	public static final String ERROR_WHILE_FETCHING_FROM_ORDER = "ERROR_WHILE_FETCHING_FROM_ORDER_SERVICE";
 	public static final String ERROR_WHILE_FETCHING_FROM_HEARING = "ERROR_WHILE_FETCHING_FROM_HEARING";
+
+    public static final String NOTIFICATION_ENG_LOCALE_CODE = "en_IN";
+    public static final String NOTIFICATION_MODULE_CODE = "notification";
+    public static final String NOTIFICATION_LOCALIZATION_CODES_JSONPATH = "$.messages.*.code";
+    public static final String NOTIFICATION_LOCALIZATION_MSGS_JSONPATH = "$.messages.*.message";
+    public static final String INDIVIDUAL_UTILITY_EXCEPTION = "INDIVIDUAL_UTILITY_EXCEPTION";
+    public static final String DOCUMENT_MARKED_EXHIBIT = "DOCUMENT_MARKED_EXHIBIT";
+    public static final String REQUEST_INFO_PATH = "$.RequestInfo";
+    public static final String APPLICATION_NUMBER_PATH = "$.application.applicationNumber";
+
+    public static final String APPLICATION_STATUS_PATH = "$.application.status";
 
 }

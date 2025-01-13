@@ -12,6 +12,8 @@ const Modal = ({
   actionCancelLabel,
   actionCancelOnSubmit,
   actionSaveLabel,
+  actionCustomLabelSubmit,
+  actionCustomLabel,
   actionSaveOnSubmit,
   error,
   setError,
@@ -28,6 +30,7 @@ const Modal = ({
   className,
   cancelButtonBody,
   popUpStyleMain = {},
+  actionCancelStyle,
 }) => {
   /**
    * TODO: It needs to be done from the desgin changes
@@ -61,26 +64,34 @@ const Modal = ({
                 theme="border"
                 label={actionCancelLabel}
                 onSubmit={actionCancelOnSubmit}
-                style={{ border: "1px solid #007E7E", backgroundColor: "white" }}
+                style={{ border: "1px solid #007E7E", backgroundColor: "white", ...(actionCancelStyle ? actionCancelStyle : {}) }}
                 ButtonBody={cancelButtonBody}
               />
             ) : (
               <div></div>
             )}
-            {actionSaveLabel && !hideSubmit
-              ? (console.log(style),
-                (
-                  <ButtonSelector
-                    textStyles={textStyle}
-                    label={actionSaveLabel}
-                    onSubmit={actionSaveOnSubmit}
-                    formId={formId}
-                    isDisabled={isDisabled}
-                    style={style}
-                    textClassName={submitTextClassName}
-                  />
-                ))
-              : null}
+            {actionCustomLabel ? (
+              <ButtonSelector
+                textStyles={textStyle}
+                label={actionCustomLabel}
+                onSubmit={actionCustomLabelSubmit}
+                formId={formId}
+                isDisabled={isDisabled}
+                style={style}
+                textClassName={submitTextClassName}
+              />
+            ) : null}
+            {actionSaveLabel && !hideSubmit ? (
+              <ButtonSelector
+                textStyles={textStyle}
+                label={actionSaveLabel}
+                onSubmit={actionSaveOnSubmit}
+                formId={formId}
+                isDisabled={isDisabled}
+                style={style}
+                textClassName={submitTextClassName}
+              />
+            ) : null}
           </div>
         </div>
       </div>

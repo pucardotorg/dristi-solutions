@@ -18,12 +18,12 @@ import {
   sendBackCase,
 } from "../../citizen/FileCase/Config/admissionActionConfig";
 import { reviewCaseFileFormConfig } from "../../citizen/FileCase/Config/reviewcasefileconfig";
-import { getAllAssignees } from "../../citizen/FileCase/EfilingValidationUtils";
+import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
 import AdmissionActionModal from "./AdmissionActionModal";
 import { generateUUID, getFilingType } from "../../../Utils";
 import { documentTypeMapping } from "../../citizen/FileCase/Config";
 import ScheduleHearing from "../AdmittedCases/ScheduleHearing";
-import { SubmissionWorkflowAction } from "../../../Utils/submissionWorkflow";
+import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../../Utils/submissionWorkflow";
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
@@ -41,7 +41,24 @@ const caseSecondaryActions = [
 ];
 const caseTertiaryActions = [{ action: "ISSUE_ORDER", label: "ISSUE_NOTICE" }];
 
+const delayCondonationStylsMain = {
+  padding: "6px 8px",
+  borderRadius: "999px",
+  backgroundColor: "#E9A7AA",
+};
+
+const delayCondonationTextStyle = {
+  margin: "0px",
+  fontFamily: "Roboto",
+  fontSize: "14px",
+  fontWeight: 400,
+  lineHeight: "16.41px",
+  textAlign: "center",
+  color: "#231F20",
+};
+
 function CaseFileAdmission({ t, path }) {
+  const [isDisabled, setIsDisabled] = useState(false);
   const history = useHistory();
   const [showErrorToast, setShowErrorToast] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -79,6 +96,9 @@ function CaseFileAdmission({ t, path }) {
     Boolean(caseId)
   );
   const caseDetails = useMemo(() => caseFetchResponse?.criteria?.[0]?.responseList?.[0] || null, [caseFetchResponse]);
+  const delayCondonationData = useMemo(() => caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data, [caseDetails]);
+  const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
+  const representativesUuid = useMemo(() => allAdvocates?.[Object.keys(allAdvocates)?.[0]], [allAdvocates]);
   const complainantPrimaryUUId = useMemo(
     () => caseDetails?.litigants?.find((item) => item?.partyType === "complainant.primary").additionalDetails?.uuid || "",
     [caseDetails]
@@ -115,6 +135,41 @@ function CaseFileAdmission({ t, path }) {
     Boolean(filingNumber)
   );
 
+  const { data: applicationData, isLoading: isApplicationLoading, refetch: applicationRefetch } = Digit.Hooks.submissions.useSearchSubmissionService(
+    {
+      criteria: {
+        filingNumber,
+        tenantId,
+      },
+      tenantId,
+    },
+    {},
+    filingNumber + "allApplications",
+    filingNumber
+  );
+
+  const isDelayApplicationPending = useMemo(
+    () =>
+      Boolean(
+        applicationData?.applicationList?.some(
+          (item) =>
+            item?.applicationType === "DELAY_CONDONATION" &&
+            [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(item?.status)
+        )
+      ),
+    [applicationData]
+  );
+
+  const isDelayApplicationCompleted = useMemo(
+    () =>
+      Boolean(
+        applicationData?.applicationList?.some(
+          (item) => item?.applicationType === "DELAY_CONDONATION" && [SubmissionWorkflowState.COMPLETED].includes(item?.status)
+        )
+      ),
+    [applicationData]
+  );
+
   const currentHearingId = useMemo(
     () =>
       hearingDetails?.HearingList?.find((list) => list?.hearingType === "ADMISSION" && !(list?.status === "COMPLETED" || list?.status === "ABATED"))
@@ -135,8 +190,6 @@ function CaseFileAdmission({ t, path }) {
     () => caseTertiaryActions?.find((action) => nextActions?.some((data) => data.action === action?.action)) || { action: "", label: "" },
     [nextActions]
   );
-
-  console.log(workFlowDetails, nextActions);
 
   const formConfig = useMemo(() => {
     if (!caseDetails) return null;
@@ -360,19 +413,27 @@ function CaseFileAdmission({ t, path }) {
   const onSubmit = async () => {
     switch (primaryAction.action) {
       case "REGISTER":
-        if (isDelayCondonation) {
-          try {
-            setLoader(true);
-            await handleCreateDelayCondonation();
-            setLoader(false);
-          } catch (error) {
-            setShowErrorToast("INTERNAL_ERROR_OCCURRED");
-            setLoader(false);
-            break;
+        try {
+          if (isDelayCondonationApplicable) {
+            try {
+              setLoader(true);
+              setIsDisabled(true);
+              await createDcaAndPendingTasks();
+            } catch (error) {
+              setShowErrorToast("INTERNAL_ERROR_OCCURRED");
+              setIsDisabled(false);
+              throw new Error("Delay condonation application creation failed: " + error.message);
+            }
           }
+          await handleRegisterCase();
+          await applicationRefetch();
+          setCreateAdmissionOrder(true);
+          setLoader(false);
+        } catch (error) {
+          setShowErrorToast("INTERNAL_ERROR_OCCURRED");
+          console.error("some error occurred:", error);
+          setLoader(false);
         }
-        handleRegisterCase();
-        setCreateAdmissionOrder(true);
         break;
       case "ADMIT":
         if (caseDetails?.status === "ADMISSION_HEARING_SCHEDULED") {
@@ -545,6 +606,7 @@ function CaseFileAdmission({ t, path }) {
   };
 
   const handleRegisterCase = async () => {
+    setIsDisabled(true);
     setCaseADmitLoader(true);
     const individualId = await fetchBasicUserInfo();
     let documentList = [];
@@ -658,6 +720,7 @@ function CaseFileAdmission({ t, path }) {
         ],
       });
       setModalInfo({ ...modalInfo, page: 4 });
+      setIsDisabled(false);
       setShowModal(true);
     });
   };
@@ -701,19 +764,55 @@ function CaseFileAdmission({ t, path }) {
     );
   };
 
-  const isDelayCondonation = useMemo(() => caseDetails?.caseDetails?.delayApplications?.formdata[0]?.data?.delayCondonationType?.code === "NO", [
-    caseDetails,
-  ]);
+  const isDelayCondonationApplicable = useMemo(
+    () => caseDetails?.caseDetails?.delayApplications?.formdata[0]?.data?.delayCondonationType?.code === "NO",
+    [caseDetails]
+  );
+  const isDelayCondonationDocUploadSkipped = useMemo(
+    () =>
+      caseDetails?.caseDetails?.delayApplications?.formdata[0]?.data?.delayCondonationType?.code === "NO" &&
+      caseDetails?.caseDetails?.delayApplications?.formdata[0]?.data?.isDcaSkippedInEFiling?.code === "YES",
+    [caseDetails]
+  );
   const delayCondonationDocument = useMemo(() => caseDetails?.caseDetails?.delayApplications?.formdata[0]?.data?.condonationFileUpload?.document, [
     caseDetails,
   ]);
 
-  const isDisabled = useMemo(() => isLoading || isWorkFlowLoading || caseAdmitLoader || isLoader, [
+  const isButtonDisabled = useMemo(() => isLoading || isWorkFlowLoading || caseAdmitLoader || isLoader, [
     isLoading,
     isWorkFlowLoading,
     caseAdmitLoader,
     isLoader,
   ]);
+
+  const createDcaAndPendingTasks = async () => {
+    if (isDelayCondonationApplicable) {
+      if (!isDelayCondonationDocUploadSkipped) {
+        await handleCreateDelayCondonation();
+      } else {
+        try {
+          DRISTIService.customApiService(Urls.dristi.pendingTask, {
+            pendingTask: {
+              name: "Create DCA Applications",
+              entityType: "delay-condonation-submission",
+              referenceId: `MANUAL_DCA_${caseDetails?.filingNumber}`,
+              status: "CREATE_DCA_SUBMISSION",
+              assignedTo: representativesUuid?.map((uuid) => ({ uuid })),
+              assignedRole: [],
+              cnrNumber: caseDetails?.cnrNumber,
+              filingNumber: caseDetails?.filingNumber,
+              isCompleted: false,
+              additionalDetails: {},
+              tenantId,
+            },
+          });
+        } catch (error) {
+          console.error("error", error);
+          throw new Error(error);
+        }
+      }
+    }
+  };
 
   const handleCreateDelayCondonation = async () => {
     const applicationReqBody = {
@@ -748,7 +847,11 @@ function CaseFileAdmission({ t, path }) {
         },
       },
     };
-    return await DRISTIService.createApplication(applicationReqBody, { tenantId });
+    try {
+      return await DRISTIService.createApplication(applicationReqBody, { tenantId });
+    } catch (error) {
+      console.error("Failed to create applications :>> ", error);
+    }
   };
 
   const handleScheduleCase = async (props) => {
@@ -958,11 +1061,20 @@ function CaseFileAdmission({ t, path }) {
             <BackButton style={{ marginBottom: 0 }}></BackButton>
             <div className="employee-card-wrapper">
               <div className="header-content">
-                <div className="header-details">
+                <div className="header-details" style={{ justifyContent: "normal", gap: "8px" }}>
                   <Header>{caseDetails?.caseTitle}</Header>
-                  <div className="header-icon" onClick={() => {}}>
-                    <CustomArrowDownIcon />
-                  </div>
+                  {delayCondonationData?.delayCondonationType?.code === "NO" && (
+                    <div className="delay-condonation-chip" style={delayCondonationStylsMain}>
+                      <p style={delayCondonationTextStyle}>
+                        {(delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" && "PENDING_REGISTRATION" === caseDetails?.status) ||
+                        (delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" && isDelayApplicationPending) ||
+                        isDelayApplicationPending ||
+                        isDelayApplicationCompleted
+                          ? t("DELAY_CONDONATION_FILED")
+                          : t("DELAY_CONDONATION_NOT_FILED")}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
               <CustomCaseInfoDiv t={t} data={caseInfo} style={{ margin: "24px 0px" }} />
@@ -976,7 +1088,7 @@ function CaseFileAdmission({ t, path }) {
                 defaultValues={{}}
                 onFormValueChange={onFormValueChange}
                 cardStyle={{ minWidth: "100%" }}
-                isDisabled={isDisabled}
+                isDisabled={isButtonDisabled}
                 cardClassName={`e-filing-card-form-style review-case-file`}
                 secondaryLabel={
                   [CaseWorkflowState.ADMISSION_HEARING_SCHEDULED, CaseWorkflowState.PENDING_RESPONSE, CaseWorkflowState.PENDING_NOTICE].includes(
@@ -1004,6 +1116,10 @@ function CaseFileAdmission({ t, path }) {
                   caseAdmittedSubmit={caseAdmittedSubmit}
                   isCaseAdmitted={false}
                   createAdmissionOrder={createAdmissionOrder}
+                  delayCondonationData={delayCondonationData}
+                  hearingDetails={hearingDetails}
+                  isDelayApplicationPending={isDelayApplicationPending}
+                  isDelayApplicationCompleted={isDelayApplicationPending}
                 />
               )}
               {showModal && (
@@ -1026,6 +1142,10 @@ function CaseFileAdmission({ t, path }) {
                   caseAdmittedSubmit={caseAdmittedSubmit}
                   createAdmissionOrder={createAdmissionOrder}
                   isAdmissionHearingAvailable={Boolean(currentHearingId)}
+                  delayCondonationData={delayCondonationData}
+                  hearingDetails={hearingDetails}
+                  isDelayApplicationPending={isDelayApplicationPending}
+                  isDelayApplicationCompleted={isDelayApplicationPending}
                 ></AdmissionActionModal>
               )}
             </div>
