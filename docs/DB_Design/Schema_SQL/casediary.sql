@@ -1,10 +1,10 @@
 CREATE TABLE dristi_casediary (
     id varchar(36) NOT NULL PRIMARY KEY,
     tenant_id varchar(64) NOT NULL,
-    -- varchar(36) of case id
-    case_id varchar(36),
+    -- varchar(36) of case number
+    case_number varchar(36),
     diary_date int8,
-    -- Master data IDs of statute and section
+    -- master data for diary type - ADiary, BDiary
     diary_type varchar(36) NOT NULL,
     -- varchar(36) of judge Id
     judge_id varchar(36),
@@ -43,10 +43,12 @@ CREATE UNIQUE INDEX idx_dristi_casediary_documents_casedairy_id ON dristi_casedi
 CREATE TABLE dristi_diaryentries (
     id varchar(36) NOT NULL PRIMARY KEY,
     tenant_id varchar(64) NOT NULL,
+    case_number varchar(36),
     entry_date int8 NOT NULL,
-    case_id varchar(36),
-    judge_id varchar(36),
     businessOfDay varchar(1024) NOT NULL,
+    reference_id varchar(64),
+    -- master ID for reference type --
+    reference_type varchar(64),
     hearingDate int8 NOT NULL,
     additional_details jsonb,
     created_by varchar(36) NOT NULL,
@@ -55,4 +57,5 @@ CREATE TABLE dristi_diaryentries (
     last_modified_time int8 NOT NULL,
 );
 
-CREATE INDEX idx_dristi_diaryentries_judge_id ON dristi_diaryentries(tenant_id, judge_id);
+CREATE INDEX idx_dristi_diaryentries_casedairy_id ON dristi_diaryentries(tenant_id, case_number);
+CREATE INDEX idx_dristi_diaryentries_entry_date ON dristi_diaryentries(tenant_id, entry_date);
