@@ -36,7 +36,7 @@ paths:
     post:
       tags:
         - Case Diaries
-      operationId: searchCaseDiaries
+      operationId: search
       summary: get the list of diaries based on input parameters
       requestBody:
         description: Details for the search of diaries + RequestInfo meta data.
@@ -63,7 +63,7 @@ paths:
     post:
       tags:
         - Case Diaries
-      operationId: searchDiaryEntries
+      operationId: search
       summary: get the list of diary entries based on input parameters
       requestBody:
         description: Details for the search of diary entries + RequestInfo meta data.
@@ -169,13 +169,38 @@ paths:
               schema:
                 $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
 
-  /case/diary/v1/update:
+  /case/diary/entry/v1/update:
     post:
       tags:
         - Case Diaries
       summary: update the case diary entry. this is mostly done before the signed PDF is created
       requestBody:
         description: updated diary line item + RequestInfo meta data.
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/CaseDiaryEntryRequest'
+      responses:
+        "200":
+          description: ResponseInfo with diary entry updated successfully
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/CaseDiaryEntryResponse'
+        "400":
+          description: diary entry update failed
+          content:
+            'application/json':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /case/diary/v1/update:
+    post:
+      tags:
+        - Case Diaries
+      summary: update the case diary. this is mostly used to update the file store ID after generating the signed PDF
+      requestBody:
+        description: updated diary + RequestInfo meta data.
         content:
           'application/json':
             schema:
@@ -201,10 +226,26 @@ components:
       properties:
         RequestInfo:
           $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        diary:
+          $ref: '#/components/schemas/CaseDiary'
+
+    CaseDiaryResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        diaryEntry:
+          $ref: '#/components/schemas/CaseDiary'
+
+    CaseDiaryEntryRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
         diaryEntry:
           $ref: '#/components/schemas/CaseDiaryEntry'
 
-    CaseDiaryResponse:
+    CaseDiaryEntryResponse:
       type: object
       properties:
         ResponseInfo:
@@ -271,6 +312,8 @@ components:
         - diaryDate
         - diaryType
         - judgeId
+      oneOf:
+        - required: [caseId, caseNumber]
       properties:
         id:
           type: string
@@ -282,13 +325,13 @@ components:
         tenantId:
           type: string
           description: This is tenantId of the case
-        caseId:
+        caseNumber:
           type: string
-          description: The case for which this diary is created in case of B Diary. For A diary this field will be null
+          description: ST number of the case for which this diary is created in case of B Diary. Since B diary is generated on closure of the case, it will have a ST number.  For A diary this field will be null
         diaryDate:
           type: integer
           format: int64
-          description: EPOCH date, with time as 00:00:00 for the diary
+          description: EPOCH date, with time as 00:00:00 for the diary in case of A diary. for B diary, this will be 0
         diaryType:
           type: string
           description: Master data ID the type of diary -ADiary or BDiary or something else in future
@@ -334,7 +377,7 @@ components:
           type: integer
           format: int64
           description: EPOCH date (time is 00:00:00) when the entry was created. All diary operations are only with date, and we don't need time. Setting time to 0, helps compare two values for same date.
-        caseId:
+        caseNumber:
           type: string
           description: CMP/ST number of the case for which the entry is being made
         judgeId:
