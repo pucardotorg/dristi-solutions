@@ -1556,6 +1556,18 @@ const AdmittedCases = () => {
     return isDcaHearingScheduled;
   }, [hearingDetails]);
 
+  const isAdmissionHearingCompletedOnce = useMemo(() => {
+    if (!hearingDetails?.HearingList?.length) {
+      return false;
+    } else {
+      return Boolean(
+        hearingDetails?.HearingList?.find(
+          (hearing) => hearing?.hearingType === "ADMISSION" && [HearingWorkflowState?.COMPLETED].includes(hearing?.status)
+        )
+      );
+    }
+  }, [hearingDetails]);
+
   const currentHearingId = useMemo(
     () =>
       hearingDetails?.HearingList?.find((list) => list?.hearingType === "ADMISSION" && !(list?.status === "COMPLETED" || list?.status === "ABATED"))
@@ -2431,7 +2443,7 @@ const AdmittedCases = () => {
                   onButtonClick={onSaveDraft}
                 />
               )}
-            {primaryAction.action && !isDcaHearingScheduled && (
+            {primaryAction.action && !isDcaHearingScheduled && !isAdmissionHearingCompletedOnce && (
               <SubmitBar
                 label={t(
                   [CaseWorkflowState.ADMISSION_HEARING_SCHEDULED].includes(caseDetails?.status) && primaryAction?.action === "ADMIT"
