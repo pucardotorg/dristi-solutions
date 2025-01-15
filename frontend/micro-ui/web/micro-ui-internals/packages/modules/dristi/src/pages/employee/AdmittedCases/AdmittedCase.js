@@ -170,6 +170,8 @@ const AdmittedCases = () => {
   const isCourtRoomManager = roles.some((role) => role.code === "COURT_ROOM_MANAGER");
   const activeTab = isFSO ? "Complaints" : urlParams.get("tab") || "Overview";
   const filingNumber = urlParams.get("filingNumber");
+  const applicationNumber = urlParams.get("applicationNumber");
+  const triggerAdmitCase = urlParams.get("triggerAdmitCase");
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
 
@@ -1048,7 +1050,7 @@ const AdmittedCases = () => {
 
   useEffect(() => {
     if (
-      history?.location?.state?.triggerAdmitCase &&
+      (history?.location?.state?.triggerAdmitCase || triggerAdmitCase) &&
       openAdmitCaseModal &&
       isDelayCondonationApplicable !== undefined &&
       isDelayApplicationCompleted !== undefined
@@ -1065,7 +1067,7 @@ const AdmittedCases = () => {
         setOpenAdmitCaseModal(false);
       }
     }
-  }, [caseInfo, history?.location, isDelayApplicationCompleted, isDelayCondonationApplicable, openAdmitCaseModal]);
+  }, [caseInfo, history?.location, isDelayApplicationCompleted, isDelayCondonationApplicable, openAdmitCaseModal, triggerAdmitCase]);
 
   useEffect(() => {
     if (history?.location?.state?.from === "orderSuccessModal" && !toastStatus?.alreadyShown) {
@@ -1090,6 +1092,38 @@ const AdmittedCases = () => {
       setShow(true);
     }
   }, [history.location?.state?.applicationDocObj, show]);
+
+  useEffect(() => {
+    if (applicationData && applicationNumber) {
+      const applicationDetails = applicationData?.applicationList?.filter((application) => application?.applicationNumber === applicationNumber)?.[0];
+      setDocumentSubmission(
+        applicationDetails?.documents?.map((doc) => {
+          return {
+            status: applicationDetails?.status,
+            details: {
+              applicationType: applicationDetails?.applicationType,
+              applicationSentOn: getDate(parseInt(applicationDetails?.auditDetails?.createdTime)),
+              sender: applicationDetails?.additionalDetails?.owner,
+              additionalDetails: applicationDetails?.additionalDetails,
+              applicationId: applicationDetails?.id,
+              auditDetails: applicationDetails?.auditDetails,
+            },
+            applicationContent: {
+              tenantId: applicationDetails?.tenantId,
+              fileStoreId: doc.fileStore,
+              id: doc.id,
+              documentType: doc.documentType,
+              documentUid: doc.documentUid,
+              additionalDetails: doc.additionalDetails,
+            },
+            comments: applicationDetails?.comment ? applicationDetails?.comment : [],
+            applicationList: applicationDetails,
+          };
+        })
+      );
+      setShow(true);
+    }
+  }, [applicationData, applicationNumber]);
 
   useEffect(() => {
     // Set default values when component mounts

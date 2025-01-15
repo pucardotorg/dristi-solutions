@@ -18,7 +18,7 @@ function PendingTaskAccordion({
   isAccordionOpen = false,
   setShowSubmitResponseModal,
   setResponsePendingTask,
-  allPendingTasks,
+  isOpenInNewTab,
 }) {
   const history = useHistory();
   const [isOpen, setIsOpen] = useState(isAccordionOpen);
@@ -31,9 +31,9 @@ function PendingTaskAccordion({
     setIsOpen(!isOpen);
   };
 
-  const redirectPendingTaskUrl = async (url, isCustomFunction = () => {}, params = {}) => {
+  const redirectPendingTaskUrl = async (url, isCustomFunction = () => {}, params = {}, isOpenInNewTab) => {
     if (isCustomFunction) {
-      await url(params);
+      await url({ ...params, isOpenInNewTab });
     } else {
       history.push(url, {
         state: {
@@ -98,14 +98,24 @@ function PendingTaskAccordion({
                   if (isJudge) {
                     const caseId = item?.params?.caseId;
                     const filingNumber = item?.params?.filingNumber;
-                    history.push(`/${window.contextPath}/employee/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview`, {
-                      triggerAdmitCase: true,
-                    });
+                    if (isOpenInNewTab) {
+                      const newTabUrl = `/${
+                        window.contextPath
+                      }/employee/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview&triggerAdmitCase=${true}`;
+                      window.open(newTabUrl, "_blank", "noopener,noreferrer");
+                    } else {
+                      history.push(
+                        `/${window.contextPath}/employee/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview`,
+                        {
+                          triggerAdmitCase: true,
+                        }
+                      );
+                    }
                   } else {
                     setResponsePendingTask(item);
                     setShowSubmitResponseModal(true);
                   }
-                } else redirectPendingTaskUrl(item?.redirectUrl, item?.isCustomFunction, item?.params);
+                } else redirectPendingTaskUrl(item?.redirectUrl, item?.isCustomFunction, item?.params, isOpenInNewTab);
               }}
             >
               <input type="checkbox" value={check} />
