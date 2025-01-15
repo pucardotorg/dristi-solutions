@@ -171,6 +171,7 @@ public class ServiceConstants {
     public static final String FLOW_JAC = "flow_jac";
 
     public static final String ADVOCATE_CASE_JOIN = "ADVOCATE_CASE_JOIN";
+    public static final String NEW_USER_JOIN = "NEW_USER_JOIN";
 
     public static final String ADVOCATE_NAME = "advocateName";
 

@@ -83,6 +83,21 @@ public class SmsNotificationService {
         if(messageCode.equalsIgnoreCase(NEXT_HEARING_SCHEDULED)){
             pushNotification(templateData, message, mobileNumber, config.getSmsNotificationNextHearingScheduledTemplateId());
         }
+        if(messageCode.equalsIgnoreCase(EXAMINATION_UNDER_S351_BNSS_SCHEDULED)){
+            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationExaminationUnderS351BNSSScheduledTemplateId());
+        }
+        if(messageCode.equalsIgnoreCase(EVIDENCE_ACCUSED_PUBLISHED)){
+            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationEvidenceAccusedPublishedTemplateId());
+        }
+        if(messageCode.equalsIgnoreCase(EVIDENCE_COMPLAINANT_PUBLISHED)){
+            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationEvidenceComplainantPublishedTemplateId());
+        }
+        if(messageCode.equalsIgnoreCase(APPEARANCE_PUBLISHED)){
+            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationAppearancePublishedTemplateId());
+        }
+        if(messageCode.equalsIgnoreCase(CASE_DECISION_AVAILABLE)){
+            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationCaseDecisionAvailableTemplateId());
+        }
     }
 
     private void pushNotification(SmsTemplateData templateData, String message, String mobileNumber, String templateId) {
@@ -152,6 +167,7 @@ public class SmsNotificationService {
                 .replace("{{cnr}}", Optional.ofNullable(userDetailsForSMS.get("cnr")).orElse(""))
                 .replace("{{link}}", Optional.ofNullable(userDetailsForSMS.get("link")).orElse(""))
                 .replace("{{date}}", Optional.ofNullable(userDetailsForSMS.get("date")).orElse(""))
+                .replace("{{submissionDate}}", Optional.ofNullable(userDetailsForSMS.get("submissionDate")).orElse(""))
                 .replace("{{cmpNumber}}", Optional.ofNullable(userDetailsForSMS.get("cmpNumber")).orElse(""))
                 .replace("{{hearingDate}}", Optional.ofNullable(userDetailsForSMS.get("hearingDate")).orElse(""));
         return message;

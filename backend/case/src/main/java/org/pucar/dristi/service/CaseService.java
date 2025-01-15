@@ -583,6 +583,16 @@ public class CaseService {
         log.info("Pushing join case litigant details :: {}", joinCaseRequest.getLitigant());
         producer.push(config.getLitigantJoinCaseTopic(), joinCaseRequest);
 
+        Set<String> IndividualIds = getLitigantIndividualId(courtCase);
+        CaseRequest caseRequest = CaseRequest.builder().requestInfo(joinCaseRequest.getRequestInfo()).cases(courtCase).build();
+        getAdvocateIndividualId(caseRequest, IndividualIds);
+        Set<String> phonenumbers = callIndividualService(caseRequest.getRequestInfo(), IndividualIds);
+        SmsTemplateData smsTemplateData = enrichSmsTemplateData(caseRequest.getCases());
+
+        for (String number : phonenumbers) {
+            notificationService.sendNotification(joinCaseRequest.getRequestInfo(), smsTemplateData, NEW_USER_JOIN, number);
+        }
+
         String tenantId = joinCaseRequest.getRequestInfo().getUserInfo().getTenantId();
 
         if (courtCase.getLitigants() != null) {
