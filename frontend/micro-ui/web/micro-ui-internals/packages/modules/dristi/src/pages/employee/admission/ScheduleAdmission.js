@@ -120,20 +120,31 @@ function ScheduleAdmission({
   const defaultHearingType = useMemo(() => {
     if (isDelayApplicationPending || isDelayApplicationCompleted || delayCondonationData?.isDcaSkippedInEFiling?.code === "NO") {
       if (!isDcaHearingScheduled) {
-        if (!isDcaHearingCompleted) {
-          return {
-            id: 15,
-            code: "DELAY_CONDONATION_HEARING",
-            type: "DELAY_CONDONATION_HEARING",
-            isactive: true,
-          };
-        } else if (isDcaHearingCompleted && !isAdmissionHearingCompleted) {
-          return {
-            id: 5,
-            type: "ADMISSION",
-            isactive: true,
-            code: "ADMISSION",
-          };
+        if (isDelayApplicationRejected) {
+          if (!isAdmissionHearingCompleted) {
+            return {
+              id: 5,
+              type: "ADMISSION",
+              isactive: true,
+              code: "ADMISSION",
+            };
+          }
+        } else {
+          if (!isDcaHearingCompleted) {
+            return {
+              id: 15,
+              code: "DELAY_CONDONATION_HEARING",
+              type: "DELAY_CONDONATION_HEARING",
+              isactive: true,
+            };
+          } else if (isDcaHearingCompleted && !isAdmissionHearingCompleted) {
+            return {
+              id: 5,
+              type: "ADMISSION",
+              isactive: true,
+              code: "ADMISSION",
+            };
+          }
         }
       }
       if (isDcaHearingScheduled) {
