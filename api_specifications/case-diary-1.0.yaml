@@ -18,14 +18,14 @@ paths:
         content:
           'application/json':
             schema:
-              $ref: '#/components/schemas/CaseDiaryRequest'
+              $ref: '#/components/schemas/CaseDiaryEntryRequest'
       responses:
         "201":
           description: ResponseInfo with diary entry added successfully
           content:
             'application/json':
               schema:
-                $ref: '#/components/schemas/CaseDiaryResponse'
+                $ref: '#/components/schemas/CaseDiaryEntryResponse'
         "400":
           description: addition of diary entry failed
           content:
