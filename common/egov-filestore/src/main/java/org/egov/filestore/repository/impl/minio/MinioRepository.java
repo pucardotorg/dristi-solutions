@@ -18,6 +18,7 @@ import java.util.Map;
 import javax.imageio.ImageIO;
 
 import io.minio.PutObjectArgs;
+import io.minio.RemoveObjectArgs;
 import io.minio.errors.*;
 import org.apache.commons.io.FilenameUtils;
 import org.egov.filestore.config.FileStoreConfig;
@@ -251,4 +252,26 @@ public class MinioRepository implements CloudFilesManager {
 				.fileSource(fileLocation.getFileSource()).build();
 	}
 
+	@Override
+	public void deleteFiles(List<Artifact> artifacts) {
+		for (Artifact artifact : artifacts) {
+			String fileLocation = artifact.getFileLocation().getFileName();
+			String fileName = fileLocation.substring(fileLocation.indexOf('/') + 1);
+			removeObject(fileName);
+		}
+	}
+
+	private void removeObject(String fileName) {
+		try {
+			RemoveObjectArgs removeObjectArgs = RemoveObjectArgs.builder()
+					.bucket(minioConfig.getBucketName())
+					.object(fileName)
+					.build();
+			minioClient.removeObject(removeObjectArgs);
+            log.info("Deleted object: {}", fileName);
+		} catch (MinioException | InvalidKeyException | IllegalArgumentException | NoSuchAlgorithmException | IOException e) {
+            log.error("Error occurred while deleting object: {}", fileName, e);
+			throw new RuntimeException(ERROR_IN_CONFIGURATION);
+		}
+	}
 }
