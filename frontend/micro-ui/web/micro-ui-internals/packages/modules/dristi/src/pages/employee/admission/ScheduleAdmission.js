@@ -28,6 +28,7 @@ function ScheduleAdmission({
   hearingDetails = [],
   isDelayApplicationPending,
   isDelayApplicationCompleted,
+  isDelayApplicationRejected = false,
   caseDetails,
 }) {
   // const getNextNDates = (n) => {
@@ -97,21 +98,24 @@ function ScheduleAdmission({
   }, [hearingDetails]);
 
   const hearingTypes = useMemo(() => {
-    if (isDelayApplicationPending || isDelayApplicationCompleted || delayCondonationData?.isDcaSkippedInEFiling?.code === "NO") {
-      return hearingTypeData?.HearingType;
-    } else {
-      if (isAdmissionHearingCompleted) {
+    if (isDelayApplicationRejected) {
+      if (isDelayApplicationPending) {
         return hearingTypeData?.HearingType;
+      } else {
+        return (
+          hearingTypeData?.HearingType?.filter((type) => !["DELAY_CONDONATION_HEARING", "DELAY_CONDONATION_AND_ADMISSION"].includes(type?.code)) || []
+        );
       }
-      if (!isAdmissionHearingCompleted) {
-        if (!isAdmissionHearingScheduled) {
-          return hearingTypeData?.HearingType?.filter((type) => ["ADMISSION"].includes(type?.code)) || [];
-        } else {
-          return hearingTypeData?.HearingType;
-        }
+    } else if (!isDelayApplicationRejected) {
+      if (isDelayApplicationPending || isDelayApplicationCompleted || delayCondonationData?.isDcaSkippedInEFiling?.code === "NO") {
+        return hearingTypeData?.HearingType;
+      } else {
+        return (
+          hearingTypeData?.HearingType?.filter((type) => !["DELAY_CONDONATION_HEARING", "DELAY_CONDONATION_AND_ADMISSION"].includes(type?.code)) || []
+        );
       }
     }
-  }, [hearingTypeData, isDelayApplicationPending, isDelayApplicationCompleted, isAdmissionHearingScheduled, isDcaHearingScheduled]);
+  }, [hearingTypeData, isDelayApplicationPending, isDelayApplicationCompleted, isDelayApplicationRejected, delayCondonationData]);
 
   const defaultHearingType = useMemo(() => {
     if (isDelayApplicationPending || isDelayApplicationCompleted || delayCondonationData?.isDcaSkippedInEFiling?.code === "NO") {
@@ -145,7 +149,15 @@ function ScheduleAdmission({
         };
       } else return null;
     }
-  }, [isDelayApplicationPending, isDelayApplicationCompleted, isDcaHearingScheduled, isAdmissionHearingScheduled]);
+  }, [
+    isDelayApplicationPending,
+    isDelayApplicationCompleted,
+    isDcaHearingScheduled,
+    isDcaHearingCompleted,
+    isAdmissionHearingScheduled,
+    isAdmissionHearingCompleted,
+    delayCondonationData,
+  ]);
   const closeToast = () => {
     setShowErrorToast(false);
   };

@@ -67,6 +67,7 @@ function AdmissionActionModal({
   delayCondonationData,
   isDelayApplicationPending = false,
   isDelayApplicationCompleted = false,
+  isDelayApplicationRejected = false,
 }) {
   const history = useHistory();
   const [showErrorToast, setShowErrorToast] = useState(false);
@@ -319,6 +320,7 @@ function AdmissionActionModal({
             caseDetails={caseDetails}
             isDelayApplicationPending={isDelayApplicationPending}
             isDelayApplicationCompleted={isDelayApplicationCompleted}
+            isDelayApplicationRejected={isDelayApplicationRejected}
           />
         </Modal>
       )}
