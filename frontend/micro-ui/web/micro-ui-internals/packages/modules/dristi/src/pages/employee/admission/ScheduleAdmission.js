@@ -58,6 +58,18 @@ function ScheduleAdmission({
     }
   }, [hearingDetails]);
 
+  const isAdmissionHearingCompleted = useMemo(() => {
+    if (!hearingDetails?.HearingList?.length) {
+      return false;
+    } else {
+      return Boolean(
+        hearingDetails?.HearingList?.find(
+          (hearing) => hearing?.hearingType === "ADMISSION" && [HearingWorkflowState?.COMPLETED].includes(hearing?.status)
+        )
+      );
+    }
+  }, [hearingDetails]);
+
   const isDcaHearingScheduled = useMemo(() => {
     if (!hearingDetails?.HearingList?.length) {
       return false;
@@ -72,46 +84,53 @@ function ScheduleAdmission({
     }
   }, [hearingDetails]);
 
+  const isDcaHearingCompleted = useMemo(() => {
+    if (!hearingDetails?.HearingList?.length) {
+      return false;
+    } else {
+      return Boolean(
+        hearingDetails?.HearingList?.find(
+          (hearing) => hearing?.hearingType === "DELAY_CONDONATION_HEARING" && [HearingWorkflowState?.COMPLETED].includes(hearing?.status)
+        )
+      );
+    }
+  }, [hearingDetails]);
+
   const hearingTypes = useMemo(() => {
     if (isDelayApplicationPending || isDelayApplicationCompleted || delayCondonationData?.isDcaSkippedInEFiling?.code === "NO") {
-      if (!isDcaHearingScheduled && !isAdmissionHearingScheduled) {
-        return (
-          hearingTypeData?.HearingType?.filter((type) =>
-            ["DELAY_CONDONATION_HEARING", "ADMISSION", "DELAY_CONDONATION_AND_ADMISSION"].includes(type?.code)
-          ) || []
-        );
-      }
-      if (!isDcaHearingScheduled && isAdmissionHearingScheduled) {
-        return hearingTypeData?.HearingType?.filter((type) => !["ADMISSION", "DELAY_CONDONATION_AND_ADMISSION"].includes(type?.code)) || [];
-      }
-      if (isDcaHearingScheduled) {
-        return (
-          hearingTypeData?.HearingType?.filter(
-            (type) => !["DELAY_CONDONATION_HEARING", "ADMISSION", "DELAY_CONDONATION_AND_ADMISSION"].includes(type?.code)
-          ) || []
-        );
-      }
+      return hearingTypeData?.HearingType;
     } else {
-      if (!isAdmissionHearingScheduled) {
-        return hearingTypeData?.HearingType?.filter((type) => ["ADMISSION"].includes(type?.code)) || [];
+      if (isAdmissionHearingCompleted) {
+        return hearingTypeData?.HearingType;
       }
-      return (
-        hearingTypeData?.HearingType?.filter(
-          (type) => !["DELAY_CONDONATION_HEARING", "ADMISSION", "DELAY_CONDONATION_AND_ADMISSION"].includes(type?.code)
-        ) || []
-      );
+      if (!isAdmissionHearingCompleted) {
+        if (!isAdmissionHearingScheduled) {
+          return hearingTypeData?.HearingType?.filter((type) => ["ADMISSION"].includes(type?.code)) || [];
+        } else {
+          return hearingTypeData?.HearingType;
+        }
+      }
     }
   }, [hearingTypeData, isDelayApplicationPending, isDelayApplicationCompleted, isAdmissionHearingScheduled, isDcaHearingScheduled]);
 
   const defaultHearingType = useMemo(() => {
     if (isDelayApplicationPending || isDelayApplicationCompleted || delayCondonationData?.isDcaSkippedInEFiling?.code === "NO") {
       if (!isDcaHearingScheduled) {
-        return {
-          id: 15,
-          code: "DELAY_CONDONATION_HEARING",
-          type: "DELAY_CONDONATION_HEARING",
-          isactive: true,
-        };
+        if (!isDcaHearingCompleted) {
+          return {
+            id: 15,
+            code: "DELAY_CONDONATION_HEARING",
+            type: "DELAY_CONDONATION_HEARING",
+            isactive: true,
+          };
+        } else if (isDcaHearingCompleted && !isAdmissionHearingCompleted) {
+          return {
+            id: 5,
+            type: "ADMISSION",
+            isactive: true,
+            code: "ADMISSION",
+          };
+        }
       }
       if (isDcaHearingScheduled) {
         return null;
