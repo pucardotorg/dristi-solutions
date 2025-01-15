@@ -64,6 +64,8 @@ const EvidenceModal = ({
   const setData = (data) => {
     setFormData(data);
   };
+  const urlParams = new URLSearchParams(window.location.search);
+  const applicationNumber = urlParams.get("applicationNumber");
 
   const CloseBtn = (props) => {
     return (
@@ -941,7 +943,7 @@ const EvidenceModal = ({
           <div className="evidence-modal-main">
             <div className={"application-details"}>
               <div style={{ display: "flex", flexDirection: "column" }}>
-                {isJudge && documentSubmission?.[0]?.applicationList?.applicationType === "DELAY_CONDONATION" && (
+                {isJudge && documentSubmission?.[0]?.applicationList?.applicationType === "DELAY_CONDONATION" && !Boolean(applicationNumber) && (
                   <div
                     className="dca-infobox-message"
                     style={{
