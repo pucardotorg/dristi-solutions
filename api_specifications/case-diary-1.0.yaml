@@ -36,7 +36,7 @@ paths:
     post:
       tags:
         - Case Diaries
-      operationId: search
+      operationId: searchDiary
       summary: get the list of diaries based on input parameters
       requestBody:
         description: Details for the search of diaries + RequestInfo meta data.
@@ -63,7 +63,7 @@ paths:
     post:
       tags:
         - Case Diaries
-      operationId: search
+      operationId: searchDiaryEntry
       summary: get the list of diary entries based on input parameters
       requestBody:
         description: Details for the search of diary entries + RequestInfo meta data.
