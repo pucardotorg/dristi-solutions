@@ -173,5 +173,18 @@ public class StorageService {
 				+ "/" + calendar.get(Calendar.DATE) + "/";
 	}
 
-	
+	public List<String> deleteFiles(List<String> fileStoreIds, String tenantId, String module, boolean isSoftDelete) {
+		if (fileStoreIds == null || fileStoreIds.isEmpty()) {
+			throw new CustomException("EG_FILESTORE_INVALID_INPUT", "fileStoreIds cannot be null or empty");
+		}
+		if (tenantId == null || tenantId.isEmpty()) {
+			throw new CustomException("EG_FILESTORE_INVALID_INPUT", "tenantId cannot be null or empty");
+		}
+		try {
+			return artifactRepository.delete(fileStoreIds, tenantId, module, isSoftDelete);
+		} catch (Exception e) {
+			log.error("Error occurred while deleting files", e);
+			throw new CustomException("EG_FILESTORE_DELETE_ERROR", "An error occurred while deleting files: " + e.getMessage());
+		}
+	}
 }

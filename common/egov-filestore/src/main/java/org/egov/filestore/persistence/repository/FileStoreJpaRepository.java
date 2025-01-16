@@ -15,7 +15,6 @@ public interface FileStoreJpaRepository extends JpaRepository<Artifact, Long> {
 	
 	@Query(value = "SELECT * FROM eg_filestoremap T WHERE T.tenantId = (?1) AND T.fileStoreId IN (?2)",nativeQuery = true)
 	List<Artifact> findByTenantIdAndFileStoreIdList(String tenantId, List<String> fileStoreIds);
-	
-	
+
 	//value = "SELECT * FROM table WHERE property=(?1)", nativeQuery = true
 }

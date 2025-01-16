@@ -138,4 +138,41 @@ public class ArtifactRepository {
 	public List<Artifact> getByTenantIdAndFileStoreIdList(String tenantId, List<String> fileStoreIds) {
 		return fileStoreJpaRepository.findByTenantIdAndFileStoreIdList(tenantId, fileStoreIds);
 	}
+
+	public List<String> delete(List<String> fileStoreIds, String tenantId,String module, boolean isSoftDelete) {
+		List<Artifact> artifacts = getByTenantIdAndFileStoreIdList(tenantId, fileStoreIds);
+
+		if (artifacts == null || artifacts.isEmpty()) {
+			throw new CustomException("EG_FILESTORE_NOT_FOUND", "No files found for the given filestore ids and tenant");
+		}
+
+		if (module != null && !module.isEmpty()) {
+			artifacts = artifacts.stream()
+					.filter(artifact -> module.equals(artifact.getModule()))
+					.collect(Collectors.toList());
+
+			if (artifacts.isEmpty()) {
+				throw new CustomException("EG_FILESTORE_NOT_FOUND",
+						"No files found for the given module: " + module);
+			}
+		}
+
+		if (isSoftDelete) {
+			artifacts.forEach(artifact -> artifact.setIsDeleted(true));
+			fileStoreJpaRepository.saveAll(artifacts);
+		} else {
+			try {
+				cloudFilesManager.deleteFiles(artifacts);
+				fileStoreJpaRepository.deleteAll(artifacts);
+			} catch (Exception e) {
+				throw new CustomException("EG_FILESTORE_DELETE_ERROR",
+						"Error deleting files from storage: " + e.getMessage());
+			}
+		}
+
+		return artifacts.stream()
+				.map(Artifact::getFileStoreId)
+				.collect(Collectors.toList());
+
+	}
 }
