@@ -304,17 +304,6 @@ export const pendingTaskCaseActions = {
       ],
     },
   },
-  ADMISSION_HEARING_SCHEDULED: {
-    actorName: ["JUDGE"],
-    actionName: "Admission hearing scheduled - Admit Case",
-    redirectDetails: {
-      url: "/dristi/home/view-case",
-      params: [
-        { key: "filingNumber", value: "filingNumber" },
-        { key: "caseId", value: "id" },
-      ],
-    },
-  },
   CASE_ADMITTED: {
     actorName: ["JUDGE"],
     actionName: "Schedule admission hearing",

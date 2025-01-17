@@ -436,47 +436,10 @@ function CaseFileAdmission({ t, path }) {
         }
         break;
       case "ADMIT":
-        if (caseDetails?.status === "ADMISSION_HEARING_SCHEDULED") {
-          const { HearingList = [] } = await Digit.HearingService.searchHearings({
-            hearing: { tenantId },
-            criteria: {
-              tenantID: tenantId,
-              filingNumber: caseDetails?.filingNumber,
-            },
-          });
-          const { startTime: hearingDate, hearingId: hearingNumber } = HearingList?.find(
-            (list) => list?.hearingType === "ADMISSION" && !(list?.status === "COMPLETED" || list?.status === "ABATED")
-          );
-          const {
-            list: [orderData],
-          } = await Digit.ordersService.searchOrder({
-            tenantId,
-            criteria: {
-              filingNumber: caseDetails?.filingNumber,
-              applicationNumber: "",
-              cnrNumber: caseDetails?.cnrNumber,
-              status: "DRAFT_IN_PROGRESS",
-              hearingNumber: hearingNumber,
-            },
-            pagination: { limit: 1, offset: 0 },
-          });
-          if (orderData?.orderType === "NOTICE") {
-            history.push(`/digit-ui/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${orderData.orderNumber}`, {
-              caseId: caseId,
-              tab: "Orders",
-            });
-            updateCaseDetails("ADMIT");
-          } else {
-            handleIssueNotice(hearingDate, hearingNumber);
-            await updateCaseDetails("ADMIT");
-          }
-        } else {
-          setSubmitModalInfo({ ...admitCaseSubmitConfig, caseInfo: caseInfo });
-          setModalInfo({ type: "admitCase", page: 0 });
-          setShowModal(true);
-        }
+        setSubmitModalInfo({ ...admitCaseSubmitConfig, caseInfo: caseInfo });
+        setModalInfo({ type: "admitCase", page: 0 });
+        setShowModal(true);
         break;
-
       case "SCHEDULE_ADMISSION_HEARING":
         setShowModal(true);
         setSubmitModalInfo({
@@ -1091,9 +1054,7 @@ function CaseFileAdmission({ t, path }) {
                 isDisabled={isButtonDisabled}
                 cardClassName={`e-filing-card-form-style review-case-file`}
                 secondaryLabel={
-                  [CaseWorkflowState.ADMISSION_HEARING_SCHEDULED, CaseWorkflowState.PENDING_RESPONSE, CaseWorkflowState.PENDING_NOTICE].includes(
-                    caseDetails?.status
-                  )
+                  [CaseWorkflowState.PENDING_RESPONSE, CaseWorkflowState.PENDING_NOTICE].includes(caseDetails?.status)
                     ? t("HEARING_IS_SCHEDULED")
                     : t(tertiaryAction.label || "")
                 }
