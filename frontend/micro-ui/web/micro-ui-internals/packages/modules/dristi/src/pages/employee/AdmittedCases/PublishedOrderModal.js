@@ -167,8 +167,9 @@ function PublishedOrderModal({
               docHeight={"unset"}
               fileStoreId={docs?.fileStore}
               tenantId={tenantId}
-              displayFilename={fileName}
+              displayFilename={docs?.additionalDetails?.name}
               showDownloadOption={false}
+              documentName={docs?.additionalDetails?.name}
             />
           ))
         ) : (
@@ -176,7 +177,7 @@ function PublishedOrderModal({
         )}
       </div>
     );
-  }, [documents, fileName, isLoading, t, tenantId]);
+  }, [documents, isLoading, t, tenantId]);
 
   useEffect(() => {
     fetchRecursiveData(order);
