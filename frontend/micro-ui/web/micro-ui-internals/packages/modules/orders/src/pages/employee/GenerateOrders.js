@@ -616,13 +616,8 @@ const GenerateOrders = () => {
                     mdmsConfig: {
                       ...field.populators?.mdmsConfig,
                       select: `(data) => {
-                        return (
-                          data?.Hearing?.HearingType?.filter((h) => {
-                            if (${!isDcaFiled}) {
-                              return !["DELAY_CONDONATION_HEARING", "DELAY_CONDONATION_AND_ADMISSION"].includes(h?.code);
-                            }
-                            return true;
-                          }) || []
+                        return (  // based on isDcaFiled condition, we can filter out DCA hearing here if needed.
+                          data?.Hearing?.HearingType|| []
                         );
                       }`,
                     },

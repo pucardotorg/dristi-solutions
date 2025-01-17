@@ -98,24 +98,8 @@ function ScheduleAdmission({
   }, [hearingDetails]);
 
   const hearingTypes = useMemo(() => {
-    if (isDelayApplicationRejected) {
-      if (isDelayApplicationPending) {
-        return hearingTypeData?.HearingType;
-      } else {
-        return (
-          hearingTypeData?.HearingType?.filter((type) => !["DELAY_CONDONATION_HEARING", "DELAY_CONDONATION_AND_ADMISSION"].includes(type?.code)) || []
-        );
-      }
-    } else if (!isDelayApplicationRejected) {
-      if (isDelayApplicationPending || isDelayApplicationCompleted || delayCondonationData?.isDcaSkippedInEFiling?.code === "NO") {
-        return hearingTypeData?.HearingType;
-      } else {
-        return (
-          hearingTypeData?.HearingType?.filter((type) => !["DELAY_CONDONATION_HEARING", "DELAY_CONDONATION_AND_ADMISSION"].includes(type?.code)) || []
-        );
-      }
-    }
-  }, [hearingTypeData, isDelayApplicationPending, isDelayApplicationCompleted, isDelayApplicationRejected, delayCondonationData]);
+    return hearingTypeData?.HearingType || [];
+  }, [hearingTypeData]);
 
   const defaultHearingType = useMemo(() => {
     if (isDelayApplicationPending || isDelayApplicationCompleted || delayCondonationData?.isDcaSkippedInEFiling?.code === "NO") {
