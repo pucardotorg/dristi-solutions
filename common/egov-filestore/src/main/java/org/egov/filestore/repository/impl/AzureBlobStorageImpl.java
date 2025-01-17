@@ -231,6 +231,7 @@ public class AzureBlobStorageImpl implements CloudFilesManager {
 
 		artifacts.forEach(artifact -> {
 			try {
+				log.info("Deleting blobs from azure initialized");
 				CloudBlobContainer container;
 				String completeName = artifact.getFileName();
 				int index = completeName.indexOf('/');

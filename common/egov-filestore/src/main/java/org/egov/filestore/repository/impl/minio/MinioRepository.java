@@ -192,6 +192,7 @@ public class MinioRepository implements CloudFilesManager {
 	public void deleteFiles(List<Artifact> artifacts) {
 		for (Artifact artifact : artifacts) {
 			try {
+				log.info("Deleting files from MinIO.");
 				String fileLocation = artifact.getFileLocation().getFileName();
 				String fileName = fileLocation.substring(fileLocation.indexOf('/') + 1);
 				removeObject(fileName);
