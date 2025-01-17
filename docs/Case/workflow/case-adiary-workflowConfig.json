@@ -19,7 +19,7 @@
               "action": "CREATE",
               "nextState": "PENDING_SIGN",
               "roles": [
-                "DIARY_EDITOR"
+                "DIARY_EDITOR",
                 "SYSTEM",
                 "SYSTEM_ADMIN"
               ]
