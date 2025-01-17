@@ -156,8 +156,8 @@ const stateSla = {
 };
 
 const AccordionTabs = {
-  REVIEW_CASE_FILE : "reviewCaseFile",
-}
+  REVIEW_CASE_FILE: "reviewCaseFile",
+};
 
 const dayInMillisecond = 24 * 3600 * 1000;
 
@@ -524,14 +524,14 @@ function EFilingCases({ path }) {
     }
   }, [caseDetails]);
 
-  useEffect(()=>{
+  useEffect(() => {
     const filingParty = caseDetails?.auditDetails?.createdBy === userInfo?.uuid;
-    setIsFilingParty(filingParty)
+    setIsFilingParty(filingParty);
 
     if (caseDetails && !filingParty && !isLoading) {
       history.replace(`?caseId=${caseId}&selected=${AccordionTabs.REVIEW_CASE_FILE}`);
     }
-  },[caseDetails, caseId, history, isFilingParty, isLoading, userInfo?.uuid])
+  }, [caseDetails, caseId, history, isFilingParty, isLoading, userInfo?.uuid]);
 
   useEffect(() => {
     const data =
@@ -786,7 +786,7 @@ function EFilingCases({ path }) {
                       return {
                         ...input,
                         data: dataobj,
-                        isFilingParty : isFilingParty
+                        isFilingParty: isFilingParty,
                       };
                     }),
                   },
@@ -1997,10 +1997,9 @@ function EFilingCases({ path }) {
         setIsDisabled(false);
       });
     setPrevSelected(selected);
-    if(!isFilingParty){
-      history.replace(`?caseId=${caseId}&selected=${key}`)
-    }
-    else{
+    if (!isFilingParty) {
+      history.replace(`?caseId=${caseId}&selected=${key}`);
+    } else {
       history.push(`?caseId=${caseId}&selected=${key}`);
     }
   };
@@ -2235,10 +2234,9 @@ function EFilingCases({ path }) {
   };
 
   const handleGoToPage = (key) => {
-    if(!isFilingParty){
-      history.replace(`?caseId=${caseId}&selected=${AccordionTabs.REVIEW_CASE_FILE}`)
-    }
-    else{
+    if (!isFilingParty) {
+      history.replace(`?caseId=${caseId}&selected=${AccordionTabs.REVIEW_CASE_FILE}`);
+    } else {
       history.push(`?caseId=${caseId}&selected=${key}`);
     }
   };
@@ -2438,15 +2436,10 @@ function EFilingCases({ path }) {
                   </Header>
                   {selected === "reviewCaseFile" && !isCaseReAssigned && isFilingParty && (
                     <div className="case-edit-icon" onClick={() => setShowEditCaseNameModal(true)} style={{ cursor: "pointer" }}>
-                      <span style={{ color: "#77787B", position: "relative" }} data-tip data-for="Click">
-                        <EditIcon style={{ display: "block", color: "#77787B", position: "relative" }} />
+                      <span style={{ position: "relative" }} data-tip data-for="Click">
+                        <EditIcon style={{ display: "block", position: "relative" }} />
                       </span>
-                      <ReactTooltip
-                        style={{ backgroundColor: "rgb(0, 255, 30)", padding: "0px" }}
-                        id="Click"
-                        place="bottom"
-                        content={t("CS_CLICK_TO_EDIT") || ""}
-                      >
+                      <ReactTooltip id="Click" place="bottom" content={t("CS_CLICK_TO_EDIT") || ""}>
                         {t("CS_CLICK_TO_EDIT")}
                       </ReactTooltip>
                     </div>
