@@ -36,7 +36,7 @@ paths:
     post:
       tags:
         - Case Diaries
-      operationId: searchDiary
+      operationId: searchDiaries
       summary: get the list of diaries based on input parameters
       requestBody:
         description: Details for the search of diaries + RequestInfo meta data.
@@ -63,7 +63,7 @@ paths:
     post:
       tags:
         - Case Diaries
-      operationId: searchDiaryEntry
+      operationId: searchDiaryEntries
       summary: get the list of diary entries based on input parameters
       requestBody:
         description: Details for the search of diary entries + RequestInfo meta data.
@@ -74,7 +74,7 @@ paths:
         required: true
       responses:
         "200":
-          description: ResponseInfo with Case Diary list
+          description: ResponseInfo with Case Diary Entries list
           content:
             'application/json':
               schema:
@@ -309,11 +309,10 @@ components:
       description: the PDF for the case diary. Mostly will be storing the signed PDF, but there is a provision to store unsigned PDF also
       required:
         - tenantId
-        - diaryDate
         - diaryType
         - judgeId
       oneOf:
-        - required: [caseId, caseNumber]
+        - required: [diaryDate, caseNumber]
       properties:
         id:
           type: string
