@@ -137,7 +137,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/CaseDiaryResponse'
         '400':
-          description: querying case summary failed
+          description: unable to get file store id
           content:
             'application/json':
               schema:
