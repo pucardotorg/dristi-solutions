@@ -28,7 +28,6 @@ const styles = {
 };
 
 const NameListWithModal = ({ t, data, type }) => {
-  console.log("type :>> ", type);
   const [open, setOpen] = useState(false);
 
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
@@ -79,7 +78,6 @@ const NameListWithModal = ({ t, data, type }) => {
           formId="modal-action"
           headerBarMain={<Heading label={t(type)} />}
           className={`join-a-case-modal`}
-          //   popupStyles={{ width: "fit-content", userSelect: "none" }}
         >
           <ul style={{ listStyle: "unset" }}>
             {data?.map((fullName) => (

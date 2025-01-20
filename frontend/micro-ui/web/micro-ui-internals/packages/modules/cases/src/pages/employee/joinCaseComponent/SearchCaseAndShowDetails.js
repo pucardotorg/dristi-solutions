@@ -75,7 +75,6 @@ const SearchCaseAndShowDetails = ({
               name="caseNumber"
               value={caseNumber}
               onChange={(e) => {
-                console.log("object :>> ");
                 setCaseDetails({});
                 setCaseList([]);
                 let str = e.target.value;

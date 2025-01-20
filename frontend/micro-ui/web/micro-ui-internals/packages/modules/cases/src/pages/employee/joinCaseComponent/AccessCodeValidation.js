@@ -51,7 +51,6 @@ const AccessCodeValidation = ({ t, caseDetails, validationCode, setValidationCod
         </div>
         <div style={{ width: "100%", maxWidth: "960px" }}>
           <TextInput
-            // t={t}
             style={{ width: "100%" }}
             type={"text"}
             name="validationCode"
@@ -73,7 +72,6 @@ const AccessCodeValidation = ({ t, caseDetails, validationCode, setValidationCod
               });
             }}
             autoFocus={true}
-            // disable={editScreen}
           />
           {errors?.validationCode && <CardLabelError> {t(errors?.validationCode?.message)} </CardLabelError>}
           {}
