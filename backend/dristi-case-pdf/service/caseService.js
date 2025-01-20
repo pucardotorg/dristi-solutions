@@ -390,7 +390,7 @@ exports.getComplainantsDetailsForComplaint = async (cases) => {
         if (complainantType.code === 'REPRESENTATIVE') {
             const companyDetails = data.addressCompanyDetails || {};
             const companyAddress = getStringAddressDetails(companyDetails);
-            const advocateList = this.getAdvocateDetailsForComplaint(cases);
+            const advocateList = exports.getAdvocateDetailsForComplaint(cases);
 
             return {
                 ifIndividual: false,
@@ -405,7 +405,7 @@ exports.getComplainantsDetailsForComplaint = async (cases) => {
         } else {
             const addressDetails = data?.complainantVerification && data?.complainantVerification?.individualDetails && data?.complainantVerification?.individualDetails?.addressDetails || {};
             const address = getStringAddressDetails(addressDetails);
-            const advocateList = this.getAdvocateDetailsForComplaint(cases);
+            const advocateList = exports.getAdvocateDetailsForComplaint(cases);
 
             return {
                 ifIndividual: true,
@@ -488,18 +488,18 @@ exports.getRespondentsDetailsForComplaint = async (cases) => {
 exports.getDocumentList = async (cases) => {
     const newDocumentList = [];
 
-    const chequeDetails = this.getChequeDetails(cases);
-    const demandNoticeDetails = this.getDemandNoticeDetails(cases);
+    const chequeDetails = exports.getChequeDetails(cases);
+    const demandNoticeDetails = exports.getDemandNoticeDetails(cases);
 
-    const bounceCheque = await this.generateBounceChequeDescriptions(chequeDetails);
-    const returnMemo = await this.generateChequeReturnMemoDescriptions(chequeDetails);
-    const statutoryNotice = await this.generateDemandNoticeDescriptions(demandNoticeDetails);
-    const proofOfDispatch = await this.generateProofDispatchDescriptions(demandNoticeDetails);
-    const proofOfService = await this.generateProofServiceDescriptions(demandNoticeDetails);
+    const bounceCheque = await exports.generateBounceChequeDescriptions(chequeDetails);
+    const returnMemo = await exports.generateChequeReturnMemoDescriptions(chequeDetails);
+    const statutoryNotice = await exports.generateDemandNoticeDescriptions(demandNoticeDetails);
+    const proofOfDispatch = await exports.generateProofDispatchDescriptions(demandNoticeDetails);
+    const proofOfService = await exports.generateProofServiceDescriptions(demandNoticeDetails);
     const affidavitInLieuComplaint = ["Digital record of proof of Affidavit under section 223 of BNSS"];
-    const proofOfReply = await this.generateProofReplyDescriptions(demandNoticeDetails);
-    const proofOfDeposit = await this.generateProofDepositDescriptions(chequeDetails);
-    const optionalDocs = await this.generateOptionalDocDescriptions(cases.documents);
+    const proofOfReply = await exports.generateProofReplyDescriptions(demandNoticeDetails);
+    const proofOfDeposit = await exports.generateProofDepositDescriptions(chequeDetails);
+    const optionalDocs = await exports.generateOptionalDocDescriptions(cases.documents);
 
     newDocumentList.push(
         ...bounceCheque,

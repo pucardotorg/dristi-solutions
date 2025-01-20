@@ -23,7 +23,7 @@ exports.generateCasePdf = async (req, res, next) => {
 
     const complainants = await caseService.getComplainantsDetailsForComplaint(caseData);
     const accuseds = await caseService.getRespondentsDetailsForComplaint(caseData);
-    const advocates = await caseService.getAdvocateDetailsForComplaint(caseData);
+    const advocates = caseService.getAdvocateDetailsForComplaint(caseData);
     const complaint = await caseService.getPrayerSwornStatementDetails(caseData)?.[0]?.memorandumOfComplaintText;
     const dateOfFiling = caseService.formatDate(caseData?.filingDate ? new Date(caseData?.filingDate) : new Date());
     const documentList = await caseService.getDocumentList(caseData);
