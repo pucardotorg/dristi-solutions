@@ -390,6 +390,7 @@ exports.getComplainantsDetailsForComplaint = async (cases) => {
         if (complainantType.code === 'REPRESENTATIVE') {
             const companyDetails = data.addressCompanyDetails || {};
             const companyAddress = getStringAddressDetails(companyDetails);
+            const advocateList = this.getAdvocateDetailsForComplaint(cases);
 
             return {
                 ifIndividual: false,
@@ -398,12 +399,13 @@ exports.getComplainantsDetailsForComplaint = async (cases) => {
                 nameOfAuthorizedSignatory: `${firstName} ${middleName} ${lastName}` || '',
                 designationOfAuthorizedSignatory: data?.complainantDesignation || '',
                 companyDetailsFileStore: getDocumentFileStore(data?.companyDetailsUpload, 'Company documents') || '',
-                advocateList: getAdvocateDetailsForComplaint(cases),
-                isPartyInPerson: getAdvocateDetailsForComplaint(cases)?.[0]?.isPartyInPerson,
+                advocateList: advocateList,
+                isPartyInPerson: advocateList?.[0]?.isPartyInPerson,
             };
         } else {
             const addressDetails = data?.complainantVerification && data?.complainantVerification?.individualDetails && data?.complainantVerification?.individualDetails?.addressDetails || {};
             const address = getStringAddressDetails(addressDetails);
+            const advocateList = this.getAdvocateDetailsForComplaint(cases);
 
             return {
                 ifIndividual: true,
@@ -413,14 +415,14 @@ exports.getComplainantsDetailsForComplaint = async (cases) => {
                 phoneNumber: phoneNumber || '',
                 emailId: '',
                 complainantIdProofFileStore: getDocumentFileStore(data?.complainantVerification?.individualDetails) || '',
-                advocateList: getAdvocateDetailsForComplaint(cases),
-                isPartyInPerson: getAdvocateDetailsForComplaint(cases)?.[0]?.isPartyInPerson,
+                advocateList: advocateList,
+                isPartyInPerson: advocateList?.[0]?.isPartyInPerson,
             };
         }
     });
 };
 
-const getAdvocateDetailsForComplaint = (cases) => {
+exports.getAdvocateDetailsForComplaint = (cases) => {
     if (!cases.additionalDetails || !cases.additionalDetails.advocateDetails || !cases.additionalDetails.advocateDetails.formdata) {
         return [];
     }
