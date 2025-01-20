@@ -8,7 +8,7 @@ var url = require("url");
  * @param {Object} cases - The cases object containing court case details.
  * @returns {String} A string object that refers to section Number.
  */
-exports.getCaseSectionNumber = async (cases) => {
+function getCaseSectionNumber(cases) {
     const statutesAndSections = cases.statutesAndSections;
     if (statutesAndSections.length === 0) {
         return '';
@@ -32,7 +32,7 @@ exports.getCaseSectionNumber = async (cases) => {
  * @param {String} fileName - File Name to search for in the document.
  * @returns {String} A string object that refers to File Store Id.
  */
-const getDocumentFileStore = (fileUploadDocuments, fileName) => {
+function getDocumentFileStore(fileUploadDocuments, fileName) {
     const documents = fileUploadDocuments?.document;
     if (Array.isArray(documents)) {
       const document = documents.find(doc => doc?.fileName === fileName || doc?.name === fileName);
@@ -43,7 +43,7 @@ const getDocumentFileStore = (fileUploadDocuments, fileName) => {
     return null;
 };
 
-const getComplaintAdditionalDocumentFileStore = (fileUploadDocuments) => {
+function getComplaintAdditionalDocumentFileStore(fileUploadDocuments) {
   if (!Array.isArray(fileUploadDocuments)) return [];
 
   return fileUploadDocuments
@@ -58,7 +58,7 @@ const getComplaintAdditionalDocumentFileStore = (fileUploadDocuments) => {
  * @param {Object} addressObject - The object containing address details.
  * @returns {Object} An object containing extracted address details.
  */
-const getAddressDetails = (addressObject) => {
+ function getAddressDetails(addressObject) {
     return {
       locality: addressObject?.locality || '',
       city: addressObject?.city || '',
@@ -68,25 +68,25 @@ const getAddressDetails = (addressObject) => {
     };
   };
 
-  const getStringAddressDetails = (addressObject) => {
+  function getStringAddressDetails(addressObject) {
     return `${addressObject?.locality || ''}, ${addressObject?.city || ''}, ${addressObject?.district || ''},  ${addressObject?.state || ''},  ${addressObject?.pincode || ''}`;
   };
 
-  exports.formatDate = (date) => {
+  function formatDate(date) {
     const day = String(date.getDate()).padStart(2, "0");
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = date.getFullYear();
     return `${day}-${month}-${year}`;
   };
 
-  exports.convertDateToDDMMYYYY = (dateString) => {
+  function convertDateToDDMMYYYY(dateString) {
     if (!dateString) return "";
   
     const [year, month, day] = dateString?.split("-");
     return `${day}-${month}-${year}`;
   };
   
-  exports.convertToIndianCurrency = (amount, locale, currency) => {
+  function convertToIndianCurrency(amount, locale, currency) {
     if (typeof amount !== "number" && typeof amount !== "string") return "";
   
     const number = Number(amount);
@@ -106,7 +106,7 @@ const getAddressDetails = (addressObject) => {
  * @param {Object} cases - The cases object containing court case details.
  * @returns {Array} An array of complainant information objects.
  */
-exports.getComplainantsDetails = async (cases) => {
+function getComplainantsDetails(cases) {
     if (!cases.additionalDetails || !cases.additionalDetails.complainantDetails || !cases.additionalDetails.complainantDetails.formdata) {
         return [];
     }
@@ -156,7 +156,7 @@ exports.getComplainantsDetails = async (cases) => {
  * @param {Object} cases - The cases object containing court case details.
  * @returns {Array} An array of respondent information objects.
  */
-exports.getRespondentsDetails = async (cases) => {
+function getRespondentsDetails(cases) {
     if (!cases.additionalDetails || !cases.additionalDetails.respondentDetails || !cases.additionalDetails.respondentDetails.formdata) {
         return [];
     }
@@ -187,7 +187,7 @@ exports.getRespondentsDetails = async (cases) => {
  * @param {Object} cases - The cases object containing court case details.
  * @returns {Array} An array of witness information objects.
  */
-exports.getWitnessDetails = async (cases) => {
+function getWitnessDetails(cases) {
     if (!cases.additionalDetails || !cases.additionalDetails.witnessDetails || !cases.additionalDetails.witnessDetails.formdata) {
         return [];
     }
@@ -218,7 +218,7 @@ exports.getWitnessDetails = async (cases) => {
  * @param {Object} cases - The cases object containing court case details.
  * @returns {Array} An array of advocate information objects.
  */
-exports.getAdvocateDetails = async (cases) => {
+function getAdvocateDetails(cases) {
     if (!cases.additionalDetails || !cases.additionalDetails.advocateDetails || !cases.additionalDetails.advocateDetails.formdata) {
         return [];
     }
@@ -240,7 +240,7 @@ exports.getAdvocateDetails = async (cases) => {
  * @param {Object} cases - The cases object containing court case details.
  * @returns {Array} An array of cheque information objects.
  */
-exports.getChequeDetails = (cases) => {
+function getChequeDetails(cases) {
     if (!cases.caseDetails || !cases.caseDetails.chequeDetails || !cases.caseDetails.chequeDetails.formdata) {
         return [];
     }
@@ -272,7 +272,7 @@ exports.getChequeDetails = (cases) => {
  * @param {Object} cases - The cases object containing court case details.
  * @returns {Array} An array of debt liability information objects.
  */
-exports.getDebtLiabilityDetails = (cases) => {
+function getDebtLiabilityDetails(cases) {
     if (!cases.caseDetails || !cases.caseDetails.debtLiabilityDetails || !cases.caseDetails.debtLiabilityDetails.formdata) {
         return [];
     }
@@ -296,7 +296,7 @@ exports.getDebtLiabilityDetails = (cases) => {
  * @param {Object} cases - The cases object containing court case details.
  * @returns {Array} An array of demand notice information objects.
  */
-exports.getDemandNoticeDetails = (cases) => {
+function getDemandNoticeDetails(cases) {
     if (!cases.caseDetails || !cases.caseDetails.demandNoticeDetails || !cases.caseDetails.demandNoticeDetails.formdata) {
         return [];
     }
@@ -328,7 +328,7 @@ exports.getDemandNoticeDetails = (cases) => {
  * @param {Object} cases - The cases object containing court case details.
  * @returns {Array} An array of delay condonation information objects.
  */
-exports.getDelayCondonationDetails = (cases) => {
+function getDelayCondonationDetails(cases) {
     if (!cases.caseDetails || !cases.caseDetails.delayApplications || !cases.caseDetails.delayApplications.formdata) {
         return [];
     }
@@ -350,7 +350,7 @@ exports.getDelayCondonationDetails = (cases) => {
  * @param {Object} cases - The cases object containing court case details.
  * @returns {Array} An array of prayer and sworn statement information objects.
  */
-exports.getPrayerSwornStatementDetails = (cases) => {
+function getPrayerSwornStatementDetails(cases) {
     if (!cases.additionalDetails || !cases.additionalDetails.prayerSwornStatement || !cases.additionalDetails.prayerSwornStatement.formdata) {
         return [];
     }
@@ -375,7 +375,7 @@ exports.getPrayerSwornStatementDetails = (cases) => {
     return prayerSwornStatementDetailsList;
 };
 
-exports.getComplainantsDetailsForComplaint = async (cases) => {
+function getComplainantsDetailsForComplaint(cases) {
     if (!cases?.additionalDetails || !cases?.additionalDetails?.complainantDetails || !cases?.additionalDetails?.complainantDetails?.formdata) {
         return [];
     }
@@ -390,7 +390,7 @@ exports.getComplainantsDetailsForComplaint = async (cases) => {
         if (complainantType.code === 'REPRESENTATIVE') {
             const companyDetails = data.addressCompanyDetails || {};
             const companyAddress = getStringAddressDetails(companyDetails);
-            const advocateList = exports.getAdvocateDetailsForComplaint(cases);
+            const advocateList = getAdvocateDetailsForComplaint(cases);
 
             return {
                 ifIndividual: false,
@@ -405,7 +405,7 @@ exports.getComplainantsDetailsForComplaint = async (cases) => {
         } else {
             const addressDetails = data?.complainantVerification && data?.complainantVerification?.individualDetails && data?.complainantVerification?.individualDetails?.addressDetails || {};
             const address = getStringAddressDetails(addressDetails);
-            const advocateList = exports.getAdvocateDetailsForComplaint(cases);
+            const advocateList = getAdvocateDetailsForComplaint(cases);
 
             return {
                 ifIndividual: true,
@@ -422,7 +422,7 @@ exports.getComplainantsDetailsForComplaint = async (cases) => {
     });
 };
 
-exports.getAdvocateDetailsForComplaint = (cases) => {
+function getAdvocateDetailsForComplaint(cases) {
     if (!cases.additionalDetails || !cases.additionalDetails.advocateDetails || !cases.additionalDetails.advocateDetails.formdata) {
         return [];
     }
@@ -448,7 +448,7 @@ exports.getAdvocateDetailsForComplaint = (cases) => {
     });
 };
 
-exports.getRespondentsDetailsForComplaint = async (cases) => {
+function getRespondentsDetailsForComplaint(cases) {
     if (!cases?.additionalDetails || !cases?.additionalDetails?.respondentDetails || !cases?.additionalDetails?.respondentDetails?.formdata) {
         return [];
     }
@@ -485,21 +485,21 @@ exports.getRespondentsDetailsForComplaint = async (cases) => {
     });
 };
 
-exports.getDocumentList = async (cases) => {
+function getDocumentList(cases) {
     const newDocumentList = [];
 
-    const chequeDetails = exports.getChequeDetails(cases);
-    const demandNoticeDetails = exports.getDemandNoticeDetails(cases);
+    const chequeDetails = getChequeDetails(cases);
+    const demandNoticeDetails = getDemandNoticeDetails(cases);
 
-    const bounceCheque = await exports.generateBounceChequeDescriptions(chequeDetails);
-    const returnMemo = await exports.generateChequeReturnMemoDescriptions(chequeDetails);
-    const statutoryNotice = await exports.generateDemandNoticeDescriptions(demandNoticeDetails);
-    const proofOfDispatch = await exports.generateProofDispatchDescriptions(demandNoticeDetails);
-    const proofOfService = await exports.generateProofServiceDescriptions(demandNoticeDetails);
+    const bounceCheque = generateBounceChequeDescriptions(chequeDetails);
+    const returnMemo = generateChequeReturnMemoDescriptions(chequeDetails);
+    const statutoryNotice = generateDemandNoticeDescriptions(demandNoticeDetails);
+    const proofOfDispatch = generateProofDispatchDescriptions(demandNoticeDetails);
+    const proofOfService = generateProofServiceDescriptions(demandNoticeDetails);
     const affidavitInLieuComplaint = ["Digital record of proof of Affidavit under section 223 of BNSS"];
-    const proofOfReply = await exports.generateProofReplyDescriptions(demandNoticeDetails);
-    const proofOfDeposit = await exports.generateProofDepositDescriptions(chequeDetails);
-    const optionalDocs = await exports.generateOptionalDocDescriptions(cases.documents);
+    const proofOfReply = generateProofReplyDescriptions(demandNoticeDetails);
+    const proofOfDeposit = generateProofDepositDescriptions(chequeDetails);
+    const optionalDocs = generateOptionalDocDescriptions(cases.documents);
 
     newDocumentList.push(
         ...bounceCheque,
@@ -515,25 +515,25 @@ exports.getDocumentList = async (cases) => {
     return newDocumentList;
 };
 
-exports.generateBounceChequeDescriptions = async (chequeDetailsList) => {
+function generateBounceChequeDescriptions(chequeDetailsList) {
     return chequeDetailsList.map((chequeDetails) => {
         const chequeNumber = chequeDetails.chequeNumber || '';
-        const dateOfIssuance = this.convertDateToDDMMYYYY(chequeDetails.dateOfIssuance);
-        const chequeAmount = this.convertToIndianCurrency(chequeDetails.chequeAmount, 'en-IN', 'INR') || '';
+        const dateOfIssuance = convertDateToDDMMYYYY(chequeDetails.dateOfIssuance);
+        const chequeAmount = convertToIndianCurrency(chequeDetails.chequeAmount, 'en-IN', 'INR') || '';
         return `Digital record of cheque no. ${chequeNumber} dated ${dateOfIssuance} for ${chequeAmount}`;
     });
 }
 
-exports.generateChequeReturnMemoDescriptions = async (chequeDetailsList) => {
+function generateChequeReturnMemoDescriptions(chequeDetailsList) {
     return chequeDetailsList.map(chequeDetails => {
-        const dateOfDishonorCheque = this.convertDateToDDMMYYYY(chequeDetails.dateOfDeposit);
+        const dateOfDishonorCheque = convertDateToDDMMYYYY(chequeDetails.dateOfDeposit);
         return `Digital record of cheque return memo dated ${dateOfDishonorCheque}.`
     });
 }
 
-exports.generateDemandNoticeDescriptions = async (demandNoticeList) => {
+function generateDemandNoticeDescriptions(demandNoticeList) {
     return demandNoticeList.map(demandNotice => {
-        const dateOfIssuance = this.convertDateToDDMMYYYY(demandNotice.dateOfIssuance);
+        const dateOfIssuance = convertDateToDDMMYYYY(demandNotice.dateOfIssuance);
         if (dateOfIssuance) {
             return `Digital record of the statutory notice dated ${dateOfIssuance}.`;
         } else {
@@ -542,41 +542,41 @@ exports.generateDemandNoticeDescriptions = async (demandNoticeList) => {
     });
 }
 
-exports.generateProofDispatchDescriptions = async (demandNoticeList) => {
+function generateProofDispatchDescriptions(demandNoticeList) {
     return demandNoticeList.map(demandNotice => {
-        const dateOfDispatch = this.convertDateToDDMMYYYY(demandNotice.dateOfDispatch);
+        const dateOfDispatch = convertDateToDDMMYYYY(demandNotice.dateOfDispatch);
         return `Digital record of proof of dispatch dated ${dateOfDispatch}.`;
     });
 }
 
-exports.generateProofServiceDescriptions = async (demandNoticeList) => {
+function generateProofServiceDescriptions(demandNoticeList) {
     return demandNoticeList
       .filter((demandNotice) => demandNotice.proofOfAcknowledgmentFileStore)
       .map((demandNotice) => {
-        const dateOfDeemedService = this.convertDateToDDMMYYYY(demandNotice.dateOfDeemedService);
+        const dateOfDeemedService = convertDateToDDMMYYYY(demandNotice.dateOfDeemedService);
         return `Digital record of proof of service- ${dateOfDeemedService}.`;
     });
 }
 
-exports.generateProofReplyDescriptions = async (demandNoticeList) => {
+function generateProofReplyDescriptions(demandNoticeList) {
     return demandNoticeList
         .filter((demandNotice) => demandNotice.proofOfReplyFileStore)
         .map((demandNotice) => {
-        const dateOfReply = this.convertDateToDDMMYYYY(demandNotice.dateOfReply);
+        const dateOfReply = convertDateToDDMMYYYY(demandNotice.dateOfReply);
         return `Digital record of proof of reply dated ${dateOfReply}.`;
     });
 }
 
-exports.generateProofDepositDescriptions = async (chequeDetailsList) => {
+function generateProofDepositDescriptions(chequeDetailsList) {
     return chequeDetailsList
         .filter((chequeDetails) => chequeDetails.depositChequeFileStore)
         .map((chequeDetails) => {
-        const dateOfDeposit = this.convertDateToDDMMYYYY(chequeDetails.dateOfDeposit);
+        const dateOfDeposit = convertDateToDDMMYYYY(chequeDetails.dateOfDeposit);
         return `Digital record of proof of deposit dated ${dateOfDeposit}.`;
     });
 }
 
-exports.generateOptionalDocDescriptions = async (documentList) => {
+function generateOptionalDocDescriptions(documentList) {
     if (!documentList) {
         return [];
     }
@@ -603,7 +603,7 @@ exports.generateOptionalDocDescriptions = async (documentList) => {
     .filter(Boolean);
 }
 
-exports.getWitnessDetailsForComplaint = async (cases) => {
+function getWitnessDetailsForComplaint(cases) {
     if (!cases?.additionalDetails || !cases?.additionalDetails?.witnessDetails || !cases?.additionalDetails?.witnessDetails?.formdata) {
         return [];
     }
@@ -627,7 +627,7 @@ exports.getWitnessDetailsForComplaint = async (cases) => {
     });
 };
 
-exports.searchCase = async (caseId, tenantId, requestinfo) => {
+async function searchCase(caseId, tenantId, requestinfo) {
     try {
       return await axios({
         method: "post",
@@ -646,3 +646,31 @@ exports.searchCase = async (caseId, tenantId, requestinfo) => {
       throw error;
     }
 };
+
+module.exports = {
+    getCaseSectionNumber,
+    formatDate,
+    getComplainantsDetails,
+    getRespondentsDetails,
+    getWitnessDetails,
+    getAdvocateDetails,
+    getChequeDetails,
+    getDebtLiabilityDetails,
+    getDemandNoticeDetails,
+    getDelayCondonationDetails,
+    getPrayerSwornStatementDetails,
+    getComplainantsDetailsForComplaint,
+    getAdvocateDetailsForComplaint,
+    getRespondentsDetailsForComplaint,
+    getDocumentList,
+    generateBounceChequeDescriptions,
+    generateChequeReturnMemoDescriptions,
+    generateDemandNoticeDescriptions,
+    generateProofDispatchDescriptions,
+    generateProofServiceDescriptions,
+    generateProofReplyDescriptions,
+    generateProofDepositDescriptions,
+    generateOptionalDocDescriptions,
+    getWitnessDetailsForComplaint,
+    searchCase,
+  };

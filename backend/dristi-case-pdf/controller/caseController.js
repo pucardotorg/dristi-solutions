@@ -21,24 +21,24 @@ exports.generateCasePdf = async (req, res, next) => {
     const place = config?.courtPlace;
     const filingNumber = caseData?.filingNumber;
 
-    const complainants = await caseService.getComplainantsDetailsForComplaint(caseData);
-    const accuseds = await caseService.getRespondentsDetailsForComplaint(caseData);
+    const complainants = caseService.getComplainantsDetailsForComplaint(caseData);
+    const accuseds = caseService.getRespondentsDetailsForComplaint(caseData);
     const advocates = caseService.getAdvocateDetailsForComplaint(caseData);
-    const complaint = await caseService.getPrayerSwornStatementDetails(caseData)?.[0]?.memorandumOfComplaintText;
+    const complaint = caseService.getPrayerSwornStatementDetails(caseData)?.[0]?.memorandumOfComplaintText;
     const dateOfFiling = caseService.formatDate(caseData?.filingDate ? new Date(caseData?.filingDate) : new Date());
-    const documentList = await caseService.getDocumentList(caseData);
-    const witnessScheduleList = await caseService.getWitnessDetailsForComplaint(caseData);
+    const documentList = caseService.getDocumentList(caseData);
+    const witnessScheduleList = caseService.getWitnessDetailsForComplaint(caseData);
 
-    const chequeDetails = await caseService.getChequeDetails(caseData);
-    const debtLiabilityDetails = await caseService.getDebtLiabilityDetails(
+    const chequeDetails = caseService.getChequeDetails(caseData);
+    const debtLiabilityDetails = caseService.getDebtLiabilityDetails(
       caseData
     );
-    const demandNoticeDetails = await caseService.getDemandNoticeDetails(caseData);
+    const demandNoticeDetails = caseService.getDemandNoticeDetails(caseData);
     const delayCondonationDetails =
-      await caseService.getDelayCondonationDetails(caseData);
+      caseService.getDelayCondonationDetails(caseData);
 
     const prayerSwornStatementDetails =
-      await caseService.getPrayerSwornStatementDetails(caseData);
+      caseService.getPrayerSwornStatementDetails(caseData);
 
     const pdfRequest = {
       RequestInfo: requestInfo,
@@ -124,12 +124,12 @@ exports.caseComplaintPdf = async (req, res, next) => {
       throw new Error('Filing Number is not present');
     }
 
-    const complainants = await caseService.getComplainantsDetailsForComplaint(caseData);
-    const accuseds = await caseService.getRespondentsDetailsForComplaint(caseData);
-    const complaint = await caseService.getPrayerSwornStatementDetails(caseData)?.[0]?.memorandumOfComplaintText;
+    const complainants = caseService.getComplainantsDetailsForComplaint(caseData);
+    const accuseds = caseService.getRespondentsDetailsForComplaint(caseData);
+    const complaint =  caseService.getPrayerSwornStatementDetails(caseData)?.[0]?.memorandumOfComplaintText;
     const dateOfFiling = caseService.formatDate(caseData?.filingDate ? new Date(caseData?.filingDate) : new Date());
-    const documentList = await caseService.getDocumentList(caseData);
-    const witnessScheduleList = await caseService.getWitnessDetailsForComplaint(caseData);
+    const documentList = caseService.getDocumentList(caseData);
+    const witnessScheduleList = caseService.getWitnessDetailsForComplaint(caseData);
 
     const pdfRequest = {
       RequestInfo: requestInfo,
