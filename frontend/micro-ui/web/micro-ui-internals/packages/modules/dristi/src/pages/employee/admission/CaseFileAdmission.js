@@ -306,6 +306,15 @@ function CaseFileAdmission({ t, path }) {
       ...caseDetails,
       additionalDetails: { ...caseDetails.additionalDetails, respondentDetails, witnessDetails, judge: data },
     };
+    const complainantUuid = caseDetails?.litigants?.[0]?.additionalDetails?.uuid;
+    const advocateUuid = caseDetails?.representatives?.[0]?.additionalDetails?.uuid;
+    let assignees = [];
+    if (complainantUuid) {
+      assignees.push(complainantUuid);
+    }
+    if (advocateUuid) {
+      assignees.push(advocateUuid);
+    }
 
     return DRISTIService.caseUpdateService(
       {
@@ -316,7 +325,7 @@ function CaseFileAdmission({ t, path }) {
           workflow: {
             ...caseDetails?.workflow,
             action,
-            ...(action === "SEND_BACK" && { assignes: [caseDetails.auditDetails.createdBy] || [] }),
+            ...(action === "SEND_BACK" && { assignes: assignees || [] }),
           },
         },
         tenantId,
