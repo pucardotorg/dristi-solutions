@@ -398,6 +398,8 @@ exports.getComplainantsDetailsForComplaint = async (cases) => {
                 nameOfAuthorizedSignatory: `${firstName} ${middleName} ${lastName}` || '',
                 designationOfAuthorizedSignatory: data?.complainantDesignation || '',
                 companyDetailsFileStore: getDocumentFileStore(data?.companyDetailsUpload, 'Company documents') || '',
+                advocateList: getAdvocateDetailsForComplaint(cases),
+                isPartyInPerson: getAdvocateDetailsForComplaint(cases)?.[0]?.isPartyInPerson,
             };
         } else {
             const addressDetails = data?.complainantVerification && data?.complainantVerification?.individualDetails && data?.complainantVerification?.individualDetails?.addressDetails || {};
@@ -410,17 +412,19 @@ exports.getComplainantsDetailsForComplaint = async (cases) => {
                 complainantAddress: address || '',
                 phoneNumber: phoneNumber || '',
                 emailId: '',
-                complainantIdProofFileStore: getDocumentFileStore(data?.complainantVerification?.individualDetails) || ''
+                complainantIdProofFileStore: getDocumentFileStore(data?.complainantVerification?.individualDetails) || '',
+                advocateList: getAdvocateDetailsForComplaint(cases),
+                isPartyInPerson: getAdvocateDetailsForComplaint(cases)?.[0]?.isPartyInPerson,
             };
         }
     });
 };
 
-exports.getAdvocateDetailsForComplaint = async (cases) => {
+const getAdvocateDetailsForComplaint = (cases) => {
     if (!cases.additionalDetails || !cases.additionalDetails.advocateDetails || !cases.additionalDetails.advocateDetails.formdata) {
         return [];
     }
-    return cases.additionalDetails.advocateDetails.formdata.map((formData) => {
+    return cases.additionalDetails.advocateDetails.formdata.map((formData, index) => {
         const data = formData.data;
         
         if (data.isAdvocateRepresenting.code === 'NO') {
@@ -429,6 +433,8 @@ exports.getAdvocateDetailsForComplaint = async (cases) => {
             };
         } else {
             return {
+                index: index,
+                adjustedIndex: index + 1,
                 isPartyInPerson: false,
                 advocateName: data.advocateName || '',
                 barId: data.barRegistrationNumber || '',
@@ -487,10 +493,10 @@ exports.getDocumentList = async (cases) => {
     const returnMemo = await this.generateChequeReturnMemoDescriptions(chequeDetails);
     const statutoryNotice = await this.generateDemandNoticeDescriptions(demandNoticeDetails);
     const proofOfDispatch = await this.generateProofDispatchDescriptions(demandNoticeDetails);
-    const proofOfService = demandNoticeDetails?.[0]?.proofOfAcknowledgmentFileStore ? await this.generateProofServiceDescriptions(demandNoticeDetails) : [];
+    const proofOfService = await this.generateProofServiceDescriptions(demandNoticeDetails);
     const affidavitInLieuComplaint = ["Digital record of proof of Affidavit under section 223 of BNSS"];
-    const proofOfReply = demandNoticeDetails?.[0]?.proofOfReplyFileStore ? await this.generateProofReplyDescriptions(demandNoticeDetails) : [];
-    const proofOfDeposit = chequeDetails?.[0]?.depositChequeFileStore ? await this.generateProofDepositDescriptions(chequeDetails) : [];
+    const proofOfReply = await this.generateProofReplyDescriptions(demandNoticeDetails);
+    const proofOfDeposit = await this.generateProofDepositDescriptions(chequeDetails);
     const optionalDocs = await this.generateOptionalDocDescriptions(cases.documents);
 
     newDocumentList.push(
@@ -542,21 +548,27 @@ exports.generateProofDispatchDescriptions = async (demandNoticeList) => {
 }
 
 exports.generateProofServiceDescriptions = async (demandNoticeList) => {
-    return demandNoticeList.map(demandNotice => {
+    return demandNoticeList
+      .filter((demandNotice) => demandNotice.proofOfAcknowledgmentFileStore)
+      .map((demandNotice) => {
         const dateOfDeemedService = this.convertDateToDDMMYYYY(demandNotice.dateOfDeemedService);
         return `Digital record of proof of service- ${dateOfDeemedService}.`;
     });
 }
 
 exports.generateProofReplyDescriptions = async (demandNoticeList) => {
-    return demandNoticeList.map(demandNotice => {
+    return demandNoticeList
+        .filter((demandNotice) => demandNotice.proofOfReplyFileStore)
+        .map((demandNotice) => {
         const dateOfReply = this.convertDateToDDMMYYYY(demandNotice.dateOfReply);
         return `Digital record of proof of reply dated ${dateOfReply}.`;
     });
 }
 
 exports.generateProofDepositDescriptions = async (chequeDetailsList) => {
-    return chequeDetailsList.map(chequeDetails => {
+    return chequeDetailsList
+        .filter((chequeDetails) => chequeDetails.depositChequeFileStore)
+        .map((chequeDetails) => {
         const dateOfDeposit = this.convertDateToDDMMYYYY(chequeDetails.dateOfDeposit);
         return `Digital record of proof of deposit dated ${dateOfDeposit}.`;
     });

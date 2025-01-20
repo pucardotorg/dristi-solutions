@@ -23,7 +23,6 @@ exports.generateCasePdf = async (req, res, next) => {
 
     const complainants = await caseService.getComplainantsDetailsForComplaint(caseData);
     const accuseds = await caseService.getRespondentsDetailsForComplaint(caseData);
-    const advocates = await caseService.getAdvocateDetailsForComplaint(caseData);
     const complaint = await caseService.getPrayerSwornStatementDetails(caseData)?.[0]?.memorandumOfComplaintText;
     const dateOfFiling = caseService.formatDate(caseData?.filingDate ? new Date(caseData?.filingDate) : new Date());
     const documentList = await caseService.getDocumentList(caseData);
@@ -47,9 +46,8 @@ exports.generateCasePdf = async (req, res, next) => {
           courtName: courtName,
           place: place,
           filingNumber: filingNumber,
-          ...complainants[0],
-          ...accuseds[0],
-          ...advocates[0],
+          complainantList: complainants,
+          accusedList: accuseds,
           complaint: complaint,
           dateOfFiling: dateOfFiling,
           documentList: documentList,
@@ -127,7 +125,6 @@ exports.caseComplaintPdf = async (req, res, next) => {
 
     const complainants = await caseService.getComplainantsDetailsForComplaint(caseData);
     const accuseds = await caseService.getRespondentsDetailsForComplaint(caseData);
-    const advocates = await caseService.getAdvocateDetailsForComplaint(caseData);
     const complaint = await caseService.getPrayerSwornStatementDetails(caseData)?.[0]?.memorandumOfComplaintText;
     const dateOfFiling = caseService.formatDate(caseData?.filingDate ? new Date(caseData?.filingDate) : new Date());
     const documentList = await caseService.getDocumentList(caseData);
@@ -140,9 +137,8 @@ exports.caseComplaintPdf = async (req, res, next) => {
           courtName: courtName,
           place: place,
           filingNumber: filingNumber,
-          ...complainants[0],
-          ...accuseds[0],
-          ...advocates[0],
+          complainantList: complainants,
+          accusedList: accuseds,
           complaint: complaint,
           dateOfFiling: dateOfFiling,
           documentList: documentList,
