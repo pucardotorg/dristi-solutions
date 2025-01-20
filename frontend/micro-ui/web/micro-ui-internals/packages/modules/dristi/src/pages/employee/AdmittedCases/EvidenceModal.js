@@ -890,14 +890,6 @@ const EvidenceModal = ({
 
   return (
     <React.Fragment>
-      <style>
-        {`.popup-module.evidence-modal .popup-module-main .selector-button-border {
-          border-color: #BB2C2F !important;
-        }
-        .popup-module.evidence-modal .popup-module-main .selector-button-border h2 {
-          color: #BB2C2F !important;
-        }`}
-      </style>
       {!showConfirmationModal && !showSuccessModal && (
         <Modal
           headerBarEnd={<CloseBtn onClick={handleBack} />}
