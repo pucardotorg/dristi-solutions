@@ -21,18 +21,22 @@ exports.generateCasePdf = async (req, res, next) => {
     const place = config?.courtPlace;
     const filingNumber = caseData?.filingNumber;
 
-    const complainants = caseService.getComplainantsDetailsForComplaint(caseData);
+    const complainants =
+      caseService.getComplainantsDetailsForComplaint(caseData);
     const accuseds = caseService.getRespondentsDetailsForComplaint(caseData);
     const advocates = caseService.getAdvocateDetailsForComplaint(caseData);
-    const complaint = caseService.getPrayerSwornStatementDetails(caseData)?.[0]?.memorandumOfComplaintText;
-    const dateOfFiling = caseService.formatDate(caseData?.filingDate ? new Date(caseData?.filingDate) : new Date());
+    const complaint =
+      caseService.getPrayerSwornStatementDetails(caseData)?.[0]
+        ?.memorandumOfComplaintText;
+    const dateOfFiling = caseService.formatDate(
+      caseData?.filingDate ? new Date(caseData?.filingDate) : new Date()
+    );
     const documentList = caseService.getDocumentList(caseData);
-    const witnessScheduleList = caseService.getWitnessDetailsForComplaint(caseData);
+    const witnessScheduleList =
+      caseService.getWitnessDetailsForComplaint(caseData);
 
     const chequeDetails = caseService.getChequeDetails(caseData);
-    const debtLiabilityDetails = caseService.getDebtLiabilityDetails(
-      caseData
-    );
+    const debtLiabilityDetails = caseService.getDebtLiabilityDetails(caseData);
     const demandNoticeDetails = caseService.getDemandNoticeDetails(caseData);
     const delayCondonationDetails =
       caseService.getDelayCondonationDetails(caseData);
@@ -52,24 +56,21 @@ exports.generateCasePdf = async (req, res, next) => {
           complaint: complaint,
           dateOfFiling: dateOfFiling,
           documentList: documentList,
-          witnessScheduleList: witnessScheduleList
-        }
-      ]
+          witnessScheduleList: witnessScheduleList,
+        },
+      ],
     };
 
     console.log("Pdf Request: {}", pdfRequest);
     await fileService.validateDocuments(caseData?.documents || []);
-    
+
     const pdf = await pdfService.generateComplaintPDF(pdfRequest);
 
     let finalPdf = await fileService.appendComplainantFilesToPDF(
       pdf,
       complainants
     );
-    finalPdf = await fileService.appendRespondentFilesToPDF(
-      finalPdf,
-      accuseds
-    );
+    finalPdf = await fileService.appendRespondentFilesToPDF(finalPdf, accuseds);
     finalPdf = await fileService.appendChequeDetailsToPDF(
       finalPdf,
       chequeDetails
@@ -114,22 +115,28 @@ exports.caseComplaintPdf = async (req, res, next) => {
     const requestInfo = req?.body?.RequestInfo;
 
     const caseData = req?.body?.cases;
-    
+
     const courtName = config?.courtName;
     const place = config?.courtPlace;
     const filingNumber = caseData.filingNumber;
 
     if (!filingNumber) {
-      console.log("Case Data", caseData)
-      throw new Error('Filing Number is not present');
+      console.log("Case Data", caseData);
+      throw new Error("Filing Number is not present");
     }
 
-    const complainants = caseService.getComplainantsDetailsForComplaint(caseData);
+    const complainants =
+      caseService.getComplainantsDetailsForComplaint(caseData);
     const accuseds = caseService.getRespondentsDetailsForComplaint(caseData);
-    const complaint =  caseService.getPrayerSwornStatementDetails(caseData)?.[0]?.memorandumOfComplaintText;
-    const dateOfFiling = caseService.formatDate(caseData?.filingDate ? new Date(caseData?.filingDate) : new Date());
+    const complaint =
+      caseService.getPrayerSwornStatementDetails(caseData)?.[0]
+        ?.memorandumOfComplaintText;
+    const dateOfFiling = caseService.formatDate(
+      caseData?.filingDate ? new Date(caseData?.filingDate) : new Date()
+    );
     const documentList = caseService.getDocumentList(caseData);
-    const witnessScheduleList = caseService.getWitnessDetailsForComplaint(caseData);
+    const witnessScheduleList =
+      caseService.getWitnessDetailsForComplaint(caseData);
 
     const pdfRequest = {
       RequestInfo: requestInfo,
@@ -143,9 +150,9 @@ exports.caseComplaintPdf = async (req, res, next) => {
           complaint: complaint,
           dateOfFiling: dateOfFiling,
           documentList: documentList,
-          witnessScheduleList: witnessScheduleList
-        }
-      ]
+          witnessScheduleList: witnessScheduleList,
+        },
+      ],
     };
 
     console.log("Pdf Request: {}", pdfRequest);
