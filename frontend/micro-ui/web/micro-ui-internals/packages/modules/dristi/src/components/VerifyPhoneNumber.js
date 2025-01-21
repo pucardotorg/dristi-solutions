@@ -370,7 +370,7 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
         >
           <div className="verify-mobile-modal-main">
             <LabelFieldPair>
-              <CardLabel className="card-label-smaller" style={{ display: "flex" }}>
+              <CardLabel className="card-label-smaller" style={{ display: "flex", width: "100%" }}>
                 {t(input.label) +
                   `${
                     input?.hasMobileNo

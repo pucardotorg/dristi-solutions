@@ -288,3 +288,71 @@
     }
   }
 }
+
+.multi-litigant-composer {
+  .card {
+    border: none;
+  }
+
+  .label-field-pair {
+    h2.card-label {
+      font-weight: 400 !important;
+      font-size: 16px;
+      margin-bottom: 8px !important;
+    }
+
+    .phone-number-verification {
+      .jk-digit-primary-btn.secondary-button-selector {
+        box-shadow: none;
+        align-items: center;
+        width: 200px;
+        height: 40px;
+        gap: 4px;
+        background-color: initial !important;
+
+        h2.secondary-label-selector {
+          color: #007e7e !important;
+          text-align: center;
+          font-weight: 700;
+          font-size: 16px;
+        }
+      }
+    }
+  }
+
+  .popup-wrap {
+    .verify-mobile-modal {
+      .popup-module-main {
+        .popup-module-action-bar {
+          .selector-button-primary-disabled {
+            .verification-button-text-modal {
+              color: white !important;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+.multi-litigant-composer-footer {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0px 16px 0px 16px;
+  align-items: center;
+}
+
+.multi-litigant-composer-footer-left {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 7px;
+}
+
+.multi-litigant-composer-footer-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+}
