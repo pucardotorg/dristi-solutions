@@ -96,7 +96,7 @@
                             ]
                         },
                         {
-                            "action": "E-SIGN_PARTY_IN_PERSON",
+                            "action": "E-SIGN_PIP_DONE",
                             "nextState": "PENDING_PAYMENT",
                             "roles": [
                                 "CASE_CREATOR",
@@ -105,7 +105,7 @@
                             ]
                         },
                         {
-                            "action": "E-SIGN",
+                            "action": "E-SIGN_COMPLETE",
                             "nextState": "PENDING_PAYMENT",
                             "roles": [
                                 "CASE_CREATOR",
