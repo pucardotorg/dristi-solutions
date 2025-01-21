@@ -150,7 +150,6 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
     service: "case-default",
     path,
     caseDetails,
-    totalAmount: totalAmount,
     scenario,
   });
   const onSubmitCase = async () => {
@@ -158,7 +157,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
       const bill = await fetchBill(caseDetails?.filingNumber + `_${suffix}`, tenantId, "case-default");
       if (!bill?.Bill?.length) return;
 
-      const paymentStatus = await openPaymentPortal(bill);
+      const paymentStatus = await openPaymentPortal(bill, bill?.Bill?.[0]?.totalAmount);
       const success = Boolean(paymentStatus);
 
       const receiptData = {
