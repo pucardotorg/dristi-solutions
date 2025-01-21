@@ -96,19 +96,9 @@
                             ]
                         },
                         {
-                            "action": "E-SIGN_PIP_DONE",
-                            "nextState": "PENDING_PAYMENT",
-                            "roles": [
-                                "CASE_CREATOR",
-                                "SYSTEM",
-                                "SYSTEM_ADMIN"
-                            ]
-                        },
-                        {
                             "action": "E-SIGN_COMPLETE",
                             "nextState": "PENDING_PAYMENT",
                             "roles": [
-                                "CASE_CREATOR",
                                 "SYSTEM",
                                 "SYSTEM_ADMIN"
                             ]
@@ -269,21 +259,11 @@
                             ]
                         },
                         {
-                            "action": "E-SIGN_PARTY_IN_PERSON",
-                            "nextState": "UNDER_SCRUTINY",
-                            "roles": [
-                                "CASE_CREATOR",
-                                "SYSTEM",
-                                "SYSTEM_ADMIN"
-                            ]
-                        },
-                        {
-                            "action": "E-SIGN",
+                            "action": "E-SIGN_COMPLETE",
                             "nextState": "UNDER_SCRUTINY",
                             "roles": [
                                 "SYSTEM",
                                 "SYSTEM_ADMIN",
-                                "CASE_CREATOR"
                             ]
                         }
                     ]
