@@ -104,7 +104,7 @@ public class LockServiceImpl implements LockService {
             log.info("method:releaseLock, result=inProgress ,lock exist with lockId={}", lock.getId());
 
             String individualId = individualUtil.getIndividualId(requestInfo);
-            if (lock.getIndividualId().equals(individualId)) {
+            if (!lock.getIndividualId().equals(individualId)) {
 
                 log.error("method:releaseLock, result=error ,lockId={}", lock.getId());
                 throw new CustomException("UNAUTHORIZED", "You are not allowed to release this lock.");

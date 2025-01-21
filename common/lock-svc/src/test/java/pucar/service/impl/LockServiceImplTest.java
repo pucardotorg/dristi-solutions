@@ -135,7 +135,7 @@ class LockServiceImplTest {
     void testReleaseLock_LockExist() {
 
         Lock lock1 = new Lock();
-        lock1.setIndividualId("12345");
+        lock1.setIndividualId("1234");
 
         Optional<Lock> lock = Optional.of(lock1);
 
