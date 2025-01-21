@@ -9,6 +9,7 @@ import pucar.config.Configuration;
 import pucar.repository.LockRepository;
 import pucar.service.LockService;
 import pucar.util.IndividualUtil;
+import pucar.web.models.AuditDetails;
 import pucar.web.models.Lock;
 
 import java.util.Optional;
@@ -37,10 +38,10 @@ public class LockServiceImpl implements LockService {
         lockDetails.setId(UUID.randomUUID().toString());
         lockDetails.setLockReleaseTime(System.currentTimeMillis() + configuration.getLockDurationMillis());
         lockDetails.setLockDate(System.currentTimeMillis());
-
         String individualId = individualUtil.getIndividualId(requestInfo);
         lockDetails.setIndividualId(individualId);
         lockDetails.setIsLocked(true);
+        lockDetails.setAuditDetails(getCreateAuditDetails(requestInfo));
         Lock lockedResponse = null;
         try {
             lockedResponse = repository.save(lockDetails);
@@ -116,5 +117,20 @@ public class LockServiceImpl implements LockService {
 
         }
 
+    }
+
+
+    AuditDetails getCreateAuditDetails(RequestInfo requestInfo) {
+        return AuditDetails.builder()
+                .createdBy(requestInfo.getUserInfo().getUuid())
+                .createdTime(System.currentTimeMillis())
+                .lastModifiedBy(requestInfo.getUserInfo().getUuid())
+                .lastModifiedTime(System.currentTimeMillis()).build();
+    }
+
+    AuditDetails getUpdateAuditDetails(RequestInfo requestInfo, AuditDetails auditDetails) {
+        auditDetails.setLastModifiedBy(requestInfo.getUserInfo().getUuid());
+        auditDetails.setLastModifiedTime(System.currentTimeMillis());
+        return auditDetails;
     }
 }
