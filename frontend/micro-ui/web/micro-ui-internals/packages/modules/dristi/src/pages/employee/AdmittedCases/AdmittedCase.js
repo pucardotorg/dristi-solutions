@@ -64,8 +64,8 @@ const delayCondonationTextStyle = {
 const casePrimaryActions = [
   { action: "REGISTER", label: "CS_REGISTER" },
   { action: "ADMIT", label: "CS_ADMIT_CASE" },
-  { action: "SCHEDULE_ADMISSION_HEARING", label: "CS_SCHEDULE_ADMISSION_HEARING" },
-  { action: "ISSUE_ORDER", label: "ISSUE_NOTICE" },
+  { action: "SCHEDULE_ADMISSION_HEARING", label: "CS_SCHEDULE_HEARING" },
+  { action: "ISSUE_ORDER", label: "ISSUE_BNSS_NOTICE" },
 ];
 const caseSecondaryActions = [
   { action: "SEND_BACK", label: "SEND_BACK_FOR_CORRECTION" },
@@ -2396,7 +2396,12 @@ const AdmittedCases = () => {
               <Button className="previous-button" variation="secondary" label={t(tertiaryAction.label)} onButtonClick={onSaveDraft} />
             )}
             {primaryAction && (
-              <SubmitBar label={t(isPendingNoticeStatus ? "ISSUE_NOTICE" : primaryAction?.label)} submit="submit" disabled={""} onSubmit={onSubmit} />
+              <SubmitBar
+                label={t(isPendingNoticeStatus ? "ISSUE_BNSS_NOTICE" : primaryAction?.label)}
+                submit="submit"
+                disabled={""}
+                onSubmit={onSubmit}
+              />
             )}
           </div>
           {secondaryAction.action && (

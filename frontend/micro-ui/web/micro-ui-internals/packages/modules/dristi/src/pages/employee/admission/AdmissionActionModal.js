@@ -438,7 +438,7 @@ function AdmissionActionModal({
           actionSaveOnSubmit={() => {
             if (submitModalInfo?.nextButtonText === "SCHEDULE_NEXT_HEARING") {
               handleScheduleNextHearing();
-            } else if (submitModalInfo?.nextButtonText === "CS_SCHEDULE_ADMISSION_HEARING") {
+            } else if (submitModalInfo?.nextButtonText === "CS_SCHEDULE_HEARING") {
               setModalInfo({ ...modalInfo, page: 0, type: "schedule" });
             } else {
               handleNextCase();
