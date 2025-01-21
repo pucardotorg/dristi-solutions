@@ -1,67 +1,91 @@
 package pucar.web.controllers;
 
-import pucar.web.models.ErrorResponse;
+import org.egov.common.contract.models.RequestInfoWrapper;
+import org.egov.common.contract.request.RequestInfo;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import pucar.service.LockService;
+import pucar.web.models.Lock;
 import pucar.web.models.LockRequest;
 import pucar.web.models.LockResponse;
-import org.junit.Test;
-import org.junit.Ignore;
-import org.junit.runner.RunWith;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.context.annotation.Import;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import pucar.TestConfiguration;
 
-    import java.util.ArrayList;
-    import java.util.HashMap;
-    import java.util.List;
-    import java.util.Map;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+@ExtendWith(MockitoExtension.class)
+class LockApiControllerTest {
 
-/**
-* API tests for LockApiController
-*/
-@Ignore
-@RunWith(SpringRunner.class)
-@WebMvcTest(LockApiController.class)
-@Import(TestConfiguration.class)
-public class LockApiControllerTest {
+    @Mock
+    private LockService lockService;
 
-    @Autowired
-    private MockMvc mockMvc;
+    @InjectMocks
+    private LockApiController lockApiController;
 
     @Test
-    public void searchLockSuccess() throws Exception {
-        mockMvc.perform(post("/lock/v1/get").contentType(MediaType
-        .APPLICATION_JSON_UTF8))
-        .andExpect(status().isOk());
+    void testSearchLock() {
+        // Arrange
+        RequestInfoWrapper requestInfoWrapper = new RequestInfoWrapper();
+        RequestInfo requestInfo = new RequestInfo();
+        requestInfoWrapper.setRequestInfo(requestInfo);
+        String uniqueId = "testUniqueId";
+        String tenantId = "testTenantId";
+
+        Lock lock = new Lock();
+        when(lockService.getLock(uniqueId, tenantId)).thenReturn(lock);
+
+        // Act
+        ResponseEntity<LockResponse> response = lockApiController.searchLock(requestInfoWrapper, uniqueId, tenantId);
+
+        // Assert
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(lock, response.getBody().getLock());
+        verify(lockService, times(1)).getLock(uniqueId, tenantId);
     }
 
     @Test
-    public void searchLockFailure() throws Exception {
-        mockMvc.perform(post("/lock/v1/get").contentType(MediaType
-        .APPLICATION_JSON_UTF8))
-        .andExpect(status().isBadRequest());
+    void testSetLock() {
+        // Arrange
+        LockRequest lockRequest = new LockRequest();
+        RequestInfo requestInfo = new RequestInfo();
+        Lock lock = new Lock();
+        lockRequest.setRequestInfo(requestInfo);
+        lockRequest.setLock(lock);
+
+        Lock savedLock = new Lock();
+        when(lockService.setLock(requestInfo, lock)).thenReturn(savedLock);
+
+        // Act
+        ResponseEntity<LockResponse> response = lockApiController.setLock(lockRequest);
+
+        // Assert
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(savedLock, response.getBody().getLock());
+        verify(lockService, times(1)).setLock(requestInfo, lock);
     }
 
     @Test
-    public void setLockSuccess() throws Exception {
-        mockMvc.perform(post("/lock/v1/set").contentType(MediaType
-        .APPLICATION_JSON_UTF8))
-        .andExpect(status().isOk());
-    }
+    void testReleaseLock() {
+        // Arrange
+        RequestInfoWrapper requestInfoWrapper = new RequestInfoWrapper();
+        RequestInfo requestInfo = new RequestInfo();
+        requestInfoWrapper.setRequestInfo(requestInfo);
+        String uniqueId = "testUniqueId";
+        String tenantId = "testTenantId";
 
-    @Test
-    public void setLockFailure() throws Exception {
-        mockMvc.perform(post("/lock/v1/set").contentType(MediaType
-        .APPLICATION_JSON_UTF8))
-        .andExpect(status().isBadRequest());
-    }
+        when(lockService.releaseLock(requestInfo, uniqueId, tenantId)).thenReturn(true);
 
+        // Act
+        ResponseEntity<?> response = lockApiController.releaseLock(requestInfoWrapper, uniqueId, tenantId);
+
+        // Assert
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(lockService, times(1)).releaseLock(requestInfo, uniqueId, tenantId);
+    }
 }
