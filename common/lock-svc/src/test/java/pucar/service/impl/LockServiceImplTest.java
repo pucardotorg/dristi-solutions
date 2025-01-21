@@ -162,7 +162,7 @@ class LockServiceImplTest {
     void testReleaseLock_Unauthorized() {
         Lock lock = new Lock();
         lock.setId("test-lock-id");
-        lock.setIndividualId("other-individual-id");
+        lock.setIndividualId("test-individual-id");
 
         when(repository.getLockByUniqueIdAndTenantIdAndIsLocked("test-unique-id", "test-tenant-id", true))
                 .thenReturn(Optional.of(lock));
