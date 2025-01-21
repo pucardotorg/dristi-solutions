@@ -607,10 +607,6 @@ const GenerateOrders = () => {
               if (field.key === "hearingPurpose") {
                 return {
                   ...field,
-                  ...(currentOrder?.additionalDetails?.formdata?.hearingPurpose?.type === "ADMISSION" &&
-                    !isCaseAdmitted && {
-                      disable: true,
-                    }),
                   populators: {
                     ...field.populators,
                     mdmsConfig: {

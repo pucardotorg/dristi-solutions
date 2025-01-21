@@ -33,7 +33,7 @@ const stateSla = {
 const casePrimaryActions = [
   { action: "REGISTER", label: "CS_REGISTER" },
   { action: "ADMIT", label: "CS_ADMIT_CASE" },
-  { action: "SCHEDULE_ADMISSION_HEARING", label: "CS_SCHEDULE_ADMISSION_HEARING" },
+  { action: "SCHEDULE_ADMISSION_HEARING", label: "CS_SCHEDULE_HEARING" },
 ];
 const caseSecondaryActions = [
   { action: "SEND_BACK", label: "SEND_BACK_FOR_CORRECTION" },
