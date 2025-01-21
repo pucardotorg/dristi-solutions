@@ -14,6 +14,7 @@ import org.egov.tracer.model.CustomException;
 import org.jetbrains.annotations.NotNull;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.CaseRegistrationEnrichment;
+import org.pucar.dristi.enrichment.EnrichmentService;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.CaseRepository;
 import org.pucar.dristi.util.AdvocateUtil;
@@ -54,6 +55,8 @@ public class CaseService {
     private final ObjectMapper objectMapper;
     private final CacheService cacheService;
 
+    private final EnrichmentService enrichmentService;
+
     private final SmsNotificationService notificationService;
 
     private final IndividualService individualService;
@@ -70,7 +73,7 @@ public class CaseService {
                        Producer producer,
                        BillingUtil billingUtil,
                        EncryptionDecryptionUtil encryptionDecryptionUtil,
-                       ObjectMapper objectMapper, CacheService cacheService, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil) {
+                       ObjectMapper objectMapper, CacheService cacheService, EnrichmentService enrichmentService, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.caseRepository = caseRepository;
@@ -81,6 +84,7 @@ public class CaseService {
         this.encryptionDecryptionUtil = encryptionDecryptionUtil;
         this.objectMapper = objectMapper;
         this.cacheService = cacheService;
+        this.enrichmentService = enrichmentService;
         this.notificationService = notificationService;
         this.individualService = individualService;
         this.advocateUtil = advocateUtil;
@@ -178,8 +182,11 @@ public class CaseService {
                 throw new CustomException(VALIDATION_ERR, "Case Application does not exist");
             }
 
+
             // Enrich application upon update
             enrichmentUtil.enrichCaseApplicationUponUpdate(caseRequest, existingApplications.get(0).getResponseList());
+
+            enrichmentService.enrichCourtCase(caseRequest);
 
             String previousStatus = caseRequest.getCases().getStatus();
             workflowService.updateWorkflowStatus(caseRequest);
