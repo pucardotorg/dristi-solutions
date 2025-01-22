@@ -10,15 +10,17 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.core.RowMapper;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
 
@@ -37,23 +39,16 @@ public class EsignRequestRepositoryTest {
 
     @Test
     @DisplayName("should return Esign parameter object for id")
-    void shouldReturnESignParameterObjectForID() {
-
+    public void shouldReturnESignParameterObjectForID() {
+        String eSignQuery = "SELECT * FROM dristi_esign_pdf de WHERE id = ? LIMIT ? OFFSET ? ;";
         String id = "123654";
 
-        ESignParameter mockedESign = ESignParameter.builder()
-                .id("123654")
-                .authType("OTP")
-                .fileStoreId("file-456")
-                .tenantId("tenant-k")
-                .build();
+        ESignParameter mockedESign = new ESignParameter();
 
         List<ESignParameter> expectedList = Collections.singletonList(mockedESign);
 
-        when(jdbcTemplate.query(ArgumentMatchers.contains("SELECT * FROM dristi_esign_pdf de WHERE id = ?"),
-                new List[]{anyList()},
-                any(int[].class),
-                any(RowMapper.class))).thenReturn(expectedList);
+        when(jdbcTemplate.query(eq(eSignQuery), eq(new Object[]{"123654", 1, 0}), eq(new int[]{12, 4, 4}), eq(rowMapper))).thenReturn(expectedList);
+
         ESignParameter recievedESignParameter = repository.getESignDetails(id);
 
         assertNotNull(recievedESignParameter);
