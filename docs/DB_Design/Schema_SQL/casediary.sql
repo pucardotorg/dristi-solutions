@@ -37,7 +37,7 @@ CREATE TABLE dristi_casediary_documents (
         REFERENCES dristi_casediary(id)
 );
 
-CREATE INDEX idx_dristi_casediary_documents_casedairy_id ON dristi_casediary_documents(tenant_id, casediary_id);
+CREATE INDEX idx_dristi_casediary_documents_casediary_id ON dristi_casediary_documents(tenant_id, casediary_id);
 CREATE UNIQUE INDEX idx_dristi_casediary_documents_filestore_id ON dristi_casediary_documents(tenant_id, filestore_id);
 
 CREATE TABLE dristi_diaryentries (
@@ -58,5 +58,5 @@ CREATE TABLE dristi_diaryentries (
     judge_id varchar(36) NOT NULL
 );
 
-CREATE INDEX idx_dristi_diaryentries_casedairy_id ON dristi_diaryentries(tenant_id, case_number);
+CREATE INDEX idx_dristi_diaryentries_casediary_id ON dristi_diaryentries(tenant_id, case_number);
 CREATE INDEX idx_dristi_diaryentries_entry_date ON dristi_diaryentries(tenant_id, entry_date);
