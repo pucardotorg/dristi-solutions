@@ -80,8 +80,8 @@ public class CaseRegistrationValidator {
         if (existingCourtCaseList.isEmpty()) {
             return false;
         }
-        checkForLock(caseRequest);
         validateCaseRegistration(caseRequest);
+        checkForLock(caseRequest);
         CourtCase courtCase = caseRequest.getCases();
         RequestInfo requestInfo = caseRequest.getRequestInfo();
 
