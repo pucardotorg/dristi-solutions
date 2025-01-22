@@ -13,6 +13,7 @@ import org.drishti.esign.util.XmlFormDataSetter;
 import org.drishti.esign.web.models.*;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -56,6 +57,7 @@ public class ESignService {
 
     public ESignXmlForm signDoc(ESignRequest request, HttpServletRequest servletRequest) {
 
+        log.info("Method=signDoc ,Result=Inprogress");
         // Root Directory.
         String uploadRootPath = servletRequest.getServletContext().getRealPath("upload");
         File uploadRootDir = new File(uploadRootPath);
@@ -79,12 +81,15 @@ public class ESignService {
         String xmlData = "";
 
         try {
+            log.info("Method=signDoc ,Result=Inprogress, private key and xml data");
             PrivateKey rsaPrivateKey = encryption.getPrivateKey(PRIVATE_KEY_FILE_NAME);
             xmlData = xmlSigning.signXmlStringNew(servletRequest.getServletContext().getRealPath("upload") + File.separator + "Testing.xml", rsaPrivateKey);
             log.info(xmlData);
             xmlGenerator.writeToXmlFile(xmlData, servletRequest.getServletContext().getRealPath("upload") + File.separator + "Testing.xml");
         } catch (Exception e) {
-            log.error("");
+            log.error("Method=signDoc ,Result=Error, private key and xml data");
+            log.error("Method=signDoc, Error:{}", e.toString());
+            throw new CustomException("E_SIGN_EXCEPTION", "Exception Occurred while generating the request");
 
         }
 
@@ -99,6 +104,8 @@ public class ESignService {
         myRequestXmlForm.setESignRequest(xmlData);
         myRequestXmlForm.setAspTxnID(eSignXmlData.getTxn());
         myRequestXmlForm.setContentType("application/xml");
+        log.info("Method=signDoc ,Result=Success");
+
         return myRequestXmlForm;
 
     }
@@ -114,6 +121,8 @@ public class ESignService {
 
     public String signDocWithDigitalSignature(SignDocRequest request) {
 
+        log.info("Method=signDocWithDigitalSignature ,Result=InProgress");
+
         SignDocParameter eSignParameter = request.getESignParameter();
 
         String txnId = eSignParameter.getTxnId();
@@ -122,6 +131,7 @@ public class ESignService {
         String tenantId = eSignParameter.getTenantId();
         String response = eSignParameter.getResponse();
 
+        log.info("Method=signDocWithDigitalSignature ,Result=InProgress, filestoreId:{},tenantId:{}",fileStoreId,tenantId);
         Resource resource = fileStoreUtil.fetchFileStoreObjectById(fileStoreId, tenantId);
 
         MultipartFile multipartFile;
@@ -134,6 +144,8 @@ public class ESignService {
                 .eSignParameter(eSignDetails).requestInfo(request.getRequestInfo()).build();
 
         producer.push(configuration.getEsignUpdateTopic(), eSignRequest);
+
+        log.info("Method=signDocWithDigitalSignature ,Result=Success");
         return signedFileStoreId;
     }
 

@@ -25,6 +25,9 @@ public class Configuration {
     @Value("${egov.filestore.create.endpoint}")
     private String filestoreCreateEndPoint;
 
+    @Value("${egov.filestore.delete.endpoint}")
+    private String  filestoreDeleteEndPoint;
+
 
     //ESign
     @Value("${esing.ver}")
