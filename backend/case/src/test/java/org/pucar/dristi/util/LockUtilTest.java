@@ -49,14 +49,8 @@ public class LockUtilTest {
         when(configuration.getLockEndPoint()).thenReturn("/lock");
 
         // Mock the repository response
-        Object mockResponse = new Object(); // Replace with appropriate mock response
+        Boolean mockResponse = true; // Replace with appropriate mock response
         when(repository.fetchResult(any(), any())).thenReturn(mockResponse);
-
-        // Mock JSON handling
-        String jsonResponse = "{ \"Lock\": { \"id\": \"lock-123\" } }";
-        when(objectMapper.writeValueAsString(any())).thenReturn(jsonResponse);
-        JsonNode jsonNode = new ObjectMapper().readTree(jsonResponse);
-        when(objectMapper.readTree(jsonResponse)).thenReturn(jsonNode);
 
         // Execute method
         boolean result = lockUtil.isLockPresent(requestInfo, uniqueId, tenantId);
@@ -73,14 +67,9 @@ public class LockUtilTest {
         when(configuration.getLockEndPoint()).thenReturn("/lock");
 
         // Mock repository response
-        Object mockResponse = new Object();
+        Boolean mockResponse = false;
         when(repository.fetchResult(any(), any())).thenReturn(mockResponse);
 
-        // Mock JSON handling
-        String jsonResponse = "{ \"Lock\": null }";
-        when(objectMapper.writeValueAsString(any())).thenReturn(jsonResponse);
-        JsonNode jsonNode = new ObjectMapper().readTree(jsonResponse);
-        when(objectMapper.readTree(jsonResponse)).thenReturn(jsonNode);
 
         // Execute method
         boolean result = lockUtil.isLockPresent(requestInfo, uniqueId, tenantId);

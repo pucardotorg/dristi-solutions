@@ -104,20 +104,4 @@ class EnrichCaseWhenESignTest {
         assertTrue(advocateMapping.getHasSigned());
     }
 
-    @Test
-    void testEnrich_SetsWorkflowAction() {
-        String individualId="12345";
-        Party litigant = Party.builder().id(UUID.randomUUID())
-                .individualId("12345")
-                .isActive(true)
-                .hasSigned(true).build();
-        when(individualService.getIndividualId(requestInfo)).thenReturn(individualId);
-
-        courtCase.setLitigants(Collections.singletonList(litigant));
-        courtCase.setWorkflow(Workflow.builder().action(E_SIGN).build());
-
-        enrichCaseWhenESign.enrich(caseRequest);
-
-        assertEquals(E_SIGN_COMPLETE, courtCase.getWorkflow().getAction());
-    }
 }

@@ -75,60 +75,6 @@ public class EnrichCaseWhenESign implements EnrichmentStrategy {
 
 
         }
-
-
-        boolean isLastSign = isLastSigned(caseRequest.getCases());
-
-        // workflow action set to E-SIGN_COMPLETE
-        if (isLastSign)
-            caseRequest.getCases().getWorkflow().setAction(E_SIGN_COMPLETE);
-
-
-    }
-
-    private boolean isLastSigned(@Valid CourtCase cases) {
-        // Check if all litigants have signed
-        boolean allLitigantsHaveSigned = cases.getLitigants().stream()
-                .filter(Party::getIsActive)
-                .allMatch(Party::getHasSigned);
-
-        // If any litigant hasn't signed, return false immediately
-        if (!allLitigantsHaveSigned) {
-            return false;
-        }
-
-        // Create a map of litigant IDs to their respective representatives
-        Map<UUID, List<AdvocateMapping>> representativesMap = cases.getRepresentatives().stream()
-                .filter(AdvocateMapping::getIsActive)
-                .flatMap(rep -> rep.getRepresenting().stream()
-                        .map(Party::getId)  // Get the ID of each litigant represented by this advocate
-                        .filter(Objects::nonNull)  // Ensure no null IDs
-                        .map(litigantId -> new AbstractMap.SimpleEntry<>(litigantId, rep)))  // Create entries with litigant ID and the rep
-                .collect(Collectors.groupingBy(Map.Entry::getKey, // Group by litigant ID
-                        Collectors.mapping(Map.Entry::getValue, Collectors.toList())));
-
-
-        // Check if each active litigant  has a at least one signed representative
-        // Find the list of representatives for the current litigant
-        // If no representatives exist, the litigant's signature is enough
-        // If representatives exist, at least one must have signed
-
-        return cases.getLitigants().stream()
-                .filter(Party::getIsActive)
-                .allMatch(litigant -> {
-                    UUID litigantId = litigant.getId();
-
-                    // Find the list of representatives for the current litigant
-                    List<AdvocateMapping> representatives = representativesMap.get(litigantId);
-
-                    // If no representatives exist, the litigant's signature is enough
-                    if (representatives == null || representatives.isEmpty()) {
-                        return true;
-                    }
-
-                    // If representatives exist, at least one must have signed
-                    return representatives.stream().anyMatch(AdvocateMapping::getHasSigned);
-                });
     }
 
 }

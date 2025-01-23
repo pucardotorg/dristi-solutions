@@ -40,12 +40,7 @@ public class LockUtil {
                 .requestInfo(requestInfo).build();
 
         Object object = repository.fetchResult(uri, requestInfoWrapper);
-        String jsonString = objectMapper.writeValueAsString(object);
-        // Parse the JSON string
-        JsonNode rootNode = objectMapper.readTree(jsonString);
-
-        JsonNode lockNode = rootNode.path("Lock");
-        return !lockNode.isNull();
+        return (Boolean)object;
 
     }
 }

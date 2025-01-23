@@ -13,6 +13,7 @@ import java.util.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.egov.common.contract.models.AuditDetails;
+import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
@@ -587,6 +588,7 @@ public class CaseServiceTest {
         String updatedStatus = "STATUS";
         CourtCase courtCase = new CourtCase(); // Mock case-indexer.yml CourtCase object with required fields
         courtCase.setId(UUID.randomUUID());
+        courtCase.setWorkflow(Workflow.builder().action("action").build());
         caseRequest.setCases(courtCase);
         courtCase.setStatus(updatedStatus);
         when(validator.validateUpdateRequest(any(CaseRequest.class),any())).thenReturn(true);
