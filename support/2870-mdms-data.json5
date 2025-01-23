@@ -105,11 +105,12 @@
       {
         "tenantId": "kl",
         "schemaCode": "common-masters.CourtEstablishment",
-        "uniqueIdentifier": "2",
+        "uniqueIdentifier": "JUDICIAL_MAGISTRATE_FIRST_CLASS",
         "data": {
-          "id": 2,
+          "code": "JUDICIAL_MAGISTRATE_FIRST_CLASS",
           "name": "Special Court Of Judicial Magistrate of the First Class , for the trial of cases under section 138 of NI Act , 1881 at Kollam ( \"24X7 ON Court\" )",
-          "type": "2"
+          "type": "2",
+          "active": true
         },
         "isActive": true
       }
