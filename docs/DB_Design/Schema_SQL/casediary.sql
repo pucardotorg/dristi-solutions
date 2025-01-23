@@ -49,7 +49,7 @@ CREATE TABLE dristi_diaryentries (
     reference_id varchar(64),
     -- master ID for reference type --
     reference_type varchar(64),
-    hearingDate int8 NOT NULL,
+    hearingDate int8 NULL,
     additional_details jsonb,
     created_by varchar(36) NOT NULL,
     last_modified_by varchar(36) NOT NULL,
