@@ -57,6 +57,12 @@ public class Lock {
     @JsonProperty("lockReleaseTime")
     private Long lockReleaseTime = null;
 
+    @JsonProperty("entity")
+    private String entity = null;
+
+    @JsonProperty("userId")
+    private String userId = null;
+
     @JsonProperty("lockType")
     @NotNull(message = "lock type cannot be null")
     private String lockType = null;

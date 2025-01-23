@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import org.egov.common.contract.models.RequestInfoWrapper;
-import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,14 +30,12 @@ public class LockApiController {
 
 
     @RequestMapping(value = "/v1/_get", method = RequestMethod.POST)
-    public ResponseEntity<LockResponse> searchLock(@Parameter(in = ParameterIn.DEFAULT, description = "Details for the search of lock + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody RequestInfoWrapper requestInfo,
-                                                   @RequestParam(name = "uniqueId") String uniqueId,
-                                                   @RequestParam(name = "tenantId") String tenantId) {
+    public ResponseEntity<Boolean> isLocked(@Parameter(in = ParameterIn.DEFAULT, description = "Details for the search of lock + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody RequestInfoWrapper requestInfo,
+                                              @RequestParam(name = "uniqueId") String uniqueId,
+                                              @RequestParam(name = "tenantId") String tenantId) {
 
-        Lock lock = lockService.getLock(uniqueId, tenantId);
-        LockResponse response = LockResponse.builder()
-                .responseInfo(ResponseInfoFactory.createResponseInfoFromRequestInfo(requestInfo.getRequestInfo(), true))
-                .lock(lock).build();
+        Boolean response = lockService.isLocked(requestInfo.getRequestInfo(), uniqueId, tenantId);
+
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -57,9 +54,9 @@ public class LockApiController {
                                          @RequestParam(name = "uniqueId") String uniqueId,
                                          @RequestParam(name = "tenantId") String tenantId) {
 
-        lockService.releaseLock(requestInfo.getRequestInfo(), uniqueId, tenantId);
+        Boolean response = lockService.releaseLock(requestInfo.getRequestInfo(), uniqueId, tenantId);
 
-        return new ResponseEntity<>(HttpStatus.OK);
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
 }

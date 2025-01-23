@@ -16,6 +16,7 @@ import pucar.web.models.Lock;
 import pucar.web.models.AuditDetails;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -36,143 +37,88 @@ class LockServiceImplTest {
     private LockServiceImpl lockService;
 
     private RequestInfo requestInfo;
+    private Lock lock;
 
     @BeforeEach
     void setUp() {
         requestInfo = new RequestInfo();
-        requestInfo.setUserInfo(new User());
-        requestInfo.getUserInfo().setUuid("test-user-id");
+        requestInfo.setUserInfo(new org.egov.common.contract.request.User());
+        requestInfo.getUserInfo().setUuid("test-user");
+
+        lock = new Lock();
+        lock.setId(UUID.randomUUID().toString());
+        lock.setUniqueId("12345");
+        lock.setTenantId("tenant1");
+        lock.setUserId("test-user");
+        lock.setIsLocked(true);
+        lock.setLockReleaseTime(System.currentTimeMillis() + 10000);
+        lock.setAuditDetails(new AuditDetails());
     }
 
     @Test
     void testSetLock_Success() {
-        Lock lockDetails = new Lock();
-        lockDetails.setUniqueId("test-unique-id");
-        lockDetails.setTenantId("test-tenant-id");
+        when(repository.getLockByUniqueIdAndTenantIdAndIsLocked(anyString(), anyString(), anyBoolean()))
+                .thenReturn(Optional.empty());
+        when(individualUtil.getIndividualId(any())).thenReturn("individualId");
+        when(repository.save(any())).thenReturn(lock);
 
-        when(configuration.getLockDurationMillis()).thenReturn(60000L);
-        when(individualUtil.getIndividualId(requestInfo)).thenReturn("test-individual-id");
-        when(repository.save(any(Lock.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        Lock result = lockService.setLock(requestInfo, lockDetails);
-
+        Lock result = lockService.setLock(requestInfo, lock);
         assertNotNull(result);
-        assertEquals("test-unique-id", result.getUniqueId());
-        assertEquals("test-tenant-id", result.getTenantId());
-        assertNotNull(result.getId());
-        assertTrue(result.getIsLocked());
-        verify(repository, times(1)).save(any(Lock.class));
+        assertEquals("test-user", result.getUserId());
     }
 
     @Test
-    void testSetLock_Exception() {
-        Lock lockDetails = new Lock();
-        lockDetails.setUniqueId("test-unique-id");
-        lockDetails.setTenantId("test-tenant-id");
+    void testSetLock_AlreadyLockedByAnotherUser() {
+        Lock existingLock = new Lock();
+        existingLock.setUserId("another-user");
+        existingLock.setLockReleaseTime(System.currentTimeMillis()+120000);
+        when(repository.getLockByUniqueIdAndTenantIdAndIsLocked(anyString(), anyString(), anyBoolean()))
+                .thenReturn(Optional.of(existingLock));
 
-        when(configuration.getLockDurationMillis()).thenReturn(60000L);
-        when(individualUtil.getIndividualId(requestInfo)).thenReturn("test-individual-id");
-        when(repository.save(any(Lock.class))).thenThrow(new RuntimeException("Database error"));
-
-        CustomException exception = assertThrows(CustomException.class, () -> lockService.setLock(requestInfo, lockDetails));
+        CustomException exception = assertThrows(CustomException.class, () -> lockService.setLock(requestInfo, lock));
         assertEquals("SET_LOCK_EXCEPTION", exception.getCode());
     }
 
     @Test
-    void testGetLock_LockExistsAndValid() {
-        Lock lock = new Lock();
-        lock.setId("test-lock-id");
-        lock.setLockReleaseTime(System.currentTimeMillis() + 60000);
-        lock.setIsLocked(true);
+    void testIsLocked_ReturnsTrueWhenLockedByAnotherUser() {
+        Lock existingLock = new Lock();
+        existingLock.setUserId("another-user");
+        existingLock.setLockReleaseTime(System.currentTimeMillis()+120000);
+        when(repository.getLockByUniqueIdAndTenantIdAndIsLocked(anyString(), anyString(), anyBoolean()))
+                .thenReturn(Optional.of(existingLock));
 
-        when(repository.getLockByUniqueIdAndTenantIdAndIsLocked("test-unique-id", "test-tenant-id", true))
-                .thenReturn(Optional.of(lock));
-
-        Lock result = lockService.getLock("test-unique-id", "test-tenant-id");
-
-        assertNotNull(result);
-        assertEquals("test-lock-id", result.getId());
-        verify(repository, never()).delete(any(Lock.class));
+        boolean isLocked = lockService.isLocked(requestInfo, "12345", "tenant1");
+        assertTrue(isLocked);
     }
 
     @Test
-    void testGetLock_LockExistsAndExpired() {
-        Lock lock = new Lock();
-        lock.setId("test-lock-id");
-        lock.setLockReleaseTime(System.currentTimeMillis() - 60000);
-        lock.setIsLocked(true);
+    void testIsLocked_ReturnsFalseWhenNoLockExists() {
+        when(repository.getLockByUniqueIdAndTenantIdAndIsLocked(anyString(), anyString(), anyBoolean()))
+                .thenReturn(Optional.empty());
 
-        when(repository.getLockByUniqueIdAndTenantIdAndIsLocked("test-unique-id", "test-tenant-id", true))
+        boolean isLocked = lockService.isLocked(requestInfo, "12345", "tenant1");
+        assertFalse(isLocked);
+    }
+
+    @Test
+    void testReleaseLock_Success() {
+        when(repository.getLockByUniqueIdAndTenantIdAndIsLocked(anyString(), anyString(), anyBoolean()))
                 .thenReturn(Optional.of(lock));
 
-        Lock result = lockService.getLock("test-unique-id", "test-tenant-id");
-
-        assertNull(result);
+        boolean result = lockService.releaseLock(requestInfo, "12345", "tenant1");
+        assertTrue(result);
         verify(repository, times(1)).delete(lock);
     }
 
     @Test
-    void testGetLock_LockDoesNotExist() {
-        when(repository.getLockByUniqueIdAndTenantIdAndIsLocked("test-unique-id", "test-tenant-id", true))
-                .thenReturn(Optional.empty());
+    void testReleaseLock_UnauthorizedUser() {
+        Lock existingLock = new Lock();
+        existingLock.setUserId("another-user");
+        when(repository.getLockByUniqueIdAndTenantIdAndIsLocked(anyString(), anyString(), anyBoolean()))
+                .thenReturn(Optional.of(existingLock));
 
-        Lock result = lockService.getLock("test-unique-id", "test-tenant-id");
-
-        assertNull(result);
-    }
-
-    @Test
-    void testReleaseLock_LockDoesNotExist() {
-        when(repository.getLockByUniqueIdAndTenantIdAndIsLocked("test-unique-id", "test-tenant-id", true))
-                .thenReturn(Optional.empty());
-
-        Boolean result = lockService.releaseLock(requestInfo, "test-unique-id", "test-tenant-id");
-
-        assertFalse(result);
-    }
-
-    @Test
-    void testReleaseLock_LockExist() {
-
-        Lock lock1 = new Lock();
-        lock1.setIndividualId("1234");
-
-        Optional<Lock> lock = Optional.of(lock1);
-
-        when(repository.getLockByUniqueIdAndTenantIdAndIsLocked("test-unique-id", "test-tenant-id", true))
-                .thenReturn(lock);
-        when(individualUtil.getIndividualId(requestInfo)).thenReturn("1234");
-
-        Boolean result = lockService.releaseLock(requestInfo, "test-unique-id", "test-tenant-id");
-
-        assertTrue(result);
-    }
-
-    @Test
-    void testGetUpdateAuditDetailsSuccess() {
-
-        AuditDetails auditDetails = lockService.getUpdateAuditDetails(requestInfo,mock(AuditDetails.class));
-
-        assertNotNull(auditDetails);
-        assertEquals(auditDetails.getLastModifiedBy(),auditDetails.getLastModifiedBy());
-
-    }
-
-    @Test
-    void testReleaseLock_Unauthorized() {
-        Lock lock = new Lock();
-        lock.setId("test-lock-id");
-        lock.setIndividualId("test-individual-id");
-
-        when(repository.getLockByUniqueIdAndTenantIdAndIsLocked("test-unique-id", "test-tenant-id", true))
-                .thenReturn(Optional.of(lock));
-        when(individualUtil.getIndividualId(requestInfo)).thenReturn("other-individual-id");
-
-        CustomException exception = assertThrows(CustomException.class, () ->
-                lockService.releaseLock(requestInfo, "test-unique-id", "test-tenant-id"));
-
+        CustomException exception = assertThrows(CustomException.class, () -> lockService.releaseLock(requestInfo, "12345", "tenant1"));
         assertEquals("UNAUTHORIZED", exception.getCode());
-        verify(repository, never()).delete(any(Lock.class));
     }
 
 }

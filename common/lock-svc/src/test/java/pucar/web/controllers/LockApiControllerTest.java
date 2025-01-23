@@ -2,13 +2,20 @@ package pucar.web.controllers;
 
 import org.egov.common.contract.models.RequestInfoWrapper;
 import org.egov.common.contract.request.RequestInfo;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import pucar.service.LockService;
 import pucar.web.models.Lock;
 import pucar.web.models.LockRequest;
@@ -16,6 +23,8 @@ import pucar.web.models.LockResponse;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
 class LockApiControllerTest {
@@ -26,66 +35,46 @@ class LockApiControllerTest {
     @InjectMocks
     private LockApiController lockApiController;
 
-    @Test
-    void testSearchLock() {
-        // Arrange
-        RequestInfoWrapper requestInfoWrapper = new RequestInfoWrapper();
-        RequestInfo requestInfo = new RequestInfo();
-        requestInfoWrapper.setRequestInfo(requestInfo);
-        String uniqueId = "testUniqueId";
-        String tenantId = "testTenantId";
+    private RequestInfoWrapper requestInfoWrapper;
+    private LockRequest lockRequest;
+    private Lock lock;
 
-        Lock lock = new Lock();
-        when(lockService.getLock(uniqueId, tenantId)).thenReturn(lock);
-
-        // Act
-        ResponseEntity<LockResponse> response = lockApiController.searchLock(requestInfoWrapper, uniqueId, tenantId);
-
-        // Assert
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals(lock, response.getBody().getLock());
-        verify(lockService, times(1)).getLock(uniqueId, tenantId);
+    @BeforeEach
+    void setUp() {
+        requestInfoWrapper = new RequestInfoWrapper(new RequestInfo());
+        lock = new Lock();
+        lock.setUniqueId("12345");
+        lock.setTenantId("tenant1");
+        lockRequest = new LockRequest(new RequestInfo(), lock);
     }
 
     @Test
-    void testSetLock() {
-        // Arrange
-        LockRequest lockRequest = new LockRequest();
-        RequestInfo requestInfo = new RequestInfo();
-        Lock lock = new Lock();
-        lockRequest.setRequestInfo(requestInfo);
-        lockRequest.setLock(lock);
+    void testIsLocked_ReturnsTrue() {
+        when(lockService.isLocked(any(), anyString(), anyString())).thenReturn(true);
 
-        Lock savedLock = new Lock();
-        when(lockService.setLock(requestInfo, lock)).thenReturn(savedLock);
+        ResponseEntity<Boolean> response = lockApiController.isLocked(requestInfoWrapper, "12345", "tenant1");
+        assertNotNull(response);
+        assertEquals(200, response.getStatusCodeValue());
+        assertTrue(response.getBody());
+    }
 
-        // Act
+    @Test
+    void testSetLock_Success() {
+        when(lockService.setLock(any(), any())).thenReturn(lock);
+
         ResponseEntity<LockResponse> response = lockApiController.setLock(lockRequest);
-
-        // Assert
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals(savedLock, response.getBody().getLock());
-        verify(lockService, times(1)).setLock(requestInfo, lock);
+        assertNotNull(response);
+        assertEquals(200, response.getStatusCodeValue());
+        assertNotNull(response.getBody().getLock());
     }
 
     @Test
-    void testReleaseLock() {
-        // Arrange
-        RequestInfoWrapper requestInfoWrapper = new RequestInfoWrapper();
-        RequestInfo requestInfo = new RequestInfo();
-        requestInfoWrapper.setRequestInfo(requestInfo);
-        String uniqueId = "testUniqueId";
-        String tenantId = "testTenantId";
+    void testReleaseLock_Success() {
+        when(lockService.releaseLock(any(), anyString(), anyString())).thenReturn(true);
 
-        when(lockService.releaseLock(requestInfo, uniqueId, tenantId)).thenReturn(true);
-
-        // Act
-        ResponseEntity<?> response = lockApiController.releaseLock(requestInfoWrapper, uniqueId, tenantId);
-
-        // Assert
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        verify(lockService, times(1)).releaseLock(requestInfo, uniqueId, tenantId);
+        ResponseEntity<?> response = lockApiController.releaseLock(requestInfoWrapper, "12345", "tenant1");
+        assertNotNull(response);
+        assertEquals(200, response.getStatusCodeValue());
+        assertTrue((Boolean) response.getBody());
     }
 }
