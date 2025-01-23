@@ -132,7 +132,7 @@ public class CaseDiaryApiController {
 
     @RequestMapping(value = "/case/diary/entries/v1/search", method = RequestMethod.POST)
     public ResponseEntity<CaseDiaryEntryListResponse> searchDiaryEntry(@Parameter(in = ParameterIn.DEFAULT, description = "Details for the search of diary entries + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody CaseDiarySearchRequest body) {
-        log.info("api = /case/diary/entries/v1/search, result = SUCCESS");
+        log.info("api = /case/diary/entries/v1/search, result = IN_PROGRESS");
         List<CaseDiaryEntry> caseDiaryEntries = diaryEntryService.searchDiaryEntries(body);
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
         CaseDiaryEntryListResponse caseDiaryEntryListResponse = CaseDiaryEntryListResponse.builder()

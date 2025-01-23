@@ -70,21 +70,12 @@ class ADiaryValidatorTest {
     }
 
     @Test
-    void validateSaveDiaryEntry_NullHearingDate_ThrowsException() {
-        validDiaryEntry.setHearingDate(null);
-
-        CustomException exception = assertThrows(CustomException.class,
-                () -> validator.validateSaveDiaryEntry(validRequest));
-        assertEquals("hearing date is mandatory", exception.getMessage());
-    }
-
-    @Test
     void validateSaveDiaryEntry_NullRequestInfo_ThrowsException() {
         validRequest.setRequestInfo(null);
 
         CustomException exception = assertThrows(CustomException.class,
                 () -> validator.validateSaveDiaryEntry(validRequest));
-        assertEquals("request Info can not be null", exception.getMessage());
+        assertEquals("request Info or user info can not be null", exception.getMessage());
     }
 
     @Test
@@ -93,13 +84,13 @@ class ADiaryValidatorTest {
 
         CustomException exception = assertThrows(CustomException.class,
                 () -> validator.validateSaveDiaryEntry(validRequest));
-        assertEquals("user info can not be null", exception.getMessage());
+        assertEquals("request Info or user info can not be null", exception.getMessage());
     }
 
     // Update Diary Entry Tests
     @Test
     void validateUpdateDiaryEntry_ValidRequest_NoExceptionThrown() {
-        when(diaryEntryRepository.getCaseDiaryEntries(any()))
+        when(diaryEntryRepository.getExistingDiaryEntry(any()))
                 .thenReturn(Collections.singletonList(validDiaryEntry));
 
         assertDoesNotThrow(() -> validator.validateUpdateDiaryEntry(validRequest));
@@ -127,21 +118,12 @@ class ADiaryValidatorTest {
     }
 
     @Test
-    void validateUpdateDiaryEntry_NullHearingDate_ThrowsException() {
-        validDiaryEntry.setHearingDate(null);
-
-        CustomException exception = assertThrows(CustomException.class,
-                () -> validator.validateUpdateDiaryEntry(validRequest));
-        assertEquals("hearing date is mandatory", exception.getMessage());
-    }
-
-    @Test
     void validateUpdateDiaryEntry_NullRequestInfo_ThrowsException() {
         validRequest.setRequestInfo(null);
 
         CustomException exception = assertThrows(CustomException.class,
                 () -> validator.validateUpdateDiaryEntry(validRequest));
-        assertEquals("request info is mandatory", exception.getMessage());
+        assertEquals("request info or user info is mandatory", exception.getMessage());
     }
 
     @Test
@@ -150,7 +132,7 @@ class ADiaryValidatorTest {
 
         CustomException exception = assertThrows(CustomException.class,
                 () -> validator.validateUpdateDiaryEntry(validRequest));
-        assertEquals("User info can not be null", exception.getMessage());
+        assertEquals("request info or user info is mandatory", exception.getMessage());
     }
 
     // Existing Diary Entry Validation Tests
@@ -177,7 +159,7 @@ class ADiaryValidatorTest {
 
         CustomException exception = assertThrows(CustomException.class,
                 () -> validator.validateUpdateDiaryEntry(validRequest));
-        assertEquals("multiple entries found with same id", exception.getMessage());
+        assertEquals("diary entry does not exists", exception.getMessage());
     }
 
     @Test
@@ -194,6 +176,6 @@ class ADiaryValidatorTest {
 
         CustomException exception = assertThrows(CustomException.class,
                 () -> validator.validateUpdateDiaryEntry(validRequest));
-        assertEquals("diary entry does not exits", exception.getMessage());
+        assertEquals("diary entry does not exists", exception.getMessage());
     }
 }

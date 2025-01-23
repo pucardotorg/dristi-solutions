@@ -1,5 +1,6 @@
 package digit.repository.querybuilder;
 
+import digit.web.models.CaseDiaryExistCriteria;
 import digit.web.models.CaseDiarySearchCriteria;
 import digit.web.models.Pagination;
 import jakarta.validation.Valid;
@@ -100,6 +101,33 @@ public class DiaryEntryQueryBuilder {
 
     private static boolean isPaginationInvalid(Pagination pagination) {
         return pagination == null || pagination.getSortBy() == null || pagination.getOrder() == null;
+    }
+
+    public String getExistingDiaryEntry(CaseDiaryExistCriteria caseDiaryExistCriteria, List<Object> preparedStatementValues, List<Integer> preparedStatementTypeValues) {
+
+        StringBuilder query = new StringBuilder(BASE_DIARY_ENTRY_QUERY);
+        query.append(FROM_DIARY_ENTRY_TABLE);
+
+        boolean firstCriteria = true;
+
+        if (caseDiaryExistCriteria != null) {
+
+            if (caseDiaryExistCriteria.getId() != null) {
+                addWhereClause(query, firstCriteria);
+                query.append("dde.id = ?");
+                preparedStatementValues.add(caseDiaryExistCriteria.getId());
+                preparedStatementTypeValues.add(Types.VARCHAR);
+                firstCriteria = false;
+            }
+            if (caseDiaryExistCriteria.getTenantId() != null) {
+                addWhereClause(query,firstCriteria);
+                query.append("dde.tenant_id = ?");
+                preparedStatementValues.add(caseDiaryExistCriteria.getTenantId());
+                preparedStatementTypeValues.add(Types.VARCHAR);
+            }
+        }
+
+        return query.toString();
     }
 
 }

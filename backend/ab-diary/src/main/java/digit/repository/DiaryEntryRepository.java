@@ -3,6 +3,7 @@ package digit.repository;
 import digit.repository.querybuilder.DiaryEntryQueryBuilder;
 import digit.repository.rowmapper.DiaryEntryRowMapper;
 import digit.web.models.CaseDiaryEntry;
+import digit.web.models.CaseDiaryExistCriteria;
 import digit.web.models.CaseDiarySearchRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
@@ -72,6 +73,33 @@ public class DiaryEntryRepository {
         String countQuery = queryBuilder.getTotalCountQuery(baseQuery);
         log.info("Final count query :: {}", countQuery);
         return jdbcTemplate.queryForObject(countQuery, Integer.class, preparedStmtList.toArray());
+    }
+
+    public List<CaseDiaryEntry> getExistingDiaryEntry(CaseDiaryExistCriteria caseDiaryExistCriteria) {
+
+        try {
+
+            List<Object> preparedStmtList = new ArrayList<>();
+            List<Integer> preparedStmtArgList = new ArrayList<>();
+
+            String diaryEntryExistQuery = queryBuilder.getExistingDiaryEntry(caseDiaryExistCriteria, preparedStmtList, preparedStmtArgList);
+
+            log.info("Diary Entry Exist query : {} ", diaryEntryExistQuery);
+
+            if (preparedStmtList.size() != preparedStmtArgList.size()) {
+                log.info("Arg size :: {}, and ArgType size :: {}", preparedStmtList.size(), preparedStmtArgList.size());
+                throw new CustomException(DIARY_ENTRY_QUERY_EXCEPTION, "Arg and ArgType size mismatch ");
+            }
+
+            return jdbcTemplate.query(diaryEntryExistQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), diaryEntryRowMapper);
+
+        } catch (CustomException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error while fetching diary entries");
+            throw new CustomException(DIARY_ENTRY_SEARCH_EXCEPTION, "Error occurred while retrieving data from the database");
+        }
+
     }
 
 }

@@ -1,10 +1,7 @@
 package digit.validators;
 
 import digit.repository.DiaryEntryRepository;
-import digit.web.models.CaseDiaryEntry;
-import digit.web.models.CaseDiaryEntryRequest;
-import digit.web.models.CaseDiarySearchCriteria;
-import digit.web.models.CaseDiarySearchRequest;
+import digit.web.models.*;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
@@ -34,14 +31,8 @@ public class ADiaryValidator {
         if (ObjectUtils.isEmpty(caseDiaryEntry)) {
             throw new CustomException(VALIDATION_EXCEPTION, "case diary entry is mandatory to create an entry");
         }
-        if (caseDiaryEntry.getHearingDate() == null) {
-            throw new CustomException(VALIDATION_EXCEPTION, "hearing date is mandatory");
-        }
-        if (requestInfo == null) {
-            throw new CustomException(VALIDATION_EXCEPTION, "request Info can not be null");
-        }
-        if (requestInfo.getUserInfo() == null) {
-            throw new CustomException(VALIDATION_EXCEPTION, "user info can not be null");
+        if (requestInfo == null || requestInfo.getUserInfo() == null) {
+            throw new CustomException(VALIDATION_EXCEPTION, "request Info or user info can not be null");
         }
     }
 
@@ -57,14 +48,8 @@ public class ADiaryValidator {
         if (caseDiaryEntry.getId() == null) {
             throw new CustomException(VALIDATION_EXCEPTION, "Id is mandatory to update entry");
         }
-        if (caseDiaryEntry.getHearingDate() == null) {
-            throw new CustomException(VALIDATION_EXCEPTION, "hearing date is mandatory");
-        }
-        if (requestInfo == null) {
-            throw new CustomException(VALIDATION_EXCEPTION, "request info is mandatory");
-        }
-        if (requestInfo.getUserInfo() == null) {
-            throw new CustomException(VALIDATION_EXCEPTION, "User info can not be null");
+        if (requestInfo == null || requestInfo.getUserInfo() == null) {
+            throw new CustomException(VALIDATION_EXCEPTION, "request info or user info is mandatory");
         }
 
         validateExistingDiaryEntry(caseDiaryEntry);
@@ -73,27 +58,18 @@ public class ADiaryValidator {
 
     private void validateExistingDiaryEntry(CaseDiaryEntry caseDiaryEntry) {
 
-        CaseDiarySearchCriteria searchCriteria = CaseDiarySearchCriteria.builder().tenantId(caseDiaryEntry.getTenantId())
-                .date(caseDiaryEntry.getEntryDate())
+        CaseDiaryExistCriteria caseDiaryExistCriteria = CaseDiaryExistCriteria.builder()
+                .tenantId(caseDiaryEntry.getTenantId())
+                .id(caseDiaryEntry.getId())
                 .build();
 
-        CaseDiarySearchRequest caseDiarySearchRequest = CaseDiarySearchRequest.builder().criteria(searchCriteria).build();
+        List<CaseDiaryEntry> caseDiaryEntryResponse = diaryEntryRepository.getExistingDiaryEntry(caseDiaryExistCriteria);
 
-        List<CaseDiaryEntry> caseDiaryEntryResponse = diaryEntryRepository.getCaseDiaryEntries(caseDiarySearchRequest);
-
-        if (caseDiaryEntryResponse == null) {
+        if (caseDiaryEntryResponse == null || caseDiaryEntryResponse.isEmpty()) {
             throw new CustomException(VALIDATION_EXCEPTION, "diary entry does not exists");
         }
-
-        List<CaseDiaryEntry> caseDiaryEntries;
-
-        caseDiaryEntries = caseDiaryEntryResponse.stream()
-                .filter(diaryEntry -> diaryEntry.getId().equals(caseDiaryEntry.getId())).toList();
-
-        if (caseDiaryEntries.size() > 1) {
-            throw new CustomException(VALIDATION_EXCEPTION, "multiple entries found with same id");
-        } else if (caseDiaryEntries.isEmpty()) {
-            throw new CustomException(VALIDATION_EXCEPTION, "diary entry does not exits");
+        if (caseDiaryEntryResponse.size() > 1) {
+            throw new CustomException(VALIDATION_EXCEPTION, "multiple diary entries found with id");
         }
 
     }

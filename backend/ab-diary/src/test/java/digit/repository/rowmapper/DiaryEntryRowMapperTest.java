@@ -84,6 +84,41 @@ class DiaryEntryRowMapperTest {
     }
 
     @Test
+    void DataWithEmptyHearingDate_Success() throws SQLException {
+        setupValidResultSet();
+        when(resultSet.getString("hearingDate")).thenReturn(null);
+
+        // Act
+        List<CaseDiaryEntry> result = rowMapper.extractData(resultSet);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(1, result.size());
+
+        CaseDiaryEntry entry = result.get(0);
+        assertEquals(UUID.fromString(TEST_UUID), entry.getId());
+        assertEquals(TENANT_ID, entry.getTenantId());
+        assertEquals(ENTRY_DATE, entry.getEntryDate());
+        assertEquals(CASE_NUMBER, entry.getCaseNumber());
+        assertEquals(JUDGE_ID, entry.getJudgeId());
+        assertEquals(BUSINESS_OF_DAY, entry.getBusinessOfDay());
+        assertEquals(REFERENCE_ID, entry.getReferenceId());
+        assertEquals(REFERENCE_TYPE, entry.getReferenceType());
+        assertNull(entry.getHearingDate());
+
+        AuditDetails auditDetails = entry.getAuditDetails();
+        assertNotNull(auditDetails);
+        assertEquals(CREATED_TIME, auditDetails.getCreatedTime());
+        assertEquals(CREATED_BY, auditDetails.getCreatedBy());
+        assertEquals(MODIFIED_TIME, auditDetails.getLastModifiedTime());
+        assertEquals(MODIFIED_BY, auditDetails.getLastModifiedBy());
+
+        // Verify
+        verify(resultSet, times(2)).next();
+        verifyResultSetReads();
+    }
+
+    @Test
     void extractData_EmptyResultSet_ReturnsEmptyList() throws SQLException, DataAccessException {
         // Arrange
         when(resultSet.next()).thenReturn(false);
@@ -139,7 +174,7 @@ class DiaryEntryRowMapperTest {
         when(resultSet.getString("businessOfDay")).thenReturn(BUSINESS_OF_DAY);
         when(resultSet.getString("referenceId")).thenReturn(REFERENCE_ID);
         when(resultSet.getString("referenceType")).thenReturn(REFERENCE_TYPE);
-        when(resultSet.getLong("hearingDate")).thenReturn(HEARING_DATE);
+        when(resultSet.getString("hearingDate")).thenReturn(HEARING_DATE.toString());
         when(resultSet.getLong("createdTime")).thenReturn(CREATED_TIME);
         when(resultSet.getString("createdBy")).thenReturn(CREATED_BY);
         when(resultSet.getLong("lastModifiedTime")).thenReturn(MODIFIED_TIME);
@@ -155,7 +190,7 @@ class DiaryEntryRowMapperTest {
         verify(resultSet).getString("businessOfDay");
         verify(resultSet).getString("referenceId");
         verify(resultSet).getString("referenceType");
-        verify(resultSet).getLong("hearingDate");
+        verify(resultSet).getString("hearingDate");
         verify(resultSet).getLong("createdTime");
         verify(resultSet).getString("createdBy");
         verify(resultSet).getLong("lastModifiedTime");
