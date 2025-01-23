@@ -8,6 +8,7 @@ import org.egov.common.contract.workflow.ProcessInstanceRequest;
 import org.egov.common.contract.workflow.State;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
+import org.pucar.dristi.enrichment.CaseRegistrationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.CaseRepository;
 import org.pucar.dristi.web.models.*;
@@ -47,11 +48,13 @@ public class PaymentUpdateService {
 
     private CaseService caseService;
 
+    private CaseRegistrationEnrichment caseRegistrationEnrichment;
+
 
 
     @Autowired
     public PaymentUpdateService(WorkflowService workflowService, ObjectMapper mapper, CaseRepository repository,
-                                Producer producer, Configuration configuration, CacheService cacheService, CaseService caseService) {
+                                Producer producer, Configuration configuration, CacheService cacheService, CaseService caseService, CaseRegistrationEnrichment caseRegistrationEnrichment) {
         this.workflowService = workflowService;
         this.mapper = mapper;
         this.repository = repository;
@@ -59,6 +62,7 @@ public class PaymentUpdateService {
         this.configuration = configuration;
         this.cacheService = cacheService;
         this.caseService = caseService;
+        this.caseRegistrationEnrichment = caseRegistrationEnrichment;
     }
 
     public void process(Map<String, Object> record) {
@@ -114,6 +118,7 @@ public class PaymentUpdateService {
 
             CourtCase courtCase = updateRequest.getCriteria().get(0).getResponseList().get(0);
             courtCase.setStatus(state.getState());
+            caseRegistrationEnrichment.enrichCaseRegistrationFillingDate(courtCase);
             AuditDetails auditDetails = courtCase.getAuditdetails();
             auditDetails.setLastModifiedBy(paymentDetail.getAuditDetails().getLastModifiedBy());
             auditDetails.setLastModifiedTime(paymentDetail.getAuditDetails().getLastModifiedTime());

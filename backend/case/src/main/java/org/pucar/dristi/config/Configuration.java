@@ -230,6 +230,9 @@ public class Configuration {
 	@Value("${egov.sms.notification.case.admitted.template.id}")
 	private String smsNotificationCaseAdmittedTemplateId;
 
+	@Value("${egov.sms.notification.new.user.join.template.id}")
+	private String smsNotificationNewUserJoinTemplateId;
+
 	@Value("${notification.sms.enabled}")
 	private Boolean isSMSEnabled;
 

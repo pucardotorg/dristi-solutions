@@ -81,11 +81,12 @@ export const validateDateForDelayApplication = ({
   history,
   caseId,
   setShowConfirmDcaSkipModal,
-  showConfirmDcaSkipModal,
   shouldShowConfirmDcaModal,
   setShouldShowConfirmDcaModal,
   prevIsDcaSkipped,
   setPrevIsDcaSkipped,
+  isDcaPageRefreshed,
+  setIsDcaPageRefreshed,
 }) => {
   if (selected === "delayApplications") {
     if (
@@ -102,6 +103,11 @@ export const validateDateForDelayApplication = ({
       setShowConfirmDcaSkipModal(true);
       setShouldShowConfirmDcaModal(false);
       setPrevIsDcaSkipped("YES");
+    } else if (prevIsDcaSkipped === "NO" && !shouldShowConfirmDcaModal && formData?.isDcaSkippedInEFiling?.code === "YES" && isDcaPageRefreshed) {
+      setShowConfirmDcaSkipModal(true);
+      setShouldShowConfirmDcaModal(false);
+      setPrevIsDcaSkipped("YES");
+      setIsDcaPageRefreshed(false);
     }
     if (formData?.isDcaSkippedInEFiling?.code === "NO") {
       setShowConfirmDcaSkipModal(false);
@@ -1629,9 +1635,9 @@ export const updateCaseDetails = async ({
         caseId: caseDetails?.id,
         representing: representative?.advocateId
           ? [litigants[0]].map((item, index) => ({
-              ...(caseDetails.representatives?.[idx]?.representing?.[index] ? caseDetails.representatives?.[idx]?.representing?.[index] : {}),
-              ...item,
-            }))
+            ...(caseDetails.representatives?.[idx]?.representing?.[index] ? caseDetails.representatives?.[idx]?.representing?.[index] : {}),
+            ...item,
+          }))
           : [],
       }));
     data.litigants = [...litigants].map((item, index) => ({
@@ -1681,7 +1687,7 @@ export const updateCaseDetails = async ({
                     documentType,
                     fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
                     documentName: uploadedData.filename || document?.documentName,
-                    fileName: "Affidavit documents",
+                    fileName: t("AFFIDAVIT_UNDER_225"),
                   };
                   docList.push(doc);
                   return doc;
@@ -2311,7 +2317,6 @@ export const updateCaseDetails = async ({
         data?.additionalDetails?.respondentDetails?.formdata?.[0]?.data || caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data
       )}`
     : caseDetails?.caseTitle;
-
   setErrorCaseDetails({
     ...caseDetails,
     documents: tempDocList,
