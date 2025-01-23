@@ -185,7 +185,6 @@ public class CaseService {
             workflowService.updateWorkflowStatus(caseRequest);
 
             if (CASE_ADMIT_STATUS.equals(caseRequest.getCases().getStatus())) {
-                enrichmentUtil.enrichAccessCode(caseRequest);
                 enrichmentUtil.enrichCourtCaseNumber(caseRequest);
                 caseRequest.getCases().setCaseType(ST);
             }
