@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.egov.common.contract.models.AuditDetails;
-import org.egov.common.contract.models.Document;
+import org.egov.common.contract.models.Workflow;
 import org.springframework.validation.annotation.Validated;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
@@ -59,7 +59,11 @@ public class CaseDiary {
 
     @JsonProperty("documents")
     @Valid
-    private List<Document> documents = null;
+    private List<CaseDiaryDocument> documents = null;
+
+    @JsonProperty("caseDiaryEntries")
+
+    private List<CaseDiaryEntry> caseDiaryEntries = null;
 
     @JsonProperty("additionalDetails")
 
@@ -70,8 +74,18 @@ public class CaseDiary {
     @Valid
     private AuditDetails auditDetails = null;
 
+    @JsonProperty("date")
+    private String date = null;
 
-    public CaseDiary addDocumentsItem(Document documentsItem) {
+    @JsonProperty("workflow")
+    @Valid
+    private Workflow workflow = null;
+
+    @JsonProperty("status")
+    private String status = null;
+
+
+    public CaseDiary addDocumentsItem(CaseDiaryDocument documentsItem) {
         if (this.documents == null) {
             this.documents = new ArrayList<>();
         }
