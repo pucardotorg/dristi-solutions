@@ -2315,7 +2315,6 @@ export const updateCaseDetails = async ({
       ...(caseComplaintDocument && { signedCaseDocument: caseComplaintDocument?.fileStore }),
     };
   }
-  debugger;
   const complainantName = getComplainantName(
     data?.additionalDetails?.complainantDetails?.formdata || caseDetails?.additionalDetails?.complainantDetails?.formdata,
     t
