@@ -1,22 +1,7 @@
 package org.pucar.dristi.validators;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import static org.pucar.dristi.config.ServiceConstants.DELETE_DRAFT_WORKFLOW_ACTION;
-import static org.pucar.dristi.config.ServiceConstants.INDIVIDUAL_NOT_FOUND;
-import static org.pucar.dristi.config.ServiceConstants.INVALID_ADVOCATE_DETAILS;
-import static org.pucar.dristi.config.ServiceConstants.INVALID_ADVOCATE_ID;
-import static org.pucar.dristi.config.ServiceConstants.INVALID_COMPLAINANT_DETAILS;
-import static org.pucar.dristi.config.ServiceConstants.INVALID_DOCUMENT_DETAILS;
-import static org.pucar.dristi.config.ServiceConstants.INVALID_FILESTORE_ID;
-import static org.pucar.dristi.config.ServiceConstants.INVALID_LINKEDCASE_ID;
-import static org.pucar.dristi.config.ServiceConstants.MDMS_DATA_NOT_FOUND;
-import static org.pucar.dristi.config.ServiceConstants.SAVE_DRAFT_CASE_WORKFLOW_ACTION;
-import static org.pucar.dristi.config.ServiceConstants.SUBMIT_CASE_WORKFLOW_ACTION;
-import static org.pucar.dristi.config.ServiceConstants.VALIDATION_ERR;
-import static org.pucar.dristi.config.ServiceConstants.SUBMIT_CASE_ADVOCATE_WORKFLOW_ACTION;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import net.minidev.json.JSONArray;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
@@ -24,18 +9,18 @@ import org.pucar.dristi.repository.CaseRepository;
 import org.pucar.dristi.service.IndividualService;
 import org.pucar.dristi.util.AdvocateUtil;
 import org.pucar.dristi.util.FileStoreUtil;
+import org.pucar.dristi.util.LockUtil;
 import org.pucar.dristi.util.MdmsUtil;
-import org.pucar.dristi.web.models.AdvocateMapping;
-import org.pucar.dristi.web.models.CaseCriteria;
-import org.pucar.dristi.web.models.CaseRequest;
-import org.pucar.dristi.web.models.CourtCase;
-import org.pucar.dristi.web.models.JoinCaseRequest;
-import org.pucar.dristi.web.models.Party;
+import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
-import net.minidev.json.JSONArray;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import static org.pucar.dristi.config.ServiceConstants.*;
 
 
 @Component
@@ -253,5 +238,4 @@ public class CaseRegistrationValidator {
 
 		return masterList;
 	}
-
 }
