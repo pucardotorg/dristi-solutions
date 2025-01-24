@@ -38,18 +38,21 @@ public class CaseRegistrationValidator {
 	private AdvocateUtil advocateUtil;
 
 	private Configuration config;
-	
+
+	private final LockUtil lockUtil;
+
 	@Autowired
 	public CaseRegistrationValidator(IndividualService indService, CaseRepository caseRepo,
-			 MdmsUtil mdmsUtil, FileStoreUtil fileStoreUtil, AdvocateUtil advocateUtil,
-			Configuration config) {
+									 MdmsUtil mdmsUtil, FileStoreUtil fileStoreUtil, AdvocateUtil advocateUtil,
+									 Configuration config, LockUtil lockUtil) {
 		this.individualService = indService;
 		this.repository = caseRepo;
 		this.mdmsUtil = mdmsUtil;
 		this.fileStoreUtil = fileStoreUtil;
 		this.advocateUtil = advocateUtil;
 		this.config = config;
-		
+
+		this.lockUtil = lockUtil;
 	}
 
 	/*
@@ -66,7 +69,7 @@ public class CaseRegistrationValidator {
 			throw new CustomException(VALIDATION_ERR, "statute and sections is mandatory for creating case");
 		if (!(SAVE_DRAFT_CASE_WORKFLOW_ACTION.equalsIgnoreCase(courtCase.getWorkflow().getAction())
 				|| DELETE_DRAFT_WORKFLOW_ACTION.equalsIgnoreCase(courtCase.getWorkflow().getAction())) && ObjectUtils.isEmpty(courtCase.getLitigants())) {
-				throw new CustomException(VALIDATION_ERR, "litigants is mandatory for creating case");
+			throw new CustomException(VALIDATION_ERR, "litigants is mandatory for creating case");
 		}
 		if (ObjectUtils.isEmpty(caseRequest.getRequestInfo().getUserInfo())) {
 			throw new CustomException(VALIDATION_ERR, "user info is mandatory for creating case");
@@ -74,30 +77,48 @@ public class CaseRegistrationValidator {
 	}
 
 	public boolean validateUpdateRequest(CaseRequest caseRequest, List<CourtCase> existingCourtCaseList) {
-		if(existingCourtCaseList.isEmpty()){
+		if (existingCourtCaseList.isEmpty()) {
 			return false;
 		}
 		validateCaseRegistration(caseRequest);
+		checkForLock(caseRequest);
 		CourtCase courtCase = caseRequest.getCases();
 		RequestInfo requestInfo = caseRequest.getRequestInfo();
 
 		if (!(SUBMIT_CASE_WORKFLOW_ACTION.equalsIgnoreCase(courtCase.getWorkflow().getAction())
 				|| SAVE_DRAFT_CASE_WORKFLOW_ACTION.equalsIgnoreCase(courtCase.getWorkflow().getAction()) || SUBMIT_CASE_ADVOCATE_WORKFLOW_ACTION.equalsIgnoreCase(courtCase.getWorkflow().getAction())
 				|| DELETE_DRAFT_WORKFLOW_ACTION.equalsIgnoreCase(courtCase.getWorkflow().getAction())) && ObjectUtils.isEmpty(courtCase.getFilingDate())) {
-				throw new CustomException(VALIDATION_ERR, "filingDate is mandatory for updating case");
+			throw new CustomException(VALIDATION_ERR, "filingDate is mandatory for updating case");
 		}
 		//For not allowing certain fields to update
 		setUnEditableOnUpdate(existingCourtCaseList.get(0), caseRequest);
 
-		validateMDMSData(requestInfo,courtCase);
+		validateMDMSData(requestInfo, courtCase);
 		validateDocuments(courtCase);
-		validateRepresentative(requestInfo,courtCase);
-		validateLinkedCase(courtCase,existingCourtCaseList);
+		validateRepresentative(requestInfo, courtCase);
+		validateLinkedCase(courtCase, existingCourtCaseList);
 
 		return true;
 	}
 
-	private void validateMDMSData(RequestInfo requestInfo, CourtCase courtCase){
+	private void checkForLock(CaseRequest caseRequest) {
+		String uniqueId = caseRequest.getCases().getId().toString();
+		String tenantId = caseRequest.getCases().getTenantId();
+
+		// check the lock for case if there is lock then throw an exception
+		boolean isLocked ;
+		try {
+			isLocked = lockUtil.isLockPresent(caseRequest.getRequestInfo(), uniqueId, tenantId);
+		} catch (JsonProcessingException e) {
+			throw new CustomException("JSON_PROCESSING_EXCEPTION", "Exception Occurred while processing json");
+		}
+		if (isLocked) {
+			throw new CustomException("CASE_LOCKED_EXCEPTION", "Case is locked please try after sometime");
+		}
+
+	}
+
+	private void validateMDMSData(RequestInfo requestInfo, CourtCase courtCase) {
 		Map<String, Map<String, JSONArray>> mdmsData = mdmsUtil.fetchMdmsData(requestInfo, courtCase.getTenantId(),
 				config.getCaseModule(), createMasterDetails());
 
@@ -114,7 +135,7 @@ public class CaseRegistrationValidator {
 		}
 	}
 
-	private void validateDocuments(CourtCase courtCase){
+	private void validateDocuments(CourtCase courtCase) {
 		if (courtCase.getDocuments() != null && !courtCase.getDocuments().isEmpty()) {
 			courtCase.getDocuments().forEach(document -> {
 				if (document.getFileStore() != null) {
@@ -126,7 +147,7 @@ public class CaseRegistrationValidator {
 		}
 	}
 
-	private void validateRepresentative(RequestInfo requestInfo, CourtCase courtCase){
+	private void validateRepresentative(RequestInfo requestInfo, CourtCase courtCase) {
 		if (courtCase.getRepresentatives() != null && !courtCase.getRepresentatives().isEmpty()) {
 			courtCase.getRepresentatives().forEach(rep -> {
 				if (rep.getAdvocateId() != null) {
@@ -138,7 +159,7 @@ public class CaseRegistrationValidator {
 		}
 	}
 
-	private void validateLinkedCase(CourtCase courtCase, List<CourtCase> existingApplications ){
+	private void validateLinkedCase(CourtCase courtCase, List<CourtCase> existingApplications) {
 		if (courtCase.getLinkedCases() != null && !courtCase.getLinkedCases().isEmpty()) {
 			boolean isValidLinkedCase = courtCase.getLinkedCases().stream().allMatch(linkedCase -> existingApplications
 					.stream()
@@ -203,8 +224,8 @@ public class CaseRegistrationValidator {
 			throw new CustomException(INVALID_ADVOCATE_ID, INVALID_ADVOCATE_DETAILS);
 		}
 		if (representative.getDocuments() != null && !representative.getDocuments().isEmpty()) { // validation for
-																									// documents for
-																									// representative
+			// documents for
+			// representative
 			representative.getDocuments().forEach(document -> {
 				if (document.getFileStore() != null) {
 					if (!fileStoreUtil.doesFileExist(representative.getTenantId(), document.getFileStore()))
@@ -219,12 +240,12 @@ public class CaseRegistrationValidator {
 
 	public void validateEditCase(CaseRequest caseRequest) throws CustomException {
 
-		if(ObjectUtils.isEmpty(caseRequest.getCases().getId())){
+		if (ObjectUtils.isEmpty(caseRequest.getCases().getId())) {
 			throw new CustomException(VALIDATION_ERR, "case Id cannot be empty");
 		}
 
 		if (ObjectUtils.isEmpty(caseRequest.getCases().getCaseTitle()) || ObjectUtils.isEmpty(caseRequest.getCases().getAdditionalDetails())
-		   || caseRequest.getCases().getCaseTitle().trim().isEmpty()) {
+				|| caseRequest.getCases().getCaseTitle().trim().isEmpty()) {
 			throw new CustomException(VALIDATION_ERR, "caseTitle or additionalDetails cannot be empty");
 		}
 	}
@@ -238,4 +259,5 @@ public class CaseRegistrationValidator {
 
 		return masterList;
 	}
+
 }
