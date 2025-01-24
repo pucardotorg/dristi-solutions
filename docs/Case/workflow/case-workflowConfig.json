@@ -102,6 +102,13 @@
                                 "SYSTEM",
                                 "SYSTEM_ADMIN"
                             ]
+                        },
+                        {
+                            "action": "EDIT_CASE",
+                            "nextState": "DRAFT_IN_PROGRESS",
+                            "roles": [
+                                "CASE_CREATOR"
+                            ]
                         }
                     ]
                 },
@@ -121,6 +128,13 @@
                                 "ADVOCATE_ROLE",
                                 "SYSTEM",
                                 "SYSTEM_ADMIN"
+                            ]
+                        },
+                        {
+                            "action": "EDIT_CASE",
+                            "nextState": "DRAFT_IN_PROGRESS",
+                            "roles": [
+                                "CASE_CREATOR"
                             ]
                         }
                     ]
@@ -237,6 +251,13 @@
                                 "SYSTEM",
                                 "SYSTEM_ADMIN"
                             ]
+                        },
+                        {
+                            "action": "EDIT_CASE",
+                            "nextState": "CASE_REASSIGNED",
+                            "roles": [
+                                "CASE_CREATOR"
+                            ]
                         }
                     ]
                 },
@@ -263,7 +284,14 @@
                             "nextState": "UNDER_SCRUTINY",
                             "roles": [
                                 "SYSTEM",
-                                "SYSTEM_ADMIN",
+                                "SYSTEM_ADMIN"
+                            ]
+                        },
+                        {
+                            "action": "EDIT_CASE",
+                            "nextState": "CASE_REASSIGNED",
+                            "roles": [
+                                "CASE_CREATOR"
                             ]
                         }
                     ]
