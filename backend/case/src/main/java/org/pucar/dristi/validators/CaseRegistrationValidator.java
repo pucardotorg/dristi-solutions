@@ -187,26 +187,25 @@ public class CaseRegistrationValidator {
 
 	public boolean canLitigantJoinCase(JoinCaseRequest joinCaseRequest) {
 		RequestInfo requestInfo = joinCaseRequest.getRequestInfo();
-		List<Party> litigants = joinCaseRequest.getLitigant();
+		Party litigant = joinCaseRequest.getLitigant();
 
-		for (Party litigant:litigants){
-			if (litigant.getIndividualId() != null) { // validation for IndividualId for litigant
-				if (!individualService.searchIndividual(requestInfo, litigant.getIndividualId()))
-					throw new CustomException(INDIVIDUAL_NOT_FOUND, INVALID_COMPLAINANT_DETAILS);
-			} else {
+		if (litigant.getIndividualId() != null) { // validation for IndividualId for litigant
+			if (!individualService.searchIndividual(requestInfo, litigant.getIndividualId())) {
 				throw new CustomException(INDIVIDUAL_NOT_FOUND, INVALID_COMPLAINANT_DETAILS);
 			}
+		} else {
+			throw new CustomException(INDIVIDUAL_NOT_FOUND, INVALID_COMPLAINANT_DETAILS);
+		}
 
-			if (litigant.getDocuments() != null && !litigant.getDocuments().isEmpty()) {// validation for documents for
-				// litigant
-				litigant.getDocuments().forEach(document -> {
-					if (document.getFileStore() != null) {
-						if (!fileStoreUtil.doesFileExist(litigant.getTenantId(), document.getFileStore()))
-							throw new CustomException(INVALID_FILESTORE_ID, INVALID_DOCUMENT_DETAILS);
-					} else
+		if (litigant.getDocuments() != null && !litigant.getDocuments().isEmpty()) {// validation for documents for
+			// litigant
+			litigant.getDocuments().forEach(document -> {
+				if (document.getFileStore() != null) {
+					if (!fileStoreUtil.doesFileExist(litigant.getTenantId(), document.getFileStore()))
 						throw new CustomException(INVALID_FILESTORE_ID, INVALID_DOCUMENT_DETAILS);
-				});
-			}
+				} else
+					throw new CustomException(INVALID_FILESTORE_ID, INVALID_DOCUMENT_DETAILS);
+			});
 		}
 		return true;
 
