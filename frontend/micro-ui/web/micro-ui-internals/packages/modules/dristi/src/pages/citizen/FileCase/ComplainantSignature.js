@@ -143,9 +143,9 @@ const complainantWorkflowACTION = {
 
 const complainantWorkflowState = {
   PENDING_ESIGN: "PENDING_E-SIGN",
-  PENDING_ESIGN_SCRUTINTY: "PENDING_RE_E-SIGN",
+  PENDING_ESIGN_SCRUTINY: "PENDING_RE_E-SIGN",
   UPLOAD_SIGN_DOC: "PENDING_SIGN",
-  UPLOAD_SIGN_DOC_SCRUTINTY: "PENDING_RE_SIGN",
+  UPLOAD_SIGN_DOC_SCRUTINY: "PENDING_RE_SIGN",
 };
 
 const stateSla = {
@@ -289,13 +289,13 @@ const ComplainantSignature = ({ path }) => {
 
   const state = useMemo(() => caseDetails?.status, [caseDetails]);
   const isSelectedEsign = useMemo(() => {
-    const esignStates = [complainantWorkflowState.PENDING_ESIGN, complainantWorkflowState.PENDING_ESIGN_SCRUTINTY];
+    const esignStates = [complainantWorkflowState.PENDING_ESIGN, complainantWorkflowState.PENDING_ESIGN_SCRUTINY];
 
     return esignStates.includes(state);
   }, [state]);
 
   const isSelectedUploadDoc = useMemo(
-    () => [complainantWorkflowState.UPLOAD_SIGN_DOC, complainantWorkflowState.UPLOAD_SIGN_DOC_SCRUTINTY].includes(state),
+    () => [complainantWorkflowState.UPLOAD_SIGN_DOC, complainantWorkflowState.UPLOAD_SIGN_DOC_SCRUTINY].includes(state),
     [state]
   );
 
@@ -537,12 +537,13 @@ const ComplainantSignature = ({ path }) => {
               });
             } else {
               const advocates = getOtherAdvocatesForClosing();
-              advocates?.map(async (advocate) => {
-                await closePendingTask({
+              const promises = advocates?.map(async (advocate) => {
+                return closePendingTask({
                   status: state,
                   assignee: advocate?.additionalDetails?.uuid,
                 });
               });
+              await Promise.all(promises);
             }
           }
           if (res?.cases?.[0]?.status === "PENDING_PAYMENT") {
@@ -658,8 +659,8 @@ const ComplainantSignature = ({ path }) => {
         <div style={styles.detailsSection}>
           <div style={styles.details}>
             <div>{t("COMPLAINT_SIGN")}:</div>
-            {litigants?.map((litigant) => (
-              <div style={{ ...styles.litigantDetails, marginTop: "5px", fontSize: "15px" }}>
+            {litigants?.map((litigant, index) => (
+              <div key={index} style={{ ...styles.litigantDetails, marginTop: "5px", fontSize: "15px" }}>
                 {litigant?.additionalDetails?.fullName}
                 {litigant?.hasSigned || (!isAdvocateFilingCase && isEsignSuccess) ? (
                   <span style={{ ...styles.signedLabel, alignItems: "right" }}>{t("SIGNED")}</span>
@@ -669,7 +670,7 @@ const ComplainantSignature = ({ path }) => {
               </div>
             ))}
           </div>
-          {caseDetails?.representatives !== 0 && (
+          {Array.isArray(caseDetails?.representatives) && caseDetails?.representatives?.length > 0 && (
             <div style={{ ...styles.details, marginTop: "15px" }}>
               <div>{t("ADVOCATE_SIGN")}:</div>
               {litigants?.map(
