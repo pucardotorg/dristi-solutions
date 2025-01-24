@@ -208,7 +208,6 @@ public class CaseRegistrationValidator {
 				});
 			}
 		}
-
 		return true;
 
 	}
