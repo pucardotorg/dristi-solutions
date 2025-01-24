@@ -1821,7 +1821,13 @@ function EFilingCases({ path }) {
             throw new Error("FILE_STORE_ID_MISSING");
           }
         }
-        const newCaseDetails = { ...caseDetails, caseTitle: newCaseName || caseDetails.caseTitle };
+        const newCaseDetails = {
+          ...caseDetails,
+          additionalDetails: {
+            ...caseDetails.additionalDetails,
+            modifiedCaseTitle: newCaseName || caseDetails?.additionalDetails?.modifiedCaseTitle,
+          },
+        };
         await updateCaseDetails({
           t,
           isCompleted: true,
@@ -1878,8 +1884,13 @@ function EFilingCases({ path }) {
 
   const onSaveDraft = (props) => {
     setParmas({ ...params, [pageConfig.key]: formdata });
-    const newCaseDetails = { ...caseDetails, caseTitle: newCaseName || caseDetails.caseTitle };
-
+    const newCaseDetails = {
+      ...caseDetails,
+      additionalDetails: {
+        ...caseDetails.additionalDetails,
+        modifiedCaseTitle: newCaseName || caseDetails?.additionalDetails?.modifiedCaseTitle,
+      },
+    };
     updateCaseDetails({
       t,
       caseDetails: newCaseDetails,
@@ -1953,7 +1964,13 @@ function EFilingCases({ path }) {
             JSON.parse(JSON.stringify(formdata.filter((data) => data.isenabled)))
           )
         : false;
-    const newCaseDetails = { ...caseDetails, caseTitle: newCaseName || caseDetails.caseTitle };
+    const newCaseDetails = {
+      ...caseDetails,
+      additionalDetails: {
+        ...caseDetails.additionalDetails,
+        modifiedCaseTitle: newCaseName || caseDetails?.additionalDetails?.modifiedCaseTitle,
+      },
+    };
     updateCaseDetails({
       t,
       isCompleted: isDrafted,
@@ -2110,8 +2127,9 @@ function EFilingCases({ path }) {
             },
           }),
           caseTitle:
-            `${getComplainantName(caseDetails?.additionalDetails?.complainantDetails?.formdata?.[0]?.data || {})} vs ${getRespondentName(
-              caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data || {}
+            `${getComplainantName(caseDetails?.additionalDetails?.complainantDetails?.formdata || {}, t)} vs ${getRespondentName(
+              caseDetails?.additionalDetails?.respondentDetails?.formdata || {},
+              t
             )}` || caseDetails?.caseTitle,
           courtId: "KLKM52" || data?.court?.code,
           workflow: {
@@ -2364,7 +2382,7 @@ function EFilingCases({ path }) {
                   title={item.title}
                   handlePageChange={handlePageChange}
                   handleAccordionClick={() => {
-                    handleAccordionClick(index);
+                    handleAccordionClick(isFilingParty ? index : accordion.length - 1);
                   }}
                   key={index}
                   children={item.children}
@@ -2388,7 +2406,7 @@ function EFilingCases({ path }) {
               title={item.title}
               handlePageChange={handlePageChange}
               handleAccordionClick={() => {
-                handleAccordionClick(index);
+                handleAccordionClick(isFilingParty ? index : accordion.length - 1);
               }}
               key={index}
               children={item.children}
@@ -2588,7 +2606,7 @@ function EFilingCases({ path }) {
               headerBarEnd={<CloseBtn onClick={() => setShowConfirmOptionalModal(false)} />}
               actionCancelLabel={t("SKIP_AND_CONTINUE")}
               actionCancelOnSubmit={handleSkip}
-              actionSaveLabel={t("FILL_NOW")}
+              actionSaveLabel={isFilingParty && t("FILL_NOW")}
               children={optionalFieldsRemainingText(optionalFieldsLeftTotalCount)}
               actionSaveOnSubmit={() => takeUserToRemainingOptionalFieldsPage()}
             ></Modal>
