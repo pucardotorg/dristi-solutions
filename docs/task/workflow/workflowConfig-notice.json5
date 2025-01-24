@@ -2,56 +2,43 @@
   "BusinessServices": [
     {
       "tenantId": "kl",
-      "business": "hearing",
-      "businessService": "hearing-default",
-      "businessServiceSla": null,
+      "business": "task",
+      "businessService": "task-notice",
+      "businessServiceSla": 4320000000,
       "states": [
         {
           "sla": null,
           "state": null,
           "applicationStatus": null,
-          "docUploadRequired": false,
+          "docUploadRequired": true,
           "isStartState": true,
           "isTerminateState": false,
           "isStateUpdatable": true,
           "actions": [
             {
               "action": "CREATE",
-              "nextState": "SCHEDULED",
+              "nextState": "PENDING_PAYMENT",
               "roles": [
-                "HEARING_CREATOR"
+                "TASK_CREATOR"
               ]
             }
           ]
         },
         {
-          "sla": null,
-          "state": "SCHEDULED",
+          "sla": 172800000,
+          "state": "PENDING_PAYMENT",
           "applicationStatus": "INWORKFLOW",
-          "docUploadRequired": false,
+          "docUploadRequired": true,
           "isStartState": false,
           "isTerminateState": false,
           "isStateUpdatable": true,
           "actions": [
             {
-              "action": "RESCHEDULE",
-              "nextState": "OPT_OUT",
+              "action": "MAKE_PAYMENT",
+              "nextState": "ISSUE_NOTICE",
               "roles": [
-                "HEARING_EDITOR"
-              ]
-            },
-            {
-              "action": "BULK_RESCHEDULE",
-              "nextState": "SCHEDULED",
-              "roles": [
-                "HEARING_SCHEDULER"
-              ]
-            },
-            {
-              "action": "START",
-              "nextState": "IN_PROGRESS",
-              "roles": [
-                "HEARING_EDITOR"
+                "SYSTEM",
+                "SYSTEM_ADMIN"
               ]
             },
             {
@@ -65,8 +52,8 @@
           ]
         },
         {
-          "sla": null,
-          "state": "OPT_OUT",
+          "sla": 172800000,
+          "state": "ISSUE_NOTICE",
           "applicationStatus": "INWORKFLOW",
           "docUploadRequired": false,
           "isStartState": false,
@@ -74,10 +61,47 @@
           "isStateUpdatable": true,
           "actions": [
             {
-              "action": "SET_DATE",
-              "nextState": "SCHEDULED",
+              "action": "SEND",
+              "nextState": "NOTICE_SENT",
               "roles": [
-                "HEARING_EDITOR",
+                "TASK_EDITOR",
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            },
+            {
+              "action": "ABANDON",
+              "nextState": "ABATED",
+              "roles": [
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            }
+          ]
+        },
+        {
+          "sla": 3888000000,
+          "state": "NOTICE_SENT",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "action": "SERVED",
+              "nextState": "DELIVERED",
+              "roles": [
+                "TASK_EDITOR",
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            },
+            {
+              "action": "NOT_SERVED",
+              "nextState": "RE_ISSUE",
+              "roles": [
+                "TASK_EDITOR",
                 "SYSTEM",
                 "SYSTEM_ADMIN",
                 "AUTO_ESCALATE"
@@ -95,7 +119,7 @@
         },
         {
           "sla": 86400000,
-          "state": "IN_PROGRESS",
+          "state": "RE_ISSUE",
           "applicationStatus": "INWORKFLOW",
           "docUploadRequired": false,
           "isStartState": false,
@@ -103,23 +127,11 @@
           "isStateUpdatable": true,
           "actions": [
             {
-              "action": "CLOSE",
-              "nextState": "HEARD",
+              "action": "NEW_NOTICE",
+              "nextState": "UNDELIVERED",
               "roles": [
-                "HEARING_EDITOR"
-              ]
-            },
-            {
-              "action": "ADJOURN",
-              "nextState": "ADJOURNED",
-              "roles": [
-                "HEARING_EDITOR"
-              ]
-            },
-            {
-              "action": "ABANDON",
-              "nextState": "ABATED",
-              "roles": [
+                "TASK_CREATOR",
+                "TASK_EDITOR",
                 "SYSTEM",
                 "SYSTEM_ADMIN"
               ]
@@ -128,7 +140,7 @@
         },
         {
           "sla": null,
-          "state": "HEARD",
+          "state": "DELIVERED",
           "applicationStatus": "ACTIVE",
           "isStateUpdatable": false,
           "docUploadRequired": false,
@@ -137,8 +149,8 @@
         },
         {
           "sla": null,
-          "state": "ADJOURNED",
-          "applicationStatus": "ACTIVE",
+          "state": "UNDELIVERED",
+          "applicationStatus": "INACTIVE",
           "isStateUpdatable": false,
           "docUploadRequired": false,
           "isStartState": false,

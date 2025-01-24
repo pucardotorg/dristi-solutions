@@ -37,9 +37,7 @@
               "action": "MAKE_PAYMENT",
               "nextState": "ISSUE_WARRANT",
               "roles": [
-                "TASK_CREATOR",
                 "SYSTEM",
-                "CITIZEN",
                 "SYSTEM_ADMIN"
               ]
             },
