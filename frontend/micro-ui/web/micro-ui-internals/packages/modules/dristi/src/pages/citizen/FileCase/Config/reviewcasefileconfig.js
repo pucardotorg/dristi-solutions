@@ -507,6 +507,11 @@ export const reviewCaseFileFormConfig = [
                 },
                 {
                   type: "text",
+                  label: "CS_PRAYER",
+                  value: "prayer.text",
+                },
+                {
+                  type: "text",
                   label: "CS_ADDITIONAL_DETAILS",
                   value: "additionalDetails.text",
                 },
