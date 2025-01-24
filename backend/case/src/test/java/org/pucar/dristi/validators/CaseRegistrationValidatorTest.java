@@ -86,7 +86,7 @@ public class CaseRegistrationValidatorTest {
         representative = new AdvocateMapping();
         document = new Document();
         joinCaseRequest = new JoinCaseRequest();
-        joinCaseRequest.setLitigant(litigant);
+        joinCaseRequest.setLitigant(Collections.singletonList(litigant));
         joinCaseRequest.setRepresentative(representative);
         joinCaseRequest.setRequestInfo(requestInfo);
     }

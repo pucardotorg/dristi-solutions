@@ -577,6 +577,7 @@ public class CaseService {
 
 
     private void verifyAndEnrichLitigant(JoinCaseRequest joinCaseRequest, CourtCase courtCase,CourtCase caseObj, AuditDetails auditDetails) {
+
         log.info("enriching litigants");
         enrichLitigantsOnCreateAndUpdate(caseObj, auditDetails);
 
@@ -587,14 +588,14 @@ public class CaseService {
 
         if (courtCase.getLitigants() != null) {
             List<Party> litigants = courtCase.getLitigants();
-            litigants.add(joinCaseRequest.getLitigant());
+            litigants.addAll(joinCaseRequest.getLitigant());
         } else {
-            courtCase.setLitigants(Collections.singletonList(joinCaseRequest.getLitigant()));
+            courtCase.setLitigants(joinCaseRequest.getLitigant());
         }
 
         if (joinCaseRequest.getAdditionalDetails() != null) {
 
-            caseObj.setAdditionalDetails(editRespondantDetails(joinCaseRequest.getAdditionalDetails(),courtCase.getAdditionalDetails(),joinCaseRequest.getLitigant().getIndividualId()));
+            caseObj.setAdditionalDetails(editRespondantDetails(joinCaseRequest.getAdditionalDetails(),courtCase.getAdditionalDetails(),joinCaseRequest.getLitigant()));
             courtCase.setAdditionalDetails(caseObj.getAdditionalDetails());
             caseObj = encryptionDecryptionUtil.encryptObject(caseObj, config.getCourtCaseEncrypt(), CourtCase.class);
             courtCase = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncrypt(), CourtCase.class);
@@ -823,19 +824,65 @@ public class CaseService {
     }
 
     private void verifyLitigantsAndJoinCase(JoinCaseRequest joinCaseRequest, CourtCase courtCase, CourtCase caseObj, AuditDetails auditDetails) {
-        if (joinCaseRequest.getLitigant() != null) { //for litigant to join a case
+        if (joinCaseRequest.getLitigant() != null && !joinCaseRequest.getLitigant().isEmpty()) { //for litigant to join a case
             // Stream over the litigants to create a list of individualIds
             if (!validator.canLitigantJoinCase(joinCaseRequest))
                 throw new CustomException(VALIDATION_ERR, JOIN_CASE_INVALID_REQUEST);
 
-            List<String> individualIds = courtCase.getLitigants().stream()
+            List<String> individualIds = Optional.ofNullable(courtCase.getLitigants())
+                    .orElse(Collections.emptyList())
+                    .stream()
                     .map(Party::getIndividualId)
                     .toList();
-            if (joinCaseRequest.getLitigant().getIndividualId() != null &&
-                    individualIds.contains(joinCaseRequest.getLitigant().getIndividualId())) {
-                throw new CustomException(VALIDATION_ERR, "Litigant is already a part of the given case");
+
+            if(joinCaseRequest.getIsLitigantPIP() && joinCaseRequest.getLitigant().get(0).getId()!=null){
+                Party litigant = Optional.ofNullable(courtCase.getLitigants())
+                        .orElse(Collections.emptyList())
+                        .stream()
+                        .filter(p -> p.getIndividualId().equalsIgnoreCase(joinCaseRequest.getLitigant().get(0).getIndividualId())).toList().get(0);
+
+                List<AdvocateMapping> representatives = courtCase.getRepresentatives();
+                if(representatives!=null){
+                    for (AdvocateMapping representative : representatives){
+                        for (Party party:representative.getRepresenting()){
+                            if(party.getIndividualId().equals(litigant.getIndividualId())){
+
+                                //remove representing from advocate
+                                party.setIsActive(false);
+
+                                AuditDetails auditDetailsRepresenting = representative.getAuditDetails();
+                                auditDetailsRepresenting.setLastModifiedTime(System.currentTimeMillis());
+                                auditDetailsRepresenting.setLastModifiedBy(joinCaseRequest.getRequestInfo().getUserInfo().getUuid());
+                                party.setAuditDetails(auditDetailsRepresenting);
+
+                                //if advocate only representing to one litigant remove advocate from case
+                                if(representative.getRepresenting().size()==1){
+                                    representative.setIsActive(false);
+
+                                    AuditDetails auditDetailsRepresentative = representative.getAuditDetails();
+                                    auditDetailsRepresentative.setLastModifiedTime(System.currentTimeMillis());
+                                    auditDetailsRepresentative.setLastModifiedBy(joinCaseRequest.getRequestInfo().getUserInfo().getUuid());
+                                    representative.setAuditDetails(auditDetailsRepresentative);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                CaseRequest caseRequest= new CaseRequest();
+                caseRequest.setCases(encryptionDecryptionUtil.encryptObject(courtCase, "CourtCase", CourtCase.class));
+
+                log.info("Pushing litigant join case representative details :: {}", representatives);
+                producer.push(config.getCaseUpdateTopic(), caseRequest);
             }
-            caseObj.setLitigants(Collections.singletonList(joinCaseRequest.getLitigant()));
+
+            for(Party litigant: joinCaseRequest.getLitigant()){
+                if (litigant.getIndividualId() != null && individualIds.contains(litigant.getIndividualId()) && !joinCaseRequest.getIsLitigantPIP()) {
+                    throw new CustomException(VALIDATION_ERR, "Litigant is already a part of the given case");
+                }
+            }
+
+            caseObj.setLitigants(joinCaseRequest.getLitigant());
             verifyAndEnrichLitigant(joinCaseRequest, courtCase, caseObj, auditDetails);
         }
     }
@@ -918,7 +965,7 @@ public class CaseService {
     }
 
 
-    private Object editRespondantDetails(Object additionalDetails1, Object additionalDetails2, String individualId) {
+    private Object editRespondantDetails(Object additionalDetails1, Object additionalDetails2, List<Party> litigants) {
         // Convert the Objects to ObjectNodes for easier manipulation
         ObjectNode details1Node = objectMapper.convertValue(additionalDetails1, ObjectNode.class);
         ObjectNode details2Node = objectMapper.convertValue(additionalDetails2, ObjectNode.class);
@@ -940,13 +987,15 @@ public class CaseService {
                     ObjectNode dataNode2 = (ObjectNode) formData2.get(i).path("data");
                     if(dataNode1.has("respondentVerification")){
                         JsonNode individualDetails1 = dataNode1.path("respondentVerification").path("individualDetails");
-                        if (individualDetails1.has("individualId") && individualId.equals(individualDetails1.get("individualId").asText())) {
-                            // Set or remove fields in dataNode2 based on dataNode1
-                            setOrRemoveField(dataNode1, dataNode2, "respondentLastName");
-                            setOrRemoveField(dataNode1, dataNode2, "respondentFirstName");
-                            setOrRemoveField(dataNode1, dataNode2, "respondentMiddleName");
-                            setOrRemoveField(dataNode1, dataNode2, "respondentVerification");
-                            break;
+                        for (Party litigant : litigants){
+                            if (individualDetails1.has("individualId") && litigant.getIndividualId().equals(individualDetails1.get("individualId").asText())) {
+                                // Set or remove fields in dataNode2 based on dataNode1
+                                setOrRemoveField(dataNode1, dataNode2, "respondentLastName");
+                                setOrRemoveField(dataNode1, dataNode2, "respondentFirstName");
+                                setOrRemoveField(dataNode1, dataNode2, "respondentMiddleName");
+                                setOrRemoveField(dataNode1, dataNode2, "respondentVerification");
+                                break;
+                            }
                         }
                     }
                 }
@@ -954,7 +1003,7 @@ public class CaseService {
                 throw new CustomException(VALIDATION_ERR, "formdata is not found or is not an array in one of the respondentDetails objects.");
             }
         } else {
-            throw new CustomException(VALIDATION_ERR, "respondentDetails not found in one of the additional details objects.");
+           // throw new CustomException(VALIDATION_ERR, "respondentDetails not found in one of the additional details objects.");
         }
 
         // Convert the updated ObjectNode back to its original form

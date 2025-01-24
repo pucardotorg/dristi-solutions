@@ -14,6 +14,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 
 @Validated
 @Data
@@ -38,7 +40,10 @@ public class JoinCaseRequest {
     private AdvocateMapping representative = null;
 
     @JsonProperty("litigant")
-    private Party litigant = null;
+    private List<Party> litigant = null;
+
+    @JsonProperty("isLitigantPIP")
+    private Boolean isLitigantPIP = false;
 
     @JsonProperty("additionalDetails")
     private Object additionalDetails = null;

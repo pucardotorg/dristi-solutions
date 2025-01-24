@@ -201,7 +201,7 @@ public class CaseServiceTest {
         joinCaseRequest.setRequestInfo(requestInfo);
         joinCaseRequest.setCaseFilingNumber("12345");
         joinCaseRequest.setAccessCode("validAccessCode");
-        joinCaseRequest.setLitigant(litigant);
+        joinCaseRequest.setLitigant(Collections.singletonList(litigant));
 
         when(validator.canLitigantJoinCase(joinCaseRequest)).thenReturn(true);
         when(config.getCaseDecryptSelf()).thenReturn("CaseDecryptSelf");
@@ -394,7 +394,7 @@ public class CaseServiceTest {
         joinCaseRequest.setRequestInfo(requestInfo);
         joinCaseRequest.setCaseFilingNumber("12345");
         joinCaseRequest.setAccessCode("validAccessCode");
-        joinCaseRequest.setLitigant(litigant);
+        joinCaseRequest.setLitigant(Collections.singletonList(litigant));
         joinCaseRequest.setAdditionalDetails("form-data");
         LinkedHashMap<String, Object> additionalDetails = new LinkedHashMap<>();
         additionalDetails.put(ADVOCATE_NAME, "John Doe");
@@ -470,7 +470,7 @@ public class CaseServiceTest {
         JoinCaseResponse response = caseService.verifyJoinCaseRequest(joinCaseRequest);
         assertEquals("validAccessCode", response.getJoinCaseRequest().getAccessCode());
         assertEquals("12345", response.getJoinCaseRequest().getCaseFilingNumber());
-        assertEquals(litigant, response.getJoinCaseRequest().getLitigant());
+        assertEquals(litigant, response.getJoinCaseRequest().getLitigant().get(0));
         assertEquals(advocate, response.getJoinCaseRequest().getRepresentative());
     }
 
