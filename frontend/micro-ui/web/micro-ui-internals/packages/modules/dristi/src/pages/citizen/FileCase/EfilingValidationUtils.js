@@ -679,11 +679,6 @@ export const demandNoticeFileValidation = ({ formData, selected, setShowErrorToa
       setShowErrorToast(true);
       return true;
     }
-    if (formData?.proofOfReply?.code === "YES" && formData?.["proofOfReplyFileUpload"]?.document.length === 0) {
-      setFormErrors("proofOfReplyFileUpload", { type: "required" });
-      setShowErrorToast(true);
-      return true;
-    }
   } else {
     return false;
   }
