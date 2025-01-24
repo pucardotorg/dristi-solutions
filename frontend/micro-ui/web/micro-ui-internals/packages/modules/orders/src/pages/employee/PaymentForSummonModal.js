@@ -91,7 +91,7 @@ const PaymentForSummonComponent = ({ infos, links, feeOptions, orderDate, paymen
                   ) : action?.isCompleted ? (
                     <p style={{ color: "green" }}>{t("PAYMENT_COMPLETED")}</p>
                   ) : action?.action !== "offline-process" ? (
-                    <Button label={t(action.action)} onButtonClick={action.onClick} isDisabled={paymentLoader} />
+                    <Button label={t(action?.action)} onButtonClick={action?.onClick} isDisabled={paymentLoader} />
                   ) : (
                     <p className="offline-process-text">
                       {t("THIS_OFFLINE_TEXT")} <span className="learn-more-text">{t("LEARN_MORE")}</span>
@@ -441,7 +441,7 @@ const PaymentForSummonModal = ({ path }) => {
   ]);
 
   const infos = useMemo(() => {
-    const name = filteredTasks?.[0]?.taskDetails?.respondentDetails?.name?.filter(Boolean)?.join(" ");
+    const name = filteredTasks?.[0]?.taskDetails?.respondentDetails?.name;
     const addressDetails = filteredTasks?.[0]?.taskDetails?.respondentDetails?.address;
     const formattedAddress =
       typeof addressDetails === "object"
