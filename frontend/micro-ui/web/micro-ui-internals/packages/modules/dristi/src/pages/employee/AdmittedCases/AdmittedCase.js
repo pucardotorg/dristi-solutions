@@ -385,6 +385,16 @@ const AdmittedCases = () => {
     [applicationData]
   );
 
+  const isDelayApplicationRejected = useMemo(
+    () =>
+      Boolean(
+        applicationData?.applicationList?.some(
+          (item) => item?.applicationType === "DELAY_CONDONATION" && [SubmissionWorkflowState.REJECTED].includes(item?.status)
+        )
+      ),
+    [applicationData]
+  );
+
   const caseRelatedData = useMemo(
     () => ({
       caseId,
@@ -2350,6 +2360,7 @@ const AdmittedCases = () => {
           hearingDetails={hearingDetails}
           isDelayApplicationPending={isDelayApplicationPending}
           isDelayApplicationCompleted={isDelayApplicationCompleted}
+          isDelayApplicationRejected={isDelayApplicationRejected}
         />
       )}
       {orderDraftModal && <ViewAllOrderDrafts t={t} setShow={setOrderDraftModal} draftOrderList={draftOrderList} filingNumber={filingNumber} />}
@@ -2441,6 +2452,7 @@ const AdmittedCases = () => {
           hearingDetails={hearingDetails}
           isDelayApplicationPending={isDelayApplicationPending}
           isDelayApplicationCompleted={isDelayApplicationCompleted}
+          isDelayApplicationRejected={isDelayApplicationRejected}
         ></AdmissionActionModal>
       )}
       {showDismissCaseConfirmation && (
