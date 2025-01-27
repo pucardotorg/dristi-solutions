@@ -53,7 +53,6 @@ function PublishedOrderModal({
       userRoles.includes("SUBMISSION_CREATOR") &&
       [
         CaseWorkflowState.PENDING_ADMISSION_HEARING,
-        CaseWorkflowState.ADMISSION_HEARING_SCHEDULED,
         CaseWorkflowState.PENDING_NOTICE,
         CaseWorkflowState.PENDING_RESPONSE,
         CaseWorkflowState.PENDING_ADMISSION,

@@ -607,10 +607,6 @@ const GenerateOrders = () => {
               if (field.key === "hearingPurpose") {
                 return {
                   ...field,
-                  ...(currentOrder?.additionalDetails?.formdata?.hearingPurpose?.type === "ADMISSION" &&
-                    !isCaseAdmitted && {
-                      disable: true,
-                    }),
                   populators: {
                     ...field.populators,
                     mdmsConfig: {
@@ -2237,9 +2233,9 @@ const GenerateOrders = () => {
         },
       });
       currentOrder?.additionalDetails?.formdata?.refApplicationId && closeManualPendingTask(currentOrder?.orderNumber);
-      if (orderType === "SCHEDULE_OF_HEARING_DATE") {
+      if (["SCHEDULE_OF_HEARING_DATE"].includes(orderType)) {
         closeManualPendingTask(filingNumber);
-        if (currentOrder?.additionalDetails?.formdata?.hearingPurpose?.code === "ADMISSION" && !isCaseAdmitted) {
+        if (!isCaseAdmitted) {
           updateCaseDetails("SCHEDULE_ADMISSION_HEARING");
         }
       }
@@ -2247,64 +2243,69 @@ const GenerateOrders = () => {
       if (orderType === "SUMMONS") {
         closeManualPendingTask(currentOrder?.hearingNumber || hearingDetails?.hearingId);
       }
-      if (orderType === "NOTICE") {
+      if (orderType === "NOTICE" && currentOrder?.additionalDetails?.formdata?.noticeType?.code === "Section 223 Notice") {
         closeManualPendingTask(currentOrder?.hearingNumber || hearingDetails?.hearingId);
-        if (caseDetails?.status === "ADMISSION_HEARING_SCHEDULED") {
-          try {
-            await updateCaseDetails("ADMIT");
-          } catch (error) {
-            console.error("Error during ADMIT case update:", error);
-          } finally {
+        try {
+          await updateCaseDetails("ISSUE_ORDER");
+          const caseDetails = await refetchCaseData();
+          const caseData = caseDetails?.data?.criteria?.[0]?.responseList?.[0];
+          const respondent = caseData?.litigants?.find((litigant) => litigant?.partyType?.includes("respondent"));
+          const advocate = caseData?.representatives?.find((representative) =>
+            representative?.representing?.some((represent) => respondent && represent?.individualId === respondent?.individualId)
+          );
+
+          const assignees = [];
+          if (respondent) assignees.push({ uuid: respondent?.additionalDetails?.uuid });
+          if (advocate) assignees.push({ uuid: advocate?.additionalDetails?.uuid });
+
+          if (respondent && assignees?.length > 0) {
             try {
-              await refetchCaseData();
-              await updateCaseDetails("ISSUE_ORDER");
-            } catch (finalError) {
-              console.error("Error during final steps:", finalError);
+              await DRISTIService.customApiService(Urls.orders.pendingTask, {
+                pendingTask: {
+                  name: "Pending Response",
+                  entityType: "case-default",
+                  referenceId: `MANUAL_${caseData?.filingNumber}`,
+                  status: "PENDING_RESPONSE",
+                  assignedTo: assignees,
+                  assignedRole: ["CASE_RESPONDER"],
+                  cnrNumber: caseData?.cnrNumber,
+                  filingNumber: caseData?.filingNumber,
+                  isCompleted: false,
+                  stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
+                  additionalDetails: { individualId: respondent?.individualId, caseId: caseData?.id },
+                  tenantId,
+                },
+              });
+            } catch (err) {
+              console.error("err :>> ", err);
             }
           }
-        } else {
-          try {
-            await updateCaseDetails("ISSUE_ORDER");
-            const caseDetails = await refetchCaseData();
-            const caseData = caseDetails?.data?.criteria?.[0]?.responseList?.[0];
-            const respondent = caseData?.litigants?.find((litigant) => litigant?.partyType?.includes("respondent"));
-            const advocate = caseData?.representatives?.find((representative) =>
-              representative?.representing?.some((represent) => respondent && represent?.individualId === respondent?.individualId)
-            );
-
-            const assignees = [];
-            if (respondent) assignees.push({ uuid: respondent?.additionalDetails?.uuid });
-            if (advocate) assignees.push({ uuid: advocate?.additionalDetails?.uuid });
-
-            if (respondent && assignees?.length > 0) {
-              try {
-                await DRISTIService.customApiService(Urls.orders.pendingTask, {
-                  pendingTask: {
-                    name: "Pending Response",
-                    entityType: "case-default",
-                    referenceId: `MANUAL_${caseData?.filingNumber}`,
-                    status: "PENDING_RESPONSE",
-                    assignedTo: assignees,
-                    assignedRole: ["CASE_RESPONDER"],
-                    cnrNumber: caseData?.cnrNumber,
-                    filingNumber: caseData?.filingNumber,
-                    isCompleted: false,
-                    stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
-                    additionalDetails: { individualId: respondent?.individualId, caseId: caseData?.id },
-                    tenantId,
-                  },
-                });
-              } catch (err) {
-                console.error("err :>> ", err);
-              }
-            }
-          } catch (error) {
-            console.error("error :>> ", error);
-          }
+        } catch (error) {
+          console.error("error :>> ", error);
         }
       }
       if (orderType === "ADMIT_DISMISS_CASE") {
-        updateCaseDetails(currentOrder.additionalDetails?.formdata?.isCaseAdmittedOrDismissed?.code === "DISMISSED" ? "REJECT" : "ADMIT");
+        updateCaseDetails(currentOrder.additionalDetails?.formdata?.isCaseAdmittedOrDismissed?.code === "DISMISSED" ? "REJECT" : "ADMIT").then(
+          async (res) => {
+            const { HearingList = [] } = await Digit.HearingService.searchHearings({
+              hearing: { tenantId },
+              criteria: {
+                tenantID: tenantId,
+                filingNumber: filingNumber,
+              },
+            });
+            const hearingData =
+              HearingList?.find((list) => list?.hearingType === "ADMISSION" && !(list?.status === "COMPLETED" || list?.status === "ABATED")) || {};
+            if (hearingData.hearingId) {
+              hearingData.workflow = hearingData.workflow || {};
+              hearingData.workflow.action = "ABANDON";
+              await Digit.HearingService.updateHearings(
+                { tenantId, hearing: hearingData, hearingType: "", status: "" },
+                { applicationNumber: "", cnrNumber: "" }
+              );
+            }
+          }
+        );
       }
       createTask(orderType, caseDetails, orderResponse);
       setLoader(false);

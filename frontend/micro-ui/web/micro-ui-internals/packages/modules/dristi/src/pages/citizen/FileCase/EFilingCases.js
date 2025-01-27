@@ -977,6 +977,7 @@ function EFilingCases({ path }) {
                 body?.isDocDependentOn &&
                 body?.isDocDependentKey &&
                 data?.[body?.isDocDependentOn]?.[body?.isDocDependentKey] &&
+                body?.key !== "proofOfReplyFileUpload" &&
                 body?.component === "SelectCustomDragDrop"
               ) {
                 body.isMandatory = true;

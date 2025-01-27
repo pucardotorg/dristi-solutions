@@ -25,6 +25,7 @@ exports.generateCasePdf = async (req, res, next) => {
     const accuseds = await caseService.getRespondentsDetailsForComplaint(caseData);
     const advocates = await caseService.getAdvocateDetailsForComplaint(caseData);
     const complaint = await caseService.getPrayerSwornStatementDetails(caseData)?.[0]?.memorandumOfComplaintText;
+    const prayer = await caseService.getPrayerSwornStatementDetails(caseData)?.[0]?.prayer;
     const dateOfFiling = caseService.formatDate(caseData?.filingDate ? new Date(caseData?.filingDate) : new Date());
     const documentList = await caseService.getDocumentList(caseData);
     const witnessScheduleList = await caseService.getWitnessDetailsForComplaint(caseData);
@@ -51,6 +52,7 @@ exports.generateCasePdf = async (req, res, next) => {
           ...accuseds[0],
           ...advocates[0],
           complaint: complaint,
+          prayer:prayer,
           dateOfFiling: dateOfFiling,
           documentList: documentList,
           witnessScheduleList: witnessScheduleList
@@ -129,6 +131,7 @@ exports.caseComplaintPdf = async (req, res, next) => {
     const accuseds = await caseService.getRespondentsDetailsForComplaint(caseData);
     const advocates = await caseService.getAdvocateDetailsForComplaint(caseData);
     const complaint = await caseService.getPrayerSwornStatementDetails(caseData)?.[0]?.memorandumOfComplaintText;
+    const prayer = await caseService.getPrayerSwornStatementDetails(caseData)?.[0]?.prayer;
     const dateOfFiling = caseService.formatDate(caseData?.filingDate ? new Date(caseData?.filingDate) : new Date());
     const documentList = await caseService.getDocumentList(caseData);
     const witnessScheduleList = await caseService.getWitnessDetailsForComplaint(caseData);
@@ -144,6 +147,7 @@ exports.caseComplaintPdf = async (req, res, next) => {
           ...accuseds[0],
           ...advocates[0],
           complaint: complaint,
+          prayer:prayer,
           dateOfFiling: dateOfFiling,
           documentList: documentList,
           witnessScheduleList: witnessScheduleList

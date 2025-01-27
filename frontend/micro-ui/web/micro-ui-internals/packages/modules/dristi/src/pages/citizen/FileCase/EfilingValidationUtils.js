@@ -679,11 +679,6 @@ export const demandNoticeFileValidation = ({ formData, selected, setShowErrorToa
       setShowErrorToast(true);
       return true;
     }
-    if (formData?.proofOfReply?.code === "YES" && formData?.["proofOfReplyFileUpload"]?.document.length === 0) {
-      setFormErrors("proofOfReplyFileUpload", { type: "required" });
-      setShowErrorToast(true);
-      return true;
-    }
   } else {
     return false;
   }
@@ -1635,9 +1630,9 @@ export const updateCaseDetails = async ({
         caseId: caseDetails?.id,
         representing: representative?.advocateId
           ? [litigants[0]].map((item, index) => ({
-              ...(caseDetails.representatives?.[idx]?.representing?.[index] ? caseDetails.representatives?.[idx]?.representing?.[index] : {}),
-              ...item,
-            }))
+            ...(caseDetails.representatives?.[idx]?.representing?.[index] ? caseDetails.representatives?.[idx]?.representing?.[index] : {}),
+            ...item,
+          }))
           : [],
       }));
     data.litigants = [...litigants].map((item, index) => ({
@@ -1687,7 +1682,7 @@ export const updateCaseDetails = async ({
                     documentType,
                     fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
                     documentName: uploadedData.filename || document?.documentName,
-                    fileName: "Affidavit documents",
+                    fileName: t("AFFIDAVIT_UNDER_225"),
                   };
                   docList.push(doc);
                   return doc;
