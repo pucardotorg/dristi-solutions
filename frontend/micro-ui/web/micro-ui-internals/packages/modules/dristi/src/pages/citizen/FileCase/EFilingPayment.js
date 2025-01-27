@@ -199,7 +199,6 @@ function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
       await DRISTIService.setCaseLock({ Lock: { uniqueId: caseDetails?.filingNumber, tenantId: tenantId, lockType: "PAYMENT" } }, {});
       if (bill?.Bill?.length) {
         const paymentStatus = await openPaymentPortal(bill);
-        const caseUnlockStatus = await DRISTIService.setCaseUnlock({}, { uniqueId: caseDetails?.filingNumber, tenantId: tenantId });
         await DRISTIService.setCaseUnlock({}, { uniqueId: caseDetails?.filingNumber, tenantId: tenantId });
 
         if (paymentStatus) {
