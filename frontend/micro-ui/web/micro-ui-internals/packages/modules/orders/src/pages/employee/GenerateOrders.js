@@ -785,6 +785,12 @@ const GenerateOrders = () => {
               ...customValidations(),
             };
           }
+          if (body?.labelChildren === "optional") {
+            return {
+              ...body,
+              labelChildren: <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>,
+            };
+          }
           return {
             ...body,
           };
