@@ -75,6 +75,6 @@ class LockApiControllerTest {
         ResponseEntity<LockResponse> response = lockApiController.releaseLock(requestInfoWrapper, "12345", "tenant1");
         assertNotNull(response);
         assertEquals(200, response.getStatusCodeValue());
-        assertTrue( response.getBody().getLock().getIsLocked());
+        assertFalse( response.getBody().getLock().getIsLocked());
     }
 }

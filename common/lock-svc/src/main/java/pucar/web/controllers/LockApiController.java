@@ -62,7 +62,7 @@ public class LockApiController {
 
         LockResponse response = LockResponse.builder().responseInfo(
                         ResponseInfoFactory.createResponseInfoFromRequestInfo(requestInfo.getRequestInfo(), releaseLock))
-                .lock(Lock.builder().uniqueId(uniqueId).tenantId(tenantId).isLocked(releaseLock).build()).build();
+                .lock(Lock.builder().uniqueId(uniqueId).tenantId(tenantId).isLocked(!releaseLock).build()).build();
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
