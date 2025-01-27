@@ -1,3 +1,4 @@
+import { advocateDetailsConfig } from "./advocateDetailsConfig";
 import { delayApplicationConfig } from "./delayApplicationConfig";
 
 export const sideMenuConfig = [
@@ -316,16 +317,17 @@ export const sideMenuConfig = [
         checked: false,
         isCompleted: false,
         isDisabled: false,
-        pageConfig: [
-          {
-            moduleName: "commonUiConfig",
-            masterDetails: [
-              {
-                name: "advocateDetailsConfig",
-              },
-            ],
-          },
-        ],
+        pageConfig: advocateDetailsConfig,
+        // pageConfig: [
+        //   {
+        //     moduleName: "commonUiConfig",
+        //     masterDetails: [
+        //       {
+        //         name: "advocateDetailsConfig",
+        //       },
+        //     ],
+        //   },
+        // ],
         mandatoryFields: [
           "isAdvocateRepresenting",
           // if advocateBarRegistrationNumber is present, 3 name fields will be filled automatically.

@@ -1332,6 +1332,8 @@ export const updateCaseDetails = async ({
   if (selected === "complainantDetails") {
     let litigants = [];
     const complainantVerification = {};
+    // check in new flow, mltiple complainant forms are possible, so iscompleted logic has to be updated
+    // and logic to update litigants also has to be changed.
     if (isCompleted === true) {
       litigants = await Promise.all(
         updatedFormData
@@ -1635,23 +1637,24 @@ export const updateCaseDetails = async ({
           };
         })
     );
-    const representatives = (caseDetails?.representatives ? [...caseDetails?.representatives] : [])
-      ?.filter((representative) => representative?.advocateId)
-      .map((representative, idx) => ({
-        ...representative,
-        caseId: caseDetails?.id,
-        representing: representative?.advocateId
-          ? [litigants[0]].map((item, index) => ({
-              ...(caseDetails.representatives?.[idx]?.representing?.[index] ? caseDetails.representatives?.[idx]?.representing?.[index] : {}),
-              ...item,
-            }))
-          : [],
-      }));
+    // const representatives = (caseDetails?.representatives ? [...caseDetails?.representatives] : [])
+    //   ?.filter((representative) => representative?.advocateId)
+    //   .map((representative, idx) => ({
+    //     ...representative,
+    //     caseId: caseDetails?.id,
+    //     representing: representative?.advocateId
+    //       ? [litigants[0]].map((item, index) => ({
+    //           ...(caseDetails.representatives?.[idx]?.representing?.[index] ? caseDetails.representatives?.[idx]?.representing?.[index] : {}),
+    //           ...item,
+    //         }))
+    //       : [],
+    //   }));
+
     data.litigants = [...litigants].map((item, index) => ({
       ...(caseDetails.litigants?.[index] ? caseDetails.litigants?.[index] : {}),
       ...item,
     }));
-    data.representatives = [...representatives];
+    data.representatives = [];
     data.additionalDetails = {
       ...caseDetails.additionalDetails,
       complainantDetails: {
@@ -2188,11 +2191,12 @@ export const updateCaseDetails = async ({
     };
   }
   if (selected === "advocateDetails") {
-    const advocateDetails = {};
+    const advocateDetails = [{}];
+    let docList = [];
     const newFormData = await Promise.all(
       updatedFormData
         .filter((item) => item.isenabled)
-        .map(async (data) => {
+        .map(async (data, index) => {
           const vakalatnamaDocumentData = { vakalatnamaFileUpload: null };
           if (data?.data?.vakalatnamaFileUpload?.document) {
             vakalatnamaDocumentData.vakalatnamaFileUpload = {};
@@ -2216,48 +2220,76 @@ export const updateCaseDetails = async ({
                     documentName: uploadedData.filename || document?.documentName,
                     fileName: pageConfig?.selectDocumentName?.["vakalatnamaFileUpload"],
                   };
-                  updateCaseDocuments(documentType, doc);
+                  // updateCaseDocuments(documentType, doc);
+                  docList.push(doc);
                   return doc;
                 }
               })
             );
             setFormDataValue("vakalatnamaFileUpload", vakalatnamaDocumentData?.vakalatnamaFileUpload);
-          } else {
-            updateCaseDocuments(documentsTypeMapping["vakalatnamaFileUpload"], false);
           }
-          const advocateDetail = await DRISTIService.searchAdvocateClerk("/advocate/v1/_search", {
-            criteria: [
-              {
-                barRegistrationNumber: data?.data?.advocateBarRegNumberWithName?.[0]?.barRegistrationNumber,
-              },
-            ],
-            tenantId,
-          });
-          advocateDetails[data?.data?.advocateBarRegNumberWithName?.[0]?.advocateId] =
-            advocateDetail?.advocates?.[0]?.responseList?.[0]?.auditDetails?.createdBy;
+          const pipAffidavitDocumentData = { pipAffidavitFileUpload: null };
+          if (data?.data?.pipAffidavitFileUpload?.document) {
+            pipAffidavitDocumentData.pipAffidavitFileUpload = {};
+            pipAffidavitDocumentData.pipAffidavitFileUpload.document = await Promise.all(
+              data?.data?.pipAffidavitFileUpload?.document?.map(async (document) => {
+                if (document) {
+                  const documentType = documentsTypeMapping["pipAffidavitFileUpload"];
+                  const uploadedData = await onDocumentUpload(documentType, document, document.name, tenantId);
+                  const doc = {
+                    documentType,
+                    fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
+                    documentName: uploadedData.filename || document?.documentName,
+                    fileName: pageConfig?.selectDocumentName?.["pipAffidavitFileUpload"],
+                  };
+                  docList.push(doc);
+                  return doc;
+                }
+              })
+            );
+            setFormDataValue("pipAffidavitFileUpload", pipAffidavitDocumentData?.pipAffidavitFileUpload);
+          }
+          const advocateDetailsDocTypes = [documentsTypeMapping["vakalatnamaFileUpload"], documentsTypeMapping["pipAffidavitFileUpload"]];
+          updateTempDocListMultiForm(docList, advocateDetailsDocTypes);
+
+          if (data?.data?.MultipleAdvocateNameDetails?.length > 0) {
+            const advSearchPromises = data?.data?.MultipleAdvocateNameDetails?.map((detail) => {
+              return DRISTIService.searchAdvocateClerk("/advocate/v1/_search", {
+                criteria: [
+                  {
+                    barRegistrationNumber: detail?.advocateBarRegNumberWithName?.barRegistrationNumberOriginal,
+                  },
+                ],
+                tenantId,
+              });
+            });
+
+            const allAdvocateDetails = await Promise.all(advSearchPromises);
+          }
           return {
             ...data,
             data: {
               ...data.data,
               ...vakalatnamaDocumentData,
-              advocateBarRegNumberWithName: data?.data?.advocateBarRegNumberWithName?.map((item) => {
-                return {
-                  ...item,
-                  barRegistrationNumber: item?.barRegistrationNumber,
-                  advocateName: item?.advocateName,
-                  advocateId: item?.advocateId,
-                  barRegistrationNumberOriginal: data?.data?.advocateBarRegNumberWithName?.[0]?.barRegistrationNumberOriginal,
-                };
-              }),
-              advocateName: data?.data?.advocateBarRegNumberWithName?.[0]?.advocateName,
-              advocateId: data?.data?.advocateBarRegNumberWithName?.[0]?.advocateId,
-              barRegistrationNumber: data?.data?.advocateBarRegNumberWithName?.[0]?.barRegistrationNumber,
-              barRegistrationNumberOriginal: data?.data?.advocateBarRegNumberWithName?.[0]?.barRegistrationNumberOriginal,
+              ...pipAffidavitDocumentData,
+              // advocateBarRegNumberWithName: data?.data?.advocateBarRegNumberWithName?.map((item) => {
+              //   return {
+              //     ...item,
+              //     barRegistrationNumber: item?.barRegistrationNumber,
+              //     advocateName: item?.advocateName,
+              //     advocateId: item?.advocateId,
+              //     barRegistrationNumberOriginal: data?.data?.advocateBarRegNumberWithName?.[0]?.barRegistrationNumberOriginal,
+              //   };
+              // }),
+              // advocateName: data?.data?.advocateBarRegNumberWithName?.[0]?.advocateName,
+              // advocateId: data?.data?.advocateBarRegNumberWithName?.[0]?.advocateId,
+              // barRegistrationNumber: data?.data?.advocateBarRegNumberWithName?.[0]?.barRegistrationNumber,
+              // barRegistrationNumberOriginal: data?.data?.advocateBarRegNumberWithName?.[0]?.barRegistrationNumberOriginal,
             },
           };
         })
     );
-    let representatives = [];
+    let representatives = []; // check representatives to be updated correctly.
     if (newFormData?.filter((item) => item.isenabled).some((data) => data?.data?.isAdvocateRepresenting?.code === "YES")) {
       representatives = newFormData
         .filter((item) => item.isenabled)
@@ -2265,7 +2297,7 @@ export const updateCaseDetails = async ({
           return {
             ...(caseDetails.representatives?.[index] ? caseDetails.representatives?.[index] : {}),
             caseId: caseDetails?.id,
-            representing: data?.data?.advocateBarRegNumberWithName?.[0]?.advocateId
+            representing: data?.data?.MultipleAdvocateNameDetails?.[0]?.advocateBarRegNumberWithName?.advocateId
               ? [
                   ...(caseDetails?.litigants && Array.isArray(caseDetails?.litigants)
                     ? [caseDetails?.litigants[0]]?.map((data, key) => ({
@@ -2284,7 +2316,7 @@ export const updateCaseDetails = async ({
                     : []),
                 ]
               : [],
-            advocateId: data?.data?.advocateBarRegNumberWithName?.[0]?.advocateId,
+            advocateId: data?.data?.MultipleAdvocateNameDetails?.[0]?.advocateBarRegNumberWithName?.advocateId,
             documents: data?.data?.vakalatnamaFileUpload?.document,
             additionalDetails: {
               advocateName: data?.data?.advocateBarRegNumberWithName?.[0]?.advocateName,
