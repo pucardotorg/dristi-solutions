@@ -53,6 +53,7 @@ public class SmsNotificationUtil {
 
             String messageCode = updatedState != null ? getMessageCode(applicationType, updatedState, isVoluntarySubmission) : null;
             assert messageCode != null;
+            log.info("Message code: {}", messageCode);
             String[] smsTopics = messageCode.split(",");
 
             for(String smsTopic: smsTopics) {
@@ -105,6 +106,7 @@ public class SmsNotificationUtil {
 
     private String getMessageCode(String applicationType, String updatedStatus, boolean isVoluntarySubmission) {
 
+        log.info("operation: getMessageCode, Application Type: {}, Updated Status: {}, Is Voluntary Submission: {}", applicationType, updatedStatus, isVoluntarySubmission);
         if(applicationType.equalsIgnoreCase(RE_SCHEDULE) && updatedStatus.equalsIgnoreCase(PENDINGREVIEW)){
             return RESCHEDULE_REQUEST_SUBMITTED;
         }

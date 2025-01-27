@@ -112,6 +112,8 @@ public class OrderRegistrationService {
             enrichmentUtil.enrichOrderRegistrationUponUpdate(body);
 
             workflowUpdate(body);
+
+            log.info("OrderRequest after workflow update: {}", body);
             String updatedState = body.getOrder().getStatus();
             String orderType = body.getOrder().getOrderType();
             producer.push(config.getUpdateOrderKafkaTopic(), body);
@@ -139,6 +141,7 @@ public class OrderRegistrationService {
     }
     private String getMessageCode(String orderType, String updatedStatus, Boolean hearingCompleted, String submissionType, String purpose) {
 
+        log.info("Operation: getMessageCode for OrderType: {}, UpdatedStatus: {}, HearingCompleted: {}, SubmissionType: {}, Purpose: {}", orderType, updatedStatus, hearingCompleted, submissionType, purpose);
         if(!StringUtils.isEmpty(purpose) && purpose.equalsIgnoreCase(EXAMINATION_UNDER_S351_BNSS) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
             return EXAMINATION_UNDER_S351_BNSS_SCHEDULED;
         }
@@ -202,6 +205,7 @@ public class OrderRegistrationService {
             String purposeOfHearing = orderDetails.has("purposeOfHearing") ? orderDetails.get("purposeOfHearing").asText() : "";
 
             String messageCode = updatedState != null ? getMessageCode(orderType, updatedState, hearingCompleted, submissionType, purposeOfHearing) : null;
+            log.info("Message Code: {}", messageCode);
             assert messageCode != null;
 
             String receiver = getReceiverParty(messageCode);

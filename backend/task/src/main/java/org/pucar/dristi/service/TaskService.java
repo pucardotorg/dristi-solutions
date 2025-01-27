@@ -119,7 +119,9 @@ public class TaskService {
 
             producer.push(config.getTaskUpdateTopic(), body);
 
+            log.info("TaskRequest before calling notificationService: {}", body);
             String messageCode = status != null ? getMessageCode(taskType, status) : null;
+            log.info("Message Code :: {}", messageCode);
             if(messageCode != null){
                 callNotificationService(body, messageCode);
             }
@@ -278,6 +280,7 @@ public class TaskService {
 
     private String getMessageCode(String taskType, String status) {
 
+        log.info("Operation: getMessageCode, Task Type :: {} and Status :: {}", taskType, status);
         if (NOTICE.equalsIgnoreCase(taskType) && DELIVERED.equalsIgnoreCase(status)) {
             return NOTICE_DELIVERED;
         }
