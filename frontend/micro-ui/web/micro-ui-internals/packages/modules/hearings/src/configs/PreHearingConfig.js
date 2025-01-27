@@ -119,6 +119,10 @@ export const preHearingConfig = {
             jsonPath: "caseType",
           },
           {
+            label: "Case Id",
+            jsonPath: "caseNumber",
+          },
+          {
             label: "Pending Tasks",
             jsonPath: "pendingTasks",
           },
