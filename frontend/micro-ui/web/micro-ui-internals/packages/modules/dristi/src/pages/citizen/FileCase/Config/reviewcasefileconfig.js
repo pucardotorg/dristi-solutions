@@ -400,8 +400,6 @@ export const reviewCaseFileFormConfig = [
                   type: "text",
                   label: "DELAY_ADDITIONAL_INFO",
                   value: "additionalDelayCondonationDetails.text",
-                  dependentOn: "delayCondonationType.name",
-                  dependentValue: "NO",
                 },
                 {
                   type: "image",
