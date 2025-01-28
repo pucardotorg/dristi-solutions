@@ -610,8 +610,8 @@ const EvidenceModal = ({
                   displayFilename={docs?.additionalDetails?.name}
                   tenantId={tenantId}
                   docWidth={"calc(80vw * 62 / 100)"}
-                  docHeight={"60vh"}
                   showDownloadOption={false}
+                  docHeight={"unset"}
                   documentName={docs?.additionalDetails?.name}
                 />
               </div>
