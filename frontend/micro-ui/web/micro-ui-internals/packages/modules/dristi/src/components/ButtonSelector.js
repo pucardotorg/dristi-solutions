@@ -21,9 +21,11 @@ const ButtonSelector = (props) => {
       style={props.style ? props.style : null}
       title={props.title ? props.title : null}
     >
-      <h2 style={{ ...props?.textStyles, ...{ width: "100%" } }} className={props?.textClassName}>
-        {props.label}
-      </h2>
+      {props?.label && (
+        <h2 style={{ ...props?.textStyles, ...{ width: "100%" } }} className={props?.textClassName}>
+          {props.label}
+        </h2>
+      )}
       {props.ButtonBody ? props.ButtonBody : ""}
     </button>
   );
