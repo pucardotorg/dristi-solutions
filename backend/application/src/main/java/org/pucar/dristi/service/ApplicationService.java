@@ -96,7 +96,7 @@ public class ApplicationService {
                 updateRelatedApplication(application, applicationRequest.getRequestInfo());
 
             }
-
+            log.info("ApplicationRequest before calling notificationService: {}", applicationRequest);
             smsNotificationUtil.callNotificationService(applicationRequest, application.getStatus(), application.getApplicationType());
             producer.push(config.getApplicationUpdateTopic(), applicationRequest);
 
