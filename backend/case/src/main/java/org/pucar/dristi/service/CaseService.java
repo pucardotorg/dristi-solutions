@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
+import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
@@ -21,6 +22,7 @@ import org.pucar.dristi.repository.CaseRepository;
 import org.pucar.dristi.util.AdvocateUtil;
 import org.pucar.dristi.util.BillingUtil;
 import org.pucar.dristi.util.EncryptionDecryptionUtil;
+import org.pucar.dristi.util.TaskUtil;
 import org.pucar.dristi.validators.CaseRegistrationValidator;
 import org.pucar.dristi.web.OpenApiCaseSummary;
 import org.pucar.dristi.web.models.*;
@@ -28,6 +30,9 @@ import org.pucar.dristi.web.models.analytics.CaseOutcome;
 import org.pucar.dristi.web.models.analytics.CaseOverallStatus;
 import org.pucar.dristi.web.models.analytics.CaseStageSubStage;
 import org.pucar.dristi.web.models.analytics.Outcome;
+import org.pucar.dristi.web.models.task.Task;
+import org.pucar.dristi.web.models.task.TaskRequest;
+import org.pucar.dristi.web.models.task.TaskResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -62,6 +67,7 @@ public class CaseService {
     private final IndividualService individualService;
 
     private final AdvocateUtil advocateUtil;
+    private final TaskUtil taskUtil;
 
 
     @Autowired
@@ -71,6 +77,7 @@ public class CaseService {
                        WorkflowService workflowService,
                        Configuration config,
                        Producer producer,
+                       TaskUtil taskUtil,
                        BillingUtil billingUtil,
                        EncryptionDecryptionUtil encryptionDecryptionUtil,
                        ObjectMapper objectMapper, CacheService cacheService, EnrichmentService enrichmentService, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil) {
@@ -80,6 +87,7 @@ public class CaseService {
         this.workflowService = workflowService;
         this.config = config;
         this.producer = producer;
+        this.taskUtil = taskUtil;
         this.billingUtil = billingUtil;
         this.encryptionDecryptionUtil = encryptionDecryptionUtil;
         this.objectMapper = objectMapper;
@@ -197,7 +205,7 @@ public class CaseService {
 
             Boolean lastSigned = checkItsLastSign(caseRequest);
 
-            if(lastSigned){
+            if (lastSigned) {
                 caseRequest.getRequestInfo()
                         .getUserInfo().getRoles()
                         .add(Role.builder()
@@ -643,8 +651,7 @@ public class CaseService {
     }
 
 
-
-    private void verifyAndEnrichLitigant(JoinCaseRequest joinCaseRequest, CourtCase courtCase,CourtCase caseObj, AuditDetails auditDetails) {
+    private void verifyAndEnrichLitigant(JoinCaseRequest joinCaseRequest, CourtCase courtCase, CourtCase caseObj, AuditDetails auditDetails) {
         log.info("enriching litigants");
         enrichLitigantsOnCreateAndUpdate(caseObj, auditDetails);
 
@@ -662,7 +669,7 @@ public class CaseService {
 
         if (joinCaseRequest.getAdditionalDetails() != null) {
 
-            caseObj.setAdditionalDetails(editRespondantDetails(joinCaseRequest.getAdditionalDetails(),courtCase.getAdditionalDetails(),joinCaseRequest.getLitigant()));
+            caseObj.setAdditionalDetails(editRespondantDetails(joinCaseRequest.getAdditionalDetails(), courtCase.getAdditionalDetails(), joinCaseRequest.getLitigant()));
             courtCase.setAdditionalDetails(caseObj.getAdditionalDetails());
             caseObj = encryptionDecryptionUtil.encryptObject(caseObj, config.getCourtCaseEncrypt(), CourtCase.class);
             courtCase = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncrypt(), CourtCase.class);
@@ -726,7 +733,7 @@ public class CaseService {
         publishToJoinCaseIndexer(joinCaseRequest.getRequestInfo(), courtCase);
     }
 
-    public JoinCaseResponse verifyJoinCaseRequest(JoinCaseRequest joinCaseRequest) {
+    public JoinCaseResponse verifyJoinCaseRequest(JoinCaseRequest joinCaseRequest,Boolean isPaymentCompleted) {
         try {
             String filingNumber = joinCaseRequest.getCaseFilingNumber();
             List<CaseCriteria> existingApplications = caseRepository.getCases(Collections.singletonList(CaseCriteria.builder().filingNumber(filingNumber).build()), joinCaseRequest.getRequestInfo());
@@ -746,31 +753,64 @@ public class CaseService {
                     .id(caseId)
                     .build();
 
-            Object additionalDetails = joinCaseRequest.getAdditionalDetails();
-
-            verifyLitigantsAndJoinCase(joinCaseRequest, courtCase, caseObj, auditDetails);
+            if (joinCaseRequest.getLitigant() != null && !joinCaseRequest.getLitigant().isEmpty() && joinCaseRequest.getRepresentative() == null) //for litigant to join a case
+                verifyLitigantsAndJoinCase(joinCaseRequest, courtCase, caseObj, auditDetails);
 
             if (joinCaseRequest.getRepresentative() != null) {
 
-                joinCaseRequest.setAdditionalDetails(additionalDetails);
+                if (!isPaymentCompleted) {
+                    //create task
+                    TaskRequest taskRequest = new TaskRequest();
+                    Task task = new Task();
+                    task.setTaskType(JOIN_CASE_TASK);
+                    task.setStatus("");
+                    task.setTenantId(joinCaseRequest.getRequestInfo().getUserInfo().getTenantId());
+                    task.setFilingNumber(joinCaseRequest.getCaseFilingNumber());
+                    Workflow workflow = new Workflow();
+                    workflow.setAction("CREATE");
+                    RequestInfo requestInfo = joinCaseRequest.getRequestInfo();
+                    Role role = new Role();
+                    role.setName("TASK_CREATOR");
+                    role.setCode("TASK_CREATOR");
+                    List<Role> roles =  requestInfo.getUserInfo().getRoles();
+                    roles.add(role);
+                    requestInfo.getUserInfo().setRoles(roles);
+                    task.setWorkflow(workflow);
+                    ObjectMapper objectMapper = new ObjectMapper();
 
-                verifyRepresentativesAndJoinCase(joinCaseRequest, courtCase, caseObj, auditDetails);
+                    Object additionalDetails = objectMapper.convertValue(joinCaseRequest, Object.class);
+                    task.setAdditionalDetails(additionalDetails);
 
-                AdvocateMapping advocateMapping = joinCaseRequest.getRepresentative();
-                Set<String> individualIds = getIndividualId(advocateMapping);
-                Set<String> phonenumbers = callIndividualService(joinCaseRequest.getRequestInfo(), individualIds);
-                LinkedHashMap advocate = ((LinkedHashMap) advocateMapping.getAdditionalDetails());
-                String advocateName = advocate != null ? advocate.get(ADVOCATE_NAME).toString() : "";
+                    taskRequest.setTask(task);
+                    taskRequest.setRequestInfo(joinCaseRequest.getRequestInfo());
 
-                SmsTemplateData smsTemplateData = SmsTemplateData.builder()
-                        .cmpNumber(courtCase.getCmpNumber())
-                        .efilingNumber(courtCase.getFilingNumber())
-                        .advocateName(advocateName)
-                        .tenantId(courtCase.getTenantId()).build();
-                for (String number : phonenumbers) {
-                    notificationService.sendNotification(joinCaseRequest.getRequestInfo(), smsTemplateData, ADVOCATE_CASE_JOIN, number);
+                    TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
+                    String consumerCode = taskResponse.getTask().getTaskNumber()+"_JOIN_CASE";
+                    //create demand
+                    billingUtil.createDemand(joinCaseRequest,consumerCode);
+
+                    joinCaseRequest.setConsumerCode(consumerCode);
+                } else {
+                    verifyRepresentativesAndJoinCase(joinCaseRequest, courtCase, caseObj, auditDetails);
+
+                    if (joinCaseRequest.getLitigant() != null && !joinCaseRequest.getLitigant().isEmpty())
+                        verifyLitigantsAndJoinCase(joinCaseRequest, courtCase, caseObj, auditDetails);
+
+                    AdvocateMapping advocateMapping = joinCaseRequest.getRepresentative();
+                    Set<String> individualIds = getIndividualId(advocateMapping);
+                    Set<String> phonenumbers = callIndividualService(joinCaseRequest.getRequestInfo(), individualIds);
+                    LinkedHashMap advocate = ((LinkedHashMap) advocateMapping.getAdditionalDetails());
+                    String advocateName = advocate != null ? advocate.get(ADVOCATE_NAME).toString() : "";
+
+                    SmsTemplateData smsTemplateData = SmsTemplateData.builder()
+                            .cmpNumber(courtCase.getCmpNumber())
+                            .efilingNumber(courtCase.getFilingNumber())
+                            .advocateName(advocateName)
+                            .tenantId(courtCase.getTenantId()).build();
+                    for (String number : phonenumbers) {
+                        notificationService.sendNotification(joinCaseRequest.getRequestInfo(), smsTemplateData, ADVOCATE_CASE_JOIN, number);
+                    }
                 }
-
             }
 
             return JoinCaseResponse.builder().joinCaseRequest(joinCaseRequest).build();
@@ -819,7 +859,7 @@ public class CaseService {
         advocatePartOfCaseHandler(advocateIds, joinCaseRequest, courtCase, auditDetails);
 
         //when advocate is not the part of the case
-        //Scenario 1 -> If individual exist then replace other advocate when relation is primary
+        //Scenario 1 -> If individual exist in the case then replace other advocate
         //Scenario 2 -> If individual doesn't exist then add advocate
 
         if (!advocateIds.isEmpty() && joinCaseRequest.getRepresentative().getAdvocateId() != null && !advocateIds.contains(joinCaseRequest.getRepresentative().getAdvocateId())) {
@@ -891,67 +931,65 @@ public class CaseService {
     }
 
     private void verifyLitigantsAndJoinCase(JoinCaseRequest joinCaseRequest, CourtCase courtCase, CourtCase caseObj, AuditDetails auditDetails) {
-        if (joinCaseRequest.getLitigant() != null && !joinCaseRequest.getLitigant().isEmpty()) { //for litigant to join a case
-            // Stream over the litigants to create a list of individualIds
-            if (!validator.canLitigantJoinCase(joinCaseRequest))
-                throw new CustomException(VALIDATION_ERR, JOIN_CASE_INVALID_REQUEST);
+        // Stream over the litigants to create a list of individualIds
+        if (!validator.canLitigantJoinCase(joinCaseRequest))
+            throw new CustomException(VALIDATION_ERR, JOIN_CASE_INVALID_REQUEST);
 
-            List<String> individualIds = Optional.ofNullable(courtCase.getLitigants())
+        List<String> individualIds = Optional.ofNullable(courtCase.getLitigants())
+                .orElse(Collections.emptyList())
+                .stream()
+                .map(Party::getIndividualId)
+                .toList();
+
+        if (joinCaseRequest.getIsLitigantPIP() && joinCaseRequest.getLitigant().get(0).getId() != null) {
+            Party litigant = Optional.ofNullable(courtCase.getLitigants())
                     .orElse(Collections.emptyList())
                     .stream()
-                    .map(Party::getIndividualId)
-                    .toList();
+                    .filter(p -> p.getIndividualId().equalsIgnoreCase(joinCaseRequest.getLitigant().get(0).getIndividualId())).toList().get(0);
 
-            if(joinCaseRequest.getIsLitigantPIP() && joinCaseRequest.getLitigant().get(0).getId()!=null){
-                Party litigant = Optional.ofNullable(courtCase.getLitigants())
-                        .orElse(Collections.emptyList())
-                        .stream()
-                        .filter(p -> p.getIndividualId().equalsIgnoreCase(joinCaseRequest.getLitigant().get(0).getIndividualId())).toList().get(0);
+            List<AdvocateMapping> representatives = courtCase.getRepresentatives();
+            if (representatives != null) {
+                for (AdvocateMapping representative : representatives) {
+                    for (Party party : representative.getRepresenting()) {
+                        if (party.getIndividualId().equals(litigant.getIndividualId())) {
 
-                List<AdvocateMapping> representatives = courtCase.getRepresentatives();
-                if(representatives!=null){
-                    for (AdvocateMapping representative : representatives){
-                        for (Party party:representative.getRepresenting()){
-                            if(party.getIndividualId().equals(litigant.getIndividualId())){
+                            //remove representing from advocate
+                            party.setIsActive(false);
 
-                                //remove representing from advocate
-                                party.setIsActive(false);
+                            AuditDetails auditDetailsRepresenting = representative.getAuditDetails();
+                            auditDetailsRepresenting.setLastModifiedTime(System.currentTimeMillis());
+                            auditDetailsRepresenting.setLastModifiedBy(joinCaseRequest.getRequestInfo().getUserInfo().getUuid());
+                            party.setAuditDetails(auditDetailsRepresenting);
 
-                                AuditDetails auditDetailsRepresenting = representative.getAuditDetails();
-                                auditDetailsRepresenting.setLastModifiedTime(System.currentTimeMillis());
-                                auditDetailsRepresenting.setLastModifiedBy(joinCaseRequest.getRequestInfo().getUserInfo().getUuid());
-                                party.setAuditDetails(auditDetailsRepresenting);
+                            //if advocate only representing to one litigant remove advocate from case
+                            if (representative.getRepresenting().size() == 1) {
+                                representative.setIsActive(false);
 
-                                //if advocate only representing to one litigant remove advocate from case
-                                if(representative.getRepresenting().size()==1){
-                                    representative.setIsActive(false);
-
-                                    AuditDetails auditDetailsRepresentative = representative.getAuditDetails();
-                                    auditDetailsRepresentative.setLastModifiedTime(System.currentTimeMillis());
-                                    auditDetailsRepresentative.setLastModifiedBy(joinCaseRequest.getRequestInfo().getUserInfo().getUuid());
-                                    representative.setAuditDetails(auditDetailsRepresentative);
-                                }
+                                AuditDetails auditDetailsRepresentative = representative.getAuditDetails();
+                                auditDetailsRepresentative.setLastModifiedTime(System.currentTimeMillis());
+                                auditDetailsRepresentative.setLastModifiedBy(joinCaseRequest.getRequestInfo().getUserInfo().getUuid());
+                                representative.setAuditDetails(auditDetailsRepresentative);
                             }
                         }
                     }
                 }
-
-                CaseRequest caseRequest= new CaseRequest();
-                caseRequest.setCases(encryptionDecryptionUtil.encryptObject(courtCase, "CourtCase", CourtCase.class));
-
-                log.info("Pushing litigant join case representative details :: {}", representatives);
-                producer.push(config.getCaseUpdateTopic(), caseRequest);
             }
 
-            for(Party litigant: joinCaseRequest.getLitigant()){
-                if (litigant.getIndividualId() != null && individualIds.contains(litigant.getIndividualId()) && !joinCaseRequest.getIsLitigantPIP()) {
-                    throw new CustomException(VALIDATION_ERR, "Litigant is already a part of the given case");
-                }
-            }
+            CaseRequest caseRequest = new CaseRequest();
+            caseRequest.setCases(encryptionDecryptionUtil.encryptObject(courtCase, "CourtCase", CourtCase.class));
 
-            caseObj.setLitigants(joinCaseRequest.getLitigant());
-            verifyAndEnrichLitigant(joinCaseRequest, courtCase, caseObj, auditDetails);
+            log.info("Pushing litigant join case representative details :: {}", representatives);
+            producer.push(config.getCaseUpdateTopic(), caseRequest);
         }
+
+        for (Party litigant : joinCaseRequest.getLitigant()) {
+            if (litigant.getIndividualId() != null && individualIds.contains(litigant.getIndividualId()) && !joinCaseRequest.getIsLitigantPIP()) {
+                throw new CustomException(VALIDATION_ERR, "Litigant is already a part of the given case");
+            }
+        }
+
+        caseObj.setLitigants(joinCaseRequest.getLitigant());
+        verifyAndEnrichLitigant(joinCaseRequest, courtCase, caseObj, auditDetails);
     }
 
     private @NotNull CourtCase validateAccessCodeAndReturnCourtCase(JoinCaseRequest joinCaseRequest, List<CaseCriteria> existingApplications) {
@@ -1054,7 +1092,7 @@ public class CaseService {
                     ObjectNode dataNode2 = (ObjectNode) formData2.get(i).path("data");
                     if (dataNode1.has("respondentVerification")) {
                         JsonNode individualDetails1 = dataNode1.path("respondentVerification").path("individualDetails");
-                        for (Party litigant : litigants){
+                        for (Party litigant : litigants) {
                             if (individualDetails1.has("individualId") && litigant.getIndividualId().equals(individualDetails1.get("individualId").asText())) {
                                 // Set or remove fields in dataNode2 based on dataNode1
                                 setOrRemoveField(dataNode1, dataNode2, "respondentLastName");
@@ -1070,7 +1108,7 @@ public class CaseService {
                 throw new CustomException(VALIDATION_ERR, "formdata is not found or is not an array in one of the respondentDetails objects.");
             }
         } else {
-           // throw new CustomException(VALIDATION_ERR, "respondentDetails not found in one of the additional details objects.");
+            // throw new CustomException(VALIDATION_ERR, "respondentDetails not found in one of the additional details objects.");
         }
 
         // Convert the updated ObjectNode back to its original form

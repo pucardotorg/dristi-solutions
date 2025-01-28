@@ -30,9 +30,11 @@ import org.pucar.dristi.enrichment.CaseRegistrationEnrichment;
 import org.pucar.dristi.enrichment.EnrichmentService;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.CaseRepository;
+import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.util.AdvocateUtil;
 import org.pucar.dristi.util.BillingUtil;
 import org.pucar.dristi.util.EncryptionDecryptionUtil;
+import org.pucar.dristi.util.TaskUtil;
 import org.pucar.dristi.validators.CaseRegistrationValidator;
 import org.pucar.dristi.web.OpenApiCaseSummary;
 import org.pucar.dristi.web.models.*;
@@ -71,7 +73,13 @@ public class CaseServiceTest {
     private AdvocateUtil advocateUtil;
 
     @Mock
+    private TaskUtil taskUtil;
+
+    @Mock
     private EnrichmentService enrichmentService;
+
+    @Mock
+    private ServiceRequestRepository repository;
 
 
     @InjectMocks
@@ -123,7 +131,7 @@ public class CaseServiceTest {
         courtCase = new CourtCase();
         objectMapper = new ObjectMapper();
         enrichmentService = new EnrichmentService(new ArrayList<>());
-        caseService = new CaseService(validator,enrichmentUtil,caseRepository,workflowService,config,producer,new BillingUtil(new RestTemplate(),config),encryptionDecryptionUtil,objectMapper,cacheService,enrichmentService, notificationService, individualService, advocateUtil);
+        caseService = new CaseService(validator,enrichmentUtil,caseRepository,workflowService,config,producer,taskUtil,new BillingUtil(new RestTemplate(),config),encryptionDecryptionUtil,objectMapper,cacheService,enrichmentService, notificationService, individualService, advocateUtil);
     }
 
     CaseCriteria setupTestCaseCriteria(CourtCase courtCase) {
@@ -164,7 +172,7 @@ public class CaseServiceTest {
         joinCaseRequest.setCaseFilingNumber("12345");
         joinCaseRequest.setAccessCode("validAccessCode");
         assertThrows(CustomException.class, () -> {
-            caseService.verifyJoinCaseRequest(joinCaseRequest);
+            caseService.verifyJoinCaseRequest(joinCaseRequest,true);
         });
 
     }
@@ -184,7 +192,7 @@ public class CaseServiceTest {
         CaseCriteria caseCriteria = setupTestCaseCriteria(courtCase); // or false for CaseNotFound scenario
         when(caseRepository.getCases(anyList(), any())).thenReturn(Collections.singletonList(caseCriteria));
         assertThrows(CustomException.class, () -> {
-            caseService.verifyJoinCaseRequest(joinCaseRequest);
+            caseService.verifyJoinCaseRequest(joinCaseRequest,true);
         });
     }
 
@@ -213,7 +221,7 @@ public class CaseServiceTest {
         when(config.getCaseDecryptSelf()).thenReturn("CaseDecryptSelf");
 
         CustomException exception = assertThrows(CustomException.class, () -> {
-            caseService.verifyJoinCaseRequest(joinCaseRequest);
+            caseService.verifyJoinCaseRequest(joinCaseRequest,true);
         });
 
         assertEquals(VALIDATION_ERR, exception.getCode());
@@ -239,7 +247,7 @@ public class CaseServiceTest {
         when(encryptionDecryptionUtil.decryptObject(any(CourtCase.class), any(String.class), eq(CourtCase.class), any(RequestInfo.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
         when(config.getCaseDecryptSelf()).thenReturn("CaseDecryptSelf");
-        CustomException exception = assertThrows(CustomException.class, () -> caseService.verifyJoinCaseRequest(joinCaseRequest));
+        CustomException exception = assertThrows(CustomException.class, () -> caseService.verifyJoinCaseRequest(joinCaseRequest,true));
 
         assertEquals("VALIDATION_EXCEPTION", exception.getCode());
         assertEquals("Access code not generated", exception.getMessage());
@@ -274,7 +282,7 @@ public class CaseServiceTest {
         when(config.getCaseDecryptSelf()).thenReturn("CaseDecryptSelf");
 
         CustomException exception = assertThrows(CustomException.class, () -> {
-            caseService.verifyJoinCaseRequest(joinCaseRequest);
+            caseService.verifyJoinCaseRequest(joinCaseRequest,true);
         });
 
         assertEquals("Advocate is already a part of the given case", exception.getMessage());
@@ -379,7 +387,7 @@ public class CaseServiceTest {
         doNothing().when(cacheService).save(any(),any());
 
         // Call the method
-        JoinCaseResponse response = caseService.verifyJoinCaseRequest(joinCaseRequest);
+        JoinCaseResponse response = caseService.verifyJoinCaseRequest(joinCaseRequest,true);
 
         // Verify the results
         assertNotNull(response);
@@ -473,7 +481,7 @@ public class CaseServiceTest {
 
         doNothing().when(cacheService).save(any(),any());
 
-        JoinCaseResponse response = caseService.verifyJoinCaseRequest(joinCaseRequest);
+        JoinCaseResponse response = caseService.verifyJoinCaseRequest(joinCaseRequest,true);
         assertEquals("validAccessCode", response.getJoinCaseRequest().getAccessCode());
         assertEquals("12345", response.getJoinCaseRequest().getCaseFilingNumber());
         assertEquals(litigant, response.getJoinCaseRequest().getLitigant().get(0));
@@ -513,7 +521,7 @@ public class CaseServiceTest {
         courtCase.setRepresentatives(Collections.singletonList(advocateMapping));
 
         // When
-       CustomException exception = assertThrows(CustomException.class, ()->caseService.verifyJoinCaseRequest(joinCaseRequest));
+       CustomException exception = assertThrows(CustomException.class, ()->caseService.verifyJoinCaseRequest(joinCaseRequest,true));
        assertEquals("Invalid request for joining a case",exception.getMessage());
     }
 

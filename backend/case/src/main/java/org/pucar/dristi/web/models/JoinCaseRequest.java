@@ -45,6 +45,9 @@ public class JoinCaseRequest {
     @JsonProperty("isLitigantPIP")
     private Boolean isLitigantPIP = false;
 
+    @JsonProperty("consumerCode")
+    private String consumerCode = null;
+
     @JsonProperty("additionalDetails")
     private Object additionalDetails = null;
 
