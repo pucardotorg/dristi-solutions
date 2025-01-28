@@ -163,7 +163,7 @@ public class OrderRegistrationService {
         if(orderType.equalsIgnoreCase(JUDGEMENT) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
             return CASE_DECISION_AVAILABLE;
         }
-        if(orderType.equalsIgnoreCase(INITIATING_RESCHEDULING_OF_HEARING_DATE) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
+        if(orderType.equalsIgnoreCase(ASSIGNING_DATE_RESCHEDULED_HEARING) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
             return HEARING_RESCHEDULED;
         }
         if(orderType.equalsIgnoreCase(WARRANT) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
@@ -213,12 +213,15 @@ public class OrderRegistrationService {
             Set<String> individualIds = extractIndividualIds(caseDetails, receiver);
 
             Set<String> phonenumbers = callIndividualService(orderRequest.getRequestInfo(), individualIds);
+            String hearingDate = formData.has("hearingDate") ? formData.get("hearingDate").asText()
+                    : formData.has("newHearingDate") ? formData.get("newHearingDate").asText()
+                    : "";
 
             SmsTemplateData smsTemplateData = SmsTemplateData.builder()
                     .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").asText() : "")
                     .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").asText() : "")
-                    .hearingDate(formData.has("hearingDate") ? formData.get("hearingDate").asText() : "")
-                    .submissionDate(orderDetails.has("dates") ? orderDetails.get("dates").get("submissionDeadlineDate").asText() : "")
+                    .hearingDate(hearingDate)
+                    .submissionDate(formData.has("submissionDeadline") ? formData.get("submissionDeadline").asText() : "")
                     .tenantId(orderRequest.getOrder().getTenantId()).build();
 
             for (String number : phonenumbers) {

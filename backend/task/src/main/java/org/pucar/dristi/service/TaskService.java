@@ -239,7 +239,7 @@ public class TaskService {
 
         if (litigantNode.isArray()) {
             for (JsonNode node : litigantNode) {
-                if (!node.get("partyType").asText().contains("complainant")) {
+                if (node.get("partyType").asText().contains("complainant")) {
                     String uuid = node.path("additionalDetails").get("uuid").asText();
                     if (!uuid.isEmpty() ) {
                         uuids.add(uuid);
