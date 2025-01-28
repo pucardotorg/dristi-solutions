@@ -118,6 +118,8 @@ public class HearingService {
             hearingRequest.setHearing(hearing);
             workflowService.updateWorkflowStatus(hearingRequest);
 
+            log.info("Hearing Request after workflow update: {}", hearingRequest);
+
             // Enrich application upon update
             enrichmentUtil.enrichHearingApplicationUponUpdate(hearingRequest);
 
@@ -243,6 +245,7 @@ public class HearingService {
 
             String messageCode = updatedState != null ? getMessageCode(updatedState, caseAdjourned) : null;
             assert messageCode != null;
+            log.info("Message code: {}", messageCode);
 
             String hearingDate = hearingRequest.getHearing().getStartTime() != null ? hearingRequest.getHearing().getStartTime().toString() : "";
 
@@ -275,6 +278,7 @@ public class HearingService {
     }
     private String getMessageCode(String updatedStatus, Boolean hearingAdjourned) {
 
+        log.info("Operation: getMessage, UpdatedStatus: {}", updatedStatus);
         if(hearingAdjourned && updatedStatus.equalsIgnoreCase(COMPLETED)){
             return HEARING_ADJOURNED;
         }
