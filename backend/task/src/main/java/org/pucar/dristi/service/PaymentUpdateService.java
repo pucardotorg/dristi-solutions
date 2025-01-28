@@ -211,18 +211,18 @@ public class PaymentUpdateService {
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
                 }
-//                case JOIN_CASE_TASK -> {
-//                    Workflow workflow = new Workflow();
-//                    workflow.setAction("CLOSE");
-//                    task.setWorkflow(workflow);
-//
-//                    String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, task.getTaskNumber(),
-//                            config.getTaskBusinessServiceName(), workflow, config.getTaskBusinessName());
-//                    task.setStatus(status);
-//
-//                    TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
-//                    producer.push(config.getTaskJoinCaseUpdateTopic(), taskRequest);
-//                }
+                case JOIN_CASE_TASK -> {
+                    Workflow workflow = new Workflow();
+                    workflow.setAction("CLOSE");
+                    task.setWorkflow(workflow);
+
+                    String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, task.getTaskNumber(),
+                            config.getTaskBusinessServiceName(), workflow, config.getTaskBusinessName());
+                    task.setStatus(status);
+
+                    TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
+                    producer.push(config.getTaskJoinCaseUpdateTopic(), taskRequest);
+                }
             }
         }
     }
