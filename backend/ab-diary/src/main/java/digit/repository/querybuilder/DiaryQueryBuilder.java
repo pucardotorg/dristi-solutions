@@ -59,6 +59,14 @@ public class DiaryQueryBuilder {
                 query.append("dcd.judge_id = ?");
                 preparedStatementValues.add(searchCriteria.getJudgeId());
                 preparedStatementTypeValues.add(Types.VARCHAR);
+                firstCriteria =false;
+            }
+
+            if (searchCriteria.getDiaryType() != null) {
+                addWhereClause(query,firstCriteria);
+                query.append("dcd.diary_type = ?");
+                preparedStatementValues.add(searchCriteria.getDiaryType());
+                preparedStatementTypeValues.add(Types.VARCHAR);
             }
         }
 

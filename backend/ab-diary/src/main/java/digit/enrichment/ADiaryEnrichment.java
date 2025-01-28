@@ -4,6 +4,7 @@ import digit.util.ADiaryUtil;
 import digit.web.models.CaseDiary;
 import digit.web.models.CaseDiaryRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
@@ -31,10 +32,11 @@ public class ADiaryEnrichment {
 
             diary.setId(aDiaryUtil.generateUUID());
 
-            diary.getAuditDetails().setCreatedTime(aDiaryUtil.getCurrentTimeInMilliSec());
-            diary.getAuditDetails().setLastModifiedTime(aDiaryUtil.getCurrentTimeInMilliSec());
-            diary.getAuditDetails().setCreatedBy(user.getUuid());
-            diary.getAuditDetails().setLastModifiedBy(user.getUuid());
+            AuditDetails auditDetails = AuditDetails.builder().createdBy(user.getUuid()).lastModifiedBy(user.getUuid())
+                    .createdTime(aDiaryUtil.getCurrentTimeInMilliSec()).lastModifiedTime(aDiaryUtil.getCurrentTimeInMilliSec())
+                    .build();
+
+            diary.setAuditDetails(auditDetails);
 
         } catch (Exception e) {
             log.error("Error occurred during enriching diary");
