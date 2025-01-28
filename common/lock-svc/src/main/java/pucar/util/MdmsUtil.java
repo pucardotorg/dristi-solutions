@@ -1,21 +1,21 @@
-package org.drishti.esign.util;
+package pucar.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
-import org.drishti.esign.config.Configuration;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.mdms.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import pucar.config.Configuration;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.drishti.esign.config.ServiceConstants.ERROR_WHILE_FETCHING_FROM_MDMS;
+import static pucar.config.ServiceConstants.ERROR_WHILE_FETCHING_FROM_MDMS;
 
 @Slf4j
 @Component
@@ -37,6 +37,7 @@ public class MdmsUtil {
         uri.append(configs.getMdmsHost()).append(configs.getMdmsEndPoint());
         MdmsCriteriaReq mdmsCriteriaReq = getMdmsRequest(requestInfo, tenantId, moduleName, masterNameList);
         Object response = new HashMap<>();
+        Integer rate = 0;
         MdmsResponse mdmsResponse = new MdmsResponse();
         try {
             response = restTemplate.postForObject(uri.toString(), mdmsCriteriaReq, Map.class);
@@ -46,6 +47,7 @@ public class MdmsUtil {
         }
 
         return mdmsResponse.getMdmsRes();
+        //log.info(ulbToCategoryListMap.toString());
     }
 
     private MdmsCriteriaReq getMdmsRequest(RequestInfo requestInfo, String tenantId,
