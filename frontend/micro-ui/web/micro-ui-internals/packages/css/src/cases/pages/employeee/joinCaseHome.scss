@@ -1,4 +1,3 @@
-.payment-due-wrapper,
 .enter-validation-code,
 .view-document-vak,
 .general-details-vek,
@@ -86,6 +85,11 @@
   width: 50%;
   .popup-module-main {
     position: relative !important;
+    .payment-due-wrapper {
+      display: flex;
+      flex-direction: column;
+      width: 536px;
+    }
   }
   .skip-button {
     position: absolute;
@@ -184,6 +188,24 @@
   gap: 24px !important;
 }
 
+.select-user-join-case {
+  .party-in-person-affidavit-upload {
+    .card {
+      min-width: 100%;
+      padding: 0px;
+      margin: 0px;
+      .label-field-pair {
+        .field {
+          .uploaded-file-div-main {
+            &.upload-successful {
+              margin-bottom: 16px;
+            }
+          }
+        }
+      }
+    }
+  }
+}
 .general-details-vek {
   .primary-advocate-details {
     .contact-text {
