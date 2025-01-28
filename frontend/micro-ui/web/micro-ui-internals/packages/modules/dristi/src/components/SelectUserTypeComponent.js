@@ -231,6 +231,7 @@ const SelectUserTypeComponent = ({ t, config, onSelect, formData = {}, errors, f
                       customClass={input?.customClass}
                       containerStyles={{ ...input?.containerStyles }}
                       requestSpecifcFileRemoval={removeFile}
+                      multiple={input?.multiple !== undefined ? input?.multiple : true}
                     />
                   )}
                   {showDoc && input?.type === "documentUpload" && showUploadedDocument}

@@ -859,6 +859,7 @@ const EvidenceModal = ({
                   disableMandatoryFieldFor: ["aadharNumber"],
                   errorMessage: "CUSTOM_DOCUMENT_ERROR_MSG",
                   disableFormValidation: false,
+                  multiple: false,
                 },
               ],
               validation: {},
