@@ -17,6 +17,10 @@ import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -248,6 +252,9 @@ public class HearingService {
             log.info("Message code: {}", messageCode);
 
             String hearingDate = hearingRequest.getHearing().getStartTime() != null ? hearingRequest.getHearing().getStartTime().toString() : "";
+            LocalDateTime dateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(Long.parseLong(hearingDate)), ZoneId.systemDefault());
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DOB_FORMAT_D_M_Y);
+            String date = dateTime.format(formatter);
 
             Set<String> individualIds = extractIndividualIds(caseDetails);
 
@@ -256,7 +263,7 @@ public class HearingService {
             SmsTemplateData smsTemplateData = SmsTemplateData.builder()
                     .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").asText() : "")
                     .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").asText() : "")
-                    .hearingDate(hearingDate)
+                    .hearingDate(date)
                     .tenantId(hearingRequest.getHearing().getTenantId()).build();
 
             for (String number : phoneNumbers) {
