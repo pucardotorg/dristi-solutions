@@ -137,7 +137,7 @@ public class SmsNotificationUtil {
         if(!isVoluntarySubmission && applicationType.equalsIgnoreCase(PRODUCTION_DOCUMENTS) && updatedStatus.equalsIgnoreCase(PENDINGRESPONSE)){
             return RESPONSE_REQUIRED;
         }
-        if(isVoluntarySubmission && !DEFINED_VOLUNTARY_SUBMISSIONS.contains(applicationType) && updatedStatus.equalsIgnoreCase(PENDINGREVIEW)){
+        if(isVoluntarySubmission && !DEFINED_VOLUNTARY_SUBMISSIONS.contains(applicationType) && (updatedStatus.equalsIgnoreCase(PENDINGREVIEW) || updatedStatus.equalsIgnoreCase(PENDINGAPPROVAL))){
             if(applicationType.equalsIgnoreCase(OTHERS)) {
                 return VOLUNTARY_SUBMISSION_SUBMITTED;
             } else {

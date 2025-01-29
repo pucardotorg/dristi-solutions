@@ -488,7 +488,7 @@ public class CaseService {
         else if(previousStatus.equalsIgnoreCase(PENDING_RESPONSE) && updatedStatus.equalsIgnoreCase(CASE_ADMITTED)){
             return CASE_ADMITTED;
         }
-        else if(previousStatus.equalsIgnoreCase(PENDING_RESPONSE) && updatedStatus.equalsIgnoreCase(CASE_DISMISSED)){
+        else if((previousStatus.equalsIgnoreCase(PENDING_RESPONSE) || previousStatus.equalsIgnoreCase(PENDING_NOTICE)) && updatedStatus.equalsIgnoreCase(CASE_DISMISSED)){
             return CASE_DISMISSED;
         }
         return null;
