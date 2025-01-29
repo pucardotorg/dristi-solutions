@@ -30,6 +30,7 @@ import useSummonsPaymentBreakUp from "./dristi/useSummonsPaymentBreakUp.js";
 import { extractFeeMedium, getTaskType, combineMultipleFiles, getFilingType } from "../Utils/index.js";
 import useRepondentPincodeDetails from "./dristi/useRepondentPincodeDetails.js";
 import downloadPdfFromFile from "../Utils/downloadPdfFromFile.js";
+import useGetAllAdvocates from "./dristi/useGetAllAdvocates.js";
 
 export const Urls = {
   Authenticate: "/user/oauth/token",
@@ -41,6 +42,7 @@ export const Urls = {
     searchIndividualClerk: "/advocate/clerk/v1/_search",
     updateAdvocateDetails: "/advocate/v1/_update",
     caseCreate: "/case/v1/_create",
+    searchAllAdvocates: "/advocate/v1/status/_search",
     caseUpdate: "/case/v1/_update",
     caseSearch: "/case/v1/_search",
     casePfGeneration: "/case/v1/_generatePdf",
@@ -75,6 +77,9 @@ export const Urls = {
     summonsPayment: "/payment-calculator/v1/_calculate",
     repondentPincodeSearch: "/payment-calculator/hub/v1/_search",
     downloadCaseBundle: "/casemanagement/casemanager/case/v1/_buildcasebundle",
+    setCaseUnlock: "/lock-svc/v1/_release",
+    getCaseLockStatus: "/lock-svc/v1/_get",
+    setCaseLock: "/lock-svc/v1/_set",
   },
   case: {
     addWitness: "/case/v1/add/witness",
@@ -111,6 +116,7 @@ const dristi = {
   useSummonsPaymentBreakUp,
   useRepondentPincodeDetails,
   downloadPdfFromFile,
+  useGetAllAdvocates,
 };
 
 const Hooks = {
