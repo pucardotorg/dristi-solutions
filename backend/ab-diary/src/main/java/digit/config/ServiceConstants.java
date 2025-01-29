@@ -63,4 +63,6 @@ public class ServiceConstants {
     public static final String WORKFLOW_SERVICE_EXCEPTION = "WORKFLOW_SERVICE_EXCEPTION";
 
     public static final String ERROR_FROM_CASE = "ERROR_WHILE_FETCHING_FROM_CASE_SERVICE";
+
+    public static final String SIGN_ACTION = "SIGN";
 }

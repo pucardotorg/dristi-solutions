@@ -14,15 +14,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.models.Document;
+import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.text.SimpleDateFormat;
 
 import static digit.config.ServiceConstants.*;
@@ -93,16 +91,18 @@ public class DiaryService {
 
             enrichment.enrichUpdateCaseDiary(caseDiaryRequest);
 
-            if (caseDiaryRequest.getDiary().getWorkflow() != null) {
-                workflowService.updateWorkflowStatus(caseDiaryRequest);
+
+            Workflow workflow = caseDiaryRequest.getDiary().getWorkflow();
+
+            if (workflow == null) {
+                Workflow workflowWithSignAction = Workflow.builder().action(SIGN_ACTION).build();
+                caseDiaryRequest.getDiary().setWorkflow(workflowWithSignAction);
             }
 
-            if (caseDiaryRequest.getDiary().getDocuments() == null) {
-                producer.push(configuration.getADiaryUpdateTopic(), caseDiaryRequest);
-            }
-            else {
-                producer.push(configuration.);
-            }
+            workflowService.updateWorkflowStatus(caseDiaryRequest);
+
+            producer.push(configuration.getDiaryUpdateTopic(), caseDiaryRequest);
+
         } catch (CustomException e) {
             log.error("Custom exception occurred while updating diary");
             throw e;
@@ -126,74 +126,60 @@ public class DiaryService {
 
             CaseDiaryRequest caseDiaryRequest = CaseDiaryRequest.builder().requestInfo(generateRequest.getRequestInfo()).diary(generateRequest.getDiary()).build();
 
-            CaseDiaryListItem caseDiaryListItem = validator.validateSaveDiary(caseDiaryRequest);
+            List<CourtCase> caseListResponse = caseUtil.getCaseDetails(generateRequest);
 
-            if (caseDiaryListItem == null) {
+            String cmpNumber = null;
+            String courtCaseNumber = null;
+            if (caseListResponse != null) {
+                cmpNumber = caseListResponse.get(0).getCmpNumber();
+                courtCaseNumber = caseListResponse.get(0).getCourtCaseNumber();
+            }
 
-                enrichment.enrichSaveCaseDiary(caseDiaryRequest);
+            CaseDiarySearchRequest caseDiarySearchRequest = buildCaseDiarySearchRequest(generateRequest, cmpNumber);
+            List<CaseDiaryEntry> caseDiaryEntries = new ArrayList<>(diaryEntryService.searchDiaryEntries(caseDiarySearchRequest));
+            caseDiarySearchRequest = buildCaseDiarySearchRequest(generateRequest, courtCaseNumber);
+            caseDiaryEntries.addAll(diaryEntryService.searchDiaryEntries(caseDiarySearchRequest));
 
-                List<CourtCase> caseListResponse = caseUtil.getCaseDetails(generateRequest);
-
-                String cmpNumber = null;
-                String courtCaseNumber = null;
-                if (caseListResponse != null) {
-                    cmpNumber = caseListResponse.get(0).getCmpNumber();
-                    courtCaseNumber = caseListResponse.get(0).getCourtCaseNumber();
+            caseDiaryEntries.forEach(entry -> {
+                if (entry.getHearingDate() != null) {
+                    Date date = new Date(entry.getHearingDate());
+                    entry.setDate(dateFormat.format(date));
                 }
+            });
 
-                CaseDiarySearchRequest caseDiarySearchRequest = buildCaseDiarySearchRequest(generateRequest,cmpNumber);
-                List<CaseDiaryEntry> caseDiaryEntries = new ArrayList<>(diaryEntryService.searchDiaryEntries(caseDiarySearchRequest));
-                caseDiarySearchRequest = buildCaseDiarySearchRequest(generateRequest,courtCaseNumber);
-                caseDiaryEntries.addAll(diaryEntryService.searchDiaryEntries(caseDiarySearchRequest));
+            CaseDiary caseDiary = caseDiaryRequest.getDiary();
 
-                caseDiaryEntries.forEach(entry -> {
-                    if (entry.getHearingDate() != null) {
-                        Date date = new Date(entry.getHearingDate());
-                        entry.setDate(dateFormat.format(date));
-                    }
-                });
+            caseDiary.setCaseDiaryEntries(caseDiaryEntries);
+            caseDiary.setDate(dateFormat.format(new Date(caseDiary.getDiaryDate())));
+            generateRequest.setDiary(caseDiary);
 
-                CaseDiary caseDiary = caseDiaryRequest.getDiary();
+            ByteArrayResource byteArrayResource = generateCaseDiary(caseDiary, generateRequest.getRequestInfo());
+            Document document = fileStoreUtil.saveDocumentToFileStore(byteArrayResource, generateRequest.getDiary().getTenantId());
 
-                caseDiary.setCaseDiaryEntries(caseDiaryEntries);
-                caseDiary.setDate(dateFormat.format(new Date(caseDiary.getDiaryDate())));
-                generateRequest.setDiary(caseDiary);
+            CaseDiaryDocumentItem caseDiaryDocumentItem = validator.validateSaveDiary(caseDiaryRequest);
 
-                ByteArrayResource byteArrayResource = generateCaseDiary(caseDiary, generateRequest.getRequestInfo());
-                Document document = fileStoreUtil.saveDocumentToFileStore(byteArrayResource, generateRequest.getDiary().getTenantId());
-
+            if (caseDiaryDocumentItem == null) {
+                enrichment.enrichSaveCaseDiary(caseDiaryRequest);
                 CaseDiaryDocument caseDiaryDocument = getCaseDiaryDocument(generateRequest, document);
                 generateRequest.getDiary().addDocumentsItem(caseDiaryDocument);
-
-//            workflowService.updateWorkflowStatus(caseDiaryRequest);
-
+//                workflowService.updateWorkflowStatus(caseDiaryRequest);
                 producer.push(configuration.getCaseDiaryTopic(), caseDiaryRequest);
-                log.info("operation = generateDiary ,  result = SUCCESS , CaseDiaryGenerateRequest : {} ", generateRequest);
 
-                return document.getFileStore();
+            } else {
+                enrichment.enrichUpdateCaseDiary(caseDiaryRequest);
+                caseDiary.setId(caseDiaryDocumentItem.getDiaryId());
+                CaseDiaryDocument caseDiaryDocument = getCaseDiaryDocument(generateRequest, document);
+                AuditDetails auditDetails = caseDiaryDocument.getAuditDetails();
+                auditDetails.setCreatedTime(caseDiaryDocumentItem.getDocumentAuditDetails().getCreatedTime());
+                auditDetails.setCreatedBy(caseDiaryDocumentItem.getDocumentAuditDetails().getCreatedBy());
+                caseDiaryDocument.setAuditDetails(auditDetails);
+                generateRequest.getDiary().addDocumentsItem(caseDiaryDocument);
+                CaseDiaryDocument diaryDocument = caseDiary.getDocuments().get(0);
+                diaryDocument.setId(UUID.fromString(caseDiaryDocumentItem.getDocumentId()));
+                producer.push(configuration.getDiaryUpdateTopic(), caseDiaryRequest);
             }
-            else {
-
-                CaseDiaryDocument caseDiaryDocument = CaseDiaryDocument.builder()
-                        .fileStoreId(caseDiaryListItem.getFileStoreID())
-                        .caseDiaryId(caseDiaryListItem.getDiaryId().toString())
-                        .build();
-
-                CaseDiary caseDiary = CaseDiary.builder().id(caseDiaryListItem.getDiaryId())
-                        .diaryDate(caseDiaryListItem.getDate())
-                        .tenantId(caseDiaryListItem.getTenantId())
-                        .diaryType(caseDiaryListItem.getDiaryType())
-                        .documents(Collections.singletonList(caseDiaryDocument))
-                        .build();
-
-                CaseDiaryRequest diaryRequest = CaseDiaryRequest.builder()
-                        .diary(caseDiary)
-                        .build();
-
-
-                updateDiary(diaryRequest);
-            }
-
+            log.info("operation = generateDiary ,  result = SUCCESS , CaseDiaryGenerateRequest : {} ", generateRequest);
+            return document.getFileStore();
 
         } catch (CustomException e) {
             log.error("Custom exception while generating diary");
@@ -202,11 +188,9 @@ public class DiaryService {
             throw new CustomException(DIARY_GENERATE_EXCEPTION, "Error while generating diary");
         }
 
-        return null;
-
     }
 
-    public CaseDiarySearchRequest buildCaseDiarySearchRequest(CaseDiaryGenerateRequest generateRequest,String caseId) {
+    public CaseDiarySearchRequest buildCaseDiarySearchRequest(CaseDiaryGenerateRequest generateRequest, String caseId) {
         return CaseDiarySearchRequest.builder().requestInfo(generateRequest.getRequestInfo())
                 .criteria(CaseDiarySearchCriteria.builder()
                         .caseId(caseId)

@@ -55,8 +55,12 @@ public class ADiaryEnrichment {
             RequestInfo requestInfo = caseDiaryRequest.getRequestInfo();
             User user = requestInfo.getUserInfo();
 
-            diary.getAuditDetails().setLastModifiedTime(aDiaryUtil.getCurrentTimeInMilliSec());
-            diary.getAuditDetails().setLastModifiedBy(user.getUuid());
+            AuditDetails auditDetails = AuditDetails.builder()
+                    .lastModifiedBy(user.getUuid())
+                    .lastModifiedTime(aDiaryUtil.getCurrentTimeInMilliSec())
+                    .build();
+
+            diary.setAuditDetails(auditDetails);
 
         } catch (Exception e) {
             log.error("Error occurred during enriching diary");

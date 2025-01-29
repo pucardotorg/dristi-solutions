@@ -93,13 +93,13 @@ public class Configuration {
 
     //DiaryEntry Create topic
     @Value("${diaryentry.kafka.create.topic}")
-    private String aDiaryEntryCreateTopic;
+    private String diaryEntryCreateTopic;
 
     @Value("${diaryentry.kafka.update.topic}")
-    private String aDiaryEntryUpdateTopic;
+    private String diaryEntryUpdateTopic;
 
     @Value("${diary.kafka.update.topic}")
-    private String aDiaryUpdateTopic;
+    private String diaryUpdateTopic;
 
     // Filestore Config
     @Value("${egov.filestore.host}")
@@ -114,7 +114,7 @@ public class Configuration {
     @Value("${egov.filestore.caseDiary.module}")
     private String fileStoreCaseDiaryModule;
 
-    @Value("${caseDiary.save.topic}")
+    @Value("${caseDiary.create.topic}")
     private String caseDiaryTopic;
 
     //court details

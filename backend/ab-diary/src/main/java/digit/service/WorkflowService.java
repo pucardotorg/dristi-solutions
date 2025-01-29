@@ -77,8 +77,9 @@ public class WorkflowService {
             Workflow workflow = diary.getWorkflow();
             ProcessInstance processInstance = new ProcessInstance();
             if (StringUtils.equals(diary.getDiaryType().toLowerCase(), "adiary")) {
-                processInstance.setBusinessId(String.valueOf(diary.getDiaryDate()));
+                processInstance.setBusinessId(diary.getJudgeId() + "-" + diary.getDiaryDate());
             } else if (StringUtils.equals(diary.getDiaryType().toLowerCase(), "bdiary")) {
+                // TODO check with atul about courtRoom issue
                 processInstance.setBusinessId(String.valueOf(diary.getCaseNumber()));
             }
             processInstance.setAction(workflow.getAction());
