@@ -610,8 +610,8 @@ const EvidenceModal = ({
                   displayFilename={docs?.additionalDetails?.name}
                   tenantId={tenantId}
                   docWidth={"calc(80vw * 62 / 100)"}
-                  docHeight={"60vh"}
                   showDownloadOption={false}
+                  docHeight={"unset"}
                   documentName={docs?.additionalDetails?.name}
                 />
               </div>
@@ -854,11 +854,14 @@ const EvidenceModal = ({
                   type: "documentUpload",
                   name: "doc",
                   validation: {},
-                  allowedFileTypes: /(.*?)(png|jpg|pdf)$/i,
+                  allowedFileTypes: /(.*?)(pdf)$/i,
                   isMandatory: true,
                   disableMandatoryFieldFor: ["aadharNumber"],
                   errorMessage: "CUSTOM_DOCUMENT_ERROR_MSG",
+                  notSupportedError: "ALLOW_PDF_TYPE",
+                  noteMsg: "CS_DOCUMENT_PDF_TYPE",
                   disableFormValidation: false,
+                  multiple: false,
                 },
               ],
               validation: {},

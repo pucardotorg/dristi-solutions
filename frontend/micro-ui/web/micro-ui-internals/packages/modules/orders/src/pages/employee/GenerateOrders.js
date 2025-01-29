@@ -55,6 +55,11 @@ import useSearchOrdersService from "../../hooks/orders/useSearchOrdersService";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { constructFullName, removeInvalidNameParts } from "../../utils";
 
+const stateSla = {
+  SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
+  NOTICE: 3 * 24 * 3600 * 1000,
+};
+
 const configKeys = {
   SECTION_202_CRPC: configsOrderSection202CRPC,
   MANDATORY_SUBMISSIONS_RESPONSES: configsOrderMandatorySubmissions,
@@ -778,6 +783,12 @@ const GenerateOrders = () => {
             body.populators.validation = {
               ...body.populators.validation,
               ...customValidations(),
+            };
+          }
+          if (body?.labelChildren === "optional") {
+            return {
+              ...body,
+              labelChildren: <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>,
             };
           }
           return {
@@ -2303,6 +2314,28 @@ const GenerateOrders = () => {
                 { tenantId, hearing: hearingData, hearingType: "", status: "" },
                 { applicationNumber: "", cnrNumber: "" }
               );
+            }
+            if (currentOrder.additionalDetails?.formdata?.isCaseAdmittedOrDismissed?.code !== "DISMISSED") {
+              try {
+                DRISTIService.customApiService(Urls.orders.pendingTask, {
+                  pendingTask: {
+                    name: "Schedule Hearing",
+                    entityType: "case-default",
+                    referenceId: `MANUAL_${caseDetails?.filingNumber}`,
+                    status: "SCHEDULE_HEARING",
+                    assignedTo: [],
+                    assignedRole: ["JUDGE_ROLE"],
+                    cnrNumber: caseDetails?.cnrNumber,
+                    filingNumber: caseDetails?.filingNumber,
+                    isCompleted: false,
+                    stateSla: todayDate + stateSla.SCHEDULE_HEARING,
+                    additionalDetails: {},
+                    tenantId,
+                  },
+                });
+              } catch (error) {
+                console.error("error :>> ", error);
+              }
             }
           }
         );

@@ -119,7 +119,9 @@ public class TaskService {
 
             producer.push(config.getTaskUpdateTopic(), body);
 
+            log.info("TaskRequest before calling notificationService: {}", body);
             String messageCode = status != null ? getMessageCode(taskType, status) : null;
+            log.info("Message Code :: {}", messageCode);
             if(messageCode != null){
                 callNotificationService(body, messageCode);
             }
@@ -237,7 +239,7 @@ public class TaskService {
 
         if (litigantNode.isArray()) {
             for (JsonNode node : litigantNode) {
-                if (!node.get("partyType").asText().contains("complainant")) {
+                if (node.get("partyType").asText().contains("complainant")) {
                     String uuid = node.path("additionalDetails").get("uuid").asText();
                     if (!uuid.isEmpty() ) {
                         uuids.add(uuid);
@@ -278,6 +280,7 @@ public class TaskService {
 
     private String getMessageCode(String taskType, String status) {
 
+        log.info("Operation: getMessageCode, Task Type :: {} and Status :: {}", taskType, status);
         if (NOTICE.equalsIgnoreCase(taskType) && DELIVERED.equalsIgnoreCase(status)) {
             return NOTICE_DELIVERED;
         }

@@ -548,6 +548,23 @@ function EFilingCases({ path }) {
     }
   }, [caseDetails, errorCaseDetails]);
 
+  const isDelayCondonation = useMemo(() => {
+    return caseDetails?.caseDetails?.["demandNoticeDetails"]?.formdata?.some((data) => {
+      const dateObj = new Date(data?.data?.dateOfAccrual);
+      const currentDate = new Date();
+      const monthDifference = currentDate.getMonth() - dateObj.getMonth() + (currentDate.getFullYear() - dateObj.getFullYear()) * 12;
+      if (monthDifference > 1) {
+        return true;
+      } else if (monthDifference === 0) {
+        return false;
+      } else if (currentDate.getDate() > dateObj.getDate()) {
+        return true;
+      } else {
+        return false;
+      }
+    });
+  }, [caseDetails]);
+
   const getDefaultValues = useCallback(
     (index) => {
       if (isCaseReAssigned && errorCaseDetails) {
@@ -570,11 +587,7 @@ function EFilingCases({ path }) {
       }
 
       if (caseDetails?.status === "DRAFT_IN_PROGRESS" && selected === "delayApplications") {
-        if (
-          caseDetails?.caseDetails?.["demandNoticeDetails"]?.formdata?.some(
-            (data) => new Date(data?.data?.dateOfAccrual).getTime() + 31 * 24 * 60 * 60 * 1000 < new Date().getTime()
-          )
-        ) {
+        if (isDelayCondonation) {
           const data = {
             ...caseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data,
             delayCondonationType: {
@@ -964,6 +977,7 @@ function EFilingCases({ path }) {
                 body?.isDocDependentOn &&
                 body?.isDocDependentKey &&
                 data?.[body?.isDocDependentOn]?.[body?.isDocDependentKey] &&
+                body?.key !== "proofOfReplyFileUpload" &&
                 body?.component === "SelectCustomDragDrop"
               ) {
                 body.isMandatory = true;
@@ -1145,12 +1159,7 @@ function EFilingCases({ path }) {
                   if (body?.key === "delayCondonationType") {
                     disableDelayCondonationType = true;
                   }
-                  if (
-                    body?.key === "isDcaSkippedInEFiling" &&
-                    caseDetails?.caseDetails?.["demandNoticeDetails"]?.formdata?.some(
-                      (data) => new Date(data?.data?.dateOfAccrual).getTime() + 31 * 24 * 60 * 60 * 1000 > new Date().getTime()
-                    )
-                  ) {
+                  if (body?.key === "isDcaSkippedInEFiling" && !isDelayCondonation) {
                     return {};
                   }
                 }
@@ -1992,14 +2001,6 @@ function EFilingCases({ path }) {
     history.push(`?caseId=${caseId}&selected=${key}`);
   };
 
-  const delayCondonation = useMemo(() => {
-    const today = new Date();
-    if (!caseDetails?.caseDetails?.["demandNoticeDetails"]?.formdata) {
-      return 0;
-    }
-    const dateOfAccrual = new Date(caseDetails?.caseDetails["demandNoticeDetails"]?.formdata[0]?.data?.dateOfAccrual);
-    return today?.getTime() - dateOfAccrual?.getTime();
-  }, [caseDetails]);
   const chequeDetails = useMemo(() => {
     const debtLiability = caseDetails?.caseDetails?.debtLiabilityDetails?.formdata?.[0]?.data;
     if (debtLiability?.liabilityType?.code === "PARTIAL_LIABILITY") {
@@ -2048,7 +2049,7 @@ function EFilingCases({ path }) {
             numberOfApplication: 1,
             tenantId: tenantId,
             caseId: caseId,
-            delayCondonation: delayCondonation,
+            isDelayCondonation: isDelayCondonation,
             filingNumber: caseDetails?.filingNumber,
           },
         ],
@@ -2072,7 +2073,7 @@ function EFilingCases({ path }) {
               taxHeadMasterCode: "CASE_ADVANCE_CARRYFORWARD",
               taxAmount: 4, // amount to be replaced with calculationResponse
               collectionAmount: 0,
-              delayCondonation: delayCondonation,
+              isDelayCondonation: isDelayCondonation,
             },
           ],
           additionalDetails: {
@@ -2081,7 +2082,7 @@ function EFilingCases({ path }) {
             cnrNumber: caseDetails?.cnrNumber,
             payer: caseDetails?.litigants?.[0]?.additionalDetails?.fullName,
             payerMobileNo: caseDetails?.additionalDetails?.payerMobileNo,
-            delayCondonation: delayCondonation,
+            isDelayCondonation: isDelayCondonation,
           },
         },
       ],

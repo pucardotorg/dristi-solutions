@@ -2,6 +2,13 @@ import { useEffect } from "react";
 import { useQuery, useQueryClient } from "react-query";
 import { Urls } from "../../../dristi/src/hooks";
 
+const createShorthand = (fullname) => {
+  const words = fullname?.split(" ");
+  const firstChars = words?.map((word) => word?.charAt(0));
+  const shorthand = firstChars?.join("");
+  return shorthand;
+};
+
 const usePreHearingModalData = ({ url, params, body, config = {}, plainAccessRequest, state, changeQueryName = "Random" }) => {
   const client = useQueryClient();
 
@@ -97,6 +104,10 @@ const usePreHearingModalData = ({ url, params, body, config = {}, plainAccessReq
       .map(([filingNumber, caseData]) => {
         const pendingTaskDetail = pendingTaskResponses.find((taskResponse) => taskResponse.filingNumber === filingNumber);
         const pendingTasksData = pendingTaskDetail ? pendingTaskDetail.data.length : 0;
+        const caseType = `${createShorthand(caseData?.statutesAndSections?.[0]?.sections?.[0])} S${
+          caseData?.statutesAndSections?.[0]?.subsections?.[0]
+        }`;
+        const caseNumber = caseData?.courtCaseNumber || caseData?.cmpNumber || "";
 
         return (
           filingNumberToHearing.get(filingNumber)?.map((hearing) => {
@@ -107,7 +118,8 @@ const usePreHearingModalData = ({ url, params, body, config = {}, plainAccessReq
               cnrNumber: caseData.cnrNumber,
               stage: caseData?.stage || "",
               subStage: caseData?.substage || "",
-              caseType: caseData?.caseType || "NIA S138",
+              caseType: caseType || "NIA S138",
+              caseNumber: caseNumber || "",
               pendingTasks: pendingTasksData || "-",
               hearingId: hearing.hearingId,
               hearing: hearing,
