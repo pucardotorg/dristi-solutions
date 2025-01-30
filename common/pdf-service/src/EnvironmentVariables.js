@@ -34,10 +34,10 @@ const envVariables = {
   DEFAULT_LOCALISATION_TENANT: process.env.DEFAULT_LOCALISATION_TENANT || "pb",
   DATA_CONFIG_URLS:
     process.env.DATA_CONFIG_URLS ||
-    "file:///home/beehyv/Desktop/kerala-configs/pdf-service/data-config/aDiary.json",
+    "https://raw.githubusercontent.com/pucardotorg/kerala-configs/develop/pdf-service/data-config/case.json",
   FORMAT_CONFIG_URLS:
     process.env.FORMAT_CONFIG_URLS ||
-    "file:///home/beehyv/Desktop/kerala-configs/pdf-service/format-config/aDiary.json",
+    "https://raw.githubusercontent.com/pucardotorg/kerala-configs/develop/pdf-service/format-config/case.json",
   STATE_LEVEL_TENANT_ID: "in.stateb",
   DEFAULT_VARIABLE_VALUE:
     process.env.DEFAULT_VARIABLE_VALUE === undefined ||
