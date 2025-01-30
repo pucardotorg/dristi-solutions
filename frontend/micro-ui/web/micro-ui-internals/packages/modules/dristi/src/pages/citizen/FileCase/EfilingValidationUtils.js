@@ -7,6 +7,15 @@ import { DocumentUploadError } from "../../../Utils/errorUtil";
 import { userTypeOptions } from "../registration/config";
 import { efilingDocumentKeyAndTypeMapping } from "./Config/efilingDocumentKeyAndTypeMapping";
 
+const formatName = (value, capitalize = true) => {
+  let cleanedValue = value
+    .replace(/[^a-zA-Z\s]/g, "")
+    .trimStart()
+    .replace(/ +/g, " ");
+
+  return capitalize ? cleanedValue.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase()) : cleanedValue;
+};
+
 export const showDemandNoticeModal = ({ selected, setValue, formData, setError, clearErrors, index, setServiceOfDemandNoticeModal, caseDetails }) => {
   if (selected === "demandNoticeDetails") {
     const totalCheques = caseDetails?.caseDetails?.["chequeDetails"]?.formdata && caseDetails?.caseDetails?.["chequeDetails"]?.formdata.length;
@@ -238,10 +247,7 @@ export const checkNameValidation = ({ formData, setValue, selected, reset, index
               value = value.slice(0, 100);
             }
 
-            let updatedValue = value
-              .replace(/[^a-zA-Z\s]/g, "")
-              .trimStart()
-              .replace(/ +/g, " ");
+            let updatedValue = formatName(value);
             if (updatedValue !== oldValue) {
               const element = document.querySelector(`[name="${key}"]`);
               const start = element?.selectionStart;
@@ -294,10 +300,7 @@ export const checkNameValidation = ({ formData, setValue, selected, reset, index
               value = value.slice(0, 100);
             }
 
-            let updatedValue = value
-              .replace(/[^a-zA-Z\s]/g, "")
-              .trimStart()
-              .replace(/ +/g, " ");
+            let updatedValue = formatName(value);
             if (updatedValue !== oldValue) {
               const element = document.querySelector(`[name="${key}"]`);
               const start = element?.selectionStart;
@@ -544,10 +547,7 @@ export const checkOnlyCharInCheque = ({ formData, setValue, selected }) => {
                 value = value.slice(0, 100);
               }
 
-              let updatedValue = value
-                .replace(/[^a-zA-Z\s]/g, "")
-                .trimStart()
-                .replace(/ +/g, " ");
+              let updatedValue = formatName(value);
               if (updatedValue !== oldValue) {
                 const element = document.querySelector(`[name="${key}"]`);
                 const start = element?.selectionStart;
@@ -564,10 +564,7 @@ export const checkOnlyCharInCheque = ({ formData, setValue, selected }) => {
                 value = value.slice(0, 200);
               }
 
-              let updatedValue = value
-                .replace(/[^a-zA-Z0-9 ]/g, "")
-                .trimStart()
-                .replace(/ +/g, " ");
+              let updatedValue = formatName(value);
               if (updatedValue !== oldValue) {
                 const element = document.querySelector(`[name="${key}"]`);
                 const start = element?.selectionStart;
