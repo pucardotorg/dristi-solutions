@@ -1,7 +1,7 @@
 {
     "tenantId": "kl",
     "masterName": "commonUiConfig",
-    "moduleName": "reviewCaseFileConfig",
+    "moduleName": "complainantDetailsConfig",
     "mdmsPayload": [
         {
             "id": "8ee75716-4b45-4b17-aeb8-36e0a9bb61d4",
