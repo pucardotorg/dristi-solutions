@@ -151,7 +151,7 @@ public class CaseService {
             casesList.forEach(caseCriteria -> {
                 List<CourtCase> decryptedCourtCases = new ArrayList<>();
                 caseCriteria.getResponseList().forEach(cases -> {
-                    decryptedCourtCases.add(encryptionDecryptionUtil.decryptObject(cases, CASE_DECRYPT_SELF, CourtCase.class, caseSearchRequests.getRequestInfo()));
+                    decryptedCourtCases.add(encryptionDecryptionUtil.decryptObject(cases, config.getCaseDecryptSelf(), CourtCase.class, caseSearchRequests.getRequestInfo()));
                 });
                 caseCriteria.setResponseList(decryptedCourtCases);
             });
@@ -198,7 +198,7 @@ public class CaseService {
             }
 
             log.info("Encrypting: {}", caseRequest);
-            caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), "CourtCase", CourtCase.class));
+            caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), config.getCourtCaseEncrypt(), CourtCase.class));
             producer.push(config.getCaseUpdateTopic(), caseRequest);
 
             log.info("Updating cache");
@@ -249,7 +249,7 @@ public class CaseService {
                 }
             }
 
-            CourtCase decryptedCourtCase = encryptionDecryptionUtil.decryptObject(courtCase, CASE_DECRYPT_SELF, CourtCase.class, caseRequest.getRequestInfo());
+            CourtCase decryptedCourtCase = encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, caseRequest.getRequestInfo());
 
             AuditDetails auditDetails = courtCase.getAuditdetails();
             auditDetails.setLastModifiedTime(System.currentTimeMillis());
@@ -263,7 +263,7 @@ public class CaseService {
 
             log.info("Encrypting :: {}", caseRequest);
 
-            caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), "CourtCase", CourtCase.class));
+            caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), config.getCourtCaseEncryptNew(), CourtCase.class));
             cacheService.save(caseRequest.getCases().getTenantId() + ":" + caseRequest.getCases().getId(), caseRequest.getCases());
 
             producer.push(config.getCaseEditTopic(), caseRequest);
