@@ -96,7 +96,7 @@ public class CaseDiaryApiController {
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
         CaseDiaryFile caseDiaryFile = CaseDiaryFile.builder().fileStoreID(response)
                 .responseInfo(responseInfo).build();
-        log.info("api = /case/diary/v1/update, result = SUCCESS");
+        log.info("api = /case/diary/v1/generate, result = SUCCESS");
         return new ResponseEntity<>(caseDiaryFile, HttpStatus.OK);
     }
 
@@ -123,7 +123,7 @@ public class CaseDiaryApiController {
                 .responseInfo(responseInfo).pagination(body.getPagination())
                 .diaries(caseDiaryListItems)
                 .build();
-        log.info("api = /case/diary/entries/v1/search, result = SUCCESS");
+        log.info("api = /case/diary/v1/search, result = SUCCESS");
         return new ResponseEntity<>(caseDiaryListResponse, HttpStatus.OK);
     }
 

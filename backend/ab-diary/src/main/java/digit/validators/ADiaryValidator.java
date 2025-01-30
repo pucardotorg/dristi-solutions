@@ -77,7 +77,7 @@ public class ADiaryValidator {
 
     }
 
-    public void validateSaveDiary(CaseDiaryRequest caseDiaryRequest) {
+    public CaseDiaryDocumentItem validateSaveDiary(CaseDiaryRequest caseDiaryRequest) {
 
         CaseDiary diary = caseDiaryRequest.getDiary();
 
@@ -89,6 +89,9 @@ public class ADiaryValidator {
         if (requestInfo == null || requestInfo.getUserInfo() == null) {
             throw new CustomException(VALIDATION_EXCEPTION, "request Info or user info can not be null");
         }
+
+        return validateCaseDiary(caseDiaryRequest);
+
     }
 
     public void validateUpdateDiary(CaseDiaryRequest caseDiaryRequest) {
@@ -132,6 +135,34 @@ public class ADiaryValidator {
         } else if (diaries.isEmpty()) {
             throw new CustomException(VALIDATION_EXCEPTION, "diary does not exist");
         }
+    }
+
+    private CaseDiaryDocumentItem validateCaseDiary(CaseDiaryRequest diaryRequest) {
+
+        CaseDiary diary = diaryRequest.getDiary();
+
+        CaseDiarySearchCriteria caseDiarySearchCriteria = CaseDiarySearchCriteria.builder()
+                .diaryType(diary.getDiaryType())
+                .date(diary.getDiaryDate())
+                .judgeId(diary.getJudgeId())
+                .build();
+
+        CaseDiarySearchRequest caseDiarySearchRequest = CaseDiarySearchRequest.builder()
+                .criteria(caseDiarySearchCriteria)
+                .build();
+
+        List<CaseDiaryDocumentItem> caseDiaryDocumentItems = diaryRepository.getCaseDiaryWithDocumentId(caseDiarySearchRequest);
+
+        if (caseDiaryDocumentItems.isEmpty()) {
+            return null;
+        }
+
+        if (caseDiaryDocumentItems.size() != 1) {
+            throw new CustomException(VALIDATION_EXCEPTION, "found multiple diaries of " + diary.getDiaryType() + " type on mentioned date");
+        }
+
+        return caseDiaryDocumentItems.get(0);
+
     }
 
 }

@@ -2,12 +2,16 @@ package digit.enrichment;
 
 import digit.util.ADiaryUtil;
 import digit.web.models.CaseDiary;
+import digit.web.models.CaseDiaryDocument;
 import digit.web.models.CaseDiaryRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.springframework.stereotype.Component;
+
+import java.util.Collections;
 
 import static digit.config.ServiceConstants.ENRICHMENT_EXCEPTION;
 
@@ -31,10 +35,11 @@ public class ADiaryEnrichment {
 
             diary.setId(aDiaryUtil.generateUUID());
 
-            diary.getAuditDetails().setCreatedTime(aDiaryUtil.getCurrentTimeInMilliSec());
-            diary.getAuditDetails().setLastModifiedTime(aDiaryUtil.getCurrentTimeInMilliSec());
-            diary.getAuditDetails().setCreatedBy(user.getUuid());
-            diary.getAuditDetails().setLastModifiedBy(user.getUuid());
+            AuditDetails auditDetails = AuditDetails.builder().createdBy(user.getUuid()).lastModifiedBy(user.getUuid())
+                    .createdTime(aDiaryUtil.getCurrentTimeInMilliSec()).lastModifiedTime(aDiaryUtil.getCurrentTimeInMilliSec())
+                    .build();
+
+            diary.setAuditDetails(auditDetails);
 
         } catch (Exception e) {
             log.error("Error occurred during enriching diary");
@@ -53,8 +58,17 @@ public class ADiaryEnrichment {
             RequestInfo requestInfo = caseDiaryRequest.getRequestInfo();
             User user = requestInfo.getUserInfo();
 
-            diary.getAuditDetails().setLastModifiedTime(aDiaryUtil.getCurrentTimeInMilliSec());
-            diary.getAuditDetails().setLastModifiedBy(user.getUuid());
+            AuditDetails auditDetails = AuditDetails.builder()
+                    .lastModifiedBy(user.getUuid())
+                    .lastModifiedTime(aDiaryUtil.getCurrentTimeInMilliSec())
+                    .build();
+
+            diary.setAuditDetails(auditDetails);
+
+            if (caseDiaryRequest.getDiary().getDocuments() != null) {
+
+                enrichDiaryDocument(caseDiaryRequest);
+            }
 
         } catch (Exception e) {
             log.error("Error occurred during enriching diary");
@@ -62,6 +76,28 @@ public class ADiaryEnrichment {
         }
 
         log.info("operation = enrichUpdateCaseDiary ,  result = SUCCESS , CaseDiaryRequest : {} ", caseDiaryRequest);
+
+    }
+
+    public void enrichDiaryDocument(CaseDiaryRequest caseDiaryRequest) {
+
+
+        CaseDiaryDocument caseDiaryDocument = caseDiaryRequest.getDiary().getDocuments().get(0);
+
+        RequestInfo requestInfo = caseDiaryRequest.getRequestInfo();
+        User user = requestInfo.getUserInfo();
+
+        if (caseDiaryDocument != null) {
+            caseDiaryDocument.setId(aDiaryUtil.generateUUID());
+
+            AuditDetails auditDetails = AuditDetails.builder().createdBy(user.getUuid()).lastModifiedBy(user.getUuid())
+                    .createdTime(aDiaryUtil.getCurrentTimeInMilliSec()).lastModifiedTime(aDiaryUtil.getCurrentTimeInMilliSec())
+                    .build();
+
+            caseDiaryDocument.setAuditDetails(auditDetails);
+        }
+
+        caseDiaryRequest.getDiary().setDocuments(Collections.singletonList(caseDiaryDocument));
 
     }
 }
