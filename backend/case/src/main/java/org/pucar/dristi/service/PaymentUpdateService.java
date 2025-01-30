@@ -11,6 +11,7 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.CaseRegistrationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.CaseRepository;
+import org.pucar.dristi.util.EncryptionDecryptionUtil;
 import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -50,11 +51,11 @@ public class PaymentUpdateService {
 
     private CaseRegistrationEnrichment enrichmentUtil;
 
-
+    private EncryptionDecryptionUtil encryptionDecryptionUtil;
 
     @Autowired
     public PaymentUpdateService(WorkflowService workflowService, ObjectMapper mapper, CaseRepository repository,
-                                Producer producer, Configuration configuration, CacheService cacheService, CaseService caseService, CaseRegistrationEnrichment enrichmentUtil) {
+                                Producer producer, Configuration configuration, CacheService cacheService, CaseService caseService, CaseRegistrationEnrichment enrichmentUtil,EncryptionDecryptionUtil encryptionDecryptionUtil) {
         this.workflowService = workflowService;
         this.mapper = mapper;
         this.repository = repository;
@@ -63,6 +64,7 @@ public class PaymentUpdateService {
         this.cacheService = cacheService;
         this.caseService = caseService;
         this.enrichmentUtil = enrichmentUtil;
+        this.encryptionDecryptionUtil = encryptionDecryptionUtil;
     }
 
     public void process(Map<String, Object> record) {
@@ -130,6 +132,9 @@ public class PaymentUpdateService {
                 caseService.callNotificationService(caseRequest, CASE_PAYMENT_COMPLETED);
             }
             enrichmentUtil.enrichAccessCode(caseRequest);
+            log.info("Encrypting: {}", caseRequest);
+            caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), "CourtCase", CourtCase.class));
+
             producer.push(configuration.getCaseUpdateStatusTopic(),caseRequest);
             cacheService.save(requestInfo.getUserInfo().getTenantId() + ":" + courtCase.getId().toString(), courtCase);
 
