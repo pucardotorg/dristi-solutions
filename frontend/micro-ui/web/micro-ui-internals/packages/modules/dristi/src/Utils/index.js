@@ -236,3 +236,10 @@ export const getDate = (value) => {
   const formattedDate = `${day}-${month}-${year}`;
   return formattedDate;
 };
+
+export const formatAddress = (value) => {
+  return value
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+};
