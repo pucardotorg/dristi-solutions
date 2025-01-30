@@ -74,8 +74,8 @@ public class EnrichCaseWhenESign implements EnrichmentStrategy {
                             return true;
                         })
                         .orElse(false);
+                log.info("Method=EnrichCaseWhenESign,Result=IN_PROGRESS, AdvocateSigned={}", isAdvocateSigned);
             }
-            log.info("Method=EnrichCaseWhenESign,Result=IN_PROGRESS, AdvocateSigned={}", isLitigantSigned);
         }
         log.info("Method=EnrichCaseWhenESign,Result=SUCCESS, CaseId={}", caseRequest.getCases().getId());
     }
