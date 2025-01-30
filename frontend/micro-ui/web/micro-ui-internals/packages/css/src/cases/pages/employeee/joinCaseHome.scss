@@ -1,4 +1,5 @@
 .enter-validation-code,
+.litigant-verification,
 .view-document-vak,
 .general-details-vek,
 .select-user-join-case,
@@ -50,6 +51,28 @@
   margin: 0px;
 }
 
+.litigant-verification {
+  width: 712px;
+  margin-bottom: 0px !important;
+  .multi-litigant-composer {
+    .card {
+      margin: 0px;
+      padding: 0px;
+      padding-bottom: 24px;
+      gap: 24px;
+
+      .label-field-pair {
+        h2.card-label {
+          margin: 0px;
+        }
+        input {
+          margin-bottom: 0px;
+        }
+      }
+    }
+  }
+}
+
 .case-number-input {
   .case-label-field-pair {
     .text-input {
@@ -89,6 +112,9 @@
       display: flex;
       flex-direction: column;
       width: 536px;
+    }
+    .multi-litigant-composer-footer {
+      padding: 16px;
     }
   }
   .skip-button {
@@ -370,6 +396,21 @@
   align-items: center;
   justify-content: flex-start;
   gap: 7px;
+}
+
+.arrow-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #ffffff;
+  border: 1px solid #c5c5c5;
+  box-shadow: none !important;
+  height: 32px !important;
+  border-radius: 4px;
+}
+
+.arrow-button:hover {
+  background-color: #eeeeee;
 }
 
 .multi-litigant-composer-footer-right {

@@ -38,13 +38,15 @@ export const VerifyMultipartyLitigantConfig = [
       {
         type: "component",
         component: "VerifyPhoneNumber",
-        key: "complainantVerification",
+        key: "phoneNumberVerification",
         withoutLabel: true,
         label: "Mobile No",
         name: "mobileNumber",
         error: "ERR_HRMS_INVALID_MOB_NO",
         componentInFront: "+91",
         disableConfigFields: ["firstName", "middleName", "lastName"],
+        requiredFields: ["firstName"],
+        confirmModal: true,
         disableConfigKey: "individualDetails",
         isMandatory: true,
         validation: {

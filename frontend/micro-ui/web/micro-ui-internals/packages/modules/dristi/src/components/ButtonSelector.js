@@ -13,7 +13,7 @@ const ButtonSelector = (props) => {
   }
   return (
     <button
-      className={props.isDisabled ? "selector-button-primary-disabled" : theme}
+      className={props.isDisabled ? `selector-button-primary-disabled ${props.className}` : `${theme} ${props.className}`}
       type={props.type || "submit"}
       form={props.formId}
       onClick={props.onSubmit}
@@ -48,6 +48,10 @@ ButtonSelector.propTypes = {
    * CustomBody
    */
   ButtonBody: PropTypes.any,
+  /**
+   * ButtonSelector className
+   */
+  className: PropTypes.string,
 };
 
 ButtonSelector.defaultProps = {
@@ -55,6 +59,7 @@ ButtonSelector.defaultProps = {
   theme: "",
   onSubmit: undefined,
   ButtonBody: undefined,
+  className: "",
 };
 
 export default ButtonSelector;

@@ -28,8 +28,6 @@ const SelectParty = ({
   setIsReplaceAdvocate,
   isLitigantJoined,
 }) => {
-  console.log("parties :>> ", parties);
-  console.log("party :>> ", party);
   const { t } = useTranslation();
 
   const targetRef = useRef(null);
@@ -203,7 +201,6 @@ const SelectParty = ({
                 selected={party}
                 optionsKey={"fullName"}
                 onSelect={(value) => {
-                  console.log("value :>> ", value);
                   setParty(value?.map((val) => val[1]));
                 }}
                 defaultUnit={"Others"}
