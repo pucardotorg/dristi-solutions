@@ -14,7 +14,8 @@ import java.util.List;
 public class DiaryQueryBuilder {
 
     private static final String BASE_DIARY_QUERY = "SELECT dcd.id as id, dcd.tenant_id as tenantId, " +
-            "dcd.diary_date as diaryDate, dcd.diary_type as diaryType, dcdd.filestore_id as fileStoreID ";
+            "dcd.diary_date as diaryDate, dcd.diary_type as diaryType, dcdd.filestore_id as fileStoreID , dcdd.id as documentId," +
+            "dcdd.created_by as documentCreatedBy,dcdd.last_modified_by as documentLastModifiedBy,dcdd.created_time as documentCreatedTime , dcdd.last_modified_time as documentLastModifiedTime ";
 
     private static final String FROM_DIARY_ENTRY_TABLE = "FROM dristi_casediary dcd join dristi_casediary_documents dcdd on dcd.id = dcdd.casediary_id ";
 
@@ -58,6 +59,14 @@ public class DiaryQueryBuilder {
                 addWhereClause(query, firstCriteria);
                 query.append("dcd.judge_id = ?");
                 preparedStatementValues.add(searchCriteria.getJudgeId());
+                preparedStatementTypeValues.add(Types.VARCHAR);
+                firstCriteria =false;
+            }
+
+            if (searchCriteria.getDiaryType() != null) {
+                addWhereClause(query,firstCriteria);
+                query.append("dcd.diary_type = ?");
+                preparedStatementValues.add(searchCriteria.getDiaryType());
                 preparedStatementTypeValues.add(Types.VARCHAR);
             }
         }
