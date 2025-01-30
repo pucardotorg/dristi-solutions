@@ -162,7 +162,14 @@ public class DiaryService {
                 enrichment.enrichSaveCaseDiary(caseDiaryRequest);
                 CaseDiaryDocument caseDiaryDocument = getCaseDiaryDocument(generateRequest, document);
                 generateRequest.getDiary().addDocumentsItem(caseDiaryDocument);
-//                workflowService.updateWorkflowStatus(caseDiaryRequest);
+                Workflow workflow = generateRequest.getDiary().getWorkflow();
+                if (workflow == null) {
+                    Workflow workFlowForCreateAction = Workflow.builder()
+                            .action(CREATE_ACTION)
+                            .build();
+                    generateRequest.getDiary().setWorkflow(workFlowForCreateAction);
+                }
+                workflowService.updateWorkflowStatus(caseDiaryRequest);
                 producer.push(configuration.getCaseDiaryTopic(), caseDiaryRequest);
 
             } else {
@@ -170,8 +177,8 @@ public class DiaryService {
                 caseDiary.setId(caseDiaryDocumentItem.getDiaryId());
                 CaseDiaryDocument caseDiaryDocument = getCaseDiaryDocument(generateRequest, document);
                 AuditDetails auditDetails = caseDiaryDocument.getAuditDetails();
-                auditDetails.setCreatedTime(caseDiaryDocumentItem.getDocumentAuditDetails().getCreatedTime());
-                auditDetails.setCreatedBy(caseDiaryDocumentItem.getDocumentAuditDetails().getCreatedBy());
+//                auditDetails.setCreatedTime(caseDiaryDocumentItem.getDocumentAuditDetails().getCreatedTime());
+//                auditDetails.setCreatedBy(caseDiaryDocumentItem.getDocumentAuditDetails().getCreatedBy());
                 caseDiaryDocument.setAuditDetails(auditDetails);
                 generateRequest.getDiary().addDocumentsItem(caseDiaryDocument);
                 CaseDiaryDocument diaryDocument = caseDiary.getDocuments().get(0);
