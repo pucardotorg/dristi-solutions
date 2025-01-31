@@ -18,7 +18,7 @@
       {
         "tenantId": "kl",
         "schemaCode": "ACCESSCONTROL-ROLES.roles",
-        "uniqueIdentifier": "DIARY_EDITOR",
+        "uniqueIdentifier": "DIARY_VIEWER",
         "data": {
           "code": "DIARY_VIEWER",
           "name": "DIARY_VIEWER",
