@@ -3,7 +3,7 @@ package digit.repository;
 import digit.repository.querybuilder.DiaryQueryBuilder;
 import digit.repository.rowmapper.DiaryRowMapper;
 import digit.repository.rowmapper.DiaryWithDocumentRowMapper;
-import digit.web.models.CaseDiaryDocumentItem;
+import digit.web.models.CaseDiary;
 import digit.web.models.CaseDiaryListItem;
 import digit.web.models.CaseDiarySearchRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -77,7 +77,7 @@ public class DiaryRepository {
         return jdbcTemplate.queryForObject(countQuery, Integer.class, preparedStmtList.toArray());
     }
 
-    public List<CaseDiaryDocumentItem> getCaseDiaryWithDocumentId(CaseDiarySearchRequest searchRequest) {
+    public List<CaseDiary> getCaseDiariesWithDocuments(CaseDiarySearchRequest searchRequest) {
 
         try {
 

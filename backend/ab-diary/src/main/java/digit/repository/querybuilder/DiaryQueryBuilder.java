@@ -13,9 +13,14 @@ import java.util.List;
 @Slf4j
 public class DiaryQueryBuilder {
 
-    private static final String BASE_DIARY_QUERY = "SELECT dcd.id as id, dcd.tenant_id as tenantId, " +
-            "dcd.diary_date as diaryDate, dcd.diary_type as diaryType, dcdd.filestore_id as fileStoreID , dcdd.id as documentId," +
-            "dcdd.created_by as documentCreatedBy,dcdd.last_modified_by as documentLastModifiedBy,dcdd.created_time as documentCreatedTime , dcdd.last_modified_time as documentLastModifiedTime ";
+    private static final String BASE_DIARY_QUERY = "SELECT dcd.id as id, dcd.tenant_id as tenantId,dcd.case_number as caseNumber," +
+            "dcd.diary_date as diaryDate, dcd.diary_type as diaryType,dcd.judge_id as judgeId,dcd.additional_details as additionalDetails," +
+            "dcd.created_by as diaryCreateBy,dcd.last_modified_by as diaryLastModifiedBy,dcd.created_time as diaryCreatedTime," +
+            "dcd.last_modified_time as diaryLastModifiedTime, dcdd.filestore_id as fileStoreId , dcdd.id as documentId," +
+            "dcdd.document_uid as documentUid,dcdd.document_name as documentName,dcdd.document_type as documentType," +
+            "dcdd.casediary_id as caseDiaryId,dcdd.is_active as documentIsActive,dcdd.additional_details as documentAdditionalDetails," +
+            "dcdd.created_by as documentCreatedBy,dcdd.last_modified_by as documentLastModifiedBy," +
+            "dcdd.created_time as documentCreatedTime , dcdd.last_modified_time as documentLastModifiedTime ";
 
     private static final String FROM_DIARY_ENTRY_TABLE = "FROM dristi_casediary dcd join dristi_casediary_documents dcdd on dcd.id = dcdd.casediary_id ";
 

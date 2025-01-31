@@ -94,7 +94,6 @@ public class DiaryServiceTest {
         CaseDiaryRequest caseDiaryRequest = mock(CaseDiaryRequest.class);
         when(caseDiaryRequest.getDiary()).thenReturn(mock(CaseDiary.class));
 
-        doNothing().when(validator).validateSaveDiary(caseDiaryRequest);
         doNothing().when(workflowService).updateWorkflowStatus(caseDiaryRequest);
 
         CaseDiary result = diaryService.updateDiary(caseDiaryRequest);

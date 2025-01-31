@@ -66,5 +66,5 @@ public class ServiceConstants {
 
     public static final String SIGN_ACTION = "SIGN";
 
-    public static final String CREATE_ACTION = "CREATE";
+    public static final String GENERATE_ACTION = "GENERATE";
 }

@@ -4,7 +4,6 @@ import digit.config.Configuration;
 import digit.enrichment.ADiaryEnrichment;
 import digit.kafka.Producer;
 import digit.repository.DiaryRepository;
-import digit.util.ADiaryUtil;
 import digit.util.CaseUtil;
 import digit.util.FileStoreUtil;
 import digit.util.PdfServiceUtil;
@@ -12,7 +11,6 @@ import digit.validators.ADiaryValidator;
 import digit.web.models.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
-import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.models.Document;
 import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
@@ -43,15 +41,13 @@ public class DiaryService {
 
     private final FileStoreUtil fileStoreUtil;
 
-    private final ADiaryUtil aDiaryUtil;
-
     private final PdfServiceUtil pdfServiceUtil;
 
     private final WorkflowService workflowService;
 
     private final CaseUtil caseUtil;
 
-    public DiaryService(Producer producer, Configuration configuration, DiaryRepository diaryRepository, ADiaryValidator validator, ADiaryEnrichment enrichment, DiaryEntryService diaryEntryService, FileStoreUtil fileStoreUtil, ADiaryUtil aDiaryUtil, PdfServiceUtil pdfServiceUtil, WorkflowService workflowService, CaseUtil caseUtil) {
+    public DiaryService(Producer producer, Configuration configuration, DiaryRepository diaryRepository, ADiaryValidator validator, ADiaryEnrichment enrichment, DiaryEntryService diaryEntryService, FileStoreUtil fileStoreUtil, PdfServiceUtil pdfServiceUtil, WorkflowService workflowService, CaseUtil caseUtil) {
         this.producer = producer;
         this.configuration = configuration;
         this.diaryRepository = diaryRepository;
@@ -59,7 +55,6 @@ public class DiaryService {
         this.enrichment = enrichment;
         this.diaryEntryService = diaryEntryService;
         this.fileStoreUtil = fileStoreUtil;
-        this.aDiaryUtil = aDiaryUtil;
         this.pdfServiceUtil = pdfServiceUtil;
         this.workflowService = workflowService;
         this.caseUtil = caseUtil;
@@ -119,12 +114,10 @@ public class DiaryService {
 
         log.info("operation = generateDiary ,  result = IN_PROGRESS , CaseDiaryGenerateRequest : {} ", generateRequest);
         try {
-            if (generateRequest == null || generateRequest.getDiary() == null) {
-                return null;
-            }
-            SimpleDateFormat dateFormat = new SimpleDateFormat(DOB_FORMAT_D_M_Y);
 
-            CaseDiaryRequest caseDiaryRequest = CaseDiaryRequest.builder().requestInfo(generateRequest.getRequestInfo()).diary(generateRequest.getDiary()).build();
+            enrichment.enrichGenerateRequestForDiary(generateRequest);
+
+            SimpleDateFormat dateFormat = new SimpleDateFormat(DOB_FORMAT_D_M_Y);
 
             List<CourtCase> caseListResponse = caseUtil.getCaseDetails(generateRequest);
 
@@ -147,7 +140,7 @@ public class DiaryService {
                 }
             });
 
-            CaseDiary caseDiary = caseDiaryRequest.getDiary();
+            CaseDiary caseDiary = generateRequest.getDiary();
 
             caseDiary.setCaseDiaryEntries(caseDiaryEntries);
             caseDiary.setDate(dateFormat.format(new Date(caseDiary.getDiaryDate())));
@@ -155,36 +148,19 @@ public class DiaryService {
 
             ByteArrayResource byteArrayResource = generateCaseDiary(caseDiary, generateRequest.getRequestInfo());
             Document document = fileStoreUtil.saveDocumentToFileStore(byteArrayResource, generateRequest.getDiary().getTenantId());
+            CaseDiaryDocument caseDiaryDocument = getCaseDiaryDocument(generateRequest, document);
+            generateRequest.getDiary().setDocuments(Collections.singletonList(caseDiaryDocument));
 
-            CaseDiaryDocumentItem caseDiaryDocumentItem = validator.validateSaveDiary(caseDiaryRequest);
+            Workflow workFlowForCreateAction = Workflow.builder()
+                    .action(GENERATE_ACTION)
+                    .build();
+            generateRequest.getDiary().setWorkflow(workFlowForCreateAction);
 
-            if (caseDiaryDocumentItem == null) {
-                enrichment.enrichSaveCaseDiary(caseDiaryRequest);
-                CaseDiaryDocument caseDiaryDocument = getCaseDiaryDocument(generateRequest, document);
-                generateRequest.getDiary().addDocumentsItem(caseDiaryDocument);
-                Workflow workflow = generateRequest.getDiary().getWorkflow();
-                if (workflow == null) {
-                    Workflow workFlowForCreateAction = Workflow.builder()
-                            .action(CREATE_ACTION)
-                            .build();
-                    generateRequest.getDiary().setWorkflow(workFlowForCreateAction);
-                }
-                workflowService.updateWorkflowStatus(caseDiaryRequest);
-                producer.push(configuration.getCaseDiaryTopic(), caseDiaryRequest);
+            CaseDiaryRequest caseDiaryRequest = CaseDiaryRequest.builder().requestInfo(generateRequest.getRequestInfo()).diary(generateRequest.getDiary()).build();
 
-            } else {
-                enrichment.enrichUpdateCaseDiary(caseDiaryRequest);
-                caseDiary.setId(caseDiaryDocumentItem.getDiaryId());
-                CaseDiaryDocument caseDiaryDocument = getCaseDiaryDocument(generateRequest, document);
-                AuditDetails auditDetails = caseDiaryDocument.getAuditDetails();
-//                auditDetails.setCreatedTime(caseDiaryDocumentItem.getDocumentAuditDetails().getCreatedTime());
-//                auditDetails.setCreatedBy(caseDiaryDocumentItem.getDocumentAuditDetails().getCreatedBy());
-                caseDiaryDocument.setAuditDetails(auditDetails);
-                generateRequest.getDiary().addDocumentsItem(caseDiaryDocument);
-                CaseDiaryDocument diaryDocument = caseDiary.getDocuments().get(0);
-                diaryDocument.setId(UUID.fromString(caseDiaryDocumentItem.getDocumentId()));
-                producer.push(configuration.getDiaryUpdateTopic(), caseDiaryRequest);
-            }
+            workflowService.updateWorkflowStatus(caseDiaryRequest);
+            producer.push(configuration.getCaseDiaryTopic(), caseDiaryRequest);
+
             log.info("operation = generateDiary ,  result = SUCCESS , CaseDiaryGenerateRequest : {} ", generateRequest);
             return document.getFileStore();
 
@@ -210,22 +186,17 @@ public class DiaryService {
     }
 
     public CaseDiaryDocument getCaseDiaryDocument(CaseDiaryGenerateRequest generateRequest, Document document) {
-        AuditDetails auditDetails = AuditDetails.builder()
-                .createdTime(aDiaryUtil.getCurrentTimeInMilliSec())
-                .lastModifiedTime(aDiaryUtil.getCurrentTimeInMilliSec())
-                .createdBy(generateRequest.getRequestInfo().getUserInfo() != null ? generateRequest.getRequestInfo().getUserInfo().getUuid() : null)
-                .lastModifiedBy(generateRequest.getRequestInfo().getUserInfo() != null ? generateRequest.getRequestInfo().getUserInfo().getUuid() : null)
-                .build();
 
         return CaseDiaryDocument.builder()
-                .id(aDiaryUtil.generateUUID())
+                .id(generateRequest.getDiary().getDocuments().get(0).getId())
                 .tenantId(generateRequest.getDiary().getTenantId())
                 .documentType(document.getDocumentType())
                 .caseDiaryId(String.valueOf(generateRequest.getDiary().getId()))
+                .isActive(true)
                 .fileStoreId(document.getFileStore())
                 .documentUid(document.getDocumentUid())
                 .additionalDetails(document.getAdditionalDetails())
-                .auditDetails(auditDetails)
+                .auditDetails(generateRequest.getDiary().getAuditDetails())
                 .build();
     }
 
