@@ -104,6 +104,7 @@ const ADiaryPage = ({ path }) => {
             onChange={handleDateChange}
             style={{ paddingRight: "3px" }}
             defaultValue={selectedDate}
+            max={new Date().toISOString().split("T")[0]}
           />
           <Button label={t("GO")} variation={"primary"} style={styles.goButton} onButtonClick={handleGoClick} />
         </div>
