@@ -285,7 +285,7 @@ public class CaseServiceTest {
             caseService.verifyJoinCaseRequest(joinCaseRequest,true);
         });
 
-        assertEquals("Advocate is already a part of the given case", exception.getMessage());
+        assertEquals("Advocate is already representing the individual", exception.getMessage());
     }
 
     @Test
@@ -307,7 +307,7 @@ public class CaseServiceTest {
         CaseCriteria caseCriteria = setupTestCaseCriteria(courtCase); // or false for CaseNotFound scenario
         when(caseRepository.getCases(anyList(), any())).thenReturn(Collections.singletonList(caseCriteria));
 
-        when(config.getUpdateRepresentativeJoinCaseTopic()).thenReturn("update-topic");
+        when(config.getRepresentativeJoinCaseTopic()).thenReturn("update-topic");
         when(validator.canRepresentativeJoinCase(joinCaseRequest)).thenReturn(true);
         when(individualService.getIndividualsByIndividualId(requestInfo, "111")).thenReturn(null);
 

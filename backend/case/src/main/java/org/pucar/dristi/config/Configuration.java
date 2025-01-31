@@ -163,9 +163,6 @@ public class Configuration {
 	@Value("${egov.representative.join.case.kafka.topic}")
 	private String representativeJoinCaseTopic;
 
-	@Value("${egov.update.representative.join.case.kafka.topic}")
-	private String updateRepresentativeJoinCaseTopic;
-
 	@Value("${egov.additional.join.case.kafka.topic}")
 	private String additionalJoinCaseTopic;
 
