@@ -354,9 +354,48 @@ const HomeView = () => {
             <div className="home-header-wrapper">
               <UpcomingHearings handleNavigate={handleNavigate} attendeeIndividualId={individualId} userInfoType={userInfoType} t={t} />
               {isJudge && (
-                <div className="hearingCard" style={{ backgroundColor: "#ECF3FD" }}>
-                  <Link to={`/${window.contextPath}/employee/home/dashboard`} style={{ color: "#007e7e", fontWeight: 700, textDecoration: "none" }}>
-                    Open Dashboard
+                <div className="hearingCard" style={{ backgroundColor: "white", justifyContent: "flex-start" }}>
+                  <Link
+                    to={`/${window.contextPath}/employee/home/dashboard`}
+                    style={{
+                      color: "black",
+                      backgroundColor: "#ECF3FD",
+                      fontWeight: 500,
+                      textDecoration: "none",
+                      padding: 12,
+                      borderRadius: "8px",
+                      display: "inline-block",
+                    }}
+                  >
+                    {t("OPEN_DASHBOARD")}
+                  </Link>
+                  <Link
+                    to={`/${window.contextPath}/employee/home/dashboard?select=5`}
+                    style={{
+                      color: "black",
+                      backgroundColor: "#ECF3FD",
+                      fontWeight: 500,
+                      textDecoration: "none",
+                      padding: 12,
+                      borderRadius: "8px",
+                      display: "inline-block",
+                    }}
+                  >
+                    {t("OPEN_REPORTS")}
+                  </Link>
+                  <Link
+                    to={`/${window.contextPath}/employee/home/adiary`}
+                    style={{
+                      color: "black",
+                      backgroundColor: "#ECF3FD",
+                      fontWeight: 500,
+                      textDecoration: "none",
+                      padding: 12,
+                      borderRadius: "8px",
+                      display: "inline-block",
+                    }}
+                  >
+                    {t("OPEN_A_DIARY")}
                   </Link>
                 </div>
               )}
