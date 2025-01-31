@@ -16,7 +16,7 @@
           "isStateUpdatable": true,
           "actions": [
             {
-              "action": "CREATE",
+              "action": "GENERATE",
               "nextState": "PENDING_SIGN",
               "roles": [
                 "DIARY_EDITOR",
@@ -45,7 +45,7 @@
               ]
             },
             {
-              "action": "UPDATE",
+              "action": "GENERATE",
               "nextState": "PENDING_SIGN",
               "roles": [
                 "DIARY_EDITOR",
