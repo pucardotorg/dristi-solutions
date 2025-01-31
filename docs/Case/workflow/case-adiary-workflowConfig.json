@@ -43,6 +43,15 @@
                 "SYSTEM",
                 "SYSTEM_ADMIN"
               ]
+            },
+            {
+              "action": "UPDATE",
+              "nextState": "PENDING_SIGN",
+              "roles": [
+                "DIARY_EDITOR",
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
             }
           ]
         },
