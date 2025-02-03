@@ -267,7 +267,7 @@ public class CaseService {
             // Create a map of litigant IDs to their respective representatives
             log.info("Generating a litigant-representative map for case {} ", cases.getId());
             // add null check here if representative is null then there should not be stream
-            Map<String, List<AdvocateMapping>> representativesMap = Optional.ofNullable(cases.getRepresentatives()).orElse(Collections.emptyList()).stream().filter(AdvocateMapping::getIsActive).flatMap(rep -> rep.getRepresenting().stream().map(Party::getIndividualId)  // Get the ID of each litigant represented by this advocate
+            Map<String, List<AdvocateMapping>> representativesMap = Optional.ofNullable(cases.getRepresentatives()).orElse(Collections.emptyList()).stream().filter(AdvocateMapping::getIsActive).flatMap(rep -> Optional.ofNullable(rep.getRepresenting()).orElse(Collections.emptyList()).stream().map(Party::getIndividualId)  // Get the ID of each litigant represented by this advocate
                             .filter(Objects::nonNull)  // Ensure no null IDs
                             .map(litigantId -> new AbstractMap.SimpleEntry<>(litigantId, rep)))  // Create entries with litigant ID and the rep
                     .collect(Collectors.groupingBy(Map.Entry::getKey, // Group by litigant ID
