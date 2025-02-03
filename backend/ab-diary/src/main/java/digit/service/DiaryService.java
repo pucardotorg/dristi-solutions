@@ -119,19 +119,23 @@ public class DiaryService {
 
             SimpleDateFormat dateFormat = new SimpleDateFormat(DOB_FORMAT_D_M_Y);
 
-            List<CourtCase> caseListResponse = caseUtil.getCaseDetails(generateRequest);
+            //TODO: use strategy design pattern to get case diary entries based on diaryType
 
-            String cmpNumber = null;
-            String courtCaseNumber = null;
-            if (caseListResponse != null) {
-                cmpNumber = caseListResponse.get(0).getCmpNumber();
-                courtCaseNumber = caseListResponse.get(0).getCourtCaseNumber();
-            }
+//            if (generateRequest.getDiary().getDiaryType().equalsIgnoreCase())
 
-            CaseDiarySearchRequest caseDiarySearchRequest = buildCaseDiarySearchRequest(generateRequest, cmpNumber);
-            List<CaseDiaryEntry> caseDiaryEntries = new ArrayList<>(diaryEntryService.searchDiaryEntries(caseDiarySearchRequest));
-            caseDiarySearchRequest = buildCaseDiarySearchRequest(generateRequest, courtCaseNumber);
-            caseDiaryEntries.addAll(diaryEntryService.searchDiaryEntries(caseDiarySearchRequest));
+//            List<CourtCase> caseListResponse = caseUtil.getCaseDetails(generateRequest);
+
+//            String cmpNumber = null;
+//            String courtCaseNumber = null;
+//            if (caseListResponse != null) {
+//                cmpNumber = caseListResponse.get(0).getCmpNumber();
+//                courtCaseNumber = caseListResponse.get(0).getCourtCaseNumber();
+//            }
+
+//            CaseDiarySearchRequest caseDiarySearchRequest = buildCaseDiarySearchRequest(generateRequest, cmpNumber);
+//            List<CaseDiaryEntry> caseDiaryEntries = new ArrayList<>(diaryEntryService.searchDiaryEntries(caseDiarySearchRequest));
+            CaseDiarySearchRequest caseDiarySearchRequest = buildCaseDiarySearchRequest(generateRequest, null);
+            List<CaseDiaryEntry> caseDiaryEntries = diaryEntryService.searchDiaryEntries(caseDiarySearchRequest);
 
             caseDiaryEntries.forEach(entry -> {
                 if (entry.getHearingDate() != null) {

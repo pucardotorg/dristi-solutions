@@ -85,6 +85,7 @@ public class ADiaryEnrichment {
 
             RequestInfo requestInfo = generateRequest.getRequestInfo();
 
+            // TODO works for A-diary need to enrich for B-diary
             CaseDiarySearchRequest caseDiaryRequest = CaseDiarySearchRequest.builder()
                     .criteria(CaseDiarySearchCriteria.builder()
                             .judgeId(caseDiary.getJudgeId())
