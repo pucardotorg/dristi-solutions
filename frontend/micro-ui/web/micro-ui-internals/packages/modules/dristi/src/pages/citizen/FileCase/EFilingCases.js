@@ -1359,6 +1359,11 @@ function EFilingCases({ path }) {
           assignees.push({ uuid: userInfo?.uuid }); // pending task for complainant
           assignees.push({ uuid: isAdvocateRepresenting?.uuid }); // pending task for advocate
         }
+      } else {
+        // this is for advocate choose litigant will e-sign
+
+        assignees.push({ uuid: userInfo?.uuid }); // pending task for advocate
+        assignees.push({ uuid: caseDetails?.litigants?.[0]?.additionalDetails?.uuid }); // for complainant
       }
     }
     // if Uploading Documents is the preferred at the time of case locking.(this can only be done when advocate is locking the case)

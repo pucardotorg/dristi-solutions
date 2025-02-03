@@ -71,34 +71,26 @@ function CaseLockModal({
   const handleSaveOnSubmit = async () => {
     setShowCaseLockingModal(false);
 
-    if (!isAdvocateFilingCase) {
-      if (state === CaseWorkflowState.CASE_REASSIGNED) {
-        const result = await onSubmit("EDIT_CASE", true);
-        if (result?.error) {
-          return;
-        }
-        try {
-          await createPendingTask({ name: t("PENDING_RE_E_SIGN_FOR_CASE"), status: "PENDING_RE_E-SIGN" });
-          history.push(`${path}/sign-complaint?filingNumber=${filingNumber}`);
-        } catch (error) {
-          console.error("An error occurred:", error);
-          toast.error(t("SOMETHING_WENT_WRONG"));
-        }
-      } else {
-        const result = await onSubmit("SUBMIT_CASE", true);
-        if (result?.error) {
-          return;
-        }
-        try {
-          await createPendingTask({ name: t("PENDING_E_SIGN_FOR_CASE"), status: "PENDING_E-SIGN" });
-          history.push(`${path}/sign-complaint?filingNumber=${filingNumber}`);
-        } catch (error) {
-          console.error("An error occurred:", error);
-          toast.error(t("SOMETHING_WENT_WRONG"));
-        }
-      }
-    } else {
-      setShowConfirmCaseDetailsModal(true);
+    // Update API when a litigant will e-sign the case if the status is reassigned during to advocate filing changes as well.
+    const isCaseReassigned = state === CaseWorkflowState.CASE_REASSIGNED;
+    const actionType = isCaseReassigned ? "EDIT_CASE" : "SUBMIT_CASE";
+    const pendingTask = isCaseReassigned
+      ? { name: t("PENDING_RE_E_SIGN_FOR_CASE"), status: "PENDING_RE_E-SIGN" }
+      : { name: t("PENDING_E_SIGN_FOR_CASE"), status: "PENDING_E-SIGN" };
+
+    if (isAdvocateFilingCase && !isCaseReassigned) {
+      return setShowConfirmCaseDetailsModal(true);
+    }
+
+    try {
+      const result = await onSubmit(actionType, true);
+      if (result?.error) return;
+
+      await createPendingTask(pendingTask);
+      history.push(`${path}/sign-complaint?filingNumber=${filingNumber}`);
+    } catch (error) {
+      console.error("An error occurred:", error);
+      toast.error(t("SOMETHING_WENT_WRONG"));
     }
   };
 
