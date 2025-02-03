@@ -654,13 +654,17 @@ const ComplainantSignature = ({ path }) => {
             }
           }
           if (res?.cases?.[0]?.status === "PENDING_PAYMENT") {
+            const uuids = [
+              ...caseDetails?.litigants?.map((litigant) => ({ uuid: litigant?.additionalDetails?.uuid })),
+              ...caseDetails?.representatives?.map((advocate) => ({ uuid: advocate?.additionalDetails?.uuid })),
+            ];
             await DRISTIService.customApiService(Urls.dristi.pendingTask, {
               pendingTask: {
                 name: "Pending Payment",
                 entityType: "case-default",
                 referenceId: `MANUAL_${caseDetails?.filingNumber}`,
                 status: "PENDING_PAYMENT",
-                assignedTo: [...assignees?.map((uuid) => ({ uuid }))],
+                assignedTo: uuids,
                 assignedRole: ["CASE_CREATOR"],
                 cnrNumber: null,
                 filingNumber: caseDetails?.filingNumber,
