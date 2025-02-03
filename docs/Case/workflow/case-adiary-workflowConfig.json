@@ -16,7 +16,7 @@
           "isStateUpdatable": true,
           "actions": [
             {
-              "action": "CREATE",
+              "action": "GENERATE",
               "nextState": "PENDING_SIGN",
               "roles": [
                 "DIARY_EDITOR",
@@ -40,6 +40,15 @@
               "nextState": "COMPLETED",
               "roles": [
                 "DIARY_APPROVER",
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            },
+            {
+              "action": "GENERATE",
+              "nextState": "PENDING_SIGN",
+              "roles": [
+                "DIARY_EDITOR",
                 "SYSTEM",
                 "SYSTEM_ADMIN"
               ]
