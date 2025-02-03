@@ -350,8 +350,7 @@ export const DRISTIService = {
       userService: false,
       data,
       params,
-    }
-  ),
+    }),
   setCaseUnlock: (data, params) =>
     Request({
       url: Urls.dristi.setCaseUnlock,

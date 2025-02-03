@@ -52,6 +52,11 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     localStorage.setItem("individualId", individualId);
   }
 
+  const isLitigantPartialRegistered = useMemo(() => {
+    const address = data?.Individual?.[0]?.address;
+    return !address || (Array.isArray(address) && address.length === 0);
+  }, [data?.Individual]);
+
   const userType = useMemo(() => data?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value, [data?.Individual]);
   const { data: searchData, isLoading: isSearchLoading } = Digit.Hooks.dristi.useGetAdvocateClerk(
     {
@@ -122,7 +127,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   if (!isUserLoggedIn && !whiteListedRoutes.includes(location.pathname)) {
     history.push(`${path}/home/login`);
   }
-  if (!isRejected && individualId && whiteListedRoutes.includes(location.pathname)) {
+  if (!isRejected && individualId && !isLitigantPartialRegistered && whiteListedRoutes.includes(location.pathname)) {
     history.push(`${path}/home`);
   }
 

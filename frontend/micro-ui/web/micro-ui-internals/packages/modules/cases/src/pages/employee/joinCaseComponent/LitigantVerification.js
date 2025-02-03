@@ -110,7 +110,6 @@ const LitigantVerification = ({ t, party, setParty, goBack, onProceed }) => {
               }
             }
             if (shouldUpdateState(party[index], formData)) {
-              debugger;
               setParty(
                 party?.map((item, i) => {
                   return i === index

@@ -633,7 +633,6 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
     if (caseDetails?.cnrNumber && individualId && userType && userType?.value === "Litigant") {
       const litigant = caseDetails?.litigants?.find((item) => item.individualId === individualId);
       if (litigant !== undefined) {
-        debugger;
         setIsLitigantJoined(true);
         setPartyInvolve({
           label: litigant?.partyType?.includes("respondent") ? t("RESPONDENTS_TEXT") : t("COMPLAINANTS_TEXT"),
@@ -963,7 +962,6 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
       }
     } else if (step === 3) {
       console.log("party :>> ", party);
-      debugger;
     } else if (step === 4) {
       await handleMakePayment();
     } else if (step === 5) {
