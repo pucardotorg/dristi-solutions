@@ -69,6 +69,14 @@ export const DRISTIService = {
       data,
       params,
     }),
+  searchAllAdvocates: (url, data, params) =>
+    Request({
+      url: Urls.dristi.searchAllAdvocates,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
   caseCreateService: (data, tenantId) => {
     return Request({
       url: Urls.dristi.caseCreate,
@@ -330,6 +338,54 @@ export const DRISTIService = {
   downloadCaseBundle: (data, params) =>
     Request({
       url: Urls.dristi.downloadCaseBundle,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  setCaseLock: (data, params) =>
+    Request({
+      url: Urls.dristi.setCaseLock,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  getCaseLockStatus: (data, params) =>
+    Request({
+      url: Urls.dristi.getCaseLockStatus,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  setCaseUnlock: (data, params) =>
+    Request({
+      url: Urls.dristi.setCaseUnlock,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  addADiaryEntry: (data, params) =>
+    Request({
+      url: Urls.dristi.addADiaryEntry,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  aDiaryEntryUpdate: (data, params) =>
+    Request({
+      url: Urls.dristi.aDiaryEntryUpdate,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  aDiaryEntrySearch: (data, params) =>
+    Request({
+      url: Urls.dristi.aDiaryEntrySearch,
       useCache: false,
       userService: false,
       data,
