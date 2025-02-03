@@ -4,22 +4,21 @@ import digit.config.Configuration;
 import digit.enrichment.ADiaryEnrichment;
 import digit.kafka.Producer;
 import digit.repository.DiaryRepository;
-import digit.util.ADiaryUtil;
+import digit.util.CaseUtil;
 import digit.util.FileStoreUtil;
 import digit.util.PdfServiceUtil;
 import digit.validators.ADiaryValidator;
 import digit.web.models.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
-import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.models.Document;
+import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.text.SimpleDateFormat;
 
 import static digit.config.ServiceConstants.*;
@@ -42,13 +41,13 @@ public class DiaryService {
 
     private final FileStoreUtil fileStoreUtil;
 
-    private final ADiaryUtil aDiaryUtil;
-
     private final PdfServiceUtil pdfServiceUtil;
 
     private final WorkflowService workflowService;
 
-    public DiaryService(Producer producer, Configuration configuration, DiaryRepository diaryRepository, ADiaryValidator validator, ADiaryEnrichment enrichment, DiaryEntryService diaryEntryService, FileStoreUtil fileStoreUtil, ADiaryUtil aDiaryUtil, PdfServiceUtil pdfServiceUtil, WorkflowService workflowService) {
+    private final CaseUtil caseUtil;
+
+    public DiaryService(Producer producer, Configuration configuration, DiaryRepository diaryRepository, ADiaryValidator validator, ADiaryEnrichment enrichment, DiaryEntryService diaryEntryService, FileStoreUtil fileStoreUtil, PdfServiceUtil pdfServiceUtil, WorkflowService workflowService, CaseUtil caseUtil) {
         this.producer = producer;
         this.configuration = configuration;
         this.diaryRepository = diaryRepository;
@@ -56,9 +55,9 @@ public class DiaryService {
         this.enrichment = enrichment;
         this.diaryEntryService = diaryEntryService;
         this.fileStoreUtil = fileStoreUtil;
-        this.aDiaryUtil = aDiaryUtil;
         this.pdfServiceUtil = pdfServiceUtil;
         this.workflowService = workflowService;
+        this.caseUtil = caseUtil;
     }
 
     public List<CaseDiaryListItem> searchCaseDiaries(CaseDiarySearchRequest searchRequest) {
@@ -87,9 +86,18 @@ public class DiaryService {
 
             enrichment.enrichUpdateCaseDiary(caseDiaryRequest);
 
+
+            Workflow workflow = caseDiaryRequest.getDiary().getWorkflow();
+
+            if (workflow == null) {
+                Workflow workflowWithSignAction = Workflow.builder().action(SIGN_ACTION).build();
+                caseDiaryRequest.getDiary().setWorkflow(workflowWithSignAction);
+            }
+
             workflowService.updateWorkflowStatus(caseDiaryRequest);
 
-            producer.push(configuration.getADiaryUpdateTopic(), caseDiaryRequest);
+            producer.push(configuration.getDiaryUpdateTopic(), caseDiaryRequest);
+
         } catch (CustomException e) {
             log.error("Custom exception occurred while updating diary");
             throw e;
@@ -106,21 +114,29 @@ public class DiaryService {
 
         log.info("operation = generateDiary ,  result = IN_PROGRESS , CaseDiaryGenerateRequest : {} ", generateRequest);
         try {
-            if (generateRequest == null || generateRequest.getDiary() == null) {
-                return null;
-            }
+
+            enrichment.enrichGenerateRequestForDiary(generateRequest);
+
             SimpleDateFormat dateFormat = new SimpleDateFormat(DOB_FORMAT_D_M_Y);
 
-            CaseDiaryRequest caseDiaryRequest = CaseDiaryRequest.builder().requestInfo(generateRequest.getRequestInfo()).diary(generateRequest.getDiary()).build();
+            //TODO: use strategy design pattern to get case diary entries based on diaryType
 
-            validator.validateSaveDiary(caseDiaryRequest);
+//            if (generateRequest.getDiary().getDiaryType().equalsIgnoreCase())
 
-            enrichment.enrichSaveCaseDiary(caseDiaryRequest);
+//            List<CourtCase> caseListResponse = caseUtil.getCaseDetails(generateRequest);
 
-            List<CaseDiaryEntry> caseDiaryEntries;
-            CaseDiarySearchRequest caseDiarySearchRequest = buildCaseDiarySearchRequest(generateRequest);
+//            String cmpNumber = null;
+//            String courtCaseNumber = null;
+//            if (caseListResponse != null) {
+//                cmpNumber = caseListResponse.get(0).getCmpNumber();
+//                courtCaseNumber = caseListResponse.get(0).getCourtCaseNumber();
+//            }
 
-            caseDiaryEntries = diaryEntryService.searchDiaryEntries(caseDiarySearchRequest);
+//            CaseDiarySearchRequest caseDiarySearchRequest = buildCaseDiarySearchRequest(generateRequest, cmpNumber);
+//            List<CaseDiaryEntry> caseDiaryEntries = new ArrayList<>(diaryEntryService.searchDiaryEntries(caseDiarySearchRequest));
+            CaseDiarySearchRequest caseDiarySearchRequest = buildCaseDiarySearchRequest(generateRequest, null);
+            List<CaseDiaryEntry> caseDiaryEntries = diaryEntryService.searchDiaryEntries(caseDiarySearchRequest);
+
             caseDiaryEntries.forEach(entry -> {
                 if (entry.getHearingDate() != null) {
                     Date date = new Date(entry.getHearingDate());
@@ -128,7 +144,7 @@ public class DiaryService {
                 }
             });
 
-            CaseDiary caseDiary = caseDiaryRequest.getDiary();
+            CaseDiary caseDiary = generateRequest.getDiary();
 
             caseDiary.setCaseDiaryEntries(caseDiaryEntries);
             caseDiary.setDate(dateFormat.format(new Date(caseDiary.getDiaryDate())));
@@ -136,16 +152,22 @@ public class DiaryService {
 
             ByteArrayResource byteArrayResource = generateCaseDiary(caseDiary, generateRequest.getRequestInfo());
             Document document = fileStoreUtil.saveDocumentToFileStore(byteArrayResource, generateRequest.getDiary().getTenantId());
-
             CaseDiaryDocument caseDiaryDocument = getCaseDiaryDocument(generateRequest, document);
-            generateRequest.getDiary().addDocumentsItem(caseDiaryDocument);
+            generateRequest.getDiary().setDocuments(Collections.singletonList(caseDiaryDocument));
+
+            Workflow workFlowForCreateAction = Workflow.builder()
+                    .action(GENERATE_ACTION)
+                    .build();
+            generateRequest.getDiary().setWorkflow(workFlowForCreateAction);
+
+            CaseDiaryRequest caseDiaryRequest = CaseDiaryRequest.builder().requestInfo(generateRequest.getRequestInfo()).diary(generateRequest.getDiary()).build();
 
             workflowService.updateWorkflowStatus(caseDiaryRequest);
-
             producer.push(configuration.getCaseDiaryTopic(), caseDiaryRequest);
-            log.info("operation = generateDiary ,  result = SUCCESS , CaseDiaryGenerateRequest : {} ", generateRequest);
 
+            log.info("operation = generateDiary ,  result = SUCCESS , CaseDiaryGenerateRequest : {} ", generateRequest);
             return document.getFileStore();
+
         } catch (CustomException e) {
             log.error("Custom exception while generating diary");
             throw e;
@@ -155,10 +177,10 @@ public class DiaryService {
 
     }
 
-    public CaseDiarySearchRequest buildCaseDiarySearchRequest(CaseDiaryGenerateRequest generateRequest) {
+    public CaseDiarySearchRequest buildCaseDiarySearchRequest(CaseDiaryGenerateRequest generateRequest, String caseId) {
         return CaseDiarySearchRequest.builder().requestInfo(generateRequest.getRequestInfo())
                 .criteria(CaseDiarySearchCriteria.builder()
-                        .caseId(generateRequest.getDiary().getCaseNumber())
+                        .caseId(caseId)
                         .tenantId(generateRequest.getDiary().getTenantId())
                         .diaryType(generateRequest.getDiary().getDiaryType())
                         .date(generateRequest.getDiary().getDiaryDate())
@@ -168,26 +190,21 @@ public class DiaryService {
     }
 
     public CaseDiaryDocument getCaseDiaryDocument(CaseDiaryGenerateRequest generateRequest, Document document) {
-        AuditDetails auditDetails = AuditDetails.builder()
-                .createdTime(aDiaryUtil.getCurrentTimeInMilliSec())
-                .lastModifiedTime(aDiaryUtil.getCurrentTimeInMilliSec())
-                .createdBy(generateRequest.getRequestInfo().getUserInfo() != null ? generateRequest.getRequestInfo().getUserInfo().getUuid() : null)
-                .lastModifiedBy(generateRequest.getRequestInfo().getUserInfo() != null ? generateRequest.getRequestInfo().getUserInfo().getUuid() : null)
-                .build();
 
         return CaseDiaryDocument.builder()
-                .id(aDiaryUtil.generateUUID())
+                .id(generateRequest.getDiary().getDocuments().get(0).getId())
                 .tenantId(generateRequest.getDiary().getTenantId())
                 .documentType(document.getDocumentType())
                 .caseDiaryId(String.valueOf(generateRequest.getDiary().getId()))
+                .isActive(true)
                 .fileStoreId(document.getFileStore())
                 .documentUid(document.getDocumentUid())
                 .additionalDetails(document.getAdditionalDetails())
-                .auditDetails(auditDetails)
+                .auditDetails(generateRequest.getDiary().getAuditDetails())
                 .build();
     }
 
-    public ByteArrayResource generateCaseDiary(CaseDiary caseDiary, RequestInfo requestInfo){
+    public ByteArrayResource generateCaseDiary(CaseDiary caseDiary, RequestInfo requestInfo) {
         log.info("operation = generateCaseDiary, result = IN_PROGRESS");
         ByteArrayResource byteArrayResource = null;
         try {
@@ -203,7 +220,7 @@ public class DiaryService {
                 pdfTemplateKey = configuration.getBDiaryPdfTemplateKey();
             }
 
-            byteArrayResource =  pdfServiceUtil.generatePdfFromPdfService(caseDiaryRequest, caseDiary.getTenantId(), pdfTemplateKey);
+            byteArrayResource = pdfServiceUtil.generatePdfFromPdfService(caseDiaryRequest, caseDiary.getTenantId(), pdfTemplateKey);
             log.info("operation = generateCauseListPdf, result = SUCCESS");
         } catch (Exception e) {
             log.error("Error occurred while generating pdf: {}", e.getMessage());

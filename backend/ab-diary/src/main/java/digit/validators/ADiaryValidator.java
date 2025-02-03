@@ -77,20 +77,6 @@ public class ADiaryValidator {
 
     }
 
-    public void validateSaveDiary(CaseDiaryRequest caseDiaryRequest) {
-
-        CaseDiary diary = caseDiaryRequest.getDiary();
-
-        RequestInfo requestInfo = caseDiaryRequest.getRequestInfo();
-
-        if (ObjectUtils.isEmpty(diary)) {
-            throw new CustomException(VALIDATION_EXCEPTION, "case diary is mandatory to create/update an entry");
-        }
-        if (requestInfo == null || requestInfo.getUserInfo() == null) {
-            throw new CustomException(VALIDATION_EXCEPTION, "request Info or user info can not be null");
-        }
-    }
-
     public void validateUpdateDiary(CaseDiaryRequest caseDiaryRequest) {
 
         CaseDiary diary = caseDiaryRequest.getDiary();

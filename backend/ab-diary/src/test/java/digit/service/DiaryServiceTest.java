@@ -11,17 +11,20 @@ import digit.util.ADiaryUtil;
 import digit.validators.ADiaryValidator;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
-import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.egov.common.contract.models.Document;
 import digit.web.models.*;
 import digit.util.FileStoreUtil;
 import digit.util.PdfServiceUtil;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.ByteArrayResource;
 
 import java.util.*;
 
+
+@ExtendWith(MockitoExtension.class)
 public class DiaryServiceTest {
 
     @InjectMocks
@@ -42,7 +45,7 @@ public class DiaryServiceTest {
     @Mock
     private ADiaryEnrichment enrichment;
 
-    @Mock
+    @InjectMocks
     private DiaryEntryService diaryEntryService;
 
     @Mock
@@ -59,13 +62,6 @@ public class DiaryServiceTest {
 
     private CaseDiary caseDiary;
     private CaseDiaryRequest caseDiaryRequest;
-
-    @Before
-    public void setUp() {
-        MockitoAnnotations.openMocks(this);
-        caseDiary = new CaseDiary();
-        caseDiaryRequest = new CaseDiaryRequest();
-    }
 
     @Test
     public void testSearchCaseDiaries_success() {
@@ -98,7 +94,6 @@ public class DiaryServiceTest {
         CaseDiaryRequest caseDiaryRequest = mock(CaseDiaryRequest.class);
         when(caseDiaryRequest.getDiary()).thenReturn(mock(CaseDiary.class));
 
-        doNothing().when(validator).validateSaveDiary(caseDiaryRequest);
         doNothing().when(workflowService).updateWorkflowStatus(caseDiaryRequest);
 
         CaseDiary result = diaryService.updateDiary(caseDiaryRequest);
@@ -130,7 +125,7 @@ public class DiaryServiceTest {
         caseDiary.setDiaryDate(System.currentTimeMillis());
         generateRequest.setDiary(caseDiary);
 
-        CaseDiarySearchRequest result = diaryService.buildCaseDiarySearchRequest(generateRequest);
+        CaseDiarySearchRequest result = diaryService.buildCaseDiarySearchRequest(generateRequest,"cmpNumber");
         assertNotNull(result);
         assertNotNull(result.getCriteria());
         assertEquals("tenantId", result.getCriteria().getTenantId());

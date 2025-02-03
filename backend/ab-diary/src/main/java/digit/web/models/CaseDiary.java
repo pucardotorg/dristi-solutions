@@ -29,32 +29,26 @@ import lombok.Builder;
 @Builder
 public class CaseDiary {
     @JsonProperty("id")
-
     @Valid
     private UUID id = null;
 
     @JsonProperty("tenantId")
-    @NotNull
-
+    @NotNull(message = "tenant id cannot be null")
     private String tenantId = null;
 
     @JsonProperty("caseNumber")
-
     private String caseNumber = null;
 
     @JsonProperty("diaryDate")
-    @NotNull
-
+    @NotNull(message = "Diary Date cannot be null")
     private Long diaryDate = null;
 
     @JsonProperty("diaryType")
-    @NotNull
-
+    @NotNull(message = "Diary type cannot be null")
     private String diaryType = null;
 
     @JsonProperty("judgeId")
-    @NotNull
-
+    @NotNull(message = "JudgeId cannot be null")
     private String judgeId = null;
 
     @JsonProperty("documents")
@@ -62,15 +56,12 @@ public class CaseDiary {
     private List<CaseDiaryDocument> documents = null;
 
     @JsonProperty("caseDiaryEntries")
-
     private List<CaseDiaryEntry> caseDiaryEntries = null;
 
     @JsonProperty("additionalDetails")
-
     private Object additionalDetails = null;
 
     @JsonProperty("auditDetails")
-
     @Valid
     private AuditDetails auditDetails = null;
 
