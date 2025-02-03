@@ -195,7 +195,8 @@ components:
 
     NotificationExists:
       type: object
-      description: can send in any one of the values and Exists value will be populated with true or false. If multiple paramters are passed, then it will be a logical AND search
+-      description: can send in any one of the values and Exists value will be populated with true or false. If multiple paramters are passed, then it will be a logical AND search
++      description: can send in any one of the values and 'exists' will be populated as true or false. If multiple parameters are passed, then it will be a logical AND search
       properties:
         id:
           type: string
@@ -208,7 +209,6 @@ components:
           type: string
         exists:
           type: boolean
-
     Notification:
       description: An Notification is created as an outcome of an hearing or based on an application. Notification will contain a set of tasks
       type: object
