@@ -1,0 +1,37 @@
+[
+  {
+    "tenantId": "kl",
+    "mdmsPayload": {
+      "tenantId": "kl",
+      "code": "common-masters.District",
+      "description": null,
+      "definition": {
+        "type": "object",
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "required": [
+          "code",
+          "type"
+        ],
+        "x-unique": [
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "isActive": true
+    }
+  }
+]
