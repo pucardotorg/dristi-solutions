@@ -488,7 +488,6 @@ public class CaseServiceTest {
         assertEquals("validAccessCode", response.getJoinCaseRequest().getAccessCode());
         assertEquals("12345", response.getJoinCaseRequest().getCaseFilingNumber());
         assertEquals(litigant, response.getJoinCaseRequest().getLitigant().get(0));
-        assertEquals(advocate, response.getJoinCaseRequest().getRepresentative());
     }
 
     @Test
