@@ -2486,12 +2486,12 @@ const GenerateOrders = () => {
   };
 
   const handleClose = async () => {
+    localStorage.removeItem("fileStoreId");
     if (successModalActionSaveLabel === t("CS_COMMON_CLOSE")) {
+      setShowSuccessModal(false);
       history.push(`/${window.contextPath}/employee/dristi/home/view-case?tab=${"Orders"}&caseId=${caseDetails?.id}&filingNumber=${filingNumber}`, {
         from: "orderSuccessModal",
       });
-      localStorage.removeItem("fileStoreId");
-      setShowSuccessModal(false);
       return;
     }
     if (successModalActionSaveLabel === t("ISSUE_SUMMONS_BUTTON")) {
@@ -2505,11 +2505,11 @@ const GenerateOrders = () => {
   };
 
   const handleCloseSuccessModal = () => {
+    localStorage.removeItem("fileStoreId");
+    setShowSuccessModal(false);
     history.push(`/${window.contextPath}/employee/dristi/home/view-case?tab=${"Orders"}&caseId=${caseDetails?.id}&filingNumber=${filingNumber}`, {
       from: "orderSuccessModal",
     });
-    localStorage.removeItem("fileStoreId");
-    setShowSuccessModal(false);
   };
 
   if (!filingNumber) {
