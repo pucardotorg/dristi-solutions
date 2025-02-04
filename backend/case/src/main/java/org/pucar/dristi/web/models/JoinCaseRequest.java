@@ -37,7 +37,7 @@ public class JoinCaseRequest {
     private String caseFilingNumber = null;
 
     @JsonProperty("representative")
-    private AdvocateMapping representative = null;
+    private Representative representative = null;
 
     @JsonProperty("litigant")
     private List<Party> litigant = null;

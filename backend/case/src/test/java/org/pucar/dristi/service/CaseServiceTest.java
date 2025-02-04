@@ -255,17 +255,17 @@ public class CaseServiceTest {
 
     @Test
     public void testVerifyJoinCaseRequest_RepresentativesAlreadyExists() {
-        Party litigant = new Party();
+        Representing litigant = new Representing();
         litigant.setIndividualId("existingLitigant");
         litigant.setPartyType("primary");
+        AdvocateMapping advocate = new AdvocateMapping();
+        advocate.setAdvocateId("existingAdv");
+        advocate.setRepresenting(Collections.singletonList(litigant));
 
-        AdvocateMapping representative = new AdvocateMapping();
-        representative.setAdvocateId("existingAdv");
-        representative.setRepresenting(Collections.singletonList(litigant));
         courtCase.setId(UUID.randomUUID());
         courtCase.setAccessCode("validAccessCode");
         courtCase.setStatus(CASE_ADMIT_STATUS);
-        courtCase.setRepresentatives(Collections.singletonList(representative));
+        courtCase.setRepresentatives(Collections.singletonList(advocate));
 
         when(encryptionDecryptionUtil.decryptObject(any(CourtCase.class), any(String.class), eq(CourtCase.class), any(RequestInfo.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
@@ -273,6 +273,9 @@ public class CaseServiceTest {
         CaseCriteria caseCriteria = setupTestCaseCriteria(courtCase); // or false for CaseNotFound scenario
         when(caseRepository.getCases(anyList(), any())).thenReturn(Collections.singletonList(caseCriteria));
 
+        Representative representative = new Representative();
+        representative.setAdvocateId("existingAdv");
+        representative.setRepresenting(Collections.singletonList(litigant));
 
         joinCaseRequest.setRequestInfo(requestInfo);
         joinCaseRequest.setCaseFilingNumber("12345");
@@ -315,8 +318,8 @@ public class CaseServiceTest {
         user.setTenantId(TEST_TENANT_ID);
         requestInfo.setUserInfo(user);
         joinCaseRequest.setRequestInfo(requestInfo);
-        Party party1 = Party.builder().individualId("111").partyType(ServiceConstants.COMPLAINANT_PRIMARY).isActive(true).auditDetails(new AuditDetails()).build();
-        AdvocateMapping advocateMapping2 = AdvocateMapping.builder().advocateId("333").representing(Collections.singletonList(party1)).isActive(true).auditDetails(new AuditDetails()).build();
+        Representing party1 = Representing.builder().individualId("111").partyType(ServiceConstants.COMPLAINANT_PRIMARY).isActive(true).auditDetails(new AuditDetails()).build();
+        Representative advocateMapping2 = Representative.builder().advocateId("333").representing(Collections.singletonList(party1)).isActive(true).auditDetails(new AuditDetails()).build();
         joinCaseRequest.setRepresentative(advocateMapping2);
 
         when(encryptionDecryptionUtil.decryptObject(any(CourtCase.class), any(String.class), eq(CourtCase.class), any(RequestInfo.class)))
@@ -397,7 +400,7 @@ public class CaseServiceTest {
     public void testVerifyJoinCaseRequest_Success() throws JsonProcessingException {
         Party litigant = new Party();
         litigant.setIndividualId("newLitigant");
-        AdvocateMapping advocate = new AdvocateMapping();
+        Representative advocate = new Representative();
         advocate.setAdvocateId("newAdvocate");
         courtCase.setId(UUID.randomUUID());
         courtCase.setAccessCode("validAccessCode");
@@ -506,9 +509,9 @@ public class CaseServiceTest {
         when(caseRepository.getCases(anyList(), any())).thenReturn(Collections.singletonList(caseCriteria));
 
 
-        AdvocateMapping representative = new AdvocateMapping();
+        Representative representative = new Representative();
         representative.setAdvocateId("advocate-1");
-        Party party = new Party();
+        Representing party = new Representing();
         party.setIndividualId("individual-1");
         representative.setRepresenting(Collections.singletonList(party));
         joinCaseRequest.setRepresentative(representative);

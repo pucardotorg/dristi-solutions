@@ -214,7 +214,7 @@ public class CaseRegistrationValidator {
 
 	public boolean canRepresentativeJoinCase(JoinCaseRequest joinCaseRequest) {
 		RequestInfo requestInfo = joinCaseRequest.getRequestInfo();
-		AdvocateMapping representative = joinCaseRequest.getRepresentative();
+		Representative representative = joinCaseRequest.getRepresentative();
 
 		if (representative.getAdvocateId() != null) { // validation for advocateId for representative
 			if (!advocateUtil.doesAdvocateExist(requestInfo, representative.getAdvocateId()))
