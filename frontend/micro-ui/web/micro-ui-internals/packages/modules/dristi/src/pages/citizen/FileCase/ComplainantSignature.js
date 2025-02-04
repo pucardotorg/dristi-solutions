@@ -300,8 +300,9 @@ const ComplainantSignature = ({ path }) => {
       ?.map((litigant) => ({
         ...litigant,
         representatives:
-          caseDetails?.representatives?.filter((rep) => rep.representing.some((complainant) => complainant.individualId === litigant.individualId)) ||
-          [],
+          caseDetails?.representatives?.filter((rep) =>
+            rep?.representing?.some((complainant) => complainant?.individualId === litigant?.individualId)
+          ) || [],
       }));
   }, [caseDetails]);
 
@@ -587,7 +588,7 @@ const ComplainantSignature = ({ path }) => {
 
   const updateSignedDocInCaseDoc = () => {
     const tempDocList = structuredClone(caseDetails?.documents || []);
-    const index = tempDocList.findIndex((doc) => doc.documentType === "case.complaint.signed");
+    const index = tempDocList.findIndex((doc) => doc?.documentType === "case.complaint.signed");
     const signedDoc = {
       documentType: "case.complaint.signed",
       fileStore: signatureDocumentId ? signatureDocumentId : DocumentFileStoreId,
@@ -653,13 +654,17 @@ const ComplainantSignature = ({ path }) => {
             }
           }
           if (res?.cases?.[0]?.status === "PENDING_PAYMENT") {
+            const uuids = [
+              ...caseDetails?.litigants?.map((litigant) => ({ uuid: litigant?.additionalDetails?.uuid })),
+              ...caseDetails?.representatives?.map((advocate) => ({ uuid: advocate?.additionalDetails?.uuid })),
+            ];
             await DRISTIService.customApiService(Urls.dristi.pendingTask, {
               pendingTask: {
                 name: "Pending Payment",
                 entityType: "case-default",
                 referenceId: `MANUAL_${caseDetails?.filingNumber}`,
                 status: "PENDING_PAYMENT",
-                assignedTo: [...assignees?.map((uuid) => ({ uuid }))],
+                assignedTo: uuids,
                 assignedRole: ["CASE_CREATOR"],
                 cnrNumber: null,
                 filingNumber: caseDetails?.filingNumber,
