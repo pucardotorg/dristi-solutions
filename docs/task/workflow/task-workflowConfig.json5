@@ -20,6 +20,7 @@
               "nextState": "IN_PROGRESS",
               "roles": [
                 "TASK_CREATOR",
+                "PENDING_TASK_CREATOR",
                 "SYSTEM",
                 "SYSTEM_ADMIN"
               ]
@@ -49,7 +50,8 @@
               "nextState": "ABATED",
               "roles": [
                 "SYSTEM",
-                "SYSTEM_ADMIN"
+                "SYSTEM_ADMIN",
+                "WORKFLOW_ABANDON"
               ]
             }
           ]

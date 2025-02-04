@@ -21,7 +21,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.util.*;
 
-import static org.pucar.dristi.config.ServiceConstants.PENDINGAPPROVAL;
+import static org.pucar.dristi.config.ServiceConstants.PENDING_APPROVAL;
 
 @Slf4j
 @Service
@@ -118,7 +118,7 @@ public class PaymentUpdateService {
                 applicationRequest.setApplication(application);
                 applicationRequest.setRequestInfo(requestInfo);
 
-                if (PENDINGAPPROVAL.equalsIgnoreCase(application.getStatus())){
+                if (PENDING_APPROVAL.equalsIgnoreCase(application.getStatus())){
                     enrichment.enrichApplicationNumberByCMPNumber(applicationRequest);
                 }
 

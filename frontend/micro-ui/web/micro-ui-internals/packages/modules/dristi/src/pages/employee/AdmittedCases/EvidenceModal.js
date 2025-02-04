@@ -245,7 +245,7 @@ const EvidenceModal = ({
   //       documents: [{}],
   //       id: documentSubmission[0]?.applicationList?.workflow.id,
   //       status: documentSubmission[0]?.applicationList?.workflow?.status,
-  //       action: "TYPE DEPOSITION",
+  //       action: "SUBMIT_EVIDENCE",
   //     },
   //   },
   // };
@@ -364,7 +364,7 @@ const EvidenceModal = ({
               isVoid: false,
               workflow: {
                 ...documentSubmission?.[0].artifactList.workflow,
-                action: "SIGN DEPOSITION",
+                action: "E-SIGN",
               },
             },
           },

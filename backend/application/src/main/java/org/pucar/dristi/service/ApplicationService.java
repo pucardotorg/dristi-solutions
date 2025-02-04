@@ -62,7 +62,7 @@ public class ApplicationService {
             if (body.getApplication().getWorkflow() != null)
                 workflowService.updateWorkflowStatus(body);
 
-            if (body.getApplication().getWorkflow() != null && PENDINGAPPROVAL.equalsIgnoreCase(body.getApplication().getStatus())) {
+            if (body.getApplication().getWorkflow() != null && PENDING_APPROVAL.equalsIgnoreCase(body.getApplication().getStatus())) {
                 enrichmentUtil.enrichApplicationNumberByCMPNumber(body);
             }
 
@@ -87,7 +87,7 @@ public class ApplicationService {
             if (application.getWorkflow() != null)
                 workflowService.updateWorkflowStatus(applicationRequest);
 
-            if (application.getWorkflow() != null && PENDINGAPPROVAL.equalsIgnoreCase(application.getStatus())) {
+            if (application.getWorkflow() != null && PENDING_APPROVAL.equalsIgnoreCase(application.getStatus())) {
                 enrichmentUtil.enrichApplicationNumberByCMPNumber(applicationRequest);
             }
 
