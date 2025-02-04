@@ -798,7 +798,7 @@ const GenerateOrders = () => {
       };
     });
     return updatedConfig;
-  }, [caseDetails?.filingNumber, caseDetails?.id, complainants, currentOrder?.additionalDetails?.applicationStatus, currentOrder?.additionalDetails?.warrantFor, currentOrder?.orderNumber, orderType, respondents, t, unJoinedLitigant, witnesses]);
+  }, [caseDetails, complainants, currentOrder, orderType, respondents, t, unJoinedLitigant, witnesses]);
   const multiSelectDropdownKeys = useMemo(() => {
     const foundKeys = [];
     modifiedFormConfig.forEach((config) => {
