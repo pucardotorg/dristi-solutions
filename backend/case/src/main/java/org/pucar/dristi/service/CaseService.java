@@ -1194,7 +1194,7 @@ public class CaseService {
                 throw new CustomException(VALIDATION_ERR, "formdata is not found or is not an array in one of the respondentDetails objects.");
             }
         } else {
-            // throw new CustomException(VALIDATION_ERR, "respondentDetails not found in one of the additional details objects.");
+             throw new CustomException(VALIDATION_ERR, "respondentDetails not found in one of the additional details objects.");
         }
 
         if(isLitigantPIP){
