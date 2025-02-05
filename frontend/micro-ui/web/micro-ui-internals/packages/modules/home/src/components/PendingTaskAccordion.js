@@ -94,7 +94,7 @@ function PendingTaskAccordion({
               key={item?.filingNumber}
               style={{ cursor: "pointer" }}
               onClick={() => {
-                if (item.status === "PENDING_SIGN" && item?.actionName === "Sign A Diary") {
+                if (item?.status === "PENDING_SIGN" && item?.actionName === "Sign A Diary") {
                   history.push(`/${window.contextPath}/employee/home/adiary?date=${item?.params?.referenceId}`);
                 } else if (item?.status === "PENDING_RESPONSE") {
                   if (isJudge) {

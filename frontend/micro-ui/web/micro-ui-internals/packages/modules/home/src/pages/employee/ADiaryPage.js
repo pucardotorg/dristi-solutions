@@ -189,7 +189,7 @@ const ADiaryPage = ({ path }) => {
     return null;
   }
 
-  useMemo(() => {
+  useEffect(() => {
     const getDiarySearch = async () => {
       try {
         const diary = await HomeService.getADiarySearch({
