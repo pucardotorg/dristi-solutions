@@ -210,3 +210,22 @@ export const searchIndividualUserWithUuid = async (uuid, tenantId) => {
 export const getFullName = (seperator, ...strings) => {
   return strings.filter(Boolean).join(seperator);
 };
+
+export const createShorthand = (fullname) => {
+  const words = fullname?.split(" ");
+  const firstChars = words?.map((word) => word?.charAt(0));
+  const shorthand = firstChars?.join("");
+  return shorthand;
+};
+
+export const getUserUUID = async (individualId, tenantId) => {
+  const individualData = await window?.Digit.DRISTIService.searchIndividualUser(
+    {
+      Individual: {
+        individualId: individualId,
+      },
+    },
+    { tenantId, limit: 1000, offset: 0 }
+  );
+  return individualData;
+};
