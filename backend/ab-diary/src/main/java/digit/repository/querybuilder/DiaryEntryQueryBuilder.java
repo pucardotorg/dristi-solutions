@@ -53,7 +53,7 @@ public class DiaryEntryQueryBuilder {
                 addWhereClause(query, firstCriteria);
                 query.append("dde.case_number = ?");
                 preparedStatementValues.add(searchCriteria.getCaseId());
-                preparedStatementTypeValues.add(Types.BIGINT);
+                preparedStatementTypeValues.add(Types.VARCHAR);
                 firstCriteria = false;
             }
 
