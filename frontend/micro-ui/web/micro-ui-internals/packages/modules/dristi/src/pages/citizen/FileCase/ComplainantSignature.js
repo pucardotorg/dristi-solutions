@@ -85,7 +85,7 @@ const getStyles = () => ({
   rightPanel: { flex: 1, padding: "24px 16px 24px 24px", borderLeft: "1px solid #ccc" },
   signaturePanel: { display: "flex", flexDirection: "column" },
   signatureTitle: { fontSize: "24px", fontWeight: 700, color: "#3D3C3C" },
-  signatureDescription: { fontWeight: "400", fontSize: "16px", color: "#3D3C3C" },
+  signatureDescription: { fontWeight: "400", fontSize: "16px", color: "#3D3C3C", marginBottom: 0 },
   esignButton: {
     height: "40px",
     alignItems: "center",
@@ -102,6 +102,7 @@ const getStyles = () => ({
   },
   uploadButton: {
     marginBottom: "16px",
+    marginTop: "8px",
     height: "40px",
     fontWeight: 700,
     fontSize: "16px",
@@ -299,8 +300,9 @@ const ComplainantSignature = ({ path }) => {
       ?.map((litigant) => ({
         ...litigant,
         representatives:
-          caseDetails?.representatives?.filter((rep) => rep.representing.some((complainant) => complainant.individualId === litigant.individualId)) ||
-          [],
+          caseDetails?.representatives?.filter((rep) =>
+            rep?.representing?.some((complainant) => complainant?.individualId === litigant?.individualId)
+          ) || [],
       }));
   }, [caseDetails]);
 
@@ -586,7 +588,7 @@ const ComplainantSignature = ({ path }) => {
 
   const updateSignedDocInCaseDoc = () => {
     const tempDocList = structuredClone(caseDetails?.documents || []);
-    const index = tempDocList.findIndex((doc) => doc.documentType === "case.complaint.signed");
+    const index = tempDocList.findIndex((doc) => doc?.documentType === "case.complaint.signed");
     const signedDoc = {
       documentType: "case.complaint.signed",
       fileStore: signatureDocumentId ? signatureDocumentId : DocumentFileStoreId,
@@ -652,13 +654,27 @@ const ComplainantSignature = ({ path }) => {
             }
           }
           if (res?.cases?.[0]?.status === "PENDING_PAYMENT") {
+
+           // Extract UUIDs of litigants and representatives if available
+            const uuids = [
+              ...(Array.isArray(caseDetails?.litigants)
+                ? caseDetails?.litigants?.map((litigant) => ({
+                    uuid: litigant?.additionalDetails?.uuid,
+                  }))
+                : []),
+              ...(Array.isArray(caseDetails?.representatives)
+                ? caseDetails?.representatives?.map((advocate) => ({
+                    uuid: advocate?.additionalDetails?.uuid,
+                  }))
+                : []),
+            ];
             await DRISTIService.customApiService(Urls.dristi.pendingTask, {
               pendingTask: {
                 name: "Pending Payment",
                 entityType: "case-default",
                 referenceId: `MANUAL_${caseDetails?.filingNumber}`,
                 status: "PENDING_PAYMENT",
-                assignedTo: [...assignees?.map((uuid) => ({ uuid }))],
+                assignedTo: uuids,
                 assignedRole: ["CASE_CREATOR"],
                 cnrNumber: null,
                 filingNumber: caseDetails?.filingNumber,
@@ -721,7 +737,7 @@ const ComplainantSignature = ({ path }) => {
 
   const isRightPannelEnable = () => {
     if (isAdvocateFilingCase) {
-      return !(isEsignSuccess || uploadDoc);
+      return !(isCurrentAdvocateSigned || isEsignSuccess || uploadDoc);
     }
     return !(isCurrentLitigantSigned || isEsignSuccess);
   };
@@ -775,7 +791,7 @@ const ComplainantSignature = ({ path }) => {
             {litigants?.map((litigant, index) => (
               <div key={index} style={{ ...styles.litigantDetails, marginTop: "5px", fontSize: "15px" }}>
                 {litigant?.additionalDetails?.fullName}
-                {litigant?.hasSigned || (litigant?.additionalDetails?.uuid === userInfo?.uuid && isEsignSuccess) ? (
+                {litigant?.hasSigned || (litigant?.additionalDetails?.uuid === userInfo?.uuid && (isEsignSuccess || uploadDoc)) ? (
                   <span style={{ ...styles.signedLabel, alignItems: "right" }}>{t("SIGNED")}</span>
                 ) : (
                   <span style={{ ...styles.unSignedLabel, alignItems: "right" }}>{t("PENDING")}</span>
@@ -848,11 +864,11 @@ const ComplainantSignature = ({ path }) => {
               <button
                 style={{
                   ...styles.uploadButton,
-                  opacity: isAdvocateFilingCase && isFilingParty ? 1 : 0.5,
-                  cursor: isAdvocateFilingCase && isFilingParty ? "pointer" : "default",
+                  opacity: isAdvocateFilingCase ? 1 : 0.5,
+                  cursor: isAdvocateFilingCase ? "pointer" : "default",
                 }}
                 onClick={handleUploadFile}
-                disabled={!(isAdvocateFilingCase && isFilingParty)}
+                disabled={!isAdvocateFilingCase}
               >
                 <FileUploadIcon />
                 <span style={{ marginLeft: "8px" }}>{t("UPLOAD_SIGNED_PDF")}</span>
