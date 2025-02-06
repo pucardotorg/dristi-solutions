@@ -3,6 +3,7 @@
     "tenantId": "kl",
     "masterName": "case",
     "moduleName": "CaseOverallStatusType",
+    //can be added using workbench
     "mdmsPayload": [
       {
         "tenantId": "kl",
