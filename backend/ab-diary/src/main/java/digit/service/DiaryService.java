@@ -86,13 +86,8 @@ public class DiaryService {
 
             enrichment.enrichUpdateCaseDiary(caseDiaryRequest);
 
-
-            Workflow workflow = caseDiaryRequest.getDiary().getWorkflow();
-
-            if (workflow == null) {
-                Workflow workflowWithSignAction = Workflow.builder().action(SIGN_ACTION).build();
-                caseDiaryRequest.getDiary().setWorkflow(workflowWithSignAction);
-            }
+            Workflow workflowWithSignAction = Workflow.builder().action(SIGN_ACTION).build();
+            caseDiaryRequest.getDiary().setWorkflow(workflowWithSignAction);
 
             workflowService.updateWorkflowStatus(caseDiaryRequest);
 
