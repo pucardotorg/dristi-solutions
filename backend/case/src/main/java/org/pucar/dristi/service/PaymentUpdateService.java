@@ -13,6 +13,8 @@ import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.CaseRepository;
 import org.pucar.dristi.util.EncryptionDecryptionUtil;
 import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.task.TaskRequest;
+import org.pucar.dristi.web.models.task.TaskResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -21,10 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 import static org.pucar.dristi.config.ServiceConstants.FSO_VALIDATED;
@@ -86,6 +85,20 @@ public class PaymentUpdateService {
 
     }
 
+    public void updateJoinCaseDetails(Map<String, Object> record) {
+
+        try {
+            TaskRequest taskRequest = mapper.convertValue(record, TaskRequest.class);
+            Object additionalDetails = taskRequest.getTask().getAdditionalDetails();
+            ObjectMapper objectMapper = new ObjectMapper();
+            JoinCaseRequest joinCaseRequest  = objectMapper.convertValue(additionalDetails, JoinCaseRequest.class);
+            caseService.verifyJoinCaseRequest(joinCaseRequest,true);
+        } catch (Exception e) {
+            log.error("KAFKA_PROCESS_ERROR:", e);
+        }
+
+    }
+
     private void updateWorkflowForCasePayment(RequestInfo requestInfo, String tenantId, PaymentDetail paymentDetail) {
 
         Bill bill  = paymentDetail.getBill();
@@ -124,19 +137,20 @@ public class PaymentUpdateService {
             auditDetails.setLastModifiedBy(paymentDetail.getAuditDetails().getLastModifiedBy());
             auditDetails.setLastModifiedTime(paymentDetail.getAuditDetails().getLastModifiedTime());
             courtCase.setAuditdetails(auditDetails);
+            CourtCase decryptedCourtCase = encryptionDecryptionUtil.decryptObject(courtCase, configuration.getCaseDecryptSelf(), CourtCase.class, requestInfo);
 
             CaseRequest caseRequest = new CaseRequest();
             caseRequest.setRequestInfo(requestInfo);
-            caseRequest.setCases(courtCase);
+            caseRequest.setCases(decryptedCourtCase);
             if(UNDER_SCRUTINY.equalsIgnoreCase(courtCase.getStatus())) {
                 caseService.callNotificationService(caseRequest, CASE_PAYMENT_COMPLETED);
             }
             enrichmentUtil.enrichAccessCode(caseRequest);
-            log.info("Encrypting: {}", caseRequest);
-            caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), "CourtCase", CourtCase.class));
+            log.info("In Payment Update, Encrypting: {}", caseRequest.getCases().getId());
+            caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), configuration.getCourtCaseEncrypt(), CourtCase.class));
 
             producer.push(configuration.getCaseUpdateStatusTopic(),caseRequest);
-            cacheService.save(requestInfo.getUserInfo().getTenantId() + ":" + courtCase.getId().toString(), courtCase);
+            cacheService.save(requestInfo.getUserInfo().getTenantId() + ":" + courtCase.getId().toString(), caseRequest.getCases());
 
         });
     }

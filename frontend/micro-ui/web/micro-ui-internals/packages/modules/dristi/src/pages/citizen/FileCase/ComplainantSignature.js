@@ -16,7 +16,7 @@ import { useToast } from "../../../components/Toast/useToast";
 import Modal from "../../../components/Modal";
 
 const getStyles = () => ({
-  container: { display: "flex", flexDirection: "row", height: "100vh", marginBottom: "50px" },
+  container: { display: "flex", flexDirection: "row", marginBottom: "50px" },
   leftPanel: {
     flex: 1,
     padding: "24px 16px 16px 16px",
@@ -374,18 +374,22 @@ const ComplainantSignature = ({ path }) => {
       ).then(async (res) => {
         if ([complainantWorkflowState.CASE_REASSIGNED, complainantWorkflowState.DRAFT_IN_PROGRESS].includes(res?.cases?.[0]?.status)) {
           const promises = [
-            ...caseDetails?.litigants?.map(async (litigant) => {
-              return closePendingTask({
-                status: state,
-                assignee: litigant?.additionalDetails?.uuid,
-              });
-            }),
-            ...caseDetails?.representatives?.map(async (advocate) => {
-              return closePendingTask({
-                status: state,
-                assignee: advocate?.additionalDetails?.uuid,
-              });
-            }),
+            ...(Array.isArray(caseDetails?.litigants)
+              ? caseDetails?.litigants?.map(async (litigant) => {
+                  return closePendingTask({
+                    status: state,
+                    assignee: litigant?.additionalDetails?.uuid,
+                  });
+                })
+              : []),
+            ...(Array.isArray(caseDetails?.representatives)
+              ? caseDetails?.representatives?.map(async (advocate) => {
+                  return closePendingTask({
+                    status: state,
+                    assignee: advocate?.additionalDetails?.uuid,
+                  });
+                })
+              : []),
           ];
           await Promise.all(promises);
           history.replace(
@@ -654,13 +658,26 @@ const ComplainantSignature = ({ path }) => {
             }
           }
           if (res?.cases?.[0]?.status === "PENDING_PAYMENT") {
+            // Extract UUIDs of litigants and representatives if available
+            const uuids = [
+              ...(Array.isArray(caseDetails?.litigants)
+                ? caseDetails?.litigants?.map((litigant) => ({
+                    uuid: litigant?.additionalDetails?.uuid,
+                  }))
+                : []),
+              ...(Array.isArray(caseDetails?.representatives)
+                ? caseDetails?.representatives?.map((advocate) => ({
+                    uuid: advocate?.additionalDetails?.uuid,
+                  }))
+                : []),
+            ];
             await DRISTIService.customApiService(Urls.dristi.pendingTask, {
               pendingTask: {
                 name: "Pending Payment",
                 entityType: "case-default",
                 referenceId: `MANUAL_${caseDetails?.filingNumber}`,
                 status: "PENDING_PAYMENT",
-                assignedTo: [...assignees?.map((uuid) => ({ uuid }))],
+                assignedTo: uuids,
                 assignedRole: ["CASE_CREATOR"],
                 cnrNumber: null,
                 filingNumber: caseDetails?.filingNumber,

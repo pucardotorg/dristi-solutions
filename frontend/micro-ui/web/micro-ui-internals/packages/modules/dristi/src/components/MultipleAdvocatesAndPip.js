@@ -1,4 +1,4 @@
-import { Loader, UploadIcon } from "@egovernments/digit-ui-react-components";
+import { ArrowDown, Loader, UploadIcon } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
 import { ReactComponent as CrossIcon } from "../images/cross.svg";
 import { CustomAddIcon, FileUploadIcon } from "../icons/svgIndex";
@@ -416,33 +416,43 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
 
   const handleInputChange = async (index, field, value) => {
     const updatedData = structuredClone(advocateAndPipData?.multipleAdvocateNameDetails);
-    if (field === "advocateBarRegNumberWithName") {
-      const advocateFullname = value?.advocateName || "";
-      updatedData[index].advocateBarRegNumberWithName = value;
-      const advIndividualId = value?.individualId || null;
-      const advocateIndvidualData = await fetchIndividualInfo(advIndividualId);
-      const identifierIdDetails = JSON.parse(
-        advocateIndvidualData?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "identifierIdDetails")?.value || "{}"
-      );
-      const idType = advocateIndvidualData?.Individual?.[0]?.identifiers[0]?.identifierType || "";
 
-      updatedData[index].advocateNameDetails = {
-        firstName: splitNamesPartiallyFromFullName(advocateFullname)?.firstName,
-        middleName: splitNamesPartiallyFromFullName(advocateFullname)?.middleName,
-        lastName: splitNamesPartiallyFromFullName(advocateFullname)?.lastName,
-        advocateMobileNumber: advocateIndvidualData?.Individual?.[0]?.mobileNumber || "",
-        advocateIdProof: identifierIdDetails?.fileStoreId
-          ? [
-              {
-                name: idType,
-                fileStore: identifierIdDetails?.fileStoreId,
-                documentName: identifierIdDetails?.filename,
-                fileName: "ID Proof",
-              },
-            ]
-          : null,
-      };
+    if (field === "advocateBarRegNumberWithName") {
+      if (!value) {
+        // Reset index data if value is null
+        updatedData[index] = {
+          advocateBarRegNumberWithName: {},
+          advocateNameDetails: {},
+        };
+      } else {
+        const advocateFullname = value?.advocateName || "";
+        updatedData[index].advocateBarRegNumberWithName = value;
+        const advIndividualId = value?.individualId || null;
+        const advocateIndvidualData = await fetchIndividualInfo(advIndividualId);
+        const identifierIdDetails = JSON.parse(
+          advocateIndvidualData?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "identifierIdDetails")?.value || "{}"
+        );
+        const idType = advocateIndvidualData?.Individual?.[0]?.identifiers[0]?.identifierType || "";
+
+        updatedData[index].advocateNameDetails = {
+          firstName: splitNamesPartiallyFromFullName(advocateFullname)?.firstName,
+          middleName: splitNamesPartiallyFromFullName(advocateFullname)?.middleName,
+          lastName: splitNamesPartiallyFromFullName(advocateFullname)?.lastName,
+          advocateMobileNumber: advocateIndvidualData?.Individual?.[0]?.mobileNumber || "",
+          advocateIdProof: identifierIdDetails?.fileStoreId
+            ? [
+                {
+                  name: idType,
+                  fileStore: identifierIdDetails?.fileStoreId,
+                  documentName: identifierIdDetails?.filename,
+                  fileName: "ID Proof",
+                },
+              ]
+            : null,
+        };
+      }
     }
+
     const newData = { ...advocateAndPipData, multipleAdvocateNameDetails: updatedData };
     setAdvocateAndPipData(newData);
     onSelect(config.key, newData);
@@ -560,20 +570,20 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     setAdvocateAndPipData(newData);
   };
 
-  const SearchableDropdown = ({ value, onChange, disabled }) => {
+  const SearchableDropdown = ({ advocatesList, value, onChange, disabled }) => {
     const [searchTerm, setSearchTerm] = useState("");
     const [isDropdownVisible, setDropdownVisible] = useState(false);
 
     const filteredRoles = useMemo(() => {
       if (!searchTerm.trim()) {
-        return allAdvocatesBarRegAndNameList;
+        return advocatesList;
       }
-      return allAdvocatesBarRegAndNameList.filter(
+      return advocatesList.filter(
         (role) =>
           role.advocateName.toLowerCase().includes(searchTerm.toLowerCase()) ||
           role.barRegistrationNumberOriginal.toLowerCase().includes(searchTerm.toLowerCase())
       );
-    }, [searchTerm, allAdvocatesBarRegAndNameList]);
+    }, [searchTerm, advocatesList]);
 
     useEffect(() => {
       const handleClickOutside = (event) => {
@@ -595,11 +605,19 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
       setDropdownVisible(false);
     };
 
+    // reset the onChnage value when search term is empty
+    const handleInputChange = (e) => {
+      setSearchTerm(e.target.value);
+      if (e.target.value === "") {
+        onChange(null);
+      }
+    };
+
     return (
       <div className="dropdown-container" style={{ position: "relative", width: "100%", marginBottom: "20px" }}>
         <input
           type="text"
-          placeholder="Search Advocate"
+          placeholder={t("ADVOCATE_PLACEHOLDER")}
           value={searchTerm || value?.barRegistrationNumberOriginal || ""}
           onFocus={() => {
             setDropdownVisible(true);
@@ -607,9 +625,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
               setSearchTerm("");
             }
           }}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
-          }}
+          onChange={handleInputChange}
           style={{
             width: "100%",
             padding: "10px",
@@ -621,6 +637,24 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
           }}
           disabled={disabled}
         />
+        <div
+          onClick={(e) => {
+            e.stopPropagation();
+            setDropdownVisible((prev) => !prev);
+          }}
+          style={{
+            position: "absolute",
+            right: "10px",
+            top: "50%",
+            transform: "translateY(-50%)",
+            fontSize: "14px",
+            color: "black",
+            cursor: "pointer",
+            zIndex: 10,
+          }}
+        >
+          <ArrowDown />
+        </div>
         {isDropdownVisible && (
           <ul
             style={{
@@ -662,6 +696,10 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     );
   };
 
+  const disableRadio = useMemo(() => {
+    return Boolean(userType === "ADVOCATE" && advocateAndPipData?.boxComplainant?.index === 0 && advocateAndPipData?.boxComplainant?.individualId);
+  }, [userType, advocateAndPipData]);
+
   if (isAllAdvocateSearchLoading || isCaseLoading || isAllAdvocateSearchLoading) {
     return <Loader></Loader>;
   }
@@ -672,14 +710,15 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
         className="box-complainant-details-div"
         style={{
           display: "flex",
-          justifyContent: "space-between",
+          justifyContent: "flex-start",
           alignItems: "center",
           marginBottom: "20px",
-          height: "20px",
+          height: "25px",
+          gap: "10px",
         }}
       >
-        <h1 style={{ fontSize: "18px", fontWeight: "bold" }}> Complainant {advocateAndPipData?.boxComplainant?.index + 1 || 1}</h1>
-        <h1 style={{ fontSize: "18px" }}> {advocateAndPipData?.boxComplainant?.firstName || ""}</h1>
+        <span style={{ fontSize: "16px", fontWeight: 700 }}>Complainant {advocateAndPipData?.boxComplainant?.index + 1 || 1}</span>
+        <span style={{ fontSize: "16px" }}>{advocateAndPipData?.boxComplainant?.firstName || ""}</span>
       </div>
 
       <div
@@ -688,6 +727,8 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
           display: "flex",
           flexDirection: "row",
           alignItems: "flex-start",
+          gap: "30px",
+          marginBottom: advocateAndPipData?.showVakalatNamaUpload ? "10px" : "0px",
         }}
         className="radio-div"
       >
@@ -695,49 +736,50 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
         <div
           style={{
             fontSize: "16px",
-            color: "#333",
+            color: "#0A0A0A",
             marginBottom: "16px",
+            fontWeight: 700,
           }}
         >
-          {/* t({radioInput?.CS_IF_COMPLAINANT_IS_PIP}) */}
-          Is this complainant representing themselves as a Party in Person (PiP)?
+          {t(radioInput?.label)}
         </div>
 
         {/* Radio Options */}
         <div
           style={{
             display: "flex",
-            gap: "16px", // Space between options
+            gap: "16px",
           }}
         >
           {radioInput?.options.map((option) => {
+            const isChecked = advocateAndPipData?.isComplainantPip?.code === option?.code;
             return (
               <label
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: "8px",
-                  cursor: "pointer",
                 }}
               >
                 <input
                   type="radio"
                   name="isPip"
                   value={option?.code}
+                  disabled={disableRadio}
                   onChange={() => handleRadioChange(option?.code)}
-                  checked={advocateAndPipData?.isComplainantPip?.code === option?.code}
+                  checked={isChecked}
                   style={{
                     width: "24px",
                     height: "24px",
-                    border: "1px solid var(--Primary-Pucar-Teal, #007E7E)",
+                    border: `1px solid ${disableRadio ? (isChecked ? "#E6E6E6" : "#3D3C3C") : "var(--Primary-Pucar-Teal, #007E7E)"}`,
                     borderRadius: "50%",
-                    background: advocateAndPipData?.isComplainantPip?.code === option?.code ? "var(--Primary-Pucar-Teal, #007E7E)" : "transparent",
+                    background: isChecked ? (disableRadio ? "#E6E6E6" : "var(--Primary-Pucar-Teal, #007E7E)") : "transparent",
                     appearance: "none",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     position: "relative",
-                    cursor: "pointer",
+                    cursor: disableRadio ? "auto" : "pointer",
                     boxShadow: advocateAndPipData?.isComplainantPip?.code === option?.code ? "inset 0 0 0 5px white" : "none",
                     transition: "all 0.3s ease",
                   }}
@@ -746,6 +788,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
                   style={{
                     fontSize: "16px",
                     color: "#333",
+                    cursor: "auto",
                   }}
                 >
                   {option?.name}
@@ -756,82 +799,100 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
         </div>
       </div>
 
+      {advocateAndPipData?.showVakalatNamaUpload && (
+        <div style={{ color: "#0A0A0A", fontWeight: 700, fontSize: "16px", marginBottom: "15px" }}>{t(config?.labelHeading)}</div>
+      )}
       {!advocateAndPipData?.showAffidavit && (
         <div className="advocate-details-div">
           {Array.isArray(advocateAndPipData?.multipleAdvocateNameDetails) &&
-            Object.keys(advocateAndPipData?.multipleAdvocateNameDetails?.[0])?.length !== 0 &&
-            advocateAndPipData?.multipleAdvocateNameDetails.map((data, index) => (
-              <div
-                key={index}
-                style={{
-                  marginBottom: "0px",
-                  padding: "0px",
-                  borderRadius: "8px",
-                }}
-              >
+            Object.keys(advocateAndPipData?.multipleAdvocateNameDetails?.[0] || {})?.length !== 0 &&
+            advocateAndPipData?.multipleAdvocateNameDetails.map((data, index) => {
+              const advocatesList = allAdvocatesBarRegAndNameList?.filter(
+                (obj) =>
+                  !advocateAndPipData?.multipleAdvocateNameDetails?.find(
+                    (o) =>
+                      o?.advocateBarRegNumberWithName?.barRegistrationNumberOriginal === obj?.barRegistrationNumberOriginal &&
+                      obj?.barRegistrationNumberOriginal !== data?.advocateBarRegNumberWithName?.barRegistrationNumberOriginal
+                  )
+              );
+              return (
                 <div
+                  key={index}
                   style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
                     marginBottom: "0px",
+                    padding: "0px",
+                    borderRadius: "8px",
                   }}
                 >
-                  <h1 style={{ fontSize: "18px", fontWeight: "bold" }}>Advocate {index + 1}</h1>
-                  {advocateAndPipData?.multipleAdvocateNameDetails?.[index]?.advocateBarRegNumberWithName?.individualId !== individualId && (
-                    <span
-                      onClick={() => handleDeleteAdvocate(index)}
-                      style={{
-                        cursor: "pointer",
-                        color: "red",
-                        display: "flex",
-                        alignItems: "center",
-                      }}
-                    >
-                      <CustomDeleteIcon />
-                    </span>
-                  )}
-                </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: "0px",
+                    }}
+                  >
+                    <h1 style={{ fontSize: "18px", fontWeight: "bold" }}>Advocate {index + 1}</h1>
+                    {!(
+                      advocateAndPipData?.multipleAdvocateNameDetails?.[index]?.boxComplainant?.index === 0 &&
+                      advocateAndPipData?.multipleAdvocateNameDetails?.[index]?.advocateBarRegNumberWithName?.individualId === individualId
+                    ) && (
+                      <span
+                        onClick={() => handleDeleteAdvocate(index)}
+                        style={{
+                          cursor: "pointer",
+                          color: "red",
+                          display: "flex",
+                          alignItems: "center",
+                        }}
+                      >
+                        <CustomDeleteIcon />
+                      </span>
+                    )}
+                  </div>
 
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "left", gap: "0px" }}>
-                  <h1 style={{ fontSize: "14px" }}> {t("BAR_REGISTRATON")}</h1>
-                  <SearchableDropdown
-                    value={data?.advocateBarRegNumberWithName}
-                    onChange={(value) => handleInputChange(index, "advocateBarRegNumberWithName", value)}
-                    disabled={data?.advocateBarRegNumberWithName?.individualId === individualId}
-                  />
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "left", gap: "0px" }}>
+                    <h1 style={{ fontSize: "14px" }}> {t("BAR_REGISTRATON")}</h1>
+                    <SearchableDropdown
+                      advocatesList={advocatesList}
+                      value={data?.advocateBarRegNumberWithName}
+                      onChange={(value) => handleInputChange(index, "advocateBarRegNumberWithName", value)}
+                      disabled={data?.advocateBarRegNumberWithName?.individualId === individualId}
+                    />
 
-                  {inputs.map((input, index) => {
-                    return (
-                      <div style={{ width: "100%", textAlign: "left", marginBottom: "20px" }}>
-                        <label
-                          style={{
-                            fontSize: "14px",
-                            display: "block",
-                            marginBottom: "5px",
-                          }}
-                        >
-                          {t(input.label)}
-                        </label>
-                        <input
-                          type="text"
-                          value={data?.advocateNameDetails?.[input.name] || ""}
-                          //   onChange={(e) => handleInputChange(index, input.name, e.target.value)}
-                          style={{
-                            width: "100%",
-                            padding: "10px",
-                            fontSize: "16px",
-                            border: "1px solid #3D3C3C",
-                            borderRadius: "0px",
-                          }}
-                          disabled={true}
-                        />
-                      </div>
-                    );
-                  })}
+                    {data?.advocateBarRegNumberWithName?.barRegistrationNumberOriginal &&
+                      inputs.map((input, i) => {
+                        return (
+                          <div style={{ width: "100%", textAlign: "left", marginBottom: "20px" }}>
+                            <label
+                              style={{
+                                fontSize: "14px",
+                                display: "block",
+                                marginBottom: "5px",
+                              }}
+                            >
+                              {t(input.label)}
+                            </label>
+                            <input
+                              type="text"
+                              value={data?.advocateNameDetails?.[input.name] || ""}
+                              //   onChange={(e) => handleInputChange(index, input.name, e.target.value)}
+                              style={{
+                                width: "100%",
+                                padding: "10px",
+                                fontSize: "16px",
+                                border: "1px solid #3D3C3C",
+                                borderRadius: "0px",
+                              }}
+                              disabled={true}
+                            />
+                          </div>
+                        );
+                      })}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           {
             <div>
               <CustomAddIcon />
@@ -840,9 +901,8 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
                 label={t("ADD_ADVOCATE")}
                 style={{
                   display: "inline-block",
-                  margin: "0px",
+                  margin: "0 0 20px 0",
                   fontSize: "16px",
-                  color: "blue",
                   background: "none",
                   border: "none",
                   textDecoration: "none",

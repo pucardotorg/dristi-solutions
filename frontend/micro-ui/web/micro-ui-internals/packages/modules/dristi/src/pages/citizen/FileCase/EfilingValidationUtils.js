@@ -6,6 +6,7 @@ import { DocumentUploadError } from "../../../Utils/errorUtil";
 
 import { userTypeOptions } from "../registration/config";
 import { efilingDocumentKeyAndTypeMapping } from "./Config/efilingDocumentKeyAndTypeMapping";
+import isMatch from "lodash/isMatch";
 
 export const showDemandNoticeModal = ({ selected, setValue, formData, setError, clearErrors, index, setServiceOfDemandNoticeModal, caseDetails }) => {
   if (selected === "demandNoticeDetails") {
@@ -1639,12 +1640,36 @@ export const updateCaseDetails = async ({
           };
         })
     );
-    data.litigants = [...litigants].map((item, index) => ({
-      ...(caseDetails.litigants?.[index] ? caseDetails.litigants?.[index] : {}),
-      ...item,
-    }));
+    const caseLitigants = caseDetails?.litigants || [];
 
-    // Check - Do we need to update case represenatives here necessarily? on advocate details page it will get updates anyways.
+    // Logic to update the litigants with same id so that duplication does not happen in backend.
+    // We will check that if a litigant is already present in litigants array in case search api data,
+    // we will just update the new documents and representinng data to that object.
+    const updatedLitigants = litigants.map((lit) => {
+      const existingLit = caseLitigants.find((caseLit) => caseLit.individualId === lit.individualId);
+      if (existingLit) {
+        lit.id = existingLit?.id;
+        lit.auditDetails = existingLit?.auditDetails;
+        lit.hasSigned = existingLit?.hasSigned || false;
+        return lit;
+      }
+      return lit;
+    });
+
+    // If a litigant object was present previously and now that litigant is not present in form data,
+    // the same object should again be copied with isActive as false and added in the updatedLitigants.
+
+    caseLitigants.forEach((caseLit) => {
+      const isAlreadyIncluded = updatedLitigants.some((lit) => lit?.individualId === caseLit?.individualId);
+      if (!isAlreadyIncluded) {
+        updatedLitigants.push({
+          ...caseLit,
+          isActive: false,
+        });
+      }
+    });
+    data.litigants = [...updatedLitigants];
+
     data.additionalDetails = {
       ...caseDetails.additionalDetails,
       complainantDetails: {
@@ -2181,6 +2206,7 @@ export const updateCaseDetails = async ({
     };
   }
   if (selected === "advocateDetails") {
+    const caseRepresentatives = caseDetails?.representatives || [];
     const advocateDetails = [];
     let docList = [];
     const newFormData = await Promise.all(
@@ -2260,9 +2286,10 @@ export const updateCaseDetails = async ({
 
             const allAdvocateSearchData = await Promise.all(advSearchPromises);
             for (let i = 0; i < allAdvocateSearchData?.length; i++) {
+              const document = vakalatnamaDocumentData?.vakalatnamaFileUpload?.document?.[0];
               advocateDetails.push({
                 advocate: allAdvocateSearchData?.[i].advocates?.[0]?.responseList?.[0],
-                documents: [vakalatnamaDocumentData?.vakalatnamaFileUpload?.document?.[0]],
+                documents: document ? [document] : [],
                 complainantIndividualId: data?.data?.multipleAdvocatesAndPip?.boxComplainant?.individualId,
               });
             }
@@ -2347,7 +2374,40 @@ export const updateCaseDetails = async ({
       };
     });
 
-    data.representatives = [...representatives];
+    // Logic to update the representatives with same id so that duplication does not happen in backend.
+    // We will check that if a representative is already present in representatives array in case search api data,
+    // we will just update the new documents and representinng data to that object.
+    const updatedRepresentatives = representatives.map((rep) => {
+      const existingRep = caseRepresentatives.find((caseRep) => caseRep.advocateId === rep.advocateId);
+      if (existingRep) {
+        if (!isMatch(existingRep.documents, rep.documents)) {
+          existingRep.documents = rep.documents;
+        }
+        if (!isMatch(existingRep.representing, rep.representing)) {
+          existingRep.representing = rep.representing;
+        }
+        if (!isMatch(existingRep.additionalDetails, rep.additionalDetails)) {
+          existingRep.additionalDetails = rep.additionalDetails;
+        }
+        return existingRep;
+      }
+      return rep;
+    });
+
+    // If a representative object was present previously and now that representative is not present now,
+    // the same object should again be copied with isActive as false and added in the updatedRepresentatives.
+    caseRepresentatives.forEach((caseRep) => {
+      const isAlreadyIncluded = updatedRepresentatives.some((rep) => rep.advocateId === caseRep.advocateId);
+
+      if (!isAlreadyIncluded) {
+        updatedRepresentatives.push({
+          ...caseRep,
+          isActive: false,
+        });
+      }
+    });
+
+    data.representatives = [...updatedRepresentatives];
     data.additionalDetails = {
       ...caseDetails.additionalDetails,
       advocateDetails: {
