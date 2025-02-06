@@ -519,7 +519,7 @@ components:
         toDate:
           type: integer
           format: int64
-          description: The toDate field represents the end date in EPOCH format.
+          description: The toDate field represents the end date in EPOCH format. Default to current date epoch if not passed
         judgeId:
           type: string
           description: ID is the Judge for whom this diary is being managed

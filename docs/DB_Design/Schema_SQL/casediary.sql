@@ -75,4 +75,6 @@ CREATE TABLE dristi_adiary_activities (
 );
 
 CREATE INDEX idx_dristi_adiary_activities_judge_tenantid ON dristi_adiary_activities(tenant_id, judge_id);
+CREATE INDEX idx_dristi_adiary_activities_tenantid_judgeid_diarydate ON dristi_adiary_activities (tenantid, judgeid, diaryDate);
+
 
