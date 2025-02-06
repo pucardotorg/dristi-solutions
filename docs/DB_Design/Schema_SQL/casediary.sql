@@ -60,3 +60,19 @@ CREATE TABLE dristi_diaryentries (
 
 CREATE INDEX idx_dristi_diaryentries_casediary_id ON dristi_diaryentries(tenant_id, case_number);
 CREATE INDEX idx_dristi_diaryentries_entry_date ON dristi_diaryentries(tenant_id, entry_date);
+
+
+CREATE TABLE dristi_adiary_activities (
+                                     id varchar(36) NOT NULL PRIMARY KEY,
+                                     tenant_id varchar(64) NOT NULL,
+                                     entry_date int8 NOT NULL,
+                                     additional_details jsonb,
+                                     created_by varchar(36) NOT NULL,
+                                     last_modified_by varchar(36) NOT NULL,
+                                     created_time int8 NOT NULL,
+                                     last_modified_time int8 NOT NULL,
+                                     judge_id varchar(36) NOT NULL
+);
+
+CREATE INDEX idx_dristi_adiary_activities_judge_tenantid ON dristi_adiary_activities(tenant_id, judge_id);
+
