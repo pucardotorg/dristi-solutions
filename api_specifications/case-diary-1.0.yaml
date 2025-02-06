@@ -229,7 +229,7 @@ paths:
         content:
           'application/json':
             schema:
-              $ref: '#/components/schemas/CaseDiaryActivitySearchCriteria'
+              $ref: '#/components/schemas/CaseDiaryActivitySearchRequest'
       responses:
         "200":
           description: ResponseInfo with diary activity list
