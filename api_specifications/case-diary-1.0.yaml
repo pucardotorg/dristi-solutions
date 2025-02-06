@@ -219,6 +219,31 @@ paths:
               schema:
                 $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
 
+  /case/diary/v1/activities:
+    post:
+      tags:
+        - Case Diaries
+      summary: get the list of diary activities based on input parameters
+      requestBody:
+        description: Details for the search of diary activities + RequestInfo meta data.
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/CaseDiaryActivitySearchCriteria'
+      responses:
+        "200":
+          description: ResponseInfo with diary activity list
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/CaseDiaryActivityListResponse'
+        "400":
+          description: failed to find diary activities
+          content:
+            'application/json':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
 components:
   schemas:
     CaseDiaryRequest:
@@ -455,3 +480,66 @@ components:
         judgeId:
           type: string
           description: ID is the Judge for whom this diary is being managed
+
+    CaseDiaryActivitySearchRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        criteria:
+          $ref: '#/components/schemas/CaseDiaryActivitySearchCriteria'
+        pagination:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Pagination'
+
+    CaseDiaryActivityListResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        diaries:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseDiaryActivityListItem'
+        pagination:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Pagination'
+
+    CaseDiaryActivitySearchCriteria:
+      type: object
+      required:
+        - tenantId
+        - judgeId
+      properties:
+        tenantId:
+          type: string
+          description: This is tenantId of the case
+        fromDate:
+          type: integer
+          format: int64
+          description: The fromDate field represents the start date in EPOCH format.
+        toDate:
+          type: integer
+          format: int64
+          description: The toDate field represents the end date in EPOCH format.
+        judgeId:
+          type: string
+          description: ID is the Judge for whom this diary is being managed
+
+    CaseDiaryActivityListItem:
+      type: object
+      description: this entity is only for use by get API to return a list of items. it is not stored in DB, but is filled by getting data from DB. This will mostly be used for to get A diary activities based on date range for a specific judge
+      properties:
+        Id:
+          type: string
+          description: primary key to identify the entity
+          format: uuid
+          minLength: 36
+          maxLength: 36
+          readOnly: true
+        tenantId:
+          type: string
+          description: This is tenantId of the case
+        date:
+          type: integer
+          format: int64
+          description: EPOCH date, with time as 00:00:00 for the diary
+
