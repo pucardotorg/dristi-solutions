@@ -451,6 +451,18 @@ const ComplainantSignature = ({ path }) => {
     return true;
   };
 
+  const _getClosePendingTaskStatus = () => {
+    if (isSelectedUploadDoc) {
+      return complainantWorkflowState.UPLOAD_SIGN_DOC;
+    }
+
+    if (isAdvocateFilingCase) {
+      return isScrutiny ? complainantWorkflowState.PENDING_ESIGN_ADVOCATE_SCRUTINITY : complainantWorkflowState.PENDING_ESIGN_ADVOCATE;
+    }
+
+    return isScrutiny ? complainantWorkflowState.PENDING_ESIGN_LITIGANT_SCRUTINITY : complainantWorkflowState.PENDING_ESIGN_LITIGANT;
+  };
+
   const updateSignedDocInCaseDoc = () => {
     const tempDocList = structuredClone(caseDetails?.documents || []);
     const index = tempDocList.findIndex((doc) => doc.documentType === "case.complaint.signed");
@@ -501,11 +513,7 @@ const ComplainantSignature = ({ path }) => {
         )
           .then(async (res) => {
             await closePendingTask({
-              status: isSelectedUploadDoc
-                ? complainantWorkflowState.UPLOAD_SIGN_DOC
-                : isAdvocateFilingCase
-                ? complainantWorkflowState.PENDING_ESIGN_ADVOCATE
-                : complainantWorkflowState.PENDING_ESIGN_LITIGANT,
+              status: _getClosePendingTaskStatus(),
             });
 
             if (res?.cases?.[0]?.status === "PENDING_PAYMENT") {
@@ -566,16 +574,20 @@ const ComplainantSignature = ({ path }) => {
       )
         .then(async (res) => {
           await closePendingTask({
-            status: complainantWorkflowState.PENDING_ESIGN_LITIGANT,
+            status: _getClosePendingTaskStatus(),
           });
 
-          if (res?.cases?.[0]?.status === complainantWorkflowState.PENDING_ESIGN_ADVOCATE) {
+          if (
+            [complainantWorkflowState.PENDING_ESIGN_ADVOCATE, complainantWorkflowState.PENDING_ESIGN_ADVOCATE_SCRUTINITY].includes(
+              res?.cases?.[0]?.status
+            )
+          ) {
             await DRISTIService.customApiService(Urls.dristi.pendingTask, {
               pendingTask: {
                 name: "Pending Advocate Sign",
                 entityType: "case-default",
                 referenceId: `MANUAL_${caseDetails?.filingNumber}`,
-                status: complainantWorkflowState.PENDING_ESIGN_ADVOCATE,
+                status: res?.cases?.[0]?.status,
                 assignedTo: [{ uuid: advocateUuid }],
                 assignedRole: ["CASE_CREATOR"],
                 cnrNumber: null,
