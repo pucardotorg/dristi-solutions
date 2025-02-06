@@ -230,9 +230,18 @@ public class CaseService {
             producer.push(config.getCaseUpdateTopic(), caseRequest);
 
             log.info("Updating cache");
+
+            // filtering document, advocate and their representing party and litigant base on isActive before saving into cache
             List<Document> isActiveTrueDocuments = Optional.ofNullable(caseRequest.getCases().getDocuments()).orElse(Collections.emptyList()).stream().filter(Document::getIsActive).toList();
             List<AdvocateMapping>activeAdvocateMapping = Optional.ofNullable(caseRequest.getCases().getRepresentatives()).orElse(Collections.emptyList()).stream().filter(AdvocateMapping::getIsActive).toList();
-            List<Party>activeParty = Optional.ofNullable(caseRequest.getCases().getLitigants()).orElse(Collections.emptyList()).stream().filter(Party::getIsActive).toList();
+            activeAdvocateMapping.forEach(advocateMapping -> {
+                if (advocateMapping.getRepresenting() != null) {
+                    List<Party> activeRepresenting = advocateMapping.getRepresenting().stream()
+                            .filter(Party::getIsActive)
+                            .collect(Collectors.toList());
+                    advocateMapping.setRepresenting(activeRepresenting);
+                }
+            });            List<Party>activeParty = Optional.ofNullable(caseRequest.getCases().getLitigants()).orElse(Collections.emptyList()).stream().filter(Party::getIsActive).toList();
             caseRequest.getCases().setDocuments(isActiveTrueDocuments);
             caseRequest.getCases().setRepresentatives(activeAdvocateMapping);
             caseRequest.getCases().setLitigants(activeParty);
