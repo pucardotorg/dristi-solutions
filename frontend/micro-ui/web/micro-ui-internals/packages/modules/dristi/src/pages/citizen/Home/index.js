@@ -41,7 +41,9 @@ function CitizenHome({ tenantId, setHideBack }) {
 
   const individualId = useMemo(() => data?.Individual?.[0]?.individualId, [data?.Individual]);
   const isLitigantPartialRegistered = useMemo(() => {
-    const address = data?.Individual?.[0]?.address;
+    if (!data?.Individual || data.Individual.length === 0) return false;
+
+    const address = data.Individual[0]?.address;
     return !address || (Array.isArray(address) && address.length === 0);
   }, [data?.Individual]);
 

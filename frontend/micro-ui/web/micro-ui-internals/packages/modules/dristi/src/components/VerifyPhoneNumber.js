@@ -232,6 +232,7 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
               ...formData?.[config.key],
               individualDetails: {
                 individualId: individualData?.Individual?.[0]?.individualId,
+                userUuid: individualData?.Individual?.[0]?.userUuid,
                 document: identifierIdDetails?.fileStoreId
                   ? [{ fileName: idType, fileStore: identifierIdDetails?.fileStoreId, documentName: identifierIdDetails?.filename }]
                   : null,

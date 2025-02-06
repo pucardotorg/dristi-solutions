@@ -6,10 +6,9 @@ import isEqual from "lodash/isEqual";
 import { useTranslation } from "react-i18next";
 
 const SelectParty = ({
+  selectPartyData,
+  setSelectPartyData,
   caseDetails,
-  userType,
-  partyInvolve,
-  setPartyInvolve,
   setSelectedParty,
   setRoleOfNewAdvocate,
   parties,
@@ -19,14 +18,10 @@ const SelectParty = ({
   searchLitigantInRepresentives,
   advocateId,
   searchAdvocateInRepresentives,
-  roleOfNewAdvocate,
   partyInPerson,
   setPartyInPerson,
-  affidavit,
-  setAffidavit,
-  isReplaceAdvocate,
-  setIsReplaceAdvocate,
   isLitigantJoined,
+  isAdvocateJoined,
 }) => {
   const { t } = useTranslation();
 
@@ -46,7 +41,7 @@ const SelectParty = ({
               inputs: [
                 {
                   name: "document",
-                  documentHeader: userType?.value === "Litigant" ? "AFFIDAVIT" : "NOC_JUDGE_ORDER",
+                  documentHeader: selectPartyData?.userType?.value === "Litigant" ? "AFFIDAVIT" : "NOC_JUDGE_ORDER",
                   type: "DragDropComponent",
                   uploadGuidelines: "UPLOAD_DOC_50",
                   maxFileSize: 50,
@@ -63,7 +58,7 @@ const SelectParty = ({
         ],
       },
     ],
-    [userType]
+    [selectPartyData?.userType]
   );
 
   const caseInfo = useMemo(() => {
@@ -102,12 +97,12 @@ const SelectParty = ({
 
   useEffect(() => {
     scrollToDiv();
-  }, [partyInvolve, party, partyInPerson]);
+  }, [selectPartyData?.partyInvolve, party, partyInPerson]);
 
   return (
     <div ref={targetRef} className="select-user-join-case" style={{ width: "712px" }}>
       <CustomCaseInfoDiv t={t} data={caseInfo?.slice(0, 4)} column={4} />
-      {userType?.value === "Litigant" && (
+      {selectPartyData?.userType?.value === "Litigant" && (
         <InfoCard
           variant={"default"}
           label={t("PLEASE_NOTE")}
@@ -120,7 +115,7 @@ const SelectParty = ({
       <LabelFieldPair className="case-label-field-pair">
         <CardLabel className="case-input-label">{`${t("JOINING_THIS_CASE_AS")}`}</CardLabel>
         <RadioButtons
-          selectedOption={userType}
+          selectedOption={selectPartyData?.userType}
           disabled={true}
           optionsKey={"label"}
           options={[
@@ -132,32 +127,38 @@ const SelectParty = ({
       <LabelFieldPair className="case-label-field-pair">
         <CardLabel className="case-input-label">{`${t("WHICH_PARTY_ARE_YOU")}`}</CardLabel>
         <RadioButtons
-          selectedOption={partyInvolve}
+          selectedOption={selectPartyData?.partyInvolve}
           onSelect={(value) => {
-            setPartyInvolve(value);
+            setSelectPartyData((selectPartyData) => ({
+              ...selectPartyData,
+              partyInvolve: value,
+              isReplaceAdvocate: {},
+              affidavit: {},
+            }));
             setSelectedParty({});
             setRoleOfNewAdvocate("");
-            setIsReplaceAdvocate({});
-            setParty(userType?.value === "Litigant" ? {} : []);
-            setAffidavit({});
+            setParty(selectPartyData?.userType?.value === "Litigant" ? {} : []);
           }}
           optionsKey={"label"}
           options={[
             { label: t("COMPLAINANTS_TEXT"), value: "COMPLAINANTS" },
             { label: t("RESPONDENTS_TEXT"), value: "RESPONDENTS" },
           ]}
-          disabled={userType?.value === "Litigant"}
+          disabled={isAdvocateJoined}
         />
       </LabelFieldPair>
-      {userType?.value === "Advocate" && partyInvolve?.value && (
+      {selectPartyData?.userType?.value === "Advocate" && selectPartyData?.partyInvolve?.value && (
         <LabelFieldPair className="case-label-field-pair">
           <CardLabel className="case-input-label">{`${t("ARE_YOU_REPLACING_ADVOCATE")}`}</CardLabel>
           <RadioButtons
-            selectedOption={isReplaceAdvocate}
+            selectedOption={selectPartyData?.isReplaceAdvocate}
             onSelect={(value) => {
-              setIsReplaceAdvocate(value);
+              setSelectPartyData((selectPartyData) => ({
+                ...selectPartyData,
+                isReplaceAdvocate: value,
+                affidavit: {},
+              }));
               setParty([]);
-              setAffidavit({});
             }}
             optionsKey={"label"}
             options={[
@@ -167,16 +168,16 @@ const SelectParty = ({
           />
         </LabelFieldPair>
       )}
-      {((userType?.value === "Litigant" && partyInvolve?.value) || isReplaceAdvocate?.value) && (
+      {((selectPartyData?.userType?.value === "Litigant" && selectPartyData?.partyInvolve?.value) || selectPartyData?.isReplaceAdvocate?.value) && (
         <LabelFieldPair className="case-label-field-pair">
           <CardLabel className="case-input-label">{`${t(
-            userType?.value === "Litigant" ? "WHICH_LITIGANT" : "WHICH_LITIGANTS_REPRESENTING"
+            selectPartyData?.userType?.value === "Litigant" ? "WHICH_LITIGANT" : "WHICH_LITIGANTS_REPRESENTING"
           )}`}</CardLabel>
-          {userType?.value === "Litigant" ? (
+          {selectPartyData?.userType?.value === "Litigant" ? (
             <Dropdown
               t={t}
               option={parties?.filter((filterParty) =>
-                partyInvolve?.value === "COMPLAINANTS"
+                selectPartyData?.partyInvolve?.value === "COMPLAINANTS"
                   ? filterParty?.partyType?.includes("complainant")
                   : filterParty?.partyType?.includes("respondent")
               )}
@@ -191,10 +192,10 @@ const SelectParty = ({
               disable={isLitigantJoined}
             />
           ) : (
-            isReplaceAdvocate?.value && (
+            selectPartyData?.isReplaceAdvocate?.value && (
               <MultiSelectDropdown
                 options={parties?.filter((filterParty) =>
-                  partyInvolve?.value === "COMPLAINANTS"
+                  selectPartyData?.partyInvolve?.value === "COMPLAINANTS"
                     ? filterParty?.partyType?.includes("complainant")
                     : filterParty?.partyType?.includes("respondent")
                 )}
@@ -212,14 +213,14 @@ const SelectParty = ({
           )}
         </LabelFieldPair>
       )}
-      {userType?.value === "Litigant" && party?.label && (
+      {selectPartyData?.userType?.value === "Litigant" && party?.label && (
         <LabelFieldPair className="case-label-field-pair">
           <CardLabel className="case-input-label">{`${t("ARE_YOU_JOINING_AS_PARTY_IN_PERSON")}`}</CardLabel>
           <RadioButtons
             selectedOption={partyInPerson}
             onSelect={(value) => {
               setPartyInPerson(value);
-              if (value?.value === "NO") setAffidavit({});
+              if (value?.value === "NO") setSelectPartyData((selectPartyData) => ({ ...selectPartyData, affidavit: {} }));
             }}
             optionsKey={"label"}
             options={[
@@ -245,83 +246,24 @@ const SelectParty = ({
           />
         </React.Fragment>
       )}
-      {(partyInPerson?.value === "YES" || isReplaceAdvocate?.value === "YES") && (
+      {(partyInPerson?.value === "YES" || selectPartyData?.isReplaceAdvocate?.value === "YES") && (
         <FormComposerV2
           key={2}
           config={advocateVakalatnamaConfig}
           onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
-            if (!isEqual(formData, affidavit)) {
-              setAffidavit(formData);
+            if (!isEqual(formData, selectPartyData?.affidavit)) {
+              setSelectPartyData((selectPartyData) => ({
+                ...selectPartyData,
+                affidavit: formData,
+              }));
             }
           }}
-          defaultValues={affidavit}
+          defaultValues={selectPartyData?.affidavit}
           className={`party-in-person-affidavit-upload`}
           noBreakLine
         />
       )}
-      {selectedParty?.label &&
-        (() => {
-          const { isFound, representative } = searchLitigantInRepresentives(caseDetails);
-          if (isFound && representative.advocateId === advocateId) return true;
-          else return false;
-        })() &&
-        userType?.value === "Advocate" && (
-          <React.Fragment>
-            <hr className="horizontal-line" />
-            <InfoCard
-              variant={"default"}
-              label={t("ES_COMMON_INFO")}
-              additionalElements={[
-                <p>
-                  {t("ALREADY_REPRESENTING")} <span style={{ fontWeight: "bold" }}>{selectedParty?.label}</span>{" "}
-                </p>,
-              ]}
-              inline
-              textStyle={{}}
-              className={`custom-info-card`}
-            />
-          </React.Fragment>
-        )}
-      {selectedParty?.label &&
-        (() => {
-          const { isFound, representative } = searchLitigantInRepresentives(caseDetails);
-          const { isFound: advIsFound, partyType } = searchAdvocateInRepresentives(advocateId);
-          if (isFound && representative.advocateId !== advocateId && ((advIsFound && selectedParty?.partyType?.includes(partyType)) || !advIsFound))
-            return true;
-          else return false;
-        })() &&
-        userType?.value === "Advocate" && (
-          <React.Fragment>
-            <hr className="horizontal-line" />
-            <InfoCard
-              variant={"warning"}
-              label={t("WARNING")}
-              additionalElements={[
-                <p>
-                  {t("FOR_THE_SELECTED")} <span style={{ fontWeight: "bold" }}>{selectedParty?.label}</span> {t("ALREADY_AN_ADVOCATE")}
-                </p>,
-              ]}
-              inline
-              textStyle={{}}
-              className={`custom-info-card warning`}
-            />
 
-            <LabelFieldPair className="case-label-field-pair">
-              <CardLabel className="case-input-label">{`${t("PLEASE_CHOOSE_PROCEED")}`}</CardLabel>
-              <RadioButtons
-                selectedOption={roleOfNewAdvocate}
-                onSelect={(value) => {
-                  setRoleOfNewAdvocate(value);
-                }}
-                optionsKey={"label"}
-                options={[
-                  { label: t("PRIMARY_ADVOCATE"), value: "PRIMARY_ADVOCATE" },
-                  { label: t("SUPPORTING_ADVOCATE"), value: "SUPPORTING_ADVOCATE" },
-                ]}
-              />
-            </LabelFieldPair>
-          </React.Fragment>
-        )}
       {selectedParty?.label &&
         (() => {
           const { isFound } = searchLitigantInRepresentives(caseDetails);
@@ -333,7 +275,7 @@ const SelectParty = ({
             return true;
           else return false;
         })() &&
-        userType?.value === "Advocate" && (
+        selectPartyData?.userType?.value === "Advocate" && (
           <React.Fragment>
             <hr className="horizontal-line" />
             <InfoCard
@@ -351,7 +293,7 @@ const SelectParty = ({
             />
           </React.Fragment>
         )}
-      {selectedParty?.label && userType?.value === "Litigant" && selectedParty?.individualId && (
+      {selectedParty?.label && selectPartyData?.userType?.value === "Litigant" && selectedParty?.individualId && (
         <React.Fragment>
           <hr className="horizontal-line" />
           <InfoCard

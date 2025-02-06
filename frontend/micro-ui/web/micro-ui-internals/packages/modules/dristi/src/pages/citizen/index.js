@@ -53,7 +53,9 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   }
 
   const isLitigantPartialRegistered = useMemo(() => {
-    const address = data?.Individual?.[0]?.address;
+    if (!data?.Individual || data.Individual.length === 0) return false;
+
+    const address = data.Individual[0]?.address;
     return !address || (Array.isArray(address) && address.length === 0);
   }, [data?.Individual]);
 
@@ -141,7 +143,6 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     localStorage.setItem("isSignSuccess", result);
   }
   if (fileStoreId) {
-    console.log(fileStoreId, "fileStoreId");
     localStorage.setItem("fileStoreId", fileStoreId);
   }
   if (isUserLoggedIn && retrievedObject) {

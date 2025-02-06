@@ -166,6 +166,72 @@ export const createRespondentIndividualUser = async (data, documentData, tenantI
   return response;
 };
 
+export const registerIndividualWithNameAndMobileNumber = async (data, tenantId) => {
+  let Individual = {
+    Individual: {
+      tenantId: tenantId,
+      name: {
+        givenName: data?.firstName,
+        familyName: data?.lastName,
+        otherNames: data?.middleName,
+      },
+      userDetails: {
+        username: data?.username,
+        type: data?.type,
+        roles: [
+          {
+            code: "CITIZEN",
+            name: "Citizen",
+            tenantId: tenantId,
+          },
+          ...[
+            "CASE_CREATOR",
+            "CASE_EDITOR",
+            "CASE_VIEWER",
+            "EVIDENCE_CREATOR",
+            "EVIDENCE_VIEWER",
+            "EVIDENCE_EDITOR",
+            "APPLICATION_CREATOR",
+            "APPLICATION_VIEWER",
+            "HEARING_VIEWER",
+            "ORDER_VIEWER",
+            "SUBMISSION_CREATOR",
+            "SUBMISSION_RESPONDER",
+            "SUBMISSION_DELETE",
+            "TASK_VIEWER",
+            "ADVOCATE_VIEWER",
+            "CASE_RESPONDER",
+            "HEARING_ACCEPTOR",
+            "PENDING_TASK_CREATOR",
+          ]?.map((role) => ({
+            code: role,
+            name: role,
+            tenantId: tenantId,
+          })),
+        ],
+      },
+      userUuid: data?.userUuid,
+      userId: data?.userId,
+      mobileNumber: data?.mobileNumber,
+      isSystemUser: true,
+      skills: [],
+      additionalFields: {
+        fields: [
+          { key: "userType", value: userTypeOptions?.[0]?.code },
+          { key: "userTypeDetail", value: JSON.stringify(userTypeOptions) },
+        ],
+      },
+    },
+  };
+  const response = await window?.Digit.DRISTIService.postIndividualService(Individual, tenantId);
+  const refreshToken = window.localStorage.getItem(`temp-refresh-token-${response?.Individual?.mobileNumber}`);
+  window.localStorage.removeItem(`temp-refresh-token-${response?.Individual?.mobileNumber}`);
+  if (refreshToken) {
+    await getUserDetails(refreshToken, response?.Individual?.mobileNumber);
+  }
+  return response;
+};
+
 export const updateCaseDetails = async (caseDetails, tenantId, action) => {
   return DRISTIService.caseUpdateService(
     {

@@ -62,7 +62,7 @@ const SearchCaseAndShowDetails = ({
             let response = undefined;
             let fullName = "";
             if (data?.data?.respondentVerification?.individualDetails?.individualId) {
-              response = await getUserUUID(data?.data?.respondentVerification?.individualDetails?.individualId);
+              response = await getUserUUID(data?.data?.respondentVerification?.individualDetails?.individualId, tenantId);
             }
             if (response) {
               const { givenName, otherNames, familyName } = response?.Individual?.[0]?.name || {};
