@@ -233,7 +233,7 @@ const ADiaryPage = ({ path }) => {
       });
       setStepper(0);
       setIsSelectedDataSigned(true);
-      setADiarypdf(signedDocumentUploadID);
+      setADiarypdf(signedDocumentUploadID|| localStorageID);
       localStorage.removeItem("fileStoreId");
       localStorage.removeItem("adiarypdf");
       localStorage.removeItem("adiaryStepper");
