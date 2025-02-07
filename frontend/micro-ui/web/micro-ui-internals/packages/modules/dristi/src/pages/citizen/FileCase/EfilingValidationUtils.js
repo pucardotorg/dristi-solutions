@@ -13,7 +13,12 @@ const formatName = (value, capitalize = true) => {
     .trimStart()
     .replace(/ +/g, " ");
 
-  return capitalize ? cleanedValue.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase()) : cleanedValue;
+  if (!capitalize) return cleanedValue;
+
+  return cleanedValue
+    .split(" ")
+    .map((word) => (word.length > 1 && word === word.toUpperCase() ? word : word.charAt(0).toUpperCase() + word.slice(1)))
+    .join(" ");
 };
 
 export const showDemandNoticeModal = ({ selected, setValue, formData, setError, clearErrors, index, setServiceOfDemandNoticeModal, caseDetails }) => {
@@ -358,6 +363,35 @@ export const checkNameValidation = ({ formData, setValue, selected, reset, index
             setTimeout(() => {
               element?.setSelectionRange(start, end);
             }, 0);
+          }
+        }
+      }
+    }
+  }
+
+  // added for Nature of Debt/liablity
+  if (selected === "debtLiabilityDetails") {
+    if(formData?.liabilityNature){
+      const formDataCopy = structuredClone(formData);
+      for (const key in formDataCopy) {
+        if (["liabilityNature"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)){
+          const oldValue = formDataCopy[key];
+          let value = oldValue;
+          if (typeof value === "string") {
+            if (value.length > 100) {
+              value = value.slice(0, 100);
+            }
+
+            let updatedValue = formatName(value);
+            if (updatedValue !== oldValue) {
+              const element = document.querySelector(`[name="${key}"]`);
+              const start = element?.selectionStart;
+              const end = element?.selectionEnd;
+              setValue(key, updatedValue);
+              setTimeout(() => {
+                element?.setSelectionRange(start, end);
+              }, 0);
+            }
           }
         }
       }
@@ -1627,9 +1661,9 @@ export const updateCaseDetails = async ({
         caseId: caseDetails?.id,
         representing: representative?.advocateId
           ? [litigants[0]].map((item, index) => ({
-            ...(caseDetails.representatives?.[idx]?.representing?.[index] ? caseDetails.representatives?.[idx]?.representing?.[index] : {}),
-            ...item,
-          }))
+              ...(caseDetails.representatives?.[idx]?.representing?.[index] ? caseDetails.representatives?.[idx]?.representing?.[index] : {}),
+              ...item,
+            }))
           : [],
       }));
     data.litigants = [...litigants].map((item, index) => ({
