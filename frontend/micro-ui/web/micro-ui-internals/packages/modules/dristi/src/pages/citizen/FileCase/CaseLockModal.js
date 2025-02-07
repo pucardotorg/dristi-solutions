@@ -174,7 +174,7 @@ function CaseLockModal({
           return;
         }
         try {
-          createPendingTask({
+          await createPendingTask({
             name: t("PENDING_UPLOAD_SIGNATURE_FOR_CASE"),
             status: "PENDING_SIGN",
             assignees: assignees,
