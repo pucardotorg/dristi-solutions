@@ -41,5 +41,7 @@ public class TaskCriteria {
     @JsonProperty("state")
     private String state;
 
+    @JsonProperty("filingNumber")
+    private String filingNumber;
 
 }

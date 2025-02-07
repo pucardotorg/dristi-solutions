@@ -92,6 +92,7 @@ public class TaskQueryBuilder {
             UUID orderId = criteria.getOrderId();
             String referenceId = criteria.getReferenceId();
             String state = criteria.getState();
+            String filingNumber = criteria.getFilingNumber();
 
             StringBuilder query = new StringBuilder(BASE_CASE_QUERY);
             query.append(FROM_TASK_TABLE);
@@ -100,6 +101,7 @@ public class TaskQueryBuilder {
             firstCriteria = addTaskCriteria(id, query, firstCriteria, "task.id = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(tenantId, query, firstCriteria, "task.tenantid = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(status, query, firstCriteria, "task.status = ?", preparedStmtList, preparedStmtArgList);
+            firstCriteria = addTaskCriteria(filingNumber, query, firstCriteria, "task.filingnumber = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(orderId != null ? orderId.toString() : null, query, firstCriteria, "task.orderid = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(cnrNumber, query, firstCriteria, "task.cnrnumber = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(referenceId, query, firstCriteria, "task.referenceid = ?", preparedStmtList,preparedStmtArgList);
