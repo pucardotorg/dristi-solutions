@@ -1,6 +1,7 @@
 package digit.web.controllers;
 
 
+import digit.service.DiaryActivityService;
 import digit.service.DiaryEntryService;
 import digit.service.DiaryService;
 import digit.util.ResponseInfoFactory;
@@ -42,15 +43,18 @@ public class CaseDiaryApiController {
 
     private final DiaryEntryService diaryEntryService;
 
+    private final DiaryActivityService diaryActivityService;
+
     private final ResponseInfoFactory responseInfoFactory;
 
     private final DiaryService diaryService;
 
     @Autowired
-    public CaseDiaryApiController(ObjectMapper objectMapper, HttpServletRequest request, DiaryEntryService diaryEntryService, ResponseInfoFactory responseInfoFactory, DiaryService diaryService) {
+    public CaseDiaryApiController(ObjectMapper objectMapper, HttpServletRequest request, DiaryEntryService diaryEntryService, DiaryActivityService diaryActivityService, ResponseInfoFactory responseInfoFactory, DiaryService diaryService) {
         this.objectMapper = objectMapper;
         this.request = request;
         this.diaryEntryService = diaryEntryService;
+        this.diaryActivityService = diaryActivityService;
         this.responseInfoFactory = responseInfoFactory;
         this.diaryService = diaryService;
     }
@@ -137,6 +141,20 @@ public class CaseDiaryApiController {
                 .build();
         log.info("api = /case/diary/entries/v1/search, result = SUCCESS");
         return new ResponseEntity<>(caseDiaryEntryListResponse, HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/case/diary/v1/activities", method = RequestMethod.POST)
+    public ResponseEntity<CaseDiaryActivityListResponse> caseDiaryV1ActivitiesPost(@Parameter(in = ParameterIn.DEFAULT, description = "Details for the search of diary activities + RequestInfo meta data.", schema = @Schema()) @Valid @RequestBody CaseDiaryActivitySearchRequest body) {
+        log.info("api = /case/diary/v1/activities, result = IN_PROGRESS");
+        List<CaseDiaryActivityListItem> caseDiaryActivityListItems = diaryActivityService.getDiaryActivities(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(),true);
+        CaseDiaryActivityListResponse response = CaseDiaryActivityListResponse.builder()
+                .responseInfo(responseInfo)
+                .diaries(caseDiaryActivityListItems)
+                .pagination(body.getPagination())
+                .build();
+        log.info("api = /case/diary/v1/activities, result = SUCCESS");
+        return new ResponseEntity<>(response,HttpStatus.OK);
     }
 
 }

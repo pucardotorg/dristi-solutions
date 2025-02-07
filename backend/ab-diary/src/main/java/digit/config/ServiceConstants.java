@@ -64,11 +64,16 @@ public class ServiceConstants {
 
     public static final String ERROR_FROM_CASE = "ERROR_WHILE_FETCHING_FROM_CASE_SERVICE";
 
+    // workflow actions
     public static final String SIGN_ACTION = "SIGN";
-
     public static final String GENERATE_ACTION = "GENERATE";
 
+    // document types
     public static final String SIGNED_DOCUMENT_TYPE = "casediary.signed";
-
     public static final String UNSIGNED_DOCUMENT_TYPE = "casediary.unsigned";
+
+    // time zone
+    public static final String IST_TIME_ZONE = "Asia/Kolkata";
+
+    public static final String DIARY_ACTIVITY_SEARCH_EXCEPTION = "DIARY_ACTIVITY_SEARCH_EXCEPTION";
 }
