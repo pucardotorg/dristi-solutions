@@ -2482,6 +2482,9 @@ export const updateCaseDetails = async ({
           const existingRepresenting = structuredClone(existingRep.representing || []);
           const newRepresenting = structuredClone(rep.representing || []);
           const updateRepresenting = [];
+          //When the representing array in updated for a particular representative in formdata,
+          //we check for the existing representing list from case data and if a representing object already exists,
+          //then we just take that object (because it contains id for that representing) and put it in place of newer one.
           newRepresenting.forEach((obj) => {
             const objFound = existingRepresenting.find((o) => o.individualId === obj.individualId);
             if (objFound) {
@@ -2492,6 +2495,9 @@ export const updateCaseDetails = async ({
             }
           });
 
+          //Also if there was a representing array in existing representing list from case data,
+          // but it is not present now in new formdata's representing list,
+          //then we add the existing object with isActive as false.
           existingRepresenting.forEach((representingObj) => {
             const repObjectFound = updateRepresenting.find((o) => o.individualId === representingObj.individualId);
             if (!repObjectFound) {
