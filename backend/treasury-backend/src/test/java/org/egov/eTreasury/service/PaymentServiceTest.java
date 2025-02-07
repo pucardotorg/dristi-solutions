@@ -1,6 +1,7 @@
 package org.egov.eTreasury.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.egov.common.contract.models.Document;
 import org.egov.common.contract.request.RequestInfo;
@@ -31,6 +32,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Optional;
 
+import static org.egov.eTreasury.config.ServiceConstants.ADVOCATE_CLERK_WELFARE_FUND;
+import static org.egov.eTreasury.config.ServiceConstants.APPLICATION_FEE;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -58,6 +61,12 @@ class PaymentServiceTest {
     private ObjectMapper objectMapper;
     @Mock
     private TransactionDetails transactionDetails;
+    @Mock
+    private CaseUtil caseUtil;
+    @Mock
+    private BillUtil billUtil;
+    @Mock
+    private PaymentCalculatorUtil paymentCalculatorUtil;
 
     @Test
     void verifyConnection_success() {
@@ -149,15 +158,32 @@ class PaymentServiceTest {
         verify(producer).push(eq("save-auth-sek"), any(AuthSekRequest.class));
     }
 
+    private JsonNode createMockBillJson() throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        String json = "{\"billDetails\":[{\"additionalDetails\":{\"filingNumber\":\"12345\",\"chequeDetails\":{\"totalAmount\":5000.0},\"isDelayCondonation\":true}}]}";
+        return mapper.readTree(json);
+    }
+
+    private JsonNode createMockCaseJson() throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        String json = "{\"caseTitle\":\"Sample Case\"}";
+        return mapper.readTree(json);
+    }
+
+    private JsonNode createMockPaymentBreakdownJson() throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        String json = "[{\"type\":\"APPLICATION_FEE\",\"amount\":1000.0},{\"type\":\"ADVOCATE_CLERK_WELFARE_FUND\",\"amount\":200.0},{\"type\":\"ADVOCATE_WELFARE_FUND\",\"amount\":300.0}]";
+        return mapper.readTree(json);
+    }
+
+
     @Test
-    void testDecryptAndProcessTreasuryPayLoad() throws NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, BadPaddingException, InvalidKeyException, JsonProcessingException {
+    void testDecryptAndProcessTreasuryPayLoad() throws Exception {
         TreasuryParams treasuryParams = mock(TreasuryParams.class);
         RequestInfo requestInfo = mock(RequestInfo.class);
         ArrayList<AuthSek> list = new ArrayList<>();
-        list.add(mock(AuthSek.class));
+        list.add(AuthSek.builder().billId("12345").decryptedSek("testSek").build());
         when(authSekRepository.getAuthSek(treasuryParams.getAuthToken())).thenReturn(list);
-        Optional<AuthSek> optionalAuthSek = Optional.ofNullable(list.get(0));
-        when(optionalAuthSek.get().getDecryptedSek()).thenReturn("testSek");
         when(treasuryParams.getRek()).thenReturn("testRek");
         when(treasuryParams.getData()).thenReturn("testData").toString();
         when(encryptionUtil.decryptResponse("testRek","testSek")).thenReturn("testRek");
@@ -166,6 +192,9 @@ class PaymentServiceTest {
         when(transactionDetails.getAmount()).thenReturn("10");
         when(transactionDetails.getStatus()).thenReturn("success");
         when(requestInfo.getUserInfo()).thenReturn(mock(User.class));
+        when(billUtil.searchBill(requestInfo, "12345")).thenReturn(createMockBillJson());
+        when(caseUtil.getCases(requestInfo, "12345")).thenReturn(createMockCaseJson());
+        when(paymentCalculatorUtil.getBreakDown(requestInfo, 5000.0, "12345", true)).thenReturn(createMockPaymentBreakdownJson());
 
         TreasuryPaymentData treasuryPaymentData = paymentService.decryptAndProcessTreasuryPayload(treasuryParams,requestInfo);
 

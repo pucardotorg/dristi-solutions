@@ -50,5 +50,19 @@ public class TreasuryPaymentData {
 
     private String businessService;
 
+    private String caseType;
 
+    private String caseName;
+
+    private String caseNumber;
+
+    private String purposeOfPayment;
+
+    private double courtFee;
+
+    private double advocateWelfareFund;
+
+    private double clerkWelfareFund;
+
+    private double totalAmount;
 }

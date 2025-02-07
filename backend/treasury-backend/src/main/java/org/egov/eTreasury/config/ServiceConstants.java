@@ -73,4 +73,8 @@ public class ServiceConstants {
     public static final String FILES_KEY = "files";
     public static final String DOCUMENT_TYPE_PDF = "application/pdf";
 
+    public static final String ADVOCATE_CLERK_WELFARE_FUND = "Advocate Clerk Welfare Fund";
+    public static final String ADVOCATE_WELFARE_FUND = "Advocate Welfare Fund";
+    public static final String APPLICATION_FEE = "Total Application Fee";
+    public static final String CASE_TYPE = "NIA_S138";
 }

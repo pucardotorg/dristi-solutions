@@ -104,4 +104,25 @@ public class PaymentConfiguration {
 
     @Value("${challan.test.amount}")
     private String challanTestAmount;
+
+    //CaseCriteria
+    @Value("${dristi.case.host}")
+    private String caseUrl;
+
+    @Value("${dristi.case.endpoint}")
+    private String caseEndpoint;
+
+    //Bill Config
+    @Value("${bill.v2.host}")
+    private String billHost;
+
+    @Value("${bill.v2.search.endpoint}")
+    private String billV2Endpoint;
+
+    //Payment Config
+    @Value("${dristi.payment.calculator.host}")
+    private String paymentCalculatorHost;
+
+    @Value("${dristi.payment.calculator.endpoint}")
+    private String paymentCalculatorEndpoint;
 }

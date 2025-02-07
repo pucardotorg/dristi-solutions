@@ -1,5 +1,7 @@
 package org.egov.eTreasury.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.jayway.jsonpath.JsonPath;
 import org.egov.common.contract.models.Document;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.eTreasury.config.PaymentConfiguration;
@@ -59,11 +61,17 @@ public class PaymentService {
 
     private final TreasuryEnrichment treasuryEnrichment;
 
+    private final BillUtil billUtil;
+
+    private final CaseUtil caseUtil;
+
+    private final PaymentCalculatorUtil paymentCalculatorUtil;
+
     @Autowired
     public PaymentService(PaymentConfiguration config, ETreasuryUtil treasuryUtil,
                           ObjectMapper objectMapper, EncryptionUtil encryptionUtil,
                           Producer producer, AuthSekRepository repository, CollectionsUtil collectionsUtil,
-                          FileStorageUtil fileStorageUtil, TreasuryPaymentRepository treasuryPaymentRepository, PdfServiceUtil pdfServiceUtil, TreasuryEnrichment treasuryEnrichment) {
+                          FileStorageUtil fileStorageUtil, TreasuryPaymentRepository treasuryPaymentRepository, PdfServiceUtil pdfServiceUtil, TreasuryEnrichment treasuryEnrichment, BillUtil billUtil, CaseUtil caseUtil, PaymentCalculatorUtil paymentCalculatorUtil) {
         this.config = config;
         this.treasuryUtil = treasuryUtil;
         this.objectMapper = objectMapper;
@@ -75,6 +83,9 @@ public class PaymentService {
         this.treasuryPaymentRepository = treasuryPaymentRepository;
         this.pdfServiceUtil = pdfServiceUtil;
         this.treasuryEnrichment = treasuryEnrichment;
+        this.billUtil = billUtil;
+        this.caseUtil = caseUtil;
+        this.paymentCalculatorUtil = paymentCalculatorUtil;
     }
 
     public ConnectionStatus verifyConnection() {
@@ -194,7 +205,7 @@ public class PaymentService {
 
             TransactionDetails transactionDetails = objectMapper.readValue(decryptedData, TransactionDetails.class);
             TreasuryPaymentData data = createTreasuryPaymentData(transactionDetails, authSek);
-
+            enrichTreasuryData(requestInfo, authSek.getBillId(), data);
             requestInfo.getUserInfo().setTenantId(config.getEgovStateTenantId());
 
             log.info("Request info: {}", requestInfo);
@@ -242,6 +253,38 @@ public class PaymentService {
                 .build();
     }
 
+
+    private void enrichTreasuryData(RequestInfo requestInfo, String billId, TreasuryPaymentData data){
+        try {
+            log.info("operation=enrichTreasuryData, result=IN_PROCESS");
+            JsonNode bill = billUtil.searchBill(requestInfo, billId);
+            JsonNode additionalDetails = bill.get("billDetails").get(0).get("additionalDetails");
+            String filingNumber = additionalDetails.get("filingNumber").textValue();
+            JsonNode caseList = caseUtil.getCases(requestInfo, filingNumber);
+            String caseName = caseList.get("caseTitle").textValue();
+            Double chequeAmount = additionalDetails.get("chequeDetails").get("totalAmount").doubleValue();
+            Boolean isDelayCondonation = additionalDetails.get("isDelayCondonation").booleanValue();
+            JsonNode paymentBreakDown = paymentCalculatorUtil.getBreakDown(requestInfo, chequeAmount, filingNumber, isDelayCondonation);
+            for(JsonNode jsonNode : paymentBreakDown) {
+                String type = jsonNode.get("type").toString();
+                if(Objects.equals(type, APPLICATION_FEE)) {
+                    data.setTotalAmount(jsonNode.get("amount").asDouble());
+                } else if(Objects.equals(type, ADVOCATE_CLERK_WELFARE_FUND)){
+                    data.setClerkWelfareFund(jsonNode.get("amount").asDouble());
+                } else if(Objects.equals(type, ADVOCATE_WELFARE_FUND)) {
+                    data.setAdvocateWelfareFund(jsonNode.get("amount").asDouble());
+                }
+            }
+            data.setCaseName(caseName);
+            data.setCaseNumber(filingNumber);
+            data.setCaseType(CASE_TYPE);
+            data.setTotalAmount(data.getAmount().doubleValue());
+            log.info("operation=enrichTreasuryData, result=SUCCESS");
+        } catch (Exception e) {
+            log.error("operation=enrichTreasuryData, result=Failure");
+            throw new CustomException("ERROR_ENRICH_PAYMENT", "Error enriching payment data.");
+        }
+    }
 
     private void saveAuthTokenAndSek(RequestInfo requestInfo, AuthSek authSek) {
         AuthSekRequest request = new AuthSekRequest(requestInfo, authSek);
