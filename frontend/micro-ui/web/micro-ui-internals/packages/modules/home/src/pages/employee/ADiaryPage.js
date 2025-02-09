@@ -308,7 +308,6 @@ const ADiaryPage = ({ path }) => {
   if (isDiaryEntriesLoading || generateAdiaryLoader) {
     return <Loader />;
   }
-  debugger;
   return (
     <div style={styles.container}>
       <div style={styles.centerPanel}>
