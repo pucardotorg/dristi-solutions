@@ -48,9 +48,9 @@ public class JoinCaseCalculationService {
 
                 // here check for null
                 // if litigant is not there means litigant and advocate joining together
-                UUID uuid = UUID.fromString(partyId);
+//                UUID uuid = UUID.fromString(partyId);
 
-                List<JsonNode> jsonNodes = advocateForLitigant.get(uuid);
+//                List<JsonNode> jsonNodes = advocateForLitigant.get(uuid);
 
 
                 // if the size is less than 3 add 25 rupees and 12 for advocate and clerk
