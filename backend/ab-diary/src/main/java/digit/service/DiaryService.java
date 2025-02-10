@@ -143,6 +143,7 @@ public class DiaryService {
             CaseDiary caseDiary = generateRequest.getDiary();
 
             caseDiary.setCaseDiaryEntries(caseDiaryEntries);
+            dateFormat.setTimeZone(TimeZone.getTimeZone(IST_TIME_ZONE));
             caseDiary.setDate(dateFormat.format(new Date(caseDiary.getDiaryDate())));
             generateRequest.setDiary(caseDiary);
 
