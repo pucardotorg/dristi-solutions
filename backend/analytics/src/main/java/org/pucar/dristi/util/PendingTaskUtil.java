@@ -90,7 +90,7 @@ public class PendingTaskUtil {
     private String buildRequestBody(JsonNode task){
         String taskId = task.get("referenceId").asText();
         StringBuilder bulkRequestBody = new StringBuilder();
-        bulkRequestBody.append("{ \"update\": { \"_index\": \"pending-tasks-index\", \"_id\": \"").append(taskId).append("\" } }\n");
+        bulkRequestBody.append("{ \"create\": { \"_index\": \"pending-tasks-index\", \"_id\": \"").append(taskId).append("\" } }\n");
         bulkRequestBody.append("{ \"doc\": ").append(task).append(" }\n");
         return bulkRequestBody.toString();
     }

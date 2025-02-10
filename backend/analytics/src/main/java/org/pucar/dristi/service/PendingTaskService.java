@@ -74,7 +74,9 @@ public class PendingTaskService {
             if(Objects.equals(topic, LITIGANT_JOIN_CASE_TOPIC) && joinCaseJson.get("litigant") != null) {
                 updatePendingTaskForLitigant(joinCaseJson, pendingTaskNode);
             } else if (Objects.equals(topic, REPRESENTATIVE_JOIN_CASE_TOPIC) && joinCaseJson.get("representative") != null) {
-                updatePendingTaskForAdvocate(joinCaseJson, pendingTaskNode);
+                updatePendingTaskForAdvocate(joinCaseJson, pendingTaskNode, false);
+            } else if(Objects.equals(topic, REPRESENTATIVE_REPLACE_JOIN_CASE)) {
+                updatePendingTaskForAdvocate(joinCaseJson, pendingTaskNode, true);
             }
 
         } catch (Exception e) {
@@ -104,7 +106,7 @@ public class PendingTaskService {
 
     }
 
-    public void updatePendingTaskForAdvocate(Map<String, Object> joinCaseJson, JsonNode pendingTaskNode) {
+    public void updatePendingTaskForAdvocate(Map<String, Object> joinCaseJson, JsonNode pendingTaskNode, Boolean isAdvocateReplace) {
         try {
             log.info("Updating Pending task for Advocate.");
             Map<String, Object> representative = (Map<String, Object>) joinCaseJson.get("representative");
@@ -120,19 +122,12 @@ public class PendingTaskService {
             List<JsonNode> filteredTasks = new ArrayList<>();
             filteredTasks = filterPendingTaskAdvocate(hitsNode, litigantUuids);
 
-            if(joinCaseJson.get("isActive").equals(true)){
-                if (advocateUuid != null) {
-                    filteredTasks = filteredTasks.stream()
-                            .filter(task -> !task.path("_source").path("Data").path("assignedTo")
-                                    .findValuesAsText("uuid").contains(advocateUuid))
-                            .collect(Collectors.toList());
-                }
+            if(isAdvocateReplace){
+                replaceAssigneeToPendingTask(filteredTasks, advocateUuid, requestInfo);
             }
-
-            Map<String, Object> auditDetails = (Map<String, Object>) joinCaseJson.get("auditdetails");
-            String createdBy = (String) auditDetails.get("createdBy");
-
-            addAssigneeToPendingTask(filteredTasks, createdBy);
+            else {
+                addAssigneeToPendingTask(filteredTasks, advocateUuid);
+            }
             pendingTaskUtil.updatePendingTask(filteredTasks);
             log.info("Pending Task for advocate is updated.");
         } catch (Exception e){
@@ -141,12 +136,41 @@ public class PendingTaskService {
         }
     }
 
-    private static void addAssigneeToPendingTask(List<JsonNode> filteredTasks, String createdBy) {
+    private void replaceAssigneeToPendingTask(List<JsonNode> filteredTasks, String uuid, RequestInfo requestInfo) {
+        for(JsonNode task : filteredTasks) {
+            JsonNode dataNode = task.path("_source").path("Data");
+            ArrayNode assignedToArray = (ArrayNode) dataNode.withArray("assignedTo");
+            List<JsonNode> litigantNode = new ArrayList<>();
+            for(JsonNode uuidNode : assignedToArray) {
+                if(uuidNode.has("uuid") && !isAdvocateUuid(uuidNode.get("uuid").asText(), requestInfo)){
+                    litigantNode.add(uuidNode);
+                }
+            }
+            assignedToArray.removeAll();
+
+            for(JsonNode node : litigantNode) {
+                assignedToArray.add(node);
+            }
+            ObjectNode newAssignee = assignedToArray.addObject();
+            newAssignee.put("uuid", uuid);
+        }
+    }
+
+    private boolean isAdvocateUuid(String uuid, RequestInfo requestInfo) {
+        List<Individual> individuals = individualService.getIndividuals(requestInfo, Collections.singletonList(uuid));
+        String individualId = individuals.get(0).getIndividualId();
+        if(advocateUtil.isAdvocateExists(requestInfo, List.of(individualId))) {
+            return true;
+        }
+        return false;
+    }
+
+    private static void addAssigneeToPendingTask(List<JsonNode> filteredTasks, String uuid) {
         for (JsonNode task : filteredTasks) {
             JsonNode dataNode = task.path("_source").path("Data");
             ArrayNode assignedToArray = (ArrayNode) dataNode.withArray("assignedTo");
-            ObjectNode createdByNode = assignedToArray.addObject();
-            createdByNode.put("uuid", createdBy);
+            ObjectNode uuidNode = assignedToArray.addObject();
+            uuidNode.put("uuid", uuid);
         }
     }
 
