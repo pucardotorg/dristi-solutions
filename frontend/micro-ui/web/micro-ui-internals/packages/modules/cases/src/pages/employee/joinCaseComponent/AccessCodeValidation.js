@@ -2,8 +2,11 @@ import { InfoCard } from "@egovernments/digit-ui-components";
 import CustomCaseInfoDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCaseInfoDiv";
 import { CardLabel, CardLabelError, LabelFieldPair, TextInput } from "@egovernments/digit-ui-react-components";
 import React, { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
-const AccessCodeValidation = ({ t, caseDetails, validationCode, setValidationCode, setIsDisabled, errors, setErrors }) => {
+const AccessCodeValidation = ({ caseDetails, validationCode, setValidationCode, setIsDisabled, errors, setErrors }) => {
+  const { t } = useTranslation();
+
   const caseInfo = useMemo(() => {
     if (caseDetails?.caseCategory) {
       return [
@@ -43,7 +46,7 @@ const AccessCodeValidation = ({ t, caseDetails, validationCode, setValidationCod
         text={t("SIX_DIGIT_CODE_INFO")}
         textStyle={{}}
         className={`custom-info-card`}
-        style={{ width: "712px" }}
+        style={{ width: "100%", maxWidth: "960px" }}
       />
       <LabelFieldPair className="case-label-field-pair">
         <div className="join-case-tooltip-wrapper">

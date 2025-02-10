@@ -4,16 +4,10 @@ import { CardLabel, LabelFieldPair, TextInput } from "@egovernments/digit-ui-rea
 import React, { useMemo } from "react";
 import { formatDate } from "../../../utils";
 import NameListWithModal from "../../../components/NameListWithModal";
-
-const createShorthand = (fullname) => {
-  const words = fullname?.split(" ");
-  const firstChars = words?.map((word) => word?.charAt(0));
-  const shorthand = firstChars?.join("");
-  return shorthand;
-};
+import { createShorthand } from "../../../utils/joinCaseUtils";
+import { useTranslation } from "react-i18next";
 
 const SearchCaseAndShowDetails = ({
-  t,
   caseNumber,
   setCaseNumber,
   caseList,
@@ -23,9 +17,10 @@ const SearchCaseAndShowDetails = ({
   caseDetails,
   setCaseDetails,
   onSelect,
-  complainantList,
-  respondentList,
+  successScreenData,
 }) => {
+  const { t } = useTranslation();
+
   const caseInfo = useMemo(() => {
     if (caseDetails?.caseCategory) {
       return [
@@ -48,6 +43,7 @@ const SearchCaseAndShowDetails = ({
         {
           key: "CASE_CATEGORY",
           value: caseDetails?.caseCategory,
+          prefix: "CS_",
         },
         {
           key: "CASE_TYPE",
@@ -148,7 +144,7 @@ const SearchCaseAndShowDetails = ({
                     }}
                   >
                     <h2 className="case-info-title">{t("COMPLAINANTS_TEXT")}</h2>
-                    <NameListWithModal t={t} data={complainantList?.map((complainant) => complainant?.fullName)} type={"COMPLAINANTS_TEXT"} />
+                    <NameListWithModal t={t} data={successScreenData?.complainantList} type={"COMPLAINANTS_TEXT"} />
                   </div>
                   <div
                     style={{
@@ -159,17 +155,17 @@ const SearchCaseAndShowDetails = ({
                     }}
                   >
                     <h2 className="case-info-title">{t("RESPONDENTS_TEXT")}</h2>
-                    <NameListWithModal t={t} data={respondentList?.map((respondent) => respondent?.fullName)} type={"RESPONDENTS_TEXT"} />
+                    <NameListWithModal t={t} data={successScreenData?.respondentList} type={"RESPONDENTS_TEXT"} />
                   </div>
                 </div>
                 <div className="complainants-respondents">
                   <div style={{ width: "50%" }}>
                     <h2 className="case-info-title">{t("COMPLAINTS_ADVOCATES")}</h2>
-                    <NameListWithModal t={t} data={complainantList?.map((complainant) => complainant?.fullName)} type={"COMPLAINTS_ADVOCATES"} />
+                    <NameListWithModal t={t} data={successScreenData?.complainantAdvocateList} type={"COMPLAINTS_ADVOCATES"} />
                   </div>
                   <div style={{ width: "50%", paddingLeft: "16px", borderLeft: "1px solid rgba(0, 0, 0, 0.10196)" }}>
                     <h2 className="case-info-title">{t("ACCUSEDS_ADVOCATES")}</h2>
-                    <NameListWithModal t={t} data={[]} type={"ACCUSEDS_ADVOCATES"} />
+                    <NameListWithModal t={t} data={successScreenData?.respondentAdvocateList} type={"ACCUSEDS_ADVOCATES"} />
                   </div>
                 </div>
               </div>

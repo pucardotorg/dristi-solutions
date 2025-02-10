@@ -37,6 +37,7 @@ const TasksComponent = ({
   setJoinCaseShowSubmitResponseModal,
   hideTaskComponent,
   hideFilters = false,
+  isDiary = false,
 }) => {
   const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
   const [pendingTasks, setPendingTasks] = useState([]);
@@ -66,13 +67,14 @@ const TasksComponent = ({
           ...(isLitigant && { assignedTo: uuid }),
           ...(!isLitigant && { assignedRole: [...roles] }),
           ...(inCase && { filingNumber: filingNumber }),
+          isDiary: isDiary,
         },
         limit: 10000,
         offset: 0,
       },
     },
     params: { tenantId },
-    key: `${taskType?.code}-${filingNumber}`,
+    key: `${taskType?.code}-${filingNumber}-${isDiary}`,
     config: { enabled: Boolean(taskType?.code && tenantId) },
   });
 
