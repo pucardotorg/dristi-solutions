@@ -79,7 +79,7 @@ public class NotificationService {
 	 */
 	public void sendNotification(EmployeeRequest request, Map<String, String> pwdMap) {
 		
-		String message =" getMessage(request,HRMSConstants.HRMS_EMP_CREATE_LOCLZN_CODE)";
+		String message =getMessage(request,HRMSConstants.HRMS_EMP_CREATE_LOCLZN_CODE);
 		String tenantId = request.getEmployees().get(0).getTenantId(); 
 				
 		if(StringUtils.isEmpty(message)) {
@@ -87,7 +87,7 @@ public class NotificationService {
 			return;
 		}
 		for(Employee employee: request.getEmployees()) {
-//			sendSms(pwdMap, employee, message, tenantId);
+			sendSms(pwdMap, employee, message, tenantId);
 			if(!employee.getUser().getEmailId().isEmpty()) {
 				pwdMap.put("email", employee.getUser().getEmailId());
 				sendEmail(pwdMap, employee, tenantId, request.getRequestInfo());
