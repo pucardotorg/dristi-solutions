@@ -703,25 +703,119 @@ export const chequeDetailFileValidation = ({ formData, selected, setShowErrorToa
   }
 };
 
-export const advocateDetailsFileValidation = ({ formData, selected, setShowErrorToast, setFormErrors, t }) => {
+export const getAdvocatesAndPipRemainingFields = (formdata, t) => {
+  const allErrorData = [];
+  for (let i = 0; i < formdata?.length; i++) {
+    const formData = formdata?.[i]?.data || {};
+    const { boxComplainant, isComplainantPip, multipleAdvocateNameDetails, vakalatnamaFileUpload, pipAffidavitFileUpload } =
+      formData?.multipleAdvocatesAndPip || {};
+
+    let errorObject = {
+      ADVOCATE_INFORMATION_MISSING: false,
+      VAKALATNAMA_DOCUMENT_MISSING: false,
+      AFFIDAVIT_DOCUMENT_MISSING: false,
+    };
+    if (boxComplainant?.individualId) {
+      let isAnAdvocateMissing = false;
+      let isVakalatnamaFileMissing = false;
+      let isPipAffidavitFileMissing = false;
+      if (isComplainantPip?.code === "NO") {
+        // IF complainant is not party in person, an advocate must be present
+        if (!multipleAdvocateNameDetails || (Array.isArray(multipleAdvocateNameDetails) && multipleAdvocateNameDetails?.length === 0)) {
+          isAnAdvocateMissing = true;
+        } else if (
+          multipleAdvocateNameDetails &&
+          Array.isArray(multipleAdvocateNameDetails) &&
+          multipleAdvocateNameDetails?.length > 0 &&
+          multipleAdvocateNameDetails?.some((adv) => !adv?.advocateBarRegNumberWithName?.advocateId)
+        ) {
+          isAnAdvocateMissing = true;
+        }
+        // IF complainant is not party in person, there must be a vakalathnama document uploaded.
+        if (!vakalatnamaFileUpload || vakalatnamaFileUpload?.document?.length === 0) {
+          isVakalatnamaFileMissing = true;
+        }
+      }
+      if (isComplainantPip?.code === "YES") {
+        // IF complainant is party in person, there must be a PIP affidavit document uploaded.
+        if (!pipAffidavitFileUpload || pipAffidavitFileUpload?.document?.length === 0) {
+          isPipAffidavitFileMissing = true;
+        }
+      }
+      errorObject.ADVOCATE_INFORMATION_MISSING = isAnAdvocateMissing;
+      errorObject.VAKALATNAMA_DOCUMENT_MISSING = isVakalatnamaFileMissing;
+      errorObject.AFFIDAVIT_DOCUMENT_MISSING = isPipAffidavitFileMissing;
+    }
+    let mandatoryLeft = false;
+    for (let key in errorObject) {
+      if (errorObject[key] === true) {
+        mandatoryLeft = true;
+      }
+    }
+
+    if (mandatoryLeft) {
+      const errorData = {
+        index: boxComplainant?.index,
+        complainant: boxComplainant?.firstName,
+        errorKeys: Object.keys(errorObject)
+          .filter((key) => errorObject[key])
+          .map((key) => t(key)),
+      };
+      allErrorData.push(errorData);
+    }
+  }
+  return allErrorData;
+};
+
+export const advocateDetailsFileValidation = ({ formData, selected, setShowErrorToast, setFormErrors, t, isSubmitDisabled }) => {
   if (selected === "advocateDetails") {
-    if (formData?.numberOfAdvocate < 0) {
-      setFormErrors("numberOfAdvocate", { message: t("NUMBER_OF_ADVOCATE_ERROR") });
-      setShowErrorToast(true);
-      return true;
+    const { boxComplainant, isComplainantPip, multipleAdvocateNameDetails, vakalatnamaFileUpload, pipAffidavitFileUpload } =
+      formData?.multipleAdvocatesAndPip || {};
+    let errorObject = {
+      advocateDetailsAbsent: false,
+      vakalatnamaFileUploadAbsent: false,
+      pipAffidavitFileUploadAbsent: false,
+    };
+    if (boxComplainant?.individualId) {
+      let isAnAdvocateMissing = false;
+      let isVakalatnamaFileMissing = false;
+      let isPipAffidavitFileMissing = false;
+      if (isComplainantPip?.code === "NO") {
+        // IF complainant is not party in person, an advocate must be present
+        if (!multipleAdvocateNameDetails || (Array.isArray(multipleAdvocateNameDetails) && multipleAdvocateNameDetails?.length === 0)) {
+          isAnAdvocateMissing = true;
+        } else if (
+          multipleAdvocateNameDetails &&
+          Array.isArray(multipleAdvocateNameDetails) &&
+          multipleAdvocateNameDetails?.length > 0 &&
+          multipleAdvocateNameDetails?.some((adv) => !adv?.advocateBarRegNumberWithName?.advocateId)
+        ) {
+          isAnAdvocateMissing = true;
+        }
+        // IF complainant is not party in person, there must be a vakalathnama document uploaded.
+        if (!vakalatnamaFileUpload || vakalatnamaFileUpload?.document?.length === 0) {
+          isVakalatnamaFileMissing = true;
+        }
+      }
+      if (isComplainantPip?.code === "YES") {
+        // IF complainant is party in person, there must be a PIP affidavit document uploaded.
+        if (!pipAffidavitFileUpload || pipAffidavitFileUpload?.document?.length === 0) {
+          isPipAffidavitFileMissing = true;
+        }
+      }
+      errorObject = {
+        advocateDetailsAbsent: isAnAdvocateMissing,
+        vakalatnamaFileUploadAbsent: isVakalatnamaFileMissing,
+        pipAffidavitFileUploadAbsent: isPipAffidavitFileMissing,
+      };
     }
-    if (
-      formData?.isAdvocateRepresenting?.code === "YES" &&
-      ["vakalatnamaFileUpload"].some((data) => !Object.keys(formData?.[data]?.document || {}).length)
-    ) {
-      setFormErrors("vakalatnamaFileUpload", { type: "required" });
-      setShowErrorToast(true);
-      return true;
-    } else {
-      return false;
+    let mandatoryLeft = false;
+    for (let key in errorObject) {
+      if (errorObject[key] === true) {
+        mandatoryLeft = true;
+      }
     }
-  } else {
-    return false;
+    // setError("multipleAdvocatesAndPip", errorObject);
   }
 };
 
@@ -2378,13 +2472,39 @@ export const updateCaseDetails = async ({
     // We will check that if a representative is already present in representatives array in case search api data,
     // we will just update the new documents and representinng data to that object.
     const updatedRepresentatives = representatives.map((rep) => {
-      const existingRep = caseRepresentatives.find((caseRep) => caseRep.advocateId === rep.advocateId);
-      if (existingRep) {
+      const existingRepresentative = caseRepresentatives.find((caseRep) => caseRep.advocateId === rep.advocateId);
+      if (existingRepresentative) {
+        const existingRep = structuredClone(existingRepresentative);
         if (!isMatch(existingRep.documents, rep.documents)) {
           existingRep.documents = rep.documents;
         }
         if (!isMatch(existingRep.representing, rep.representing)) {
-          existingRep.representing = rep.representing;
+          const existingRepresenting = structuredClone(existingRep.representing || []);
+          const newRepresenting = structuredClone(rep.representing || []);
+          const updateRepresenting = [];
+          //When the representing array in updated for a particular representative in formdata,
+          //we check for the existing representing list from case data and if a representing object already exists,
+          //then we just take that object (because it contains id for that representing) and put it in place of newer one.
+          newRepresenting.forEach((obj) => {
+            const objFound = existingRepresenting.find((o) => o.individualId === obj.individualId);
+            if (objFound) {
+              updateRepresenting.push(objFound);
+            }
+            if (!objFound) {
+              updateRepresenting.push(obj);
+            }
+          });
+
+          //Also if there was a representing array in existing representing list from case data,
+          // but it is not present now in new formdata's representing list,
+          //then we add the existing object with isActive as false.
+          existingRepresenting.forEach((representingObj) => {
+            const repObjectFound = updateRepresenting.find((o) => o.individualId === representingObj.individualId);
+            if (!repObjectFound) {
+              updateRepresenting.push({ ...representingObj, isActive: false });
+            }
+          });
+          existingRep.representing = updateRepresenting;
         }
         if (!isMatch(existingRep.additionalDetails, rep.additionalDetails)) {
           existingRep.additionalDetails = rep.additionalDetails;
@@ -2393,7 +2513,6 @@ export const updateCaseDetails = async ({
       }
       return rep;
     });
-
     // If a representative object was present previously and now that representative is not present now,
     // the same object should again be copied with isActive as false and added in the updatedRepresentatives.
     caseRepresentatives.forEach((caseRep) => {
