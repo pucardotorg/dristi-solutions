@@ -1,6 +1,6 @@
 import { InfoCard } from "@egovernments/digit-ui-components";
 import CustomCaseInfoDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCaseInfoDiv";
-import { CardLabel, Dropdown, FormComposerV2, LabelFieldPair, MultiSelectDropdown, RadioButtons } from "@egovernments/digit-ui-react-components";
+import { CardLabel, Dropdown, FormComposerV2, LabelFieldPair, RadioButtons } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useRef } from "react";
 import isEqual from "lodash/isEqual";
 import { useTranslation } from "react-i18next";
@@ -9,18 +9,18 @@ const SelectParty = ({
   selectPartyData,
   setSelectPartyData,
   caseDetails,
-  setSelectedParty,
-  setRoleOfNewAdvocate,
   parties,
   party,
   setParty,
-  selectedParty,
   partyInPerson,
   setPartyInPerson,
   isLitigantJoined,
   isAdvocateJoined,
 }) => {
   const { t } = useTranslation();
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+
+  const MultiSelectDropdown = window?.Digit?.ComponentRegistryService?.getComponent("MultiSelectDropdown");
 
   const targetRef = useRef(null);
 
@@ -86,6 +86,17 @@ const SelectParty = ({
     return [];
   }, [caseDetails]);
 
+  const customLabel = useMemo(() => {
+    if (selectPartyData?.userType?.value !== "Advocate") return "";
+
+    const partyCount = party?.length || 0;
+
+    if (partyCount === 1) return party[0]?.fullName;
+    if (partyCount > 1) return `${party[0]?.fullName} + ${partyCount - 1} ${t("CS_OTHERS")}`;
+
+    return "";
+  }, [t, party, selectPartyData?.userType]);
+
   const scrollToDiv = () => {
     if (targetRef.current) {
       targetRef.current.scrollTop = targetRef.current.scrollHeight;
@@ -99,16 +110,16 @@ const SelectParty = ({
   return (
     <div ref={targetRef} className="select-user-join-case" style={{ width: "712px" }}>
       <CustomCaseInfoDiv t={t} data={caseInfo?.slice(0, 4)} column={4} />
-      {selectPartyData?.userType?.value === "Litigant" && (
-        <InfoCard
-          variant={"default"}
-          label={t("PLEASE_NOTE")}
-          additionalElements={[<p>{t("ACKNOWLEDGE_RECEIPT_OF_SUMMONS")}</p>]}
-          inline
-          textStyle={{}}
-          className={`custom-info-card`}
-        />
-      )}
+
+      <InfoCard
+        variant={"default"}
+        label={t("PLEASE_NOTE")}
+        additionalElements={[<p>{t("ACKNOWLEDGE_RECEIPT_OF_SUMMONS")}</p>]}
+        inline
+        textStyle={{}}
+        className={`custom-info-card`}
+      />
+
       <LabelFieldPair className="case-label-field-pair">
         <CardLabel className="case-input-label">{`${t("JOINING_THIS_CASE_AS")}`}</CardLabel>
         <RadioButtons
@@ -134,8 +145,7 @@ const SelectParty = ({
               isReplaceAdvocate: {},
               affidavit: {},
             }));
-            setSelectedParty({});
-            setRoleOfNewAdvocate("");
+            setPartyInPerson({});
             setParty(selectPartyData?.userType?.value === "Litigant" ? {} : []);
           }}
           optionsKey={"label"}
@@ -143,7 +153,7 @@ const SelectParty = ({
             { label: t("COMPLAINANTS_TEXT"), value: "COMPLAINANTS" },
             { label: t("RESPONDENTS_TEXT"), value: "RESPONDENTS" },
           ]}
-          disabled={isAdvocateJoined}
+          disabled={isAdvocateJoined || isLitigantJoined}
         />
       </LabelFieldPair>
       {selectPartyData?.userType?.value === "Advocate" && selectPartyData?.partyInvolve?.value && (
@@ -203,7 +213,7 @@ const SelectParty = ({
                 onSelect={(value) => {
                   setParty(value?.map((val) => val[1]));
                 }}
-                defaultUnit={"Others"}
+                customLabel={customLabel}
               />
             )
           )}
@@ -226,7 +236,7 @@ const SelectParty = ({
           />
         </LabelFieldPair>
       )}
-      {partyInPerson?.value === "YES" && (
+      {partyInPerson?.value === "YES" && party?.uuid === userInfo?.uuid && (
         <React.Fragment>
           <InfoCard
             variant={"default"}
@@ -242,7 +252,9 @@ const SelectParty = ({
           />
         </React.Fragment>
       )}
-      {(partyInPerson?.value === "YES" || selectPartyData?.isReplaceAdvocate?.value === "YES") && (
+      {((partyInPerson?.value === "YES" && party?.uuid === userInfo?.uuid) ||
+        (partyInPerson?.value === "YES" && !party?.uuid) ||
+        selectPartyData?.isReplaceAdvocate?.value === "YES") && (
         <FormComposerV2
           key={2}
           config={advocateVakalatnamaConfig}
@@ -260,20 +272,22 @@ const SelectParty = ({
         />
       )}
 
-      {selectPartyData?.userType?.value === "Litigant" && partyInPerson?.value === "NO" && party?.individualId && (
-        <InfoCard
-          variant={"warning"}
-          label={t("WARNING")}
-          additionalElements={[
-            <p>
-              {t("ABOVE_SELECTED_PARTY")} <span style={{ fontWeight: "bold" }}>{`${party?.label}`}</span> {t("ALREADY_JOINED_CASE")}
-            </p>,
-          ]}
-          inline
-          textStyle={{}}
-          className={`custom-info-card warning`}
-        />
-      )}
+      {selectPartyData?.userType?.value === "Litigant" &&
+        party?.individualId &&
+        ((partyInPerson?.value === "NO" && party?.individualId) || (partyInPerson?.value === "YES" && party?.uuid !== userInfo?.uuid)) && (
+          <InfoCard
+            variant={"warning"}
+            label={t("WARNING")}
+            additionalElements={[
+              <p>
+                {t("ABOVE_SELECTED_PARTY")} <span style={{ fontWeight: "bold" }}>{`${party?.label}`}</span> {t("ALREADY_JOINED_CASE")}
+              </p>,
+            ]}
+            inline
+            textStyle={{}}
+            className={`custom-info-card warning`}
+          />
+        )}
     </div>
   );
 };

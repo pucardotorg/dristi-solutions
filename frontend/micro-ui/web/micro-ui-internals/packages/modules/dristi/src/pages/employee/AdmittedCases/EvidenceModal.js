@@ -89,6 +89,15 @@ const EvidenceModal = ({
       </div>
     );
   };
+
+  const getDefaultBOTD = useMemo(() => {
+    const businessOfDay = `${documentSubmission?.[0]?.artifactList?.artifactNumber} ${
+      documentSubmission?.[0]?.artifactList?.isEvidence ? "unmarked" : "marked"
+    } as evidence`;
+    setBusinessOfTheDay(businessOfDay);
+    return businessOfDay;
+  }, [documentSubmission]);
+
   const respondingUuids = useMemo(() => {
     return documentSubmission?.[0]?.details?.additionalDetails?.respondingParty?.map((party) => party?.uuid?.map((uuid) => uuid))?.flat() || [];
   }, [documentSubmission]);
@@ -343,7 +352,6 @@ const EvidenceModal = ({
     counterUpdate();
     handleBack();
     setIsSubmitDisabled(false);
-
   };
 
   const onError = async (result) => {
@@ -395,6 +403,7 @@ const EvidenceModal = ({
           body: {
             artifact: {
               ...documentSubmission?.[0].artifactList,
+              comments: comments,
               isEvidence: !documentSubmission?.[0]?.artifactList?.isEvidence,
               isVoid: false,
               filingNumber: filingNumber,
@@ -1080,7 +1089,7 @@ const EvidenceModal = ({
                 </div>
                 <div style={{ display: "flex", flexDirection: "column" }}>{showDocument}</div>
               </div>
-              {modalType === "Documents" && (
+              {modalType === "Documents" && isJudge && (
                 <div>
                   <h3 style={{ marginTop: 0, marginBottom: "2px" }}>{t("BUSINESS_OF_THE_DAY")} </h3>
                   <div style={{ display: "flex", gap: "10px" }}>
@@ -1090,7 +1099,7 @@ const EvidenceModal = ({
                         setBusinessOfTheDay(e.target.value);
                       }}
                       disable={isDisabled}
-                      defaultValue={currentDiaryEntry?.businessOfDay}
+                      defaultValue={currentDiaryEntry?.businessOfDay || getDefaultBOTD}
                       style={{ minWidth: "500px" }}
                       textInputStyle={{ maxWidth: "100%" }}
                     />

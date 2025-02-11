@@ -10,8 +10,8 @@ import { CloseSvg, InfoCard } from "@egovernments/digit-ui-components";
 import { HomeService } from "../../hooks/services";
 
 const getStyles = () => ({
-  container: { display: "flex", flexDirection: "row", height: "100vh" },
-  centerPanel: { flex: 3, padding: "24px 40px 16px 16px", border: "1px solid #e0e0e0", marginLeft: "20px" },
+  container: { display: "flex", flexDirection: "row", padding: 10 },
+  centerPanel: { flex: 3, padding: 30, border: "1px solid #e0e0e0", marginLeft: "20px" },
   title: { width: "584px", height: "38px", color: "#0A0A0A", fontSize: "32px", fontWeight: 700, marginBottom: "20px" },
   rightPanel: { flex: 1, padding: "24px 16px 24px 24px", borderLeft: "1px solid #ccc" },
   signaturePanel: { display: "flex", flexDirection: "column" },
@@ -90,6 +90,7 @@ const ADiaryPage = ({ path }) => {
   const [formData, setFormData] = useState({});
   const [signedDocumentUploadID, setSignedDocumentUploadID] = useState("");
   const [generateAdiaryLoader, setGenerateAdiaryLoader] = useState(false);
+  const [noAdiaryModal, setNoAdiaryModal] = useState(false);
 
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const MemoDocViewerWrapper = React.memo(DocViewerWrapper);
@@ -135,7 +136,7 @@ const ADiaryPage = ({ path }) => {
   };
 
   const onSubmit = async () => {
-    if (parseInt(stepper) == 0) {
+    if (parseInt(stepper) === 0) {
       setGenerateAdiaryLoader(true);
       try {
         const generateADiaryPDF = await HomeService.generateADiaryPDF({
@@ -187,11 +188,6 @@ const ADiaryPage = ({ path }) => {
     checkSignStatus(name, formData, uploadModalConfig, onSelect, setIsSigned);
   }, [checkSignStatus]);
 
-  if (!DocViewerWrapper) {
-    console.error("DocViewerWrapper is not available");
-    return null;
-  }
-
   useEffect(() => {
     const getDiarySearch = async () => {
       try {
@@ -216,10 +212,15 @@ const ADiaryPage = ({ path }) => {
     getDiarySearch();
   }, [entryDate, tenantId]);
 
+  if (!DocViewerWrapper) {
+    console.error("DocViewerWrapper is not available");
+    return null;
+  }
+
   const uploadSignedPdf = async () => {
     try {
       const localStorageID = localStorage.getItem("fileStoreId");
-      const upload = await HomeService.updateADiaryPDF({
+      await HomeService.updateADiaryPDF({
         diary: {
           tenantId: tenantId,
           diaryDate: entryDate,
@@ -277,6 +278,10 @@ const ADiaryPage = ({ path }) => {
       history.push(`/${window.contextPath}/employee/home/adiary`);
     }
   };
+
+  useEffect(() => {
+    if (Array.isArray(diaryEntries?.entries) && diaryEntries?.entries?.length == 0) setNoAdiaryModal(true);
+  }, [diaryEntries]);
 
   const handleNext = () => {
     if (diaryEntries?.pagination?.totalCount > offSet + limit) {
@@ -352,7 +357,7 @@ const ADiaryPage = ({ path }) => {
               entryDate
             )}`}</h2>
 
-            {Array.isArray(diaryEntries?.entries) && diaryEntries?.entries?.length != 0 ? (
+            {Array.isArray(diaryEntries?.entries) && diaryEntries?.entries?.length !== 0 ? (
               <div>
                 <table style={{ width: "100%", marginTop: "20px", borderCollapse: "collapse" }}>
                   <thead>
@@ -412,9 +417,12 @@ const ADiaryPage = ({ path }) => {
       <div style={styles.rightPanel}>
         {
           <div>
-            {!isSelectedDataSigned && entryDate !== new Date().setHours(0, 0, 0, 0) && Array.isArray(diaryEntries?.entries) && diaryEntries?.entries?.length != 0  && (
-              <Button onButtonClick={onSubmit} label={t("ADD_SIGNATURE")} style={{ margin: "20px", maxWidth: "300px", width: "100%" }} />
-            )}
+            {!isSelectedDataSigned &&
+              entryDate !== new Date().setHours(0, 0, 0, 0) &&
+              Array.isArray(diaryEntries?.entries) &&
+              diaryEntries?.entries?.length !== 0 && (
+                <Button onButtonClick={onSubmit} label={t("ADD_SIGNATURE")} style={{ margin: "20px", maxWidth: "300px", width: "100%" }} />
+              )}
 
             <TasksComponent
               taskType={taskType}
@@ -573,6 +581,22 @@ const ADiaryPage = ({ path }) => {
                   {t("SIGNED")}
                 </h2>
               </div>
+            </div>
+          </Modal>
+        )}
+
+        {noAdiaryModal && (
+          <Modal
+            headerBarEnd={<CloseBtn onClick={() => setNoAdiaryModal(false)} />}
+            popupStyles={{ width: "600px" }}
+            actionSaveLabel={t("BACK")}
+            actionSaveOnSubmit={() => setNoAdiaryModal(false)}
+            formId="modal-action"
+            headerBarMainStyle={{ height: "60px" }}
+            headerBarMain={<Heading label={t("NO_ADIARY")} />}
+          >
+            <div style={{ padding: "20px" }}>
+              <span>{t("NO_ADIARY_TEXT")}</span>
             </div>
           </Modal>
         )}
