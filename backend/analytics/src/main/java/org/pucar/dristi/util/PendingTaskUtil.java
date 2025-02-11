@@ -79,7 +79,7 @@ public class PendingTaskUtil {
     public void updatePendingTask(List<JsonNode> pendingTasks) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBasicAuth(config.getEsUsername(), config.getEsPassword());
+        headers.add("Authorization", getESEncodedCredentials());
 
         String url = config.getEsHostUrl() + config.getPendingTaskIndexEndpoint() + config.getBulkPath();
         for(JsonNode task: pendingTasks) {
