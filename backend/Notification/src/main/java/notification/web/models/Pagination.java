@@ -35,7 +35,7 @@ public class Pagination {
     private String sortBy = null;
 
     @JsonProperty("order")
-    private AllOfPaginationOrder order = null;
+    private Order order = null;
 
 
 }

@@ -22,8 +22,8 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 public class NotificationExistsResponse {
-    @JsonProperty("ResponseInfo")
 
+    @JsonProperty("ResponseInfo")
     @Valid
     private ResponseInfo responseInfo = null;
 
