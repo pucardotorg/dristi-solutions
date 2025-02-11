@@ -53,7 +53,7 @@ import _ from "lodash";
 import { useGetPendingTask } from "../../hooks/orders/useGetPendingTask";
 import useSearchOrdersService from "../../hooks/orders/useSearchOrdersService";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
-import { constructFullName, removeInvalidNameParts } from "../../utils";
+import { getRespondantName, getComplainantName, constructFullName, removeInvalidNameParts } from "../../utils";
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
@@ -1656,8 +1656,7 @@ const GenerateOrders = () => {
     const respondentAddress = orderFormData?.addressDetails
       ? orderFormData?.addressDetails?.map((data) => ({ ...data?.addressDetails }))
       : caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.addressDetails?.map((data) => data?.addressDetails);
-    const respondentName =
-      constructFullName(respondentNameData?.firstName, respondentNameData?.middleName, respondentNameData?.lastName) || respondentNameData;
+    const respondentName = getRespondantName(respondentNameData);
 
     const respondentPhoneNo = orderFormData?.party?.data?.phone_numbers || [];
     const respondentEmail = orderFormData?.party?.data?.email || [];
@@ -1671,9 +1670,7 @@ const GenerateOrders = () => {
     const latitude = complainantDetails?.address[0]?.latitude || "";
     const longitude = complainantDetails?.address[0]?.longitude || "";
     const doorNo = complainantDetails?.address[0]?.doorNo || "";
-    const complainantName = `${complainantDetails?.name?.givenName || ""}${
-      complainantDetails?.name?.otherNames ? " " + complainantDetails?.name?.otherNames + " " : " "
-    }${complainantDetails?.name?.familyName || ""}`;
+    const complainantName = getComplainantName(caseDetails?.additionalDetails?.complainantDetails?.formdata[0]?.data);
     const address = `${doorNo ? doorNo + "," : ""} ${buildingName ? buildingName + "," : ""} ${street}`.trim();
     const complainantAddress = {
       pincode: pincode,
