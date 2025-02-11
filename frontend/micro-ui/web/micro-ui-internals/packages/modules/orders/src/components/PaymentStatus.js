@@ -16,6 +16,7 @@ const PaymentStatus = ({ path }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const caseId = location.state.state.caseId;
   const receiptData = location.state.state.receiptData;
+  const orderType = receiptData.orderType;
   const history = useHistory();
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
 
@@ -48,7 +49,9 @@ const PaymentStatus = ({ path }) => {
         />
         {isResponseSuccess ? (
           <div>
-            <div className="payment-status-message">The Summons would be sent to the relevant party.</div>
+            <div className="payment-status-message">{`${
+              orderType === "SUMMONS" ? "THE_SUMMON" : "THE_NOTICE"
+            } would be sent to the relevant party.`}</div>
             <CustomCopyTextDiv
               t={t}
               keyStyle={{ margin: "8px 0px" }}
