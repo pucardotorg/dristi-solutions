@@ -3,8 +3,6 @@ package org.pucar.dristi.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.pucar.dristi.web.models.*;
-import org.springframework.beans.factory.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
@@ -12,10 +10,15 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.ElasticSearchRepository;
 import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.util.MdmsV2Util;
+import org.pucar.dristi.web.models.CaseCriteria;
+import org.pucar.dristi.web.models.CaseSearchRequest;
+import org.pucar.dristi.web.models.Mdms;
+import org.pucar.dristi.web.models.ProcessCaseBundlePdfRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
-import org.springframework.core.io.Resource;
 
 import java.io.IOException;
 import java.util.*;
@@ -42,22 +45,22 @@ public class CaseBundleIndexBuilderService {
 
         this.configuration = configuration;
         this.objectMapper = objectMapper;
-        this.caseBundleService=caseBundleService;
-        this.mdmsV2Util=mdmsV2Util;
-        this.serviceRequestRepository=serviceRequestRepository;
-        this.esRepository=esRepository;
+        this.caseBundleService = caseBundleService;
+        this.mdmsV2Util = mdmsV2Util;
+        this.serviceRequestRepository = serviceRequestRepository;
+        this.esRepository = esRepository;
     }
 
-    public Boolean isValidState(String moduleName, String businessService, String state,String tenantID,RequestInfo requestInfo){
+    public Boolean isValidState(String moduleName, String businessService, String state, String tenantID, RequestInfo requestInfo) {
 
         Map<String, String> filters = new HashMap<>();
         filters.put("state", state);
-        filters.put("moduleName",moduleName);
-        filters.put("businessservice",businessService);
+        filters.put("moduleName", moduleName);
+        filters.put("businessservice", businessService);
 
-        List<Mdms> mdmsData = mdmsV2Util.fetchMdmsV2Data(requestInfo,tenantID,null,null,configuration.getStateMasterSchema(),true,filters);
+        List<Mdms> mdmsData = mdmsV2Util.fetchMdmsV2Data(requestInfo, tenantID, null, null, configuration.getStateMasterSchema(), true, filters);
 
-        if(mdmsData.isEmpty()){
+        if (mdmsData.isEmpty()) {
             return false;
         }
 
@@ -65,7 +68,7 @@ public class CaseBundleIndexBuilderService {
     }
 
     public String getCaseNumber(RequestInfo requestInfo, String filingNumber, String tenantId) {
-        String caseId=null;
+        String caseId = null;
         CaseSearchRequest caseSearchRequest = new CaseSearchRequest();
         caseSearchRequest.setTenantId(tenantId);
         CaseCriteria caseCriteria = new CaseCriteria();
@@ -98,12 +101,11 @@ public class CaseBundleIndexBuilderService {
 
             Map<String, Object> criteria = criteriaList.get(0);
 
-            List<Map<String,Object>> responseList  = (List<Map<String,Object>>) criteria.get("responseList");
+            List<Map<String, Object>> responseList = (List<Map<String, Object>>) criteria.get("responseList");
 
             if (responseList != null) {
                 caseId = responseList.get(0).get("id").toString();
-            }
-            else {
+            } else {
                 log.error(CASE_ERROR_MESSAGE);
                 throw new CustomException(CASE_NOT_FOUND, CASE_ERROR_MESSAGE);
             }
@@ -118,11 +120,11 @@ public class CaseBundleIndexBuilderService {
     @KafkaListener(topics = {"${casemanagement.kafka.workflow.transition.topic}"})
     public void listen(final HashMap<String, Object> record) {
         List<Map<String, Object>> processInstances = (List<Map<String, Object>>) record.get("ProcessInstances");
-        String moduleName =null ;
-        String businessService=null ;
-        String businessId =null;
-        String tenantId=null ;
-        String stateName=null;
+        String moduleName = null;
+        String businessService = null;
+        String businessId = null;
+        String tenantId = null;
+        String stateName = null;
         RequestInfo requestInfo = objectMapper.convertValue(record.get("RequestInfo"), RequestInfo.class);
 
         if (processInstances != null && !processInstances.isEmpty()) {
@@ -135,13 +137,13 @@ public class CaseBundleIndexBuilderService {
             stateName = (String) state.get("state");
         }
 
-        Boolean isValid = isValidState(moduleName, businessService, stateName, tenantId,requestInfo);
-        if(isValid){
-            String caseID = getCaseNumber(requestInfo,businessId,tenantId);
-            if(caseID!=null){
+        Boolean isValid = isValidState(moduleName, businessService, stateName, tenantId, requestInfo);
+        if (isValid) {
+            String caseID = getCaseNumber(requestInfo, businessId, tenantId);
+            if (caseID != null) {
                 String uri = configuration.getEsHostUrl() + configuration.getCaseBundleIndex() + configuration.getSearchPath();
                 String request = String.format(ES_IDS_QUERY, caseID);
-                String response =null;
+                String response = null;
 
                 try {
                     response = esRepository.fetchDocuments(uri, request);
@@ -153,54 +155,64 @@ public class CaseBundleIndexBuilderService {
                 try {
                     JsonNode rootNode = objectMapper.readTree(response);
                     JsonNode hitsNode = rootNode.path("hits").path("hits");
-
+                    //  this will create index of case id if not present
                     if (hitsNode.isArray() && hitsNode.isEmpty()) {
                         log.error("not able to get data from es for given case ID");
-                    } else {
-                        JsonNode indexJson = hitsNode.get(0).path("_source");
-                        ProcessCaseBundlePdfRequest processCaseBundlePdfRequest = new ProcessCaseBundlePdfRequest();
-                        processCaseBundlePdfRequest.setRequestInfo(requestInfo);
-                        processCaseBundlePdfRequest.setCaseId(caseID);
-                        processCaseBundlePdfRequest.setIndex(indexJson);
-                        processCaseBundlePdfRequest.setState(stateName);
-                        processCaseBundlePdfRequest.setTenantId(tenantId);
-                        StringBuilder url = new StringBuilder();
-                        url.append(configuration.getCaseBundlePdfHost()).append(configuration.getProcessCaseBundlePdfPath());
-
-                        Object pdfResponse =null;
+                        // create  index for case id and tenant id and update the hits node
                         try {
-                            pdfResponse = serviceRequestRepository.fetchResult(url, processCaseBundlePdfRequest);
+                            log.info("creating index for case id {} and tenant id {}", caseID, tenantId);
+                            createIndexForBundle(caseID, tenantId);
+                            response = esRepository.fetchDocuments(uri, request);
+                            JsonNode node = objectMapper.readTree(response);
+                            hitsNode = node.path("hits").path("hits");
                         } catch (Exception e) {
-                            log.error("Error generating PDF", e);
-                        }
+                            log.error("Error while fetching documents from ElasticSearch", e);
 
-                        Map<String, Object> pdfResponseMap = objectMapper.convertValue(pdfResponse, Map.class);
-                        Map<String, Object> indexMap = (Map<String, Object>) pdfResponseMap.get("index");
-                        JsonNode updateIndexJson = objectMapper.valueToTree(indexMap);
-
-                        String esUpdateUrl = configuration.getEsHostUrl() + configuration.getCaseBundleIndex() + "/_update/" + caseID;
-                        String esRequest;
-                        try {
-                            esRequest = String.format(ES_UPDATE_QUERY, objectMapper.writeValueAsString(updateIndexJson));
-                            esRepository.fetchDocuments(esUpdateUrl, esRequest);
-                        } catch (IOException e) {
-                            log.error("Error updating ElasticSearch index with new data", e);
                         }
 
                     }
-                }catch(Exception e){
+                    JsonNode indexJson = hitsNode.get(0).path("_source");
+                    ProcessCaseBundlePdfRequest processCaseBundlePdfRequest = new ProcessCaseBundlePdfRequest();
+                    processCaseBundlePdfRequest.setRequestInfo(requestInfo);
+                    processCaseBundlePdfRequest.setCaseId(caseID);
+                    processCaseBundlePdfRequest.setIndex(indexJson);
+                    processCaseBundlePdfRequest.setState(stateName);
+                    processCaseBundlePdfRequest.setTenantId(tenantId);
+                    StringBuilder url = new StringBuilder();
+                    url.append(configuration.getCaseBundlePdfHost()).append(configuration.getProcessCaseBundlePdfPath());
+
+                    Object pdfResponse = null;
+                    try {
+                        pdfResponse = serviceRequestRepository.fetchResult(url, processCaseBundlePdfRequest);
+                    } catch (Exception e) {
+                        log.error("Error generating PDF", e);
+                    }
+
+                    Map<String, Object> pdfResponseMap = objectMapper.convertValue(pdfResponse, Map.class);
+                    Map<String, Object> indexMap = (Map<String, Object>) pdfResponseMap.get("index");
+                    JsonNode updateIndexJson = objectMapper.valueToTree(indexMap);
+
+                    String esUpdateUrl = configuration.getEsHostUrl() + configuration.getCaseBundleIndex() + "/_update/" + caseID;
+                    String esRequest;
+                    try {
+                        esRequest = String.format(ES_UPDATE_QUERY, objectMapper.writeValueAsString(updateIndexJson));
+                        esRepository.fetchDocuments(esUpdateUrl, esRequest);
+                    } catch (IOException e) {
+                        log.error("Error updating ElasticSearch index with new data", e);
+                    }
+
+
+                } catch (Exception e) {
                     log.error("Not able to parse json body");
                 }
 
-            }
-            else{
+            } else {
                 log.error("No case present for processing");
             }
 
         }
-
-
     }
+
 
     @KafkaListener(topics = {"${casemanagement.kafka.case.application.topic}"})
     public void listenCaseApplication(final HashMap<String, Object> record) throws IOException {
@@ -208,6 +220,12 @@ public class CaseBundleIndexBuilderService {
         String caseId = ((LinkedHashMap<String, Object>) record.get("cases")).get("id").toString();
 
         String tenantId = ((LinkedHashMap<String, Object>) record.get("cases")).get("tenantId").toString();
+
+        createIndexForBundle(caseId, tenantId);
+
+    }
+
+    private void createIndexForBundle(String caseId, String tenantId) throws IOException {
 
         JsonNode caseData = objectMapper.readTree(caseDataResource.getInputStream());
 
@@ -227,8 +245,6 @@ public class CaseBundleIndexBuilderService {
         } catch (IOException e) {
             log.error("Error enriching  ElasticSearch index with new data to initiate index", e);
         }
-
-
     }
 
 }
