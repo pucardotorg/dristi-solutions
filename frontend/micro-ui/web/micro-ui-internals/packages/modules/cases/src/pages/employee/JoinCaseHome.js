@@ -452,7 +452,14 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
   ];
 
   const closeModal = () => {
-    setSelectPartyData({ userType: {} });
+    setSelectPartyData({
+      userType: { label: "", value: "" },
+      partyInvolve: { label: "", value: "" },
+      isReplaceAdvocate: { label: "", value: "" },
+      affidavit: {},
+    });
+    setPartyInPerson(false);
+    setParty({});
     setIsDisabled(false);
     setCaseNumber("");
     setValidationCode("");
@@ -1451,7 +1458,6 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
             },
           },
         };
-
         const [res, err] = await submitJoinCase(joinAdvocatePayload);
 
         if (res) {
@@ -1521,7 +1527,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                   filingNumber: caseDetails?.filingNumber,
                   isCompleted: false,
                   stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
-                  additionalDetails: { individualId, caseId: caseDetails?.id },
+                  additionalDetails: { individualId: user?.individualId, caseId: caseDetails?.id },
                   tenantId,
                 },
               })
@@ -1646,7 +1652,6 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
             ],
           },
         };
-
         const [res, err] = await submitJoinCase(joinAdvocatePayloadWithReplace);
 
         if (res) {
@@ -1768,7 +1773,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                   filingNumber: caseDetails?.filingNumber,
                   isCompleted: false,
                   stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
-                  additionalDetails: { individualId, caseId: caseDetails?.id },
+                  additionalDetails: { individualId: user?.individualId, caseId: caseDetails?.id },
                   tenantId,
                 },
               })
