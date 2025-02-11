@@ -54,7 +54,8 @@ public class CdacSmsServiceImpl extends BaseSMSService {
             }
 
         } catch (RestClientException e) {
-            log.error("Error occurred while sending SMS to " + sms.getMobileNumber(), e);
+            String maskedNumber = sms.getMobileNumber().substring(0, 2) + "******" + sms.getMobileNumber().substring(sms.getMobileNumber().length() - 2);
+            log.error("operation = submitToExternalSmsService, result = FAILURE, Error occurred while sending SMS to {}", maskedNumber, e);
             throw e;
         }
     }

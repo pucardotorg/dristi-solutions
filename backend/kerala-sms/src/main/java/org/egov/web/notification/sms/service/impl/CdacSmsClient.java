@@ -172,6 +172,8 @@ public class CdacSmsClient {
 
             MultiValueMap<String, String> requestBodyMap = new LinkedMultiValueMap<>();
 
+            String maskedNumber = mobileNumber.substring(0, 2) + "******" + mobileNumber.substring(mobileNumber.length() - 2);
+
             if (!isBulk) requestBodyMap.add("mobileno", mobileNumber);
             else requestBodyMap.add("bulkmobno", mobileNumber);
 
@@ -182,13 +184,16 @@ public class CdacSmsClient {
             requestBodyMap.add("password", encryptedPassword);
             requestBodyMap.add("key", genratedhashKey);
             requestBodyMap.add("templateid", templateId);
-            log.info("Request Body Map: {}", requestBodyMap);
+            log.info("operation = sendSms, result = IN_PROGRESS, mobileno = {}, senderId = {}, smsServiceType = {}, templateId = {}, content = {}",
+                    maskedNumber, senderId, smsServiceType, templateId, message);
+
             log.info("Request Url: {}", smsProviderURL);
 
             HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(requestBodyMap, httpHeaders);
             ResponseEntity<String> responseEntity = restTemplate.exchange(smsProviderURL, HttpMethod.POST, requestEntity, String.class);
 
-            log.info(responseEntity.getBody().toString());
+            log.info("operation = sendSms, result = SUCCESS, statusCode = {}",
+                    responseEntity.getStatusCode());
             responseString = responseEntity.getBody().toString();
         }
         catch (NoSuchAlgorithmException | KeyManagementException | IOException e)

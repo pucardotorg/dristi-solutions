@@ -91,6 +91,7 @@ public class SmsNotificationService {
         //get individual name, id, mobileNumber
         log.info("get case e filing number, id, cnr");
         Map<String, String> smsDetails = getDetailsForSMS(smsTemplateData, mobileNumber);
+        String maskedMobileNumber = mobileNumber.substring(0, 2) + "******" + mobileNumber.substring(mobileNumber.length() - 2);
 
         log.info("building Notification Request for case filing number {}", smsTemplateData.getEfilingNumber());
         message = buildMessage(smsDetails, message);
@@ -103,7 +104,9 @@ public class SmsNotificationService {
                 .locale(NOTIFICATION_ENG_LOCALE_CODE)
                 .expiryTime(System.currentTimeMillis() + 60 * 60 * 1000)
                 .message(message).build();
-        log.info("push message {}", smsRequest);
+
+        log.info("operation = pushNotification, result = IN_PROGRESS, smsRequest: mobileNumber = {}, tenantId = {}, templateId = {}, contentType = {}, category = {}, locale = {}, expiryTime = {}, message = {}",
+                maskedMobileNumber, smsRequest.getTenantId(), smsRequest.getTemplateId(), smsRequest.getContentType(), smsRequest.getCategory(), smsRequest.getLocale(), smsRequest.getExpiryTime(), smsRequest.getMessage());
 
         producer.push(config.getSmsNotificationTopic(), smsRequest);
     }

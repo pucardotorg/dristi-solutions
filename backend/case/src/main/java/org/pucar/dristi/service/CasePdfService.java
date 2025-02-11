@@ -58,7 +58,7 @@ public class CasePdfService {
     }
 
     public CourtCase generatePdf(CaseSearchRequest body) {
-        log.info("Received Generate Pdf for case search criteria: {}", body);
+        log.info("operation = generatePdf, result = IN_PROGRESS, Received Generate Pdf");
 
         try {
             caseRepository.getCases(body.getCriteria(), body.getRequestInfo());
@@ -94,7 +94,7 @@ public class CasePdfService {
                 courtCase.getDocuments().add(document);
             }
 
-            log.info("Encrypting: {}", caseRequest);
+            log.info("operation = encryptCaseRequest, result = IN_PROGRESS");
             caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), config.getCourtCaseEncrypt(), CourtCase.class));
             cacheService.save(caseRequest.getCases().getTenantId() + ":" + caseRequest.getCases().getId(), caseRequest.getCases());
 

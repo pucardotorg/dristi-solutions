@@ -41,7 +41,7 @@ public class MdmsUtil {
 		StringBuilder uri = new StringBuilder();
 		uri.append(configs.getMdmsHost()).append(configs.getMdmsEndPoint());
 		MdmsCriteriaReq mdmsCriteriaReq = getMdmsRequest(requestInfo, tenantId, moduleName, masterNameList);
-		log.info("MDMS Criteria :: {}",mdmsCriteriaReq);
+		log.info("operation = fetchMdmsData, result = IN_PROGRESS");
 		Object response;
 		MdmsResponse mdmsResponse = new MdmsResponse();
 		try {
