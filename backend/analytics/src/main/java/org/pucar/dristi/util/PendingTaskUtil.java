@@ -34,7 +34,7 @@ public class PendingTaskUtil {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBasicAuth(config.getEsUsername(), config.getElasticUserPassword());
+        headers.setBasicAuth(config.getEsUsername(), config.getEsPassword());
 
         String query = getEsQuery(filingNumber);
 
@@ -72,7 +72,7 @@ public class PendingTaskUtil {
     public void updatePendingTask(List<JsonNode> pendingTasks) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBasicAuth(config.getEsUsername(), config.getElasticUserPassword());
+        headers.setBasicAuth(config.getEsUsername(), config.getEsPassword());
 
         String url = config.getEsHostUrl() + config.getPendingTaskIndexEndpoint() + config.getBulkPath();
         for(JsonNode task: pendingTasks) {

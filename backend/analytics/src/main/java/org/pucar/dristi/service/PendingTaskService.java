@@ -69,6 +69,7 @@ public class PendingTaskService {
 
     public void updatePendingTask(String topic, Map<String, Object> joinCaseJson) {
         try {
+            log.info("operation=updatePendingTask, result=IN_PROGRESS");
             String filingNumber = joinCaseJson.get("caseFilingNumber").toString();
             JsonNode pendingTaskNode = pendingTaskUtil.callPendingTask(filingNumber);
             if(Objects.equals(topic, LITIGANT_JOIN_CASE_TOPIC) && joinCaseJson.get("litigant") != null) {
@@ -78,7 +79,7 @@ public class PendingTaskService {
             } else if(Objects.equals(topic, REPRESENTATIVE_REPLACE_JOIN_CASE)) {
                 updatePendingTaskForAdvocate(joinCaseJson, pendingTaskNode, true);
             }
-
+            log.info("operation=updatePendingTask, result=SUCCESS");
         } catch (Exception e) {
             log.error(ERROR_UPDATING_PENDING_TASK, e);
             throw new CustomException(ERROR_UPDATING_PENDING_TASK, e.getMessage());
