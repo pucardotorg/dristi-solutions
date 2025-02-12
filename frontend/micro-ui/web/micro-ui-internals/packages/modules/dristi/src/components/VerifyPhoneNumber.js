@@ -469,8 +469,17 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
       )}
       {showConfirmModal && (
         <Modal
-          headerBarEnd={<CloseBtn onClick={() => setShowConfirmModal(false)} isMobileView={true} />}
+          headerBarEnd={
+            <CloseBtn
+              onClick={() => {
+                setIsUserRegistered(true);
+                setShowConfirmModal(false);
+              }}
+              isMobileView={true}
+            />
+          }
           actionCancelOnSubmit={() => {
+            setIsUserRegistered(true);
             setShowConfirmModal(false);
           }}
           actionSaveLabel={t("CS_COMMON_CONFIRM")}
