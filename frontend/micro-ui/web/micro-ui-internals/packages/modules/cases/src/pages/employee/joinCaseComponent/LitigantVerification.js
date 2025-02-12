@@ -24,7 +24,7 @@ const LitigantVerification = ({
   const modifiedFormConfig = useMemo(() => {
     const applyUiChanges = (config) => ({
       ...config,
-      head: "Accused's Basic Details",
+      head: litigants?.some((litigant) => litigant?.isComplainant) ? t("COMPLAINANT_BASIC_DETAILS") : t("ACCUSED_BASIC_DETAILS"),
       body: config?.body?.map((body) => {
         let tempBody = {
           ...body,

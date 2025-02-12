@@ -1219,7 +1219,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                   }
                 }
 
-                setMessageHeader(t("You are now party in person"));
+                setMessageHeader(t("YOU_ARE_NOW_PARTY_IN_PERSON"));
                 setSuccess(true);
                 setStep(step + 3);
               }

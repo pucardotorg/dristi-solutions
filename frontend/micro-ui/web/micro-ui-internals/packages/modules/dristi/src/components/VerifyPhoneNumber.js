@@ -501,13 +501,11 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
             setTimeLeft(10);
           }}
           formId="modal-action"
-          headerBarMain={<Heading label={t("Are you sure?")} />}
+          headerBarMain={<Heading label={t("ARE_YOU_SURE")} />}
           submitTextClassName={"verification-button-text-modal"}
           className={"verify-mobile-modal"}
         >
-          <div className="verify-mobile-modal-main">
-            {t("Please ensure all details are correct. An account for this litigant will be created with the entered details")}
-          </div>
+          <div className="verify-mobile-modal-main">{t("PLEASE_ENSURE_DETAILS_CORRECT_ACCOUNT_CREATE")}</div>
         </Modal>
       )}
     </div>
