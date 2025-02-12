@@ -1208,12 +1208,12 @@ const GenerateOrders = () => {
       case "REFERRAL_CASE_TO_ADR":
         return "Case referred to Alternative Dispute Resolution to seek settlement";
       case "SCHEDULE_OF_HEARING_DATE":
-        return `For ${currentOrder?.orderDetails?.purposeOfHearing} on ${formatDate(
+        return `For ${t(currentOrder?.orderDetails?.purposeOfHearing)} on ${formatDate(
           new Date(currentOrder?.additionalDetails?.formdata?.hearingDate),
           "DD-MM-YYYY"
         )}`;
       case "SCHEDULING_NEXT_HEARING":
-        return `For ${currentOrder?.orderDetails?.purposeOfHearing} on ${formatDate(
+        return `For ${t(currentOrder?.orderDetails?.purposeOfHearing)} on ${formatDate(
           new Date(currentOrder?.additionalDetails?.formdata?.hearingDate),
           "DD-MM-YYYY"
         )}`;
@@ -1233,7 +1233,7 @@ const GenerateOrders = () => {
         return `Request for rescheduling of hearing on ${formatDate(
           new Date(currentOrder?.orderDetails?.originalHearingDate),
           "DD-MM-YYYY"
-        )} raised by ${getPartyNamesString(currentOrder?.orderDetails?.parties)} dismissed`;
+        )} raised by ${applicationDetails?.additionalDetails?.owner} dismissed`;
       case "INITIATING_RESCHEDULING_OF_HEARING_DATE":
         return "Initiated the process for rescheduling the hearing";
       case "ASSIGNING_DATE_RESCHEDULED_HEARING":
@@ -1245,7 +1245,7 @@ const GenerateOrders = () => {
           "DD-MM-YYYY"
         )}`;
       case "ASSIGNING_NEW_HEARING_DATE":
-        return `For ${currentOrder?.orderDetails?.purposeOfHearing} on ${formatDate(
+        return `For ${t(currentOrder?.orderDetails?.purposeOfHearing)} on ${formatDate(
           new Date(currentOrder?.additionalDetails?.formdata?.hearingDate),
           "DD-MM-YYYY"
         )}`;
@@ -1256,13 +1256,13 @@ const GenerateOrders = () => {
           ? "The settlement records have been accepted by the court. Case closed."
           : "The settlement records have been dismissed by the court";
       case "SUMMONS":
-        return `Issue Summons to ${currentOrder?.orderDetails?.respondentName} - ${currentOrder?.orderDetails?.parties?.[0]?.partyType}`;
+        return `Issue Summons to ${currentOrder?.orderDetails?.parties?.[0]?.partyName}`;
       case "NOTICE":
-        return `Issue Notice to ${currentOrder?.orderDetails?.respondentName} - ${currentOrder?.orderDetails?.parties?.[0]?.partyType}`;
+        return `Issue Notice to ${currentOrder?.orderDetails?.parties?.[0]?.partyName}`;
       case "BAIL":
         return "Bail";
       case "WARRANT":
-        return `Issue ${currentOrder?.orderDetails?.warrantType} to ${currentOrder?.orderDetails?.parties?.[0]?.partyCode} - ${currentOrder?.orderDetails?.parties?.[0]?.partyType}`;
+        return `Issue ${t(currentOrder?.orderDetails?.warrantType)} to ${currentOrder?.orderDetails?.parties?.[0]?.partyName}`;
       case "WITHDRAWAL":
         return currentOrder?.orderDetails?.applicationStatus === "APPROVED"
           ? "The application to withdraw the case has been accepted. Case closed"
@@ -1284,7 +1284,9 @@ const GenerateOrders = () => {
       case "SET_BAIL_TERMS":
         return "Condition of Bail";
       case "ACCEPTANCE_REJECTION_DCA":
-        return "Order for Acceptance/Rejection of Delay Condonation";
+        return `CMP: ${t(applicationDetails?.applicationType)} ${applicationDetails?.applicationNumber} stands ${
+          currentOrder?.orderDetails?.isDcaAcceptedOrRejected === "ACCEPTED" ? "allowed" : "dismissed"
+        }`;
       case "ADMIT_DISMISS_CASE":
         return `Cognizance of the offence taken on file as ${caseDetails?.cmpNumber} under Section 138 of the Negotiable Instruments Act`;
       default:
@@ -1469,11 +1471,14 @@ const GenerateOrders = () => {
       return await Promise.all(promises);
     }
     if ((order?.orderType === "SUMMONS" || orderType === "SUMMONS") && refId) {
-      const assignee = [...complainants?.map((data) => data?.uuid[0])];
-      const advocateUuid = Object.keys(allAdvocates)
-        .filter((data) => assignee?.includes(allAdvocates?.[data]?.[0]))
-        ?.flat();
-      assignees = [...assignee, ...advocateUuid]?.map((uuid) => ({ uuid }));
+      const assignee = [...complainants?.map((data) => data?.uuid)]?.flat();
+      // const advocateUuid = Object.keys(allAdvocates)
+      //   .filter((data) => assignee?.includes(allAdvocates?.[data]?.[0]))
+      //   ?.flat();
+      const complainantUuids = caseDetails?.litigants
+        ?.filter((com) => com?.partyType?.startsWith("complainant"))
+        .map((com) => com?.additionalDetails?.uuid);
+      assignees = [...assignee, ...complainantUuids]?.map((uuid) => ({ uuid }));
       entityType = "order-default";
       return ordersService.customApiService(Urls.orders.pendingTask, {
         pendingTask: {
@@ -1493,11 +1498,14 @@ const GenerateOrders = () => {
       });
     }
     if ((order?.orderType === "NOTICE" || orderType === "NOTICE") && refId) {
-      const assignee = [...complainants?.map((data) => data?.uuid[0])];
-      const advocateUuid = Object.keys(allAdvocates)
-        .filter((data) => assignee?.includes(allAdvocates?.[data]?.[0]))
-        ?.flat();
-      assignees = [...assignee, ...advocateUuid]?.map((uuid) => ({ uuid }));
+      const assignee = [...complainants?.map((data) => data?.uuid)]?.flat();
+      // const advocateUuid = Object.keys(allAdvocates)
+      //   .filter((data) => assignee?.includes(allAdvocates?.[data]?.[0]))
+      //   ?.flat();
+      const complainantUuids = caseDetails?.litigants
+        ?.filter((com) => com?.partyType?.startsWith("complainant"))
+        .map((com) => com?.additionalDetails?.uuid);
+      assignees = [...assignee, ...complainantUuids]?.map((uuid) => ({ uuid }));
       entityType = "order-default";
       return ordersService.customApiService(Urls.orders.pendingTask, {
         pendingTask: {
@@ -1517,11 +1525,14 @@ const GenerateOrders = () => {
       });
     }
     if ((order?.orderType === "WARRANT" || orderType === "WARRANT") && refId) {
-      const assignee = [...complainants?.map((data) => data?.uuid[0])];
-      const advocateUuid = Object.keys(allAdvocates)
-        .filter((data) => assignee?.includes(allAdvocates?.[data]?.[0]))
-        ?.flat();
-      assignees = [...assignee, ...advocateUuid]?.map((uuid) => ({ uuid }));
+      const assignee = [...complainants?.map((data) => data?.uuid)]?.flat();
+      // const advocateUuid = Object.keys(allAdvocates)
+      //   .filter((data) => assignee?.includes(allAdvocates?.[data]?.[0]))
+      //   ?.flat();
+      const complainantUuids = caseDetails?.litigants
+        ?.filter((com) => com?.partyType?.startsWith("complainant"))
+        .map((com) => com?.additionalDetails?.uuid);
+      assignees = [...assignee, ...complainantUuids]?.map((uuid) => ({ uuid }));
       entityType = "order-default";
       return ordersService.customApiService(Urls.orders.pendingTask, {
         pendingTask: {
