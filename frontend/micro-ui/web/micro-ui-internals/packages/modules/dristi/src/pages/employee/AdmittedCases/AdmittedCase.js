@@ -1307,7 +1307,7 @@ const AdmittedCases = () => {
   };
 
   const handleSendCaseBack = (props) => {
-    updateCaseDetails("SEND_BACK", { comment: props?.commentForLitigant }).then((res) => {
+    updateCaseDetails("SEND_BACK", { comment: props?.commentForLitigant, isJudge: true }).then((res) => {
       setModalInfo({ ...modalInfo, page: 1 });
     });
   };
