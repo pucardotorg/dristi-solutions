@@ -321,7 +321,16 @@ function ViewCaseFile({ t, inViewCase = false }) {
     const scrutinyObj = action === CaseWorkflowAction.VALIDATE ? {} : CaseWorkflowAction.SEND_BACK && isPrevScrutiny ? newScrutinyData : formdata;
     const newcasedetails = {
       ...caseDetails,
-      additionalDetails: { ...caseDetails.additionalDetails, scrutiny: scrutinyObj },
+      additionalDetails: {
+        ...caseDetails.additionalDetails,
+        scrutiny: scrutinyObj,
+        ...(caseDetails?.additionalDetails?.judge && {
+          judge: {
+            ...caseDetails.additionalDetails.judge,
+            isJudge: false,
+          },
+        }),
+      },
       caseTitle: newCaseName !== "" ? newCaseName : caseDetails?.caseTitle,
     };
     const complainantUuid = caseDetails?.litigants?.[0]?.additionalDetails?.uuid;

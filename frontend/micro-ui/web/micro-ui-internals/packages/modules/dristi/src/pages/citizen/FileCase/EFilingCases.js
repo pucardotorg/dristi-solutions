@@ -1304,7 +1304,8 @@ function EFilingCases({ path }) {
                   );
                 }
 
-                modifiedFormComponent.disable = scrutiny?.[selected]?.scrutinyMessage?.FSOError || (judgeObj && !isPendingReESign) ? false : true;
+                modifiedFormComponent.disable =
+                  scrutiny?.[selected]?.scrutinyMessage?.FSOError || (judgeObj?.isJudge && !isPendingReESign) ? false : true;
 
                 if (scrutiny?.[selected] && scrutiny?.[selected]?.form?.[index]) {
                   if (formComponent.component == "SelectUploadFiles") {
@@ -2352,7 +2353,7 @@ function EFilingCases({ path }) {
   }
 
   if (isCaseReAssigned && !errorPages.some((item) => item.key === selected) && selected !== "reviewCaseFile" && selected !== "addSignature") {
-    if (!judgeObj) {
+    if (!judgeObj?.isJudge) {
       history.push(`?caseId=${caseId}&selected=${nextSelected}`);
     }
   }
@@ -2423,9 +2424,8 @@ function EFilingCases({ path }) {
         )}
         {isCaseReAssigned && (
           <div className="side-stepper-error-count">
-            {judgeObj ? (
-              <FlagBox t={t} judgeObj={judgeObj} />
-            ) : (
+            {judgeObj && <FlagBox t={t} judgeObj={judgeObj} />}
+            {!judgeObj?.isJudge && (
               <ErrorsAccordion
                 t={t}
                 totalErrorCount={totalErrors.total}
