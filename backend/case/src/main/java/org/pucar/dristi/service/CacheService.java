@@ -21,6 +21,7 @@ public class CacheService {
     public void save(String id, Object value) {
         log.info("operation = savingToRedis, result = IN_PROGRESS, Sending data to redis");
         redisTemplate.opsForValue().set(id, value, config.getRedisTimeout(), TimeUnit.MINUTES);
+        log.info("operation = savingToRedis, result = SUCCESS");
     }
 
     public Object findById(String id) {

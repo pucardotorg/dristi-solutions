@@ -29,6 +29,7 @@ import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
+import org.egov.web.notification.sms.Util.MaskUtil;
 import org.egov.web.notification.sms.config.SMSProperties;
 import org.egov.web.notification.sms.models.Sms;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -172,8 +173,6 @@ public class CdacSmsClient {
 
             MultiValueMap<String, String> requestBodyMap = new LinkedMultiValueMap<>();
 
-            String maskedNumber = mobileNumber.substring(0, 2) + "******" + mobileNumber.substring(mobileNumber.length() - 2);
-
             if (!isBulk) requestBodyMap.add("mobileno", mobileNumber);
             else requestBodyMap.add("bulkmobno", mobileNumber);
 
@@ -185,7 +184,7 @@ public class CdacSmsClient {
             requestBodyMap.add("key", genratedhashKey);
             requestBodyMap.add("templateid", templateId);
             log.info("operation = sendSms, result = IN_PROGRESS, mobileno = {}, senderId = {}, smsServiceType = {}, templateId = {}, content = {}",
-                    maskedNumber, senderId, smsServiceType, templateId, message);
+                    MaskUtil.maskMobile(mobileNumber), senderId, smsServiceType, templateId, message);
 
             log.info("Request Url: {}", smsProviderURL);
 

@@ -25,7 +25,7 @@ public class ReportListener {
     public void listen(final HashMap<String, Object> record) {
         Report report = objectMapper.convertValue(record, Report.class);
         log.info("operation = listenReport, result = SUCCESS, jobNo = {}, messageStatus = {}, doneTime = {}",
-                report.getJobno(), report.getMessagestatus(), report.getDoneTime());log.info(report.toString());
+                report.getJobno(), report.getMessagestatus(), report.getDoneTime());
     }
 
 }

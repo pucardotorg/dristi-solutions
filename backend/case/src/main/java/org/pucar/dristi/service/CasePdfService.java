@@ -58,7 +58,7 @@ public class CasePdfService {
     }
 
     public CourtCase generatePdf(CaseSearchRequest body) {
-        log.info("operation = generatePdf, result = IN_PROGRESS, Received Generate Pdf");
+        log.info("operation = generatePdf, result = IN_PROGRESS");
 
         try {
             caseRepository.getCases(body.getCriteria(), body.getRequestInfo());

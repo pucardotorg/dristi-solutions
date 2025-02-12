@@ -9,6 +9,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.ServiceRequestRepository;
+import org.pucar.dristi.util.MaskUtil;
 import org.pucar.dristi.web.models.CourtCase;
 import org.pucar.dristi.web.models.Individual;
 import org.pucar.dristi.web.models.SMSRequest;
@@ -82,7 +83,6 @@ public class NotificationService {
         log.info("building Notification Request for case filing number {}", courtCase.getFilingNumber());
         message = buildMessage(smsDetails, message);
         String mobileNumber = smsDetails.get("mobileNumber");
-        String maskedMobileNumber = mobileNumber.substring(0, 2) + "******" + mobileNumber.substring(mobileNumber.length() - 2);
 
         SMSRequest smsRequest = SMSRequest.builder()
                 .mobileNumber(smsDetails.get("mobileNumber"))
@@ -95,7 +95,7 @@ public class NotificationService {
                 .message(message).build();
         log.info("push message {}", smsRequest);
         log.info("operation = pushNotification, result = IN_PROGRESS, smsRequest: mobileNumber = {}, tenantId = {}, templateId = {}, contentType = {}, category = {}, locale = {}, expiryTime = {}, message = {}",
-                maskedMobileNumber, smsRequest.getTenantId(), smsRequest.getTemplateId(), smsRequest.getContentType(), smsRequest.getCategory(), smsRequest.getLocale(), smsRequest.getExpiryTime(), smsRequest.getMessage());
+                MaskUtil.maskMobile(mobileNumber), smsRequest.getTenantId(), smsRequest.getTemplateId(), smsRequest.getContentType(), smsRequest.getCategory(), smsRequest.getLocale(), smsRequest.getExpiryTime(), smsRequest.getMessage());
 
         producer.push(config.getSmsNotificationTopic(), smsRequest);
     }

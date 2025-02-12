@@ -109,8 +109,8 @@ public class AdvocateUtil {
 			advocateResponse = mapper.convertValue(response, AdvocateListResponse.class);
 			log.info("operation = getAdvocate, result = SUCCESS");
 		} catch (Exception e) {
-			log.error("ERROR_WHILE_FETCHING_FROM_ADVOCATE", e);
-			throw new CustomException("ERROR_WHILE_FETCHING_FROM_ADVOCATE", e.getMessage());
+			log.error(ERROR_WHILE_FETCHING_FROM_ADVOCATE, e);
+			throw new CustomException(ERROR_WHILE_FETCHING_FROM_ADVOCATE, e.getMessage());
 		}
 		List<Advocate> list = new ArrayList<>();
 

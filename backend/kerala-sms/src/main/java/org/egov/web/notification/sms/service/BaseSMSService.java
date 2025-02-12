@@ -5,6 +5,7 @@ import com.jayway.jsonpath.*;
 import lombok.extern.slf4j.*;
 import org.apache.http.conn.ssl.*;
 import org.apache.http.impl.client.*;
+import org.egov.web.notification.sms.Util.MaskUtil;
 import org.egov.web.notification.sms.config.*;
 import org.egov.web.notification.sms.models.*;
 import org.springframework.asm.*;
@@ -59,20 +60,17 @@ abstract public class BaseSMSService implements SMSService, SMSBodyBuilder {
     @Override
     public void sendSMS(Sms sms) {
         if (!sms.isValid()) {
-            String maskedNumber = sms.getMobileNumber().substring(0, 2) + "******" + sms.getMobileNumber().substring(sms.getMobileNumber().length() - 2);
-            log.error("operation = sendSms, result = FAILURE, Sms to {} is not valid", maskedNumber);
+            log.error("operation = sendSms, result = FAILURE, Sms to {} is not valid", MaskUtil.maskMobile(sms.getMobileNumber()));
             return;
         }
 
         if (smsProperties.isNumberBlacklisted(sms.getMobileNumber())) {
-            String maskedNumber = sms.getMobileNumber().substring(0, 2) + "******" + sms.getMobileNumber().substring(sms.getMobileNumber().length() - 2);
-            log.error("operation = sendSms, result = FAILURE, Sms to {} is blacklisted", maskedNumber);
+            log.error("operation = sendSms, result = FAILURE, Sms to {} is blacklisted", MaskUtil.maskMobile(sms.getMobileNumber()));
             return;
         }
 
         if (!smsProperties.isNumberWhitelisted(sms.getMobileNumber())) {
-            String maskedNumber = sms.getMobileNumber().substring(0, 2) + "******" + sms.getMobileNumber().substring(sms.getMobileNumber().length() - 2);
-            log.error("operation = sendSms, result = FAILURE, Sms to {} is not in whitelist", maskedNumber);
+            log.error("operation = sendSms, result = FAILURE, Sms to {} is not in whitelist", MaskUtil.maskMobile(sms.getMobileNumber()));
             return;
         }
 
