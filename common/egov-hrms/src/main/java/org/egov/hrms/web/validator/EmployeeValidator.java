@@ -378,9 +378,9 @@ public class EmployeeValidator {
 	private void validateAssignments(Employee employee, Map<String, String> errorMap, Map<String, List<String>> mdmsData) {
 		List<Assignment> currentAssignments = employee.getAssignments().stream()
 				.peek(assignment -> {
-                    assignment.setIsCurrentAssignment((assignment.getToDate()) == null ||
-                            (assignment.getToDate() >= (Long)LocalDateTime.now().toInstant(ZoneOffset.UTC).toEpochMilli()));
-                })
+					assignment.setIsCurrentAssignment((assignment.getToDate()) == null ||
+							(assignment.getToDate() >= (Long)LocalDateTime.now().toInstant(ZoneOffset.UTC).toEpochMilli()));
+				})
 				.filter(Assignment::getIsCurrentAssignment).toList();
 		employee.getAssignments().sort(new Comparator<Assignment>() {
 			@Override
@@ -400,7 +400,7 @@ public class EmployeeValidator {
 		for(Assignment assignment: employee.getAssignments()) {
 			if(!assignment.getIsCurrentAssignment() && !CollectionUtils.isEmpty(currentAssignments) && null != assignment.getToDate()&& currentAssignments.get(0).getFromDate() < assignment.getToDate() )
 				errorMap.put(ErrorConstants.HRMS_OVERLAPPING_ASSGN_CURRENT_CODE,ErrorConstants.HRMS_OVERLAPPING_ASSGN_CURRENT_MSG);
-		    if(!mdmsData.get(HRMSConstants.HRMS_MDMS_COURT_ESTABLISHMENT).contains(assignment.getCourtEstablishment()))
+			if(!mdmsData.get(HRMSConstants.HRMS_MDMS_COURT_ESTABLISHMENT).contains(assignment.getCourtEstablishment()))
 				errorMap.put(ErrorConstants.HRMS_INVALID_COURT_ESTABLISHMENT, ErrorConstants.HRMS_INVALID_COURT_ESTABLISHMENT_MSG);
 			if(!mdmsData.get(HRMSConstants.HRMS_MDMS_DESG_CODE).contains(assignment.getDesignation()))
 				errorMap.put(ErrorConstants.HRMS_INVALID_DESG_CODE, ErrorConstants.HRMS_INVALID_DESG_MSG);
@@ -415,8 +415,6 @@ public class EmployeeValidator {
                 	errorMap.put(ErrorConstants.HRMS_INVALID_ASSIGNMENT_DATES_CODE, ErrorConstants.HRMS_INVALID_ASSIGNMENT_DATES_MSG);
 			if(null != employee.getDateOfAppointment() && assignment.getFromDate() <	 employee.getDateOfAppointment())
 				errorMap.put(ErrorConstants.HRMS_INVALID_ASSIGNMENT_DATES_APPOINTMENT_CODE, ErrorConstants.HRMS_INVALID_ASSIGNMENT_DATES_APPOINTMENT_MSG);
-			if(!mdmsData.get(HRMSConstants.HRMS_MDMS_DISTRICT_CODE).contains(assignment.getDistrict()))
-				errorMap.put(ErrorConstants.HRMS_INVALID_DISTRICT_CODE, ErrorConstants.HRMS_INVALID_DISTRICT_CODE_MSG);
         }
 		
 	}
