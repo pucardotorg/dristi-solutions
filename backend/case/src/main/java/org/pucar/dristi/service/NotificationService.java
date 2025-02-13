@@ -93,9 +93,10 @@ public class NotificationService {
                 .locale(NOTIFICATION_ENG_LOCALE_CODE)
                 .expiryTime(System.currentTimeMillis() + 60 * 60 * 1000)
                 .message(message).build();
-        log.info("push message {}", smsRequest);
+
+        MaskUtil maskUtil = new MaskUtil();
         log.info("operation = pushNotification, result = IN_PROGRESS, smsRequest: mobileNumber = {}, tenantId = {}, templateId = {}, contentType = {}, category = {}, locale = {}, expiryTime = {}, message = {}",
-                MaskUtil.maskMobile(mobileNumber), smsRequest.getTenantId(), smsRequest.getTemplateId(), smsRequest.getContentType(), smsRequest.getCategory(), smsRequest.getLocale(), smsRequest.getExpiryTime(), smsRequest.getMessage());
+                maskUtil.maskMobile(mobileNumber), smsRequest.getTenantId(), smsRequest.getTemplateId(), smsRequest.getContentType(), smsRequest.getCategory(), smsRequest.getLocale(), smsRequest.getExpiryTime(), smsRequest.getMessage());
 
         producer.push(config.getSmsNotificationTopic(), smsRequest);
     }

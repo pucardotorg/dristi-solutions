@@ -67,8 +67,8 @@ public class WorkflowService {
         try {
             StringBuilder url = new StringBuilder(config.getWfHost().concat(config.getWfTransitionPath()));
             Object optional = repository.fetchResult(url, workflowReq);
-            log.info("operation = callWorkFlow, result = SUCCESS");
             ProcessInstanceResponse response = mapper.convertValue(optional, ProcessInstanceResponse.class);
+            log.info("operation = callWorkFlow, result = SUCCESS");
             return response.getProcessInstances().get(0).getState();
         } catch (CustomException e) {
             throw e;

@@ -59,18 +59,19 @@ abstract public class BaseSMSService implements SMSService, SMSBodyBuilder {
 
     @Override
     public void sendSMS(Sms sms) {
+        MaskUtil maskUtil = new MaskUtil();
         if (!sms.isValid()) {
-            log.error("operation = sendSms, result = FAILURE, Sms to {} is not valid", MaskUtil.maskMobile(sms.getMobileNumber()));
+            log.error("operation = sendSms, result = FAILURE, Sms to {} is not valid", maskUtil.maskMobile(sms.getMobileNumber()));
             return;
         }
 
         if (smsProperties.isNumberBlacklisted(sms.getMobileNumber())) {
-            log.error("operation = sendSms, result = FAILURE, Sms to {} is blacklisted", MaskUtil.maskMobile(sms.getMobileNumber()));
+            log.error("operation = sendSms, result = FAILURE, Sms to {} is blacklisted", maskUtil.maskMobile(sms.getMobileNumber()));
             return;
         }
 
         if (!smsProperties.isNumberWhitelisted(sms.getMobileNumber())) {
-            log.error("operation = sendSms, result = FAILURE, Sms to {} is not in whitelist", MaskUtil.maskMobile(sms.getMobileNumber()));
+            log.error("operation = sendSms, result = FAILURE, Sms to {} is not in whitelist", maskUtil.maskMobile(sms.getMobileNumber()));
             return;
         }
 

@@ -183,8 +183,10 @@ public class CdacSmsClient {
             requestBodyMap.add("password", encryptedPassword);
             requestBodyMap.add("key", genratedhashKey);
             requestBodyMap.add("templateid", templateId);
+
+            MaskUtil maskUtil = new MaskUtil();
             log.info("operation = sendSms, result = IN_PROGRESS, mobileno = {}, senderId = {}, smsServiceType = {}, templateId = {}, content = {}",
-                    MaskUtil.maskMobile(mobileNumber), senderId, smsServiceType, templateId, message);
+                    maskUtil.maskMobile(mobileNumber), senderId, smsServiceType, templateId, message);
 
             log.info("Request Url: {}", smsProviderURL);
 

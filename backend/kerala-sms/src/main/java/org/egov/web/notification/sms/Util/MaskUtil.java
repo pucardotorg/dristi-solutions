@@ -4,13 +4,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
 public class MaskUtil {
-    public static String maskData(String input, String regexPattern) {
+    public String maskData(String input, String regexPattern) {
         if (input == null || input.isEmpty()) {
             return input;
         }
@@ -29,7 +31,7 @@ public class MaskUtil {
         return sb.toString();
     }
 
-    public static void maskPII(Object obj) {
+    public void maskPII(Object obj) {
         if (obj == null) return;
 
         Field[] fields = obj.getClass().getDeclaredFields();
@@ -45,7 +47,7 @@ public class MaskUtil {
                     if (fieldName.toLowerCase().contains("email")) {
                         field.set(obj, maskEmail(strValue));
                     } else if (fieldName.toLowerCase().contains("name")) {
-                        field.set(obj, maskData(strValue, "(?<=.).")); // Show first character
+                        field.set(obj, maskName(strValue)); // Show first character
                     } else if (fieldName.toLowerCase().contains("mobile") || fieldName.contains("phone")) {
                         field.set(obj, maskMobile(strValue));
                     } else if (fieldName.toLowerCase().contains("aadhar")) {
@@ -58,21 +60,31 @@ public class MaskUtil {
         }
     }
 
-    public static String maskEmail(String email) {
+    public String maskEmail(String email) {
         if (email == null || !email.contains("@")) return email;
+
         String[] parts = email.split("@", 2);
-        if (parts[0].length() <= 3) return "***@" + parts[1];
-        return parts[0].substring(0, 3) + "***@" + parts[1];
+        return parts[0].length() <= 3
+                ? "*".repeat(parts[0].length()) + "@" + parts[1]
+                : parts[0].substring(0, 3) + "*".repeat(parts[0].length() - 3) + "@" + parts[1];
     }
 
-    public static String maskMobile(String mobile) {
+
+    public String maskMobile(String mobile) {
         if (mobile == null) return mobile;
         return mobile.substring(0, 2) + "******" + mobile.substring(mobile.length() - 2);
     }
 
-    public static String maskAadhaar(String aadhar) {
+    public String maskAadhaar(String aadhar) {
         if (aadhar == null || aadhar.length() < 12) return aadhar;
         return "********" + aadhar.substring(aadhar.length() - 4);
+    }
+    public String maskName(String name) {
+        if (name == null || name.isEmpty()) return name;
+
+        return Arrays.stream(name.split("\\s+")) // Split by spaces
+                .map(word -> word.charAt(0) + "*".repeat(word.length() - 1)) // Keep first letter, mask rest
+                .collect(Collectors.joining(" ")); // Join back with spaces
     }
 }
 
