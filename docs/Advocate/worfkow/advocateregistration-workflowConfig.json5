@@ -19,14 +19,15 @@
               "action": "REGISTER",
               "nextState": "VERIFICATION_REQUESTED",
               "roles": [
-                "USER_REGISTER"
+                "CITIZEN",
+                "EMPLOYEE"
               ]
             }
           ]
         },
         {
           "sla": null,
-          "state": "VERIFICATIONREQUESTED",
+          "state": "VERIFICATION_REQUESTED",
           "applicationStatus": "INWORKFLOW",
           "docUploadRequired": false,
           "isStartState": false,

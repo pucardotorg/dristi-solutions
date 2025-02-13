@@ -2116,7 +2116,7 @@ export const updateCaseDetails = async ({
                         },
                         filingType: filingType,
                         workflow: {
-                          action: "TYPE DEPOSITION",
+                          action: "SUBMIT_EVIDENCE",
                           documents: [
                             {
                               documentType: data.fileType,

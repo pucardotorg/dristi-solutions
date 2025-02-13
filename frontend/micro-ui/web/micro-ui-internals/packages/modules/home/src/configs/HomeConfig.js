@@ -60,7 +60,6 @@ export const userTypeOptions = [
       "SUBMISSION_RESPONDER",
       "SUBMISSION_DELETE",
       "TASK_VIEWER",
-      "USER_REGISTER",
       "ADVOCATE_VIEWER",
       "ADVOCATE_APPLICATION_VIEWER",
       "PENDING_TASK_CREATOR",
@@ -94,7 +93,6 @@ export const userTypeOptions = [
       "SUBMISSION_RESPONDER",
       "SUBMISSION_DELETE",
       "TASK_VIEWER",
-      "USER_REGISTER",
       "ADVOCATE_VIEWER",
       "ADVOCATE_APPLICATION_VIEWER",
       "PENDING_TASK_CREATOR",
@@ -547,7 +545,7 @@ export const pendingTaskVoluntarySubmissionActions = {
       ],
     },
   },
-  PENDINGESIGN: {
+  "PENDING_E-SIGN": {
     actorName: ["LITIGANT/ADVOCATE"],
     actionName: "Esign the Submission",
     redirectDetails: {
@@ -558,7 +556,7 @@ export const pendingTaskVoluntarySubmissionActions = {
       ],
     },
   },
-  PENDINGREVIEW: {
+  PENDING_REVIEW: {
     actorName: ["JUDGE"],
     actionName: "Review the submission",
     customFunction: "handleReviewSubmission",
@@ -570,7 +568,7 @@ export const pendingTaskVoluntarySubmissionActions = {
       ],
     },
   },
-  PENDINGAPPROVAL: {
+  PENDING_APPROVAL: {
     actorName: ["JUDGE"],
     actionName: "Review the submission",
     customFunction: "handleReviewSubmission",
@@ -721,7 +719,7 @@ export const pendingTaskVoluntarySubmissionBailDocumentsActions = {
       ],
     },
   },
-  PENDINGAPPROVAL: {
+  PENDING_APPROVAL: {
     actorName: ["JUDGE"],
     actionName: "Review the submission",
     customFunction: "handleReviewSubmission",
@@ -747,7 +745,7 @@ export const pendingTaskVoluntarySubmissionBailDocumentsActions = {
 };
 
 export const pendingTaskVoluntarySubmissionBailActions = {
-  PENDINGAPPROVAL: {
+  PENDING_APPROVAL: {
     actorName: ["JUDGE"],
     actionName: "Review the submission",
     customFunction: "handleReviewSubmission",

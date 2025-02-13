@@ -24,7 +24,7 @@ public class ServiceConstants {
     public static final String BUSINESS_SERVICES = "&businessServices=";
     public static final String FILE_STORE_UTILITY_EXCEPTION = "FILE_STORE_UTILITY_EXCEPTION";
     public static final String OPT_OUT_DUE = "OPT_OUT_DUE";
-    public final String APPLICATION_STATE = "PENDINGAPPROVAL";
+    public final String APPLICATION_STATE = "PENDING_APPROVAL";
     public static final String DELAY_CONDONATION = "DELAY_CONDONATION";
 
     public static final String OPT_OUT_SELECTION_LIMIT = "OPT_OUT_SELECTION_LIMIT";
