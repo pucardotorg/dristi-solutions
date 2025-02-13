@@ -35,7 +35,7 @@ public class NotificationEnrichment {
 
         Notification notification = request.getNotification();
         RequestInfo requestInfo = request.getRequestInfo();
-        String idName = config.getNotificationIdName();
+        String idName = config.getNotificationConfig();
         String idFormat = config.getNotificationIdFormat();
 
         List<String> notificationIdList = idgenUtil.getIdList(requestInfo, notification.getTenantId(), idName, idFormat, 1, false);

@@ -46,7 +46,7 @@ public class NotificationApiController {
     @RequestMapping(value = "/v1/exists", method = RequestMethod.POST)
     public ResponseEntity<NotificationExistsResponse> notificationV1Exists(@Parameter(in = ParameterIn.DEFAULT, description = "check if the Notification(S) exists", required = true, schema = @Schema()) @Valid @RequestBody NotificationExistsRequest request) {
 
-        List<NotificationExists> notificationExists = notificationService.existV1Notification();
+        List<NotificationExists> notificationExists = notificationService.existV1Notification(request);
         NotificationExistsResponse response = NotificationExistsResponse.builder()
                 .responseInfo(ResponseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true))
                 .notificationList(notificationExists).build();

@@ -27,7 +27,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class Notification {
+public class    Notification {
 
     @JsonProperty("id")
     @Valid

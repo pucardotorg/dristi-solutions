@@ -90,9 +90,9 @@ public class Configuration {
     @Value("${egov.sms.notification.topic}")
     private String updateNotificationTopic;
 
-    @Value("${egov.sms.notification.topic}")
-    private String notificationIdName;
+    @Value("${egov.idgen.notification.config}")
+    private String notificationConfig;
 
-    @Value("${egov.sms.notification.topic}")
+    @Value("${egov.idgen.notification.format}")
     private String notificationIdFormat;
 }

@@ -18,10 +18,10 @@ public class NotificationQueryBuilder {
     private static final String FROM_NOTIFICATION = " FROM dristi_notification ";
     private static final String WHERE = " WHERE ";
     private static final String AND = " AND ";
-    private static final String BASE_QUERY_NOTIFICATION_DOCUMENT = " ,nd.id as documentId, nd.fileStore as fileStore, nd.documentUid as documentUid, nd.documentType as documentType, nd.notification_id as notificationId, nd.additionalDetails as documentAdditionalDetails";
+    private static final String BASE_QUERY_NOTIFICATION_DOCUMENT = " ,nd.id as documentid, nd.fileStore as filestore, nd.documentUid as documentuid, nd.documentType as documenttype, nd.notification_id as notificationid, nd.additionalDetails as documentadditionaldetails";
 
     private static final String FROM_CTE_TABLE = " paginated_notification pn";
-    private static final String CTE_QUERY_NOTIFICATION = " pn.id, pn.tenantId, pn.notificationType, pn.caseNumber, pn.courtId, pn.notificationNumber, pn.createdDate, pn.issuedBy, pn.status, pn.comment, pn.isActive, pn.notificationDetails, pn.additionalDetails, pn.createdBy, pn.lastModifiedBy, pn.createdTime, pn.lastModifiedTime ";
+    private static final String CTE_QUERY_NOTIFICATION = " pn.id as id, pn.tenantId as tenantid, pn.notificationType as notificationtype, pn.caseNumber as casenumber, pn.courtId as courtid, pn.notificationNumber as notificationnumber, pn.createdDate as createddate, pn.issuedBy as issuedby, pn.status as status, pn.comment as comment, pn.isActive as isactive, pn.notificationDetails as notificationdetails, pn.additionalDetails as additionaldetails, pn.createdBy as createdby, pn.lastModifiedBy as lastmodifiedby, pn.createdTime as createdtime, pn.lastModifiedTime as lastmodifiedtime ";
     private static final String NOTIFICATION_DOCUMENT_TABLE = " dristi_notification_document nd ";
     private static final String LIMIT = "LIMIT ?";
     private static final String ORDER_BY = " ORDER BY ";
