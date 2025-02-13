@@ -173,13 +173,11 @@ public class ServiceConstants {
 
     public static final String ADVOCATE_NAME = "advocateName";
 
-    public static final String UPLOAD = "UPLOAD";
 
     public static final String SEND_BACK = "SEND_BACK";
 
     public static final String EDIT_CASE = "EDIT_CASE";
 
-    public static final String E_SIGN = "E-SIGN";
 
     public static final String E_SIGN_COMPLETE = "E-SIGN_COMPLETE";
 
