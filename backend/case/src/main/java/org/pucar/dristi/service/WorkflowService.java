@@ -49,32 +49,33 @@ public class WorkflowService {
     }
 
     public void updateWorkflowStatus(CaseRequest caseRequest) {
-            try {
-                ProcessInstance processInstance = getProcessInstance(caseRequest.getCases());
-                ProcessInstanceRequest workflowRequest = new ProcessInstanceRequest(caseRequest.getRequestInfo(), Collections.singletonList(processInstance));
-                log.info("ProcessInstance Request :: {}", workflowRequest);
-                String state=callWorkFlow(workflowRequest).getState();
-                log.info("Workflow State for filing number :: {} and state :: {}",caseRequest.getCases().getFilingNumber(), state);
-                caseRequest.getCases().setStatus(state);
-            } catch(CustomException e){
-                throw e;
-            } catch (Exception e) {
-                log.error("Error updating workflow status :: {}", e.toString());
-                throw new CustomException(WORKFLOW_SERVICE_EXCEPTION,"Error updating workflow status: "+e.getMessage());
-            }
+        try {
+            ProcessInstance processInstance = getProcessInstance(caseRequest.getCases());
+            ProcessInstanceRequest workflowRequest = new ProcessInstanceRequest(caseRequest.getRequestInfo(), Collections.singletonList(processInstance));
+            log.info("operation = updateWorkflowStatus, result = IN_PROGRESS");
+            String state=callWorkFlow(workflowRequest).getState();
+            log.info("operation = updateWorkflowStatus, result = SUCCESS, Workflow State for filing number :: {} and state :: {}",caseRequest.getCases().getFilingNumber(), state);
+            caseRequest.getCases().setStatus(state);
+        } catch(CustomException e){
+            throw e;
+        } catch (Exception e) {
+            log.error("operation = updateWorkflowStatus, result = FAILURE, error = {}", e.getMessage());
+            throw new CustomException(WORKFLOW_SERVICE_EXCEPTION,"Error updating workflow status: "+e.getMessage());
+        }
     }
+
     public State callWorkFlow(ProcessInstanceRequest workflowReq) {
         try {
             StringBuilder url = new StringBuilder(config.getWfHost().concat(config.getWfTransitionPath()));
             Object optional = repository.fetchResult(url, workflowReq);
-            log.info("Workflow Response :: {}", optional);
             ProcessInstanceResponse response = mapper.convertValue(optional, ProcessInstanceResponse.class);
+            log.info("operation = callWorkFlow, result = SUCCESS");
             return response.getProcessInstances().get(0).getState();
-        } catch(CustomException e){
+        } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Error calling workflow :: {}", e.toString());
-            throw new CustomException(WORKFLOW_SERVICE_EXCEPTION,e.getMessage());
+            log.error("operation = callWorkFlow, result = FAILURE, error = {}", e.getMessage());
+            throw new CustomException(WORKFLOW_SERVICE_EXCEPTION, e.getMessage());
         }
     }
 
@@ -100,10 +101,11 @@ public class WorkflowService {
             }
             return processInstance;
         } catch (Exception e) {
-            log.error("Error getting process instance for CASE :: {}", e.toString());
+            log.error("operation = getProcessInstance, result = FAILURE, error = {}", e.getMessage());
             throw new CustomException(WORKFLOW_SERVICE_EXCEPTION,e.getMessage());
         }
     }
+
     public ProcessInstance getCurrentWorkflow(RequestInfo requestInfo, String tenantId, String businessId) {
         try {
             RequestInfoWrapper requestInfoWrapper = RequestInfoWrapper.builder().requestInfo(requestInfo).build();
@@ -114,7 +116,7 @@ public class WorkflowService {
                 return response.getProcessInstances().get(0);
             return null;
         } catch (Exception e) {
-            log.error("Error getting current workflow :: {}", e.toString());
+            log.error("operation = getCurrentWorkflow, result = FAILURE, error = {}", e.getMessage());
             throw new CustomException(WORKFLOW_SERVICE_EXCEPTION, e.getMessage());
         }
     }
@@ -126,6 +128,7 @@ public class WorkflowService {
         url.append("&businessIds=").append(businessService);
         return url;
     }
+
     public ProcessInstanceRequest getProcessInstanceRegistrationPayment(CaseRequest updateRequest) {
         try {
             CourtCase application = updateRequest.getCases();
@@ -144,7 +147,7 @@ public class WorkflowService {
         } catch(CustomException e){
             throw e;
         } catch (Exception e) {
-            log.error("Error getting process instance for case registration payment :: {}", e.toString());
+            log.error("operation = getProcessInstanceRegistrationPayment, result = FAILURE, error = {}", e.getMessage());
             throw new CustomException(WORKFLOW_SERVICE_EXCEPTION, e.getMessage());
         }
     }

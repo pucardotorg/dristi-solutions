@@ -65,7 +65,7 @@ public class BillingUtil {
 		Object response;
 		try {
 			response = restTemplate.postForObject(uri.toString(), demandRequest, Map.class);
-			log.info("Demand response :: {}", response);
+			log.info("operation = createDemand, result = SUCCESS, Using CaseRequest for createDemand");
 		} catch (Exception e) {
 			log.error(ERROR_WHILE_CREATING_DEMAND_FOR_CASE, e);
 			throw new CustomException(ERROR_WHILE_CREATING_DEMAND_FOR_CASE, e.getMessage());
@@ -87,7 +87,7 @@ public class BillingUtil {
 		Object response;
 		try {
 			response = restTemplate.postForObject(uri.toString(), demandRequest, Map.class);
-			log.info("Demand response :: {}", response);
+			log.info("operation = createDemand, result = SUCCESS, Using JoinCaseRequest for createDemand");
 		} catch (Exception e) {
 			log.error(ERROR_WHILE_CREATING_DEMAND_FOR_CASE, e);
 			throw new CustomException(ERROR_WHILE_CREATING_DEMAND_FOR_CASE, e.getMessage());

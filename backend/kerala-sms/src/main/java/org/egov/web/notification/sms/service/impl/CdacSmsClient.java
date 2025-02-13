@@ -29,6 +29,7 @@ import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
+import org.egov.web.notification.sms.Util.MaskUtil;
 import org.egov.web.notification.sms.config.SMSProperties;
 import org.egov.web.notification.sms.models.Sms;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -182,13 +183,18 @@ public class CdacSmsClient {
             requestBodyMap.add("password", encryptedPassword);
             requestBodyMap.add("key", genratedhashKey);
             requestBodyMap.add("templateid", templateId);
-            log.info("Request Body Map: {}", requestBodyMap);
+
+            MaskUtil maskUtil = new MaskUtil();
+            log.info("operation = sendSms, result = IN_PROGRESS, mobileno = {}, senderId = {}, smsServiceType = {}, templateId = {}, content = {}",
+                    maskUtil.maskMobile(mobileNumber), senderId, smsServiceType, templateId, message);
+
             log.info("Request Url: {}", smsProviderURL);
 
             HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(requestBodyMap, httpHeaders);
             ResponseEntity<String> responseEntity = restTemplate.exchange(smsProviderURL, HttpMethod.POST, requestEntity, String.class);
 
-            log.info(responseEntity.getBody().toString());
+            log.info("operation = sendSms, result = SUCCESS, statusCode = {}",
+                    responseEntity.getStatusCode());
             responseString = responseEntity.getBody().toString();
         }
         catch (NoSuchAlgorithmException | KeyManagementException | IOException e)
