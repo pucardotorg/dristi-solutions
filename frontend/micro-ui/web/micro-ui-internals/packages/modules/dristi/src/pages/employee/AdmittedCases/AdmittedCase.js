@@ -274,10 +274,10 @@ const AdmittedCases = () => {
     return [CaseWorkflowState.PENDING_NOTICE].includes(caseDetails?.status) && primaryAction?.action === "ISSUE_ORDER";
   }, [caseDetails?.status, primaryAction?.action]);
 
-  const isDelayCondonationApplicable = useMemo(
-    () => caseDetails?.caseDetails?.delayApplications?.formdata[0]?.data?.delayCondonationType?.code === "NO" || undefined,
-    [caseDetails]
-  );
+  const isDelayCondonationApplicable = useMemo(() => {
+    if (!caseDetails?.cnrNumber) return undefined;
+    return caseDetails?.caseDetails?.delayApplications?.formdata[0]?.data?.delayCondonationType?.code === "NO";
+  }, [caseDetails]);
 
   const statue = useMemo(() => {
     const statutesAndSections = caseDetails?.statutesAndSections;
@@ -1162,7 +1162,7 @@ const AdmittedCases = () => {
     }
   }, [artifactNumber, currentDiaryEntry]);
 
-  useEffect(()=> {
+  useEffect(() => {
     if (applicationData && applicationNumber) {
       const applicationDetails = applicationData?.applicationList?.filter((application) => application?.applicationNumber === applicationNumber)?.[0];
       setDocumentSubmission(
@@ -1192,7 +1192,7 @@ const AdmittedCases = () => {
       );
       setShow(true);
     }
-  },[applicationData, applicationNumber]);
+  }, [applicationData, applicationNumber]);
 
   useEffect(() => {
     // Set default values when component mounts
@@ -1317,17 +1317,11 @@ const AdmittedCases = () => {
       ...caseDetails,
       additionalDetails: { ...caseDetails.additionalDetails, respondentDetails, witnessDetails, judge: data },
     };
-    const complainantUuid = caseDetails?.litigants?.[0]?.additionalDetails?.uuid;
-    const advocateUuid = caseDetails?.representatives?.[0]?.additionalDetails?.uuid;
+    const caseCreatedByUuid = caseDetails?.auditDetails?.createdBy;
     let assignees = [];
-    if (complainantUuid) {
-      assignees.push(complainantUuid);
-    }
-    if (advocateUuid) {
-      assignees.push(advocateUuid);
-    }
+    assignees.push(caseCreatedByUuid);
 
-    return DRISTIService.caseUpdateService(
+    return await DRISTIService.caseUpdateService(
       {
         cases: {
           ...newcasedetails,
@@ -2142,7 +2136,7 @@ const AdmittedCases = () => {
     // Early return if the status requires a simple download
     if (["PENDING_PAYMENT", "UNDER_SCRUTINY", "PENDING_REGISTRATION"].includes(caseStatus)) {
       const fileStoreId =
-      caseDetails?.documents?.find((doc) => doc?.key === "case.complaint.signed")?.fileStore || caseDetails?.additionalDetails?.signedCaseDocument;
+        caseDetails?.documents?.find((doc) => doc?.key === "case.complaint.signed")?.fileStore || caseDetails?.additionalDetails?.signedCaseDocument;
       if (fileStoreId) {
         downloadPdf(tenantId, fileStoreId);
         return;
