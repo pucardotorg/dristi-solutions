@@ -94,11 +94,11 @@ public class MdmsDataQueryBuilderV2 {
 
         // Append offset
         paginatedQuery.append(" OFFSET ? ");
-        preparedStmtList.add(mdmsCriteriaV2.getOffset());
+        preparedStmtList.add(ObjectUtils.isEmpty(mdmsCriteriaV2.getOffset()) ? config.getDefaultOffset() : mdmsCriteriaV2.getOffset());
 
         // Append limit
         paginatedQuery.append(" LIMIT ? ");
-        preparedStmtList.add(mdmsCriteriaV2.getLimit());
+        preparedStmtList.add(ObjectUtils.isEmpty(mdmsCriteriaV2.getLimit()) ? config.getDefaultLimit() : mdmsCriteriaV2.getLimit());
 
         return paginatedQuery.toString();
     }
