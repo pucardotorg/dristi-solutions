@@ -11,8 +11,10 @@ public class HRMSConstants {
 	public static final String HRMS_MDMS_EGOV_LOCATION_MASTERS_CODE = "egov-location";
 	
 	public static final String HRMS_MDMS_DEPT_CODE = "Department";
+	public static final String HRMS_MDMS_COURT_ESTABLISHMENT= "CourtEstablishment";
 	public static final String HRMS_MDMS_DESG_CODE = "Designation";
 	public static final String HRMS_MDMS_COURT_CODE = "Court_Rooms";
+	public static final String HRMS_MDMS_DISTRICT_CODE = "District";
 	public static final String HRMS_MDMS_EMP_STATUS_CODE = "EmployeeStatus";
 	public static final String HRMS_MDMS_EMP_TYPE_CODE = "EmployeeType";
 	public static final String HRMS_MDMS_SERVICE_STATUS_CODE = "ServiceStatus";
@@ -59,5 +61,8 @@ public class HRMSConstants {
 	public static final String INTERNALMICROSERVICEUSER_MOBILENO = "9999999999";
 
 	public static final String INTERNALMICROSERVICEUSER_TYPE = "SYSTEM";
+	public static final String HRMS_EMPLOYEE_JUDGE = "Judge";
 
+	public static final String HRMS_PASSWORD_SUBJECT = "Password for 24X7 OnCourt Login.";
+	public static final String HRMS_LOGIN_TEMPLATE = "HRMS_LOGIN_TEMPLATE";
 }

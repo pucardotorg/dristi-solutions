@@ -6,6 +6,7 @@ import { DocumentUploadError } from "../../../Utils/errorUtil";
 
 import { userTypeOptions } from "../registration/config";
 import { efilingDocumentKeyAndTypeMapping } from "./Config/efilingDocumentKeyAndTypeMapping";
+import isMatch from "lodash/isMatch";
 
 const formatName = (value, capitalize = true) => {
   let cleanedValue = value
@@ -95,6 +96,7 @@ export const validateDateForDelayApplication = ({
   history,
   caseId,
   setShowConfirmDcaSkipModal,
+  showConfirmDcaSkipModal,
   shouldShowConfirmDcaModal,
   setShouldShowConfirmDcaModal,
   prevIsDcaSkipped,
@@ -371,10 +373,10 @@ export const checkNameValidation = ({ formData, setValue, selected, reset, index
 
   // added for Nature of Debt/liablity
   if (selected === "debtLiabilityDetails") {
-    if(formData?.liabilityNature){
+    if (formData?.liabilityNature) {
       const formDataCopy = structuredClone(formData);
       for (const key in formDataCopy) {
-        if (["liabilityNature"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)){
+        if (["liabilityNature"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)) {
           const oldValue = formDataCopy[key];
           let value = oldValue;
           if (typeof value === "string") {
@@ -734,25 +736,119 @@ export const chequeDetailFileValidation = ({ formData, selected, setShowErrorToa
   }
 };
 
-export const advocateDetailsFileValidation = ({ formData, selected, setShowErrorToast, setFormErrors, t }) => {
+export const getAdvocatesAndPipRemainingFields = (formdata, t) => {
+  const allErrorData = [];
+  for (let i = 0; i < formdata?.length; i++) {
+    const formData = formdata?.[i]?.data || {};
+    const { boxComplainant, isComplainantPip, multipleAdvocateNameDetails, vakalatnamaFileUpload, pipAffidavitFileUpload } =
+      formData?.multipleAdvocatesAndPip || {};
+
+    let errorObject = {
+      ADVOCATE_INFORMATION_MISSING: false,
+      VAKALATNAMA_DOCUMENT_MISSING: false,
+      AFFIDAVIT_DOCUMENT_MISSING: false,
+    };
+    if (boxComplainant?.individualId) {
+      let isAnAdvocateMissing = false;
+      let isVakalatnamaFileMissing = false;
+      let isPipAffidavitFileMissing = false;
+      if (isComplainantPip?.code === "NO") {
+        // IF complainant is not party in person, an advocate must be present
+        if (!multipleAdvocateNameDetails || (Array.isArray(multipleAdvocateNameDetails) && multipleAdvocateNameDetails?.length === 0)) {
+          isAnAdvocateMissing = true;
+        } else if (
+          multipleAdvocateNameDetails &&
+          Array.isArray(multipleAdvocateNameDetails) &&
+          multipleAdvocateNameDetails?.length > 0 &&
+          multipleAdvocateNameDetails?.some((adv) => !adv?.advocateBarRegNumberWithName?.advocateId)
+        ) {
+          isAnAdvocateMissing = true;
+        }
+        // IF complainant is not party in person, there must be a vakalathnama document uploaded.
+        if (!vakalatnamaFileUpload || vakalatnamaFileUpload?.document?.length === 0) {
+          isVakalatnamaFileMissing = true;
+        }
+      }
+      if (isComplainantPip?.code === "YES") {
+        // IF complainant is party in person, there must be a PIP affidavit document uploaded.
+        if (!pipAffidavitFileUpload || pipAffidavitFileUpload?.document?.length === 0) {
+          isPipAffidavitFileMissing = true;
+        }
+      }
+      errorObject.ADVOCATE_INFORMATION_MISSING = isAnAdvocateMissing;
+      errorObject.VAKALATNAMA_DOCUMENT_MISSING = isVakalatnamaFileMissing;
+      errorObject.AFFIDAVIT_DOCUMENT_MISSING = isPipAffidavitFileMissing;
+    }
+    let mandatoryLeft = false;
+    for (let key in errorObject) {
+      if (errorObject[key] === true) {
+        mandatoryLeft = true;
+      }
+    }
+
+    if (mandatoryLeft) {
+      const errorData = {
+        index: boxComplainant?.index,
+        complainant: boxComplainant?.firstName,
+        errorKeys: Object.keys(errorObject)
+          .filter((key) => errorObject[key])
+          .map((key) => t(key)),
+      };
+      allErrorData.push(errorData);
+    }
+  }
+  return allErrorData;
+};
+
+export const advocateDetailsFileValidation = ({ formData, selected, setShowErrorToast, setFormErrors, t, isSubmitDisabled }) => {
   if (selected === "advocateDetails") {
-    if (formData?.numberOfAdvocate < 0) {
-      setFormErrors("numberOfAdvocate", { message: t("NUMBER_OF_ADVOCATE_ERROR") });
-      setShowErrorToast(true);
-      return true;
+    const { boxComplainant, isComplainantPip, multipleAdvocateNameDetails, vakalatnamaFileUpload, pipAffidavitFileUpload } =
+      formData?.multipleAdvocatesAndPip || {};
+    let errorObject = {
+      advocateDetailsAbsent: false,
+      vakalatnamaFileUploadAbsent: false,
+      pipAffidavitFileUploadAbsent: false,
+    };
+    if (boxComplainant?.individualId) {
+      let isAnAdvocateMissing = false;
+      let isVakalatnamaFileMissing = false;
+      let isPipAffidavitFileMissing = false;
+      if (isComplainantPip?.code === "NO") {
+        // IF complainant is not party in person, an advocate must be present
+        if (!multipleAdvocateNameDetails || (Array.isArray(multipleAdvocateNameDetails) && multipleAdvocateNameDetails?.length === 0)) {
+          isAnAdvocateMissing = true;
+        } else if (
+          multipleAdvocateNameDetails &&
+          Array.isArray(multipleAdvocateNameDetails) &&
+          multipleAdvocateNameDetails?.length > 0 &&
+          multipleAdvocateNameDetails?.some((adv) => !adv?.advocateBarRegNumberWithName?.advocateId)
+        ) {
+          isAnAdvocateMissing = true;
+        }
+        // IF complainant is not party in person, there must be a vakalathnama document uploaded.
+        if (!vakalatnamaFileUpload || vakalatnamaFileUpload?.document?.length === 0) {
+          isVakalatnamaFileMissing = true;
+        }
+      }
+      if (isComplainantPip?.code === "YES") {
+        // IF complainant is party in person, there must be a PIP affidavit document uploaded.
+        if (!pipAffidavitFileUpload || pipAffidavitFileUpload?.document?.length === 0) {
+          isPipAffidavitFileMissing = true;
+        }
+      }
+      errorObject = {
+        advocateDetailsAbsent: isAnAdvocateMissing,
+        vakalatnamaFileUploadAbsent: isVakalatnamaFileMissing,
+        pipAffidavitFileUploadAbsent: isPipAffidavitFileMissing,
+      };
     }
-    if (
-      formData?.isAdvocateRepresenting?.code === "YES" &&
-      ["vakalatnamaFileUpload"].some((data) => !Object.keys(formData?.[data]?.document || {}).length)
-    ) {
-      setFormErrors("vakalatnamaFileUpload", { type: "required" });
-      setShowErrorToast(true);
-      return true;
-    } else {
-      return false;
+    let mandatoryLeft = false;
+    for (let key in errorObject) {
+      if (errorObject[key] === true) {
+        mandatoryLeft = true;
+      }
     }
-  } else {
-    return false;
+    // setError("multipleAdvocatesAndPip", errorObject);
   }
 };
 
@@ -1225,21 +1321,32 @@ const fetchBasicUserInfo = async (caseDetails, tenantId) => {
   return individualData?.Individual?.[0]?.individualId;
 };
 
-export const getComplainantName = (complainantDetails) => {
-  if (complainantDetails?.complainantType?.code === "INDIVIDUAL") {
-    return complainantDetails?.firstName && `${complainantDetails?.firstName || ""} ${complainantDetails?.lastName || ""}`.trim();
+export const getComplainantName = (complainantDetails, t) => {
+  const count = complainantDetails?.length;
+  var concatenatedComplainantName = "";
+  if (complainantDetails?.[0]?.data?.complainantType?.code === "INDIVIDUAL") {
+    concatenatedComplainantName =
+      complainantDetails?.[0]?.data?.firstName &&
+      `${complainantDetails?.[0]?.data?.firstName || ""} ${complainantDetails?.[0]?.data?.lastName || ""}`.trim();
+  } else concatenatedComplainantName = complainantDetails?.[0]?.data?.complainantCompanyName || "";
+  if (count > 1) {
+    concatenatedComplainantName = concatenatedComplainantName + ` and ${count - 1} ${t(count === 2 ? "TITLE_OTHER" : "TITLE_OTHERS")}`;
   }
-  return complainantDetails?.complainantCompanyName || "";
+  return concatenatedComplainantName;
 };
 
-export const getRespondentName = (respondentDetails) => {
-  if (respondentDetails?.respondentType?.code === "INDIVIDUAL") {
-    return (
-      respondentDetails?.respondentFirstName &&
-      `${respondentDetails?.respondentFirstName || ""} ${respondentDetails?.respondentLastName || ""}`.trim()
-    );
+export const getRespondentName = (respondentDetails, t) => {
+  const count = respondentDetails?.length;
+  var concatenatedRespondentName = "";
+  if (respondentDetails?.[0]?.data?.respondentType?.code === "INDIVIDUAL") {
+    concatenatedRespondentName =
+      respondentDetails?.[0]?.data?.respondentFirstName &&
+      `${respondentDetails?.[0]?.data?.respondentFirstName || ""} ${respondentDetails?.[0]?.data?.respondentLastName || ""}`.trim();
+  } else concatenatedRespondentName = respondentDetails?.[0]?.data?.respondentCompanyName || "";
+  if (count > 1) {
+    concatenatedRespondentName = concatenatedRespondentName + ` and ${count - 1} ${t(count === 2 ? "TITLE_OTHER" : "TITLE_OTHERS")}`;
   }
-  return respondentDetails?.respondentCompanyName || "";
+  return concatenatedRespondentName;
 };
 
 const updateComplaintDocInCaseDoc = (docList, complaintDoc) => {
@@ -1353,6 +1460,8 @@ export const updateCaseDetails = async ({
   if (selected === "complainantDetails") {
     let litigants = [];
     const complainantVerification = {};
+    // check -in new flow, mltiple complainant forms are possible, so iscompleted logic has to be updated
+    // and logic to update litigants also has to be changed.
     if (isCompleted === true) {
       litigants = await Promise.all(
         updatedFormData
@@ -1420,6 +1529,7 @@ export const updateCaseDetails = async ({
                 additionalDetails: {
                   fullName: getFullName(" ", data?.data?.firstName, data?.data?.middleName, data?.data?.lastName),
                   uuid: userUuid ? userUuid : null,
+                  currentPosition: index + 1,
                 },
               };
             } else {
@@ -1502,6 +1612,7 @@ export const updateCaseDetails = async ({
                     additionalDetails: {
                       fullName: getFullName(" ", firstName, middleName, lastName),
                       uuid: userUuid ? userUuid : null,
+                      currentPosition: index + 1,
                     },
                   };
                 } else {
@@ -1554,6 +1665,7 @@ export const updateCaseDetails = async ({
                     additionalDetails: {
                       fullName: getFullName(" ", firstName, middleName, lastName),
                       uuid: userUuid ? userUuid : null,
+                      currentPosition: index + 1,
                     },
                   };
                 }
@@ -1641,6 +1753,7 @@ export const updateCaseDetails = async ({
           updateTempDocListMultiForm(docList, complainantDocTypes);
           return {
             ...data,
+            isFormCompleted: true,
             data: {
               ...data.data,
               ...documentData,
@@ -1654,23 +1767,36 @@ export const updateCaseDetails = async ({
           };
         })
     );
-    const representatives = (caseDetails?.representatives ? [...caseDetails?.representatives] : [])
-      ?.filter((representative) => representative?.advocateId)
-      .map((representative, idx) => ({
-        ...representative,
-        caseId: caseDetails?.id,
-        representing: representative?.advocateId
-          ? [litigants[0]].map((item, index) => ({
-              ...(caseDetails.representatives?.[idx]?.representing?.[index] ? caseDetails.representatives?.[idx]?.representing?.[index] : {}),
-              ...item,
-            }))
-          : [],
-      }));
-    data.litigants = [...litigants].map((item, index) => ({
-      ...(caseDetails.litigants?.[index] ? caseDetails.litigants?.[index] : {}),
-      ...item,
-    }));
-    data.representatives = [...representatives];
+    const caseLitigants = caseDetails?.litigants || [];
+
+    // Logic to update the litigants with same id so that duplication does not happen in backend.
+    // We will check that if a litigant is already present in litigants array in case search api data,
+    // we will just update the new documents and representinng data to that object.
+    const updatedLitigants = litigants.map((lit) => {
+      const existingLit = caseLitigants.find((caseLit) => caseLit.individualId === lit.individualId);
+      if (existingLit) {
+        lit.id = existingLit?.id;
+        lit.auditDetails = existingLit?.auditDetails;
+        lit.hasSigned = existingLit?.hasSigned || false;
+        return lit;
+      }
+      return lit;
+    });
+
+    // If a litigant object was present previously and now that litigant is not present in form data,
+    // the same object should again be copied with isActive as false and added in the updatedLitigants.
+
+    caseLitigants.forEach((caseLit) => {
+      const isAlreadyIncluded = updatedLitigants.some((lit) => lit?.individualId === caseLit?.individualId);
+      if (!isAlreadyIncluded) {
+        updatedLitigants.push({
+          ...caseLit,
+          isActive: false,
+        });
+      }
+    });
+    data.litigants = [...updatedLitigants];
+
     data.additionalDetails = {
       ...caseDetails.additionalDetails,
       complainantDetails: {
@@ -2207,16 +2333,18 @@ export const updateCaseDetails = async ({
     };
   }
   if (selected === "advocateDetails") {
-    const advocateDetails = {};
+    const caseRepresentatives = caseDetails?.representatives || [];
+    const advocateDetails = [];
+    let docList = [];
     const newFormData = await Promise.all(
       updatedFormData
         .filter((item) => item.isenabled)
-        .map(async (data) => {
+        .map(async (data, index) => {
           const vakalatnamaDocumentData = { vakalatnamaFileUpload: null };
-          if (data?.data?.vakalatnamaFileUpload?.document) {
+          if (data?.data?.multipleAdvocatesAndPip?.vakalatnamaFileUpload?.document) {
             vakalatnamaDocumentData.vakalatnamaFileUpload = {};
             vakalatnamaDocumentData.vakalatnamaFileUpload.document = await Promise.all(
-              data?.data?.vakalatnamaFileUpload?.document?.map(async (document) => {
+              data?.data?.multipleAdvocatesAndPip?.vakalatnamaFileUpload?.document?.map(async (document) => {
                 if (document) {
                   const documentType = documentsTypeMapping["vakalatnamaFileUpload"];
                   const uploadedData = await onDocumentUpload(documentType, document, document.name, tenantId);
@@ -2235,85 +2363,203 @@ export const updateCaseDetails = async ({
                     documentName: uploadedData.filename || document?.documentName,
                     fileName: pageConfig?.selectDocumentName?.["vakalatnamaFileUpload"],
                   };
-                  updateCaseDocuments(documentType, doc);
+                  docList.push(doc);
                   return doc;
                 }
               })
             );
             setFormDataValue("vakalatnamaFileUpload", vakalatnamaDocumentData?.vakalatnamaFileUpload);
-          } else {
-            updateCaseDocuments(documentsTypeMapping["vakalatnamaFileUpload"], false);
           }
-          const advocateDetail = await DRISTIService.searchAdvocateClerk("/advocate/v1/_search", {
-            criteria: [
-              {
-                barRegistrationNumber: data?.data?.advocateBarRegNumberWithName?.[0]?.barRegistrationNumber,
-              },
-            ],
-            tenantId,
-          });
-          advocateDetails[data?.data?.advocateBarRegNumberWithName?.[0]?.advocateId] =
-            advocateDetail?.advocates?.[0]?.responseList?.[0]?.auditDetails?.createdBy;
+          const pipAffidavitDocumentData = { pipAffidavitFileUpload: null };
+          if (data?.data?.multipleAdvocatesAndPip?.pipAffidavitFileUpload?.document) {
+            pipAffidavitDocumentData.pipAffidavitFileUpload = {};
+            pipAffidavitDocumentData.pipAffidavitFileUpload.document = await Promise.all(
+              data?.data?.multipleAdvocatesAndPip?.pipAffidavitFileUpload?.document?.map(async (document) => {
+                if (document) {
+                  const documentType = documentsTypeMapping["pipAffidavitFileUpload"];
+                  const uploadedData = await onDocumentUpload(documentType, document, document.name, tenantId);
+                  const doc = {
+                    documentType,
+                    fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
+                    documentName: uploadedData.filename || document?.documentName,
+                    fileName: pageConfig?.selectDocumentName?.["pipAffidavitFileUpload"],
+                  };
+                  docList.push(doc);
+                  return doc;
+                }
+              })
+            );
+            setFormDataValue("pipAffidavitFileUpload", pipAffidavitDocumentData?.pipAffidavitFileUpload);
+          }
+          const advocateDetailsDocTypes = [documentsTypeMapping["vakalatnamaFileUpload"], documentsTypeMapping["pipAffidavitFileUpload"]];
+          updateTempDocListMultiForm(docList, advocateDetailsDocTypes);
+
+          if (
+            data?.data?.multipleAdvocatesAndPip?.multipleAdvocateNameDetails?.length > 0 &&
+            data?.data?.multipleAdvocatesAndPip?.multipleAdvocateNameDetails?.length
+          ) {
+            const advSearchPromises = data?.data?.multipleAdvocatesAndPip?.multipleAdvocateNameDetails
+              ?.filter((detail) => detail?.advocateBarRegNumberWithName?.barRegistrationNumberOriginal)
+              .map((detail) => {
+                return DRISTIService.searchAdvocateClerk("/advocate/v1/_search", {
+                  criteria: [
+                    {
+                      barRegistrationNumber: detail?.advocateBarRegNumberWithName?.barRegistrationNumberOriginal,
+                    },
+                  ],
+                  tenantId,
+                });
+              });
+
+            const allAdvocateSearchData = await Promise.all(advSearchPromises);
+            for (let i = 0; i < allAdvocateSearchData?.length; i++) {
+              const document = vakalatnamaDocumentData?.vakalatnamaFileUpload?.document?.[0];
+              advocateDetails.push({
+                advocate: allAdvocateSearchData?.[i].advocates?.[0]?.responseList?.[0],
+                documents: document ? [document] : [],
+                complainantIndividualId: data?.data?.multipleAdvocatesAndPip?.boxComplainant?.individualId,
+              });
+            }
+          }
           return {
             ...data,
+            isFormCompleted: true,
             data: {
               ...data.data,
-              ...vakalatnamaDocumentData,
-              advocateBarRegNumberWithName: data?.data?.advocateBarRegNumberWithName?.map((item) => {
-                return {
-                  ...item,
-                  barRegistrationNumber: item?.barRegistrationNumber,
-                  advocateName: item?.advocateName,
-                  advocateId: item?.advocateId,
-                  barRegistrationNumberOriginal: data?.data?.advocateBarRegNumberWithName?.[0]?.barRegistrationNumberOriginal,
-                };
-              }),
-              advocateName: data?.data?.advocateBarRegNumberWithName?.[0]?.advocateName,
-              advocateId: data?.data?.advocateBarRegNumberWithName?.[0]?.advocateId,
-              barRegistrationNumber: data?.data?.advocateBarRegNumberWithName?.[0]?.barRegistrationNumber,
-              barRegistrationNumberOriginal: data?.data?.advocateBarRegNumberWithName?.[0]?.barRegistrationNumberOriginal,
+              multipleAdvocatesAndPip: {
+                ...data.data.multipleAdvocatesAndPip,
+                vakalatnamaFileUpload: vakalatnamaDocumentData?.vakalatnamaFileUpload,
+                pipAffidavitFileUpload: pipAffidavitDocumentData?.pipAffidavitFileUpload,
+              },
             },
           };
         })
     );
-    let representatives = [];
-    if (newFormData?.filter((item) => item.isenabled).some((data) => data?.data?.isAdvocateRepresenting?.code === "YES")) {
-      representatives = newFormData
-        .filter((item) => item.isenabled)
-        .map((data, index) => {
-          return {
-            ...(caseDetails.representatives?.[index] ? caseDetails.representatives?.[index] : {}),
-            caseId: caseDetails?.id,
-            representing: data?.data?.advocateBarRegNumberWithName?.[0]?.advocateId
-              ? [
-                  ...(caseDetails?.litigants && Array.isArray(caseDetails?.litigants)
-                    ? [caseDetails?.litigants[0]]?.map((data, key) => ({
-                        ...(caseDetails.representatives?.[index]?.representing?.[key]
-                          ? caseDetails.representatives?.[index]?.representing?.[key]
-                          : {}),
-                        additionalDetails: {
-                          ...data?.additionalDetails,
-                        },
-                        tenantId,
-                        caseId: data?.caseId,
-                        partyCategory: data?.partyCategory,
-                        individualId: data?.individualId,
-                        partyType: data?.partyType.includes("complainant") ? "complainant.primary" : "respondent.primary",
-                      }))
-                    : []),
-                ]
-              : [],
-            advocateId: data?.data?.advocateBarRegNumberWithName?.[0]?.advocateId,
-            documents: data?.data?.vakalatnamaFileUpload?.document,
-            additionalDetails: {
-              advocateName: data?.data?.advocateBarRegNumberWithName?.[0]?.advocateName,
-              uuid: advocateDetails?.[data?.data?.advocateBarRegNumberWithName?.[0]?.advocateId],
-            },
-            tenantId,
-          };
-        });
+
+    const updatedAdvocateDetails = [];
+    let duplicateAdvocateDetails = advocateDetails.slice();
+
+    for (let i = 0; i < advocateDetails?.length; i++) {
+      const advObj = advocateDetails[i];
+      if (updatedAdvocateDetails.some((obj) => obj.advocate?.individualId === advObj?.advocate?.individualId)) {
+        continue;
+      }
+      const complainants = [];
+      const indexArray = [];
+
+      duplicateAdvocateDetails.forEach((dupObj, index) => {
+        if (advObj.advocate?.individualId === dupObj?.advocate?.individualId) {
+          complainants.push(dupObj.complainantIndividualId);
+          indexArray.push(index);
+        }
+      });
+      const newAdvObj = {
+        advocate: advObj.advocate,
+        documents: advObj.documents,
+        complainants: complainants,
+      };
+      updatedAdvocateDetails.push(newAdvObj);
+      duplicateAdvocateDetails = duplicateAdvocateDetails.filter((_, index) => !indexArray.includes(index));
     }
-    data.representatives = [...representatives];
+
+    const getRepresentings = (complIndvidualIdArray) => {
+      let representings = [];
+      if (caseDetails?.litigants && Array.isArray(caseDetails?.litigants)) {
+        complIndvidualIdArray.map((individualId) => {
+          const litigant = caseDetails?.litigants?.find((obj) => obj?.individualId === individualId);
+          if (litigant) {
+            const representingData = {
+              additionalDetails: {
+                ...litigant?.additionalDetails,
+              },
+              tenantId,
+              caseId: litigant?.caseId,
+              partyCategory: litigant?.partyCategory,
+              individualId: litigant?.individualId,
+              partyType: litigant?.partyType.includes("complainant") ? "complainant.primary" : "respondent.primary",
+            };
+            representings.push(representingData);
+          }
+        });
+        return representings;
+      }
+    };
+
+    let representatives = [];
+    representatives = updatedAdvocateDetails.map((data) => {
+      const representing = getRepresentings(data?.complainants);
+      return {
+        tenantId,
+        caseId: caseDetails?.id,
+        advocateId: data?.advocate?.id,
+        documents: data?.documents,
+        additionalDetails: {
+          advocateName: data?.advocate?.additionalDetails?.username,
+          uuid: data?.advocate?.auditDetails?.createdBy,
+        },
+        representing: representing,
+      };
+    });
+
+    // Logic to update the representatives with same id so that duplication does not happen in backend.
+    // We will check that if a representative is already present in representatives array in case search api data,
+    // we will just update the new documents and representinng data to that object.
+    const updatedRepresentatives = representatives.map((rep) => {
+      const existingRepresentative = caseRepresentatives.find((caseRep) => caseRep.advocateId === rep.advocateId);
+      if (existingRepresentative) {
+        const existingRep = structuredClone(existingRepresentative);
+        if (!isMatch(existingRep.documents, rep.documents)) {
+          existingRep.documents = rep.documents;
+        }
+        if (!isMatch(existingRep.representing, rep.representing)) {
+          const existingRepresenting = structuredClone(existingRep.representing || []);
+          const newRepresenting = structuredClone(rep.representing || []);
+          const updateRepresenting = [];
+          //When the representing array in updated for a particular representative in formdata,
+          //we check for the existing representing list from case data and if a representing object already exists,
+          //then we just take that object (because it contains id for that representing) and put it in place of newer one.
+          newRepresenting.forEach((obj) => {
+            const objFound = existingRepresenting.find((o) => o.individualId === obj.individualId);
+            if (objFound) {
+              updateRepresenting.push(objFound);
+            }
+            if (!objFound) {
+              updateRepresenting.push(obj);
+            }
+          });
+
+          //Also if there was a representing array in existing representing list from case data,
+          // but it is not present now in new formdata's representing list,
+          //then we add the existing object with isActive as false.
+          existingRepresenting.forEach((representingObj) => {
+            const repObjectFound = updateRepresenting.find((o) => o.individualId === representingObj.individualId);
+            if (!repObjectFound) {
+              updateRepresenting.push({ ...representingObj, isActive: false });
+            }
+          });
+          existingRep.representing = updateRepresenting;
+        }
+        if (!isMatch(existingRep.additionalDetails, rep.additionalDetails)) {
+          existingRep.additionalDetails = rep.additionalDetails;
+        }
+        return existingRep;
+      }
+      return rep;
+    });
+    // If a representative object was present previously and now that representative is not present now,
+    // the same object should again be copied with isActive as false and added in the updatedRepresentatives.
+    caseRepresentatives.forEach((caseRep) => {
+      const isAlreadyIncluded = updatedRepresentatives.some((rep) => rep.advocateId === caseRep.advocateId);
+
+      if (!isAlreadyIncluded) {
+        updatedRepresentatives.push({
+          ...caseRep,
+          isActive: false,
+        });
+      }
+    });
+
+    data.representatives = [...updatedRepresentatives];
     data.additionalDetails = {
       ...caseDetails.additionalDetails,
       advocateDetails: {
@@ -2336,12 +2582,17 @@ export const updateCaseDetails = async ({
       ...(caseComplaintDocument && { signedCaseDocument: caseComplaintDocument?.fileStore }),
     };
   }
-  const caseTitle = ["DRAFT_IN_PROGRESS", "CASE_REASSIGNED"].includes(caseDetails?.status)
-    ? `${getComplainantName(
-        data?.additionalDetails?.complainantDetails?.formdata?.[0]?.data || caseDetails?.additionalDetails?.complainantDetails?.formdata?.[0]?.data
-      )} vs ${getRespondentName(
-        data?.additionalDetails?.respondentDetails?.formdata?.[0]?.data || caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data
-      )}`
+  const complainantName = getComplainantName(
+    data?.additionalDetails?.complainantDetails?.formdata || caseDetails?.additionalDetails?.complainantDetails?.formdata,
+    t
+  );
+  const respondentName = getRespondentName(
+    data?.additionalDetails?.respondentDetails?.formdata || caseDetails?.additionalDetails?.respondentDetails?.formdata,
+    t
+  );
+
+  const caseTitle = ["DRAFT_IN_PROGRESS"].includes(caseDetails?.status)
+    ? caseDetails?.additionalDetails?.modifiedCaseTitle || (complainantName || respondentName ? `${complainantName} vs ${respondentName}` : "")
     : caseDetails?.caseTitle;
   setErrorCaseDetails({
     ...caseDetails,
@@ -2363,7 +2614,7 @@ export const updateCaseDetails = async ({
     return null;
   }
 
-  return DRISTIService.caseUpdateService(
+  return await DRISTIService.caseUpdateService(
     {
       cases: {
         ...caseDetails,

@@ -335,7 +335,11 @@ async function appendPrayerSwornFilesToPDF(pdf, prayerSwornStatementDetails) {
       );
     }
     if (prayerSworn?.complaintAdditionalDocumentFileStore?.length > 0) {
-      for (let j = 0; j < prayerSworn?.complaintAdditionalDocumentFileStore.length; j++) {
+      for (
+        let j = 0;
+        j < prayerSworn?.complaintAdditionalDocumentFileStore.length;
+        j++
+      ) {
         await appendPdfPagesWithHeader(
           existingPdfDoc,
           prayerSworn?.complaintAdditionalDocumentFileStore?.[j],
@@ -358,13 +362,34 @@ async function appendPrayerSwornFilesToPDF(pdf, prayerSwornStatementDetails) {
 async function appendAdvocateFilesToPDF(pdf, advocates) {
   const existingPdfDoc = await PDFDocument.load(pdf);
 
+  let vakalatnamaCount = 0;
+  let affidavitCount = 0;
+  const uniqueFileStores = new Set();
+
   for (let i = 0; i < advocates.length; i++) {
     const advocate = advocates[i];
-    if (advocate.vakalatnamaFileStore) {
+
+    if (
+      advocate.vakalatnamaFileStore &&
+      !uniqueFileStores.has(advocate.vakalatnamaFileStore)
+    ) {
+      vakalatnamaCount++;
+      uniqueFileStores.add(advocate.vakalatnamaFileStore);
       await appendPdfPagesWithHeader(
         existingPdfDoc,
         advocate.vakalatnamaFileStore,
-        `Vakalatnama Document ${i + 1}`
+        `Vakalatnama Document ${vakalatnamaCount}`
+      );
+    } else if (
+      advocate.pipAffidavitFileStore &&
+      !uniqueFileStores.has(advocate.pipAffidavitFileStore)
+    ) {
+      uniqueFileStores.add(advocate.pipAffidavitFileStore);
+      affidavitCount++;
+      await appendPdfPagesWithHeader(
+        existingPdfDoc,
+        advocate.pipAffidavitFileStore,
+        `Affidavit Document ${affidavitCount}`
       );
     }
   }

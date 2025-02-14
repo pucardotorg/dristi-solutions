@@ -172,6 +172,43 @@ const SubmissionsCreate = ({ path }) => {
     return caseData?.criteria?.[0]?.responseList?.[0];
   }, [caseData]);
 
+  // filtering out litigants which are part in person.
+  const pipComplainants = useMemo(() => {
+    return caseDetails?.litigants
+      ?.filter((litigant) => litigant.partyType.includes("complainant"))
+      ?.filter(
+        (litigant) =>
+          !caseDetails?.representatives?.some((representative) =>
+            representative?.representing?.some((rep) => rep?.individualId === litigant?.individualId)
+          )
+      );
+  }, [caseDetails]);
+
+  const complainantsList = useMemo(() => {
+    const loggedinUserUuid = userInfo?.uuid;
+    // If logged in person is an advocate
+    const isAdvocateLoggedIn = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === loggedinUserUuid);
+    const isPipLoggedIn = pipComplainants?.find((p) => p?.additionalDetails?.uuid === loggedinUserUuid);
+
+    if (isAdvocateLoggedIn) {
+      return isAdvocateLoggedIn?.representing?.map((r) => {
+        return {
+          code: r?.additionalDetails?.fullName,
+          name: r?.additionalDetails?.fullName,
+          uuid: r?.additionalDetails?.uuid,
+        };
+      });
+    } else if (isPipLoggedIn) {
+      return [
+        {
+          code: isPipLoggedIn?.additionalDetails?.fullName,
+          name: isPipLoggedIn?.additionalDetails?.fullName,
+          uuid: isPipLoggedIn?.additionalDetails?.uuid,
+        },
+      ];
+    }
+  }, [caseDetails, pipComplainants, userInfo]);
+
   const { data: applicationData, isloading: isApplicationLoading, refetch: applicationRefetch } = Digit.Hooks.submissions.useSearchSubmissionService(
     {
       criteria: {
@@ -185,6 +222,14 @@ const SubmissionsCreate = ({ path }) => {
     applicationNumber + filingNumber,
     Boolean(applicationNumber + filingNumber)
   );
+
+  const fullName = useMemo(() => {
+    return (
+      caseDetails?.litigants?.find((litigant) => litigant?.additionalDetails?.uuid === userInfo?.uuid)?.additionalDetails?.fullName ||
+      caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === userInfo?.uuid)?.additionalDetails?.advocateName ||
+      ""
+    );
+  }, [caseDetails, userInfo?.uuid]);
 
   const orderRefNumber = useMemo(() => applicationData?.applicationList?.[0]?.additionalDetails?.formdata?.refOrderId, [applicationData]);
   const referenceId = useMemo(() => applicationData?.applicationList?.[0]?.referenceId, [applicationData]);
@@ -288,6 +333,9 @@ const SubmissionsCreate = ({ path }) => {
             if (body?.key === "suretyDocuments") {
               body.populators.inputs[0].modalData = documentTypeData;
             }
+            if (body?.key === "selectComplainant") {
+              body.populators.options = complainantsList;
+            }
             return {
               ...body,
             };
@@ -298,7 +346,7 @@ const SubmissionsCreate = ({ path }) => {
     } else {
       return [];
     }
-  }, [applicationType, documentTypeData, isCitizen]);
+  }, [applicationType, documentTypeData, isCitizen, complainantsList]);
 
   const formatDate = (date, format) => {
     const day = String(date.getDate()).padStart(2, "0");
@@ -769,7 +817,7 @@ const SubmissionsCreate = ({ path }) => {
             formdata,
             ...(orderDetails && { orderDate: formatDate(new Date(orderDetails?.auditDetails?.lastModifiedTime)) }),
             ...(orderDetails?.additionalDetails?.formdata?.documentName && { documentName: orderDetails?.additionalDetails?.formdata?.documentName }),
-            onBehalOfName: onBehalfOfLitigent?.additionalDetails?.fullName,
+            onBehalOfName: formdata?.selectComplainant?.code,
             partyType: sourceType?.toLowerCase(),
             ...(orderDetails &&
               orderDetails?.orderDetails?.isResponseRequired?.code === true && {
@@ -780,7 +828,7 @@ const SubmissionsCreate = ({ path }) => {
             owner: cleanString(userInfo?.name),
           },
           documents,
-          onBehalfOf: [isCitizen ? onBehalfOfuuid : userInfo?.uuid],
+          onBehalfOf: [formdata?.selectComplainant?.uuid],
           comment: [],
           workflow: {
             id: "workflow123",
@@ -1104,7 +1152,6 @@ const SubmissionsCreate = ({ path }) => {
         const billPaymentStatus = await openPaymentPortal(bill);
         setPaymentStatus(billPaymentStatus);
         await applicationRefetch();
-        console.log(billPaymentStatus);
         if (billPaymentStatus === true) {
           setMakePaymentLabel(false);
           setShowPaymentModal(false);
@@ -1160,7 +1207,7 @@ const SubmissionsCreate = ({ path }) => {
           applicationType={applicationDetails?.applicationType}
           application={applicationDetails}
           submissionDate={applicationDetails?.createdDate}
-          sender={caseDetails?.additionalDetails?.payerName}
+          sender={fullName}
           setShowReviewModal={setShowReviewModal}
           setShowsignatureModal={setShowsignatureModal}
           handleBack={handleBack}

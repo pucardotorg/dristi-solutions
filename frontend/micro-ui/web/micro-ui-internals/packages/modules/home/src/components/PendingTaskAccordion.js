@@ -18,6 +18,7 @@ function PendingTaskAccordion({
   isAccordionOpen = false,
   setShowSubmitResponseModal,
   setResponsePendingTask,
+  allPendingTasks,
   isOpenInNewTab,
 }) {
   const history = useHistory();
@@ -41,6 +42,29 @@ function PendingTaskAccordion({
         },
       });
       setCheck(!check);
+    }
+  };
+
+  const formatDate = (dateInMS) => {
+    try {
+      const milliseconds = parseInt(dateInMS?.split("-")[1]);
+      const date = new Date(milliseconds);
+      const options = { month: "short", day: "numeric" };
+      return date.toLocaleDateString("en-GB", options);
+    } catch (error) {
+      return "";
+    }
+  };
+
+  const getNextFormatDate = (dateInMS) => {
+    try {
+      const milliseconds = parseInt(dateInMS?.split("-")[1]);
+      const date = new Date(milliseconds);
+      const nextDate = new Date(date.getTime() + 24 * 60 * 60 * 1000);
+      const options = { year: "numeric", month: "short", day: "numeric" };
+      return nextDate.toLocaleDateString("en-GB", options);
+    } catch (error) {
+      return "";
     }
   };
 
@@ -94,40 +118,43 @@ function PendingTaskAccordion({
               key={item?.filingNumber}
               style={{ cursor: "pointer" }}
               onClick={() => {
-                if (item?.status === "PENDING_RESPONSE") {
+                if (item?.status === "PENDING_SIGN" && item?.actionName === "Sign A Diary") {
+                  history.push(`/${window.contextPath}/employee/home/adiary?date=${item?.params?.referenceId}`);
+                } else if (item?.status === "PENDING_RESPONSE") {
                   if (isJudge) {
                     const caseId = item?.params?.caseId;
                     const filingNumber = item?.params?.filingNumber;
-                    if (isOpenInNewTab) {
-                      const newTabUrl = `/${
-                        window.contextPath
-                      }/employee/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview&triggerAdmitCase=${true}`;
-                      window.open(newTabUrl, "_blank", "noopener,noreferrer");
-                    } else {
-                      history.push(
-                        `/${window.contextPath}/employee/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview`,
-                        {
-                          triggerAdmitCase: true,
-                        }
-                      );
-                    }
+                    history.push(`/${window.contextPath}/employee/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview`, {
+                      triggerAdmitCase: true,
+                    });
                   } else {
                     setResponsePendingTask(item);
                     setShowSubmitResponseModal(true);
                   }
-                } else redirectPendingTaskUrl(item?.redirectUrl, item?.isCustomFunction, item?.params, isOpenInNewTab);
+                } else redirectPendingTaskUrl(item?.redirectUrl, item?.isCustomFunction, item?.params);
               }}
             >
               <input type="checkbox" value={check} />
-              <div className="task-details" style={{ display: "flex", flexDirection: "column", gap: 8, marginLeft: 8 }}>
-                <span className="task-title">
-                  {t(item?.actionName)} : {item?.caseTitle}
-                </span>
-                <span className="task-info">
-                  {item?.caseType} - {item?.filingNumber} -{" "}
-                  <span style={{ ...(item?.dueDateColor && { color: item?.dueDateColor }) }}>{item?.due}</span>
-                </span>
-              </div>
+              {item?.actionName === "Sign A Diary" && item?.status === "PENDING_SIGN" ? (
+                <div className="task-details" style={{ display: "flex", flexDirection: "column", gap: 8, marginLeft: 8 }}>
+                  <span className="task-title">
+                    {t("SIGN_A_DIARY")} {formatDate(item?.params?.referenceId)}
+                  </span>
+                  <span className="task-info">
+                    {t("ADIARY_DUE_ON")} {getNextFormatDate(item?.params?.referenceId)}{" "}
+                  </span>
+                </div>
+              ) : (
+                <div className="task-details" style={{ display: "flex", flexDirection: "column", gap: 8, marginLeft: 8 }}>
+                  <span className="task-title">
+                    {t(item?.actionName)} : {item?.caseTitle}
+                  </span>
+                  <span className="task-info">
+                    {item?.caseType} - {item?.filingNumber} -{" "}
+                    <span style={{ ...(item?.dueDateColor && { color: item?.dueDateColor }) }}>{item?.due}</span>
+                  </span>
+                </div>
+              )}
             </div>
           ))}
         </div>

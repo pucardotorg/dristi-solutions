@@ -63,6 +63,8 @@ function CaseLockModal({
   const [submitConfirmed, setSubmitConfirmed] = useState(false);
   const history = useHistory();
   const toast = useToast();
+  const userInfo = Digit?.UserService?.getUser()?.info;
+  const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
 
   const filingNumber = useMemo(() => {
     return caseDetails?.filingNumber;
@@ -71,23 +73,35 @@ function CaseLockModal({
   const handleSaveOnSubmit = async () => {
     setShowCaseLockingModal(false);
 
-    // Update API when a litigant will e-sign the case if the status is reassigned during to advocate filing changes as well.
     const isCaseReassigned = state === CaseWorkflowState.CASE_REASSIGNED;
-    const actionType = isCaseReassigned ? "EDIT_CASE" : "SUBMIT_CASE";
-    const pendingTask = isCaseReassigned
-      ? { name: t("PENDING_RE_E_SIGN_FOR_CASE"), status: "PENDING_RE_E-SIGN" }
-      : { name: t("PENDING_E_SIGN_FOR_CASE"), status: "PENDING_E-SIGN" };
 
-    if (isAdvocateFilingCase && !isCaseReassigned) {
-      return setShowConfirmCaseDetailsModal(true);
-    }
+    // uncomment if confirm caseDetails modal needed and don't want to call update case api
+    // if (isAdvocateFilingCase && !isCaseReassigned) {
+    //   setShowConfirmCaseDetailsModal(true);
+    //   return;
+    // }
+
+    const actionType = isCaseReassigned ? "EDIT_CASE" : "SUBMIT_CASE";
+
+    const result = await onSubmit(actionType, true);
+    if (result?.error) return;
 
     try {
-      const result = await onSubmit(actionType, true);
-      if (result?.error) return;
-
-      await createPendingTask(pendingTask);
-      history.push(`${path}/sign-complaint?filingNumber=${filingNumber}`);
+      const taskName = isCaseReassigned ? t("PENDING_RE_E_SIGN_FOR_CASE") : t("PENDING_E_SIGN_FOR_CASE");
+      const taskStatus = isCaseReassigned ? "PENDING_RE_E-SIGN" : "PENDING_E-SIGN";
+      const promises = [...(caseDetails?.litigants || []), ...(caseDetails?.representatives || [])].map((party) =>
+        createPendingTask({
+          name: taskName,
+          status: taskStatus,
+          assignee: party?.additionalDetails?.uuid,
+        })
+      );
+      await Promise.all(promises);
+      if (isAdvocateFilingCase) {
+        history.replace(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
+      } else {
+        history.replace(`${path}/sign-complaint?filingNumber=${filingNumber}`);
+      }
     } catch (error) {
       console.error("An error occurred:", error);
       toast.error(t("SOMETHING_WENT_WRONG"));
@@ -96,33 +110,33 @@ function CaseLockModal({
 
   const handleCancelOnSubmit = async () => {
     setShowCaseLockingModal(false);
-    if (state === CaseWorkflowState.CASE_REASSIGNED) {
-      if (isAdvocateFilingCase) {
-        const result = await onSubmit("EDIT_CASE_ADVOCATE", true);
-        if (result?.error) {
-          return;
-        }
-        try {
-          await createPendingTask({ name: t("PENDING_RE_UPLOAD_SIGNATURE_FOR_CASE"), status: "PENDING_RE_SIGN" }); // check status
-          history.push(`${path}/sign-complaint?filingNumber=${filingNumber}`);
-        } catch (error) {
-          console.error("An error occurred:", error);
-          toast.error(t("SOMETHING_WENT_WRONG"));
-        }
-      }
-    } else {
-      if (isAdvocateFilingCase) {
-        const result = await onSubmit("SUBMIT_CASE_ADVOCATE", true);
-        if (result?.error) {
-          return;
-        }
-        try {
-          await createPendingTask({ name: t("PENDING_UPLOAD_SIGNATURE_FOR_CASE"), status: "PENDING_SIGN" }); // check status
-          history.push(`${path}/sign-complaint?filingNumber=${filingNumber}`);
-        } catch (error) {
-          console.error("An error occurred:", error);
-          toast.error(t("SOMETHING_WENT_WRONG"));
-        }
+
+    if (isAdvocateFilingCase) {
+      const assignees = Array.isArray(caseDetails?.representatives)
+        ? caseDetails?.representatives?.map((advocate) => ({
+            uuid: advocate?.additionalDetails?.uuid,
+          }))
+        : [];
+
+      const isCaseReassigned = state === CaseWorkflowState.CASE_REASSIGNED;
+      const actionType = isCaseReassigned ? "EDIT_CASE_ADVOCATE" : "SUBMIT_CASE_ADVOCATE";
+
+      const result = await onSubmit(actionType, true);
+      if (result?.error) return;
+
+      const taskName = isCaseReassigned ? t("PENDING_RE_UPLOAD_SIGNATURE_FOR_CASE") : t("PENDING_UPLOAD_SIGNATURE_FOR_CASE");
+      const taskStatus = isCaseReassigned ? "PENDING_RE_SIGN" : "PENDING_SIGN";
+
+      try {
+        await createPendingTask({
+          name: taskName,
+          status: taskStatus,
+          assignees: assignees,
+        });
+        history.replace(`${path}/sign-complaint?filingNumber=${filingNumber}`);
+      } catch (error) {
+        console.error("An error occurred:", error);
+        toast.error(t("SOMETHING_WENT_WRONG"));
       }
     }
   };
