@@ -88,7 +88,7 @@
                     "actions": [
                         {
                             "action": "E-SIGN",
-                            "nextState": "PENDING_E-SIGN-2",
+                            "nextState": "PENDING_E-SIGN",
                             "roles": [
                                 "CASE_CREATOR",
                                 "SYSTEM",
@@ -96,32 +96,18 @@
                             ]
                         },
                         {
-                            "action": "E-SIGN_PARTY_IN_PERSON",
+                            "action": "E-SIGN_COMPLETE",
                             "nextState": "PENDING_PAYMENT",
                             "roles": [
-                                "CASE_CREATOR",
                                 "SYSTEM",
                                 "SYSTEM_ADMIN"
                             ]
-                        }
-                    ]
-                },
-                {
-                    "sla": null,
-                    "state": "PENDING_E-SIGN-2",
-                    "applicationStatus": "INWORKFLOW",
-                    "docUploadRequired": false,
-                    "isStartState": false,
-                    "isTerminateState": false,
-                    "isStateUpdatable": true,
-                    "actions": [
+                        },
                         {
-                            "action": "E-SIGN",
-                            "nextState": "PENDING_PAYMENT",
+                            "action": "EDIT_CASE",
+                            "nextState": "DRAFT_IN_PROGRESS",
                             "roles": [
-                                "ADVOCATE_ROLE",
-                                "SYSTEM",
-                                "SYSTEM_ADMIN"
+                                "CASE_CREATOR"
                             ]
                         }
                     ]
@@ -142,6 +128,13 @@
                                 "ADVOCATE_ROLE",
                                 "SYSTEM",
                                 "SYSTEM_ADMIN"
+                            ]
+                        },
+                        {
+                            "action": "EDIT_CASE",
+                            "nextState": "DRAFT_IN_PROGRESS",
+                            "roles": [
+                                "CASE_CREATOR"
                             ]
                         }
                     ]
@@ -258,6 +251,13 @@
                                 "SYSTEM",
                                 "SYSTEM_ADMIN"
                             ]
+                        },
+                        {
+                            "action": "EDIT_CASE",
+                            "nextState": "CASE_REASSIGNED",
+                            "roles": [
+                                "CASE_CREATOR"
+                            ]
                         }
                     ]
                 },
@@ -272,7 +272,7 @@
                     "actions": [
                         {
                             "action": "E-SIGN",
-                            "nextState": "PENDING_RE_E-SIGN-2",
+                            "nextState": "PENDING_RE_E-SIGN",
                             "roles": [
                                 "SYSTEM",
                                 "SYSTEM_ADMIN",
@@ -280,32 +280,18 @@
                             ]
                         },
                         {
-                            "action": "E-SIGN_PARTY_IN_PERSON",
+                            "action": "E-SIGN_COMPLETE",
                             "nextState": "UNDER_SCRUTINY",
                             "roles": [
-                                "CASE_CREATOR",
                                 "SYSTEM",
                                 "SYSTEM_ADMIN"
                             ]
-                        }
-                    ]
-                },
-                {
-                    "sla": null,
-                    "state": "PENDING_RE_E-SIGN-2",
-                    "applicationStatus": "INWORKFLOW",
-                    "docUploadRequired": false,
-                    "isStartState": false,
-                    "isTerminateState": false,
-                    "isStateUpdatable": true,
-                    "actions": [
+                        },
                         {
-                            "action": "E-SIGN",
-                            "nextState": "UNDER_SCRUTINY",
+                            "action": "EDIT_CASE",
+                            "nextState": "CASE_REASSIGNED",
                             "roles": [
-                                "SYSTEM",
-                                "SYSTEM_ADMIN",
-                                "ADVOCATE_ROLE"
+                                "CASE_CREATOR"
                             ]
                         }
                     ]
