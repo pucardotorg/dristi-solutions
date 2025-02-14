@@ -1161,7 +1161,7 @@ const AdmittedCases = () => {
     }
   }, [artifactNumber, currentDiaryEntry]);
 
-  useEffect(()=> {
+  useEffect(() => {
     if (applicationData && applicationNumber) {
       const applicationDetails = applicationData?.applicationList?.filter((application) => application?.applicationNumber === applicationNumber)?.[0];
       setDocumentSubmission(
@@ -1191,7 +1191,7 @@ const AdmittedCases = () => {
       );
       setShow(true);
     }
-  },[applicationData, applicationNumber]);
+  }, [applicationData, applicationNumber]);
 
   useEffect(() => {
     // Set default values when component mounts
@@ -1316,17 +1316,11 @@ const AdmittedCases = () => {
       ...caseDetails,
       additionalDetails: { ...caseDetails.additionalDetails, respondentDetails, witnessDetails, judge: data },
     };
-    const complainantUuid = caseDetails?.litigants?.[0]?.additionalDetails?.uuid;
-    const advocateUuid = caseDetails?.representatives?.[0]?.additionalDetails?.uuid;
+    const caseCreatedByUuid = caseDetails?.auditDetails?.createdBy;
     let assignees = [];
-    if (complainantUuid) {
-      assignees.push(complainantUuid);
-    }
-    if (advocateUuid) {
-      assignees.push(advocateUuid);
-    }
+    assignees.push(caseCreatedByUuid);
 
-    return DRISTIService.caseUpdateService(
+    return await DRISTIService.caseUpdateService(
       {
         cases: {
           ...newcasedetails,
