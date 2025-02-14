@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 import static org.pucar.dristi.config.ServiceConstants.DELETE_DRAFT_WORKFLOW_ACTION;
@@ -21,7 +22,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.pucar.dristi.web.models.Document;
+import lombok.SneakyThrows;
+import org.pucar.dristi.util.LockUtil;
+import org.pucar.dristi.web.models.*;
 import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
@@ -38,15 +41,6 @@ import org.pucar.dristi.service.IndividualService;
 import org.pucar.dristi.util.AdvocateUtil;
 import org.pucar.dristi.util.FileStoreUtil;
 import org.pucar.dristi.util.MdmsUtil;
-import org.pucar.dristi.web.models.AdvocateMapping;
-import org.pucar.dristi.web.models.CaseCriteria;
-import org.pucar.dristi.web.models.CaseRequest;
-import org.pucar.dristi.web.models.CaseSearchRequest;
-import org.pucar.dristi.web.models.CourtCase;
-import org.pucar.dristi.web.models.JoinCaseRequest;
-import org.pucar.dristi.web.models.LinkedCase;
-import org.pucar.dristi.web.models.Party;
-import org.pucar.dristi.web.models.StatuteSection;
 
 import net.minidev.json.JSONArray;
 
@@ -72,21 +66,24 @@ public class CaseRegistrationValidatorTest {
     private FileStoreUtil fileStoreUtil;
 
     @Mock
+    private LockUtil lockUtil;
+
+    @Mock
     private AdvocateUtil advocateUtil;
     private JoinCaseRequest joinCaseRequest;
     private RequestInfo requestInfo;
     private Party litigant;
-    private AdvocateMapping representative;
+    private Representative representative;
     private Document document;
     @BeforeEach
     void setUp() {
         // Setup done before each test
         requestInfo = new RequestInfo();
         litigant = new Party();
-        representative = new AdvocateMapping();
+        representative = new Representative();
         document = new Document();
         joinCaseRequest = new JoinCaseRequest();
-        joinCaseRequest.setLitigant(litigant);
+        joinCaseRequest.setLitigant(Collections.singletonList(litigant));
         joinCaseRequest.setRepresentative(representative);
         joinCaseRequest.setRequestInfo(requestInfo);
     }
@@ -363,7 +360,7 @@ public class CaseRegistrationValidatorTest {
     }
 
     @Test
-    void testvalidateUpdateRequest_ExistingApplicationMissingTenantId() {
+    void testvalidateUpdateRequest_InvalidCaseRegistration() {
         CaseCriteria caseCriteria = new CaseCriteria();
         CourtCase courtCase = new CourtCase();
         CaseRequest caseRequest = new CaseRequest();
@@ -373,16 +370,22 @@ public class CaseRegistrationValidatorTest {
     }
 
     @Test
+    @SneakyThrows
     void testvalidateUpdateRequest_ExistingApplicationMissingFilingDate() {
         CourtCase courtCase = new CourtCase();
         CaseCriteria caseCriteria = new CaseCriteria();
+        courtCase.setId(UUID.randomUUID());
         courtCase.setTenantId("pg");
+        courtCase.setCaseCategory("category");
+        courtCase.setStatutesAndSections(Collections.singletonList(StatuteSection.builder().statute("statue").build()));
         Workflow workflow = new Workflow();
-        workflow.setAction("random_action");
+        workflow.setAction("Action");
         courtCase.setWorkflow(workflow);
+        courtCase.setLitigants(Collections.singletonList(Party.builder().caseId("id").build()));
         CaseRequest caseRequest = new CaseRequest();
         caseRequest.setCases(courtCase);
-        caseRequest.setRequestInfo(new RequestInfo());
+        caseRequest.setRequestInfo( RequestInfo.builder().userInfo(User.builder().id(1L).build()).build());
+        when(lockUtil.isLockPresent(any(),anyString(),anyString())).thenReturn(false);
 
         assertThrows(CustomException.class, () -> validator.validateUpdateRequest(caseRequest, Collections.singletonList(new CourtCase())));
     }
@@ -663,5 +666,25 @@ public class CaseRegistrationValidatorTest {
         });
         assertEquals(INVALID_FILESTORE_ID, exception.getCode());
         assertEquals("Invalid document details", exception.getMessage());
+    }
+
+
+    @Test
+    @SneakyThrows
+    void testvalidateUpdateRequest_CaseLocked() {
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(UUID.randomUUID());
+        courtCase.setTenantId("kl");
+        courtCase.setCaseCategory("category");
+        courtCase.setStatutesAndSections(List.of(StatuteSection.builder().tenantId("pb").build()));
+        Workflow workflow = new Workflow();
+        workflow.setAction(DELETE_DRAFT_WORKFLOW_ACTION);
+        courtCase.setWorkflow(workflow);
+        CaseRequest caseRequest = new CaseRequest();
+        caseRequest.setCases(courtCase);
+        caseRequest.setRequestInfo( RequestInfo.builder().userInfo(User.builder().id(1L).build()).build());
+
+        when(lockUtil.isLockPresent(any(),anyString(),anyString())).thenReturn(true);
+        assertThrows(CustomException.class, () -> validator.validateUpdateRequest(caseRequest, Collections.singletonList(new CourtCase())));
     }
 }

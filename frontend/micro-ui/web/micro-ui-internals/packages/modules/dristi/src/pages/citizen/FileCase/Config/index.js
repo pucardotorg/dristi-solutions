@@ -1,5 +1,3 @@
-import { delayApplicationConfig } from "./delayApplicationConfig";
-
 export const sideMenuConfig = [
   {
     isOpen: false,
@@ -326,21 +324,14 @@ export const sideMenuConfig = [
             ],
           },
         ],
-        mandatoryFields: [
-          "isAdvocateRepresenting",
-          // if advocateBarRegistrationNumber is present, 3 name fields will be filled automatically.
-        ],
-        initialMandatoryFieldCount: 1,
-        dependentMandatoryFields: [
-          { field: "barRegistrationNumber", dependentOn: "isAdvocateRepresenting", dependentOnKey: "showForm" },
-          { field: "advocateName", dependentOn: "isAdvocateRepresenting", dependentOnKey: "showForm" },
-          { field: "numberOfAdvocate", dependentOn: "isAdvocateRepresenting", dependentOnKey: "showForm" },
-          {
-            field: "vakalatnamaFileUpload.document",
-            dependentOn: "isAdvocateRepresenting",
-            dependentOnKey: "showForm",
-          },
-        ],
+        mandatoryFields: [],
+        // We are not specifying mandatory fields here because whole form
+        // is a custom component and it is not possible to show fields in that manner.
+        // the counting logic is written directly for Advocate Details page.
+        initialMandatoryFieldCount: 2,
+        optionalFields: [],
+        dependentOptionalFields: [],
+        dependentMandatoryFields: [],
         optionalFields: [],
         dependentOptionalFields: [],
         initialOptionalFieldCount: 0,

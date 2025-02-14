@@ -13,6 +13,7 @@ import java.util.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.egov.common.contract.models.AuditDetails;
+import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
@@ -26,11 +27,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.config.ServiceConstants;
 import org.pucar.dristi.enrichment.CaseRegistrationEnrichment;
+import org.pucar.dristi.enrichment.EnrichmentService;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.CaseRepository;
+import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.util.AdvocateUtil;
 import org.pucar.dristi.util.BillingUtil;
 import org.pucar.dristi.util.EncryptionDecryptionUtil;
+import org.pucar.dristi.util.TaskUtil;
 import org.pucar.dristi.validators.CaseRegistrationValidator;
 import org.pucar.dristi.web.OpenApiCaseSummary;
 import org.pucar.dristi.web.models.*;
@@ -67,6 +71,15 @@ public class CaseServiceTest {
 
     @Mock
     private AdvocateUtil advocateUtil;
+
+    @Mock
+    private TaskUtil taskUtil;
+
+    @Mock
+    private EnrichmentService enrichmentService;
+
+    @Mock
+    private ServiceRequestRepository repository;
 
 
     @InjectMocks
@@ -117,7 +130,8 @@ public class CaseServiceTest {
         joinCaseRequest.setAdditionalDetails("form-data");
         courtCase = new CourtCase();
         objectMapper = new ObjectMapper();
-        caseService = new CaseService(validator,enrichmentUtil,caseRepository,workflowService,config,producer,new BillingUtil(new RestTemplate(),config),encryptionDecryptionUtil,objectMapper,cacheService, notificationService, individualService, advocateUtil);
+        enrichmentService = new EnrichmentService(new ArrayList<>());
+        caseService = new CaseService(validator,enrichmentUtil,caseRepository,workflowService,config,producer,taskUtil,new BillingUtil(new RestTemplate(),config),encryptionDecryptionUtil,objectMapper,cacheService,enrichmentService, notificationService, individualService, advocateUtil);
     }
 
     CaseCriteria setupTestCaseCriteria(CourtCase courtCase) {
@@ -158,7 +172,7 @@ public class CaseServiceTest {
         joinCaseRequest.setCaseFilingNumber("12345");
         joinCaseRequest.setAccessCode("validAccessCode");
         assertThrows(CustomException.class, () -> {
-            caseService.verifyJoinCaseRequest(joinCaseRequest);
+            caseService.verifyJoinCaseRequest(joinCaseRequest,true);
         });
 
     }
@@ -178,7 +192,7 @@ public class CaseServiceTest {
         CaseCriteria caseCriteria = setupTestCaseCriteria(courtCase); // or false for CaseNotFound scenario
         when(caseRepository.getCases(anyList(), any())).thenReturn(Collections.singletonList(caseCriteria));
         assertThrows(CustomException.class, () -> {
-            caseService.verifyJoinCaseRequest(joinCaseRequest);
+            caseService.verifyJoinCaseRequest(joinCaseRequest,true);
         });
     }
 
@@ -201,13 +215,13 @@ public class CaseServiceTest {
         joinCaseRequest.setRequestInfo(requestInfo);
         joinCaseRequest.setCaseFilingNumber("12345");
         joinCaseRequest.setAccessCode("validAccessCode");
-        joinCaseRequest.setLitigant(litigant);
+        joinCaseRequest.setLitigant(Collections.singletonList(litigant));
 
         when(validator.canLitigantJoinCase(joinCaseRequest)).thenReturn(true);
         when(config.getCaseDecryptSelf()).thenReturn("CaseDecryptSelf");
 
         CustomException exception = assertThrows(CustomException.class, () -> {
-            caseService.verifyJoinCaseRequest(joinCaseRequest);
+            caseService.verifyJoinCaseRequest(joinCaseRequest,true);
         });
 
         assertEquals(VALIDATION_ERR, exception.getCode());
@@ -233,7 +247,7 @@ public class CaseServiceTest {
         when(encryptionDecryptionUtil.decryptObject(any(CourtCase.class), any(String.class), eq(CourtCase.class), any(RequestInfo.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
         when(config.getCaseDecryptSelf()).thenReturn("CaseDecryptSelf");
-        CustomException exception = assertThrows(CustomException.class, () -> caseService.verifyJoinCaseRequest(joinCaseRequest));
+        CustomException exception = assertThrows(CustomException.class, () -> caseService.verifyJoinCaseRequest(joinCaseRequest,true));
 
         assertEquals("VALIDATION_EXCEPTION", exception.getCode());
         assertEquals("Access code not generated", exception.getMessage());
@@ -241,17 +255,17 @@ public class CaseServiceTest {
 
     @Test
     public void testVerifyJoinCaseRequest_RepresentativesAlreadyExists() {
-        Party litigant = new Party();
+        Representing litigant = new Representing();
         litigant.setIndividualId("existingLitigant");
         litigant.setPartyType("primary");
+        AdvocateMapping advocate = new AdvocateMapping();
+        advocate.setAdvocateId("existingAdv");
+        advocate.setRepresenting(Collections.singletonList(litigant));
 
-        AdvocateMapping representative = new AdvocateMapping();
-        representative.setAdvocateId("existingAdv");
-        representative.setRepresenting(Collections.singletonList(litigant));
         courtCase.setId(UUID.randomUUID());
         courtCase.setAccessCode("validAccessCode");
         courtCase.setStatus(CASE_ADMIT_STATUS);
-        courtCase.setRepresentatives(Collections.singletonList(representative));
+        courtCase.setRepresentatives(Collections.singletonList(advocate));
 
         when(encryptionDecryptionUtil.decryptObject(any(CourtCase.class), any(String.class), eq(CourtCase.class), any(RequestInfo.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
@@ -259,6 +273,9 @@ public class CaseServiceTest {
         CaseCriteria caseCriteria = setupTestCaseCriteria(courtCase); // or false for CaseNotFound scenario
         when(caseRepository.getCases(anyList(), any())).thenReturn(Collections.singletonList(caseCriteria));
 
+        Representative representative = new Representative();
+        representative.setAdvocateId("existingAdv");
+        representative.setRepresenting(Collections.singletonList(litigant));
 
         joinCaseRequest.setRequestInfo(requestInfo);
         joinCaseRequest.setCaseFilingNumber("12345");
@@ -268,10 +285,10 @@ public class CaseServiceTest {
         when(config.getCaseDecryptSelf()).thenReturn("CaseDecryptSelf");
 
         CustomException exception = assertThrows(CustomException.class, () -> {
-            caseService.verifyJoinCaseRequest(joinCaseRequest);
+            caseService.verifyJoinCaseRequest(joinCaseRequest,true);
         });
 
-        assertEquals("Advocate is already a part of the given case", exception.getMessage());
+        assertEquals("Advocate is already representing the individual", exception.getMessage());
     }
 
     @Test
@@ -293,7 +310,7 @@ public class CaseServiceTest {
         CaseCriteria caseCriteria = setupTestCaseCriteria(courtCase); // or false for CaseNotFound scenario
         when(caseRepository.getCases(anyList(), any())).thenReturn(Collections.singletonList(caseCriteria));
 
-        when(config.getUpdateRepresentativeJoinCaseTopic()).thenReturn("update-topic");
+        when(config.getRepresentativeJoinCaseTopic()).thenReturn("update-topic");
         when(validator.canRepresentativeJoinCase(joinCaseRequest)).thenReturn(true);
         when(individualService.getIndividualsByIndividualId(requestInfo, "111")).thenReturn(null);
 
@@ -301,8 +318,8 @@ public class CaseServiceTest {
         user.setTenantId(TEST_TENANT_ID);
         requestInfo.setUserInfo(user);
         joinCaseRequest.setRequestInfo(requestInfo);
-        Party party1 = Party.builder().individualId("111").partyType(ServiceConstants.COMPLAINANT_PRIMARY).isActive(true).auditDetails(new AuditDetails()).build();
-        AdvocateMapping advocateMapping2 = AdvocateMapping.builder().advocateId("333").representing(Collections.singletonList(party1)).isActive(true).auditDetails(new AuditDetails()).build();
+        Representing party1 = Representing.builder().individualId("111").partyType(ServiceConstants.COMPLAINANT_PRIMARY).isActive(true).auditDetails(new AuditDetails()).build();
+        Representative advocateMapping2 = Representative.builder().advocateId("333").representing(Collections.singletonList(party1)).isActive(true).auditDetails(new AuditDetails()).build();
         joinCaseRequest.setRepresentative(advocateMapping2);
 
         when(encryptionDecryptionUtil.decryptObject(any(CourtCase.class), any(String.class), eq(CourtCase.class), any(RequestInfo.class)))
@@ -373,7 +390,7 @@ public class CaseServiceTest {
         doNothing().when(cacheService).save(any(),any());
 
         // Call the method
-        JoinCaseResponse response = caseService.verifyJoinCaseRequest(joinCaseRequest);
+        JoinCaseResponse response = caseService.verifyJoinCaseRequest(joinCaseRequest,true);
 
         // Verify the results
         assertNotNull(response);
@@ -383,7 +400,7 @@ public class CaseServiceTest {
     public void testVerifyJoinCaseRequest_Success() throws JsonProcessingException {
         Party litigant = new Party();
         litigant.setIndividualId("newLitigant");
-        AdvocateMapping advocate = new AdvocateMapping();
+        Representative advocate = new Representative();
         advocate.setAdvocateId("newAdvocate");
         courtCase.setId(UUID.randomUUID());
         courtCase.setAccessCode("validAccessCode");
@@ -394,7 +411,7 @@ public class CaseServiceTest {
         joinCaseRequest.setRequestInfo(requestInfo);
         joinCaseRequest.setCaseFilingNumber("12345");
         joinCaseRequest.setAccessCode("validAccessCode");
-        joinCaseRequest.setLitigant(litigant);
+        joinCaseRequest.setLitigant(Collections.singletonList(litigant));
         joinCaseRequest.setAdditionalDetails("form-data");
         LinkedHashMap<String, Object> additionalDetails = new LinkedHashMap<>();
         additionalDetails.put(ADVOCATE_NAME, "John Doe");
@@ -467,11 +484,10 @@ public class CaseServiceTest {
 
         doNothing().when(cacheService).save(any(),any());
 
-        JoinCaseResponse response = caseService.verifyJoinCaseRequest(joinCaseRequest);
+        JoinCaseResponse response = caseService.verifyJoinCaseRequest(joinCaseRequest,true);
         assertEquals("validAccessCode", response.getJoinCaseRequest().getAccessCode());
         assertEquals("12345", response.getJoinCaseRequest().getCaseFilingNumber());
-        assertEquals(litigant, response.getJoinCaseRequest().getLitigant());
-        assertEquals(advocate, response.getJoinCaseRequest().getRepresentative());
+        assertEquals(litigant, response.getJoinCaseRequest().getLitigant().get(0));
     }
 
     @Test
@@ -492,9 +508,9 @@ public class CaseServiceTest {
         when(caseRepository.getCases(anyList(), any())).thenReturn(Collections.singletonList(caseCriteria));
 
 
-        AdvocateMapping representative = new AdvocateMapping();
+        Representative representative = new Representative();
         representative.setAdvocateId("advocate-1");
-        Party party = new Party();
+        Representing party = new Representing();
         party.setIndividualId("individual-1");
         representative.setRepresenting(Collections.singletonList(party));
         joinCaseRequest.setRepresentative(representative);
@@ -507,7 +523,7 @@ public class CaseServiceTest {
         courtCase.setRepresentatives(Collections.singletonList(advocateMapping));
 
         // When
-       CustomException exception = assertThrows(CustomException.class, ()->caseService.verifyJoinCaseRequest(joinCaseRequest));
+       CustomException exception = assertThrows(CustomException.class, ()->caseService.verifyJoinCaseRequest(joinCaseRequest,true));
        assertEquals("Invalid request for joining a case",exception.getMessage());
     }
 
@@ -582,6 +598,7 @@ public class CaseServiceTest {
         String updatedStatus = "STATUS";
         CourtCase courtCase = new CourtCase(); // Mock case-indexer.yml CourtCase object with required fields
         courtCase.setId(UUID.randomUUID());
+        courtCase.setWorkflow(Workflow.builder().action("action").build());
         caseRequest.setCases(courtCase);
         courtCase.setStatus(updatedStatus);
         when(validator.validateUpdateRequest(any(CaseRequest.class),any())).thenReturn(true);

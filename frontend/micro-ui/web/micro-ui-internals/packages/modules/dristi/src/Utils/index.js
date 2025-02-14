@@ -163,6 +163,7 @@ export const documentsTypeMapping = {
   SelectUploadDocWithName: "case.docs",
   vakalatnamaFileUpload: "VAKALATNAMA_DOC",
   submissionDocuments: "SUBMISSION_DOCUMENTS",
+  pipAffidavitFileUpload: "COMPLAINANT_PIP_AFFIDAVIT",
 };
 
 export const getFileByFileStoreId = async (uri) => {
@@ -235,4 +236,16 @@ export const getDate = (value) => {
   const year = date.getFullYear();
   const formattedDate = `${day}-${month}-${year}`;
   return formattedDate;
+};
+
+// make first letter capital as well as allow someone type capital
+export const formatAddress = (value) => {
+  return value
+    .split(" ")
+    .map((word) =>
+      word === word.toUpperCase() || /[A-Z]/.test(word.slice(1)) 
+        ? word
+        : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+    )
+    .join(" ");
 };

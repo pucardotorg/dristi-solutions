@@ -410,6 +410,7 @@ export const pendingTaskOrderActions = {
   NOTICE_STATUS: {
     actorName: ["JUDGE"],
     actionName: "Show Notice Status",
+    additionalDetailsKeys: ["partyIndex"],
     redirectDetails: {
       url: "/home/home-pending-task/summons-warrants-modal",
       params: [

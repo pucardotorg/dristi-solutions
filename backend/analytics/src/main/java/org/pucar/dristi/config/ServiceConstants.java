@@ -14,7 +14,7 @@ public class ServiceConstants {
 
     //Consumer
     public static final String ES_INDEX_HEADER_FORMAT = "{\"index\":{\"_index\":\"%s\",\"_id\":\"%s\"}}\n";
-    public static final String ES_INDEX_DOCUMENT_FORMAT = "{\"Data\": {\"id\":\"%s\",\"name\":\"%s\",\"entityType\":\"%s\",\"referenceId\":\"%s\",\"status\":\"%s\",\"assignedTo\":%s,\"assignedRole\":%s,\"cnrNumber\":\"%s\",\"filingNumber\":\"%s\",\"isCompleted\":%b,\"stateSla\":%d,\"businessServiceSla\":%d,\"additionalDetails\":%s}}\n";
+    public static final String ES_INDEX_DOCUMENT_FORMAT = "{\"Data\": {\"id\":\"%s\",\"name\":\"%s\",\"entityType\":\"%s\",\"referenceId\":\"%s\",\"status\":\"%s\",\"assignedTo\":%s,\"assignedRole\":%s,\"cnrNumber\":\"%s\",\"filingNumber\":\"%s\",\"isCompleted\":%b,\"stateSla\":%d,\"businessServiceSla\":%d,\"additionalDetails\":%s,\"isDiary\":%b}}\n";
     public static final String TENANTID_MDC_STRING = "TENANTID";
 
 
@@ -214,4 +214,11 @@ public class ServiceConstants {
     public static final String DUE_DATE_PATH= "$.duedate";
 
     public static final long ONE_DAY_DURATION_MILLIS=86400000L;
+
+    public static final String ERROR_WHILE_FETCHING_PENDING_TASK = "Error fetching pending task.";
+    public static final String ERROR_UPDATING_PENDING_TASK = "Error updating pending task.";
+
+    public static final String REPRESENTATIVE_REPLACE_JOIN_CASE="update-representative-join-case";
+    public static final String REPRESENTATIVE_JOIN_CASE_TOPIC = "representative-join-case";
+    public static final String LITIGANT_JOIN_CASE_TOPIC = "litigant-join-case";
 }

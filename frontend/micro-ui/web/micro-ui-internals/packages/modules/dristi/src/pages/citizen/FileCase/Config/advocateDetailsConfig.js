@@ -2,173 +2,80 @@ const advocateDetailsFormConfig = [
   {
     body: [
       {
-        type: "radio",
-        key: "isAdvocateRepresenting",
-        label: "CS_IF_ADVOCATE_IS_COMPLAINANT",
-        isMandatory: true,
-        populators: {
-          type: "radioButton",
-          optionsKey: "name",
-          error: "CORE_REQUIRED_FIELD_ERROR",
-          required: false,
-          isMandatory: true,
-          isDependent: true,
-          clearFields: { stateOfRegistration: "", barRegistrationNumber: "", barCouncilId: [], stateRegnNumber: "" },
-          options: [
-            {
-              code: "YES",
-              name: "Yes",
-              showForm: true,
-              isEnabled: true,
-            },
-            {
-              code: "NO",
-              name: "No",
-              showForm: false,
-              isVerified: true,
-              hasBarRegistrationNo: true,
-              isEnabled: true,
-            },
-          ],
-        },
-      },
-    ],
-  },
-  {
-    dependentKey: { isAdvocateRepresenting: ["showForm"] },
-    head: "CS_ADVOCATE_BASIC_DETAILS",
-    body: [
-      {
-        type: "apidropdown",
-        key: "advocateBarRegistrationNumber",
-        label: "CS_BAR_REGISTRATION",
-        isMandatory: true,
-        populators: {
-          allowMultiSelect: false,
-          name: "advocateBarRegNumberWithName",
-          isMandatory: true,
-          validation: {},
-          masterName: "commonUiConfig",
-          moduleName: "getAdvocateNameUsingBarRegistrationNumber",
-          customfn: "getNames",
-          optionsKey: "barRegistrationNumber",
-          optionsCustomStyle: {
-            marginTop: "40px",
-            justifyContent: "space-between",
-            flexDirection: "row-reverse",
-            maxHeight: "200px",
-            overflowY: "scroll",
-          },
-        },
-      },
-    ],
-  },
-  {
-    dependentKey: { isAdvocateRepresenting: ["showForm"] },
-    body: [
-      {
         type: "component",
-        component: "AdvocateNameDetails",
-        key: "AdvocateNameDetails",
+        component: "MultipleAdvocatesAndPip",
+        key: "multipleAdvocatesAndPip",
+        labelHeading : "CS_ADVOCATE_HEADING",
         withoutLabel: true,
         populators: {
+          isDependent: true,
           inputs: [
             {
+              type: "radioInput",
+              label: "CS_IF_COMPLAINANT_IS_PIP",
+              name: "isComplainantPip",
+              options: [
+                {
+                  code: "YES",
+                  name: "Yes",
+                  isEnabled: true,
+                },
+                {
+                  code: "NO",
+                  name: "No",
+                  isEnabled: true,
+                },
+              ],
+            },
+            {
+              type: "textInput",
               label: "FIRST_NAME",
-              type: "text",
               name: "firstName",
-              isDisabled: true,
-              inputFieldClassName: "user-details-form-style",
-              validation: {
-                isRequired: true,
-              },
-              isMandatory: true,
             },
             {
-              label: "MIDDLE_NAME",
-              type: "text",
+              type: "textInput",
+              label: "MIDDLE_NAME_OPTIONAL",
               name: "middleName",
-              isDisabled: true,
-              inputFieldClassName: "user-details-form-style",
-              validation: {},
             },
             {
+              type: "textInput",
               label: "LAST_NAME",
-              type: "text",
               name: "lastName",
-              isDisabled: true,
-              inputFieldClassName: "user-details-form-style",
-              validation: {
-                isRequired: true,
-              },
-              isMandatory: true,
             },
-          ],
-          validation: {},
-        },
-      },
-    ],
-  },
-  {
-    dependentKey: { isAdvocateRepresenting: ["showForm"] },
-    body: [
-      {
-        type: "number",
-        label: "NUMBER_OF_ADVOCATES",
-        isMandatory: true,
-        populators: {
-          error: "FIRST_LAST_NAME_MANDATORY_MESSAGE",
-          validation: {
-            minLength: 1,
-          },
-          defaultValue: "1",
-          name: "numberOfAdvocate",
-        },
-      },
-    ],
-  },
-  {
-    dependentKey: { isAdvocateRepresenting: ["showForm"] },
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomDragDrop",
-        key: "vakalatnamaFileUpload",
-        isMandatory: true,
-        populators: {
-          inputs: [
             {
+              fileKey: "vakalatnamaFileUpload",
+              type: "DragDropComponent",
               name: "document",
+              isDocDependentOn: "multipleAdvocatesAndPip",
+              isDocDependentKey: "showVakalatNamaUpload",
               documentHeader: "UPLOAD_VAKALATNAMA",
               infoTooltipMessage: "UPLOAD_VAKALATNAMA",
-              type: "DragDropComponent",
               uploadGuidelines: "UPLOAD_DOC_50",
               maxFileSize: 50,
               maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
               fileTypes: ["JPG", "PDF", "PNG"],
               isMultipleUpload: true,
               downloadTemplateText: "VAKALATNAMA_TEMPLATE_TEXT",
-              downloadTemplateLink: "https://www.jsscacs.edu.in/sites/default/files/Department%20Files/Number%20System%20.pdf",
+              downloadTemplateLink: "https://pucarfilestore.blob.core.windows.net/pucar-filestore/kl/Vakalat.Template.docx",
             },
-          ],
-        },
-      },
-    ],
-  },
-  {
-    dependentKey: { isAdvocateRepresenting: ["showForm"] },
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomNote",
-        key: "addressDetailsNote",
-        populators: {
-          inputs: [
             {
-              infoHeader: "CS_COMMON_NOTE",
-              infoText: "ADVOCATE_DETAIL_NOTE",
+              infoHeader: "CS_PLEASE_NOTE",
+              infoText: "AFFIDAVIT_NECESSARY_FOR_PIP",
               infoTooltipMessage: "ADVOCATE_DETAIL_NOTE",
               type: "InfoComponent",
+            },
+            {
+              fileKey: "pipAffidavitFileUpload",
+              type: "DragDropComponent",
+              name: "document",
+              isDocDependentOn: "multipleAdvocatesAndPip",
+              isDocDependentKey: "showAffidavit",
+              documentHeader: "UPLOAD_AFFIDAVIT",
+              uploadGuidelines: "UPLOAD_DOC_50",
+              maxFileSize: 50,
+              maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+              fileTypes: ["JPG", "PDF", "PNG"],
+              isMultipleUpload: true,
             },
           ],
         },
@@ -184,5 +91,6 @@ export const advocateDetailsConfig = {
   className: "advocate-detail",
   selectDocumentName: {
     vakalatnamaFileUpload: "UPLOAD_VAKALATNAMA",
+    pipAffidavitFileUpload: "UPLOAD_PIP_AFFIDAVIT",
   },
 };

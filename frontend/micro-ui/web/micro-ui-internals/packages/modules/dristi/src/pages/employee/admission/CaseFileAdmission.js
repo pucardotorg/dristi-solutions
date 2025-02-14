@@ -4,7 +4,7 @@ import { Redirect, useHistory, useLocation } from "react-router-dom/cjs/react-ro
 import CustomCaseInfoDiv from "../../../components/CustomCaseInfoDiv";
 import { Urls } from "../../../hooks";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
-import { CustomArrowDownIcon, RightArrow } from "../../../icons/svgIndex";
+import { CustomArrowDownIcon, FileDownloadIcon, RightArrow } from "../../../icons/svgIndex";
 import { DRISTIService } from "../../../services";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import { OrderTypes, OrderWorkflowAction } from "../../../Utils/orderWorkflow";
@@ -24,6 +24,7 @@ import { generateUUID, getFilingType } from "../../../Utils";
 import { documentTypeMapping } from "../../citizen/FileCase/Config";
 import ScheduleHearing from "../AdmittedCases/ScheduleHearing";
 import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../../Utils/submissionWorkflow";
+import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
@@ -40,6 +41,26 @@ const caseSecondaryActions = [
   { action: "REJECT", label: "CS_CASE_REJECT" },
 ];
 const caseTertiaryActions = [{ action: "ISSUE_ORDER", label: "ISSUE_NOTICE" }];
+
+const downloadSvgStyle = {
+  height: "16px",
+  width: "16px",
+};
+
+const downloadPathStyle = {
+  fill: "#007e7e",
+};
+
+const downloadButtonTextStyle = {
+  color: "#007e7e",
+  fontFamily: "Roboto, sans-serif",
+  fontSize: "16px",
+  fontWeight: 700,
+  lineHeight: "18.75px",
+  textAlign: "center",
+  width: "fit-content",
+  marginLeft: "5px",
+};
 
 const delayCondonationStylsMain = {
   padding: "6px 8px",
@@ -81,6 +102,7 @@ function CaseFileAdmission({ t, path }) {
   const moduleCode = "case-default";
   const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
   const [isLoader, setLoader] = useState(false);
+  const { downloadPdf } = useDownloadCasePdf();
   const { data: caseFetchResponse, isLoading, refetch } = useSearchCaseService(
     {
       criteria: [
@@ -306,17 +328,11 @@ function CaseFileAdmission({ t, path }) {
       ...caseDetails,
       additionalDetails: { ...caseDetails.additionalDetails, respondentDetails, witnessDetails, judge: data },
     };
-    const complainantUuid = caseDetails?.litigants?.[0]?.additionalDetails?.uuid;
-    const advocateUuid = caseDetails?.representatives?.[0]?.additionalDetails?.uuid;
+    const caseCreatedByUuid = caseDetails?.auditDetails?.createdBy;
     let assignees = [];
-    if (complainantUuid) {
-      assignees.push(complainantUuid);
-    }
-    if (advocateUuid) {
-      assignees.push(advocateUuid);
-    }
+    assignees.push(caseCreatedByUuid);
 
-    return DRISTIService.caseUpdateService(
+    return await DRISTIService.caseUpdateService(
       {
         cases: {
           ...newcasedetails,
@@ -1003,6 +1019,19 @@ function CaseFileAdmission({ t, path }) {
       .catch((err) => {});
   };
 
+  const handleDownloadPdf = () => {
+    const fileStoreId =
+      caseDetails?.documents?.find((doc) => doc?.key === "case.complaint.signed")?.fileStore || caseDetails?.additionalDetails?.signedCaseDocument;
+
+    if (fileStoreId) {
+      downloadPdf(tenantId, fileStoreId);
+      return;
+    } else {
+      console.error("No fileStoreId available for download.");
+      return;
+    }
+  };
+
   if (!caseId || (caseDetails && caseDetails?.status === CaseWorkflowState.CASE_ADMITTED)) {
     return <Redirect to="/" />;
   }
@@ -1030,7 +1059,15 @@ function CaseFileAdmission({ t, path }) {
             </div>
           </div>
           <div className="file-case-form-section">
-            <BackButton style={{ marginBottom: 0 }}></BackButton>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <BackButton style={{ marginBottom: 0 }}></BackButton>
+              <button style={{ display: "flex", alignItems: "center", background: "none" }} onClick={handleDownloadPdf}>
+                <span style={{ display: "flex", alignItems: "center" }}>
+                  <FileDownloadIcon svgStyle={downloadSvgStyle} pathStyle={downloadPathStyle} />
+                </span>
+                <span style={downloadButtonTextStyle}>{t("CS_COMMON_DOWNLOAD")}</span>
+              </button>
+            </div>
             <div className="employee-card-wrapper">
               <div className="header-content">
                 <div className="header-details" style={{ justifyContent: "normal", gap: "8px" }}>
@@ -1101,13 +1138,7 @@ function CaseFileAdmission({ t, path }) {
                   modalInfo={modalInfo}
                   setModalInfo={setModalInfo}
                   handleSendCaseBack={handleSendCaseBack}
-                  handleAdmitCase={handleAdmitCase}
-                  path={path}
-                  handleScheduleCase={handleScheduleCase}
-                  updatedConfig={updatedConfig}
-                  tenantId={tenantId}
                   handleScheduleNextHearing={handleScheduleNextHearing}
-                  caseAdmitLoader={caseAdmitLoader}
                   caseDetails={caseDetails}
                   caseAdmittedSubmit={caseAdmittedSubmit}
                   createAdmissionOrder={createAdmissionOrder}

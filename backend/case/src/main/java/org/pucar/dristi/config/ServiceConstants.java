@@ -87,8 +87,6 @@ public class ServiceConstants {
     public static final String SUBMIT_CASE_ADVOCATE_WORKFLOW_ACTION = "SUBMIT_CASE_ADVOCATE";
     public static final String DELETE_DRAFT_WORKFLOW_ACTION = "DELETE_DRAFT";
     public static final String E_SIGN_PARTY_IN_PERSON = "E-SIGN_PARTY_IN_PERSON";
-    public static final String UPLOAD = "UPLOAD";
-    public static final String E_SIGN = "E-SIGN";
     public static final Long TAX_PERIOD_FROM = 1680287400000l;
     public static final Long TAX_PERIOD_TO = 1711909799000l;
     public static final BigDecimal TAX_AMOUNT = BigDecimal.valueOf(2000.00);
@@ -115,10 +113,6 @@ public class ServiceConstants {
     public static final String INTERNAL_MICROSERVICE_ROLE = "INTERNAL_MICROSERVICE_ROLE";
     public static final String ADVOCATE_ROLE = "ADVOCATE_ROLE";
     public static final String EMPLOYEE = "EMPLOYEE";
-    //	Models for encryption decryption in MDMS
-    public static final String COURT_CASE_ENCRYPT = "CourtCase";
-    public static final String CASE_DECRYPT_SELF = "CaseDecryptSelf";
-    public static final String CASE_DECRYPT_OTHER = "CaseDecryptOther";
     public static final String PAYMENT_PENDING = "PENDING_PAYMENT";
 
     public static final String PENDING_E_SIGN = "PENDING_E-SIGN";
@@ -176,6 +170,20 @@ public class ServiceConstants {
     public static final String NEW_USER_JOIN = "NEW_USER_JOIN";
 
     public static final String ADVOCATE_NAME = "advocateName";
+
+    public static final String UPLOAD = "UPLOAD";
+
+    public static final String SEND_BACK = "SEND_BACK";
+
+    public static final String EDIT_CASE = "EDIT_CASE";
+
+    public static final String E_SIGN = "E-SIGN";
+
+    public static final String E_SIGN_COMPLETE = "E-SIGN_COMPLETE";
+
+    public static final String SYSTEM="SYSTEM";
+
+    public static final String JOIN_CASE_TASK="JOIN_CASE_TASK";
 
     private ServiceConstants() {
     }

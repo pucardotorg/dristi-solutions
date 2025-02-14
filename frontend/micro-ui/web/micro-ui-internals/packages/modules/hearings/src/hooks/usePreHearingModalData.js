@@ -9,11 +9,33 @@ const createShorthand = (fullname) => {
   return shorthand;
 };
 
+const shortNameForCaseType = (caseData) => {
+  return `${createShorthand(caseData?.statutesAndSections?.[0]?.sections?.[0])} S${caseData?.statutesAndSections?.[0]?.subsections?.[0]}`;
+};
+
+// filtering based on stage, type and caseNameOrId
+const filterCaseData = ([filingNumber, caseData], stage, type, caseNameOrId) => {
+  if (!caseData) return false;
+  const trimmedCaseNameOrId = caseNameOrId?.trim();
+  const matchesStage = !stage || caseData?.substage === stage?.code;
+  const matchesCaseType = shortNameForCaseType(caseData) === type?.type;
+  const matchesCaseNameOrId = !trimmedCaseNameOrId || [
+    caseData?.caseTitle,
+    caseData?.cmpNumber,
+    caseData?.courtCaseNumber
+  ].some(value => value?.trim() === trimmedCaseNameOrId);
+
+  return matchesStage && matchesCaseType && matchesCaseNameOrId;
+};
+
 const usePreHearingModalData = ({ url, params, body, config = {}, plainAccessRequest, state, changeQueryName = "Random" }) => {
   const client = useQueryClient();
+  const defaultType = {
+    type: "NIA S138",
+  };
 
   const { searchForm } = state;
-  const { stage, type, caseNameOrId } = searchForm;
+  const { stage, type = defaultType, caseNameOrId } = searchForm;
 
   const idPattern = /^F-C\.\d{4}\.\d{3}-\d{4}-\d{6}$/;
 
@@ -59,8 +81,6 @@ const usePreHearingModalData = ({ url, params, body, config = {}, plainAccessReq
       tenantId: Digit.ULBService.getCurrentTenantId(),
       criteria: filingNumbers.map((filingNumber) => ({
         filingNumber: filingNumber,
-        ...(stage && { stage: stage.stage }),
-        ...(type && { caseType: type.type }),
       })),
     };
 
@@ -100,13 +120,11 @@ const usePreHearingModalData = ({ url, params, body, config = {}, plainAccessReq
     const pendingTaskResponses = await Promise.all(pendingTaskPromises);
 
     const combinedData = Array.from(caseDetailsMap.entries())
-      .filter(([filingNumber, caseData]) => caseData)
+      .filter((entry) => filterCaseData(entry, stage, type, caseNameOrId))
       .map(([filingNumber, caseData]) => {
         const pendingTaskDetail = pendingTaskResponses.find((taskResponse) => taskResponse.filingNumber === filingNumber);
         const pendingTasksData = pendingTaskDetail ? pendingTaskDetail.data.length : 0;
-        const caseType = `${createShorthand(caseData?.statutesAndSections?.[0]?.sections?.[0])} S${
-          caseData?.statutesAndSections?.[0]?.subsections?.[0]
-        }`;
+        const caseType = shortNameForCaseType(caseData);
         const caseNumber = caseData?.courtCaseNumber || caseData?.cmpNumber || "";
 
         return (

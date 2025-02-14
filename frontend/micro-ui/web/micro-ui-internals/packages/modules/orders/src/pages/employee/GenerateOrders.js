@@ -53,7 +53,8 @@ import _ from "lodash";
 import { useGetPendingTask } from "../../hooks/orders/useGetPendingTask";
 import useSearchOrdersService from "../../hooks/orders/useSearchOrdersService";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
-import { constructFullName, removeInvalidNameParts } from "../../utils";
+import { getRespondantName, getComplainantName, constructFullName, removeInvalidNameParts } from "../../utils";
+import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/Toast/useToast";
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
@@ -184,6 +185,11 @@ const GenerateOrders = () => {
   const canESign = roles?.some((role) => role.code === "ORDER_ESIGN");
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
   const judgeName = window?.globalConfigs?.getConfig("JUDGE_NAME");
+  const [businessOfTheDay, setBusinessOfTheDay] = useState(null);
+  const toast = useToast();
+  const [currentPublishedOrder, setCurrentPublishedOrder] = useState(null);
+  const currentDiaryEntry = history.location?.state?.diaryEntry;
+
   const setSelectedOrder = (orderIndex) => {
     _setSelectedOrder(orderIndex);
   };
@@ -345,7 +351,7 @@ const GenerateOrders = () => {
   );
 
   const isDCANoticeGenerated = useMemo(
-    () => noticeOrdersData?.list?.some((notice) => "DCA Notice" === notice?.additionalDetails?.formdata?.noticeType.code),
+    () => noticeOrdersData?.list?.some((notice) => "DCA Notice" === notice?.additionalDetails?.formdata?.noticeType?.code),
     [noticeOrdersData]
   );
 
@@ -448,6 +454,38 @@ const GenerateOrders = () => {
       localStorage.removeItem("orderPDF");
     }
   }, [defaultIndex]);
+
+  useEffect(() => {
+    const getOrder = async () => {
+      try {
+        const response = await DRISTIService.searchOrders(
+          {
+            criteria: {
+              filingNumber: filingNumber,
+              orderNumber: orderNumber,
+              status: "PUBLISHED",
+            },
+            tenantId,
+          },
+          { tenantId: tenantId }
+        );
+
+        const order = response?.list?.[0];
+
+        if (order) {
+          setCurrentPublishedOrder(order);
+          setBusinessOfTheDay(currentDiaryEntry?.businessOfDay);
+          setShowReviewModal(true);
+        }
+      } catch (error) {
+        console.error("Error fetching order:", error);
+      }
+    };
+
+    if (orderNumber && currentDiaryEntry) {
+      getOrder();
+    }
+  }, [currentDiaryEntry, filingNumber, orderNumber, tenantId]);
 
   const currentOrder = useMemo(() => formList?.[selectedOrder], [formList, selectedOrder]);
   const orderType = useMemo(() => currentOrder?.orderType || {}, [currentOrder]);
@@ -1125,7 +1163,7 @@ const GenerateOrders = () => {
       return parties;
     }
     parties = parties?.map((party) => {
-      const matchingParty = allParties.find((p) => p.name === party);
+      const matchingParty = allParties.find((p) => p.code === party);
       if (matchingParty) {
         return {
           partyName: matchingParty.name,
@@ -1140,6 +1178,127 @@ const GenerateOrders = () => {
     });
     return parties;
   };
+
+  const getPartyNamesString = (parties) => {
+    if (!Array.isArray(parties) || parties.length === 0) {
+      return "";
+    }
+    return parties.map((party) => party.partyName).join(", ");
+  };
+
+  const defaultBOTD = useMemo(() => {
+    if (!currentOrder?.orderType) return "";
+
+    switch (currentOrder.orderType) {
+      case "SECTION_202_CRPC":
+        return "Order Under Section 202 CrPC";
+      case "MANDATORY_SUBMISSIONS_RESPONSES":
+        return (
+          `${currentOrder?.orderDetails?.partyDetails?.partyToMakeSubmission?.join(", ")} to produce ${
+            currentOrder?.orderDetails?.documentType?.value
+          } before court by ${formatDate(new Date(currentOrder?.orderDetails?.dates?.submissionDeadlineDate), "DD-MM-YYYY")}.` +
+          (currentOrder?.orderDetails?.isResponseRequired?.code
+            ? ` Objections to be received by ${formatDate(new Date(currentOrder?.orderDetails?.dates?.responseDeadlineDate), "DD-MM-YYYY")}.`
+            : "")
+        );
+      case "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE":
+        return currentOrder?.orderDetails?.applicationStatus === "APPROVED"
+          ? `Extension of the deadline granted to ${getPartyNamesString(currentOrder?.orderDetails?.parties)} for ${
+              currentOrder?.orderDetails?.documentName
+            } to the court. Submission to be made by ${formatDate(new Date(currentOrder?.orderDetails?.newSubmissionDate), "DD-MM-YYYY")}`
+          : `The application to extend the submission deadline against ${currentOrder?.orderDetails?.documentName} ${caseDetails?.cmpNumber} has been rejected`;
+      case "REFERRAL_CASE_TO_ADR":
+        return "Case referred to Alternative Dispute Resolution to seek settlement";
+      case "SCHEDULE_OF_HEARING_DATE":
+        return `For ${t(currentOrder?.orderDetails?.purposeOfHearing)} on ${formatDate(
+          new Date(currentOrder?.additionalDetails?.formdata?.hearingDate),
+          "DD-MM-YYYY"
+        )}`;
+      case "SCHEDULING_NEXT_HEARING":
+        return `For ${t(currentOrder?.orderDetails?.purposeOfHearing)} on ${formatDate(
+          new Date(currentOrder?.additionalDetails?.formdata?.hearingDate),
+          "DD-MM-YYYY"
+        )}`;
+      case "RESCHEDULE_OF_HEARING_DATE":
+        return `Hearing for ${formatDate(
+          new Date(currentOrder?.orderDetails?.newHearingDate),
+          "DD-MM-YYYY"
+        )} rescheduled on petition. Hearing Date to be announced on ${formatDate(
+          new Date(currentOrder?.orderDetails?.newHearingDate),
+          "DD-MM-YYYY"
+        )}`;
+      case "CHECKOUT_ACCEPTANCE":
+        return "Order for Approval of Check out (Emergency Reschedule) request";
+      case "CHECKOUT_REJECT":
+        return "Order for Rejection of Check out (Emergency Reschedule) request";
+      case "REJECTION_RESCHEDULE_REQUEST":
+        return `Request for rescheduling of hearing on ${formatDate(
+          new Date(currentOrder?.orderDetails?.originalHearingDate),
+          "DD-MM-YYYY"
+        )} raised by ${applicationDetails?.additionalDetails?.owner} dismissed`;
+      case "INITIATING_RESCHEDULING_OF_HEARING_DATE":
+        return "Initiated the process for rescheduling the hearing";
+      case "ASSIGNING_DATE_RESCHEDULED_HEARING":
+        return `Hearing for ${formatDate(
+          new Date(currentOrder?.orderDetails?.newHearingDate),
+          "DD-MM-YYYY"
+        )} rescheduled on petition. Hearing Date to be announced on ${formatDate(
+          new Date(currentOrder?.orderDetails?.newHearingDate),
+          "DD-MM-YYYY"
+        )}`;
+      case "ASSIGNING_NEW_HEARING_DATE":
+        return `For ${t(currentOrder?.orderDetails?.purposeOfHearing)} on ${formatDate(
+          new Date(currentOrder?.additionalDetails?.formdata?.hearingDate),
+          "DD-MM-YYYY"
+        )}`;
+      case "CASE_TRANSFER":
+        return "The case is transferred to another court for further proceedings";
+      case "SETTLEMENT":
+        return currentOrder?.orderDetails?.applicationStatus === "APPROVED"
+          ? "The settlement records have been accepted by the court. Case closed."
+          : "The settlement records have been dismissed by the court";
+      case "SUMMONS":
+        return `Issue Summons to ${currentOrder?.orderDetails?.parties?.[0]?.partyName}`;
+      case "NOTICE":
+        return `Issue Notice to ${currentOrder?.orderDetails?.parties?.[0]?.partyName}`;
+      case "BAIL":
+        return "Bail";
+      case "WARRANT":
+        return `Issue ${t(currentOrder?.orderDetails?.warrantType)} to ${currentOrder?.orderDetails?.parties?.[0]?.partyName}`;
+      case "WITHDRAWAL":
+        return currentOrder?.orderDetails?.applicationStatus === "APPROVED"
+          ? "The application to withdraw the case has been accepted. Case closed"
+          : `The application to withdraw the case raised by ${applicationDetails?.additionalDetails?.owner} has been rejected`;
+      case "OTHERS":
+        return "Others";
+      case "APPROVE_VOLUNTARY_SUBMISSIONS":
+        return `CMP: ${t(applicationDetails?.applicationType)} ${applicationDetails?.applicationNumber} stands allowed`;
+      case "REJECT_VOLUNTARY_SUBMISSIONS":
+        return `CMP: ${t(applicationDetails?.applicationType)} ${applicationDetails?.applicationNumber} stands dismissed`;
+      case "JUDGEMENT":
+        return currentOrder?.additionalDetails?.formdata?.plea?.code === "GUILTY"
+          ? `The accused is convicted u/s 278(2) BNSS`
+          : `The accused is acquitted u/s 278(1) BNSS`;
+      case "REJECT_BAIL":
+        return "Bail Rejected";
+      case "ACCEPT_BAIL":
+        return "Bail Granted";
+      case "SET_BAIL_TERMS":
+        return "Condition of Bail";
+      case "ACCEPTANCE_REJECTION_DCA":
+        return `CMP: ${t(applicationDetails?.applicationType)} ${applicationDetails?.applicationNumber} stands ${
+          currentOrder?.orderDetails?.isDcaAcceptedOrRejected === "ACCEPTED" ? "allowed" : "dismissed"
+        }`;
+      case "ADMIT_DISMISS_CASE":
+        return `Cognizance of the offence taken on file as ${caseDetails?.cmpNumber} under Section 138 of the Negotiable Instruments Act`;
+      default:
+        return "";
+    }
+  }, [t, applicationDetails, caseDetails, currentOrder]);
+
+  useEffect(() => {
+    setBusinessOfTheDay(defaultBOTD);
+  }, [defaultBOTD]);
 
   const updateOrder = async (order, action) => {
     try {
@@ -1168,7 +1327,7 @@ const GenerateOrders = () => {
 
       const parties = getParties(order?.orderType, {
         ...orderSchema,
-        orderDetails: { ...orderSchema?.orderDetails, ...(order?.orderDetails || {}) },
+        orderDetails: { ...(order?.orderDetails || {}), ...orderSchema?.orderDetails },
       });
       orderSchema = { ...orderSchema, orderDetails: { ...orderSchema?.orderDetails, parties: parties } };
       return await ordersService.updateOrder(
@@ -1255,7 +1414,7 @@ const GenerateOrders = () => {
     if (order?.orderType === "MANDATORY_SUBMISSIONS_RESPONSES") {
       create = true;
       name = t("MAKE_MANDATORY_SUBMISSION");
-      assignees = formdata?.submissionParty?.map((party) => party?.uuid.map((uuid) => ({ uuid }))).flat();
+      assignees = formdata?.submissionParty?.map((party) => party?.uuid.map((uuid) => ({ uuid, individualId: party?.individualId }))).flat();
       stateSla = new Date(formdata?.submissionDeadline).getTime();
       status = "CREATE_SUBMISSION";
       const promises = assignees.map(async (assignee) => {
@@ -1263,7 +1422,7 @@ const GenerateOrders = () => {
           pendingTask: {
             name,
             entityType,
-            referenceId: `MANUAL_${assignee?.uuid}_${order?.orderNumber}`,
+            referenceId: `MANUAL_${assignee?.individualId}_${assignee?.uuid}_${order?.orderNumber}`,
             status,
             assignedTo: [assignee],
             assignedRole,
@@ -1316,11 +1475,14 @@ const GenerateOrders = () => {
       return await Promise.all(promises);
     }
     if ((order?.orderType === "SUMMONS" || orderType === "SUMMONS") && refId) {
-      const assignee = [...complainants?.map((data) => data?.uuid[0])];
-      const advocateUuid = Object.keys(allAdvocates)
-        .filter((data) => assignee?.includes(allAdvocates?.[data]?.[0]))
-        ?.flat();
-      assignees = [...assignee, ...advocateUuid]?.map((uuid) => ({ uuid }));
+      const assignee = [...complainants?.map((data) => data?.uuid)]?.flat();
+      // const advocateUuid = Object.keys(allAdvocates)
+      //   .filter((data) => assignee?.includes(allAdvocates?.[data]?.[0]))
+      //   ?.flat();
+      const complainantUuids = caseDetails?.litigants
+        ?.filter((com) => com?.partyType?.startsWith("complainant"))
+        .map((com) => com?.additionalDetails?.uuid);
+      assignees = [...assignee, ...complainantUuids]?.map((uuid) => ({ uuid }));
       entityType = "order-default";
       return ordersService.customApiService(Urls.orders.pendingTask, {
         pendingTask: {
@@ -1340,11 +1502,14 @@ const GenerateOrders = () => {
       });
     }
     if ((order?.orderType === "NOTICE" || orderType === "NOTICE") && refId) {
-      const assignee = [...complainants?.map((data) => data?.uuid[0])];
-      const advocateUuid = Object.keys(allAdvocates)
-        .filter((data) => assignee?.includes(allAdvocates?.[data]?.[0]))
-        ?.flat();
-      assignees = [...assignee, ...advocateUuid]?.map((uuid) => ({ uuid }));
+      const assignee = [...complainants?.map((data) => data?.uuid)]?.flat();
+      // const advocateUuid = Object.keys(allAdvocates)
+      //   .filter((data) => assignee?.includes(allAdvocates?.[data]?.[0]))
+      //   ?.flat();
+      const complainantUuids = caseDetails?.litigants
+        ?.filter((com) => com?.partyType?.startsWith("complainant"))
+        .map((com) => com?.additionalDetails?.uuid);
+      assignees = [...assignee, ...complainantUuids]?.map((uuid) => ({ uuid }));
       entityType = "order-default";
       return ordersService.customApiService(Urls.orders.pendingTask, {
         pendingTask: {
@@ -1364,11 +1529,14 @@ const GenerateOrders = () => {
       });
     }
     if ((order?.orderType === "WARRANT" || orderType === "WARRANT") && refId) {
-      const assignee = [...complainants?.map((data) => data?.uuid[0])];
-      const advocateUuid = Object.keys(allAdvocates)
-        .filter((data) => assignee?.includes(allAdvocates?.[data]?.[0]))
-        ?.flat();
-      assignees = [...assignee, ...advocateUuid]?.map((uuid) => ({ uuid }));
+      const assignee = [...complainants?.map((data) => data?.uuid)]?.flat();
+      // const advocateUuid = Object.keys(allAdvocates)
+      //   .filter((data) => assignee?.includes(allAdvocates?.[data]?.[0]))
+      //   ?.flat();
+      const complainantUuids = caseDetails?.litigants
+        ?.filter((com) => com?.partyType?.startsWith("complainant"))
+        .map((com) => com?.additionalDetails?.uuid);
+      assignees = [...assignee, ...complainantUuids]?.map((uuid) => ({ uuid }));
       entityType = "order-default";
       return ordersService.customApiService(Urls.orders.pendingTask, {
         pendingTask: {
@@ -1656,9 +1824,8 @@ const GenerateOrders = () => {
     const respondentAddress = orderFormData?.addressDetails
       ? orderFormData?.addressDetails?.map((data) => ({ ...data?.addressDetails }))
       : caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.addressDetails?.map((data) => data?.addressDetails);
-    const respondentName =
-      constructFullName(respondentNameData?.firstName, respondentNameData?.middleName, respondentNameData?.lastName) || respondentNameData;
-
+    const partyIndex = orderFormData?.party?.data?.partyIndex || "";
+    const respondentName = getRespondantName(respondentNameData);
     const respondentPhoneNo = orderFormData?.party?.data?.phone_numbers || [];
     const respondentEmail = orderFormData?.party?.data?.email || [];
     const complainantDetails = individualDetail?.Individual?.[0];
@@ -1671,9 +1838,7 @@ const GenerateOrders = () => {
     const latitude = complainantDetails?.address[0]?.latitude || "";
     const longitude = complainantDetails?.address[0]?.longitude || "";
     const doorNo = complainantDetails?.address[0]?.doorNo || "";
-    const complainantName = `${complainantDetails?.name?.givenName || ""}${
-      complainantDetails?.name?.otherNames ? " " + complainantDetails?.name?.otherNames + " " : " "
-    }${complainantDetails?.name?.familyName || ""}`;
+    const complainantName = getComplainantName(caseDetails?.additionalDetails?.complainantDetails?.formdata[0]?.data);
     const address = `${doorNo ? doorNo + "," : ""} ${buildingName ? buildingName + "," : ""} ${street}`.trim();
     const complainantAddress = {
       pincode: pincode,
@@ -1746,6 +1911,7 @@ const GenerateOrders = () => {
             caseFilingDate: caseDetails?.filingDate,
             noticeType,
             docSubType: orderFormData?.party?.data?.partyType === "Witness" ? "WITNESS" : "ACCUSED",
+            partyIndex: partyIndex,
           },
           respondentDetails: orderFormData?.party?.data?.partyType === "Witness" ? caseRespondent : respondentDetails,
           ...(orderFormData?.party?.data?.partyType === "Witness" && { witnessDetails: respondentDetails }),
@@ -2073,6 +2239,33 @@ const GenerateOrders = () => {
     });
   };
 
+  const handleUpdateBusinessOfDayEntry = async () => {
+    try {
+      await DRISTIService.aDiaryEntryUpdate(
+        {
+          diaryEntry: {
+            ...currentDiaryEntry,
+            businessOfDay: businessOfTheDay,
+          },
+        },
+        {}
+      ).then(async () => {
+        history.goBack();
+      });
+    } catch (error) {
+      console.error("error: ", error);
+      toast.error(t("SOMETHING_WENT_WRONG"));
+    }
+  };
+
+  const handleReviewGoBack = () => {
+    if (currentDiaryEntry) {
+      history.goBack();
+    } else {
+      setShowReviewModal(false);
+    }
+  };
+
   const handleIssueNotice = async (hearingDate, hearingNumber) => {
     try {
       const orderbody = {
@@ -2226,6 +2419,39 @@ const GenerateOrders = () => {
         });
       }
       referenceId && (await handleApplicationAction(currentOrder));
+      if (businessOfTheDay) {
+        const response = await Digit.HearingService.searchHearings(
+          {
+            criteria: {
+              tenantId: Digit.ULBService.getCurrentTenantId(),
+              filingNumber: filingNumber,
+            },
+          },
+          {}
+        );
+        const nextHearing = response?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
+        await DRISTIService.addADiaryEntry(
+          {
+            diaryEntry: {
+              judgeId: "super",
+              businessOfDay: businessOfTheDay,
+              tenantId: tenantId,
+              entryDate: new Date().setHours(0, 0, 0, 0),
+              caseNumber: caseDetails?.cmpNumber,
+              referenceId: currentOrder?.orderNumber,
+              referenceType: "Order",
+              hearingDate: (Array.isArray(nextHearing) && nextHearing.length > 0 && nextHearing[0]?.startTime) || null,
+              additionalDetails: {
+                filingNumber: currentOrder?.filingNumber,
+              },
+            },
+          },
+          {}
+        ).catch((error) => {
+          console.error("error: ", error);
+          toast.error(t("SOMETHING_WENT_WRONG"));
+        });
+      }
       const orderResponse = await updateOrder(
         {
           ...currentOrder,
@@ -2486,12 +2712,12 @@ const GenerateOrders = () => {
   };
 
   const handleClose = async () => {
+    localStorage.removeItem("fileStoreId");
     if (successModalActionSaveLabel === t("CS_COMMON_CLOSE")) {
+      setShowSuccessModal(false);
       history.push(`/${window.contextPath}/employee/dristi/home/view-case?tab=${"Orders"}&caseId=${caseDetails?.id}&filingNumber=${filingNumber}`, {
         from: "orderSuccessModal",
       });
-      localStorage.removeItem("fileStoreId");
-      setShowSuccessModal(false);
       return;
     }
     if (successModalActionSaveLabel === t("ISSUE_SUMMONS_BUTTON")) {
@@ -2505,11 +2731,11 @@ const GenerateOrders = () => {
   };
 
   const handleCloseSuccessModal = () => {
+    localStorage.removeItem("fileStoreId");
+    setShowSuccessModal(false);
     history.push(`/${window.contextPath}/employee/dristi/home/view-case?tab=${"Orders"}&caseId=${caseDetails?.id}&filingNumber=${filingNumber}`, {
       from: "orderSuccessModal",
     });
-    localStorage.removeItem("fileStoreId");
-    setShowSuccessModal(false);
   };
 
   if (!filingNumber) {
@@ -2634,11 +2860,16 @@ const GenerateOrders = () => {
       {showReviewModal && (
         <OrderReviewModal
           t={t}
-          order={currentOrder}
+          order={currentPublishedOrder || currentOrder}
           setShowReviewModal={setShowReviewModal}
           setShowsignatureModal={setShowsignatureModal}
           setOrderPdfFileStoreID={setOrderPdfFileStoreID}
-          showActions={canESign}
+          showActions={canESign && !currentDiaryEntry}
+          setBusinessOfTheDay={setBusinessOfTheDay}
+          currentDiaryEntry={currentDiaryEntry}
+          handleUpdateBusinessOfDayEntry={handleUpdateBusinessOfDayEntry}
+          handleReviewGoBack={handleReviewGoBack}
+          defaultBOTD={defaultBOTD}
         />
       )}
       {showsignatureModal && (

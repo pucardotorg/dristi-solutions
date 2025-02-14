@@ -1,0 +1,212 @@
+[
+  {
+    "tenantId": "kl",
+    "moduleName": "ACCESSCONTROL-ROLES",
+    "masterName": "roles",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLES.roles",
+        "uniqueIdentifier": "DIARY_EDITOR",
+        "data": {
+          "code": "DIARY_EDITOR",
+          "name": "DIARY_EDITOR",
+          "description": "DIARY_EDITOR"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLES.roles",
+        "uniqueIdentifier": "DIARY_VIEWER",
+        "data": {
+          "code": "DIARY_VIEWER",
+          "name": "DIARY_VIEWER",
+          "description": "DIARY_VIEWER"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLES.roles",
+        "uniqueIdentifier": "DIARY_APPROVER",
+        "data": {
+          "code": "DIARY_APPROVER",
+          "name": "DIARY_APPROVER",
+          "description": "DIARY_APPROVER"
+        },
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "tenantId": "kl",
+    "mastername": "actions-test",
+    "moduleName": "ACCESSCONTROL-ACTIONS-TEST",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "uniqueIdentifier": 2713,
+        "data": {
+          "id": 2713,
+          "name": "update diary",
+          "url": "/ab-diary/case/diary/v1/update",
+          "displayName": "update diary",
+          "serviceCode": "ab-diary",
+          "code": 2713
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "uniqueIdentifier": 2712,
+        "data": {
+          "id": 2712,
+          "name": "generate diary",
+          "url": "/ab-diary/case/diary/v1/generate",
+          "displayName": "generate diary",
+          "serviceCode": "ab-diary",
+          "code": 2712
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "uniqueIdentifier": 2711,
+        "data": {
+          "id": 2711,
+          "name": "search case diary",
+          "url": "/ab-diary/case/diary/v1/search",
+          "displayName": "search case diary",
+          "serviceCode": "ab-diary",
+          "code": 2711
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "uniqueIdentifier": 2709,
+        "data": {
+          "id": 2709,
+          "name": "search diary entry",
+          "url": "/ab-diary/case/diary/entries/v1/search",
+          "displayName": "search diary entry",
+          "serviceCode": "ab-diary",
+          "code": 2709
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "uniqueIdentifier": 2708,
+        "data": {
+          "id": 2708,
+          "name": "update diary entry",
+          "url": "/ab-diary/case/diary/entries/v1/update",
+          "displayName": "update diary entry",
+          "serviceCode": "ab-diary",
+          "code": 2708
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "uniqueIdentifier": 2707,
+        "data": {
+          "id": 2707,
+          "name": "add diary entry",
+          "url": "/ab-diary/case/diary/entries/v1/addDiaryEntry",
+          "displayName": "add diary entry",
+          "serviceCode": "ab-diary",
+          "code": 2707
+        },
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "tenantId": "kl",
+    "mastername": "roleactions",
+    "moduleName": "ACCESSCONTROL-ROLEACTIONS",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "rolecode": "DIARY_APPROVER",
+          "actionid": 2713,
+          "actioncode": "2713",
+          "tenantId": "kl"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "rolecode": "DIARY_APPROVER",
+          "actionid": 2712,
+          "actioncode": "2712",
+          "tenantId": "kl"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "rolecode": "DIARY_VIEWER",
+          "actionid": 2711,
+          "actioncode": "2711",
+          "tenantId": "kl"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "rolecode": "DIARY_EDITOR",
+          "actionid": 2707,
+          "actioncode": "2707",
+          "tenantId": "kl"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "rolecode": "DIARY_EDITOR",
+          "actionid": 2708,
+          "actioncode": "2708",
+          "tenantId": "kl"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "rolecode": "DIARY_VIEWER",
+          "actionid": 2709,
+          "actioncode": "2709",
+          "tenantId": "kl"
+        },
+        "isActive": true
+      }
+    ]
+  }
+]

@@ -395,7 +395,7 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
 
   let showFlagIcon = isScrutiny ? true : false;
   return (
-    <div className="accordion-wrapper" onClick={() => { }}>
+    <div className="accordion-wrapper" onClick={() => {}}>
       <div className={`accordion-title ${isOpen ? "open" : ""}`} onClick={() => setOpen(!isOpen)}>
         <span>
           {config?.number}. {t(config?.label)}
@@ -429,7 +429,7 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
                   {input?.data?.length === 0 && (
                     <span style={{ fontFamily: "Roboto", fontSize: "14px", fontWeight: 400 }}>{t(input?.noDataText)}</span>
                   )}
-                  {!isScrutiny && !isJudge && (isCaseReAssigned || isDraftInProgress) && (
+                  {input?.isFilingParty && !isScrutiny && !isJudge && (isCaseReAssigned || isDraftInProgress) && (
                     <div
                       className="header-right"
                       style={{ display: "contents" }}
@@ -479,7 +479,7 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
                     const dataErrors = sectionValue?.form?.[index];
                     const prevDataErrors = input?.prevErrors?.form?.[index] || {};
                     const titleHeading = input.name === "chequeDetails" ? true : false;
-                    const updatedConfig = input?.config?.filter((inputConfig) => {
+                    let updatedConfig = input?.config?.filter((inputConfig) => {
                       if (!inputConfig?.dependentOn || !inputConfig?.dependentValue) {
                         return true;
                       } else {
@@ -489,6 +489,49 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
                         return false;
                       }
                     });
+                    if (input?.key === "advocateDetails") {
+                      if (input?.data?.[index]?.data?.multipleAdvocatesAndPip?.isComplainantPip?.code === "NO") {
+                        updatedConfig = [
+                          ...updatedConfig,
+                          ...input.data[index].data.multipleAdvocatesAndPip?.multipleAdvocateNameDetails
+                            ?.map((litigant, index) => [
+                              {
+                                type: "text",
+                                style: { fontWeight: "bold" },
+                                label: `${index + 1}. Advocate Name`,
+                                value: `multipleAdvocatesAndPip.multipleAdvocateNameDetails[${index}].advocateBarRegNumberWithName.advocateName`,
+                              },
+                              {
+                                type: "text",
+                                label: "CS_BAR_REGISTRATION",
+                                value: `multipleAdvocatesAndPip.multipleAdvocateNameDetails[${index}].advocateBarRegNumberWithName.barRegistrationNumberOriginal`,
+                              },
+                              {
+                                type: "image",
+                                label: "CS_ID_PROOF",
+                                value: [`multipleAdvocatesAndPip.multipleAdvocateNameDetails[${index}].advocateNameDetails.advocateIdProof`],
+                              },
+                            ])
+                            .flatMap((list) => list),
+                          {
+                            type: "image",
+                            label: "VAKALATNAMA",
+                            value: [`multipleAdvocatesAndPip.vakalatnamaFileUpload.document`],
+                            enableScrutinyField: true,
+                          },
+                        ];
+                      } else if (input?.data?.[index]?.data?.multipleAdvocatesAndPip?.isComplainantPip?.code === "YES") {
+                        updatedConfig = [
+                          ...updatedConfig,
+                          {
+                            type: "image",
+                            label: "UPLOAD_PIP_AFFIDAVIT",
+                            value: [`multipleAdvocatesAndPip.pipAffidavitFileUpload.document`],
+                            enableScrutinyField: true,
+                          },
+                        ];
+                      }
+                    }
                     return (
                       <CustomReviewCard
                         isScrutiny={isScrutiny}

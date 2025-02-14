@@ -1,6 +1,6 @@
 import { CardLabelError, CardText } from "@egovernments/digit-ui-components";
 import { CardLabel, CloseSvg, LabelFieldPair, TextInput } from "@egovernments/digit-ui-react-components";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { verifyMobileNoConfig } from "../configs/component";
 import useInterval from "../hooks/useInterval";
 import { InfoIconRed } from "../icons/svgIndex";
@@ -40,7 +40,13 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
     isUserVerified: false,
     errorMsg: "",
   });
-  const [user, setUser] = useState(null);
+  const isUserVerifiedRef = useRef(isUserVerified);
+
+  useEffect(() => {
+    isUserVerifiedRef.current = isUserVerified;
+  }, [isUserVerified]);
+
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isUserRegistered, setIsUserRegistered] = useState(true);
   const [timeLeft, setTimeLeft] = useState(10);
   const getUserType = () => window?.Digit.UserService.getType();
@@ -56,6 +62,15 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
 
   const otp = useMemo(() => formData[config.key]?.[input?.name], [formData[config.key]?.[input?.name]]);
 
+  const sendOtp = async (data) => {
+    try {
+      const res = await window?.Digit.UserService.sendOtp(data, stateCode);
+      return [res, null];
+    } catch (err) {
+      return [null, err];
+    }
+  };
+
   const modalOnSubmit = () => {
     if (!otp)
       setState((prev) => ({
@@ -67,28 +82,41 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
     else selectOtp(input);
   };
 
-  const handleKeyDown = (e) => {
-    e.stopPropagation();
-    if (e.key === "Enter" && otp?.length === 6 && showModal) {
-      modalOnSubmit();
-    }
+  const onConfirmClick = async () => {
+    const data = {
+      mobileNumber: formData?.[config.key]?.[config.name],
+      tenantId: stateCode,
+      userType: getUserType(),
+    };
+    const [res, err] = await sendOtp({ otp: { ...data, name: DEFAULT_USER, ...TYPE_REGISTER } });
+
+    setShowConfirmModal(false);
+    setState((prev) => ({
+      ...prev,
+      showModal: true,
+      mobileNumber: null,
+    }));
+    setTimeLeft(10);
   };
+
+  const handleKeyDown = useCallback(
+    (e) => {
+      e.stopPropagation();
+      if (e.key === "Enter" && otp?.length === 6 && showModal) {
+        modalOnSubmit();
+      } else if (e.key === "Enter" && showConfirmModal) {
+        onConfirmClick();
+      }
+    },
+    [otp?.length, showConfirmModal, showModal]
+  );
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [otp]);
-
-  const sendOtp = async (data) => {
-    try {
-      const res = await window?.Digit.UserService.sendOtp(data, stateCode);
-      return [res, null];
-    } catch (err) {
-      return [null, err];
-    }
-  };
+  }, [handleKeyDown, otp]);
 
   const selectMobileNumber = async () => {
     const data = {
@@ -98,11 +126,39 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
     };
     const [res, err] = await sendOtp({ otp: { ...data, ...TYPE_LOGIN } });
     if (!err) {
+      setState((prev) => ({
+        ...prev,
+        showModal: true,
+        mobileNumber: null,
+      }));
+      setTimeLeft(10);
       return;
     } else {
       setIsUserRegistered(false);
-      const [res, err] = await sendOtp({ otp: { ...data, name: DEFAULT_USER, ...TYPE_REGISTER } });
-      return;
+      if (config?.confirmModal) {
+        if (config?.requiredFields) {
+          let requiredFieldsValidation = false;
+          for (const field of config.requiredFields) {
+            if (!Boolean(formData?.[field])) {
+              setError(field, { message: "FIRST_LAST_NAME_MANDATORY_MESSAGE" });
+              requiredFieldsValidation = true;
+            }
+          }
+          if (requiredFieldsValidation) return;
+          else setShowConfirmModal(true);
+        } else {
+          setShowConfirmModal(true);
+        }
+      } else {
+        const [res, err] = await sendOtp({ otp: { ...data, name: DEFAULT_USER, ...TYPE_REGISTER } });
+
+        setState((prev) => ({
+          ...prev,
+          showModal: true,
+          mobileNumber: null,
+        }));
+        setTimeLeft(10);
+      }
     }
   };
 
@@ -146,7 +202,6 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
       { tenantId: stateCode, limit: 10, offset: 0 }
     )
       .then((individualData) => {
-        setUser({ info, ...tokens });
         if (Array.isArray(individualData?.Individual) && individualData?.Individual?.length > 0) {
           const addressLine1 = individualData?.Individual?.[0]?.address[0]?.addressLine1 || "Telangana";
           const addressLine2 = individualData?.Individual?.[0]?.address[0]?.addressLine2 || "Rangareddy";
@@ -198,6 +253,7 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
               ...formData?.[config.key],
               individualDetails: {
                 individualId: individualData?.Individual?.[0]?.individualId,
+                userUuid: individualData?.Individual?.[0]?.userUuid,
                 document: identifierIdDetails?.fileStoreId
                   ? [{ fileName: idType, fileStore: identifierIdDetails?.fileStoreId, documentName: identifierIdDetails?.filename }]
                   : null,
@@ -217,7 +273,6 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
         }
       })
       .catch(() => {
-        setUser({ info, ...tokens });
         onSelect(
           config?.key,
           { ...formData?.[config.key], individualDetails: null, userDetails: info, isUserVerified: true },
@@ -246,7 +301,7 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
           isUserVerified: true,
           showModal: false,
         }));
-      } else if (!isUserRegistered) {
+      } else if (!isUserRegistered && !isUserVerifiedRef?.current) {
         const requestData = {
           name: DEFAULT_USER,
           username: formData[config.key]?.[input?.mobileNoKey],
@@ -338,14 +393,7 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
               formData?.[config.key]?.[config.name]?.length > config?.validation?.maxLength
             }
             onButtonClick={() => {
-              selectMobileNumber(mobileNumber).then(() => {
-                setState((prev) => ({
-                  ...prev,
-                  showModal: true,
-                  mobileNumber: null,
-                }));
-                setTimeLeft(10);
-              });
+              selectMobileNumber(mobileNumber);
             }}
           />
         )}
@@ -370,7 +418,7 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
         >
           <div className="verify-mobile-modal-main">
             <LabelFieldPair>
-              <CardLabel className="card-label-smaller" style={{ display: "flex" }}>
+              <CardLabel className="card-label-smaller" style={{ display: "flex", width: "100%" }}>
                 {t(input.label) +
                   `${
                     input?.hasMobileNo
@@ -438,6 +486,32 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
               </React.Fragment>
             )}
           </div>
+        </Modal>
+      )}
+      {showConfirmModal && (
+        <Modal
+          headerBarEnd={
+            <CloseBtn
+              onClick={() => {
+                setIsUserRegistered(true);
+                setShowConfirmModal(false);
+              }}
+              isMobileView={true}
+            />
+          }
+          actionCancelOnSubmit={() => {
+            setIsUserRegistered(true);
+            setShowConfirmModal(false);
+          }}
+          actionSaveLabel={t("CS_COMMON_CONFIRM")}
+          actionCancelLabel={t("BACK")}
+          actionSaveOnSubmit={async () => await onConfirmClick()}
+          formId="modal-action"
+          headerBarMain={<Heading label={t("ARE_YOU_SURE")} />}
+          submitTextClassName={"verification-button-text-modal"}
+          className={"verify-mobile-modal"}
+        >
+          <div className="verify-mobile-modal-main">{t("PLEASE_ENSURE_DETAILS_CORRECT_ACCOUNT_CREATE")}</div>
         </Modal>
       )}
     </div>
