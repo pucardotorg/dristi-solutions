@@ -105,8 +105,7 @@ public class NotificationService {
      * if the notification exists or not
      */
     public List<NotificationExists> existV1Notification(NotificationExistsRequest request) {
-        // search from db and return
-
-        return null;
+        List<NotificationExists> notifications = notificationRepository.checkIfNotificationExists(request.getNotificationList());
+        return notifications;
     }
 }
