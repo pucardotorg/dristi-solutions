@@ -464,8 +464,8 @@ public class CaseQueryBuilder {
     private boolean addCaseSearchTextCriteria(CaseCriteria criteria, StringBuilder query, boolean firstCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         if (criteria.getCaseSearchText() != null && !criteria.getCaseSearchText().isEmpty()) {
             addClauseIfRequired(query, firstCriteria);
-            query.append(" (LOWER(cases.courtcasenumber) LIKE LOWER(?) OR LOWER(cases.filingnumber) LIKE LOWER(?) OR LOWER(cases.cmpnumber) or LOWER(cases.casetitle) LIKE LOWER(?))");
-            for (int i = 0; i < 3; i++) {
+            query.append(" (LOWER(cases.courtcasenumber) LIKE LOWER(?) OR LOWER(cases.filingnumber) LIKE LOWER(?) OR LOWER(cases.cmpnumber) LIKE LOWER(?) or LOWER(cases.casetitle) LIKE LOWER(?))");
+            for (int i = 0; i < 4; i++) {
                 preparedStmtList.add("%" + criteria.getCaseSearchText() + "%");
                 preparedStmtArgList.add(Types.VARCHAR);
             }
