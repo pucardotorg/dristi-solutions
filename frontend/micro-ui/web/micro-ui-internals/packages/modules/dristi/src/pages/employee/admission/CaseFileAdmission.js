@@ -4,7 +4,7 @@ import { Redirect, useHistory, useLocation } from "react-router-dom/cjs/react-ro
 import CustomCaseInfoDiv from "../../../components/CustomCaseInfoDiv";
 import { Urls } from "../../../hooks";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
-import { CustomArrowDownIcon, RightArrow } from "../../../icons/svgIndex";
+import { CustomArrowDownIcon, FileDownloadIcon, RightArrow } from "../../../icons/svgIndex";
 import { DRISTIService } from "../../../services";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import { OrderTypes, OrderWorkflowAction } from "../../../Utils/orderWorkflow";
@@ -24,6 +24,7 @@ import { generateUUID, getFilingType } from "../../../Utils";
 import { documentTypeMapping } from "../../citizen/FileCase/Config";
 import ScheduleHearing from "../AdmittedCases/ScheduleHearing";
 import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../../Utils/submissionWorkflow";
+import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
@@ -33,13 +34,33 @@ const stateSla = {
 const casePrimaryActions = [
   { action: "REGISTER", label: "CS_REGISTER" },
   { action: "ADMIT", label: "CS_ADMIT_CASE" },
-  { action: "SCHEDULE_ADMISSION_HEARING", label: "CS_SCHEDULE_ADMISSION_HEARING" },
+  { action: "SCHEDULE_ADMISSION_HEARING", label: "CS_SCHEDULE_HEARING" },
 ];
 const caseSecondaryActions = [
   { action: "SEND_BACK", label: "SEND_BACK_FOR_CORRECTION" },
   { action: "REJECT", label: "CS_CASE_REJECT" },
 ];
 const caseTertiaryActions = [{ action: "ISSUE_ORDER", label: "ISSUE_NOTICE" }];
+
+const downloadSvgStyle = {
+  height: "16px",
+  width: "16px",
+};
+
+const downloadPathStyle = {
+  fill: "#007e7e",
+};
+
+const downloadButtonTextStyle = {
+  color: "#007e7e",
+  fontFamily: "Roboto, sans-serif",
+  fontSize: "16px",
+  fontWeight: 700,
+  lineHeight: "18.75px",
+  textAlign: "center",
+  width: "fit-content",
+  marginLeft: "5px",
+};
 
 const delayCondonationStylsMain = {
   padding: "6px 8px",
@@ -81,6 +102,7 @@ function CaseFileAdmission({ t, path }) {
   const moduleCode = "case-default";
   const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
   const [isLoader, setLoader] = useState(false);
+  const { downloadPdf } = useDownloadCasePdf();
   const { data: caseFetchResponse, isLoading, refetch } = useSearchCaseService(
     {
       criteria: [
@@ -306,8 +328,11 @@ function CaseFileAdmission({ t, path }) {
       ...caseDetails,
       additionalDetails: { ...caseDetails.additionalDetails, respondentDetails, witnessDetails, judge: data },
     };
+    const caseCreatedByUuid = caseDetails?.auditDetails?.createdBy;
+    let assignees = [];
+    assignees.push(caseCreatedByUuid);
 
-    return DRISTIService.caseUpdateService(
+    return await DRISTIService.caseUpdateService(
       {
         cases: {
           ...newcasedetails,
@@ -316,7 +341,7 @@ function CaseFileAdmission({ t, path }) {
           workflow: {
             ...caseDetails?.workflow,
             action,
-            ...(action === "SEND_BACK" && { assignes: [caseDetails.auditDetails.createdBy] || [] }),
+            ...(action === "SEND_BACK" && { assignes: assignees || [] }),
           },
         },
         tenantId,
@@ -436,47 +461,10 @@ function CaseFileAdmission({ t, path }) {
         }
         break;
       case "ADMIT":
-        if (caseDetails?.status === "ADMISSION_HEARING_SCHEDULED") {
-          const { HearingList = [] } = await Digit.HearingService.searchHearings({
-            hearing: { tenantId },
-            criteria: {
-              tenantID: tenantId,
-              filingNumber: caseDetails?.filingNumber,
-            },
-          });
-          const { startTime: hearingDate, hearingId: hearingNumber } = HearingList?.find(
-            (list) => list?.hearingType === "ADMISSION" && !(list?.status === "COMPLETED" || list?.status === "ABATED")
-          );
-          const {
-            list: [orderData],
-          } = await Digit.ordersService.searchOrder({
-            tenantId,
-            criteria: {
-              filingNumber: caseDetails?.filingNumber,
-              applicationNumber: "",
-              cnrNumber: caseDetails?.cnrNumber,
-              status: "DRAFT_IN_PROGRESS",
-              hearingNumber: hearingNumber,
-            },
-            pagination: { limit: 1, offset: 0 },
-          });
-          if (orderData?.orderType === "NOTICE") {
-            history.push(`/digit-ui/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${orderData.orderNumber}`, {
-              caseId: caseId,
-              tab: "Orders",
-            });
-            updateCaseDetails("ADMIT");
-          } else {
-            handleIssueNotice(hearingDate, hearingNumber);
-            await updateCaseDetails("ADMIT");
-          }
-        } else {
-          setSubmitModalInfo({ ...admitCaseSubmitConfig, caseInfo: caseInfo });
-          setModalInfo({ type: "admitCase", page: 0 });
-          setShowModal(true);
-        }
+        setSubmitModalInfo({ ...admitCaseSubmitConfig, caseInfo: caseInfo });
+        setModalInfo({ type: "admitCase", page: 0 });
+        setShowModal(true);
         break;
-
       case "SCHEDULE_ADMISSION_HEARING":
         setShowModal(true);
         setSubmitModalInfo({
@@ -1031,6 +1019,19 @@ function CaseFileAdmission({ t, path }) {
       .catch((err) => {});
   };
 
+  const handleDownloadPdf = () => {
+    const fileStoreId =
+      caseDetails?.documents?.find((doc) => doc?.key === "case.complaint.signed")?.fileStore || caseDetails?.additionalDetails?.signedCaseDocument;
+
+    if (fileStoreId) {
+      downloadPdf(tenantId, fileStoreId);
+      return;
+    } else {
+      console.error("No fileStoreId available for download.");
+      return;
+    }
+  };
+
   if (!caseId || (caseDetails && caseDetails?.status === CaseWorkflowState.CASE_ADMITTED)) {
     return <Redirect to="/" />;
   }
@@ -1058,7 +1059,15 @@ function CaseFileAdmission({ t, path }) {
             </div>
           </div>
           <div className="file-case-form-section">
-            <BackButton style={{ marginBottom: 0 }}></BackButton>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <BackButton style={{ marginBottom: 0 }}></BackButton>
+              <button style={{ display: "flex", alignItems: "center", background: "none" }} onClick={handleDownloadPdf}>
+                <span style={{ display: "flex", alignItems: "center" }}>
+                  <FileDownloadIcon svgStyle={downloadSvgStyle} pathStyle={downloadPathStyle} />
+                </span>
+                <span style={downloadButtonTextStyle}>{t("CS_COMMON_DOWNLOAD")}</span>
+              </button>
+            </div>
             <div className="employee-card-wrapper">
               <div className="header-content">
                 <div className="header-details" style={{ justifyContent: "normal", gap: "8px" }}>
@@ -1091,9 +1100,7 @@ function CaseFileAdmission({ t, path }) {
                 isDisabled={isButtonDisabled}
                 cardClassName={`e-filing-card-form-style review-case-file`}
                 secondaryLabel={
-                  [CaseWorkflowState.ADMISSION_HEARING_SCHEDULED, CaseWorkflowState.PENDING_RESPONSE, CaseWorkflowState.PENDING_NOTICE].includes(
-                    caseDetails?.status
-                  )
+                  [CaseWorkflowState.PENDING_RESPONSE, CaseWorkflowState.PENDING_NOTICE].includes(caseDetails?.status)
                     ? t("HEARING_IS_SCHEDULED")
                     : t(tertiaryAction.label || "")
                 }
@@ -1131,13 +1138,7 @@ function CaseFileAdmission({ t, path }) {
                   modalInfo={modalInfo}
                   setModalInfo={setModalInfo}
                   handleSendCaseBack={handleSendCaseBack}
-                  handleAdmitCase={handleAdmitCase}
-                  path={path}
-                  handleScheduleCase={handleScheduleCase}
-                  updatedConfig={updatedConfig}
-                  tenantId={tenantId}
                   handleScheduleNextHearing={handleScheduleNextHearing}
-                  caseAdmitLoader={caseAdmitLoader}
                   caseDetails={caseDetails}
                   caseAdmittedSubmit={caseAdmittedSubmit}
                   createAdmissionOrder={createAdmissionOrder}
