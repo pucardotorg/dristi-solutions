@@ -462,7 +462,7 @@ export const TabBenchSearchConfig = {
                 },
               },
               {
-                label: "CS_CASE_ID",
+                label: "CS_CASE_NAME_ID",
                 type: "text",
                 isMandatory: false,
                 disable: false,
