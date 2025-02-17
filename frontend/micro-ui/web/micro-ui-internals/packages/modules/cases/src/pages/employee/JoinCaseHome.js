@@ -288,11 +288,12 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
   };
 
   useEffect(() => {
-    if (step === 0 && !caseNumber) {
+    if (step === 0 && caseNumber) {
       setErrors({
         ...errors,
         caseNumber: undefined,
       });
+      setIsDisabled(false);
     }
     if (step === 2) {
       if (
