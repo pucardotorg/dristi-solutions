@@ -30,7 +30,9 @@ public class MdmsDataQueryBuilderV2 {
     public String getMdmsDataSearchQuery(MdmsCriteriaV2 mdmsCriteriaV2, List<Object> preparedStmtList) {
         String query = buildQuery(mdmsCriteriaV2, preparedStmtList);
         query = QueryUtil.addOrderByClause(query, MDMS_DATA_QUERY_ORDER_BY_CLAUSE);
-        query = getPaginatedQuery(query, mdmsCriteriaV2, preparedStmtList);
+        if(mdmsCriteriaV2.getLimit()!=null && mdmsCriteriaV2.getOffset()!=null){
+            query = getPaginatedQuery(query, mdmsCriteriaV2, preparedStmtList);
+        }
         return query;
     }
 
