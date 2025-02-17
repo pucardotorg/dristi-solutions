@@ -1,16 +1,12 @@
 package notification.repository.querybuilder;
 
 import notification.web.models.NotificationCriteria;
-import notification.web.models.NotificationExists;
 import notification.web.models.Pagination;
 import org.egov.tracer.model.CustomException;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Field;
 import java.sql.Types;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 @Component
@@ -36,8 +32,6 @@ public class NotificationQueryBuilder {
     private static final String ORDERBY_CLAUSE = " ORDER BY pn.{orderBy} {sortingOrder} ";
     private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY cases.createdDate DESC ";
     private  static  final String TOTAL_COUNT_QUERY = "SELECT COUNT(*) FROM ({baseQuery}) total_result";
-    private static final String NOTIFICATION_GROUP_BY_CLAUSE = " GROUP BY id, notificationNumber, notificationType";
-    private static final String BASE_QUERY_NOTIFICATION_EXISTENCE = " id, notificationNumber, notificationType, COUNT(*) > 0 AS exists ";
 
 
 
@@ -83,29 +77,6 @@ public class NotificationQueryBuilder {
                 .append(FROM_NOTIFICATION).append(whereCondition);
 
         return uri.toString();
-    }
-
-    public String getBaseNotificationExistenceQuery(List<NotificationExists> notifications, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
-        if (notifications == null || notifications.isEmpty()) {
-            throw new CustomException("List of notifications cannot be null or empty", "");
-        }
-
-        StringBuilder uri = new StringBuilder();
-        StringBuilder whereInCondition = new StringBuilder();
-
-        // Define the fields for the IN clause
-        String[] fieldNames = {"id", "notificationNumber", "notificationType"};
-
-        for (NotificationExists notification : notifications) {
-            addWhereInCondition(notification, fieldNames, whereInCondition, preparedStmtList, preparedStmtArgList);
-        }
-
-        uri.append(SELECT).append(BASE_QUERY_NOTIFICATION_EXISTENCE)
-                .append(FROM_NOTIFICATION).append(whereInCondition)
-                .append(NOTIFICATION_GROUP_BY_CLAUSE);
-
-        return uri.toString();
-
     }
 
     /**
@@ -207,38 +178,5 @@ public class NotificationQueryBuilder {
         return pagination == null || pagination.getSortBy() == null || pagination.getOrder() == null;
     }
 
-
-    private void addWhereInCondition(Object obj, String[] fieldNames, StringBuilder sb, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
-        if (obj == null || fieldNames == null || fieldNames.length == 0 || sb == null) {
-            throw new CustomException("Object, fieldNames, and StringBuilder cannot be null or empty", "");
-        }
-
-        sb.append(WHERE);
-        List<String> conditions = new ArrayList<>();
-
-        Class<?> clazz = obj.getClass();
-        for (Field field : clazz.getDeclaredFields()) {
-            field.setAccessible(true);
-            try {
-                if (Arrays.asList(fieldNames).contains(field.getName()) && field.get(obj) != null) {
-                    conditions.add("?");  // Each field will be replaced by `?` in SQL
-                    preparedStmtList.add(field.get(obj));
-                    preparedStmtArgList.add(Types.VARCHAR); // Assuming all fields are VARCHAR (adjust if needed)
-                }
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException("Failed to access field: " + field.getName(), e);
-            }
-        }
-
-        if (!conditions.isEmpty()) {
-            sb.append("(").append(String.join(", ", fieldNames)).append(") IN (");
-            sb.append(generatePlaceholders(conditions.size(), fieldNames.length));  // Dynamically generate placeholders
-            sb.append(")");
-        }
-    }
-
-    private String generatePlaceholders(int conditionCount, int paramsPerCondition) {
-        return String.join(", ", Collections.nCopies(conditionCount, "(" + "?,".repeat(paramsPerCondition - 1) + "?" + ")"));
-    }
 
 }

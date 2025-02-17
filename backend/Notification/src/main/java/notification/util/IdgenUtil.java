@@ -31,13 +31,6 @@ public class IdgenUtil {
     @Autowired
     private Configuration configs;
 
-    @Autowired
-    public IdgenUtil(ObjectMapper mapper, ServiceRequestRepository restRepo, Configuration configs) {
-        this.mapper = mapper;
-        this.restRepo = restRepo;
-        this.configs = configs;
-    }
-
 
     public List<String> getIdList(RequestInfo requestInfo, String tenantId, String idName, String idformat, Integer count, Boolean isSequencePadded) {
         List<IdRequest> reqList = new ArrayList<>();
