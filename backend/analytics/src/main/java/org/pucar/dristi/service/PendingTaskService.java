@@ -112,19 +112,19 @@ public class PendingTaskService {
 
     public void updatePendingTaskForAdvocate(Map<String, Object> joinCaseJson, JsonNode pendingTaskNode, Boolean isAdvocateReplace) {
         try {
-            log.info("Updating Pending task for Advocate.");
+            log.info("operation=updatePendingTaskForAdvocate, status=IN_PROGRESS");
             Map<String, Object> representative = (Map<String, Object>) joinCaseJson.get("representative");
             List<Map<String, Object>> parties = (List<Map<String, Object>>) representative.get("representing");
 
             RequestInfo requestInfo = objectMapper.convertValue(joinCaseJson.get("RequestInfo"), RequestInfo.class);
 
             String advocateUuid = getAdvocateUuid(requestInfo, representative);
-            List<String> litigantUuids = getLitigantUuids(parties, requestInfo);
+            List<String> litigantIndividualIds = getLitigantIndividualIds(parties, requestInfo);
 
             JsonNode hitsNode = pendingTaskNode.path("hits").path("hits");
 
             List<JsonNode> filteredTasks = new ArrayList<>();
-            filteredTasks = filterPendingTaskAdvocate(hitsNode, litigantUuids);
+            filteredTasks = filterPendingTaskAdvocate(hitsNode, litigantIndividualIds);
 
             if(isAdvocateReplace){
                 replaceAssigneeToPendingTask(filteredTasks, advocateUuid, requestInfo);
@@ -133,7 +133,7 @@ public class PendingTaskService {
                 addAssigneeToPendingTask(filteredTasks, advocateUuid);
             }
             pendingTaskUtil.updatePendingTask(filteredTasks);
-            log.info("Pending Task for advocate is updated.");
+            log.info("operation=updatePendingTaskAdvocate, status=SUCCESS");
         } catch (Exception e){
             log.error(ERROR_UPDATING_PENDING_TASK, e);
             throw new CustomException(ERROR_UPDATING_PENDING_TASK, e.getMessage());
@@ -178,15 +178,13 @@ public class PendingTaskService {
         }
     }
 
-    private List<String> getLitigantUuids(List<Map<String, Object>> parties, RequestInfo requestInfo) {
-        List<String> uuids = new ArrayList<>();
+    private List<String> getLitigantIndividualIds(List<Map<String, Object>> parties, RequestInfo requestInfo) {
+        List<String> individualIds = new ArrayList<>();
         for (Map<String, Object> party : parties) {
             String individualId = party.get("individualId").toString();
-            List<Individual> individuals = individualService.getIndividualsByIndividualId(requestInfo, individualId);
-            String uuid = individuals.get(0).getUserUuid();
-            uuids.add(uuid);
+            individualIds.add(individualId);
         }
-        return uuids;
+        return individualIds;
     }
 
     private String getAdvocateUuid(RequestInfo requestInfo, Map<String, Object> representative) {
@@ -194,16 +192,16 @@ public class PendingTaskService {
         return individualService.getIndividualsByIndividualId(requestInfo, advocateIndividualId.stream().findFirst().orElse(null)).get(0).getUserUuid();
     }
 
-    private List<JsonNode> filterPendingTaskAdvocate(JsonNode hitsNode, List<String> uuids) {
+    private List<JsonNode> filterPendingTaskAdvocate(JsonNode hitsNode, List<String> individualIds) {
         List<JsonNode> filteredTasks = new ArrayList<>();
         for (JsonNode hit : hitsNode) {
             JsonNode dataNode = hit.path("_source").path("Data");
-            JsonNode assignedToNode = dataNode.path("assignedTo");
+            JsonNode litigantIds = dataNode.path("additionalDetails").path("litigants");
 
             boolean isAssigned = false;
-            for (JsonNode assigned : assignedToNode) {
-                String assignedUuid = assigned.path("uuid").asText();
-                if (uuids.contains(assignedUuid)) {
+            for (JsonNode assigned : litigantIds) {
+                String individualId = assigned.asText();
+                if (individualIds.contains(individualId)) {
                     isAssigned = true;
                     break;
                 }
@@ -237,7 +235,7 @@ public class PendingTaskService {
                 })
                 .collect(Collectors.toList());
 
-        List<String> litigantUuids = getLitigantUuids(litigantList, (RequestInfo) joinCase.get("requestInfo"));
+        List<String> litigantUuids = getLitigantIndividualIds(litigantList, (RequestInfo) joinCase.get("requestInfo"));
 
         return tasks.stream()
                 .filter(task -> {
