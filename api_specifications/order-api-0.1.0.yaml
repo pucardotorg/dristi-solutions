@@ -122,11 +122,11 @@ paths:
               schema:
                 $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
 
-  /order/v2/add-order-type:
+  /order/v2/add-item:
     post:
-      summary: Append new order types to an existing composite order
+      summary: Append new item/order to an existing composite order
       requestBody:
-        description: Details for the update order + RequestInfo meta data.
+        description: Details for the update item/order + RequestInfo meta data.
         content:
           '*/*':
             schema:
@@ -140,25 +140,25 @@ paths:
               schema:
                 $ref: '#/components/schemas/OrderResponse'
         "400":
-          description: order update failed
+          description: item/order update failed
           content:
             '*/*':
               schema:
                 $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
 
-  /order/v2/remove-order-type:
+  /order/v2/remove-item:
     post:
-      summary: Remove an order type from a composite order
+      summary: Remove an item/order type from a composite order
       requestBody:
-        description: Details for the order to be removed + RequestInfo meta data.
+        description: Details for the item/order to be removed + RequestInfo meta data.
         content:
           '*/*':
             schema:
-              $ref: '#/components/schemas/RemoveOrderRequest'
+              $ref: '#/components/schemas/RemoveItemRequest'
         required: true
       responses:
         "200":
-          description: Order type removed from composite order
+          description: item/order removed from composite order
         "400":
           description: order update failed
           content:
@@ -185,15 +185,15 @@ components:
         order:
           $ref: '#/components/schemas/Order'
 
-    RemoveOrderRequest:
+    RemoveItemRequest:
       type: object
       properties:
         RequestInfo:
           $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
         order:
-          $ref: '#/components/schemas/RemoveOrder'
+          $ref: '#/components/schemas/RemoveItem'
 
-    RemoveOrder:
+    RemoveItem:
       type: object
       properties:
         orderNumber:
@@ -356,12 +356,12 @@ components:
         orderDetails:
           type: object
           description: schema to define fields that required to creation of ORDER PDFs. will be used to validate the fields before creating the PDF
-        compositeOrderDetails:
+        compositeItems:
           type: array
           description: List of order types and schema for composite orders. Required only if orderCategory = "composite".
           nullable: true
           items:
-            $ref: '#/components/schemas/CompositeOrderDetail'
+            $ref: '#/components/schemas/CompositeItem'
         status:
           type: string
           description: workflow status
@@ -385,7 +385,7 @@ components:
         workflow:
           $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Workflow'
 
-    CompositeOrderDetail:
+    CompositeItem:
       type: object
       properties:
         orderType:
