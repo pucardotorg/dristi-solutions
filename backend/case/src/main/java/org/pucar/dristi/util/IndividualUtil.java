@@ -43,7 +43,7 @@ public class IndividualUtil {
             if (responseMap != null) {
                 Gson gson = new Gson();
                 String jsonString = gson.toJson(responseMap);
-                log.info("Individual Response :: {}", jsonString);
+                log.info("operation = individualCall, result = IN_PROGRESS");
                 JsonObject response = JsonParser.parseString(jsonString).getAsJsonObject();
                 JsonArray individualObject = response.getAsJsonArray("Individual");
                 return !individualObject.isEmpty() && individualObject.get(0).getAsJsonObject().get("individualId") != null;
@@ -63,7 +63,7 @@ public class IndividualUtil {
             Object responseMap = serviceRequestRepository.fetchResult(uri, individualRequest);
             if (responseMap != null) {
                 String jsonString = objectMapper.writeValueAsString(responseMap);
-                log.info("Response :: {}", jsonString);
+                log.info("operation = getIndividualByIndividualId, result = IN_PROGRESS");
                 JsonNode rootNode = objectMapper.readTree(jsonString);
 
                 JsonNode individualNode = rootNode.path("Individual");
@@ -90,7 +90,7 @@ public class IndividualUtil {
             if (responseMap != null) {
                 Gson gson = new Gson();
                 String jsonString = gson.toJson(responseMap);
-                log.info("Individual Response :: {}", jsonString);
+                log.info("operation = getIndividual, result = IN_PROGRESS");
                 JsonObject response = JsonParser.parseString(jsonString).getAsJsonObject();
                 JsonArray individualObject = response.getAsJsonArray("Individual");
                 if (!individualObject.isEmpty() && individualObject.get(0).getAsJsonObject() != null) {
