@@ -263,6 +263,8 @@ components:
           type: string
         status:
           type: string
+        orderCategory:
+          type: string
 
     OrderExists:
       type: object
