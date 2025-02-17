@@ -4,7 +4,7 @@ info:
   title: API specs for Order
   description:
     Order API paths and entity is defined in this file.
-  version: "0.1.0"
+  version: "0.2.0"
 
 servers:
   - url: ""
@@ -122,6 +122,50 @@ paths:
               schema:
                 $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
 
+  /order/v2/add-order-type:
+    post:
+      summary: Append new order types to an existing composite order
+      requestBody:
+        description: Details for the update order + RequestInfo meta data.
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+        required: true
+      responses:
+        "201":
+          description: ResponseInfo with order updated successfully
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        "400":
+          description: order update failed
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /order/v2/remove-order-type:
+    post:
+      summary: Remove an order type from a composite order
+      requestBody:
+        description: Details for the order to be removed + RequestInfo meta data.
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/RemoveOrderRequest'
+        required: true
+      responses:
+        "200":
+          description: Order type removed from composite order
+        "400":
+          description: order update failed
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
 components:
   schemas:
     OrderSearchRequest:
@@ -140,6 +184,23 @@ components:
           $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
         order:
           $ref: '#/components/schemas/Order'
+
+    RemoveOrderRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        order:
+          $ref: '#/components/schemas/RemoveOrder'
+
+    RemoveOrder:
+      type: object
+      properties:
+        orderNumber:
+          type: string
+        orderType:
+          type: string
+
     OrderResponse:
       type: object
       properties:
@@ -161,6 +222,7 @@ components:
             $ref: '#/components/schemas/Order'
         pagination:
           $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Pagination'
+
     OrderExistsRequest:
       type: object
       properties:
@@ -170,6 +232,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/OrderExists'
+
     OrderExistsResponse:
       type: object
       properties:
@@ -179,6 +242,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/OrderExists'
+
     OrderCriteria:
       type: object
       description: can send in any one of the values. If multiple parameters are passed, then it will be a logical AND search
@@ -199,6 +263,7 @@ components:
           type: string
         status:
           type: string
+
     OrderExists:
       type: object
       description: can send in any one of the values and Exists value will be populated with true or false. If multiple paramters are passed, then it will be a logical AND search
@@ -218,6 +283,7 @@ components:
           type: string
         exists:
           type: boolean
+
     IssuedBy:
       type: object
       properties:
@@ -232,6 +298,9 @@ components:
             maxLength: 36
         courtID:
           type: string
+          description: code of the court
+          example: KLKM52
+
     Order:
       description: An order is created as an outcome of an hearing or based on an application. Order will contain a set of tasks
       type: object
@@ -279,14 +348,20 @@ components:
           $ref: '#/components/schemas/IssuedBy'
         orderType:
           type: string
-          description: Master Data ID from OrderType master
+          description: Master Data ID from OrderType master. Used only if orderCategory is NOT composite.
         orderCategory:
           type: string
-          description: Master data ID
-          example: Intermediate, Judgement
+          description: Master data ID. Possible values - Intermediate, Judgement, Composite
+          example: Intermediate, Judgement, Composite
         orderDetails:
           type: object
-          description: schema to define fields that required to creation of ORDER PDFs. will be used to validate the fields before creating the PDF          
+          description: schema to define fields that required to creation of ORDER PDFs. will be used to validate the fields before creating the PDF
+        compositeOrderDetails:
+          type: array
+          description: List of order types and schema for composite orders. Required only if orderCategory = "composite".
+          nullable: true
+          items:
+            $ref: '#/components/schemas/CompositeOrderDetail'
         status:
           type: string
           description: workflow status
@@ -309,3 +384,16 @@ components:
           $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/AuditDetails'
         workflow:
           $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Workflow'
+
+    CompositeOrderDetail:
+      type: object
+      properties:
+        orderType:
+          type: string
+          description: order type for an individual order in composite orders
+        orderSchema:
+          type: object
+          description: schema to define fields that required to creation of ORDER PDFs. will be used to validate the fields before creating the PDF
+
+
+
