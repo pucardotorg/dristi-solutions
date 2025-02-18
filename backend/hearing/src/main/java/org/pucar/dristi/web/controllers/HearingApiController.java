@@ -125,9 +125,9 @@ public class HearingApiController {
     @RequestMapping(value = "/v1/bulk/_reschedule", method = RequestMethod.POST)
     public ResponseEntity<BulkRescheduleResponse> bulkRescheduleHearing(@Parameter(in = ParameterIn.DEFAULT, description = "Bulk Reschedule Request and Request Info", required = true, schema = @Schema()) @Valid @RequestBody BulkRescheduleRequest request) {
         log.info("api =/v1/bulk/_reschedule, result = IN_PROGRESS");
-        List<String> scheduledHearings = hearingService.bulkReschedule(request);
+        List<ScheduleHearing> scheduledHearings = hearingService.bulkReschedule(request);
         BulkRescheduleResponse response = BulkRescheduleResponse.builder().ResponseInfo(responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true))
-                .build();
+                .reScheduleHearings(scheduledHearings).build();
         log.info("api =/v1/bulk/_reschedule, result = SUCCESS");
         return ResponseEntity.accepted().body(response);
     }

@@ -9,6 +9,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.egov.common.contract.response.ResponseInfo;
 
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -18,4 +20,8 @@ public class BulkRescheduleResponse {
     @JsonProperty("ResponseInfo")
     @Valid
     private ResponseInfo ResponseInfo = null;
+
+    @JsonProperty("Hearings")
+    @Valid
+    private List<ScheduleHearing> reScheduleHearings = null;
 }

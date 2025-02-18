@@ -338,7 +338,7 @@ public class HearingService {
         return mobileNumber;
     }
 
-    public List<Hearing> bulkReschedule(@Valid BulkRescheduleRequest request) {
+    public List<ScheduleHearing> bulkReschedule(@Valid BulkRescheduleRequest request) {
         BulkReschedule bulkReschedule = request.getBulkReschedule();
         RequestInfo requestInfo = request.getRequestInfo();
         Set<Integer> slotIds = bulkReschedule.getSlotIds();
@@ -362,7 +362,7 @@ public class HearingService {
             }
         }
         // need to push into producer
-        return hearingsToReschedule;
+        return scheduleHearings;
     }
 
 
