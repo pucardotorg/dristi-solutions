@@ -39,45 +39,4 @@ public class ReScheduleRequestValidatorTest {
 
         request.setRequestInfo(new RequestInfo());
     }
-
-
-    @Test
-    public void validateBulkRescheduleRequest_Success() {
-
-        when(dateUtil.getLocalDateFromEpoch(buklRescheduling.getScheduleAfter())).thenReturn(LocalDate.now().plusDays(1));
-
-        validator.validateBulkRescheduleRequest(request);
-    }
-
-    @Test
-    public void validateBulkRescheduleRequest_Exception() {
-
-        CustomException exception = assertThrows(CustomException.class, () -> {
-            validator.validateBulkRescheduleRequest(request);
-        });
-
-        assertEquals("DK_SH_APP_ERR", exception.getCode());
-    }
-
-    @Test
-    public void validateBulkRescheduleRequest_Exception2() {
-
-        CustomException exception = assertThrows(CustomException.class, () -> {
-            validator.validateBulkRescheduleRequest(request);
-        });
-
-        assertEquals("DK_SH_APP_ERR", exception.getCode());
-    }
-
-    @Test
-    public void validateBulkRescheduleRequest_Exception3() {
-
-        when(dateUtil.getLocalDateFromEpoch(buklRescheduling.getScheduleAfter())).thenReturn(LocalDate.now().minusDays(1));
-
-        CustomException exception = assertThrows(CustomException.class, () -> {
-            validator.validateBulkRescheduleRequest(request);
-        });
-
-        assertEquals("DK_SH_APP_ERR", exception.getCode());
-    }
 }

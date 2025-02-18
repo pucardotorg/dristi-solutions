@@ -191,7 +191,6 @@ public class ReScheduleHearingService {
     }
 
 
-
     /**
      * Reschedules multiple hearings in bulk to the available date and time slot.
      * <p>
@@ -254,14 +253,20 @@ public class ReScheduleHearingService {
                 }
             }
 
+            log.info("operation = bulkReschedule, result = SUCCESS");
+
             return hearingService.updateBulk(ScheduleHearingRequest.builder().hearing(hearings).requestInfo(request.getRequestInfo()).build(), defaultSlots, hearingTypeMap);
             // one edge case is here , for opt out if that date or in that duration suggested days are there then what need to done
+        } catch (CustomException e) {
+            log.error(e.getMessage());
+            throw e;
         } catch (Exception e) {
             log.error("Error updating bulk reschdule request: {}", e.getMessage());
-            throw new CustomException("", "");
+            throw new CustomException("BULK_RESCHEDULE_ERR", "Error occurred while updating bulk reschedule request");
         }
-
     }
-
-
 }
+
+
+
+

@@ -84,6 +84,7 @@ public class HearingService {
     /**
      * Updates the hearing based on the ScheduleHearingRequest object.
      * This function first enriches the hearing object and then sends the updated hearing to kafka topic.
+     *
      * @param scheduleHearingRequest object containing the request info and hearings
      * @return list of updated schedule hearing object
      */
@@ -102,13 +103,12 @@ public class HearingService {
     }
 
 
-
     /**
      * Searches for scheduled hearings based on the given criteria.
      *
      * @param request the search request containing the criteria for hearing search
-     * @param limit the maximum number of records to return
-     * @param offset the starting point for the records to return
+     * @param limit   the maximum number of records to return
+     * @param offset  the starting point for the records to return
      * @return a list of scheduled hearings that match the search criteria
      */
     public List<ScheduleHearing> search(HearingSearchRequest request, Integer limit, Integer offset) {
@@ -116,7 +116,6 @@ public class HearingService {
         return hearingRepository.getHearings(request.getCriteria(), limit, offset);
 
     }
-
 
 
     /**
@@ -132,7 +131,6 @@ public class HearingService {
     }
 
 
-
     /**
      * Updates multiple hearings in bulk based on the provided request.
      * <p>
@@ -141,21 +139,21 @@ public class HearingService {
      * by assigning available slots and updates both the hearing table and
      * external systems using the hearing service and utility.
      *
-     * @param request contains the bulk rescheduling details and request info
-     * @param defaultSlot list of default slots for each judge
+     * @param request        contains the bulk rescheduling details and request info
+     * @param defaultSlot    list of default slots for each judge
      * @param hearingTypeMap map of hearing type to MdmsHearing
      * @return a list of rescheduled hearings, or null if an error occurs
      * @throws CustomException if the request is invalid
      */
     public List<ScheduleHearing> updateBulk(ScheduleHearingRequest request, List<MdmsSlot> defaultSlot, Map<String, MdmsHearing> hearingTypeMap) {
 
+        log.info("operation = updateBulk, result = IN_PROGRESS");
         hearingEnrichment.enrichBulkReschedule(request, defaultSlot, hearingTypeMap);
-
         producer.push(config.getScheduleHearingUpdateTopic(), request);
+        log.info("operation = updateBulk, result = SUCCESS");
 
         return request.getHearing();
     }
-
 
 
     /**

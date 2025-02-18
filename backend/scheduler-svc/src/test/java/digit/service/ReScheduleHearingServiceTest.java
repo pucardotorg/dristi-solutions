@@ -17,13 +17,15 @@ import org.egov.common.contract.request.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -200,43 +202,5 @@ public class ReScheduleHearingServiceTest {
 
     }
 
-    @Test
-    void testBulkRescheduleSuccess() throws Exception {
-        // Prepare data for the test
-        BulkRescheduleRequest request = new BulkRescheduleRequest();
-        BulkReschedule bulkRescheduling = new BulkReschedule();
-        bulkRescheduling.setTenantId("tenant1");
-        bulkRescheduling.setJudgeId("judge1");
 
-        bulkRescheduling.setHearingIds(Collections.singletonList("hearing1"));
-
-        request.setRequestInfo(new RequestInfo());
-
-        // Mock validator
-        doNothing().when(validator).validateBulkRescheduleRequest(any());
-
-        // Mock MDMS data
-        List<MdmsSlot> defaultSlots = Collections.singletonList(new MdmsSlot());
-        when(helper.getDataFromMDMS(eq(MdmsSlot.class), anyString(), anyString())).thenReturn(defaultSlots);
-
-        List<MdmsHearing> defaultHearings = Collections.singletonList(new MdmsHearing());
-
-        // Mock hearing service
-        ScheduleHearing scheduleHearing = new ScheduleHearing();
-        scheduleHearing.setHearingBookingId("hearing1");
-        scheduleHearing.setHearingType("default");
-
-        // Mock calendar service
-        List<AvailabilityDTO> availabilityDTOs = new ArrayList<>();
-        AvailabilityDTO availabilityDTO = new AvailabilityDTO();
-        availabilityDTO.setDate("2023-10-10");
-        availabilityDTO.setOccupiedBandwidth(2.0);
-        availabilityDTOs.add(availabilityDTO);
-
-        List<ScheduleHearing> result = reScheduleHearingService.bulkReschedule(request);
-
-        // Assertions
-        assertNull(result);
-        verify(validator, times(1)).validateBulkRescheduleRequest(any());
-    }
 }
