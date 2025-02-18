@@ -17,26 +17,23 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class BulkReschedulingOfHearings {
+public class BulkReschedule {
 
     @JsonProperty("judgeId")
     @NotNull
     private String judgeId;
 
-    @JsonProperty("startTime")
-    private Long startTime;
-
-    @JsonProperty("endTime")
-    private Long endTime;
-
     @JsonProperty("tenantId")
     @NotNull
     private String tenantId;
 
-    @JsonProperty("hearingIds")
-    private List<String> hearingIds;
-
     @JsonProperty("scheduleAfter")
-    @NotNull
     private Long scheduleAfter;
+
+    @JsonProperty("courtId")
+    @NotNull
+    private String courtId;
+
+    @JsonProperty("hearingIds")
+    List<String> hearingIds;
 }

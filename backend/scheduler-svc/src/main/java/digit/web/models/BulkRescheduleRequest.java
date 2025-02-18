@@ -17,13 +17,13 @@ import org.springframework.validation.annotation.Validated;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class BulkReScheduleHearingRequest {
+public class BulkRescheduleRequest {
 
     @JsonProperty("RequestInfo")
     @Valid
     private RequestInfo requestInfo = null;
 
-    @JsonProperty("BulkRescheduling")
+    @JsonProperty("BulkReschedule")
     @Valid
-    private BulkReschedulingOfHearings bulkRescheduling = null;
+    private BulkReschedule bulkReschedule = null;
 }

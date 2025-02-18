@@ -91,15 +91,7 @@ public class ReScheduleHearingServiceTest {
                 .requestInfo(requestInfo)
                 .build();
 
-        BulkReScheduleHearingRequest bulkReScheduleHearingRequest = BulkReScheduleHearingRequest.builder()
-                .bulkRescheduling(BulkReschedulingOfHearings.builder()
-                        .judgeId("judgeId")
-                        .startTime(LocalDateTime.now().toEpochSecond(ZoneOffset.UTC))
-                        .endTime(LocalDateTime.now().plusHours(1).toEpochSecond(ZoneOffset.UTC))
-                        .scheduleAfter(LocalDate.now().toEpochDay())
-                        .build())
-                .requestInfo(requestInfo)
-                .build();
+
     }
 
     @Test
@@ -211,14 +203,13 @@ public class ReScheduleHearingServiceTest {
     @Test
     void testBulkRescheduleSuccess() throws Exception {
         // Prepare data for the test
-        BulkReScheduleHearingRequest request = new BulkReScheduleHearingRequest();
-        BulkReschedulingOfHearings bulkRescheduling = new BulkReschedulingOfHearings();
+        BulkRescheduleRequest request = new BulkRescheduleRequest();
+        BulkReschedule bulkRescheduling = new BulkReschedule();
         bulkRescheduling.setTenantId("tenant1");
         bulkRescheduling.setJudgeId("judge1");
-        bulkRescheduling.setStartTime(123456789L);
-        bulkRescheduling.setEndTime(987654321L);
+
         bulkRescheduling.setHearingIds(Collections.singletonList("hearing1"));
-        request.setBulkRescheduling(bulkRescheduling);
+
         request.setRequestInfo(new RequestInfo());
 
         // Mock validator
@@ -242,7 +233,7 @@ public class ReScheduleHearingServiceTest {
         availabilityDTO.setOccupiedBandwidth(2.0);
         availabilityDTOs.add(availabilityDTO);
 
-        List<ReScheduleHearing> result = reScheduleHearingService.bulkReschedule(request);
+        List<ScheduleHearing> result = reScheduleHearingService.bulkReschedule(request);
 
         // Assertions
         assertNull(result);
