@@ -9,9 +9,32 @@ import PreHearingModal from "../../components/PreHearingModal";
 import TasksComponent from "../../components/TaskComponentCalander";
 import useGetHearings from "../../hooks/hearings/useGetHearings";
 import useGetHearingSlotMetaData from "../../hooks/useGetHearingSlotMetaData";
+import { Button, CloseSvg, FormComposerV2, Modal } from "@egovernments/digit-ui-react-components";
 
 const tenantId = window?.Digit.ULBService.getCurrentTenantId();
-
+const CloseBtn = ({ onClick }) => {
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        height: "100%",
+        display: "flex",
+        alignItems: "center",
+        paddingRight: "20px",
+        cursor: "pointer",
+      }}
+    >
+      <CloseSvg />
+    </div>
+  );
+};
+const Heading = ({ label }) => {
+  return (
+    <div className="evidence-title">
+      <h1 className="heading-m">{label}</h1>
+    </div>
+  );
+};
 const MonthlyCalendar = () => {
   const history = useHistory();
   const { t } = useTranslation();
@@ -45,6 +68,7 @@ const MonthlyCalendar = () => {
   const [dateRange, setDateRange] = useState({});
   const [taskType, setTaskType] = useState({});
   const [caseType, setCaseType] = useState({});
+  const [stepper, setStepper] = useState(0);
   const initial = userInfoType === "citizen" ? "timeGridDay" : "dayGridMonth";
 
   const search = window.location.search;
@@ -182,61 +206,173 @@ const MonthlyCalendar = () => {
     </svg>
   );
 
+  const onSubmit = () => {
+    setStepper((prev) => prev + 1);
+  };
+
+  const onCancel = () => {
+    setStepper((prev) => prev - 1);
+  };
+  const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {};
+
+  const config = [
+    {
+      body: [
+        {
+          type: "dropdown",
+          key: "reason",
+          label: "Reason for Reschedule",
+          isMandatory: true,
+          populators: {
+            label: "Reason for Reschedule",
+            optionsKey: "name",
+            isMandatory: true,
+            mdmsConfig: {
+              masterName: "BulkRescheduleReason",
+              moduleName: "Hearing",
+              select: "(data) => { console.log(data) ;return data['Hearing'].BulkRescheduleReason?.map((item) => {return item;});}",
+            },
+          },
+        },
+        {
+          inline: true,
+          label: "Date Range  (From) ", // need to update this component to custom date picker date should show CustomCalendar modal
+          isMandatory: true,
+          key: "dob",
+          type: "date",
+          disable: false,
+          populators: { name: "dob", error: "Required" },
+        },
+        {
+          inline: true,
+          label: "Date Range (To)", // need to update this component to custom date picker date should show CustomCalendar modal
+          isMandatory: false,
+          key: "dob1",
+          type: "date",
+          disable: false,
+          populators: { name: "dob1", error: "Required" },
+        },
+        {
+          label: "Slot",
+          isMandatory: true,
+          key: "slot",
+          type: "dropdown",
+          // disable: true,//dynamic based on dates
+          populators: {
+            name: "slot",
+            optionsKey: "name",
+            allowMultiSelect: true,
+            isMandatory: true,
+            defaultText: "select slot",
+            selectedText: " ",
+            options: [
+              {
+                code: "slot1",
+                name: "slote1",
+              },
+              {
+                code: "slot2",
+                name: "slot2",
+              },
+            ],
+          },
+        },
+      ],
+    },
+  ];
+
   return (
-    <div style={{ display: "flex" }}>
-      <div style={{ width: "70%" }}>
-        <div>
-          <FullCalendar
-            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-            initialView={initialView}
-            headerToolbar={{
-              start: "prev",
-              center: "title",
-              end: "next,dayGridMonth,timeGridWeek,timeGridDay",
-            }}
-            height={"85vh"}
-            events={Calendar_events}
-            eventContent={(arg) => {
-              return (
-                <div>
-                  <div>{`${arg.event.extendedProps.slot} : ${arg.event.extendedProps.count}-${t("HEARINGS")}`}</div>
-                  {hearingCount(arg.event.extendedProps.hearings).map((hearingFrequency) => (
-                    <div>
-                      {hearingFrequency.frequency} - {t(hearingFrequency.type)}
-                    </div>
-                  ))}
-                </div>
-              );
-            }}
-            eventClick={handleEventClick}
-            datesSet={(dateInfo) => {
-              setDateRange({ start: dateInfo.start, end: dateInfo.end });
-            }}
-            ref={calendarRef}
-          />
-          {fromDate && toDate && slot && (
-            <PreHearingModal
-              courtData={courtData?.["common-masters"]?.Court_Rooms}
-              onCancel={closeModal}
-              hearingData={{ fromDate, toDate, slot, count }}
-              individualId={individualId}
-              userType={userType}
+    <React.Fragment>
+      <div style={{ display: "flex", justifyContent: "end", paddingRight: "24px", marginTop: "5px" }}>
+        <Button label={"Bulk Reschedule"} onButtonClick={onSubmit}></Button>
+      </div>
+      <div style={{ display: "flex" }}>
+        <div style={{ width: "70%" }}>
+          <div>
+            <FullCalendar
+              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+              initialView={initialView}
+              headerToolbar={{
+                start: "prev",
+                center: "title",
+                end: "next,dayGridMonth,timeGridWeek,timeGridDay",
+              }}
+              height={"85vh"}
+              events={Calendar_events}
+              eventContent={(arg) => {
+                return (
+                  <div>
+                    <div>{`${arg.event.extendedProps.slot} : ${arg.event.extendedProps.count}-${t("HEARINGS")}`}</div>
+                    {hearingCount(arg.event.extendedProps.hearings).map((hearingFrequency) => (
+                      <div>
+                        {hearingFrequency.frequency} - {t(hearingFrequency.type)}
+                      </div>
+                    ))}
+                  </div>
+                );
+              }}
+              eventClick={handleEventClick}
+              datesSet={(dateInfo) => {
+                setDateRange({ start: dateInfo.start, end: dateInfo.end });
+              }}
+              ref={calendarRef}
             />
-          )}
+            {fromDate && toDate && slot && (
+              <PreHearingModal
+                courtData={courtData?.["common-masters"]?.Court_Rooms}
+                onCancel={closeModal}
+                hearingData={{ fromDate, toDate, slot, count }}
+                individualId={individualId}
+                userType={userType}
+              />
+            )}
+          </div>
+        </div>
+        <div className="right-side">
+          <TasksComponent
+            taskType={taskType}
+            setTaskType={setTaskType}
+            caseType={caseType}
+            setCaseType={setCaseType}
+            isLitigant={Boolean(userInfoType === "citizen")}
+            uuid={userInfo?.uuid}
+            userInfoType={userInfoType}
+          />
         </div>
       </div>
-      <div className="right-side">
-        <TasksComponent
-          taskType={taskType}
-          setTaskType={setTaskType}
-          caseType={caseType}
-          setCaseType={setCaseType}
-          isLitigant={Boolean(userInfoType === "citizen")}
-          uuid={userInfo?.uuid}
-          userInfoType={userInfoType}
-        />
-      </div>
-    </div>
+      {stepper === 1 && (
+        <Modal
+          headerBarEnd={<CloseBtn onClick={onCancel} />}
+          actionSaveLabel={t("CS_COMMON_CONFIRM")}
+          formId="modal-action"
+          headerBarMain={<Heading label={t("CS_CONFIRM_COURT")} />}
+          hideSubmit
+        >
+          <FormComposerV2
+            // key={`form-config-${selected?.respondentType?.code}`}
+            config={config}
+            style={{ width: "100%", margin: "0px", padding: "0px !important" }}
+            onFormValueChange={onFormValueChange}
+            // defaultValues={accusedRegisterFormData}
+            actionClassName="e-filing-action-bar"
+            actionSaveLabel={t("CS_COMMON_CONFIRM")}
+            t={t}
+            noBoxShadow
+            inline={true}
+            label={t("CORE_COMMON_CONTINUE")}
+            onSecondayActionClick={() => {}}
+            secondaryLabel={t("back")}
+            onSubmit={(props) => onSubmit(props)}
+            submitInForm
+            className={"Bulk-rechedule"}
+            fieldStyle={{ margin: 0, Background: "black" }}
+            cardStyle={{ minWidth: "100%", Background: "blue" }}
+            cardClassName={"card-shec"}
+            headingStyle={{ textAlign: "center" }}
+          />
+        </Modal>
+      )}
+    </React.Fragment>
   );
 };
 
