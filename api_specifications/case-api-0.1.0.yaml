@@ -550,11 +550,11 @@ components:
           items:
             $ref: '#/components/schemas/Party'
           minItems: 2
-        poaUsers:
+        poaHolders:
           type: array
           nullable: true
           items:
-            $ref: '#/components/schemas/POAUsers'
+            $ref: '#/components/schemas/POAHolders'
         representatives:
           type: array
           items:
@@ -805,7 +805,7 @@ components:
             - name
             - organisationID
 
-    POAUsers:
+    POAHolders:
       type: object
       properties:
         id:
