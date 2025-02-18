@@ -458,7 +458,7 @@ public class CaseQueryBuilder {
     }
 
     public String addOrderByQueryForLitigants(String query) {
-        return query +  "ORDER BY COALESCE((ltg.additionaldetails->>'currentPosition')::int, 999999);";
+        return query +  " ORDER BY COALESCE((ltg.additionaldetails->>'currentPosition')::int, 999999);";
     }
 
     private boolean isEmptyPagination(Pagination pagination) {
