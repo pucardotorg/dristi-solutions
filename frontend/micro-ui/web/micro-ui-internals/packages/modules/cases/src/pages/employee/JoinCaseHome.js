@@ -546,7 +546,8 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                 userUuid: response?.Individual?.[0]?.userUuid,
               },
             },
-            isDisabled: isAdvocateRepresenting && representatives?.length === 1,
+            isAdvocateRepresenting: !!isAdvocateRepresenting,
+            advocateReprresentingLength: representatives?.length,
           };
         } catch (error) {
           console.error(error);
@@ -619,7 +620,8 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                 },
               },
             }),
-            isDisabled: isAdvocateRepresenting && representatives?.length === 1,
+            isAdvocateRepresenting: !!isAdvocateRepresenting,
+            advocateReprresentingLength: representatives?.length,
           };
         } catch (error) {
           console.error(error);
@@ -875,7 +877,9 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
               multipleAdvocatesAndPip: {
                 ...formdataItem?.data?.multipleAdvocatesAndPip,
                 multipleAdvocateNameDetails: [
-                  ...formdataItem?.data?.multipleAdvocatesAndPip?.multipleAdvocateNameDetails?.filter((obj) => Object.keys(obj).length > 0),
+                  ...(isReplaceAdvocate?.value === "NO"
+                    ? formdataItem?.data?.multipleAdvocatesAndPip?.multipleAdvocateNameDetails?.filter((obj) => Object.keys(obj).length > 0)
+                    : []),
                   {
                     advocateBarRegNumberWithName: {
                       barRegistrationNumber: advocateData?.barRegistrationNumber,
@@ -1627,7 +1631,12 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                 });
               const isCurrentAdvocatePresent = advocateList?.some((adv) => adv?.advocateId === advocateData?.id);
               if (!isCurrentAdvocatePresent) {
-                advocateList = [...advocateList?.map((adv) => adv?.additionalDetails?.fullName), getFullName(" ", givenName, otherNames, familyName)];
+                advocateList = [
+                  ...advocateList?.map((adv) => adv?.additionalDetails?.advocateName),
+                  getFullName(" ", givenName, otherNames, familyName),
+                ];
+              } else {
+                advocateList = [...advocateList?.map((adv) => adv?.additionalDetails?.advocateName)];
               }
 
               if (documentUploadResult?.[0]?.isComplainant) {
