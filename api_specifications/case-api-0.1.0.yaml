@@ -943,21 +943,21 @@ components:
       required: [tenantId]
       properties:
         caseId:
-          type: String
+          type: string
         tenantId:
           type: string
         defaultFields:
-          type: Boolean
+          type: boolean
         cnrNumber:
-          type: String
+          type: string
         filingNumber:
-          type: String
+          type: string
         outcome:
           type: array
           items:
-            type: String
+            type: string
         courtCaseNumber:
-          type: String
+          type: string
         filingFromDate:
           type: integer
           format: int64
@@ -971,7 +971,7 @@ components:
           type: integer
           format: int64
         judgeId:
-          type: String
+          type: string
         stage:
           type: array
           items:
@@ -979,15 +979,15 @@ components:
         subStage:
           type: string
         litigantId:
-          type: String
+          type: string
         advocateId:
-          type: String
+          type: string
         courtId:
-          type: String
+          type: string
         status:
           type: array
           items:
-            type: String
+            type: string
 
     CaseListRequestCriteria:
       type: object

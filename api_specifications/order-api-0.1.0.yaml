@@ -126,7 +126,7 @@ paths:
     post:
       summary: Append new item/order to an existing composite order
       requestBody:
-        description: Details for the update item/order + RequestInfo meta data.
+        description: Details for the new item/order + RequestInfo meta data.
         content:
           '*/*':
             schema:
@@ -196,10 +196,16 @@ components:
     RemoveItem:
       type: object
       properties:
+        tenantId:
+          type: string
+        courtId:
+          type: string
+          description: optional field. This can help narrow down the search of orders to withing a specific court
         orderNumber:
           type: string
-        orderType:
+        itemID:
           type: string
+          description: ID of the item to be removed. Cannot use order type as there can be multiple items of the same type
 
     OrderResponse:
       type: object
@@ -357,7 +363,7 @@ components:
           example: Intermediate, Judgement, Composite
         orderDetails:
           type: object
-          description: schema to define fields that required to creation of ORDER PDFs. will be used to validate the fields before creating the PDF
+          description: schema to define fields that are required for creation of ORDER PDFs. it will be used to validate the fields before creating the PDF
         compositeItems:
           type: array
           description: List of order types and schema for composite orders. Required only if orderCategory = "composite".
@@ -390,12 +396,12 @@ components:
     CompositeItem:
       type: object
       properties:
+        id:
+          type: string
+          description: identifier for this item, which will be useful for deletion of item
         orderType:
           type: string
-          description: order type for an individual order in composite orders
+          description: order type for an individual item in composite orders. this is the same as is used for an individual order
         orderSchema:
           type: object
-          description: schema to define fields that required to creation of ORDER PDFs. will be used to validate the fields before creating the PDF
-
-
-
+          description: schema to define the fields that are required for creation of ORDER PDFs. it will be used to validate the fields before creating the PDF
