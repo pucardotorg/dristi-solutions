@@ -156,7 +156,7 @@ public class Artifact {
 	@JsonProperty("workflow")
 
 	@Valid
-	private Workflow workflow = null;
+	private WorkflowObject workflow = null;
 
 	public Artifact addApplicableToItem(String applicableToItem) {
 		if (this.applicableTo == null) {
