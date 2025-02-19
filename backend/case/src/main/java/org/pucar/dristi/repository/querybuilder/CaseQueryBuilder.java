@@ -457,6 +457,10 @@ public class CaseQueryBuilder {
         return query.replace("{orderBy}", pagination.getSortBy()).replace("{sortingOrder}", pagination.getOrder().name());
     }
 
+    public String addOrderByQueryForLitigants(String query) {
+        return query +  " ORDER BY COALESCE((ltg.additionaldetails->>'currentPosition')::int, 999999);";
+    }
+
     private boolean isEmptyPagination(Pagination pagination) {
         return pagination == null || pagination.getSortBy()==null || pagination.getOrder() == null;
     }
