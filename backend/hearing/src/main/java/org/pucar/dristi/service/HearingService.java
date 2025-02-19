@@ -347,6 +347,11 @@ public class HearingService {
 
         List<Hearing> hearingsToReschedule = getHearingsForBulkReschedule(slotIds, bulkReschedule, requestInfo);
 
+        if (hearingsToReschedule.isEmpty()) {
+            log.info("No hearings found for bulk reschedule");
+            return new ArrayList<>();
+        }
+
         List<String> hearingIds = hearingsToReschedule.stream().map(Hearing::getHearingId).toList();
         bulkReschedule.setHearingIds(hearingIds);
         request.setBulkReschedule(bulkReschedule);
@@ -384,9 +389,9 @@ public class HearingService {
 
         if (!slotIds.isEmpty()) {
             // check mdms data for slot filtering if any slot id is there
-            Map<String, Map<String, JSONArray>> slotDetails = mdmsUtil.fetchMdmsData(requestInfo, bulkReschedule.getTenantId(), "court", Collections.singletonList("hearings"));
+            Map<String, Map<String, JSONArray>> slotDetails = mdmsUtil.fetchMdmsData(requestInfo, bulkReschedule.getTenantId(), "court", Collections.singletonList("slots"));
 
-            JSONArray slots = slotDetails.get("court").get("hearings");
+            JSONArray slots = slotDetails.get("court").get("slots");
             for (Object slot : slots) {
                 HearingSlot hearingSlot = objectMapper.convertValue(slot, HearingSlot.class);
                 if (slotIds.contains(hearingSlot.getId())) {
