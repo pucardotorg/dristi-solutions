@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
@@ -211,6 +212,16 @@ public class CaseService {
                 workflowService.updateWorkflowStatus(caseRequest);
             }
 
+            if (RESPOND.equalsIgnoreCase(caseRequest.getCases().getWorkflow().getAction())) {
+                Boolean lastSubmittedResponse = checkItsLastResponse(caseRequest);
+                if (lastSubmittedResponse) {
+                    log.info("Last response submitted by accused for case {}", caseRequest.getCases().getId());
+                    caseRequest.getRequestInfo().getUserInfo().getRoles().add(Role.builder().id(123L).code(SYSTEM).name(SYSTEM).tenantId(caseRequest.getCases().getTenantId()).build());
+                    caseRequest.getCases().getWorkflow().setAction(RESPONSE_COMPLETE);
+                    log.info("Updating workflow status for case {} in last response submission", caseRequest.getCases().getId());
+                    workflowService.updateWorkflowStatus(caseRequest);
+                }
+            }
 
             if (CASE_ADMIT_STATUS.equals(caseRequest.getCases().getStatus())) {
                 enrichmentUtil.enrichCourtCaseNumber(caseRequest);
@@ -323,6 +334,37 @@ public class CaseService {
         }
         log.info("Method=checkItsLastSign, Result= SUCCESS, Not last e-sign for case {}", caseRequest.getCases().getId());
         return false;
+    }
+
+    private Boolean checkItsLastResponse(CaseRequest caseRequest) {
+
+        log.info("Method=checkItsLastResponse, Result= IN_ProgressChecking if its last response by accused advocates {}", caseRequest.getCases().getId());
+
+        CourtCase cases = caseRequest.getCases();
+
+        List<Party> accusedListWithResponseRequired = cases.getLitigants().stream().filter(party -> party.getIsActive() && party.getIsResponseRequired()).toList();
+
+        for (Party party : accusedListWithResponseRequired){
+            boolean hasThisAccusedSubmittedResponse = false;
+
+            for (Document document: party.getDocuments()){
+                ObjectNode additionalDetails = objectMapper.convertValue(document.getAdditionalDetails(), ObjectNode.class);
+
+                if (additionalDetails.has("fileType")) {
+                    String fileType = additionalDetails.get("fileType").asText();
+                    if (StringUtils.equalsIgnoreCase("respondent-response", fileType)) {
+                        hasThisAccusedSubmittedResponse = true;
+                    }
+                }
+            }
+            if(!hasThisAccusedSubmittedResponse){
+                return false;
+            }
+        }
+
+        log.info("All accused have submitted response for case {}", cases.getId());
+        log.info("Method=checkItsLastResponse, Result= SUCCESS, last response for case {}", caseRequest.getCases().getId());
+        return true;
     }
 
     public CourtCase editCase(CaseRequest caseRequest) {
@@ -829,12 +871,11 @@ public class CaseService {
 
                     List<Party> partyList = existingRepresentative.getRepresenting();
 
-                    joinCaseRequest.getRepresentative().getRepresenting().forEach(representing->{
+                    joinCaseRequest.getRepresentative().getRepresenting().forEach(representing -> {
                         if (individualIdList.contains(representing.getIndividualId()) && !representing.getIsAdvocateReplacing()) {
                             log.info("Advocate is already representing the individual");
                             throw new CustomException(VALIDATION_ERR, "Advocate is already representing the individual");
-                        }
-                        else if (individualIdList.contains(representing.getIndividualId()) && representing.getIsAdvocateReplacing()) {
+                        } else if (individualIdList.contains(representing.getIndividualId()) && representing.getIsAdvocateReplacing()) {
                             log.info("Advocate is already representing the individual and isAdvocateReplacing is true");
                             Optional<UUID> representingIdOptional = Optional.ofNullable(partyList)
                                     .orElse(Collections.emptyList())
@@ -947,7 +988,7 @@ public class CaseService {
             joinCaseRequest.getRepresentative().getRepresenting().forEach(representing -> {
                 representing.setAuditDetails(auditDetails);
                 if (representing.getIsAdvocateReplacing())
-                    disableExistingRepresenting(joinCaseRequest.getRequestInfo(), courtCase, representing.getIndividualId(), auditDetails,joinCaseRequest.getRepresentative().getAdvocateId());
+                    disableExistingRepresenting(joinCaseRequest.getRequestInfo(), courtCase, representing.getIndividualId(), auditDetails, joinCaseRequest.getRepresentative().getAdvocateId());
             });
         }
         AdvocateMapping advocateMapping = mapRepresentativeToAdvocateMapping(joinCaseRequest.getRepresentative());
@@ -1095,7 +1136,7 @@ public class CaseService {
             List<AdvocateMapping> representatives = courtCase.getRepresentatives();
 
             if (representatives != null)
-                disableExistingRepresenting(joinCaseRequest.getRequestInfo(), courtCase, litigant.getIndividualId(), auditDetails,null);
+                disableExistingRepresenting(joinCaseRequest.getRequestInfo(), courtCase, litigant.getIndividualId(), auditDetails, null);
 
         }
 

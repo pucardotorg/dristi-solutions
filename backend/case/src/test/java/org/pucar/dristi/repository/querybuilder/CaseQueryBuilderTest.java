@@ -434,7 +434,7 @@ class CaseQueryBuilderTest {
         String query = queryBuilder.getLitigantSearchQuery(ids, preparedStmtList,preparedStmtArgList);
 
         // Assert
-        String expectedQuery = " SELECT ltg.id as id, ltg.tenantid as tenantid, ltg.partycategory as partycategory, ltg.case_id as case_id, ltg.individualid as individualid,  ltg.organisationid as organisationid, ltg.partytype as partytype, ltg.isactive as isactive, ltg.additionaldetails as additionaldetails, ltg.createdby as createdby, ltg.lastmodifiedby as lastmodifiedby, ltg.createdtime as createdtime, ltg.lastmodifiedtime as lastmodifiedtime , ltg.hassigned as hassigned  FROM dristi_case_litigants ltg WHERE ltg.case_id IN (?,?,?) AND ltg.isactive = true";
+        String expectedQuery = " SELECT ltg.id as id, ltg.tenantid as tenantid, ltg.partycategory as partycategory, ltg.case_id as case_id, ltg.isresponserequired as isresponserequired, ltg.individualid as individualid,  ltg.organisationid as organisationid, ltg.partytype as partytype, ltg.isactive as isactive, ltg.additionaldetails as additionaldetails, ltg.createdby as createdby, ltg.lastmodifiedby as lastmodifiedby, ltg.createdtime as createdtime, ltg.lastmodifiedtime as lastmodifiedtime , ltg.hassigned as hassigned  FROM dristi_case_litigants ltg WHERE ltg.case_id IN (?,?,?) AND ltg.isactive = true";
         assertEquals(expectedQuery, query);
         assertEquals(3, preparedStmtList.size());
         assertEquals("1", preparedStmtList.get(0));
