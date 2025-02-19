@@ -1448,13 +1448,14 @@ const GenerateOrders = () => {
       return await Promise.all(promises);
     }
     if (order?.orderType === "INITIATING_RESCHEDULING_OF_HEARING_DATE") {
+      debugger;
       create = true;
       status = "OPTOUT";
       assignees = [
         ...new Map(
           Object.values(allAdvocates)
             ?.flat()
-            ?.map((uuid) => [uuid, { uuid }]) // Use Map to remove duplicates
+            ?.map((uuid) => [uuid, { uuid }])
         ).values(),
       ];
       name = t("CHOOSE_DATES_FOR_RESCHEDULE_OF_HEARING_DATE");
@@ -1599,7 +1600,14 @@ const GenerateOrders = () => {
           filingNumber: filingNumber,
           isCompleted: false,
           stateSla,
-          additionalDetails,
+          additionalDetails: {
+            ...additionalDetails,
+            litigants: [
+              caseDetails?.litigants?.find(
+                (litigant) => litigant?.additionalDetails?.uuid === applicationDetails?.additionalDetails?.formdata?.selectComplainant?.uuid
+              )?.individualId,
+            ],
+          },
           tenantId,
         },
       });
@@ -2360,6 +2368,8 @@ const GenerateOrders = () => {
   };
 
   const handleIssueOrder = async () => {
+    debugger;
+
     try {
       setLoader(true);
       let newhearingId = "";
@@ -2657,6 +2667,8 @@ const GenerateOrders = () => {
   };
 
   const handleReviewOrderClick = () => {
+    debugger;
+
     if (
       referenceId &&
       "ACCEPTANCE_REJECTION_DCA" === orderType &&
