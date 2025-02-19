@@ -353,6 +353,7 @@ public class CaseService {
                                 }
                             });
 
+                            //TO DO--> Optimize for not checking with all the litigants once hasThisAccusedSubmittedResponse is false for a litigant
                             if (!hasThisAccusedSubmittedResponse.get())
                                 lastSubmittedResponse.set(false);
                         }
