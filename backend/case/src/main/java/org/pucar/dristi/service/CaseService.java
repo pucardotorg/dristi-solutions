@@ -39,6 +39,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
@@ -212,16 +214,7 @@ public class CaseService {
                 workflowService.updateWorkflowStatus(caseRequest);
             }
 
-            if (RESPOND.equalsIgnoreCase(caseRequest.getCases().getWorkflow().getAction())) {
-                Boolean lastSubmittedResponse = checkItsLastResponse(caseRequest);
-                if (lastSubmittedResponse) {
-                    log.info("Last response submitted by accused for case {}", caseRequest.getCases().getId());
-                    caseRequest.getRequestInfo().getUserInfo().getRoles().add(Role.builder().id(123L).code(SYSTEM).name(SYSTEM).tenantId(caseRequest.getCases().getTenantId()).build());
-                    caseRequest.getCases().getWorkflow().setAction(RESPONSE_COMPLETE);
-                    log.info("Updating workflow status for case {} in last response submission", caseRequest.getCases().getId());
-                    workflowService.updateWorkflowStatus(caseRequest);
-                }
-            }
+            checkItsLastResponse(caseRequest);
 
             if (CASE_ADMIT_STATUS.equals(caseRequest.getCases().getStatus())) {
                 enrichmentUtil.enrichCourtCaseNumber(caseRequest);
@@ -336,35 +329,45 @@ public class CaseService {
         return false;
     }
 
-    private Boolean checkItsLastResponse(CaseRequest caseRequest) {
+    private void checkItsLastResponse(CaseRequest caseRequest) {
+        if (RESPOND.equalsIgnoreCase(caseRequest.getCases().getWorkflow().getAction())) {
 
-        log.info("Method=checkItsLastResponse, Result= IN_ProgressChecking if its last response by accused advocates {}", caseRequest.getCases().getId());
+            log.info("Method=checkItsLastResponse, Result= IN_ProgressChecking if its last response by accused advocates {}", caseRequest.getCases().getId());
 
-        CourtCase cases = caseRequest.getCases();
+            AtomicReference<Boolean> lastSubmittedResponse = new AtomicReference<>(true);
 
-        List<Party> accusedListWithResponseRequired = cases.getLitigants().stream().filter(party -> party.getIsActive() && party.getIsResponseRequired()).toList();
+            CourtCase cases = caseRequest.getCases();
 
-        for (Party party : accusedListWithResponseRequired){
-            boolean hasThisAccusedSubmittedResponse = false;
+            Optional.ofNullable(cases.getLitigants()).orElse(Collections.emptyList()).forEach(party -> {
+                        if (party.getIsActive() && party.getIsResponseRequired()) {
+                            AtomicBoolean hasThisAccusedSubmittedResponse = new AtomicBoolean(false);
 
-            for (Document document: party.getDocuments()){
-                ObjectNode additionalDetails = objectMapper.convertValue(document.getAdditionalDetails(), ObjectNode.class);
+                            Optional.ofNullable(party.getDocuments()).orElse(Collections.emptyList()).forEach(document -> {
+                                ObjectNode additionalDetails = objectMapper.convertValue(document.getAdditionalDetails(), ObjectNode.class);
 
-                if (additionalDetails.has("fileType")) {
-                    String fileType = additionalDetails.get("fileType").asText();
-                    if (StringUtils.equalsIgnoreCase("respondent-response", fileType)) {
-                        hasThisAccusedSubmittedResponse = true;
+                                if (additionalDetails.has(FILE_TYPE)) {
+                                    String fileType = additionalDetails.get(FILE_TYPE).asText();
+                                    if (StringUtils.equalsIgnoreCase(RESPONDENT_RESPONSE, fileType)) {
+                                        hasThisAccusedSubmittedResponse.set(true);
+                                    }
+                                }
+                            });
+
+                            if (!hasThisAccusedSubmittedResponse.get())
+                                lastSubmittedResponse.set(false);
+                        }
                     }
-                }
-            }
-            if(!hasThisAccusedSubmittedResponse){
-                return false;
+            );
+
+
+            if (lastSubmittedResponse.get()) {
+                log.info("Last response submitted by accused for case {}", caseRequest.getCases().getId());
+                caseRequest.getRequestInfo().getUserInfo().getRoles().add(Role.builder().id(123L).code(SYSTEM).name(SYSTEM).tenantId(caseRequest.getCases().getTenantId()).build());
+                caseRequest.getCases().getWorkflow().setAction(RESPONSE_COMPLETE);
+                log.info("Updating workflow status for case {} in last response submission", caseRequest.getCases().getId());
+                workflowService.updateWorkflowStatus(caseRequest);
             }
         }
-
-        log.info("All accused have submitted response for case {}", cases.getId());
-        log.info("Method=checkItsLastResponse, Result= SUCCESS, last response for case {}", caseRequest.getCases().getId());
-        return true;
     }
 
     public CourtCase editCase(CaseRequest caseRequest) {
@@ -703,7 +706,8 @@ public class CaseService {
     }
 
 
-    private void verifyAndEnrichLitigant(JoinCaseRequest joinCaseRequest, CourtCase courtCase, CourtCase caseObj, AuditDetails auditDetails) {
+    private void verifyAndEnrichLitigant(JoinCaseRequest joinCaseRequest, CourtCase courtCase, CourtCase
+            caseObj, AuditDetails auditDetails) {
         log.info("enriching litigants");
         enrichLitigantsOnCreateAndUpdate(caseObj, auditDetails);
 
@@ -746,7 +750,8 @@ public class CaseService {
         publishToJoinCaseIndexer(joinCaseRequest.getRequestInfo(), courtCase);
     }
 
-    private void verifyAndEnrichRepresentative(JoinCaseRequest joinCaseRequest, CourtCase courtCase, CourtCase caseObj, AuditDetails auditDetails) {
+    private void verifyAndEnrichRepresentative(JoinCaseRequest joinCaseRequest, CourtCase courtCase, CourtCase
+            caseObj, AuditDetails auditDetails) {
         log.info("enriching representatives");
         enrichRepresentativesOnCreateAndUpdate(caseObj, auditDetails);
 
@@ -974,7 +979,8 @@ public class CaseService {
                 .collect(Collectors.toSet());
     }
 
-    private void verifyRepresentativesAndJoinCase(JoinCaseRequest joinCaseRequest, CourtCase courtCase, CourtCase caseObj, AuditDetails auditDetails, List<String> advocateIds, AdvocateMapping existingRepresentative) {
+    private void verifyRepresentativesAndJoinCase(JoinCaseRequest joinCaseRequest, CourtCase courtCase, CourtCase
+            caseObj, AuditDetails auditDetails, List<String> advocateIds, AdvocateMapping existingRepresentative) {
         //Setting representative ID as null to resolve later as per need
         joinCaseRequest.getRepresentative().setId(null);
 
@@ -1036,7 +1042,8 @@ public class CaseService {
         return partyList;
     }
 
-    private void disableExistingRepresenting(RequestInfo requestInfo, CourtCase courtCase, String joinCasePartyIndividualId, AuditDetails auditDetails, String advocateId) {
+    private void disableExistingRepresenting(RequestInfo requestInfo, CourtCase courtCase, String
+            joinCasePartyIndividualId, AuditDetails auditDetails, String advocateId) {
         if (courtCase.getRepresentatives() != null) {
             courtCase.getRepresentatives().forEach(representative -> {
 
@@ -1125,7 +1132,8 @@ public class CaseService {
         return representingList;
     }
 
-    private void verifyLitigantsAndJoinCase(JoinCaseRequest joinCaseRequest, CourtCase courtCase, CourtCase caseObj, AuditDetails auditDetails) {
+    private void verifyLitigantsAndJoinCase(JoinCaseRequest joinCaseRequest, CourtCase courtCase, CourtCase
+            caseObj, AuditDetails auditDetails) {
 
         if (joinCaseRequest.getIsLitigantPIP() && joinCaseRequest.getLitigant().get(0).getId() != null) {
             Party litigant = Optional.ofNullable(courtCase.getLitigants())
@@ -1144,7 +1152,8 @@ public class CaseService {
         verifyAndEnrichLitigant(joinCaseRequest, courtCase, caseObj, auditDetails);
     }
 
-    private @NotNull CourtCase validateAccessCodeAndReturnCourtCase(JoinCaseRequest joinCaseRequest, List<CaseCriteria> existingApplications) {
+    private @NotNull CourtCase validateAccessCodeAndReturnCourtCase(JoinCaseRequest
+                                                                            joinCaseRequest, List<CaseCriteria> existingApplications) {
         if (existingApplications.isEmpty()) {
             throw new CustomException(CASE_EXIST_ERR, "Case does not exist");
         }
@@ -1222,7 +1231,8 @@ public class CaseService {
     }
 
 
-    private Object editRespondantDetails(Object additionalDetails1, Object additionalDetails2, List<Party> litigants, boolean isLitigantPIP) {
+    private Object editRespondantDetails(Object additionalDetails1, Object
+            additionalDetails2, List<Party> litigants, boolean isLitigantPIP) {
         // Convert the Objects to ObjectNodes for easier manipulation
         ObjectNode details1Node = objectMapper.convertValue(additionalDetails1, ObjectNode.class);
         ObjectNode details2Node = objectMapper.convertValue(additionalDetails2, ObjectNode.class);

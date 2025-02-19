@@ -185,6 +185,10 @@ public class ServiceConstants {
 
     public static final String RESPONSE_COMPLETE = "RESPONSE_COMPLETE";
 
+    public static final String FILE_TYPE = "fileType";
+
+    public static final String RESPONDENT_RESPONSE = "respondent-response";
+
     public static final String SYSTEM="SYSTEM";
 
     public static final String JOIN_CASE_TASK="JOIN_CASE_TASK";
