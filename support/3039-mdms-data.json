@@ -38,5 +38,6836 @@
         "isActive": true
       }
     ]
+  },
+  {
+    "moduleName": "case",
+    "masterName": "PoliceStation",
+    "mdmsPayload": [
+      {
+        "id": "0f7692e8-1560-431f-ba91-e343b13f73ef",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15996057",
+        "data": {
+          "code": 15996057,
+          "name": "MEDICAL COLLEGE PS",
+          "active": true,
+          "district": "THRISSUR CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "832914af-dab5-4456-91f8-24768c7e8da0",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15996014",
+        "data": {
+          "code": 15996014,
+          "name": "GURUVAYUR TEMPLE PS",
+          "active": true,
+          "district": "THRISSUR CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a15ddc2b-2aa7-4125-919c-e2287f274e99",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15996013",
+        "data": {
+          "code": 15996013,
+          "name": "VIYYOOR",
+          "active": true,
+          "district": "THRISSUR CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "13b8288b-b439-46f7-98c4-51d8e7af310a",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15996012",
+        "data": {
+          "code": 15996012,
+          "name": "PERAMANGALAM",
+          "active": true,
+          "district": "THRISSUR CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "10c1f87c-67ac-4bfb-8d82-6c80584d49e8",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15996011",
+        "data": {
+          "code": 15996011,
+          "name": "PAVARATTY",
+          "active": true,
+          "district": "THRISSUR CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "268248e4-690f-4edd-9109-31c0bb11f1ca",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15996010",
+        "data": {
+          "code": 15996010,
+          "name": "GURUVAYOOR",
+          "active": true,
+          "district": "THRISSUR CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "93a9f9c9-a7af-4df5-ac35-52db63161217",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15996008",
+        "data": {
+          "code": 15996008,
+          "name": "PEECHI",
+          "active": true,
+          "district": "THRISSUR CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "bec7eebe-b9dd-4c75-9bef-0787b6fea0fa",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15996007",
+        "data": {
+          "code": 15996007,
+          "name": "MANNUTHY",
+          "active": true,
+          "district": "THRISSUR CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "e2ef3003-6872-4705-9ff4-102a7838d470",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15996006",
+        "data": {
+          "code": 15996006,
+          "name": "OLLUR",
+          "active": true,
+          "district": "THRISSUR CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "09dad86a-d810-4e47-b367-d0da793b4935",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15996005",
+        "data": {
+          "code": 15996005,
+          "name": "NEDUPUZHA",
+          "active": true,
+          "district": "THRISSUR CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "646ca445-b828-487d-ab2d-3f71eddcc67d",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15996004",
+        "data": {
+          "code": 15996004,
+          "name": "THRISSUR WEST",
+          "active": true,
+          "district": "THRISSUR CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "918ab08f-5512-437d-89c3-994b807ae730",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15996003",
+        "data": {
+          "code": 15996003,
+          "name": "TRAFFIC",
+          "active": true,
+          "district": "THRISSUR CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "4e1e537e-6227-4870-b54b-cf098c756b5c",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15996002",
+        "data": {
+          "code": 15996002,
+          "name": "VANITHA",
+          "active": true,
+          "district": "THRISSUR CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "19054299-fd9f-4fe4-877d-f86851210aae",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15996001",
+        "data": {
+          "code": 15996001,
+          "name": "THRISSUR EAST",
+          "active": true,
+          "district": "THRISSUR CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "0ebbed14-934d-4ca0-9a27-89c07907e512",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15995018",
+        "data": {
+          "code": 15995018,
+          "name": "KOLLAM CITY VANITHA PS",
+          "active": true,
+          "district": "KOLLAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "0a588e84-9a3c-47bf-a4b9-f67478227b0d",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15995017",
+        "data": {
+          "code": 15995017,
+          "name": "CHAVARA THEKKUMBHAGAM",
+          "active": true,
+          "district": "KOLLAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "c5f1fe08-26d6-4ca1-8781-250861c69a0a",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15995016",
+        "data": {
+          "code": 15995016,
+          "name": "CHAVARA",
+          "active": true,
+          "district": "KOLLAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "e41552cc-b2e3-4fab-9c48-10b76595b8cc",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15995015",
+        "data": {
+          "code": 15995015,
+          "name": "OCHIRA",
+          "active": true,
+          "district": "KOLLAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "0e4fe0e7-b556-458b-8969-4ab872c47ab8",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15995014",
+        "data": {
+          "code": 15995014,
+          "name": "KARUNAGAPALLY",
+          "active": true,
+          "district": "KOLLAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "ab5f1dfd-ff54-4d9f-a07f-e56fa3d09d2d",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15995013",
+        "data": {
+          "code": 15995013,
+          "name": "CHATHANNUR",
+          "active": true,
+          "district": "KOLLAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "6a6826c3-df8d-4433-b273-f1b543679214",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15995012",
+        "data": {
+          "code": 15995012,
+          "name": "KOTTIYAM",
+          "active": true,
+          "district": "KOLLAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "6914957f-ed34-4fb1-bdc1-52f2db0dfa80",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15995011",
+        "data": {
+          "code": 15995011,
+          "name": "PARIPPALLY",
+          "active": true,
+          "district": "KOLLAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "d6b2af82-5762-4c50-8590-aff8413ff0d9",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15995010",
+        "data": {
+          "code": 15995010,
+          "name": "PARAVOOR",
+          "active": true,
+          "district": "KOLLAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "4fe77237-53de-4480-ac95-3e44d2f4c8c0",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15995009",
+        "data": {
+          "code": 15995009,
+          "name": "NEENDAKARA COASTAL",
+          "active": true,
+          "district": "KOLLAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "f01eb815-3483-42fd-a6cd-48cb30acd5fd",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15995008",
+        "data": {
+          "code": 15995008,
+          "name": "KILIKOLLOOR",
+          "active": true,
+          "district": "KOLLAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "fc198b4e-9772-4839-8b9b-1d3b63d09dd8",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15995007",
+        "data": {
+          "code": 15995007,
+          "name": "ERAVIPURAM",
+          "active": true,
+          "district": "KOLLAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a8eb38ca-e945-417e-ac7d-e867dc8acee1",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15995006",
+        "data": {
+          "code": 15995006,
+          "name": "KOLLAM CITY TRAFFIC",
+          "active": true,
+          "district": "KOLLAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "723e1320-b4f3-4be0-9ce5-8e8a5677b8c6",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15995005",
+        "data": {
+          "code": 15995005,
+          "name": "SAKTHIKULANGARA",
+          "active": true,
+          "district": "KOLLAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "c8212cd1-5913-4713-9f3a-a1dbc1788fba",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15995004",
+        "data": {
+          "code": 15995004,
+          "name": "ANCHALUMMOODU",
+          "active": true,
+          "district": "KOLLAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a8443c7b-1b95-40c0-9362-f4d29d591d55",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15995003",
+        "data": {
+          "code": 15995003,
+          "name": "KOLLAM WEST",
+          "active": true,
+          "district": "KOLLAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "1d3b0f93-87fd-4d69-bab9-3cb0eeb4856f",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15995002",
+        "data": {
+          "code": 15995002,
+          "name": "PALLITHOTTAM",
+          "active": true,
+          "district": "KOLLAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "eff1225e-719f-4a46-b7d9-0ff48d26485f",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15995001",
+        "data": {
+          "code": 15995001,
+          "name": "KOLLAM EAST",
+          "active": true,
+          "district": "KOLLAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "8282c6d7-0882-47d1-9e3d-9b604651fd04",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15300068",
+        "data": {
+          "code": 15300068,
+          "name": "KASARAGOD TRAFFIC PS",
+          "active": true,
+          "district": "KASARGODE"
+        },
+        "isActive": true
+      },
+      {
+        "id": "d8776acd-9aad-4d7b-995d-a8d2bdac60e9",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15300067",
+        "data": {
+          "code": 15300067,
+          "name": "Kasaragodu SMS",
+          "active": true,
+          "district": "KASARGODE"
+        },
+        "isActive": true
+      },
+      {
+        "id": "2e0dbad0-b623-4ec0-9e59-d25c54344f19",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15300066",
+        "data": {
+          "code": 15300066,
+          "name": "VIDYANAGAR",
+          "active": true,
+          "district": "KASARGODE"
+        },
+        "isActive": true
+      },
+      {
+        "id": "3a8907a1-93b6-403c-abf4-6af8c91ebccb",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15300065",
+        "data": {
+          "code": 15300065,
+          "name": "VELLERIKUNDU",
+          "active": true,
+          "district": "KASARGODE"
+        },
+        "isActive": true
+      },
+      {
+        "id": "fedea327-eddc-40d2-878a-19ddb0b8571e",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15300063",
+        "data": {
+          "code": 15300063,
+          "name": "RAJAPURAM",
+          "active": true,
+          "district": "KASARGODE"
+        },
+        "isActive": true
+      },
+      {
+        "id": "b738f578-446d-45c2-9a93-85d2de60d1f8",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15300053",
+        "data": {
+          "code": 15300053,
+          "name": "NEELESWARAM",
+          "active": true,
+          "district": "KASARGODE"
+        },
+        "isActive": true
+      },
+      {
+        "id": "6860f002-e581-443d-9cdc-20fb6b27b7e9",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15300047",
+        "data": {
+          "code": 15300047,
+          "name": "MANJESWAR",
+          "active": true,
+          "district": "KASARGODE"
+        },
+        "isActive": true
+      },
+      {
+        "id": "cd4ce59d-677c-4ff2-99d5-1eabba231871",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15300040",
+        "data": {
+          "code": 15300040,
+          "name": "KUMBLA",
+          "active": true,
+          "district": "KASARGODE"
+        },
+        "isActive": true
+      },
+      {
+        "id": "2fa61275-0e76-4d34-a697-c5dbb39feb64",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15300038",
+        "data": {
+          "code": 15300038,
+          "name": "KASARGODE",
+          "active": true,
+          "district": "KASARGODE"
+        },
+        "isActive": true
+      },
+      {
+        "id": "87bfe531-662c-436a-8551-5dbfcb2e565a",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15300029",
+        "data": {
+          "code": 15300029,
+          "name": "HOSDURG",
+          "active": true,
+          "district": "KASARGODE"
+        },
+        "isActive": true
+      },
+      {
+        "id": "cd9c82f2-ac4c-49e5-a0fe-a4d395dd581f",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15300018",
+        "data": {
+          "code": 15300018,
+          "name": "CHEEMENI",
+          "active": true,
+          "district": "KASARGODE"
+        },
+        "isActive": true
+      },
+      {
+        "id": "174a8984-431a-4e40-941d-ef3a3eedf238",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15300016",
+        "data": {
+          "code": 15300016,
+          "name": "CHITTARIKKAL",
+          "active": true,
+          "district": "KASARGODE"
+        },
+        "isActive": true
+      },
+      {
+        "id": "e22b0c4f-1e6c-4bb6-9e32-fa4d62c2fa3f",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15300015",
+        "data": {
+          "code": 15300015,
+          "name": "CHANDERA",
+          "active": true,
+          "district": "KASARGODE"
+        },
+        "isActive": true
+      },
+      {
+        "id": "8081faad-b224-4778-8ea2-796b25c0dfa9",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15300011",
+        "data": {
+          "code": 15300011,
+          "name": "BEDAKOM",
+          "active": true,
+          "district": "KASARGODE"
+        },
+        "isActive": true
+      },
+      {
+        "id": "95e91b5e-d994-48dc-b8d3-5735c5c0ffd3",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15300010",
+        "data": {
+          "code": 15300010,
+          "name": "BAKEL COASTAL PS",
+          "active": true,
+          "district": "KASARGODE"
+        },
+        "isActive": true
+      },
+      {
+        "id": "13b8d9df-7289-427b-852f-6e4d376a57c1",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15300009",
+        "data": {
+          "code": 15300009,
+          "name": "BAKEL",
+          "active": true,
+          "district": "KASARGODE"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a592a054-46e4-46d4-a5c4-a6efe31f880d",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15300008",
+        "data": {
+          "code": 15300008,
+          "name": "BADIADKA",
+          "active": true,
+          "district": "KASARGODE"
+        },
+        "isActive": true
+      },
+      {
+        "id": "d649e083-d3eb-46b8-ab5b-fba28508df79",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15300005",
+        "data": {
+          "code": 15300005,
+          "name": "AMBALATHARA",
+          "active": true,
+          "district": "KASARGODE"
+        },
+        "isActive": true
+      },
+      {
+        "id": "29a587fd-3037-49e3-be37-f7dbcaa68813",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15300001",
+        "data": {
+          "code": 15300001,
+          "name": "ADHUR",
+          "active": true,
+          "district": "KASARGODE"
+        },
+        "isActive": true
+      },
+      {
+        "id": "0ad83392-043b-4558-b722-11dd1af93d8a",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15299055",
+        "data": {
+          "code": 15299055,
+          "name": "VECHOOCHIRA",
+          "active": true,
+          "district": "PATHANAMTHITTA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "19f022ce-7f17-4aa2-b022-1c56831415eb",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15299050",
+        "data": {
+          "code": 15299050,
+          "name": "THIRUVALLA",
+          "active": true,
+          "district": "PATHANAMTHITTA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "098a1974-6b55-4bb0-a9a7-33b9182d9546",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15299048",
+        "data": {
+          "code": 15299048,
+          "name": "THANITHODE",
+          "active": true,
+          "district": "PATHANAMTHITTA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "ff440cac-0f6e-4b3e-bf77-2e926ff79498",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15299045",
+        "data": {
+          "code": 15299045,
+          "name": "RANNY",
+          "active": true,
+          "district": "PATHANAMTHITTA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "e135ed33-00b6-43fe-a499-28ad4d5e251e",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15299044",
+        "data": {
+          "code": 15299044,
+          "name": "PERINADU",
+          "active": true,
+          "district": "PATHANAMTHITTA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "3f2d41e1-c717-4b59-8e93-8b66d9ff1cda",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15299043",
+        "data": {
+          "code": 15299043,
+          "name": "PULIKEEZHU",
+          "active": true,
+          "district": "PATHANAMTHITTA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "8f16db9a-542f-4f1f-bd96-2a6d7a23d2bf",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15299042",
+        "data": {
+          "code": 15299042,
+          "name": "PATHANAMTHITTA",
+          "active": true,
+          "district": "PATHANAMTHITTA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a69bad83-38fb-4088-a3d9-d6c29b44cb7f",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15299041",
+        "data": {
+          "code": 15299041,
+          "name": "PERUMPETTY",
+          "active": true,
+          "district": "PATHANAMTHITTA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "0bc15738-c0df-47ce-8dc4-8ebc122fa983",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15299040",
+        "data": {
+          "code": 15299040,
+          "name": "PANDALAM",
+          "active": true,
+          "district": "PATHANAMTHITTA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "b7c0b324-e5b9-4bfc-ad64-e250d0b07d75",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15299039",
+        "data": {
+          "code": 15299039,
+          "name": "PAMBA",
+          "active": true,
+          "district": "PATHANAMTHITTA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "21ed30f5-869b-4168-8bac-6c32edc0d57f",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15299036",
+        "data": {
+          "code": 15299036,
+          "name": "MODZHIYAR",
+          "active": true,
+          "district": "PATHANAMTHITTA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a84e2679-78d3-4356-98c6-bba4c156431d",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15299033",
+        "data": {
+          "code": 15299033,
+          "name": "KOODAL",
+          "active": true,
+          "district": "PATHANAMTHITTA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "c482f107-39d5-44a1-88df-6062757ea77d",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15299032",
+        "data": {
+          "code": 15299032,
+          "name": "KOIPURAM",
+          "active": true,
+          "district": "PATHANAMTHITTA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "c86d4dbc-1066-4609-8f28-3bb6cfc38aa9",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15299030",
+        "data": {
+          "code": 15299030,
+          "name": "KONNY",
+          "active": true,
+          "district": "PATHANAMTHITTA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "1eff82bd-548e-4379-8ab7-a05d526b27b6",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15299028",
+        "data": {
+          "code": 15299028,
+          "name": "KODUMON",
+          "active": true,
+          "district": "PATHANAMTHITTA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "d2fa7f0d-681a-4148-9d5e-ec0b7838c6df",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15299025",
+        "data": {
+          "code": 15299025,
+          "name": "KEEZHVAIPUR",
+          "active": true,
+          "district": "PATHANAMTHITTA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "ae5e0e84-e0c9-4528-831b-65b2b6e8a4e0",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15299016",
+        "data": {
+          "code": 15299016,
+          "name": "ENATHU",
+          "active": true,
+          "district": "PATHANAMTHITTA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "b20a9eeb-1ae6-4243-b45d-afa50d6a2e33",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15299015",
+        "data": {
+          "code": 15299015,
+          "name": "CHITTAR",
+          "active": true,
+          "district": "PATHANAMTHITTA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "ff9cb2d8-bebd-4574-acff-4b1a4242013d",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15299008",
+        "data": {
+          "code": 15299008,
+          "name": "ARANMULA",
+          "active": true,
+          "district": "PATHANAMTHITTA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "c16435fa-4ee5-4801-9d66-9fd87268694d",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15299005",
+        "data": {
+          "code": 15299005,
+          "name": "ADOOR",
+          "active": true,
+          "district": "PATHANAMTHITTA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "96c647e9-c15f-4f24-8fa1-66136d0420da",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15299004",
+        "data": {
+          "code": 15299004,
+          "name": "SANNIDHANAM",
+          "active": true,
+          "district": "PATHANAMTHITTA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "8b278051-3cd5-4408-a1fe-9a4a84214f36",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15299003",
+        "data": {
+          "code": 15299003,
+          "name": "MALAYALAPUZHA",
+          "active": true,
+          "district": "PATHANAMTHITTA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "5511f85a-6d22-438c-a4d8-3f6d063ab928",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15298038",
+        "data": {
+          "code": 15298038,
+          "name": "WAYANADU SMS",
+          "active": true,
+          "district": "WYNAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "d0d1f6e1-3f39-42cd-a7d9-8932a8bae104",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15298037",
+        "data": {
+          "code": 15298037,
+          "name": "VYTHIRI",
+          "active": true,
+          "district": "WYNAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "beab1dd9-dace-443e-93bd-9c28b2e9025c",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15298035",
+        "data": {
+          "code": 15298035,
+          "name": "VELLAMUNDA",
+          "active": true,
+          "district": "WYNAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "f0c02b42-a2e9-4b90-b9e9-d6e0b978f046",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15298030",
+        "data": {
+          "code": 15298030,
+          "name": "THIRUNELLI",
+          "active": true,
+          "district": "WYNAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "b15a06b0-86de-40f3-87f9-ac3998899a8b",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15298028",
+        "data": {
+          "code": 15298028,
+          "name": "THALAPUZHA",
+          "active": true,
+          "district": "WYNAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a70d7351-0e8c-4af5-82e5-423b144d5e1f",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15298025",
+        "data": {
+          "code": 15298025,
+          "name": "SULTHANBATHERY",
+          "active": true,
+          "district": "WYNAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "05147fc8-b561-4c23-bd71-9e361d9c837e",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15298021",
+        "data": {
+          "code": 15298021,
+          "name": "PANAMARAM",
+          "active": true,
+          "district": "WYNAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "3a22dda5-4f05-4f12-8fcc-2a0a10f170de",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15298020",
+        "data": {
+          "code": 15298020,
+          "name": "PULPALLI",
+          "active": true,
+          "district": "WYNAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "00ee7d19-6c27-4edb-a004-3dec9a561269",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15298018",
+        "data": {
+          "code": 15298018,
+          "name": "PADINJARETHARA",
+          "active": true,
+          "district": "WYNAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "d2c6dfa8-c75c-4120-bc2e-97ae81a9a233",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15298017",
+        "data": {
+          "code": 15298017,
+          "name": "MEPPADI",
+          "active": true,
+          "district": "WYNAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "396e1147-d1a2-4220-a3bd-7f5e8843b3fc",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15298016",
+        "data": {
+          "code": 15298016,
+          "name": "MEENANGADI",
+          "active": true,
+          "district": "WYNAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "d09ac17d-944f-4de4-8f9f-eee17923a897",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15298015",
+        "data": {
+          "code": 15298015,
+          "name": "MANANTODDY",
+          "active": true,
+          "district": "WYNAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "0c39eee2-13c3-4404-803f-219cfb7313e4",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15298014",
+        "data": {
+          "code": 15298014,
+          "name": "KENICHIRA",
+          "active": true,
+          "district": "WYNAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "ac023830-8db3-4453-be93-bf2fa665efd0",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15298012",
+        "data": {
+          "code": 15298012,
+          "name": "KUMBALAKAD",
+          "active": true,
+          "district": "WYNAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "24daf9b1-009f-403f-8609-c2e58a98f837",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15298008",
+        "data": {
+          "code": 15298008,
+          "name": "KALPETTA",
+          "active": true,
+          "district": "WYNAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "2b8eaff5-1fec-46d4-bb55-05cfbfa6da1f",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15298001",
+        "data": {
+          "code": 15298001,
+          "name": "AMBALAVAYAL",
+          "active": true,
+          "district": "WYNAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "8f52a51c-3149-4642-9111-3d112cc439fa",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15297075",
+        "data": {
+          "code": 15297075,
+          "name": "VALAYAM",
+          "active": true,
+          "district": "KOZHIKODE RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "677b92b4-a4db-4dce-988b-e6c336928bc6",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15297061",
+        "data": {
+          "code": 15297061,
+          "name": "THIRUVAMBADY",
+          "active": true,
+          "district": "KOZHIKODE RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "00c4fb96-d0a8-4cb1-b574-1d0a3ec35f5c",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15297060",
+        "data": {
+          "code": 15297060,
+          "name": "THOTTILPALAM",
+          "active": true,
+          "district": "KOZHIKODE RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a6bce03e-2e6a-4d8b-b8b0-a83b46d45649",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15297059",
+        "data": {
+          "code": 15297059,
+          "name": "THAMARASSERY",
+          "active": true,
+          "district": "KOZHIKODE RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "456568cc-dfc5-4055-8876-d1bf4b2b85de",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15297051",
+        "data": {
+          "code": 15297051,
+          "name": "QUILANDY",
+          "active": true,
+          "district": "KOZHIKODE RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "1678e00f-dcab-4b8f-87cc-990ae7d729a4",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15297048",
+        "data": {
+          "code": 15297048,
+          "name": "PERUVANNAMUZHY",
+          "active": true,
+          "district": "KOZHIKODE RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "d65e874e-b12d-4067-9d80-73c843925311",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15297046",
+        "data": {
+          "code": 15297046,
+          "name": "PERAMBRA",
+          "active": true,
+          "district": "KOZHIKODE RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "cd491744-992e-45f6-af72-45a35b391aaf",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15297044",
+        "data": {
+          "code": 15297044,
+          "name": "PAYYOLY",
+          "active": true,
+          "district": "KOZHIKODE RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "460b02d1-68b7-4326-89c2-75dc10d1fa9c",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15297040",
+        "data": {
+          "code": 15297040,
+          "name": "NADAPURAM",
+          "active": true,
+          "district": "KOZHIKODE RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "175d7a79-1426-44fc-90c6-28ce0ebea078",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15297036",
+        "data": {
+          "code": 15297036,
+          "name": "MUKKOM",
+          "active": true,
+          "district": "KOZHIKODE RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a90c47a6-3634-4c6c-9d39-8a56dee4fa5d",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15297030",
+        "data": {
+          "code": 15297030,
+          "name": "MEPPAYUR",
+          "active": true,
+          "district": "KOZHIKODE RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "57f9af13-c117-4af2-8043-f1ec73e486f2",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15297028",
+        "data": {
+          "code": 15297028,
+          "name": "KUTTIADY",
+          "active": true,
+          "district": "KOZHIKODE RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "e5226d46-aca8-46ba-955f-fa288ff65e98",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15297027",
+        "data": {
+          "code": 15297027,
+          "name": "KODUVALLY",
+          "active": true,
+          "district": "KOZHIKODE RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "3a34ca41-9130-4cb0-95b6-713d6e179130",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15297026",
+        "data": {
+          "code": 15297026,
+          "name": "KODENCHERRY",
+          "active": true,
+          "district": "KOZHIKODE RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "b0b4309b-0941-487f-9cae-e977890380dd",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15297024",
+        "data": {
+          "code": 15297024,
+          "name": "KOORACHUNDU",
+          "active": true,
+          "district": "KOZHIKODE RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "77a69eb6-62e4-499b-84f1-52fdff09131c",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15297020",
+        "data": {
+          "code": 15297020,
+          "name": "KAKKOOR",
+          "active": true,
+          "district": "KOZHIKODE RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "849e04ad-9167-48f4-8375-b1f6c5407bee",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15297014",
+        "data": {
+          "code": 15297014,
+          "name": "EDACHERRY",
+          "active": true,
+          "district": "KOZHIKODE RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "d4a918ef-305c-4eda-a876-b374d54060ca",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15297009",
+        "data": {
+          "code": 15297009,
+          "name": "BALUSSERY",
+          "active": true,
+          "district": "KOZHIKODE RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "44cf207a-c56e-4be4-8d0d-247debb35007",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15297004",
+        "data": {
+          "code": 15297004,
+          "name": "BADAGARA",
+          "active": true,
+          "district": "KOZHIKODE RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "df3b15b8-48dc-4429-b999-868afe60ccce",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15297003",
+        "data": {
+          "code": 15297003,
+          "name": "ATHOLY",
+          "active": true,
+          "district": "KOZHIKODE RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "c2f28b71-2337-4a51-91f0-22b556f86893",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15297001",
+        "data": {
+          "code": 15297001,
+          "name": "CHOMBALA",
+          "active": true,
+          "district": "KOZHIKODE RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "84a5668d-5814-4beb-a293-0446e6f6979f",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15296015",
+        "data": {
+          "code": 15296015,
+          "name": "HIRUVANANTHAPURAM RAILWA",
+          "active": true,
+          "district": "RAILWAY POLICE"
+        },
+        "isActive": true
+      },
+      {
+        "id": "8de3dd31-fdbc-4ad7-8a27-72620f3d0aa7",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15296014",
+        "data": {
+          "code": 15296014,
+          "name": "THRISSUR RAILWAY",
+          "active": true,
+          "district": "RAILWAY POLICE"
+        },
+        "isActive": true
+      },
+      {
+        "id": "f76cc459-cd7e-4bf5-9134-54977cdeea8e",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15296013",
+        "data": {
+          "code": 15296013,
+          "name": "SHORNUR RAILWAY",
+          "active": true,
+          "district": "RAILWAY POLICE"
+        },
+        "isActive": true
+      },
+      {
+        "id": "09ee2e84-8afc-4c37-86a2-3a1472370192",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15296012",
+        "data": {
+          "code": 15296012,
+          "name": "ALAPPUZHA RAILWAY",
+          "active": true,
+          "district": "RAILWAY POLICE"
+        },
+        "isActive": true
+      },
+      {
+        "id": "312d2682-16f0-474d-9605-8cc9342e0b81",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15296011",
+        "data": {
+          "code": 15296011,
+          "name": "KOLLAM RAILWAY",
+          "active": true,
+          "district": "RAILWAY POLICE"
+        },
+        "isActive": true
+      },
+      {
+        "id": "12294d43-8753-4db6-a3a9-c7ff34728b56",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15296010",
+        "data": {
+          "code": 15296010,
+          "name": "PUNALUR RAILWAY",
+          "active": true,
+          "district": "RAILWAY POLICE"
+        },
+        "isActive": true
+      },
+      {
+        "id": "3c3a7c58-fec5-4805-9aca-37defec36b9b",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15296009",
+        "data": {
+          "code": 15296009,
+          "name": "PALAKKAD RAILWAY",
+          "active": true,
+          "district": "RAILWAY POLICE"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a540de34-816b-42be-9ed1-4af58fb910ed",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15296008",
+        "data": {
+          "code": 15296008,
+          "name": "PARASSALA RAILWAY",
+          "active": true,
+          "district": "RAILWAY POLICE"
+        },
+        "isActive": true
+      },
+      {
+        "id": "c3a2135b-bc43-44d8-b42f-7b35de11d6df",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15296007",
+        "data": {
+          "code": 15296007,
+          "name": "KOTTAYAM RAILWAY",
+          "active": true,
+          "district": "RAILWAY POLICE"
+        },
+        "isActive": true
+      },
+      {
+        "id": "b9019e78-fc3f-45b6-9357-e8047b114f91",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15296006",
+        "data": {
+          "code": 15296006,
+          "name": "KASARAGOD RAILWAY",
+          "active": true,
+          "district": "RAILWAY POLICE"
+        },
+        "isActive": true
+      },
+      {
+        "id": "b27e5128-58d3-4d00-ad82-30fdbd1c48ce",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15296005",
+        "data": {
+          "code": 15296005,
+          "name": "ERNAKUMAL RAILWAY",
+          "active": true,
+          "district": "RAILWAY POLICE"
+        },
+        "isActive": true
+      },
+      {
+        "id": "4449767b-7e2e-438d-a0c3-7975fd4e2566",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15296004",
+        "data": {
+          "code": 15296004,
+          "name": "KANNUR RAILWAY",
+          "active": true,
+          "district": "RAILWAY POLICE"
+        },
+        "isActive": true
+      },
+      {
+        "id": "87d7ffbc-c382-4a08-9e90-c1607e498670",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15296003",
+        "data": {
+          "code": 15296003,
+          "name": "KOZHIKODE RAILWAY",
+          "active": true,
+          "district": "RAILWAY POLICE"
+        },
+        "isActive": true
+      },
+      {
+        "id": "dc6136c8-9e44-4215-b43b-43c9465148d8",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295053",
+        "data": {
+          "code": 15295053,
+          "name": "MALAPPURAM VANITHA PS",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "ee8235f0-5d18-4049-8cd5-32a01b91b84c",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295052",
+        "data": {
+          "code": 15295052,
+          "name": "KADAMPUZA",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a94a0380-3bef-46fd-b587-c56e664fa977",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295051",
+        "data": {
+          "code": 15295051,
+          "name": "POOKOOTTUMPADAM",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "249038a5-c8b8-42cb-ae79-765639995f0d",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295050",
+        "data": {
+          "code": 15295050,
+          "name": "POTHUKAL",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a15a749c-9e08-4747-bc2e-a2586a898b1b",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295042",
+        "data": {
+          "code": 15295042,
+          "name": "VAZHAKKAD",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "f219099e-0e57-455e-b3f5-434063e1d34b",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295041",
+        "data": {
+          "code": 15295041,
+          "name": "WANDOOR",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "0a956257-327c-4775-9071-bcbdd8f958b7",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295040",
+        "data": {
+          "code": 15295040,
+          "name": "VENGARA",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "fc516acf-7f8f-4cb4-912d-2b70f97e7b14",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295038",
+        "data": {
+          "code": 15295038,
+          "name": "TIRURANGADI",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "203da212-af8d-4366-81d3-907975cd1b3f",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295037",
+        "data": {
+          "code": 15295037,
+          "name": "TIRUR",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "cf24758b-3104-4f18-92b4-378b48be2f8a",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295036",
+        "data": {
+          "code": 15295036,
+          "name": "TENHIPALAM",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "247218f8-9bd3-4b41-96c2-c662b07a2780",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295035",
+        "data": {
+          "code": 15295035,
+          "name": "TANUR",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a01e89c6-36ce-4b0d-81f1-f5e365ebe971",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295031",
+        "data": {
+          "code": 15295031,
+          "name": "PONNANI",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "954942e6-2bb0-4fc1-950f-be77eaf15ec5",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295030",
+        "data": {
+          "code": 15295030,
+          "name": "PERINTHALMANNA",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "50707f50-53e3-44ed-8b42-5c4e4cc91bce",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295029",
+        "data": {
+          "code": 15295029,
+          "name": "PANDIKKAD",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "c48c89e3-d267-4170-8519-4500960f2ff5",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295028",
+        "data": {
+          "code": 15295028,
+          "name": "PARAPPANANGADI",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "7751a96e-4b69-47fe-9321-c4c9b24d8bdd",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295026",
+        "data": {
+          "code": 15295026,
+          "name": "NILAMBUR",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "93e69063-a7f3-4025-ac06-d9cab94a0706",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295024",
+        "data": {
+          "code": 15295024,
+          "name": "MANKADA",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "fac7e3d5-c723-4f07-a6de-550e087719a0",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295023",
+        "data": {
+          "code": 15295023,
+          "name": "MELATTOOR",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "f98fc02e-b104-4da8-80a5-b55d5977f763",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295022",
+        "data": {
+          "code": 15295022,
+          "name": "VAZHIKADAVU",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "1c07cba0-3762-4f4c-803a-7e0c19f0f2c9",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295021",
+        "data": {
+          "code": 15295021,
+          "name": "MANCHERRY",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "b4a321ce-fe03-49ae-bbf5-4619027c1fa6",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295020",
+        "data": {
+          "code": 15295020,
+          "name": "MALAPPURAM",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "01232aea-7d5f-4656-8b72-30c954344606",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295018",
+        "data": {
+          "code": 15295018,
+          "name": "KUTTIPURAM",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "856b1e63-ff05-49db-a3d5-102eca24db3c",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295016",
+        "data": {
+          "code": 15295016,
+          "name": "KARIPUR",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "f3aa8ad1-e18a-4411-93c4-ea803581e957",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295015",
+        "data": {
+          "code": 15295015,
+          "name": "KOLATHUR",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "c75294d3-4c58-4e14-b564-f52e8426607d",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295014",
+        "data": {
+          "code": 15295014,
+          "name": "KOTTAKKAL",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "85cabfee-26ed-40c1-a38e-d539f294033e",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295013",
+        "data": {
+          "code": 15295013,
+          "name": "KONDOTTY",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "fb902415-a8e7-4af2-b431-9e09b76edcbe",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295012",
+        "data": {
+          "code": 15295012,
+          "name": "VALANCHERRY",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "4156f9b1-db4c-4034-8b55-bd285c28279d",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295011",
+        "data": {
+          "code": 15295011,
+          "name": "KALPAKANCHERRY",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "05a9950d-4c00-4d7c-a2bc-2c9bd2a4b185",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295010",
+        "data": {
+          "code": 15295010,
+          "name": "KALIKAVU",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "93446c63-885a-489a-9e63-bd2ff639e850",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295009",
+        "data": {
+          "code": 15295009,
+          "name": "KARUVARAKUNDU",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "521aa863-baae-462c-86e7-50ce89e22d2a",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295008",
+        "data": {
+          "code": 15295008,
+          "name": "EDAKKARA",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "2f527ebd-120d-4b02-bcb1-22e16827bc7b",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295007",
+        "data": {
+          "code": 15295007,
+          "name": "EDAVANA",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a67830ab-95cf-4d5a-aee6-a45650fca186",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295005",
+        "data": {
+          "code": 15295005,
+          "name": "CHANGARAMKULAM",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "acacabf3-31db-40bc-907a-76653bc709b8",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295002",
+        "data": {
+          "code": 15295002,
+          "name": "AREAKKODE",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "f3c273f3-45b9-4b39-88c0-60dd9bbbe84e",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15295001",
+        "data": {
+          "code": 15295001,
+          "name": "PERUMPADAPPU/ANDATHO",
+          "active": true,
+          "district": "MALAPPURAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "3da179de-988e-4eb4-8502-4d92f8fa55c6",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15294036",
+        "data": {
+          "code": 15294036,
+          "name": "MULLAPERIYAR",
+          "active": true,
+          "district": "IDUKKI"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a4764b03-c618-42be-8b8f-7f11d4dc3e91",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15294035",
+        "data": {
+          "code": 15294035,
+          "name": "THANKAMANI",
+          "active": true,
+          "district": "IDUKKI"
+        },
+        "isActive": true
+      },
+      {
+        "id": "63941517-2c2e-4528-a99c-fc167155e28f",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15294034",
+        "data": {
+          "code": 15294034,
+          "name": "MUTTAM",
+          "active": true,
+          "district": "IDUKKI"
+        },
+        "isActive": true
+      },
+      {
+        "id": "713833aa-663a-45bc-8cae-b9385e29db02",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15294033",
+        "data": {
+          "code": 15294033,
+          "name": "VAGAMON",
+          "active": true,
+          "district": "IDUKKI"
+        },
+        "isActive": true
+      },
+      {
+        "id": "ba31336c-a118-4612-af6a-79f9b65528b2",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15294032",
+        "data": {
+          "code": 15294032,
+          "name": "PERUVAMTHANAM",
+          "active": true,
+          "district": "IDUKKI"
+        },
+        "isActive": true
+      },
+      {
+        "id": "f3b50e0d-1a73-483b-8efd-b4ed3fc942f5",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15294030",
+        "data": {
+          "code": 15294030,
+          "name": "SANTHANPARA",
+          "active": true,
+          "district": "IDUKKI"
+        },
+        "isActive": true
+      },
+      {
+        "id": "90e116ae-1457-43ad-908e-fad3e54f2b8b",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15294029",
+        "data": {
+          "code": 15294029,
+          "name": "KARIMANAL",
+          "active": true,
+          "district": "IDUKKI"
+        },
+        "isActive": true
+      },
+      {
+        "id": "443c2b7a-9c6d-4652-a21c-c90ea4d929e9",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15294028",
+        "data": {
+          "code": 15294028,
+          "name": "MARAYOOR",
+          "active": true,
+          "district": "IDUKKI"
+        },
+        "isActive": true
+      },
+      {
+        "id": "67bb286d-84fd-4f06-9134-a04caf0a5d47",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15294027",
+        "data": {
+          "code": 15294027,
+          "name": "VELLATHOOVAL",
+          "active": true,
+          "district": "IDUKKI"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a2682b48-9071-43f0-b65b-097781f84b03",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15294026",
+        "data": {
+          "code": 15294026,
+          "name": "ADIMALI",
+          "active": true,
+          "district": "IDUKKI"
+        },
+        "isActive": true
+      },
+      {
+        "id": "38b90c2a-b97e-45c0-86a7-cb2ff5c2e7f2",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15294025",
+        "data": {
+          "code": 15294025,
+          "name": "RAJAKKADU",
+          "active": true,
+          "district": "IDUKKI"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a8fc8d28-ef92-4694-9ca7-46756c3378fa",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15294024",
+        "data": {
+          "code": 15294024,
+          "name": "VANDANMEDU",
+          "active": true,
+          "district": "IDUKKI"
+        },
+        "isActive": true
+      },
+      {
+        "id": "37e69ac0-bad9-450e-a71c-24801c23e8cd",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15294023",
+        "data": {
+          "code": 15294023,
+          "name": "VANDIPERIYAR",
+          "active": true,
+          "district": "IDUKKI"
+        },
+        "isActive": true
+      },
+      {
+        "id": "62425600-a7c5-4975-91ad-506bcddb6e86",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15294022",
+        "data": {
+          "code": 15294022,
+          "name": "UPPUTHARA",
+          "active": true,
+          "district": "IDUKKI"
+        },
+        "isActive": true
+      },
+      {
+        "id": "42245f1d-648f-480b-9575-3ccf8c0ba63d",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15294021",
+        "data": {
+          "code": 15294021,
+          "name": "THODUPZHA",
+          "active": true,
+          "district": "IDUKKI"
+        },
+        "isActive": true
+      },
+      {
+        "id": "14f7f0bc-6e2a-4316-9804-8b2b00749f7d",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15294020",
+        "data": {
+          "code": 15294020,
+          "name": "PEERUMADE",
+          "active": true,
+          "district": "IDUKKI"
+        },
+        "isActive": true
+      },
+      {
+        "id": "64ccc7d7-8209-4297-8208-d2748ac25ff0",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15294018",
+        "data": {
+          "code": 15294018,
+          "name": "MURIKKASSERY",
+          "active": true,
+          "district": "IDUKKI"
+        },
+        "isActive": true
+      },
+      {
+        "id": "97c52f78-d40c-40a9-ab23-e35c19cd776b",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15294017",
+        "data": {
+          "code": 15294017,
+          "name": "MUNNAR",
+          "active": true,
+          "district": "IDUKKI"
+        },
+        "isActive": true
+      },
+      {
+        "id": "6f968cae-3654-4385-82f8-c4dca282d889",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15294016",
+        "data": {
+          "code": 15294016,
+          "name": "KANJIKKUZHI",
+          "active": true,
+          "district": "IDUKKI"
+        },
+        "isActive": true
+      },
+      {
+        "id": "2ef433e9-fa66-46cc-8452-ec9fafb1bd9b",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15294015",
+        "data": {
+          "code": 15294015,
+          "name": "KUMALY",
+          "active": true,
+          "district": "IDUKKI"
+        },
+        "isActive": true
+      },
+      {
+        "id": "2866861d-eae2-4056-be58-25f33bc68b80",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15294014",
+        "data": {
+          "code": 15294014,
+          "name": "KULAMAVU",
+          "active": true,
+          "district": "IDUKKI"
+        },
+        "isActive": true
+      },
+      {
+        "id": "cf930e66-cc82-4257-b1de-e07af72b6ae1",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15294013",
+        "data": {
+          "code": 15294013,
+          "name": "KANJAAR",
+          "active": true,
+          "district": "IDUKKI"
+        },
+        "isActive": true
+      },
+      {
+        "id": "ead956a6-abdb-45a0-8230-e0d65ac8876c",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15294012",
+        "data": {
+          "code": 15294012,
+          "name": "KARIMANNOOR",
+          "active": true,
+          "district": "IDUKKI"
+        },
+        "isActive": true
+      },
+      {
+        "id": "1dacf8a5-5341-4f24-b4b0-549e3f8abb1b",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15294011",
+        "data": {
+          "code": 15294011,
+          "name": "NEDUMKANDAM",
+          "active": true,
+          "district": "IDUKKI"
+        },
+        "isActive": true
+      },
+      {
+        "id": "b47714d6-a923-41f1-82c0-c2043b897454",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15294010",
+        "data": {
+          "code": 15294010,
+          "name": "KALIYAR",
+          "active": true,
+          "district": "IDUKKI"
+        },
+        "isActive": true
+      },
+      {
+        "id": "ead7d55f-b1ef-4d30-9bd7-af60ed82c4eb",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15294009",
+        "data": {
+          "code": 15294009,
+          "name": "KARIMKUNNAM",
+          "active": true,
+          "district": "IDUKKI"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a48aa4f6-2ba3-4c21-b02a-2d6e190d6e1b",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15294008",
+        "data": {
+          "code": 15294008,
+          "name": "IDUKKI",
+          "active": true,
+          "district": "IDUKKI"
+        },
+        "isActive": true
+      },
+      {
+        "id": "5a563069-2d33-451e-b681-a6474a278c74",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15294004",
+        "data": {
+          "code": 15294004,
+          "name": "DEVICULAM",
+          "active": true,
+          "district": "IDUKKI"
+        },
+        "isActive": true
+      },
+      {
+        "id": "67041b0b-f772-4314-a984-0417e4aaa0c0",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15294003",
+        "data": {
+          "code": 15294003,
+          "name": "CUMBAMETTU",
+          "active": true,
+          "district": "IDUKKI"
+        },
+        "isActive": true
+      },
+      {
+        "id": "f8e8ef47-d14c-48fe-a4c5-c6cbd001ef9b",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15294001",
+        "data": {
+          "code": 15294001,
+          "name": "KATTAPPANA",
+          "active": true,
+          "district": "IDUKKI"
+        },
+        "isActive": true
+      },
+      {
+        "id": "51978cdf-6ebf-458c-b949-df33b3a454e8",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15293059",
+        "data": {
+          "code": 15293059,
+          "name": "VALAVUPACHA",
+          "active": true,
+          "district": "KOLLAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "f7037d1c-ac92-4e26-ad01-f47888f207b2",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15293058",
+        "data": {
+          "code": 15293058,
+          "name": "YERROOR",
+          "active": true,
+          "district": "KOLLAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "c3040bfd-ba41-4d69-881a-2554d6418f13",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15293055",
+        "data": {
+          "code": 15293055,
+          "name": "THENMALA",
+          "active": true,
+          "district": "KOLLAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "2e54a357-fe10-46fc-a87e-2f4a0d200075",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15293052",
+        "data": {
+          "code": 15293052,
+          "name": "SOORANADU",
+          "active": true,
+          "district": "KOLLAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "9115a383-e7ba-45ba-ba3b-c8bb81db1eaf",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15293047",
+        "data": {
+          "code": 15293047,
+          "name": "EZHUKONE",
+          "active": true,
+          "district": "KOLLAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "70d5f628-3be4-4b7e-b9f7-11ee20dd7038",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15293046",
+        "data": {
+          "code": 15293046,
+          "name": "KUNNIKODE",
+          "active": true,
+          "district": "KOLLAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "df17b7ce-77c3-4cd7-ad0e-7b8bf7ba4804",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15293045",
+        "data": {
+          "code": 15293045,
+          "name": "SASTHANCOTTAH",
+          "active": true,
+          "district": "KOLLAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "6285e6eb-c077-4bfe-ad3a-f314cbedbcee",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15293037",
+        "data": {
+          "code": 15293037,
+          "name": "PUTHOOR",
+          "active": true,
+          "district": "KOLLAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "0a3e4088-09a9-4138-9b2e-6de7e0fb253e",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15293035",
+        "data": {
+          "code": 15293035,
+          "name": "PUNALOOR",
+          "active": true,
+          "district": "KOLLAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "c27815e6-07f5-4d64-ab15-4fd8e221f018",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15293034",
+        "data": {
+          "code": 15293034,
+          "name": "POOYAPPALLY",
+          "active": true,
+          "district": "KOLLAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "61624953-292c-4037-805f-b3faeb1c2de0",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15293032",
+        "data": {
+          "code": 15293032,
+          "name": "PATHANA PURAM",
+          "active": true,
+          "district": "KOLLAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "f7bb368f-1da2-4fe9-88d2-aca9089d4a64",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15293021",
+        "data": {
+          "code": 15293021,
+          "name": "KUNDARA",
+          "active": true,
+          "district": "KOLLAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "3d1fd51a-5f9f-4940-9b65-8e22bedc80b6",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15293020",
+        "data": {
+          "code": 15293020,
+          "name": "KULATHUPUZHA",
+          "active": true,
+          "district": "KOLLAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "1bb56079-6768-4270-9b94-6d9990ad5a6c",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15293019",
+        "data": {
+          "code": 15293019,
+          "name": "KOTTARAKARA",
+          "active": true,
+          "district": "KOLLAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "ee5730e7-2c9e-4365-b924-bddd043f57ee",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15293016",
+        "data": {
+          "code": 15293016,
+          "name": "KADAKKAL",
+          "active": true,
+          "district": "KOLLAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "4a25158c-87ff-46a9-ab06-a31740e6f018",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15293007",
+        "data": {
+          "code": 15293007,
+          "name": "CHADAYAMANGALAM",
+          "active": true,
+          "district": "KOLLAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "cffc0bea-c3b6-4db0-917e-32af68608f3d",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15293003",
+        "data": {
+          "code": 15293003,
+          "name": "ANCHAL",
+          "active": true,
+          "district": "KOLLAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "3327ffae-bcf7-4fa9-809d-378d2da8891e",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15293001",
+        "data": {
+          "code": 15293001,
+          "name": "EAST KALLADA",
+          "active": true,
+          "district": "KOLLAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "3db6db57-cda4-4dd5-9170-4d1eaf3fb679",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292055",
+        "data": {
+          "code": 15292055,
+          "name": "MARAYAMUTTAM",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "c4459584-d0b5-4419-8db6-97a7cf9aa897",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292054",
+        "data": {
+          "code": 15292054,
+          "name": "NARUVAMOODU",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a9bbd5e3-1a6b-490f-b290-a2661340f31c",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292051",
+        "data": {
+          "code": 15292051,
+          "name": "POTHENCODE",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "561aa7d1-289b-4d1a-aaff-72842dacea41",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292050",
+        "data": {
+          "code": 15292050,
+          "name": "VARKALA",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "3f3bc38a-9dba-43a7-b2cc-14e4c40825ed",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292048",
+        "data": {
+          "code": 15292048,
+          "name": "ANJUTHENGU",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "92a6926e-44f5-4a8b-a307-5a44a20bd18c",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292047",
+        "data": {
+          "code": 15292047,
+          "name": "PANGODE",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "ffd6e5f8-37e7-4a94-a304-9897b9be83ea",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292046",
+        "data": {
+          "code": 15292046,
+          "name": "VALIYAMALA",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "e726e756-7d10-43fc-9fdd-0edcc87c9c80",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292045",
+        "data": {
+          "code": 15292045,
+          "name": "VILAPPILSALA",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "747cd91b-ae6f-4cb7-964b-262a24073681",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292043",
+        "data": {
+          "code": 15292043,
+          "name": "VIDURA",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "91aa09d5-7699-44c0-aa46-f7816b199ae1",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292042",
+        "data": {
+          "code": 15292042,
+          "name": "VENJARAMOODU",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "b2f28b17-8011-44a6-9b21-d727e25693fb",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292041",
+        "data": {
+          "code": 15292041,
+          "name": "VELLARADA",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "0781ef41-5462-4228-b233-3a6a0b2b3542",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292040",
+        "data": {
+          "code": 15292040,
+          "name": "VATTAPPARA",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "9355b784-1beb-4179-ad87-aee768cf062f",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292038",
+        "data": {
+          "code": 15292038,
+          "name": "POZHIYOOR",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "d94e881d-4d65-4636-9cfa-ac74ca5a214b",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292037",
+        "data": {
+          "code": 15292037,
+          "name": "PALODE",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "36fbd00f-fc4d-485b-85b5-97d2282c54a4",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292036",
+        "data": {
+          "code": 15292036,
+          "name": "PONMUDI",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "1b89febf-fb3b-4539-9144-7a8126d77a2c",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292035",
+        "data": {
+          "code": 15292035,
+          "name": "PARASSALA",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "ace79f05-fcb0-4eb3-81a4-bb9ff3f454b4",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292034",
+        "data": {
+          "code": 15292034,
+          "name": "POOVAR",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "1bfbbe55-3958-447f-8784-9efa81425198",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292033",
+        "data": {
+          "code": 15292033,
+          "name": "PALLIKKAL",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "c25f44ab-db50-4536-8b03-33d3c285bbf9",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292032",
+        "data": {
+          "code": 15292032,
+          "name": "NEYYATTINKARA",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "72fd2d99-4192-4f92-a1e0-1282a24da16a",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292030",
+        "data": {
+          "code": 15292030,
+          "name": "NEDUMANGAD",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "ec5d5961-e9ef-4a9c-a504-ed27fd7ce3ae",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292029",
+        "data": {
+          "code": 15292029,
+          "name": "NEYYAR DAM",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "547177ce-0edc-483e-a85c-e7075d35ed41",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292027",
+        "data": {
+          "code": 15292027,
+          "name": "MARANALLOOR",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "b6d7a49f-74c4-4d07-b170-e8ff99ab6dc1",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292026",
+        "data": {
+          "code": 15292026,
+          "name": "MANGALAPURAM",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "923a27e6-0717-4e3f-bebb-25a3db785670",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292025",
+        "data": {
+          "code": 15292025,
+          "name": "MALAYINKIL",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "3e03e8d6-52dd-44e8-8a22-560092bf6d9e",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292022",
+        "data": {
+          "code": 15292022,
+          "name": "KALLAMBALAM",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "ad9f6490-d95d-462f-bd4a-d3a52bbcbb50",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292020",
+        "data": {
+          "code": 15292020,
+          "name": "KADINAMKULAM",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "13113913-f83d-4eec-a16e-e2ddd22d028e",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292019",
+        "data": {
+          "code": 15292019,
+          "name": "KILIMANOOR",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "02933db3-a2b6-43e1-ae99-1d4651afa72e",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292017",
+        "data": {
+          "code": 15292017,
+          "name": "KATTAKADA",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "ded71907-116f-4452-a369-2ba691c71a80",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292016",
+        "data": {
+          "code": 15292016,
+          "name": "KANJIRAMKULAM",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "2198452e-6569-4e10-8ae2-d9317f65bc7b",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292015",
+        "data": {
+          "code": 15292015,
+          "name": "KADAKKAVOOR",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "bc3b1ccb-3a16-47e1-9ada-59056738cd16",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292007",
+        "data": {
+          "code": 15292007,
+          "name": "AYIROOR",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "69c5f2c5-63fa-434c-9e3a-85dcb8a8b1e0",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292006",
+        "data": {
+          "code": 15292006,
+          "name": "CHIRAYINKIL",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "d5957f9b-48ea-4b58-8179-07ba60eb16c3",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292005",
+        "data": {
+          "code": 15292005,
+          "name": "ARUVIKKARA",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "d9de4b26-2e76-4b95-8ff1-83f977fa47fe",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292004",
+        "data": {
+          "code": 15292004,
+          "name": "BALARAMAPURAM",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "8fd05901-3396-44e2-a5c7-20bcec300a67",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292003",
+        "data": {
+          "code": 15292003,
+          "name": "ARIYANCODE",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "b93065e7-756b-4e52-9776-d50e4b93b8e6",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292002",
+        "data": {
+          "code": 15292002,
+          "name": "ARYANAD",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "eddd4e67-8d04-419a-879b-28bb897f0648",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15292001",
+        "data": {
+          "code": 15292001,
+          "name": "ATTINGAL",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "32d93f02-fdf5-4abc-8640-565330265311",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15291055",
+        "data": {
+          "code": 15291055,
+          "name": "SREEKARYAM",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "9ac91cde-a607-4434-b8aa-b6421de721e3",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15291052",
+        "data": {
+          "code": 15291052,
+          "name": "VIZHINJAM COASTAL",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "e18b1011-2f67-4286-a329-fca18497a028",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15291051",
+        "data": {
+          "code": 15291051,
+          "name": "VIZHINJAM",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "7e427961-1914-4d93-a28a-04df7aeacd1a",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15291050",
+        "data": {
+          "code": 15291050,
+          "name": "VATTIYOORKAVU",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "1c259ca7-452d-43a8-9511-3a1f38f8e4f0",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15291049",
+        "data": {
+          "code": 15291049,
+          "name": "KARAMANA",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "48754253-8adc-4a02-8baa-1338af88db8b",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15291048",
+        "data": {
+          "code": 15291048,
+          "name": "KOVALAM",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "de1a783e-d67d-4f55-b471-057247028dd9",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15291047",
+        "data": {
+          "code": 15291047,
+          "name": "NEMOM",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "187f0558-9774-4842-a78a-f65ee77aefbb",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15291046",
+        "data": {
+          "code": 15291046,
+          "name": "VANITHA",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "ff4f56b9-b2c6-4495-adda-3a52f13b5ad8",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15291045",
+        "data": {
+          "code": 15291045,
+          "name": "VANCHIYOOR",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "ca469567-91aa-4189-81b2-946ce8cff925",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15291042",
+        "data": {
+          "code": 15291042,
+          "name": "VALIATHURA",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "f39ff0fb-5827-4d17-aafd-b5a9b7f9672f",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15291040",
+        "data": {
+          "code": 15291040,
+          "name": "THUMBA",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "8c836cba-6db8-4165-aae9-7d3271b2d6a2",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15291035",
+        "data": {
+          "code": 15291035,
+          "name": "THIRUVALLAM",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "3c835081-61a0-4660-bf89-e56d7ad99736",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15291034",
+        "data": {
+          "code": 15291034,
+          "name": "THAMPANOOR",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "85742545-93d7-49c4-b51a-33a30b5fdb11",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15291033",
+        "data": {
+          "code": 15291033,
+          "name": "POONTHURA",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "68dabb8b-21ac-41b0-9c14-efa8ead81e07",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15291032",
+        "data": {
+          "code": 15291032,
+          "name": "POOJAPPURA",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "6157f6d8-00dc-479b-b45c-b842c8446bc5",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15291031",
+        "data": {
+          "code": 15291031,
+          "name": "PETTAH",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "7a13e789-44f9-425f-9fc3-0d73c14ebf9d",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15291030",
+        "data": {
+          "code": 15291030,
+          "name": "PEROORKADA",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "ed890cc9-6e79-4074-a2bf-b4ae54efdde2",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15291029",
+        "data": {
+          "code": 15291029,
+          "name": "MEDICAL COLLEGE",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "4a40f960-ba58-436f-99e7-7e84f09c031f",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15291028",
+        "data": {
+          "code": 15291028,
+          "name": "MUSEUM",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "257ab5cb-31ad-4b18-9139-1a7ae792bb66",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15291018",
+        "data": {
+          "code": 15291018,
+          "name": "KAZHAKUTTAM",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "ae63e805-eac9-4e20-88a9-1231d812aad4",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15291016",
+        "data": {
+          "code": 15291016,
+          "name": "CITY TRAFFIC",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "c2bc84b5-8ec4-4b21-bf7c-ff340a5e6245",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15291015",
+        "data": {
+          "code": 15291015,
+          "name": "FORT",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "f754f093-b019-4a4c-8e35-9e0ddc563a76",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15291010",
+        "data": {
+          "code": 15291010,
+          "name": "CANTONMENT",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "d55f1ae0-a1a2-4ff0-a41c-05812e7d9435",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15291001",
+        "data": {
+          "code": 15291001,
+          "name": "MANNANTHALA",
+          "active": true,
+          "district": "THIRUVANANTHAPURAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "cd92ce19-23eb-44c3-b862-2807a45f57bc",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15290071",
+        "data": {
+          "code": 15290071,
+          "name": "THRISSUR RURAL VANITHA PS",
+          "active": true,
+          "district": "THRISSUR RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "bb5513e0-03a3-483a-88fb-3c2d1bd1bda6",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15290070",
+        "data": {
+          "code": 15290070,
+          "name": "WADAKKANCHERRY",
+          "active": true,
+          "district": "THRISSUR RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "1730804b-2943-47d3-9518-2398d6cea41a",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15290067",
+        "data": {
+          "code": 15290067,
+          "name": "VELLIKULANGARA",
+          "active": true,
+          "district": "THRISSUR RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "df022d40-83fe-4943-99f2-a357db367c9a",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15290066",
+        "data": {
+          "code": 15290066,
+          "name": "VARANTHARAPPILLY",
+          "active": true,
+          "district": "THRISSUR RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "6bb3480c-e62d-4df7-bfe3-27b489c7482f",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15290065",
+        "data": {
+          "code": 15290065,
+          "name": "VALAPPAD",
+          "active": true,
+          "district": "THRISSUR RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a66676a7-6cb0-43be-8fd7-e778b3fc1382",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15290063",
+        "data": {
+          "code": 15290063,
+          "name": "ERUMAPETTY",
+          "active": true,
+          "district": "THRISSUR RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "3feb0eff-8bb0-4a47-b94d-5ca829daf6be",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15290060",
+        "data": {
+          "code": 15290060,
+          "name": "VADANAPALLY",
+          "active": true,
+          "district": "THRISSUR RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "bc16f7c3-78a3-4072-a87d-5971d46dba4e",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15290059",
+        "data": {
+          "code": 15290059,
+          "name": "VADAKEKAD",
+          "active": true,
+          "district": "THRISSUR RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "e25a78e8-c264-4584-aee9-39024f1ddacb",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15290050",
+        "data": {
+          "code": 15290050,
+          "name": "MALAKKAPARA",
+          "active": true,
+          "district": "THRISSUR RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a62600ad-8638-4641-8b63-bbcee6d9aff8",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15290042",
+        "data": {
+          "code": 15290042,
+          "name": "PUDUKKADU",
+          "active": true,
+          "district": "THRISSUR RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "c9384cda-a1db-4c87-a73d-1729136a621e",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15290041",
+        "data": {
+          "code": 15290041,
+          "name": "PAZHAYANNUR",
+          "active": true,
+          "district": "THRISSUR RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "9e46f2f1-1595-40d2-99b2-51beae6a7cb7",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15290031",
+        "data": {
+          "code": 15290031,
+          "name": "MATHILAKAM",
+          "active": true,
+          "district": "THRISSUR RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "0b8225b9-a745-421d-872b-5bd30d9f1e08",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15290030",
+        "data": {
+          "code": 15290030,
+          "name": "MALA",
+          "active": true,
+          "district": "THRISSUR RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "4bc7fad6-bf7f-4272-b3a0-dba431b148ea",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15290026",
+        "data": {
+          "code": 15290026,
+          "name": "KORATTY",
+          "active": true,
+          "district": "THRISSUR RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "62feb9bf-9ff2-4c4f-afd8-849da8729bca",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15290025",
+        "data": {
+          "code": 15290025,
+          "name": "KUNNAMKULAM",
+          "active": true,
+          "district": "THRISSUR RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "d1db067d-90ca-49f8-8aed-f60acd4a6fcd",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15290024",
+        "data": {
+          "code": 15290024,
+          "name": "KODAKARA",
+          "active": true,
+          "district": "THRISSUR RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "ea8bacf8-0b67-47bd-b319-1cbc509582ed",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15290022",
+        "data": {
+          "code": 15290022,
+          "name": "KATTOOR",
+          "active": true,
+          "district": "THRISSUR RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "2faef9d0-3764-40d0-9609-d630911348e2",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15290020",
+        "data": {
+          "code": 15290020,
+          "name": "IRINJALAKUDA",
+          "active": true,
+          "district": "THRISSUR RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "f137d8c5-610e-4f94-a4ac-b31354e0ee2d",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15290015",
+        "data": {
+          "code": 15290015,
+          "name": "CHERUTHURUTHI",
+          "active": true,
+          "district": "THRISSUR RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "5f680a36-60f1-4cd9-9e53-a6ac4e2824ce",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15290014",
+        "data": {
+          "code": 15290014,
+          "name": "CHELAKKARA",
+          "active": true,
+          "district": "THRISSUR RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "4a1e4866-f93a-40c7-bcb2-0d983c277668",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15290013",
+        "data": {
+          "code": 15290013,
+          "name": "KODUNGALLOOR",
+          "active": true,
+          "district": "THRISSUR RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "5f81ece6-6e3c-46d5-819b-be5121e56ede",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15290012",
+        "data": {
+          "code": 15290012,
+          "name": "CHAVAKAD",
+          "active": true,
+          "district": "THRISSUR RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a45890b3-d61f-426e-b396-12f225c65dbc",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15290011",
+        "data": {
+          "code": 15290011,
+          "name": "CHERPU",
+          "active": true,
+          "district": "THRISSUR RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "3f05d045-dca7-4536-b98d-44ab0adb3219",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15290010",
+        "data": {
+          "code": 15290010,
+          "name": "CHALAKUDI",
+          "active": true,
+          "district": "THRISSUR RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "e6beefbf-2261-4a1b-a165-974003568d96",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15290003",
+        "data": {
+          "code": 15290003,
+          "name": "ATHIRAPPALLI",
+          "active": true,
+          "district": "THRISSUR RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "cad3222c-3613-4aa1-9451-8373d3c2e4a7",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15290002",
+        "data": {
+          "code": 15290002,
+          "name": "AZHIKODE COASTAL",
+          "active": true,
+          "district": "THRISSUR RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "6daf2e4e-2d2f-4b02-b352-3f3b1b465182",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15290001",
+        "data": {
+          "code": 15290001,
+          "name": "ANTHIKKAD",
+          "active": true,
+          "district": "THRISSUR RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "47658bc5-d713-4352-9dfd-163471e1a276",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289073",
+        "data": {
+          "code": 15289073,
+          "name": "MEENAKSHIPURAM",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "aa31a103-180c-49f7-a61a-f9a8c3497be9",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289072",
+        "data": {
+          "code": 15289072,
+          "name": "MANNARCADU TRAFFIC",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "acf4e3b7-6e29-4739-b3a5-9739239a3e00",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289071",
+        "data": {
+          "code": 15289071,
+          "name": "KALLADIKKODE",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "9a444851-fae6-40a5-9eff-490c68dcff1c",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289070",
+        "data": {
+          "code": 15289070,
+          "name": "WALAYAR",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "303778a8-5b01-4e30-ab7f-fe9acea12504",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289065",
+        "data": {
+          "code": 15289065,
+          "name": "VADAKKENCHERRY",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "b1a1faf4-641e-45b6-8b92-1822e11f1569",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289063",
+        "data": {
+          "code": 15289063,
+          "name": "TRAFFIC P.S",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a28b09df-03d2-4002-bdd0-e51bce99235d",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289062",
+        "data": {
+          "code": 15289062,
+          "name": "THRITHALA",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "b8d5d827-610d-4b21-a4f5-2f42f5ed0053",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289059",
+        "data": {
+          "code": 15289059,
+          "name": "SREEKRISHNAPURAM",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "bcfc4d32-a1e5-442a-ae05-f345748fbf10",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289058",
+        "data": {
+          "code": 15289058,
+          "name": "SHORNUR",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "71e12a6e-c237-4908-85e6-4a06e3756bb9",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289053",
+        "data": {
+          "code": 15289053,
+          "name": "PUDUNAGARAM",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "18e37b77-bc4d-43f8-9438-2a2809452356",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289051",
+        "data": {
+          "code": 15289051,
+          "name": "KOTTAYI",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "8fa2b489-8321-4640-bac7-5978e5878be7",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289050",
+        "data": {
+          "code": 15289050,
+          "name": "PATTAMBI",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "aa58b853-9a3b-402e-bee0-0fad89d75699",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289049",
+        "data": {
+          "code": 15289049,
+          "name": "PARAMBIKULAM",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "b9654865-8e24-45a6-928c-a490c03818ba",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289048",
+        "data": {
+          "code": 15289048,
+          "name": "PALAKKAD TOWN SOUTH",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "0e6b7c67-ca02-4ff9-838c-ed45c4774d7c",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289047",
+        "data": {
+          "code": 15289047,
+          "name": "PALAKKAD CUSBA",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "5e2efa9a-5ed9-40d1-b13a-40f915cbc7e0",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289046",
+        "data": {
+          "code": 15289046,
+          "name": "PADAGIRI",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "39440f33-6b9e-4701-8228-5d4a772b7f5b",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289044",
+        "data": {
+          "code": 15289044,
+          "name": "PALGHAT TOWN NORTH",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "77210923-1818-4f6d-804a-572f09082648",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289043",
+        "data": {
+          "code": 15289043,
+          "name": "OTTAPPALAM",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "4ae15e39-d902-4a36-bb02-26b8eed60f46",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289039",
+        "data": {
+          "code": 15289039,
+          "name": "NENMARA",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "0fd98cad-15f7-44a2-a79b-0670fa10cdc5",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289038",
+        "data": {
+          "code": 15289038,
+          "name": "NATTUKAL",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "16920a59-5c34-4f1f-8a3e-8c04be390e9d",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289036",
+        "data": {
+          "code": 15289036,
+          "name": "SHOLAYAR",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "3052c58d-2c23-4b9a-aab1-f3af1bc1952f",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289034",
+        "data": {
+          "code": 15289034,
+          "name": "MALAMPUZHA",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "0256a13e-6168-4e94-8a88-3663ef785dc1",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289033",
+        "data": {
+          "code": 15289033,
+          "name": "MANNARGHAT",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "37806ac3-9f04-42bb-a329-31b154c30c7c",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289032",
+        "data": {
+          "code": 15289032,
+          "name": "MANKARA",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "8307a717-03f8-443a-abee-7d6d2d87a3c5",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289030",
+        "data": {
+          "code": 15289030,
+          "name": "MANGALAM DAM",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "f075cbad-e6ae-4b86-bba7-3f6f5f8f3e21",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289028",
+        "data": {
+          "code": 15289028,
+          "name": "KOZHINJAMPARA",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "2d3c982d-98de-412e-a1f9-9889e89d1d8d",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289027",
+        "data": {
+          "code": 15289027,
+          "name": "KONGADU",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "1429ecb2-290a-4e08-9f5d-466e466a4663",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289026",
+        "data": {
+          "code": 15289026,
+          "name": "KOLLENGODE",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "6351a110-640b-43e1-af6b-f57c7b6ead51",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289020",
+        "data": {
+          "code": 15289020,
+          "name": "HEMAMBIKA NAGAR",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "4bcbfd6b-547c-4632-821e-dbcfddbb6acd",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289013",
+        "data": {
+          "code": 15289013,
+          "name": "COYALMANNAM",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "1fdc0e6c-92db-4837-a986-83dd65973a8c",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289012",
+        "data": {
+          "code": 15289012,
+          "name": "CHITTOOR",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "2c478b53-e060-4f05-b4a4-98ee8ed1ddeb",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289011",
+        "data": {
+          "code": 15289011,
+          "name": "CHERPULASSERRY",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "8deee4af-a988-41bf-8989-9600fc0a32ff",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289010",
+        "data": {
+          "code": 15289010,
+          "name": "CHALISSERRY",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "3a15e8a0-17f8-437b-a557-c47145189bdb",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289002",
+        "data": {
+          "code": 15289002,
+          "name": "ALATHUR",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "c2d4f1a8-faec-427e-a6c0-4b51d5eae5bb",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15289001",
+        "data": {
+          "code": 15289001,
+          "name": "AGALI",
+          "active": true,
+          "district": "PALAKKAD"
+        },
+        "isActive": true
+      },
+      {
+        "id": "1fb8bd17-368c-4c60-ac8d-853f8ed409bf",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15288088",
+        "data": {
+          "code": 15288088,
+          "name": "VELLAYIL",
+          "active": true,
+          "district": "KOZHIKODE CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "b4a2aa3d-70d0-4320-8654-a6bfb2aea72e",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15288086",
+        "data": {
+          "code": 15288086,
+          "name": "VANITHA",
+          "active": true,
+          "district": "KOZHIKODE CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "37822cf4-b496-40a7-8ada-1785be2585c8",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15288080",
+        "data": {
+          "code": 15288080,
+          "name": "BEYPORE",
+          "active": true,
+          "district": "KOZHIKODE CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "c1b4c697-5125-4b92-bb84-8931aaf9f113",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15288079",
+        "data": {
+          "code": 15288079,
+          "name": "TRAFFIC STATION",
+          "active": true,
+          "district": "KOZHIKODE CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "ffbdbad1-6a6d-4375-9292-347ffbe14a19",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15288058",
+        "data": {
+          "code": 15288058,
+          "name": "PANNIANKARA",
+          "active": true,
+          "district": "KOZHIKODE CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "627117b0-706b-469e-890b-8d6dfb685afe",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15288053",
+        "data": {
+          "code": 15288053,
+          "name": "NADAKKAVU",
+          "active": true,
+          "district": "KOZHIKODE CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "c3ccb4af-a62d-4e59-808d-a2d1bc2692e3",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15288046",
+        "data": {
+          "code": 15288046,
+          "name": "NALLALAM",
+          "active": true,
+          "district": "KOZHIKODE CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "e12e4240-c85b-41ab-8459-51eba276ec0d",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15288045",
+        "data": {
+          "code": 15288045,
+          "name": "MAVOOR",
+          "active": true,
+          "district": "KOZHIKODE CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "692a48e0-5d32-4d4d-98e2-b3e3905017d9",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15288044",
+        "data": {
+          "code": 15288044,
+          "name": "MARAD",
+          "active": true,
+          "district": "KOZHIKODE CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "211a4a26-1bef-4800-9e40-e83747b03d82",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15288038",
+        "data": {
+          "code": 15288038,
+          "name": "KUNNAMANGALAM",
+          "active": true,
+          "district": "KOZHIKODE CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "c27d89bf-396a-4926-affb-3a0456d5e190",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15288037",
+        "data": {
+          "code": 15288037,
+          "name": "KOZHIKODE TOWN",
+          "active": true,
+          "district": "KOZHIKODE CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "35191e3e-9043-4241-946a-9627596cc5ff",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15288036",
+        "data": {
+          "code": 15288036,
+          "name": "MEDICAL COLLEGE",
+          "active": true,
+          "district": "KOZHIKODE CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a048ca05-35d0-440e-8c56-1754dbce9412",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15288035",
+        "data": {
+          "code": 15288035,
+          "name": "KOZHIKODE CUSBA",
+          "active": true,
+          "district": "KOZHIKODE CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "2963982b-d68e-4633-b417-67511ebbd0c7",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15288024",
+        "data": {
+          "code": 15288024,
+          "name": "FEROKE",
+          "active": true,
+          "district": "KOZHIKODE CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "d47d2298-05fc-4723-b22d-6987541cd450",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15288019",
+        "data": {
+          "code": 15288019,
+          "name": "ELATHOOR",
+          "active": true,
+          "district": "KOZHIKODE CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "177e7692-c1d5-40b0-97e4-55378f6fc926",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15288012",
+        "data": {
+          "code": 15288012,
+          "name": "CHEMMANGADU",
+          "active": true,
+          "district": "KOZHIKODE CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "5ebcef34-3334-4509-9d8b-e86e63e98213",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15288011",
+        "data": {
+          "code": 15288011,
+          "name": "CHEVAYOOR",
+          "active": true,
+          "district": "KOZHIKODE CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "af8e3a7d-d543-4681-bd19-d4a18bce18c3",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15288004",
+        "data": {
+          "code": 15288004,
+          "name": "BEYPORE COASTAL",
+          "active": true,
+          "district": "KOZHIKODE CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "79aece84-9bae-41e2-aba1-1ec9dccc63cf",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15287066",
+        "data": {
+          "code": 15287066,
+          "name": "KOTTAYAM VANITHA PS",
+          "active": true,
+          "district": "KOTTAYAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "4ccd480d-d077-4272-a319-44d00eb47256",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15287065",
+        "data": {
+          "code": 15287065,
+          "name": "TRAFFIC PS KOTTAYAM",
+          "active": true,
+          "district": "KOTTAYAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "8759730a-9178-422e-b430-df1916fa456e",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15287059",
+        "data": {
+          "code": 15287059,
+          "name": "VELLOOR",
+          "active": true,
+          "district": "KOTTAYAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "fd3bf01b-86f5-4002-b39b-7331b3f83498",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15287056",
+        "data": {
+          "code": 15287056,
+          "name": "VAKATHANAM",
+          "active": true,
+          "district": "KOTTAYAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "943249f1-9593-49db-8ef9-abf619c41a39",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15287055",
+        "data": {
+          "code": 15287055,
+          "name": "VAIKOM",
+          "active": true,
+          "district": "KOTTAYAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "b48a6e01-b3ea-493e-a40f-0b85d9a4d089",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15287052",
+        "data": {
+          "code": 15287052,
+          "name": "THRIKODITHANAM",
+          "active": true,
+          "district": "KOTTAYAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "72cb9b1e-79b1-49b4-93cc-48636f6a4fe6",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15287051",
+        "data": {
+          "code": 15287051,
+          "name": "THALAYOLAPARAMBU",
+          "active": true,
+          "district": "KOTTAYAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "34fb3317-fe27-4809-9018-4e85b8ae35ea",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15287050",
+        "data": {
+          "code": 15287050,
+          "name": "THIDANADU",
+          "active": true,
+          "district": "KOTTAYAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "18ac5f25-1528-4ed0-9a63-0a9bd84d13a3",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15287048",
+        "data": {
+          "code": 15287048,
+          "name": "RAMAPURAM",
+          "active": true,
+          "district": "KOTTAYAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "cd04ec29-8ffa-40a8-809a-f2740c20dd74",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15287044",
+        "data": {
+          "code": 15287044,
+          "name": "PONKUNNAM",
+          "active": true,
+          "district": "KOTTAYAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "e7947a72-c692-47ba-917d-af5fb71caaa1",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15287042",
+        "data": {
+          "code": 15287042,
+          "name": "PAMBADI",
+          "active": true,
+          "district": "KOTTAYAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "3daece30-7472-42a2-a623-094feb41dca5",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15287041",
+        "data": {
+          "code": 15287041,
+          "name": "PALLIKATHODU",
+          "active": true,
+          "district": "KOTTAYAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "57d14b97-7124-4c65-acec-67afd10329e1",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15287040",
+        "data": {
+          "code": 15287040,
+          "name": "PALAI",
+          "active": true,
+          "district": "KOTTAYAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "f59e8b44-ea7d-422d-a3cc-72523c4c0e26",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15287039",
+        "data": {
+          "code": 15287039,
+          "name": "GANDHI NAGAR",
+          "active": true,
+          "district": "KOTTAYAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "22c634aa-c49a-40c2-9993-97b340cca83f",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15287038",
+        "data": {
+          "code": 15287038,
+          "name": "MELUKAVU",
+          "active": true,
+          "district": "KOTTAYAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "e731304e-bf85-4288-96a7-61e79e9c0c2d",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15287037",
+        "data": {
+          "code": 15287037,
+          "name": "MUNDAKKAYAM",
+          "active": true,
+          "district": "KOTTAYAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a1a1e621-2196-4448-99d2-e1644564720a",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15287036",
+        "data": {
+          "code": 15287036,
+          "name": "MARANGATTUPPALLI",
+          "active": true,
+          "district": "KOTTAYAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "76499281-b524-435e-ac99-aebc6ceabd37",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15287035",
+        "data": {
+          "code": 15287035,
+          "name": "MANIMALA",
+          "active": true,
+          "district": "KOTTAYAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "cd8148b9-ee8a-4d42-a2e1-68a718436a51",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15287033",
+        "data": {
+          "code": 15287033,
+          "name": "MANARKAD",
+          "active": true,
+          "district": "KOTTAYAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "591a1478-b939-4cd4-bb79-35e0524a6594",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15287032",
+        "data": {
+          "code": 15287032,
+          "name": "KIDANGOOR",
+          "active": true,
+          "district": "KOTTAYAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "beab5b8b-561d-4167-a035-109b524999ab",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15287030",
+        "data": {
+          "code": 15287030,
+          "name": "KUMARAKOM",
+          "active": true,
+          "district": "KOTTAYAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "2b554117-3817-49ff-8df4-99af04044943",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15287029",
+        "data": {
+          "code": 15287029,
+          "name": "KURAVILANGADU",
+          "active": true,
+          "district": "KOTTAYAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "6268753e-e346-402f-bcb7-18d1b8ee353c",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15287028",
+        "data": {
+          "code": 15287028,
+          "name": "KOTTAYAM WEST",
+          "active": true,
+          "district": "KOTTAYAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "7c14d278-fd1b-462f-a280-ce09f87d5294",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15287027",
+        "data": {
+          "code": 15287027,
+          "name": "KOTTAYAM EAST",
+          "active": true,
+          "district": "KOTTAYAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "18ce306a-1265-4822-89cf-644eef8d538a",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15287026",
+        "data": {
+          "code": 15287026,
+          "name": "KARUKACHAL",
+          "active": true,
+          "district": "KOTTAYAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "0034807e-7b4c-4d79-8970-c77e9c7a91a9",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15287025",
+        "data": {
+          "code": 15287025,
+          "name": "KANJIRAPALLY",
+          "active": true,
+          "district": "KOTTAYAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "cb3b77c4-9138-496d-b3b7-f87b69468501",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15287024",
+        "data": {
+          "code": 15287024,
+          "name": "KADUTHURUTHI",
+          "active": true,
+          "district": "KOTTAYAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "373193ae-37ab-4f3f-872e-30e0bf05a30d",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15287019",
+        "data": {
+          "code": 15287019,
+          "name": "ETTUMANOOR",
+          "active": true,
+          "district": "KOTTAYAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "5e542fb0-d863-4720-ad5d-0a19f833fcc9",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15287018",
+        "data": {
+          "code": 15287018,
+          "name": "ERUMELI",
+          "active": true,
+          "district": "KOTTAYAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "5540f5ce-6943-4efb-8c39-5f593d97b3ce",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15287017",
+        "data": {
+          "code": 15287017,
+          "name": "ERATTUPETTAH",
+          "active": true,
+          "district": "KOTTAYAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "36b6f0dd-99b9-426c-b191-139f23a0d8b7",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15287010",
+        "data": {
+          "code": 15287010,
+          "name": "CHINGAVANAM",
+          "active": true,
+          "district": "KOTTAYAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "0d8b1979-6955-4e9a-98cb-1ac4ed4d276f",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15287009",
+        "data": {
+          "code": 15287009,
+          "name": "CHANGANASSERRY",
+          "active": true,
+          "district": "KOTTAYAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "ffbf7c76-7d8d-4445-b5f2-9b1ec3a59143",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15287001",
+        "data": {
+          "code": 15287001,
+          "name": "AYARKUNNAM",
+          "active": true,
+          "district": "KOTTAYAM"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a0bacd2e-dddd-436f-9397-925de1469038",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286066",
+        "data": {
+          "code": 15286066,
+          "name": "EDATHALA",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "bef9fdd8-6a20-441b-8d5e-c90f8435c174",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286065",
+        "data": {
+          "code": 15286065,
+          "name": "VAZHAKULAM",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "08ecde94-88ef-4db0-8ece-c93cd4aeb9bb",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286064",
+        "data": {
+          "code": 15286064,
+          "name": "THADIYATTAPARA MBA",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "4287504f-e910-40ee-8600-3efcb36f7ff1",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286062",
+        "data": {
+          "code": 15286062,
+          "name": "AYYAMPUZHA",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "bc9d9457-c02a-406e-9095-fe66caca67ff",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286060",
+        "data": {
+          "code": 15286060,
+          "name": "VARAPUZHA",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "58166e9a-4f5b-40a5-bc1e-6b41b7e0a41d",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286058",
+        "data": {
+          "code": 15286058,
+          "name": "VADAKKEKARA",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "749b0836-c910-433d-9d7b-bfb849de2766",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286050",
+        "data": {
+          "code": 15286050,
+          "name": "RAMAMANGALAM",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "e0903524-1500-4aae-96ef-cc3c575f707b",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286047",
+        "data": {
+          "code": 15286047,
+          "name": "PUTHANVELIKARA",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "79fe1e1f-5a66-46fe-bf5c-a5787ab5d2c3",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286045",
+        "data": {
+          "code": 15286045,
+          "name": "PIRAVAM",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "bd63a0d8-eb8b-4ee0-b2b8-3167e37d414d",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286044",
+        "data": {
+          "code": 15286044,
+          "name": "PUTHENCRUZE",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "829608fa-48a9-44dd-b570-165283df8e68",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286043",
+        "data": {
+          "code": 15286043,
+          "name": "POTHANIKAD",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "3688ed74-48aa-4bdd-b981-1234b743cad0",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286042",
+        "data": {
+          "code": 15286042,
+          "name": "PERUMBAVOOR",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "4d379c8f-81ae-4fa9-ac43-aa2b28a80601",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286040",
+        "data": {
+          "code": 15286040,
+          "name": "OONNUKAL",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "ea1a5864-7507-4618-aa33-d6ce16e64303",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286038",
+        "data": {
+          "code": 15286038,
+          "name": "NORTH PARUR",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "1e5d1bd2-b13f-4f04-9659-e5a57ce9b69b",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286037",
+        "data": {
+          "code": 15286037,
+          "name": "NARAKAL",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "e4b43046-7e74-42a1-9a77-2cc7caf698c3",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286036",
+        "data": {
+          "code": 15286036,
+          "name": "NEDUMBASSERY AIRPORT",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "3ebea5a9-6bcb-4730-8cc2-5ffc00379ce5",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286033",
+        "data": {
+          "code": 15286033,
+          "name": "MUNAMBAM",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "2e9685f0-c1a7-4c20-955e-56c54ff26e43",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286032",
+        "data": {
+          "code": 15286032,
+          "name": "MULANTHURUTHY",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "c6eecd85-14b5-446a-aee2-7463770b0788",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286031",
+        "data": {
+          "code": 15286031,
+          "name": "MOOVATTUPUZHA",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "503eb9a0-6903-44d9-b7ec-af19f99c6479",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286030",
+        "data": {
+          "code": 15286030,
+          "name": "KURUPPANPADI",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "b1e991d0-7c73-4606-80d3-a7d126374b36",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286029",
+        "data": {
+          "code": 15286029,
+          "name": "KUNNATHUNADU",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "1c290a8d-a9aa-4369-a492-3473d00ddfbf",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286028",
+        "data": {
+          "code": 15286028,
+          "name": "KOOTHATTUKULAM",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "bacdd54b-e793-4a84-b2b8-a6a612aeeeab",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286027",
+        "data": {
+          "code": 15286027,
+          "name": "KOTHAMANGALAM",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "462ee239-4a6f-4b81-905d-839642127666",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286026",
+        "data": {
+          "code": 15286026,
+          "name": "KODANADU",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "3d8e231d-f253-466a-a535-5b7760905fc8",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286025",
+        "data": {
+          "code": 15286025,
+          "name": "KOTTAPPADY",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "35db31c0-ea9f-4646-abee-703bf2f53b8c",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286024",
+        "data": {
+          "code": 15286024,
+          "name": "KALADY",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "e8efb9eb-8c97-4e4e-943b-eb5f105201b0",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286023",
+        "data": {
+          "code": 15286023,
+          "name": "KALLOORKAD",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "2fff676d-8cb7-48f8-8033-67aca8babce7",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286011",
+        "data": {
+          "code": 15286011,
+          "name": "CHOTTANIKKARA",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "7e94d16f-fe98-40a2-bf15-37f0b8afd600",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286010",
+        "data": {
+          "code": 15286010,
+          "name": "CHENGAMANAD",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "9b693834-4093-40b7-bf4d-ba080b07ca41",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286007",
+        "data": {
+          "code": 15286007,
+          "name": "KUTTAMPUZHA",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "86dac17a-6397-47be-b89b-f0f58e0fd776",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286005",
+        "data": {
+          "code": 15286005,
+          "name": "BINANI PURAM",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "4ab5b351-602d-4670-adcb-1cb04b90c179",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286003",
+        "data": {
+          "code": 15286003,
+          "name": "ALUVA WEST",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "2fb28ac7-d7d9-47cc-bdd4-1fd489ce5f13",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286002",
+        "data": {
+          "code": 15286002,
+          "name": "ANKAMALY",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "b9a8c405-8da8-47c2-962b-e1fd2bafb541",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15286001",
+        "data": {
+          "code": 15286001,
+          "name": "ALUWA",
+          "active": true,
+          "district": "ERNAKULAM RURAL"
+        },
+        "isActive": true
+      },
+      {
+        "id": "6da11aa2-8ba0-4764-9cea-37f9c9e38f47",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15285056",
+        "data": {
+          "code": 15285056,
+          "name": "INFOPARK",
+          "active": true,
+          "district": "ERNAKULAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "f5757a8b-1e59-4b71-8e4d-efdc56e329fc",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15285055",
+        "data": {
+          "code": 15285055,
+          "name": "ERNAKULAM CITY TRAFFIC EAST",
+          "active": true,
+          "district": "ERNAKULAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "572d8061-7b35-4de6-8233-47126b7a7f16",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15285049",
+        "data": {
+          "code": 15285049,
+          "name": "VANITHA",
+          "active": true,
+          "district": "ERNAKULAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "05c000f4-8dd3-4f59-b053-88fe2bf521c6",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15285048",
+        "data": {
+          "code": 15285048,
+          "name": "UDAYAMPEROOR",
+          "active": true,
+          "district": "ERNAKULAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "0c611218-8157-4305-83d4-897a1a510025",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15285047",
+        "data": {
+          "code": 15285047,
+          "name": "THRIKKAKARA",
+          "active": true,
+          "district": "ERNAKULAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "f87385c9-1dfa-46d2-a91d-98155fa128c9",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15285045",
+        "data": {
+          "code": 15285045,
+          "name": "THOPPUMPADY",
+          "active": true,
+          "district": "ERNAKULAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "f49e3f79-487c-42ae-b835-f4d16b8d900a",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15285042",
+        "data": {
+          "code": 15285042,
+          "name": "PANANGAD",
+          "active": true,
+          "district": "ERNAKULAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "e8154737-d2d0-4eb1-9ec0-770c011c78b8",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15285041",
+        "data": {
+          "code": 15285041,
+          "name": "PALARIVATTOM",
+          "active": true,
+          "district": "ERNAKULAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "d8afb942-771a-4356-96dc-e6132c8b746a",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15285040",
+        "data": {
+          "code": 15285040,
+          "name": "MULAVUKAD",
+          "active": true,
+          "district": "ERNAKULAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "2175c332-7e67-46cc-ba9f-106dff5b7000",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15285037",
+        "data": {
+          "code": 15285037,
+          "name": "MATTANCHERRY",
+          "active": true,
+          "district": "ERNAKULAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "cf75b927-d7aa-4189-8f1f-6b49f8597341",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15285033",
+        "data": {
+          "code": 15285033,
+          "name": "KANNAMALY",
+          "active": true,
+          "district": "ERNAKULAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "4e3c4100-81fa-4520-97cc-cfbca0ec4671",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15285031",
+        "data": {
+          "code": 15285031,
+          "name": "KALAMASSERRY",
+          "active": true,
+          "district": "ERNAKULAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "5cc6c9f0-638b-4243-8860-4f3191fe014c",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15285027",
+        "data": {
+          "code": 15285027,
+          "name": "HILL PALACE",
+          "active": true,
+          "district": "ERNAKULAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a0c432e5-32e0-42a8-bb1b-4375fb780bbc",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15285024",
+        "data": {
+          "code": 15285024,
+          "name": "HARBOUR CRIME",
+          "active": true,
+          "district": "ERNAKULAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "c72f2729-1abd-42f7-9512-d16027686066",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15285021",
+        "data": {
+          "code": 15285021,
+          "name": "KADAVANTHRA",
+          "active": true,
+          "district": "ERNAKULAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "561a055d-7d44-4497-bb57-976df3180aeb",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15285019",
+        "data": {
+          "code": 15285019,
+          "name": "FORT KOCHI COASTAL PS",
+          "active": true,
+          "district": "ERNAKULAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "4f906e11-76f3-41e0-8dd5-454c08e9e5b2",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15285018",
+        "data": {
+          "code": 15285018,
+          "name": "FORT COCHIN",
+          "active": true,
+          "district": "ERNAKULAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "2e7e07ee-ef6f-4c12-9345-eb9f6041574c",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15285017",
+        "data": {
+          "code": 15285017,
+          "name": "ERNAKULAM CITY TRAFFIC WEST",
+          "active": true,
+          "district": "ERNAKULAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "fe479b65-2493-4b34-b622-7299a22bcdd9",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15285015",
+        "data": {
+          "code": 15285015,
+          "name": "ERNAKULAM TOWN SOUTH",
+          "active": true,
+          "district": "ERNAKULAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "66da487e-bce6-4329-b1de-efd543edac30",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15285014",
+        "data": {
+          "code": 15285014,
+          "name": "ERNAKULAM TOWN NORTH",
+          "active": true,
+          "district": "ERNAKULAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "4ee151de-f975-43c1-9c72-f43c11142b3c",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15285013",
+        "data": {
+          "code": 15285013,
+          "name": "ERNAKULAM CENTRAL",
+          "active": true,
+          "district": "ERNAKULAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "b00a6f6c-3e39-438f-8123-62532601c9e9",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15285012",
+        "data": {
+          "code": 15285012,
+          "name": "ELOOR",
+          "active": true,
+          "district": "ERNAKULAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a8add583-dd91-473b-b269-423c986094eb",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15285007",
+        "data": {
+          "code": 15285007,
+          "name": "PALLURUTHY KASABA",
+          "active": true,
+          "district": "ERNAKULAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "32e63ab9-3d66-407f-9646-da8d717e08d1",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15285005",
+        "data": {
+          "code": 15285005,
+          "name": "CHERANALLOOR",
+          "active": true,
+          "district": "ERNAKULAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "fd11f645-c08d-4e04-83bf-91397a804d30",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15285003",
+        "data": {
+          "code": 15285003,
+          "name": "AMBALAMEDU",
+          "active": true,
+          "district": "ERNAKULAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "efe0da9c-6d33-4c87-bd1b-f9fd49707522",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15285002",
+        "data": {
+          "code": 15285002,
+          "name": "ELAMAKKARA PS",
+          "active": true,
+          "district": "ERNAKULAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "89ae0987-6570-4d89-b3c3-0e8e005b0e9e",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15285001",
+        "data": {
+          "code": 15285001,
+          "name": "MARADU PS",
+          "active": true,
+          "district": "ERNAKULAM CITY"
+        },
+        "isActive": true
+      },
+      {
+        "id": "752bbe04-3fc6-47e8-a6eb-b5b087c710c6",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15284002",
+        "data": {
+          "code": 15284002,
+          "name": "CYBER CRIME PS",
+          "active": true,
+          "district": "C I D"
+        },
+        "isActive": true
+      },
+      {
+        "id": "9a3a973f-8724-449f-a633-f266631b1205",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15284001",
+        "data": {
+          "code": 15284001,
+          "name": "CBCID PS",
+          "active": true,
+          "district": "C I D"
+        },
+        "isActive": true
+      },
+      {
+        "id": "9e40eba6-c30f-40f9-b039-976fd8408137",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283077",
+        "data": {
+          "code": 15283077,
+          "name": "Cherupuzha",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "4ef0bc2a-ccdc-4c38-9087-e4c960e4b8fc",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283076",
+        "data": {
+          "code": 15283076,
+          "name": "MUZHAKKUNNU",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "99788045-30e7-4ab2-8d14-19bc9384e92c",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283075",
+        "data": {
+          "code": 15283075,
+          "name": "KANNUR VANITHA",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "8b94a287-b20f-4286-90df-5e6b33846866",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283074",
+        "data": {
+          "code": 15283074,
+          "name": "ULIKKAL",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "4dc442a6-de9c-41b2-a8ed-621089da1d68",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283071",
+        "data": {
+          "code": 15283071,
+          "name": "TELLICHERRY",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "603fca4c-012f-418d-a16c-e21a80c32a6b",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283070",
+        "data": {
+          "code": 15283070,
+          "name": "THALIPARAMBA",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "4485b1ae-38ba-4029-a763-0e15e6308492",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283065",
+        "data": {
+          "code": 15283065,
+          "name": "SREEKANDAPURAM",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "b2c37252-28b2-40f6-9add-f53e65cb3bde",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283062",
+        "data": {
+          "code": 15283062,
+          "name": "PARIYARAM MEDICAL COLLEGE",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "1940a02c-d727-4a6f-8dc5-05210ec50907",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283061",
+        "data": {
+          "code": 15283061,
+          "name": "PERINGOME",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "0412ea92-af96-48b8-b3f7-3eccd8cbcf6d",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283060",
+        "data": {
+          "code": 15283060,
+          "name": "PERAVUR",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "16b84690-07e3-4417-8e07-685e553c96a9",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283059",
+        "data": {
+          "code": 15283059,
+          "name": "PAZHAYANGADI",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "f229346b-763b-4753-9b69-2eb4236bb515",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283058",
+        "data": {
+          "code": 15283058,
+          "name": "PAYYANNUR",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "1163fb4a-7311-4601-aba1-c77f36a4990f",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283057",
+        "data": {
+          "code": 15283057,
+          "name": "PANOOR",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "07242054-de34-4d33-bea9-bdc1f4321e6b",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283056",
+        "data": {
+          "code": 15283056,
+          "name": "PAYYAVOOR",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "c1d84ef7-013b-4bd1-9e28-0df558034177",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283050",
+        "data": {
+          "code": 15283050,
+          "name": "NEW MAHE",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "f09af803-fb67-4b2d-a6bc-f33cecb64328",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283048",
+        "data": {
+          "code": 15283048,
+          "name": "MATTANNORE",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "8ce902be-92d5-4415-9fbb-e97fa44cae77",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283046",
+        "data": {
+          "code": 15283046,
+          "name": "MAYYIL",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "08c340f2-2185-49ee-85c5-577b5b864a22",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283045",
+        "data": {
+          "code": 15283045,
+          "name": "MALUR",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "61497d72-d6fd-4e18-aa72-9353439d1196",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283044",
+        "data": {
+          "code": 15283044,
+          "name": "KUDIYANMALA",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "e8db3c7c-db1c-4533-89e4-cd5c8a72df17",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283042",
+        "data": {
+          "code": 15283042,
+          "name": "KELAKOM",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "311ce46d-e14e-40f2-8de7-69864289caa3",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283041",
+        "data": {
+          "code": 15283041,
+          "name": "KUTHUPARAMBA",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "69180ffa-ec32-4073-9baf-012ace6f75b4",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283039",
+        "data": {
+          "code": 15283039,
+          "name": "KULAVALLUR",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "156c7d4c-6044-43f7-8c2a-ab738f444e19",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283038",
+        "data": {
+          "code": 15283038,
+          "name": "KATHIROOR",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "8ee1f711-ae53-4b68-834d-9b4e01436663",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283037",
+        "data": {
+          "code": 15283037,
+          "name": "KANNAPURAM",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "7bde7543-6c19-4d0f-b444-629b01d28abe",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283036",
+        "data": {
+          "code": 15283036,
+          "name": "KARIKOTTAKARI",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "c8ac2ad2-6724-4005-8ef5-8d89ef851bc3",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283035",
+        "data": {
+          "code": 15283035,
+          "name": "KANNAVAM",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "3c9978ac-d9e8-41bd-948e-9be3bb6f786e",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283034",
+        "data": {
+          "code": 15283034,
+          "name": "IRITTY",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "8ceb10a8-b7fe-4fc8-a61c-a1f85d453f21",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283033",
+        "data": {
+          "code": 15283033,
+          "name": "IRIKKUR",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a5abc277-e73c-4646-adb4-69d1ef24dca9",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283024",
+        "data": {
+          "code": 15283024,
+          "name": "EDAKKAD",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "6dc25f6f-5ddb-4bdc-86bb-6a08f194a91a",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283021",
+        "data": {
+          "code": 15283021,
+          "name": "DHARMADOM",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a141a38a-910f-491a-9417-e2e216973573",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283018",
+        "data": {
+          "code": 15283018,
+          "name": "CHAKKARAKKALLU",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "b31f29bd-1348-46d8-a43a-61bf57cea1fb",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283017",
+        "data": {
+          "code": 15283017,
+          "name": "CHOKLI",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "b7137093-9aef-4375-8d35-99e97b994a8e",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283016",
+        "data": {
+          "code": 15283016,
+          "name": "KANNUR TRAFFIC",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "5c367e8c-cc9d-4bce-ae0a-db5f536ae8b1",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283014",
+        "data": {
+          "code": 15283014,
+          "name": "KANNUR TOWN",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "f9b08961-8a1a-432d-ba4d-29160d44a89d",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283013",
+        "data": {
+          "code": 15283013,
+          "name": "KANNUR CITY",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "e6531a73-1e6d-4dcd-b899-e354db67eb4c",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283010",
+        "data": {
+          "code": 15283010,
+          "name": "BALIAPATTAM",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "4c954cf2-8467-44ae-a981-b13f1acabffc",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283005",
+        "data": {
+          "code": 15283005,
+          "name": "ARALAM",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a34b90d3-5810-42b0-8257-46bf5c8b6872",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283003",
+        "data": {
+          "code": 15283003,
+          "name": "AZHEEKAL COASTAL PS",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "47aac02a-9747-4de2-aec3-8a9c09dbbe17",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15283002",
+        "data": {
+          "code": 15283002,
+          "name": "ALACODE",
+          "active": true,
+          "district": "KANNUR"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a9e4a048-6b6a-44f5-9d36-9153c9252b3b",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281066",
+        "data": {
+          "code": 15281066,
+          "name": "VANITHA PS",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "bd889668-7424-46a1-ab33-972e54d02546",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281065",
+        "data": {
+          "code": 15281065,
+          "name": "ARTHUNGAL",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "0c4197c5-cba6-41a5-821a-5c6f5380f415",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281063",
+        "data": {
+          "code": 15281063,
+          "name": "VEEYAPURAM",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "748f463d-71b3-40c2-bdcc-3d535d53a50c",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281062",
+        "data": {
+          "code": 15281062,
+          "name": "VENMANI",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "634b1123-c097-40a6-b95b-bbdf9704498e",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281061",
+        "data": {
+          "code": 15281061,
+          "name": "PATTANAKADU",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "d1d5d704-02c0-4e0d-85c8-ee7c321d03c3",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281060",
+        "data": {
+          "code": 15281060,
+          "name": "VALLI KUNNAM",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "ddc5fdc3-e942-4460-bba3-eb7f4d87dbc9",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281058",
+        "data": {
+          "code": 15281058,
+          "name": "THOTTAPPALLY",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "4fa70856-43ff-4e14-a528-cf3134afec91",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281057",
+        "data": {
+          "code": 15281057,
+          "name": "THRIKUNNAPUZHA",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "64fe7c15-e3b1-48d7-aea2-4108b6e86c9c",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281056",
+        "data": {
+          "code": 15281056,
+          "name": "ARROOR",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a49b76da-6037-4576-8c4e-a4919fc7567d",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281045",
+        "data": {
+          "code": 15281045,
+          "name": "RAMANKARI",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "2e9e0bd1-0f10-47da-a525-76d464bc8a52",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281040",
+        "data": {
+          "code": 15281040,
+          "name": "PUNNAPRA",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "c1996677-5fba-410b-bdee-779527bd8836",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281039",
+        "data": {
+          "code": 15281039,
+          "name": "PULINKUNNU",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "7dd87cc2-4d1e-44dc-95bc-cee3a3866ff4",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281038",
+        "data": {
+          "code": 15281038,
+          "name": "POOCHAKAL",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "59189749-3af5-4b8a-9882-da983b073f3c",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281035",
+        "data": {
+          "code": 15281035,
+          "name": "MANNANCHERY",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "615b8694-618d-46f8-a7c7-9f921fb039ab",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281034",
+        "data": {
+          "code": 15281034,
+          "name": "MARARIKULAM",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "d792773c-3628-463c-bf7a-9d11595b6a72",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281033",
+        "data": {
+          "code": 15281033,
+          "name": "MUHAMMA",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "13e65c76-db01-4306-bc9e-04cb5106e9e5",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281032",
+        "data": {
+          "code": 15281032,
+          "name": "MAVELIKKARA",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "6781dacc-b673-4fc9-9510-33e73719fba3",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281031",
+        "data": {
+          "code": 15281031,
+          "name": "MANNAR",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "696cb59b-266a-4da3-8fed-45ddacbf8c49",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281029",
+        "data": {
+          "code": 15281029,
+          "name": "KURATHIKADU",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "fa772435-2831-4af4-9c8c-af5663f0efb5",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281028",
+        "data": {
+          "code": 15281028,
+          "name": "KAINADI",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "918f68d2-c313-4ed9-b36c-7236dffaf9fa",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281026",
+        "data": {
+          "code": 15281026,
+          "name": "KUTHIATHODE",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "6ee6b8b8-aa48-46af-b901-c95c23536ba7",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281024",
+        "data": {
+          "code": 15281024,
+          "name": "KAYAMKULAM",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "c2bdc61f-a32c-4abb-a185-c7ec07f0f0c7",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281023",
+        "data": {
+          "code": 15281023,
+          "name": "KANAKAKUNNU",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "00cd9c5b-efc6-46e9-b5d6-90f1fc5d2475",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281021",
+        "data": {
+          "code": 15281021,
+          "name": "KAREELAKULANGARA",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a76c71a1-87e3-48c2-889e-1a2f7b789e9c",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281019",
+        "data": {
+          "code": 15281019,
+          "name": "HARIPPAD",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "c2254b45-352c-49be-bf94-afe018e814a9",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281016",
+        "data": {
+          "code": 15281016,
+          "name": "NOORANADU",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "fe8322af-dcde-4fd5-a503-3c6f1bdd8240",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281015",
+        "data": {
+          "code": 15281015,
+          "name": "EDATHWA",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "68e21cf8-dd24-4d8b-ae17-b5a9573e9eec",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281010",
+        "data": {
+          "code": 15281010,
+          "name": "CHERTALA",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "9278e2b9-426f-449a-9712-71da1493fabf",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281009",
+        "data": {
+          "code": 15281009,
+          "name": "CHENGANNUR",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "c83e5855-ff46-441d-8626-90a5984c2c15",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281005",
+        "data": {
+          "code": 15281005,
+          "name": "TRAFFIC PS ALAPPUZHA",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "4ac7992b-2d83-491c-a804-eb4b3a045afb",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281004",
+        "data": {
+          "code": 15281004,
+          "name": "NEDUMUDI",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a395a333-2ba7-4394-aa99-9721b3db0264",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281003",
+        "data": {
+          "code": 15281003,
+          "name": "AMBALAPUZHA",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "7635482d-9208-4f09-8ebf-d5a6b820e982",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281002",
+        "data": {
+          "code": 15281002,
+          "name": "ALAPPUZHA SOUTH",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "82255d87-1b2e-4e02-b4a0-d9e188cef6c5",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281001",
+        "data": {
+          "code": 15281001,
+          "name": "ALAPPUZHA NORTH",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true
+      },
+      {
+        "id": "87460b2d-3e15-4346-b17c-1288440ada40",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "9",
+        "data": {
+          "id": 9,
+          "code": "ANCHALUMMOODU",
+          "name": "Anchalummoodu Police Station",
+          "isActive": true
+        },
+        "isActive": false
+      },
+      {
+        "id": "75987be3-0cb5-4785-ab5e-f190fe7ebf5f",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "8",
+        "data": {
+          "id": 8,
+          "code": "ERAVIPURAM",
+          "name": "Eravipuram Police Station",
+          "isActive": true
+        },
+        "isActive": false
+      },
+      {
+        "id": "67c7f994-8461-4f5c-a07f-35163cc74f6e",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "7",
+        "data": {
+          "id": 7,
+          "code": "KILIKOLLOOR",
+          "name": "Kilikolloor Police Station",
+          "isActive": true
+        },
+        "isActive": false
+      },
+      {
+        "id": "4903df7c-890f-4b3e-b4f7-1e5d2cc1fb6e",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "6",
+        "data": {
+          "id": 6,
+          "code": "KOLLAM_EAST",
+          "name": "Kollam East Police Station",
+          "isActive": true
+        },
+        "isActive": false
+      },
+      {
+        "id": "61c80a49-179a-4512-9e41-9195af485aae",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "5",
+        "data": {
+          "id": 5,
+          "code": "KOLLAM_WEST",
+          "name": "Kollam West Police Station",
+          "isActive": true
+        },
+        "isActive": false
+      },
+      {
+        "id": "7fbbdb49-6cd1-4275-ab04-f1dc7ef63993",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "4",
+        "data": {
+          "id": 4,
+          "code": "KOTTIYAM",
+          "name": "Kottiyam Police Station",
+          "isActive": true
+        },
+        "isActive": false
+      },
+      {
+        "id": "e3728bc1-3f85-4077-b74b-cfc9bc33aa55",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "3",
+        "data": {
+          "id": 3,
+          "code": "KUNDARA",
+          "name": "Kundara Police Station",
+          "isActive": true
+        },
+        "isActive": false
+      },
+      {
+        "id": "0cd95802-86ed-4551-8431-553d6563f8f8",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "2",
+        "data": {
+          "id": 2,
+          "code": "PALLITHOTTAM",
+          "name": "Pallithottam Police Station",
+          "isActive": true
+        },
+        "isActive": false
+      },
+      {
+        "id": "984d30c2-19c0-420d-9cae-ace7eff4b8b1",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "1",
+        "data": {
+          "id": 1,
+          "code": "SAKTHIKULANGARA",
+          "name": "Sakthikulangara Police Station",
+          "isActive": true
+        },
+        "isActive": false
+      }
+    ]
   }
 ]
