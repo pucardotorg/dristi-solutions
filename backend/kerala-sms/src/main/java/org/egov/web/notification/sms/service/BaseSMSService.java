@@ -5,6 +5,7 @@ import com.jayway.jsonpath.*;
 import lombok.extern.slf4j.*;
 import org.apache.http.conn.ssl.*;
 import org.apache.http.impl.client.*;
+import org.egov.web.notification.sms.Util.MaskUtil;
 import org.egov.web.notification.sms.config.*;
 import org.egov.web.notification.sms.models.*;
 import org.springframework.asm.*;
@@ -58,18 +59,19 @@ abstract public class BaseSMSService implements SMSService, SMSBodyBuilder {
 
     @Override
     public void sendSMS(Sms sms) {
+        MaskUtil maskUtil = new MaskUtil();
         if (!sms.isValid()) {
-            log.error(String.format("Sms %s is not valid", sms));
+            log.error("operation = sendSms, result = FAILURE, Sms to {} is not valid", maskUtil.maskMobile(sms.getMobileNumber()));
             return;
         }
 
         if (smsProperties.isNumberBlacklisted(sms.getMobileNumber())) {
-            log.error(String.format("Sms to %s is blacklisted", sms.getMobileNumber()));
+            log.error("operation = sendSms, result = FAILURE, Sms to {} is blacklisted", maskUtil.maskMobile(sms.getMobileNumber()));
             return;
         }
 
         if (!smsProperties.isNumberWhitelisted(sms.getMobileNumber())) {
-            log.error(String.format("Sms to %s is not in whitelist", sms.getMobileNumber()));
+            log.error("operation = sendSms, result = FAILURE, Sms to {} is not in whitelist", maskUtil.maskMobile(sms.getMobileNumber()));
             return;
         }
 

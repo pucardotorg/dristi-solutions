@@ -1,6 +1,7 @@
 package org.egov.web.notification.sms.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
+import org.egov.web.notification.sms.Util.MaskUtil;
 import org.egov.web.notification.sms.config.SMSProperties;
 import org.egov.web.notification.sms.models.Category;
 import org.egov.web.notification.sms.models.Sms;
@@ -54,7 +55,8 @@ public class CdacSmsServiceImpl extends BaseSMSService {
             }
 
         } catch (RestClientException e) {
-            log.error("Error occurred while sending SMS to " + sms.getMobileNumber(), e);
+            MaskUtil maskUtil = new MaskUtil();
+            log.error("operation = submitToExternalSmsService, result = FAILURE, Error occurred while sending SMS to {}", maskUtil.maskMobile(sms.getMobileNumber()), e);
             throw e;
         }
     }
