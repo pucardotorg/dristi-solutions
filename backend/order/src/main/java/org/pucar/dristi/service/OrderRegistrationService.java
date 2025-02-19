@@ -260,7 +260,7 @@ public class OrderRegistrationService {
 
         String tenantId = order.getTenantId();
         String orderNumber = order.getOrderNumber();
-        Workflow workflow = order.getWorkflow();
+        WorkflowObject workflow = order.getWorkflow();
 
         String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, orderNumber, config.getOrderBusinessServiceName(),
                     workflow, config.getOrderBusinessName());

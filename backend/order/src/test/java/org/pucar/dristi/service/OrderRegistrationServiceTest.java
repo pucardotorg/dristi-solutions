@@ -61,7 +61,7 @@ import static org.mockito.Mockito.*;
 
         doNothing().when(validator).validateOrderRegistration(any(OrderRequest.class));
         doNothing().when(enrichmentUtil).enrichOrderRegistration(any(OrderRequest.class));
-        when(workflowUtil.updateWorkflowStatus(any(RequestInfo.class),anyString(),anyString(),anyString(),any(Workflow.class),anyString())).thenReturn("APPROVED");
+        when(workflowUtil.updateWorkflowStatus(any(RequestInfo.class),anyString(),anyString(),anyString(),any(WorkflowObject.class),anyString())).thenReturn("APPROVED");
         doNothing().when(producer).push(anyString(), any(OrderRequest.class));
 
         Order result = orderRegistrationService.createOrder(orderRequest);
@@ -119,7 +119,7 @@ import static org.mockito.Mockito.*;
      void testUpdateOrder_success() {
         OrderRequest orderRequest = new OrderRequest();
         Order order = new Order();
-        order.setWorkflow(new Workflow());
+        order.setWorkflow(new WorkflowObject());
         order.setOrderCategory("other");
         order.setOrderType("other");
         orderRequest.setOrder(order);

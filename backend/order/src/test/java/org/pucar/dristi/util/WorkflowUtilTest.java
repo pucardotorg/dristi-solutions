@@ -18,6 +18,7 @@ import org.egov.common.contract.workflow.ProcessInstance;
 import org.egov.common.contract.workflow.ProcessInstanceResponse;
 import org.egov.common.contract.workflow.State;
 import org.egov.tracer.model.CustomException;
+import org.pucar.dristi.web.models.WorkflowObject;
 
 import java.util.*;
 
@@ -44,14 +45,14 @@ public class WorkflowUtilTest {
     private RequestInfo requestInfo;
     private String tenantId;
     private String businessServiceCode;
-    private Workflow workflow;
+    private WorkflowObject workflow = new WorkflowObject();
 
     @BeforeEach
     public void setUp() {
         requestInfo = new RequestInfo();
         tenantId = "tenantId";
         businessServiceCode = "businessServiceCode";
-        workflow = Workflow.builder().action("APPROVE").build();
+        workflow.setAction("APPROVE");
     }
 
     @Test
