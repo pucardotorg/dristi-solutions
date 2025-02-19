@@ -1448,7 +1448,6 @@ const GenerateOrders = () => {
       return await Promise.all(promises);
     }
     if (order?.orderType === "INITIATING_RESCHEDULING_OF_HEARING_DATE") {
-      debugger;
       create = true;
       status = "OPTOUT";
       assignees = [
@@ -2368,8 +2367,6 @@ const GenerateOrders = () => {
   };
 
   const handleIssueOrder = async () => {
-    debugger;
-
     try {
       setLoader(true);
       let newhearingId = "";
@@ -2667,8 +2664,6 @@ const GenerateOrders = () => {
   };
 
   const handleReviewOrderClick = () => {
-    debugger;
-
     if (
       referenceId &&
       "ACCEPTANCE_REJECTION_DCA" === orderType &&
