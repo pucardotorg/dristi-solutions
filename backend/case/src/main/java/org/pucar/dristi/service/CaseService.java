@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
@@ -38,6 +39,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
@@ -211,6 +214,7 @@ public class CaseService {
                 workflowService.updateWorkflowStatus(caseRequest);
             }
 
+            checkItsLastResponse(caseRequest);
 
             if (CASE_ADMIT_STATUS.equals(caseRequest.getCases().getStatus())) {
                 enrichmentUtil.enrichCourtCaseNumber(caseRequest);
@@ -323,6 +327,48 @@ public class CaseService {
         }
         log.info("Method=checkItsLastSign, Result= SUCCESS, Not last e-sign for case {}", caseRequest.getCases().getId());
         return false;
+    }
+
+    private void checkItsLastResponse(CaseRequest caseRequest) {
+        if (RESPOND.equalsIgnoreCase(caseRequest.getCases().getWorkflow().getAction())) {
+
+            log.info("Method=checkItsLastResponse, Result= IN_ProgressChecking if its last response by accused advocates {}", caseRequest.getCases().getId());
+
+            AtomicReference<Boolean> lastSubmittedResponse = new AtomicReference<>(true);
+
+            CourtCase cases = caseRequest.getCases();
+
+            Optional.ofNullable(cases.getLitigants()).orElse(Collections.emptyList()).forEach(party -> {
+                        if (party.getIsActive() && party.getIsResponseRequired()) {
+                            AtomicBoolean hasThisAccusedSubmittedResponse = new AtomicBoolean(false);
+
+                            Optional.ofNullable(party.getDocuments()).orElse(Collections.emptyList()).forEach(document -> {
+                                ObjectNode additionalDetails = objectMapper.convertValue(document.getAdditionalDetails(), ObjectNode.class);
+
+                                if (additionalDetails.has(FILE_TYPE)) {
+                                    String fileType = additionalDetails.get(FILE_TYPE).asText();
+                                    if (StringUtils.equalsIgnoreCase(RESPONDENT_RESPONSE, fileType)) {
+                                        hasThisAccusedSubmittedResponse.set(true);
+                                    }
+                                }
+                            });
+
+                            //TO DO--> Optimize for not checking with all the litigants once hasThisAccusedSubmittedResponse is false for a litigant
+                            if (!hasThisAccusedSubmittedResponse.get())
+                                lastSubmittedResponse.set(false);
+                        }
+                    }
+            );
+
+
+            if (lastSubmittedResponse.get()) {
+                log.info("Last response submitted by accused for case {}", caseRequest.getCases().getId());
+                caseRequest.getRequestInfo().getUserInfo().getRoles().add(Role.builder().id(123L).code(SYSTEM).name(SYSTEM).tenantId(caseRequest.getCases().getTenantId()).build());
+                caseRequest.getCases().getWorkflow().setAction(RESPONSE_COMPLETE);
+                log.info("Updating workflow status for case {} in last response submission", caseRequest.getCases().getId());
+                workflowService.updateWorkflowStatus(caseRequest);
+            }
+        }
     }
 
     public CourtCase editCase(CaseRequest caseRequest) {
@@ -661,7 +707,8 @@ public class CaseService {
     }
 
 
-    private void verifyAndEnrichLitigant(JoinCaseRequest joinCaseRequest, CourtCase courtCase, CourtCase caseObj, AuditDetails auditDetails) {
+    private void verifyAndEnrichLitigant(JoinCaseRequest joinCaseRequest, CourtCase courtCase, CourtCase
+            caseObj, AuditDetails auditDetails) {
         log.info("enriching litigants");
         enrichLitigantsOnCreateAndUpdate(caseObj, auditDetails);
 
@@ -704,7 +751,8 @@ public class CaseService {
         publishToJoinCaseIndexer(joinCaseRequest.getRequestInfo(), courtCase);
     }
 
-    private void verifyAndEnrichRepresentative(JoinCaseRequest joinCaseRequest, CourtCase courtCase, CourtCase caseObj, AuditDetails auditDetails) {
+    private void verifyAndEnrichRepresentative(JoinCaseRequest joinCaseRequest, CourtCase courtCase, CourtCase
+            caseObj, AuditDetails auditDetails) {
         log.info("enriching representatives");
         enrichRepresentativesOnCreateAndUpdate(caseObj, auditDetails);
 
@@ -829,12 +877,11 @@ public class CaseService {
 
                     List<Party> partyList = existingRepresentative.getRepresenting();
 
-                    joinCaseRequest.getRepresentative().getRepresenting().forEach(representing->{
+                    joinCaseRequest.getRepresentative().getRepresenting().forEach(representing -> {
                         if (individualIdList.contains(representing.getIndividualId()) && !representing.getIsAdvocateReplacing()) {
                             log.info("Advocate is already representing the individual");
                             throw new CustomException(VALIDATION_ERR, "Advocate is already representing the individual");
-                        }
-                        else if (individualIdList.contains(representing.getIndividualId()) && representing.getIsAdvocateReplacing()) {
+                        } else if (individualIdList.contains(representing.getIndividualId()) && representing.getIsAdvocateReplacing()) {
                             log.info("Advocate is already representing the individual and isAdvocateReplacing is true");
                             Optional<UUID> representingIdOptional = Optional.ofNullable(partyList)
                                     .orElse(Collections.emptyList())
@@ -933,7 +980,8 @@ public class CaseService {
                 .collect(Collectors.toSet());
     }
 
-    private void verifyRepresentativesAndJoinCase(JoinCaseRequest joinCaseRequest, CourtCase courtCase, CourtCase caseObj, AuditDetails auditDetails, List<String> advocateIds, AdvocateMapping existingRepresentative) {
+    private void verifyRepresentativesAndJoinCase(JoinCaseRequest joinCaseRequest, CourtCase courtCase, CourtCase
+            caseObj, AuditDetails auditDetails, List<String> advocateIds, AdvocateMapping existingRepresentative) {
         //Setting representative ID as null to resolve later as per need
         joinCaseRequest.getRepresentative().setId(null);
 
@@ -947,7 +995,7 @@ public class CaseService {
             joinCaseRequest.getRepresentative().getRepresenting().forEach(representing -> {
                 representing.setAuditDetails(auditDetails);
                 if (representing.getIsAdvocateReplacing())
-                    disableExistingRepresenting(joinCaseRequest.getRequestInfo(), courtCase, representing.getIndividualId(), auditDetails,joinCaseRequest.getRepresentative().getAdvocateId());
+                    disableExistingRepresenting(joinCaseRequest.getRequestInfo(), courtCase, representing.getIndividualId(), auditDetails, joinCaseRequest.getRepresentative().getAdvocateId());
             });
         }
         AdvocateMapping advocateMapping = mapRepresentativeToAdvocateMapping(joinCaseRequest.getRepresentative());
@@ -995,7 +1043,8 @@ public class CaseService {
         return partyList;
     }
 
-    private void disableExistingRepresenting(RequestInfo requestInfo, CourtCase courtCase, String joinCasePartyIndividualId, AuditDetails auditDetails, String advocateId) {
+    private void disableExistingRepresenting(RequestInfo requestInfo, CourtCase courtCase, String
+            joinCasePartyIndividualId, AuditDetails auditDetails, String advocateId) {
         if (courtCase.getRepresentatives() != null) {
             courtCase.getRepresentatives().forEach(representative -> {
 
@@ -1084,7 +1133,8 @@ public class CaseService {
         return representingList;
     }
 
-    private void verifyLitigantsAndJoinCase(JoinCaseRequest joinCaseRequest, CourtCase courtCase, CourtCase caseObj, AuditDetails auditDetails) {
+    private void verifyLitigantsAndJoinCase(JoinCaseRequest joinCaseRequest, CourtCase courtCase, CourtCase
+            caseObj, AuditDetails auditDetails) {
 
         if (joinCaseRequest.getIsLitigantPIP() && joinCaseRequest.getLitigant().get(0).getId() != null) {
             Party litigant = Optional.ofNullable(courtCase.getLitigants())
@@ -1095,7 +1145,7 @@ public class CaseService {
             List<AdvocateMapping> representatives = courtCase.getRepresentatives();
 
             if (representatives != null)
-                disableExistingRepresenting(joinCaseRequest.getRequestInfo(), courtCase, litigant.getIndividualId(), auditDetails,null);
+                disableExistingRepresenting(joinCaseRequest.getRequestInfo(), courtCase, litigant.getIndividualId(), auditDetails, null);
 
         }
 
@@ -1103,7 +1153,8 @@ public class CaseService {
         verifyAndEnrichLitigant(joinCaseRequest, courtCase, caseObj, auditDetails);
     }
 
-    private @NotNull CourtCase validateAccessCodeAndReturnCourtCase(JoinCaseRequest joinCaseRequest, List<CaseCriteria> existingApplications) {
+    private @NotNull CourtCase validateAccessCodeAndReturnCourtCase(JoinCaseRequest
+                                                                            joinCaseRequest, List<CaseCriteria> existingApplications) {
         if (existingApplications.isEmpty()) {
             throw new CustomException(CASE_EXIST_ERR, "Case does not exist");
         }
@@ -1181,7 +1232,8 @@ public class CaseService {
     }
 
 
-    private Object editRespondantDetails(Object additionalDetails1, Object additionalDetails2, List<Party> litigants, boolean isLitigantPIP) {
+    private Object editRespondantDetails(Object additionalDetails1, Object
+            additionalDetails2, List<Party> litigants, boolean isLitigantPIP) {
         // Convert the Objects to ObjectNodes for easier manipulation
         ObjectNode details1Node = objectMapper.convertValue(additionalDetails1, ObjectNode.class);
         ObjectNode details2Node = objectMapper.convertValue(additionalDetails2, ObjectNode.class);

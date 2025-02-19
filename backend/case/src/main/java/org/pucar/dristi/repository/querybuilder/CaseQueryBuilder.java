@@ -47,7 +47,7 @@ public class CaseQueryBuilder {
     private static final String FROM_LINKED_CASE_TABLE = " FROM dristi_linked_case lics";
 
 
-    private static final String BASE_LITIGANT_QUERY = " SELECT ltg.id as id, ltg.tenantid as tenantid, ltg.partycategory as partycategory, ltg.case_id as case_id, " +
+    private static final String BASE_LITIGANT_QUERY = " SELECT ltg.id as id, ltg.tenantid as tenantid, ltg.partycategory as partycategory, ltg.case_id as case_id, ltg.isresponserequired as isresponserequired, " +
             "ltg.individualid as individualid, " +
             " ltg.organisationid as organisationid, ltg.partytype as partytype, ltg.isactive as isactive, ltg.additionaldetails as additionaldetails, ltg.createdby as createdby," +
             " ltg.lastmodifiedby as lastmodifiedby, ltg.createdtime as createdtime, ltg.lastmodifiedtime as lastmodifiedtime , ltg.hassigned as hassigned ";

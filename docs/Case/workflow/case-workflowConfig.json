@@ -350,9 +350,17 @@
                     "actions": [
                         {
                             "action": "RESPOND",
-                            "nextState": "PENDING_ADMISSION",
+                            "nextState": "PENDING_RESPONSE",
                             "roles": [
                                 "CASE_EDITOR",
+                                "SYSTEM",
+                                "SYSTEM_ADMIN"
+                            ]
+                        },
+                        {
+                            "action": "RESPONSE_COMPLETE",
+                            "nextState": "PENDING_ADMISSION",
+                            "roles": [
                                 "SYSTEM",
                                 "SYSTEM_ADMIN"
                             ]
