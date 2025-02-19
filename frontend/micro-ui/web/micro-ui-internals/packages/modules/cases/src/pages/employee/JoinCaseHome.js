@@ -2072,13 +2072,11 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
           actionCancelLabel={t("BACK")}
           actionSaveOnSubmit={async () => await onPipConfirm()}
           formId="modal-action"
-          headerBarMain={<Heading label={t("Confirm Replace Advocate")} />}
+          headerBarMain={<Heading label={t("CONFIRM_REPLACE_ADVOCATE")} />}
           submitTextClassName={"verification-button-text-modal"}
           className={"verify-mobile-modal"}
         >
-          <div className="verify-mobile-modal-main">
-            {t("One or more advocates are currently representing you. By joining as a PiP, you will replace the current advocates.")}
-          </div>
+          <div className="verify-mobile-modal-main">{t("CONFIRM_REPLACE_ADVOCATE_PIP_MESSAGE")}</div>
         </Modal>
       )}
     </div>
