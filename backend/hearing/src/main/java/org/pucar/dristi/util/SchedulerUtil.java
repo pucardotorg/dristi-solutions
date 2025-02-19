@@ -1,17 +1,16 @@
 package org.pucar.dristi.util;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.web.models.BulkRescheduleRequest;
+import org.pucar.dristi.web.models.BulkRescheduleResponse;
 import org.pucar.dristi.web.models.ScheduleHearing;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -37,8 +36,8 @@ public class SchedulerUtil {
         List<ScheduleHearing> result;
 
         try {
-            result = mapper.convertValue(response, new TypeReference<List<ScheduleHearing>>() {
-            });
+            BulkRescheduleResponse rescheduleResponse = mapper.convertValue(response, BulkRescheduleResponse.class);
+            result = rescheduleResponse.getReScheduleHearings();
 
         } catch (Exception e) {
             log.error("Error occurred while calling bulk reschedule");

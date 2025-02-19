@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -25,9 +26,11 @@ public class BulkReschedule {
     private String courtId;
 
     @JsonProperty("startTime")
+    @NotNull
     private Long startTime;
 
     @JsonProperty("endTime")
+    @NotNull
     private Long endTime;
 
     @JsonProperty("tenantId")
@@ -35,7 +38,7 @@ public class BulkReschedule {
     private String tenantId;
 
     @JsonProperty("slotIds")
-    private Set<Integer> slotIds;
+    private Set<Integer> slotIds = new HashSet<>();
 
     @JsonProperty("hearingIds")
     private List<String> hearingIds;
