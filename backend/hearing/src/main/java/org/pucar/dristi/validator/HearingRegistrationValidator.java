@@ -187,17 +187,8 @@ public class HearingRegistrationValidator {
         return applicationExistsRequest;
     }
 
-    private void validateDocuments(Hearing hearing){
-        if (hearing.getDocuments() != null && !hearing.getDocuments().isEmpty()) {
-            hearing.getDocuments().forEach(document -> {
-                if (document.getFileStore() != null) {
-                    if (!fileStoreUtil.doesFileExist(hearing.getTenantId(), document.getFileStore()))
-                        throw new CustomException(INVALID_FILESTORE_ID, INVALID_DOCUMENT_DETAILS);
-                } else
-                    throw new CustomException(INVALID_FILESTORE_ID, INVALID_DOCUMENT_DETAILS);
+    private void validateDocuments(Hearing hearing) {
 
-            });
-        }
     }
 
     public void validateBulkRescheduleRequest(@Valid RequestInfo requestInfo, BulkReschedule bulkReschedule) {

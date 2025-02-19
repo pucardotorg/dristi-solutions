@@ -187,4 +187,7 @@ public class Configuration {
 
     @Value("${egov.scheduler.bulk.reschedule.endpoint}")
     private String bulkRescheduleEndPoint;
+
+    @Value("${bulk.reschedule.topic}")
+    private String bulkRescheduleTopic;
 }

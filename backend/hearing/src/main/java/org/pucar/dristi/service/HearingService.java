@@ -364,9 +364,13 @@ public class HearingService {
                 ScheduleHearing scheduleHearing = scheduleHearingMap.get(hearing.getHearingId());
                 hearing.setStartTime(scheduleHearing.getStartTime());
                 hearing.setEndTime(scheduleHearing.getEndTime());
+                hearing.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
+                hearing.getAuditDetails().setLastModifiedBy(requestInfo.getUserInfo().getUuid());
             }
         }
-        // need to push into producer
+        UpdateTimeRequest reschedule = UpdateTimeRequest.builder().requestInfo(requestInfo).hearings(hearingsToReschedule).build();
+
+        producer.push(config.getBulkRescheduleTopic(),reschedule);
         return scheduleHearings;
     }
 
