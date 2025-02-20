@@ -14,7 +14,7 @@
               "actor": "Judge",
               "state": "PENDING_SIGN",
               "isgeneric": false,
-              "pendingTask": "Review and Sign",
+              "pendingTask": "Review and Sign A Diary",
               "closerAction": [
                 "SIGN"
               ],
