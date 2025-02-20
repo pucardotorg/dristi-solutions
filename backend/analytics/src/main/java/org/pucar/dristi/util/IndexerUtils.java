@@ -473,7 +473,6 @@ public class IndexerUtils {
         Map<String, String> caseDetails = new HashMap<>();
         caseDetails.put("cnrNumber", null);
         caseDetails.put("filingNumber", null);
-        caseDetails.put("isDiary", "true");
         caseDetails.put("screenType", ADIARY);
 
         return caseDetails;
