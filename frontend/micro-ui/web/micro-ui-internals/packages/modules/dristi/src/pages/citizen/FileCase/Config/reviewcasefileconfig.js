@@ -226,8 +226,8 @@ export const reviewCaseFileFormConfig = [
                 {
                   type: "text",
                   label: "POLICE_STATION",
-                  value: "policeStation.code",
-                  isLocalizationRequired: true,
+                  value: "policeStation.name",
+                  isLocalizationRequired: false,
                 },
                 {
                   type: "date",
@@ -309,6 +309,10 @@ export const reviewCaseFileFormConfig = [
                 //   label: "CS_MODE_OF_DISPATCH",
                 //   value: "modeOfDispatchType.modeOfDispatchType.name",
                 // },
+                {
+                  type: "infoBox",
+                  value: "infoBoxData",
+                },
                 {
                   type: "date",
                   label: "CS_DATE_OF_DISPATCH_LDN",
