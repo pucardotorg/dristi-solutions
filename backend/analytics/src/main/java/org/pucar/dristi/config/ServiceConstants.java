@@ -14,7 +14,7 @@ public class ServiceConstants {
 
     //Consumer
     public static final String ES_INDEX_HEADER_FORMAT = "{\"index\":{\"_index\":\"%s\",\"_id\":\"%s\"}}\n";
-    public static final String ES_INDEX_DOCUMENT_FORMAT = "{\"Data\": {\"id\":\"%s\",\"name\":\"%s\",\"entityType\":\"%s\",\"referenceId\":\"%s\",\"status\":\"%s\",\"assignedTo\":%s,\"assignedRole\":%s,\"cnrNumber\":\"%s\",\"filingNumber\":\"%s\",\"isCompleted\":%b,\"stateSla\":%d,\"businessServiceSla\":%d,\"additionalDetails\":%s,\"isDiary\":%b}}\n";
+    public static final String ES_INDEX_DOCUMENT_FORMAT = "{\"Data\": {\"id\":\"%s\",\"name\":\"%s\",\"entityType\":\"%s\",\"referenceId\":\"%s\",\"status\":\"%s\",\"assignedTo\":%s,\"assignedRole\":%s,\"cnrNumber\":\"%s\",\"filingNumber\":\"%s\",\"isCompleted\":%b,\"stateSla\":%d,\"businessServiceSla\":%d,\"additionalDetails\":%s,\"screenType\":%s}}\n";
     public static final String TENANTID_MDC_STRING = "TENANTID";
 
 
@@ -221,4 +221,6 @@ public class ServiceConstants {
     public static final String REPRESENTATIVE_REPLACE_JOIN_CASE="update-representative-join-case";
     public static final String REPRESENTATIVE_JOIN_CASE_TOPIC = "representative-join-case";
     public static final String LITIGANT_JOIN_CASE_TOPIC = "litigant-join-case";
+    public static final String HOME = "home";
+    public static final String ADIARY = "Adiary";
 }
