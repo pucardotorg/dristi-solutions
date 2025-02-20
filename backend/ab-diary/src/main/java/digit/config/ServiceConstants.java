@@ -72,6 +72,8 @@ public class ServiceConstants {
 
     public static final String UNSIGNED_DOCUMENT_TYPE = "casediary.unsigned";
 
+    public static final String DIARY_TYPE = "ADiary";
+
     public static final String IST_TIME_ZONE = "Asia/Kolkata";
 
 }
