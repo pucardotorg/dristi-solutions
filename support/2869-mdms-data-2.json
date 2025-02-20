@@ -1,0 +1,129 @@
+[
+    {
+        "tenantId": "kl",
+        "masterName": "common-masters",
+        "moduleName": "PendingTaskType",
+        "mdmsPayload": [
+          {
+            "id": "441938b2-fffb-46aa-947b-a16c2c2971fb",
+            "tenantId": "kl",
+            "schemaCode": "common-masters.PendingTaskType",
+            "uniqueIdentifier": "21",
+            "data": {
+              "id": "21",
+              "actor": "Judge",
+              "state": "PENDING_SIGN",
+              "isgeneric": false,
+              "pendingTask": "Review and Sign",
+              "closerAction": [
+                "SIGN"
+              ],
+              "triggerAction": [
+                "GENERATE"
+              ],
+              "workflowModule": "case-a-diary"
+            },
+            "isActive": true,
+            "auditDetails": {
+              "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+              "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+              "createdTime": 1739677778877,
+              "lastModifiedTime": 1739963935783
+            }
+          }
+        ]
+      },
+
+  {
+    "id": "fcc825d8-cd98-4b46-96d1-876bcd9bedb6",
+    "tenantId": "kl",
+    "schemaCode": "INBOX.InboxQueryConfiguration",
+    "uniqueIdentifier": "pending-tasks-index",
+    "data": {
+      "index": "pending-tasks-index",
+      "module": "Pending Tasks Service",
+      "sortBy": {
+        "path": "Data.isCompleted",
+        "defaultOrder": "ASC"
+      },
+      "sourceFilterPathList": [
+        "Data"
+      ],
+      "allowedSearchCriteria": [
+        {
+          "name": "id",
+          "path": "Data.id.keyword",
+          "isMandatory": false
+        },
+        {
+          "name": "entityType",
+          "path": "Data.entityType.keyword",
+          "operator": "EQUAL",
+          "isMandatory": false
+        },
+        {
+          "name": "referenceId",
+          "path": "Data.referenceId.keyword",
+          "isMandatory": false
+        },
+        {
+          "name": "status",
+          "path": "Data.status.keyword",
+          "isMandatory": false
+        },
+        {
+          "name": "assignedTo",
+          "path": "Data.assignedTo.uuid.keyword",
+          "isMandatory": false
+        },
+        {
+          "name": "assignedRole",
+          "path": "Data.assignedRole.keyword",
+          "isMandatory": false
+        },
+        {
+          "name": "cnrNumber",
+          "path": "Data.cnrNumber.keyword",
+          "isMandatory": false
+        },
+        {
+          "name": "filingNumber",
+          "path": "Data.filingNumber.keyword",
+          "isMandatory": false
+        },
+        {
+          "name": "isCompleted",
+          "path": "Data.isCompleted",
+          "isMandatory": false
+        },
+        {
+          "name": "stateSla",
+          "path": "Data.stateSla",
+          "isMandatory": false
+        },
+        {
+          "name": "businessServiceSla",
+          "path": "Data.businessServiceSla",
+          "isMandatory": false
+        },
+        {
+          "name": "isDiary",
+          "path": "Data.isDiary",
+          "isMandatory": true
+        },
+        {
+          "name": "screenType",
+          "path": "Data.screenType",
+          "isMandatory": true
+        }
+      ]
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+      "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+      "createdTime": 1721905184083,
+      "lastModifiedTime": 1740043439613
+    }
+  }
+]
