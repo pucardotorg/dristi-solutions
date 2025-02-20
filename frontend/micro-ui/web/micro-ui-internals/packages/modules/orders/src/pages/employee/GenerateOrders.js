@@ -276,6 +276,7 @@ const GenerateOrders = () => {
             code: fullName,
             name: `${fullName} (Complainant)`,
             uuid: allAdvocates[item?.additionalDetails?.uuid],
+            partyUuid: item?.additionalDetails?.uuid,
             individualId: item?.individualId,
             isJoined: true,
             partyType: "complainant",
@@ -294,6 +295,7 @@ const GenerateOrders = () => {
             code: fullName,
             name: `${fullName} (Accused)`,
             uuid: allAdvocates[item?.additionalDetails?.uuid],
+            partyUuid: item?.additionalDetails?.uuid,
             individualId: item?.individualId,
             isJoined: true,
             partyType: "respondent",
@@ -1415,7 +1417,13 @@ const GenerateOrders = () => {
     if (order?.orderType === "MANDATORY_SUBMISSIONS_RESPONSES") {
       create = true;
       name = t("MAKE_MANDATORY_SUBMISSION");
-      assignees = formdata?.submissionParty?.map((party) => party?.uuid.map((uuid) => ({ uuid, individualId: party?.individualId }))).flat();
+      assignees = formdata?.submissionParty
+        ?.map((party) =>
+          party?.uuid.map((uuid) => {
+            return { assigneeInfo: { uuid, individualId: party?.individualId }, partyUuid: party?.partyUuid };
+          })
+        )
+        .flat();
       stateSla = new Date(formdata?.submissionDeadline).getTime();
       status = "CREATE_SUBMISSION";
       const promises = assignees.map(async (assignee) => {
@@ -1423,15 +1431,15 @@ const GenerateOrders = () => {
           pendingTask: {
             name,
             entityType,
-            referenceId: `MANUAL_${assignee?.individualId}_${assignee?.uuid}_${order?.orderNumber}`,
+            referenceId: `MANUAL_${assignee?.assigneeInfo?.individualId}_${assignee?.assigneeInfo?.uuid}_${order?.orderNumber}`,
             status,
-            assignedTo: [assignee],
+            assignedTo: [assignee?.assigneeInfo],
             assignedRole,
             cnrNumber: cnrNumber,
             filingNumber: filingNumber,
             isCompleted: false,
             stateSla,
-            additionalDetails: { ...additionalDetails, litigants: [assignee?.individualId] },
+            additionalDetails: { ...additionalDetails, litigants: [assignee?.assigneeInfo?.individualId], litigantUuid: [assignee?.partyUuid] },
             tenantId,
           },
         });
@@ -1605,6 +1613,11 @@ const GenerateOrders = () => {
               caseDetails?.litigants?.find(
                 (litigant) => litigant?.additionalDetails?.uuid === applicationDetails?.additionalDetails?.formdata?.selectComplainant?.uuid
               )?.individualId,
+            ],
+            litigantUuid: [
+              caseDetails?.litigants?.find(
+                (litigant) => litigant?.additionalDetails?.uuid === applicationDetails?.additionalDetails?.formdata?.selectComplainant?.uuid
+              )?.additionalDetails?.uuid,
             ],
           },
           tenantId,
