@@ -1,5 +1,6 @@
 package notification.repository.querybuilder;
 
+import lombok.extern.slf4j.Slf4j;
 import notification.web.models.NotificationCriteria;
 import notification.web.models.NotificationExists;
 import notification.web.models.Pagination;
@@ -8,12 +9,12 @@ import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Field;
 import java.sql.Types;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+
+import static notification.config.ServiceConstants.NOTIFICATION_SEARCH_QUERY_EXCEPTION;
 
 @Component
+@Slf4j
 public class NotificationQueryBuilder {
 
     private static final String SELECT = " SELECT ";
@@ -36,8 +37,7 @@ public class NotificationQueryBuilder {
     private static final String ORDERBY_CLAUSE = " ORDER BY pn.{orderBy} {sortingOrder} ";
     private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY cases.createdDate DESC ";
     private  static  final String TOTAL_COUNT_QUERY = "SELECT COUNT(*) FROM ({baseQuery}) total_result";
-    private static final String NOTIFICATION_GROUP_BY_CLAUSE = " GROUP BY id, notificationNumber, notificationType";
-    private static final String BASE_QUERY_NOTIFICATION_EXISTENCE = " id, notificationNumber, notificationType, COUNT(*) > 0 AS exists ";
+    private static final String COUNT_ALL = " COUNT(*) ";
 
 
 
@@ -85,27 +85,30 @@ public class NotificationQueryBuilder {
         return uri.toString();
     }
 
-    public String getBaseNotificationExistenceQuery(List<NotificationExists> notifications, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
-        if (notifications == null || notifications.isEmpty()) {
-            throw new CustomException("List of notifications cannot be null or empty", "");
+    public String getBaseNotificationExistenceQuery(NotificationExists notificationExist, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+
+        try {
+            StringBuilder query = new StringBuilder();
+            query.append(SELECT).append(COUNT_ALL).append(FROM_NOTIFICATION);
+            boolean firstCriteria = true;
+
+            if(notificationExist != null){
+                if(notificationExist.getId() != null && !notificationExist.getId().equals(new UUID(0, 0)))
+                    firstCriteria = addCriteria(notificationExist.getId().toString(), query, firstCriteria, "id = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
+
+                if(notificationExist.getNotificationNumber() != null && !notificationExist.getNotificationNumber().isEmpty())
+                    firstCriteria = addCriteria(notificationExist.getNotificationNumber(), query, firstCriteria, "notificationNumber = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
+
+                if(notificationExist.getNotificationType() != null && !notificationExist.getNotificationType().isEmpty())
+                    addCriteria(notificationExist.getNotificationType(), query, firstCriteria, "notificationType = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
+
+                query.append(";");
+            }
+            return query.toString();
+        } catch (Exception e) {
+            log.error("Error while building notification exist query", e);
+            throw new CustomException(NOTIFICATION_SEARCH_QUERY_EXCEPTION, "Error occurred while building the notification exist query: " + e.getMessage());
         }
-
-        StringBuilder uri = new StringBuilder();
-        StringBuilder whereInCondition = new StringBuilder();
-
-        // Define the fields for the IN clause
-        String[] fieldNames = {"id", "notificationNumber", "notificationType"};
-
-        for (NotificationExists notification : notifications) {
-            addWhereInCondition(notification, fieldNames, whereInCondition, preparedStmtList, preparedStmtArgList);
-        }
-
-        uri.append(SELECT).append(BASE_QUERY_NOTIFICATION_EXISTENCE)
-                .append(FROM_NOTIFICATION).append(whereInCondition)
-                .append(NOTIFICATION_GROUP_BY_CLAUSE);
-
-        return uri.toString();
-
     }
 
     /**
@@ -240,5 +243,25 @@ public class NotificationQueryBuilder {
     private String generatePlaceholders(int conditionCount, int paramsPerCondition) {
         return String.join(", ", Collections.nCopies(conditionCount, "(" + "?,".repeat(paramsPerCondition - 1) + "?" + ")"));
     }
+
+    private boolean addCriteria(String criteria, StringBuilder query, boolean firstCriteria, String str, List<Object> preparedStmtList, List<Integer> preparedStmtArgList, int type ) {
+        if (criteria != null && !criteria.isEmpty()) {
+            addClauseIfRequired(query, firstCriteria);
+            query.append(str);
+            preparedStmtList.add(criteria);
+            preparedStmtArgList.add(type);
+            firstCriteria = false;
+        }
+        return firstCriteria;
+    }
+
+    private void addClauseIfRequired(StringBuilder query, boolean isFirstCriteria) {
+        if (isFirstCriteria) {
+            query.append(" WHERE ");
+        } else {
+            query.append(AND);
+        }
+    }
+
 
 }

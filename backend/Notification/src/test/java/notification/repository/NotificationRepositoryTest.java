@@ -1,7 +1,6 @@
 package notification.repository;
 
 import notification.repository.querybuilder.NotificationQueryBuilder;
-import notification.repository.rowmapper.NotificationExistsRowMapper;
 import notification.repository.rowmapper.NotificationRowMapper;
 import notification.web.models.Notification;
 import notification.web.models.NotificationCriteria;
@@ -21,6 +20,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -37,9 +37,6 @@ public class NotificationRepositoryTest {
 
     @Mock
     private JdbcTemplate jdbcTemplate;
-
-    @Mock
-    private NotificationExistsRowMapper notificationExistsRowMapper;
 
     @InjectMocks
     private NotificationRepository notificationRepository;
@@ -168,36 +165,6 @@ public class NotificationRepositoryTest {
         assertEquals(expectedCount, result);
     }
 
-    @Test
-    public void checkIfNotificationExists_ShouldReturnExistingNotifications() {
-        List<NotificationExists> input = Arrays.asList(
-                new NotificationExists(),
-                new NotificationExists()
-        );
-        String query = "SELECT * FROM notifications WHERE id IN (?)";
-        List<NotificationExists> expectedResults = Arrays.asList(
-                new NotificationExists(),
-                new NotificationExists()
-        );
-
-        when(queryBuilder.getBaseNotificationExistenceQuery(
-                ArgumentMatchers.eq(input),
-                ArgumentMatchers.<List<Object>>any(),
-                ArgumentMatchers.<List<Integer>>any()))
-                .thenReturn(query);
-
-        when(jdbcTemplate.query(
-                ArgumentMatchers.eq(query),
-                ArgumentMatchers.<Object[]>any(),
-                ArgumentMatchers.<int[]>any(),
-                ArgumentMatchers.eq(notificationExistsRowMapper)))
-                .thenReturn(expectedResults);
-
-        List<NotificationExists> result = notificationRepository.checkIfNotificationExists(input);
-
-        assertNotNull(result);
-        assertEquals(expectedResults.size(), result.size());
-    }
 
     @Test(expected = CustomException.class)
     public void getNotifications_WithMismatchedPreparedStatements_ShouldThrowException() {
@@ -228,37 +195,80 @@ public class NotificationRepositoryTest {
 
     }
 
-    @Test(expected = CustomException.class)
-    public void checkIfNotificationExists_WithMismatchedPreparedStatements_ShouldThrowException() {
-        // Arrange
+
+
+    @Test
+    public void checkIfNotificationExists_ShouldReturnCorrectExistenceStatus() {
         List<NotificationExists> input = Arrays.asList(
-                new NotificationExists(),
-                new NotificationExists()
+                NotificationExists.builder()
+                        .notificationNumber("123")
+                        .id(UUID.randomUUID())
+                        .build(),
+                NotificationExists.builder()
+                        .id(new UUID(0L, 0L))
+                        .build()
         );
 
-        // Create an Answer that will modify the passed lists to create a size mismatch
-        doAnswer(new Answer() {
-            @Override
-            public String answer(InvocationOnMock invocation) {
-                // Get the lists passed to the method
-                List<Object> preparedStmtList = (List<Object>) invocation.getArguments()[1];
-                List<Integer> preparedStmtArgList = (List<Integer>) invocation.getArguments()[2];
-
-                // Add items to create a size mismatch
-                preparedStmtList.add("value1");
-                preparedStmtList.add("value2");
-                preparedStmtArgList.add(1); // Only add one item to create mismatch
-
-                return "SELECT * FROM notifications";
-            }
-        }).when(queryBuilder).getBaseNotificationExistenceQuery(
-                ArgumentMatchers.eq(input),
+        when(queryBuilder.getBaseNotificationExistenceQuery(
+                ArgumentMatchers.any(NotificationExists.class),
                 ArgumentMatchers.<List<Object>>any(),
-                ArgumentMatchers.<List<Integer>>any()
+                ArgumentMatchers.<List<Integer>>any()))
+                .thenReturn("SELECT COUNT(*) FROM notifications WHERE id = ?");
+
+        when(jdbcTemplate.queryForObject(
+                ArgumentMatchers.eq("SELECT COUNT(*) FROM notifications WHERE id = ?"),
+                ArgumentMatchers.<Object[]>any(),
+                ArgumentMatchers.<int[]>any(),
+                ArgumentMatchers.eq(Integer.class)))
+                .thenReturn(1); // Simulating that the notification exists
+
+        List<NotificationExists> result = notificationRepository.checkIfNotificationExists(input);
+
+        assertNotNull(result);
+        assertTrue(result.get(0).getExists()); // Should be true since count > 0
+        assertFalse(result.get(1).getExists()); // Should be false since it had empty ID & number
+    }
+
+    @Test(expected = CustomException.class)
+    public void checkIfNotificationExists_ShouldThrowExceptionOnError() {
+        List<NotificationExists> input = Arrays.asList(
+                NotificationExists.builder()
+                        .notificationNumber("123")
+                        .id(UUID.randomUUID())
+                        .build()
         );
+
+        when(queryBuilder.getBaseNotificationExistenceQuery(
+                ArgumentMatchers.any(NotificationExists.class),
+                ArgumentMatchers.<List<Object>>any(),
+                ArgumentMatchers.<List<Integer>>any()))
+                .thenThrow(new RuntimeException("DB error"));
 
         notificationRepository.checkIfNotificationExists(input);
+    }
 
+    @Test
+    public void checkIfNotificationExists_ShouldHandleEmptyList() {
+        List<NotificationExists> input = new ArrayList<>();
+        List<NotificationExists> result = notificationRepository.checkIfNotificationExists(input);
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void checkIfNotificationExists_ShouldHandleNullValues() {
+        List<NotificationExists> input = Arrays.asList(
+                NotificationExists.builder().build(),
+                NotificationExists.builder()
+                        .notificationNumber("")
+                        .id(new UUID(0L, 0L))
+                        .build()
+        );
+
+        List<NotificationExists> result = notificationRepository.checkIfNotificationExists(input);
+        assertNotNull(result);
+        assertFalse(result.get(0).getExists());
+        assertFalse(result.get(1).getExists());
     }
 
 }
