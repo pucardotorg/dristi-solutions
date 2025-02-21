@@ -728,7 +728,7 @@ const ComplainantSignature = ({ path }) => {
             setCalculationResponse(calculation);
             setLoader(false);
             if (isSelectedUploadDoc) {
-              history.replace(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculation } });
+              history.replace(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculationResponse: calculation } });
             }
           } else {
             setLoader(false);
