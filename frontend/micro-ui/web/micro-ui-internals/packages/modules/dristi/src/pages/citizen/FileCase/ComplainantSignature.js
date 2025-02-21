@@ -335,14 +335,14 @@ const ComplainantSignature = ({ path }) => {
   );
 
   const isLastPersonSigned = useMemo(() => {
-    if (!caseDetails?.litigants?.length) return false;
-    return caseDetails.litigants.every((litigant) => {
-      const litigantSigned = litigant.hasSigned;
-      const hasReps = litigant.representatives?.length > 0;
-      const anyRepresentativeSigned = hasReps ? litigant.representatives.some((rep) => rep.hasSigned) : true;
+    if (!litigants?.length) return false;
+    return litigants?.every((litigant) => {
+      const litigantSigned = litigant?.hasSigned;
+      const hasReps = litigant?.representatives?.length > 0;
+      const anyRepresentativeSigned = hasReps ? litigant?.representatives?.some((rep) => rep?.hasSigned) : true;
       return litigantSigned && anyRepresentativeSigned;
     });
-  }, [caseDetails]);
+  }, [litigants]);
 
   const closePendingTask = async ({ status, assignee, closeUploadDoc }) => {
     const entityType = "case-default";
