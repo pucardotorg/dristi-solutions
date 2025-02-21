@@ -68,7 +68,7 @@ const TasksComponent = ({
           ...(isLitigant && { assignedTo: uuid }),
           ...(!isLitigant && { assignedRole: [...roles] }),
           ...(inCase && { filingNumber: filingNumber }),
-          isDiary: isDiary,
+          screenType: isDiary ? ["Adiary"] : ["home"],
         },
         limit: 10000,
         offset: 0,
