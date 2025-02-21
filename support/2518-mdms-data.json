@@ -84,10 +84,21 @@
                         },
                         "body": [
                             {
-                                "type": "text",
-                                "label": "FIRST_NAME",
+                                "type": "component",
+                                "component": "CustomTextInput",
+                                "key": "firstName",
                                 "populators": {
-                                    "name": "firstName"
+                                    "inputs": [
+                                        {
+                                            "label": "FIRST_NAME",
+                                            "type": "text",
+                                            "name": "firstName",
+                                            "isMandatory": true,
+                                            "styles": {
+                                                "paddingRight": "36px"
+                                            }
+                                        }
+                                    ]
                                 }
                             },
                             {
