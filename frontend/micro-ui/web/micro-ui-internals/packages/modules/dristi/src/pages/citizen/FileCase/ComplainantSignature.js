@@ -755,9 +755,11 @@ const ComplainantSignature = ({ path }) => {
     return isEsignSuccess || isCurrentAdvocateSigned || isCurrentLitigantSigned || uploadDoc;
   };
 
-  const refetchCaseDetails = async () => {
-    await refetchCaseData();
-  };
+  const esignCaseUpdate = useMemo(() => {
+    if (isEsignSuccess && caseDetails) {
+      updateCase(state);
+    }
+  }, [isEsignSuccess, state, caseDetails]);
 
   useEffect(() => {
     const handleCaseUnlocking = async () => {
@@ -775,8 +777,6 @@ const ComplainantSignature = ({ path }) => {
         const fileStoreId = localStorage.getItem("fileStoreId");
         setSignatureDocumentId(fileStoreId);
         setEsignSuccess(true);
-        refetchCaseDetails();
-        updateCase(state);
       }
     }
     if (esignProcess && caseDetails?.filingNumber) {
@@ -787,7 +787,7 @@ const ComplainantSignature = ({ path }) => {
     localStorage.removeItem("isSignSuccess");
     localStorage.removeItem("signStatus");
     localStorage.removeItem("fileStoreId");
-  }, [caseDetails, refetchCaseDetails]);
+  }, [caseDetails]);
 
   const isRightPannelEnable = () => {
     if (isAdvocateFilingCase) {
