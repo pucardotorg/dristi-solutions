@@ -15,6 +15,7 @@ public class JudgeCalendarEnrichment {
 
 
     public void enrichUpdateJudgeCalendar(RequestInfo requestInfo, List<JudgeCalendarRule> judgeCalendarRule) {
+        log.info("operation = enrichUpdateJudgeCalendar , Result = IN_PROGRESS");
         AuditDetails auditDetails = getAuditDetailsScheduleHearing(requestInfo);
 
         judgeCalendarRule.forEach((calendar) -> {
@@ -24,6 +25,7 @@ public class JudgeCalendarEnrichment {
             calendar.setRowVersion(1);
 
         });
+        log.info("operation = enrichUpdateJudgeCalendar, Result=SUCCESS");
     }
 
     private AuditDetails getAuditDetailsScheduleHearing(RequestInfo requestInfo) {
