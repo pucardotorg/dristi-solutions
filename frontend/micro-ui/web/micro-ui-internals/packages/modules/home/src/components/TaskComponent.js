@@ -138,10 +138,10 @@ const TasksComponent = ({
   );
 
   const handleReviewOrder = useCallback(
-    async ({ filingNumber, caseId, referenceId, litigant }) => {
+    async ({ filingNumber, caseId, referenceId, litigant, litigantIndId }) => {
       const orderDetails = await getOrderDetail(referenceId);
       history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Orders`, {
-        orderObj: { ...orderDetails, litigant },
+        orderObj: { ...orderDetails, litigant, litigantIndId },
       });
     },
     [getOrderDetail, history, userType]
@@ -304,6 +304,8 @@ const TasksComponent = ({
           const individualId = data?.fields?.find((field) => field.key === "additionalDetails.individualId")?.value;
           const caseId = data?.fields?.find((field) => field.key === "additionalDetails.caseId")?.value;
           const litigant = data?.fields?.find((field) => field.key === "additionalDetails.litigantUuid[0]")?.value;
+          const litigantIndId = data?.fields?.find((field) => field.key === "additionalDetails.litigants[0]")?.value;
+
           const updateReferenceId = referenceId.split("_").pop();
           const defaultObj = { referenceId: updateReferenceId, ...caseDetail };
           const pendingTaskActions = selectTaskType?.[entityType || taskTypeCode];
@@ -338,7 +340,15 @@ const TasksComponent = ({
             isCompleted,
             dueDateColor: due === "Due today" ? "#9E400A" : "",
             redirectUrl,
-            params: { ...additionalDetails, cnrNumber, filingNumber, caseId: caseDetail?.id, referenceId: updateReferenceId, litigant },
+            params: {
+              ...additionalDetails,
+              cnrNumber,
+              filingNumber,
+              caseId: caseDetail?.id,
+              referenceId: updateReferenceId,
+              litigant,
+              litigantIndId,
+            },
             isCustomFunction,
             referenceId,
           };

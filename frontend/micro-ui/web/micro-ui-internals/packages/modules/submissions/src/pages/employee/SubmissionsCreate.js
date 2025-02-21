@@ -64,6 +64,7 @@ const SubmissionsCreate = ({ path }) => {
     hearingId,
     applicationType: applicationTypeUrl,
     litigant,
+    litigantIndId,
   } = Digit.Hooks.useQueryParams();
   const [formdata, setFormdata] = useState({});
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -1080,13 +1081,20 @@ const SubmissionsCreate = ({ path }) => {
           assignedRole: ["SUBMISSION_CREATOR", "SUBMISSION_RESPONDER"],
         });
       }
-      ["PRODUCTION_DOCUMENTS", "SUBMIT_BAIL_DOCUMENTS"].includes(applicationType) &&
+      ["SUBMIT_BAIL_DOCUMENTS"].includes(applicationType) &&
         (orderNumber || orderRefNumber) &&
         createPendingTask({
           refId: `${userInfo?.uuid}_${orderNumber || orderRefNumber}`,
           isCompleted: true,
           status: "Completed",
           ...(applicationType === "SUBMIT_BAIL_DOCUMENTS" && { name: t("SUBMIT_BAIL_DOCUMENTS") }),
+        });
+      ["PRODUCTION_DOCUMENTS"].includes(applicationType) &&
+        (orderNumber || orderRefNumber) &&
+        createPendingTask({
+          refId: `${litigantIndId}_${userInfo?.uuid}_${orderNumber || orderRefNumber}`,
+          isCompleted: true,
+          status: "Completed",
         });
       history.push(
         orderNumber
