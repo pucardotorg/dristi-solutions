@@ -755,9 +755,11 @@ const ComplainantSignature = ({ path }) => {
     return isEsignSuccess || isCurrentAdvocateSigned || isCurrentLitigantSigned || uploadDoc;
   };
 
-  const esignCaseUpdate = useMemo(() => {
+  const esignCaseUpdate = useMemo(async () => {
     if (isEsignSuccess && caseDetails?.filingNumber) {
       updateCase(state);
+      await refetchCaseData();
+      setEsignSuccess(false);
     }
   }, [isEsignSuccess, caseDetails]);
 
