@@ -26,7 +26,15 @@ export const HomeService = {
       url: url,
       useCache: useCache,
       userService: true,
-      data,
+      data: {
+        ...data,
+        ...(data?.pendingTask && {
+          pendingTask: {
+            ...data?.pendingTask,
+            screenType: data?.pendingTask?.isDiary ? "Adiary" : "home",
+          },
+        }),
+      },
       params,
     }),
   searchReschedule: (data, params) => {
