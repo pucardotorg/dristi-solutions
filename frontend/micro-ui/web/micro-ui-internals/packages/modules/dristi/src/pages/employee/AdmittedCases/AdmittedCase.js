@@ -1987,12 +1987,12 @@ const AdmittedCases = () => {
 
   const handleExtensionRequest = (orderNumber) => {
     history.push(
-      `/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&isExtension=true&litigant=${currentOrder?.litigant}`
+      `/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&isExtension=true&litigant=${currentOrder?.litigant}&litigantIndId=${currentOrder?.litigantIndId}`
     );
   };
   const handleSubmitDocument = (orderNumber) => {
     history.push(
-      `/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&litigant=${currentOrder?.litigant}`
+      `/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&litigant=${currentOrder?.litigant}&litigantIndId=${currentOrder?.litigantIndId}`
     );
   };
 
