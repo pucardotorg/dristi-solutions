@@ -3,7 +3,7 @@ import React, { useMemo } from "react";
 
 const Heading = (props) => {
   return (
-    <h1 className="heading-m" style={{ marginLeft: "47px" }}>
+    <h1 className="heading-m" style={{ marginLeft: "24px" }}>
       {props.label}
     </h1>
   );
@@ -28,7 +28,6 @@ function ErrorDataModal({ t, setIsSubmitDisabled, showErrorDataModal, setShowErr
       headerBarEnd={<CloseBtn onClick={handleOnClose} />}
       actionSaveLabel={t("CS_CLOSE")}
       actionSaveOnSubmit={handleOnClose}
-      popupModuleActionBarStyles={{ display: "flex", justifyContent: "center" }}
       popUpStyleMain={{ zIndex: "1000" }}
     >
       <div>

@@ -2228,7 +2228,7 @@ const AdmittedCases = () => {
               </React.Fragment>
             )}
             <div className="sub-details-text">Code: {caseDetails?.accessCode}</div>
-            {delayCondonationData?.delayCondonationType?.code === "NO" && isJudge && (
+            {delayCondonationData?.delayCondonationType?.code === "NO" && (
               <div className="delay-condonation-chip" style={delayCondonationStylsMain}>
                 <p style={delayCondonationTextStyle}>
                   {(delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" && isDelayApplicationPending) ||

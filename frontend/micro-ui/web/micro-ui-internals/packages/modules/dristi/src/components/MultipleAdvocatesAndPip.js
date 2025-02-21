@@ -888,7 +888,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
                   >
                     <h1 style={{ fontSize: "18px", fontWeight: "bold" }}>Advocate {index + 1}</h1>
                     {!(
-                      advocateAndPipData?.multipleAdvocateNameDetails?.[index]?.boxComplainant?.index === 0 &&
+                      advocateAndPipData?.boxComplainant?.index === 0 &&
                       advocateAndPipData?.multipleAdvocateNameDetails?.[index]?.advocateBarRegNumberWithName?.individualId === individualId
                     ) && (
                       <span
