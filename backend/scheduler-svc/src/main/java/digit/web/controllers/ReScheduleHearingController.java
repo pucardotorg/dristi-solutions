@@ -24,8 +24,12 @@ import java.util.List;
 @Slf4j
 public class ReScheduleHearingController {
 
+    private final ReScheduleHearingService reScheduleHearingService;
+
     @Autowired
-    private ReScheduleHearingService reScheduleHearingService;
+    public ReScheduleHearingController(ReScheduleHearingService reScheduleHearingService) {
+        this.reScheduleHearingService = reScheduleHearingService;
+    }
 
     @RequestMapping(value = "/hearing/v1/_reschedule", method = RequestMethod.POST)
     public ResponseEntity<ReScheduleHearingResponse> reScheduleHearing(@Parameter(in = ParameterIn.DEFAULT, description = "Hearing Details and Request Info", required = true, schema = @Schema()) @Valid @RequestBody ReScheduleHearingRequest request) {
