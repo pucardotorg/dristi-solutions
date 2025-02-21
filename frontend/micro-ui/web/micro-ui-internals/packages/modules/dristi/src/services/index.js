@@ -208,7 +208,15 @@ export const DRISTIService = {
   customApiService: (url, data, params, useCache = false, userService = true) =>
     Request({
       url: url,
-      data,
+      data: {
+        ...data,
+        ...(data?.pendingTask && {
+          pendingTask: {
+            ...data?.pendingTask,
+            screenType: data?.pendingTask?.isDiary ? "Adiary" : "home",
+          },
+        }),
+      },
       params,
       useCache,
       userService,

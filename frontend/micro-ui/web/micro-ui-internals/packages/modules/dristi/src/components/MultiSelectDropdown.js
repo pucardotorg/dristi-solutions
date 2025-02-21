@@ -118,7 +118,13 @@ const MultiSelectDropdown = ({
     <div
       key={index}
       className={`${option.isDisabled ? "disabled" : ""}`}
-      style={isOBPSMultiple ? (index % 2 !== 0 ? { background: "#EEEEEE" } : {}) : {}}
+      style={
+        isOBPSMultiple
+          ? index % 2 !== 0
+            ? { background: "#EEEEEE", ...(option.isDisabled && { background: "rgba(238, 238, 238, var(--bg-opacity))" }) }
+            : { ...(option.isDisabled && { background: "rgba(238, 238, 238, var(--bg-opacity))" }) }
+          : { ...(option.isDisabled && { background: "rgba(238, 238, 238, var(--bg-opacity))" }) }
+      }
     >
       <input
         type="checkbox"
