@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.jsonpath.JsonPath;
-import io.swagger.util.Json;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.models.individual.Individual;
@@ -119,8 +118,8 @@ public class PendingTaskService {
             String advocateUuid = getAdvocateUuid(requestInfo, representative);
 
             JsonNode hitsNode = pendingTaskNode.path("hits").path("hits");
-            List<JsonNode> filteredTasks = filterPendingTasks(hitsNode, parties, advocateUuid, requestInfo);
-            pendingTaskUtil.updatePendingTask(filteredTasks);
+            List<JsonNode> updatedTasks = updatePendingTasksAdvocate(hitsNode, parties, advocateUuid, requestInfo);
+            pendingTaskUtil.updatePendingTask(updatedTasks);
             log.info("operation=updatePendingTaskAdvocate, status=SUCCESS");
         } catch (Exception e){
             log.error(ERROR_UPDATING_PENDING_TASK, e);
@@ -128,7 +127,7 @@ public class PendingTaskService {
         }
     }
 
-    private List<JsonNode> filterPendingTasks(JsonNode hitsNode, List<Map<String, Object>> parties, String advocateUuid, RequestInfo requestInfo) {
+    private List<JsonNode> updatePendingTasksAdvocate(JsonNode hitsNode, List<Map<String, Object>> parties, String advocateUuid, RequestInfo requestInfo) {
         List<JsonNode> filteredTasks = new ArrayList<>();
         for(Map<String, Object> litigant: parties) {
             List<JsonNode> tasks = filterPendingTaskAdvocate(hitsNode, Collections.singletonList(litigant.get("individualId").toString()));
@@ -176,18 +175,27 @@ public class PendingTaskService {
         for (JsonNode task : filteredTasks) {
             JsonNode dataNode = task.path("_source").path("Data");
             ArrayNode assignedToArray = (ArrayNode) dataNode.withArray("assignedTo");
-            ObjectNode uuidNode = assignedToArray.addObject();
-            uuidNode.put("uuid", uuid);
+            boolean uuidExists = false;
+            for (JsonNode node : assignedToArray) {
+                if (node.has("uuid") && node.get("uuid").asText().equals(uuid)) {
+                    uuidExists = true;
+                    break;
+                }
+            }
+            if (!uuidExists) {
+                ObjectNode uuidNode = assignedToArray.addObject();
+                uuidNode.put("uuid", uuid);
+            }
         }
     }
 
-    private List<String> getLitigantIndividualIds(List<Map<String, Object>> parties, RequestInfo requestInfo) {
-        List<String> individualIds = new ArrayList<>();
+    private List<String> getLitigantUuids(List<Map<String, Object>> parties, RequestInfo requestInfo) {
+        List<String> individualUuids = new ArrayList<>();
         for (Map<String, Object> party : parties) {
             List<Individual> individual = individualService.getIndividualsByIndividualId(requestInfo, party.get("individualId").toString());
-            individualIds.add(individual.get(0).getUserUuid());
+            individualUuids.add(individual.get(0).getUserUuid());
         }
-        return individualIds;
+        return individualUuids;
     }
 
     private String getAdvocateUuid(RequestInfo requestInfo, Map<String, Object> representative) {
@@ -238,7 +246,7 @@ public class PendingTaskService {
                 })
                 .collect(Collectors.toList());
 
-        List<String> litigantUuids = getLitigantIndividualIds(litigantList, (RequestInfo) joinCase.get("requestInfo"));
+        List<String> litigantUuids = getLitigantUuids(litigantList, (RequestInfo) joinCase.get("requestInfo"));
 
         return tasks.stream()
                 .filter(task -> {
