@@ -2142,15 +2142,15 @@ export const updateCaseDetails = async ({
   }
   if (selected === "witnessDetails") {
     const newFormDataCopy = structuredClone(updatedFormData.filter((item) => item.isenabled));
+
     for (let i = 0; i < newFormDataCopy.length; i++) {
       const obj = newFormDataCopy[i];
-      if (obj?.data?.phonenumbers) {
-        obj.data.phonenumbers.textfieldValue = "";
-      }
-      if (obj?.data?.emails) {
-        obj.data.emails.textfieldValue = "";
+
+      if (obj?.data?.firstName && typeof obj?.data?.firstName === "object" && obj.data?.firstName?.firstName !== undefined) {
+        obj.data.firstName = obj.data.firstName.firstName;
       }
     }
+
     data.additionalDetails = {
       ...caseDetails.additionalDetails,
       witnessDetails: {
@@ -2159,6 +2159,7 @@ export const updateCaseDetails = async ({
       },
     };
   }
+
   if (selected === "demandNoticeDetails") {
     let docList = [];
     let infoBoxData = {};

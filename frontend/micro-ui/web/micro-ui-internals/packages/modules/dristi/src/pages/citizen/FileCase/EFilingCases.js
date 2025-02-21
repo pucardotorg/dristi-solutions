@@ -732,10 +732,12 @@ function EFilingCases({ path }) {
       }
 
       if (caseDetails?.status === "DRAFT_IN_PROGRESS" && selected === "witnessDetails") {
+        const formData = caseDetails?.additionalDetails?.[selected]?.formdata?.[index]?.data || {};
         return {
-          ...caseDetails?.additionalDetails?.[selected]?.formdata?.[index]?.data,
-          witnessNameAvailable: caseDetails?.additionalDetails?.[selected]?.formdata?.[index]?.data?.witnessNameAvailable
-            ? caseDetails?.additionalDetails?.[selected]?.formdata?.[index]?.data?.witnessNameAvailable
+          ...formData,
+          firstName: typeof formData.firstName === "string" ? { firstName: formData.firstName } : formData.firstName,
+          witnessNameAvailable: formData?.witnessNameAvailable
+            ? formData?.witnessNameAvailable
             : {
                 code: "YES",
                 name: "YES",
@@ -1897,14 +1899,14 @@ function EFilingCases({ path }) {
     }
 
     if (
-      selected === "complainantDetails" && 
-      !isWarning && 
-      formdata?.some(item => item?.data?.complainantVerification?.individualDetails === null)
+      selected === "complainantDetails" &&
+      !isWarning &&
+      formdata?.some((item) => item?.data?.complainantVerification?.individualDetails === null)
     ) {
       setWarningModal(true);
       return;
     }
-    
+
     if (selected === "reviewCaseFile" && isCaseReAssigned && !openConfirmCorrectionModal && !isCaseLocked) {
       setOpenConfirmCorrectionModal(true);
       return;
@@ -2028,11 +2030,10 @@ function EFilingCases({ path }) {
   };
 
   const onSaveDraft = (props, isWarning = false) => {
-
     if (
-      selected === "complainantDetails" && 
-      !isWarning && 
-      formdata?.some(item => item?.data?.complainantVerification?.individualDetails === null)
+      selected === "complainantDetails" &&
+      !isWarning &&
+      formdata?.some((item) => item?.data?.complainantVerification?.individualDetails === null)
     ) {
       setSaveDraft(true);
       setWarningModal(true);
@@ -2851,7 +2852,12 @@ function EFilingCases({ path }) {
             onSubmit={() => onSubmit("SAVE_DRAFT")}
           />
           {!(isCaseReAssigned || isPendingReESign) && (
-            <Button className="previous-button" variation="secondary" label={t("CS_SAVE_DRAFT")} onButtonClick={() => onSaveDraft(undefined, false)} />
+            <Button
+              className="previous-button"
+              variation="secondary"
+              label={t("CS_SAVE_DRAFT")}
+              onButtonClick={() => onSaveDraft(undefined, false)}
+            />
           )}
         </ActionBar>
       )}
