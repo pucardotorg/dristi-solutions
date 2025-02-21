@@ -118,7 +118,7 @@ function PendingTaskAccordion({
               key={item?.filingNumber}
               style={{ cursor: "pointer" }}
               onClick={() => {
-                if (item?.status === "PENDING_SIGN" && item?.actionName === "Review and Sign") {
+                if (item?.status === "PENDING_SIGN" && item?.screenType === "Adiary") {
                   history.push(`/${window.contextPath}/employee/home/adiary?date=${item?.params?.referenceId}`);
                 } else if (item?.status === "PENDING_RESPONSE") {
                   if (isJudge) {
@@ -135,10 +135,10 @@ function PendingTaskAccordion({
               }}
             >
               <input type="checkbox" value={check} />
-              {item?.actionName === "Sign A Diary" && item?.status === "PENDING_SIGN" ? (
+              {item?.screenType === "Adiary" && item?.status === "PENDING_SIGN" ? (
                 <div className="task-details" style={{ display: "flex", flexDirection: "column", gap: 8, marginLeft: 8 }}>
                   <span className="task-title">
-                    {t("SIGN_A_DIARY")} {formatDate(item?.params?.referenceId)}
+                    {item?.actionName} {formatDate(item?.params?.referenceId)}
                   </span>
                   <span className="task-info">
                     {t("ADIARY_DUE_ON")} {getNextFormatDate(item?.params?.referenceId)}{" "}
