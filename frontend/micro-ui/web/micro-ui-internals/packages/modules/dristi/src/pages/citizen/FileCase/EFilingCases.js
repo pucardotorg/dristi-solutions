@@ -56,6 +56,7 @@ import {
   updateCaseDetails,
   validateDateForDelayApplication,
   witnessDetailsValidation,
+  WitnessValidation,
 } from "./EfilingValidationUtils";
 import isEqual from "lodash/isEqual";
 import isMatch from "lodash/isMatch";
@@ -725,6 +726,22 @@ function EFilingCases({ path }) {
             },
           };
         }
+      }
+
+      if (caseDetails?.status === "DRAFT_IN_PROGRESS" && selected === "witnessDetails") {
+        return {
+          ...caseDetails?.additionalDetails?.[selected]?.formdata?.[index]?.data,
+          witnessNameAvailable: caseDetails?.additionalDetails?.[selected]?.formdata?.[index]?.data?.witnessNameAvailable
+            ? caseDetails?.additionalDetails?.[selected]?.formdata?.[index]?.data?.witnessNameAvailable
+            : {
+                code: "YES",
+                name: "YES",
+                showName: true,
+                commonFields: true,
+                showDesignation: false,
+                isEnabled: true,
+              },
+        };
       }
 
       if (caseDetails?.status === "DRAFT_IN_PROGRESS" && selected === "advocateDetails") {
@@ -1477,6 +1494,7 @@ function EFilingCases({ path }) {
     checkIfscValidation({ formData, setValue, selected });
     checkNameValidation({ formData, setValue, selected, formdata, index, reset, clearErrors, formState });
     checkOnlyCharInCheque({ formData, setValue, selected });
+    WitnessValidation({ formData, setValue, selected, formdata, index, reset, clearErrors, formState });
     if (!isEqual(formData, formdata[index].data)) {
       chequeDateValidation({ formData, setError, clearErrors, selected });
       showDemandNoticeModal({
