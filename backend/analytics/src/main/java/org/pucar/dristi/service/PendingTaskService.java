@@ -132,6 +132,7 @@ public class PendingTaskService {
         for(Map<String, Object> litigant: parties) {
             List<JsonNode> tasks = filterPendingTaskAdvocate(hitsNode, Collections.singletonList(litigant.get("individualId").toString()));
             if(litigant.get("isAdvocateReplacing").equals(true)) {
+                // Note: If the same pending task is displayed to multiple litigants, this logic will break.
                 replaceAssigneeToPendingTask(tasks, advocateUuid, requestInfo);
             } else {
                 addAssigneeToPendingTask(tasks, advocateUuid);
@@ -190,12 +191,12 @@ public class PendingTaskService {
     }
 
     private List<String> getLitigantUuids(List<Map<String, Object>> parties, RequestInfo requestInfo) {
-        List<String> individualUuids = new ArrayList<>();
+        List<String> userUuids = new ArrayList<>();
         for (Map<String, Object> party : parties) {
             List<Individual> individual = individualService.getIndividualsByIndividualId(requestInfo, party.get("individualId").toString());
-            individualUuids.add(individual.get(0).getUserUuid());
+            userUuids.add(individual.get(0).getUserUuid());
         }
-        return individualUuids;
+        return userUuids;
     }
 
     private String getAdvocateUuid(RequestInfo requestInfo, Map<String, Object> representative) {
