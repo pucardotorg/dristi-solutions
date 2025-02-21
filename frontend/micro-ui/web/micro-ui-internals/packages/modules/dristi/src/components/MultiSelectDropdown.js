@@ -121,9 +121,9 @@ const MultiSelectDropdown = ({
       style={
         isOBPSMultiple
           ? index % 2 !== 0
-            ? { background: "#EEEEEE", ...(option.isDisabled && { background: "rgba(238, 238, 238, var(--bg-opacity))" }) }
-            : { ...(option.isDisabled && { background: "rgba(238, 238, 238, var(--bg-opacity))" }) }
-          : { ...(option.isDisabled && { background: "rgba(238, 238, 238, var(--bg-opacity))" }) }
+            ? { background: "#EEEEEE", ...(option.isDisabled && { background: "#D2D2D2" }) }
+            : { ...(option.isDisabled && { background: "#D2D2D2" }) }
+          : { ...(option.isDisabled && { background: "#D2D2D2" }) }
       }
     >
       <input
@@ -141,7 +141,12 @@ const MultiSelectDropdown = ({
         disabled={option.isDisabled || false}
       />
       <div className="custom-checkbox">
-        <CheckSvg style={{ innerWidth: "24px", width: "24px" }} fill={option.isDisabled ? "#505050" : COLOR_FILL} />
+        <CheckSvg
+          style={{ innerWidth: "24px", width: "100%", ...(option?.isDisabled && { opacity: 1 }) }}
+          fill={option.isDisabled ? "#505050" : COLOR_FILL}
+          checkBoxFill={option?.isDisabled ? "#D2D2D2" : undefined}
+          tickStyle={option?.isDisabled ? { opacity: 0 } : {}}
+        />
       </div>
       <p
         className="label"
