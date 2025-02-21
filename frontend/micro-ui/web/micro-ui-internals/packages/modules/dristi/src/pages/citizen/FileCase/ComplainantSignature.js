@@ -757,9 +757,11 @@ const ComplainantSignature = ({ path }) => {
   useEffect(() => {
     const esignCaseUpdate = async () => {
       if (isEsignSuccess && caseDetails?.filingNumber) {
-        await updateCase(state);
-        await refetchCaseData();
-        setEsignSuccess(false);
+        await updateCase(state).then(async () => {
+          await refetchCaseData().then(() => {
+            setEsignSuccess(false);
+          });
+        });
       }
     };
 
