@@ -51,5 +51,6 @@ module.exports = function (app) {
     "/casemanagement/casemanager/case/v1/_buildcasebundle",
     "/lock-svc",
     "/ab-diary",
+    "/kerala-icops",
   ].forEach((location) => app.use(location, createProxy));
 };
