@@ -17,7 +17,7 @@ const getStyles = () => ({
   rightPanel: { flex: 1, padding: "24px 16px 24px 24px", borderLeft: "1px solid #ccc" },
   signaturePanel: { display: "flex", flexDirection: "column" },
   signatureTitle: { fontSize: "24px", fontWeight: 700, color: "#3D3C3C" },
-  goButton: { padding: 20, boxShadow: "none" },
+  goButton: { padding: "8px 16px", boxShadow: "none" },
   rowDataStyle: { padding: "18px", border: "1px solid #000" },
   linkRowDataStyle: { color: "#007E7E", textDecoration: "none", cursor: "pointer" },
 });
@@ -242,11 +242,6 @@ const ADiaryPage = ({ path }) => {
     getDiarySearch();
   }, [entryDate, tenantId]);
 
-  if (!DocViewerWrapper) {
-    console.error("DocViewerWrapper is not available");
-    return null;
-  }
-
   const uploadSignedPdf = async () => {
     try {
       const localStorageID = localStorage.getItem("fileStoreId");
@@ -312,6 +307,11 @@ const ADiaryPage = ({ path }) => {
   useEffect(() => {
     if (Array.isArray(diaryEntries?.entries) && diaryEntries?.entries?.length == 0) setNoAdiaryModal(true);
   }, [diaryEntries]);
+
+  if (!DocViewerWrapper) {
+    console.error("DocViewerWrapper is not available");
+    return null;
+  }
 
   const handleNext = () => {
     if (diaryEntries?.pagination?.totalCount > offSet + limit) {

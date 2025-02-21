@@ -40,7 +40,15 @@ export const ordersService = {
       url: url,
       useCache: useCache,
       userService,
-      data,
+      data: {
+        ...data,
+        ...(data?.pendingTask && {
+          pendingTask: {
+            ...data?.pendingTask,
+            screenType: data?.pendingTask?.isDiary ? "Adiary" : "home",
+          },
+        }),
+      },
       params,
     }),
   getPendingTaskService: (data, params) =>
@@ -99,7 +107,15 @@ export const EpostService = {
       url: url,
       useCache: useCache,
       userService,
-      data,
+      data: {
+        ...data,
+        ...(data?.pendingTask && {
+          pendingTask: {
+            ...data?.pendingTask,
+            screenType: data?.pendingTask?.isDiary ? "Adiary" : "home",
+          },
+        }),
+      },
       params,
     }),
 };
