@@ -391,4 +391,12 @@ export const DRISTIService = {
       data,
       params,
     }),
+  getLocationBasedJurisdiction: (data, params) =>
+    Request({
+      url: Urls.dristi.getLocationBasedJurisdiction,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
 };
