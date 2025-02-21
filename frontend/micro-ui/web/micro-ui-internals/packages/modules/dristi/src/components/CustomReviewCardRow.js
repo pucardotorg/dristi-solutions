@@ -88,6 +88,8 @@ const CustomReviewCardRow = ({
     type = null,
     label = null,
     value = null,
+    prefix = "",
+    style = {},
     badgeType = null,
     textDependentOn = null,
     textDependentValue = null,
@@ -96,6 +98,7 @@ const CustomReviewCardRow = ({
     enableScrutinyField = false,
   } = config;
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
+  const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
 
   function getNestedValue(obj, path) {
     return path.split(".").reduce((acc, key) => acc?.[key], obj);
@@ -108,10 +111,22 @@ const CustomReviewCardRow = ({
     const keyParts = key.split(".");
     let value = data;
     keyParts.forEach((part) => {
-      if (value && value.hasOwnProperty(part)) {
-        value = value[part];
+      const match = part.match(/^(.+?)\[(\d+)\]$/);
+      if (match) {
+        const prop = match[1];
+        const index = parseInt(match[2], 10);
+
+        if (value && value.hasOwnProperty(prop) && Array.isArray(value[prop])) {
+          value = value[prop][index];
+        } else {
+          value = undefined;
+        }
       } else {
-        value = undefined;
+        if (value && value.hasOwnProperty(part)) {
+          value = value[part];
+        } else {
+          value = undefined;
+        }
       }
     });
     return value;
@@ -131,6 +146,9 @@ const CustomReviewCardRow = ({
     if (isPrevScrutiny && (!disableScrutiny || enableScrutinyField)) {
       showFlagIcon = prevDataError ? true : false;
     }
+
+    if (isCitizen) showFlagIcon = false;
+
     if (isScrutiny) {
       if (typeof prevDataError === "string" && (dataError || prevDataError)) {
         bgclassname = dataError === prevDataError ? "preverror" : "error";
@@ -213,7 +231,7 @@ const CustomReviewCardRow = ({
           <div className={`title-main ${bgclassname}`}>
             <div className={`title ${isScrutiny && (dataError ? "column" : "")}`}>
               <div style={{ display: "flex", flexDirection: "row", gap: "8px", alignItems: "center" }}>
-                {`${titleIndex}. ${titleHeading ? t("CS_CHEQUE_NO") + " " : ""}${title || t("")}`}
+                {`${titleIndex}. ${titleHeading ? t("CS_CHEQUE_NO") + " " : prefix ? prefix + " " : ""}${title || t("")}`}
                 {data?.partyInPerson && <div style={badgeStyle}>{t("PARTY_IN_PERSON_TEXT")}</div>}
               </div>
               {badgeType && <div>{extractValue(data, badgeType)}</div>}
@@ -272,7 +290,9 @@ const CustomReviewCardRow = ({
         return (
           <div className={`text-main ${bgclassname}`}>
             <div className="text">
-              <div className="label">{t(label)}</div>
+              <div style={style} className="label">
+                {t(label)}
+              </div>
               <div className="value" style={{ overflowY: "auto", maxHeight: "310px" }}>
                 {Array.isArray(textValue)
                   ? textValue.length > 0
@@ -588,7 +608,7 @@ const CustomReviewCardRow = ({
                     )
                   : null}
               </div>
-              {showFlagIcon && (
+              {showFlagIcon && !(type === "image" && configKey === "litigentDetails" && name === "complainantDetails") && (
                 <div
                   className="flag"
                   onClick={(e) => {

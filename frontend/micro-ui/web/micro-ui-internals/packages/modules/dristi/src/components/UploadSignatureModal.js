@@ -3,8 +3,9 @@ import React, { useState } from "react";
 import SelectCustomDragDrop from "./SelectCustomDragDrop";
 import Modal from "./Modal";
 import { useToast } from "./Toast/useToast";
+import WarningTextComponent from "./WarningTextComponent";
 
-function UploadSignatureModal({ t, setOpenUploadSignatureModal, config, onSelect, formData, name }) {
+function UploadSignatureModal({ t, setOpenUploadSignatureModal, config, onSelect, formData, name, showWarning = false, warningText, onSubmit }) {
   const toast = useToast();
   const [error, setError] = useState({});
   function setValue(value, input) {
@@ -29,12 +30,6 @@ function UploadSignatureModal({ t, setOpenUploadSignatureModal, config, onSelect
 
   const Heading = (props) => {
     return <h1 className="heading-m">{props.label}</h1>;
-  };
-
-  const onSubmit = () => {
-    localStorage.setItem("formData", JSON.stringify(formData));
-    // toast.success(t("CS_E_SIGN_VERIFIED"));
-    setOpenUploadSignatureModal(false);
   };
 
   const onCancel = () => {
@@ -65,6 +60,7 @@ function UploadSignatureModal({ t, setOpenUploadSignatureModal, config, onSelect
       className="upload-signature-modal"
       submitTextClassName="upload-signature-button"
     >
+      {showWarning && <WarningTextComponent t={t} label={warningText} />}
       <div className="upload-signature-modal-main">
         <SelectCustomDragDrop
           config={config}

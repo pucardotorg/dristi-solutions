@@ -526,6 +526,10 @@ export const newConfig = [
                   code: "MODIFICATION_MESSAGE",
                   name: "FOURTH_TERMS_AND_CONDITIONS",
                 },
+                {
+                  code: "PERSONAL_INFORMATION_CONSENT_MESSAGE",
+                  name: "FIFTH_TERMS_AND_CONDITIONS",
+                },
               ],
             },
           ],

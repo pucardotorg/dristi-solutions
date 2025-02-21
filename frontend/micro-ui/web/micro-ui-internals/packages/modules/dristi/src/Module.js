@@ -58,7 +58,13 @@ import CustomCheckBoxCard from "./components/CustomCheckBoxCard";
 import useBillSearch from "./hooks/dristi/useBillSearch";
 import SelectTranscriptTextArea from "./components/SelectTranscriptTextArea";
 import SelectMultiUpload from "./components/SelectMultiUpload";
-import SupportingDocsComponent from "./components/SupportingDocsComponent"
+import SupportingDocsComponent from "./components/SupportingDocsComponent";
+import MultipleAdvocateNameDetails from "./components/MultipleAdvocateNameDetails";
+import BoxComplainant from "./components/BoxComplainant";
+import MultipleAdvocatesAndPip from "./components/MultipleAdvocatesAndPip";
+import MultiSelectDropdown from "./components/MultiSelectDropdown";
+import WarningModal from "./components/WarningModal";
+import CustomTextInput from "./components/CustomTextInput";
 
 export const DRISTIModule = ({ stateCode, userType, tenants }) => {
   const Digit = useMemo(() => window?.Digit || {}, []);
@@ -164,7 +170,13 @@ const componentsToRegister = {
   useBillSearch,
   SelectTranscriptTextArea,
   SelectMultiUpload,
-  SupportingDocsComponent
+  SupportingDocsComponent,
+  MultipleAdvocateNameDetails,
+  MultipleAdvocatesAndPip,
+  BoxComplainant,
+  MultiSelectDropdown,
+  WarningModal,
+  CustomTextInput
 };
 
 const overrideHooks = () => {

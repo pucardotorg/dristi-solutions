@@ -226,8 +226,8 @@ export const reviewCaseFileFormConfig = [
                 {
                   type: "text",
                   label: "POLICE_STATION",
-                  value: "policeStation.code",
-                  isLocalizationRequired: true,
+                  value: "policeStation.name",
+                  isLocalizationRequired: false,
                 },
                 {
                   type: "date",
@@ -309,6 +309,10 @@ export const reviewCaseFileFormConfig = [
                 //   label: "CS_MODE_OF_DISPATCH",
                 //   value: "modeOfDispatchType.modeOfDispatchType.name",
                 // },
+                {
+                  type: "infoBox",
+                  value: "infoBoxData",
+                },
                 {
                   type: "date",
                   label: "CS_DATE_OF_DISPATCH_LDN",
@@ -535,28 +539,12 @@ export const reviewCaseFileFormConfig = [
               config: [
                 {
                   type: "title",
-                  value: ["advocateName"],
-                },
-                {
-                  type: "text",
-                  label: "CS_BAR_REGISTRATION",
-                  value: "barRegistrationNumber",
-                },
-                {
-                  type: "text",
-                  label: "NUMBER_OF_ADVOCATES",
-                  value: "numberOfAdvocate",
-                },
-                {
-                  type: "image",
-                  label: "VAKALATNAMA",
-                  value: ["vakalatnamaFileUpload.document"],
-                  enableScrutinyField: true,
-                },
-                {
-                  type: "image",
-                  label: "CS_ID_PROOF",
-                  value: ["AdvocateNameDetails.advocateIdProof"],
+                  prefix: "Complainant:",
+                  value: [
+                    "multipleAdvocatesAndPip.boxComplainant.firstName",
+                    "multipleAdvocatesAndPip.boxComplainant.middleName",
+                    "multipleAdvocatesAndPip.boxComplainant.lastName",
+                  ],
                 },
               ],
               data: {},
