@@ -209,6 +209,7 @@ const ComplainantSignature = ({ path }) => {
   const name = "Signature";
   const complainantPlaceholder = "Complainant Signature";
   const advocatePlaceholder = "Advocate Signature";
+  const [calculationResponse, setCalculationResponse] = useState({});
 
   const uploadModalConfig = useMemo(() => {
     return {
@@ -332,6 +333,16 @@ const ComplainantSignature = ({ path }) => {
     () => [complainantWorkflowState.UPLOAD_SIGN_DOC, complainantWorkflowState.UPLOAD_SIGN_DOC_SCRUTINY].includes(state),
     [state]
   );
+
+  const isLastPersonSigned = useMemo(() => {
+    if (!caseDetails?.litigants?.length) return false;
+    return caseDetails.litigants.every((litigant) => {
+      const litigantSigned = litigant.hasSigned;
+      const hasReps = litigant.representatives?.length > 0;
+      const anyRepresentativeSigned = hasReps ? litigant.representatives.some((rep) => rep.hasSigned) : true;
+      return litigantSigned && anyRepresentativeSigned;
+    });
+  }, [caseDetails]);
 
   const closePendingTask = async ({ status, assignee, closeUploadDoc }) => {
     const entityType = "case-default";
@@ -621,10 +632,21 @@ const ComplainantSignature = ({ path }) => {
     return tempDocList;
   };
 
-  const handleSubmit = async (state) => {
-    setLoader(true);
+  const handleSubmit = (state) => {
+    if (isSelectedEsign) {
+      if (isLastPersonSigned && state === "PENDING_PAYMENT") {
+        history.replace(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculationResponse } });
+      } else {
+        history.replace(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
+      }
+    }
+    if (isSelectedUploadDoc) {
+      updateCase(state);
+    }
+  };
 
-    let calculationResponse = {};
+  const updateCase = async (state) => {
+    setLoader(true);
 
     const caseDocList = updateSignedDocInCaseDoc();
 
@@ -703,13 +725,19 @@ const ComplainantSignature = ({ path }) => {
                 tenantId,
               },
             });
-            calculationResponse = await callCreateDemandAndCalculation(caseDetails, tenantId, caseId);
+            const calculation = await callCreateDemandAndCalculation(caseDetails, tenantId, caseId);
+            setCalculationResponse(calculation);
             setLoader(false);
-            history.replace(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculationResponse } });
+            if (isSelectedUploadDoc) {
+              history.replace(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculationResponse } });
+            }
           } else {
             setLoader(false);
-            history.replace(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
+            if (isSelectedUploadDoc) {
+              history.replace(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
+            }
           }
+          await refetchCaseData();
         })
         .catch((error) => {
           toast.error(t("SOMETHING_WENT_WRONG"));
@@ -742,6 +770,7 @@ const ComplainantSignature = ({ path }) => {
         const fileStoreId = localStorage.getItem("fileStoreId");
         setSignatureDocumentId(fileStoreId);
         setEsignSuccess(true);
+        updateCase(state);
       }
     }
     if (esignProcess && caseDetails?.filingNumber) {
@@ -919,7 +948,7 @@ const ComplainantSignature = ({ path }) => {
           <SubmitBar
             label={
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>
-                <span>{t("CS_SUBMIT_CASE")}</span>
+                <span>{isSelectedUploadDoc || (isSelectedEsign && isLastPersonSigned) ? t("CS_SUBMIT_CASE") : t("ESIGN_GO_TO_HOME")}</span>
                 <RightArrow />
               </div>
             }
