@@ -56,6 +56,7 @@ import {
   updateCaseDetails,
   validateDateForDelayApplication,
   witnessDetailsValidation,
+  WitnessValidation,
 } from "./EfilingValidationUtils";
 import isEqual from "lodash/isEqual";
 import isMatch from "lodash/isMatch";
@@ -728,6 +729,24 @@ function EFilingCases({ path }) {
             },
           };
         }
+      }
+
+      if (caseDetails?.status === "DRAFT_IN_PROGRESS" && selected === "witnessDetails") {
+        const formData = caseDetails?.additionalDetails?.[selected]?.formdata?.[index]?.data || {};
+        return {
+          ...formData,
+          firstName: typeof formData.firstName === "string" ? { firstName: formData.firstName } : formData.firstName,
+          witnessNameAvailable: formData?.witnessNameAvailable
+            ? formData?.witnessNameAvailable
+            : {
+                code: "YES",
+                name: "YES",
+                showName: true,
+                commonFields: true,
+                showDesignation: false,
+                isEnabled: true,
+              },
+        };
       }
 
       if (caseDetails?.status === "DRAFT_IN_PROGRESS" && selected === "advocateDetails") {
@@ -1480,6 +1499,7 @@ function EFilingCases({ path }) {
     checkIfscValidation({ formData, setValue, selected });
     checkNameValidation({ formData, setValue, selected, formdata, index, reset, clearErrors, formState });
     checkOnlyCharInCheque({ formData, setValue, selected });
+    WitnessValidation({ formData, setValue, selected, formdata, index, reset, clearErrors, formState });
     if (!isEqual(formData, formdata[index].data)) {
       chequeDateValidation({ formData, setError, clearErrors, selected });
       showDemandNoticeModal({
@@ -1879,14 +1899,14 @@ function EFilingCases({ path }) {
     }
 
     if (
-      selected === "complainantDetails" && 
-      !isWarning && 
-      formdata?.some(item => item?.data?.complainantVerification?.individualDetails === null)
+      selected === "complainantDetails" &&
+      !isWarning &&
+      formdata?.some((item) => item?.data?.complainantVerification?.individualDetails === null)
     ) {
       setWarningModal(true);
       return;
     }
-    
+
     if (selected === "reviewCaseFile" && isCaseReAssigned && !openConfirmCorrectionModal && !isCaseLocked) {
       setOpenConfirmCorrectionModal(true);
       return;
@@ -2010,11 +2030,10 @@ function EFilingCases({ path }) {
   };
 
   const onSaveDraft = (props, isWarning = false) => {
-
     if (
-      selected === "complainantDetails" && 
-      !isWarning && 
-      formdata?.some(item => item?.data?.complainantVerification?.individualDetails === null)
+      selected === "complainantDetails" &&
+      !isWarning &&
+      formdata?.some((item) => item?.data?.complainantVerification?.individualDetails === null)
     ) {
       setSaveDraft(true);
       setWarningModal(true);
@@ -2833,7 +2852,12 @@ function EFilingCases({ path }) {
             onSubmit={() => onSubmit("SAVE_DRAFT")}
           />
           {!(isCaseReAssigned || isPendingReESign) && (
-            <Button className="previous-button" variation="secondary" label={t("CS_SAVE_DRAFT")} onButtonClick={() => onSaveDraft(undefined, false)} />
+            <Button
+              className="previous-button"
+              variation="secondary"
+              label={t("CS_SAVE_DRAFT")}
+              onButtonClick={() => onSaveDraft(undefined, false)}
+            />
           )}
         </ActionBar>
       )}
