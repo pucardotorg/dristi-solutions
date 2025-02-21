@@ -633,15 +633,14 @@ const ComplainantSignature = ({ path }) => {
   };
 
   const handleSubmit = (state) => {
-    if (isSelectedEsign) {
+    if (isSelectedUploadDoc) {
+      updateCase(state);
+    } else {
       if (isLastPersonSigned && state === "PENDING_PAYMENT") {
         history.replace(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculationResponse } });
       } else {
         history.replace(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
       }
-    }
-    if (isSelectedUploadDoc) {
-      updateCase(state);
     }
   };
 
@@ -741,17 +740,23 @@ const ComplainantSignature = ({ path }) => {
         })
         .catch((error) => {
           toast.error(t("SOMETHING_WENT_WRONG"));
+          setEsignSuccess(false);
           throw error;
         });
     } catch (error) {
       console.error("Error:", error);
       toast.error(t("SOMETHING_WENT_WRONG"));
+      setEsignSuccess(false);
       setLoader(false);
     }
   };
 
   const isSubmitEnabled = () => {
-    return isEsignSuccess || uploadDoc;
+    return isEsignSuccess || isCurrentAdvocateSigned || isCurrentLitigantSigned || uploadDoc;
+  };
+
+  const refetchCaseDetails = async () => {
+    await refetchCaseData();
   };
 
   useEffect(() => {
@@ -771,6 +776,7 @@ const ComplainantSignature = ({ path }) => {
         setSignatureDocumentId(fileStoreId);
         setEsignSuccess(true);
         updateCase(state);
+        refetchCaseDetails();
       }
     }
     if (esignProcess && caseDetails?.filingNumber) {
@@ -781,7 +787,7 @@ const ComplainantSignature = ({ path }) => {
     localStorage.removeItem("isSignSuccess");
     localStorage.removeItem("signStatus");
     localStorage.removeItem("fileStoreId");
-  }, [caseDetails?.filingNumber, tenantId]);
+  }, [caseDetails, refetchCaseDetails]);
 
   const isRightPannelEnable = () => {
     if (isAdvocateFilingCase) {
@@ -927,7 +933,7 @@ const ComplainantSignature = ({ path }) => {
       </div>
       <ActionBar>
         <div style={styles.actionBar}>
-          {isFilingParty && (
+          {isFilingParty && ((isSelectedEsign && !isLastPersonSigned) || isSelectedUploadDoc) && (
             <Button
               label={t("EDIT_A_CASE")}
               variation={"secondary"}
@@ -948,7 +954,7 @@ const ComplainantSignature = ({ path }) => {
           <SubmitBar
             label={
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>
-                <span>{isSelectedUploadDoc || (isSelectedEsign && isLastPersonSigned) ? t("CS_SUBMIT_CASE") : t("ESIGN_GO_TO_HOME")}</span>
+                <span>{isSelectedUploadDoc || isLastPersonSigned ? t("CS_SUBMIT_CASE") : t("ESIGN_GO_TO_HOME")}</span>
                 <RightArrow />
               </div>
             }
