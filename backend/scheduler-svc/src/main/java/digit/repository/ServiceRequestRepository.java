@@ -21,15 +21,14 @@ import static digit.config.ServiceConstants.SEARCHER_SERVICE_EXCEPTION;
 public class ServiceRequestRepository {
 
     private final ObjectMapper mapper;
-
     private final RestTemplate restTemplate;
-
 
     @Autowired
     public ServiceRequestRepository(ObjectMapper mapper, RestTemplate restTemplate) {
         this.mapper = mapper;
         this.restTemplate = restTemplate;
     }
+
     public Object postMethod(StringBuilder uri, Object requestObject) {
         Object response = null;
         mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
