@@ -63,6 +63,8 @@ import MultipleAdvocateNameDetails from "./components/MultipleAdvocateNameDetail
 import BoxComplainant from "./components/BoxComplainant";
 import MultipleAdvocatesAndPip from "./components/MultipleAdvocatesAndPip";
 import MultiSelectDropdown from "./components/MultiSelectDropdown";
+import WarningModal from "./components/WarningModal";
+import CustomTextInput from "./components/CustomTextInput";
 
 export const DRISTIModule = ({ stateCode, userType, tenants }) => {
   const Digit = useMemo(() => window?.Digit || {}, []);
@@ -90,6 +92,7 @@ export const DRISTIModule = ({ stateCode, userType, tenants }) => {
   const urlParams = new URLSearchParams(window.location.search);
   const result = urlParams.get("result");
   const fileStoreId = urlParams.get("filestoreId");
+  console.log(result, fileStoreId, "result");
   if (userType === "citizen" && userInfo?.type !== "EMPLOYEE") {
     return (
       <ToastProvider>
@@ -172,6 +175,8 @@ const componentsToRegister = {
   MultipleAdvocatesAndPip,
   BoxComplainant,
   MultiSelectDropdown,
+  WarningModal,
+  CustomTextInput
 };
 
 const overrideHooks = () => {

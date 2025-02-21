@@ -31,7 +31,15 @@ export const submissionService = {
       url: url,
       useCache,
       userService,
-      data,
+      data: {
+        ...data,
+        ...(data?.pendingTask && {
+          pendingTask: {
+            ...data?.pendingTask,
+            screenType: data?.pendingTask?.isDiary ? "Adiary" : "home",
+          },
+        }),
+      },
       params,
     }),
   getPendingTaskService: (data, params) =>

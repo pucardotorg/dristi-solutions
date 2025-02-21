@@ -56,6 +56,7 @@ import {
   updateCaseDetails,
   validateDateForDelayApplication,
   witnessDetailsValidation,
+  WitnessValidation,
 } from "./EfilingValidationUtils";
 import isEqual from "lodash/isEqual";
 import isMatch from "lodash/isMatch";
@@ -71,6 +72,7 @@ import ConfirmCaseDetailsModal from "./ConfirmCaseDetailsModal";
 import { DocumentUploadError } from "../../../Utils/errorUtil";
 import ConfirmDcaSkipModal from "./ConfirmDcaSkipModal";
 import ErrorDataModal from "./ErrorDataModal";
+import WarningModal from "../../../components/WarningModal";
 
 const OutlinedInfoIcon = () => (
   <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: "absolute", right: -22, top: 0 }}>
@@ -207,6 +209,7 @@ function EFilingCases({ path }) {
   const [shouldShowConfirmDcaModal, setShouldShowConfirmDcaModal] = useState(false);
   const [prevIsDcaSkipped, setPrevIsDcaSkipped] = useState("");
   const [showErrorDataModal, setShowErrorDataModal] = useState({ page: "", showModal: false, errorData: [] });
+  const [isDcaPageRefreshed, setIsDcaPageRefreshed] = useState(true);
 
   const [showConfirmCaseDetailsModal, setShowConfirmCaseDetailsModal] = useState(false);
 
@@ -222,6 +225,8 @@ function EFilingCases({ path }) {
   const [showEditCaseNameModal, setShowEditCaseNameModal] = useState(false);
   const [modalCaseName, setModalCaseName] = useState("");
   const [isFilingParty, setIsFilingParty] = useState(false);
+  const [warningModal, setWarningModal] = useState(false);
+  const [isSaveDraft, setSaveDraft] = useState(false);
 
   const [{ showSuccessToast, successMsg }, setSuccessToast] = useState({
     showSuccessToast: false,
@@ -506,7 +511,9 @@ function EFilingCases({ path }) {
   useEffect(() => {
     const isDcaSkipped = caseDetails?.caseDetails?.["delayApplications"]?.formdata?.[0]?.data?.isDcaSkippedInEFiling?.code;
     if (isDcaSkipped !== prevIsDcaSkipped) {
-      setPrevIsDcaSkipped(isDcaSkipped);
+      if (!isCaseReAssigned || (isCaseReAssigned && isDcaSkipped === "NO")) {
+        setPrevIsDcaSkipped(isDcaSkipped);
+      }
     }
   }, [caseDetails, prevIsDcaSkipped]);
 
@@ -515,29 +522,34 @@ function EFilingCases({ path }) {
   }, [selected]);
 
   useEffect(() => {
-    if (Object.keys(caseDetails).length !== 0) {
+    const currentCaseDetails = isCaseReAssigned && errorCaseDetails ? errorCaseDetails : caseDetails;
+
+    if (currentCaseDetails && Object.keys(currentCaseDetails).length !== 0) {
       const fieldsRemainingCopy = structuredClone(fieldsRemaining);
       const additionalDetailsArray = ["complainantDetails", "respondentDetails", "witnessDetails", "prayerSwornStatement", "advocateDetails"];
       const caseDetailsArray = ["chequeDetails", "debtLiabilityDetails", "demandNoticeDetails", "delayApplications"];
+
       for (const key of additionalDetailsArray) {
-        if (caseDetails?.additionalDetails?.[key]) {
+        if (currentCaseDetails?.additionalDetails?.[key]) {
           const index = fieldsRemainingCopy.findIndex((fieldsRemainingCopy) => fieldsRemainingCopy.selectedPage === key);
-          fieldsRemainingCopy[index] = setMandatoryAndOptionalRemainingFields(caseDetails?.additionalDetails?.[key]?.formdata, key);
+          fieldsRemainingCopy[index] = setMandatoryAndOptionalRemainingFields(currentCaseDetails?.additionalDetails?.[key]?.formdata, key);
         }
       }
+
       for (const key of caseDetailsArray) {
-        if (caseDetails?.caseDetails?.[key]) {
+        if (currentCaseDetails?.caseDetails?.[key]) {
           const index = fieldsRemainingCopy.findIndex((fieldsRemainingCopy) => fieldsRemainingCopy.selectedPage === key);
-          fieldsRemainingCopy[index] = setMandatoryAndOptionalRemainingFields(caseDetails?.caseDetails?.[key]?.formdata, key);
+          fieldsRemainingCopy[index] = setMandatoryAndOptionalRemainingFields(currentCaseDetails?.caseDetails?.[key]?.formdata, key);
         }
       }
-      if (isDraftInProgress) {
+
+      if (isDraftInProgress || isCaseReAssigned) {
         setFieldsRemaining(fieldsRemainingCopy);
       } else {
         setFieldsRemaining([{ mandatoryTotalCount: 0, optionalTotalCount: 0 }]);
       }
     }
-  }, [caseDetails]);
+  }, [caseDetails, errorCaseDetails, isCaseReAssigned, isDraftInProgress]);
 
   useEffect(() => {
     const filingParty = caseDetails?.auditDetails?.createdBy === userInfo?.uuid;
@@ -663,6 +675,14 @@ function EFilingCases({ path }) {
         if (selected === "reviewCaseFile") {
           return scrutinyObj;
         }
+        if (selected === "delayApplications") {
+          if (caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload && prevIsDcaSkipped === "NO") {
+            setFormDataValue.current?.(
+              "condonationFileUpload",
+              caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload
+            );
+          }
+        }
         return (
           errorCaseDetails?.additionalDetails?.[selected]?.formdata?.[index]?.data ||
           errorCaseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data ||
@@ -688,7 +708,15 @@ function EFilingCases({ path }) {
                   name: "NO",
                   showDcaFileUpload: true,
                 },
+            condonationFileUpload: caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload,
           };
+          if (caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload) {
+            setFormDataValue.current?.(
+              "condonationFileUpload",
+              caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload
+            );
+          }
+
           return data;
         } else {
           return {
@@ -701,6 +729,24 @@ function EFilingCases({ path }) {
             },
           };
         }
+      }
+
+      if (caseDetails?.status === "DRAFT_IN_PROGRESS" && selected === "witnessDetails") {
+        const formData = caseDetails?.additionalDetails?.[selected]?.formdata?.[index]?.data || {};
+        return {
+          ...formData,
+          firstName: typeof formData.firstName === "string" ? { firstName: formData.firstName } : formData.firstName,
+          witnessNameAvailable: formData?.witnessNameAvailable
+            ? formData?.witnessNameAvailable
+            : {
+                code: "YES",
+                name: "YES",
+                showName: true,
+                commonFields: true,
+                showDesignation: false,
+                isEnabled: true,
+              },
+        };
       }
 
       if (caseDetails?.status === "DRAFT_IN_PROGRESS" && selected === "advocateDetails") {
@@ -817,27 +863,7 @@ function EFilingCases({ path }) {
                       let dataobj = caseDetails?.additionalDetails?.[input?.key]?.formdata || caseDetails?.caseDetails?.[input?.key]?.formdata || {};
                       if (isCaseReAssigned) {
                         dataobj =
-                          input?.key === "advocateDetails"
-                            ? errorCaseDetails?.additionalDetails?.[input?.key]?.formdata?.[0]?.data?.advocateName
-                              ? errorCaseDetails?.additionalDetails?.[input?.key]?.formdata
-                              : [
-                                  {
-                                    data: {
-                                      advocateName: "",
-                                      barRegistrationNumber: "",
-                                      vakalatnamaFileUpload: {},
-                                      isAdvocateRepresenting: {
-                                        code: "NO",
-                                        name: "No",
-                                        showForm: true,
-                                        isEnabled: true,
-                                      },
-                                    },
-                                  },
-                                ]
-                            : errorCaseDetails?.additionalDetails?.[input?.key]?.formdata ||
-                              errorCaseDetails?.caseDetails?.[input?.key]?.formdata ||
-                              {};
+                          errorCaseDetails?.additionalDetails?.[input?.key]?.formdata || errorCaseDetails?.caseDetails?.[input?.key]?.formdata || {};
                       }
                       return {
                         ...input,
@@ -1043,6 +1069,7 @@ function EFilingCases({ path }) {
                 body?.isDocDependentOn &&
                 body?.isDocDependentKey &&
                 data?.[body?.isDocDependentOn]?.[body?.isDocDependentKey] &&
+                body?.key !== "proofOfReplyFileUpload" &&
                 body?.component === "SelectCustomDragDrop"
               ) {
                 body.isMandatory = true;
@@ -1305,7 +1332,29 @@ function EFilingCases({ path }) {
                 }
 
                 modifiedFormComponent.disable = scrutiny?.[selected]?.scrutinyMessage?.FSOError || (judgeObj && !isPendingReESign) ? false : true;
+                if (
+                  modifiedFormComponent?.type === "radio" &&
+                  !(scrutiny?.[selected]?.scrutinyMessage?.FSOError || (judgeObj && !isPendingReESign))
+                ) {
+                  modifiedFormComponent.populators.styles = { opacity: 0.5 };
+                }
+                if (judgeObj && !isPendingReESign) {
+                  if (selected === "complainantDetails") {
+                    const disabledFields = ["firstName", "middleName", "lastName", "complainantType", "complainantAge"];
+                    const fieldName = modifiedFormComponent?.populators?.name || modifiedFormComponent?.key;
 
+                    if (disabledFields?.includes(fieldName)) {
+                      modifiedFormComponent.disable = true;
+                    }
+                    if (modifiedFormComponent?.component === "SelectComponents") {
+                      modifiedFormComponent?.populators?.inputs?.forEach((input) => {
+                        if (input?.name === "typeOfAddress") {
+                          input.disable = true;
+                        }
+                      });
+                    }
+                  }
+                }
                 if (scrutiny?.[selected] && scrutiny?.[selected]?.form?.[index]) {
                   if (formComponent.component == "SelectUploadFiles") {
                     if (formComponent.key + "." + formComponent.populators?.inputs?.[0]?.name in scrutiny?.[selected]?.form?.[index]) {
@@ -1450,6 +1499,7 @@ function EFilingCases({ path }) {
     checkIfscValidation({ formData, setValue, selected });
     checkNameValidation({ formData, setValue, selected, formdata, index, reset, clearErrors, formState });
     checkOnlyCharInCheque({ formData, setValue, selected });
+    WitnessValidation({ formData, setValue, selected, formdata, index, reset, clearErrors, formState });
     if (!isEqual(formData, formdata[index].data)) {
       chequeDateValidation({ formData, setError, clearErrors, selected });
       showDemandNoticeModal({
@@ -1489,6 +1539,8 @@ function EFilingCases({ path }) {
         setShouldShowConfirmDcaModal,
         prevIsDcaSkipped,
         setPrevIsDcaSkipped,
+        isDcaPageRefreshed,
+        setIsDcaPageRefreshed,
       });
       showToastForComplainant({ formData, setValue, selected, setSuccessToast, formState, clearErrors });
       setFormdata(
@@ -1574,8 +1626,8 @@ function EFilingCases({ path }) {
         currentPageOptionalFields.push(...currentPageOptionalDependentFields);
 
         if (currentPageMandatoryFields.length !== 0) {
-          for (let i = 0; i < currentPageMandatoryFields.length; i++) {
-            const value = extractValue(currentIndexData?.data, currentPageMandatoryFields[i]);
+          for (let j = 0; j < currentPageMandatoryFields.length; j++) {
+            const value = extractValue(currentIndexData?.data, currentPageMandatoryFields[j]);
             const isValueEmpty = isEmptyValue(value);
             if (isValueEmpty) {
               totalMandatoryLeft++;
@@ -1585,10 +1637,10 @@ function EFilingCases({ path }) {
 
         if ("ifMultipleAddressLocations" in currentPage) {
           const arrayValue = currentIndexData?.data[currentPage?.ifMultipleAddressLocations?.dataKey] || [];
-          for (let i = 0; i < arrayValue.length; i++) {
+          for (let k = 0; k < arrayValue.length; k++) {
             const mandatoryFields = currentPage?.ifMultipleAddressLocations?.mandatoryFields || [];
             for (let j = 0; j < mandatoryFields.length; j++) {
-              const value = extractValue(arrayValue[i], mandatoryFields[j]);
+              const value = extractValue(arrayValue[k], mandatoryFields[j]);
               const isValueEmpty = isEmptyValue(value);
               if (isValueEmpty) {
                 totalMandatoryLeft++;
@@ -1599,8 +1651,8 @@ function EFilingCases({ path }) {
 
         if ("anyOneOfTheseMandatoryFields" in currentPage) {
           const fieldsArray = currentPage.anyOneOfTheseMandatoryFields;
-          for (let i = 0; i < fieldsArray.length; i++) {
-            const currentChildArray = fieldsArray[i];
+          for (let k = 0; k < fieldsArray.length; k++) {
+            const currentChildArray = fieldsArray[k];
             let count = 0;
             for (let j = 0; j < currentChildArray.length; j++) {
               const value = extractValue(currentIndexData?.data, currentChildArray[j]);
@@ -1617,8 +1669,8 @@ function EFilingCases({ path }) {
 
         if (currentPageOptionalFields.length !== 0) {
           let optionalLeft = 0;
-          for (let i = 0; i < currentPageOptionalFields.length; i++) {
-            const value = extractValue(currentIndexData?.data, currentPageOptionalFields[i]);
+          for (let j = 0; j < currentPageOptionalFields.length; j++) {
+            const value = extractValue(currentIndexData?.data, currentPageOptionalFields[j]);
             const isValueEmpty = isEmptyValue(value);
             if (isValueEmpty) {
               optionalLeft++;
@@ -1683,7 +1735,7 @@ function EFilingCases({ path }) {
     }
   };
 
-  const onSubmit = async (action, isCaseLocked = false) => {
+  const onSubmit = async (action, isCaseLocked = false, isWarning = false) => {
     if (isDisableAllFieldsMode) {
       history.push(homepagePath);
     }
@@ -1845,6 +1897,16 @@ function EFilingCases({ path }) {
     ) {
       return;
     }
+
+    if (
+      selected === "complainantDetails" &&
+      !isWarning &&
+      formdata?.some((item) => item?.data?.complainantVerification?.individualDetails === null)
+    ) {
+      setWarningModal(true);
+      return;
+    }
+
     if (selected === "reviewCaseFile" && isCaseReAssigned && !openConfirmCorrectionModal && !isCaseLocked) {
       setOpenConfirmCorrectionModal(true);
       return;
@@ -1931,6 +1993,7 @@ function EFilingCases({ path }) {
           multiUploadList,
           scrutinyObj,
           filingType: filingType,
+          setShouldShowConfirmDcaModal,
         });
 
         if (resetFormData.current) {
@@ -1966,7 +2029,16 @@ function EFilingCases({ path }) {
     }
   };
 
-  const onSaveDraft = (props) => {
+  const onSaveDraft = (props, isWarning = false) => {
+    if (
+      selected === "complainantDetails" &&
+      !isWarning &&
+      formdata?.some((item) => item?.data?.complainantVerification?.individualDetails === null)
+    ) {
+      setSaveDraft(true);
+      setWarningModal(true);
+      return;
+    }
     setParmas({ ...params, [pageConfig.key]: formdata });
     const newCaseDetails = {
       ...caseDetails,
@@ -1989,6 +2061,7 @@ function EFilingCases({ path }) {
       multiUploadList,
       scrutinyObj,
       filingType: filingType,
+      setShouldShowConfirmDcaModal,
     })
       .then(() => {
         refetchCaseData().then(() => {
@@ -2071,6 +2144,7 @@ function EFilingCases({ path }) {
       multiUploadList,
       scrutinyObj,
       filingType: filingType,
+      setShouldShowConfirmDcaModal,
     })
       .then(() => {
         if (!isCaseReAssigned) {
@@ -2401,6 +2475,11 @@ function EFilingCases({ path }) {
   }
 `;
 
+  const handleCancelWarningModal = () => {
+    setWarningModal(!warningModal);
+    setSaveDraft(false);
+  };
+
   return (
     <div className="file-case">
       <style>{customStyles}</style>
@@ -2598,7 +2677,7 @@ function EFilingCases({ path }) {
                   label={showActionsLabels && actionName}
                   config={config}
                   onSubmit={() => onSubmit("SAVE_DRAFT")}
-                  onSecondayActionClick={onSaveDraft}
+                  onSecondayActionClick={() => onSaveDraft(undefined, false)}
                   defaultValues={getDefaultValues(index)}
                   onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
                     onFormValueChange(
@@ -2773,7 +2852,12 @@ function EFilingCases({ path }) {
             onSubmit={() => onSubmit("SAVE_DRAFT")}
           />
           {!(isCaseReAssigned || isPendingReESign) && (
-            <Button className="previous-button" variation="secondary" label={t("CS_SAVE_DRAFT")} onButtonClick={onSaveDraft} />
+            <Button
+              className="previous-button"
+              variation="secondary"
+              label={t("CS_SAVE_DRAFT")}
+              onButtonClick={() => onSaveDraft(undefined, false)}
+            />
           )}
         </ActionBar>
       )}
@@ -2884,6 +2968,18 @@ function EFilingCases({ path }) {
           <h3 className="input-label">{t("CS_CASE_NAME")}</h3>
           <TextInput defaultValue={newCaseName || caseDetails?.caseTitle} type="text" onChange={(e) => setModalCaseName(e.target.value)} />
         </Modal>
+      )}
+      {warningModal && (
+        <WarningModal
+          t={t}
+          heading={t("CONFIRM_COMPLAINT_DETAILS")}
+          info={t("COMPLAINT_INFO")}
+          onCancel={handleCancelWarningModal}
+          setWarningModal={setWarningModal}
+          onSubmit={onSubmit}
+          isSaveDraft={isSaveDraft}
+          onSaveDraft={onSaveDraft}
+        />
       )}
     </div>
   );

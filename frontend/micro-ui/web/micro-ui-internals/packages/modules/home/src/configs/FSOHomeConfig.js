@@ -1,5 +1,5 @@
 const defaultSearchValues = {
-  filingNumber: "",
+  caseSearchText: "",
   caseType: "NIA S138",
   substage: "",
 };
@@ -199,12 +199,12 @@ export const TabFSOSearchConfig = {
                 },
               },
               {
-                label: "CS_CASE_ID",
+                label: "CS_CASE_NAME_ID",
                 type: "text",
                 isMandatory: false,
                 disable: false,
                 populators: {
-                  name: "filingNumber",
+                  name: "caseSearchText",
                   error: "BR_PATTERN_ERR_MSG",
                   validation: {
                     pattern: {},
@@ -240,7 +240,7 @@ export const TabFSOSearchConfig = {
               },
               {
                 label: "CS_DAYS_FILING",
-                jsonPath: "auditDetails.createdTime",
+                jsonPath: "filingDate",
                 additionalCustomization: true,
               },
             ],
@@ -348,12 +348,12 @@ export const TabFSOSearchConfig = {
                 },
               },
               {
-                label: "CS_CASE_ID",
+                label: "CS_CASE_NAME_ID",
                 type: "text",
                 isMandatory: false,
                 disable: false,
                 populators: {
-                  name: "filingNumber",
+                  name: "caseSearchText",
                   error: "BR_PATTERN_ERR_MSG",
                   validation: {
                     pattern: {},
@@ -390,7 +390,7 @@ export const TabFSOSearchConfig = {
               },
               {
                 label: "CS_DAYS_FILING",
-                jsonPath: "auditDetails.createdTime",
+                jsonPath: "filingDate",
                 additionalCustomization: true,
               },
             ],

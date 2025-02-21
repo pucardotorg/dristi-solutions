@@ -8,20 +8,7 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { RightArrow } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import { useTranslation } from "react-i18next";
 
-const JoinCaseSuccess = ({
-  success,
-  messageHeader,
-  caseDetails,
-  closeModal,
-  refreshInbox,
-  selectedParty,
-  isAttendingHearing,
-  nextHearing,
-  setShow,
-  setShowSubmitResponseModal,
-  setShowConfirmSummonModal,
-  successScreenData,
-}) => {
+const JoinCaseSuccess = ({ success, messageHeader, caseDetails, closeModal, refreshInbox, successScreenData }) => {
   const { t } = useTranslation();
 
   const history = useHistory();
@@ -108,7 +95,7 @@ const JoinCaseSuccess = ({
                         <NameListWithModal t={t} data={successScreenData?.respondentList} type={"RESPONDENTS_TEXT"} />
                       </div>
                     </div>
-                    <div className="complainants-respondents">
+                    <div className="complainants-respondents" style={{ display: "flex", flexWrap: "wrap", gap: "0px" }}>
                       <div style={{ width: "50%" }}>
                         <h2 className="case-info-title">{t("COMPLAINTS_ADVOCATES")}</h2>
                         <NameListWithModal t={t} data={successScreenData?.complainantAdvocateList} type={"COMPLAINTS_ADVOCATES"} />
@@ -134,26 +121,11 @@ const JoinCaseSuccess = ({
             />
             <Button
               className={"selector-button-primary"}
-              label={
-                caseDetails?.status === "PENDING_RESPONSE" && selectedParty?.isRespondent
-                  ? t("SUBMIT_RESPONSE_TEXT")
-                  : !isAttendingHearing && nextHearing && selectedParty?.isRespondent
-                  ? t("CONFIRN_SUMMON_NOTICE_RECEIPT")
-                  : t("VIEW_CASE_FILE")
-              }
+              label={t("VIEW_CASE_FILE")}
               onButtonClick={() => {
-                setShow(false);
-                if (caseDetails?.status === "PENDING_RESPONSE" && selectedParty?.isRespondent) {
-                  if (setShowSubmitResponseModal) setShowSubmitResponseModal(true);
-                } else {
-                  if (!isAttendingHearing && nextHearing && selectedParty?.isRespondent) {
-                    closeModal();
-                    setShowConfirmSummonModal(true);
-                  } else
-                    history.push(
-                      `/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${caseDetails?.filingNumber}&tab=Overview`
-                    );
-                }
+                history.push(
+                  `/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${caseDetails?.filingNumber}&tab=Overview`
+                );
               }}
             >
               <RightArrow />

@@ -2,7 +2,7 @@ import { CardLabel, CardLabelError, LabelFieldPair, TextInput, RadioButtons } fr
 import Axios from "axios";
 import React, { useMemo, useState } from "react";
 import LocationSearch from "./LocationSearch";
-import { generateUUID } from "../Utils";
+import { generateUUID, formatAddress } from "../Utils";
 
 const getLocation = (places, code) => {
   let location = null;
@@ -241,7 +241,13 @@ const SelectComponents = ({ t, config, onSelect, formData = {}, errors, formStat
                   />
                 ) : input?.type === "Radio" ? (
                   <RadioButtons
-                    style={{ display: "flex", justifyContent: "flex-start", gap: "3rem", ...input.styles }}
+                    style={{
+                      display: "flex",
+                      justifyContent: "flex-start",
+                      gap: "3rem",
+                      ...input.styles,
+                      ...(input?.disable && { opacity: 0.5 }),
+                    }}
                     selectedOption={formData?.[config?.key]?.[input?.name]}
                     options={input?.options}
                     optionsKey={"code"}
@@ -249,6 +255,7 @@ const SelectComponents = ({ t, config, onSelect, formData = {}, errors, formStat
                     onSelect={(value) => {
                       setValue(value, input?.name);
                     }}
+                    disabled={input?.disable || config?.disable}
                   />
                 ) : (
                   <React.Fragment>
@@ -260,7 +267,11 @@ const SelectComponents = ({ t, config, onSelect, formData = {}, errors, formStat
                         ...input.validation,
                       })}
                       onChange={(e) => {
-                        setValue(e.target.value, input.name, input?.autoFill);
+                        let value = e.target.value;
+                        if (input?.isFormatRequired) {
+                          value = formatAddress(value);
+                        }
+                        setValue(value, input.name, input?.autoFill);
                       }}
                       disable={input.isDisabled || config?.disable}
                     />

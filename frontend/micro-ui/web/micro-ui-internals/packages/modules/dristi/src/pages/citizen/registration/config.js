@@ -483,6 +483,7 @@ export const newConfig = [
               disableMandatoryFieldFor: ["aadharNumber"],
               errorMessage: "CUSTOM_DOCUMENT_ERROR_MSG",
               disableFormValidation: false,
+              multiple: false,
             },
           ],
           validation: {},
@@ -524,6 +525,10 @@ export const newConfig = [
                 {
                   code: "MODIFICATION_MESSAGE",
                   name: "FOURTH_TERMS_AND_CONDITIONS",
+                },
+                {
+                  code: "PERSONAL_INFORMATION_CONSENT_MESSAGE",
+                  name: "FIFTH_TERMS_AND_CONDITIONS",
                 },
               ],
             },

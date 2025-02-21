@@ -132,7 +132,6 @@ export const TabCourtRoomSearchConfig = {
               status: [
                 "PENDING_REGISTRATION",
                 "PENDING_ADMISSION",
-                "ADMISSION_HEARING_SCHEDULED",
                 "CASE_ADMITTED",
                 "PENDING_ADMISSION_HEARING",
                 "PENDING_NOTICE",
@@ -199,7 +198,7 @@ export const TabCourtRoomSearchConfig = {
                 },
               },
               {
-                label: "CS_CASE_ID",
+                label: "CS_CASE_NAME_ID",
                 type: "text",
                 isMandatory: false,
                 disable: false,
@@ -267,7 +266,6 @@ export const TabCourtRoomSearchConfig = {
               status: [
                 "PENDING_REGISTRATION",
                 "PENDING_ADMISSION",
-                "ADMISSION_HEARING_SCHEDULED",
                 "CASE_ADMITTED",
                 "PENDING_ADMISSION_HEARING",
                 "PENDING_NOTICE",
@@ -334,7 +332,7 @@ export const TabCourtRoomSearchConfig = {
                 },
               },
               {
-                label: "CS_CASE_ID",
+                label: "CS_CASE_NAME_ID",
                 type: "text",
                 isMandatory: false,
                 disable: false,
@@ -399,14 +397,7 @@ export const TabCourtRoomSearchConfig = {
           criteria: [
             {
               stage: ["Pre-Trial"],
-              status: [
-                "PENDING_REGISTRATION",
-                "PENDING_ADMISSION",
-                "ADMISSION_HEARING_SCHEDULED",
-                "PENDING_ADMISSION_HEARING",
-                "PENDING_NOTICE",
-                "PENDING_RESPONSE",
-              ],
+              status: ["PENDING_REGISTRATION", "PENDING_ADMISSION", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"],
             },
           ],
         },
@@ -483,7 +474,7 @@ export const TabCourtRoomSearchConfig = {
                 },
               },
               {
-                label: "CS_CASE_ID",
+                label: "CS_CASE_NAME_ID",
                 type: "text",
                 isMandatory: false,
                 disable: false,
@@ -628,7 +619,7 @@ export const TabCourtRoomSearchConfig = {
                 },
               },
               {
-                label: "CS_CASE_ID",
+                label: "CS_CASE_NAME_ID",
                 type: "text",
                 isMandatory: false,
                 disable: false,

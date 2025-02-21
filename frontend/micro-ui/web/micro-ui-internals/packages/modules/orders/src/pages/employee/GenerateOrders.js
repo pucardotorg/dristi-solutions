@@ -53,8 +53,13 @@ import _ from "lodash";
 import { useGetPendingTask } from "../../hooks/orders/useGetPendingTask";
 import useSearchOrdersService from "../../hooks/orders/useSearchOrdersService";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
-import { constructFullName, removeInvalidNameParts } from "../../utils";
+import { getRespondantName, getComplainantName, constructFullName, removeInvalidNameParts } from "../../utils";
 import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/Toast/useToast";
+
+const stateSla = {
+  SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
+  NOTICE: 3 * 24 * 3600 * 1000,
+};
 
 const configKeys = {
   SECTION_202_CRPC: configsOrderSection202CRPC,
@@ -271,6 +276,7 @@ const GenerateOrders = () => {
             code: fullName,
             name: `${fullName} (Complainant)`,
             uuid: allAdvocates[item?.additionalDetails?.uuid],
+            partyUuid: item?.additionalDetails?.uuid,
             individualId: item?.individualId,
             isJoined: true,
             partyType: "complainant",
@@ -289,6 +295,8 @@ const GenerateOrders = () => {
             code: fullName,
             name: `${fullName} (Accused)`,
             uuid: allAdvocates[item?.additionalDetails?.uuid],
+            partyUuid: item?.additionalDetails?.uuid,
+            individualId: item?.individualId,
             isJoined: true,
             partyType: "respondent",
           };
@@ -645,22 +653,13 @@ const GenerateOrders = () => {
               if (field.key === "hearingPurpose") {
                 return {
                   ...field,
-                  ...(currentOrder?.additionalDetails?.formdata?.hearingPurpose?.type === "ADMISSION" &&
-                    !isCaseAdmitted && {
-                      disable: true,
-                    }),
                   populators: {
                     ...field.populators,
                     mdmsConfig: {
                       ...field.populators?.mdmsConfig,
                       select: `(data) => {
-                        return (
-                          data?.Hearing?.HearingType?.filter((h) => {
-                            if (${!isDcaFiled}) {
-                              return !["DELAY_CONDONATION_HEARING", "DELAY_CONDONATION_AND_ADMISSION"].includes(h?.code);
-                            }
-                            return true;
-                          }) || []
+                        return (  // based on isDcaFiled condition, we can filter out DCA hearing here if needed.
+                          data?.Hearing?.HearingType|| []
                         );
                       }`,
                     },
@@ -825,6 +824,12 @@ const GenerateOrders = () => {
             body.populators.validation = {
               ...body.populators.validation,
               ...customValidations(),
+            };
+          }
+          if (body?.labelChildren === "optional") {
+            return {
+              ...body,
+              labelChildren: <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>,
             };
           }
           return {
@@ -1307,6 +1312,8 @@ const GenerateOrders = () => {
           ? {
               documentType: "SIGNED",
               fileStore: signedDoucumentUploadedID || localStorageID,
+              documentOrder: documents?.length > 0 ? documents.length + 1 : 1,
+              additionalDetails: { name: `Order: ${t(orderType)}.pdf` },
             }
           : null;
       let orderSchema = {};
@@ -1410,7 +1417,13 @@ const GenerateOrders = () => {
     if (order?.orderType === "MANDATORY_SUBMISSIONS_RESPONSES") {
       create = true;
       name = t("MAKE_MANDATORY_SUBMISSION");
-      assignees = formdata?.submissionParty?.map((party) => party?.uuid.map((uuid) => ({ uuid, individualId: party?.individualId }))).flat();
+      assignees = formdata?.submissionParty
+        ?.map((party) =>
+          party?.uuid.map((uuid) => {
+            return { assigneeInfo: { uuid, individualId: party?.individualId }, partyUuid: party?.partyUuid };
+          })
+        )
+        .flat();
       stateSla = new Date(formdata?.submissionDeadline).getTime();
       status = "CREATE_SUBMISSION";
       const promises = assignees.map(async (assignee) => {
@@ -1418,15 +1431,15 @@ const GenerateOrders = () => {
           pendingTask: {
             name,
             entityType,
-            referenceId: `MANUAL_${assignee?.individualId}_${assignee?.uuid}_${order?.orderNumber}`,
+            referenceId: `MANUAL_${assignee?.assigneeInfo?.individualId}_${assignee?.assigneeInfo?.uuid}_${order?.orderNumber}`,
             status,
-            assignedTo: [assignee],
+            assignedTo: [assignee?.assigneeInfo],
             assignedRole,
             cnrNumber: cnrNumber,
             filingNumber: filingNumber,
             isCompleted: false,
             stateSla,
-            additionalDetails: { ...additionalDetails },
+            additionalDetails: { ...additionalDetails, litigants: [assignee?.assigneeInfo?.individualId], litigantUuid: [assignee?.partyUuid] },
             tenantId,
           },
         });
@@ -1445,9 +1458,13 @@ const GenerateOrders = () => {
     if (order?.orderType === "INITIATING_RESCHEDULING_OF_HEARING_DATE") {
       create = true;
       status = "OPTOUT";
-      assignees = Object.values(allAdvocates)
-        ?.flat()
-        ?.map((uuid) => ({ uuid }));
+      assignees = [
+        ...new Map(
+          Object.values(allAdvocates)
+            ?.flat()
+            ?.map((uuid) => [uuid, { uuid }])
+        ).values(),
+      ];
       name = t("CHOOSE_DATES_FOR_RESCHEDULE_OF_HEARING_DATE");
       entityType = "hearing-default";
       const promises = assignees.map(async (assignee) => {
@@ -1463,7 +1480,12 @@ const GenerateOrders = () => {
             filingNumber: filingNumber,
             isCompleted: false,
             stateSla,
-            additionalDetails,
+            additionalDetails: {
+              ...additionalDetails,
+              litigants: caseDetails?.representatives
+                ?.find((representative) => representative?.additionalDetails?.uuid === assignee?.uuid)
+                ?.representing?.map((representing) => representing?.individualId),
+            },
             tenantId,
           },
         });
@@ -1492,7 +1514,11 @@ const GenerateOrders = () => {
           filingNumber: filingNumber,
           isCompleted: false,
           stateSla: stateSlaMap?.[order?.orderType || orderType] * dayInMillisecond + todayDate,
-          additionalDetails: { ...additionalDetails, applicationNumber: order?.additionalDetails?.formdata?.refApplicationId },
+          additionalDetails: {
+            ...additionalDetails,
+            applicationNumber: order?.additionalDetails?.formdata?.refApplicationId,
+            litigants: [...complainants?.map((data) => data?.individualId)],
+          },
           tenantId,
         },
       });
@@ -1507,21 +1533,27 @@ const GenerateOrders = () => {
         .map((com) => com?.additionalDetails?.uuid);
       assignees = [...assignee, ...complainantUuids]?.map((uuid) => ({ uuid }));
       entityType = "order-default";
-      return ordersService.customApiService(Urls.orders.pendingTask, {
-        pendingTask: {
-          name: t(`MAKE_PAYMENT_FOR_NOTICE_${channelTypeEnum?.[channel?.type]?.code}`),
-          entityType,
-          referenceId: `MANUAL_${refId}`,
-          status: `PAYMENT_PENDING_${channelTypeEnum?.[channel?.type]?.code}`,
-          assignedTo: assignees,
-          assignedRole,
-          cnrNumber: cnrNumber,
-          filingNumber: filingNumber,
-          isCompleted: false,
-          stateSla: stateSlaMap?.[order?.orderType || orderType] * dayInMillisecond + todayDate,
-          additionalDetails: { ...additionalDetails, applicationNumber: order?.additionalDetails?.formdata?.refApplicationId },
-          tenantId,
+      const pendingTask = {
+        name: t(`MAKE_PAYMENT_FOR_NOTICE_${channelTypeEnum?.[channel?.type]?.code}`),
+        entityType,
+        referenceId: `MANUAL_${refId}`,
+        status: `PAYMENT_PENDING_${channelTypeEnum?.[channel?.type]?.code}`,
+        assignedTo: assignees,
+        assignedRole,
+        cnrNumber: cnrNumber,
+        filingNumber: filingNumber,
+        isCompleted: false,
+        stateSla: stateSlaMap?.[order?.orderType || orderType] * dayInMillisecond + todayDate,
+        additionalDetails: {
+          ...additionalDetails,
+          applicationNumber: order?.additionalDetails?.formdata?.refApplicationId,
+          litigants: [...complainants?.map((data) => data?.individualId)],
         },
+        tenantId,
+      };
+
+      return ordersService.customApiService(Urls.orders.pendingTask, {
+        pendingTask,
       });
     }
     if ((order?.orderType === "WARRANT" || orderType === "WARRANT") && refId) {
@@ -1546,12 +1578,17 @@ const GenerateOrders = () => {
           filingNumber: filingNumber,
           isCompleted: false,
           stateSla: stateSlaMap?.[order?.orderType || orderType] * dayInMillisecond + todayDate,
-          additionalDetails: { ...additionalDetails, applicationNumber: order?.additionalDetails?.formdata?.refApplicationId },
+          additionalDetails: {
+            ...additionalDetails,
+            applicationNumber: order?.additionalDetails?.formdata?.refApplicationId,
+            litigants: [...complainants?.map((data) => data?.individualId)],
+          },
           tenantId,
         },
       });
     }
 
+    // need to check
     if (order?.orderType === "SET_BAIL_TERMS") {
       create = true;
       status = "CREATE_SUBMISSION";
@@ -1570,7 +1607,19 @@ const GenerateOrders = () => {
           filingNumber: filingNumber,
           isCompleted: false,
           stateSla,
-          additionalDetails,
+          additionalDetails: {
+            ...additionalDetails,
+            litigants: [
+              caseDetails?.litigants?.find(
+                (litigant) => litigant?.additionalDetails?.uuid === applicationDetails?.additionalDetails?.formdata?.selectComplainant?.uuid
+              )?.individualId,
+            ],
+            litigantUuid: [
+              caseDetails?.litigants?.find(
+                (litigant) => litigant?.additionalDetails?.uuid === applicationDetails?.additionalDetails?.formdata?.selectComplainant?.uuid
+              )?.additionalDetails?.uuid,
+            ],
+          },
           tenantId,
         },
       });
@@ -1820,11 +1869,9 @@ const GenerateOrders = () => {
     const respondentAddress = orderFormData?.addressDetails
       ? orderFormData?.addressDetails?.map((data) => ({ ...data?.addressDetails }))
       : caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.addressDetails?.map((data) => data?.addressDetails);
-    const respondentName =
-      constructFullName(respondentNameData?.firstName, respondentNameData?.middleName, respondentNameData?.lastName) || respondentNameData;
-
-    const respondentPhoneNo = orderFormData?.party?.data?.phone_numbers || [];
     const partyIndex = orderFormData?.party?.data?.partyIndex || "";
+    const respondentName = getRespondantName(respondentNameData);
+    const respondentPhoneNo = orderFormData?.party?.data?.phone_numbers || [];
     const respondentEmail = orderFormData?.party?.data?.email || [];
     const complainantDetails = individualDetail?.Individual?.[0];
     const addressLine1 = complainantDetails?.address[0]?.addressLine1 || "";
@@ -1836,9 +1883,7 @@ const GenerateOrders = () => {
     const latitude = complainantDetails?.address[0]?.latitude || "";
     const longitude = complainantDetails?.address[0]?.longitude || "";
     const doorNo = complainantDetails?.address[0]?.doorNo || "";
-    const complainantName = `${complainantDetails?.name?.givenName || ""}${
-      complainantDetails?.name?.otherNames ? " " + complainantDetails?.name?.otherNames + " " : " "
-    }${complainantDetails?.name?.familyName || ""}`;
+    const complainantName = getComplainantName(caseDetails?.additionalDetails?.complainantDetails?.formdata[0]?.data);
     const address = `${doorNo ? doorNo + "," : ""} ${buildingName ? buildingName + "," : ""} ${street}`.trim();
     const complainantAddress = {
       pincode: pincode,
@@ -2470,9 +2515,9 @@ const GenerateOrders = () => {
         },
       });
       currentOrder?.additionalDetails?.formdata?.refApplicationId && closeManualPendingTask(currentOrder?.orderNumber);
-      if (orderType === "SCHEDULE_OF_HEARING_DATE") {
+      if (["SCHEDULE_OF_HEARING_DATE"].includes(orderType)) {
         closeManualPendingTask(filingNumber);
-        if (currentOrder?.additionalDetails?.formdata?.hearingPurpose?.code === "ADMISSION" && !isCaseAdmitted) {
+        if (!isCaseAdmitted) {
           updateCaseDetails("SCHEDULE_ADMISSION_HEARING");
         }
       }
@@ -2480,64 +2525,95 @@ const GenerateOrders = () => {
       if (orderType === "SUMMONS") {
         closeManualPendingTask(currentOrder?.hearingNumber || hearingDetails?.hearingId);
       }
-      if (orderType === "NOTICE") {
+      if (orderType === "NOTICE" && currentOrder?.additionalDetails?.formdata?.noticeType?.code === "Section 223 Notice") {
         closeManualPendingTask(currentOrder?.hearingNumber || hearingDetails?.hearingId);
-        if (caseDetails?.status === "ADMISSION_HEARING_SCHEDULED") {
-          try {
-            await updateCaseDetails("ADMIT");
-          } catch (error) {
-            console.error("Error during ADMIT case update:", error);
-          } finally {
+        try {
+          await updateCaseDetails("ISSUE_ORDER");
+          const caseDetails = await refetchCaseData();
+          const caseData = caseDetails?.data?.criteria?.[0]?.responseList?.[0];
+          const respondent = caseData?.litigants?.find((litigant) => litigant?.partyType?.includes("respondent"));
+          const advocate = caseData?.representatives?.find((representative) =>
+            representative?.representing?.some((represent) => respondent && represent?.individualId === respondent?.individualId)
+          );
+
+          const assignees = [];
+          if (respondent) assignees.push({ uuid: respondent?.additionalDetails?.uuid });
+          if (advocate) assignees.push({ uuid: advocate?.additionalDetails?.uuid });
+
+          if (respondent && assignees?.length > 0) {
             try {
-              await refetchCaseData();
-              await updateCaseDetails("ISSUE_ORDER");
-            } catch (finalError) {
-              console.error("Error during final steps:", finalError);
-            }
-          }
-        } else {
-          try {
-            await updateCaseDetails("ISSUE_ORDER");
-            const caseDetails = await refetchCaseData();
-            const caseData = caseDetails?.data?.criteria?.[0]?.responseList?.[0];
-            const respondent = caseData?.litigants?.find((litigant) => litigant?.partyType?.includes("respondent"));
-            const advocate = caseData?.representatives?.find((representative) =>
-              representative?.representing?.some((represent) => respondent && represent?.individualId === respondent?.individualId)
-            );
-
-            const assignees = [];
-            if (respondent) assignees.push({ uuid: respondent?.additionalDetails?.uuid });
-            if (advocate) assignees.push({ uuid: advocate?.additionalDetails?.uuid });
-
-            if (respondent && assignees?.length > 0) {
-              try {
-                await DRISTIService.customApiService(Urls.orders.pendingTask, {
-                  pendingTask: {
-                    name: "Pending Response",
-                    entityType: "case-default",
-                    referenceId: `MANUAL_${caseData?.filingNumber}`,
-                    status: "PENDING_RESPONSE",
-                    assignedTo: assignees,
-                    assignedRole: ["CASE_RESPONDER"],
-                    cnrNumber: caseData?.cnrNumber,
-                    filingNumber: caseData?.filingNumber,
-                    isCompleted: false,
-                    stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
-                    additionalDetails: { individualId: respondent?.individualId, caseId: caseData?.id },
-                    tenantId,
+              await DRISTIService.customApiService(Urls.orders.pendingTask, {
+                pendingTask: {
+                  name: "Pending Response",
+                  entityType: "case-default",
+                  referenceId: `MANUAL_${caseData?.filingNumber}`,
+                  status: "PENDING_RESPONSE",
+                  assignedTo: assignees,
+                  assignedRole: ["CASE_RESPONDER"],
+                  cnrNumber: caseData?.cnrNumber,
+                  filingNumber: caseData?.filingNumber,
+                  isCompleted: false,
+                  stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
+                  additionalDetails: {
+                    individualId: respondent?.individualId,
+                    caseId: caseData?.id,
+                    litigants: [respondent?.map((data) => data?.individualId)],
                   },
-                });
-              } catch (err) {
-                console.error("err :>> ", err);
-              }
+                  tenantId,
+                },
+              });
+            } catch (err) {
+              console.error("err :>> ", err);
             }
-          } catch (error) {
-            console.error("error :>> ", error);
           }
+        } catch (error) {
+          console.error("error :>> ", error);
         }
       }
       if (orderType === "ADMIT_DISMISS_CASE") {
-        updateCaseDetails(currentOrder.additionalDetails?.formdata?.isCaseAdmittedOrDismissed?.code === "DISMISSED" ? "REJECT" : "ADMIT");
+        updateCaseDetails(currentOrder.additionalDetails?.formdata?.isCaseAdmittedOrDismissed?.code === "DISMISSED" ? "REJECT" : "ADMIT").then(
+          async (res) => {
+            const { HearingList = [] } = await Digit.HearingService.searchHearings({
+              hearing: { tenantId },
+              criteria: {
+                tenantID: tenantId,
+                filingNumber: filingNumber,
+              },
+            });
+            const hearingData =
+              HearingList?.find((list) => list?.hearingType === "ADMISSION" && !(list?.status === "COMPLETED" || list?.status === "ABATED")) || {};
+            if (hearingData.hearingId) {
+              hearingData.workflow = hearingData.workflow || {};
+              hearingData.workflow.action = "ABANDON";
+              await Digit.HearingService.updateHearings(
+                { tenantId, hearing: hearingData, hearingType: "", status: "" },
+                { applicationNumber: "", cnrNumber: "" }
+              );
+            }
+            if (currentOrder.additionalDetails?.formdata?.isCaseAdmittedOrDismissed?.code !== "DISMISSED") {
+              try {
+                DRISTIService.customApiService(Urls.orders.pendingTask, {
+                  pendingTask: {
+                    name: "Schedule Hearing",
+                    entityType: "case-default",
+                    referenceId: `MANUAL_${caseDetails?.filingNumber}`,
+                    status: "SCHEDULE_HEARING",
+                    assignedTo: [],
+                    assignedRole: ["JUDGE_ROLE"],
+                    cnrNumber: caseDetails?.cnrNumber,
+                    filingNumber: caseDetails?.filingNumber,
+                    isCompleted: false,
+                    stateSla: todayDate + stateSla.SCHEDULE_HEARING,
+                    additionalDetails: {},
+                    tenantId,
+                  },
+                });
+              } catch (error) {
+                console.error("error :>> ", error);
+              }
+            }
+          }
+        );
       }
       createTask(orderType, caseDetails, orderResponse);
       setLoader(false);
@@ -2685,12 +2761,12 @@ const GenerateOrders = () => {
   };
 
   const handleClose = async () => {
+    localStorage.removeItem("fileStoreId");
     if (successModalActionSaveLabel === t("CS_COMMON_CLOSE")) {
+      setShowSuccessModal(false);
       history.push(`/${window.contextPath}/employee/dristi/home/view-case?tab=${"Orders"}&caseId=${caseDetails?.id}&filingNumber=${filingNumber}`, {
         from: "orderSuccessModal",
       });
-      localStorage.removeItem("fileStoreId");
-      setShowSuccessModal(false);
       return;
     }
     if (successModalActionSaveLabel === t("ISSUE_SUMMONS_BUTTON")) {
@@ -2704,11 +2780,11 @@ const GenerateOrders = () => {
   };
 
   const handleCloseSuccessModal = () => {
+    localStorage.removeItem("fileStoreId");
+    setShowSuccessModal(false);
     history.push(`/${window.contextPath}/employee/dristi/home/view-case?tab=${"Orders"}&caseId=${caseDetails?.id}&filingNumber=${filingNumber}`, {
       from: "orderSuccessModal",
     });
-    localStorage.removeItem("fileStoreId");
-    setShowSuccessModal(false);
   };
 
   if (!filingNumber) {

@@ -1,7 +1,7 @@
 export const modalConfig = [
   {
     headModal: "CS_SEND_CASE_BACK",
-    wordCount: "50",
+    wordCount: "1000",
     body: [
       {
         type: "component",
@@ -34,7 +34,7 @@ export const modalConfig = [
     submitText: "SURE_TEXT",
   },
   {
-    headModal: "CS_SCHEDULE_ADMISSION_HEARING",
+    headModal: "CS_SCHEDULE_HEARING",
     label: "PURPOSE_OF_HEARING",
     name: "purposeOfHearing",
   },
@@ -93,7 +93,7 @@ export const registerCaseConfig = {
   header: "CS_REGISTER_SUCCESS",
   subHeader: "CASE_UPDATES_NOTICE_ISSUED",
   backButtonText: "BACK_TO_HOME",
-  nextButtonText: "CS_SCHEDULE_ADMISSION_HEARING",
+  nextButtonText: "CS_SCHEDULE_HEARING",
   isArrow: false,
   showTable: true,
 };

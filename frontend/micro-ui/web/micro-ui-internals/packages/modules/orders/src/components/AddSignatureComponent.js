@@ -18,6 +18,7 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${fileStoreId}`;
   const name = "Signature";
+  const signPlaceHolder = "Signature";
   const uploadModalConfig = useMemo(() => {
     return {
       key: "uploadSignature",
@@ -50,17 +51,21 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
     }
   };
 
-  useEffect(() => {
-    const upload = async () => {
-      if (formData?.uploadSignature?.Signature?.length > 0) {
+  const onSubmit = async () => {
+    if (formData?.uploadSignature?.Signature?.length > 0) {
+      try {
         const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
         setSignatureId(uploadedFileId?.[0]?.fileStoreId);
         handleSigned(true);
+        localStorage.setItem("formData", JSON.stringify(formData));
+        setOpenUploadSignatureModal(false);
+      } catch (error) {
+        console.error("error", error);
+        setFormData({});
+        handleSigned(false);
       }
-    };
-
-    upload();
-  }, [formData]);
+    }
+  };
 
   useEffect(() => {
     checkSignStatus(name, formData, uploadModalConfig, onSelect, handleSigned);
@@ -113,7 +118,7 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
                   onButtonClick={() => {
                     localStorage.setItem("ESignSummons", JSON.stringify(rowData));
                     localStorage.setItem("delieveryChannel", deliveryChannel);
-                    handleEsign(name, pageModule, rowData?.documents?.[0]?.fileStore);
+                    handleEsign(name, pageModule, rowData?.documents?.[0]?.fileStore, signPlaceHolder);
                   }}
                   style={{
                     width: "96px",
@@ -198,6 +203,7 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
           onSelect={onSelect}
           config={uploadModalConfig}
           formData={formData}
+          onSubmit={onSubmit}
         />
       )}
     </div>

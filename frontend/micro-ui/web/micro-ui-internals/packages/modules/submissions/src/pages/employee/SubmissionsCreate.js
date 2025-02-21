@@ -49,14 +49,23 @@ const getFormattedDate = (date) => {
   const year = String(currentDate.getFullYear());
   const month = String(currentDate.getMonth() + 1).padStart(2, "0");
   const day = String(currentDate.getDate()).padStart(2, "0");
-  return `${month}/${day}/${year}`;
+  return `${day}/${month}/${year}`;
 };
 
 const SubmissionsCreate = ({ path }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const { t } = useTranslation();
   const history = useHistory();
-  const { orderNumber, filingNumber, applicationNumber, isExtension, hearingId, applicationType: applicationTypeUrl } = Digit.Hooks.useQueryParams();
+  const {
+    orderNumber,
+    filingNumber,
+    applicationNumber,
+    isExtension,
+    hearingId,
+    applicationType: applicationTypeUrl,
+    litigant,
+    litigantIndId,
+  } = Digit.Hooks.useQueryParams();
   const [formdata, setFormdata] = useState({});
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showsignatureModal, setShowsignatureModal] = useState(false);
@@ -184,11 +193,23 @@ const SubmissionsCreate = ({ path }) => {
       );
   }, [caseDetails]);
 
+  const pipAccuseds = useMemo(() => {
+    return caseDetails?.litigants
+      ?.filter((litigant) => litigant.partyType.includes("respondent"))
+      ?.filter(
+        (litigant) =>
+          !caseDetails?.representatives?.some((representative) =>
+            representative?.representing?.some((rep) => rep?.individualId === litigant?.individualId)
+          )
+      );
+  }, [caseDetails]);
+
   const complainantsList = useMemo(() => {
     const loggedinUserUuid = userInfo?.uuid;
     // If logged in person is an advocate
     const isAdvocateLoggedIn = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === loggedinUserUuid);
     const isPipLoggedIn = pipComplainants?.find((p) => p?.additionalDetails?.uuid === loggedinUserUuid);
+    const accusedLoggedIn = pipAccuseds?.find((p) => p?.additionalDetails?.uuid === loggedinUserUuid);
 
     if (isAdvocateLoggedIn) {
       return isAdvocateLoggedIn?.representing?.map((r) => {
@@ -206,8 +227,17 @@ const SubmissionsCreate = ({ path }) => {
           uuid: isPipLoggedIn?.additionalDetails?.uuid,
         },
       ];
+    } else if (accusedLoggedIn) {
+      return [
+        {
+          code: accusedLoggedIn?.additionalDetails?.fullName,
+          name: accusedLoggedIn?.additionalDetails?.fullName,
+          uuid: accusedLoggedIn?.additionalDetails?.uuid,
+        },
+      ];
     }
-  }, [caseDetails, pipComplainants, userInfo]);
+    return [];
+  }, [caseDetails, pipComplainants, pipAccuseds, userInfo]);
 
   const { data: applicationData, isloading: isApplicationLoading, refetch: applicationRefetch } = Digit.Hooks.submissions.useSearchSubmissionService(
     {
@@ -335,6 +365,13 @@ const SubmissionsCreate = ({ path }) => {
             }
             if (body?.key === "selectComplainant") {
               body.populators.options = complainantsList;
+              if (complainantsList?.length === 1 || litigant) {
+                const updatedBody = {
+                  ...body,
+                  disable: true,
+                };
+                return updatedBody;
+              }
             }
             return {
               ...body,
@@ -499,6 +536,10 @@ const SubmissionsCreate = ({ path }) => {
     } else if (orderNumber) {
       if (orderDetails?.orderType === orderTypes.MANDATORY_SUBMISSIONS_RESPONSES) {
         if (isExtension) {
+          const currentLitigant = complainantsList?.find((c) => c?.uuid === litigant);
+          const selectComplainant = currentLitigant
+            ? { code: currentLitigant.code, name: currentLitigant.name, uuid: currentLitigant.uuid }
+            : undefined;
           const initialSubmissionDate = latestExtensionOrder
             ? formatDate(new Date(latestExtensionOrder?.orderDetails.newSubmissionDate))
             : orderDetails?.additionalDetails?.formdata?.submissionDeadline;
@@ -516,8 +557,14 @@ const SubmissionsCreate = ({ path }) => {
             applicationDate: formatDate(new Date()),
             documentType: orderDetails?.additionalDetails?.formdata?.documentType,
             initialSubmissionDate: initialSubmissionDate,
+            ...(selectComplainant !== undefined ? { selectComplainant } : {}),
           };
         } else {
+          const currentLitigant = complainantsList?.find((c) => c?.uuid === litigant);
+          const selectComplainant = currentLitigant
+            ? { code: currentLitigant.code, name: currentLitigant.name, uuid: currentLitigant.uuid }
+            : undefined;
+
           return {
             submissionType: {
               code: "APPLICATION",
@@ -530,6 +577,7 @@ const SubmissionsCreate = ({ path }) => {
             },
             refOrderId: orderDetails?.orderNumber,
             applicationDate: formatDate(new Date()),
+            ...(selectComplainant !== undefined ? { selectComplainant } : {}),
           };
         }
       } else if (orderDetails?.orderType === orderTypes.WARRANT) {
@@ -546,6 +594,10 @@ const SubmissionsCreate = ({ path }) => {
           applicationDate: formatDate(new Date()),
         };
       } else if (orderDetails?.orderType === orderTypes.SET_BAIL_TERMS) {
+        const currentLitigant = complainantsList?.find((c) => c?.uuid === litigant);
+        const selectComplainant = currentLitigant
+          ? { code: currentLitigant.code, name: currentLitigant.name, uuid: currentLitigant.uuid }
+          : undefined;
         return {
           submissionType: {
             code: "APPLICATION",
@@ -557,6 +609,7 @@ const SubmissionsCreate = ({ path }) => {
           },
           refOrderId: orderDetails?.orderNumber,
           applicationDate: formatDate(new Date()),
+          ...(selectComplainant !== undefined ? { selectComplainant } : {}),
         };
       } else {
         return {
@@ -568,6 +621,10 @@ const SubmissionsCreate = ({ path }) => {
         };
       }
     } else if (applicationType) {
+      let selectComplainant = null;
+      if (complainantsList?.length === 1) {
+        selectComplainant = complainantsList?.[0];
+      }
       return {
         submissionType: {
           code: "APPLICATION",
@@ -579,6 +636,7 @@ const SubmissionsCreate = ({ path }) => {
           isActive: true,
         },
         applicationDate: formatDate(new Date()),
+        ...(selectComplainant !== null ? { selectComplainant } : {}),
       };
     } else {
       return {
@@ -760,10 +818,11 @@ const SubmissionsCreate = ({ path }) => {
       const uploadedDocumentList = [...(documentres || []), ...applicationDocuments];
 
       // evidence we are creating after create application (each evidenece need application Number)
-      uploadedDocumentList.forEach((res) => {
+      uploadedDocumentList.forEach((res, index) => {
         file = {
           documentType: res?.fileType,
           fileStore: res?.fileStore || res?.file?.files?.[0]?.fileStoreId,
+          documentOrder: index,
           additionalDetails: { name: res?.filename || res?.additionalDetails?.name },
         };
         documents.push(file);
@@ -877,7 +936,8 @@ const SubmissionsCreate = ({ path }) => {
           ? {
               documentType: "SIGNED",
               fileStore: signedDoucumentUploadedID || localStorageID,
-              additionalDetails: { name: "Signed_Doc.pdf" },
+              documentOrder: documents?.length > 0 ? documents.length + 1 : 1,
+              additionalDetails: { name: `Application: ${t(applicationType)}.pdf` },
             }
           : null;
 
@@ -931,7 +991,8 @@ const SubmissionsCreate = ({ path }) => {
         const doc = formData.supportingDocuments[index];
         if (doc?.submissionDocuments?.uploadedDocs?.length) {
           try {
-            const combinedDocName = `${t("SUPPORTING_DOCS")} ${index + 1}.pdf`;
+            const docTitle = doc?.documentTitle;
+            const combinedDocName = docTitle ? `${docTitle}.pdf` : `${t("SUPPORTING_DOCS")} ${index + 1}.pdf`;
             const combinedDocumentFile = await combineMultipleFiles(doc.submissionDocuments.uploadedDocs, combinedDocName, "submissionDocuments");
             const docs = await onDocumentUpload(combinedDocumentFile?.[0], combinedDocName);
             const file = {
@@ -941,6 +1002,7 @@ const SubmissionsCreate = ({ path }) => {
             };
             doc.submissionDocuments.uploadedDocs = [file];
           } catch (error) {
+            setLoader(false);
             console.error("Error combining or uploading documents for index:", index, error);
             throw new Error("Failed to combine and update uploaded documents.");
           }
@@ -1019,13 +1081,20 @@ const SubmissionsCreate = ({ path }) => {
           assignedRole: ["SUBMISSION_CREATOR", "SUBMISSION_RESPONDER"],
         });
       }
-      ["PRODUCTION_DOCUMENTS", "SUBMIT_BAIL_DOCUMENTS"].includes(applicationType) &&
+      ["SUBMIT_BAIL_DOCUMENTS"].includes(applicationType) &&
         (orderNumber || orderRefNumber) &&
         createPendingTask({
           refId: `${userInfo?.uuid}_${orderNumber || orderRefNumber}`,
           isCompleted: true,
           status: "Completed",
           ...(applicationType === "SUBMIT_BAIL_DOCUMENTS" && { name: t("SUBMIT_BAIL_DOCUMENTS") }),
+        });
+      ["PRODUCTION_DOCUMENTS"].includes(applicationType) &&
+        (orderNumber || orderRefNumber) &&
+        createPendingTask({
+          refId: `${litigantIndId}_${userInfo?.uuid}_${orderNumber || orderRefNumber}`,
+          isCompleted: true,
+          status: "Completed",
         });
       history.push(
         orderNumber

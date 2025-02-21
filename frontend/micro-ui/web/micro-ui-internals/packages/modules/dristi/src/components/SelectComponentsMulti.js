@@ -151,6 +151,7 @@ const selectCompMultiConfig = {
         label: "ADDRESS",
         type: "text",
         name: "locality",
+        isFormatRequired : true,
         validation: {
           minlength: 2,
           maxlength: 256,
@@ -217,7 +218,6 @@ const geoLocationConfig = {
 
 const SelectComponentsMulti = ({ t, config, onSelect, formData, errors, setError, clearErrors }) => {
   const [locationData, setLocationData] = useState([formData?.[config?.key] ? formData?.[config?.key] : { id: generateUUID() }]);
-  console.log("formData", formData, errors);
 
   useEffect(() => {
     if (
@@ -230,7 +230,7 @@ const SelectComponentsMulti = ({ t, config, onSelect, formData, errors, setError
     } else {
       setLocationData(locationData);
     }
-  }, [formData]);
+  }, [config?.key, formData, locationData]);
 
   const { isLoading: isTypeOfAddressData, data: typeOfAddressData } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),

@@ -38,6 +38,7 @@ const TasksComponent = ({
   hideTaskComponent,
   hideFilters = false,
   isDiary = false,
+  taskIncludes,
 }) => {
   const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
   const [pendingTasks, setPendingTasks] = useState([]);
@@ -67,7 +68,7 @@ const TasksComponent = ({
           ...(isLitigant && { assignedTo: uuid }),
           ...(!isLitigant && { assignedRole: [...roles] }),
           ...(inCase && { filingNumber: filingNumber }),
-          isDiary: isDiary,
+          screenType: isDiary ? ["Adiary"] : ["home"],
         },
         limit: 10000,
         offset: 0,
@@ -137,17 +138,17 @@ const TasksComponent = ({
   );
 
   const handleReviewOrder = useCallback(
-    async ({ filingNumber, caseId, referenceId }) => {
+    async ({ filingNumber, caseId, referenceId, litigant, litigantIndId }) => {
       const orderDetails = await getOrderDetail(referenceId);
       history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Orders`, {
-        orderObj: orderDetails,
+        orderObj: { ...orderDetails, litigant, litigantIndId },
       });
     },
     [getOrderDetail, history, userType]
   );
 
   const handleReviewSubmission = useCallback(
-    async ({ filingNumber, caseId, referenceId }) => {
+    async ({ filingNumber, caseId, referenceId, isOpenInNewTab }) => {
       const getDate = (value) => {
         const date = new Date(value);
         const day = date.getDate().toString().padStart(2, "0");
@@ -196,9 +197,14 @@ const TasksComponent = ({
         };
       }) || [defaultObj];
 
-      history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Submissions`, {
-        applicationDocObj: docObj,
-      });
+      if (isOpenInNewTab) {
+        const newTabUrl = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&applicationNumber=${applicationDetails?.applicationNumber}&tab=Submissions`;
+        window.open(newTabUrl, "_blank", "noopener,noreferrer");
+      } else {
+        history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Submissions`, {
+          applicationDocObj: docObj,
+        });
+      }
     },
     [getApplicationDetail, history, userType]
   );
@@ -297,6 +303,9 @@ const TasksComponent = ({
           const entityType = data?.fields?.find((field) => field.key === "entityType")?.value;
           const individualId = data?.fields?.find((field) => field.key === "additionalDetails.individualId")?.value;
           const caseId = data?.fields?.find((field) => field.key === "additionalDetails.caseId")?.value;
+          const litigant = data?.fields?.find((field) => field.key === "additionalDetails.litigantUuid[0]")?.value;
+          const litigantIndId = data?.fields?.find((field) => field.key === "additionalDetails.litigants[0]")?.value;
+
           const updateReferenceId = referenceId.split("_").pop();
           const defaultObj = { referenceId: updateReferenceId, ...caseDetail };
           const pendingTaskActions = selectTaskType?.[entityType || taskTypeCode];
@@ -331,7 +340,15 @@ const TasksComponent = ({
             isCompleted,
             dueDateColor: due === "Due today" ? "#9E400A" : "",
             redirectUrl,
-            params: { ...additionalDetails, cnrNumber, filingNumber, caseId: caseDetail?.id, referenceId: updateReferenceId },
+            params: {
+              ...additionalDetails,
+              cnrNumber,
+              filingNumber,
+              caseId: caseDetail?.id,
+              referenceId: updateReferenceId,
+              litigant,
+              litigantIndId,
+            },
             isCustomFunction,
             referenceId,
           };
@@ -512,6 +529,12 @@ const TasksComponent = ({
     }),
     [pendingTasks, userType]
   );
+
+  const taskIncludesPendingTasks = useMemo(() => pendingTasks?.filter((task) => taskIncludes?.includes(task?.actionName)), [
+    pendingTasks,
+    taskIncludes,
+  ]);
+
   if (isLoading) {
     return <Loader />;
   }
@@ -565,30 +588,48 @@ const TasksComponent = ({
                 {searchCaseLoading && <Loader />}
                 {!searchCaseLoading && (
                   <React.Fragment>
-                    <div className="task-section">
-                      <PendingTaskAccordion
-                        pendingTasks={pendingTaskDataInWeek}
-                        allPendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
-                        accordionHeader={"COMPLETE_THIS_WEEK"}
-                        t={t}
-                        totalCount={pendingTaskDataInWeek?.length}
-                        isHighlighted={true}
-                        isAccordionOpen={true}
-                        setShowSubmitResponseModal={setShowSubmitResponseModal}
-                        setResponsePendingTask={setResponsePendingTask}
-                      />
-                    </div>
-                    <div className="task-section">
-                      <PendingTaskAccordion
-                        pendingTasks={allOtherPendingTask}
-                        allPendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
-                        accordionHeader={"ALL_OTHER_TASKS"}
-                        t={t}
-                        totalCount={allOtherPendingTask?.length}
-                        setShowSubmitResponseModal={setShowSubmitResponseModal}
-                        setResponsePendingTask={setResponsePendingTask}
-                      />
-                    </div>
+                    {taskIncludes?.length > 0 ? (
+                      <div className="task-section">
+                        <PendingTaskAccordion
+                          pendingTasks={taskIncludesPendingTasks}
+                          allPendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
+                          accordionHeader={"Take_Action"}
+                          t={t}
+                          isHighlighted={true}
+                          isAccordionOpen={true}
+                          isOpenInNewTab={true}
+                          setShowSubmitResponseModal={setShowSubmitResponseModal}
+                          setResponsePendingTask={setResponsePendingTask}
+                        />
+                      </div>
+                    ) : (
+                      <React.Fragment>
+                        <div className="task-section">
+                          <PendingTaskAccordion
+                            pendingTasks={pendingTaskDataInWeek}
+                            allPendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
+                            accordionHeader={"COMPLETE_THIS_WEEK"}
+                            t={t}
+                            totalCount={pendingTaskDataInWeek?.length}
+                            isHighlighted={true}
+                            isAccordionOpen={true}
+                            setShowSubmitResponseModal={setShowSubmitResponseModal}
+                            setResponsePendingTask={setResponsePendingTask}
+                          />
+                        </div>
+                        <div className="task-section">
+                          <PendingTaskAccordion
+                            pendingTasks={allOtherPendingTask}
+                            allPendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
+                            accordionHeader={"ALL_OTHER_TASKS"}
+                            t={t}
+                            totalCount={allOtherPendingTask?.length}
+                            setShowSubmitResponseModal={setShowSubmitResponseModal}
+                            setResponsePendingTask={setResponsePendingTask}
+                          />
+                        </div>
+                      </React.Fragment>
+                    )}
                     <div className="task-section"></div>
                   </React.Fragment>
                 )}

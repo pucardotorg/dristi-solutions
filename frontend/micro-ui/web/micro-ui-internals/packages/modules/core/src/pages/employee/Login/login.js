@@ -112,11 +112,21 @@ const Login = ({ config: propsConfig, t, isDisabled, tenantsData, isTenantsDataL
   const { data: commonMasterData, isLoading: isCommonMasterDataLoading } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
     "common-masters",
-    [{ name: "CourtEstablishment" }, { name: "Court_Rooms" }],
+    [{ name: "CourtEstablishment" }, { name: "Court_Rooms" }, { name: "District" }],
     {
       select: (data) => data,
     }
   );
+
+  const defaultValue = useMemo(() => {
+    const district = commonMasterData?.["common-masters"]?.District?.find((district) => district?.code === "KOLLAM");
+    const courtRoom = commonMasterData?.["common-masters"]?.Court_Rooms?.find((room) => room?.code === "KLKM52");
+    setPrevDistrict(district);
+    return {
+      district: district,
+      courtroom: courtRoom,
+    };
+  }, [commonMasterData]);
 
   const getFilteredCourtRoom = (district) => {
     const courtEstablishmnets = commonMasterData?.["common-masters"]?.CourtEstablishment;
@@ -130,7 +140,7 @@ const Login = ({ config: propsConfig, t, isDisabled, tenantsData, isTenantsDataL
     const newPopulators = {
       name: "courtroom",
       optionsKey: "name",
-      error: "ERR_HRMS_INVALID_COURT_ROOM",
+      // error: "ERR_HRMS_INVALID_COURT_ROOM",
       options: getFilteredCourtRoom(district?.code),
     };
     let modifiedConfig = config;
@@ -162,6 +172,7 @@ const Login = ({ config: propsConfig, t, isDisabled, tenantsData, isTenantsDataL
         inline
         submitInForm
         config={config}
+        defaultValues={defaultValue}
         label={propsConfig.texts.submitButtonLabel}
         // secondaryActionLabel={propsConfig.texts.secondaryButtonLabel}
         onSecondayActionClick={onForgotPassword}
