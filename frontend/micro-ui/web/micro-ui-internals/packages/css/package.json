@@ -1,4 +1,5 @@
 {
+  "_comment": "This is a comment and will be ignored by npm",
   "name": "dristi-ui-css",
   "version": "0.0.1-dristi-kerala.6",
   "license": "MIT",
