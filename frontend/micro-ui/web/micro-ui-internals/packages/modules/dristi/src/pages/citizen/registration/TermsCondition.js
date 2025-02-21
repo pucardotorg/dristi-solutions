@@ -419,7 +419,7 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
   }
 
   return (
-    <div className="terms-condition">
+    <div className="terms-condition" style={{ margin: "50px" }}>
       <FormComposerV2
         config={config}
         t={t}

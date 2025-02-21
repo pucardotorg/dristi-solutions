@@ -133,6 +133,9 @@ public class Configuration {
     @Value("${judge.designation}")
     private String judgeDesignation;
 
+    @Value("${judge.id}")
+    private String judgeId;
+
     //Pdf Services
     @Value("${egov.pdf.service.host}")
     private String pdfServiceHost;
@@ -157,5 +160,16 @@ public class Configuration {
 
     @Value("${dristi.case.search.path}")
     private String caseSearchPath;
+
+    @Value("${egov.tenantId}")
+    private String tenantId;
+
+    @Value("${schedule.cron.expression}")
+    private String cronExpression;
+
+    @Bean
+    public String scheduleCronExpression() {
+        return cronExpression;
+    }
 
 }

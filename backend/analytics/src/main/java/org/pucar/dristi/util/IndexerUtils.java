@@ -169,7 +169,7 @@ public class IndexerUtils {
         String cnrNumber = pendingTask.getCnrNumber();
         String filingNumber = pendingTask.getFilingNumber();
         String additionalDetails = "{}";
-        Boolean isDiary = pendingTask.getIsDiary();
+        String screenType = pendingTask.getScreenType();
         try {
             additionalDetails = mapper.writeValueAsString(pendingTask.getAdditionalDetails());
         } catch (Exception e) {
@@ -180,7 +180,7 @@ public class IndexerUtils {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status, assignedTo, assignedRole, cnrNumber, filingNumber, isCompleted, stateSla, businessServiceSla, additionalDetails, isDiary
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status, assignedTo, assignedRole, cnrNumber, filingNumber, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType
         );
     }
 
@@ -214,7 +214,7 @@ public class IndexerUtils {
         // Validate details map using the utility function
         String cnrNumber = details.get("cnrNumber");
         String filingNumber = details.get("filingNumber");
-        Boolean isDiary = details.containsKey("isDiary");
+        String screenType = details.get("screenType");
         String name = details.get("name");
         isCompleted = isNullOrEmpty(name);
         isGeneric = details.containsKey("isGeneric");
@@ -263,7 +263,7 @@ public class IndexerUtils {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status, assignedTo, assignedRole, cnrNumber, filingNumber, isCompleted, stateSla, businessServiceSla, additionalDetails, isDiary
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status, assignedTo, assignedRole, cnrNumber, filingNumber, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType
         );
     }
 
@@ -421,6 +421,7 @@ public class IndexerUtils {
 
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", filingNumber);
+        caseDetails.put("screenType", HOME);
         return caseDetails;
     }
 
@@ -434,6 +435,7 @@ public class IndexerUtils {
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", referenceId);
         caseDetails.put("cmpNumber", cmpNumber);
+        caseDetails.put("screenType", HOME);
 
         return caseDetails;
     }
@@ -448,6 +450,7 @@ public class IndexerUtils {
 
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", filingNumber);
+        caseDetails.put("screenType", HOME);
 
         return caseDetails;
     }
@@ -461,6 +464,7 @@ public class IndexerUtils {
 
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", filingNumber);
+        caseDetails.put("screenType", HOME);
 
         return caseDetails;
     }
@@ -469,7 +473,7 @@ public class IndexerUtils {
         Map<String, String> caseDetails = new HashMap<>();
         caseDetails.put("cnrNumber", null);
         caseDetails.put("filingNumber", null);
-        caseDetails.put("isDiary", "true");
+        caseDetails.put("screenType", ADIARY);
 
         return caseDetails;
     }
@@ -483,6 +487,7 @@ public class IndexerUtils {
 
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", filingNumber);
+        caseDetails.put("screenType", HOME);
 
         return caseDetails;
     }
@@ -493,6 +498,8 @@ public class IndexerUtils {
         String filingNumber = JsonPath.read(orderObject.toString(), FILING_NUMBER_PATH);
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", filingNumber);
+        caseDetails.put("screenType", HOME);
+
         return caseDetails;
     }
 
