@@ -94,6 +94,7 @@
                                             "type": "text",
                                             "name": "firstName",
                                             "isMandatory": true,
+                                            "isFormatRequired": true,
                                             "styles": {
                                                 "paddingRight": "36px"
                                             }
@@ -160,8 +161,7 @@
                                 "isMandatory": false,
                                 "labelChildren": "optional"
                             }
-                        ],
-                        "head": "CS_WITNESS_NAME"
+                        ]
                     },
                     {
                         "dependentKey": {
