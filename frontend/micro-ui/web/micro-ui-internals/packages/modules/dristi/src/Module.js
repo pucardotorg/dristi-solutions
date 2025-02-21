@@ -63,6 +63,7 @@ import MultipleAdvocateNameDetails from "./components/MultipleAdvocateNameDetail
 import BoxComplainant from "./components/BoxComplainant";
 import MultipleAdvocatesAndPip from "./components/MultipleAdvocatesAndPip";
 import MultiSelectDropdown from "./components/MultiSelectDropdown";
+import WarningModal from "./components/WarningModal";
 
 export const DRISTIModule = ({ stateCode, userType, tenants }) => {
   const Digit = useMemo(() => window?.Digit || {}, []);
@@ -173,6 +174,7 @@ const componentsToRegister = {
   MultipleAdvocatesAndPip,
   BoxComplainant,
   MultiSelectDropdown,
+  WarningModal,
 };
 
 const overrideHooks = () => {

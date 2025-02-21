@@ -71,6 +71,7 @@ import ConfirmCaseDetailsModal from "./ConfirmCaseDetailsModal";
 import { DocumentUploadError } from "../../../Utils/errorUtil";
 import ConfirmDcaSkipModal from "./ConfirmDcaSkipModal";
 import ErrorDataModal from "./ErrorDataModal";
+import WarningModal from "../../../components/WarningModal";
 
 const OutlinedInfoIcon = () => (
   <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: "absolute", right: -22, top: 0 }}>
@@ -223,6 +224,8 @@ function EFilingCases({ path }) {
   const [showEditCaseNameModal, setShowEditCaseNameModal] = useState(false);
   const [modalCaseName, setModalCaseName] = useState("");
   const [isFilingParty, setIsFilingParty] = useState(false);
+  const [warningModal, setWarningModal] = useState(false);
+  const [isSaveDraft, setSaveDraft] = useState(false);
 
   const [{ showSuccessToast, successMsg }, setSuccessToast] = useState({
     showSuccessToast: false,
@@ -1712,7 +1715,7 @@ function EFilingCases({ path }) {
     }
   };
 
-  const onSubmit = async (action, isCaseLocked = false) => {
+  const onSubmit = async (action, isCaseLocked = false, isWarning = false) => {
     if (isDisableAllFieldsMode) {
       history.push(homepagePath);
     }
@@ -1874,6 +1877,16 @@ function EFilingCases({ path }) {
     ) {
       return;
     }
+
+    if (
+      selected === "complainantDetails" && 
+      !isWarning && 
+      formdata?.some(item => item?.data?.complainantVerification?.individualDetails === null)
+    ) {
+      setWarningModal(true);
+      return;
+    }
+    
     if (selected === "reviewCaseFile" && isCaseReAssigned && !openConfirmCorrectionModal && !isCaseLocked) {
       setOpenConfirmCorrectionModal(true);
       return;
@@ -1996,7 +2009,17 @@ function EFilingCases({ path }) {
     }
   };
 
-  const onSaveDraft = (props) => {
+  const onSaveDraft = (props, isWarning = false) => {
+
+    if (
+      selected === "complainantDetails" && 
+      !isWarning && 
+      formdata?.some(item => item?.data?.complainantVerification?.individualDetails === null)
+    ) {
+      setSaveDraft(true);
+      setWarningModal(true);
+      return;
+    }
     setParmas({ ...params, [pageConfig.key]: formdata });
     const newCaseDetails = {
       ...caseDetails,
@@ -2433,6 +2456,11 @@ function EFilingCases({ path }) {
   }
 `;
 
+  const handleCancelWarningModal = () => {
+    setWarningModal(!warningModal);
+    setSaveDraft(false);
+  };
+
   return (
     <div className="file-case">
       <style>{customStyles}</style>
@@ -2630,7 +2658,7 @@ function EFilingCases({ path }) {
                   label={showActionsLabels && actionName}
                   config={config}
                   onSubmit={() => onSubmit("SAVE_DRAFT")}
-                  onSecondayActionClick={onSaveDraft}
+                  onSecondayActionClick={() => onSaveDraft(undefined, false)}
                   defaultValues={getDefaultValues(index)}
                   onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
                     onFormValueChange(
@@ -2805,7 +2833,7 @@ function EFilingCases({ path }) {
             onSubmit={() => onSubmit("SAVE_DRAFT")}
           />
           {!(isCaseReAssigned || isPendingReESign) && (
-            <Button className="previous-button" variation="secondary" label={t("CS_SAVE_DRAFT")} onButtonClick={onSaveDraft} />
+            <Button className="previous-button" variation="secondary" label={t("CS_SAVE_DRAFT")} onButtonClick={() => onSaveDraft(undefined, false)} />
           )}
         </ActionBar>
       )}
@@ -2916,6 +2944,18 @@ function EFilingCases({ path }) {
           <h3 className="input-label">{t("CS_CASE_NAME")}</h3>
           <TextInput defaultValue={newCaseName || caseDetails?.caseTitle} type="text" onChange={(e) => setModalCaseName(e.target.value)} />
         </Modal>
+      )}
+      {warningModal && (
+        <WarningModal
+          t={t}
+          heading={t("CONFIRM_COMPLAINT_DETAILS")}
+          info={t("COMPLAINT_INFO")}
+          onCancel={handleCancelWarningModal}
+          setWarningModal={setWarningModal}
+          onSubmit={onSubmit}
+          isSaveDraft={isSaveDraft}
+          onSaveDraft={onSaveDraft}
+        />
       )}
     </div>
   );
