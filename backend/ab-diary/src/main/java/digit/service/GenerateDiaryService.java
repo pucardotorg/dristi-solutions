@@ -5,6 +5,7 @@ import digit.web.models.CaseDiary;
 import digit.web.models.CaseDiaryGenerateRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -13,7 +14,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
-import static digit.config.ServiceConstants.DIARY_TYPE;
+import static digit.config.ServiceConstants.*;
 
 @Service
 @Slf4j
@@ -25,10 +26,13 @@ public class GenerateDiaryService {
     @Autowired
     private DiaryService diaryService;
 
+    @Autowired
+    private UserService userService;
+
     private static final String TIME_ZONE = "Asia/Kolkata";
 
     // This runs everyday at 11:59 PM
-    //59 23 * * * *
+    //0 59 23 * * *
 
     @Scheduled(cron = "#{@scheduleCronExpression}", zone = TIME_ZONE)
     public void generateDiary() {
@@ -36,7 +40,7 @@ public class GenerateDiaryService {
 
         try {
             CaseDiaryGenerateRequest generateRequest = new CaseDiaryGenerateRequest();
-            RequestInfo requestInfo = new RequestInfo();
+            RequestInfo requestInfo = createInternalRequestInfo();
             CaseDiary diary = new CaseDiary();
             diary.setDiaryDate(generateDiaryDate());
             diary.setDiaryType(DIARY_TYPE);
@@ -65,5 +69,14 @@ public class GenerateDiaryService {
 
         log.info("Epoch Time (Milliseconds) :: {} for date :: {} " , epochMillis,today);
         return epochMillis;
+    }
+
+    private RequestInfo createInternalRequestInfo() {
+        User userInfo = new User();
+        userInfo.setType(SYSTEM);
+        userInfo.setUuid(userService.internalMicroserviceRoleUuid);
+        userInfo.setRoles(userService.internalMicroserviceRoles);
+        userInfo.setTenantId(configuration.getTenantId());
+        return RequestInfo.builder().userInfo(userInfo).msgId(msgId).build();
     }
 }
