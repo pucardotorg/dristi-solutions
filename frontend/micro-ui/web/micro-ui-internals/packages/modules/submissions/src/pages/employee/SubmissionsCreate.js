@@ -56,7 +56,16 @@ const SubmissionsCreate = ({ path }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const { t } = useTranslation();
   const history = useHistory();
-  const { orderNumber, filingNumber, applicationNumber, isExtension, hearingId, applicationType: applicationTypeUrl } = Digit.Hooks.useQueryParams();
+  const {
+    orderNumber,
+    filingNumber,
+    applicationNumber,
+    isExtension,
+    hearingId,
+    applicationType: applicationTypeUrl,
+    litigant,
+    litigantIndId,
+  } = Digit.Hooks.useQueryParams();
   const [formdata, setFormdata] = useState({});
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showsignatureModal, setShowsignatureModal] = useState(false);
@@ -227,6 +236,7 @@ const SubmissionsCreate = ({ path }) => {
         },
       ];
     }
+    return [];
   }, [caseDetails, pipComplainants, pipAccuseds, userInfo]);
 
   const { data: applicationData, isloading: isApplicationLoading, refetch: applicationRefetch } = Digit.Hooks.submissions.useSearchSubmissionService(
@@ -355,6 +365,13 @@ const SubmissionsCreate = ({ path }) => {
             }
             if (body?.key === "selectComplainant") {
               body.populators.options = complainantsList;
+              if (complainantsList?.length === 1 || litigant) {
+                const updatedBody = {
+                  ...body,
+                  disable: true,
+                };
+                return updatedBody;
+              }
             }
             return {
               ...body,
@@ -519,6 +536,10 @@ const SubmissionsCreate = ({ path }) => {
     } else if (orderNumber) {
       if (orderDetails?.orderType === orderTypes.MANDATORY_SUBMISSIONS_RESPONSES) {
         if (isExtension) {
+          const currentLitigant = complainantsList?.find((c) => c?.uuid === litigant);
+          const selectComplainant = currentLitigant
+            ? { code: currentLitigant.code, name: currentLitigant.name, uuid: currentLitigant.uuid }
+            : undefined;
           const initialSubmissionDate = latestExtensionOrder
             ? formatDate(new Date(latestExtensionOrder?.orderDetails.newSubmissionDate))
             : orderDetails?.additionalDetails?.formdata?.submissionDeadline;
@@ -536,8 +557,14 @@ const SubmissionsCreate = ({ path }) => {
             applicationDate: formatDate(new Date()),
             documentType: orderDetails?.additionalDetails?.formdata?.documentType,
             initialSubmissionDate: initialSubmissionDate,
+            ...(selectComplainant !== undefined ? { selectComplainant } : {}),
           };
         } else {
+          const currentLitigant = complainantsList?.find((c) => c?.uuid === litigant);
+          const selectComplainant = currentLitigant
+            ? { code: currentLitigant.code, name: currentLitigant.name, uuid: currentLitigant.uuid }
+            : undefined;
+
           return {
             submissionType: {
               code: "APPLICATION",
@@ -550,6 +577,7 @@ const SubmissionsCreate = ({ path }) => {
             },
             refOrderId: orderDetails?.orderNumber,
             applicationDate: formatDate(new Date()),
+            ...(selectComplainant !== undefined ? { selectComplainant } : {}),
           };
         }
       } else if (orderDetails?.orderType === orderTypes.WARRANT) {
@@ -566,6 +594,10 @@ const SubmissionsCreate = ({ path }) => {
           applicationDate: formatDate(new Date()),
         };
       } else if (orderDetails?.orderType === orderTypes.SET_BAIL_TERMS) {
+        const currentLitigant = complainantsList?.find((c) => c?.uuid === litigant);
+        const selectComplainant = currentLitigant
+          ? { code: currentLitigant.code, name: currentLitigant.name, uuid: currentLitigant.uuid }
+          : undefined;
         return {
           submissionType: {
             code: "APPLICATION",
@@ -577,6 +609,7 @@ const SubmissionsCreate = ({ path }) => {
           },
           refOrderId: orderDetails?.orderNumber,
           applicationDate: formatDate(new Date()),
+          ...(selectComplainant !== undefined ? { selectComplainant } : {}),
         };
       } else {
         return {
@@ -588,6 +621,10 @@ const SubmissionsCreate = ({ path }) => {
         };
       }
     } else if (applicationType) {
+      let selectComplainant = null;
+      if (complainantsList?.length === 1) {
+        selectComplainant = complainantsList?.[0];
+      }
       return {
         submissionType: {
           code: "APPLICATION",
@@ -599,6 +636,7 @@ const SubmissionsCreate = ({ path }) => {
           isActive: true,
         },
         applicationDate: formatDate(new Date()),
+        ...(selectComplainant !== null ? { selectComplainant } : {}),
       };
     } else {
       return {
@@ -1043,13 +1081,20 @@ const SubmissionsCreate = ({ path }) => {
           assignedRole: ["SUBMISSION_CREATOR", "SUBMISSION_RESPONDER"],
         });
       }
-      ["PRODUCTION_DOCUMENTS", "SUBMIT_BAIL_DOCUMENTS"].includes(applicationType) &&
+      ["SUBMIT_BAIL_DOCUMENTS"].includes(applicationType) &&
         (orderNumber || orderRefNumber) &&
         createPendingTask({
           refId: `${userInfo?.uuid}_${orderNumber || orderRefNumber}`,
           isCompleted: true,
           status: "Completed",
           ...(applicationType === "SUBMIT_BAIL_DOCUMENTS" && { name: t("SUBMIT_BAIL_DOCUMENTS") }),
+        });
+      ["PRODUCTION_DOCUMENTS"].includes(applicationType) &&
+        (orderNumber || orderRefNumber) &&
+        createPendingTask({
+          refId: `${litigantIndId}_${userInfo?.uuid}_${orderNumber || orderRefNumber}`,
+          isCompleted: true,
+          status: "Completed",
         });
       history.push(
         orderNumber
