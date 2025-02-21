@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.jsonpath.JsonPath;
+import io.swagger.util.Json;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.models.individual.Individual;
@@ -75,12 +76,9 @@ public class PendingTaskService {
             if(Objects.equals(topic, LITIGANT_JOIN_CASE_TOPIC) && joinCaseJson.get("litigant") != null) {
                 log.debug("operation=updatePendingTask, topic=LITIGANT_JOIN_CASE_TOPIC");
                 updatePendingTaskForLitigant(joinCaseJson, pendingTaskNode);
-            } else if (Objects.equals(topic, REPRESENTATIVE_JOIN_CASE_TOPIC) && joinCaseJson.get("representative") != null) {
-                log.debug("operation=updatePendingTask, topic=REPRESENTATIVE_JOIN_CASE");
-                updatePendingTaskForAdvocate(joinCaseJson, pendingTaskNode, false);
-            } else if(Objects.equals(topic, REPRESENTATIVE_REPLACE_JOIN_CASE)) {
-                log.debug("operation=updatePendingTask, topic=REPRESENTATIVE_REPLACE_JOIN_CASE");
-                updatePendingTaskForAdvocate(joinCaseJson, pendingTaskNode, true);
+            } else if (Objects.equals(topic, REPRESENTATIVE_JOIN_CASE_TOPIC) || Objects.equals(topic, REPRESENTATIVE_REPLACE_JOIN_CASE)) {
+                log.debug("operation=updatePendingTask, topic={}", topic);
+                updatePendingTaskForAdvocate(joinCaseJson, pendingTaskNode);
             }
             log.info("operation=updatePendingTask, result=SUCCESS, topic={}, filingNumber={}", topic, filingNumber);
         } catch (Exception e) {
@@ -110,7 +108,7 @@ public class PendingTaskService {
 
     }
 
-    public void updatePendingTaskForAdvocate(Map<String, Object> joinCaseJson, JsonNode pendingTaskNode, Boolean isAdvocateReplace) {
+    public void updatePendingTaskForAdvocate(Map<String, Object> joinCaseJson, JsonNode pendingTaskNode) {
         try {
             log.info("operation=updatePendingTaskForAdvocate, status=IN_PROGRESS");
             Map<String, Object> representative = (Map<String, Object>) joinCaseJson.get("representative");
@@ -119,19 +117,9 @@ public class PendingTaskService {
             RequestInfo requestInfo = objectMapper.convertValue(joinCaseJson.get("RequestInfo"), RequestInfo.class);
 
             String advocateUuid = getAdvocateUuid(requestInfo, representative);
-            List<String> litigantIndividualIds = getLitigantIndividualIds(parties, requestInfo);
 
             JsonNode hitsNode = pendingTaskNode.path("hits").path("hits");
-
-            List<JsonNode> filteredTasks = new ArrayList<>();
-            filteredTasks = filterPendingTaskAdvocate(hitsNode, litigantIndividualIds);
-
-            if(isAdvocateReplace){
-                replaceAssigneeToPendingTask(filteredTasks, advocateUuid, requestInfo);
-            }
-            else {
-                addAssigneeToPendingTask(filteredTasks, advocateUuid);
-            }
+            List<JsonNode> filteredTasks = filterPendingTasks(hitsNode, parties, advocateUuid, requestInfo);
             pendingTaskUtil.updatePendingTask(filteredTasks);
             log.info("operation=updatePendingTaskAdvocate, status=SUCCESS");
         } catch (Exception e){
@@ -140,6 +128,21 @@ public class PendingTaskService {
         }
     }
 
+    private List<JsonNode> filterPendingTasks(JsonNode hitsNode, List<Map<String, Object>> parties, String advocateUuid, RequestInfo requestInfo) {
+        List<JsonNode> filteredTasks = new ArrayList<>();
+        for(Map<String, Object> litigant: parties) {
+            List<JsonNode> tasks = filterPendingTaskAdvocate(hitsNode, Collections.singletonList(litigant.get("individualId").toString()));
+            if(litigant.get("isAdvocateReplacing").equals(true)) {
+                replaceAssigneeToPendingTask(tasks, advocateUuid, requestInfo);
+            } else {
+                addAssigneeToPendingTask(tasks, advocateUuid);
+            }
+            if(!tasks.isEmpty()) {
+                filteredTasks.addAll(tasks);
+            }
+        }
+        return filteredTasks;
+    }
     private void replaceAssigneeToPendingTask(List<JsonNode> filteredTasks, String uuid, RequestInfo requestInfo) {
         for(JsonNode task : filteredTasks) {
             JsonNode dataNode = task.path("_source").path("Data");
@@ -181,8 +184,8 @@ public class PendingTaskService {
     private List<String> getLitigantIndividualIds(List<Map<String, Object>> parties, RequestInfo requestInfo) {
         List<String> individualIds = new ArrayList<>();
         for (Map<String, Object> party : parties) {
-            String individualId = party.get("individualId").toString();
-            individualIds.add(individualId);
+            List<Individual> individual = individualService.getIndividualsByIndividualId(requestInfo, party.get("individualId").toString());
+            individualIds.add(individual.get(0).getUserUuid());
         }
         return individualIds;
     }
