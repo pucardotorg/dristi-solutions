@@ -775,8 +775,8 @@ const ComplainantSignature = ({ path }) => {
         const fileStoreId = localStorage.getItem("fileStoreId");
         setSignatureDocumentId(fileStoreId);
         setEsignSuccess(true);
-        updateCase(state);
         refetchCaseDetails();
+        updateCase(state);
       }
     }
     if (esignProcess && caseDetails?.filingNumber) {
