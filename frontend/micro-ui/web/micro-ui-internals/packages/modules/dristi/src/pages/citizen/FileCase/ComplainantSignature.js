@@ -736,7 +736,6 @@ const ComplainantSignature = ({ path }) => {
               history.replace(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
             }
           }
-          await refetchCaseData();
         })
         .catch((error) => {
           toast.error(t("SOMETHING_WENT_WRONG"));
