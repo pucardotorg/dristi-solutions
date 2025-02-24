@@ -73,8 +73,13 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
     }
   };
 
+  const validationPattern = {
+    longitude: /^-?(180|1[0-7][0-9]|[0-9]?[0-9](.d+)?)$/,
+    latitude: /^-?(90|[0-8]?[0-9](.d+)?)$/,
+  };
+
   const validateCoordinate = (value, validation) => {
-    if (value && validation?.pattern && !value.match(validation.pattern)) {
+    if (value && validation?.patternType && !value.match(validationPattern[validation.patternType])) {
       return (
         <CardLabelError className="coordinate-error">
           <span className="error-text">{t(validation?.errorMessage || "CORE_COMMON_INVALID")}</span>
@@ -83,6 +88,7 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
     }
     return null;
   };
+
   const isValidCoordinate = (latitude, longitude) => {
     const isLatValid = !isNaN(latitude) && latitude >= -90 && latitude <= 90;
     const isLonValid = !isNaN(longitude) && longitude >= -180 && longitude <= 180;
