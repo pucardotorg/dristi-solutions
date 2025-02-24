@@ -242,10 +242,31 @@ export const getDate = (value) => {
 export const formatAddress = (value) => {
   return value
     .split(" ")
-    .map((word) =>
-      word === word.toUpperCase() || /[A-Z]/.test(word.slice(1)) 
-        ? word
-        : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-    )
+    .map((word) => (word === word.toUpperCase() || /[A-Z]/.test(word.slice(1)) ? word : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()))
     .join(" ");
+};
+
+export const maskEmail = (email) => {
+  if (!email || typeof email !== "string") {
+    return "";
+  }
+
+  try {
+    const emailParts = email.trim().split("@");
+    if (emailParts.length !== 2) {
+      throw new Error("Invalid email format");
+    }
+
+    const [username, domain] = emailParts;
+    if (!username || !domain) {
+      throw new Error("Invalid email parts");
+    }
+
+    const maskedUsername = username.length <= 2 ? username.padEnd(4, "*") : `${username.slice(0, 2)}${"*".repeat(Math.min(8, username.length - 2))}`;
+
+    return `${maskedUsername}@${domain}`;
+  } catch (error) {
+    console.error("Email masking failed:", error);
+    return "****@****";
+  }
 };
