@@ -30,6 +30,8 @@ const SelectOtp = ({
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
   const [timeLeft, setTimeLeft] = useState(25);
+  const tenantId = Digit.ULBService.getCurrentTenantId();
+  const [user, setUser] = useState(null);
 
   const handleKeyDown = (e) => {
     e.stopPropagation();
@@ -38,12 +40,28 @@ const SelectOtp = ({
     }
   };
 
+  const setUserDetails = async () => {
+    const {
+      user: [user],
+    } = await Digit.UserService.userSearch(tenantId, { mobileNumber: mobileNumber }, {});
+    setUser(user);
+  };
+
   useEffect(() => {
+    setUserDetails();
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [otp]);
+
+  const maskEmail = (email) => {
+    const [username, domain] = email.split("@");
+    if (username.length <= 2) {
+      return username + "**@" + domain;
+    }
+    return username?.slice(0, 2) + "********@" + domain;
+  };
 
   useInterval(
     () => {
@@ -125,7 +143,9 @@ const SelectOtp = ({
         <React.Fragment>
           <Heading label={isAdhaar ? t("Verify_Otp_Aadhaar") : t("Verify_Otp_MOBILE")} />
           <CardText>
-            {isAdhaar ? t("ENTER_OTP_TO_THE_REGISTERED_AADHAR_NO") : `${cardText}${mobileNumber ? " +91****" + mobileNumber.slice(-4) : ""}`}
+            {isAdhaar
+              ? t("ENTER_OTP_TO_THE_REGISTERED_AADHAR_NO")
+              : `${cardText}${mobileNumber ? " +91******" + mobileNumber.slice(-4) : ""}${user?.emailId ? ` and ${maskEmail(user?.emailId)}` : ""}`}
           </CardText>
         </React.Fragment>
       }
