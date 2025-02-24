@@ -25,6 +25,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   const FileCase = Digit?.ComponentRegistryService?.getComponent("FileCase");
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
+  const userInfoType = Digit.UserService.getType();
 
   const moduleCode = "DRISTI";
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
@@ -53,11 +54,15 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   }
 
   const isLitigantPartialRegistered = useMemo(() => {
+    if (userInfoType !== "citizen") return false;
+
     if (!data?.Individual || data.Individual.length === 0) return false;
+
+    if (data?.Individual[0]?.userDetails?.roles?.some((role) => role?.code === "ADVOCATE_ROLE")) return false;
 
     const address = data.Individual[0]?.address;
     return !address || (Array.isArray(address) && address.length === 0);
-  }, [data?.Individual]);
+  }, [data.Individual, userInfoType]);
 
   const userType = useMemo(() => data?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value, [data?.Individual]);
   const { data: searchData, isLoading: isSearchLoading } = Digit.Hooks.dristi.useGetAdvocateClerk(
