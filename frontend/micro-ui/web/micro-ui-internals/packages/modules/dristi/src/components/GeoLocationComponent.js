@@ -72,6 +72,17 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
     }
   };
 
+  const validateCoordinate = (value, validation) => {
+    if (value && validation?.pattern && !value.match(validation.pattern)) {
+      return (
+        <CardLabelError style={{ width: "100%", marginTop: "-15px", fontSize: "16px", marginBottom: "12px", color: "#FF0000" }}>
+          <span style={{ color: "#FF0000" }}>{t(validation?.errMsg || "CORE_COMMON_INVALID")}</span>
+        </CardLabelError>
+      );
+    }
+    return null;
+  };
+
   return (
     <div className="geo-location-component">
       <div className="police-station-juridiction">
@@ -93,7 +104,7 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
                 {
                   infoHeader: "CS_PLEASE_COMMON_NOTE",
                   infoText: "GEOLOCATION_INFO",
-                  infoTooltipMessage: "NEW_PARTY_NOTE",
+                  infoTooltipMessage: "GEOLOCATION_INFO_TOOLTIP",
                   type: "InfoComponent",
                 },
               ],
@@ -123,18 +134,7 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
               {...config?.latitudeInput?.validation}
             />
             {/* Validation Error Message */}
-            {(() => {
-              let currentValue = locationFormData?.[config.key]?.["latitude"] || "";
-              let validation = config?.latitudeInput?.validation;
-
-              if (currentValue && validation?.pattern && !currentValue.match(validation.pattern)) {
-                return (
-                  <CardLabelError style={{ width: "100%", marginTop: "-15px", fontSize: "16px", marginBottom: "12px", color: "#FF0000" }}>
-                    <span style={{ color: "#FF0000" }}>{t(validation?.errMsg || "CORE_COMMON_INVALID")}</span>
-                  </CardLabelError>
-                );
-              }
-            })()}
+            {validateCoordinate(locationFormData?.[config.key]?.["latitude"], config?.latitudeInput?.validation)}
           </LabelFieldPair>
 
           <LabelFieldPair>
@@ -152,18 +152,7 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
             />
 
             {/* Validation Error Message */}
-            {(() => {
-              let currentValue = locationFormData?.[config.key]?.["longitude"] || "";
-              let validation = config?.longitudeInput?.validation;
-
-              if (currentValue && validation?.pattern && !currentValue.match(validation.pattern)) {
-                return (
-                  <CardLabelError style={{ wiCustomNotedth: "100%", marginTop: "-15px", fontSize: "16px", marginBottom: "12px", color: "#FF0000" }}>
-                    <span style={{ color: "#FF0000" }}>{t(validation?.errMsg || "CORE_COMMON_INVALID")}</span>
-                  </CardLabelError>
-                );
-              }
-            })()}
+            {validateCoordinate(locationFormData?.[config.key]?.["longitude"], config?.longitudeInput?.validation)}
           </LabelFieldPair>
         </div>
         <Button
