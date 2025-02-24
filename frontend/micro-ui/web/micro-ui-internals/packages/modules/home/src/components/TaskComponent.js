@@ -305,6 +305,7 @@ const TasksComponent = ({
           const caseId = data?.fields?.find((field) => field.key === "additionalDetails.caseId")?.value;
           const litigant = data?.fields?.find((field) => field.key === "additionalDetails.litigantUuid[0]")?.value;
           const litigantIndId = data?.fields?.find((field) => field.key === "additionalDetails.litigants[0]")?.value;
+          const screenType = data?.fields?.find((field) => field.key === "screenType")?.value;
 
           const updateReferenceId = referenceId.split("_").pop();
           const defaultObj = { referenceId: updateReferenceId, ...caseDetail };
@@ -351,6 +352,7 @@ const TasksComponent = ({
             },
             isCustomFunction,
             referenceId,
+            screenType,
           };
         })
       );
