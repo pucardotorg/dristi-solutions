@@ -51,7 +51,7 @@ function CitizenHome({ tenantId, setHideBack }) {
 
     const address = data.Individual[0]?.address;
     return !address || (Array.isArray(address) && address.length === 0);
-  }, [data.Individual, userInfoType]);
+  }, [data?.Individual, userInfoType]);
 
   const userType = useMemo(() => data?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value, [data?.Individual]);
   const { data: searchData, isLoading: isSearchLoading, refetch: refetchAdvocateClerk } = Digit.Hooks.dristi.useGetAdvocateClerk(
