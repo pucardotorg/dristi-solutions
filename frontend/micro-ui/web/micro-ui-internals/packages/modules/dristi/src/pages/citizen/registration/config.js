@@ -554,7 +554,7 @@ export const newConfig = [
               name: "emailId",
               validation: {
                 isRequired: true,
-                pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+.[a-zA-Z]{2,}$/,
+                pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9][a-zA-Z0-9.-]*\.[a-zA-Z]{2,}$/,
                 errMsg: "PLEASE_ENTER_VALID_EMAIL",
               },
               isMandatory: true,
