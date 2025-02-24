@@ -151,65 +151,13 @@ const selectCompMultiConfig = {
         label: "ADDRESS",
         type: "text",
         name: "locality",
-        isFormatRequired : true,
+        isFormatRequired: true,
         validation: {
           minlength: 2,
           maxlength: 256,
           pattern: /^[^\$\"<>?\\\\~`!@$%^()={}\[\]*:;“”‘’]{2,256}$/i,
           errMsg: "CORE_COMMON_APPLICANT_ADDRESS_INVALID",
         },
-      },
-    ],
-    validation: {},
-  },
-};
-
-const geoLocationConfig = {
-  type: "component",
-  key: "geoLocationDetails",
-  withoutLabel: true,
-  populators: {
-    inputs: [
-      {
-        label: "Do you know which police station's jurisdiction this address belongs to?",
-        type: "Radio",
-        name: "jurisdictionKnown",
-        options: [
-          { code: "yes", name: "Yes" },
-          { code: "no", name: "No" },
-        ],
-        validation: {
-          required: true,
-          errorMessage: "This field is required.",
-        },
-      },
-      {
-        label: "Latitude",
-        type: "text",
-        name: "latitude",
-        disabled: true,
-        validation: {
-          required: true,
-          pattern: /^-?(90|[0-8]?[0-9](\.\d+)?)$/,
-          errorMessage: "Latitude must be a number between -90 and 90.",
-        },
-      },
-      {
-        label: "Longitude",
-        type: "text",
-        name: "longitude",
-        disabled: true,
-        validation: {
-          required: true,
-          pattern: /^-?(180|1[0-7][0-9]|[0-9]?[0-9](\.\d+)?)$/, // Matches -180 to 180
-          errorMessage: "Longitude must be a number between -180 and 180.",
-        },
-      },
-      {
-        name: "policeStation",
-        type: "dropdown",
-        label: "POLICE_STATION",
-        optionsKey: "code",
       },
     ],
     validation: {},
@@ -273,19 +221,10 @@ const SelectComponentsMulti = ({ t, config, onSelect, formData, errors, setError
     });
   };
 
-  const onChange = (key, value, locationId) => {
+  const handleChange = (key, value, locationId, field) => {
     setLocationData((locationData) => {
       const locationsCopy = structuredClone(locationData);
-      const updatedLocations = locationsCopy.map((data) => (data.id === locationId ? { ...data, addressDetails: value } : data));
-
-      onSelect(config?.key, updatedLocations);
-      return updatedLocations;
-    });
-  };
-  const onChange2 = (key, value, locationId) => {
-    setLocationData((locationData) => {
-      const locationsCopy = structuredClone(locationData);
-      const updatedLocations = locationsCopy.map((data) => (data.id === locationId ? { ...data, geoLocationDetails: value } : data));
+      const updatedLocations = locationsCopy.map((data) => (data.id === locationId ? { ...data, [field]: value } : data));
 
       onSelect(config?.key, updatedLocations);
       return updatedLocations;
@@ -327,7 +266,7 @@ const SelectComponentsMulti = ({ t, config, onSelect, formData, errors, setError
               config={modifiedSelectCompMultiConfig}
               locationFormData={data}
               onLocationSelect={(key, value) => {
-                onChange(key, value, data.id);
+                handleChange(key, value, data.id, "addressDetails");
               }}
               errors={errors}
               setError={setError}
@@ -340,10 +279,10 @@ const SelectComponentsMulti = ({ t, config, onSelect, formData, errors, setError
             {config?.isPoliceStationComponent === true && (
               <GeoLocationComponent
                 t={t}
-                config={geoLocationConfig}
+                config={config.geoLocationConfig}
                 locationFormData={data}
                 onGeoLocationSelect={(key, value) => {
-                  onChange2(key, value, data.id);
+                  handleChange(key, value, data.id, "geoLocationDetails");
                 }}
                 errors={errors}
                 setError={setError}

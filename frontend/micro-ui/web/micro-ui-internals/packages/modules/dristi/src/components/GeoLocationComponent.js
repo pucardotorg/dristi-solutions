@@ -6,23 +6,32 @@ import { useToast } from "./Toast/useToast";
 
 const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
-  const inputs = config?.populators?.inputs;
   const toast = useToast();
   const { data: policeStationData } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "case", [{ name: "PoliceStation" }], {
     select: (data) => {
       return data;
     },
   });
-  const setValue = (key, value) => {
-    const resetFields = ["latitude", "longitude", "policeStation"].reduce((acc, field) => {
-      if (
-        (key === "jurisdictionKnown" && value?.name === "Yes" && (field === "latitude" || field === "longitude")) ||
-        (key === "jurisdictionKnown" && value?.name === "No" && field === "policeStation")
-      ) {
+  const resetFieldsConfig = {
+    jurisdictionKnown: {
+      Yes: ["latitude", "longitude"],
+      No: ["policeStation"],
+    },
+  };
+
+  const getResetFields = React.useMemo(
+    () => (key, value) => {
+      const fieldsToReset = resetFieldsConfig[key]?.[value?.name] || [];
+      return fieldsToReset.reduce((acc, field) => {
         acc[field] = null;
-      }
-      return acc;
-    }, {});
+        return acc;
+      }, {});
+    },
+    []
+  );
+
+  const setValue = (key, value) => {
+    const resetFields = getResetFields(key, value);
 
     onGeoLocationSelect(config.key, {
       ...locationFormData?.[config.key],
@@ -47,9 +56,9 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
         individualData?.locationBasedJurisdiction?.nearest_police_station === null ||
         individualData?.locationBasedJurisdiction?.nearest_police_station === undefined
       ) {
-        toast.error("Error: Something went wrong, please try again later, or check the entered values");
+        toast.error(t("GEOLOCATION_ERROR"));
       } else {
-        toast.success("Success: Jurisdiction data found.");
+        toast.success(t("GEOLOCATION_SUCCESS"));
       }
 
       let option = {
@@ -59,17 +68,17 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
       setValue("policeStation", option);
       return individualData;
     } catch (error) {
-      console.log("error", error);
-      toast.error("Error: Something went wrong, please try again later, or check the entered values");
+      toast.error(t("GEOLOCATION_ERROR"));
     }
   };
+
   return (
     <div className="geo-location-component">
       <div className="police-station-juridiction">
-        <CardLabel>{t("Do you know which police station's jurisdiction this address belongs to?")}</CardLabel>
+        <CardLabel>{t(config?.juridictionRadioButton?.label)}</CardLabel>
         <RadioButtons
           additionalWrapperClass="radio-group"
-          options={inputs[0].options}
+          options={config?.juridictionRadioButton?.options}
           optionsKey="name"
           selectedOption={locationFormData?.[config.key]?.["jurisdictionKnown"] || { code: "yes", name: "Yes" }}
           onSelect={(value) => setValue("jurisdictionKnown", value)}
@@ -83,7 +92,7 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
               inputs: [
                 {
                   infoHeader: "CS_PLEASE_COMMON_NOTE",
-                  infoText: "You can use an online map software to get latitude and longitude of an address.",
+                  infoText: "GEOLOCATION_INFO",
                   infoTooltipMessage: "NEW_PARTY_NOTE",
                   type: "InfoComponent",
                 },
@@ -101,7 +110,7 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
       <div className="coordinate-container">
         <div className="lat-long">
           <LabelFieldPair>
-            <CardLabel>{t(inputs[1].label)}</CardLabel>
+            <CardLabel>{t(config?.latitudeInput?.label)}</CardLabel>
             <TextInput
               type={"number"}
               value={locationFormData?.[config.key]?.["latitude"] || ""}
@@ -111,12 +120,12 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
                   : true
               }
               onChange={(e) => setValue("latitude", e.target.value)}
-              {...config?.populators?.inputs[1]?.validation}
+              {...config?.latitudeInput?.validation}
             />
             {/* Validation Error Message */}
             {(() => {
               let currentValue = locationFormData?.[config.key]?.["latitude"] || "";
-              let validation = config?.populators?.inputs[1]?.validation;
+              let validation = config?.latitudeInput?.validation;
 
               if (currentValue && validation?.pattern && !currentValue.match(validation.pattern)) {
                 return (
@@ -129,7 +138,7 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
           </LabelFieldPair>
 
           <LabelFieldPair>
-            <CardLabel>{t(inputs[2].label)}</CardLabel>
+            <CardLabel>{t(config?.longitudeInput?.label)}</CardLabel>
             <TextInput
               type={"number"}
               value={locationFormData?.[config.key]?.["longitude"] || ""}
@@ -139,13 +148,13 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
                   : true
               }
               onChange={(e) => setValue("longitude", e.target.value)}
-              {...config?.populators?.inputs[2]?.validation}
+              {...config?.longitudeInput?.validation}
             />
 
             {/* Validation Error Message */}
             {(() => {
               let currentValue = locationFormData?.[config.key]?.["longitude"] || "";
-              let validation = config?.populators?.inputs[2]?.validation;
+              let validation = config?.longitudeInput?.validation;
 
               if (currentValue && validation?.pattern && !currentValue.match(validation.pattern)) {
                 return (
@@ -159,7 +168,7 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
         </div>
         <Button
           className={"custom-button-policeStation"}
-          label={t("Get Police Station")}
+          label={t(config?.policeStationDropdown?.label)}
           isDisabled={
             locationFormData?.[config.key]?.["jurisdictionKnown"]?.name ? locationFormData?.[config.key]?.["jurisdictionKnown"]?.name === "Yes" : true
           }
@@ -167,7 +176,7 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
             var lat = locationFormData?.[config.key]?.["latitude"];
             var long = locationFormData?.[config.key]?.["longitude"];
 
-            console.log(getPoliceStationByLocation(lat, long));
+            getPoliceStationByLocation(lat, long);
           }}
         />
       </div>
@@ -176,21 +185,16 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
         <CardLabel>
           {
             <div className="police-station-label">
-              {t("Police Stations (Optional)")}
-              <CustomErrorTooltip
-                message={"Enter the police station whose jurisdiction this address falls under. Summons will be sent via this police station."}
-                showTooltip={"visible"}
-                icon
-              />
+              {t(config?.policeStationDropdown?.header)}
+              <CustomErrorTooltip message={t("POLICE_STATION_HEADER_TOOLTIP")} showTooltip={"visible"} icon />
             </div>
           }
         </CardLabel>
         <Dropdown
           className={"police-station-dropdown"}
-          label="Select police station"
-          name="police station"
+          label={t(config?.policeStationDropdown?.label)}
+          name={config?.policeStationDropdown?.name}
           select={(selectedOption) => {
-            console.log("selectedOption", selectedOption);
             setValue("policeStation", selectedOption);
           }}
           selected={locationFormData?.[config.key]?.["policeStation"]}

@@ -727,7 +727,6 @@ const CustomReviewCardRow = ({
                   <div className="label">{t(label)}</div>
                   <div className={`value ${!isScrutiny ? "column" : ""}`}>
                     {address.map((item) => {
-                      console.log("item in customreviewcardrow testing...", item);
                       return (
                         <p>
                           {item?.address}{" "}
