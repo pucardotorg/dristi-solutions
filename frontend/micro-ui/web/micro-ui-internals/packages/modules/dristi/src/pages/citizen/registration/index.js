@@ -116,7 +116,7 @@ const Registration = ({ stateCode }) => {
 
     const address = data.Individual[0]?.address;
     return !address || (Array.isArray(address) && address.length === 0);
-  }, [data.Individual, userInfoType]);
+  }, [data?.Individual, userInfoType]);
 
   useEffect(() => {
     if (isLitigantPartialRegistered && data?.Individual) {
