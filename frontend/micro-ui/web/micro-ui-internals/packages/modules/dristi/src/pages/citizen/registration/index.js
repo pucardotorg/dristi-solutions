@@ -44,6 +44,7 @@ const Registration = ({ stateCode }) => {
   const [canSubmitOtp, setCanSubmitOtp] = useState(true);
   const [{ showOtpModal, isAdhaar }, setState] = useState({ showOtpModal: false, isAdhaar: false });
   const getUserType = () => Digit.UserService.getType();
+  const userInfoType = getUserType();
   const { t } = useTranslation();
   const location = useLocation();
   const DEFAULT_USER = "digit-user";
@@ -107,11 +108,15 @@ const Registration = ({ stateCode }) => {
   );
 
   const isLitigantPartialRegistered = useMemo(() => {
+    if (userInfoType !== "citizen") return false;
+
     if (!data?.Individual || data.Individual.length === 0) return false;
+
+    if (data?.Individual[0]?.userDetails?.roles?.some((role) => role?.code === "ADVOCATE_ROLE")) return false;
 
     const address = data.Individual[0]?.address;
     return !address || (Array.isArray(address) && address.length === 0);
-  }, [data?.Individual]);
+  }, [data.Individual, userInfoType]);
 
   useEffect(() => {
     if (isLitigantPartialRegistered && data?.Individual) {
