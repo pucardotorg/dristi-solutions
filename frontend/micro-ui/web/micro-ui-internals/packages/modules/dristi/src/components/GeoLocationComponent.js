@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 import { LabelFieldPair, CardLabel, TextInput, Dropdown, CardLabelError, RadioButtons, Button } from "@egovernments/digit-ui-react-components";
 import SelectCustomNote from "./SelectCustomNote";
 import CustomErrorTooltip from "./CustomErrorTooltip";
@@ -7,6 +7,9 @@ import { useToast } from "./Toast/useToast";
 const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const toast = useToast();
+
+  const [isLoading, setIsLoading] = useState(false);
+
   const { data: policeStationData } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "case", [{ name: "PoliceStation" }], {
     select: (data) => {
       return data;
@@ -14,14 +17,14 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
   });
   const resetFieldsConfig = {
     jurisdictionKnown: {
-      Yes: ["latitude", "longitude"],
-      No: ["policeStation"],
+      YES: ["latitude", "longitude"],
+      NO: ["policeStation"],
     },
   };
 
   const getResetFields = React.useMemo(
     () => (key, value) => {
-      const fieldsToReset = resetFieldsConfig[key]?.[value?.name] || [];
+      const fieldsToReset = resetFieldsConfig[key]?.[value?.code] || [];
       return fieldsToReset.reduce((acc, field) => {
         acc[field] = null;
         return acc;
@@ -41,6 +44,7 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
   };
 
   const getPoliceStationByLocation = async (lat, long) => {
+    setIsLoading(true);
     try {
       const individualData = await window?.Digit.DRISTIService.getLocationBasedJurisdiction(
         {
@@ -56,9 +60,10 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
         individualData?.locationBasedJurisdiction?.nearest_police_station === null ||
         individualData?.locationBasedJurisdiction?.nearest_police_station === undefined
       ) {
-        toast.error(t("GEOLOCATION_ERROR"));
+        setIsLoading(false);
+        toast.error(t("GEOLOCATION_ERROR"), 5000);
       } else {
-        toast.success(t("GEOLOCATION_SUCCESS"));
+        toast.success(t("GEOLOCATION_SUCCESS"), 5000);
       }
 
       let option = {
@@ -83,6 +88,18 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
     return null;
   };
 
+  const locationButtonDisable = useMemo(() => {
+    const locationData = locationFormData?.[config.key];
+    const jurisdictionKnown = locationData?.jurisdictionKnown?.code === "YES";
+    const latitude = parseFloat(locationData?.latitude);
+    const longitude = parseFloat(locationData?.longitude);
+
+    const isLatValid = !isNaN(latitude) && latitude >= -90 && latitude <= 90;
+    const isLonValid = !isNaN(longitude) && longitude >= -180 && longitude <= 180;
+
+    return jurisdictionKnown ? true : !(isLatValid && isLonValid);
+  }, [config.key, locationFormData]);
+
   return (
     <div className="geo-location-component">
       <div className="police-station-juridiction">
@@ -91,12 +108,12 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
           additionalWrapperClass="radio-group"
           options={config?.juridictionRadioButton?.options}
           optionsKey="name"
-          selectedOption={locationFormData?.[config.key]?.["jurisdictionKnown"] || { code: "yes", name: "Yes" }}
+          selectedOption={locationFormData?.[config.key]?.["jurisdictionKnown"] || { code: "YES", name: "ES_COMMON_YES" }}
           onSelect={(value) => setValue("jurisdictionKnown", value)}
         />
       </div>
 
-      {locationFormData?.[config.key]?.["jurisdictionKnown"]?.name === "No" && (
+      {locationFormData?.[config.key]?.["jurisdictionKnown"]?.code === "NO" && (
         <SelectCustomNote
           config={{
             populators: {
@@ -126,11 +143,14 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
               type={"number"}
               value={locationFormData?.[config.key]?.["latitude"] || ""}
               disabled={
-                locationFormData?.[config.key]?.["jurisdictionKnown"]?.name
-                  ? locationFormData?.[config.key]?.["jurisdictionKnown"]?.name === "Yes"
+                locationFormData?.[config.key]?.["jurisdictionKnown"]?.code
+                  ? locationFormData?.[config.key]?.["jurisdictionKnown"]?.code === "YES"
                   : true
               }
-              onChange={(e) => setValue("latitude", e.target.value)}
+              onChange={(e) => {
+                setIsLoading(false);
+                setValue("latitude", e.target.value);
+              }}
               {...config?.latitudeInput?.validation}
             />
             {/* Validation Error Message */}
@@ -143,11 +163,14 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
               type={"number"}
               value={locationFormData?.[config.key]?.["longitude"] || ""}
               disabled={
-                locationFormData?.[config.key]?.["jurisdictionKnown"]?.name
-                  ? locationFormData?.[config.key]?.["jurisdictionKnown"]?.name === "Yes"
+                locationFormData?.[config.key]?.["jurisdictionKnown"]?.code
+                  ? locationFormData?.[config.key]?.["jurisdictionKnown"]?.code === "YES"
                   : true
               }
-              onChange={(e) => setValue("longitude", e.target.value)}
+              onChange={(e) => {
+                setIsLoading(false);
+                setValue("longitude", e.target.value);
+              }}
               {...config?.longitudeInput?.validation}
             />
 
@@ -158,9 +181,7 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
         <Button
           className={"custom-button-policeStation"}
           label={t(config?.policeStationDropdown?.label)}
-          isDisabled={
-            locationFormData?.[config.key]?.["jurisdictionKnown"]?.name ? locationFormData?.[config.key]?.["jurisdictionKnown"]?.name === "Yes" : true
-          }
+          isDisabled={locationButtonDisable || isLoading}
           onButtonClick={() => {
             var lat = locationFormData?.[config.key]?.["latitude"];
             var long = locationFormData?.[config.key]?.["longitude"];
@@ -190,7 +211,7 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
           option={policeStationData?.case?.PoliceStation}
           optionKey={"name"}
           type="dropdown"
-          disable={locationFormData?.[config.key]?.["jurisdictionKnown"]?.name === "No"}
+          disable={locationFormData?.[config.key]?.["jurisdictionKnown"]?.code === "NO"}
           style={{ width: "100%", maxWidth: "100%" }}
         />
       </LabelFieldPair>
