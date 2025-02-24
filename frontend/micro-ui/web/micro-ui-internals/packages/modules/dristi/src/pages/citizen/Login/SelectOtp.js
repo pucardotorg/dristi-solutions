@@ -6,6 +6,7 @@ import FormStep from "../../../components/FormStep";
 import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { CloseIconWhite } from "../../../icons/svgIndex";
 import Modal from "../../../components/Modal";
+import { maskEmail } from "../../../Utils";
 
 const SelectOtp = ({
   config,
@@ -54,14 +55,6 @@ const SelectOtp = ({
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [otp]);
-
-  const maskEmail = (email) => {
-    const [username, domain] = email.split("@");
-    if (username.length <= 2) {
-      return username + "**@" + domain;
-    }
-    return username?.slice(0, 2) + "********@" + domain;
-  };
 
   useInterval(
     () => {

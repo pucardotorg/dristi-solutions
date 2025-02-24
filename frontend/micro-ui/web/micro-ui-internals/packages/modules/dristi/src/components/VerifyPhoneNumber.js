@@ -8,6 +8,7 @@ import { DRISTIService } from "../services";
 import Button from "./Button";
 import Modal from "./Modal";
 import OTPInput from "./OTPInput";
+import { maskEmail } from "../Utils";
 const TYPE_REGISTER = { type: "register" };
 const TYPE_LOGIN = { type: "login" };
 const DEFAULT_USER = "digit-user";
@@ -345,14 +346,6 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
         errorMsg: err?.response?.data?.error_description === "Account locked" ? t("MAX_RETRIES_EXCEEDED") : t("CS_INVALID_OTP"),
       }));
     }
-  };
-
-  const maskEmail = (email) => {
-    const [username, domain] = email.split("@");
-    if (username.length <= 2) {
-      return username + "**@" + domain;
-    }
-    return username?.slice(0, 2) + "********@" + domain;
   };
 
   return (
