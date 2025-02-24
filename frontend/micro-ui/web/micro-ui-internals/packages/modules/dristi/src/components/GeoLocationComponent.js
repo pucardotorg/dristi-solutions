@@ -10,11 +10,7 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const { data: policeStationData } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "case", [{ name: "PoliceStation" }], {
-    select: (data) => {
-      return data;
-    },
-  });
+  const { data: policeStationData } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "case", [{ name: "PoliceStation" }]);
   const resetFieldsConfig = {
     jurisdictionKnown: {
       YES: ["latitude", "longitude"],
@@ -80,13 +76,18 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
   const validateCoordinate = (value, validation) => {
     if (value && validation?.pattern && !value.match(validation.pattern)) {
       return (
-        <CardLabelError style={{ width: "100%", marginTop: "-15px", fontSize: "16px", marginBottom: "12px", color: "#FF0000" }}>
-          <span style={{ color: "#FF0000" }}>{t(validation?.errMsg || "CORE_COMMON_INVALID")}</span>
+        <CardLabelError className="coordinate-error">
+          <span className="error-text">{t(validation?.errorMessage || "CORE_COMMON_INVALID")}</span>
         </CardLabelError>
       );
     }
     return null;
   };
+  // const isValidCoordinate = (latitude, longitude) => {
+  //   const isLatValid = !isNaN(latitude) && latitude >= -90 && latitude <= 90;
+  //   const isLonValid = !isNaN(longitude) && longitude >= -180 && longitude <= 180;
+  //   return isLatValid && isLonValid;
+  // };
 
   const locationButtonDisable = useMemo(() => {
     const locationData = locationFormData?.[config.key];
@@ -132,7 +133,7 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
       )}
 
       <div className="geolocation-header">
-        <b>GeoLocation</b> <span>(Optional)</span>
+        <b>{t("GEOLOCATION_TITLE")}</b> <span>{t("CS_IS_OPTIONAL")}</span>
       </div>
 
       <div className="coordinate-container">
