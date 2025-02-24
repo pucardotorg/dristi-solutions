@@ -53,7 +53,7 @@ import _ from "lodash";
 import { useGetPendingTask } from "../../hooks/orders/useGetPendingTask";
 import useSearchOrdersService from "../../hooks/orders/useSearchOrdersService";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
-import { getRespondantName, getComplainantName, constructFullName, removeInvalidNameParts } from "../../utils";
+import { getRespondantName, getComplainantName, constructFullName, removeInvalidNameParts, getFormattedName } from "../../utils";
 import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/Toast/useToast";
 
 const stateSla = {
@@ -318,7 +318,7 @@ const GenerateOrders = () => {
   const witnesses = useMemo(() => {
     return (
       caseDetails?.additionalDetails?.witnessDetails?.formdata?.map((data) => {
-        const fullName = constructFullName(data?.data?.firstName, data?.data?.middleName, data?.data?.lastName);
+        const fullName = getFormattedName(data?.data?.firstName, data?.data?.middleName, data?.data?.lastName, data?.data?.witnessDesignation, null);
         return { code: fullName, name: `${fullName} (Witness)`, uuid: data?.data?.uuid, partyType: "witness" };
       }) || []
     );
