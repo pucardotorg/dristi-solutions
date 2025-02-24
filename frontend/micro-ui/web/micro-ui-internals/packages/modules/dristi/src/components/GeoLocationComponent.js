@@ -83,11 +83,11 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
     }
     return null;
   };
-  // const isValidCoordinate = (latitude, longitude) => {
-  //   const isLatValid = !isNaN(latitude) && latitude >= -90 && latitude <= 90;
-  //   const isLonValid = !isNaN(longitude) && longitude >= -180 && longitude <= 180;
-  //   return isLatValid && isLonValid;
-  // };
+  const isValidCoordinate = (latitude, longitude) => {
+    const isLatValid = !isNaN(latitude) && latitude >= -90 && latitude <= 90;
+    const isLonValid = !isNaN(longitude) && longitude >= -180 && longitude <= 180;
+    return isLatValid && isLonValid;
+  };
 
   const locationButtonDisable = useMemo(() => {
     const locationData = locationFormData?.[config.key];
@@ -95,10 +95,7 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
     const latitude = parseFloat(locationData?.latitude);
     const longitude = parseFloat(locationData?.longitude);
 
-    const isLatValid = !isNaN(latitude) && latitude >= -90 && latitude <= 90;
-    const isLonValid = !isNaN(longitude) && longitude >= -180 && longitude <= 180;
-
-    return jurisdictionKnown ? true : !(isLatValid && isLonValid);
+    return jurisdictionKnown ? true : !isValidCoordinate(latitude, longitude);
   }, [config.key, locationFormData]);
 
   return (
