@@ -742,22 +742,16 @@ body {
 }
 
 .registration-email {
-  display: flex !important;
-  justify-content: center !important;
-  padding: 40px 40px 25px !important;
-  background-color: #ffffff !important;
-  box-shadow: none !important;
-  flex-direction: column !important;
+  padding: 40px 40px 25px;
+  background-color: #ffffff;
   .card {
-    margin: 0px !important;
-    padding: 0px !important;
-    display: flex !important;
-    align-items: center !important;
-    flex-direction: column;
+    margin: 0px ;
+    padding: 0px;
+    align-items: center;
     .card-section-header {
       font-family: Roboto !important;
-      font-size: 24px !important;
-      font-weight: 700 !important;
+      font-size: 24px;
+      font-weight: 700;
       line-height: 30px !important;
       text-align: center !important;
       color: #0b0c0c !important;
@@ -765,7 +759,7 @@ body {
       width: 100%;
     }
     #select-name-subtext_DES {
-      width: 75% !important;
+      width: 75%;
       font-family: Roboto !important;
       font-size: 14px !important;
       font-weight: 400 !important;
