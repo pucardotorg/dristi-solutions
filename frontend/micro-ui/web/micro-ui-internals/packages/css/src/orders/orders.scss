@@ -443,6 +443,7 @@
   .view-order {
     padding: 24px;
     width: 60%;
+    margin-bottom: 100px;
 
     .order-header {
       font-family: Roboto;
@@ -461,7 +462,7 @@
     .order-type-form-composer {
       width: 100%;
       box-shadow: none;
-      margin: 0px;
+      margin: 0px !important;
       padding: 0px;
 
       .label-field-pair {
