@@ -153,6 +153,7 @@ const SelectEmail = ({
                   letterSpacing: "0px",
                   textAlign: "center",
                   color: "#BBBBBD",
+                  cursor: "pointer",
                 }}
               >
                 {t("SKIP_THIS_STEP")}
