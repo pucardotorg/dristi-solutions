@@ -52,6 +52,15 @@ const getFormattedDate = (date) => {
   return `${day}/${month}/${year}`;
 };
 
+const BAIL_APPLICATION_EXCLUDED_STATUSES = [
+  "PENDING_RESPONSE",
+  "PENDING_ADMISSION_HEARING",
+  "ADMISSION_HEARING_SCHEDULED",
+  "PENDING_NOTICE",
+  "CASE_ADMITTED",
+  "PENDING_ADMISSION",
+];
+
 const SubmissionsCreate = ({ path }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const { t } = useTranslation();
@@ -304,16 +313,7 @@ const SubmissionsCreate = ({ path }) => {
                     select: `(data) => {return data['Application'].ApplicationType?.filter((item)=>!["EXTENSION_SUBMISSION_DEADLINE","DOCUMENT","RE_SCHEDULE","CHECKOUT_REQUEST", "SUBMIT_BAIL_DOCUMENTS",${
                       isDelayApplicationPending ? `"DELAY_CONDONATION",` : ""
                     }${
-                      ![
-                        "PENDING_RESPONSE",
-                        "PENDING_ADMISSION_HEARING",
-                        "ADMISSION_HEARING_SCHEDULED",
-                        "PENDING_NOTICE",
-                        "CASE_ADMITTED",
-                        "PENDING_ADMISSION",
-                      ].includes(caseDetails?.status)
-                        ? `"REQUEST_FOR_BAIL",`
-                        : ""
+                      !BAIL_APPLICATION_EXCLUDED_STATUSES.includes(caseDetails?.status) ? `"REQUEST_FOR_BAIL",` : ""
                     }].includes(item.type)).map((item) => {return { ...item, name: 'APPLICATION_TYPE_'+item.type };});}`,
                   },
                 },
