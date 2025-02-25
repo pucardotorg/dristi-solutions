@@ -304,7 +304,16 @@ const SubmissionsCreate = ({ path }) => {
                     select: `(data) => {return data['Application'].ApplicationType?.filter((item)=>!["EXTENSION_SUBMISSION_DEADLINE","DOCUMENT","RE_SCHEDULE","CHECKOUT_REQUEST", "SUBMIT_BAIL_DOCUMENTS",${
                       isDelayApplicationPending ? `"DELAY_CONDONATION",` : ""
                     }${
-                      caseDetails?.status !== "CASE_ADMITTED" ? `"REQUEST_FOR_BAIL",` : ""
+                      ![
+                        "PENDING_RESPONSE",
+                        "PENDING_ADMISSION_HEARING",
+                        "ADMISSION_HEARING_SCHEDULED",
+                        "PENDING_NOTICE",
+                        "CASE_ADMITTED",
+                        "PENDING_ADMISSION",
+                      ].includes(caseDetails?.status)
+                        ? `"REQUEST_FOR_BAIL",`
+                        : ""
                     }].includes(item.type)).map((item) => {return { ...item, name: 'APPLICATION_TYPE_'+item.type };});}`,
                   },
                 },
