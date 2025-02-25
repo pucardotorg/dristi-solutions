@@ -58,7 +58,7 @@ public class SmsNotificationService {
         if(messageCode.equalsIgnoreCase(DOCUMENT_MARKED_EXHIBIT)){
             pushNotification(templateData, message, mobileNumber, config.getSmsNotificationDocumentMarkedExhibitTemplateId());
         }
-        if (messageCode.equalsIgnoreCase(EVIDENCE_SUBMISSION)) {
+        if (messageCode.equalsIgnoreCase(EVIDENCE_SUBMISSION_CODE)) {
             pushNotification(templateData,message,mobileNumber,config.getSmsNotificationEvidenceSubmitted());
         }
     }
