@@ -1,7 +1,6 @@
 import React from 'react'
 
 const OrSeparator = ({ t, config, onSelect, formData = {}, errors, setError, clearErrors }) => {
-  debugger;
   return (
     <div style={{ display: "flex", alignItems: "center", margin: "10px 0" }}>
       <div style={{ flexGrow: 1, height: "1px", backgroundColor: "#ccc" }}></div>
