@@ -39,6 +39,12 @@ const MultiSelectDropdown = ({
           props
         );
         return newState;
+      case "ADD_ALL":
+        return [
+          ...action?.payload?.filter((data) => !data?.isDisabled)?.map((data) => ({ [optionsKey]: data?.[optionsKey], propsData: [null, data] })),
+        ];
+      case "REMOVE_ALL":
+        return [];
       case "REPLACE_COMPLETE_STATE":
         return action.payload;
       default:
@@ -84,6 +90,11 @@ const MultiSelectDropdown = ({
     setSearchQuery(e.target.value);
   }
 
+  const onSelectAll = (e, payload) => {
+    const isChecked = e.target.checked;
+    isChecked ? dispatch({ type: "ADD_ALL", payload }) : dispatch({ type: "REMOVE_ALL" });
+  };
+
   function onSelectToAddToQueue(...props) {
     const isChecked = arguments[0].target.checked;
     isChecked
@@ -112,6 +123,35 @@ const MultiSelectDropdown = ({
     } else if (e.key == "Enter") {
       onSelectToAddToQueue(e, filtOptns[optionIndex]);
     }
+  };
+
+  const SelectAllMenuItem = ({ filteredOptions }) => {
+    const isDisabled = filteredOptions?.every((option) => option?.isDisabled);
+    return (
+      <div key={filteredOptions?.length + 1} className={`${isDisabled ? "disabled" : ""}`} style={{ ...(isDisabled && { background: "#D2D2D2" }) }}>
+        <input
+          type="checkbox"
+          checked={
+            alreadyQueuedSelectedState?.length > 0 &&
+            filteredOptions?.length === filteredOptions?.filter((option) => option?.isDisabled)?.length + alreadyQueuedSelectedState?.length
+          }
+          onChange={(e) => {
+            onSelectAll(e, filteredOptions);
+          }}
+          style={{ minWidth: "24px", width: "100%" }}
+          disabled={isDisabled || false}
+        />
+        <div className="custom-checkbox">
+          <CheckSvg
+            style={{ innerWidth: "24px", width: "100%", ...(isDisabled && { opacity: 1 }) }}
+            fill={isDisabled ? "#505050" : COLOR_FILL}
+            checkBoxFill={isDisabled ? "#D2D2D2" : undefined}
+            tickStyle={isDisabled ? { opacity: 0 } : {}}
+          />
+        </div>
+        <p className="label">{t("SELECT_ALL")}</p>
+      </div>
+    );
   };
 
   const MenuItem = ({ option, index }) => (
@@ -174,7 +214,10 @@ const MultiSelectDropdown = ({
                 .indexOf(searchQuery.toLowerCase()) >= 0
           )
         : options;
-    return filteredOptions?.map((option, index) => <MenuItem option={option} key={index} index={index} />);
+    return [
+      ...(config?.isSelectAll ? [<SelectAllMenuItem filteredOptions={filteredOptions} />] : []),
+      filteredOptions?.map((option, index) => <MenuItem option={option} key={index} index={index} />),
+    ];
   };
 
   return (
