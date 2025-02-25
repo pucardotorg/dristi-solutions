@@ -6,6 +6,7 @@ import com.jayway.jsonpath.PathNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.config.MdmsDataConfig;
@@ -37,16 +38,18 @@ public class CaseOverallStatusUtil {
 	private final ObjectMapper mapper;
 	private final MdmsDataConfig mdmsDataConfig;
 	private List<org.pucar.dristi.web.models.CaseOverallStatusType> caseOverallStatusTypeList;
+	private final Util util;
 
 
 	@Autowired
-	public CaseOverallStatusUtil(Configuration config, HearingUtil hearingUtil, OrderUtil orderUtil, Producer producer, ObjectMapper mapper, MdmsDataConfig mdmsDataConfig) {
+	public CaseOverallStatusUtil(Configuration config, HearingUtil hearingUtil, OrderUtil orderUtil, Producer producer, ObjectMapper mapper, MdmsDataConfig mdmsDataConfig, Util util) {
 		this.config = config;
         this.hearingUtil = hearingUtil;
         this.orderUtil = orderUtil;
         this.producer = producer;
 		this.mapper = mapper;
         this.mdmsDataConfig = mdmsDataConfig;
+		this.util = util;
     }
 
 	public Object checkCaseOverAllStatus(String entityType, String referenceId, String status, String action, String tenantId, JSONObject requestInfo) {
@@ -76,9 +79,27 @@ public class CaseOverallStatusUtil {
 		Thread.sleep(config.getApiCallDelayInSeconds()*1000);
 		Object orderObject = orderUtil.getOrder(request, referenceId, config.getStateLevelTenantId());
 		String filingNumber = JsonPath.read(orderObject.toString(), FILING_NUMBER_PATH);
-		String orderType = JsonPath.read(orderObject.toString(), ORDER_TYPE_PATH);
-		publishToCaseOverallStatus(determineOrderStage(filingNumber, tenantId, orderType, status),request);
-		publishToCaseOutcome(determineCaseOutcome(filingNumber, tenantId, orderType, status, orderObject),request);
+		String orderCategory = JsonPath.read(orderObject.toString(), ORDER_CATEGORY_PATH);
+		if(COMPOSITE.equalsIgnoreCase(orderCategory)) {
+            try {
+				JSONArray compositeItems = util.constructArray(orderObject.toString(), ORDER_COMPOSITE_ITEMS_PATH);
+				for (int i = 0; i < compositeItems.length(); i++) {
+					JSONObject compositeItem = compositeItems.getJSONObject(i);  // Get JSONObject directly
+					String orderType = compositeItem.getString("orderType");
+
+					publishToCaseOverallStatus(determineOrderStage(filingNumber, tenantId, orderType, status), request);
+					publishToCaseOutcome(determineCaseOutcome(filingNumber, tenantId, orderType, status, orderObject), request);
+				}
+			}
+			catch (Exception e) {
+				log.error("Error while processing Composite Items from Order Object", e);
+			}
+		}
+		else {
+			String orderType = JsonPath.read(orderObject.toString(), ORDER_TYPE_PATH);
+			publishToCaseOverallStatus(determineOrderStage(filingNumber, tenantId, orderType, status), request);
+			publishToCaseOutcome(determineCaseOutcome(filingNumber, tenantId, orderType, status, orderObject), request);
+		}
 		return orderObject;
 	}
 
