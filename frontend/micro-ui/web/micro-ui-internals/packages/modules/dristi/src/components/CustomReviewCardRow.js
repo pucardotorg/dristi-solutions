@@ -304,7 +304,6 @@ const CustomReviewCardRow = ({
         }
         bgclassname = isScrutiny && witnessTitleError ? (witnessTitleError === witnessPrevTitleError ? "preverror" : "error") : "";
         bgclassname = witnessTitleError && isCaseReAssigned ? "preverrorside" : bgclassname;
-        debugger
         return (
           <div className={`title-main ${bgclassname}`}>
             <div className={`title ${isScrutiny && (dataError ? "column" : "")}`}>
