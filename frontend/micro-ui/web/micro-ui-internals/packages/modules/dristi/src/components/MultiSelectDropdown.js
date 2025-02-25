@@ -133,7 +133,10 @@ const MultiSelectDropdown = ({
           type="checkbox"
           checked={
             alreadyQueuedSelectedState?.length > 0 &&
-            filteredOptions?.length === filteredOptions?.filter((option) => option?.isDisabled)?.length + alreadyQueuedSelectedState?.length
+            filteredOptions?.filter((option) => !option?.isDisabled)?.length > 0 &&
+            filteredOptions
+              ?.filter((option) => !option?.isDisabled)
+              ?.every((option) => alreadyQueuedSelectedState.some((selected) => selected[optionsKey] === option[optionsKey]))
           }
           onChange={(e) => {
             onSelectAll(e, filteredOptions);
