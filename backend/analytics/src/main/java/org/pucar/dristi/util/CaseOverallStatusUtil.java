@@ -85,7 +85,7 @@ public class CaseOverallStatusUtil {
 				JSONArray compositeItems = util.constructArray(orderObject.toString(), ORDER_COMPOSITE_ITEMS_PATH);
 				for (int i = 0; i < compositeItems.length(); i++) {
 					JSONObject compositeItem = compositeItems.getJSONObject(i);  // Get JSONObject directly
-					String orderType = compositeItem.getString("orderType");
+					String orderType = JsonPath.read(compositeItem.toString(), ORDER_TYPE_PATH);
 
 					publishToCaseOverallStatus(determineOrderStage(filingNumber, tenantId, orderType, status), request);
 					publishToCaseOutcome(determineCaseOutcome(filingNumber, tenantId, orderType, status, orderObject), request);
