@@ -40,10 +40,16 @@ const MultiSelectDropdown = ({
         );
         return newState;
       case "ADD_ALL":
-        return [
+        const newStateWithAll = [
           ...action?.payload?.filter((data) => !data?.isDisabled)?.map((data) => ({ [optionsKey]: data?.[optionsKey], propsData: [null, data] })),
         ];
+        onSelect(
+          newStateWithAll.map((e) => e.propsData),
+          props
+        );
+        return newStateWithAll;
       case "REMOVE_ALL":
+        onSelect([], props);
         return [];
       case "REPLACE_COMPLETE_STATE":
         return action.payload;
