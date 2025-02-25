@@ -51,6 +51,9 @@ public class OrderRegistrationValidator {
         if (ObjectUtils.isEmpty(orderRequest.getOrder().getStatuteSection()))
             throw new CustomException(CREATE_ORDER_ERR, "statute and section is mandatory for creating order");
 
+        if (orderRequest.getOrder().getOrderType() ==null)
+            throw new CustomException(CREATE_ORDER_ERR, "orderType is mandatory for intermediate order");
+
         if(!ADMINISTRATIVE.equalsIgnoreCase(orderRequest.getOrder().getOrderCategory()) && !caseUtil.fetchCaseDetails(requestInfo, orderRequest.getOrder().getCnrNumber(), orderRequest.getOrder().getFilingNumber())){
                 throw new CustomException("INVALID_CASE_DETAILS", "Invalid Case");
         }
@@ -122,5 +125,14 @@ public class OrderRegistrationValidator {
         List<String> masterList = new ArrayList<>();
         masterList.add("DocumentType");
         return masterList;
+    }
+
+    public void validateAddItem(OrderRequest body) {
+        if(!body.getOrder().getOrderCategory().equalsIgnoreCase(COMPOSITE)){
+            throw new CustomException(ORDER_UPDATE_EXCEPTION, "orderCategory should be composite");
+        }
+        if(body.getOrder().getCompositeItems()==null){
+            throw new CustomException(ORDER_UPDATE_EXCEPTION, "compositeItems is mandatory");
+        }
     }
 }

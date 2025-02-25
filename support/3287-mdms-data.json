@@ -1,0 +1,160 @@
+[
+    {
+        "tenantId": "kl",
+        "masterName": "ACCESSCONTROL-ACTIONS-TEST",
+        "moduleName": "actions-test",
+        "mdmsPayload": [
+          {
+            "tenantId": "kl",
+            "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+            "uniqueIdentifier": "2716",
+            "data": {
+              "id": 2716,
+              "url": "/order/v2/add-item",
+              "code": "2716",
+              "name": "Add Item",
+              "enabled": true,
+              "displayName": "Add Item",
+              "serviceCode": "order"
+            },
+            "isActive": true,
+            "auditDetails": {
+              "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+              "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+              "createdTime": 1723206810289,
+              "lastModifiedTime": 1723206810289
+            }
+          },
+          {
+            "tenantId": "kl",
+            "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+            "uniqueIdentifier": "2717",
+            "data": {
+              "id": 2717,
+              "url": "/order/v2/remove-item",
+              "code": "2717",
+              "name": "Remove Item",
+              "enabled": true,
+              "displayName": "Remove Item",
+              "serviceCode": "order"
+            },
+            "isActive": true,
+            "auditDetails": {
+              "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+              "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+              "createdTime": 1723206810289,
+              "lastModifiedTime": 1723206810289
+            }
+          }
+        ]
+      },
+      {
+        "tenantId": "kl",
+        "masterName": "ACCESSCONTROL-ROLEACTIONS",
+        "moduleName": "roleactions",
+        "mdmsPayload": [
+          {
+            "tenantId": "kl",
+            "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+            "uniqueIdentifier": "435",
+            "data": {
+              "id": 435,
+              "actionid": 2716,
+              "rolecode": "SUPERUSER",
+              "tenantid": "kl",
+              "actioncode": ""
+            },
+            "isActive": true,
+            "auditDetails": {
+              "createdBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+              "lastModifiedBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+              "createdTime": 1721808022915,
+              "lastModifiedTime": 1721808022915
+            }
+          },
+          {
+            "tenantId": "kl",
+            "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+            "uniqueIdentifier": "436",
+            "data": {
+              "id": 436,
+              "actionid": 2717,
+              "rolecode": "SUPERUSER",
+              "tenantid": "kl",
+              "actioncode": ""
+            },
+            "isActive": true,
+            "auditDetails": {
+              "createdBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+              "lastModifiedBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+              "createdTime": 1721808022915,
+              "lastModifiedTime": 1721808022915
+            }
+          },
+          {
+            "tenantId": "kl",
+            "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+            "uniqueIdentifier": "437",
+            "data": {
+              "id": 437,
+              "actionid": 2716,
+              "rolecode": "ORDER_APPROVER",
+              "tenantid": "kl",
+              "actioncode": ""
+            },
+            "isActive": true,
+            "auditDetails": {
+              "createdBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+              "lastModifiedBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+              "createdTime": 1721808022887,
+              "lastModifiedTime": 1721808022887
+            }
+          },
+          {
+            "tenantId": "kl",
+            "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+            "uniqueIdentifier": "438",
+            "data": {
+              "id": 438,
+              "actionid": 2717,
+              "rolecode": "ORDER_APPROVER",
+              "tenantid": "kl",
+              "actioncode": ""
+            },
+            "isActive": true,
+            "auditDetails": {
+              "createdBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+              "lastModifiedBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+              "createdTime": 1721808022887,
+              "lastModifiedTime": 1721808022887
+            }
+          }
+
+        ]
+      },
+
+  {
+    "tenantId": "kl",
+    "masterName": "Order",
+    "moduleName": "OrderCategory",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "Order.OrderCategory",
+        "uniqueIdentifier": "4",
+        "data": {
+          "id": 4,
+          "category": "COMPOSITE",
+          "isactive": true
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+          "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+          "createdTime": 1740411524347,
+          "lastModifiedTime": 1740411524347
+        }
+      }
+    ]
+  }
+]
