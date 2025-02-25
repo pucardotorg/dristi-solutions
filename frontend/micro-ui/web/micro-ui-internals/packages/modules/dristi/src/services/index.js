@@ -208,7 +208,15 @@ export const DRISTIService = {
   customApiService: (url, data, params, useCache = false, userService = true) =>
     Request({
       url: url,
-      data,
+      data: {
+        ...data,
+        ...(data?.pendingTask && {
+          pendingTask: {
+            ...data?.pendingTask,
+            screenType: data?.pendingTask?.isDiary ? "Adiary" : "home",
+          },
+        }),
+      },
       params,
       useCache,
       userService,
@@ -386,6 +394,14 @@ export const DRISTIService = {
   aDiaryEntrySearch: (data, params) =>
     Request({
       url: Urls.dristi.aDiaryEntrySearch,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  getLocationBasedJurisdiction: (data, params) =>
+    Request({
+      url: Urls.dristi.getLocationBasedJurisdiction,
       useCache: false,
       userService: false,
       data,

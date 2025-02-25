@@ -42,7 +42,7 @@ const checkChequeDepositDateValidity = (caseDetails, dateOfDispatch) => {
   return {
     isValid,
     info: {
-      header : "WARNING",
+      header: "WARNING",
       scrutinyHeader: "CS_LEGAL_WARNING",
       data: [message.trim()],
     },
@@ -1014,8 +1014,8 @@ export const delayApplicationValidation = ({ t, formData, selected, setShowError
 export const witnessDetailsValidation = ({ t, formData, selected, setShowErrorToast, setErrorMsg, toast, setFormErrors }) => {
   if (selected === "witnessDetails") {
     if (!(formData?.firstName || formData?.witnessDesignation)) {
-      setFormErrors("firstName", { message: "FIRST_LAST_NAME_MANDATORY_MESSAGE" });
-      setFormErrors("witnessDesignation", { message: "FIRST_LAST_NAME_MANDATORY_MESSAGE" });
+      // setFormErrors("firstName", { message: "FIRST_LAST_NAME_MANDATORY_MESSAGE" });
+      // setFormErrors("witnessDesignation",{ message: "FIRST_LAST_NAME_MANDATORY_MESSAGE" })
       toast.error(t("AT_LEAST_ONE_OUT_OF_FIRST_NAME_AND_WITNESS_DESIGNATION_IS_MANDATORY"));
       return true;
     }
@@ -2109,8 +2109,10 @@ export const updateCaseDetails = async ({
   }
   if (selected === "witnessDetails") {
     const newFormDataCopy = structuredClone(updatedFormData.filter((item) => item.isenabled));
+
     for (let i = 0; i < newFormDataCopy.length; i++) {
       const obj = newFormDataCopy[i];
+
       if (obj?.data?.phonenumbers) {
         obj.data.phonenumbers.textfieldValue = "";
       }
@@ -2118,6 +2120,7 @@ export const updateCaseDetails = async ({
         obj.data.emails.textfieldValue = "";
       }
     }
+
     data.additionalDetails = {
       ...caseDetails.additionalDetails,
       witnessDetails: {
@@ -2126,6 +2129,7 @@ export const updateCaseDetails = async ({
       },
     };
   }
+
   if (selected === "demandNoticeDetails") {
     let docList = [];
     let infoBoxData = {};

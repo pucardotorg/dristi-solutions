@@ -5,6 +5,7 @@ import { ReactComponent as CrossIcon } from "../images/cross.svg";
 import Button from "./Button";
 import LocationComponent from "./LocationComponent";
 import { CaseWorkflowState } from "../Utils/caseWorkflow";
+import GeoLocationComponent from "./GeoLocationComponent";
 
 const witnessAddressConfig = {
   type: "component",
@@ -150,7 +151,7 @@ const selectCompMultiConfig = {
         label: "ADDRESS",
         type: "text",
         name: "locality",
-        isFormatRequired : true,
+        isFormatRequired: true,
         validation: {
           minlength: 2,
           maxlength: 256,
@@ -165,7 +166,6 @@ const selectCompMultiConfig = {
 
 const SelectComponentsMulti = ({ t, config, onSelect, formData, errors, setError, clearErrors }) => {
   const [locationData, setLocationData] = useState([formData?.[config?.key] ? formData?.[config?.key] : { id: generateUUID() }]);
-  console.log("formData", formData, errors);
 
   useEffect(() => {
     if (
@@ -221,10 +221,10 @@ const SelectComponentsMulti = ({ t, config, onSelect, formData, errors, setError
     });
   };
 
-  const onChange = (key, value, locationId) => {
+  const handleChange = (key, value, locationId, field) => {
     setLocationData((locationData) => {
       const locationsCopy = structuredClone(locationData);
-      const updatedLocations = locationsCopy.map((data) => (data.id === locationId ? { ...data, addressDetails: value } : data));
+      const updatedLocations = locationsCopy.map((data) => (data.id === locationId ? { ...data, [field]: value } : data));
 
       onSelect(config?.key, updatedLocations);
       return updatedLocations;
@@ -260,12 +260,13 @@ const SelectComponentsMulti = ({ t, config, onSelect, formData, errors, setError
                 <CrossIcon></CrossIcon>
               </span>
             </div>
+
             <LocationComponent
               t={t}
               config={modifiedSelectCompMultiConfig}
               locationFormData={data}
               onLocationSelect={(key, value) => {
-                onChange(key, value, data.id);
+                handleChange(key, value, data.id, "addressDetails");
               }}
               errors={errors}
               setError={setError}
@@ -274,6 +275,23 @@ const SelectComponentsMulti = ({ t, config, onSelect, formData, errors, setError
               disable={config?.disable}
               isAutoFilledDisabled={true}
             ></LocationComponent>
+
+            {config?.isPoliceStationComponent === true && (
+              <GeoLocationComponent
+                t={t}
+                config={config.geoLocationConfig}
+                locationFormData={data}
+                onGeoLocationSelect={(key, value) => {
+                  handleChange(key, value, data.id, "geoLocationDetails");
+                }}
+                errors={errors}
+                setError={setError}
+                clearErrors={clearErrors}
+                mapIndex={data.id}
+                disable={config?.disable}
+                isAutoFilledDisabled={true}
+              ></GeoLocationComponent>
+            )}
           </div>
         ))}
       {!(config?.removeAddLocationButton === true) && (

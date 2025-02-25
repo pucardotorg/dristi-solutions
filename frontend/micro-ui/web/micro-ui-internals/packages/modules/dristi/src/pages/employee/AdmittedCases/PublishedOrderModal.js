@@ -5,6 +5,8 @@ import { Button, SubmitBar } from "@egovernments/digit-ui-react-components";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/useGetAllOrderApplicationRelatedDocuments";
 import { DRISTIService } from "../../../services";
+import { getAdvocates } from "@egovernments/digit-ui-module-orders/src/utils/caseUtils";
+import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
 
 function PublishedOrderModal({
   t,
@@ -37,16 +39,41 @@ function PublishedOrderModal({
     );
   };
 
+  const { data: caseData } = useSearchCaseService(
+    {
+      criteria: [
+        {
+          filingNumber: order?.filingNumber,
+        },
+      ],
+      tenantId,
+    },
+    {},
+    `dristi-${order?.filingNumber}`,
+    order?.filingNumber,
+    Boolean(order?.filingNumber)
+  );
+  const caseDetails = useMemo(() => caseData?.criteria?.[0]?.responseList?.[0] || {}, [caseData]);
+
   const signedOrder = useMemo(() => order?.documents?.filter((item) => item?.documentType === "SIGNED")[0], [order]);
   const userInfo = Digit.UserService.getUser()?.info;
+  const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
+
   const showSubmissionButtons = useMemo(() => {
     if (productionOfDocumentApplications?.some((item) => item?.referenceId === order?.id)) {
       return false;
     }
 
+    if (!Boolean(caseDetails?.filingNumber) && Object?.keys(allAdvocates)?.length === 0) return false;
+
     //TODO : need to ask
     const isAuthority = order?.additionalDetails?.formdata?.partyId;
-    const submissionParty = order?.additionalDetails?.formdata?.submissionParty?.map((item) => item.uuid)?.flat() || [];
+    const submissionParty =
+      order?.additionalDetails?.formdata?.submissionParty
+        ?.map(
+          (item) => allAdvocates[caseDetails?.litigants?.find((litigant) => litigant?.individualId === item?.individualId)?.additionalDetails?.uuid]
+        )
+        ?.flat() || [];
     const allSubmissionParty = [...submissionParty, isAuthority].filter(Boolean);
     return (
       allSubmissionParty?.includes(userInfo?.uuid) &&
@@ -59,7 +86,7 @@ function PublishedOrderModal({
         CaseWorkflowState.CASE_ADMITTED,
       ].includes(caseStatus)
     );
-  }, [caseStatus, order, userInfo?.uuid, userRoles, productionOfDocumentApplications]);
+  }, [caseStatus, order, userInfo?.uuid, userRoles, productionOfDocumentApplications, caseDetails, allAdvocates]);
 
   const showExtensionButton = useMemo(
     () =>

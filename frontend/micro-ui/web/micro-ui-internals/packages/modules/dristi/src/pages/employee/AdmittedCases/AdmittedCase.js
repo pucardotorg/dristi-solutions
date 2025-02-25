@@ -1986,10 +1986,14 @@ const AdmittedCases = () => {
   };
 
   const handleExtensionRequest = (orderNumber) => {
-    history.push(`/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&isExtension=true`);
+    history.push(
+      `/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&isExtension=true&litigant=${currentOrder?.litigant}&litigantIndId=${currentOrder?.litigantIndId}`
+    );
   };
   const handleSubmitDocument = (orderNumber) => {
-    history.push(`/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}`);
+    history.push(
+      `/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&litigant=${currentOrder?.litigant}&litigantIndId=${currentOrder?.litigantIndId}`
+    );
   };
 
   const openHearingModule = () => {
@@ -2228,7 +2232,7 @@ const AdmittedCases = () => {
               </React.Fragment>
             )}
             <div className="sub-details-text">Code: {caseDetails?.accessCode}</div>
-            {delayCondonationData?.delayCondonationType?.code === "NO" && isJudge && (
+            {delayCondonationData?.delayCondonationType?.code === "NO" && (
               <div className="delay-condonation-chip" style={delayCondonationStylsMain}>
                 <p style={delayCondonationTextStyle}>
                   {(delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" && isDelayApplicationPending) ||
