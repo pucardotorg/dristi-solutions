@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="e078ad07-5c24-41fe-bf6a-f9b4a5b8ecaf" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/../.idea/backend.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Notification/.idea/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Notification/.idea/compiler.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Notification/.idea/encodings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Notification/.idea/jarRepositories.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Notification/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../Notification/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../order/.idea/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../order/.idea/compiler.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../order/.idea/encodings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../order/.idea/jarRepositories.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../order/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../order/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../support/.idea/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../support/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../support/.idea/modules.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../support/.idea/support.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../../support/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/pucar/dristi/config/ServiceConstants.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/pucar/dristi/config/ServiceConstants.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/pucar/dristi/service/HearingService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/pucar/dristi/service/HearingService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../order/src/main/java/org/pucar/dristi/config/Configuration.java" beforeDir="false" afterPath="$PROJECT_DIR$/../order/src/main/java/org/pucar/dristi/config/Configuration.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../order/src/main/java/org/pucar/dristi/config/ServiceConstants.java" beforeDir="false" afterPath="$PROJECT_DIR$/../order/src/main/java/org/pucar/dristi/config/ServiceConstants.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../order/src/main/java/org/pucar/dristi/service/OrderRegistrationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../order/src/main/java/org/pucar/dristi/service/OrderRegistrationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../order/src/main/java/org/pucar/dristi/service/SmsNotificationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../order/src/main/java/org/pucar/dristi/service/SmsNotificationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../order/src/main/java/org/pucar/dristi/validators/OrderRegistrationValidator.java" beforeDir="false" afterPath="$PROJECT_DIR$/../order/src/main/java/org/pucar/dristi/validators/OrderRegistrationValidator.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../order/src/main/java/org/pucar/dristi/web/models/SmsTemplateData.java" beforeDir="false" afterPath="$PROJECT_DIR$/../order/src/main/java/org/pucar/dristi/web/models/SmsTemplateData.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../order/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../order/src/main/resources/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../common/egov-user/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../../common/egov-user/src/main/resources/application.properties" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$/../.." value="main" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../.." />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;Hemadri-Chinna&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/pucardotorg/dristi-solutions.git&quot;,
+    &quot;accountId&quot;: &quot;5133dd53-e561-4dcb-a9e5-59d47d986186&quot;
+  }
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 5
+}</component>
+  <component name="ProjectId" id="2tCdQuhSAiWXwgmsBCN7ScEgevo" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;develop&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/beehyv/Documents/dristi-solutions/backend/Notification&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.poratu.idea.plugins.tomcat.setting.TomcatServersConfigurable&quot;
+  }
+}</component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="e078ad07-5c24-41fe-bf6a-f9b4a5b8ecaf" name="Changes" comment="" />
+      <created>1739859983498</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1739859983498</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="RECENT_FILTERS">
+      <map>
+        <entry key="User">
+          <value>
+            <list>
+              <RecentGroup>
+                <option name="FILTER_VALUES">
+                  <option value="shashikesh12" />
+                </option>
+              </RecentGroup>
+            </list>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="3034-feature-bulk-reschedule" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>

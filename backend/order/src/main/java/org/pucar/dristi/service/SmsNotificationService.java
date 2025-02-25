@@ -56,8 +56,11 @@ public class SmsNotificationService {
 
     private void pushNotificationBasedOnNotificationStatus(SmsTemplateData templateData, String messageCode, String message, String mobileNumber) {
 
-        if(messageCode.equalsIgnoreCase(ADMISSION_HEARING_SCHEDULED)){
-            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationAdmissionHearingScheduledTemplateId());
+//        if(messageCode.equalsIgnoreCase(ADMISSION_HEARING_SCHEDULED)){
+//            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationAdmissionHearingScheduledTemplateId());
+//        }
+        if (messageCode.equalsIgnoreCase(VARIABLE_HEARING_SCHEDULED)) {
+            pushNotification(templateData,message,mobileNumber,config.getSmsNotificationVariableHearingScheduled());
         }
         if(messageCode.equalsIgnoreCase(ORDER_ISSUED)){
             pushNotification(templateData, message, mobileNumber, config.getSmsNotificationJudgeIssueOrderTemplateId());
@@ -83,18 +86,18 @@ public class SmsNotificationService {
         if(messageCode.equalsIgnoreCase(NEXT_HEARING_SCHEDULED)){
             pushNotification(templateData, message, mobileNumber, config.getSmsNotificationNextHearingScheduledTemplateId());
         }
-        if(messageCode.equalsIgnoreCase(EXAMINATION_UNDER_S351_BNSS_SCHEDULED)){
-            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationExaminationUnderS351BNSSScheduledTemplateId());
-        }
-        if(messageCode.equalsIgnoreCase(EVIDENCE_ACCUSED_PUBLISHED)){
-            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationEvidenceAccusedPublishedTemplateId());
-        }
+//        if(messageCode.equalsIgnoreCase(EXAMINATION_UNDER_S351_BNSS_SCHEDULED)){
+//            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationExaminationUnderS351BNSSScheduledTemplateId());
+//        }
+//        if(messageCode.equalsIgnoreCase(EVIDENCE_ACCUSED_PUBLISHED)){
+//            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationEvidenceAccusedPublishedTemplateId());
+//        }
         if(messageCode.equalsIgnoreCase(EVIDENCE_COMPLAINANT_PUBLISHED)){
             pushNotification(templateData, message, mobileNumber, config.getSmsNotificationEvidenceComplainantPublishedTemplateId());
         }
-        if(messageCode.equalsIgnoreCase(APPEARANCE_PUBLISHED)){
-            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationAppearancePublishedTemplateId());
-        }
+//        if(messageCode.equalsIgnoreCase(APPEARANCE_PUBLISHED)){
+//            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationAppearancePublishedTemplateId());
+//        }
         if(messageCode.equalsIgnoreCase(CASE_DECISION_AVAILABLE)){
             pushNotification(templateData, message, mobileNumber, config.getSmsNotificationCaseDecisionAvailableTemplateId());
         }
@@ -130,6 +133,7 @@ public class SmsNotificationService {
         smsDetails.put("tenantId", smsTemplateData.getTenantId());
         smsDetails.put("submissionDate", smsTemplateData.getSubmissionDate());
         smsDetails.put("mobileNumber", mobileNumber);
+        smsDetails.put("hearingType",smsTemplateData.getHearingType());
 
         return smsDetails;
     }
@@ -169,7 +173,8 @@ public class SmsNotificationService {
                 .replace("{{date}}", Optional.ofNullable(userDetailsForSMS.get("date")).orElse(""))
                 .replace("{{submissionDate}}", Optional.ofNullable(userDetailsForSMS.get("submissionDate")).orElse(""))
                 .replace("{{cmpNumber}}", Optional.ofNullable(userDetailsForSMS.get("cmpNumber")).orElse(""))
-                .replace("{{hearingDate}}", Optional.ofNullable(userDetailsForSMS.get("hearingDate")).orElse(""));
+                .replace("{{hearingDate}}", Optional.ofNullable(userDetailsForSMS.get("hearingDate")).orElse(""))
+                .replace("{{hearingType}}",Optional.ofNullable(userDetailsForSMS.get("hearingType")).orElse(""));
         return message;
     }
 
@@ -188,7 +193,7 @@ public class SmsNotificationService {
         StringBuilder uri = new StringBuilder();
         RequestInfoWrapper requestInfoWrapper = new RequestInfoWrapper();
         requestInfoWrapper.setRequestInfo(requestInfo);
-        uri.append(config.getLocalizationHost()).append(config.getLocalizationSearchEndpoint())
+        uri.append(config.getLocalizationHost()).append(config.getLocalizationContextPath()).append(config.getLocalizationSearchEndpoint())
                 .append("?tenantId=" + rootTenantId).append("&module=" + module).append("&locale=" + locale);
         List<String> codes = null;
         List<String> messages = null;

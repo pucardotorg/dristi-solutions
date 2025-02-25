@@ -149,6 +149,9 @@ public class Configuration {
     @Value("${egov.localization.search.endpoint}")
     private String localizationSearchEndpoint;
 
+    @Value("${egov.sms.notification.judge.scheduled.variable.hearing.template.id}")
+    private String smsNotificationVariableHearingScheduled;
+
     @Value("${egov.sms.notification.admission.hearing.scheduled.template.id}")
     private String smsNotificationAdmissionHearingScheduledTemplateId;
 

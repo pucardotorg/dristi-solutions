@@ -209,4 +209,7 @@ public class Configuration {
 	@Value("${egov.sms.notification.document.marked.exhibit.template.id}")
 	private String smsNotificationDocumentMarkedExhibitTemplateId;
 
+	@Value("egov.sms.notification.document.evidence.submitted.template.id")
+	private String smsNotificationEvidenceSubmitted;
+
 }

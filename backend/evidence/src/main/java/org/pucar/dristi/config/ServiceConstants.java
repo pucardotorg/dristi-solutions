@@ -90,4 +90,9 @@ public class ServiceConstants {
 
     public static final String APPLICATION_STATUS_PATH = "$.application.status";
 
+	public static final String SUBMITTED = "SUBMITTED";
+	public static final String EVIDENCE_SUBMISSION = "EVIDENCE_SUBMISSION";
+	public static final String DIRECT = "DIRECT";
+	public static final String APPLICATION = "APPLICATION";
+
 }

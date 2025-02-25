@@ -9,6 +9,7 @@ import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
+import org.jetbrains.annotations.Nullable;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.EvidenceEnrichment;
 import org.pucar.dristi.kafka.Producer;
@@ -78,6 +79,7 @@ public class EvidenceService {
             } else {
                 producer.push(config.getEvidenceCreateWithoutWorkflowTopic(), body);
             }
+            callNotificationService(body,false);
             return body.getArtifact();
         } catch (CustomException e) {
             log.error("Custom Exception occurred while creating evidence");
@@ -144,10 +146,11 @@ public class EvidenceService {
     }
     public Artifact updateEvidence(EvidenceRequest evidenceRequest) {
         try {
-            Artifact existingApplication = validateExistingEvidence(evidenceRequest);
+            Boolean isEvidence = evidenceRequest.getArtifact().getIsEvidence();
+//            Artifact existingApplication = validateExistingEvidence(evidenceRequest);
 
             // Update workflow
-            existingApplication.setWorkflow(evidenceRequest.getArtifact().getWorkflow());
+//            existingApplication.setWorkflow(evidenceRequest.getArtifact().getWorkflow());
 
             // Enrich application upon update
             evidenceEnrichment.enrichEvidenceRegistrationUponUpdate(evidenceRequest);
@@ -165,9 +168,9 @@ public class EvidenceService {
                 enrichBasedOnStatus(evidenceRequest);
                 producer.push(config.getUpdateEvidenceKafkaTopic(), evidenceRequest);
             } else {
-                callNotificationService(evidenceRequest);
                 producer.push(config.getUpdateEvidenceWithoutWorkflowKafkaTopic(), evidenceRequest);
             }
+            callNotificationService(evidenceRequest,isEvidence);
             return evidenceRequest.getArtifact();
 
         } catch (CustomException e) {
@@ -236,17 +239,16 @@ public class EvidenceService {
         return AuditDetails.builder().createdBy(requestInfo.getUserInfo().getUuid()).createdTime(System.currentTimeMillis()).lastModifiedBy(requestInfo.getUserInfo().getUuid()).lastModifiedTime(System.currentTimeMillis()).build();
     }
 
-    private void callNotificationService(EvidenceRequest evidenceRequest) {
+    private void callNotificationService(EvidenceRequest evidenceRequest,Boolean isEvidence) {
 
         try {
             CaseSearchRequest caseSearchRequest = createCaseSearchRequest(evidenceRequest.getRequestInfo(), evidenceRequest.getArtifact().getFilingNumber());
             JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
 
             Artifact artifact = evidenceRequest.getArtifact();
-            String smsTopic = null;
-            if(artifact.getIsEvidence() && null != artifact.getEvidenceNumber()) {
-                smsTopic = "DOCUMENT_MARKED_EXHIBIT";
-            }
+
+            String smsTopic = getSmsTopic(isEvidence, artifact);
+            log.info("Message Code : {}", smsTopic);
             Set<String> individualIds = extractIndividualIds(caseDetails);
 
             Set<String> phoneNumbers = callIndividualService(evidenceRequest.getRequestInfo(), individualIds);
@@ -255,8 +257,12 @@ public class EvidenceService {
                     .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").asText() : "")
                     .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").asText() : "")
                     .artifactNumber(artifact.getArtifactNumber())
+                    .cnrNumber(caseDetails.has("cnrNumber") ? caseDetails.get("cnrNumber").asText() : "")
                     .tenantId(artifact.getTenantId()).build();
 
+            if (smsTopic != null && smsTopic.equalsIgnoreCase(EVIDENCE_SUBMISSION)) {
+
+            }
 
             for (String number : phoneNumbers) {
                 notificationService.sendNotification(evidenceRequest.getRequestInfo(), smsTemplateData, smsTopic, number);
@@ -266,6 +272,21 @@ public class EvidenceService {
             // Log the exception and continue the execution without throwing
             log.error("Error occurred while sending notification: {}", e.toString());
         }
+    }
+
+    private String getSmsTopic(Boolean isEvidence, Artifact artifact) {
+        String status = artifact.getStatus();
+        String filingType = artifact.getFilingType();
+        Boolean isEvidenceAfterUpdate = artifact.getIsEvidence();
+        String smsTopic = null;
+        if(artifact.getIsEvidence() && null != artifact.getEvidenceNumber()) {
+            smsTopic = "DOCUMENT_MARKED_EXHIBIT";
+        }
+        if ((!(status == null) && status.equalsIgnoreCase(SUBMITTED) && filingType.equalsIgnoreCase(DIRECT) && (!isEvidence && !isEvidenceAfterUpdate))
+        || ( (filingType.equalsIgnoreCase(CASE_FILING) || filingType.equalsIgnoreCase(APPLICATION)) && (!isEvidence && !isEvidenceAfterUpdate))) {
+            smsTopic = EVIDENCE_SUBMISSION;
+        }
+        return smsTopic;
     }
 
     public static String getPartyTypeByName(JsonNode litigants, String name) {

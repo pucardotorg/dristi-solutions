@@ -190,4 +190,8 @@ public class Configuration {
 
     @Value("${bulk.reschedule.topic}")
     private String bulkRescheduleTopic;
+
+    // template for generic message of hearing types
+    @Value("${egov.sms.notification.judge.scheduled.variable.hearing.template.id}")
+    private String smsNotificationVariableHearingScheduled;
 }

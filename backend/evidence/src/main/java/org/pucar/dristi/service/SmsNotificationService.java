@@ -58,6 +58,9 @@ public class SmsNotificationService {
         if(messageCode.equalsIgnoreCase(DOCUMENT_MARKED_EXHIBIT)){
             pushNotification(templateData, message, mobileNumber, config.getSmsNotificationDocumentMarkedExhibitTemplateId());
         }
+        if (messageCode.equalsIgnoreCase(EVIDENCE_SUBMISSION)) {
+            pushNotification(templateData,message,mobileNumber,config.getSmsNotificationEvidenceSubmitted());
+        }
     }
 
     private void pushNotification(SmsTemplateData templateData, String message, String mobileNumber, String templateId) {
@@ -89,6 +92,7 @@ public class SmsNotificationService {
         smsDetails.put("tenantId", smsTemplateData.getTenantId());
         smsDetails.put("artifactNumber", smsTemplateData.getArtifactNumber());
         smsDetails.put("mobileNumber", mobileNumber);
+        smsDetails.put("cnrNumber",smsTemplateData.getCnrNumber());
 
         return smsDetails;
     }
@@ -127,7 +131,8 @@ public class SmsNotificationService {
                 .replace("{{link}}", Optional.ofNullable(userDetailsForSMS.get("link")).orElse(""))
                 .replace("{{date}}", Optional.ofNullable(userDetailsForSMS.get("date")).orElse(""))
                 .replace("{{cmpNumber}}", Optional.ofNullable(userDetailsForSMS.get("cmpNumber")).orElse(""))
-                .replace("{{artifactNumber}}", Optional.ofNullable(userDetailsForSMS.get("artifactNumber")).orElse(""));
+                .replace("{{artifactNumber}}", Optional.ofNullable(userDetailsForSMS.get("artifactNumber")).orElse(""))
+                .replace("{{cnrNumber}}",userDetailsForSMS.get("cmpNumber") != null ? userDetailsForSMS.get("cmpNumber") : userDetailsForSMS.get("cnrNumber"));
         return message;
     }
 
@@ -146,7 +151,7 @@ public class SmsNotificationService {
         StringBuilder uri = new StringBuilder();
         RequestInfoWrapper requestInfoWrapper = new RequestInfoWrapper();
         requestInfoWrapper.setRequestInfo(requestInfo);
-        uri.append(config.getLocalizationHost()).append(config.getLocalizationSearchEndpoint())
+        uri.append(config.getLocalizationHost()).append(config.getLocalizationContextPath()).append(config.getLocalizationSearchEndpoint())
                 .append("?tenantId=" + rootTenantId).append("&module=" + module).append("&locale=" + locale);
         List<String> codes = null;
         List<String> messages = null;
