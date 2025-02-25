@@ -435,8 +435,8 @@ export const reviewCaseFileFormConfig = [
               noDataText: "NO_WITNESSES_ADDED",
               config: [
                 {
-                  type: "title",
-                  value: ["firstName", "lastName"],
+                  type: "witnessTitle",
+                  value: ["firstName", "lastName", "witnessDesignation"],
                 },
                 {
                   type: "phonenumber",
@@ -452,11 +452,6 @@ export const reviewCaseFileFormConfig = [
                   type: "text",
                   label: "AGE",
                   value: "witnessAge",
-                },
-                {
-                  type: "text",
-                  label: "WITNESS_DESIGNATION",
-                  value: "witnessDesignation",
                 },
                 {
                   type: "address",
