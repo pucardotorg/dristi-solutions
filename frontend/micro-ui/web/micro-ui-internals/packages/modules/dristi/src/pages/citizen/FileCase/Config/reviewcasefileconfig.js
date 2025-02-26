@@ -436,7 +436,7 @@ export const reviewCaseFileFormConfig = [
               config: [
                 {
                   type: "witnessTitle",
-                  value: ["firstName", "lastName", "witnessDesignation"],
+                  value: ["firstName", "middleName","lastName","witnessDesignation"],
                 },
                 {
                   type: "phonenumber",
