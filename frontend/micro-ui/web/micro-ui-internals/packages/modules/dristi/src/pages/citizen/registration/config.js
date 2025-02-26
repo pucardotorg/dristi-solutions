@@ -537,6 +537,34 @@ export const newConfig = [
       },
     ],
   },
+  {
+    head: "CS_ENTER_EMAIL_ID",
+    subHead: "CS_ENTER_EMAIL_ID_TEXT",
+    headId: "select-name-subtext",
+    body: [
+      {
+        type: "component",
+        component: "CustomEmailTextInput",
+        key: "email",
+        populators: {
+          inputs: [
+            {
+              label: "EMAIL_ID",
+              type: "text",
+              name: "emailId",
+              validation: {
+                isRequired: true,
+                pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9][a-zA-Z0-9.-]*\.[a-zA-Z]{2,}$/,
+                errMsg: "PLEASE_ENTER_VALID_EMAIL",
+              },
+              isMandatory: true,
+              styles: { paddingRight: "36px" },
+            },
+          ],
+        },
+      },
+    ],
+  },
 ];
 
 export const termsAndConditionConfig = [
