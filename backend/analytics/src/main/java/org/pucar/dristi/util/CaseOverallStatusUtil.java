@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.config.MdmsDataConfig;
@@ -75,33 +76,36 @@ public class CaseOverallStatusUtil {
 		}
 	}
 
-	private Object processOrderOverallStatus(JSONObject request, String referenceId, String status, String tenantId) throws InterruptedException {
-		Thread.sleep(config.getApiCallDelayInSeconds()*1000);
-		Object orderObject = orderUtil.getOrder(request, referenceId, config.getStateLevelTenantId());
-		String filingNumber = JsonPath.read(orderObject.toString(), FILING_NUMBER_PATH);
-		String orderCategory = JsonPath.read(orderObject.toString(), ORDER_CATEGORY_PATH);
-		if(COMPOSITE.equalsIgnoreCase(orderCategory)) {
-            try {
-				JSONArray compositeItems = util.constructArray(orderObject.toString(), ORDER_COMPOSITE_ITEMS_PATH);
-				for (int i = 0; i < compositeItems.length(); i++) {
-					JSONObject compositeItem = compositeItems.getJSONObject(i);  // Get JSONObject directly
-					String orderType = JsonPath.read(compositeItem.toString(), ORDER_TYPE_PATH);
+    private Object processOrderOverallStatus(JSONObject request, String referenceId, String status, String tenantId) throws InterruptedException {
+        Thread.sleep(config.getApiCallDelayInSeconds() * 1000);
+        Object orderObject = orderUtil.getOrder(request, referenceId, config.getStateLevelTenantId());
+        String filingNumber = JsonPath.read(orderObject.toString(), FILING_NUMBER_PATH);
+        String orderCategory = JsonPath.read(orderObject.toString(), ORDER_CATEGORY_PATH);
+        try {
+            if (COMPOSITE.equalsIgnoreCase(orderCategory)) {
 
-					publishToCaseOverallStatus(determineOrderStage(filingNumber, tenantId, orderType, status), request);
-					publishToCaseOutcome(determineCaseOutcome(filingNumber, tenantId, orderType, status, orderObject), request);
-				}
-			}
-			catch (Exception e) {
-				log.error("Error while processing Composite Items from Order Object", e);
-			}
-		}
-		else {
-			String orderType = JsonPath.read(orderObject.toString(), ORDER_TYPE_PATH);
-			publishToCaseOverallStatus(determineOrderStage(filingNumber, tenantId, orderType, status), request);
-			publishToCaseOutcome(determineCaseOutcome(filingNumber, tenantId, orderType, status, orderObject), request);
-		}
-		return orderObject;
-	}
+                JSONArray compositeItems = util.constructArray(orderObject.toString(), ORDER_COMPOSITE_ITEMS_PATH);
+                if (compositeItems == null || compositeItems.length() == 0) {
+                    log.warn("No composite items found for filing number: {}", filingNumber);
+                    return orderObject;
+                }
+                for (int i = 0; i < compositeItems.length(); i++) {
+                    JSONObject compositeItem = compositeItems.getJSONObject(i);
+                    processIndividualOrder(request, filingNumber, tenantId, status, compositeItem.toString(), orderObject);
+                }
+
+            } else {
+                processIndividualOrder(request, filingNumber, tenantId, status, orderObject.toString(), orderObject);
+            }
+        } catch (JSONException e) {
+            log.error("Error processing JSON structure in composite items: {}, for filing number: {}", e.getMessage(), filingNumber, e);
+        } catch (PathNotFoundException e) {
+            log.error("Required JSON path not found in composite items: {} for filing number: {}", e.getMessage(), filingNumber, e);
+        } catch (Exception e) {
+            log.error("Unexpected error while processing composite items: {} for filing number: {}", e.getMessage(), filingNumber, e);
+        }
+        return orderObject;
+    }
 
 	private Object processCaseOverallStatus(JSONObject request, String referenceId, String status, String action, String tenantId) {
 		publishToCaseOverallStatus(determineCaseStage(referenceId,tenantId,status,action), request);
@@ -233,4 +237,10 @@ public class CaseOverallStatusUtil {
 			log.error("Error in publishToCaseOutcome method", e);
 		}
 	}
+
+    private void processIndividualOrder(JSONObject request, String filingNumber, String tenantId, String status, String orderItemJson, Object orderObject) {
+        String orderType = JsonPath.read(orderItemJson, ORDER_TYPE_PATH);
+        publishToCaseOverallStatus(determineOrderStage(filingNumber, tenantId, orderType, status), request);
+        publishToCaseOutcome(determineCaseOutcome(filingNumber, tenantId, orderType, status, orderObject), request);
+    }
 }
