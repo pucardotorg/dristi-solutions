@@ -20,7 +20,7 @@ export const reviewCaseFileFormConfig = [
               config: [
                 {
                   type: "title",
-                  value: ["firstName", "lastName"],
+                  value: ["firstName", "middleName", "lastName"],
                   badgeType: "complainantType.name",
                 },
                 {
@@ -86,7 +86,7 @@ export const reviewCaseFileFormConfig = [
               config: [
                 {
                   type: "title",
-                  value: ["respondentFirstName", "respondentLastName"],
+                  value: ["respondentFirstName", "respondentMiddleName", "respondentLastName"],
                   badgeType: "respondentType.name",
                 },
                 {
@@ -436,7 +436,7 @@ export const reviewCaseFileFormConfig = [
               config: [
                 {
                   type: "witnessTitle",
-                  value: ["firstName", "middleName","lastName","witnessDesignation"],
+                  value: ["firstName", "middleName", "lastName", "witnessDesignation"],
                 },
                 {
                   type: "phonenumber",
