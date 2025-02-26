@@ -1045,7 +1045,6 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                 additionalDetails: { documentName: "UPLOAD_PIP_AFFIDAVIT" },
               },
             ],
-            isResponseRequired: "PENDING_RESPONSE" === caseDetails?.status,
           },
         ],
       };
@@ -1107,42 +1106,17 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
           }
         }
 
-        // remove all pending task of replaced adovcate
-        const { representatives, representing } = searchLitigantInRepresentives(caseDetails?.representatives, individual?.individualId);
+        const isResponseSubmitted = caseDetails?.litigants
+          ?.filter((litigant) => litigant?.individualId === party?.individualId)
+          ?.documents?.some((document) => document?.additionalDetails?.fileType === "respondent-response");
 
-        if (representatives?.length > 0) {
-          const removePendingTaskOfReplacedAdvocate = representatives?.map((data) =>
-            DRISTIService.customApiService(Urls.dristi.pendingTask, {
-              pendingTask: {
-                name: "Pending Response",
-                entityType: "case-default",
-                referenceId: `MANUAL_PENDING_RESPONSE_${caseDetails?.filingNumber}_${representing?.additionalDetails?.uuid}_${data?.additionalDetails?.uuid}`,
-                status: "PENDING_RESPONSE",
-                assignedTo: [{ uuid: representing?.additionalDetails?.uuid }, { uuid: data?.additionalDetails?.uuid }],
-                assignedRole: ["CASE_RESPONDER"],
-                cnrNumber: caseDetails?.cnrNumber,
-                filingNumber: caseDetails?.filingNumber,
-                isCompleted: true,
-                stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
-                additionalDetails: { individualId, caseId: caseDetails?.id },
-                tenantId,
-              },
-            })
-          );
-
-          try {
-            await Promise.all(removePendingTaskOfReplacedAdvocate);
-          } catch (error) {
-            console.error("error :>> ", error);
-          }
-        }
-        if ("PENDING_RESPONSE" === caseDetails?.status && !party?.isComplainant) {
+        if ("PENDING_RESPONSE" === caseDetails?.status && !party?.isComplainant && !isResponseSubmitted) {
           try {
             await DRISTIService.customApiService(Urls.dristi.pendingTask, {
               pendingTask: {
                 name: "Pending Response",
                 entityType: "case-default",
-                referenceId: `MANUAL_PENDING_RESPONSE_${caseDetails?.filingNumber}_${party?.uuid}`,
+                referenceId: `MANUAL_PENDING_RESPONSE_${caseDetails?.filingNumber}_${party?.individualId}`,
                 status: "PENDING_RESPONSE",
                 assignedTo: [{ uuid: party?.uuid }],
                 assignedRole: ["CASE_RESPONDER"],
@@ -1375,7 +1349,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                       pendingTask: {
                         name: "Pending Response",
                         entityType: "case-default",
-                        referenceId: `MANUAL_PENDING_RESPONSE_${caseDetails?.filingNumber}_${party?.uuid}`,
+                        referenceId: `MANUAL_PENDING_RESPONSE_${caseDetails?.filingNumber}_${party?.individualId}`,
                         status: "PENDING_RESPONSE",
                         assignedTo: [{ uuid: party?.uuid }],
                         assignedRole: ["CASE_RESPONDER"],
@@ -1444,25 +1418,19 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
         if (selectPartyData?.isReplaceAdvocate?.value === "NO") {
           try {
             const litigantData = [
-              ...updatedParty?.map((user) => {
-                const litigant = caseDetails?.litigants?.find((item2) => user.individualId === item2.individualId);
-                if (litigant) {
-                  if ("PENDING_RESPONSE" === caseDetails?.status) return { ...litigant, isResponseRequired: true };
-                  else return litigant;
-                } else {
-                  return {
-                    additionalDetails: {
-                      fullName: user?.fullName,
-                      uuid: user?.uuid,
-                    },
-                    tenantId: tenantId,
-                    individualId: user?.individualId,
-                    partyCategory: "INDIVIDUAL",
-                    partyType: user?.partyType,
-                    isResponseRequired: "PENDING_RESPONSE" === caseDetails?.status,
-                  };
-                }
-              }),
+              ...updatedParty
+                .filter((item1) => !caseDetails?.litigants.some((item2) => item1.individualId === item2.individualId))
+                ?.map((user) => ({
+                  additionalDetails: {
+                    fullName: user?.fullName,
+                    uuid: user?.uuid,
+                  },
+                  tenantId: tenantId,
+                  individualId: user?.individualId,
+                  partyCategory: "INDIVIDUAL",
+                  partyType: user?.partyType,
+                  isResponseRequired: "PENDING_RESPONSE" === caseDetails?.status,
+                })),
             ];
 
             const { givenName, otherNames, familyName } = individual?.name;
@@ -1585,53 +1553,42 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                 }
               }
 
-              const removePipResponse = litigantData
-                ?.filter((litigant) => {
-                  const { isFound } = searchLitigantInRepresentives(caseDetails?.representatives, litigant?.individualId);
-                  return !isFound;
-                })
-                ?.map((litigant) =>
-                  DRISTIService.customApiService(Urls.dristi.pendingTask, {
-                    pendingTask: {
-                      name: "Pending Response",
-                      entityType: "case-default",
-                      referenceId: `MANUAL_PENDING_RESPONSE_${caseDetails?.filingNumber}_${litigant?.additionalDetails?.uuid}`,
-                      status: "PENDING_RESPONSE",
-                      assignedTo: [{ uuid: litigant?.additionalDetails?.uuid }],
-                      assignedRole: ["CASE_RESPONDER"],
-                      cnrNumber: caseDetails?.cnrNumber,
-                      filingNumber: caseDetails?.filingNumber,
-                      isCompleted: true,
-                      stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
-                      additionalDetails: { individualId: party?.individualId, caseId: caseDetails?.id },
-                      tenantId,
-                    },
-                  })
-                );
-
-              // creating new pending task for submit response
+              // create/update pending task for submit response
               if ("PENDING_RESPONSE" === caseDetails?.status && documentUploadResult?.[0]?.isRespondent) {
-                const pendingResponseTaskCreate = updatedParty?.map((user) =>
-                  DRISTIService.customApiService(Urls.dristi.pendingTask, {
-                    pendingTask: {
-                      name: "Pending Response",
-                      entityType: "case-default",
-                      referenceId: `MANUAL_PENDING_RESPONSE_${caseDetails?.filingNumber}_${user?.uuid}_${individual?.userUuid}`,
-                      status: "PENDING_RESPONSE",
-                      assignedTo: [{ uuid: user?.uuid }, { uuid: individual?.userUuid }],
-                      assignedRole: ["CASE_RESPONDER"],
-                      cnrNumber: caseDetails?.cnrNumber,
-                      filingNumber: caseDetails?.filingNumber,
-                      isCompleted: false,
-                      stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
-                      additionalDetails: { individualId: user?.individualId, caseId: caseDetails?.id },
-                      tenantId,
-                    },
+                const pendingResponseTaskCreate = updatedParty
+                  ?.filter((user) => {
+                    const litigant = caseDetails?.litigants?.filter((litigant) => litigant?.individualId === user?.individualId);
+                    if (!litigant) return true;
+
+                    if (!litigant?.isResponseRequired) return false;
+
+                    return !litigant?.documents?.some((document) => document?.additionalDetails?.fileType === "respondent-response");
                   })
-                );
+                  ?.map((user) => {
+                    const { isFound, representatives } = searchLitigantInRepresentives(caseDetails?.representatives, user?.individualId);
+                    return DRISTIService.customApiService(Urls.dristi.pendingTask, {
+                      pendingTask: {
+                        name: "Pending Response",
+                        entityType: "case-default",
+                        referenceId: `MANUAL_PENDING_RESPONSE_${caseDetails?.filingNumber}_${user?.individualId}`,
+                        status: "PENDING_RESPONSE",
+                        assignedTo: [
+                          { uuid: user?.uuid },
+                          ...(isFound ? representatives?.map((representative) => ({ uuid: representative?.additionalDetails?.uuid })) : []),
+                          { uuid: individual?.userUuid },
+                        ],
+                        assignedRole: ["CASE_RESPONDER"],
+                        cnrNumber: caseDetails?.cnrNumber,
+                        filingNumber: caseDetails?.filingNumber,
+                        isCompleted: false,
+                        stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
+                        additionalDetails: { individualId: user?.individualId, caseId: caseDetails?.id },
+                        tenantId,
+                      },
+                    });
+                  });
                 try {
                   await Promise.all(pendingResponseTaskCreate);
-                  await Promise.all(removePipResponse);
                 } catch (err) {
                   console.error("err :>> ", err);
                 }
@@ -1652,25 +1609,19 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
         } else {
           try {
             const litigantData = [
-              ...updatedParty?.map((user) => {
-                const litigant = caseDetails?.litigants?.find((item2) => user.individualId === item2.individualId);
-                if (litigant) {
-                  if ("PENDING_RESPONSE" === caseDetails?.status) return { ...litigant, isResponseRequired: true };
-                  else return litigant;
-                } else {
-                  return {
-                    additionalDetails: {
-                      fullName: user?.fullName,
-                      uuid: user?.uuid,
-                    },
-                    tenantId: tenantId,
-                    individualId: user?.individualId,
-                    partyCategory: "INDIVIDUAL",
-                    partyType: user?.partyType,
-                    isResponseRequired: "PENDING_RESPONSE" === caseDetails?.status,
-                  };
-                }
-              }),
+              ...updatedParty
+                .filter((item1) => !caseDetails?.litigants.some((item2) => item1.individualId === item2.individualId))
+                ?.map((user) => ({
+                  additionalDetails: {
+                    fullName: user?.fullName,
+                    uuid: user?.uuid,
+                  },
+                  tenantId: tenantId,
+                  individualId: user?.individualId,
+                  partyCategory: "INDIVIDUAL",
+                  partyType: user?.partyType,
+                  isResponseRequired: "PENDING_RESPONSE" === caseDetails?.status,
+                })),
             ];
 
             const { givenName, otherNames, familyName } = individual?.name;
@@ -1838,84 +1789,35 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                 }
               }
 
-              // remove all pending task of replaced adovcate
-              const removeData = representingData
-                ?.filter((data) => data?.isAdvocateReplacing)
-                ?.map((data) => {
-                  const { representatives, representing } = searchLitigantInRepresentives(caseDetails?.representatives, data?.individualId);
-                  return { representatives, representing };
-                });
-              const removePipResponse = litigantData
-                ?.filter((litigant) => {
-                  const { isFound } = searchLitigantInRepresentives(caseDetails?.representatives, litigant?.individualId);
-                  return !isFound;
-                })
-                ?.map((litigant) =>
-                  DRISTIService.customApiService(Urls.dristi.pendingTask, {
-                    pendingTask: {
-                      name: "Pending Response",
-                      entityType: "case-default",
-                      referenceId: `MANUAL_PENDING_RESPONSE_${caseDetails?.filingNumber}_${litigant?.additionalDetails?.uuid}`,
-                      status: "PENDING_RESPONSE",
-                      assignedTo: [{ uuid: litigant?.additionalDetails?.uuid }],
-                      assignedRole: ["CASE_RESPONDER"],
-                      cnrNumber: caseDetails?.cnrNumber,
-                      filingNumber: caseDetails?.filingNumber,
-                      isCompleted: true,
-                      stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
-                      additionalDetails: { individualId: party?.individualId, caseId: caseDetails?.id },
-                      tenantId,
-                    },
-                  })
-                );
-              if (removeData?.length > 0) {
-                const removePendingTaskOfReplacedAdvocate = removeData?.map((data) =>
-                  DRISTIService.customApiService(Urls.dristi.pendingTask, {
-                    pendingTask: {
-                      name: "Pending Response",
-                      entityType: "case-default",
-                      referenceId: `MANUAL_PENDING_RESPONSE_${caseDetails?.filingNumber}_${data?.representing?.additionalDetails?.uuid}_${data?.representatives?.additionalDetails?.uuid}`,
-                      status: "PENDING_RESPONSE",
-                      assignedTo: [{ uuid: data?.representing?.additionalDetails?.uuid }, { uuid: data?.representatives?.additionalDetails?.uuid }],
-                      assignedRole: ["CASE_RESPONDER"],
-                      cnrNumber: caseDetails?.cnrNumber,
-                      filingNumber: caseDetails?.filingNumber,
-                      isCompleted: true,
-                      stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
-                      additionalDetails: { individualId, caseId: caseDetails?.id },
-                      tenantId,
-                    },
-                  })
-                );
-
-                try {
-                  await Promise.all(removePendingTaskOfReplacedAdvocate);
-                  await Promise.all(removePipResponse);
-                } catch (error) {
-                  console.error("error :>> ", error);
-                }
-              }
-
-              // creating new pending task for submit response
+              // create/update pending task for submit response
               if ("PENDING_RESPONSE" === caseDetails?.status && documentUploadResult?.[0]?.isRespondent) {
-                const pendingResponseTaskCreate = updatedParty?.map((user) =>
-                  DRISTIService.customApiService(Urls.dristi.pendingTask, {
-                    pendingTask: {
-                      name: "Pending Response",
-                      entityType: "case-default",
-                      referenceId: `MANUAL_PENDING_RESPONSE_${caseDetails?.filingNumber}_${user?.uuid}_${individual?.userUuid}`,
-                      status: "PENDING_RESPONSE",
-                      assignedTo: [{ uuid: user?.uuid }, { uuid: individual?.userUuid }],
-                      assignedRole: ["CASE_RESPONDER"],
-                      cnrNumber: caseDetails?.cnrNumber,
-                      filingNumber: caseDetails?.filingNumber,
-                      isCompleted: false,
-                      stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
-                      additionalDetails: { individualId: user?.individualId, caseId: caseDetails?.id },
-                      tenantId,
-                    },
+                const pendingResponseTaskCreate = updatedParty
+                  ?.filter((user) => {
+                    const litigant = caseDetails?.litigants?.filter((litigant) => litigant?.individualId === user?.individualId);
+                    if (!litigant) return true;
+
+                    if (!litigant?.isResponseRequired) return false;
+
+                    return !litigant?.documents?.some((document) => document?.additionalDetails?.fileType === "respondent-response");
                   })
-                );
+                  ?.map((user) =>
+                    DRISTIService.customApiService(Urls.dristi.pendingTask, {
+                      pendingTask: {
+                        name: "Pending Response",
+                        entityType: "case-default",
+                        referenceId: `MANUAL_PENDING_RESPONSE_${caseDetails?.filingNumber}_${user?.individualId}`,
+                        status: "PENDING_RESPONSE",
+                        assignedTo: [{ uuid: user?.uuid }, { uuid: individual?.userUuid }],
+                        assignedRole: ["CASE_RESPONDER"],
+                        cnrNumber: caseDetails?.cnrNumber,
+                        filingNumber: caseDetails?.filingNumber,
+                        isCompleted: false,
+                        stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
+                        additionalDetails: { individualId: user?.individualId, caseId: caseDetails?.id },
+                        tenantId,
+                      },
+                    })
+                  );
                 try {
                   await Promise.all(pendingResponseTaskCreate);
                 } catch (err) {
