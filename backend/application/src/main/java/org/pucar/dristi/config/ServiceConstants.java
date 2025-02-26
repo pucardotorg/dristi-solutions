@@ -121,6 +121,11 @@ public class ServiceConstants {
     public static final String VARIABLE_SUBMISSION_ACCEPTED = "VARIABLE_SUBMISSION_ACCEPTED";
 
     public static final String REQUEST_FOR_BAIL = "REQUEST_FOR_BAIL";
+    public static final String REQUEST_FOR_BAIL_SUBMITTED = "REQUEST_FOR_BAIL_SUBMITTED";
+    public static final String REQUEST_FOR_BAIL_REJECTED = "REQUEST_FOR_BAIL_REJECTED";
+    public static final String REQUEST_FOR_BAIL_APPROVED_MESSAGE_CODE = "REQUEST_FOR_BAIL_ACCEPTED,REQUEST_FOR_BAIL_GRANTED";
+    public static final String REQUEST_FOR_BAIL_ACCEPTED = "REQUEST_FOR_BAIL_ACCEPTED";
+    public static final String REQUEST_FOR_BAIL_GRANTED = "REQUEST_FOR_BAIL_GRANTED";
     public static final String SUBMIT_BAIL_DOCUMENTS = "SUBMIT_BAIL_DOCUMENTS";
 
     public static final String APPROVE = "APPROVE";

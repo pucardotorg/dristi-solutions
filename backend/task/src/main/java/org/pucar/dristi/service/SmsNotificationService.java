@@ -63,6 +63,14 @@ public class SmsNotificationService {
             pushNotification(templateData, message, mobileNumber, config.getSmsNotificationSummonsDeliveredTemplateId());
         } else if(messageCode.equalsIgnoreCase(SUMMONS_NOT_DELIVERED)){
             pushNotification(templateData, message, mobileNumber, config.getSmsNotificationSummonsNotDeliveredTemplateId());
+        } else if (messageCode.equalsIgnoreCase(WARRANT_ISSUED)) {
+            pushNotification(templateData,message,mobileNumber,config.getSmsNotificationWarrantIssuedTemplateId());
+        } else if (messageCode.equalsIgnoreCase(WARRANT_ISSUE_SUCCESS)) {
+            pushNotification(templateData,message,mobileNumber,config.getSmsNotificationWarrantIssueSuccess());
+        } else if (messageCode.equalsIgnoreCase(WARRANT_DELIVERED)) {
+            pushNotification(templateData,message,mobileNumber,config.getSmsNotificationWarrantDeliveredTemplateId());
+        } else if (messageCode.equalsIgnoreCase(WARRANT_NOT_DELIVERED)) {
+            pushNotification(templateData,message,mobileNumber,config.getSmsNotificationWarrantNotDeliveredTemplateId());
         }
     }
 
@@ -151,7 +159,7 @@ public class SmsNotificationService {
         StringBuilder uri = new StringBuilder();
         RequestInfoWrapper requestInfoWrapper = new RequestInfoWrapper();
         requestInfoWrapper.setRequestInfo(requestInfo);
-        uri.append(config.getLocalizationHost()).append(config.getLocalizationSearchEndpoint())
+        uri.append(config.getLocalizationHost()).append(config.getLocalizationContextPath()).append(config.getLocalizationSearchEndpoint())
                 .append("?tenantId=" + rootTenantId).append("&module=" + module).append("&locale=" + locale);
         List<String> codes = null;
         List<String> messages = null;

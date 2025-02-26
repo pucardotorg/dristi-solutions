@@ -73,6 +73,10 @@ public class SmsNotificationService {
             put(VARIABLE_SUBMISSION_ACCEPTED, config.getSmsNotificationVariableSubmissionAcceptedTemplateId());
             put(EVIDENCE_SUBMITTED, config.getSmsNotificationEvidenceSubmittedTemplateId());
             put(RESPONSE_REQUIRED, config.getSmsNotificationResponseRequiredTemplateId());
+            put(REQUEST_FOR_BAIL_SUBMITTED,config.getSmsNotificationBailApplicationFiledTemplateId());
+            put(REQUEST_FOR_BAIL_REJECTED,config.getSmsNotificationBailApplicationRejectedTemplateId());
+            put(REQUEST_FOR_BAIL_ACCEPTED,config.getSmsNotificationBailApplicationAcceptedTemplateId());
+            put(REQUEST_FOR_BAIL_GRANTED,config.getSmsNotificationBailApplicationGrantedTemplateId());
         }};
         String templateId = messageCodeToTemplateIdMap.get(messageCode);
         if (templateId != null) {

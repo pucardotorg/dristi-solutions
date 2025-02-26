@@ -80,14 +80,14 @@ public class HearingService {
             validator.validateHearingRegistration(body);
 
             // Enrich applications
-//            enrichmentUtil.enrichHearingRegistration(body);
+            enrichmentUtil.enrichHearingRegistration(body);
 
             // Initiate workflow for the new application-
-//            workflowService.updateWorkflowStatus(body);
+            workflowService.updateWorkflowStatus(body);
 
             // Push the application to the topic for persister to listen and persist
 
-//            producer.push(config.getHearingCreateTopic(), body);
+            producer.push(config.getHearingCreateTopic(), body);
 
             // send the sms after creating hearing
 

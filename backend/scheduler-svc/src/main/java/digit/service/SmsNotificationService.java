@@ -1,15 +1,15 @@
-package org.pucar.dristi.service;
+package digit.service;
 
 import com.jayway.jsonpath.JsonPath;
+import digit.config.Configuration;
+import digit.kafka.producer.Producer;
+import digit.repository.ServiceRequestRepository;
+import digit.web.models.SMSRequest;
+import digit.web.models.SmsTemplateData;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.models.RequestInfoWrapper;
 import org.egov.common.contract.request.RequestInfo;
-import org.pucar.dristi.config.Configuration;
-import org.pucar.dristi.kafka.Producer;
-import org.pucar.dristi.repository.ServiceRequestRepository;
-import org.pucar.dristi.web.models.SMSRequest;
-import org.pucar.dristi.web.models.SmsTemplateData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.pucar.dristi.config.ServiceConstants.*;
+import static digit.config.ServiceConstants.*;
 
 @Service
 @Slf4j
@@ -55,17 +55,8 @@ public class SmsNotificationService {
 
     private void pushNotificationBasedOnNotificationStatus(SmsTemplateData templateData, String messageCode, String message, String mobileNumber) {
 
-        if(messageCode.equalsIgnoreCase(DOCUMENT_MARKED_EXHIBIT)){
-            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationDocumentMarkedExhibitTemplateId());
-        }
-        if (messageCode.equalsIgnoreCase(EVIDENCE_SUBMISSION)) {
-            pushNotification(templateData,message,mobileNumber,config.getSmsNotificationEvidenceSubmitted());
-        }
-        if (messageCode.equalsIgnoreCase(EVIDENCE_SUBMISSION_MESSAGE_FILING)) {
-            pushNotification(templateData,message,mobileNumber,config.getSmsNotificationDocumentSubmissionByParty());
-        }
-        if (messageCode.equalsIgnoreCase(EVIDENCE_SUBMISSION_MESSAGE_OPPOSITE_PARTY)) {
-            pushNotification(templateData,message,mobileNumber,config.getSmsNotificationDocumentSubmissionToOppositeParty());
+        if(messageCode.equalsIgnoreCase(CAUSE_LIST_HEARING_MESSAGE)){
+//            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationHearingAdjournedTemplateId());
         }
     }
 
@@ -95,10 +86,10 @@ public class SmsNotificationService {
 
         smsDetails.put("courtCaseNumber", smsTemplateData.getCourtCaseNumber());
         smsDetails.put("cmpNumber", smsTemplateData.getCmpNumber());
+        smsDetails.put("hearingDate", smsTemplateData.getHearingDate());
         smsDetails.put("tenantId", smsTemplateData.getTenantId());
-        smsDetails.put("artifactNumber", smsTemplateData.getArtifactNumber());
         smsDetails.put("mobileNumber", mobileNumber);
-        smsDetails.put("cnrNumber",smsTemplateData.getCnrNumber());
+        smsDetails.put("hearingType",smsTemplateData.getHearingType());
 
         return smsDetails;
     }
@@ -131,14 +122,11 @@ public class SmsNotificationService {
      * @return
      */
     public String buildMessage(Map<String, String> userDetailsForSMS, String message) {
-        message = message.replace("{{caseId}}", Optional.ofNullable(userDetailsForSMS.get("caseId")).orElse(""))
-                .replace("{{efilingNumber}}", Optional.ofNullable(userDetailsForSMS.get("efilingNumber")).orElse(""))
-                .replace("{{cnr}}", Optional.ofNullable(userDetailsForSMS.get("cnr")).orElse(""))
+        message = message.replace("{{cnr}}", Optional.ofNullable(userDetailsForSMS.get("courtCaseNumber")).orElse(""))
                 .replace("{{link}}", Optional.ofNullable(userDetailsForSMS.get("link")).orElse(""))
-                .replace("{{date}}", Optional.ofNullable(userDetailsForSMS.get("date")).orElse(""))
                 .replace("{{cmpNumber}}", Optional.ofNullable(userDetailsForSMS.get("cmpNumber")).orElse(""))
-                .replace("{{artifactNumber}}", Optional.ofNullable(userDetailsForSMS.get("artifactNumber")).orElse(""))
-                .replace("{{cnrNumber}}",userDetailsForSMS.get("cmpNumber") != null ? userDetailsForSMS.get("cmpNumber") : userDetailsForSMS.get("cnrNumber"));
+                .replace("{{hearingDate}}", Optional.ofNullable(userDetailsForSMS.get("hearingDate")).orElse(""))
+                .replace("{{hearingType}}",Optional.ofNullable(userDetailsForSMS.get("hearingType")).orElse(""));
         return message;
     }
 

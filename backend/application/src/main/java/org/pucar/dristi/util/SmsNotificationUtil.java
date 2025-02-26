@@ -107,6 +107,15 @@ public class SmsNotificationUtil {
     private String getMessageCode(String applicationType, String updatedStatus, boolean isVoluntarySubmission) {
 
         log.info("operation: getMessageCode, Application Type: {}, Updated Status: {}, Is Voluntary Submission: {}", applicationType, updatedStatus, isVoluntarySubmission);
+        if (applicationType.equalsIgnoreCase(REQUEST_FOR_BAIL) && updatedStatus.equalsIgnoreCase(PENDINGAPPROVAL)) {
+            return REQUEST_FOR_BAIL_SUBMITTED;
+        }
+        if (applicationType.equalsIgnoreCase(REQUEST_FOR_BAIL) && updatedStatus.equalsIgnoreCase(REJECTED)) {
+            return REQUEST_FOR_BAIL_REJECTED;
+        }
+        if (applicationType.equalsIgnoreCase(REQUEST_FOR_BAIL) && updatedStatus.equalsIgnoreCase(APPROVE)) {
+            return REQUEST_FOR_BAIL_APPROVED_MESSAGE_CODE;
+        }
         if(applicationType.equalsIgnoreCase(RE_SCHEDULE) && updatedStatus.equalsIgnoreCase(PENDINGREVIEW)){
             return RESCHEDULE_REQUEST_SUBMITTED;
         }
@@ -164,7 +173,8 @@ public class SmsNotificationUtil {
     private static String getReceiverParty(String messageCode, String party) {
         return switch (messageCode.toUpperCase()) {
             case RESCHEDULE_REQUEST_REJECTED_REQUESTING_PARTY, RESCHEDULE_REQUEST_ACCEPTED_REQUESTING_PARTY,
-                 CHECKOUT_REQUEST_REJECTED, CHECKOUT_REQUEST_ACCEPTED ->
+                 CHECKOUT_REQUEST_REJECTED, CHECKOUT_REQUEST_ACCEPTED,REQUEST_FOR_BAIL_SUBMITTED,REQUEST_FOR_BAIL_REJECTED,
+                 REQUEST_FOR_BAIL_ACCEPTED,REQUEST_FOR_BAIL_GRANTED->
                     party.contains("respondent") ? RESPONDENT : COMPLAINANT;
             case RESCHEDULE_REQUEST_REJECTED_OPPONENT_PARTY, RESCHEDULE_REQUEST_ACCEPTED_OPPONENT_PARTY,
                  EVIDENCE_SUBMITTED, RESPONSE_REQUIRED ->

@@ -256,7 +256,7 @@ public class EvidenceService {
             Set<String> oppositeIndividualIds = new HashSet<>(individualIds);
 
             if (smsTopic != null && smsTopic.equalsIgnoreCase(EVIDENCE_SUBMISSION_CODE)) {
-                String receiverId = evidenceRequest.getArtifact().getAuditdetails().getLastModifiedBy();
+                String receiverId = evidenceRequest.getRequestInfo().getUserInfo().getUuid();
                 filingIndividualIds = extractIndividualIds(caseDetails,receiverId);
                 oppositeIndividualIds.removeAll(filingIndividualIds);
             }
@@ -269,10 +269,10 @@ public class EvidenceService {
             for (String topic : smsTopics) {
 
                 Set<String> phoneNumbers = callIndividualService(evidenceRequest.getRequestInfo(), individualIds);
-                if (Objects.equals(topic, "EVIDENCE_SUBMISSION_MESSAGE_FILING") || Objects.equals(topic, "EVIDENCE_SUBMISSION")) {
+                if (Objects.equals(topic, EVIDENCE_SUBMISSION_MESSAGE_FILING) || Objects.equals(topic, EVIDENCE_SUBMISSION)) {
                     phoneNumbers = callIndividualService(evidenceRequest.getRequestInfo(),filingIndividualIds);
                 }
-                if (Objects.equals(topic, "EVIDENCE_SUBMISSION_MESSAGE_OPPOSITE_PARTY")) {
+                if (Objects.equals(topic, EVIDENCE_SUBMISSION_MESSAGE_OPPOSITE_PARTY)) {
                     phoneNumbers = callIndividualService(evidenceRequest.getRequestInfo(),oppositeIndividualIds);
                 }
 
