@@ -1018,7 +1018,6 @@ const GenerateOrders = () => {
     return updatedFormdata;
   }, [currentOrder, orderType, applicationDetails, t, hearingDetails, caseDetails, orderTypeData]);
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
-    console.log("formData :>> ", formData);
     applyMultiSelectDropdownFix(setValue, formData, multiSelectDropdownKeys);
 
     if (orderType && ["MANDATORY_SUBMISSIONS_RESPONSES"].includes(orderType)) {
