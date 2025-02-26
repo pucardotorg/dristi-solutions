@@ -59,6 +59,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const history = useHistory();
   const dayInMillisecond = 24 * 3600 * 1000;
   const todayDate = new Date().getTime();
+  const [updateStatusDate, setUpdateStatusDate] = useState("");
 
   const [tabData, setTabData] = useState(
     SummonsTabsConfig?.SummonsTabsConfig?.map((configItem, index) => ({ key: index, label: configItem.label, active: index === 0 ? true : false }))
@@ -189,6 +190,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
             ...(typeof task?.taskDetails === "string" && { taskDetails: JSON.parse(task?.taskDetails) }),
             taskDetails: {
               ...(typeof task?.taskDetails === "string" ? JSON.parse(task?.taskDetails) : task?.taskDetails),
+              deliveryChannels: {
+                ...task?.taskDetails?.deliveryChannels,
+                statusChangeDate: updateStatusDate,
+              },
               remarks: {
                 remark: remarks,
               },
@@ -479,6 +484,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           orderType={orderType}
           remarks={remarks}
           setRemarks={setRemarks}
+          setUpdateStatusDate={setUpdateStatusDate}
         />
       ),
       actionSaveOnSubmit: handleUpdateStatus,
