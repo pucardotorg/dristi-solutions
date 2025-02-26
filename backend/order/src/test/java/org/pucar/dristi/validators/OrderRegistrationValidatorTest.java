@@ -63,6 +63,7 @@ class OrderRegistrationValidatorTest {
         order.setOrderCategory("Judicial");
         order.setCnrNumber("CNR12345");
         order.setFilingNumber("FIL12345");
+        order.setOrderType("Interim"); // Added orderType field
 
         OrderRequest orderRequest = new OrderRequest();
         orderRequest.setRequestInfo(new RequestInfo());
@@ -84,6 +85,7 @@ class OrderRegistrationValidatorTest {
         // Prepare test data
         Order order = new Order();
         order.setOrderCategory("Judicial");
+        order.setOrderType("Interim"); // Added orderType field
 
         OrderRequest orderRequest = new OrderRequest();
         orderRequest.setRequestInfo(new RequestInfo());
@@ -97,6 +99,27 @@ class OrderRegistrationValidatorTest {
     }
 
     @Test
+    void testValidateOrderRegistration_missingOrderType() {
+        // Prepare test data - new test case for missing orderType
+        Order order = new Order();
+        order.setStatuteSection(new StatuteSection());
+        order.setOrderCategory("Judicial");
+        order.setCnrNumber("CNR12345");
+        order.setFilingNumber("FIL12345");
+        // Intentionally not setting orderType
+
+        OrderRequest orderRequest = new OrderRequest();
+        orderRequest.setRequestInfo(new RequestInfo());
+        orderRequest.setOrder(order);
+
+        // Execute and verify exception
+        CustomException exception = assertThrows(CustomException.class, () ->
+                orderRegistrationValidator.validateOrderRegistration(orderRequest));
+        assertEquals(CREATE_ORDER_ERR, exception.getCode());
+        assertEquals("orderType is mandatory for intermediate order", exception.getMessage());
+    }
+
+    @Test
     void testValidateOrderRegistration_invalidCase() {
         // Prepare test data
         Order order = new Order();
@@ -104,6 +127,7 @@ class OrderRegistrationValidatorTest {
         order.setOrderCategory("Judicial");
         order.setCnrNumber("CNR12345");
         order.setFilingNumber("FIL12345");
+        order.setOrderType("Interim"); // Added orderType field
 
         OrderRequest orderRequest = new OrderRequest();
         orderRequest.setRequestInfo(new RequestInfo());
@@ -118,6 +142,26 @@ class OrderRegistrationValidatorTest {
                 orderRegistrationValidator.validateOrderRegistration(orderRequest));
         assertEquals("INVALID_CASE_DETAILS", exception.getCode());
         assertEquals("Invalid Case", exception.getMessage());
+    }
+
+    @Test
+    void testValidateOrderRegistration_administrativeOrderSuccess() {
+        // Prepare test data - new test case for Administrative order
+        Order order = new Order();
+        order.setStatuteSection(new StatuteSection());
+        order.setOrderCategory("Administrative");
+        order.setOrderType("Interim");
+        // No CNR or filing number needed for Administrative orders
+
+        OrderRequest orderRequest = new OrderRequest();
+        orderRequest.setRequestInfo(new RequestInfo());
+        orderRequest.setOrder(order);
+
+        // Execute method - should not call fetchCaseDetails for Administrative orders
+        assertDoesNotThrow(() -> orderRegistrationValidator.validateOrderRegistration(orderRequest));
+
+        // Verify that fetchCaseDetails was not called
+        verify(caseUtil, never()).fetchCaseDetails(any(), any(), any());
     }
 
     @Test
