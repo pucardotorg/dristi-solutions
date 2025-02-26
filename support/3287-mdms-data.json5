@@ -7,11 +7,11 @@
           {
             "tenantId": "kl",
             "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
-            "uniqueIdentifier": "2716",
+            "uniqueIdentifier": "2718",
             "data": {
-              "id": 2716,
+              "id": 2718,
               "url": "/order/v2/add-item",
-              "code": "2716",
+              "code": "2718",
               "name": "Add Item",
               "enabled": true,
               "displayName": "Add Item",
@@ -59,7 +59,7 @@
             "uniqueIdentifier": "437",
             "data": {
               "id": 437,
-              "actionid": 2716,
+              "actionid": 2718,
               "rolecode": "ORDER_APPROVER",
               "tenantid": "kl",
               "actioncode": ""
@@ -75,9 +75,9 @@
           {
             "tenantId": "kl",
             "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
-            "uniqueIdentifier": "438",
+            "uniqueIdentifier": "436",
             "data": {
-              "id": 438,
+              "id": 436,
               "actionid": 2717,
               "rolecode": "ORDER_APPROVER",
               "tenantid": "kl",
@@ -119,6 +119,179 @@
     ]
   }
   ,
+  {
+    "tenantId": "kl",
+    "masterName": "Order",
+    "moduleName": "NonOverlappingCompositeOrders",
+    "mdmsPayload":
+    [
+      {
+        "id": "6a70aebd-5b43-4916-ba7d-a045b605dbfa",
+        "tenantId": "kl",
+        "schemaCode": "Order.NonOverlappingCompositeOrders",
+        "uniqueIdentifier": "3",
+        "data": {
+          "id": "3",
+          "path": "$.applicationNumber[0]",
+          "orderTypeList": [
+            "ACCEPT_BAIL",
+            "REJECT_BAIL"
+          ]
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "createdTime": 1740595107422,
+          "lastModifiedTime": 1740595107422
+        }
+      },
+      {
+        "id": "2d2f4ff6-7d93-44ae-946d-1088e1cc9270",
+        "tenantId": "kl",
+        "schemaCode": "Order.NonOverlappingCompositeOrders",
+        "uniqueIdentifier": "2",
+        "data": {
+          "id": "2",
+          "orderTypeList": [
+            "SCHEDULE_OF_HEARING_DATE",
+            "RESCHEDULE_OF_HEARING_DATE"
+          ]
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "createdTime": 1740482038528,
+          "lastModifiedTime": 1740586292385
+        }
+      },
+      {
+        "id": "cc119eec-20ba-41df-8bbb-4f3ed880278b",
+        "tenantId": "kl",
+        "schemaCode": "Order.NonOverlappingCompositeOrders",
+        "uniqueIdentifier": "1",
+        "data": {
+          "id": "1",
+          "orderTypeList": [
+            "REFERRAL_CASE_TO_ADR",
+            "JUDGEMENT",
+            "WITHDRAWAL",
+            "SETTLEMENT",
+            "CASE_TRANSFER",
+            "ADMIT_DISMISS_CASE"
+          ]
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "createdTime": 1740479868343,
+          "lastModifiedTime": 1740586535572
+        }
+      }
+    ]
+
+  },
+
+  {
+    "tenantId": "kl",
+    "masterName": "Order",
+    "moduleName": "NonRepeatingCompositeOrders",
+    "mdmsPayload":
+    [
+      {
+        "id": "a283d398-4bba-4e7b-a134-f5bd05781cf4",
+        "tenantId": "kl",
+        "schemaCode": "Order.NonRepeatingCompositeOrders",
+        "uniqueIdentifier": "5",
+        "data": {
+          "id": "5",
+          "path": "$.applicationNumber[0]",
+          "orderType": "SET_BAIL_TERMS"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "createdTime": 1740594976618,
+          "lastModifiedTime": 1740594976618
+        }
+      },
+      {
+        "id": "3cf962fa-71e0-4609-b996-d6dc89a476be",
+        "tenantId": "kl",
+        "schemaCode": "Order.NonRepeatingCompositeOrders",
+        "uniqueIdentifier": "4",
+        "data": {
+          "id": "4",
+          "orderType": "ADMIT_DISMISS_CASE"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "createdTime": 1740592849581,
+          "lastModifiedTime": 1740595324344
+        }
+      },
+      {
+        "id": "762d1a43-ad5b-4d23-a614-e6945887afc7",
+        "tenantId": "kl",
+        "schemaCode": "Order.NonRepeatingCompositeOrders",
+        "uniqueIdentifier": "3",
+        "data": {
+          "id": "3",
+          "path": "$.applicationNumber[0]",
+          "orderType": "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "createdTime": 1740586883880,
+          "lastModifiedTime": 1740586883880
+        }
+      },
+      {
+        "id": "c84a07d2-8486-4504-a4f2-2efe6cbbf297",
+        "tenantId": "kl",
+        "schemaCode": "Order.NonRepeatingCompositeOrders",
+        "uniqueIdentifier": "2",
+        "data": {
+          "id": "2",
+          "path": "$.applicationNumber[0]",
+          "orderType": "ACCEPTANCE_REJECTION_DCA"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "createdTime": 1740482152554,
+          "lastModifiedTime": 1740586668167
+        }
+      },
+      {
+        "id": "3b29b52b-1481-441d-9f3f-cc8299e3191a",
+        "tenantId": "kl",
+        "schemaCode": "Order.NonRepeatingCompositeOrders",
+        "uniqueIdentifier": "1",
+        "data": {
+          "id": "1",
+          "path": "$.applicationNumber[0]",
+          "orderType": "MANDATORY_SUBMISSIONS_RESPONSES"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "createdTime": 1740482142805,
+          "lastModifiedTime": 1740586796404
+        }
+      }
+    ]
+
+  },
 
 //Added screenType
   {
