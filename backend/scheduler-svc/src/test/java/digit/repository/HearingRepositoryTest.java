@@ -101,43 +101,43 @@ public class HearingRepositoryTest {
     }
 
     @Test
-    public void testGetAvailableDatesOfJudges_Success() {
+    public void testGetHearingDayAndOccupiedBandwidthForDay_Success() {
         List<Object> preparedStmtList = new ArrayList<>();
-        when(queryBuilder.getJudgeAvailableDatesQuery(any(ScheduleHearingSearchCriteria.class), any(List.class))).thenReturn("SELECT * FROM availability");
+        when(queryBuilder.getHearingDayAndOccupiedBandwidthForDayQuery(any(ScheduleHearingSearchCriteria.class), any(List.class))).thenReturn("SELECT * FROM availability");
         when(jdbcTemplate.query(anyString(), any(Object[].class), any(AvailabilityRowMapper.class))).thenReturn(availabilityDTOs);
 
-        List<AvailabilityDTO> result = hearingRepository.getAvailableDatesOfJudges(hearingSearchCriteria);
+        List<AvailabilityDTO> result = hearingRepository.getHearingDayAndOccupiedBandwidthForDay(hearingSearchCriteria);
 
         assertEquals(1, result.size());
-        verify(queryBuilder, times(1)).getJudgeAvailableDatesQuery(any(ScheduleHearingSearchCriteria.class), any(List.class));
+        verify(queryBuilder, times(1)).getHearingDayAndOccupiedBandwidthForDayQuery(any(ScheduleHearingSearchCriteria.class), any(List.class));
         verify(jdbcTemplate, times(1)).query(anyString(), any(Object[].class), any(AvailabilityRowMapper.class));
     }
 
     @Test
-    public void testGetAvailableDatesOfJudges_EmptyResult() {
+    public void testGetHearingDayAndOccupiedBandwidthForDay_EmptyResult() {
         List<Object> preparedStmtList = new ArrayList<>();
-        when(queryBuilder.getJudgeAvailableDatesQuery(any(ScheduleHearingSearchCriteria.class), any(List.class))).thenReturn("SELECT * FROM availability");
+        when(queryBuilder.getHearingDayAndOccupiedBandwidthForDayQuery(any(ScheduleHearingSearchCriteria.class), any(List.class))).thenReturn("SELECT * FROM availability");
         when(jdbcTemplate.query(anyString(), any(Object[].class), any(AvailabilityRowMapper.class))).thenReturn(Collections.emptyList());
 
-        List<AvailabilityDTO> result = hearingRepository.getAvailableDatesOfJudges(hearingSearchCriteria);
+        List<AvailabilityDTO> result = hearingRepository.getHearingDayAndOccupiedBandwidthForDay(hearingSearchCriteria);
 
         assertEquals(0, result.size());
-        verify(queryBuilder, times(1)).getJudgeAvailableDatesQuery(any(ScheduleHearingSearchCriteria.class), any(List.class));
+        verify(queryBuilder, times(1)).getHearingDayAndOccupiedBandwidthForDayQuery(any(ScheduleHearingSearchCriteria.class), any(List.class));
         verify(jdbcTemplate, times(1)).query(anyString(), any(Object[].class), any(AvailabilityRowMapper.class));
     }
 
     @Test
-    public void testGetAvailableDatesOfJudges_Exception() {
+    public void testGetHearingDayAndOccupiedBandwidthForDay_Exception() {
         List<Object> preparedStmtList = new ArrayList<>();
-        when(queryBuilder.getJudgeAvailableDatesQuery(any(ScheduleHearingSearchCriteria.class), any(List.class))).thenReturn("SELECT * FROM availability");
+        when(queryBuilder.getHearingDayAndOccupiedBandwidthForDayQuery(any(ScheduleHearingSearchCriteria.class), any(List.class))).thenReturn("SELECT * FROM availability");
         when(jdbcTemplate.query(anyString(), any(Object[].class), any(AvailabilityRowMapper.class))).thenThrow(new RuntimeException("Database error"));
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            hearingRepository.getAvailableDatesOfJudges(hearingSearchCriteria);
+            hearingRepository.getHearingDayAndOccupiedBandwidthForDay(hearingSearchCriteria);
         });
 
         assertEquals("Database error", exception.getMessage());
-        verify(queryBuilder, times(1)).getJudgeAvailableDatesQuery(any(ScheduleHearingSearchCriteria.class), any(List.class));
+        verify(queryBuilder, times(1)).getHearingDayAndOccupiedBandwidthForDayQuery(any(ScheduleHearingSearchCriteria.class), any(List.class));
         verify(jdbcTemplate, times(1)).query(anyString(), any(Object[].class), any(AvailabilityRowMapper.class));
     }
 }

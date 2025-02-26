@@ -70,7 +70,7 @@ public class HearingQueryBuilderTest {
     }
 
     @Test
-    public void testGetJudgeAvailableDatesQuery_withAllCriteria() {
+    public void testGetHearingDayAndOccupiedBandwidthForDay_Query_withAllCriteria() {
         ScheduleHearingSearchCriteria searchCriteria = new ScheduleHearingSearchCriteria();
         searchCriteria.setTenantId("tenant1");
         searchCriteria.setJudgeId("judge1");
@@ -80,7 +80,7 @@ public class HearingQueryBuilderTest {
 
         doNothing().when(queryBuilderHelper).addClauseIfRequired(any(StringBuilder.class), anyList());
 
-        String actualQuery = hearingQueryBuilder.getJudgeAvailableDatesQuery(searchCriteria, preparedStmtList);
+        String actualQuery = hearingQueryBuilder.getHearingDayAndOccupiedBandwidthForDayQuery(searchCriteria, preparedStmtList);
 
         assertEquals(4, preparedStmtList.size());
 
@@ -89,14 +89,14 @@ public class HearingQueryBuilderTest {
     }
 
     @Test
-    public void testGetJudgeAvailableDatesQuery_withNoCriteria() {
+    public void testGetHearingDayAndOccupiedBandwidthForDay_Query_withNoCriteria() {
         ScheduleHearingSearchCriteria searchCriteria = new ScheduleHearingSearchCriteria();
         List<Object> preparedStmtList = new ArrayList<>();
 
         String expectedQuery = "SELECT meeting_hours.hearing_date AS date,meeting_hours.total_hours  AS hours FROM (SELECT hb.hearing_date, SUM(EXTRACT(EPOCH FROM (TO_TIMESTAMP(hb.end_time, 'YYYY-MM-DD HH24:MI:SS') - TO_TIMESTAMP(hb.start_time, 'YYYY-MM-DD HH24:MI:SS'))) / 3600) AS total_hours FROM hearing_booking hb  WHERE  ) AS meeting_hours  ( hb.status = ?  OR hb.status = ? )";
 
         doNothing().when(queryBuilderHelper).addClauseIfRequired(any(StringBuilder.class), anyList());
-        String actualQuery = hearingQueryBuilder.getJudgeAvailableDatesQuery(searchCriteria, preparedStmtList);
+        String actualQuery = hearingQueryBuilder.getHearingDayAndOccupiedBandwidthForDayQuery(searchCriteria, preparedStmtList);
 
         assertEquals(2, preparedStmtList.size());
 
