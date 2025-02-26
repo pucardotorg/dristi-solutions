@@ -172,8 +172,7 @@ public class OrderRegistrationValidator {
             //For non repeating path null
             mdmsDataConfig.getNonRepeatingOrdersMdmsData().forEach(compositeOrderMdms -> {
                 if (compositeOrderMdms.getPath() == null) {
-                    AtomicInteger nonRepeatingOrderPathNullCount = new AtomicInteger(0);
-                    orderTypesMap.forEach((orderType, value) -> nonRepeatingPathNullValidation(compositeOrderMdms, orderType, nonRepeatingOrderPathNullCount));
+                    orderTypesMap.forEach((orderType, value) -> nonRepeatingPathNullValidation(compositeOrderMdms, orderType,value));
                 }
             });
 
@@ -226,7 +225,7 @@ public class OrderRegistrationValidator {
                     List<String> existingValues = overlappingOrderCountPathNotNullMap.get(orderType);
 
                     if (existingValues.contains(pathValue)) {
-                        throw new CustomException(ORDER_UPDATE_EXCEPTION, "Overlapping orderTypes are not allowed");
+                        throw new CustomException(ORDER_UPDATE_EXCEPTION, "Overlapping orderTypes are not allowed for same Application Number");
                     } else {
                         existingValues.add(pathValue);
                         log.info("ExistingValues :: {}", overlappingOrderCountPathNotNullMap);
@@ -236,18 +235,15 @@ public class OrderRegistrationValidator {
         }
     }
 
-    private static void nonRepeatingPathNullValidation(CompositeOrderMdms compositeOrderMdms, String orderType, AtomicInteger nonRepeatingOrderPathNullCount) {
+    private static void nonRepeatingPathNullValidation(CompositeOrderMdms compositeOrderMdms, String orderType, List<Object> orderSchemaList) {
         log.info("Inside nonRepeatingPathNullValidation");
 
-        log.info("Validating non repeating path null for OrderTypeList :: {} and orderType :: {}", compositeOrderMdms.getOrderTypeList(), orderType);
-        log.info("Non repeating path null count :: {}", nonRepeatingOrderPathNullCount);
+        log.info("Validating non repeating path null for OrderTypeMdms :: {} and orderType :: {}", compositeOrderMdms.getOrderType(), orderType);
+        log.info("Validating non repeating path null for orderType :: {} and orderSchemaList :: {}", orderType, orderSchemaList);
 
-        if (compositeOrderMdms.getOrderTypeList().contains(orderType)) {
-            nonRepeatingOrderPathNullCount.getAndIncrement();
-            log.info("Non repeating path null count :: {}", nonRepeatingOrderPathNullCount);
-        }
-        if (nonRepeatingOrderPathNullCount.get() == 2) {
-            throw new CustomException(ORDER_UPDATE_EXCEPTION, "Repeating orderTypes are not allowed");
+        if (compositeOrderMdms.getOrderType().equalsIgnoreCase(orderType)) {
+            if(orderSchemaList.size()>1)
+             throw new CustomException(ORDER_UPDATE_EXCEPTION, "Repeating orderTypes are not allowed");
         }
     }
 
@@ -269,7 +265,7 @@ public class OrderRegistrationValidator {
                 List<String> existingValues = repeatingOrderCountMapPathNotNull.get(orderType);
 
                 if (existingValues.contains(pathValue)) {
-                    throw new CustomException(ORDER_UPDATE_EXCEPTION, "Repeating orderTypes are not allowed");
+                    throw new CustomException(ORDER_UPDATE_EXCEPTION, "Repeating orderTypes are not allowed for same Application Number");
                 } else {
                     existingValues.add(pathValue);
                     log.info("Existing values :: {}",existingValues);
