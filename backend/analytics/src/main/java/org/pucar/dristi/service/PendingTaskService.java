@@ -218,7 +218,7 @@ public class PendingTaskService {
                     break;
                 }
             }
-            if (isAssigned) {
+            if (isAssigned && !dataNode.get("referenceId").toString().startsWith(MANUAL_PENDING_RESPONSE)) {
                 filteredTasks.add(hit);
             }
         }
