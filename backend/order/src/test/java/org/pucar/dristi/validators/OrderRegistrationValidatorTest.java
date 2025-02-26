@@ -11,6 +11,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.pucar.dristi.config.Configuration;
+import org.pucar.dristi.config.MdmsDataConfig;
 import org.pucar.dristi.repository.OrderRepository;
 import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.FileStoreUtil;
@@ -47,12 +48,15 @@ class OrderRegistrationValidatorTest {
     @Mock
     private ObjectMapper objectMapper;
 
+    @Mock
+    private MdmsDataConfig mdmsDataConfig;
+
     @InjectMocks
     private OrderRegistrationValidator orderRegistrationValidator;
 
     @BeforeEach
     void setUp() {
-        orderRegistrationValidator = new OrderRegistrationValidator(repository, caseUtil, fileStoreUtil,configuration,mdmsUtil,objectMapper);
+        orderRegistrationValidator = new OrderRegistrationValidator(repository, caseUtil, fileStoreUtil,configuration,mdmsUtil,objectMapper,mdmsDataConfig);
     }
 
     @Test
