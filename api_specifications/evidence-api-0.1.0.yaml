@@ -234,7 +234,7 @@ components:
           items:
             $ref: '#/components/schemas/Comment'
         additionalDetails:
-          type: string
+          type: object
           description: >-
             This field is meant to hold any extra information that we want to
             store for a case.
@@ -274,7 +274,7 @@ components:
           description: Field to indicate soft delete of records
           default: true
         additionalDetails:
-          type: string
+          type: object
           description: >-
             This field is meant to hold any extra information that we want to
             store for this entity.
