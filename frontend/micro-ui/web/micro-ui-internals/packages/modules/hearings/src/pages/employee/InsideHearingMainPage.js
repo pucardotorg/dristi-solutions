@@ -408,7 +408,7 @@ const InsideHearingMainPage = () => {
                 selected={
                   IsSelectedWitness
                     ? {
-                        label: [selectedWitness?.firstName, selectedWitness?.lastName].filter(Boolean).join(" "),
+                        label: getFormattedName(selectedWitness?.firstName, selectedWitness?.middleName, selectedWitness?.lastName, selectedWitness?.witnessDesignation),
                         value: selectedWitness?.uuid,
                       }
                     : {}
