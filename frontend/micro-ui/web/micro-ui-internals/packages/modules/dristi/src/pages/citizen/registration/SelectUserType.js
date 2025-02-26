@@ -8,6 +8,7 @@ const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRe
   const history = useHistory();
   const [showErrorToast, setShowErrorToast] = useState(false);
   const [showUsename, setshowUsename] = useState(false);
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
 
   const closeToast = () => {
     setShowErrorToast(false);
@@ -140,6 +141,7 @@ const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRe
         userUuid: Digit.UserService.getUser()?.info?.uuid,
         userId: Digit.UserService.getUser()?.info?.id,
         mobileNumber: Digit.UserService.getUser()?.info?.mobileNumber,
+        email: userInfo?.emailId,
         address: [
           {
             tenantId: tenantId,
