@@ -405,6 +405,7 @@ function EFilingCases({ path }) {
     let total = 0;
     let sectionErrors = 0;
     let inputErrors = 0;
+    let warningCount = 0;
     let pages = new Set();
     Object.keys(section)?.forEach((key) => {
       let pageErrorCount = 0;
@@ -414,12 +415,21 @@ function EFilingCases({ path }) {
           sectionErrors++;
           pageErrorCount++;
         }
+
+        if (section[key]?.scrutinyMessage?.isWarning) {
+          warningCount++;
+          sectionErrors--;
+          pageErrorCount++;
+        }
+
         section[key]?.form?.forEach((item) => {
           Object.keys(item)?.forEach((field) => {
             if (item[field]?.FSOError && field != "image" && field != "title") {
-              total++;
-              inputErrors++;
-              pageErrorCount++;
+              if (!item[field]?.isWarning) {
+                total++;
+                inputErrors++;
+                pageErrorCount++;
+              }
             }
           });
         });
@@ -429,7 +439,7 @@ function EFilingCases({ path }) {
       }
     });
 
-    return { total, inputErrors, sectionErrors, pages: [...pages] };
+    return { total, inputErrors, sectionErrors, warningCount, pages: [...pages] };
   };
 
   const scrutinyErrors = useMemo(() => {
@@ -1373,6 +1383,7 @@ function EFilingCases({ path }) {
                         label: modifiedFormComponent.label,
                         populators: {
                           scrutinyMessage: scrutiny?.[selected].form[index][key].FSOError,
+                          isWarning: scrutiny?.[selected].form[index][key]?.isWarning,
                         },
                       },
                       modifiedFormComponent,
