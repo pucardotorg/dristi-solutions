@@ -258,22 +258,72 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
             form: inputs.find((item) => item.name === name)?.data?.map(() => ({})),
           };
 
-    if (index == null) {
-      currentMessage.scrutinyMessage = { FSOError: "" };
-    } else {
-      let fieldObj = { [fieldName]: { FSOError: "" } };
+    const dependentFields = inputs?.find((item) => item.name === name)?.config?.find((f) => f.value === fieldName)?.dependentFields || [];
+
+    // Collect all interdependent fields
+    const interdependentWarnings = dependentFields.map(({ configKey, page, field }) => {
+      const scrutinyMessage = get(formData, [configKey, page], {
+        scrutinyMessage: "",
+        form: inputs.find((item) => item.name === name)?.data?.map(() => ({})),
+      });
+      return get(scrutinyMessage, ["form", index, field, "isWarning"], undefined);
+    });
+
+    if (interdependentWarnings.includes(false)) {
+      // If any interdependent field has isWarning === false, set isWarning: true instead of deleting
+      let fieldObj = { [fieldName]: { FSOError: `${t("RECHECK")}: ${t("SCRUTINY_MESSAGE")}`, isWarning: true } };
       inputlist.forEach((key) => {
-        fieldObj[key] = { FSOError: "" };
+        fieldObj[key] = { FSOError: `${t("RECHECK")}: ${t("SCRUTINY_MESSAGE")}`, isWarning: true };
       });
       currentMessage.form[index] = {
         ...currentMessage.form[index],
         ...fieldObj,
       };
+      setValue(config.Key, currentMessage, name);
+    } else {
+      // Proceed with deleting error if no false isWarning values exist
+      if (index == null) {
+        currentMessage.scrutinyMessage = { FSOError: "", isWarning: undefined };
+      } else {
+        let fieldObj = { [fieldName]: { FSOError: "", isWarning: undefined } };
+        inputlist.forEach((key) => {
+          fieldObj[key] = { FSOError: "", isWarning: undefined };
+        });
+        currentMessage.form[index] = {
+          ...currentMessage.form[index],
+          ...fieldObj,
+        };
+      }
+      setValue(config.Key, currentMessage, name);
+      // Update dependent scrutiny messages
+      for (const { configKey, page, field } of dependentFields) {
+        const scrutinyMessage = get(formData, [configKey, page], {
+          scrutinyMessage: "",
+          form: inputs.find((item) => item.name === name)?.data?.map(() => ({})),
+        });
+
+        const existingField = get(scrutinyMessage, ["form", index, field], {});
+
+        if (existingField?.isWarning) {
+          set(
+            scrutinyMessage,
+            ["form", index, field].filter((x) => x != null),
+            {
+              ...existingField,
+              FSOError: "",
+              isWarning: undefined,
+            }
+          );
+
+          set(formData, [configKey, page], scrutinyMessage);
+          setValue(configKey, scrutinyMessage, page);
+        }
+      }
     }
+
     setDeletePopup(false);
     setScrutinyError("");
     setSystemError("");
-    setValue(config.key, currentMessage, name);
     setValue("scrutinyMessage", null, "popupInfo");
   };
 
@@ -281,7 +331,6 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
     const trimmedError = message ? message : scrutinyError.trim();
 
     const { name, configKey, index, fieldName, inputlist, fileName } = popupInfoData ? popupInfoData : popupInfo;
-
     let fieldObj = {
       [fieldName]: {
         [type ? type : "FSOError"]: trimmedError,
@@ -303,7 +352,7 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
         [type ? type : "FSOError"]: trimmedError,
         fileName,
         ...(isPrevScrutiny && { markError: true }),
-        isWarning: isCheckedPresent ? !existingField.isWarning : true,
+        isWarning: false,
       };
     });
     let currentMessage =
