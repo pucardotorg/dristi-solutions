@@ -85,7 +85,6 @@ public class HearingService {
             workflowService.updateWorkflowStatus(body);
 
             // Push the application to the topic for persister to listen and persist
-
             producer.push(config.getHearingCreateTopic(), body);
 
             return body.getHearing();
@@ -358,19 +357,14 @@ public class HearingService {
 
         List<ScheduleHearing> scheduleHearings = schedulerUtil.callBulkReschedule(request);
 
-        Map<String, ScheduleHearing> scheduleHearingMap = scheduleHearings.stream().collect(Collectors.toMap(ScheduleHearing::getHearingBookingId, obj -> obj));
-        for (Hearing hearing : hearingsToReschedule) {
-            if (scheduleHearingMap.containsKey(hearing.getHearingId())) {
-                ScheduleHearing scheduleHearing = scheduleHearingMap.get(hearing.getHearingId());
-                hearing.setStartTime(scheduleHearing.getStartTime());
-                hearing.setEndTime(scheduleHearing.getEndTime());
-                hearing.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
-                hearing.getAuditDetails().setLastModifiedBy(requestInfo.getUserInfo().getUuid());
+        Map<String, Hearing> scheduleHearingMap = hearingsToReschedule.stream().collect(Collectors.toMap(Hearing::getHearingId, obj -> obj));
+        for (ScheduleHearing hearing : scheduleHearings) {
+            if (scheduleHearingMap.containsKey(hearing.getHearingBookingId())) {
+                Hearing scheduleHearing = scheduleHearingMap.get(hearing.getHearingBookingId());
+                hearing.setOriginalHearingDate(scheduleHearing.getStartTime());
             }
         }
-        UpdateTimeRequest reschedule = UpdateTimeRequest.builder().requestInfo(requestInfo).hearings(hearingsToReschedule).build();
 
-        producer.push(config.getBulkRescheduleTopic(),reschedule);
         return scheduleHearings;
     }
 
