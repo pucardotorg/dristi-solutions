@@ -83,6 +83,7 @@ const CustomReviewCardRow = ({
   setShowImageModal,
   isCaseReAssigned,
   disableScrutiny,
+  isWarning,
 }) => {
   const {
     type = null,
@@ -171,8 +172,12 @@ const CustomReviewCardRow = ({
         if (showFlagIcon && dateDependentOnValue && t(textDependentValue)) {
           showFlagIcon = false;
         }
+        const inlineStyle = isWarning
+          ? { backgroundColor: "#FDF2DE" } // Set the background color to yellow if checked
+          : {};
+        bgclassname = isWarning ? "" : bgclassname;
         return (
-          <div className={`text-main ${bgclassname}`}>
+          <div className={`text-main ${bgclassname}`} style={inlineStyle}>
             <div className="text">
               {value === "dateOfDispatch" && <div> {`${dataIndex + 1}. `}</div>}
               <div className="label">{t(label)}</div>
@@ -185,7 +190,7 @@ const CustomReviewCardRow = ({
                   }}
                   key={dataIndex}
                 >
-                  {dataError && isScrutiny ? (
+                  {dataError && isScrutiny && !isWarning ? (
                     <React.Fragment>
                       <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`Click`}>
                         {" "}

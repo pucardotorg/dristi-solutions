@@ -135,7 +135,10 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
     }
     const { name = null, configKey = null, index = null, fieldName = null } = popupInfo;
     return fieldName
-      ? formData?.[configKey]?.[name]?.form?.[index]?.[fieldName]?.FSOError || formData?.[configKey]?.[name]?.form?.[index]?.[fieldName]?.systemError
+      ? formData?.[configKey]?.[name]?.form?.[index]?.[fieldName]?.isWarning
+        ? ""
+        : formData?.[configKey]?.[name]?.form?.[index]?.[fieldName]?.FSOError ||
+          formData?.[configKey]?.[name]?.form?.[index]?.[fieldName]?.systemError
       : formData?.[configKey]?.[name]?.scrutinyMessage?.FSOError || "";
   }, [formData, popupInfo]);
 
@@ -278,9 +281,30 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
     const trimmedError = message ? message : scrutinyError.trim();
 
     const { name, configKey, index, fieldName, inputlist, fileName } = popupInfoData ? popupInfoData : popupInfo;
-    let fieldObj = { [fieldName]: { [type ? type : "FSOError"]: trimmedError, ...(isPrevScrutiny && { markError: true }) } };
+
+    let fieldObj = {
+      [fieldName]: {
+        [type ? type : "FSOError"]: trimmedError,
+        ...(isPrevScrutiny && { markError: true }),
+      },
+    };
+
+    if (fieldObj[fieldName].hasOwnProperty("isWarning")) {
+      fieldObj[fieldName].isWarning = !fieldObj[fieldName].isWarning;
+    } else {
+      fieldObj[fieldName].isWarning = false;
+    }
+
     inputlist.forEach((key) => {
-      fieldObj[key] = { [type ? type : "FSOError"]: trimmedError, fileName, ...(isPrevScrutiny && { markError: true }) };
+      const existingField = fieldObj[key] || {};
+      const isCheckedPresent = existingField.hasOwnProperty("isWarning");
+
+      fieldObj[key] = {
+        [type ? type : "FSOError"]: trimmedError,
+        fileName,
+        ...(isPrevScrutiny && { markError: true }),
+        isWarning: isCheckedPresent ? !existingField.isWarning : true,
+      };
     });
     let currentMessage =
       formData && formData[configKey] && formData[config.key]?.[name]
@@ -292,7 +316,11 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
 
     if (currentMessage?.form) {
       if (index == null) {
-        currentMessage.scrutinyMessage = { [type ? type : "FSOError"]: trimmedError, fileName, ...(isPrevScrutiny && { markError: true }) };
+        currentMessage.scrutinyMessage = {
+          [type ? type : "FSOError"]: trimmedError,
+          fileName,
+          ...(isPrevScrutiny && { markError: true }),
+        };
       } else {
         currentMessage.form[index] = {
           ...(currentMessage?.form?.[index] || {}),
@@ -303,19 +331,25 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
 
       const dependentFields = inputs?.find((item) => item.name === name)?.config?.find((f) => f.value === fieldName)?.dependentFields || [];
       for (const { configKey, page, field } of dependentFields) {
-        const scrutinyMessage = {
-          ...(get(formData, [configKey, page]) || {
-            scrutinyMessage: "",
-            form: inputs.find((item) => item.name === name)?.data?.map(() => ({})),
-          }),
-        };
+        const scrutinyMessage = get(formData, [configKey, page], {
+          scrutinyMessage: "",
+          form: inputs.find((item) => item.name === name)?.data?.map(() => ({})),
+        });
+
         const fieldInputData = config.populators.inputs.find((input) => input.name === page)?.data?.[0]?.data?.[field];
-        if (fieldInputData) {
+        const existingField = get(scrutinyMessage, ["form", index, field], {});
+
+        if (fieldInputData && !existingField.hasOwnProperty("isWarning")) {
+          if (!existingField.hasOwnProperty("isWarning")) {
+            existingField.isWarning = true;
+          }
+
           set(
             scrutinyMessage,
             ["form", index, field].filter((x) => x != null),
             {
-              [type ? type : "FSOError"]: trimmedError,
+              ...existingField,
+              [type ? type : "FSOError"]: `${t("RECHECK")}: ${t("SCRUTINY_MESSAGE")}`,
             }
           );
           set(formData, [configKey, page], scrutinyMessage);
