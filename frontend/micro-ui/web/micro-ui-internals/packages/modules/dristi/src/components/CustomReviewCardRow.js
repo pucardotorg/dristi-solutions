@@ -294,15 +294,24 @@ const CustomReviewCardRow = ({
         }
         let witnessTitle = "";
         if (Array.isArray(value)) {
-          const extractedValues = value.map((key) => extractValue(data, key))?.filter((val) => val?.trim());
+          const extractedValues = value
+            ?.map((key) => {
+              const extractedValue = extractValue(data, key);
+              return extractedValue ? { [key]: extractedValue } : null;
+            })
+            .filter((val) => val !== null);
 
-          if (extractedValues.length === 1) {
-            witnessTitle = extractedValues[0];
-          } else if (extractedValues.length > 1) {
-            const namePart = extractedValues.slice(0, -1).join(" ");
-            const designationPart = extractedValues[extractedValues.length - 1];
+          // Extract individual parts based on the keys
+          const firstName = extractedValues.find((item) => item.firstName)?.firstName || "";
+          const middleName = extractedValues.find((item) => item.middleName)?.middleName || "";
+          const lastName = extractedValues.find((item) => item.lastName)?.lastName || "";
+          const designation = extractedValues.find((item) => item.witnessDesignation)?.witnessDesignation || "";
 
-            witnessTitle = designationPart ? `${namePart} - ${designationPart}` : namePart;
+          const parts = [firstName, middleName, lastName]?.filter(Boolean);
+          witnessTitle = parts?.join(" ");
+
+          if (designation) {
+            witnessTitle += ` - ${designation}`;
           }
         } else {
           witnessTitle = extractValue(data, value);
