@@ -19,11 +19,8 @@ import java.util.List;
 public class CauseListRepository {
 
     private CauseListQueryBuilder queryBuilder;
-
     private CauseListRowMapper rowMapper;
-
     private JdbcTemplate jdbcTemplate;
-
     private CaseTypeRowMapper caseTypeRowMapper;
 
     @Autowired

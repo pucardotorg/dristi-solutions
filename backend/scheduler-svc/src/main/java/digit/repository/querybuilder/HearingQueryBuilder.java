@@ -19,12 +19,15 @@ import static digit.config.ServiceConstants.SCHEDULE;
 public class HearingQueryBuilder {
 
     private static final String FROM_TABLES = " FROM hearing_booking hb ";
-    private final String BASE_APPLICATION_QUERY = "SELECT  hb.hearing_booking_id, hb.tenant_id, hb.court_id,hb.hearing_date, hb.judge_id, hb.case_id, hb.hearing_type, hb.title, hb.description, hb.status, hb.start_time, hb.end_time, hb.created_by,hb.last_modified_by,hb.created_time,hb.last_modified_time, hb.row_version ,hb.reschedule_request_id";
-    private final String ORDER_BY = " ORDER BY ";
-    private final String GROUP_BY = " GROUP BY ";
-    private final String LIMIT_OFFSET = " LIMIT ? OFFSET ?";
+    private static final String BASE_APPLICATION_QUERY = "SELECT  hb.hearing_booking_id, hb.tenant_id, hb.court_id,hb.hearing_date, hb.judge_id, hb.case_id, hb.hearing_type, hb.title, hb.description, hb.status, hb.start_time, hb.end_time, hb.created_by,hb.last_modified_by,hb.created_time,hb.last_modified_time, hb.row_version ,hb.reschedule_request_id";
+    private static final String LIMIT_OFFSET = " LIMIT ? OFFSET ?";
+
+    private final QueryBuilderHelper queryBuilderHelper;
+
     @Autowired
-    private QueryBuilderHelper queryBuilderHelper;
+    public HearingQueryBuilder(QueryBuilderHelper queryBuilderHelper) {
+        this.queryBuilderHelper = queryBuilderHelper;
+    }
 
     public String getHearingQuery(ScheduleHearingSearchCriteria scheduleHearingSearchCriteria, List<Object> preparedStmtList, Integer limit, Integer offset) {
 
@@ -96,18 +99,7 @@ public class HearingQueryBuilder {
             preparedStmtList.add(scheduleHearingSearchCriteria.getHearingType());
 
         }
-//        if (!ObjectUtils.isEmpty(scheduleHearingSearchCriteria.getFromDate())) {
-//            queryBuilderHelper.addClauseIfRequired(query, preparedStmtList);
-//            query.append(" TO_DATE(hb.hearing_date, 'YYYY-MM-DD')  >= ? ");
-//            preparedStmtList.add(scheduleHearingSearchCriteria.getFromDate());
-//
-//        }
-//        if (!ObjectUtils.isEmpty(scheduleHearingSearchCriteria.getToDate())) {
-//            queryBuilderHelper.addClauseIfRequired(query, preparedStmtList);
-//            query.append(" TO_DATE(hb.hearing_date, 'YYYY-MM-DD') <= ? ");
-//            preparedStmtList.add(scheduleHearingSearchCriteria.getToDate());
-//
-//        }
+
         if (!ObjectUtils.isEmpty(scheduleHearingSearchCriteria.getStartDateTime())) {
             queryBuilderHelper.addClauseIfRequired(query, preparedStmtList);
             query.append(" hb.start_time >= ? ");
