@@ -14,9 +14,6 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.sql.ResultSet;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.*;
 
 @Component
@@ -60,32 +57,32 @@ public class OrderRowMapper implements ResultSetExtractor<List<Order>> {
                             .orderCategory(rs.getString("ordercategory"))
                             .isActive(rs.getBoolean("isactive"))
                             .orderType(rs.getString("ordertype"))
-                            .createdDate(rs.getLong("createddate"))
+                            .createdDate(parseDateToLong(rs.getString("createddate")))
                             .comments(rs.getString("comments"))
                             .filingNumber(rs.getString("filingnumber"))
-                            .issuedBy(getObjectFromJson(rs.getString("issuedby"), new TypeReference<IssuedBy>() {}))
+                            .issuedBy(getObjectFromJson(rs.getString("issuedby"), new TypeReference<IssuedBy>() {
+                            }))
                             .status(rs.getString("status"))
                             .auditDetails(auditdetails)
                             .build();
                 }
                 PGobject pgObject1 = (PGobject) rs.getObject("applicationnumber");
-                if(pgObject1!=null)
-                    order.setApplicationNumber(objectMapper.readValue(pgObject1.getValue(),List.class));
+                if (pgObject1 != null)
+                    order.setApplicationNumber(objectMapper.readValue(pgObject1.getValue(), List.class));
 
                 PGobject pgObject2 = (PGobject) rs.getObject("additionaldetails");
-                if(pgObject2!=null)
+                if (pgObject2 != null)
                     order.setAdditionalDetails(objectMapper.readTree(pgObject2.getValue()));
 
                 PGobject pgObject3 = (PGobject) rs.getObject("orderDetails");
-                if(pgObject3!=null)
+                if (pgObject3 != null)
                     order.setOrderDetails(objectMapper.readTree(pgObject3.getValue()));
 
                 orderMap.put(uuid, order);
             }
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             log.error("Error occurred while processing order ResultSet :: {}", e.toString());
-            throw new CustomException("ROW_MAPPER_EXCEPTION","Error occurred while processing order ResultSet: "+ e.getMessage());
+            throw new CustomException("ROW_MAPPER_EXCEPTION", "Error occurred while processing order ResultSet: " + e.getMessage());
         }
         return new ArrayList<>(orderMap.values());
     }
@@ -102,6 +99,19 @@ public class OrderRowMapper implements ResultSetExtractor<List<Order>> {
             return objectMapper.readValue(json, typeRef);
         } catch (Exception e) {
             throw new CustomException("Failed to convert JSON to " + typeRef.getType(), e.getMessage());
+        }
+    }
+
+    private Long parseDateToLong(String dateStr) {
+        if (dateStr == null || dateStr.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return Long.valueOf(dateStr);
+        } catch (NumberFormatException e) {
+            log.error("Invalid date format: {}", dateStr);
+            throw new CustomException("INVALID_DATE_FORMAT",
+                    "Date must be a valid timestamp: " + dateStr);
         }
     }
 }
