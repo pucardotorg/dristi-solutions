@@ -409,6 +409,7 @@ const TasksComponent = ({
                   ...responseDoc,
                   additionalDetails: {
                     fileName: `Response (${data?.additionalDetails?.fullName})`,
+                    fileType: "respondent-response",
                   },
                 },
               ],
@@ -424,7 +425,7 @@ const TasksComponent = ({
           pendingTask: {
             name: "Pending Response",
             entityType: "case-default",
-            referenceId: `MANUAL_${pendingTask?.filingNumber}`,
+            referenceId: pendingTask?.referenceId,
             status: "PENDING_RESPONSE",
             assignedTo: [{ uuid: userInfo?.uuid }],
             assignedRole: ["CASE_RESPONDER"],
