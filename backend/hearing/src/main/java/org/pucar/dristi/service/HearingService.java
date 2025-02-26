@@ -448,7 +448,8 @@ public class HearingService {
                         .filter(hearing -> hearing.getId().toString().equals(schedule.getHearingBookingId()))
                         .findFirst()
                         .ifPresent(hearing -> {
-                            if(hearing.getStartTime() != schedule.getStartTime() || hearing.getEndTime() != schedule.getEndTime()){
+                            if (!Objects.equals(hearing.getStartTime(), schedule.getStartTime())
+                                    || !Objects.equals(hearing.getEndTime(), schedule.getEndTime())){
                                 log.error("Start and End time not matching for hearing: {}", schedule.getHearingBookingId());
                             } else {
                                 schedule.setExpiryTime(null);
