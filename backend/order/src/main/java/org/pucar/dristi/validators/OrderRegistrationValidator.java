@@ -302,7 +302,6 @@ public class OrderRegistrationValidator {
                             Object orderSchema = itemNode.get("orderSchema");
                             listMap.computeIfAbsent(orderType, k -> new ArrayList<>());
                             listMap.get(orderType).add(orderSchema);
-                            log.info("OrderType Map key :: {}, value :: {}", orderType, orderSchema);
                         } else {
                             throw new CustomException(ENRICHMENT_EXCEPTION, "orderType is mandatory");
                         }
