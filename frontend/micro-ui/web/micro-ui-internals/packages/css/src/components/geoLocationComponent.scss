@@ -30,11 +30,11 @@
       display: flex;
       gap: 24px;
       width: 100%;
+      .latlong-input:disabled {
+        background-color: #d9d9d9;
+      }
       .label-field-pair {
         flex: 1;
-        [class*="-card-input"]:disabled {
-          background-color: #d9d9d9;
-        }
       }
     }
   }

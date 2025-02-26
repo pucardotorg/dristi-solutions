@@ -146,6 +146,7 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
           <LabelFieldPair>
             <CardLabel>{t(config?.latitudeInput?.label)}</CardLabel>
             <TextInput
+              className={"latlong-input"}
               type={"number"}
               value={locationFormData?.[config.key]?.["latitude"] || ""}
               disabled={
@@ -172,6 +173,7 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
             <CardLabel>{t(config?.longitudeInput?.label)}</CardLabel>
             <TextInput
               type={"number"}
+              className={"latlong-input"}
               value={locationFormData?.[config.key]?.["longitude"] || ""}
               disabled={
                 locationFormData?.[config.key]?.["jurisdictionKnown"]?.code
