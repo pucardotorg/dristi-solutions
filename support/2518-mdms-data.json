@@ -17,88 +17,10 @@
                     {
                         "body": [
                             {
-                                "head": "CS_WARNING_WITNESS",
-                                "type": "component",
-                                "component": "CustomRadioInfoComponent",
-                                "key": "witnessNameAvilable",
-                                "withoutLabel": true,
-                                "isMandatory": true,
-                                "name": "witnessNameAvilable",
-                                "resetForm": true,
-                                "populators": {
-                                    "label": "CS_WARNING_WITNESS",
-                                    "type": "radioButton",
-                                    "optionsKey": "name",
-                                    "error": "CORE_REQUIRED_FIELD_ERROR",
-                                    "required": false,
-                                    "isMandatory": true,
-                                    "isDependent": true,
-                                    "options": [
-                                        {
-                                            "code": "YES",
-                                            "name": "YES",
-                                            "showName": true,
-                                            "commonFields": true,
-                                            "showDesignation": false,
-                                            "isEnabled": true
-                                        },
-                                        {
-                                            "code": "NO",
-                                            "name": "NO",
-                                            "showName": false,
-                                            "showDesignation": true,
-                                            "commonFields": true,
-                                            "isEnabled": true
-                                        }
-                                    ],
-                                    "customStyle": {
-                                        "gap": "40px",
-                                        "flexDirection": "row",
-                                        "alignItems": "center"
-                                    }
-                                }
-                            }
-                        ]
-                    },
-                    {
-                        "dependentKey": {
-                            "witnessNameAvilable": [
-                                "showDesignation"
-                            ]
-                        },
-                        "body": [
-                            {
                                 "type": "text",
-                                "label": "WITNESS_DESIGNATION",
+                                "label": "FIRST_NAME",
                                 "populators": {
-                                    "name": "witnessDesignation"
-                                }
-                            }
-                        ]
-                    },
-                    {
-                        "dependentKey": {
-                            "witnessNameAvilable": [
-                                "showName"
-                            ]
-                        },
-                        "body": [
-                            {
-                                "type": "component",
-                                "component": "CustomTextInput",
-                                "key": "firstName",
-                                "populators": {
-                                    "inputs": [
-                                        {
-                                            "label": "FIRST_NAME",
-                                            "type": "text",
-                                            "name": "firstName",
-                                            "isMandatory": true,
-                                            "styles": {
-                                                "paddingRight": "36px"
-                                            }
-                                        }
-                                    ]
+                                    "name": "firstName"
                                 }
                             },
                             {
@@ -140,6 +62,15 @@
                                 "labelChildren": "optional"
                             },
                             {
+                                "key": "OrSeparator",
+                                "type": "component",
+                                "sublabel": "OR",
+                                "component": "OrSeparator",
+                                "populators": {
+                                    "inputs": []
+                                }
+                            },
+                            {
                                 "type": "text",
                                 "label": "WITNESS_DESIGNATION",
                                 "populators": {
@@ -161,14 +92,9 @@
                                 "labelChildren": "optional"
                             }
                         ],
-                        "head": "CS_WITNESS_NAME"
+                        "head": "WITNESS_BASIC_DETAILS"
                     },
                     {
-                        "dependentKey": {
-                            "witnessNameAvilable": [
-                                "commonFields"
-                            ]
-                        },
                         "body": [
                             {
                                 "key": "phonenumbers",
@@ -206,11 +132,6 @@
                         "subHead": "CS_WITNESS_NOTE"
                     },
                     {
-                        "dependentKey": {
-                            "witnessNameAvilable": [
-                                "commonFields"
-                            ]
-                        },
                         "body": [
                             {
                                 "key": "emails",
@@ -243,11 +164,6 @@
                         "head": " "
                     },
                     {
-                        "dependentKey": {
-                            "witnessNameAvilable": [
-                                "commonFields"
-                            ]
-                        },
                         "body": [
                             {
                                 "key": "addressDetails",
@@ -309,11 +225,6 @@
                         ]
                     },
                     {
-                        "dependentKey": {
-                            "witnessNameAvilable": [
-                                "commonFields"
-                            ]
-                        },
                         "body": [
                             {
                                 "key": "witnessAdditionalDetails",

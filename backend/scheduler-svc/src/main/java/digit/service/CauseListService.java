@@ -44,31 +44,18 @@ import static digit.config.ServiceConstants.*;
 public class CauseListService {
 
     private HearingRepository hearingRepository;
-
     private CauseListRepository causeListRepository;
-
     private Producer producer;
-
     private Configuration config;
-
     private PdfServiceUtil pdfServiceUtil;
-
     private MdmsUtil mdmsUtil;
-
     private ServiceConstants serviceConstants;
-
     private HearingUtil hearingUtil;
-
     private CaseUtil caseUtil;
-
     private DateUtil dateUtil;
-
     private ObjectMapper objectMapper;
-
     private ApplicationUtil applicationUtil;
-
     private FileStoreUtil fileStoreUtil;
-
     private UserService userService;
 
     @Autowired
