@@ -60,11 +60,11 @@ public class OrderRegistrationValidator {
         if (ObjectUtils.isEmpty(orderRequest.getOrder().getStatuteSection()))
             throw new CustomException(CREATE_ORDER_ERR, "statute and section is mandatory for creating order");
 
-        if (orderRequest.getOrder().getOrderType() ==null)
+        if (orderRequest.getOrder().getOrderType() == null)
             throw new CustomException(CREATE_ORDER_ERR, "orderType is mandatory for intermediate order");
 
-        if(!ADMINISTRATIVE.equalsIgnoreCase(orderRequest.getOrder().getOrderCategory()) && !caseUtil.fetchCaseDetails(requestInfo, orderRequest.getOrder().getCnrNumber(), orderRequest.getOrder().getFilingNumber())){
-                throw new CustomException("INVALID_CASE_DETAILS", "Invalid Case");
+        if (!ADMINISTRATIVE.equalsIgnoreCase(orderRequest.getOrder().getOrderCategory()) && !caseUtil.fetchCaseDetails(requestInfo, orderRequest.getOrder().getCnrNumber(), orderRequest.getOrder().getFilingNumber())) {
+            throw new CustomException("INVALID_CASE_DETAILS", "Invalid Case");
         }
 
         //validate documents
@@ -90,7 +90,7 @@ public class OrderRegistrationValidator {
         return !orderExistsList.isEmpty() && orderExistsList.get(0).getExists();
     }
 
-    private void validateDocuments(Order order){
+    private void validateDocuments(Order order) {
         if (order.getDocuments() != null && !order.getDocuments().isEmpty()) {
             order.getDocuments().forEach(document -> {
                 if (document.getFileStore() != null) {
@@ -103,7 +103,7 @@ public class OrderRegistrationValidator {
         }
     }
 
-    private void validateMDMSDocumentTypes(OrderRequest orderRequest){
+    private void validateMDMSDocumentTypes(OrderRequest orderRequest) {
         String mdmsData = mdmsUtil.fetchMdmsData(orderRequest.getRequestInfo(), orderRequest.getOrder().getTenantId(), configuration.getOrderModule(), createMasterDetails());
 
         Object orderDetails = orderRequest.getOrder().getOrderDetails();
@@ -121,7 +121,7 @@ public class OrderRegistrationValidator {
                     // Extract 'value' from 'documentType'
                     String documentTypeValue = (String) documentType.get("value");
 
-                    List<Map<String, Object>> orderTypeResults = JsonPath.read(mdmsData, configuration.getDocumentTypePath().replace("{}",documentTypeValue));
+                    List<Map<String, Object>> orderTypeResults = JsonPath.read(mdmsData, configuration.getDocumentTypePath().replace("{}", documentTypeValue));
                     if (orderTypeResults.isEmpty()) {
                         throw new CustomException(MDMS_DATA_NOT_FOUND, "Invalid DocumentType");
                     }
@@ -172,7 +172,7 @@ public class OrderRegistrationValidator {
             //For non repeating path null
             mdmsDataConfig.getNonRepeatingOrdersMdmsData().forEach(compositeOrderMdms -> {
                 if (compositeOrderMdms.getPath() == null) {
-                    orderTypesMap.forEach((orderType, value) -> nonRepeatingPathNullValidation(compositeOrderMdms, orderType,value));
+                    orderTypesMap.forEach((orderType, value) -> nonRepeatingPathNullValidation(compositeOrderMdms, orderType, value));
                 }
             });
 
@@ -212,23 +212,19 @@ public class OrderRegistrationValidator {
 
         log.info("OrderTypeList Mdms :: {}", compositeOrderMdms.getOrderTypeList());
         log.info("OrderType :: {}", orderType);
-        log.info("OrderSchemaList :: {}" ,orderSchemaList);
+        log.info("OrderSchemaList :: {}", orderSchemaList);
 
         for (String orderTypeMdms : compositeOrderMdms.getOrderTypeList()) {
-            overlappingOrderCountPathNotNullMap.computeIfAbsent(orderType, k -> new ArrayList<>());
-
             if (orderTypeMdms.equalsIgnoreCase(orderType)) {
 
                 for (Object orderSchema : orderSchemaList) {
+
                     String pathValue = extractPathValue(compositeOrderMdms, orderSchema);
+                    if (!overlappingOrderCountPathNotNullMap.containsKey(pathValue))
+                        overlappingOrderCountPathNotNullMap.put(pathValue, compositeOrderMdms.getOrderTypeList());
 
-                    List<String> existingValues = overlappingOrderCountPathNotNullMap.get(orderType);
-
-                    if (existingValues.contains(pathValue)) {
+                    else if (overlappingOrderCountPathNotNullMap.get(pathValue).contains(orderType)) {
                         throw new CustomException(ORDER_UPDATE_EXCEPTION, "Overlapping orderTypes are not allowed for same Application Number");
-                    } else {
-                        existingValues.add(pathValue);
-                        log.info("ExistingValues :: {}", overlappingOrderCountPathNotNullMap);
                     }
                 }
             }
@@ -242,8 +238,8 @@ public class OrderRegistrationValidator {
         log.info("Validating non repeating path null for orderType :: {} and orderSchemaList :: {}", orderType, orderSchemaList);
 
         if (compositeOrderMdms.getOrderType().equalsIgnoreCase(orderType)) {
-            if(orderSchemaList.size()>1)
-             throw new CustomException(ORDER_UPDATE_EXCEPTION, "Repeating orderTypes are not allowed");
+            if (orderSchemaList.size() > 1)
+                throw new CustomException(ORDER_UPDATE_EXCEPTION, "Repeating orderTypes are not allowed");
         }
     }
 
@@ -252,7 +248,7 @@ public class OrderRegistrationValidator {
 
         log.info("OrderTypeList Mdms :: {}", compositeOrderMdms.getOrderTypeList());
         log.info("OrderType :: {}", orderType);
-        log.info("OrderSchemaList :: {}" ,orderSchemaList);
+        log.info("OrderSchemaList :: {}", orderSchemaList);
 
         if (compositeOrderMdms.getOrderType().equalsIgnoreCase(orderType)) {
             for (Object orderSchema : orderSchemaList) {
@@ -268,7 +264,7 @@ public class OrderRegistrationValidator {
                     throw new CustomException(ORDER_UPDATE_EXCEPTION, "Repeating orderTypes are not allowed for same Application Number");
                 } else {
                     existingValues.add(pathValue);
-                    log.info("Existing values :: {}",existingValues);
+                    log.info("Existing values :: {}", existingValues);
                 }
             }
         }
