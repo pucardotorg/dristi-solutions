@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { AppContainer, Loader, Toast } from "@egovernments/digit-ui-react-components";
+import { CloseSvg, Loader, Toast } from "@egovernments/digit-ui-react-components";
 import { Route, Switch, useHistory, useRouteMatch } from "react-router-dom";
 import AdvocateClerkAdditionalDetail from "./AdvocateClerkAdditionalDetail";
 import SelectUserType from "./SelectUserType";
@@ -14,6 +14,8 @@ import EnterAdhaar from "./EnterAdhaar";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import UploadIdType from "./UploadIdType";
 import TermsCondition from "./TermsCondition";
+import SelectEmail from "./SelectEmail";
+import Modal from "../../../components/Modal";
 
 const TYPE_REGISTER = { type: "REGISTER" };
 const setCitizenDetail = (userObject, token, tenantId) => {
@@ -28,6 +30,19 @@ const setCitizenDetail = (userObject, token, tenantId) => {
   localStorage.setItem("user-info", JSON.stringify(userObject));
   localStorage.setItem("Citizen.user-info", JSON.stringify(userObject));
 };
+
+const CloseBtn = (props) => {
+  return (
+    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
+      <CloseSvg />
+    </div>
+  );
+};
+
+const Heading = (props) => {
+  return <h1 className="heading-m">{props.label}</h1>;
+};
+
 const Registration = ({ stateCode }) => {
   const Digit = window.Digit || {};
   const tenantId = Digit.ULBService.getCurrentTenantId();
@@ -43,6 +58,7 @@ const Registration = ({ stateCode }) => {
   const [isUserRegistered, setIsUserRegistered] = useState(true);
   const [canSubmitOtp, setCanSubmitOtp] = useState(true);
   const [{ showOtpModal, isAdhaar }, setState] = useState({ showOtpModal: false, isAdhaar: false });
+  const [showSkipEmailModal, setShowSkipEmailModal] = useState(false);
   const getUserType = () => Digit.UserService.getType();
   const userInfoType = getUserType();
   const { t } = useTranslation();
@@ -110,13 +126,13 @@ const Registration = ({ stateCode }) => {
   const isLitigantPartialRegistered = useMemo(() => {
     if (userInfoType !== "citizen") return false;
 
-    if (!data?.Individual || data.Individual.length === 0) return false;
+    if (!data?.Individual || data?.Individual.length === 0) return false;
 
     if (data?.Individual[0]?.userDetails?.roles?.some((role) => role?.code === "ADVOCATE_ROLE")) return false;
 
-    const address = data.Individual[0]?.address;
+    const address = data?.Individual[0]?.address;
     return !address || (Array.isArray(address) && address.length === 0);
-  }, [data.Individual, userInfoType]);
+  }, [data?.Individual, userInfoType]);
 
   useEffect(() => {
     if (isLitigantPartialRegistered && data?.Individual) {
@@ -177,7 +193,7 @@ const Registration = ({ stateCode }) => {
         ...prev,
         showOtpModal: false,
       }));
-      history.push(`${path}/user-name`);
+      history.push(`${path}/email`);
     } catch (err) {
       setCanSubmitOtp(true);
       setOtpError(err?.response?.data?.error_description === "Account locked" ? t("MAX_RETRIES_EXCEEDED") : t("CS_INVALID_OTP"));
@@ -220,6 +236,10 @@ const Registration = ({ stateCode }) => {
     const { value } = event.target;
     setNewParams({ ...newParams, mobileNumber: value?.replace(/[^0-9]/g, "") });
     setIsUserRegistered(true);
+  };
+  const onSelectSkipEmail = async () => {
+    setShowSkipEmailModal(false);
+    history.push(`${path}/user-name`);
   };
   const selectName = async (name) => {
     setNewParams({ ...newParams, name });
@@ -300,6 +320,19 @@ const Registration = ({ stateCode }) => {
               className={"register"}
             />
           </Route>
+          <Route path={`${path}/email`}>
+            <SelectEmail
+              config={[stepItems[11]]}
+              t={t}
+              history={history}
+              params={newParams}
+              setNewParams={setNewParams}
+              isUserLoggedIn={isUserLoggedIn}
+              setShowSkipEmailModal={setShowSkipEmailModal}
+              stateCode={stateCode}
+              path={path}
+            />
+          </Route>
           <Route path={`${path}/user-name`}>
             <SelectName
               config={[stepItems[3]]}
@@ -354,6 +387,29 @@ const Registration = ({ stateCode }) => {
               t={t}
               setState={setState}
             />
+          )}
+          {showSkipEmailModal && (
+            <Modal
+              headerBarEnd={
+                <CloseBtn
+                  onClick={() => {
+                    setShowSkipEmailModal(false);
+                  }}
+                />
+              }
+              actionCancelOnSubmit={() => {
+                setShowSkipEmailModal(false);
+              }}
+              actionSaveLabel={t("SKIP_ANYWAY")}
+              actionCancelLabel={t("BACK")}
+              actionSaveOnSubmit={async () => onSelectSkipEmail()}
+              formId="modal-action"
+              headerBarMain={<Heading label={t("CONFIRM_SKIP_EMAIL")} />}
+              submitTextClassName={"verification-button-text-modal"}
+              className={"verify-mobile-modal"}
+            >
+              <div className="verify-mobile-modal-main">{t("ADDING_EMAIL_WILL_HELP_TEXT")}</div>
+            </Modal>
           )}
           <Route path={`${path}/user-type`}>
             <SelectUserType

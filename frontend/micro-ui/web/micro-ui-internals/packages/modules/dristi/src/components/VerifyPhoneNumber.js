@@ -8,6 +8,7 @@ import { DRISTIService } from "../services";
 import Button from "./Button";
 import Modal from "./Modal";
 import OTPInput from "./OTPInput";
+import { maskEmail } from "../Utils";
 const TYPE_REGISTER = { type: "register" };
 const TYPE_LOGIN = { type: "login" };
 const DEFAULT_USER = "digit-user";
@@ -51,6 +52,9 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
   const [timeLeft, setTimeLeft] = useState(10);
   const getUserType = () => window?.Digit.UserService.getType();
   const stateCode = window?.Digit.ULBService.getStateId();
+  const tenantId = Digit.ULBService.getCurrentTenantId();
+  const [user, setUser] = useState(null);
+
   useInterval(
     () => {
       if (showModal) setTimeLeft(timeLeft - 1);
@@ -59,6 +63,16 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
   );
 
   const input = useMemo(() => verifyMobileNoConfig?.[0]?.body?.[0]?.populators?.inputs?.[0], []);
+
+  const setUserDetails = async () => {
+    const number = formData[config.key]?.[input?.mobileNoKey] || mobileNumber;
+    if (number) {
+      const {
+        user: [user],
+      } = await Digit.UserService.userSearch(tenantId, { mobileNumber: number }, {});
+      setUser(user);
+    }
+  };
 
   const otp = useMemo(() => formData[config.key]?.[input?.name], [formData[config.key]?.[input?.name]]);
 
@@ -112,6 +126,7 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
   );
 
   useEffect(() => {
+    setUserDetails();
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
@@ -430,7 +445,8 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
                           : ` ${formData[config.key]?.[input?.mobileNoKey]}`
                         : ""
                       : ""
-                  }`}
+                  }` +
+                  `${user?.emailId ? ` and ${maskEmail(user?.emailId)}` : ""}`}
               </CardLabel>
               <div className="otp-component" style={{ width: "100%", padding: 0, gridGap: "20px" }}>
                 {input?.type === "text" && (

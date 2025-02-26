@@ -9,25 +9,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.List;
 
 @Component
 @Slf4j
 public class ReScheduleHearingQueryBuilder {
 
+    private static final String BASE_APPLICATION_QUERY = "SELECT hbr.reschedule_request_id, hbr.hearing_booking_id, hbr.tenant_id, hbr.judge_id, hbr.case_id,hbr.requester_id,hbr.reason,hbr.status, hbr.created_by,hbr.last_modified_by,hbr.created_time,hbr.last_modified_time, hbr.row_version, hbr.suggested_days , hbr.available_days, hbr.litigants, hbr.representatives  ";
+    private static final String FROM_TABLES = " FROM hearing_booking_reschedule_request hbr ";
+    private static final String ORDER_BY = " ORDER BY hbr.last_modified_time DESC";
+    private static final String LIMIT_OFFSET = " LIMIT ? OFFSET ?";
+
+
+    private final QueryBuilderHelper helper;
 
     @Autowired
-    private QueryBuilderHelper helper;
-
-    private final String BASE_APPLICATION_QUERY = "SELECT hbr.reschedule_request_id, hbr.hearing_booking_id, hbr.tenant_id, hbr.judge_id, hbr.case_id,hbr.requester_id,hbr.reason,hbr.status, hbr.created_by,hbr.last_modified_by,hbr.created_time,hbr.last_modified_time, hbr.row_version, hbr.suggested_days , hbr.available_days, hbr.litigants, hbr.representatives  ";
-
-    private static final String FROM_TABLES = " FROM hearing_booking_reschedule_request hbr ";
-
-    private final String ORDER_BY = " ORDER BY hbr.last_modified_time DESC";
-
-    private final String LIMIT_OFFSET = " LIMIT ? OFFSET ?";
+    public ReScheduleHearingQueryBuilder(QueryBuilderHelper helper) {
+        this.helper = helper;
+    }
 
     public String getReScheduleRequestQuery(ReScheduleHearingReqSearchCriteria searchCriteria, List<Object> preparedStmtList, Integer limit, Integer offset) {
         StringBuilder query = new StringBuilder(BASE_APPLICATION_QUERY);
