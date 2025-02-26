@@ -142,7 +142,7 @@ public class OrderRegistrationService {
 
             workflowUpdate(body);
 
-           // producer.push(config.getUpdateOrderKafkaTopic(), body);
+            producer.push(config.getUpdateOrderKafkaTopic(), body);
 
             return body.getOrder();
 
