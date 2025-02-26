@@ -9,6 +9,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.ServiceRequestRepository;
+import org.pucar.dristi.util.MaskUtil;
 import org.pucar.dristi.web.models.SmsTemplateData;
 import org.pucar.dristi.web.models.SMSRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -109,7 +110,10 @@ public class SmsNotificationService {
                 .locale(NOTIFICATION_ENG_LOCALE_CODE)
                 .expiryTime(System.currentTimeMillis() + 60 * 60 * 1000)
                 .message(message).build();
-        log.info("push message {}", smsRequest);
+
+        MaskUtil maskUtil = new MaskUtil();
+        log.info("operation = pushNotification, result = IN_PROGRESS, smsRequest: mobileNumber = {}, tenantId = {}, templateId = {}, contentType = {}, category = {}, locale = {}, expiryTime = {}, message = {}",
+                maskUtil.maskMobile(mobileNumber), smsRequest.getTenantId(), smsRequest.getTemplateId(), smsRequest.getContentType(), smsRequest.getCategory(), smsRequest.getLocale(), smsRequest.getExpiryTime(), smsRequest.getMessage());
 
         producer.push(config.getSmsNotificationTopic(), smsRequest);
     }
