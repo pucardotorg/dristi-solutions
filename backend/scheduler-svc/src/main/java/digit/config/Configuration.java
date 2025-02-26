@@ -236,4 +236,7 @@ public class Configuration {
 
     @Value("${egov.localization.search.endpoint}")
     private String localizationSearchEndpoint;
+
+    @Value("${egov.sms.notification.hearing.reminder.template.id}")
+    private String smsNotificationHearingReminder;
 }

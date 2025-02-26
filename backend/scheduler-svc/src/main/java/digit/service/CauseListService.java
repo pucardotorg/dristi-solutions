@@ -76,7 +76,7 @@ public class CauseListService {
                             Producer producer, Configuration config, PdfServiceUtil pdfServiceUtil,
                             MdmsUtil mdmsUtil, ServiceConstants serviceConstants, HearingUtil hearingUtil,
                             CaseUtil caseUtil, DateUtil dateUtil, ObjectMapper objectMapper, ApplicationUtil applicationUtil,
-                            FileStoreUtil fileStoreUtil, UserService userService) {
+                            FileStoreUtil fileStoreUtil, UserService userService, IndividualService individualService, SmsNotificationService notificationService) {
         this.hearingRepository = hearingRepository;
         this.causeListRepository = causeListRepository;
         this.producer = producer;
@@ -91,6 +91,8 @@ public class CauseListService {
         this.applicationUtil = applicationUtil;
         this.fileStoreUtil = fileStoreUtil;
         this.userService = userService;
+        this.individualService = individualService;
+        this.notificationService = notificationService;
     }
 
     public void updateCauseListForTomorrow() {
@@ -672,9 +674,10 @@ public class CauseListService {
                     .RequestInfo(createInternalRequestInfo())
                     .tenantId(config.getEgovStateTenantId())
                     .criteria(Collections.singletonList(criteria))
+                    .flow(FLOW_JAC)
                     .build();
 
-            JsonNode caseDetails = caseUtil.getCases(searchCaseRequest);
+            JsonNode caseDetails = caseUtil.getCases(searchCaseRequest).get(0);
 
             String messageCode = CAUSE_LIST_HEARING_MESSAGE;
 
@@ -684,8 +687,8 @@ public class CauseListService {
             Set<String> phoneNumbers = callIndividualService(requestInfo, individualIds);
 
             SmsTemplateData smsTemplateData = SmsTemplateData.builder()
-                    .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").asText() : "")
-                    .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").asText() : "")
+                    .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").textValue() : "")
+                    .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").textValue() : "")
                     .hearingDate(hearingDate)
                     .tenantId(requestInfo.getUserInfo().getTenantId()).build();
 

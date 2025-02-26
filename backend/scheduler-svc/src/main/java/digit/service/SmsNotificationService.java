@@ -56,7 +56,7 @@ public class SmsNotificationService {
     private void pushNotificationBasedOnNotificationStatus(SmsTemplateData templateData, String messageCode, String message, String mobileNumber) {
 
         if(messageCode.equalsIgnoreCase(CAUSE_LIST_HEARING_MESSAGE)){
-//            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationHearingAdjournedTemplateId());
+            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationHearingReminder());
         }
     }
 
@@ -122,11 +122,8 @@ public class SmsNotificationService {
      * @return
      */
     public String buildMessage(Map<String, String> userDetailsForSMS, String message) {
-        message = message.replace("{{cnr}}", Optional.ofNullable(userDetailsForSMS.get("courtCaseNumber")).orElse(""))
-                .replace("{{link}}", Optional.ofNullable(userDetailsForSMS.get("link")).orElse(""))
-                .replace("{{cmpNumber}}", Optional.ofNullable(userDetailsForSMS.get("cmpNumber")).orElse(""))
-                .replace("{{hearingDate}}", Optional.ofNullable(userDetailsForSMS.get("hearingDate")).orElse(""))
-                .replace("{{hearingType}}",Optional.ofNullable(userDetailsForSMS.get("hearingType")).orElse(""));
+        message = message.replace("{{courtCaseNumber}}", Optional.ofNullable(userDetailsForSMS.get("courtCaseNumber")).orElse(userDetailsForSMS.get("cmpNumber")))
+                .replace("{{hearingDate}}", Optional.ofNullable(userDetailsForSMS.get("hearingDate")).orElse(""));
         return message;
     }
 
