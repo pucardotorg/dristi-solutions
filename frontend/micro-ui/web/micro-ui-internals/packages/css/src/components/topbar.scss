@@ -155,6 +155,8 @@ video::-webkit-media-controls-panel {
   right: -0.5rem !important;
 }
 
-.select-wrap .options-card {
-  width: max-content !important;
+.navbar {
+  .select-wrap .options-card {
+    width: max-content !important;
+  }
 }

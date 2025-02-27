@@ -418,7 +418,12 @@ const TasksComponent = ({
         }),
       };
     }
-    const response = await updateCaseDetails(newCase, tenantId, "RESPOND");
+    let response;
+    try {
+      response = await updateCaseDetails(newCase, tenantId, "RESPOND");
+    } catch (error) {
+      console.error("error :>> ", error);
+    }
     if (response) {
       try {
         await DRISTIService.customApiService(Urls.pendingTask, {
@@ -482,6 +487,7 @@ const TasksComponent = ({
           actionSaveOnSubmit: async () => {
             await submitResponse(responseDoc);
           },
+          async: true,
           isDisabled: responseDoc?.fileStore ? false : true,
         },
         {
