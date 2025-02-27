@@ -239,6 +239,7 @@ const Registration = ({ stateCode }) => {
   };
   const onSelectSkipEmail = async () => {
     setShowSkipEmailModal(false);
+    setNewParams({ ...newParams, isSkip: true });
     history.push(`${path}/user-name`);
   };
   const selectName = async (name) => {
@@ -291,7 +292,7 @@ const Registration = ({ stateCode }) => {
   if (isLoading || isFetching) {
     return <Loader />;
   }
-  const pathOnRefresh = `${path}/user-name`;
+  const pathOnRefresh = `${path}/email`;
   return (
     <div className="citizen-form-wrapper">
       <Switch>

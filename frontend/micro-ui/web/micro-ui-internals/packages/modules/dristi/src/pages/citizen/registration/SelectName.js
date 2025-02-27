@@ -1,7 +1,7 @@
 import { FormComposerV2, Toast } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
 
-const SelectName = ({ config, t, onSubmit, isDisabled, params, history, value, isUserLoggedIn, isLitigantPartialRegistered }) => {
+const SelectName = ({ config, t, onSubmit, isDisabled, params, history, value, isUserLoggedIn, pathOnRefresh, isLitigantPartialRegistered }) => {
   const [showErrorToast, setShowErrorToast] = useState(false);
 
   const closeToast = () => {
@@ -18,6 +18,10 @@ const SelectName = ({ config, t, onSubmit, isDisabled, params, history, value, i
 
   if (!params?.mobileNumber && !isUserLoggedIn) {
     history.push("/digit-ui/citizen/dristi/home/login");
+  }
+
+  if (!params?.isSkip && !params?.email) {
+    history.push(pathOnRefresh);
   }
 
   const onFormValueChange = (setValue, formData, formState) => {

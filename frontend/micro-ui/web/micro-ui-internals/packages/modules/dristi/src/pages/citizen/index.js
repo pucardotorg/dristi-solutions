@@ -164,7 +164,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     <div className={"pt-citizen"}>
       <Switch>
         <React.Fragment>
-          {!hideBack && !(location.pathname.includes("/login") || location.pathname.includes("/registration/user-name") || individualId) && (
+          {!hideBack && !(location.pathname.includes("/login") || location.pathname.includes("/registration/email") || individualId) && (
             <div className="back-button-home">
               <BackButton />
             </div>
