@@ -40,6 +40,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -334,41 +335,66 @@ public class CaseService {
 
             log.info("Method=checkItsLastResponse, Result= IN_ProgressChecking if its last response by accused advocates {}", caseRequest.getCases().getId());
 
-            AtomicReference<Boolean> lastSubmittedResponse = new AtomicReference<>(true);
-
             CourtCase cases = caseRequest.getCases();
 
-            Optional.ofNullable(cases.getLitigants()).orElse(Collections.emptyList()).forEach(party -> {
-                        if (party.getIsActive() && party.getIsResponseRequired()) {
-                            AtomicBoolean hasThisAccusedSubmittedResponse = new AtomicBoolean(false);
+            int noOfAccused = getNoOfAccused(cases.getAdditionalDetails());
+            log.info("No of Accused :: {}", noOfAccused);
 
-                            Optional.ofNullable(party.getDocuments()).orElse(Collections.emptyList()).forEach(document -> {
-                                ObjectNode additionalDetails = objectMapper.convertValue(document.getAdditionalDetails(), ObjectNode.class);
+            List<Party> noOfAccusedJoined = Optional.ofNullable(cases.getLitigants()).orElse(Collections.emptyList()).stream()
+                    .filter(party -> party.getIsActive() && party.getPartyType().contains(ACCUSED_PARTY_TYPE)).toList();
 
-                                if (additionalDetails.has(FILE_TYPE)) {
-                                    String fileType = additionalDetails.get(FILE_TYPE).asText();
-                                    if (StringUtils.equalsIgnoreCase(RESPONDENT_RESPONSE, fileType)) {
-                                        hasThisAccusedSubmittedResponse.set(true);
-                                    }
-                                }
-                            });
+            log.info("No of accused joined :: {}",noOfAccusedJoined.size());
+            if (noOfAccusedJoined.size() != noOfAccused) {
+                return;
+            }
 
-                            //TO DO--> Optimize for not checking with all the litigants once hasThisAccusedSubmittedResponse is false for a litigant
-                            if (!hasThisAccusedSubmittedResponse.get())
-                                lastSubmittedResponse.set(false);
+            for (Party party : noOfAccusedJoined) {
+                if (party.getIsActive() && party.getIsResponseRequired()) {
+                    log.info("Checking if accused with individualId :: {} has submitted response",party.getIndividualId());
+
+                    boolean hasThisAccusedSubmittedResponse = false;
+
+                    for (Document document : Optional.ofNullable(party.getDocuments()).orElse(Collections.emptyList())) {
+                        ObjectNode additionalDetails = objectMapper.convertValue(document.getAdditionalDetails(), ObjectNode.class);
+
+                        if (additionalDetails.has(FILE_TYPE)) {
+                            String fileType = additionalDetails.get(FILE_TYPE).asText();
+                            if (StringUtils.equalsIgnoreCase(RESPONDENT_RESPONSE, fileType)) {
+                                log.info("Party with individualId :: {} has submitted response", party.getIndividualId());
+                                hasThisAccusedSubmittedResponse = true;
+                                break;
+                            }
                         }
                     }
-            );
 
+                    if (!hasThisAccusedSubmittedResponse) {
+                        log.info("Party with individualId :: {} has not submitted response", party.getIndividualId());
+                        return;
+                    }
+                }
+            }
 
-            if (lastSubmittedResponse.get()) {
-                log.info("Last response submitted by accused for case {}", caseRequest.getCases().getId());
-                caseRequest.getRequestInfo().getUserInfo().getRoles().add(Role.builder().id(123L).code(SYSTEM).name(SYSTEM).tenantId(caseRequest.getCases().getTenantId()).build());
-                caseRequest.getCases().getWorkflow().setAction(RESPONSE_COMPLETE);
-                log.info("Updating workflow status for case {} in last response submission", caseRequest.getCases().getId());
-                workflowService.updateWorkflowStatus(caseRequest);
+            log.info("Last response submitted by accused for case {}", caseRequest.getCases().getId());
+            caseRequest.getRequestInfo().getUserInfo().getRoles().add(Role.builder().id(123L).code(SYSTEM).name(SYSTEM).tenantId(caseRequest.getCases().getTenantId()).build());
+            caseRequest.getCases().getWorkflow().setAction(RESPONSE_COMPLETE);
+            log.info("Updating workflow status for case {} in last response submission", caseRequest.getCases().getId());
+            workflowService.updateWorkflowStatus(caseRequest);
+        }
+    }
+
+    private int getNoOfAccused(Object additionalDetails) {
+        int noOfAccused =0;
+        ObjectNode detailsNode = objectMapper.convertValue(additionalDetails, ObjectNode.class);
+
+        if (detailsNode.has("respondentDetails")) {
+            ObjectNode respondentDetails = (ObjectNode) detailsNode.get("respondentDetails");
+
+            if (respondentDetails.has("formdata") && respondentDetails.get("formdata").isArray()) {
+                ArrayNode formData = (ArrayNode) respondentDetails.get("formdata");
+                noOfAccused = formData.size();
             }
         }
+        return noOfAccused;
     }
 
     public CourtCase editCase(CaseRequest caseRequest) {
