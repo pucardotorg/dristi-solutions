@@ -1,6 +1,7 @@
 package digit.enrichment;
 
 
+import digit.config.Configuration;
 import digit.models.coremodels.AuditDetails;
 import digit.repository.HearingRepository;
 import digit.util.DateUtil;
@@ -24,11 +25,13 @@ public class HearingEnrichment {
 
     private final HearingRepository repository;
     private final DateUtil dateUtil;
+    private final Configuration configuration;
 
     @Autowired
-    public HearingEnrichment(HearingRepository repository, DateUtil dateUtil) {
+    public HearingEnrichment(HearingRepository repository, DateUtil dateUtil, Configuration configuration) {
         this.repository = repository;
         this.dateUtil = dateUtil;
+        this.configuration = configuration;
     }
 
 
@@ -170,12 +173,15 @@ public class HearingEnrichment {
         log.info("operation = enrichBulkReschedule, result=IN_PROGRESS");
         List<ScheduleHearing> hearing = request.getHearing();
 
+
+        String uuid = request.getRequestInfo().getUserInfo().getUuid();
+        Long currentTime = System.currentTimeMillis();
         hearing.forEach((element) -> {
 
-            Long currentTime = System.currentTimeMillis();
             element.getAuditDetails().setLastModifiedTime(currentTime);
-            element.getAuditDetails().setLastModifiedBy(request.getRequestInfo().getUserInfo().getUuid());
+            element.getAuditDetails().setLastModifiedBy(uuid);
             element.setRowVersion(element.getRowVersion() + 1);
+            element.setExpiryTime(element.getAuditDetails().getLastModifiedTime() + configuration.getExpiryIntervalMiliSeconds());
 
         });
 

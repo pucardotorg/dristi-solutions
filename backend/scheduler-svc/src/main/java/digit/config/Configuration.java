@@ -219,4 +219,7 @@ public class Configuration {
 
     @Value("${egov.advocate.path}")
     private String advocatePath;
+
+    @Value("${hearing.expiry.interval.miliseconds}")
+    private Integer expiryIntervalMiliSeconds;
 }

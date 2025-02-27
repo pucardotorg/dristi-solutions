@@ -5,13 +5,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.ServiceRequestRepository;
-import org.pucar.dristi.web.models.BulkRescheduleRequest;
-import org.pucar.dristi.web.models.BulkRescheduleResponse;
-import org.pucar.dristi.web.models.ScheduleHearing;
+import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Component
 @Slf4j
@@ -20,12 +21,13 @@ public class SchedulerUtil {
     private final ServiceRequestRepository repository;
     private final Configuration configuration;
     private final ObjectMapper mapper;
-
+    private final RestTemplate restTemplate;
     @Autowired
-    public SchedulerUtil(ServiceRequestRepository repository, Configuration configuration, ObjectMapper mapper) {
+    public SchedulerUtil(ServiceRequestRepository repository, Configuration configuration, ObjectMapper mapper, RestTemplate restTemplate) {
         this.repository = repository;
         this.configuration = configuration;
         this.mapper = mapper;
+        this.restTemplate = restTemplate;
     }
 
     public List<ScheduleHearing> callBulkReschedule(BulkRescheduleRequest request) {
@@ -45,5 +47,32 @@ public class SchedulerUtil {
         }
         return result;
 
+    }
+
+    public List<ScheduleHearing> getScheduledHearings(ScheduleHearingSearchRequest request) {
+        StringBuilder uri = new StringBuilder();
+        uri.append(configuration.getSchedulerHost()).append(configuration.getSchedulerSearchEndpoint());
+        Object response = repository.fetchResult(uri, request);
+        List<ScheduleHearing> scheduleHearings;
+        try {
+            ScheduleHearingSearchResponse searchResponse = mapper.convertValue(response, ScheduleHearingSearchResponse.class);
+            scheduleHearings = searchResponse.getHearings();
+        } catch (Exception e){
+            log.error("Error occurred while getting scheduled hearings.");
+            throw new CustomException("ERR_SCHEDULER_EXCEPTION", "Error occurred while getting scheduled hearings.");
+        }
+        return scheduleHearings;
+    }
+
+    public void updateScheduleHearings(ScheduleHearingUpdateRequest request) {
+        StringBuilder uri = new StringBuilder();
+        uri.append(configuration.getSchedulerHost()).append(configuration.getSchedulerUpdateEndpoint());
+        Object response = new HashMap<>();
+        try {
+            response = restTemplate.postForEntity(uri.toString(), request, Map.class);
+        } catch (Exception e) {
+            log.error("Error updating time for hearing in Scheduler :: {}", e.getMessage());
+            throw new CustomException("Error updating time for hearing in Scheduler.", e.getMessage());
+        }
     }
 }

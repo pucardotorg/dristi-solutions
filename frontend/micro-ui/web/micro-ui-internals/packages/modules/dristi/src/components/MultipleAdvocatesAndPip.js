@@ -966,10 +966,23 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
               />
             </div>
           }
+          {advocateAndPipData?.multipleAdvocateNameDetails &&
+            advocateAndPipData?.multipleAdvocateNameDetails.length > 0 &&
+            !advocateAndPipData?.multipleAdvocateNameDetails.every((item) => Object.keys(item).length === 0) && (
+              <div className="custom-note-main-div advocate-document-info" style={{ marginBottom: "24px" }}>
+                <div className="custom-note-heading-div">
+                  <CustomErrorTooltip message={t("ADVOCATE_DETAIL_INFO_TOOLTIP")} showTooltip={true} />
+                  <h2>{t(noteInput?.infoHeader)}</h2>
+                </div>
+                <div className="custom-note-info-div">
+                  <p>{`${t("ADVOCATE_DETAIL_INFO_TOOLTIP")} `}</p>
+                </div>
+              </div>
+            )}
         </div>
       )}
       {advocateAndPipData?.showAffidavit && (
-        <div className="custom-note-main-div">
+        <div className="custom-note-main-div advocate-document-info" style={{ marginBottom: "24px" }}>
           <div className="custom-note-heading-div">
             <CustomErrorTooltip
               message={t(noteInput?.infoTooltipMessage)}

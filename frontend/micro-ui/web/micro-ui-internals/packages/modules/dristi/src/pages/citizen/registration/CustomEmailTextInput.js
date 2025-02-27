@@ -77,7 +77,7 @@ function CustomEmailTextInput({ t, config, onSelect, formData = {}, errors, setE
             </div>
             {errors[input?.name] && (
               <CardLabelError style={{ color: "red", fontSize: "12px" }}>
-                {errors[input?.name]?.message ? errors[input?.name]?.message : t(errors[input?.name]) || t(input?.error)}
+                {errors[input?.name]?.message ? t(errors[input?.name]?.message) : t(errors[input?.name]) || t(input?.error)}
               </CardLabelError>
             )}{" "}
           </div>
