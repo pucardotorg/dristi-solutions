@@ -618,7 +618,7 @@ const GenerateOrders = () => {
                   ...field,
                   populators: {
                     ...field.populators,
-                    options: [...complainants, ...respondents],
+                    options: [...complainants],
                   },
                 };
               }
@@ -627,7 +627,7 @@ const GenerateOrders = () => {
                   ...field,
                   populators: {
                     ...field.populators,
-                    options: [...complainants, ...respondents],
+                    options: [...respondents],
                   },
                 };
               }
@@ -2608,6 +2608,25 @@ const GenerateOrders = () => {
                     tenantId,
                   },
                 });
+                const closePendingResponse = respondents?.map((user) =>
+                  DRISTIService.customApiService(Urls.orders.pendingTask, {
+                    pendingTask: {
+                      name: "Pending Response",
+                      entityType: "case-default",
+                      referenceId: `MANUAL_PENDING_RESPONSE_${caseDetails?.filingNumber}_${user?.individualId}`,
+                      status: "PENDING_RESPONSE",
+                      assignedTo: [],
+                      assignedRole: ["CASE_RESPONDER"],
+                      cnrNumber: caseDetails?.cnrNumber,
+                      filingNumber: caseDetails?.filingNumber,
+                      isCompleted: true,
+                      stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
+                      additionalDetails: {},
+                      tenantId,
+                    },
+                  })
+                );
+                Promise.all(closePendingResponse);
               } catch (error) {
                 console.error("error :>> ", error);
               }

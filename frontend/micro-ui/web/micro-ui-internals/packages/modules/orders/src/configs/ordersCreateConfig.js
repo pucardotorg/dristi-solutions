@@ -256,61 +256,35 @@ export const configsOrderSection202CRPC = [
         populators: { name: "filingYear", hideInForm: true },
       },
       {
-        label: "APPLICATION_FILLED_BY",
+        label: "COMPLAINANT",
         isMandatory: true,
         key: "applicationFilledBy",
         schemaKeyPath: "orderDetails.applicationFilledBy",
         transformer: "customDropdown",
-        type: "radio",
+        type: "dropdown",
         populators: {
           name: "applicationFilledBy",
           optionsKey: "name",
           error: "CORE_REQUIRED_FIELD_ERROR",
           required: true,
           isMandatory: true,
-          options: [
-            {
-              code: "COMPLAINANT_1",
-              name: "COMPLAINANT_1",
-            },
-            {
-              code: "COMPLAINANT_2",
-              name: "COMPLAINANT_2",
-            },
-            {
-              code: "COMPLAINANT_3",
-              name: "COMPLAINANT_3",
-            },
-          ],
+          options: [],
         },
       },
       {
-        label: "DETAILS_SEEKED_OF",
+        label: "CS_RESPONDENT",
         isMandatory: true,
         key: "detailsSeekedOf",
         schemaKeyPath: "orderDetails.soughtOfDetails",
         transformer: "customDropdown",
-        type: "radio",
+        type: "dropdown",
         populators: {
           name: "detailsSeekedOf",
           optionsKey: "name",
           error: "CORE_REQUIRED_FIELD_ERROR",
           required: true,
           isMandatory: true,
-          options: [
-            {
-              code: "RESPONDANT_1",
-              name: "RESPONDANT_1",
-            },
-            {
-              code: "RESPONDANT_2",
-              name: "RESPONDANT_2",
-            },
-            {
-              code: "RESPONDANT_3",
-              name: "RESPONDANT_3",
-            },
-          ],
+          options: [],
         },
       },
     ],
