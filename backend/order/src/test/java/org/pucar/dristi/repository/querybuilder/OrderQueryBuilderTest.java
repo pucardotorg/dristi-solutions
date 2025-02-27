@@ -67,7 +67,7 @@ class OrderQueryBuilderTest {
 
         assertNotNull(query);
         assertFalse(preparedStmt.isEmpty());
-        assertEquals(8, preparedStmt.size());
+        assertEquals(16, preparedStmt.size());
     }
 
     @Test
