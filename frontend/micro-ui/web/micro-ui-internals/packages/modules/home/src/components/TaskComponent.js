@@ -409,6 +409,7 @@ const TasksComponent = ({
                   ...responseDoc,
                   additionalDetails: {
                     fileName: `Response (${data?.additionalDetails?.fullName})`,
+                    fileType: "respondent-response",
                   },
                 },
               ],
@@ -417,14 +418,19 @@ const TasksComponent = ({
         }),
       };
     }
-    const response = await updateCaseDetails(newCase, tenantId, "RESPOND");
+    let response;
+    try {
+      response = await updateCaseDetails(newCase, tenantId, "RESPOND");
+    } catch (error) {
+      console.error("error :>> ", error);
+    }
     if (response) {
       try {
         await DRISTIService.customApiService(Urls.pendingTask, {
           pendingTask: {
             name: "Pending Response",
             entityType: "case-default",
-            referenceId: `MANUAL_${pendingTask?.filingNumber}`,
+            referenceId: pendingTask?.referenceId,
             status: "PENDING_RESPONSE",
             assignedTo: [{ uuid: userInfo?.uuid }],
             assignedRole: ["CASE_RESPONDER"],
@@ -481,6 +487,7 @@ const TasksComponent = ({
           actionSaveOnSubmit: async () => {
             await submitResponse(responseDoc);
           },
+          async: true,
           isDisabled: responseDoc?.fileStore ? false : true,
         },
         {
