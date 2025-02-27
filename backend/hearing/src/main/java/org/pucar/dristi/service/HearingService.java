@@ -358,10 +358,14 @@ public class HearingService {
         List<ScheduleHearing> scheduleHearings = schedulerUtil.callBulkReschedule(request);
 
         Map<String, Hearing> scheduleHearingMap = hearingsToReschedule.stream().collect(Collectors.toMap(Hearing::getHearingId, obj -> obj));
-        for (ScheduleHearing hearing : scheduleHearings) {
-            if (scheduleHearingMap.containsKey(hearing.getHearingBookingId())) {
-                Hearing scheduleHearing = scheduleHearingMap.get(hearing.getHearingBookingId());
-                hearing.setOriginalHearingDate(scheduleHearing.getStartTime());
+        for (ScheduleHearing scheduleHearing : scheduleHearings) {
+            if (scheduleHearingMap.containsKey(scheduleHearing.getHearingBookingId())) {
+                Hearing hearing = scheduleHearingMap.get(scheduleHearing.getHearingBookingId());
+                scheduleHearing.setOriginalHearingDate(hearing.getStartTime());
+                scheduleHearing.setCaseId(hearing.getCmpNumber());
+                scheduleHearing.setJudgeIds(hearing.getPresidedBy().getJudgeID());
+
+                // todo: check for case title
             }
         }
 
