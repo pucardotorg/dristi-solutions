@@ -19,7 +19,6 @@ const requiredFields = [
   "endTime",
   "slotIds",
   "reason",
-  "reasonForRescheduling",
 ];
 
 // compare time and return slots
