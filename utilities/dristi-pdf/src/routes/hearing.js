@@ -40,8 +40,11 @@ router.post(
           await hearingBulkReschedule(req, res, qrCode);
           break;
         default:
-          // no genric for hearing
-          break;
+          return renderError(
+            res,
+            `Unsupported hearing PDF type: ${hearingPdfType}`,
+            400
+          );
       }
     } catch (error) {
       renderError(
