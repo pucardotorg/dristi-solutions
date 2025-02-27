@@ -14,9 +14,7 @@ import org.springframework.stereotype.Component;
 public class ApplicationUtil {
 
     private final Configuration config;
-
     private final ServiceRequestRepository requestRepository;
-
     private final ObjectMapper mapper;
 
     @Autowired

@@ -281,6 +281,83 @@ const CustomReviewCardRow = ({
             )}
           </div>
         );
+      case "witnessTitle":
+        const witnessTitleError = dataError?.witnessTitle?.FSOError;
+        const witnessPrevTitleError = prevDataError?.witnessTitle?.FSOError;
+        if (isPrevScrutiny && !witnessPrevTitleError && !disableScrutiny) {
+          showFlagIcon = false;
+        }
+        let witnessTitle = "";
+        if (Array.isArray(value)) {
+          const extractedValues = value.map((key) => extractValue(data, key))?.filter((val) => val?.trim());
+
+          if (extractedValues.length === 1) {
+            witnessTitle = extractedValues[0];
+          } else if (extractedValues.length > 1) {
+            const namePart = extractedValues.slice(0, -1).join(" ");
+            const designationPart = extractedValues[extractedValues.length - 1];
+
+            witnessTitle = designationPart ? `${namePart} - ${designationPart}` : namePart;
+          }
+        } else {
+          witnessTitle = extractValue(data, value);
+        }
+        bgclassname = isScrutiny && witnessTitleError ? (witnessTitleError === witnessPrevTitleError ? "preverror" : "error") : "";
+        bgclassname = witnessTitleError && isCaseReAssigned ? "preverrorside" : bgclassname;
+        return (
+          <div className={`title-main ${bgclassname}`}>
+            <div className={`title ${isScrutiny && (dataError ? "column" : "")}`}>
+              <div style={{ display: "flex", flexDirection: "row", gap: "8px", alignItems: "center" }}>
+                {`${titleIndex}. ${titleHeading ? t("CS_CHEQUE_NO") + " " : prefix ? prefix + " " : ""}${witnessTitle || t("")}`}
+                {data?.partyInPerson && <div style={badgeStyle}>{t("PARTY_IN_PERSON_TEXT")}</div>}
+              </div>
+              {badgeType && <div>{extractValue(data, badgeType)}</div>}
+
+              {showFlagIcon && (
+                <div
+                  className="flag"
+                  onClick={(e) => {
+                    handleOpenPopup(
+                      e,
+                      configKey,
+                      name,
+                      dataIndex,
+                      Array.isArray(value) ? type : value,
+                      Array.isArray(value) ? [...value, type] : [value, type]
+                    );
+                  }}
+                  key={dataIndex}
+                >
+                  {/* {badgeType && <div>{extractValue(data, badgeType)}</div>} */}
+                  {witnessTitleError ? (
+                    <React.Fragment>
+                      <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`Click`}>
+                        {" "}
+                        <EditPencilIcon />
+                      </span>
+                      <ReactTooltip id={`Click`} place="bottom" content={t("CS_CLICK_TO_EDIT") || ""}>
+                        {t("CS_CLICK_TO_EDIT")}
+                      </ReactTooltip>
+                    </React.Fragment>
+                  ) : (
+                    <FlagIcon />
+                  )}
+                </div>
+              )}
+            </div>
+            {witnessTitleError && isScrutiny && (
+              <div className="scrutiny-error input">
+                {bgclassname === "preverror" ? (
+                  <span style={{ color: "#4d83cf", fontWeight: 300 }}>{t("CS_PREVIOUS_ERROR")}</span>
+                ) : (
+                  <FlagIcon isError={true} />
+                )}
+
+                {witnessTitleError}
+              </div>
+            )}
+          </div>
+        );
       case "text":
         const textValue = extractValue(data, value);
         const dependentOnValue = extractValue(data, textDependentOn);

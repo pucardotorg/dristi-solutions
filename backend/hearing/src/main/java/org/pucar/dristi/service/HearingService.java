@@ -9,6 +9,7 @@ import net.minidev.json.JSONArray;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.models.individual.Individual;
 import org.egov.tracer.model.CustomException;
+import org.jetbrains.annotations.NotNull;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.HearingRegistrationEnrichment;
 import org.pucar.dristi.kafka.Producer;
@@ -85,7 +86,6 @@ public class HearingService {
             workflowService.updateWorkflowStatus(body);
 
             // Push the application to the topic for persister to listen and persist
-
             producer.push(config.getHearingCreateTopic(), body);
 
             return body.getHearing();
@@ -358,19 +358,18 @@ public class HearingService {
 
         List<ScheduleHearing> scheduleHearings = schedulerUtil.callBulkReschedule(request);
 
-        Map<String, ScheduleHearing> scheduleHearingMap = scheduleHearings.stream().collect(Collectors.toMap(ScheduleHearing::getHearingBookingId, obj -> obj));
-        for (Hearing hearing : hearingsToReschedule) {
-            if (scheduleHearingMap.containsKey(hearing.getHearingId())) {
-                ScheduleHearing scheduleHearing = scheduleHearingMap.get(hearing.getHearingId());
-                hearing.setStartTime(scheduleHearing.getStartTime());
-                hearing.setEndTime(scheduleHearing.getEndTime());
-                hearing.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
-                hearing.getAuditDetails().setLastModifiedBy(requestInfo.getUserInfo().getUuid());
+        Map<String, Hearing> scheduleHearingMap = hearingsToReschedule.stream().collect(Collectors.toMap(Hearing::getHearingId, obj -> obj));
+        for (ScheduleHearing scheduleHearing : scheduleHearings) {
+            if (scheduleHearingMap.containsKey(scheduleHearing.getHearingBookingId())) {
+                Hearing hearing = scheduleHearingMap.get(scheduleHearing.getHearingBookingId());
+                scheduleHearing.setOriginalHearingDate(hearing.getStartTime());
+                scheduleHearing.setCaseId(hearing.getCmpNumber());
+                scheduleHearing.setJudgeIds(hearing.getPresidedBy().getJudgeID());
+
+                // todo: check for case title
             }
         }
-        UpdateTimeRequest reschedule = UpdateTimeRequest.builder().requestInfo(requestInfo).hearings(hearingsToReschedule).build();
 
-        producer.push(config.getBulkRescheduleTopic(),reschedule);
         return scheduleHearings;
     }
 
@@ -433,5 +432,65 @@ public class HearingService {
 
     }
 
+    public List<Hearing> updateBulkHearing(HearingUpdateBulkRequest request) {
+        try {
+            log.info("operation=updateBulkHearing, status=IN_PROGRESS");
+            List<Hearing> hearingList = request.getHearings();
+            List<Hearing> updatedBulkHearings = getExistingHearings(hearingList);
+            if(!updatedBulkHearings.isEmpty())
+                request.setHearings(updatedBulkHearings);
+            List<ScheduleHearing> scheduleHearings = getScheduledHearings(updatedBulkHearings, request.getRequestInfo());
 
+            scheduleHearings.forEach(schedule -> {
+                updatedBulkHearings.stream()
+                        .filter(hearing -> hearing.getId().toString().equals(schedule.getHearingBookingId()))
+                        .findFirst()
+                        .ifPresent(hearing -> {
+                            if (!Objects.equals(hearing.getStartTime(), schedule.getStartTime())
+                                    || !Objects.equals(hearing.getEndTime(), schedule.getEndTime())){
+                                log.error("Start and End time not matching for hearing: {}", schedule.getHearingBookingId());
+                            } else {
+                                schedule.setExpiryTime(null);
+                            }
+                        });
+            });
+
+            updateSchedulerHearings(scheduleHearings, request.getRequestInfo());
+            log.info("operation=updateBulkHearing, status=SUCCESS");
+            producer.push(config.getBulkRescheduleTopic(), request);
+            return updatedBulkHearings;
+        } catch (Exception e) {
+            log.error("operation=updateBulkHearing, status=FAILURE, message={}", e.getMessage());
+            throw new CustomException(HEARING_UPDATE_EXCEPTION, "Error occurred while updating hearing in bulk: " + e.getMessage());
+        }
+    }
+
+    private void updateSchedulerHearings(List<ScheduleHearing> scheduleHearings, @Valid RequestInfo requestInfo) {
+        ScheduleHearingUpdateRequest request = ScheduleHearingUpdateRequest.builder().requestInfo(requestInfo)
+                .scheduleHearings(scheduleHearings).build();
+        schedulerUtil.updateScheduleHearings(request);
+    }
+
+    private List<ScheduleHearing> getScheduledHearings(List<Hearing> hearingList, @Valid RequestInfo requestInfo) {
+        List<String> hearingIds = hearingList.stream().map(Hearing::getHearingId).toList();
+        ScheduleHearingSearchRequest request = ScheduleHearingSearchRequest.builder().requestInfo(requestInfo).
+                criteria(ScheduleHearingSearchCriteria.builder().hearingIds(hearingIds).build())
+                .build();
+
+        return schedulerUtil.getScheduledHearings(request);
+    }
+
+    @NotNull
+    private List<Hearing> getExistingHearings(List<Hearing> hearingList) {
+        List<Hearing> updatedBulkHearings = new ArrayList<>();
+        for(Hearing hearing : hearingList) {
+            Hearing existingHearing = hearingRepository.checkHearingsExist(hearing).get(0);
+            if(existingHearing == null) {
+                log.error("Hearing does not present for hearingId :: {}", hearing.getHearingId());
+                continue;
+            }
+            updatedBulkHearings.add(hearing);
+        }
+        return updatedBulkHearings;
+    }
 }

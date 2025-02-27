@@ -37,11 +37,12 @@ const OrderPreviewOrderTypeMap = {
   SECTION_202_CRPC: "order-202-crpc",
   CHECKOUT_ACCEPTANCE: "order-accept-checkout-request",
   CHECKOUT_REJECT: "order-reject-checkout-request",
-  ADMIT_DISMISS_CASE: "order-acceptance-rejection-case",
   ACCEPTANCE_REJECTION_DCA: "order-acceptance-rejection-dca",
   SET_BAIL_TERMS: "order-set-terms-of-bail",
   REJECT_BAIL: "order-bail-rejection",
   ACCEPT_BAIL: "order-bail-acceptance",
+  ADMIT_CASE: "order-admit-case",
+  DISMISS_CASE: "order-dismiss-case",
 };
 
 const orderPDFMap = {
