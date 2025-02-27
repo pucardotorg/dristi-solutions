@@ -177,7 +177,7 @@ class CaseOverallStatusUtilTest {
     }
 
     @Test
-    void testCheckCaseOverAllStatusUnsupportedEntityType() throws JSONException {
+    void testCheckCaseOverAllStatusUnsupportedEntityType() throws JSONException, JsonProcessingException {
         // Prepare test data
         String entityType = "unsupported";
         String referenceId = "123";
