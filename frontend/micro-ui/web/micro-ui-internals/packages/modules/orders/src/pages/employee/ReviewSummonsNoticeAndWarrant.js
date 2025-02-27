@@ -199,7 +199,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
               ...(typeof task?.taskDetails === "string" ? JSON.parse(task?.taskDetails) : task?.taskDetails),
               deliveryChannels: {
                 ...task?.taskDetails?.deliveryChannels,
-                statusChangeDate: updateStatusDate,
+                statusChangeDate: updateStatusDate
+                  ? updateStatusDate
+                  : convertToDateInputFormat(rowData?.taskDetails?.deliveryChannels?.statusChangeDate),
               },
               remarks: {
                 remark: remarks,
