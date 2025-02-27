@@ -337,24 +337,21 @@ public class CaseService {
 
             CourtCase cases = caseRequest.getCases();
 
-            int noOfResponseRequired = 0;
+            int noOfAccused = getNoOfAccused(cases.getAdditionalDetails());
+            log.info("No of Accused :: {}", noOfAccused);
 
-            // Convert the Objects to ObjectNodes for easier manipulation
-            ObjectNode detailsNode = objectMapper.convertValue(cases.getAdditionalDetails(), ObjectNode.class);
+            List<Party> noOfAccusedJoined = Optional.ofNullable(cases.getLitigants()).orElse(Collections.emptyList()).stream()
+                    .filter(party -> party.getIsActive() && party.getPartyType().contains(ACCUSED_PARTY_TYPE)).toList();
 
-            if (detailsNode.has("respondentDetails")) {
-                ObjectNode respondentDetails = (ObjectNode) detailsNode.get("respondentDetails");
-
-                if (respondentDetails.has("formdata") && respondentDetails.get("formdata").isArray()) {
-                    ArrayNode formData = (ArrayNode) respondentDetails.get("formdata");
-                    noOfResponseRequired = formData.size();
-                }
+            log.info("No of accused joined :: {}",noOfAccusedJoined.size());
+            if (noOfAccusedJoined.size() != noOfAccused) {
+                return;
             }
 
-            log.info("No of response required :: {}",noOfResponseRequired);
-
-            for (Party party : Optional.ofNullable(cases.getLitigants()).orElse(Collections.emptyList())) {
+            for (Party party : noOfAccusedJoined) {
                 if (party.getIsActive() && party.getIsResponseRequired()) {
+                    log.info("Checking if accused with individualId :: {} has submitted response",party.getIndividualId());
+
                     boolean hasThisAccusedSubmittedResponse = false;
 
                     for (Document document : Optional.ofNullable(party.getDocuments()).orElse(Collections.emptyList())) {
@@ -365,7 +362,6 @@ public class CaseService {
                             if (StringUtils.equalsIgnoreCase(RESPONDENT_RESPONSE, fileType)) {
                                 log.info("Party with individualId :: {} has submitted response", party.getIndividualId());
                                 hasThisAccusedSubmittedResponse = true;
-                                noOfResponseRequired--;
                                 break;
                             }
                         }
@@ -378,17 +374,27 @@ public class CaseService {
                 }
             }
 
-            if (noOfResponseRequired != 0) {
-                log.info("No of response Not submitted yet :: {}",noOfResponseRequired);
-                return;
-            }
-
             log.info("Last response submitted by accused for case {}", caseRequest.getCases().getId());
             caseRequest.getRequestInfo().getUserInfo().getRoles().add(Role.builder().id(123L).code(SYSTEM).name(SYSTEM).tenantId(caseRequest.getCases().getTenantId()).build());
             caseRequest.getCases().getWorkflow().setAction(RESPONSE_COMPLETE);
             log.info("Updating workflow status for case {} in last response submission", caseRequest.getCases().getId());
             workflowService.updateWorkflowStatus(caseRequest);
         }
+    }
+
+    private int getNoOfAccused(Object additionalDetails) {
+        int noOfAccused =0;
+        ObjectNode detailsNode = objectMapper.convertValue(additionalDetails, ObjectNode.class);
+
+        if (detailsNode.has("respondentDetails")) {
+            ObjectNode respondentDetails = (ObjectNode) detailsNode.get("respondentDetails");
+
+            if (respondentDetails.has("formdata") && respondentDetails.get("formdata").isArray()) {
+                ArrayNode formData = (ArrayNode) respondentDetails.get("formdata");
+                noOfAccused = formData.size();
+            }
+        }
+        return noOfAccused;
     }
 
     public CourtCase editCase(CaseRequest caseRequest) {
