@@ -10,7 +10,7 @@ import CustomStepperSuccess from "../../components/CustomStepperSuccess";
 import UpdateDeliveryStatusComponent from "../../components/UpdateDeliveryStatusComponent";
 import { ordersService, taskService } from "../../hooks/services";
 import { Urls } from "../../hooks/services/Urls";
-import { convertToDateInputFormat } from "../../utils/index";
+import { convertToDateInputFormat, formatDate } from "../../utils/index";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { useHistory } from "react-router-dom";
 import isEqual from "lodash/isEqual";
@@ -163,6 +163,13 @@ const ReviewSummonsNoticeAndWarrant = () => {
           task: {
             ...task,
             ...(typeof task?.taskDetails === "string" && { taskDetails: JSON.parse(task?.taskDetails) }),
+            taskDetails: {
+              ...(typeof task?.taskDetails === "string" ? JSON.parse(task?.taskDetails) : task?.taskDetails),
+              deliveryChannels: {
+                ...task?.taskDetails?.deliveryChannels,
+                statusChangeDate: formatDate(new Date()),
+              },
+            },
             workflow: {
               ...tasksData?.list?.[0]?.workflow,
               action: "SEND",
