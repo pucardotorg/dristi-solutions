@@ -30,6 +30,16 @@ const defaultSearchValues = {
   caseType: "NIA S138",
 };
 
+const linkStyle = {
+  color: "black",
+  backgroundColor: "#ECF3FD",
+  fontWeight: 500,
+  textDecoration: "none",
+  padding: 12,
+  borderRadius: "8px",
+  display: "inline-block",
+};
+
 const HomeView = () => {
   const history = useHistory();
   const location = useLocation();
@@ -77,6 +87,21 @@ const HomeView = () => {
     userInfo?.uuid && isUserLoggedIn
   );
   const individualId = useMemo(() => individualData?.Individual?.[0]?.individualId, [individualData]);
+
+  const isLitigantPartialRegistered = useMemo(() => {
+    if (userInfoType !== "citizen") return false;
+
+    if (!individualData?.Individual || individualData.Individual.length === 0) return false;
+
+    if (individualData?.Individual[0]?.userDetails?.roles?.some((role) => role?.code === "ADVOCATE_ROLE")) return false;
+
+    const address = individualData.Individual[0]?.address;
+    return !address || (Array.isArray(address) && address.length === 0);
+  }, [individualData?.Individual, userInfoType]);
+
+  if (isLitigantPartialRegistered) {
+    history.push(`/${window?.contextPath}/citizen/dristi/home/registration/user-name`);
+  }
 
   const userType = useMemo(() => individualData?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value, [
     individualData?.Individual,
@@ -351,9 +376,15 @@ const HomeView = () => {
             <div className="home-header-wrapper">
               <UpcomingHearings handleNavigate={handleNavigate} attendeeIndividualId={individualId} userInfoType={userInfoType} t={t} />
               {isJudge && (
-                <div className="hearingCard" style={{ backgroundColor: "#ECF3FD" }}>
-                  <Link to={`/${window.contextPath}/employee/home/dashboard`} style={{ color: "#007e7e", fontWeight: 700, textDecoration: "none" }}>
-                    Open Dashboard
+                <div className="hearingCard" style={{ backgroundColor: "white", justifyContent: "flex-start" }}>
+                  <Link to={`/${window.contextPath}/employee/home/dashboard`} style={linkStyle}>
+                    {t("OPEN_DASHBOARD")}
+                  </Link>
+                  <Link to={`/${window.contextPath}/employee/home/dashboard?select=5`} style={linkStyle}>
+                    {t("OPEN_REPORTS")}
+                  </Link>
+                  <Link to={`/${window.contextPath}/employee/home/adiary`} style={linkStyle}>
+                    {t("OPEN_A_DIARY")}
                   </Link>
                 </div>
               )}

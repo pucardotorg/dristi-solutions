@@ -119,7 +119,6 @@ public class TaskService {
 
             producer.push(config.getTaskUpdateTopic(), body);
 
-            log.info("TaskRequest before calling notificationService: {}", body);
             String messageCode = status != null ? getMessageCode(taskType, status) : null;
             log.info("Message Code :: {}", messageCode);
             if(messageCode != null){
@@ -157,7 +156,7 @@ public class TaskService {
         String taskType = task.getTaskType().toUpperCase();
         String tenantId = task.getTenantId();
         String taskNumber = task.getTaskNumber();
-        Workflow workflow = task.getWorkflow();
+        WorkflowObject workflow = task.getWorkflow();
 
         String status = switch (taskType) {
             case BAIL -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
@@ -280,7 +279,6 @@ public class TaskService {
 
     private String getMessageCode(String taskType, String status) {
 
-        log.info("Operation: getMessageCode, Task Type :: {} and Status :: {}", taskType, status);
         if (NOTICE.equalsIgnoreCase(taskType) && DELIVERED.equalsIgnoreCase(status)) {
             return NOTICE_DELIVERED;
         }

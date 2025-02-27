@@ -289,6 +289,11 @@ export const SummonsTabsConfig = {
                 additionalCustomization: true,
               },
               {
+                label: "DELIEVRY_DATE",
+                jsonPath: "statusChangeDate",
+                additionalCustomization: true,
+              },
+              {
                 label: "ISSUED",
                 jsonPath: "createdDate",
                 additionalCustomization: true,

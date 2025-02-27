@@ -1,5 +1,7 @@
 package org.egov.hrms.web.validator;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.time.ZoneId;
@@ -8,7 +10,6 @@ import java.util.Date;
 
 import com.jayway.jsonpath.JsonPath;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.kafka.common.protocol.types.Field;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.hrms.config.PropertiesManager;
@@ -133,7 +134,7 @@ public class EmployeeValidator {
 			}
 		}
 		if(null != criteria.getAsOnDate()) {
-			if(CollectionUtils.isEmpty(criteria.getDepartments()) || CollectionUtils.isEmpty(criteria.getDesignations()))
+			if(CollectionUtils.isEmpty(criteria.getCourtEstablishment()) || CollectionUtils.isEmpty(criteria.getDesignations()))
 				errorMap.put(ErrorConstants.HRMS_INVALID_SEARCH_AOD_CODE, ErrorConstants.HRMS_INVALID_SEARCH_AOD_MSG);
 		}
 
@@ -162,6 +163,9 @@ public class EmployeeValidator {
 		validateDataUniqueness(employees,errorMap);
         validateUserMobile(employees,errorMap,request.getRequestInfo());
         validateUserName(employees,errorMap,request.getRequestInfo());
+		if(request.getEmployees().get(0).getEmployeeType().equals(HRMSConstants.HRMS_EMPLOYEE_JUDGE)){
+			validateJudgeAssignment(request, errorMap);
+		}
 	}
 
 	/**
@@ -187,6 +191,31 @@ public class EmployeeValidator {
 		});
 	}
 
+	private void validateJudgeAssignment(EmployeeRequest request, Map<String, String> errorMap) {
+		for(Employee employee : request.getEmployees()) {
+			EmployeeSearchCriteria criteria = EmployeeSearchCriteria.builder()
+					.tenantId(request.getEmployees().get(0).getTenantId())
+					.courtrooms(employee.getAssignments()
+							.stream()
+							.map(Assignment::getCourtroom)
+							.collect(Collectors.toList()))
+					.employeetypes(List.of(employee.getEmployeeType()))
+					.asOnDate(LocalDateTime.now().toInstant(ZoneOffset.UTC).toEpochMilli())
+					.designations(employee.getAssignments()
+							.stream()
+							.map(Assignment::getDesignation)
+							.collect(Collectors.toList()))
+					.courtEstablishment(employee.getAssignments()
+							.stream()
+							.map(Assignment::getCourtEstablishment)
+							.collect(Collectors.toList()))
+					.build();
+			List<Employee> employees = employeeService.search(criteria, request.getRequestInfo()).getEmployees();
+			if (!employees.isEmpty()) {
+				errorMap.put(ErrorConstants.HRMS_INVALID_ASSIGNMENT, ErrorConstants.ERR_HRMS_INVALID_ASSIGNMENT);
+			}
+		}
+	}
 	/**
 	 * Checks if the mobile number used in the request is duplicate.
 	 * 
@@ -347,10 +376,12 @@ public class EmployeeValidator {
 	 * @param mdmsData
 	 */
 	private void validateAssignments(Employee employee, Map<String, String> errorMap, Map<String, List<String>> mdmsData) {
-		List<Assignment> currentAssignments = employee.getAssignments().stream().filter(assignment -> assignment.getIsCurrentAssignment()).collect(Collectors.toList());
-		if(currentAssignments.size() != 1){
-			errorMap.put(ErrorConstants.HRMS_INVALID_CURRENT_ASSGN_CODE, ErrorConstants.HRMS_INVALID_CURRENT_ASSGN_MSG);
-		}
+		List<Assignment> currentAssignments = employee.getAssignments().stream()
+				.peek(assignment -> {
+					assignment.setIsCurrentAssignment((assignment.getToDate()) == null ||
+							(assignment.getToDate() >= (Long)LocalDateTime.now().toInstant(ZoneOffset.UTC).toEpochMilli()));
+				})
+				.filter(Assignment::getIsCurrentAssignment).toList();
 		employee.getAssignments().sort(new Comparator<Assignment>() {
 			@Override
 			public int compare(Assignment assignment1, Assignment assignment2) {
@@ -369,14 +400,12 @@ public class EmployeeValidator {
 		for(Assignment assignment: employee.getAssignments()) {
 			if(!assignment.getIsCurrentAssignment() && !CollectionUtils.isEmpty(currentAssignments) && null != assignment.getToDate()&& currentAssignments.get(0).getFromDate() < assignment.getToDate() )
 				errorMap.put(ErrorConstants.HRMS_OVERLAPPING_ASSGN_CURRENT_CODE,ErrorConstants.HRMS_OVERLAPPING_ASSGN_CURRENT_MSG);
-		    if(!mdmsData.get(HRMSConstants.HRMS_MDMS_DEPT_CODE).contains(assignment.getDepartment()))
-				errorMap.put(ErrorConstants.HRMS_INVALID_DEPT_CODE, ErrorConstants.HRMS_INVALID_DEPT_MSG);
+			if(!mdmsData.get(HRMSConstants.HRMS_MDMS_COURT_ESTABLISHMENT).contains(assignment.getCourtEstablishment()))
+				errorMap.put(ErrorConstants.HRMS_INVALID_COURT_ESTABLISHMENT, ErrorConstants.HRMS_INVALID_COURT_ESTABLISHMENT_MSG);
 			if(!mdmsData.get(HRMSConstants.HRMS_MDMS_DESG_CODE).contains(assignment.getDesignation()))
 				errorMap.put(ErrorConstants.HRMS_INVALID_DESG_CODE, ErrorConstants.HRMS_INVALID_DESG_MSG);
 			if(!mdmsData.get(HRMSConstants.HRMS_MDMS_COURT_CODE).contains(assignment.getCourtroom()))
 				errorMap.put(ErrorConstants.HRMS_INVALID_COURT_CODE, ErrorConstants.HRMS_INVALID_COURT_MSG);
-            if( assignment.getIsCurrentAssignment() && null != assignment.getToDate())
-                errorMap.put(ErrorConstants.HRMS_INVALID_ASSIGNMENT_CURRENT_TO_DATE_CODE,ErrorConstants.HRMS_INVALID_ASSIGNMENT_CURRENT_TO_DATE_MSG);
             if(!assignment.getIsCurrentAssignment() && null == assignment.getToDate())
                 errorMap.put(ErrorConstants.HRMS_INVALID_ASSIGNMENT_NON_CURRENT_TO_DATE_CODE,ErrorConstants.HRMS_INVALID_ASSIGNMENT_NON_CURRENT_TO_DATE_MSG);
 			if(null != assignment.getToDate() && assignment.getFromDate() > assignment.getToDate())
@@ -386,7 +415,6 @@ public class EmployeeValidator {
                 	errorMap.put(ErrorConstants.HRMS_INVALID_ASSIGNMENT_DATES_CODE, ErrorConstants.HRMS_INVALID_ASSIGNMENT_DATES_MSG);
 			if(null != employee.getDateOfAppointment() && assignment.getFromDate() <	 employee.getDateOfAppointment())
 				errorMap.put(ErrorConstants.HRMS_INVALID_ASSIGNMENT_DATES_APPOINTMENT_CODE, ErrorConstants.HRMS_INVALID_ASSIGNMENT_DATES_APPOINTMENT_MSG);
-
         }
 		
 	}

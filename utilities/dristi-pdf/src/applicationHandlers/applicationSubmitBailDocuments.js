@@ -11,6 +11,7 @@ const {
 const { renderError } = require("../utils/renderError");
 const { getAdvocates } = require("./getAdvocates");
 const { formatDate } = require("./formatDate");
+const { cleanName } = require("./cleanName");
 
 function getOrdinalSuffix(day) {
   if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
@@ -118,7 +119,7 @@ const applicationSubmitBailDocuments = async (req, res, qrCode) => {
       ?.advocateName
       ? allAdvocates[onBehalfOfuuid]?.[0]
       : {};
-    const advocateName = advocate?.additionalDetails?.advocateName || "";
+    const advocateName = cleanName(advocate?.additionalDetails?.advocateName || "");
     const partyName = application?.additionalDetails?.onBehalOfName || "";
     const complainantName =
       courtCase?.litigants?.find(

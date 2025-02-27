@@ -86,7 +86,6 @@ function ImageModal({ imageInfo, handleCloseModal, handleOpenPopup, t, anchorRef
       </React.Fragment>
     );
   };
-
   return (
     <Modal
       headerBarEnd={<HeaderBarEnd />}

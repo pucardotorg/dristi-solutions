@@ -200,17 +200,22 @@ const ViewPaymentDetails = ({ location, match }) => {
     let taskFilingNumber = "";
     let taskHearingNumber = "";
     let taskOrderType = "";
+    let taskPartyIndex = "";
     if (["task-notice", "task-summons", "task-warrant"].includes(businessService)) {
       const {
-        list: [{ orderNumber, hearingNumber, orderType }],
+        list: [orderDetails],
       } = await ordersService.searchOrder({
         criteria: {
           tenantId: tenantId,
           id: tasksData?.orderId,
         },
       });
-      taskHearingNumber = hearingNumber || "";
-      taskOrderType = orderType || "";
+
+      taskHearingNumber = orderDetails?.hearingNumber || "";
+      taskOrderType = orderDetails?.orderType || "";
+      if (orderDetails?.orderType === "NOTICE") {
+        taskPartyIndex = orderDetails?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex;
+      }
       taskFilingNumber = tasksData?.filingNumber || demandBill?.additionalDetails?.filingNumber;
     }
 
@@ -276,6 +281,7 @@ const ViewPaymentDetails = ({ location, match }) => {
             stateSla: 3 * dayInMillisecond + todayDate,
             additionalDetails: {
               hearingId: taskHearingNumber,
+              partyIndex: taskPartyIndex,
             },
             tenantId,
           },

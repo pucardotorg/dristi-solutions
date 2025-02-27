@@ -12,6 +12,7 @@ import org.egov.common.contract.workflow.ProcessInstanceRequest;
 import org.egov.common.contract.workflow.ProcessInstanceResponse;
 import org.egov.common.contract.workflow.State;
 import org.egov.tracer.model.CustomException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -51,6 +52,11 @@ public class WorkflowServiceTest {
     @Mock
     private UserUtil userUtil;
 
+    WorkflowObject workflow = new WorkflowObject();
+    @BeforeEach
+    void setUp() {
+        workflow.setAction("APPROVE");
+    }
     @Test
     void updateWorkflowStatus_Success() {
         // Mock AdvocateRequest
@@ -59,7 +65,7 @@ public class WorkflowServiceTest {
         Application application = new Application();
         application.setApplicationNumber("APP001");
         application.setTenantId("tenant1");
-        application.setWorkflow(Workflow.builder().action("APPROVE").build());
+        application.setWorkflow(workflow);
         applicationRequest.setApplication(application);
 
         when(config.getWfHost()).thenReturn("http://localhost:8080");
@@ -85,7 +91,7 @@ public class WorkflowServiceTest {
         Application application = new Application();
         application.setApplicationNumber("APP001");
         application.setTenantId("tenant1");
-        application.setWorkflow(Workflow.builder().action("APPROVE").build());
+        application.setWorkflow(workflow);
         applicationRequest.setApplication(application);
 
         // Execute the method
@@ -121,7 +127,7 @@ public class WorkflowServiceTest {
         Application application = new Application();
         application.setApplicationNumber("APP001");
         application.setTenantId("tenant1");
-        application.setWorkflow(Workflow.builder().action("APPROVE").build());
+        application.setWorkflow(workflow);
         applicationRequest.setApplication(application);
 
         ProcessInstance processInstance = new ProcessInstance();

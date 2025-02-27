@@ -78,7 +78,7 @@ class ApplicationServiceTest {
         ApplicationRequest applicationRequest = new ApplicationRequest();
         applicationRequest.setApplication(application);
 
-        Workflow workflow = new Workflow();
+        WorkflowObject workflow = new WorkflowObject();
         workflow.setAction("CREATE");
         application.setWorkflow(workflow);
         when(config.getApplicationCreateTopic()).thenReturn("save-application");

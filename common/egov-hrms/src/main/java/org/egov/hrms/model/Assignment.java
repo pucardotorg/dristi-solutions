@@ -62,13 +62,16 @@ public class Assignment {
 
 	private Long position;
 
+	@NotNull
+	private String district;
+
 	@SafeHtml
 	@NotNull
 	private String designation;
 
 	@SafeHtml
 	@NotNull
-	private String department;
+	private String courtEstablishment;
 
 	@SafeHtml
 	@NotNull
@@ -91,7 +94,6 @@ public class Assignment {
 	@JsonProperty("isHOD")
 	private Boolean isHOD=false;
 	
-	@NotNull
 	@JsonProperty("isCurrentAssignment")
 	private Boolean isCurrentAssignment;
 

@@ -135,7 +135,10 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
     }
     const { name = null, configKey = null, index = null, fieldName = null } = popupInfo;
     return fieldName
-      ? formData?.[configKey]?.[name]?.form?.[index]?.[fieldName]?.FSOError || formData?.[configKey]?.[name]?.form?.[index]?.[fieldName]?.systemError
+      ? formData?.[configKey]?.[name]?.form?.[index]?.[fieldName]?.isWarning
+        ? ""
+        : formData?.[configKey]?.[name]?.form?.[index]?.[fieldName]?.FSOError ||
+          formData?.[configKey]?.[name]?.form?.[index]?.[fieldName]?.systemError
       : formData?.[configKey]?.[name]?.scrutinyMessage?.FSOError || "";
   }, [formData, popupInfo]);
 
@@ -255,22 +258,72 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
             form: inputs.find((item) => item.name === name)?.data?.map(() => ({})),
           };
 
-    if (index == null) {
-      currentMessage.scrutinyMessage = { FSOError: "" };
-    } else {
-      let fieldObj = { [fieldName]: { FSOError: "" } };
+    const dependentFields = inputs?.find((item) => item.name === name)?.config?.find((f) => f.value === fieldName)?.dependentFields || [];
+
+    // Collect all interdependent fields
+    const interdependentWarnings = dependentFields.map(({ configKey, page, field }) => {
+      const scrutinyMessage = get(formData, [configKey, page], {
+        scrutinyMessage: "",
+        form: inputs.find((item) => item.name === name)?.data?.map(() => ({})),
+      });
+      return get(scrutinyMessage, ["form", index, field, "isWarning"], undefined);
+    });
+
+    if (interdependentWarnings.includes(false)) {
+      // If any interdependent field has isWarning === false, set isWarning: true instead of deleting
+      let fieldObj = { [fieldName]: { FSOError: `${t("RECHECK")}: ${t("SCRUTINY_MESSAGE")}`, isWarning: true } };
       inputlist.forEach((key) => {
-        fieldObj[key] = { FSOError: "" };
+        fieldObj[key] = { FSOError: `${t("RECHECK")}: ${t("SCRUTINY_MESSAGE")}`, isWarning: true };
       });
       currentMessage.form[index] = {
         ...currentMessage.form[index],
         ...fieldObj,
       };
+      setValue(config.Key, currentMessage, name);
+    } else {
+      // Proceed with deleting error if no false isWarning values exist
+      if (index == null) {
+        currentMessage.scrutinyMessage = { FSOError: "", isWarning: undefined };
+      } else {
+        let fieldObj = { [fieldName]: { FSOError: "", isWarning: undefined } };
+        inputlist.forEach((key) => {
+          fieldObj[key] = { FSOError: "", isWarning: undefined };
+        });
+        currentMessage.form[index] = {
+          ...currentMessage.form[index],
+          ...fieldObj,
+        };
+      }
+      setValue(config.Key, currentMessage, name);
+      // Update dependent scrutiny messages
+      for (const { configKey, page, field } of dependentFields) {
+        const scrutinyMessage = get(formData, [configKey, page], {
+          scrutinyMessage: "",
+          form: inputs.find((item) => item.name === name)?.data?.map(() => ({})),
+        });
+
+        const existingField = get(scrutinyMessage, ["form", index, field], {});
+
+        if (existingField?.isWarning) {
+          set(
+            scrutinyMessage,
+            ["form", index, field].filter((x) => x != null),
+            {
+              ...existingField,
+              FSOError: "",
+              isWarning: undefined,
+            }
+          );
+
+          set(formData, [configKey, page], scrutinyMessage);
+          setValue(configKey, scrutinyMessage, page);
+        }
+      }
     }
+
     setDeletePopup(false);
     setScrutinyError("");
     setSystemError("");
-    setValue(config.key, currentMessage, name);
     setValue("scrutinyMessage", null, "popupInfo");
   };
 
@@ -278,9 +331,29 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
     const trimmedError = message ? message : scrutinyError.trim();
 
     const { name, configKey, index, fieldName, inputlist, fileName } = popupInfoData ? popupInfoData : popupInfo;
-    let fieldObj = { [fieldName]: { [type ? type : "FSOError"]: trimmedError, ...(isPrevScrutiny && { markError: true }) } };
+    let fieldObj = {
+      [fieldName]: {
+        [type ? type : "FSOError"]: trimmedError,
+        ...(isPrevScrutiny && { markError: true }),
+      },
+    };
+
+    if (fieldObj[fieldName].hasOwnProperty("isWarning")) {
+      fieldObj[fieldName].isWarning = !fieldObj[fieldName].isWarning;
+    } else {
+      fieldObj[fieldName].isWarning = false;
+    }
+
     inputlist.forEach((key) => {
-      fieldObj[key] = { [type ? type : "FSOError"]: trimmedError, fileName, ...(isPrevScrutiny && { markError: true }) };
+      const existingField = fieldObj[key] || {};
+      const isCheckedPresent = existingField.hasOwnProperty("isWarning");
+
+      fieldObj[key] = {
+        [type ? type : "FSOError"]: trimmedError,
+        fileName,
+        ...(isPrevScrutiny && { markError: true }),
+        isWarning: false,
+      };
     });
     let currentMessage =
       formData && formData[configKey] && formData[config.key]?.[name]
@@ -292,7 +365,11 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
 
     if (currentMessage?.form) {
       if (index == null) {
-        currentMessage.scrutinyMessage = { [type ? type : "FSOError"]: trimmedError, fileName, ...(isPrevScrutiny && { markError: true }) };
+        currentMessage.scrutinyMessage = {
+          [type ? type : "FSOError"]: trimmedError,
+          fileName,
+          ...(isPrevScrutiny && { markError: true }),
+        };
       } else {
         currentMessage.form[index] = {
           ...(currentMessage?.form?.[index] || {}),
@@ -303,19 +380,25 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
 
       const dependentFields = inputs?.find((item) => item.name === name)?.config?.find((f) => f.value === fieldName)?.dependentFields || [];
       for (const { configKey, page, field } of dependentFields) {
-        const scrutinyMessage = {
-          ...(get(formData, [configKey, page]) || {
-            scrutinyMessage: "",
-            form: inputs.find((item) => item.name === name)?.data?.map(() => ({})),
-          }),
-        };
+        const scrutinyMessage = get(formData, [configKey, page], {
+          scrutinyMessage: "",
+          form: inputs.find((item) => item.name === name)?.data?.map(() => ({})),
+        });
+
         const fieldInputData = config.populators.inputs.find((input) => input.name === page)?.data?.[0]?.data?.[field];
-        if (fieldInputData) {
+        const existingField = get(scrutinyMessage, ["form", index, field], {});
+
+        if (fieldInputData && !existingField.hasOwnProperty("isWarning")) {
+          if (!existingField.hasOwnProperty("isWarning")) {
+            existingField.isWarning = true;
+          }
+
           set(
             scrutinyMessage,
             ["form", index, field].filter((x) => x != null),
             {
-              [type ? type : "FSOError"]: trimmedError,
+              ...existingField,
+              [type ? type : "FSOError"]: `${t("RECHECK")}: ${t("SCRUTINY_MESSAGE")}`,
             }
           );
           set(formData, [configKey, page], scrutinyMessage);
@@ -395,7 +478,7 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
 
   let showFlagIcon = isScrutiny ? true : false;
   return (
-    <div className="accordion-wrapper" onClick={() => { }}>
+    <div className="accordion-wrapper" onClick={() => {}}>
       <div className={`accordion-title ${isOpen ? "open" : ""}`} onClick={() => setOpen(!isOpen)}>
         <span>
           {config?.number}. {t(config?.label)}
@@ -429,7 +512,7 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
                   {input?.data?.length === 0 && (
                     <span style={{ fontFamily: "Roboto", fontSize: "14px", fontWeight: 400 }}>{t(input?.noDataText)}</span>
                   )}
-                  {!isScrutiny && !isJudge && (isCaseReAssigned || isDraftInProgress) && (
+                  {input?.isFilingParty && !isScrutiny && !isJudge && (isCaseReAssigned || isDraftInProgress) && (
                     <div
                       className="header-right"
                       style={{ display: "contents" }}
@@ -479,7 +562,7 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
                     const dataErrors = sectionValue?.form?.[index];
                     const prevDataErrors = input?.prevErrors?.form?.[index] || {};
                     const titleHeading = input.name === "chequeDetails" ? true : false;
-                    const updatedConfig = input?.config?.filter((inputConfig) => {
+                    let updatedConfig = input?.config?.filter((inputConfig) => {
                       if (!inputConfig?.dependentOn || !inputConfig?.dependentValue) {
                         return true;
                       } else {
@@ -489,6 +572,49 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
                         return false;
                       }
                     });
+                    if (input?.key === "advocateDetails") {
+                      if (input?.data?.[index]?.data?.multipleAdvocatesAndPip?.isComplainantPip?.code === "NO") {
+                        updatedConfig = [
+                          ...updatedConfig,
+                          ...input.data[index].data.multipleAdvocatesAndPip?.multipleAdvocateNameDetails
+                            ?.map((litigant, index) => [
+                              {
+                                type: "text",
+                                style: { fontWeight: "bold" },
+                                label: `${index + 1}. Advocate Name`,
+                                value: `multipleAdvocatesAndPip.multipleAdvocateNameDetails[${index}].advocateBarRegNumberWithName.advocateName`,
+                              },
+                              {
+                                type: "text",
+                                label: "CS_BAR_REGISTRATION",
+                                value: `multipleAdvocatesAndPip.multipleAdvocateNameDetails[${index}].advocateBarRegNumberWithName.barRegistrationNumberOriginal`,
+                              },
+                              {
+                                type: "image",
+                                label: "CS_ID_PROOF",
+                                value: [`multipleAdvocatesAndPip.multipleAdvocateNameDetails[${index}].advocateNameDetails.advocateIdProof`],
+                              },
+                            ])
+                            .flatMap((list) => list),
+                          {
+                            type: "image",
+                            label: "VAKALATNAMA",
+                            value: [`multipleAdvocatesAndPip.vakalatnamaFileUpload.document`],
+                            enableScrutinyField: true,
+                          },
+                        ];
+                      } else if (input?.data?.[index]?.data?.multipleAdvocatesAndPip?.isComplainantPip?.code === "YES") {
+                        updatedConfig = [
+                          ...updatedConfig,
+                          {
+                            type: "image",
+                            label: "UPLOAD_PIP_AFFIDAVIT",
+                            value: [`multipleAdvocatesAndPip.pipAffidavitFileUpload.document`],
+                            enableScrutinyField: true,
+                          },
+                        ];
+                      }
+                    }
                     return (
                       <CustomReviewCard
                         isScrutiny={isScrutiny}

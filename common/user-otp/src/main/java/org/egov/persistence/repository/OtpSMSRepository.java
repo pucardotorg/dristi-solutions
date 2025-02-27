@@ -31,11 +31,11 @@ public class OtpSMSRepository {
     @Value("${egov.sms.template.id}")
     private String templateId;
 
-    @Value("${egov.register.sms.template.id}")
-    private String registerTemplateId;
-
     @Value("${egov.localisation.tenantid.strip.suffix.count}")
     private int tenantIdStripSuffixCount;
+
+    @Value("${egov.register.sms.template.id}")
+    private String registerTemplateId;
 
     private CustomKafkaTemplate<String, SMSRequest> kafkaTemplate;
     private String smsTopic;

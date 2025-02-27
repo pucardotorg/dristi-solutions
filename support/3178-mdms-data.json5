@@ -1,0 +1,112 @@
+[
+  {
+    "tenantId": "kl",
+    "masterName": "INBOX",
+    "moduleName": "InboxQueryConfiguration",
+    "mdmsPayload": [
+      {
+        // can be added through workbench UI , if adding through UI need to add isDiary
+        "tenantId": "kl",
+        "schemaCode": "INBOX.InboxQueryConfiguration",
+        "uniqueIdentifier": "pending-tasks-index",
+        "data": {
+          "index": "pending-tasks-index",
+          "module": "Pending Tasks Service",
+          "sortBy": {
+            "path": "Data.isCompleted",
+            "defaultOrder": "ASC"
+          },
+          "sourceFilterPathList": [
+            "Data"
+          ],
+          "allowedSearchCriteria": [
+            {
+              "name": "id",
+              "path": "Data.id.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "entityType",
+              "path": "Data.entityType.keyword",
+              "operator": "EQUAL",
+              "isMandatory": false
+            },
+            {
+              "name": "referenceId",
+              "path": "Data.referenceId.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "status",
+              "path": "Data.status.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "assignedTo",
+              "path": "Data.assignedTo.uuid.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "assignedRole",
+              "path": "Data.assignedRole.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "cnrNumber",
+              "path": "Data.cnrNumber.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "filingNumber",
+              "path": "Data.filingNumber.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "isCompleted",
+              "path": "Data.isCompleted",
+              "isMandatory": false
+            },
+            {
+              "name": "stateSla",
+              "path": "Data.stateSla",
+              "isMandatory": false
+            },
+            {
+              "name": "businessServiceSla",
+              "path": "Data.businessServiceSla",
+              "isMandatory": false
+            },
+            {
+              "name": "isDiary",
+              "path": "Data.isDiary",
+              "isMandatory": true
+            }
+          ]
+        },
+        "isActive": true
+      }
+    ]
+  },
+  {
+    // can be added through work bench ui
+    "tenantId": "kl",
+    "masterName": "common-masters",
+    "moduleName": "PendingTaskType",
+    "schemaCode": "common-masters.PendingTaskType",
+    "uniqueIdentifier": "21",
+    "data": {
+      "id": "21",
+      "actor": "Judge",
+      "state": "PENDING_SIGN",
+      "pendingTask": "Sign A Diary",
+      "closerAction": [
+        "SIGN"
+      ],
+      "triggerAction": [
+        "GENERATE"
+      ],
+      "workflowModule": "case-a-diary"
+    },
+    "isActive": true
+  }
+]
