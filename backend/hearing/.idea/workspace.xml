@@ -5,25 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e078ad07-5c24-41fe-bf6a-f9b4a5b8ecaf" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../application/src/main/java/org/pucar/dristi/config/Configuration.java" beforeDir="false" afterPath="$PROJECT_DIR$/../application/src/main/java/org/pucar/dristi/config/Configuration.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../application/src/main/java/org/pucar/dristi/config/ServiceConstants.java" beforeDir="false" afterPath="$PROJECT_DIR$/../application/src/main/java/org/pucar/dristi/config/ServiceConstants.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../application/src/main/java/org/pucar/dristi/service/SmsNotificationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../application/src/main/java/org/pucar/dristi/service/SmsNotificationService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../application/src/main/java/org/pucar/dristi/util/SmsNotificationUtil.java" beforeDir="false" afterPath="$PROJECT_DIR$/../application/src/main/java/org/pucar/dristi/util/SmsNotificationUtil.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../application/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../application/src/main/resources/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../evidence/src/main/java/org/pucar/dristi/config/Configuration.java" beforeDir="false" afterPath="$PROJECT_DIR$/../evidence/src/main/java/org/pucar/dristi/config/Configuration.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../evidence/src/main/java/org/pucar/dristi/config/ServiceConstants.java" beforeDir="false" afterPath="$PROJECT_DIR$/../evidence/src/main/java/org/pucar/dristi/config/ServiceConstants.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../evidence/src/main/java/org/pucar/dristi/service/EvidenceService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../evidence/src/main/java/org/pucar/dristi/service/EvidenceService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../evidence/src/main/java/org/pucar/dristi/service/SmsNotificationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../evidence/src/main/java/org/pucar/dristi/service/SmsNotificationService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../evidence/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../evidence/src/main/resources/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/pucar/dristi/service/HearingService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/pucar/dristi/service/HearingService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../scheduler-svc/src/main/java/digit/service/CauseListService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../scheduler-svc/src/main/java/digit/service/CauseListService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../task/src/main/java/org/pucar/dristi/config/Configuration.java" beforeDir="false" afterPath="$PROJECT_DIR$/../task/src/main/java/org/pucar/dristi/config/Configuration.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../task/src/main/java/org/pucar/dristi/config/ServiceConstants.java" beforeDir="false" afterPath="$PROJECT_DIR$/../task/src/main/java/org/pucar/dristi/config/ServiceConstants.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../task/src/main/java/org/pucar/dristi/service/SmsNotificationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../task/src/main/java/org/pucar/dristi/service/SmsNotificationService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../task/src/main/java/org/pucar/dristi/service/TaskService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../task/src/main/java/org/pucar/dristi/service/TaskService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../task/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../task/src/main/resources/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../task/target/classes/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/../task/target/classes/application.properties" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../case/src/main/java/org/pucar/dristi/config/ServiceConstants.java" beforeDir="false" afterPath="$PROJECT_DIR$/../case/src/main/java/org/pucar/dristi/config/ServiceConstants.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../case/src/main/java/org/pucar/dristi/service/CaseService.java" beforeDir="false" afterPath="$PROJECT_DIR$/../case/src/main/java/org/pucar/dristi/service/CaseService.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

@@ -175,6 +175,9 @@ public class OrderRegistrationService {
         if(orderType.equalsIgnoreCase(MANDATORY_SUBMISSIONS_RESPONSES) && submissionType.equalsIgnoreCase(EVIDENCE) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
             return EVIDENCE_REQUESTED;
         }
+        if (orderType.equalsIgnoreCase(MANDATORY_SUBMISSIONS_RESPONSES) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
+            return ADDITIONAL_INFORMATION_MESSAGE;
+        }
         if(orderType.equalsIgnoreCase(NOTICE) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
             return NOTICE_ISSUED;
         }

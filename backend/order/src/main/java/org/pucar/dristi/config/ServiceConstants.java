@@ -111,6 +111,7 @@ public class ServiceConstants {
     public static final String ORDER_PUBLISHED = "ORDER_PUBLISHED";
     public static final String MANDATORY_SUBMISSIONS_RESPONSES = "MANDATORY_SUBMISSIONS_RESPONSES";
     public static final String EVIDENCE_REQUESTED = "EVIDENCE_REQUESTED";
+    public static final String ADDITIONAL_INFORMATION_MESSAGE = "ADDITIONAL_INFORMATION_MESSAGE";
     public static final String EVIDENCE = "Evidence";
     public static final String NOTICE = "NOTICE";
     public static final String NOTICE_ISSUED = "NOTICE_ISSUED";

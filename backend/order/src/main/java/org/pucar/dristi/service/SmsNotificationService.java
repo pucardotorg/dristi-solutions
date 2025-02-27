@@ -92,14 +92,17 @@ public class SmsNotificationService {
 //        if(messageCode.equalsIgnoreCase(EVIDENCE_ACCUSED_PUBLISHED)){
 //            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationEvidenceAccusedPublishedTemplateId());
 //        }
-        if(messageCode.equalsIgnoreCase(EVIDENCE_COMPLAINANT_PUBLISHED)){
-            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationEvidenceComplainantPublishedTemplateId());
-        }
+//        if(messageCode.equalsIgnoreCase(EVIDENCE_COMPLAINANT_PUBLISHED)){
+//            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationEvidenceComplainantPublishedTemplateId());
+//        }
 //        if(messageCode.equalsIgnoreCase(APPEARANCE_PUBLISHED)){
 //            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationAppearancePublishedTemplateId());
 //        }
         if(messageCode.equalsIgnoreCase(CASE_DECISION_AVAILABLE)){
             pushNotification(templateData, message, mobileNumber, config.getSmsNotificationCaseDecisionAvailableTemplateId());
+        }
+        if (messageCode.equalsIgnoreCase(ADDITIONAL_INFORMATION_MESSAGE)) {
+            pushNotification(templateData,message,mobileNumber,config.getSmsNotificationAdditionalDetails());
         }
     }
 

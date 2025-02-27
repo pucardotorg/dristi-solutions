@@ -110,10 +110,13 @@ public class SmsNotificationUtil {
         if (applicationType.equalsIgnoreCase(REQUEST_FOR_BAIL) && updatedStatus.equalsIgnoreCase(PENDINGAPPROVAL)) {
             return REQUEST_FOR_BAIL_SUBMITTED;
         }
+        if (applicationType.equalsIgnoreCase(WITHDRAWAL) && updatedStatus.equalsIgnoreCase(PENDINGREVIEW)) {
+            return REQUEST_FOR_WITH_DRAW_SUBMITTED;
+        }
         if (applicationType.equalsIgnoreCase(REQUEST_FOR_BAIL) && updatedStatus.equalsIgnoreCase(REJECTED)) {
             return REQUEST_FOR_BAIL_REJECTED;
         }
-        if (applicationType.equalsIgnoreCase(REQUEST_FOR_BAIL) && updatedStatus.equalsIgnoreCase(APPROVE)) {
+        if (applicationType.equalsIgnoreCase(REQUEST_FOR_BAIL) && updatedStatus.equalsIgnoreCase(COMPLETED)) {
             return REQUEST_FOR_BAIL_APPROVED_MESSAGE_CODE;
         }
         if(applicationType.equalsIgnoreCase(RE_SCHEDULE) && updatedStatus.equalsIgnoreCase(PENDINGREVIEW)){

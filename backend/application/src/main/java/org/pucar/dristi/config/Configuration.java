@@ -254,4 +254,10 @@ public class Configuration {
     @Value("${egov.workflow.bail.voluntary.submission.business.name}")
     private String bailVoluntarySubBusinessName;
 
+    @Value("${egov.sms.notification.reschedule.request.submitted.payment.template.id}")
+    private String rescheduleRequestSubmissionPayment;
+
+    @Value("${egov.sms.notification.request.withdraw.template.id}")
+    private String smsNotificationWithDraw;
+
 }
