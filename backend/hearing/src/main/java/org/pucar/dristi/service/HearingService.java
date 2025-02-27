@@ -365,7 +365,7 @@ public class HearingService {
                 scheduleHearing.setOriginalHearingDate(hearing.getStartTime());
                 scheduleHearing.setCaseId(hearing.getCmpNumber());
                 scheduleHearing.setJudgeIds(hearing.getPresidedBy().getJudgeID());
-
+                scheduleHearing.setFilingNumber(hearing.getFilingNumber());
                 // todo: check for case title
             }
         }
