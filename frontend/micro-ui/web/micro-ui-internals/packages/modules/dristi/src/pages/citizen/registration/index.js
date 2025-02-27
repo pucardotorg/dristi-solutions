@@ -238,6 +238,7 @@ const Registration = ({ stateCode }) => {
     setIsUserRegistered(true);
   };
   const onSelectSkipEmail = async () => {
+    setShowSkipEmailModal(false);
     history.push(`${path}/user-name`);
   };
   const selectName = async (name) => {

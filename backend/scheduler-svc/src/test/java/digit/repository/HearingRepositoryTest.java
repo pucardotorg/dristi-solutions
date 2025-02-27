@@ -20,9 +20,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -62,82 +60,80 @@ public class HearingRepositoryTest {
     @Test
     public void testGetHearings_Success() {
         List<Object> preparedStmtList = new ArrayList<>();
-        when(queryBuilder.getHearingQuery(any(ScheduleHearingSearchCriteria.class), any(List.class), anyInt(), anyInt())).thenReturn("SELECT * FROM hearings");
-        when(jdbcTemplate.query(anyString(), any(Object[].class), any(HearingRowMapper.class))).thenReturn(scheduleHearings);
+        when(queryBuilder.getHearingQuery(any(ScheduleHearingSearchCriteria.class), any(List.class), any(List.class), anyInt(), anyInt())).thenReturn("SELECT * FROM hearings");
+        when(jdbcTemplate.query(anyString(), any(Object[].class), any(), any(HearingRowMapper.class))).thenReturn(scheduleHearings);
 
         List<ScheduleHearing> result = hearingRepository.getHearings(hearingSearchCriteria, 10, 0);
 
         assertEquals(1, result.size());
-        verify(queryBuilder, times(1)).getHearingQuery(any(ScheduleHearingSearchCriteria.class), any(List.class), anyInt(), anyInt());
-        verify(jdbcTemplate, times(1)).query(anyString(), any(Object[].class), any(HearingRowMapper.class));
+        verify(queryBuilder, times(1)).getHearingQuery(any(ScheduleHearingSearchCriteria.class), any(List.class), any(List.class), anyInt(), anyInt());
+        verify(jdbcTemplate, times(1)).query(anyString(), any(Object[].class), any(), any(HearingRowMapper.class));
     }
 
     @Test
     public void testGetHearings_EmptyResult() {
         List<Object> preparedStmtList = new ArrayList<>();
-        when(queryBuilder.getHearingQuery(any(ScheduleHearingSearchCriteria.class), any(List.class), anyInt(), anyInt())).thenReturn("SELECT * FROM hearings");
-        when(jdbcTemplate.query(anyString(), any(Object[].class), any(HearingRowMapper.class))).thenReturn(Collections.emptyList());
+        when(queryBuilder.getHearingQuery(any(ScheduleHearingSearchCriteria.class), any(List.class), any(List.class), anyInt(), anyInt())).thenReturn("SELECT * FROM hearings");
+        when(jdbcTemplate.query(anyString(), any(Object[].class), any(), any(HearingRowMapper.class))).thenReturn(new ArrayList<>());
 
         List<ScheduleHearing> result = hearingRepository.getHearings(hearingSearchCriteria, 10, 0);
 
         assertEquals(0, result.size());
-        verify(queryBuilder, times(1)).getHearingQuery(any(ScheduleHearingSearchCriteria.class), any(List.class), anyInt(), anyInt());
-        verify(jdbcTemplate, times(1)).query(anyString(), any(Object[].class), any(HearingRowMapper.class));
+        verify(queryBuilder, times(1)).getHearingQuery(any(ScheduleHearingSearchCriteria.class), any(List.class), any(List.class), anyInt(), anyInt());
+        verify(jdbcTemplate, times(1)).query(anyString(), any(Object[].class), any(), any(HearingRowMapper.class));
     }
 
     @Test
     public void testGetHearings_Exception() {
-        List<Object> preparedStmtList = new ArrayList<>();
-        when(queryBuilder.getHearingQuery(any(ScheduleHearingSearchCriteria.class), any(List.class), anyInt(), anyInt())).thenReturn("SELECT * FROM hearings");
-        when(jdbcTemplate.query(anyString(), any(Object[].class), any(HearingRowMapper.class))).thenThrow(new RuntimeException("Database error"));
+        when(queryBuilder.getHearingQuery(any(ScheduleHearingSearchCriteria.class), any(List.class), any(List.class), anyInt(), anyInt())).thenReturn("SELECT * FROM hearings");
+        when(jdbcTemplate.query(anyString(), any(Object[].class), any(), any(HearingRowMapper.class))).thenThrow(new RuntimeException("Database error"));
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             hearingRepository.getHearings(hearingSearchCriteria, 10, 0);
         });
 
         assertEquals("Database error", exception.getMessage());
-        verify(queryBuilder, times(1)).getHearingQuery(any(ScheduleHearingSearchCriteria.class), any(List.class), anyInt(), anyInt());
-        verify(jdbcTemplate, times(1)).query(anyString(), any(Object[].class), any(HearingRowMapper.class));
+        verify(queryBuilder, times(1)).getHearingQuery(any(ScheduleHearingSearchCriteria.class), any(List.class), any(List.class), anyInt(), anyInt());
+        verify(jdbcTemplate, times(1)).query(anyString(), any(Object[].class), any(), any(HearingRowMapper.class));
     }
 
     @Test
-    public void testGetAvailableDatesOfJudges_Success() {
-        List<Object> preparedStmtList = new ArrayList<>();
-        when(queryBuilder.getJudgeAvailableDatesQuery(any(ScheduleHearingSearchCriteria.class), any(List.class))).thenReturn("SELECT * FROM availability");
-        when(jdbcTemplate.query(anyString(), any(Object[].class), any(AvailabilityRowMapper.class))).thenReturn(availabilityDTOs);
+    public void testGetHearingDayAndOccupiedBandwidthForDay_Success() {
 
-        List<AvailabilityDTO> result = hearingRepository.getAvailableDatesOfJudges(hearingSearchCriteria);
+        when(queryBuilder.getHearingDayAndOccupiedBandwidthForDayQuery(any(ScheduleHearingSearchCriteria.class), any(List.class), any(List.class))).thenReturn("SELECT * FROM availability");
+        when(jdbcTemplate.query(anyString(), any(Object[].class), any(), any(AvailabilityRowMapper.class))).thenReturn(availabilityDTOs);
+
+        List<AvailabilityDTO> result = hearingRepository.getHearingDayAndOccupiedBandwidthForDay(hearingSearchCriteria);
 
         assertEquals(1, result.size());
-        verify(queryBuilder, times(1)).getJudgeAvailableDatesQuery(any(ScheduleHearingSearchCriteria.class), any(List.class));
-        verify(jdbcTemplate, times(1)).query(anyString(), any(Object[].class), any(AvailabilityRowMapper.class));
+        verify(queryBuilder, times(1)).getHearingDayAndOccupiedBandwidthForDayQuery(any(ScheduleHearingSearchCriteria.class), any(List.class), any(List.class));
+        verify(jdbcTemplate, times(1)).query(anyString(), any(Object[].class), any(), any(AvailabilityRowMapper.class));
     }
 
     @Test
-    public void testGetAvailableDatesOfJudges_EmptyResult() {
-        List<Object> preparedStmtList = new ArrayList<>();
-        when(queryBuilder.getJudgeAvailableDatesQuery(any(ScheduleHearingSearchCriteria.class), any(List.class))).thenReturn("SELECT * FROM availability");
-        when(jdbcTemplate.query(anyString(), any(Object[].class), any(AvailabilityRowMapper.class))).thenReturn(Collections.emptyList());
+    public void testGetHearingDayAndOccupiedBandwidthForDay_EmptyResult() {
 
-        List<AvailabilityDTO> result = hearingRepository.getAvailableDatesOfJudges(hearingSearchCriteria);
+        when(queryBuilder.getHearingDayAndOccupiedBandwidthForDayQuery(any(ScheduleHearingSearchCriteria.class), any(List.class), any(List.class))).thenReturn("SELECT * FROM availability");
+        when(jdbcTemplate.query(anyString(), any(Object[].class), any(), any(AvailabilityRowMapper.class))).thenReturn(Collections.emptyList());
+
+        List<AvailabilityDTO> result = hearingRepository.getHearingDayAndOccupiedBandwidthForDay(hearingSearchCriteria);
 
         assertEquals(0, result.size());
-        verify(queryBuilder, times(1)).getJudgeAvailableDatesQuery(any(ScheduleHearingSearchCriteria.class), any(List.class));
-        verify(jdbcTemplate, times(1)).query(anyString(), any(Object[].class), any(AvailabilityRowMapper.class));
+        verify(queryBuilder, times(1)).getHearingDayAndOccupiedBandwidthForDayQuery(any(ScheduleHearingSearchCriteria.class), any(List.class), any(List.class));
+        verify(jdbcTemplate, times(1)).query(anyString(), any(Object[].class), any(), any(AvailabilityRowMapper.class));
     }
 
     @Test
-    public void testGetAvailableDatesOfJudges_Exception() {
-        List<Object> preparedStmtList = new ArrayList<>();
-        when(queryBuilder.getJudgeAvailableDatesQuery(any(ScheduleHearingSearchCriteria.class), any(List.class))).thenReturn("SELECT * FROM availability");
-        when(jdbcTemplate.query(anyString(), any(Object[].class), any(AvailabilityRowMapper.class))).thenThrow(new RuntimeException("Database error"));
+    public void testGetHearingDayAndOccupiedBandwidthForDay_Exception() {
+        when(queryBuilder.getHearingDayAndOccupiedBandwidthForDayQuery(any(ScheduleHearingSearchCriteria.class), any(List.class), any(List.class))).thenReturn("SELECT * FROM availability");
+        when(jdbcTemplate.query(anyString(), any(Object[].class), any(), any(AvailabilityRowMapper.class))).thenThrow(new RuntimeException("Database error"));
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            hearingRepository.getAvailableDatesOfJudges(hearingSearchCriteria);
+            hearingRepository.getHearingDayAndOccupiedBandwidthForDay(hearingSearchCriteria);
         });
 
         assertEquals("Database error", exception.getMessage());
-        verify(queryBuilder, times(1)).getJudgeAvailableDatesQuery(any(ScheduleHearingSearchCriteria.class), any(List.class));
-        verify(jdbcTemplate, times(1)).query(anyString(), any(Object[].class), any(AvailabilityRowMapper.class));
+        verify(queryBuilder, times(1)).getHearingDayAndOccupiedBandwidthForDayQuery(any(ScheduleHearingSearchCriteria.class), any(List.class), any(List.class));
+        verify(jdbcTemplate, times(1)).query(anyString(), any(Object[].class), any(), any(AvailabilityRowMapper.class));
     }
 }

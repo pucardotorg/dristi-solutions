@@ -86,7 +86,7 @@ public class Hearing {
     private Long endTime = null;
 
     @JsonProperty("presidedBy")
-
+    @Valid
     private PresidedBy presidedBy = null;
 
     @JsonProperty("attendees")

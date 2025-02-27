@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.tracer.model.CustomException;
 import org.postgresql.util.PGobject;
+import org.pucar.dristi.web.models.CompositeItem;
 import org.pucar.dristi.web.models.IssuedBy;
 import org.pucar.dristi.web.models.Order;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,9 +15,6 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.sql.ResultSet;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.*;
 
 @Component
@@ -64,6 +62,8 @@ public class OrderRowMapper implements ResultSetExtractor<List<Order>> {
                             .comments(rs.getString("comments"))
                             .filingNumber(rs.getString("filingnumber"))
                             .issuedBy(getObjectFromJson(rs.getString("issuedby"), new TypeReference<IssuedBy>() {}))
+                            .compositeItems(getObjectListFromJson(rs.getString("compositeitems"), new TypeReference<List<CompositeItem>>() {}))
+                            .orderTitle(rs.getString("ordertitle"))
                             .status(rs.getString("status"))
                             .auditDetails(auditdetails)
                             .build();
@@ -94,6 +94,21 @@ public class OrderRowMapper implements ResultSetExtractor<List<Order>> {
         if (json == null || json.trim().isEmpty()) {
             try {
                 return objectMapper.readValue("{}", typeRef); // Return an empty object of the specified type
+            } catch (IOException e) {
+                throw new CustomException("Failed to create an empty instance of " + typeRef.getType(), e.getMessage());
+            }
+        }
+        try {
+            return objectMapper.readValue(json, typeRef);
+        } catch (Exception e) {
+            throw new CustomException("Failed to convert JSON to " + typeRef.getType(), e.getMessage());
+        }
+    }
+
+    public <T> T getObjectListFromJson(String json, TypeReference<T> typeRef) {
+        if (json == null || json.trim().isEmpty()) {
+            try {
+                return objectMapper.readValue("[]", typeRef); // Return an empty object of the specified type
             } catch (IOException e) {
                 throw new CustomException("Failed to create an empty instance of " + typeRef.getType(), e.getMessage());
             }

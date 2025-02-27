@@ -1,6 +1,6 @@
 .geo-location-component {
   .geolocation-header {
-    margin-bottom: 12px;
+    margin-bottom: 20px;
   }
   .custom-note-main-div {
     margin-bottom: 12px;
@@ -30,13 +30,26 @@
       display: flex;
       gap: 24px;
       width: 100%;
+      .latlong-input:disabled {
+        background-color: #d9d9d9;
+      }
       .label-field-pair {
         flex: 1;
       }
     }
   }
   .police-station-dropdown {
-    margin-bottom: 0px;
+    display: flex;
+    justify-content: space-between;
+    max-width: 100%;
+    width: 100%;
+    margin-bottom: 0px !important;
+    .options-card {
+      height: 30vh;
+      margin-top: 42px;
+      overflow-y: auto;
+      width: 100% !important;
+    }
   }
 
   .police-station-label {
@@ -46,10 +59,6 @@
     .custom-error-tooltip {
       margin-top: 2px;
     }
-  }
-
-  .employee-card-input:disabled {
-    background-color: #d9d9d9;
   }
 
   .select.disabled {

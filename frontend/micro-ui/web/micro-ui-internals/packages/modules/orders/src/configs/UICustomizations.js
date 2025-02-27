@@ -1,5 +1,6 @@
 import get from "lodash/get";
 import set from "lodash/set";
+import { getFormattedName } from "../utils";
 
 //create functions here based on module name set in mdms(eg->SearchProjectConfig)
 //how to call these -> Digit?.Customizations?.[masterName]?.[moduleName]
@@ -90,7 +91,15 @@ export const UICustomizations = {
       summonsOrderPartyName: {
         formToSchema: (value) => {
           try {
-            return [value?.party?.data?.firstName, value?.party?.data?.middleName, value?.party?.data?.lastName].filter(Boolean).join(" ");
+            const isWitness = value?.party?.data?.partyType?.toLowerCase() === "witness";
+            const partyTypeLabel = isWitness ? "(witness)" : null;
+            return getFormattedName(
+              value?.party?.data?.firstName,
+              value?.party?.data?.middleName,
+              value?.party?.data?.lastName,
+              isWitness ? value?.party?.data?.witnessDesignation : null,
+              partyTypeLabel,
+            );
           } catch (error) {
             console.error("Error in parsing party name", error);
             return;

@@ -123,6 +123,8 @@ const NextHearingModal = ({ hearingId, hearing, stepper, setStepper, transcript,
         statuteSection: {
           tenantId: Digit.ULBService.getCurrentTenantId(),
         },
+        orderTitle: "SCHEDULING_NEXT_HEARING",
+        orderCategory: "Intermediate",
         orderType: "SCHEDULING_NEXT_HEARING",
         status: "",
         isActive: true,

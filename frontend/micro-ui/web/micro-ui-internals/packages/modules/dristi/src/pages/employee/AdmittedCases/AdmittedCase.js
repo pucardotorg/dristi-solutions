@@ -1350,16 +1350,12 @@ const AdmittedCases = () => {
 
   const handleAdmitDismissCaseOrder = async (generateOrder, type) => {
     try {
-      const orderType = "ADMIT_DISMISS_CASE";
+      const orderType = type === "reject" ? "DISMISS_CASE" : type === "accept" ? "ADMIT_CASE" : null;
       const formdata = {
         orderType: {
           code: orderType,
           type: orderType,
           name: `ORDER_TYPE_${orderType}`,
-        },
-        isCaseAdmittedOrDismissed: {
-          code: type === "reject" ? "DISMISSED" : type === "accept" ? "ADMITTED" : null,
-          name: type === "reject" ? "DISMISSED" : type === "accept" ? "ADMITTED" : null,
         },
       };
       if (generateOrder) {
@@ -1372,6 +1368,8 @@ const AdmittedCases = () => {
             statuteSection: {
               tenantId,
             },
+            orderTitle: orderType,
+            orderCategory: "Intermediate",
             orderType,
             status: "",
             isActive: true,
@@ -1393,7 +1391,7 @@ const AdmittedCases = () => {
         };
         try {
           const res = await ordersService.createOrder(reqbody, { tenantId });
-          const name = "ADMIT_DISMISS_CASE";
+          const name = orderType;
           DRISTIService.customApiService(Urls.dristi.pendingTask, {
             pendingTask: {
               name: t(name),
@@ -1788,6 +1786,8 @@ const AdmittedCases = () => {
             statuteSection: {
               tenantId: tenantId,
             },
+            orderTitle: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+            orderCategory: "Intermediate",
             orderType: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
             status: "",
             isActive: true,
@@ -1881,6 +1881,8 @@ const AdmittedCases = () => {
           statuteSection: {
             tenantId,
           },
+          orderTitle: "REFERRAL_CASE_TO_ADR",
+          orderCategory: "Intermediate",
           orderType: "REFERRAL_CASE_TO_ADR",
           status: "",
           isActive: true,
@@ -1925,6 +1927,8 @@ const AdmittedCases = () => {
           statuteSection: {
             tenantId,
           },
+          orderTitle: "MANDATORY_SUBMISSIONS_RESPONSES",
+          orderCategory: "Intermediate",
           orderType: "MANDATORY_SUBMISSIONS_RESPONSES",
           status: "",
           isActive: true,
@@ -2021,6 +2025,8 @@ const AdmittedCases = () => {
         statuteSection: {
           tenantId,
         },
+        orderTitle: "SCHEDULE_OF_HEARING_DATE",
+        orderCategory: "Intermediate",
         orderType: "SCHEDULE_OF_HEARING_DATE",
         status: "",
         isActive: true,

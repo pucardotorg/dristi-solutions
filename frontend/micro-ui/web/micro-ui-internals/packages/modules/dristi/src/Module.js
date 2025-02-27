@@ -66,6 +66,7 @@ import MultiSelectDropdown from "./components/MultiSelectDropdown";
 import WarningModal from "./components/WarningModal";
 import CustomTextInput from "./components/CustomTextInput";
 import CustomEmailTextInput from "./pages/citizen/registration/CustomEmailTextInput";
+import OrSeparator from "./components/OrSeparator";
 
 export const DRISTIModule = ({ stateCode, userType, tenants }) => {
   const Digit = useMemo(() => window?.Digit || {}, []);
@@ -179,6 +180,7 @@ const componentsToRegister = {
   WarningModal,
   CustomTextInput,
   CustomEmailTextInput,
+  OrSeparator,
 };
 
 const overrideHooks = () => {

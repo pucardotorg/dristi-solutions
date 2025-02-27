@@ -268,36 +268,6 @@ export const checkIfscValidation = ({ formData, setValue, selected }) => {
   }
 };
 
-export const WitnessValidation = ({ formData, setValue, selected, reset, index, formdata, clearErrors, formState }) => {
-  if (selected === "witnessDetails") {
-    if (formData?.witnessNameAvailable?.code !== formdata[index]?.data?.witnessNameAvailable?.code) {
-      const formDataCopy = structuredClone(formData);
-      for (const key in formDataCopy) {
-        if (["firstName", "middleName", "lastName", "witnessDesignation"].includes(key) && Object.hasOwnProperty.call(formDataCopy, key)) {
-          const oldValue = formDataCopy[key];
-          let value = oldValue;
-          if (typeof value === "string") {
-            if (value.length > 100) {
-              value = value.slice(0, 100);
-            }
-
-            let updatedValue = "";
-            if (updatedValue !== oldValue) {
-              const element = document.querySelector(`[name="${key}"]`);
-              const start = element?.selectionStart;
-              const end = element?.selectionEnd;
-              setValue(key, updatedValue);
-              setTimeout(() => {
-                element?.setSelectionRange(start, end);
-              }, 0);
-            }
-          }
-        }
-      }
-    }
-  }
-};
-
 export const checkNameValidation = ({ formData, setValue, selected, reset, index, formdata, clearErrors, formState }) => {
   if (selected === "respondentDetails") {
     if (formData?.respondentFirstName || formData?.respondentMiddleName || formData?.respondentLastName || formData?.respondentAge) {
@@ -1043,12 +1013,9 @@ export const delayApplicationValidation = ({ t, formData, selected, setShowError
 
 export const witnessDetailsValidation = ({ t, formData, selected, setShowErrorToast, setErrorMsg, toast, setFormErrors }) => {
   if (selected === "witnessDetails") {
-    if (!formData?.firstName && formData?.witnessNameAvailable?.code === "YES") {
-      setFormErrors("firstName", { message: "FIRST_LAST_NAME_MANDATORY_MESSAGE" });
-      toast.error(t("AT_LEAST_ONE_OUT_OF_FIRST_NAME_AND_WITNESS_DESIGNATION_IS_MANDATORY"));
-      return true;
-    } else if (formData?.witnessNameAvailable?.code === "NO" && !formData?.witnessDesignation) {
-      setFormErrors("witnessDesignation", { message: "FIRST_LAST_NAME_MANDATORY_MESSAGE" });
+    if (!(formData?.firstName || formData?.witnessDesignation)) {
+      // setFormErrors("firstName", { message: "FIRST_LAST_NAME_MANDATORY_MESSAGE" });
+      // setFormErrors("witnessDesignation",{ message: "FIRST_LAST_NAME_MANDATORY_MESSAGE" })
       toast.error(t("AT_LEAST_ONE_OUT_OF_FIRST_NAME_AND_WITNESS_DESIGNATION_IS_MANDATORY"));
       return true;
     }
@@ -2146,8 +2113,11 @@ export const updateCaseDetails = async ({
     for (let i = 0; i < newFormDataCopy.length; i++) {
       const obj = newFormDataCopy[i];
 
-      if (obj?.data?.firstName && typeof obj?.data?.firstName === "object" && obj.data?.firstName?.firstName !== undefined) {
-        obj.data.firstName = obj.data.firstName.firstName;
+      if (obj?.data?.phonenumbers) {
+        obj.data.phonenumbers.textfieldValue = "";
+      }
+      if (obj?.data?.emails) {
+        obj.data.emails.textfieldValue = "";
       }
     }
 

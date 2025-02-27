@@ -89,14 +89,13 @@ public class HearingService {
      * @return list of updated schedule hearing object
      */
     public List<ScheduleHearing> update(ScheduleHearingRequest scheduleHearingRequest) {
-        log.info("operation = update, result = IN_PROGRESS, ScheduleHearingRequest={}, Hearing={}", scheduleHearingRequest, scheduleHearingRequest.getHearing());
-
+        log.info("operation = update, result = IN_PROGRESS");
 
         hearingEnrichment.enrichUpdateScheduleHearing(scheduleHearingRequest.getRequestInfo(), scheduleHearingRequest.getHearing());
 
         producer.push(config.getScheduleHearingUpdateTopic(), scheduleHearingRequest);
 
-        log.info("operation = update, result = SUCCESS, ScheduleHearing={}", scheduleHearingRequest.getHearing());
+        log.info("operation = update, result = SUCCESS");
 
         return scheduleHearingRequest.getHearing();
 
@@ -127,7 +126,7 @@ public class HearingService {
      */
     public List<AvailabilityDTO> getAvailableDateForHearing(ScheduleHearingSearchCriteria scheduleHearingSearchCriteria) {
 
-        return hearingRepository.getAvailableDatesOfJudges(scheduleHearingSearchCriteria);
+        return hearingRepository.getHearingDayAndOccupiedBandwidthForDay(scheduleHearingSearchCriteria);
     }
 
 

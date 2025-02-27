@@ -42,13 +42,14 @@ public class ReScheduleHearingQueryBuilderTest {
         searchCriteria.setDueDate(2L);
 
         List<Object> preparedStmtList = new ArrayList<>();
+        List<Integer> preparedStmtArgList = new ArrayList<>();
 
         String expectedQuery = "SELECT hbr.reschedule_request_id, hbr.hearing_booking_id, hbr.tenant_id, hbr.judge_id, hbr.case_id,hbr.requester_id,hbr.reason,hbr.status,hbr.action_comment,hbr.documents, hbr.created_by,hbr.last_modified_by,hbr.created_time,hbr.last_modified_time, hbr.row_version, hbr.suggested_days , hbr.available_days  FROM hearing_booking_reschedule_request hbr  WHERE  hbr.reschedule_request_id IN ( ? )  AND  hbr.tenant_id = ?  AND  hbr.judge_id = ?  AND  hbr.case_id = ?  AND  hbr.hearing_booking_id = ?  AND  hbr.requester_id = ?  AND  hbr.status = ?  AND  hbr.last_modified_time < ?  ORDER BY hbr.last_modified_time DESC";
 
         when(helper.createQuery(any())).thenReturn("?");
-        doNothing().when(helper).addToPreparedStatement(anyList(), any());
+        doNothing().when(helper).addToPreparedStatement(anyList(), any(),any());
 
-        String actualQuery = queryBuilder.getReScheduleRequestQuery(searchCriteria, preparedStmtList, null, null);
+        String actualQuery = queryBuilder.getReScheduleRequestQuery(searchCriteria, preparedStmtList,preparedStmtArgList, null, null);
 
         assertEquals(7, preparedStmtList.size());
 
@@ -59,10 +60,11 @@ public class ReScheduleHearingQueryBuilderTest {
     public void testGetReScheduleRequestQuery_withNoCriteria() {
         ReScheduleHearingReqSearchCriteria searchCriteria = new ReScheduleHearingReqSearchCriteria();
         List<Object> preparedStmtList = new ArrayList<>();
+       List<Integer> preparedStmtArgList = new ArrayList<>();
 
         String expectedQuery = "SELECT hbr.reschedule_request_id, hbr.hearing_booking_id, hbr.tenant_id, hbr.judge_id, hbr.case_id,hbr.requester_id,hbr.reason,hbr.status,hbr.action_comment,hbr.documents, hbr.created_by,hbr.last_modified_by,hbr.created_time,hbr.last_modified_time, hbr.row_version, hbr.suggested_days , hbr.available_days  FROM hearing_booking_reschedule_request hbr  ORDER BY hbr.last_modified_time DESC";
 
-        String actualQuery = queryBuilder.getReScheduleRequestQuery(searchCriteria, preparedStmtList, null, null);
+        String actualQuery = queryBuilder.getReScheduleRequestQuery(searchCriteria, preparedStmtList,preparedStmtArgList, null, null);
 
         assertEquals(0, preparedStmtList.size());
 
