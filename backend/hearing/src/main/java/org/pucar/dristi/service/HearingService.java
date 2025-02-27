@@ -86,7 +86,6 @@ public class HearingService {
             workflowService.updateWorkflowStatus(body);
 
             // Push the application to the topic for persister to listen and persist
-
             producer.push(config.getHearingCreateTopic(), body);
 
             return body.getHearing();
@@ -359,19 +358,18 @@ public class HearingService {
 
         List<ScheduleHearing> scheduleHearings = schedulerUtil.callBulkReschedule(request);
 
-        Map<String, ScheduleHearing> scheduleHearingMap = scheduleHearings.stream().collect(Collectors.toMap(ScheduleHearing::getHearingBookingId, obj -> obj));
-        for (Hearing hearing : hearingsToReschedule) {
-            if (scheduleHearingMap.containsKey(hearing.getHearingId())) {
-                ScheduleHearing scheduleHearing = scheduleHearingMap.get(hearing.getHearingId());
-                hearing.setStartTime(scheduleHearing.getStartTime());
-                hearing.setEndTime(scheduleHearing.getEndTime());
-                hearing.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
-                hearing.getAuditDetails().setLastModifiedBy(requestInfo.getUserInfo().getUuid());
+        Map<String, Hearing> scheduleHearingMap = hearingsToReschedule.stream().collect(Collectors.toMap(Hearing::getHearingId, obj -> obj));
+        for (ScheduleHearing scheduleHearing : scheduleHearings) {
+            if (scheduleHearingMap.containsKey(scheduleHearing.getHearingBookingId())) {
+                Hearing hearing = scheduleHearingMap.get(scheduleHearing.getHearingBookingId());
+                scheduleHearing.setOriginalHearingDate(hearing.getStartTime());
+                scheduleHearing.setCaseId(hearing.getCmpNumber());
+                scheduleHearing.setJudgeIds(hearing.getPresidedBy().getJudgeID());
+
+                // todo: check for case title
             }
         }
-        UpdateTimeRequest reschedule = UpdateTimeRequest.builder().requestInfo(requestInfo).hearings(hearingsToReschedule).build();
 
-        producer.push(config.getBulkRescheduleTopic(),reschedule);
         return scheduleHearings;
     }
 

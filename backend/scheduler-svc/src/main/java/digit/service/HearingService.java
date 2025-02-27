@@ -91,7 +91,6 @@ public class HearingService {
     public List<ScheduleHearing> update(ScheduleHearingRequest scheduleHearingRequest) {
         log.info("operation = update, result = IN_PROGRESS, ScheduleHearingRequest={}, Hearing={}", scheduleHearingRequest, scheduleHearingRequest.getHearing());
 
-
         hearingEnrichment.enrichUpdateScheduleHearing(scheduleHearingRequest.getRequestInfo(), scheduleHearingRequest.getHearing());
 
         producer.push(config.getScheduleHearingUpdateTopic(), scheduleHearingRequest);
@@ -127,7 +126,7 @@ public class HearingService {
      */
     public List<AvailabilityDTO> getAvailableDateForHearing(ScheduleHearingSearchCriteria scheduleHearingSearchCriteria) {
 
-        return hearingRepository.getAvailableDatesOfJudges(scheduleHearingSearchCriteria);
+        return hearingRepository.getHearingDayAndOccupiedBandwidthForDay(scheduleHearingSearchCriteria);
     }
 
 

@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
+import java.sql.Types;
 import java.util.List;
 
 @Component
@@ -28,26 +29,30 @@ public class ReScheduleHearingQueryBuilder {
         this.helper = helper;
     }
 
-    public String getReScheduleRequestQuery(ReScheduleHearingReqSearchCriteria searchCriteria, List<Object> preparedStmtList, Integer limit, Integer offset) {
+    public String getReScheduleRequestQuery(ReScheduleHearingReqSearchCriteria searchCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList, Integer limit, Integer offset) {
         StringBuilder query = new StringBuilder(BASE_APPLICATION_QUERY);
         query.append(FROM_TABLES);
 
         if (!CollectionUtils.isEmpty(searchCriteria.getRescheduledRequestId())) {
             helper.addClauseIfRequired(query, preparedStmtList);
             query.append(" hbr.reschedule_request_id IN ( ").append(helper.createQuery(searchCriteria.getRescheduledRequestId())).append(" ) ");
-            helper.addToPreparedStatement(preparedStmtList, searchCriteria.getRescheduledRequestId());
+            helper.addToPreparedStatement(preparedStmtList, preparedStmtArgList, searchCriteria.getRescheduledRequestId());
         }
 
         if (!ObjectUtils.isEmpty(searchCriteria.getTenantId())) {
             helper.addClauseIfRequired(query, preparedStmtList);
             query.append(" hbr.tenant_id = ? ");
             preparedStmtList.add(searchCriteria.getTenantId());
+            preparedStmtArgList.add(Types.VARCHAR);
+
         }
 
         if (!ObjectUtils.isEmpty(searchCriteria.getJudgeId())) {
             helper.addClauseIfRequired(query, preparedStmtList);
             query.append(" hbr.judge_id = ? ");
             preparedStmtList.add(searchCriteria.getJudgeId());
+            preparedStmtArgList.add(Types.VARCHAR);
+
         }
 
         //bug
@@ -55,33 +60,46 @@ public class ReScheduleHearingQueryBuilder {
             helper.addClauseIfRequired(query, preparedStmtList);
             query.append(" hbr.case_id = ? ");
             preparedStmtList.add(searchCriteria.getJudgeId());
+            preparedStmtArgList.add(Types.VARCHAR);
+
         }
 
         if (!ObjectUtils.isEmpty(searchCriteria.getHearingBookingId())) {
             helper.addClauseIfRequired(query, preparedStmtList);
             query.append(" hbr.hearing_booking_id = ? ");
             preparedStmtList.add(searchCriteria.getHearingBookingId());
+            preparedStmtArgList.add(Types.VARCHAR);
+
         }
         if (!ObjectUtils.isEmpty(searchCriteria.getRequesterId())) {
             helper.addClauseIfRequired(query, preparedStmtList);
             query.append(" hbr.requester_id = ? ");
             preparedStmtList.add(searchCriteria.getRequesterId());
+            preparedStmtArgList.add(Types.VARCHAR);
+
         }
         if (!ObjectUtils.isEmpty(searchCriteria.getStatus())) {
             helper.addClauseIfRequired(query, preparedStmtList);
             query.append(" hbr.status = ? ");
-            preparedStmtList.add(searchCriteria.getStatus().toString());
+            preparedStmtList.add(searchCriteria.getStatus());
+            preparedStmtArgList.add(Types.VARCHAR);
+
         }
         if (!ObjectUtils.isEmpty(searchCriteria.getDueDate())) {
             helper.addClauseIfRequired(query, preparedStmtList);
             query.append(" hbr.last_modified_time < ?  ");
             preparedStmtList.add(searchCriteria.getDueDate());
+            preparedStmtArgList.add(Types.BIGINT);
+
         }
         query.append(ORDER_BY);
         if (!ObjectUtils.isEmpty(limit) && !ObjectUtils.isEmpty(offset)) {
             query.append(LIMIT_OFFSET);
             preparedStmtList.add(limit);
+            preparedStmtArgList.add(Types.VARCHAR);
             preparedStmtList.add(offset);
+            preparedStmtArgList.add(Types.VARCHAR);
+
         }
 
 

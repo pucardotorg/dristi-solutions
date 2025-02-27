@@ -74,9 +74,10 @@ public class QueryBuilderHelperTest {
         // Arrange
         List<Object> preparedStmtList = new ArrayList<>();
         List<String> ids = Arrays.asList("id1", "id2", "id3");
+        List<Integer> preparedStmtArgList = new ArrayList<>();
 
         // Act
-        queryBuilderHelper.addToPreparedStatement(preparedStmtList, ids);
+        queryBuilderHelper.addToPreparedStatement(preparedStmtList,preparedStmtArgList, ids);
 
         // Assert
         assertEquals(Arrays.asList("id1", "id2", "id3"), preparedStmtList);
