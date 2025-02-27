@@ -78,7 +78,7 @@ public class PendingTask {
     @JsonProperty("additionalDetails")
     private Object additionalDetails = null;
 
-    @JsonProperty("isDiary")
-    private Boolean isDiary = null;
+    @JsonProperty("screenType")
+    private String screenType = null;
 
 }
