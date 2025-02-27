@@ -15,8 +15,8 @@ public class AvailabilityRowMapper implements RowMapper<AvailabilityDTO> {
     @Override
     public AvailabilityDTO mapRow(ResultSet rs, int rowNum) throws SQLException {
         return AvailabilityDTO.builder()
-                .date(rs.getString("date"))
-                .occupiedBandwidth(rs.getDouble("hours"))
+                .date(rs.getString("hearing_date"))
+                .occupiedBandwidth(rs.getDouble("total_mins"))
                 .build();
     }
 }

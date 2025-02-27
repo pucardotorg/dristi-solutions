@@ -54,48 +54,54 @@ public class HearingProcessor {
      * @param hearingRequest a {@link HearingRequest} object containing the hearing details.
      */
     public void processCreateHearingRequest(HearingRequest hearingRequest) {
-
         log.info("operation = processCreateHearingRequest, result = IN_PROGRESS, hearingId={}", hearingRequest.getHearing().getHearingId());
-        Hearing hearing = hearingRequest.getHearing();
-        RequestInfo requestInfo = hearingRequest.getRequestInfo();
-        PresidedBy presidedBy = hearing.getPresidedBy();
-        List<String> filling = hearing.getFilingNumber();
+        try {
+            Hearing hearing = hearingRequest.getHearing();
+            RequestInfo requestInfo = hearingRequest.getRequestInfo();
+            PresidedBy presidedBy = hearing.getPresidedBy();
+            List<String> filling = hearing.getFilingNumber();
 
-        log.debug("calculating start time and end time for hearing");
-        Pair<Long, Long> startTimeAndEndTime = getStartTimeAndEndTime(hearing.getStartTime());
+            log.debug("calculating start time and end time for hearing");
+            Pair<Long, Long> startTimeAndEndTime = getStartTimeAndEndTime(hearing.getStartTime());
 
+            ScheduleHearing scheduleHearing = customMapper.hearingToScheduleHearingConversion(hearing);
+            scheduleHearing.setCaseId(filling.get(0));
+            scheduleHearing.setStartTime(startTimeAndEndTime.getKey());
+            scheduleHearing.setEndTime(startTimeAndEndTime.getValue());
+            scheduleHearing.setHearingDate(startTimeAndEndTime.getKey());
 
-        ScheduleHearing scheduleHearing = customMapper.hearingToScheduleHearingConversion(hearing);
-        scheduleHearing.setCaseId(filling.get(0));
-        scheduleHearing.setStartTime(startTimeAndEndTime.getKey());
-        scheduleHearing.setEndTime(startTimeAndEndTime.getValue());
-        scheduleHearing.setHearingDate(startTimeAndEndTime.getKey());
+            // currently one judge only if there are other judge then we need to block all judge calendar and remove default judge id
+            String judgeId = (presidedBy.getJudgeID().isEmpty()) ? "JUDGE_ID" : presidedBy.getJudgeID().get(0);
 
+            scheduleHearing.setJudgeId(judgeId);
+            scheduleHearing.setCourtId(presidedBy.getCourtID());
+            scheduleHearing.setStatus("SCHEDULED");
 
-        // currently one judge only
-        scheduleHearing.setJudgeId(presidedBy.getJudgeID().get(0));
-        scheduleHearing.setCourtId(presidedBy.getCourtID());
-        scheduleHearing.setStatus("SCHEDULED");
+            ScheduleHearingRequest request = ScheduleHearingRequest.builder().hearing(Collections.singletonList(scheduleHearing)).requestInfo(requestInfo).build();
+            log.debug("assigning start time and end time for hearing, hearingId={}", hearing.getHearingId());
+            List<ScheduleHearing> scheduledHearings = hearingService.schedule(request);   // BLOCKED THE JUDGE CALENDAR
+            ScheduleHearing scheduledHearing = scheduledHearings.get(0);
 
-        ScheduleHearingRequest request = ScheduleHearingRequest.builder().hearing(Collections.singletonList(scheduleHearing)).requestInfo(requestInfo).build();
-        log.debug("assigning start time and end time for hearing, hearingId={}", hearing.getHearingId());
-        List<ScheduleHearing> scheduledHearings = hearingService.schedule(request);   // BLOCKED THE JUDGE CALENDAR
-        ScheduleHearing scheduledHearing = scheduledHearings.get(0);
+            hearing.setStartTime(scheduledHearing.getStartTime());
+            hearing.setEndTime(scheduledHearing.getEndTime());
 
-        hearing.setStartTime(scheduledHearing.getStartTime());
-        hearing.setEndTime(scheduledHearing.getEndTime());
+            hearingRequest.setHearing(hearing);
 
-        hearingRequest.setHearing(hearing);
+            HearingUpdateBulkRequest updateHearingRequest = HearingUpdateBulkRequest.builder()
+                    .requestInfo(requestInfo)
+                    .hearings(Collections.singletonList(hearing))
+                    .build();
+            log.debug("updating hearing in hearing module,hearingId={}", hearing.getHearingId());
+            hearingUtil.callHearing(updateHearingRequest);
 
-        HearingUpdateBulkRequest updateHearingRequest = HearingUpdateBulkRequest.builder()
-                .requestInfo(requestInfo)
-                .hearings(Collections.singletonList(hearing))
-                .build();
-        log.debug("updating hearing in hearing module,hearingId={}", hearing.getHearingId());
-        hearingUtil.callHearing(updateHearingRequest);
+            producer.push(config.getScheduleHearingTopic(), ScheduleHearingRequest.builder().requestInfo(requestInfo).hearing(scheduledHearings).build());
+            log.info("operation = processCreateHearingRequest, result = SUCCESS, hearingId={}", hearing.getHearingId());
 
-        producer.push(config.getScheduleHearingTopic(), ScheduleHearingRequest.builder().requestInfo(requestInfo).hearing(scheduledHearings).build());
-        log.info("operation = processCreateHearingRequest, result = SUCCESS, hearingId={}", hearing.getHearingId());
+        } catch (Exception e) {
+            log.error("operation = processCreateHearingRequest, result = FAILURE, error = {}", e.getMessage(), e);
+            log.error("error occurred while assigning start time and end time for hearing, hearingId={}", hearingRequest.getHearing().getHearingId());
+        }
+
     }
 
     /**
