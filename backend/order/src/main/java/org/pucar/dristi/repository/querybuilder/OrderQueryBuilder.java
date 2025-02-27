@@ -105,7 +105,7 @@ public class OrderQueryBuilder {
             firstCriteria = addCriteria(criteria.getCnrNumber(), query, firstCriteria, "orders.cnrNumber = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
             firstCriteria = addCriteria(criteria.getFilingNumber(), query, firstCriteria, "orders.filingNumber = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
             firstCriteria = addCriteria(criteria.getTenantId(), query, firstCriteria, "orders.tenantId = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
-            firstCriteria = addCriteria(criteria.getOrderType(), query, firstCriteria, "orders.orderType = ? OR EXISTS (SELECT 1 FROM jsonb_array_elements(CASE WHEN jsonb_typeof(compositeitems) = 'array' THEN compositeitems ELSE '[]'::jsonb END) elem WHERE elem->>'orderType' = ?)", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
+            firstCriteria = addOrderTypeCriteria(criteria.getOrderType(), query, firstCriteria, "orders.orderType = ? OR EXISTS (SELECT 1 FROM jsonb_array_elements(CASE WHEN jsonb_typeof(compositeitems) = 'array' THEN compositeitems ELSE '[]'::jsonb END) elem WHERE elem->>'orderType' = ?)", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
             firstCriteria = addCriteria(criteria.getOrderCategory(), query, firstCriteria, "orders.orderCategory = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
             firstCriteria = addCriteria(criteria.getId(), query, firstCriteria, "orders.id = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
             firstCriteria = addCriteria(criteria.getStatus(), query, firstCriteria, "orders.status = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
@@ -119,6 +119,19 @@ public class OrderQueryBuilder {
     }
 
     private boolean addCriteria(String criteria, StringBuilder query, boolean firstCriteria, String str, List<Object> preparedStmtList, List<Integer> preparedStmtArgList, int type ) {
+        if (criteria != null && !criteria.isEmpty()) {
+            addClauseIfRequired(query, firstCriteria);
+            query.append(str);
+
+            preparedStmtList.add(criteria);
+            preparedStmtArgList.add(type);
+
+            firstCriteria = false;
+        }
+        return firstCriteria;
+    }
+
+    private boolean addOrderTypeCriteria(String criteria, StringBuilder query, boolean firstCriteria, String str, List<Object> preparedStmtList, List<Integer> preparedStmtArgList, int type ) {
         if (criteria != null && !criteria.isEmpty()) {
             addClauseIfRequired(query, firstCriteria);
             query.append(str);
