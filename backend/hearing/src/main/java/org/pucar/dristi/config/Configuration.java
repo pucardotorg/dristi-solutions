@@ -182,11 +182,17 @@ public class Configuration {
     @Value("${egov.sms.notification.hearing.adjourned.template.id}")
     private String smsNotificationHearingAdjournedTemplateId;
 
-    @Value("${egov.scheduler.host}")
+    @Value("${dristi.scheduler.host}")
     private String schedulerHost;
 
-    @Value("${egov.scheduler.bulk.reschedule.endpoint}")
+    @Value("${dristi.scheduler.bulk.reschedule.endpoint}")
     private String bulkRescheduleEndPoint;
+
+    @Value("${dristi.scheduler.search.endpoint}")
+    private String schedulerSearchEndpoint;
+
+    @Value("${dristi.scheduler.update.endpoint}")
+    private String schedulerUpdateEndpoint;
 
     @Value("${bulk.reschedule.topic}")
     private String bulkRescheduleTopic;
