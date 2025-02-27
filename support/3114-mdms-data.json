@@ -10,7 +10,7 @@
         "uniqueIdentifier": "2719",
         "data": {
           "id": 2719,
-          "url": "/case/diary/v1/bulkEntry",
+          "url": "/ab-diary/case/diary/v1/bulkEntry",
           "code": "2719",
           "name": "Bulk Diary Entry",
           "enabled": true,
