@@ -210,40 +210,6 @@ public class NotificationQueryBuilder {
         return pagination == null || pagination.getSortBy() == null || pagination.getOrder() == null;
     }
 
-
-    private void addWhereInCondition(Object obj, String[] fieldNames, StringBuilder sb, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
-        if (obj == null || fieldNames == null || fieldNames.length == 0 || sb == null) {
-            throw new CustomException("Object, fieldNames, and StringBuilder cannot be null or empty", "");
-        }
-
-        sb.append(WHERE);
-        List<String> conditions = new ArrayList<>();
-
-        Class<?> clazz = obj.getClass();
-        for (Field field : clazz.getDeclaredFields()) {
-            field.setAccessible(true);
-            try {
-                if (Arrays.asList(fieldNames).contains(field.getName()) && field.get(obj) != null) {
-                    conditions.add("?");  // Each field will be replaced by `?` in SQL
-                    preparedStmtList.add(field.get(obj));
-                    preparedStmtArgList.add(Types.VARCHAR); // Assuming all fields are VARCHAR (adjust if needed)
-                }
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException("Failed to access field: " + field.getName(), e);
-            }
-        }
-
-        if (!conditions.isEmpty()) {
-            sb.append("(").append(String.join(", ", fieldNames)).append(") IN (");
-            sb.append(generatePlaceholders(conditions.size(), fieldNames.length));  // Dynamically generate placeholders
-            sb.append(")");
-        }
-    }
-
-    private String generatePlaceholders(int conditionCount, int paramsPerCondition) {
-        return String.join(", ", Collections.nCopies(conditionCount, "(" + "?,".repeat(paramsPerCondition - 1) + "?" + ")"));
-    }
-
     private boolean addCriteria(String criteria, StringBuilder query, boolean firstCriteria, String str, List<Object> preparedStmtList, List<Integer> preparedStmtArgList, int type ) {
         if (criteria != null && !criteria.isEmpty()) {
             addClauseIfRequired(query, firstCriteria);
