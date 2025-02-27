@@ -178,8 +178,7 @@
             "JUDGEMENT",
             "WITHDRAWAL",
             "SETTLEMENT",
-            "CASE_TRANSFER",
-            "ADMIT_DISMISS_CASE"
+            "CASE_TRANSFER"
           ]
         },
         "isActive": true,
