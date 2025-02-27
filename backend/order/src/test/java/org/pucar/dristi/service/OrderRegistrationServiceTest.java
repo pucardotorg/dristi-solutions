@@ -1,5 +1,8 @@
 package org.pucar.dristi.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
@@ -45,6 +48,9 @@ import static org.mockito.Mockito.*;
 
     @Mock
     private Producer producer;
+
+   @Mock
+   private ObjectMapper objectMapper;
 
     @BeforeEach
      void setup() {
@@ -179,7 +185,194 @@ import static org.mockito.Mockito.*;
     @Test
      void testExistOrder_customException() {
 
-       assertThrows(CustomException.class, () ->
-                orderRegistrationService.existsOrder(null));
-    }
+      assertThrows(CustomException.class, () ->
+              orderRegistrationService.existsOrder(null));
+   }
+
+   // New tests for addItem method
+   @Test
+   void testAddItem_success() {
+      // Setup
+      OrderRequest orderRequest = new OrderRequest();
+      Order order = new Order();
+      order.setOrderNumber("TEST-ORDER-123");
+      order.setTenantId("test-tenant");
+      orderRequest.setOrder(order);
+      RequestInfo requestInfo = new RequestInfo();
+      orderRequest.setRequestInfo(requestInfo);
+
+      // Mocks
+      when(validator.validateApplicationExistence(any(OrderRequest.class))).thenReturn(true);
+      doNothing().when(validator).validateAddItem(any(OrderRequest.class));
+      doNothing().when(enrichmentUtil).enrichOrderRegistrationUponUpdate(any(OrderRequest.class));
+      doNothing().when(enrichmentUtil).enrichCompositeOrderItemIdOnAddItem(any(OrderRequest.class));
+      doNothing().when(producer).push(anyString(), any(OrderRequest.class));
+      when(config.getUpdateOrderKafkaTopic()).thenReturn("update-order-topic");
+
+      // Method call
+      Order result = orderRegistrationService.addItem(orderRequest);
+
+      // Assertions
+      assertNotNull(result);
+      assertEquals(order, result);
+      verify(validator).validateApplicationExistence(orderRequest);
+      verify(validator).validateAddItem(orderRequest);
+      verify(enrichmentUtil).enrichOrderRegistrationUponUpdate(orderRequest);
+      verify(enrichmentUtil).enrichCompositeOrderItemIdOnAddItem(orderRequest);
+      verify(producer).push("update-order-topic", orderRequest);
+   }
+
+   @Test
+   void testAddItem_orderDoesNotExist() {
+      // Setup
+      OrderRequest orderRequest = new OrderRequest();
+      Order order = new Order();
+      orderRequest.setOrder(order);
+
+      // Mocks
+      when(validator.validateApplicationExistence(any(OrderRequest.class))).thenReturn(false);
+
+      // Method call and assertions
+      CustomException exception = assertThrows(CustomException.class, () ->
+              orderRegistrationService.addItem(orderRequest));
+
+      assertEquals("ORDER_UPDATE_EXCEPTION", exception.getCode());
+      assertEquals("Order doesn't exist", exception.getMessage());
+      verify(validator).validateApplicationExistence(orderRequest);
+      verify(validator, never()).validateAddItem(any(OrderRequest.class));
+   }
+
+   @Test
+   void testAddItem_validationException() {
+      // Setup
+      OrderRequest orderRequest = new OrderRequest();
+      Order order = new Order();
+      orderRequest.setOrder(order);
+
+      // Mocks
+      when(validator.validateApplicationExistence(any(OrderRequest.class))).thenReturn(true);
+      doThrow(new CustomException("VALIDATION_ERROR", "Invalid item data"))
+              .when(validator).validateAddItem(any(OrderRequest.class));
+
+      // Method call and assertions
+      CustomException exception = assertThrows(CustomException.class, () ->
+              orderRegistrationService.addItem(orderRequest));
+
+      assertEquals("VALIDATION_ERROR", exception.getCode());
+      assertEquals("Invalid item data", exception.getMessage());
+      verify(validator).validateApplicationExistence(orderRequest);
+      verify(validator).validateAddItem(orderRequest);
+   }
+
+   @Test
+   void testAddItem_genericException() {
+      // Setup
+      OrderRequest orderRequest = new OrderRequest();
+      Order order = new Order();
+      orderRequest.setOrder(order);
+
+      // Mocks
+      when(validator.validateApplicationExistence(any(OrderRequest.class))).thenReturn(true);
+      doNothing().when(validator).validateAddItem(any(OrderRequest.class));
+      doThrow(new RuntimeException("Unexpected error"))
+              .when(enrichmentUtil).enrichOrderRegistrationUponUpdate(any(OrderRequest.class));
+
+      // Method call and assertions
+      CustomException exception = assertThrows(CustomException.class, () ->
+              orderRegistrationService.addItem(orderRequest));
+
+      assertEquals("ORDER_UPDATE_EXCEPTION", exception.getCode());
+      assertTrue(exception.getMessage().contains("Error occurred while adding item/order"));
+      verify(validator).validateApplicationExistence(orderRequest);
+      verify(validator).validateAddItem(orderRequest);
+   }
+
+   // New tests for removeItem method
+   @Test
+   void testRemoveItem_success() {
+      // Setup
+      RemoveItemRequest removeItemRequest = new RemoveItemRequest();
+      RemoveItem removeItem = new RemoveItem();
+      removeItem.setOrderNumber("TEST-ORDER-123");
+      removeItem.setTenantId("test-tenant");
+      removeItem.setItemID("item-123");
+      removeItemRequest.setOrder(removeItem);
+      RequestInfo requestInfo = new RequestInfo();
+      removeItemRequest.setRequestInfo(requestInfo);
+
+      Order existingOrder = new Order();
+      existingOrder.setOrderNumber("TEST-ORDER-123");
+      existingOrder.setTenantId("test-tenant");
+
+      ArrayNode mockArrayNode = mock(ArrayNode.class);
+      ObjectNode mockObjectNode = mock(ObjectNode.class);
+
+      // Mocks
+      when(orderRepository.getOrders(any(OrderCriteria.class), any()))
+              .thenReturn(Collections.singletonList(existingOrder));
+      when(objectMapper.convertValue(any(), eq(ArrayNode.class))).thenReturn(mockArrayNode);
+      when(mockArrayNode.isEmpty()).thenReturn(false);
+      when(mockArrayNode.size()).thenReturn(1);
+      when(mockArrayNode.get(0)).thenReturn(mockObjectNode);
+      when(mockObjectNode.path("id")).thenReturn(mockObjectNode);
+      when(mockObjectNode.asText()).thenReturn("item-123");
+      doNothing().when(enrichmentUtil).enrichAuditDetails(any(OrderRequest.class));
+      when(config.getUpdateOrderKafkaTopic()).thenReturn("update-order-topic");
+      doNothing().when(producer).push(anyString(), any(OrderRequest.class));
+
+      // Method call
+      Order result = orderRegistrationService.removeItem(removeItemRequest);
+
+      // Assertions
+      assertNotNull(result);
+      assertEquals(existingOrder, result);
+      verify(orderRepository).getOrders(any(OrderCriteria.class), any());
+      verify(objectMapper).convertValue(any(), eq(ArrayNode.class));
+      verify(enrichmentUtil).enrichAuditDetails(any(OrderRequest.class));
+      verify(producer).push(anyString(), any(OrderRequest.class));
+   }
+
+   @Test
+   void testRemoveItem_orderNotFound() {
+      // Setup
+      RemoveItemRequest removeItemRequest = new RemoveItemRequest();
+      RemoveItem removeItem = new RemoveItem();
+      removeItem.setOrderNumber("NON-EXISTENT-ORDER");
+      removeItem.setTenantId("test-tenant");
+      removeItemRequest.setOrder(removeItem);
+
+      // Mocks
+      when(orderRepository.getOrders(any(OrderCriteria.class), isNull()))
+              .thenReturn(Collections.emptyList());
+
+      // Method call and assertions
+      CustomException exception = assertThrows(CustomException.class, () ->
+              orderRegistrationService.removeItem(removeItemRequest));
+
+      assertEquals("ORDER_UPDATE_EXCEPTION", exception.getCode());
+      assertEquals("Order doesn't exist", exception.getMessage());
+      verify(orderRepository).getOrders(any(OrderCriteria.class), isNull());
+   }
+
+   @Test
+   void testRemoveItem_genericException() {
+      // Setup
+      RemoveItemRequest removeItemRequest = new RemoveItemRequest();
+      RemoveItem removeItem = new RemoveItem();
+      removeItem.setOrderNumber("TEST-ORDER-123");
+      removeItem.setTenantId("test-tenant");
+      removeItemRequest.setOrder(removeItem);
+
+      // Mocks
+      when(orderRepository.getOrders(any(OrderCriteria.class), isNull()))
+              .thenThrow(new RuntimeException("Database error"));
+
+      // Method call and assertions
+      CustomException exception = assertThrows(CustomException.class, () ->
+              orderRegistrationService.removeItem(removeItemRequest));
+
+      assertEquals("ORDER_UPDATE_EXCEPTION", exception.getCode());
+      assertTrue(exception.getMessage().contains("Error occurred while removing item/order"));
+      verify(orderRepository).getOrders(any(OrderCriteria.class), isNull());
+   }
 }
