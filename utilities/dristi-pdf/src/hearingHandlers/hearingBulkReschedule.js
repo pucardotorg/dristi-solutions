@@ -22,6 +22,7 @@ const requiredFields = [
   "reasonForRescheduling",
 ];
 
+// compare time and return slots
 const _getHearingSlots = (courtHearingSlots, startTime) => {
   const startDate = new Date(startTime);
   const startHours = startDate.getHours();
@@ -30,16 +31,12 @@ const _getHearingSlots = (courtHearingSlots, startTime) => {
   return (
     courtHearingSlots?.find((slot) => {
       const { slotStartTime } = slot?.data;
-
-      // Convert slot start time to hours and minutes
       const [startHour, startMin] = slotStartTime.split(":").map(Number);
-
-      // Convert times to total minutes for easy comparison
       const startTotalMinutes = startHours * 60 + startMinutes;
       const slotStartTotalMinutes = startHour * 60 + startMin;
 
       return startTotalMinutes >= slotStartTotalMinutes;
-    })?.data.slotName || "null"
+    })?.data?.slotName || ""
   );
 };
 
@@ -83,6 +80,7 @@ const hearingBulkReschedule = async (req, res, qrCode) => {
 
   // Search for case details
   try {
+    // localisation api call
     const resMessage = await handleApiCall(
       () => search_message(tenantId, "rainmaker-common", "en_IN", requestInfo),
       "Failed to query Localized messages"
@@ -95,6 +93,7 @@ const hearingBulkReschedule = async (req, res, qrCode) => {
           )
         : {};
 
+    // mdms api call for court slots
     const resMdms = await handleApiCall(
       () => search_mdms(null, "court.slots", tenantId, requestInfo),
       "Failed to query MDMS service for court hearing slots"
@@ -116,6 +115,7 @@ const hearingBulkReschedule = async (req, res, qrCode) => {
       reason: bulkRescheduleData?.reason,
     };
 
+    // bulk reschedule api call
     const resBulkHearing = await handleApiCall(
       () => bulk_hearing_reschedule(tenantId, BulkReschedule, requestInfo),
       "Failed to query hearing service"
@@ -126,11 +126,12 @@ const hearingBulkReschedule = async (req, res, qrCode) => {
       return renderError(res, "Hearing not found during given slot", 404);
     }
 
-    // **Extract filingNumber from the response**
+    // Extract filingNumber from the response
     const criteria = resBulkHearingData?.map((hearing) => ({
       filingNumber: hearing?.filingNumber?.[0],
     }));
 
+    // case api call
     const resCase = await handleApiCall(
       () => search_multiple_cases(criteria, tenantId, requestInfo),
       "Failed to query case service"
@@ -141,6 +142,7 @@ const hearingBulkReschedule = async (req, res, qrCode) => {
       return renderError(res, "Court case not found", 404);
     }
 
+    // preparting the hearing reschedule data
     const bulkHearingRescheduleList = courtCase?.map((caseItem) => {
       const caseDate = caseItem?.responseList?.[0];
       const matchingHearing = resBulkHearingData?.find(
@@ -210,8 +212,7 @@ const hearingBulkReschedule = async (req, res, qrCode) => {
         {
           courtName: mdmsCourtRoom.name,
           date: formattedToday,
-          reasonForRescheduling:
-            bulkRescheduleData?.reasonForRescheduling || "",
+          reasonForRescheduling: bulkRescheduleData?.reason?.name || "",
           bulkHearingResheduleList: bulkHearingRescheduleList,
           additionalComments: bulkRescheduleData?.additionalComments || "",
           judgeSignature: judgeDetails.judgeSignature,
@@ -227,6 +228,8 @@ const hearingBulkReschedule = async (req, res, qrCode) => {
       qrCode === "true"
         ? config.pdf.hearing_bulk_reschedule_qr
         : config.pdf.hearing_bulk_reschedule;
+
+    // pdf creation api call
     const pdfResponse = await handleApiCall(
       () => create_pdf(tenantId, pdfKey, data, { RequestInfo: requestInfo }),
       "Failed to generate PDF of Bulk Reschedule Hearing"
