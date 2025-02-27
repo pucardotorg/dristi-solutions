@@ -75,9 +75,9 @@ public class EvidenceService {
                     body.getArtifact().getArtifactType().equals(DEPOSITION)) ||
                     (filingType != null && body.getArtifact().getWorkflow() != null && filingType.equalsIgnoreCase(SUBMISSION))) {
                 workflowService.updateWorkflowStatus(body, filingType);
-//                producer.push(config.getEvidenceCreateTopic(), body);
+                producer.push(config.getEvidenceCreateTopic(), body);
             } else {
-//                producer.push(config.getEvidenceCreateWithoutWorkflowTopic(), body);
+                producer.push(config.getEvidenceCreateWithoutWorkflowTopic(), body);
             }
             callNotificationService(body,false);
             return body.getArtifact();
