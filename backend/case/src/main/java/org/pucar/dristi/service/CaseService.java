@@ -40,6 +40,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -334,40 +335,59 @@ public class CaseService {
 
             log.info("Method=checkItsLastResponse, Result= IN_ProgressChecking if its last response by accused advocates {}", caseRequest.getCases().getId());
 
-            AtomicReference<Boolean> lastSubmittedResponse = new AtomicReference<>(true);
-
             CourtCase cases = caseRequest.getCases();
 
-            Optional.ofNullable(cases.getLitigants()).orElse(Collections.emptyList()).forEach(party -> {
-                        if (party.getIsActive() && party.getIsResponseRequired()) {
-                            AtomicBoolean hasThisAccusedSubmittedResponse = new AtomicBoolean(false);
+            int noOfResponseRequired = 0;
 
-                            Optional.ofNullable(party.getDocuments()).orElse(Collections.emptyList()).forEach(document -> {
-                                ObjectNode additionalDetails = objectMapper.convertValue(document.getAdditionalDetails(), ObjectNode.class);
+            // Convert the Objects to ObjectNodes for easier manipulation
+            ObjectNode detailsNode = objectMapper.convertValue(cases.getAdditionalDetails(), ObjectNode.class);
 
-                                if (additionalDetails.has(FILE_TYPE)) {
-                                    String fileType = additionalDetails.get(FILE_TYPE).asText();
-                                    if (StringUtils.equalsIgnoreCase(RESPONDENT_RESPONSE, fileType)) {
-                                        hasThisAccusedSubmittedResponse.set(true);
-                                    }
-                                }
-                            });
+            if (detailsNode.has("respondentDetails")) {
+                ObjectNode respondentDetails = (ObjectNode) detailsNode.get("respondentDetails");
 
-                            //TO DO--> Optimize for not checking with all the litigants once hasThisAccusedSubmittedResponse is false for a litigant
-                            if (!hasThisAccusedSubmittedResponse.get())
-                                lastSubmittedResponse.set(false);
+                if (respondentDetails.has("formdata") && respondentDetails.get("formdata").isArray()) {
+                    ArrayNode formData = (ArrayNode) respondentDetails.get("formdata");
+                    noOfResponseRequired = formData.size();
+                }
+            }
+
+            log.info("No of response required :: {}",noOfResponseRequired);
+
+            for (Party party : Optional.ofNullable(cases.getLitigants()).orElse(Collections.emptyList())) {
+                if (party.getIsActive() && party.getIsResponseRequired()) {
+                    boolean hasThisAccusedSubmittedResponse = false;
+
+                    for (Document document : Optional.ofNullable(party.getDocuments()).orElse(Collections.emptyList())) {
+                        ObjectNode additionalDetails = objectMapper.convertValue(document.getAdditionalDetails(), ObjectNode.class);
+
+                        if (additionalDetails.has(FILE_TYPE)) {
+                            String fileType = additionalDetails.get(FILE_TYPE).asText();
+                            if (StringUtils.equalsIgnoreCase(RESPONDENT_RESPONSE, fileType)) {
+                                log.info("Party with individualId :: {} has submitted response", party.getIndividualId());
+                                hasThisAccusedSubmittedResponse = true;
+                                noOfResponseRequired--;
+                                break;
+                            }
                         }
                     }
-            );
 
-
-            if (lastSubmittedResponse.get()) {
-                log.info("Last response submitted by accused for case {}", caseRequest.getCases().getId());
-                caseRequest.getRequestInfo().getUserInfo().getRoles().add(Role.builder().id(123L).code(SYSTEM).name(SYSTEM).tenantId(caseRequest.getCases().getTenantId()).build());
-                caseRequest.getCases().getWorkflow().setAction(RESPONSE_COMPLETE);
-                log.info("Updating workflow status for case {} in last response submission", caseRequest.getCases().getId());
-                workflowService.updateWorkflowStatus(caseRequest);
+                    if (!hasThisAccusedSubmittedResponse) {
+                        log.info("Party with individualId :: {} has not submitted response", party.getIndividualId());
+                        return;
+                    }
+                }
             }
+
+            if (noOfResponseRequired != 0) {
+                log.info("No of response Not submitted yet :: {}",noOfResponseRequired);
+                return;
+            }
+
+            log.info("Last response submitted by accused for case {}", caseRequest.getCases().getId());
+            caseRequest.getRequestInfo().getUserInfo().getRoles().add(Role.builder().id(123L).code(SYSTEM).name(SYSTEM).tenantId(caseRequest.getCases().getTenantId()).build());
+            caseRequest.getCases().getWorkflow().setAction(RESPONSE_COMPLETE);
+            log.info("Updating workflow status for case {} in last response submission", caseRequest.getCases().getId());
+            workflowService.updateWorkflowStatus(caseRequest);
         }
     }
 
