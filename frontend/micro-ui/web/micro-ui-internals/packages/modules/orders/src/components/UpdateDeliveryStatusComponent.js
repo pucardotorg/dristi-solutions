@@ -38,6 +38,7 @@ const UpdateDeliveryStatusComponent = ({
   ];
 
   useEffect(() => {
+    if (date) setUpdateStatusDate(date);
     if (selectedDelievery && date) handleSubmitButtonDisable(false);
     else handleSubmitButtonDisable(true);
   }, [selectedDelievery, date]);

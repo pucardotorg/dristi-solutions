@@ -289,7 +289,7 @@ export const SummonsTabsConfig = {
                 additionalCustomization: true,
               },
               {
-                label: "Delievery Date",
+                label: "DELIEVRY_DATE",
                 jsonPath: "statusChangeDate",
                 additionalCustomization: true,
               },

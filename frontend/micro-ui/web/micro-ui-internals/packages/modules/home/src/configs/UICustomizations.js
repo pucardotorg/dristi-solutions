@@ -500,7 +500,7 @@ export const UICustomizations = {
           return t(value);
         case "DELIEVERY_CHANNEL":
           return caseDetails?.deliveryChannels?.channelName || "N/A";
-        case "Delievery Date":
+        case "DELIEVRY_DATE":
           return delieveryDate || "-";
         default:
           return t("ES_COMMON_NA");
