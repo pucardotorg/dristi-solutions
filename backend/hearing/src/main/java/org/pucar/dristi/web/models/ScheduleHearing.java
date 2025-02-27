@@ -48,4 +48,7 @@ public class ScheduleHearing {
 
     @JsonProperty("endTime")
     private long endTime;
+
+    @JsonProperty("expiryTime")
+    private Long expiryTime;
 }

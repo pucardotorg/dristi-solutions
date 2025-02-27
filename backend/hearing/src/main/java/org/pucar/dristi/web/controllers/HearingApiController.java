@@ -132,5 +132,16 @@ public class HearingApiController {
         return ResponseEntity.accepted().body(response);
     }
 
+    @RequestMapping(value = "/v1/bulk/_update", method = RequestMethod.POST)
+    public ResponseEntity<HearingUpdateBulkResponse> bulkUpdateHearings(@Parameter(in = ParameterIn.DEFAULT, description = "Bulk Update Request and RequestInfo", required = true, schema = @Schema()) @Valid @RequestBody HearingUpdateBulkRequest request) {
+        log.info("api=/v1/bulk/_update, result=IN_PROGRESS");
+        List<Hearing> updatedHearing = hearingService.updateBulkHearing(request);
+        HearingUpdateBulkResponse response = HearingUpdateBulkResponse.builder().responseInfo(responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true))
+                .hearings(updatedHearing)
+                .build();
+        log.info("api=/v1/bulk/_update, result=SUCCESS");
+        return ResponseEntity.accepted().body(response);
+    }
+
 }
 
