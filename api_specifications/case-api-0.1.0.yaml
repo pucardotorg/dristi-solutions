@@ -613,6 +613,7 @@ components:
             $ref: '#/components/schemas/AdvocateMapping'
         advocateClerks:
           type: array
+          nullable: true
           items:
             $ref: '#/components/schemas/AdvocateClerk'
         status:
@@ -944,7 +945,7 @@ components:
         - caseId
         - poaType
         - isActive
-      oneOf:
+      anyOf:
         - required:
             - individualId
             - name
@@ -1410,15 +1411,18 @@ components:
           $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo
         clerks:
           type: array
-          $ref: '#/components/schemas/AdvocateClerk'
+          items:
+            $ref: '#/components/schemas/AdvocateClerk'
 
     AdvocateClerkResponse:
       type: object
       properties:
         ResponseInfo:
           $ref: https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo
-        case:
-          $ref: '#/components/schemas/AdvocateClerk'
+        clerks:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdvocateClerk'
 
 
 

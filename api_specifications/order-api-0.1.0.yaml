@@ -363,7 +363,7 @@ components:
           example: Intermediate, Judgement, Composite
         orderDetails:
           type: object
-          description: schema to define fields that are required for creation of ORDER PDFs. it will be used to validate the fields before creating the PDF
+          description: schema to define fields that are required for the creation of ORDER PDFs. it will be used to validate the fields before creating the PDF
         compositeItems:
           type: array
           description: List of order types and schema for composite orders. Required only if orderCategory = "composite".
