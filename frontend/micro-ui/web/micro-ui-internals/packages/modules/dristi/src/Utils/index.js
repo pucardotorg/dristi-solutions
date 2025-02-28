@@ -164,6 +164,8 @@ export const documentsTypeMapping = {
   vakalatnamaFileUpload: "VAKALATNAMA_DOC",
   submissionDocuments: "SUBMISSION_DOCUMENTS",
   pipAffidavitFileUpload: "COMPLAINANT_PIP_AFFIDAVIT",
+  pipAffidavitFileUploadRespondent: "RESPONDENT_PIP_AFFIDAVIT",
+  nocJudgeOrder: "NOC_JUDGE_ORDER",
 };
 
 export const getFileByFileStoreId = async (uri) => {
@@ -242,10 +244,6 @@ export const getDate = (value) => {
 export const formatAddress = (value) => {
   return value
     .split(" ")
-    .map((word) =>
-      word === word.toUpperCase() || /[A-Z]/.test(word.slice(1)) 
-        ? word
-        : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-    )
+    .map((word) => (word === word.toUpperCase() || /[A-Z]/.test(word.slice(1)) ? word : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()))
     .join(" ");
 };
