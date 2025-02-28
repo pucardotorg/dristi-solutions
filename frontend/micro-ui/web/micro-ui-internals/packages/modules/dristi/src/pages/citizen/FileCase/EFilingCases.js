@@ -72,6 +72,7 @@ import { DocumentUploadError } from "../../../Utils/errorUtil";
 import ConfirmDcaSkipModal from "./ConfirmDcaSkipModal";
 import ErrorDataModal from "./ErrorDataModal";
 import WarningModal from "../../../components/WarningModal";
+import { documentLabels } from "../../../Utils";
 
 const OutlinedInfoIcon = () => (
   <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: "absolute", right: -22, top: 0 }}>
@@ -2013,7 +2014,7 @@ function EFilingCases({ path }) {
       } catch (error) {
         let message = t("SOMETHING_WENT_WRONG");
         if (error instanceof DocumentUploadError) {
-          message = `${t("DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${error?.documentType}`;
+          message = `${t("DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${t(documentLabels[error?.documentType])}`;
         } else if (extractCodeFromErrorMsg(error) === 413) {
           message = t("FAILED_TO_UPLOAD_FILE");
         }
@@ -2072,7 +2073,7 @@ function EFilingCases({ path }) {
       })
       .catch(async (error) => {
         if (error instanceof DocumentUploadError) {
-          toast.error(`${t("DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${error?.documentType}`);
+          toast.error(`${t("DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${t(documentLabels[error?.documentType])}`);
         } else if (extractCodeFromErrorMsg(error) === 413) {
           toast.error(t("FAILED_TO_UPLOAD_FILE"));
         } else {
@@ -2158,7 +2159,7 @@ function EFilingCases({ path }) {
       })
       .catch(async (error) => {
         if (error instanceof DocumentUploadError) {
-          toast.error(`${t("DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${error?.documentType}`);
+          toast.error(`${t("DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${t(documentLabels[error?.documentType])}`);
         } else if (extractCodeFromErrorMsg(error) === 413) {
           toast.error(t("FAILED_TO_UPLOAD_FILE"));
         } else {
