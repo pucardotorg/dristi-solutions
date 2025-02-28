@@ -25,17 +25,17 @@ public class NotificationQueryBuilder {
     private static final String AND = " AND ";
     private static final String BASE_QUERY_NOTIFICATION_DOCUMENT = " ,nd.id as documentid, nd.fileStore as filestore, nd.documentUid as documentuid, nd.documentType as documenttype, nd.notification_id as notificationid, nd.additionalDetails as documentadditionaldetails";
 
-    private static final String FROM_CTE_TABLE = " paginated_notification pn";
+    private static final String FROM_CTE_TABLE = " FROM paginated_notification pn";
     private static final String CTE_QUERY_NOTIFICATION = " pn.id as id, pn.tenantId as tenantid, pn.notificationType as notificationtype, pn.caseNumber as casenumber, pn.courtId as courtid, pn.notificationNumber as notificationnumber, pn.createdDate as createddate, pn.issuedBy as issuedby, pn.status as status, pn.comment as comment, pn.isActive as isactive, pn.notificationDetails as notificationdetails, pn.additionalDetails as additionaldetails, pn.createdBy as createdby, pn.lastModifiedBy as lastmodifiedby, pn.createdTime as createdtime, pn.lastModifiedTime as lastmodifiedtime ";
     private static final String NOTIFICATION_DOCUMENT_TABLE = " dristi_notification_document nd ";
-    private static final String LIMIT = "LIMIT ?";
+    private static final String LIMIT = " LIMIT ?";
     private static final String ORDER_BY = " ORDER BY ";
     private static final String OFFSET = " OFFSET ?";
     private static final String ON = " ON ";
     private static final String LEFT_JOIN = " LEFT JOIN ";
 
     private static final String ORDERBY_CLAUSE = " ORDER BY pn.{orderBy} {sortingOrder} ";
-    private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY cases.createdDate DESC ";
+    private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY pn.createdDate DESC ";
     private  static  final String TOTAL_COUNT_QUERY = "SELECT COUNT(*) FROM ({baseQuery}) total_result";
     private static final String COUNT_ALL = " COUNT(*) ";
 
