@@ -29,4 +29,4 @@ CREATE TABLE dristi_notification_document (
                               additionalDetails JSONB NULL
 );
 
-CREATE UNIQUE INDEX idx_notification_number ON users (notificationNumber);
+CREATE UNIQUE INDEX idx_notification_number ON dristi_notification (notificationNumber);
