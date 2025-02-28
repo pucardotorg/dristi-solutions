@@ -964,7 +964,7 @@ function CaseFileAdmission({ t, path }) {
           tenantId,
         },
         orderTitle: "SCHEDULE_OF_HEARING_DATE",
-        orderCategory: "Intermediate",
+        orderCategory: "INTERMEDIATE",
         orderType: "SCHEDULE_OF_HEARING_DATE",
         status: "",
         isActive: true,

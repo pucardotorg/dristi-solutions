@@ -47,7 +47,6 @@ public class    Notification {
     private String notificationNumber = null;
 
     @JsonProperty("createdDate")
-    @NotNull
     private Long createdDate = null;
 
     @JsonProperty("issuedBy")
@@ -61,7 +60,6 @@ public class    Notification {
     private Object notificationDetails = null;
 
     @JsonProperty("status")
-    @NotNull
     private String status = null;
 
     @JsonProperty("comments")

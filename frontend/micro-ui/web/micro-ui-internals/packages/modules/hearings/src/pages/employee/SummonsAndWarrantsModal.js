@@ -173,7 +173,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
           tenantId,
         },
         orderTitle: orderType,
-        orderCategory: "Intermediate",
+        orderCategory: "INTERMEDIATE",
         orderType: orderType,
         status: "",
         isActive: true,
