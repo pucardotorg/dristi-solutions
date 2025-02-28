@@ -121,7 +121,7 @@ const SummaryModal = ({
           tenantId: Digit.ULBService.getCurrentTenantId(),
         },
         orderTitle: "OTHERS",
-        orderCategory: "Intermediate",
+        orderCategory: "INTERMEDIATE",
         orderType: "OTHERS",
         status: "",
         isActive: true,
