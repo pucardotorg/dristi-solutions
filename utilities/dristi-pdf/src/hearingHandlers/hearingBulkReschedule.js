@@ -23,7 +23,16 @@ const requiredFields = [
 
 // compare time and return slots
 function formatTimeFromEpoch(epoch) {
-  return new Date(epoch).toLocaleTimeString("en-GB", { hour12: false });
+  const options = {
+    timeZone: "Asia/Kolkata",
+    hour12: false,
+    hour: "2-digit",  
+    minute: "2-digit",
+    second: "2-digit"
+  };
+
+  const formattedTime = new Intl.DateTimeFormat("en-GB", options).format(new Date(epoch)); 
+  return formattedTime;
 }
 
 function timeToSeconds(timeStr) {
