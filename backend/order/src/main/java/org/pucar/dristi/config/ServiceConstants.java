@@ -75,8 +75,6 @@ public class ServiceConstants {
 
     public static final String NOTIFICATION_MODULE_CODE = "notification";
 
-    public static final String HEARING_TYPE_MODULE_CODE = "hearingTypes";
-
     public static final String NOTIFICATION_LOCALIZATION_CODES_JSONPATH = "$.messages.*.code";
     public static final String NOTIFICATION_LOCALIZATION_MSGS_JSONPATH = "$.messages.*.message";
 
@@ -93,14 +91,6 @@ public class ServiceConstants {
     public static final String EVIDENCE_COMPLAINANT_PUBLISHED = "EVIDENCE_COMPLAINANT_PUBLISHED";
     public static final String APPEARANCE = "APPEARANCE";
     public static final String APPEARANCE_PUBLISHED = "APPEARANCE_PUBLISHED";
-    public static final String BAIL = "BAIL";
-    public static final String ADR = "ADR";
-    public static final String REPORTS = "REPORTS";
-    public static final String ARGUMENTS = "ARGUMENTS";
-    public static final String PLEA = "PLEA";
-    public static final String EXECUTION = "EXECUTION";
-    public static final String ADMISSION = "ADMISSION";
-    public static final String VARIABLE_HEARING_SCHEDULED = "VARIABLE_HEARING_SCHEDULED";
 
     public static final String INDIVIDUAL_UTILITY_EXCEPTION = "INDIVIDUAL_UTILITY_EXCEPTION";
 

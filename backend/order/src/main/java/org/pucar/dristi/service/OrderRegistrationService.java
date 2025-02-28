@@ -244,9 +244,6 @@ public class OrderRegistrationService {
 //        if(!StringUtils.isEmpty(purpose) && purpose.equalsIgnoreCase(APPEARANCE) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
 //            return APPEARANCE_PUBLISHED;
 //        }
-        if (!purpose.isEmpty() && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
-            return validator.validatePurposeOfHearing(purpose);
-        }
         if (orderType.equalsIgnoreCase(SCHEDULING_NEXT_HEARING) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
             return NEXT_HEARING_SCHEDULED;
         }
@@ -313,17 +310,11 @@ public class OrderRegistrationService {
                     : formData.has("newHearingDate") ? formData.get("newHearingDate").asText()
                     : "";
 
-            String localizedHearingType = "";
-            if (purposeOfHearing != null && messageCode.equals(VARIABLE_HEARING_SCHEDULED)) {
-                 localizedHearingType = getLocalizedMessageOfHearingType(orderRequest,purposeOfHearing);
-            }
-
             SmsTemplateData smsTemplateData = SmsTemplateData.builder()
                     .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").asText() : "")
                     .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").asText() : "")
                     .hearingDate(hearingDate)
                     .submissionDate(formData.has("submissionDeadline") ? formData.get("submissionDeadline").asText() : "")
-                    .hearingType(localizedHearingType)
                     .tenantId(orderRequest.getOrder().getTenantId()).build();
 
             for (String number : phonenumbers) {
@@ -418,14 +409,4 @@ public class OrderRegistrationService {
         return uuids;
     }
 
-    private String getLocalizedMessageOfHearingType(OrderRequest request,String hearingType) {
-        RequestInfo requestInfo = request.getRequestInfo();
-        String tenantId = request.getOrder().getTenantId();
-        Map<String, Map<String, String>> localizedMessageMap = notificationService.getLocalisedMessages(requestInfo,tenantId,
-                NOTIFICATION_ENG_LOCALE_CODE, HEARING_TYPE_MODULE_CODE);
-        if (localizedMessageMap.isEmpty()) {
-            return null;
-        }
-        return localizedMessageMap.get(NOTIFICATION_ENG_LOCALE_CODE + "|" + tenantId).get(hearingType);
-    }
 }

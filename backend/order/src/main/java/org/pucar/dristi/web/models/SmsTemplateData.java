@@ -23,6 +23,4 @@ public class SmsTemplateData {
 
     private String cmpNumber;
 
-    private String hearingType;
-
 }

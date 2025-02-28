@@ -146,10 +146,10 @@ public class EvidenceService {
     public Artifact updateEvidence(EvidenceRequest evidenceRequest) {
         try {
             Boolean isEvidence = evidenceRequest.getArtifact().getIsEvidence();
-//            Artifact existingApplication = validateExistingEvidence(evidenceRequest);
+            Artifact existingApplication = validateExistingEvidence(evidenceRequest);
 
             // Update workflow
-//            existingApplication.setWorkflow(evidenceRequest.getArtifact().getWorkflow());
+            existingApplication.setWorkflow(evidenceRequest.getArtifact().getWorkflow());
 
             // Enrich application upon update
             evidenceEnrichment.enrichEvidenceRegistrationUponUpdate(evidenceRequest);
