@@ -22,22 +22,34 @@ const requiredFields = [
 ];
 
 // compare time and return slots
-const _getHearingSlots = (courtHearingSlots, startTime) => {
-  const startDate = new Date(startTime);
-  const startHours = startDate.getHours();
-  const startMinutes = startDate.getMinutes();
+function formatTimeFromEpoch(epoch) {
+  return new Date(epoch).toLocaleTimeString("en-GB", { hour12: false });
+}
 
-  return (
-    courtHearingSlots?.find((slot) => {
-      const { slotStartTime } = slot?.data;
-      const [startHour, startMin] = slotStartTime.split(":").map(Number);
-      const startTotalMinutes = startHours * 60 + startMinutes;
-      const slotStartTotalMinutes = startHour * 60 + startMin;
+function timeToSeconds(timeStr) {
+  const [hours, minutes, seconds] = timeStr.split(":").map(Number);
+  return hours * 3600 + minutes * 60 + seconds;
+}
 
-      return startTotalMinutes >= slotStartTotalMinutes;
-    })?.data?.slotName || ""
-  );
-};
+function _getHearingSlots(courtHearingSlots, startTime) {
+  const givenTimeStr = formatTimeFromEpoch(startTime);
+  const givenTimeInSeconds = timeToSeconds(givenTimeStr);
+
+  const sortedSlots = [...courtHearingSlots].sort((a, b) => {
+    return timeToSeconds(a.data.slotStartTime) - timeToSeconds(b.data.slotStartTime);
+  });
+
+  let lastMatchingSlot = null;
+
+  for (const slot of sortedSlots) {
+    const slotStartInSeconds = timeToSeconds(slot.data.slotStartTime);
+
+    if (givenTimeInSeconds >= slotStartInSeconds) {
+      lastMatchingSlot = slot;
+    }
+  }
+  return lastMatchingSlot?.data?.slotName || "";
+}
 
 const hearingBulkReschedule = async (req, res, qrCode) => {
   const tenantId = req.query.tenantId;
@@ -139,7 +151,6 @@ const hearingBulkReschedule = async (req, res, qrCode) => {
     );
 
     const courtCase = resCase?.data?.criteria;
-    console.debug("courtCase : ", courtCase);
     if (!courtCase) {
       return renderError(res, "Court case not found", 404);
     }
