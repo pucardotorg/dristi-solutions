@@ -1,4 +1,4 @@
-package notification.enrinchment;
+package notification.enrichment;
 
 import notification.config.Configuration;
 import notification.enrichment.NotificationEnrichment;

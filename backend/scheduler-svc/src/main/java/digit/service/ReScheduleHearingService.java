@@ -245,8 +245,15 @@ public class ReScheduleHearingService {
                 requiredSlot = hearingType.getHearingTime() / 60.00;
 
                 Double occupiedBandwidth = availability.get(index).getOccupiedBandwidth();
-                if (totalHrs - occupiedBandwidth > requiredSlot) {  // need to configure
-                    hearing.setHearingDate(Long.parseLong(availability.get(index).getDate()));
+                if (totalHrs - occupiedBandwidth > requiredSlot) {
+                    Long hearingDate = Long.parseLong(availability.get(index).getDate());
+                    hearing.setHearingDate(hearingDate);
+                    LocalDate localHearingDate = dateUtil.getLocalDateFromEpoch(hearingDate);
+                    Long startTime = dateUtil.getEPochFromLocalDate(localHearingDate);
+                    Long endTime = dateUtil.getEPochFromLocalDate(localHearingDate.plusDays(1));
+                    hearing.setStartTime(startTime);
+                    hearing.setEndTime(endTime);
+
                     availability.get(index).setOccupiedBandwidth(occupiedBandwidth + requiredSlot);  // need to configure
                 } else {
                     index++;

@@ -26,7 +26,7 @@ CREATE TABLE dristi_notification_document (
                               documentUid varchar(64)  NULL ,
                               documentType varchar(64) NULL,
                               notification_id varchar(64)  NULL,
-                              additionalDetails JSONB NULL,
+                              additionalDetails JSONB NULL
 );
 
 CREATE UNIQUE INDEX idx_notification_number ON users (notificationNumber);

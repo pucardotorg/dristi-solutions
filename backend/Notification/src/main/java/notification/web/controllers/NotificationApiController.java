@@ -31,7 +31,7 @@ public class NotificationApiController {
     }
 
 
-    @RequestMapping(value = "/v1/create", method = RequestMethod.POST)
+    @RequestMapping(value = "/v1/_create", method = RequestMethod.POST)
     public ResponseEntity<NotificationResponse> notificationV1Create(@Parameter(in = ParameterIn.DEFAULT, description = "Details for the new Notification + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody NotificationRequest request) {
         Notification notification = notificationService.createV1Notification(request);
 
@@ -43,7 +43,7 @@ public class NotificationApiController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/v1/exists", method = RequestMethod.POST)
+    @RequestMapping(value = "/v1/_exists", method = RequestMethod.POST)
     public ResponseEntity<NotificationExistsResponse> notificationV1Exists(@Parameter(in = ParameterIn.DEFAULT, description = "check if the Notification(S) exists", required = true, schema = @Schema()) @Valid @RequestBody NotificationExistsRequest request) {
 
         List<NotificationExists> notificationExists = notificationService.existV1Notification(request);
@@ -54,7 +54,7 @@ public class NotificationApiController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/v1/search", method = RequestMethod.POST)
+    @RequestMapping(value = "/v1/_search", method = RequestMethod.POST)
     public ResponseEntity<NotificationListResponse> notificationV1Search(@Parameter(in = ParameterIn.DEFAULT, description = "Details for the search Notification(s) + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody NotificationSearchRequest request) {
         List<Notification> notifications = notificationService.searchV1Notification(request);
         int totalCount;
@@ -73,7 +73,7 @@ public class NotificationApiController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/v1/update", method = RequestMethod.POST)
+    @RequestMapping(value = "/v1/_update", method = RequestMethod.POST)
     public ResponseEntity<NotificationResponse> notificationV1Update(@Parameter(in = ParameterIn.DEFAULT, description = "Details for the update Notification(s) + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody NotificationRequest request) {
 
         Notification notification = notificationService.updateV1Notification(request);
