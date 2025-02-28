@@ -9,7 +9,6 @@ import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
-import org.jetbrains.annotations.Nullable;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.EvidenceEnrichment;
 import org.pucar.dristi.kafka.Producer;
@@ -257,7 +256,9 @@ public class EvidenceService {
 
             if (smsTopic != null && smsTopic.equalsIgnoreCase(EVIDENCE_SUBMISSION_CODE)) {
                 String receiverId = evidenceRequest.getRequestInfo().getUserInfo().getUuid();
-                filingIndividualIds = extractIndividualIds(caseDetails,receiverId);
+                String partyType = getPartyTypeByUUID(caseDetails,receiverId);
+                    String receiverParty = getReceiverParty(partyType);
+                filingIndividualIds = extractIndividualIds(caseDetails,receiverParty);
                 oppositeIndividualIds.removeAll(filingIndividualIds);
             }
 
@@ -310,6 +311,17 @@ public class EvidenceService {
         return smsTopic;
     }
 
+    private static String getReceiverParty(String partyType) {
+        if (partyType.toLowerCase().contains(COMPLAINANT.toLowerCase())) {
+            return COMPLAINANT;
+        } else if (partyType.toLowerCase().contains(RESPONDENT.toLowerCase())) {
+            return RESPONDENT;
+        }
+        else {
+            return null;
+        }
+    }
+
     public static String getPartyTypeByName(JsonNode litigants, String name) {
         for (JsonNode litigant : litigants) {
             JsonNode additionalDetails = litigant.get("additionalDetails");
@@ -317,6 +329,33 @@ public class EvidenceService {
                 String fullName = additionalDetails.get("fullName").asText();
                 if (name.equals(fullName)) {
                     return litigant.get("partyType").asText();
+                }
+            }
+        }
+        return null;
+    }
+
+    public static String getPartyTypeByUUID(JsonNode caseDetails,String receiverUUID) {
+        JsonNode litigants = caseDetails.get("litigants");
+        JsonNode representatives = caseDetails.get("representatives");
+        for (JsonNode litigant : litigants) {
+            JsonNode additionalDetails = litigant.get("additionalDetails");
+            if (additionalDetails != null && additionalDetails.has("uuid")) {
+                String uuid = additionalDetails.get("uuid").textValue();
+                if (uuid.equals(receiverUUID)) {
+                    return litigant.get("partyType").textValue();
+                }
+            }
+        }
+
+        if (representatives.isArray()) {
+            for (JsonNode advocateNode : representatives) {
+                JsonNode representingNode = advocateNode.get("representing");
+                if (representingNode.isArray()) {
+                        String uuid = advocateNode.path("additionalDetails").get("uuid").asText();
+                        if (uuid.equals(receiverUUID)) {
+                            return representingNode.get(0).get("partyType").textValue();
+                        }
                 }
             }
         }
@@ -344,18 +383,21 @@ public class EvidenceService {
         return mobileNumber;
     }
 
-    public  Set<String> extractIndividualIds(JsonNode caseDetails,String receiverId) {
+    public  Set<String> extractIndividualIds(JsonNode caseDetails,String receiver) {
 
         JsonNode litigantNode = caseDetails.get("litigants");
         JsonNode representativeNode = caseDetails.get("representatives");
-        String receiverIdToMatch = (receiverId != null) ? receiverId : "";
+        String partyTypeToMatch = (receiver != null) ? receiver : "";
         Set<String> uuids = new HashSet<>();
 
         if (litigantNode.isArray()) {
             for (JsonNode node : litigantNode) {
                 String uuid = node.path("additionalDetails").get("uuid").asText();
-                if (!uuid.isEmpty() && uuid.contains(receiverIdToMatch)) {
-                    uuids.add(uuid);
+                String partyType = node.get("partyType").asText().toLowerCase();
+                if (partyType.toLowerCase().contains(partyTypeToMatch.toLowerCase())) {
+                    if (!uuid.isEmpty()) {
+                        uuids.add(uuid);
+                    }
                 }
             }
         }
@@ -364,17 +406,11 @@ public class EvidenceService {
             for (JsonNode advocateNode : representativeNode) {
                 JsonNode representingNode = advocateNode.get("representing");
                 if (representingNode.isArray()) {
-                    String uuid = advocateNode.path("additionalDetails").get("uuid").asText();
-                    if (!uuid.isEmpty() && uuid.contains(receiverIdToMatch)) {
-                        uuids.add(uuid);
-                        for (JsonNode representing : representingNode) {
-                            JsonNode representingAdditionalDetails = representing.path("additionalDetails");
-                            if (representingAdditionalDetails != null) {
-                                String repUuid = representingAdditionalDetails.path("uuid").asText("");
-                                if (!repUuid.isEmpty()) {
-                                    uuids.add(repUuid);
-                                }
-                            }
+                    String partyType = representingNode.get(0).get("partyType").asText().toLowerCase();
+                    if (partyType.toLowerCase().contains(partyTypeToMatch.toLowerCase())) {
+                        String uuid = advocateNode.path("additionalDetails").get("uuid").asText();
+                        if (!uuid.isEmpty()) {
+                            uuids.add(uuid);
                         }
                     }
                 }

@@ -41,6 +41,7 @@ public class ServiceConstants {
 	public static final String USER = "user";
 	public static final String COMMENT_ADD_ERR = "COMMENT_ADD_ERR";
 	public static final String COMPLAINANT = "COMPLAINANT";
+	public static final String RESPONDENT = "RESPONDENT";
 	public static final String ACCUSED = "ACCUSED";
 	public static final String COURT = "COURT";
 
