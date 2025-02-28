@@ -738,7 +738,7 @@ export const UICustomizations = {
                     tenantId: row.tenantId,
                   },
                   orderTitle: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
-                  orderCategory: "Intermediate",
+                  orderCategory: "INTERMEDIATE",
                   orderType: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
                   status: "",
                   isActive: true,

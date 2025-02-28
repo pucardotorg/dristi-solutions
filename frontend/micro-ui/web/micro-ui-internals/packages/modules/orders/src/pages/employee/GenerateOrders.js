@@ -1135,7 +1135,7 @@ const GenerateOrders = () => {
                   formData?.briefSummary ||
                   "",
                 orderTitle: formData?.orderType?.code,
-                orderCategory: "Intermediate",
+                orderCategory: "INTERMEDIATE",
                 orderType: formData?.orderType?.code,
                 additionalDetails: { ...item?.additionalDetails, formdata: updatedFormData },
               };
@@ -2214,7 +2214,7 @@ const GenerateOrders = () => {
           tenantId,
         },
         orderTitle: "SUMMONS",
-        orderCategory: "Intermediate",
+        orderCategory: "INTERMEDIATE",
         orderType: "SUMMONS",
         status: "",
         isActive: true,
@@ -2330,7 +2330,7 @@ const GenerateOrders = () => {
           tenantId,
         },
         orderTitle: "NOTICE",
-        orderCategory: "Intermediate",
+        orderCategory: "INTERMEDIATE",
         orderType: "NOTICE",
         status: "",
         isActive: true,
