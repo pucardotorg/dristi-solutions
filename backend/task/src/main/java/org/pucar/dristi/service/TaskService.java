@@ -70,7 +70,7 @@ public class TaskService {
 
             workflowUpdate(body);
 
-//            producer.push(config.getTaskCreateTopic(), body);
+            producer.push(config.getTaskCreateTopic(), body);
 
             String status = body.getTask().getStatus();
             String taskType = body.getTask().getTaskType();
