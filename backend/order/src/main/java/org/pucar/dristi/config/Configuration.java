@@ -155,6 +155,9 @@ public class Configuration {
     @Value("${egov.localization.search.endpoint}")
     private String localizationSearchEndpoint;
 
+    @Value("${egov.sms.notification.judge.scheduled.variable.hearing.template.id}")
+    private String smsNotificationVariableHearingScheduled;
+
     @Value("${egov.sms.notification.admission.hearing.scheduled.template.id}")
     private String smsNotificationAdmissionHearingScheduledTemplateId;
 
@@ -196,6 +199,9 @@ public class Configuration {
 
     @Value("${egov.sms.notification.case.decision.available.template.id}")
     private String smsNotificationCaseDecisionAvailableTemplateId;
+
+    @Value("${egov.sms.notification.additional.information.template.id}")
+    private String smsNotificationAdditionalDetails;
 
     //Individual Service
     @Value("${egov.individual.host}")

@@ -205,6 +205,8 @@ public class ServiceConstants {
 
     public static final String PENDING_TASK_CREATED = "PENDING_TASK_CREATED";
 
+    public static final String CASE_STATUS_CHANGED_MESSAGE = "CASE_STATUS_CHANGE_MESSAGE";
+
     public static final String ERROR_WHILE_FETCHING_FROM_CASE = "ERROR_WHILE_FETCHING_FROM_CASE";
 
     public static final String INDIVIDUAL_UTILITY_EXCEPTION = "INDIVIDUAL_UTILITY_EXCEPTION";

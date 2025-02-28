@@ -136,6 +136,18 @@ public class OrderRegistrationValidator {
         return masterList;
     }
 
+    public String validatePurposeOfHearing(String hearingType) {
+        if (hearingType.equalsIgnoreCase(WARRANT) || hearingType.equalsIgnoreCase(BAIL) || hearingType.equalsIgnoreCase(ADR) ||
+                hearingType.equalsIgnoreCase(REPORTS) || hearingType.equalsIgnoreCase(ARGUMENTS) || hearingType.equalsIgnoreCase(PLEA) ||
+                hearingType.equalsIgnoreCase(EXECUTION) || hearingType.equalsIgnoreCase(EXAMINATION_UNDER_S351_BNSS) ||
+                hearingType.equalsIgnoreCase(EVIDENCE_COMPLAINANT) || hearingType.equalsIgnoreCase(EVIDENCE_ACCUSED) ||
+                hearingType.equalsIgnoreCase(APPEARANCE) || hearingType.equalsIgnoreCase(ADMISSION) || hearingType.equalsIgnoreCase(JUDGEMENT))
+         {
+            return VARIABLE_HEARING_SCHEDULED;
+        }
+        return null;
+    }
+
     public void validateAddItem(OrderRequest orderRequest) {
         if (!orderRequest.getOrder().getOrderCategory().equalsIgnoreCase(COMPOSITE)) {
             throw new CustomException(ORDER_UPDATE_EXCEPTION, "orderCategory should be composite");
