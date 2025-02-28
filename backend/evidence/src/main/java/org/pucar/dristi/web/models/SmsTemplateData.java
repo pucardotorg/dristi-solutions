@@ -20,4 +20,6 @@ public class SmsTemplateData {
     private String artifactNumber;
 
     private String cmpNumber;
+
+    private String cnrNumber;
 }

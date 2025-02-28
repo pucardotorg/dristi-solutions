@@ -188,6 +188,9 @@ public class Configuration {
 	@Value("${egov.sms.notification.pending.task.created.template.id}")
 	private String smsNotificationPendingTaskCreatedTemplateId;
 
+	@Value("${egov.sms.notification.case.status.changed.template.id}")
+	private String smsNotificationCaseStatusChangeTemplateId;
+
 	// Advocate Config
 	@Value("${egov.advocate.host}")
 	private String advocateHost;
