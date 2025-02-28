@@ -144,7 +144,6 @@ class EvidenceServiceTest {
     void testUpdateEvidence() {
         when(mdmsUtil.fetchMdmsData(any(), any(), any(), any())).thenReturn(mockMdmsData);
         when(objectMapper.convertValue(any(), eq(JSONObject.class))).thenReturn((JSONObject) mockMdmsData.get("FilingTypeModule").get("FilingTypeMaster").get(0));
-        when(validator.validateEvidenceExistence(evidenceRequest)).thenReturn(artifact);
         when(config.getUpdateEvidenceKafkaTopic()).thenReturn("update-evidence-topic");
 
         Artifact result = evidenceService.updateEvidence(evidenceRequest);

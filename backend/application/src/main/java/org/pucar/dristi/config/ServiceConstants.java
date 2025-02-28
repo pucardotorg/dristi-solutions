@@ -95,6 +95,8 @@ public class ServiceConstants {
     public static final String PENDINGREVIEW = "PENDINGREVIEW";
     public static final String PENDINGRESPONSE = "PENDINGRESPONSE";
     public static final String RE_SCHEDULE = "RE_SCHEDULE";
+    public static final String SETTLEMENT = "SETTLEMENT";
+    public static final String PAYMENT_COMPLETED_SUCCESSFULLY = "PAYMENT_COMPLETED_SUCCESSFULLY";
     public static final String RESCHEDULE_REQUEST_SUBMITTED = "RESCHEDULE_REQUEST_SUBMITTED";
     public static final String CHECKOUT_REQUEST = "CHECKOUT_REQUEST";
     public static final String PRODUCTION_DOCUMENTS = "PRODUCTION_DOCUMENTS";
@@ -121,7 +123,14 @@ public class ServiceConstants {
     public static final String VARIABLE_SUBMISSION_ACCEPTED = "VARIABLE_SUBMISSION_ACCEPTED";
 
     public static final String REQUEST_FOR_BAIL = "REQUEST_FOR_BAIL";
+    public static final String WITHDRAWAL = "WITHDRAWAL";
+    public static final String REQUEST_FOR_BAIL_SUBMITTED = "REQUEST_FOR_BAIL_SUBMITTED";
+    public static final String REQUEST_FOR_BAIL_REJECTED = "REQUEST_FOR_BAIL_REJECTED";
+    public static final String REQUEST_FOR_BAIL_APPROVED_MESSAGE_CODE = "REQUEST_FOR_BAIL_ACCEPTED,REQUEST_FOR_BAIL_GRANTED";
+    public static final String REQUEST_FOR_BAIL_ACCEPTED = "REQUEST_FOR_BAIL_ACCEPTED";
+    public static final String REQUEST_FOR_BAIL_GRANTED = "REQUEST_FOR_BAIL_GRANTED";
     public static final String SUBMIT_BAIL_DOCUMENTS = "SUBMIT_BAIL_DOCUMENTS";
+    public static final String REQUEST_FOR_WITH_DRAW_SUBMITTED = "REQUEST_FOR_WITH_DRAW_SUBMITTED";
 
     public static final String APPROVE = "APPROVE";
     public static final String REJECT = "REJECT";
