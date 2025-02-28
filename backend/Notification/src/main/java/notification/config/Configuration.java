@@ -84,10 +84,10 @@ public class Configuration {
     private String smsNotificationTopic;
 
     //Kafka Topics
-    @Value("${egov.sms.notification.topic}")
+    @Value("${dristi.notification.create.topic}")
     private String createNotificationTopic;
 
-    @Value("${egov.sms.notification.topic}")
+    @Value("${dristi.notification.update.topic}")
     private String updateNotificationTopic;
 
     @Value("${egov.idgen.notification.config}")
