@@ -66,7 +66,9 @@
               }
             ],
             "dependentKey": {
-              "respondentType": ["showCompanyDetails"]
+              "respondentType": [
+                "showCompanyDetails"
+              ]
             }
           },
           {
@@ -111,7 +113,12 @@
                     {
                       "name": "document",
                       "type": "DragDropComponent",
-                      "fileTypes": ["JPG", "JPEG", "PDF", "PNG"],
+                      "fileTypes": [
+                        "JPG",
+                        "JPEG",
+                        "PDF",
+                        "PNG"
+                      ],
                       "isOptional": "CS_IS_OPTIONAL",
                       "isMandatory": false,
                       "maxFileSize": 50,
@@ -131,7 +138,9 @@
             ],
             "head": "CS_RESPONDENT_COMPANY_DETAIL",
             "dependentKey": {
-              "respondentType": ["showCompanyDetails"]
+              "respondentType": [
+                "showCompanyDetails"
+              ]
             }
           },
           {
@@ -218,7 +227,9 @@
               "value": "CS_RESPONDENT_NAME"
             },
             "dependentKey": {
-              "respondentType": ["commonFields"]
+              "respondentType": [
+                "commonFields"
+              ]
             },
             "updateLabelOn": "respondentType.showCompanyDetails"
           },
@@ -242,7 +253,9 @@
               }
             ],
             "dependentKey": {
-              "respondentType": ["commonFields"]
+              "respondentType": [
+                "commonFields"
+              ]
             }
           },
           {
@@ -269,7 +282,9 @@
               }
             ],
             "dependentKey": {
-              "respondentType": ["showCompanyDetails"]
+              "respondentType": [
+                "showCompanyDetails"
+              ]
             }
           },
           {
@@ -317,7 +332,9 @@
               "value": "CS_RESPONDENT_PHONE"
             },
             "dependentKey": {
-              "respondentType": ["commonFields"]
+              "respondentType": [
+                "commonFields"
+              ]
             },
             "updateLabelOn": "respondentType.showCompanyDetails"
           },
@@ -363,7 +380,9 @@
               "value": "CS_RESPONDENT_EMAIL"
             },
             "dependentKey": {
-              "respondentType": ["commonFields"]
+              "respondentType": [
+                "commonFields"
+              ]
             },
             "updateLabelOn": "respondentType.showCompanyDetails"
           },
@@ -441,13 +460,16 @@
                 },
                 "isMandatory": true,
                 "withoutLabel": true,
-                "isPoliceStationComponent": true,
                 "geoLocationConfig": {
                   "key": "geoLocationDetails",
                   "juridictionRadioButton": {
-                    "label": "KNOW_JURISDICTION_BELONGS_TO",
-                    "type": "Radio",
                     "name": "jurisdictionKnown",
+                    "type": "Radio",
+                    "label": "KNOW_JURISDICTION_BELONGS_TO",
+                    "defaultValue": {
+                      "code": "YES",
+                      "name": "ES_COMMON_YES"
+                    },
                     "options": [
                       {
                         "code": "YES",
@@ -464,23 +486,25 @@
                     }
                   },
                   "latitudeInput": {
-                    "label": "LATITUDE",
-                    "type": "text",
                     "name": "latitude",
+                    "type": "text",
+                    "label": "LATITUDE",
                     "disabled": true,
                     "validation": {
                       "required": true,
+                      "precision": 15,
                       "patternType": "latitude",
                       "errorMessage": "LATITUDE_ERROR_MESSAGE"
                     }
                   },
                   "longitudeInput": {
-                    "label": "LONGITUDE",
-                    "type": "text",
                     "name": "longitude",
+                    "type": "text",
+                    "label": "LONGITUDE",
                     "disabled": true,
                     "validation": {
                       "required": true,
+                      "precision": 15,
                       "patternType": "longitude",
                       "errorMessage": "LONGITUDE_ERROR_MESSAGE"
                     }
@@ -492,11 +516,14 @@
                     "header": "POLICE_STATION_HEADER",
                     "optionsKey": "code"
                   }
-                }
+                },
+                "isPoliceStationComponent": true
               }
             ],
             "dependentKey": {
-              "respondentType": ["commonFields"]
+              "respondentType": [
+                "commonFields"
+              ]
             }
           },
           {
@@ -511,7 +538,12 @@
                     {
                       "name": "document",
                       "type": "DragDropComponent",
-                      "fileTypes": ["JPG", "JPEG", "PDF", "PNG"],
+                      "fileTypes": [
+                        "JPG",
+                        "JPEG",
+                        "PDF",
+                        "PNG"
+                      ],
                       "isOptional": "",
                       "maxFileSize": 50,
                       "documentHeader": "AFFIDAVIT_UNDER_SECTION_225_BNSS",
@@ -526,7 +558,9 @@
               }
             ],
             "dependentKey": {
-              "respondentType": ["commonFields"]
+              "respondentType": [
+                "commonFields"
+              ]
             }
           }
         ],

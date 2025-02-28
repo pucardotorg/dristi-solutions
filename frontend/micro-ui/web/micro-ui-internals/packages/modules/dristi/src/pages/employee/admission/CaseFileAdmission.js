@@ -963,6 +963,8 @@ function CaseFileAdmission({ t, path }) {
         statuteSection: {
           tenantId,
         },
+        orderTitle: "SCHEDULE_OF_HEARING_DATE",
+        orderCategory: "Intermediate",
         orderType: "SCHEDULE_OF_HEARING_DATE",
         status: "",
         isActive: true,

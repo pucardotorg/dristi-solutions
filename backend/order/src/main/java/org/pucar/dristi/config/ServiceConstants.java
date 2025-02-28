@@ -119,4 +119,6 @@ public class ServiceConstants {
     public static final String NEXT_HEARING_SCHEDULED = "NEXT_HEARING_SCHEDULED";
     public static final String RESPONDENT = "RESPONDENT";
     public static final String COMPLAINANT = "COMPLAINANT";
+    public static final String INTERMEDIATE = "INTERMEDIATE";
+    public static final String COMPOSITE = "COMPOSITE";
 }

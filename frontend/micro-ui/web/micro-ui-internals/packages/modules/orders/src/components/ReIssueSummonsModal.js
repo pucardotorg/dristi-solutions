@@ -63,6 +63,8 @@ function ReIssueSummonsModal() {
         statuteSection: {
           tenantId,
         },
+        orderTitle: orderType,
+        orderCategory: "Intermediate",
         orderType,
         status: "",
         isActive: true,

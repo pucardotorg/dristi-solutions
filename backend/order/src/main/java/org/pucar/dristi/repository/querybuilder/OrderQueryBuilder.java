@@ -20,7 +20,7 @@ public class OrderQueryBuilder {
     private static final String BASE_ORDER_QUERY = " SELECT orders.id as id, orders.tenantid as tenantid, orders.hearingnumber as hearingnumber, " +
             "orders.filingnumber as filingnumber, orders.comments as comments, orders.cnrnumber as cnrnumber, orders.linkedordernumber as linkedordernumber, orders.ordernumber as ordernumber, orders.applicationnumber as applicationnumber," +
             "orders.createddate as createddate, orders.ordertype as ordertype, orders.orderdetails as orderdetails, orders.issuedby as issuedby, orders.ordercategory as ordercategory," +
-            "orders.status as status, orders.isactive as isactive, orders.additionaldetails as additionaldetails, orders.createdby as createdby," +
+            "orders.status as status, orders.isactive as isactive, orders.additionaldetails as additionaldetails, orders.compositeitems as compositeitems, orders.ordertitle as ordertitle, orders.createdby as createdby," +
             "orders.lastmodifiedby as lastmodifiedby, orders.createdtime as createdtime, orders.lastmodifiedtime as lastmodifiedtime ";
 
     private static final String FROM_ORDERS_TABLE = " FROM dristi_orders orders";
@@ -106,6 +106,7 @@ public class OrderQueryBuilder {
             firstCriteria = addCriteria(criteria.getFilingNumber(), query, firstCriteria, "orders.filingNumber = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
             firstCriteria = addCriteria(criteria.getTenantId(), query, firstCriteria, "orders.tenantId = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
             firstCriteria = addCriteria(criteria.getOrderType(), query, firstCriteria, "orders.orderType = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
+            firstCriteria = addCriteria(criteria.getOrderCategory(), query, firstCriteria, "orders.orderCategory = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
             firstCriteria = addCriteria(criteria.getId(), query, firstCriteria, "orders.id = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
             firstCriteria = addCriteria(criteria.getStatus(), query, firstCriteria, "orders.status = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 

@@ -27,7 +27,7 @@ public class OptOutConsumer {
 
     @KafkaListener(topics = {"reschedule-opt-out"})
     public void listenOptOut(final HashMap<String, Object> record, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
-
+        log.info("Received opt out message in topic {}", topic);
         try {
             optOutProcessor.checkAndScheduleHearingForOptOut(record);
         } catch (Exception e) {

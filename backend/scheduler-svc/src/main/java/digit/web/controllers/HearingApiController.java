@@ -64,5 +64,14 @@ public class HearingApiController {
         return ResponseEntity.accepted().body(response);
     }
 
+    @RequestMapping(value = "/hearing/v1/bulk/_update", method = RequestMethod.POST)
+    public ResponseEntity<HearingResponse> updateHearingList(@Parameter(in = ParameterIn.DEFAULT, description = "Hearing Details and Request Info", required = true, schema = @Schema()) @Valid @RequestBody ScheduleHearingRequest request) {
+        log.info("api=/hearing/v1/bulk/_update, result = IN_PROGRESS");
+        List<ScheduleHearing> scheduledHearings = hearingService.update(request);
+        HearingResponse response = HearingResponse.builder().hearings(scheduledHearings).responseInfo(ResponseInfoFactory.createResponseInfo(request.getRequestInfo(), true)).build();
+        log.info("api=/hearing/v1/bulk/_update, result = SUCCESS");
+        return ResponseEntity.accepted().body(response);
+    }
+
 
 }

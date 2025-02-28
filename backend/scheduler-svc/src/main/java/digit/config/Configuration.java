@@ -239,4 +239,8 @@ public class Configuration {
 
     @Value("${egov.sms.notification.hearing.reminder.template.id}")
     private String smsNotificationHearingReminder;
+
+    @Value("${hearing.expiry.interval.miliseconds}")
+    private Integer expiryIntervalMiliSeconds;
+
 }

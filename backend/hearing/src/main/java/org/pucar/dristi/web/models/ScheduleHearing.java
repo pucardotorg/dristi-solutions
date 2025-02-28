@@ -6,6 +6,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 @Data
 @AllArgsConstructor
@@ -22,11 +25,14 @@ public class ScheduleHearing {
     @JsonProperty("courtId")
     private String courtId;
 
-    @JsonProperty("judgeId")
-    private String judgeId;
+    @JsonProperty("judgeIds")
+    private List<String> judgeIds;
 
     @JsonProperty("caseId")
     private String caseId;
+
+    @JsonProperty("filingNumber")
+    private List<String> filingNumber = new ArrayList<>();
 
     @JsonProperty("hearingType")
     private String hearingType;
@@ -48,4 +54,11 @@ public class ScheduleHearing {
 
     @JsonProperty("endTime")
     private long endTime;
+
+
+    @JsonProperty("originalHearingDate")
+    private long originalHearingDate;
+
+    @JsonProperty("expiryTime")
+    private Long expiryTime;
 }

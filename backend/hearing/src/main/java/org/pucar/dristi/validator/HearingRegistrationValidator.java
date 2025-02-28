@@ -202,4 +202,9 @@ public class HearingRegistrationValidator {
 
     public void validateBulkRescheduleRequest(@Valid RequestInfo requestInfo, BulkReschedule bulkReschedule) {
     }
+
+    public Hearing validateBulkUpdateHearing(@Valid RequestInfo requestInfo, Hearing hearing) {
+        List<Hearing> existingHearing = repository.checkHearingsExist(hearing);
+        return existingHearing.get(0);
+    }
 }

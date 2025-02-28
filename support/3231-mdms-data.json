@@ -1,0 +1,43 @@
+{
+  "tenantId": "kl",
+  "masterName": "Order",
+  "moduleName": "OrderType",
+  "mdmsPayload": [
+    {
+      "tenantId": "kl",
+      "schemaCode": "Order.OrderType",
+      "uniqueIdentifier": "29",
+      "data": {
+        "id": 29,
+        "code": "ADMIT_DISMISS_CASE",
+        "type": "ADMIT_DISMISS_CASE",
+        "isactive": true
+      },
+      "isActive": false
+    },
+    {
+      "tenantId": "kl",
+      "schemaCode": "Order.OrderType",
+      "uniqueIdentifier": "30",
+      "data": {
+        "id": 30,
+        "code": "ADMIT_CASE",
+        "type": "ADMIT_CASE",
+        "isactive": true
+      },
+      "isActive": true
+    },
+    {
+      "tenantId": "kl",
+      "schemaCode": "Order.OrderType",
+      "uniqueIdentifier": "31",
+      "data": {
+        "id": 31,
+        "code": "DISMISS_CASE",
+        "type": "DISMISS_CASE",
+        "isactive": true
+      },
+      "isActive": true
+    }
+  ]
+}

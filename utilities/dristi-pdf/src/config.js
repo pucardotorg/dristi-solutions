@@ -249,6 +249,14 @@ module.exports = {
       process.env.ORDER_SET_TERMS_OF_BAIL || "order-set-terms-of-bail",
     order_set_terms_of_bail_qr:
       process.env.ORDER_SET_TERMS_OF_BAIL_QR || "order-set-terms-of-bail-qr",
+    order_admit_case:
+      process.env.ORDER_SET_TERMS_OF_BAIL_QR || "order-admit-case",
+    order_admit_case_qr:
+      process.env.ORDER_SET_TERMS_OF_BAIL_QR || "order-admit-case-qr",
+    order_dismiss_case:
+      process.env.ORDER_SET_TERMS_OF_BAIL_QR || "order-dismiss-case",
+    order_dismiss_case_qr:
+      process.env.ORDER_SET_TERMS_OF_BAIL_QR || "order-dismiss-case-qr",
   },
 
   app: {

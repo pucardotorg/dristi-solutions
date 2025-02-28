@@ -2,6 +2,9 @@ package org.pucar.dristi.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.micrometer.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
@@ -70,12 +73,11 @@ public class OrderRegistrationService {
             producer.push(config.getSaveOrderKafkaTopic(), body);
 
             return body.getOrder();
-        }catch (CustomException e) {
+        } catch (CustomException e) {
             log.error("Custom Exception occurred while creating order");
             throw e;
-        }
-        catch (Exception e) {
-            log.error("Error occurred while creating order :: {}",e.toString());
+        } catch (Exception e) {
+            log.error("Error occurred while creating order :: {}", e.toString());
             throw new CustomException(ORDER_CREATE_EXCEPTION, e.getMessage());
         }
     }
@@ -91,7 +93,7 @@ public class OrderRegistrationService {
             return orderList;
 
         } catch (Exception e) {
-            log.error("Error while fetching to search results :: {}",e.toString());
+            log.error("Error while fetching to search results :: {}", e.toString());
             throw new CustomException(ORDER_SEARCH_EXCEPTION, e.getMessage());
         }
     }
@@ -99,9 +101,8 @@ public class OrderRegistrationService {
     public Order updateOrder(OrderRequest body) {
 
         try {
-
             // Validate whether the application that is being requested for update indeed exists
-             if(!validator.validateApplicationExistence(body))
+            if (!validator.validateApplicationExistence(body))
                 throw new CustomException(ORDER_UPDATE_EXCEPTION, "Order don't exist");
 
             // Enrich application upon update
@@ -117,13 +118,107 @@ public class OrderRegistrationService {
             return body.getOrder();
 
         } catch (CustomException e) {
-            log.error("Custom Exception occurred while updating order :: {}",e.toString());
+            log.error("Custom Exception occurred while updating order :: {}", e.toString());
             throw e;
         } catch (Exception e) {
             log.error("Error occurred while updating order");
             throw new CustomException(ORDER_UPDATE_EXCEPTION, "Error occurred while updating order: " + e.getMessage());
         }
 
+    }
+
+    public Order addItem(OrderRequest body) {
+
+        try {
+            // Validate whether the application that is being requested for update indeed exists
+            if (!validator.validateApplicationExistence(body))
+                throw new CustomException(ORDER_UPDATE_EXCEPTION, "Order doesn't exist");
+
+            validator.validateAddItem(body);
+
+            // Enrich application upon update
+            enrichmentUtil.enrichOrderRegistrationUponUpdate(body);
+            enrichmentUtil.enrichCompositeOrderItemIdOnAddItem(body);
+
+            workflowUpdate(body);
+
+            producer.push(config.getUpdateOrderKafkaTopic(), body);
+
+            return body.getOrder();
+
+        } catch (CustomException e) {
+            log.error("Custom Exception occurred while adding item/order :: {}", e.toString());
+            throw e;
+        } catch (Exception e) {
+            log.error("Error occurred while adding item/order");
+            throw new CustomException(ORDER_UPDATE_EXCEPTION, "Error occurred while adding item/order: " + e.getMessage());
+        }
+
+    }
+
+    public Order removeItem(RemoveItemRequest body) {
+
+        try {
+            Order order = getOrder(body);
+            removeCompositeItem(body.getOrder().getItemID(), order);
+
+            OrderRequest orderRequest = new OrderRequest();
+            orderRequest.setRequestInfo(body.getRequestInfo());
+            orderRequest.setOrder(order);
+            enrichmentUtil.enrichAuditDetails(orderRequest);
+
+            producer.push(config.getUpdateOrderKafkaTopic(), orderRequest);
+
+            return order;
+
+        } catch (CustomException e) {
+            log.error("Custom Exception occurred while removing item/order :: {}", e.toString());
+            throw e;
+        } catch (Exception e) {
+            log.error("Error occurred while removing item/order");
+            throw new CustomException(ORDER_UPDATE_EXCEPTION, "Error occurred while removing item/order: " + e.getMessage());
+        }
+
+    }
+
+    private Order getOrder(RemoveItemRequest body) {
+        OrderCriteria orderCriteria = new OrderCriteria();
+        orderCriteria.setOrderNumber(body.getOrder().getOrderNumber());
+        orderCriteria.setTenantId(body.getOrder().getTenantId());
+
+        // Fetch applications from database according to the search criteria
+        List<Order> orderList = orderRepository.getOrders(orderCriteria, null);
+
+        // If no applications are found matching the given criteria, return an empty list
+        if (CollectionUtils.isEmpty(orderList))
+            throw new CustomException(ORDER_UPDATE_EXCEPTION, "Order doesn't exist");
+
+        return orderList.get(0);
+    }
+
+    private void removeCompositeItem(String compositeItemId, Order order) {
+        Object existingCompositeOrderItem = order.getCompositeItems();
+        ArrayNode arrayNode = objectMapper.convertValue(existingCompositeOrderItem, ArrayNode.class);
+
+        if (arrayNode != null && !arrayNode.isEmpty()) {
+            for (int i = 0; i < arrayNode.size(); i++) {
+                ObjectNode existingCompositeOrderItemObjectNode = (ObjectNode) arrayNode.get(i);
+                String existingCompositeOrderItemId = existingCompositeOrderItemObjectNode.path("id").asText();
+
+                log.info("Existing CompositeOrderItem :: {}", existingCompositeOrderItemObjectNode);
+
+                if (compositeItemId.equalsIgnoreCase(existingCompositeOrderItemId)) {
+                    log.info("Removing Item :: {}", existingCompositeOrderItemId);
+
+                    // Remove item from ArrayNode
+                    arrayNode.remove(i);
+
+                    // Update the order object
+                    order.setCompositeItems(arrayNode);
+                    return;
+                }
+            }
+        }
     }
 
     public CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, Order order) {
@@ -133,6 +228,7 @@ public class OrderRegistrationService {
         caseSearchRequest.addCriteriaItem(caseCriteria);
         return caseSearchRequest;
     }
+
     private String getMessageCode(String orderType, String updatedStatus, Boolean hearingCompleted, String submissionType, String purpose) {
 
         log.info("Operation: getMessageCode for OrderType: {}, UpdatedStatus: {}, HearingCompleted: {}, SubmissionType: {}, Purpose: {}", orderType, updatedStatus, hearingCompleted, submissionType, purpose);
@@ -151,7 +247,7 @@ public class OrderRegistrationService {
         if (!purpose.isEmpty() && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
             return validator.validatePurposeOfHearing(purpose);
         }
-        if(orderType.equalsIgnoreCase(SCHEDULING_NEXT_HEARING) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
+        if (orderType.equalsIgnoreCase(SCHEDULING_NEXT_HEARING) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
             return NEXT_HEARING_SCHEDULED;
         }
 //        if(orderType.equalsIgnoreCase(SCHEDULE_OF_HEARING_DATE) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
@@ -160,19 +256,19 @@ public class OrderRegistrationService {
         if(orderType.equalsIgnoreCase(JUDGEMENT) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
             return CASE_DECISION_AVAILABLE;
         }
-        if(orderType.equalsIgnoreCase(ASSIGNING_DATE_RESCHEDULED_HEARING) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
+        if (orderType.equalsIgnoreCase(ASSIGNING_DATE_RESCHEDULED_HEARING) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
             return HEARING_RESCHEDULED;
         }
-        if(orderType.equalsIgnoreCase(WARRANT) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
+        if (orderType.equalsIgnoreCase(WARRANT) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
             return WARRANT_ISSUED;
         }
-        if(orderType.equalsIgnoreCase(SUMMONS) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
+        if (orderType.equalsIgnoreCase(SUMMONS) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
             return SUMMONS_ISSUED;
         }
-        if(hearingCompleted && updatedStatus.equalsIgnoreCase(PUBLISHED)){
+        if (hearingCompleted && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
             return ORDER_PUBLISHED;
         }
-        if(orderType.equalsIgnoreCase(MANDATORY_SUBMISSIONS_RESPONSES) && submissionType.equalsIgnoreCase(EVIDENCE) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
+        if (orderType.equalsIgnoreCase(MANDATORY_SUBMISSIONS_RESPONSES) && submissionType.equalsIgnoreCase(EVIDENCE) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
             return EVIDENCE_REQUESTED;
         }
         if (orderType.equalsIgnoreCase(MANDATORY_SUBMISSIONS_RESPONSES) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
@@ -181,9 +277,9 @@ public class OrderRegistrationService {
         if(orderType.equalsIgnoreCase(NOTICE) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
             return NOTICE_ISSUED;
         }
-        if (updatedStatus.equalsIgnoreCase(PUBLISHED)){
-             return ORDER_ISSUED;
-         }
+        if (updatedStatus.equalsIgnoreCase(PUBLISHED)) {
+            return ORDER_ISSUED;
+        }
         return null;
     }
 
@@ -233,15 +329,14 @@ public class OrderRegistrationService {
             for (String number : phonenumbers) {
                 notificationService.sendNotification(orderRequest.getRequestInfo(), smsTemplateData, messageCode, number);
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             // Log the exception and continue the execution without throwing
             log.error("Error occurred while sending notification: {}", e.toString());
         }
     }
 
     private static String getReceiverParty(String messageCode) {
-        if(messageCode.equalsIgnoreCase(NOTICE_ISSUED) || messageCode.equalsIgnoreCase(WARRANT_ISSUED) || messageCode.equalsIgnoreCase(SUMMONS_ISSUED)) {
+        if (messageCode.equalsIgnoreCase(NOTICE_ISSUED) || messageCode.equalsIgnoreCase(WARRANT_ISSUED) || messageCode.equalsIgnoreCase(SUMMONS_ISSUED)) {
             return RESPONDENT;
         }
         return null;
@@ -251,18 +346,16 @@ public class OrderRegistrationService {
     public List<OrderExists> existsOrder(OrderExistsRequest orderExistsRequest) {
         try {
             return orderRepository.checkOrderExists(orderExistsRequest.getOrder());
-        }
-        catch (CustomException e){
-            log.error("Custom Exception occurred while searching :: {}",e.toString());
+        } catch (CustomException e) {
+            log.error("Custom Exception occurred while searching :: {}", e.toString());
             throw e;
-        }
-        catch (Exception e){
-            log.error("Error while fetching to search order results :: {}",e.toString());
-            throw new CustomException(ORDER_EXISTS_EXCEPTION,e.getMessage());
+        } catch (Exception e) {
+            log.error("Error while fetching to search order results :: {}", e.toString());
+            throw new CustomException(ORDER_EXISTS_EXCEPTION, e.getMessage());
         }
     }
 
-    private void workflowUpdate(OrderRequest orderRequest){
+    private void workflowUpdate(OrderRequest orderRequest) {
         Order order = orderRequest.getOrder();
         RequestInfo requestInfo = orderRequest.getRequestInfo();
 
@@ -271,7 +364,7 @@ public class OrderRegistrationService {
         Workflow workflow = order.getWorkflow();
 
         String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, orderNumber, config.getOrderBusinessServiceName(),
-                    workflow, config.getOrderBusinessName());
+                workflow, config.getOrderBusinessName());
         order.setStatus(status);
         if (PUBLISHED.equalsIgnoreCase(status))
             order.setCreatedDate(System.currentTimeMillis());
@@ -282,7 +375,7 @@ public class OrderRegistrationService {
         Set<String> mobileNumber = new HashSet<>();
 
         List<Individual> individuals = individualService.getIndividuals(requestInfo, new ArrayList<>(ids));
-        for(Individual individual : individuals) {
+        for (Individual individual : individuals) {
             if (individual.getMobileNumber() != null) {
                 mobileNumber.add(individual.getMobileNumber());
             }
@@ -290,7 +383,7 @@ public class OrderRegistrationService {
         return mobileNumber;
     }
 
-    public  Set<String> extractIndividualIds(JsonNode caseDetails, String receiver) {
+    public Set<String> extractIndividualIds(JsonNode caseDetails, String receiver) {
         JsonNode litigantNode = caseDetails.get("litigants");
         JsonNode representativeNode = caseDetails.get("representatives");
         String partyTypeToMatch = (receiver != null) ? receiver.toLowerCase() : "";
