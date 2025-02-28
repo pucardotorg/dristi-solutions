@@ -99,6 +99,7 @@ const hearingBulkReschedule = async (req, res, qrCode) => {
     );
 
     const mdmsCourtSlots = resMdms?.data?.mdms;
+    console.debug("courtClots : ", mdmsCourtSlots);
     if (!mdmsCourtSlots) {
       return renderError(res, "Court slots MDMS master not found", 404);
     }
@@ -121,6 +122,7 @@ const hearingBulkReschedule = async (req, res, qrCode) => {
     );
 
     const resBulkHearingData = resBulkHearing?.data?.Hearings;
+    console.debug("hearings : ", resBulkHearingData);
     if (!resBulkHearingData) {
       return renderError(res, "Hearing not found during given slot", 404);
     }
@@ -137,6 +139,7 @@ const hearingBulkReschedule = async (req, res, qrCode) => {
     );
 
     const courtCase = resCase?.data?.criteria;
+    console.debug("courtCase : ", courtCase);
     if (!courtCase) {
       return renderError(res, "Court case not found", 404);
     }
@@ -165,6 +168,12 @@ const hearingBulkReschedule = async (req, res, qrCode) => {
       const hearingType =
         messagesMap?.[matchingHearing?.hearingType] ||
         matchingHearing?.hearingType;
+
+      console.debug("startTime : ", matchingHearing?.startTime);
+      console.debug(
+        "newHearingSlot : ",
+        _getHearingSlots(mdmsCourtSlots, matchingHearing?.startTime)
+      );
 
       return {
         caseName: caseTitle,
