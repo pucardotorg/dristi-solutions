@@ -39,7 +39,8 @@ public class WorkflowService {
         Notification notification = notificationRequest.getNotification();
         ProcessInstance processInstance = getNotificationProcessInstance(notification,requestInfo);
         ProcessInstanceRequest workflowRequest = new ProcessInstanceRequest(requestInfo, Collections.singletonList(processInstance));
-        callWorkFlow(workflowRequest);
+        State state = callWorkFlow(workflowRequest);
+        notification.setStatus(state.getState());
 
     }
 
@@ -58,9 +59,9 @@ public class WorkflowService {
         ProcessInstance processInstance = new ProcessInstance();
         processInstance.setBusinessId(notification.getNotificationNumber());
         processInstance.setAction(workflow.getAction());
-        processInstance.setModuleName("birth-services");
+        processInstance.setModuleName("notification");
         processInstance.setTenantId(notification.getTenantId());
-        processInstance.setBusinessService("BTR");
+        processInstance.setBusinessService("notification-default");
         processInstance.setDocuments(workflow.getDocuments());
         processInstance.setComment(workflow.getComments());
 
