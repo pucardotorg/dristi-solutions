@@ -143,7 +143,7 @@ class NotificationRowMapperTest {
         when(resultSet.getString("notificationdetails")).thenReturn("details");
         when(resultSet.getString("issuedby")).thenReturn("issuer");
         when(resultSet.getLong("createddate")).thenReturn(123L);
-        when(resultSet.getString("comments")).thenReturn("comments");
+        when(resultSet.getString("comment")).thenReturn("comments");
     }
 
     private void mockAuditDetails() throws SQLException {
@@ -155,7 +155,7 @@ class NotificationRowMapperTest {
 
     private void mockDocumentData(boolean withDocument) throws SQLException {
         if (withDocument) {
-            when(resultSet.getString("document_id")).thenReturn("doc-123");
+            when(resultSet.getString("documentid")).thenReturn("doc-123");
             when(resultSet.getString("documentid")).thenReturn("doc-123");
             when(resultSet.getString("documenttype")).thenReturn("PDF");
             when(resultSet.getString("documentuid")).thenReturn("DOC-001");
