@@ -257,6 +257,10 @@ module.exports = {
       process.env.ORDER_SET_TERMS_OF_BAIL_QR || "order-dismiss-case",
     order_dismiss_case_qr:
       process.env.ORDER_SET_TERMS_OF_BAIL_QR || "order-dismiss-case-qr",
+    hearing_bulk_reschedule:
+      process.env.HEARING_BULK_RESCHEDULE || "order-bulk-reschedule",
+    hearing_bulk_reschedule_qr:
+      process.env.HEARING_BULK_RESCHEDULE_QR || "order-bulk-reschedule-qr",
   },
 
   app: {
@@ -299,6 +303,7 @@ module.exports = {
     filestore_create: "/filestore/v1/files",
     filestore_search: "/filestore/v1/files/url",
     filestore_search_id: "/filestore/v1/files/id",
+    hearing_bulk_reschedule: "/hearing/v1/bulk/_reschedule",
   },
 
   constraints: {
