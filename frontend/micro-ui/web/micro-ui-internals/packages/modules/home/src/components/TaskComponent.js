@@ -36,6 +36,8 @@ const TasksComponent = ({
   joinCaseShowSubmitResponseModal,
   setJoinCaseShowSubmitResponseModal,
   hideTaskComponent,
+  hideFilters = false,
+  isDiary = false,
   taskIncludes,
 }) => {
   const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
@@ -54,6 +56,7 @@ const TasksComponent = ({
   const [showSubmitResponseModal, setShowSubmitResponseModal] = useState(false);
   const [responsePendingTask, setResponsePendingTask] = useState({});
   const [responseDoc, setResponseDoc] = useState({});
+  const [isResponseApiCalled, setIsResponseApiCalled] = useState(false);
 
   const { data: pendingTaskDetails = [], isLoading, refetch } = useGetPendingTask({
     data: {
@@ -66,13 +69,14 @@ const TasksComponent = ({
           ...(isLitigant && { assignedTo: uuid }),
           ...(!isLitigant && { assignedRole: [...roles] }),
           ...(inCase && { filingNumber: filingNumber }),
+          screenType: isDiary ? ["Adiary"] : ["home"],
         },
         limit: 10000,
         offset: 0,
       },
     },
     params: { tenantId },
-    key: `${taskType?.code}-${filingNumber}`,
+    key: `${taskType?.code}-${filingNumber}-${isDiary}`,
     config: { enabled: Boolean(taskType?.code && tenantId) },
   });
 
@@ -135,10 +139,10 @@ const TasksComponent = ({
   );
 
   const handleReviewOrder = useCallback(
-    async ({ filingNumber, caseId, referenceId }) => {
+    async ({ filingNumber, caseId, referenceId, litigant, litigantIndId }) => {
       const orderDetails = await getOrderDetail(referenceId);
       history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Orders`, {
-        orderObj: orderDetails,
+        orderObj: { ...orderDetails, litigant, litigantIndId },
       });
     },
     [getOrderDetail, history, userType]
@@ -300,6 +304,10 @@ const TasksComponent = ({
           const entityType = data?.fields?.find((field) => field.key === "entityType")?.value;
           const individualId = data?.fields?.find((field) => field.key === "additionalDetails.individualId")?.value;
           const caseId = data?.fields?.find((field) => field.key === "additionalDetails.caseId")?.value;
+          const litigant = data?.fields?.find((field) => field.key === "additionalDetails.litigantUuid[0]")?.value;
+          const litigantIndId = data?.fields?.find((field) => field.key === "additionalDetails.litigants[0]")?.value;
+          const screenType = data?.fields?.find((field) => field.key === "screenType")?.value;
+
           const updateReferenceId = referenceId.split("_").pop();
           const defaultObj = { referenceId: updateReferenceId, ...caseDetail };
           const pendingTaskActions = selectTaskType?.[entityType || taskTypeCode];
@@ -334,8 +342,18 @@ const TasksComponent = ({
             isCompleted,
             dueDateColor: due === "Due today" ? "#9E400A" : "",
             redirectUrl,
-            params: { ...additionalDetails, cnrNumber, filingNumber, caseId: caseDetail?.id, referenceId: updateReferenceId },
+            params: {
+              ...additionalDetails,
+              cnrNumber,
+              filingNumber,
+              caseId: caseDetail?.id,
+              referenceId: updateReferenceId,
+              litigant,
+              litigantIndId,
+            },
             isCustomFunction,
+            referenceId,
+            screenType,
           };
         })
       );
@@ -361,6 +379,7 @@ const TasksComponent = ({
   );
 
   const submitResponse = async (responseDoc) => {
+    setIsResponseApiCalled(true);
     let newCase;
     const pendingTask = joinCaseShowSubmitResponseModal ? joinCaseResponsePendingTask : responsePendingTask;
 
@@ -392,6 +411,7 @@ const TasksComponent = ({
                   ...responseDoc,
                   additionalDetails: {
                     fileName: `Response (${data?.additionalDetails?.fullName})`,
+                    fileType: "respondent-response",
                   },
                 },
               ],
@@ -400,14 +420,19 @@ const TasksComponent = ({
         }),
       };
     }
-    const response = await updateCaseDetails(newCase, tenantId, "RESPOND");
+    let response;
+    try {
+      response = await updateCaseDetails(newCase, tenantId, "RESPOND");
+    } catch (error) {
+      console.error("error :>> ", error);
+    }
     if (response) {
       try {
         await DRISTIService.customApiService(Urls.pendingTask, {
           pendingTask: {
             name: "Pending Response",
             entityType: "case-default",
-            referenceId: `MANUAL_${pendingTask?.filingNumber}`,
+            referenceId: pendingTask?.referenceId,
             status: "PENDING_RESPONSE",
             assignedTo: [{ uuid: userInfo?.uuid }],
             assignedRole: ["CASE_RESPONDER"],
@@ -422,8 +447,12 @@ const TasksComponent = ({
       } catch (err) {
         console.error("err :>> ", err);
       }
+      setIsResponseApiCalled(false);
       return { continue: true };
-    } else return { continue: false };
+    } else {
+      setIsResponseApiCalled(false);
+      return { continue: false };
+    }
   };
 
   const getCaseDetailsUrl = (caseId, filingNumber) =>
@@ -462,9 +491,11 @@ const TasksComponent = ({
             />
           ),
           actionSaveOnSubmit: async () => {
-            await submitResponse(responseDoc);
+            return await submitResponse(responseDoc);
           },
-          isDisabled: responseDoc?.fileStore ? false : true,
+          async: true,
+          isDisabled: (responseDoc?.fileStore ? false : true) || isResponseApiCalled,
+          isBackButtonDisabled: isResponseApiCalled,
         },
         {
           type: "success",
@@ -534,38 +565,40 @@ const TasksComponent = ({
           <h2>{!isLitigant ? t("YOUR_TASK") : t("ALL_PENDING_TASK_TEXT")}</h2>
           {totalPendingTask !== undefined && totalPendingTask > 0 ? (
             <React.Fragment>
-              <div className="task-filters">
-                <style>{customStyles}</style>
-                <LabelFieldPair>
-                  <CardLabel style={{ fontSize: "16px" }} className={"card-label"}>
-                    {t("CASE_TYPE")}
-                  </CardLabel>
-                  <Dropdown
-                    option={caseTypes}
-                    selected={caseType}
-                    optionKey={"name"}
-                    select={(value) => {
-                      setCaseType(value);
-                    }}
-                    placeholder={t("CS_CASE_TYPE")}
-                  />
-                </LabelFieldPair>
-                <LabelFieldPair>
-                  <CardLabel style={{ fontSize: "16px" }} className={"card-label"}>
-                    {t("CS_TASK_TYPE")}
-                  </CardLabel>
-                  <Dropdown
-                    t={t}
-                    option={taskTypes}
-                    optionKey={"name"}
-                    selected={taskType}
-                    select={(value) => {
-                      setTaskType(value);
-                    }}
-                    placeholder={t("CS_TASK_TYPE")}
-                  />
-                </LabelFieldPair>
-              </div>
+              {!hideFilters && (
+                <div className="task-filters">
+                  <style>{customStyles}</style>
+                  <LabelFieldPair>
+                    <CardLabel style={{ fontSize: "16px" }} className={"card-label"}>
+                      {t("CASE_TYPE")}
+                    </CardLabel>
+                    <Dropdown
+                      option={caseTypes}
+                      selected={caseType}
+                      optionKey={"name"}
+                      select={(value) => {
+                        setCaseType(value);
+                      }}
+                      placeholder={t("CS_CASE_TYPE")}
+                    />
+                  </LabelFieldPair>
+                  <LabelFieldPair>
+                    <CardLabel style={{ fontSize: "16px" }} className={"card-label"}>
+                      {t("CS_TASK_TYPE")}
+                    </CardLabel>
+                    <Dropdown
+                      t={t}
+                      option={taskTypes}
+                      optionKey={"name"}
+                      selected={taskType}
+                      select={(value) => {
+                        setTaskType(value);
+                      }}
+                      placeholder={t("CS_TASK_TYPE")}
+                    />
+                  </LabelFieldPair>
+                </div>
+              )}
 
               <React.Fragment>
                 {searchCaseLoading && <Loader />}

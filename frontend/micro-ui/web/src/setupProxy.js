@@ -49,5 +49,7 @@ module.exports = function (app) {
     "/sbi-backend",
     "/dristi-case-pdf",
     "/casemanagement/casemanager/case/v1/_buildcasebundle",
+    "/lock-svc",
+    "/ab-diary",
   ].forEach((location) => app.use(location, createProxy));
 };

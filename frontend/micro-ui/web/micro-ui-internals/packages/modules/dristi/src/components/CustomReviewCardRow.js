@@ -83,11 +83,14 @@ const CustomReviewCardRow = ({
   setShowImageModal,
   isCaseReAssigned,
   disableScrutiny,
+  isWarning,
 }) => {
   const {
     type = null,
     label = null,
     value = null,
+    prefix = "",
+    style = {},
     badgeType = null,
     textDependentOn = null,
     textDependentValue = null,
@@ -96,6 +99,7 @@ const CustomReviewCardRow = ({
     enableScrutinyField = false,
   } = config;
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
+  const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
 
   function getNestedValue(obj, path) {
     return path.split(".").reduce((acc, key) => acc?.[key], obj);
@@ -108,10 +112,22 @@ const CustomReviewCardRow = ({
     const keyParts = key.split(".");
     let value = data;
     keyParts.forEach((part) => {
-      if (value && value.hasOwnProperty(part)) {
-        value = value[part];
+      const match = part.match(/^(.+?)\[(\d+)\]$/);
+      if (match) {
+        const prop = match[1];
+        const index = parseInt(match[2], 10);
+
+        if (value && value.hasOwnProperty(prop) && Array.isArray(value[prop])) {
+          value = value[prop][index];
+        } else {
+          value = undefined;
+        }
       } else {
-        value = undefined;
+        if (value && value.hasOwnProperty(part)) {
+          value = value[part];
+        } else {
+          value = undefined;
+        }
       }
     });
     return value;
@@ -131,6 +147,9 @@ const CustomReviewCardRow = ({
     if (isPrevScrutiny && (!disableScrutiny || enableScrutinyField)) {
       showFlagIcon = prevDataError ? true : false;
     }
+
+    if (isCitizen) showFlagIcon = false;
+
     if (isScrutiny) {
       if (typeof prevDataError === "string" && (dataError || prevDataError)) {
         bgclassname = dataError === prevDataError ? "preverror" : "error";
@@ -153,8 +172,12 @@ const CustomReviewCardRow = ({
         if (showFlagIcon && dateDependentOnValue && t(textDependentValue)) {
           showFlagIcon = false;
         }
+        const inlineStyle = isWarning
+          ? { backgroundColor: "#FDF2DE" } // Set the background color to yellow if checked
+          : {};
+        bgclassname = isWarning ? "" : bgclassname;
         return (
-          <div className={`text-main ${bgclassname}`}>
+          <div className={`text-main ${bgclassname}`} style={inlineStyle}>
             <div className="text">
               {value === "dateOfDispatch" && <div> {`${dataIndex + 1}. `}</div>}
               <div className="label">{t(label)}</div>
@@ -167,7 +190,7 @@ const CustomReviewCardRow = ({
                   }}
                   key={dataIndex}
                 >
-                  {dataError && isScrutiny ? (
+                  {dataError && isScrutiny && !isWarning ? (
                     <React.Fragment>
                       <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`Click`}>
                         {" "}
@@ -213,7 +236,7 @@ const CustomReviewCardRow = ({
           <div className={`title-main ${bgclassname}`}>
             <div className={`title ${isScrutiny && (dataError ? "column" : "")}`}>
               <div style={{ display: "flex", flexDirection: "row", gap: "8px", alignItems: "center" }}>
-                {`${titleIndex}. ${titleHeading ? t("CS_CHEQUE_NO") + " " : ""}${title || t("")}`}
+                {`${titleIndex}. ${titleHeading ? t("CS_CHEQUE_NO") + " " : prefix ? prefix + " " : ""}${title || t("")}`}
                 {data?.partyInPerson && <div style={badgeStyle}>{t("PARTY_IN_PERSON_TEXT")}</div>}
               </div>
               {badgeType && <div>{extractValue(data, badgeType)}</div>}
@@ -263,6 +286,92 @@ const CustomReviewCardRow = ({
             )}
           </div>
         );
+      case "witnessTitle":
+        const witnessTitleError = dataError?.witnessTitle?.FSOError;
+        const witnessPrevTitleError = prevDataError?.witnessTitle?.FSOError;
+        if (isPrevScrutiny && !witnessPrevTitleError && !disableScrutiny) {
+          showFlagIcon = false;
+        }
+        let witnessTitle = "";
+        if (Array.isArray(value)) {
+          const extractedValues = value
+            ?.map((key) => {
+              const extractedValue = extractValue(data, key);
+              return extractedValue ? { [key]: extractedValue } : null;
+            })
+            .filter((val) => val !== null);
+
+          // Extract individual parts based on the keys
+          const firstName = extractedValues.find((item) => item.firstName)?.firstName || "";
+          const middleName = extractedValues.find((item) => item.middleName)?.middleName || "";
+          const lastName = extractedValues.find((item) => item.lastName)?.lastName || "";
+          const designation = extractedValues.find((item) => item.witnessDesignation)?.witnessDesignation || "";
+
+          const parts = [firstName, middleName, lastName]?.filter(Boolean);
+          witnessTitle = parts?.join(" ");
+
+          if (designation) {
+            witnessTitle += ` - ${designation}`;
+          }
+        } else {
+          witnessTitle = extractValue(data, value);
+        }
+        bgclassname = isScrutiny && witnessTitleError ? (witnessTitleError === witnessPrevTitleError ? "preverror" : "error") : "";
+        bgclassname = witnessTitleError && isCaseReAssigned ? "preverrorside" : bgclassname;
+        return (
+          <div className={`title-main ${bgclassname}`}>
+            <div className={`title ${isScrutiny && (dataError ? "column" : "")}`}>
+              <div style={{ display: "flex", flexDirection: "row", gap: "8px", alignItems: "center" }}>
+                {`${titleIndex}. ${titleHeading ? t("CS_CHEQUE_NO") + " " : prefix ? prefix + " " : ""}${witnessTitle || t("")}`}
+                {data?.partyInPerson && <div style={badgeStyle}>{t("PARTY_IN_PERSON_TEXT")}</div>}
+              </div>
+              {badgeType && <div>{extractValue(data, badgeType)}</div>}
+
+              {showFlagIcon && (
+                <div
+                  className="flag"
+                  onClick={(e) => {
+                    handleOpenPopup(
+                      e,
+                      configKey,
+                      name,
+                      dataIndex,
+                      Array.isArray(value) ? type : value,
+                      Array.isArray(value) ? [...value, type] : [value, type]
+                    );
+                  }}
+                  key={dataIndex}
+                >
+                  {/* {badgeType && <div>{extractValue(data, badgeType)}</div>} */}
+                  {witnessTitleError ? (
+                    <React.Fragment>
+                      <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`Click`}>
+                        {" "}
+                        <EditPencilIcon />
+                      </span>
+                      <ReactTooltip id={`Click`} place="bottom" content={t("CS_CLICK_TO_EDIT") || ""}>
+                        {t("CS_CLICK_TO_EDIT")}
+                      </ReactTooltip>
+                    </React.Fragment>
+                  ) : (
+                    <FlagIcon />
+                  )}
+                </div>
+              )}
+            </div>
+            {witnessTitleError && isScrutiny && (
+              <div className="scrutiny-error input">
+                {bgclassname === "preverror" ? (
+                  <span style={{ color: "#4d83cf", fontWeight: 300 }}>{t("CS_PREVIOUS_ERROR")}</span>
+                ) : (
+                  <FlagIcon isError={true} />
+                )}
+
+                {witnessTitleError}
+              </div>
+            )}
+          </div>
+        );
       case "text":
         const textValue = extractValue(data, value);
         const dependentOnValue = extractValue(data, textDependentOn);
@@ -272,7 +381,9 @@ const CustomReviewCardRow = ({
         return (
           <div className={`text-main ${bgclassname}`}>
             <div className="text">
-              <div className="label">{t(label)}</div>
+              <div style={style} className="label">
+                {t(label)}
+              </div>
               <div className="value" style={{ overflowY: "auto", maxHeight: "310px" }}>
                 {Array.isArray(textValue)
                   ? textValue.length > 0
@@ -588,7 +699,7 @@ const CustomReviewCardRow = ({
                     )
                   : null}
               </div>
-              {showFlagIcon && (
+              {showFlagIcon && !(type === "image" && configKey === "litigentDetails" && name === "complainantDetails") && (
                 <div
                   className="flag"
                   onClick={(e) => {

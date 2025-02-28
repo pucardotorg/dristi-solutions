@@ -21,6 +21,7 @@ import org.egov.common.contract.workflow.ProcessInstanceRequest;
 import org.egov.common.contract.workflow.ProcessInstanceResponse;
 import org.egov.common.contract.workflow.State;
 import org.egov.tracer.model.CustomException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -28,10 +29,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.ServiceRequestRepository;
-import org.pucar.dristi.web.models.CaseCriteria;
-import org.pucar.dristi.web.models.CaseRequest;
-import org.pucar.dristi.web.models.CaseSearchRequest;
-import org.pucar.dristi.web.models.CourtCase;
+import org.pucar.dristi.web.models.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -49,7 +47,12 @@ public class WorkflowServiceTest {
 
     @Mock
     private ObjectMapper mapper;
-
+    
+    private WorkflowObject workflow = new WorkflowObject();
+    @BeforeEach
+    void setUp() {
+        workflow.setAction("APPROVE");
+    }
 
     @Test
     void updateWorkflowStatus_Success() {
@@ -62,7 +65,7 @@ public class WorkflowServiceTest {
         caseRequest.setCases(courtCase);
         List<String> list = new ArrayList<>();
         list.add("assigne1");
-        courtCase.setWorkflow(Workflow.builder().action("APPROVE").assignes(list).build());
+        courtCase.setWorkflow(workflow);
 
         when(config.getWfHost()).thenReturn("http://localhost:8080");
         when(config.getWfTransitionPath()).thenReturn("/workflow/transition");
@@ -88,7 +91,7 @@ public class WorkflowServiceTest {
 
         CaseRequest caseRequest = new CaseRequest();
         caseRequest.setCases(courtCase);
-        courtCase.setWorkflow(Workflow.builder().action("APPROVE").build());
+        courtCase.setWorkflow(workflow);
 
         when(config.getWfHost()).thenReturn("http://localhost:8080");
         when(config.getWfTransitionPath()).thenReturn("/workflow/transition");
@@ -114,7 +117,7 @@ public class WorkflowServiceTest {
 
         CaseRequest caseRequest = new CaseRequest();
         caseRequest.setCases(courtCase);
-        courtCase.setWorkflow(Workflow.builder().action("APPROVE").build());
+        courtCase.setWorkflow(workflow);
 
         when(config.getWfHost()).thenReturn("http://localhost:8080");
         when(config.getWfTransitionPath()).thenReturn("/workflow/transition");
@@ -139,7 +142,7 @@ public class WorkflowServiceTest {
 
         CaseRequest caseRequest = new CaseRequest();
         caseRequest.setCases(null);
-        courtCase.setWorkflow(Workflow.builder().action("APPROVE").build());
+        courtCase.setWorkflow(workflow);
 
         // Execute the method
         assertThrows(Exception.class, () -> {workflowService.updateWorkflowStatus(caseRequest);

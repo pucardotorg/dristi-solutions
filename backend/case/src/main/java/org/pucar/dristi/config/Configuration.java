@@ -272,6 +272,12 @@ public class Configuration {
 	@Value("${egov.enc.mdms.security.policy.case.decrypt.self}")
 	private String caseDecryptSelf;
 
+	@Value("${egov.enc.mdms.security.policy.court.case.new}")
+	private String courtCaseEncryptNew;
+
+	@Value("${egov.enc.mdms.security.policy.case.decrypt.self.new}")
+	private String caseDecryptSelfNew;
+
 	@Value("${egov.enc.mdms.security.policy.court.decrypt.other}")
 	private String caseDecryptOther;
 
@@ -303,4 +309,16 @@ public class Configuration {
 	//Indexer
 	@Value("${indexer.join.case.kafka.topic}")
 	private String joinCaseTopicIndexer;
+
+	@Value("${pucar.lock.host}")
+	private String lockSvcHost;
+
+	@Value("${pucar.lock.search.endpoint}")
+	private String lockEndPoint;
+
+	@Value("${egov.task.service.host}")
+	private String taskServiceHost;
+
+	@Value("${egov.task.service.create.endpoint}")
+	private String taskServiceCreateEndpoint;
 }

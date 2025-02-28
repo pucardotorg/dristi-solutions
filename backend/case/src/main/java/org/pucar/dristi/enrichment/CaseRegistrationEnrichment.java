@@ -307,9 +307,10 @@ public class CaseRegistrationEnrichment {
 
     public void enrichAccessCode(CaseRequest caseRequest) {
         try {
-
-            String accessCode = CaseUtil.generateAccessCode(ACCESSCODE_LENGTH);
-            caseRequest.getCases().setAccessCode(accessCode);
+            if (caseRequest.getCases().getAccessCode() == null) {
+                String accessCode = CaseUtil.generateAccessCode(ACCESSCODE_LENGTH);
+                caseRequest.getCases().setAccessCode(accessCode);
+            }
         } catch (Exception e) {
             log.error("Error enriching access code: {}", e.toString());
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in case enrichment service while enriching access code: " + e.getMessage());

@@ -122,8 +122,6 @@ public class HearingService {
             hearingRequest.setHearing(hearing);
             workflowService.updateWorkflowStatus(hearingRequest);
 
-            log.info("Hearing Request after workflow update: {}", hearingRequest);
-
             // Enrich application upon update
             enrichmentUtil.enrichHearingApplicationUponUpdate(hearingRequest);
 

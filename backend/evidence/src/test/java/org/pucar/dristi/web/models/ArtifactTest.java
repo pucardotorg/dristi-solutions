@@ -72,7 +72,7 @@ public class ArtifactTest {
         comments.add(comment);
         Object additionalDetails = "testAdditionalDetails";
         AuditDetails auditDetails = new AuditDetails();
-        Workflow workflow = new Workflow();
+        WorkflowObject workflow = new WorkflowObject();
 
         artifact.setId(id);
         artifact.setTenantId(tenantId);

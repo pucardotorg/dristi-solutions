@@ -52,11 +52,29 @@ const getFormattedDate = (date) => {
   return `${day}/${month}/${year}`;
 };
 
+const BAIL_APPLICATION_EXCLUDED_STATUSES = [
+  "PENDING_RESPONSE",
+  "PENDING_ADMISSION_HEARING",
+  "ADMISSION_HEARING_SCHEDULED",
+  "PENDING_NOTICE",
+  "CASE_ADMITTED",
+  "PENDING_ADMISSION",
+];
+
 const SubmissionsCreate = ({ path }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const { t } = useTranslation();
   const history = useHistory();
-  const { orderNumber, filingNumber, applicationNumber, isExtension, hearingId, applicationType: applicationTypeUrl } = Digit.Hooks.useQueryParams();
+  const {
+    orderNumber,
+    filingNumber,
+    applicationNumber,
+    isExtension,
+    hearingId,
+    applicationType: applicationTypeUrl,
+    litigant,
+    litigantIndId,
+  } = Digit.Hooks.useQueryParams();
   const [formdata, setFormdata] = useState({});
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showsignatureModal, setShowsignatureModal] = useState(false);
@@ -172,6 +190,64 @@ const SubmissionsCreate = ({ path }) => {
     return caseData?.criteria?.[0]?.responseList?.[0];
   }, [caseData]);
 
+  // filtering out litigants which are part in person.
+  const pipComplainants = useMemo(() => {
+    return caseDetails?.litigants
+      ?.filter((litigant) => litigant.partyType.includes("complainant"))
+      ?.filter(
+        (litigant) =>
+          !caseDetails?.representatives?.some((representative) =>
+            representative?.representing?.some((rep) => rep?.individualId === litigant?.individualId)
+          )
+      );
+  }, [caseDetails]);
+
+  const pipAccuseds = useMemo(() => {
+    return caseDetails?.litigants
+      ?.filter((litigant) => litigant.partyType.includes("respondent"))
+      ?.filter(
+        (litigant) =>
+          !caseDetails?.representatives?.some((representative) =>
+            representative?.representing?.some((rep) => rep?.individualId === litigant?.individualId)
+          )
+      );
+  }, [caseDetails]);
+
+  const complainantsList = useMemo(() => {
+    const loggedinUserUuid = userInfo?.uuid;
+    // If logged in person is an advocate
+    const isAdvocateLoggedIn = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === loggedinUserUuid);
+    const isPipLoggedIn = pipComplainants?.find((p) => p?.additionalDetails?.uuid === loggedinUserUuid);
+    const accusedLoggedIn = pipAccuseds?.find((p) => p?.additionalDetails?.uuid === loggedinUserUuid);
+
+    if (isAdvocateLoggedIn) {
+      return isAdvocateLoggedIn?.representing?.map((r) => {
+        return {
+          code: r?.additionalDetails?.fullName,
+          name: r?.additionalDetails?.fullName,
+          uuid: r?.additionalDetails?.uuid,
+        };
+      });
+    } else if (isPipLoggedIn) {
+      return [
+        {
+          code: isPipLoggedIn?.additionalDetails?.fullName,
+          name: isPipLoggedIn?.additionalDetails?.fullName,
+          uuid: isPipLoggedIn?.additionalDetails?.uuid,
+        },
+      ];
+    } else if (accusedLoggedIn) {
+      return [
+        {
+          code: accusedLoggedIn?.additionalDetails?.fullName,
+          name: accusedLoggedIn?.additionalDetails?.fullName,
+          uuid: accusedLoggedIn?.additionalDetails?.uuid,
+        },
+      ];
+    }
+    return [];
+  }, [caseDetails, pipComplainants, pipAccuseds, userInfo]);
+
   const { data: applicationData, isloading: isApplicationLoading, refetch: applicationRefetch } = Digit.Hooks.submissions.useSearchSubmissionService(
     {
       criteria: {
@@ -185,6 +261,14 @@ const SubmissionsCreate = ({ path }) => {
     applicationNumber + filingNumber,
     Boolean(applicationNumber + filingNumber)
   );
+
+  const fullName = useMemo(() => {
+    return (
+      caseDetails?.litigants?.find((litigant) => litigant?.additionalDetails?.uuid === userInfo?.uuid)?.additionalDetails?.fullName ||
+      caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === userInfo?.uuid)?.additionalDetails?.advocateName ||
+      ""
+    );
+  }, [caseDetails, userInfo?.uuid]);
 
   const orderRefNumber = useMemo(() => applicationData?.applicationList?.[0]?.additionalDetails?.formdata?.refOrderId, [applicationData]);
   const referenceId = useMemo(() => applicationData?.applicationList?.[0]?.referenceId, [applicationData]);
@@ -229,7 +313,7 @@ const SubmissionsCreate = ({ path }) => {
                     select: `(data) => {return data['Application'].ApplicationType?.filter((item)=>!["EXTENSION_SUBMISSION_DEADLINE","DOCUMENT","RE_SCHEDULE","CHECKOUT_REQUEST", "SUBMIT_BAIL_DOCUMENTS",${
                       isDelayApplicationPending ? `"DELAY_CONDONATION",` : ""
                     }${
-                      caseDetails?.status !== "CASE_ADMITTED" ? `"REQUEST_FOR_BAIL",` : ""
+                      !BAIL_APPLICATION_EXCLUDED_STATUSES.includes(caseDetails?.status) ? `"REQUEST_FOR_BAIL",` : ""
                     }].includes(item.type)).map((item) => {return { ...item, name: 'APPLICATION_TYPE_'+item.type };});}`,
                   },
                 },
@@ -288,6 +372,16 @@ const SubmissionsCreate = ({ path }) => {
             if (body?.key === "suretyDocuments") {
               body.populators.inputs[0].modalData = documentTypeData;
             }
+            if (body?.key === "selectComplainant") {
+              body.populators.options = complainantsList;
+              if (complainantsList?.length === 1 || litigant) {
+                const updatedBody = {
+                  ...body,
+                  disable: true,
+                };
+                return updatedBody;
+              }
+            }
             return {
               ...body,
             };
@@ -298,7 +392,7 @@ const SubmissionsCreate = ({ path }) => {
     } else {
       return [];
     }
-  }, [applicationType, documentTypeData, isCitizen]);
+  }, [applicationType, documentTypeData, isCitizen, complainantsList]);
 
   const formatDate = (date, format) => {
     const day = String(date.getDate()).padStart(2, "0");
@@ -451,6 +545,10 @@ const SubmissionsCreate = ({ path }) => {
     } else if (orderNumber) {
       if (orderDetails?.orderType === orderTypes.MANDATORY_SUBMISSIONS_RESPONSES) {
         if (isExtension) {
+          const currentLitigant = complainantsList?.find((c) => c?.uuid === litigant);
+          const selectComplainant = currentLitigant
+            ? { code: currentLitigant.code, name: currentLitigant.name, uuid: currentLitigant.uuid }
+            : undefined;
           const initialSubmissionDate = latestExtensionOrder
             ? formatDate(new Date(latestExtensionOrder?.orderDetails.newSubmissionDate))
             : orderDetails?.additionalDetails?.formdata?.submissionDeadline;
@@ -468,8 +566,14 @@ const SubmissionsCreate = ({ path }) => {
             applicationDate: formatDate(new Date()),
             documentType: orderDetails?.additionalDetails?.formdata?.documentType,
             initialSubmissionDate: initialSubmissionDate,
+            ...(selectComplainant !== undefined ? { selectComplainant } : {}),
           };
         } else {
+          const currentLitigant = complainantsList?.find((c) => c?.uuid === litigant);
+          const selectComplainant = currentLitigant
+            ? { code: currentLitigant.code, name: currentLitigant.name, uuid: currentLitigant.uuid }
+            : undefined;
+
           return {
             submissionType: {
               code: "APPLICATION",
@@ -482,6 +586,7 @@ const SubmissionsCreate = ({ path }) => {
             },
             refOrderId: orderDetails?.orderNumber,
             applicationDate: formatDate(new Date()),
+            ...(selectComplainant !== undefined ? { selectComplainant } : {}),
           };
         }
       } else if (orderDetails?.orderType === orderTypes.WARRANT) {
@@ -498,6 +603,10 @@ const SubmissionsCreate = ({ path }) => {
           applicationDate: formatDate(new Date()),
         };
       } else if (orderDetails?.orderType === orderTypes.SET_BAIL_TERMS) {
+        const currentLitigant = complainantsList?.find((c) => c?.uuid === litigant);
+        const selectComplainant = currentLitigant
+          ? { code: currentLitigant.code, name: currentLitigant.name, uuid: currentLitigant.uuid }
+          : undefined;
         return {
           submissionType: {
             code: "APPLICATION",
@@ -509,6 +618,7 @@ const SubmissionsCreate = ({ path }) => {
           },
           refOrderId: orderDetails?.orderNumber,
           applicationDate: formatDate(new Date()),
+          ...(selectComplainant !== undefined ? { selectComplainant } : {}),
         };
       } else {
         return {
@@ -520,6 +630,10 @@ const SubmissionsCreate = ({ path }) => {
         };
       }
     } else if (applicationType) {
+      let selectComplainant = null;
+      if (complainantsList?.length === 1) {
+        selectComplainant = complainantsList?.[0];
+      }
       return {
         submissionType: {
           code: "APPLICATION",
@@ -531,6 +645,7 @@ const SubmissionsCreate = ({ path }) => {
           isActive: true,
         },
         applicationDate: formatDate(new Date()),
+        ...(selectComplainant !== null ? { selectComplainant } : {}),
       };
     } else {
       return {
@@ -769,7 +884,7 @@ const SubmissionsCreate = ({ path }) => {
             formdata,
             ...(orderDetails && { orderDate: formatDate(new Date(orderDetails?.auditDetails?.lastModifiedTime)) }),
             ...(orderDetails?.additionalDetails?.formdata?.documentName && { documentName: orderDetails?.additionalDetails?.formdata?.documentName }),
-            onBehalOfName: onBehalfOfLitigent?.additionalDetails?.fullName,
+            onBehalOfName: formdata?.selectComplainant?.code,
             partyType: sourceType?.toLowerCase(),
             ...(orderDetails &&
               orderDetails?.orderDetails?.isResponseRequired?.code === true && {
@@ -780,7 +895,7 @@ const SubmissionsCreate = ({ path }) => {
             owner: cleanString(userInfo?.name),
           },
           documents,
-          onBehalfOf: [isCitizen ? onBehalfOfuuid : userInfo?.uuid],
+          onBehalfOf: [formdata?.selectComplainant?.uuid],
           comment: [],
           workflow: {
             id: "workflow123",
@@ -975,13 +1090,20 @@ const SubmissionsCreate = ({ path }) => {
           assignedRole: ["SUBMISSION_CREATOR", "SUBMISSION_RESPONDER"],
         });
       }
-      ["PRODUCTION_DOCUMENTS", "SUBMIT_BAIL_DOCUMENTS"].includes(applicationType) &&
+      ["SUBMIT_BAIL_DOCUMENTS"].includes(applicationType) &&
         (orderNumber || orderRefNumber) &&
         createPendingTask({
           refId: `${userInfo?.uuid}_${orderNumber || orderRefNumber}`,
           isCompleted: true,
           status: "Completed",
           ...(applicationType === "SUBMIT_BAIL_DOCUMENTS" && { name: t("SUBMIT_BAIL_DOCUMENTS") }),
+        });
+      ["PRODUCTION_DOCUMENTS"].includes(applicationType) &&
+        (orderNumber || orderRefNumber) &&
+        createPendingTask({
+          refId: `${litigantIndId}_${userInfo?.uuid}_${orderNumber || orderRefNumber}`,
+          isCompleted: true,
+          status: "Completed",
         });
       history.push(
         orderNumber
@@ -1104,7 +1226,6 @@ const SubmissionsCreate = ({ path }) => {
         const billPaymentStatus = await openPaymentPortal(bill);
         setPaymentStatus(billPaymentStatus);
         await applicationRefetch();
-        console.log(billPaymentStatus);
         if (billPaymentStatus === true) {
           setMakePaymentLabel(false);
           setShowPaymentModal(false);
@@ -1160,7 +1281,7 @@ const SubmissionsCreate = ({ path }) => {
           applicationType={applicationDetails?.applicationType}
           application={applicationDetails}
           submissionDate={applicationDetails?.createdDate}
-          sender={caseDetails?.additionalDetails?.payerName}
+          sender={fullName}
           setShowReviewModal={setShowReviewModal}
           setShowsignatureModal={setShowsignatureModal}
           handleBack={handleBack}
