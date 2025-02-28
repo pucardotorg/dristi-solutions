@@ -48,6 +48,9 @@ class CaseOverallStatusUtilTest {
     private ObjectMapper mapper;
 
     @Mock
+    private CaseUtil caseUtil;
+
+    @Mock
     private MdmsDataConfig mdmsDataConfig;
 
     @InjectMocks
