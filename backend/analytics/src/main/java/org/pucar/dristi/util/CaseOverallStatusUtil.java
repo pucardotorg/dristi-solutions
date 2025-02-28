@@ -8,7 +8,7 @@ import com.jayway.jsonpath.PathNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
-import org.egov.common.models.individual.Individual
+import org.egov.common.models.individual.Individual;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -59,7 +59,7 @@ public class CaseOverallStatusUtil {
 
 
 	@Autowired
-	public CaseOverallStatusUtil(Configuration config, HearingUtil hearingUtil, OrderUtil orderUtil, Producer producer, ObjectMapper mapper, MdmsDataConfig mdmsDataConfig, CaseUtil caseUtil, AdvocateUtil advocateUtil, IndividualService individualService, SmsNotificationService notificationService) {
+	public CaseOverallStatusUtil(Configuration config, HearingUtil hearingUtil, OrderUtil orderUtil, Producer producer, ObjectMapper mapper, MdmsDataConfig mdmsDataConfig, CaseUtil caseUtil, AdvocateUtil advocateUtil, IndividualService individualService, SmsNotificationService notificationService,Util util) {
 		this.config = config;
         this.hearingUtil = hearingUtil;
         this.orderUtil = orderUtil;
