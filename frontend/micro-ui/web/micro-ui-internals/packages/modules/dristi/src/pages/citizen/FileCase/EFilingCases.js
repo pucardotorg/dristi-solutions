@@ -72,6 +72,7 @@ import { DocumentUploadError } from "../../../Utils/errorUtil";
 import ConfirmDcaSkipModal from "./ConfirmDcaSkipModal";
 import ErrorDataModal from "./ErrorDataModal";
 import WarningModal from "../../../components/WarningModal";
+import { documentLabels } from "../../../Utils";
 
 const OutlinedInfoIcon = () => (
   <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: "absolute", right: -22, top: 0 }}>
@@ -405,7 +406,7 @@ function EFilingCases({ path }) {
     let total = 0;
     let sectionErrors = 0;
     let inputErrors = 0;
-    let warningCount = 0;
+    let warning = 0;
     let pages = new Set();
     Object.keys(section)?.forEach((key) => {
       let pageErrorCount = 0;
@@ -417,7 +418,7 @@ function EFilingCases({ path }) {
         }
 
         if (section[key]?.scrutinyMessage?.isWarning) {
-          warningCount++;
+          warning++;
           sectionErrors--;
           pageErrorCount++;
         }
@@ -425,10 +426,11 @@ function EFilingCases({ path }) {
         section[key]?.form?.forEach((item) => {
           Object.keys(item)?.forEach((field) => {
             if (item[field]?.FSOError && field != "image" && field != "title" && field != "witnessTitle") {
-              if (!item[field]?.isWarning) {
                 total++;
                 inputErrors++;
                 pageErrorCount++;
+              if(item[field]?.isWarning){
+                warning++;
               }
             }
           });
@@ -439,7 +441,7 @@ function EFilingCases({ path }) {
       }
     });
 
-    return { total, inputErrors, sectionErrors, warningCount, pages: [...pages] };
+    return { total, inputErrors, sectionErrors, warning, pages: [...pages] };
   };
 
   const scrutinyErrors = useMemo(() => {
@@ -447,13 +449,14 @@ function EFilingCases({ path }) {
     for (const key in scrutinyObj) {
       if (typeof scrutinyObj[key] === "object" && scrutinyObj[key] !== null) {
         if (!errorCount[key]) {
-          errorCount[key] = { total: 0, sectionErrors: 0, inputErrors: 0 };
+          errorCount[key] = { total: 0, sectionErrors: 0, inputErrors: 0, warning: 0 };
         }
         const temp = countSectionErrors(scrutinyObj[key]);
         errorCount[key] = {
           total: errorCount[key].total + temp.total,
           sectionErrors: errorCount[key].sectionErrors + temp.sectionErrors,
           inputErrors: errorCount[key].inputErrors + temp.inputErrors,
+          warning : errorCount[key].warning + temp.warning,
           pages: temp.pages,
         };
       }
@@ -488,17 +491,20 @@ function EFilingCases({ path }) {
     let total = 0;
     let sectionErrors = 0;
     let inputErrors = 0;
+    let warningErrors = 0;
 
     for (const key in scrutinyErrors) {
       total += scrutinyErrors[key].total || 0;
       sectionErrors += scrutinyErrors[key].sectionErrors || 0;
       inputErrors += scrutinyErrors[key].inputErrors || 0;
+      warningErrors += scrutinyErrors[key].warning || 0;
     }
 
     return {
       total,
       sectionErrors,
       inputErrors,
+      warningErrors
     };
   }, [scrutinyErrors]);
 
@@ -2008,7 +2014,7 @@ function EFilingCases({ path }) {
       } catch (error) {
         let message = t("SOMETHING_WENT_WRONG");
         if (error instanceof DocumentUploadError) {
-          message = `${t("DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${error?.documentType}`;
+          message = `${t("DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${t(documentLabels[error?.documentType])}`;
         } else if (extractCodeFromErrorMsg(error) === 413) {
           message = t("FAILED_TO_UPLOAD_FILE");
         }
@@ -2067,7 +2073,7 @@ function EFilingCases({ path }) {
       })
       .catch(async (error) => {
         if (error instanceof DocumentUploadError) {
-          toast.error(`${t("DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${error?.documentType}`);
+          toast.error(`${t("DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${t(documentLabels[error?.documentType])}`);
         } else if (extractCodeFromErrorMsg(error) === 413) {
           toast.error(t("FAILED_TO_UPLOAD_FILE"));
         } else {
@@ -2153,7 +2159,7 @@ function EFilingCases({ path }) {
       })
       .catch(async (error) => {
         if (error instanceof DocumentUploadError) {
-          toast.error(`${t("DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${error?.documentType}`);
+          toast.error(`${t("DOCUMENT_FORMAT_DOES_NOT_MATCH")} : ${t(documentLabels[error?.documentType])}`);
         } else if (extractCodeFromErrorMsg(error) === 413) {
           toast.error(t("FAILED_TO_UPLOAD_FILE"));
         } else {
@@ -2499,6 +2505,7 @@ function EFilingCases({ path }) {
               <ErrorsAccordion
                 t={t}
                 totalErrorCount={totalErrors.total}
+                totalWarningCount={totalErrors.warningErrors}
                 pages={errorPages}
                 handlePageChange={handlePageChange}
                 showConfirmModal={confirmModalConfig ? true : false}
@@ -2542,7 +2549,7 @@ function EFilingCases({ path }) {
                   children={item.children}
                   parentIndex={index}
                   isOpen={item.isOpen}
-                  errorCount={scrutinyErrors?.[item.key]?.total || 0}
+                  errorCount={(scrutinyErrors?.[item.key]?.total - scrutinyErrors?.[item.key]?.warning) || 0}
                   isCaseReAssigned={isCaseReAssigned}
                   isDraftInProgress={isDraftInProgress}
                   isFilingParty={isFilingParty}
@@ -2567,7 +2574,7 @@ function EFilingCases({ path }) {
               parentIndex={index}
               isOpen={item.isOpen}
               showConfirmModal={confirmModalConfig ? true : false}
-              errorCount={scrutinyErrors?.[item.key]?.total || 0}
+              errorCount={(scrutinyErrors?.[item.key]?.total - scrutinyErrors?.[item.key]?.warning) || 0}
               isCaseReAssigned={isCaseReAssigned}
               isDraftInProgress={isDraftInProgress}
               isFilingParty={isFilingParty}
