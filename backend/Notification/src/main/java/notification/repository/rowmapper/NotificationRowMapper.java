@@ -62,7 +62,7 @@ public class NotificationRowMapper implements ResultSetExtractor<List<Notificati
                         .additionalDetails(rs.getString("additionaldetails"))
                         .issuedBy(rs.getString("issuedby"))
                         .createdDate(rs.getLong("createddate"))
-                        .comments(rs.getString("comments"))
+                        .comments(rs.getString("comment"))
                         .documents(new ArrayList<>())
                         .build();
                 notifications.add(notification);
@@ -70,7 +70,7 @@ public class NotificationRowMapper implements ResultSetExtractor<List<Notificati
             }
 
             // Handle associated document if it exists
-            String documentId = rs.getString("document_id"); // Ensure column exists in query
+            String documentId = rs.getString("documentid"); // Ensure column exists in query
             if (documentId != null) {
                 Document document = Document.builder()
                         .id(rs.getString("documentid"))
