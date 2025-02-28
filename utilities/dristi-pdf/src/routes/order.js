@@ -39,6 +39,8 @@ const orderRejectExtension = require("../orderHandlers/orderRejectExtension");
 const orderAcceptanceRejectionCase = require("../orderHandlers/orderAcceptanceRejectionCase");
 const orderAcceptanceRejectionDca = require("../orderHandlers/orderAcceptanceRejectionDca");
 const orderSetTermsOfBail = require("../orderHandlers/orderSetTermsOfBail");
+const orderAdmitCase = require("../orderHandlers/orderAdmitCase");
+const orderDismissCase = require("../orderHandlers/orderDismissCase");
 
 function renderError(res, errorMessage, errorCode, errorObject) {
   if (errorCode == undefined) errorCode = 500;
@@ -144,14 +146,17 @@ router.post(
         case "order-202-crpc":
           await orderSection202Crpc(req, res, qrCode);
           break;
-        case "order-acceptance-rejection-case":
-          await orderAcceptanceRejectionCase(req, res, qrCode);
-          break;
         case "order-acceptance-rejection-dca":
           await orderAcceptanceRejectionDca(req, res, qrCode);
           break;
         case "order-set-terms-of-bail":
           await orderSetTermsOfBail(req, res, qrCode);
+          break;
+        case "order-admit-case":
+          await orderAdmitCase(req, res, qrCode);
+          break;
+        case "order-dismiss-case":
+          await orderDismissCase(req, res, qrCode);
           break;
         default:
           await orderGeneric(req, res, qrCode);
