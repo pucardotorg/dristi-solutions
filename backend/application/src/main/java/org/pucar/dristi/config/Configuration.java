@@ -233,6 +233,18 @@ public class Configuration {
     @Value("${egov.sms.notification.response.required.template.id}")
     private String smsNotificationResponseRequiredTemplateId;
 
+    @Value("@{egov.sms.notification.bail.application.filed.template.id}")
+    private String smsNotificationBailApplicationFiledTemplateId;
+
+    @Value("@{egov.sms.notification.bail.application.rejected.template.id}")
+    private String smsNotificationBailApplicationRejectedTemplateId;
+
+    @Value("@{egov.sms.notification.bail.application.accepted.template.id}")
+    private String smsNotificationBailApplicationAcceptedTemplateId;
+
+    @Value("@{egov.sms.notification.bail.application.granted.template.id}")
+    private String smsNotificationBailApplicationGrantedTemplateId;
+
     @Value("${egov.workflow.bail.voluntary.submission.business.service.name}")
     private String bailVoluntarySubBusinessServiceName;
 
@@ -241,5 +253,11 @@ public class Configuration {
 
     @Value("${egov.workflow.bail.voluntary.submission.business.name}")
     private String bailVoluntarySubBusinessName;
+
+    @Value("${egov.sms.notification.reschedule.request.submitted.payment.template.id}")
+    private String rescheduleRequestSubmissionPayment;
+
+    @Value("${egov.sms.notification.request.withdraw.template.id}")
+    private String smsNotificationWithDraw;
 
 }

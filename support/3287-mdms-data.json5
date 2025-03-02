@@ -126,6 +126,26 @@
     "mdmsPayload":
     [
       {
+        "id": "9ebd187f-a8a1-45ba-9144-cf0f34a4ad8c",
+        "tenantId": "kl",
+        "schemaCode": "Order.NonOverlappingCompositeOrders",
+        "uniqueIdentifier": "4",
+        "data": {
+          "id": "4",
+          "orderTypeList": [
+            "ADMIT_CASE",
+            "DISMISS_CASE"
+          ]
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "createdTime": 1740661395640,
+          "lastModifiedTime": 1740661395640
+        }
+      },
+      {
         "id": "6a70aebd-5b43-4916-ba7d-a045b605dbfa",
         "tenantId": "kl",
         "schemaCode": "Order.NonOverlappingCompositeOrders",
@@ -178,7 +198,8 @@
             "JUDGEMENT",
             "WITHDRAWAL",
             "SETTLEMENT",
-            "CASE_TRANSFER"
+            "CASE_TRANSFER",
+            "DISMISS_CASE"
           ]
         },
         "isActive": true,
@@ -215,23 +236,6 @@
           "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
           "createdTime": 1740594976618,
           "lastModifiedTime": 1740594976618
-        }
-      },
-      {
-        "id": "3cf962fa-71e0-4609-b996-d6dc89a476be",
-        "tenantId": "kl",
-        "schemaCode": "Order.NonRepeatingCompositeOrders",
-        "uniqueIdentifier": "4",
-        "data": {
-          "id": "4",
-          "orderType": "ADMIT_DISMISS_CASE"
-        },
-        "isActive": true,
-        "auditDetails": {
-          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
-          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
-          "createdTime": 1740592849581,
-          "lastModifiedTime": 1740595324344
         }
       },
       {

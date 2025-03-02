@@ -738,7 +738,7 @@ export const UICustomizations = {
                     tenantId: row.tenantId,
                   },
                   orderTitle: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
-                  orderCategory: "Intermediate",
+                  orderCategory: "INTERMEDIATE",
                   orderType: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
                   status: "",
                   isActive: true,
@@ -1043,8 +1043,6 @@ export const UICustomizations = {
           return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} value={value} showAsHeading={true} />;
         case "TYPE":
           return t(row?.filingType) || "";
-        case "STAGE":
-          return "";
         case "FILE":
           return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} />;
         case "STATUS":

@@ -1,0 +1,43 @@
+[
+  {
+    "tenantId": "kl",
+    "masterName": "actions-test",
+    "moduleName": "ACCESSCONTROL-ACTIONS-TEST",
+    "mdmsPayload":[
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "uniqueIdentifier": "2719",
+        "data": {
+          "id": 2719,
+          "url": "/ab-diary/case/diary/v1/bulkEntry",
+          "code": "2719",
+          "name": "Bulk Diary Entry",
+          "enabled": true,
+          "displayName": "Bulk Diary Entry",
+          "serviceCode": "A-Diary"
+        },
+        "isActive": true      }
+    ]
+  },
+  {
+    "tenantId": "kl",
+    "masterName": "roleactions",
+    "moduleName": "ACCESSCONTROL-ROLEACTIONS",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": "438",
+        "data": {
+          "id": 438,
+          "actionid": 2719,
+          "rolecode": "DIARY_EDITOR",
+          "tenantid": "kl",
+          "actioncode": "2719"
+        },
+        "isActive": true
+      }
+    ]
+  }
+]

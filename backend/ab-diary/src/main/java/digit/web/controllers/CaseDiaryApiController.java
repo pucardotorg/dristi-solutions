@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.jaegertracing.internal.utils.Http;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -139,4 +140,15 @@ public class CaseDiaryApiController {
         return new ResponseEntity<>(caseDiaryEntryListResponse, HttpStatus.OK);
     }
 
+    @RequestMapping(value = "/case/diary/v1/bulkEntry", method = RequestMethod.POST)
+    public ResponseEntity<BulkDiaryEntryResponse> bulkDiary(@Parameter(in = ParameterIn.DEFAULT, description = "Details for the diary entries + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody BulkDiaryEntryRequest request) {
+        log.info("api = /case/diary/v1/bulkEntry, result = IN_PROGRESS");
+        List<CaseDiaryEntry> caseDiaryEntries = diaryEntryService.bulkDiaryEntry(request);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+        BulkDiaryEntryResponse response = BulkDiaryEntryResponse.builder()
+                .responseInfo(responseInfo)
+                .caseDiaryEntries(caseDiaryEntries).build();
+        log.info("api = /case/diary/v1/bulkEntry, result = SUCCESS");
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 }

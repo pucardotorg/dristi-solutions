@@ -20,4 +20,6 @@ public class SmsTemplateData {
     private String hearingDate;
 
     private String cmpNumber;
+
+    private String hearingType;
 }

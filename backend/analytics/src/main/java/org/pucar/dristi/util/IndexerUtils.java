@@ -1,5 +1,6 @@
 package org.pucar.dristi.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
@@ -184,7 +185,7 @@ public class IndexerUtils {
         );
     }
 
-    public String buildPayload(String jsonItem, JSONObject requestInfo) {
+    public String buildPayload(String jsonItem, JSONObject requestInfo) throws JsonProcessingException {
 
         String id = JsonPath.read(jsonItem, ID_PATH);
         String entityType = JsonPath.read(jsonItem, BUSINESS_SERVICE_PATH);

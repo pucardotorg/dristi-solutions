@@ -249,14 +249,16 @@ module.exports = {
       process.env.ORDER_SET_TERMS_OF_BAIL || "order-set-terms-of-bail",
     order_set_terms_of_bail_qr:
       process.env.ORDER_SET_TERMS_OF_BAIL_QR || "order-set-terms-of-bail-qr",
-    order_admit_case:
-      process.env.ORDER_SET_TERMS_OF_BAIL_QR || "order-admit-case",
+    order_admit_case: process.env.ORDER_ADMIT_CASE || "order-admit-case",
     order_admit_case_qr:
-      process.env.ORDER_SET_TERMS_OF_BAIL_QR || "order-admit-case-qr",
-    order_dismiss_case:
-      process.env.ORDER_SET_TERMS_OF_BAIL_QR || "order-dismiss-case",
+      process.env.ORDER_ADMIT_CASE_QR || "order-admit-case-qr",
+    order_dismiss_case: process.env.ORDER_DISMISS_CASE || "order-dismiss-case",
     order_dismiss_case_qr:
-      process.env.ORDER_SET_TERMS_OF_BAIL_QR || "order-dismiss-case-qr",
+      process.env.ORDER_DISMISS_CASE_QR || "order-dismiss-case-qr",
+    hearing_bulk_reschedule:
+      process.env.HEARING_BULK_RESCHEDULE || "order-bulk-reschedule",
+    hearing_bulk_reschedule_qr:
+      process.env.HEARING_BULK_RESCHEDULE_QR || "order-bulk-reschedule-qr",
   },
 
   app: {
@@ -299,6 +301,7 @@ module.exports = {
     filestore_create: "/filestore/v1/files",
     filestore_search: "/filestore/v1/files/url",
     filestore_search_id: "/filestore/v1/files/id",
+    hearing_bulk_reschedule: "/hearing/v1/bulk/_reschedule",
   },
 
   constraints: {

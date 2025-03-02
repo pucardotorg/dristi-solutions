@@ -43,13 +43,12 @@ public class HearingQueryBuilderTest {
         status.add("SCHEDULED");
         status.add("RESCHEDULED");
         searchCriteria.setStatus(status);
-        searchCriteria.setStartDateTime(LocalDate.of(2023, 1, 1).atStartOfDay().toEpochSecond(ZoneOffset.UTC));
-        searchCriteria.setEndDateTime(LocalDate.of(2023, 1, 2).atStartOfDay().toEpochSecond(ZoneOffset.UTC));
+        searchCriteria.setStartDateTime(Long.valueOf(LocalDate.of(2023, 1, 1).atStartOfDay().toEpochSecond(ZoneOffset.UTC)));
+        searchCriteria.setEndDateTime(Long.valueOf(LocalDate.of(2023, 1, 2).atStartOfDay().toEpochSecond(ZoneOffset.UTC)));
         List<Object> preparedStmtList = new ArrayList<>();
         List<Integer> preparedStmtArgList = new ArrayList<>();
 
-        String expectedQuery = "SELECT  hb.hearing_booking_id, hb.tenant_id, hb.court_id,hb.hearing_date, hb.judge_id, hb.case_id, hb.hearing_type, hb.title, hb.description, hb.status, hb.start_time, hb.end_time, hb.created_by,hb.last_modified_by,hb.created_time,hb.last_modified_time, hb.row_version ,hb.reschedule_request_id FROM hearing_booking hb  hb.hearing_booking_id IN ( null )  hb.tenant_id = ?  hb.judge_id = ?  hb.court_id = ?  hb.case_id = ?  hb.hearing_type = ?  hb.start_time >= ?  hb.end_time <= ? hb.reschedule_request_id = ?  (  hb.status = ?  or hb.status = ? ) LIMIT ? OFFSET ? (hb.expiry_time IS NULL OR hb.expiry_time > EXTRACT(EPOCH FROM NOW())) ";
-
+        String expectedQuery = "SELECT  hb.hearing_booking_id, hb.tenant_id, hb.court_id,hb.hearing_date, hb.judge_id, hb.case_id, hb.hearing_type, hb.title, hb.description, hb.status, hb.start_time, hb.end_time, hb.created_by,hb.last_modified_by,hb.created_time,hb.last_modified_time, hb.row_version ,hb.reschedule_request_id FROM hearing_booking hb  hb.hearing_booking_id IN ( null )  hb.tenant_id = ?  hb.judge_id = ?  hb.court_id = ?  hb.case_id = ?  hb.hearing_type = ?  hb.start_time >= ?  hb.end_time <= ? hb.reschedule_request_id = ?  (  hb.status = ?  or hb.status = ? ) (hb.expiry_time IS NULL OR hb.expiry_time > EXTRACT(EPOCH FROM NOW()))  LIMIT ? OFFSET ?";
         String actualQuery = hearingQueryBuilder.getHearingQuery(searchCriteria, preparedStmtList,preparedStmtArgList, 0, 10);
 
         assertEquals(expectedQuery, actualQuery);

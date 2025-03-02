@@ -232,25 +232,25 @@ public class OrderRegistrationService {
     private String getMessageCode(String orderType, String updatedStatus, Boolean hearingCompleted, String submissionType, String purpose) {
 
         log.info("Operation: getMessageCode for OrderType: {}, UpdatedStatus: {}, HearingCompleted: {}, SubmissionType: {}, Purpose: {}", orderType, updatedStatus, hearingCompleted, submissionType, purpose);
-        if (!StringUtils.isEmpty(purpose) && purpose.equalsIgnoreCase(EXAMINATION_UNDER_S351_BNSS) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
-            return EXAMINATION_UNDER_S351_BNSS_SCHEDULED;
-        }
-        if (!StringUtils.isEmpty(purpose) && purpose.equalsIgnoreCase(EVIDENCE_ACCUSED) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
-            return EVIDENCE_ACCUSED_PUBLISHED;
-        }
-        if (!StringUtils.isEmpty(purpose) && purpose.equalsIgnoreCase(EVIDENCE_COMPLAINANT) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
-            return EVIDENCE_COMPLAINANT_PUBLISHED;
-        }
-        if (!StringUtils.isEmpty(purpose) && purpose.equalsIgnoreCase(APPEARANCE) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
-            return APPEARANCE_PUBLISHED;
-        }
+//        if(!StringUtils.isEmpty(purpose) && purpose.equalsIgnoreCase(EXAMINATION_UNDER_S351_BNSS) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
+//            return EXAMINATION_UNDER_S351_BNSS_SCHEDULED;
+//        }
+//        if(!StringUtils.isEmpty(purpose) && purpose.equalsIgnoreCase(EVIDENCE_ACCUSED) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
+//            return EVIDENCE_ACCUSED_PUBLISHED;
+//        }
+//        if(!StringUtils.isEmpty(purpose) && purpose.equalsIgnoreCase(EVIDENCE_COMPLAINANT) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
+//            return EVIDENCE_COMPLAINANT_PUBLISHED;
+//        }
+//        if(!StringUtils.isEmpty(purpose) && purpose.equalsIgnoreCase(APPEARANCE) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
+//            return APPEARANCE_PUBLISHED;
+//        }
         if (orderType.equalsIgnoreCase(SCHEDULING_NEXT_HEARING) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
             return NEXT_HEARING_SCHEDULED;
         }
-        if (orderType.equalsIgnoreCase(SCHEDULE_OF_HEARING_DATE) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
-            return ADMISSION_HEARING_SCHEDULED;
-        }
-        if (orderType.equalsIgnoreCase(JUDGEMENT) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
+//        if(orderType.equalsIgnoreCase(SCHEDULE_OF_HEARING_DATE) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
+//            return ADMISSION_HEARING_SCHEDULED;
+//        }
+        if(orderType.equalsIgnoreCase(JUDGEMENT) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
             return CASE_DECISION_AVAILABLE;
         }
         if (orderType.equalsIgnoreCase(ASSIGNING_DATE_RESCHEDULED_HEARING) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
@@ -268,7 +268,10 @@ public class OrderRegistrationService {
         if (orderType.equalsIgnoreCase(MANDATORY_SUBMISSIONS_RESPONSES) && submissionType.equalsIgnoreCase(EVIDENCE) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
             return EVIDENCE_REQUESTED;
         }
-        if (orderType.equalsIgnoreCase(NOTICE) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
+        if (orderType.equalsIgnoreCase(MANDATORY_SUBMISSIONS_RESPONSES) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
+            return ADDITIONAL_INFORMATION_MESSAGE;
+        }
+        if(orderType.equalsIgnoreCase(NOTICE) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
             return NOTICE_ISSUED;
         }
         if (updatedStatus.equalsIgnoreCase(PUBLISHED)) {
@@ -405,4 +408,5 @@ public class OrderRegistrationService {
         }
         return uuids;
     }
+
 }

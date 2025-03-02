@@ -86,6 +86,8 @@ public class ServiceConstants {
     public static final String ERRORS_PATH = "$.errors";
     public static final String ORDER_TYPE_PATH = "$.orderType";
     public static final String ORDER_FINDINGS_PATH = "$.additionalDetails.formdata.findings.code";
+    public static final String ORDER_CATEGORY_PATH = "$.orderCategory";
+    public static final String ORDER_COMPOSITE_ITEMS_PATH = "$.compositeItems.*";
 
 
     public static final String RES_MSG_ID = "uief87324";
@@ -205,6 +207,8 @@ public class ServiceConstants {
 
     public static final String PENDING_TASK_CREATED = "PENDING_TASK_CREATED";
 
+    public static final String CASE_STATUS_CHANGED_MESSAGE = "CASE_STATUS_CHANGE_MESSAGE";
+
     public static final String ERROR_WHILE_FETCHING_FROM_CASE = "ERROR_WHILE_FETCHING_FROM_CASE";
 
     public static final String INDIVIDUAL_UTILITY_EXCEPTION = "INDIVIDUAL_UTILITY_EXCEPTION";
@@ -221,4 +225,5 @@ public class ServiceConstants {
     public static final String REPRESENTATIVE_REPLACE_JOIN_CASE="update-representative-join-case";
     public static final String REPRESENTATIVE_JOIN_CASE_TOPIC = "representative-join-case";
     public static final String LITIGANT_JOIN_CASE_TOPIC = "litigant-join-case";
+    public static final String COMPOSITE = "composite";
 }
