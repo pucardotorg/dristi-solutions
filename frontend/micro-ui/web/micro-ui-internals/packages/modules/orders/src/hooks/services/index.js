@@ -19,6 +19,22 @@ export const ordersService = {
       data,
       params,
     }),
+  addOrderItem: (data, params) =>
+    Request({
+      url: Urls.orders.orderAddItem,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  removeOrderItem: (data, params) =>
+    Request({
+      url: Urls.orders.orderRemoveItem,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
   updateOrder: (data, params) =>
     Request({
       url: Urls.orders.orderUpdate,

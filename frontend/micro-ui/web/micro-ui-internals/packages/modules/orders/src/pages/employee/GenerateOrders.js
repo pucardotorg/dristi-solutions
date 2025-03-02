@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
@@ -57,6 +57,33 @@ import useSearchOrdersService from "../../hooks/orders/useSearchOrdersService";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { getRespondantName, getComplainantName, constructFullName, removeInvalidNameParts, getFormattedName } from "../../utils";
 import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/Toast/useToast";
+import ErrorDataModal from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/ErrorDataModal";
+import CompositeOrdersErrorModal from "./CompositeOrdersErrorModal";
+import OrderItemDeleteModal from "./OrderItemDeleteModal";
+
+// any order type from orderTypes can not be paired with any order from unAllowedOrderTypes when creating composite order.
+const compositeOrderAllowedTypes = [
+  {
+    key: "finalStageOrders",
+    orderTypes: ["REFERRAL_CASE_TO_ADR", "JUDGEMENT", "WITHDRAWAL", "SETTLEMENT", "CASE_TRANSFER"],
+    unAllowedOrderTypes: ["REFERRAL_CASE_TO_ADR", "JUDGEMENT", "WITHDRAWAL", "SETTLEMENT", "CASE_TRANSFER"],
+  },
+  {
+    key: "schedule_Reschedule",
+    orderTypes: ["SCHEDULE_OF_HEARING_DATE", "RESCHEDULE_OF_HEARING_DATE"],
+    unAllowedOrderTypes: ["SCHEDULE_OF_HEARING_DATE", "RESCHEDULE_OF_HEARING_DATE"],
+  },
+  {
+    key: "no_restriction",
+    orderTypes: ["NOTICE", "OTHERS", "WARRANT", "SUMMONS", "MANDATORY_SUBMISSIONS_RESPONSES", "SECTION_202_CRPC"],
+    unAllowedOrderTypes: [],
+  },
+  {
+    ket: "admit_dismiss",
+    orderTypes: ["ADMIT_DISMISS_CASE"],
+    unAllowedOrderTypes: ["ADMIT_DISMISS_CASE"],
+  },
+];
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
@@ -170,7 +197,6 @@ const GenerateOrders = () => {
   const [showsignatureModal, setShowsignatureModal] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [formList, setFormList] = useState([]);
-  const [itemList, setItemList] = useState([{ orderType: null }]);
 
   const [prevOrder, setPrevOrder] = useState();
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
@@ -193,6 +219,14 @@ const GenerateOrders = () => {
   const [businessOfTheDay, setBusinessOfTheDay] = useState(null);
   const toast = useToast();
   const [currentPublishedOrder, setCurrentPublishedOrder] = useState(null);
+  const [showOrderValidationModal, setShowOrderValidationModal] = useState({ showModal: false, errorMessage: "" });
+  const formValueChangeTriggerRefs = useRef([]);
+  const submitButtonRefs = useRef([]);
+  const setValueRef = useRef([]);
+  // const [showOrderItemDeleteModal, setShowOrderItemDeleteModal] = useState(false);
+  const [deleteOrderItemIndex, setDeleteOrderItemIndex] = useState(null);
+
+  const [currentOrderTitle, setCurrentOrderTitle] = useState("orderWithTitle");
   const currentDiaryEntry = history.location?.state?.diaryEntry;
 
   const setSelectedOrder = (orderIndex) => {
@@ -400,6 +434,7 @@ const GenerateOrders = () => {
       tenantId,
       cnrNumber,
       filingNumber,
+      orderCategory: "INTERMEDIATE",
       statuteSection: {
         tenantId,
       },
@@ -430,7 +465,23 @@ const GenerateOrders = () => {
     if (!ordersData?.list || ordersData?.list.length < 1) {
       setFormList([defaultOrderData]);
     } else {
-      setFormList([...(ordersData?.list || [])].reverse());
+      const formListNew = structuredClone([...(ordersData?.list || [])].reverse());
+      const updatedFormList = formListNew?.map((order, index) => {
+        if (order?.orderCategory === "COMPOSITE") {
+          const updatedCompositeItems = order?.compositeItems?.map((compItem, i) => {
+            return {
+              ...compItem,
+              isEnabled: true,
+              displayindex: i,
+            };
+          });
+          return {
+            ...order,
+            compositeItems: updatedCompositeItems,
+          };
+        } else return order;
+      });
+      setFormList(updatedFormList);
     }
   }, [ordersData, defaultOrderData]);
 
@@ -499,7 +550,21 @@ const GenerateOrders = () => {
   // const orderType = useMemo(() => currentOrder?.orderType || {}, [currentOrder]);
   const referenceId = useMemo(() => currentOrder?.additionalDetails?.formdata?.refApplicationId, [currentOrder]);
   const hearingNumber = useMemo(() => currentOrder?.hearingNumber || currentOrder?.additionalDetails?.hearingId || "", [currentOrder]);
-
+  useEffect(() => {
+    if (currentOrder?.orderCategory === "INTERMEDIATE") {
+      if (currentOrder?.orderTitle && currentOrderTitle !== currentOrder?.orderTitle) {
+        setCurrentOrderTitle(currentOrder?.orderTitle);
+      }
+    } else {
+      if (currentOrder?.compositeItems?.filter((item) => item?.isEnabled)?.length > 1) {
+        const firstCompositeItem = currentOrder?.compositeItems?.find((item) => item?.isEnabled);
+        const newTitle = `${t(firstCompositeItem?.orderType)} and Other Items`;
+        if (currentOrderTitle !== newTitle) {
+          setCurrentOrderTitle(newTitle);
+        }
+      }
+    }
+  }, [currentOrder, currentOrderTitle, t]);
   const { data: pendingTaskData = [], isLoading: pendingTasksLoading } = useGetPendingTask({
     data: {
       SearchCriteria: {
@@ -607,12 +672,271 @@ const GenerateOrders = () => {
     return isPresent;
   }, [hearingsData]);
 
+  const checkOrderTypeValidation = (a, b) => {
+    let errorObj = { isIncompatible: false, isDuplicate: false };
+    for (let i = 0; i < compositeOrderAllowedTypes?.length; i++) {
+      const currentObj = compositeOrderAllowedTypes?.[i];
+      if (currentObj?.orderTypes?.includes(a)) {
+        if (currentObj?.unAllowedOrderTypes?.includes(b)) {
+          if (a === b) {
+            errorObj.isDuplicate = true;
+          } else {
+            errorObj.isIncompatible = true;
+          }
+          break;
+        }
+      }
+    }
+    return errorObj;
+  };
+
   const modifiedFormConfig = useMemo(() => {
-    return itemList?.map((item) => {
+    if (currentOrder?.orderCategory === "COMPOSITE") {
+      return currentOrder?.compositeItems?.map((item) => {
+        let newConfig =
+          currentOrder?.orderNumber && item?.id
+            ? applicationTypeConfig?.map((item) => ({ body: item.body.map((input) => ({ ...input, disable: true })) }))
+            : structuredClone(applicationTypeConfig);
+        const orderType = item?.orderType;
+        if (orderType && configKeys.hasOwnProperty(orderType)) {
+          let orderTypeForm = configKeys[orderType];
+          if (orderType === "SECTION_202_CRPC") {
+            orderTypeForm = orderTypeForm?.map((section) => {
+              return {
+                ...section,
+                body: section.body.map((field) => {
+                  if (field.key === "applicationFilledBy") {
+                    return {
+                      ...field,
+                      populators: {
+                        ...field.populators,
+                        options: [...complainants, ...respondents],
+                      },
+                    };
+                  }
+                  if (field.key === "detailsSeekedOf") {
+                    return {
+                      ...field,
+                      populators: {
+                        ...field.populators,
+                        options: [...complainants, ...respondents],
+                      },
+                    };
+                  }
+                  return field;
+                }),
+              };
+            });
+          }
+          if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(orderType)) {
+            orderTypeForm = orderTypeForm?.map((section) => {
+              return {
+                ...section,
+                body: section.body.map((field) => {
+                  if (field.key === "namesOfPartiesRequired") {
+                    return {
+                      ...field,
+                      populators: {
+                        ...field.populators,
+                        options: [...complainants, ...respondents, ...unJoinedLitigant, ...witnesses],
+                      },
+                    };
+                  }
+                  if (field.key === "hearingPurpose") {
+                    return {
+                      ...field,
+                      populators: {
+                        ...field.populators,
+                        mdmsConfig: {
+                          ...field.populators?.mdmsConfig,
+                          select: `(data) => {
+                            return (  // based on isDcaFiled condition, we can filter out DCA hearing here if needed.
+                              data?.Hearing?.HearingType|| []
+                            );
+                          }`,
+                        },
+                      },
+                    };
+                  }
+                  if (field.key === "unjoinedPartiesNote") {
+                    const parties = [...unJoinedLitigant, ...witnesses];
+                    return {
+                      ...field,
+                      populators: {
+                        ...field.populators,
+                        inputs: [
+                          {
+                            ...field.populators.inputs[0],
+                            children: (
+                              <React.Fragment>
+                                {parties.map((party, index) => (
+                                  <div className="list-div" key={index}>
+                                    <p style={{ margin: "0px", fontSize: "14px" }}>
+                                      {index + 1}. {party?.name}
+                                    </p>
+                                  </div>
+                                ))}
+                              </React.Fragment>
+                            ),
+                          },
+                        ],
+                      },
+                    };
+                  }
+                  return field;
+                }),
+              };
+            });
+          }
+          if (orderType === "MANDATORY_SUBMISSIONS_RESPONSES") {
+            orderTypeForm = orderTypeForm?.map((section) => {
+              return {
+                ...section,
+                body: section.body.map((field) => {
+                  if (field.key === "submissionParty") {
+                    return {
+                      ...field,
+                      populators: {
+                        ...field.populators,
+                        options: [...complainants, ...respondents],
+                      },
+                    };
+                  }
+                  if (field?.populators?.inputs?.some((input) => input?.name === "respondingParty")) {
+                    return {
+                      ...field,
+                      populators: {
+                        ...field?.populators,
+                        inputs: field?.populators?.inputs.map((input) =>
+                          input.name === "respondingParty"
+                            ? {
+                                ...input,
+                                options: [...complainants, ...respondents],
+                              }
+                            : input
+                        ),
+                      },
+                    };
+                  }
+                  return field;
+                }),
+              };
+            });
+          }
+          if (orderType === "WARRANT") {
+            orderTypeForm = orderTypeForm?.map((section) => {
+              return {
+                ...section,
+                body: section.body.map((field) => {
+                  if (field.key === "warrantFor") {
+                    return {
+                      ...field,
+                      ...(!currentOrder?.additionalDetails?.warrantFor && {
+                        disable: false,
+                      }),
+                      populators: {
+                        ...field.populators,
+                        options: [
+                          ...(currentOrder?.additionalDetails?.warrantFor
+                            ? [currentOrder?.additionalDetails?.warrantFor]
+                            : [...respondents, ...unJoinedLitigant].map((data) => data?.name || "")),
+                        ],
+                      },
+                    };
+                  }
+                  return field;
+                }),
+              };
+            });
+          }
+          if (orderType === "JUDGEMENT") {
+            orderTypeForm = orderTypeForm?.map((section) => {
+              return {
+                ...section,
+                body: section.body.map((field) => {
+                  if (field.key === "witnessNote" || field.key === "evidenceNote") {
+                    return {
+                      ...field,
+                      populators: {
+                        ...field.populators,
+                        inputs: [
+                          {
+                            ...field.populators.inputs[0],
+                            caseId: caseDetails?.id,
+                            filingNumber: caseDetails?.filingNumber,
+                            tab: field?.key === "witnessNote" ? "Complaint" : field?.key === "evidenceNote" ? "Documents" : "Overview",
+                            customFunction: () => handleSaveDraft({ showReviewModal: false }),
+                          },
+                        ],
+                      },
+                    };
+                  }
+                  return field;
+                }),
+              };
+            });
+          }
+          if (orderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE") {
+            orderTypeForm = orderTypeForm?.map((section) => {
+              return {
+                ...section,
+                body: section.body.filter((field) => {
+                  const isRejected = currentOrder?.additionalDetails?.applicationStatus === t("REJECTED");
+                  return !(field.key === "newSubmissionDate" && isRejected);
+                }),
+              };
+            });
+          }
+          newConfig = [...newConfig, ...orderTypeForm];
+        }
+        const updatedConfig = newConfig.map((config) => {
+          return {
+            ...config,
+            body: config?.body.map((body) => {
+              if (body?.labelChildren === "OutlinedInfoIcon") {
+                body.labelChildren = (
+                  <React.Fragment>
+                    <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`${body.label}-tooltip`}>
+                      {" "}
+                      <OutlinedInfoIcon />
+                    </span>
+                    <ReactTooltip id={`${body.label}-tooltip`} place="bottom" content={body?.tooltipValue || ""}>
+                      {t(body?.tooltipValue || body.label)}
+                    </ReactTooltip>
+                  </React.Fragment>
+                );
+              }
+
+              if (body?.populators?.validation?.customValidationFn) {
+                const customValidations =
+                  Digit.Customizations[body.populators.validation.customValidationFn.moduleName][
+                    body.populators.validation.customValidationFn.masterName
+                  ];
+
+                body.populators.validation = {
+                  ...body.populators.validation,
+                  ...customValidations(),
+                };
+              }
+              if (body?.labelChildren === "optional") {
+                return {
+                  ...body,
+                  labelChildren: <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>,
+                };
+              }
+              return {
+                ...body,
+              };
+            }),
+          };
+        });
+        return updatedConfig;
+      });
+    } else {
       let newConfig = currentOrder?.orderNumber
         ? applicationTypeConfig?.map((item) => ({ body: item.body.map((input) => ({ ...input, disable: true })) }))
         : structuredClone(applicationTypeConfig);
-      const orderType = item?.orderType?.code;
+      const orderType = currentOrder?.orderType;
       if (orderType && configKeys.hasOwnProperty(orderType)) {
         let orderTypeForm = configKeys[orderType];
         if (orderType === "SECTION_202_CRPC") {
@@ -665,10 +989,10 @@ const GenerateOrders = () => {
                       mdmsConfig: {
                         ...field.populators?.mdmsConfig,
                         select: `(data) => {
-                          return (  // based on isDcaFiled condition, we can filter out DCA hearing here if needed.
-                            data?.Hearing?.HearingType|| []
-                          );
-                        }`,
+                            return (  // based on isDcaFiled condition, we can filter out DCA hearing here if needed.
+                              data?.Hearing?.HearingType|| []
+                            );
+                          }`,
                       },
                     },
                   };
@@ -845,9 +1169,10 @@ const GenerateOrders = () => {
           }),
         };
       });
-      return updatedConfig;
-    });
-  }, [caseDetails, complainants, currentOrder, itemList, respondents, t, unJoinedLitigant, witnesses]);
+      return [updatedConfig];
+    }
+  }, [caseDetails, complainants, currentOrder, respondents, t, unJoinedLitigant, witnesses, selectedOrder]);
+
   const multiSelectDropdownKeys = useMemo(() => {
     const foundKeys = [];
     modifiedFormConfig?.forEach((modified) => {
@@ -879,158 +1204,201 @@ const GenerateOrders = () => {
     }`.trim();
   };
 
-  // const defaultValue = useMemo(() => {
-  //   if (currentOrder?.orderType && !currentOrder?.additionalDetails?.formdata) {
-  //     return {
-  //       orderType: {
-  //         ...orderTypeData?.find((item) => item.code === currentOrder?.orderType),
-  //       },
-  //     };
-  //   }
-  //   let updatedFormdata = structuredClone(currentOrder?.additionalDetails?.formdata || {});
-  //   if (orderType === "JUDGEMENT") {
-  //     const complainantPrimary = caseDetails?.litigants?.filter((item) => item?.partyType?.includes("complainant.primary"))?.[0];
-  //     const respondentPrimary = caseDetails?.litigants?.filter((item) => item?.partyType?.includes("respondent.primary"))?.[0];
-  //     updatedFormdata.nameofComplainant = complainantPrimary?.additionalDetails?.fullName;
-  //     updatedFormdata.nameofRespondent = respondentPrimary?.additionalDetails?.fullName;
-  //     updatedFormdata.nameofComplainantAdvocate = uuidNameMap?.[allAdvocates?.[complainantPrimary?.additionalDetails?.uuid]] || "";
-  //     updatedFormdata.nameofRespondentAdvocate = uuidNameMap?.[allAdvocates?.[respondentPrimary?.additionalDetails?.uuid]] || "";
-  //     updatedFormdata.caseNumber = caseDetails?.courtCaseNumber;
-  //     updatedFormdata.nameOfCourt = courtRooms.find((room) => room.code === caseDetails?.courtId)?.name;
-  //     updatedFormdata.addressRespondant = generateAddress(
-  //       caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.addressDetails?.map((data) => data?.addressDetails)?.[0]
-  //     );
-  //     updatedFormdata.dateChequeReturnMemo = formatDate(new Date(caseDetails?.caseDetails?.chequeDetails?.formdata?.[0]?.data?.depositDate));
-  //     updatedFormdata.dateFiling = formatDate(new Date(caseDetails?.filingDate));
-  //     updatedFormdata.dateApprehension = formatDate(new Date(publishedBailOrder?.auditDetails?.lastModifiedTime)) || "";
-  //     updatedFormdata.dateofReleaseOnBail = formatDate(new Date(publishedBailOrder?.auditDetails?.lastModifiedTime)) || "";
-  //     updatedFormdata.dateofCommencementTrial = formatDate(new Date(publishedBailOrder?.auditDetails?.lastModifiedTime)) || "";
-  //     updatedFormdata.dateofCloseTrial = formatDate(new Date(hearingsList?.[hearingsList?.length - 2]?.startTime));
-  //     updatedFormdata.dateofSentence = formatDate(new Date(hearingsList?.[hearingsList?.length - 1]?.startTime));
-  //     updatedFormdata.offense = "Section 138 of Negotiable Instruments Act";
-  //   }
-  //   if (orderType === "BAIL") {
-  //     updatedFormdata.bailType = { type: applicationDetails?.applicationType };
-  //     updatedFormdata.submissionDocuments = applicationDetails?.additionalDetails?.formdata?.submissionDocuments;
-  //     updatedFormdata.bailOf = applicationDetails?.additionalDetails?.onBehalOfName;
-  //   }
-  //   if (orderType === "SET_BAIL_TERMS") {
-  //     updatedFormdata.partyId = applicationDetails?.createdBy;
-  //   }
-  //   if (orderType === "ACCEPT_BAIL" || orderType === "REJECT_BAIL") {
-  //     updatedFormdata.bailParty = applicationDetails?.additionalDetails?.onBehalOfName;
-  //     updatedFormdata.submissionDocuments = {
-  //       uploadedDocs:
-  //         applicationDetails?.additionalDetails?.formdata?.supportingDocuments?.flatMap((doc) => doc.submissionDocuments?.uploadedDocs || []) || [],
-  //     };
-  //   }
-  //   // if (orderType === "CASE_TRANSFER") {
-  //   //   updatedFormdata.caseTransferredTo = applicationDetails?.applicationDetails?.selectRequestedCourt;
-  //   //   updatedFormdata.grounds = { text: applicationDetails?.applicationDetails?.groundsForSeekingTransfer };
-  //   // }
-  //   if (orderType === "WITHDRAWAL") {
-  //     if (applicationDetails?.applicationType === applicationTypes.WITHDRAWAL) {
-  //       updatedFormdata.applicationOnBehalfOf = applicationDetails?.additionalDetails?.onBehalOfName;
-  //       updatedFormdata.partyType = t(applicationDetails?.additionalDetails?.partyType);
-  //       updatedFormdata.reasonForWithdrawal = t(applicationDetails?.additionalDetails?.formdata?.reasonForWithdrawal?.code);
-  //     }
-  //   }
-  //   if (orderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE") {
-  //     if (applicationDetails?.applicationType === applicationTypes.EXTENSION_SUBMISSION_DEADLINE) {
-  //       updatedFormdata.documentName = applicationDetails?.additionalDetails?.formdata?.documentType?.value;
-  //       updatedFormdata.originalDeadline = applicationDetails.additionalDetails?.formdata?.initialSubmissionDate;
-  //       updatedFormdata.proposedSubmissionDate = applicationDetails.additionalDetails?.formdata?.changedSubmissionDate;
-  //       updatedFormdata.originalSubmissionOrderDate = applicationDetails.additionalDetails?.orderDate;
-  //     }
-  //   }
-  //   if (orderType === "SUMMONS") {
-  //     if (hearingDetails?.startTime) {
-  //       updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
-  //     }
-  //     if (currentOrder?.additionalDetails?.selectedParty && currentOrder?.additionalDetails?.selectedParty?.uuid) {
-  //       updatedFormdata.SummonsOrder = {
-  //         party: caseDetails?.additionalDetails?.respondentDetails?.formdata
-  //           ?.filter((data) => data?.data?.uuid === currentOrder?.additionalDetails?.selectedParty?.uuid)
-  //           ?.map((item) => ({
-  //             ...item,
-  //             data: {
-  //               ...item.data,
-  //               firstName: item?.data?.respondentFirstName,
-  //               lastName: item?.data?.respondentLastName,
-  //               address: item?.data?.addressDetails.map((address) => ({
-  //                 locality: address?.addressDetails?.locality,
-  //                 city: address.addressDetails.city,
-  //                 district: address?.addressDetails?.district,
-  //                 pincode: address?.addressDetails?.pincode,
-  //               })),
-  //               partyType: "Respondent",
-  //               phone_numbers: item?.data?.phonenumbers?.mobileNumber || [],
-  //               email: item?.data?.emails?.emailId,
-  //             },
-  //           }))?.[0],
-  //         selectedChannels: currentOrder?.additionalDetails?.formdata?.SummonsOrder?.selectedChannels,
-  //       };
-  //     }
-  //   }
-  //   if (orderType === "NOTICE") {
-  //     if (hearingDetails?.startTime) {
-  //       updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
-  //     }
-  //     if (currentOrder?.additionalDetails?.selectedParty && currentOrder?.additionalDetails?.selectedParty?.uuid) {
-  //       updatedFormdata.noticeOrder = {
-  //         party: caseDetails?.additionalDetails?.respondentDetails?.formdata
-  //           ?.filter((data) => data?.data?.uuid === currentOrder?.additionalDetails?.selectedParty?.uuid)
-  //           ?.map((item) => ({
-  //             ...item,
-  //             data: {
-  //               ...item.data,
-  //               firstName: item.data.respondentFirstName,
-  //               lastName: item.data.respondentLastName,
-  //               address: item.data.addressDetails.map((address) => ({
-  //                 locality: address.addressDetails.locality,
-  //                 city: address.addressDetails.city,
-  //                 district: address?.addressDetails?.district,
-  //                 pincode: address?.addressDetails?.pincode,
-  //               })),
-  //               partyType: "Respondent",
-  //               phone_numbers: item?.data?.phonenumbers?.mobileNumber || [],
-  //               email: item?.data?.emails?.emailId,
-  //             },
-  //           }))?.[0],
-  //         selectedChannels: currentOrder?.additionalDetails?.formdata?.noticeOrder?.selectedChannels,
-  //       };
-  //     }
-  //   }
-  //   if (orderType === "WARRANT") {
-  //     if (hearingDetails?.startTime) {
-  //       updatedFormdata.dateOfHearing = formatDate(new Date(hearingDetails?.startTime));
-  //     }
-  //   }
-  //   if (
-  //     [
-  //       "RESCHEDULE_OF_HEARING_DATE",
-  //       "REJECTION_RESCHEDULE_REQUEST",
-  //       "APPROVAL_RESCHEDULE_REQUEST",
-  //       "INITIATING_RESCHEDULING_OF_HEARING_DATE",
-  //       "CHECKOUT_ACCEPTANCE",
-  //       "CHECKOUT_REJECT",
-  //     ].includes(orderType)
-  //   ) {
-  //     updatedFormdata.originalHearingDate =
-  //       applicationDetails?.additionalDetails?.formdata?.initialHearingDate || currentOrder.additionalDetails?.formdata?.originalHearingDate || "";
-  //     if (!isCaseAdmitted) {
-  //       updatedFormdata.hearingPurpose = {
-  //         code: "ADMISSION",
-  //       };
-  //     }
-  //   }
-  //   setCurrentFormData(updatedFormdata);
-  //   return updatedFormdata;
-  // }, [currentOrder, applicationDetails, t, hearingDetails, caseDetails, orderTypeData]);
+  const getDefaultValue = useCallback(
+    (index) => {
+      // TODO: check what's the purpose of below 5 lines of code.
+      // if (currentOrder?.orderType && !currentOrder?.additionalDetails?.formdata) {
+      //   return {
+      //     orderType: {
+      //       ...orderTypeData?.find((item) => item.code === currentOrder?.orderType),
+      //     },
+      //   };
+      // }
+
+      let updatedFormdata =
+        currentOrder?.orderCategory !== "COMPOSITE"
+          ? currentOrder?.additionalDetails?.formdata
+          : currentOrder?.compositeItems?.[index]?.orderSchema?.additionalDetails?.formdata;
+      const orderType = currentOrder?.orderCategory !== "COMPOSITE" ? currentOrder?.orderType : currentOrder?.compositeItems?.[index]?.orderType;
+      // if (orderType === "JUDGEMENT") {
+      //   const complainantPrimary = caseDetails?.litigants?.filter((item) => item?.partyType?.includes("complainant.primary"))?.[0];
+      //   const respondentPrimary = caseDetails?.litigants?.filter((item) => item?.partyType?.includes("respondent.primary"))?.[0];
+      //   updatedFormdata.nameofComplainant = complainantPrimary?.additionalDetails?.fullName;
+      //   updatedFormdata.nameofRespondent = respondentPrimary?.additionalDetails?.fullName;
+      //   updatedFormdata.nameofComplainantAdvocate = uuidNameMap?.[allAdvocates?.[complainantPrimary?.additionalDetails?.uuid]] || "";
+      //   updatedFormdata.nameofRespondentAdvocate = uuidNameMap?.[allAdvocates?.[respondentPrimary?.additionalDetails?.uuid]] || "";
+      //   updatedFormdata.caseNumber = caseDetails?.courtCaseNumber;
+      //   updatedFormdata.nameOfCourt = courtRooms.find((room) => room.code === caseDetails?.courtId)?.name;
+      //   updatedFormdata.addressRespondant = generateAddress(
+      //     caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.addressDetails?.map((data) => data?.addressDetails)?.[0]
+      //   );
+      //   updatedFormdata.dateChequeReturnMemo = formatDate(new Date(caseDetails?.caseDetails?.chequeDetails?.formdata?.[0]?.data?.depositDate));
+      //   updatedFormdata.dateFiling = formatDate(new Date(caseDetails?.filingDate));
+      //   updatedFormdata.dateApprehension = formatDate(new Date(publishedBailOrder?.auditDetails?.lastModifiedTime)) || "";
+      //   updatedFormdata.dateofReleaseOnBail = formatDate(new Date(publishedBailOrder?.auditDetails?.lastModifiedTime)) || "";
+      //   updatedFormdata.dateofCommencementTrial = formatDate(new Date(publishedBailOrder?.auditDetails?.lastModifiedTime)) || "";
+      //   updatedFormdata.dateofCloseTrial = formatDate(new Date(hearingsList?.[hearingsList?.length - 2]?.startTime));
+      //   updatedFormdata.dateofSentence = formatDate(new Date(hearingsList?.[hearingsList?.length - 1]?.startTime));
+      //   updatedFormdata.offense = "Section 138 of Negotiable Instruments Act";
+      // }
+      // if (orderType === "BAIL") {
+      //   updatedFormdata.bailType = { type: applicationDetails?.applicationType };
+      //   updatedFormdata.submissionDocuments = applicationDetails?.additionalDetails?.formdata?.submissionDocuments;
+      //   updatedFormdata.bailOf = applicationDetails?.additionalDetails?.onBehalOfName;
+      // }
+      // if (orderType === "SET_BAIL_TERMS") {
+      //   updatedFormdata.partyId = applicationDetails?.createdBy;
+      // }
+      // if (orderType === "ACCEPT_BAIL" || orderType === "REJECT_BAIL") {
+      //   updatedFormdata.bailParty = applicationDetails?.additionalDetails?.onBehalOfName;
+      //   updatedFormdata.submissionDocuments = {
+      //     uploadedDocs:
+      //       applicationDetails?.additionalDetails?.formdata?.supportingDocuments?.flatMap((doc) => doc.submissionDocuments?.uploadedDocs || []) || [],
+      //   };
+      // }
+      // // if (orderType === "CASE_TRANSFER") {
+      // //   updatedFormdata.caseTransferredTo = applicationDetails?.applicationDetails?.selectRequestedCourt;
+      // //   updatedFormdata.grounds = { text: applicationDetails?.applicationDetails?.groundsForSeekingTransfer };
+      // // }
+      // if (orderType === "WITHDRAWAL") {
+      //   if (applicationDetails?.applicationType === applicationTypes.WITHDRAWAL) {
+      //     updatedFormdata.applicationOnBehalfOf = applicationDetails?.additionalDetails?.onBehalOfName;
+      //     updatedFormdata.partyType = t(applicationDetails?.additionalDetails?.partyType);
+      //     updatedFormdata.reasonForWithdrawal = t(applicationDetails?.additionalDetails?.formdata?.reasonForWithdrawal?.code);
+      //   }
+      // }
+      // if (orderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE") {
+      //   if (applicationDetails?.applicationType === applicationTypes.EXTENSION_SUBMISSION_DEADLINE) {
+      //     updatedFormdata.documentName = applicationDetails?.additionalDetails?.formdata?.documentType?.value;
+      //     updatedFormdata.originalDeadline = applicationDetails.additionalDetails?.formdata?.initialSubmissionDate;
+      //     updatedFormdata.proposedSubmissionDate = applicationDetails.additionalDetails?.formdata?.changedSubmissionDate;
+      //     updatedFormdata.originalSubmissionOrderDate = applicationDetails.additionalDetails?.orderDate;
+      //   }
+      // }
+      // if (orderType === "SUMMONS") {
+      //   if (hearingDetails?.startTime) {
+      //     updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
+      //   }
+      //   if (currentOrder?.additionalDetails?.selectedParty && currentOrder?.additionalDetails?.selectedParty?.uuid) {
+      //     updatedFormdata.SummonsOrder = {
+      //       party: caseDetails?.additionalDetails?.respondentDetails?.formdata
+      //         ?.filter((data) => data?.data?.uuid === currentOrder?.additionalDetails?.selectedParty?.uuid)
+      //         ?.map((item) => ({
+      //           ...item,
+      //           data: {
+      //             ...item.data,
+      //             firstName: item?.data?.respondentFirstName,
+      //             lastName: item?.data?.respondentLastName,
+      //             address: item?.data?.addressDetails.map((address) => ({
+      //               locality: address?.addressDetails?.locality,
+      //               city: address.addressDetails.city,
+      //               district: address?.addressDetails?.district,
+      //               pincode: address?.addressDetails?.pincode,
+      //             })),
+      //             partyType: "Respondent",
+      //             phone_numbers: item?.data?.phonenumbers?.mobileNumber || [],
+      //             email: item?.data?.emails?.emailId,
+      //           },
+      //         }))?.[0],
+      //       selectedChannels: currentOrder?.additionalDetails?.formdata?.SummonsOrder?.selectedChannels,
+      //     };
+      //   }
+      // }
+      if (orderType === "NOTICE") {
+        if (hearingDetails?.startTime) {
+          updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
+          setValueRef?.current?.[index]?.("dateForHearing", updatedFormdata.dateForHearing);
+        }
+        const additionalDetails =
+          currentOrder?.orderCategory !== "COMPOSITE"
+            ? currentOrder?.additionalDetails
+            : currentOrder?.compositeItems?.[index]?.orderSchema?.additionalDetails;
+
+        const partyUuid = additionalDetails?.selectedParty?.uuid;
+        const selectedChannels = additionalDetails?.formdata?.noticeOrder?.selectedChannels;
+
+        if (partyUuid) {
+          updatedFormdata.noticeOrder = {
+            party: caseDetails?.additionalDetails?.respondentDetails?.formdata
+              ?.filter((data) => data?.data?.uuid === partyUuid)
+              ?.map((item) => ({
+                ...item,
+                data: {
+                  ...item.data,
+                  firstName: item.data.respondentFirstName,
+                  lastName: item.data.respondentLastName,
+                  address: item.data.addressDetails.map((address) => ({
+                    locality: address.addressDetails.locality,
+                    city: address.addressDetails.city,
+                    district: address?.addressDetails?.district,
+                    pincode: address?.addressDetails?.pincode,
+                  })),
+                  partyType: "Respondent",
+                  phone_numbers: item?.data?.phonenumbers?.mobileNumber || [],
+                  email: item?.data?.emails?.emailId,
+                },
+              }))?.[0],
+            selectedChannels: selectedChannels,
+          };
+        }
+      }
+      // if (orderType === "WARRANT") {
+      //   if (hearingDetails?.startTime) {
+      //     updatedFormdata.dateOfHearing = formatDate(new Date(hearingDetails?.startTime));
+      //   }
+      // }
+      // if (
+      //   [
+      //     "RESCHEDULE_OF_HEARING_DATE",
+      //     "REJECTION_RESCHEDULE_REQUEST",
+      //     "APPROVAL_RESCHEDULE_REQUEST",
+      //     "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+      //     "CHECKOUT_ACCEPTANCE",
+      //     "CHECKOUT_REJECT",
+      //   ].includes(orderType)
+      // ) {
+      //   updatedFormdata.originalHearingDate =
+      //     applicationDetails?.additionalDetails?.formdata?.initialHearingDate || currentOrder.additionalDetails?.formdata?.originalHearingDate || "";
+      //   if (!isCaseAdmitted) {
+      //     updatedFormdata.hearingPurpose = {
+      //       code: "ADMISSION",
+      //     };
+      //   }
+      // }
+      // setCurrentFormData(updatedFormdata); // TODO: check and update setCurrentFormData here and update where ever currentFormData is being used.
+      console.log("here1", updatedFormdata);
+      return updatedFormdata;
+    },
+    [currentOrder, hearingDetails]
+  );
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues, index) => {
+    // if (Object.keys(formState.errors)?.length) {
+    //   for (let key in formState.errors) {
+    //     if (!formData?.[key]) {
+    //       continue;
+    //     } else {
+    //       clearErrors(key);
+    //     }
+    //   }
+    // }
+    // if (formData?.orderType?.code && !isEqual(formData?.orderType?.code, itemList?.[index]?.additionalDetails?.formdata?.orderType?.code)) {
+    //   const orderTypeValidationObj = checkOrderValidation(formData?.orderType?.code, index);
+    //   console.log("orderTypeValidationObj", orderTypeValidationObj);
+    //   if (orderTypeValidationObj?.showModal) {
+    //     if (!itemList?.[index]?.additionalDetails?.formdata?.orderType?.code) {
+    //       setValue("orderType", null); // If we are adding new order- set order type to null if validation fails.
+    //     } else {
+    //       // If we are changing order type existing order- set order type as previous value.
+    //       setValue("orderType", itemList?.[index]?.additionalDetails?.formdata?.orderType?.code);
+    //     }
+    //     setShowOrderValidationModal(orderTypeValidationObj);
+    //     return;
+    //   }
+    // }
     applyMultiSelectDropdownFix(setValue, formData, multiSelectDropdownKeys);
 
-    const orderType = itemList?.[index]?.orderType?.code;
+    const orderType = currentOrder?.orderCategory === "COMPOSITE" ? currentOrder?.compositeItems?.[index]?.orderType : currentOrder?.orderType;
+    // TODO: make refs for setError;
     if (orderType && ["MANDATORY_SUBMISSIONS_RESPONSES"].includes(orderType)) {
       if (formData?.submissionDeadline && formData?.responseInfo?.responseDeadline) {
         if (new Date(formData?.submissionDeadline).getTime() >= new Date(formData?.responseInfo?.responseDeadline).getTime()) {
@@ -1126,37 +1494,66 @@ const GenerateOrders = () => {
       }
     }
 
-    if (formData?.orderType?.code && !isEqual(formData, itemList?.[index])) {
+    if (
+      formData?.orderType?.code &&
+      !isEqual(
+        formData,
+        currentOrder?.orderCategory !== "COMPOSITE"
+          ? formList?.[selectedOrder]?.additionalDetails?.formdata
+          : formList?.[selectedOrder]?.compositeItems?.[index]?.orderSchema?.additionalDetails?.formdata
+      )
+    ) {
       const updatedFormData =
-        currentOrder?.additionalDetails?.formdata?.orderType?.code !== formData?.orderType?.code ? { orderType: formData.orderType } : formData;
+        currentOrder?.orderCategory === "COMPOSITE"
+          ? currentOrder?.compositeItems?.[index]?.orderSchema?.additionalDetails?.formdata?.orderType?.code !== formData?.orderType?.code
+            ? { orderType: formData.orderType }
+            : formData
+          : currentOrder?.additionalDetails?.formdata?.orderType?.code !== formData?.orderType?.code
+          ? { orderType: formData.orderType }
+          : formData;
+
       setFormList((prev) => {
-        return prev?.map((item, index) => {
-          return index !== selectedOrder
-            ? item
-            : {
-                ...item,
-                comments:
-                  formData?.comments?.text ||
-                  formData?.additionalComments?.text ||
-                  formData?.otherDetails?.text ||
-                  formData?.sentence?.text ||
-                  formData?.briefSummary ||
-                  "",
-                orderTitle: formData?.orderType?.code,
-                orderCategory: "Intermediate",
-                orderType: formData?.orderType?.code,
-                additionalDetails: { ...item?.additionalDetails, formdata: updatedFormData },
-              };
-        });
-      });
-      setItemList((prev) => {
         return prev?.map((item, i) => {
-          return i !== index ? item : formData;
+          if (i !== selectedOrder) return item;
+          let updatedCompositeItems = item?.compositeItems?.map((compItem, compIndex) => {
+            if (compIndex === index) {
+              return {
+                ...compItem,
+                orderType: formData?.orderType?.code,
+                orderSchema: {
+                  additionalDetails: {
+                    ...compItem?.orderSchema?.additionalDetails,
+                    formdata: updatedFormData,
+                  },
+                },
+              };
+            }
+            return compItem;
+          });
+
+          return {
+            ...item,
+            comments:
+              formData?.comments?.text ||
+              formData?.additionalComments?.text ||
+              formData?.otherDetails?.text ||
+              formData?.sentence?.text ||
+              formData?.briefSummary ||
+              "",
+            orderTitle: currentOrderTitle,
+            orderCategory: item?.orderCategory,
+            orderType: item?.orderCategory !== "COMPOSITE" ? formData?.orderType?.code : null,
+            compositeItems: item?.orderCategory !== "COMPOSITE" ? null : updatedCompositeItems,
+            additionalDetails: item?.orderCategory !== "COMPOSITE" ? { ...item?.additionalDetails, formdata: updatedFormData } : null,
+            orderDetailsDetails: item?.orderCategory !== "COMPOSITE" ? item?.orderDetailsDetails : null,
+          };
         });
       });
-      setCurrentFormData(formData);
+
+      // setCurrentFormData(formData); // TODO: check and update setCurrentFormData here and update where ever currentFormData is being used.
     }
-    setFormErrors.current = setError;
+    setFormErrors.current = setError; // TODO: make useRef array for setFormErrors.
+    setValueRef.current[index] = setValue;
     if (Object.keys(formState?.errors).length) {
       setIsSubmitDisabled(true);
     } else {
@@ -1365,6 +1762,62 @@ const GenerateOrders = () => {
       );
     } catch (error) {
       return null;
+    }
+  };
+
+  const addOrderItem = async (order, action) => {
+    try {
+      const compositeItems = [];
+      order?.compositeItems?.forEach((item, index) => {
+        let orderSchema = {};
+        try {
+          let orderTypeDropDownConfig = item?.id
+            ? applicationTypeConfig?.map((obj) => ({ body: obj.body.map((input) => ({ ...input, disable: true })) }))
+            : structuredClone(applicationTypeConfig);
+          let orderFormConfig = configKeys.hasOwnProperty(item?.orderSchema?.additionalDetails?.formdata?.orderType?.code)
+            ? configKeys[item?.orderSchema?.additionalDetails?.formdata?.orderType?.code]
+            : [];
+          const modifiedPlainFormConfig = [...orderTypeDropDownConfig, ...orderFormConfig];
+          orderSchema = Digit.Customizations.dristiOrders.OrderFormSchemaUtils.formToSchema(
+            item?.orderSchema?.additionalDetails?.formdata,
+            modifiedPlainFormConfig
+          );
+        } catch (error) {
+          console.error("error :>> ", error);
+        }
+        const parties = getParties(item?.orderSchema?.additionalDetails?.formdata?.orderType?.code, {
+          ...orderSchema,
+          orderDetails: { ...orderSchema?.orderDetails },
+        });
+        const orderSchemaUpdated = {
+          ...orderSchema,
+          orderDetails: { ...orderSchema?.orderDetails, parties: parties },
+          additionalDetails: item?.orderSchema?.additionalDetails,
+        };
+        // const { orderType, ...orderSchemaRest } = orderSchemaUpdated;
+        compositeItems.push({
+          ...(item?.id ? { id: item.id } : {}),
+          orderType: item?.orderSchema?.additionalDetails?.formdata?.orderType?.code,
+          orderSchema: orderSchemaUpdated,
+        });
+      });
+      return await ordersService.addOrderItem(
+        {
+          order: {
+            ...order,
+            additionalDetails: null,
+            orderDetails: null,
+            orderType: null,
+            orderCategory: "COMPOSITE",
+            orderTitle: currentOrderTitle,
+            compositeItems,
+            workflow: { ...order.workflow, action, documents: [{}] },
+          },
+        },
+        { tenantId }
+      );
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -1712,35 +2165,99 @@ const GenerateOrders = () => {
       setLoader(true);
     }
     let count = 0;
-    const promises = formList.map(async (order) => {
-      if (order?.orderType) {
-        count += 1;
-        if (order?.orderNumber) {
-          return updateOrder(order, OrderWorkflowAction.SAVE_DRAFT);
+    const promises = formList.map(async (order, index) => {
+      // check for Composite order
+      if (order?.orderCategory === "INTERMEDIATE") {
+        if (order?.orderType) {
+          count += 1;
+          if (order?.orderNumber) {
+            return updateOrder(order, OrderWorkflowAction.SAVE_DRAFT);
+          } else {
+            return createOrder(order);
+          }
         } else {
-          return createOrder(order);
+          return Promise.resolve();
         }
-      } else {
-        return Promise.resolve();
+      }
+      // IF order Type is composite
+      else {
+        if (order?.orderNumber) {
+          count += 1;
+          return addOrderItem(order, OrderWorkflowAction.SAVE_DRAFT);
+        } else {
+          // create call first, get order number from response
+          // then add item call
+          count += 1;
+          try {
+            const totalEnabled = order?.compositeItems?.filter((compItem) => compItem?.isEnabled)?.length;
+            // if totalEnabled is 1 -> treat it as composite only and call create api only
+            if (totalEnabled === 1) {
+              const updatedOrder = structuredClone(order);
+              const compositeItem = order?.compositeItems?.find((item) => item?.isEnabled);
+              updatedOrder.additionalDetails = compositeItem?.orderSchema?.additionalDetails;
+              updatedOrder.compositeItems = null;
+              updatedOrder.orderType = compositeItem?.orderType;
+              updatedOrder.orderCategory = "INTERMEDIATE";
+              return await createOrder(updatedOrder);
+            }
+            // if totalEnabled is greater than 1 -> call create api for 1st isEnabled item and get orderNUmber from create reponse and call add item api.
+            else {
+              const updatedOrder = structuredClone(order);
+              const firstCompositeItem = order?.compositeItems?.find((item) => item?.isEnabled);
+              updatedOrder.additionalDetails = firstCompositeItem?.orderSchema?.additionalDetails;
+              updatedOrder.compositeItems = null;
+              updatedOrder.orderType = firstCompositeItem?.orderType;
+              updatedOrder.orderCategory = "INTERMEDIATE";
+
+              const response = await createOrder(updatedOrder);
+              console.log("response", response);
+
+              if (response?.order?.orderNumber) {
+                const orderForAddItem = structuredClone(response?.order);
+                // Send only isEnabled composite items from current order;
+                const enabledCompositeItems = order?.compositeItems?.filter((item) => item?.isEnabled);
+                orderForAddItem.additionalDetails = null;
+                orderForAddItem.orderType = null;
+                orderForAddItem.orderDetails = null;
+                orderForAddItem.orderCategory = "COMPOSITE";
+                orderForAddItem.compositeItems = enabledCompositeItems;
+                orderForAddItem.orderTitle = currentOrderTitle;
+                return await addOrderItem(orderForAddItem, OrderWorkflowAction.SAVE_DRAFT);
+              } else {
+                console.error("Error: Order creation failed, orderNumber missing.");
+                return Promise.reject(new Error("Order creation failed"));
+              }
+            }
+          } catch (error) {
+            console.error(error);
+          }
+        }
       }
     });
-    const responsesList = await Promise.all(promises);
-    if (showReviewModal) {
-      setLoader(false);
-    }
-    setFormList(
-      responsesList.map((res) => {
-        return res?.order;
-      })
-    );
-    if (!showReviewModal) {
-      setShowErrorToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
-    }
-    if (selectedOrder >= count) {
-      setSelectedOrder(0);
-    }
-    if (showReviewModal) {
-      setShowReviewModal(true);
+
+    try {
+      await Promise.all(promises);
+
+      // Refetch orders data after promises resolve successfully
+      await refetchOrdersData();
+
+      // Update the form list
+      // setFormList(responsesList.map((res) => res?.order));
+
+      if (!showReviewModal) {
+        setShowErrorToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
+      }
+
+      if (selectedOrder >= count) {
+        setSelectedOrder(0);
+      }
+
+      if (showReviewModal) {
+        setShowReviewModal(true);
+      }
+    } catch (error) {
+      console.error("Error while saving draft:", error);
+      setShowErrorToast({ label: t("ERROR_SAVING_DRAFT"), error: true });
     }
   };
 
@@ -2683,6 +3200,58 @@ const GenerateOrders = () => {
     }
     setDeleteOrderIndex(null);
   };
+
+  const handleDeleteOrderItem = async (deleteOrderItemIndex) => {
+    // If order was is in save draft and composite (means it already has orderNumber), keep it composite even if only 1 item remains.
+    // otherwise, change the orderCategory to INTERMEDIATE if only 1 item remains.
+    if (!currentOrder?.orderNumber) {
+      // IF compositeItems length is 1, we are not showing delete icon.
+      if (currentOrder?.compositeItems?.length === 2) {
+        // If there are 2 items, after deleting one, make the orderCategory as INTERMEDIATE back from COMPOSITE
+        const nonDeletedItemIndex = deleteOrderItemIndex === 1 ? 0 : 1;
+        setFormList((prev) => {
+          return prev?.map((item, i) => {
+            if (i !== selectedOrder) return item;
+
+            return {
+              ...item,
+              orderTitle: currentOrder?.compositeItems?.[nonDeletedItemIndex]?.orderType || "",
+              orderCategory: "INTERMEDIATE",
+              orderType: currentOrder?.compositeItems?.[nonDeletedItemIndex]?.orderType || "",
+              compositeItems: null,
+              additionalDetails: currentOrder?.compositeItems?.[nonDeletedItemIndex]?.orderSchema?.additionalDetails || {},
+              orderDetails: currentOrder?.compositeItems?.[nonDeletedItemIndex]?.orderSchema?.orderDetails || {},
+            };
+          });
+        });
+      } else if (currentOrder?.compositeItems?.length > 2) {
+        // we have remove the particular item from compositeItems list.
+        setFormList((prev) => {
+          return prev?.map((item, i) => {
+            if (i !== selectedOrder) return item;
+
+            let updatedCompositeItems = item?.compositeItems?.map((compositeItem, index) => {
+              if (index === deleteOrderItemIndex) {
+                return { ...compositeItem, isEnabled: false, displayindex: -Infinity };
+              }
+
+              return {
+                ...compositeItem,
+                displayindex: index > deleteOrderItemIndex ? compositeItem.displayindex - 1 : compositeItem.displayindex,
+              };
+            });
+
+            // setValueRef.current[deleteOrderItemIndex]?.("");
+            return {
+              ...item,
+              compositeItems: updatedCompositeItems,
+            };
+          });
+        });
+      }
+    }
+    setDeleteOrderItemIndex(null);
+  };
   const successModalActionSaveLabel = useMemo(() => {
     if (
       (prevOrder?.orderType === "RESCHEDULE_OF_HEARING_DATE" ||
@@ -2716,90 +3285,100 @@ const GenerateOrders = () => {
     // });
   };
 
-  const handleReviewOrderClick = () => {
-    itemList?.forEach((item) => {
-      const orderType = item?.orderType;
-      if (
-        referenceId &&
-        "ACCEPTANCE_REJECTION_DCA" === orderType &&
-        [SubmissionWorkflowState.COMPLETED, SubmissionWorkflowState.REJECTED].includes(applicationDetails?.status)
-      ) {
-        setShowErrorToast({
-          label: applicationDetails?.status === SubmissionWorkflowState.COMPLETED ? t("DCA_APPLICATION_ACCEPTED") : t("DCA_APPLICATION_REJECTED"),
-          error: true,
-        });
-        return;
-      }
-      if (["ADMIT_CASE", "DISMISS_CASE"]?.includes(orderType) && ["CASE_DISMISSED", "CASE_ADMITTED"].includes(caseDetails?.status)) {
-        setShowErrorToast({
-          label: "CASE_ADMITTED" === caseDetails?.status ? t("CASE_ALREADY_ADMITTED") : t("CASE_ALREADY_REJECTED"),
-          error: true,
-        });
-        return;
-      }
-
-      if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(orderType) && (isHearingScheduled || isHearingOptout)) {
-        setShowErrorToast({
-          label: isHearingScheduled ? t("HEARING_IS_ALREADY_SCHEDULED_FOR_THIS_CASE") : t("CURRENTLY_A_HEARING_IS_IN_OPTOUT_STATE"),
-          error: true,
-        });
-        return;
-      }
-      if (["INITIATING_RESCHEDULING_OF_HEARING_DATE"].includes(orderType) && !isHearingScheduled) {
-        setShowErrorToast({
-          label: t("CURRENTLY_NO_HEARING_IS_IN_SCHEDULED_STATE"),
-          error: true,
-        });
-        return;
-      }
-      if (["ASSIGNING_DATE_RESCHEDULED_HEARING"].includes(orderType) && !isHearingOptout) {
-        setShowErrorToast({
-          label: t("CURRENTLY_NO_HEARING_IS_IN_OPTOUT_STATE"),
-          error: true,
-        });
-        return;
-      }
-      if (orderType && ["MANDATORY_SUBMISSIONS_RESPONSES"].includes(orderType)) {
-        if (!currentFormData?.responseInfo?.responseDeadline && currentFormData?.responseInfo?.isResponseRequired?.code === true) {
-          setFormErrors.current("responseDeadline", { message: t("PROPOSED_DATE_CAN_NOT_BE_BEFORE_SUBMISSION_DEADLINE") });
-          return;
-        }
-        if (
-          (!currentFormData?.responseInfo?.respondingParty || currentFormData?.responseInfo?.respondingParty?.length === 0) &&
-          currentFormData?.responseInfo?.isResponseRequired?.code === true
-        ) {
-          setFormErrors.current("respondingParty", { message: t("CORE_REQUIRED_FIELD_ERROR") });
-          return;
-        }
-      }
-      if (orderType && ["WARRANT"].includes(orderType)) {
-        if (!currentFormData?.bailInfo?.noOfSureties && currentFormData?.bailInfo?.isBailable?.code === true) {
-          setFormErrors.current("noOfSureties", { message: t("CORE_REQUIRED_FIELD_ERROR") });
-          return;
-        }
-        if (
-          (!currentFormData?.bailInfo?.bailableAmount || currentFormData?.bailInfo?.bailableAmount?.slice(-1) === ".") &&
-          currentFormData?.bailInfo?.isBailable?.code === true
-        ) {
-          setFormErrors.current("bailableAmount", { message: t("CS_VALID_AMOUNT_DECIMAL") });
-          return;
-        }
-      }
-      if (referenceId && ![SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationDetails?.status)) {
-        setShowErrorToast({
-          label:
-            SubmissionWorkflowState.COMPLETED === applicationDetails?.status
-              ? t("SUBMISSION_ALREADY_ACCEPTED")
-              : SubmissionWorkflowState.REJECTED === applicationDetails?.status
-              ? t("SUBMISSION_ALREADY_REJECTED")
-              : t("SUBMISSION_NO_LONGER_VALID"),
-          error: true,
-        });
-        setShowReviewModal(false);
-        setShowsignatureModal(false);
-        return;
-      }
+  const handleCustomSubmit = () => {
+    modifiedFormConfig.forEach((_, index) => {
+      formValueChangeTriggerRefs.current[index]();
     });
+    const formSubmitButton = submitButtonRefs.current?.querySelector('button[type="submit"]');
+    if (formSubmitButton) {
+      formSubmitButton.click();
+    }
+  };
+
+  const handleReviewOrderClick = () => {
+    // itemList?.forEach((item) => {
+    //   const orderType = item?.orderType;
+    //   if (
+    //     referenceId &&
+    //     "ACCEPTANCE_REJECTION_DCA" === orderType &&
+    //     [SubmissionWorkflowState.COMPLETED, SubmissionWorkflowState.REJECTED].includes(applicationDetails?.status)
+    //   ) {
+    //     setShowErrorToast({
+    //       label: applicationDetails?.status === SubmissionWorkflowState.COMPLETED ? t("DCA_APPLICATION_ACCEPTED") : t("DCA_APPLICATION_REJECTED"),
+    //       error: true,
+    //     });
+    //     return;
+    //   }
+    //   if (["ADMIT_CASE", "DISMISS_CASE"]?.includes(orderType) && ["CASE_DISMISSED", "CASE_ADMITTED"].includes(caseDetails?.status)) {
+    //     setShowErrorToast({
+    //       label: "CASE_ADMITTED" === caseDetails?.status ? t("CASE_ALREADY_ADMITTED") : t("CASE_ALREADY_REJECTED"),
+    //       error: true,
+    //     });
+    //     return;
+    //   }
+
+    //   if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(orderType) && (isHearingScheduled || isHearingOptout)) {
+    //     setShowErrorToast({
+    //       label: isHearingScheduled ? t("HEARING_IS_ALREADY_SCHEDULED_FOR_THIS_CASE") : t("CURRENTLY_A_HEARING_IS_IN_OPTOUT_STATE"),
+    //       error: true,
+    //     });
+    //     return;
+    //   }
+    //   if (["INITIATING_RESCHEDULING_OF_HEARING_DATE"].includes(orderType) && !isHearingScheduled) {
+    //     setShowErrorToast({
+    //       label: t("CURRENTLY_NO_HEARING_IS_IN_SCHEDULED_STATE"),
+    //       error: true,
+    //     });
+    //     return;
+    //   }
+    //   if (["ASSIGNING_DATE_RESCHEDULED_HEARING"].includes(orderType) && !isHearingOptout) {
+    //     setShowErrorToast({
+    //       label: t("CURRENTLY_NO_HEARING_IS_IN_OPTOUT_STATE"),
+    //       error: true,
+    //     });
+    //     return;
+    //   }
+    //   if (orderType && ["MANDATORY_SUBMISSIONS_RESPONSES"].includes(orderType)) {
+    //     if (!currentFormData?.responseInfo?.responseDeadline && currentFormData?.responseInfo?.isResponseRequired?.code === true) {
+    //       setFormErrors.current("responseDeadline", { message: t("PROPOSED_DATE_CAN_NOT_BE_BEFORE_SUBMISSION_DEADLINE") });
+    //       return;
+    //     }
+    //     if (
+    //       (!currentFormData?.responseInfo?.respondingParty || currentFormData?.responseInfo?.respondingParty?.length === 0) &&
+    //       currentFormData?.responseInfo?.isResponseRequired?.code === true
+    //     ) {
+    //       setFormErrors.current("respondingParty", { message: t("CORE_REQUIRED_FIELD_ERROR") });
+    //       return;
+    //     }
+    //   }
+    //   if (orderType && ["WARRANT"].includes(orderType)) {
+    //     if (!currentFormData?.bailInfo?.noOfSureties && currentFormData?.bailInfo?.isBailable?.code === true) {
+    //       setFormErrors.current("noOfSureties", { message: t("CORE_REQUIRED_FIELD_ERROR") });
+    //       return;
+    //     }
+    //     if (
+    //       (!currentFormData?.bailInfo?.bailableAmount || currentFormData?.bailInfo?.bailableAmount?.slice(-1) === ".") &&
+    //       currentFormData?.bailInfo?.isBailable?.code === true
+    //     ) {
+    //       setFormErrors.current("bailableAmount", { message: t("CS_VALID_AMOUNT_DECIMAL") });
+    //       return;
+    //     }
+    //   }
+    //   if (referenceId && ![SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationDetails?.status)) {
+    //     setShowErrorToast({
+    //       label:
+    //         SubmissionWorkflowState.COMPLETED === applicationDetails?.status
+    //           ? t("SUBMISSION_ALREADY_ACCEPTED")
+    //           : SubmissionWorkflowState.REJECTED === applicationDetails?.status
+    //           ? t("SUBMISSION_ALREADY_REJECTED")
+    //           : t("SUBMISSION_NO_LONGER_VALID"),
+    //       error: true,
+    //     });
+    //     setShowReviewModal(false);
+    //     setShowsignatureModal(false);
+    //     return;
+    //   }
+    // });
     handleSaveDraft({ showReviewModal: true });
   };
 
@@ -2835,7 +3414,34 @@ const GenerateOrders = () => {
   }
 
   const handleAddForm = () => {
-    setItemList([...itemList, { orderType: null }]);
+    setFormList((prev) => {
+      return prev?.map((item, i) => {
+        const updatedCompositeItems = (obj) => {
+          const compositeItemsNew = obj?.compositeItems || [];
+          if (compositeItemsNew?.length === 0) {
+            compositeItemsNew.push({
+              orderType: obj?.orderType,
+              ...(obj?.orderNumber && { orderSchema: { orderDetails: obj?.orderDetails } }),
+              isEnabled: true,
+              displayindex: 0,
+            });
+          }
+          compositeItemsNew.push({
+            orderType: null,
+            isEnabled: true,
+            displayindex: compositeItemsNew?.length,
+          });
+          return compositeItemsNew;
+        };
+        return i !== selectedOrder
+          ? item
+          : {
+              ...item,
+              orderCategory: "COMPOSITE",
+              compositeItems: updatedCompositeItems(item),
+            };
+      });
+    });
   };
 
   if (
@@ -2876,7 +3482,7 @@ const GenerateOrders = () => {
                   }}
                   style={{ cursor: "pointer", flex: 1 }}
                 >
-                  {t(item?.orderType) || `${t("CS_ORDER")} ${index + 1}`}
+                  {t(currentOrderTitle) || `${t("CS_ORDER")} ${index + 1}`}
                 </h1>
                 {formList?.length > 1 && (
                   <span
@@ -2926,27 +3532,37 @@ const GenerateOrders = () => {
             </div>
           )}
         {modifiedFormConfig?.map((config, index) => {
+          let displayindex = 0;
+          if (currentOrder?.orderCategory === "COMPOSITE") {
+            displayindex = currentOrder?.compositeItems?.[index]?.displayindex;
+          }
+          if (currentOrder?.orderCategory === "COMPOSITE" && currentOrder?.compositeItems?.[index]?.isEnabled === false) {
+            return null;
+          }
           return (
-            <div key={`${selectedOrder}-${index}`} className="form-wrapper-d">
+            <div key={`${selectedOrder}-${index}`} className="form-wrapper-d" ref={(el) => (submitButtonRefs.current = el)}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <h1>{`${t("ITEM")} ${index + 1}`}</h1>
-                <span
-                  style={{ cursor: "pointer" }}
-                  onClick={() => {
-                    // setConfirmDeleteModal(true);
-                    // setDeleteFormIndex(index);
-                  }}
-                >
-                  <CustomDeleteIcon />
-                </span>
+                <h1>{`${t("ITEM")} ${displayindex + 1}`}</h1>
+                {modifiedFormConfig?.length > 1 && (
+                  <span
+                    style={{ cursor: "pointer" }}
+                    onClick={() => {
+                      console.log("selectedOrder", currentOrder);
+                      setDeleteOrderItemIndex(index);
+                    }}
+                  >
+                    <CustomDeleteIcon />
+                  </span>
+                )}
               </div>
               <FormComposerV2
                 className={"generate-orders"}
                 key={`${selectedOrder}=${index}`}
                 label={t("REVIEW_ORDER")}
                 config={config}
-                defaultValues={{}}
+                defaultValues={getDefaultValue(index)}
                 onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
+                  formValueChangeTriggerRefs.current[index] = trigger;
                   onFormValueChange(setValue, formData, formState, reset, setError, clearErrors, trigger, getValues, index);
                 }}
                 onSubmit={handleReviewOrderClick}
@@ -2957,18 +3573,40 @@ const GenerateOrders = () => {
                 actionClassName={"order-type-action"}
                 isDisabled={isSubmitDisabled}
               />
-              {itemList?.[index]?.orderType?.code && (
-                <Button
-                  variation="secondary"
-                  onButtonClick={handleAddForm}
-                  className="add-new-form"
-                  icon={<CustomAddIcon />}
-                  label={t("ADD_ITEM")}
-                ></Button>
-              )}
             </div>
           );
         })}
+        {/* <div
+          className="custom-submit-button"
+          style={{
+            position: "fixed",
+            bottom: "16px",
+            zIndex: "1000",
+            right: "24px",
+            height: "40px",
+            width: "164px",
+          }}
+        >
+          <button
+            type="button"
+            onClick={handleCustomSubmit}
+            disabled={isSubmitDisabled}
+            style={{ height: "40px", width: "164px", background: "#007e7e", fontSize: "16px", fontWeight: "700", color: "white" }}
+          >
+            {t("REVIEW_ORDER")}
+          </button>
+        </div> */}
+        {true && ( // TODO: set condition here to show add item button
+          <div style={{ marginBottom: "100px" }}>
+            <Button
+              variation="secondary"
+              onButtonClick={handleAddForm}
+              className="add-new-form"
+              icon={<CustomAddIcon />}
+              label={t("ADD_ITEM")}
+            ></Button>
+          </div>
+        )}
       </div>
       {deleteOrderIndex !== null && (
         <div className="delete-order-warning-modal">
@@ -3015,6 +3653,22 @@ const GenerateOrders = () => {
           handleCloseSuccessModal={handleCloseSuccessModal}
           actionSaveLabel={successModalActionSaveLabel}
         />
+      )}
+      {showOrderValidationModal?.showModal && (
+        <CompositeOrdersErrorModal
+          t={t}
+          showOrderValidationModal={showOrderValidationModal}
+          setShowOrderValidationModal={setShowOrderValidationModal}
+        ></CompositeOrdersErrorModal>
+      )}
+
+      {deleteOrderItemIndex !== null && (
+        <OrderItemDeleteModal
+          t={t}
+          handleDeleteOrderItem={handleDeleteOrderItem}
+          deleteOrderItemIndex={deleteOrderItemIndex}
+          setDeleteOrderItemIndex={setDeleteOrderItemIndex}
+        ></OrderItemDeleteModal>
       )}
       {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
     </div>
