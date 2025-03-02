@@ -567,7 +567,7 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
     downloadPdf(tenantId, downloadFileStoreId);
   };
   if (Loading) {
-    <Loader />;
+    return <Loader />;
   }
 
   return (
