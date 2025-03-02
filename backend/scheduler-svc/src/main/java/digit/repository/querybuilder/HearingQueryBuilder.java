@@ -32,10 +32,11 @@ public class HearingQueryBuilder {
         StringBuilder query = new StringBuilder(BASE_APPLICATION_QUERY);
         query.append(FROM_TABLES);
 
-        getWhereFields(scheduleHearingSearchCriteria, query, preparedStmtList, preparedStmtArgList, limit, offset);
+        getWhereFields(scheduleHearingSearchCriteria, query, preparedStmtList, preparedStmtArgList);
         queryBuilderHelper.addClauseIfRequired(query, preparedStmtList);
         // Adding expiry_time condition
         query.append(" (hb.expiry_time IS NULL OR hb.expiry_time > EXTRACT(EPOCH FROM NOW())) ");
+        addLimitOffset(query, preparedStmtList, preparedStmtArgList, limit, offset);
         return query.toString();
     }
 
@@ -45,17 +46,17 @@ public class HearingQueryBuilder {
                         "FROM hearing_booking hb "
         );
 
-        getWhereFields(scheduleHearingSearchCriteria, query, preparedStmtList, preparedStmtArgList, null, null);
+        getWhereFields(scheduleHearingSearchCriteria, query, preparedStmtList, preparedStmtArgList);
         queryBuilderHelper.addClauseIfRequired(query, preparedStmtList);
         // Adding expiry_time condition
         query.append(" (hb.expiry_time IS NULL OR hb.expiry_time > EXTRACT(EPOCH FROM NOW())) ");
         query.append("GROUP BY hb.hearing_date");
-
+        addLimitOffset(query, preparedStmtList, preparedStmtArgList, null, null);
         return query.toString();
     }
 
 
-    private void getWhereFields(ScheduleHearingSearchCriteria scheduleHearingSearchCriteria, StringBuilder query, List<Object> preparedStmtList, List<Integer> preparedStmtArgList, Integer limit, Integer offset) {
+    private void getWhereFields(ScheduleHearingSearchCriteria scheduleHearingSearchCriteria, StringBuilder query, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
 
 
         if (!CollectionUtils.isEmpty(scheduleHearingSearchCriteria.getHearingIds())) {
@@ -140,13 +141,16 @@ public class HearingQueryBuilder {
 
         }
 
+    }
+
+    private static void addLimitOffset(StringBuilder query, List<Object> preparedStmtList, List<Integer> preparedStmtArgList, Integer limit, Integer offset) {
         if (!ObjectUtils.isEmpty(limit) && !ObjectUtils.isEmpty(offset)) {
             query.append(LIMIT_OFFSET);
             preparedStmtList.add(limit);
-            preparedStmtArgList.add(Types.VARCHAR);
+            preparedStmtArgList.add(Types.INTEGER);
 
             preparedStmtList.add(offset);
-            preparedStmtArgList.add(Types.VARCHAR);
+            preparedStmtArgList.add(Types.INTEGER);
 
         }
     }

@@ -197,6 +197,9 @@ public class Configuration {
     @Value("${egov.sms.notification.case.decision.available.template.id}")
     private String smsNotificationCaseDecisionAvailableTemplateId;
 
+    @Value("${egov.sms.notification.additional.information.template.id}")
+    private String smsNotificationAdditionalDetails;
+
     //Individual Service
     @Value("${egov.individual.host}")
     private String individualHost;

@@ -55,7 +55,7 @@ class NotificationEnrichmentTest {
     void testEnrichCreateNotificationRequest() {
         when(config.getNotificationConfig()).thenReturn("notification-config");
         when(config.getNotificationIdFormat()).thenReturn("NOTIF-2024");
-        when(idgenUtil.getIdList(eq(requestInfo), eq("tenant-001"), anyString(), anyString(), eq(1), eq(false)))
+        when(idgenUtil.getIdList(eq(requestInfo), eq("tenant-001"), anyString(), anyString(), eq(1), eq(true)))
                 .thenReturn(Collections.singletonList("NOTIF-123"));
 
         notificationEnrichment.enrichCreateNotificationRequest(request);

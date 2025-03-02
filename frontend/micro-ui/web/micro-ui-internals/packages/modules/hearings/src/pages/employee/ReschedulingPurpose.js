@@ -122,7 +122,7 @@ export const ReschedulingPurpose = ({ courtData, caseDetails, closeFunc, resched
           tenantId: Digit.ULBService.getCurrentTenantId(),
         },
         orderTitle: rescheduleAll ? "RESCHEDULING_OF_MULTIPLE_HEARING" : "INITIATING_RESCHEDULING_OF_HEARING_DATE",
-        orderCategory: "Intermediate",
+        orderCategory: "INTERMEDIATE",
         orderType: rescheduleAll ? "RESCHEDULING_OF_MULTIPLE_HEARING" : "INITIATING_RESCHEDULING_OF_HEARING_DATE",
         status: "",
         isActive: true,

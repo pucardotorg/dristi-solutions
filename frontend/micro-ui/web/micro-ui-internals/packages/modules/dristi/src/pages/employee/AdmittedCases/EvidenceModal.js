@@ -738,7 +738,7 @@ const EvidenceModal = ({
               tenantId,
             },
             orderTitle: orderType,
-            orderCategory: "Intermediate",
+            orderCategory: "INTERMEDIATE",
             orderType,
             status: "",
             isActive: true,
