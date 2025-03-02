@@ -134,6 +134,7 @@ const ADiaryPage = ({ path }) => {
     }
     setStepper(parseInt(stepper) - 1);
   };
+  const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
 
   const onSubmit = async () => {
     if (parseInt(stepper) === 0) {
@@ -144,7 +145,7 @@ const ADiaryPage = ({ path }) => {
             tenantId: tenantId,
             diaryDate: entryDate,
             diaryType: "ADiary",
-            judgeId: "super",
+            judgeId: judgeId,
           },
         });
         setGenerateAdiaryLoader(false);
@@ -194,7 +195,7 @@ const ADiaryPage = ({ path }) => {
         const diary = await HomeService.getADiarySearch({
           criteria: {
             tenantId: tenantId,
-            judgeId: "super",
+            judgeId: judgeId,
             date: entryDate,
           },
         });
@@ -225,7 +226,7 @@ const ADiaryPage = ({ path }) => {
           tenantId: tenantId,
           diaryDate: entryDate,
           diaryType: "ADiary",
-          judgeId: "super",
+          judgeId: judgeId,
           documents: [
             {
               tenantId: tenantId,
@@ -253,7 +254,7 @@ const ADiaryPage = ({ path }) => {
     {
       criteria: {
         tenantId: tenantId,
-        judgeId: "super",
+        judgeId: judgeId,
         date: entryDate,
       },
       pagination: {
@@ -307,6 +308,9 @@ const ADiaryPage = ({ path }) => {
         `/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${entry?.additionalDetails?.caseId}&filingNumber=${entry?.additionalDetails?.filingNumber}&tab=Documents&artifactNumber=${entry?.referenceId}`,
         { diaryEntry: entry }
       );
+    }
+    if (entry?.referenceType === "bulkreschedule") {
+      history.push(`/${window?.contextPath}/${userInfoType}/hearings`, { diaryEntry: entry });
     }
   };
 

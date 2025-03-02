@@ -9,32 +9,10 @@ import PreHearingModal from "../../components/PreHearingModal";
 import TasksComponent from "../../components/TaskComponentCalander";
 import useGetHearings from "../../hooks/hearings/useGetHearings";
 import useGetHearingSlotMetaData from "../../hooks/useGetHearingSlotMetaData";
-import { Button, CloseSvg, FormComposerV2, Modal } from "@egovernments/digit-ui-react-components";
+import { Button } from "@egovernments/digit-ui-react-components";
+import BulkReschedule from "./BulkReschedule";
 
 const tenantId = window?.Digit.ULBService.getCurrentTenantId();
-const CloseBtn = ({ onClick }) => {
-  return (
-    <div
-      onClick={onClick}
-      style={{
-        height: "100%",
-        display: "flex",
-        alignItems: "center",
-        paddingRight: "20px",
-        cursor: "pointer",
-      }}
-    >
-      <CloseSvg />
-    </div>
-  );
-};
-const Heading = ({ label }) => {
-  return (
-    <div className="evidence-title">
-      <h1 className="heading-m">{label}</h1>
-    </div>
-  );
-};
 const MonthlyCalendar = () => {
   const history = useHistory();
   const { t } = useTranslation();
@@ -72,14 +50,15 @@ const MonthlyCalendar = () => {
   const initial = userInfoType === "citizen" ? "timeGridDay" : "dayGridMonth";
 
   const search = window.location.search;
-  const { fromDate, toDate, slot, initialView, count } = useMemo(() => {
+  const { fromDate, toDate, slot, slotId, initialView, count } = useMemo(() => {
     const searchParams = new URLSearchParams(search);
     const fromDate = Number(searchParams.get("from-date")) || null;
     const toDate = Number(searchParams.get("to-date")) || null;
     const slot = searchParams.get("slot") || null;
+    const slotId = searchParams.get("slotId") || null;
     const initialView = searchParams.get("view") || initial;
     const count = searchParams.get("count") || 0;
-    return { fromDate, toDate, slot, initialView, count };
+    return { fromDate, toDate, slot, slotId, initialView, count };
   }, [search]);
 
   const reqBody = {
@@ -101,7 +80,15 @@ const MonthlyCalendar = () => {
   const { data: hearingSlots } = useGetHearingSlotMetaData(true);
   const hearingDetails = useMemo(() => hearingResponse?.HearingList || [], [hearingResponse]);
 
-  const events = useMemo(() => hearingSlots || [], [hearingSlots]);
+  // const events = useMemo(() => hearingSlots || [], [hearingSlots]);
+
+  const mdmsEvents = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "court", [{ name: "slots" }], {
+    cacheTime: 0,
+    select: (data) => {
+      return data?.court?.slots || [];
+    },
+  });
+  const events = mdmsEvents?.data;
 
   function epochToDateTimeObject(epochTime) {
     if (!epochTime || typeof epochTime !== "number") {
@@ -128,10 +115,9 @@ const MonthlyCalendar = () => {
 
     hearingDetails.forEach((hearing) => {
       const dateTimeObj = epochToDateTimeObject(hearing.startTime);
-
       if (dateTimeObj) {
         const dateString = dateTimeObj.date;
-        events.slots.forEach((slot) => {
+        events?.forEach((slot) => {
           if (dateTimeObj.time >= slot.slotStartTime && dateTimeObj.time < slot.slotEndTime) {
             const eventKey = `${dateString}-${slot.slotName}`;
 
@@ -145,6 +131,7 @@ const MonthlyCalendar = () => {
                   count: 1,
                   date: new Date(dateString),
                   slot: slot.slotName,
+                  slotId: slot.id,
                 },
               };
             } else {
@@ -158,7 +145,7 @@ const MonthlyCalendar = () => {
 
     const eventsArray = Object.values(calendarEvents);
     return eventsArray;
-  }, [hearingDetails, events.slots]);
+  }, [hearingDetails, events]);
 
   const getEachHearingType = (hearingList) => {
     return [...new Set(hearingList.map((hearing) => hearing.hearingType))];
@@ -183,6 +170,7 @@ const MonthlyCalendar = () => {
     searchParams.set("from-date", fromDate.getTime());
     searchParams.set("to-date", toDate.getTime());
     searchParams.set("slot", arg.event.extendedProps.slot);
+    searchParams.set("slotId", arg.event.extendedProps.slotId);
     searchParams.set("view", getCurrentViewType());
     searchParams.set("count", count);
     history.replace({ search: searchParams.toString() });
@@ -193,6 +181,7 @@ const MonthlyCalendar = () => {
     searchParams.delete("from-date");
     searchParams.delete("to-date");
     searchParams.delete("slot");
+    searchParams.delete("slotId");
     searchParams.delete("view");
     searchParams.delete("count");
     history.replace({ search: searchParams.toString() });
@@ -209,83 +198,13 @@ const MonthlyCalendar = () => {
   const onSubmit = () => {
     setStepper((prev) => prev + 1);
   };
-
-  const onCancel = () => {
-    setStepper((prev) => prev - 1);
-  };
-  const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {};
-
-  const config = [
-    {
-      body: [
-        {
-          type: "dropdown",
-          key: "reason",
-          label: "Reason for Reschedule",
-          isMandatory: true,
-          populators: {
-            label: "Reason for Reschedule",
-            optionsKey: "name",
-            isMandatory: true,
-            mdmsConfig: {
-              masterName: "BulkRescheduleReason",
-              moduleName: "Hearing",
-              select: "(data) => { console.log(data) ;return data['Hearing'].BulkRescheduleReason?.map((item) => {return item;});}",
-            },
-          },
-        },
-        {
-          inline: true,
-          label: "Date Range  (From) ", // need to update this component to custom date picker date should show CustomCalendar modal
-          isMandatory: true,
-          key: "dob",
-          type: "date",
-          disable: false,
-          populators: { name: "dob", error: "Required" },
-        },
-        {
-          inline: true,
-          label: "Date Range (To)", // need to update this component to custom date picker date should show CustomCalendar modal
-          isMandatory: false,
-          key: "dob1",
-          type: "date",
-          disable: false,
-          populators: { name: "dob1", error: "Required" },
-        },
-        {
-          label: "Slot",
-          isMandatory: true,
-          key: "slot",
-          type: "dropdown",
-          // disable: true,//dynamic based on dates
-          populators: {
-            name: "slot",
-            optionsKey: "name",
-            allowMultiSelect: true,
-            isMandatory: true,
-            defaultText: "select slot",
-            selectedText: " ",
-            options: [
-              {
-                code: "slot1",
-                name: "slote1",
-              },
-              {
-                code: "slot2",
-                name: "slot2",
-              },
-            ],
-          },
-        },
-      ],
-    },
-  ];
-
   return (
     <React.Fragment>
-      <div style={{ display: "flex", justifyContent: "end", paddingRight: "24px", marginTop: "5px" }}>
-        <Button label={"Bulk Reschedule"} onButtonClick={onSubmit}></Button>
-      </div>
+      {Digit.UserService.getType() === "employee" && (
+        <div style={{ display: "flex", justifyContent: "end", paddingRight: "24px", marginTop: "5px" }}>
+          <Button label={"Bulk Reschedule"} onButtonClick={onSubmit}></Button>
+        </div>
+      )}
       <div style={{ display: "flex" }}>
         <div style={{ width: "70%" }}>
           <div>
@@ -321,9 +240,10 @@ const MonthlyCalendar = () => {
               <PreHearingModal
                 courtData={courtData?.["common-masters"]?.Court_Rooms}
                 onCancel={closeModal}
-                hearingData={{ fromDate, toDate, slot, count }}
+                hearingData={{ fromDate, toDate, slot, slotId, count }}
                 individualId={individualId}
                 userType={userType}
+                events={events}
               />
             )}
           </div>
@@ -340,38 +260,7 @@ const MonthlyCalendar = () => {
           />
         </div>
       </div>
-      {stepper === 1 && (
-        <Modal
-          headerBarEnd={<CloseBtn onClick={onCancel} />}
-          actionSaveLabel={t("CS_COMMON_CONFIRM")}
-          formId="modal-action"
-          headerBarMain={<Heading label={t("CS_CONFIRM_COURT")} />}
-          hideSubmit
-        >
-          <FormComposerV2
-            // key={`form-config-${selected?.respondentType?.code}`}
-            config={config}
-            style={{ width: "100%", margin: "0px", padding: "0px !important" }}
-            onFormValueChange={onFormValueChange}
-            // defaultValues={accusedRegisterFormData}
-            actionClassName="e-filing-action-bar"
-            actionSaveLabel={t("CS_COMMON_CONFIRM")}
-            t={t}
-            noBoxShadow
-            inline={true}
-            label={t("CORE_COMMON_CONTINUE")}
-            onSecondayActionClick={() => {}}
-            secondaryLabel={t("back")}
-            onSubmit={(props) => onSubmit(props)}
-            submitInForm
-            className={"Bulk-rechedule"}
-            fieldStyle={{ margin: 0, Background: "black" }}
-            cardStyle={{ minWidth: "100%", Background: "blue" }}
-            cardClassName={"card-shec"}
-            headingStyle={{ textAlign: "center" }}
-          />
-        </Modal>
-      )}
+      <BulkReschedule stepper={stepper} setStepper={setStepper} selectedSlot={[]} />
     </React.Fragment>
   );
 };

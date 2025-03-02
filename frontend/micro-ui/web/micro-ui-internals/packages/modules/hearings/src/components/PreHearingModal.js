@@ -6,8 +6,9 @@ import { preHearingConfig } from "../configs/PreHearingConfig";
 import { hearingService } from "../hooks/services";
 import { ReschedulingPurpose } from "../pages/employee/ReschedulingPurpose";
 import { formatDate } from "../utils";
+import BulkReschedule from "../pages/employee/BulkReschedule";
 
-function PreHearingModal({ onCancel, hearingData, courtData, individualId, userType }) {
+function PreHearingModal({ onCancel, hearingData, courtData, individualId, userType, events }) {
   const { t } = useTranslation();
   const roles = Digit.UserService.getUser()?.info?.roles;
   const isCourtRoomManager = roles?.some((role) => role.code === "COURT_ROOM_MANAGER");
@@ -16,6 +17,8 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
   const [purposeModalOpen, setPurposeModalOpen] = useState(false);
   const [purposeModalData, setPurposeModalData] = useState({});
   const [rescheduleAll, setRescheduleAll] = useState(false);
+  const [stepper, setStepper] = useState(0);
+
   const DateFormat = "DD-MM-YYYY";
 
   const Heading = (props) => {
@@ -112,6 +115,7 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
   if (userType === "citizen" && !individualId) {
     return <Loader />;
   }
+  const selectedSlot = events?.filter((slot) => slot?.id === parseInt(hearingData?.slotId));
 
   return (
     <Modal
@@ -135,11 +139,13 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
         <div>
           <strong>{formatDate(new Date(hearingData.fromDate), DateFormat)}</strong>, {hearingData.slot}
         </div>
-        {Digit.UserService.getType() === "employee" && !isCourtRoomManager && (
+        {Digit.UserService.getType() === "employee" && (
           <Button
             className="border-none dristi-font-bold"
-            onButtonClick={onRescheduleAllClick}
-            label={t("RESCHEDULE_ALL_HEARINGS")}
+            onButtonClick={() => {
+              setStepper(1);
+            }}
+            label={t("Bulk Reschedule")}
             variation={"secondary"}
           />
         )}
@@ -147,6 +153,12 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
       {purposeModalOpen && (
         <ReschedulingPurpose rescheduleAll={rescheduleAll} courtData={courtData} closeFunc={closeFunc} caseDetails={purposeModalData} />
       )}
+      <BulkReschedule
+        stepper={stepper}
+        setStepper={setStepper}
+        selectedDate={new Date(hearingData?.fromDate).setHours(0, 0, 0, 0)}
+        selectedSlot={selectedSlot || []}
+      />
     </Modal>
   );
 }

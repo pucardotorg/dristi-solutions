@@ -117,6 +117,7 @@ module.exports = function (app) {
     "/casemanagement/casemanager/case/v1/_buildcasebundle",
     "/lock-svc",
     "/ab-diary",
+    "/notification"
   ].forEach((location) => app.use(location, createProxy));
   ["/pb-egov-assets"].forEach((location) => app.use(location, assetsProxy));
   ["/mdms-v2/v2/_create"].forEach((location) => app.use(location, mdmsProxy));
