@@ -12,6 +12,7 @@ const { renderError } = require("../utils/renderError");
 const { getAdvocates } = require("./getAdvocates");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
+const { extractOrderNumber } = require("../utils/orderUtils");
 
 function getOrdinalSuffix(day) {
   if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
@@ -127,7 +128,10 @@ async function applicationSubmissionExtension(req, res, qrCode) {
       renderError(res, "Application not found", 404);
     }
 
-    const refOrderNumber = application?.additionalDetails?.formdata?.refOrderId;
+    const refOrderNumber = extractOrderNumber(
+      application?.additionalDetails?.formdata?.refOrderId
+    );
+
     const resOrder = await handleApiCall(
       () => search_order(tenantId, refOrderNumber, requestInfo, true),
       "Failed to query order service"

@@ -726,6 +726,8 @@ const EvidenceModal = ({
         }),
       };
       const linkedOrderNumber = documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.refOrderId;
+      const applicationNumber = [documentSubmission?.[0]?.applicationList?.applicationNumber];
+
       if (generateOrder) {
         const reqbody = {
           order: {
@@ -733,7 +735,7 @@ const EvidenceModal = ({
             tenantId,
             cnrNumber,
             filingNumber,
-            applicationNumber: [documentSubmission?.[0]?.applicationList?.applicationNumber],
+            applicationNumber: applicationNumber,
             statuteSection: {
               tenantId,
             },
@@ -755,6 +757,8 @@ const EvidenceModal = ({
               applicationStatus: documentSubmission?.[0]?.applicationList?.applicationType
                 ? setApplicationStatus(type, documentSubmission[0].applicationList.applicationType)
                 : null,
+              ...(linkedOrderNumber && { linkedOrderNumber: linkedOrderNumber }),
+              ...(applicationNumber && { applicationNumber: applicationNumber }),
             },
             ...(documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName && {
               orderDetails: { parties: [{ partyName: documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName }] },

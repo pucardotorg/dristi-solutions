@@ -271,7 +271,12 @@ export const UICustomizations = {
               return `${locality} ${district} ${city} ${state} ${pincode ? ` - ${pincode}` : ""}`.trim();
             };
             const taskData = data?.list
-              ?.filter((data) => data?.filingNumber === additionalDetails?.filingNumber && data?.orderId === additionalDetails?.orderId)
+              ?.filter(
+                (data) =>
+                  data?.filingNumber === additionalDetails?.filingNumber &&
+                  data?.orderId === additionalDetails?.orderId &&
+                  (!additionalDetails?.itemId || data?.additionalDetails?.itemId === additionalDetails?.itemId)
+              )
               ?.map((data) => {
                 let taskDetail = structuredClone(data?.taskDetails);
                 taskDetail = normalizeData(taskDetail);

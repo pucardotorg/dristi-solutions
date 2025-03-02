@@ -212,9 +212,14 @@ const ViewPaymentDetails = ({ location, match }) => {
       });
 
       taskHearingNumber = orderDetails?.hearingNumber || "";
-      taskOrderType = orderDetails?.orderType || "";
-      if (orderDetails?.orderType === "NOTICE") {
-        taskPartyIndex = orderDetails?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex;
+      const compositeItem = orderDetails?.compositeItems?.find((item) => item?.id === tasksData?.additionDetails?.itemId) || {};
+      taskOrderType = compositeItem?.orderType || orderDetails?.orderType || "";
+      if (taskOrderType === "NOTICE") {
+        const noticeOrder =
+          orderDetails?.orderCategory === "COMPOSITE"
+            ? compositeItem?.orderSchema?.additionalDetails?.formdata?.noticeOrder
+            : orderDetails?.additionalDetails?.formdata?.noticeOrder;
+        taskPartyIndex = noticeOrder?.party?.data?.partyIndex;
       }
       taskFilingNumber = tasksData?.filingNumber || demandBill?.additionalDetails?.filingNumber;
     }
