@@ -70,6 +70,10 @@ public class SmsNotificationService {
         else if(messageCode.equalsIgnoreCase(FSO_VALIDATED)){
             pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationCaseFsoValidationTemplateId());
         }
+        else if(messageCode.equalsIgnoreCase(JUDGE_ASSIGNED)) {
+            pushNotification(smsTemplateData,message,mobileNumber,config.getSmsNotificationCaseJudgeAssignedTemplateId());
+
+        }
         else if(messageCode.equalsIgnoreCase(FSO_SEND_BACK)){
             pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationCaseFsoSendBackTemplateId());
         }

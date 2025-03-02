@@ -215,6 +215,9 @@ public class Configuration {
 	@Value("${egov.sms.notification.case.fso.send.back.template.id}")
 	private String smsNotificationCaseFsoSendBackTemplateId;
 
+	@Value("${egov.sms.notification.case.judge.assigned.template.id}")
+	private String smsNotificationCaseJudgeAssignedTemplateId;
+
 	@Value("${egov.sms.notification.case.judge.send.back.template.id}")
 	private String smsNotificationCaseJudgeSendBackTemplateId;
 
