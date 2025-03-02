@@ -1,6 +1,7 @@
 package org.pucar.dristi.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import digit.models.coremodels.AuditDetails;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -61,4 +62,10 @@ public class ScheduleHearing {
 
     @JsonProperty("expiryTime")
     private Long expiryTime;
+
+    @JsonProperty("auditDetails")
+    private AuditDetails auditDetails;
+
+    @JsonProperty("rowVersion")
+    private Integer rowVersion = null;
 }
