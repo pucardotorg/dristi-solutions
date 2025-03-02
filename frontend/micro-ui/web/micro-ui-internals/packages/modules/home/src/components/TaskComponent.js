@@ -68,7 +68,7 @@ const TasksComponent = ({
           ...(isLitigant && { assignedTo: uuid }),
           ...(!isLitigant && { assignedRole: [...roles] }),
           ...(inCase && { filingNumber: filingNumber }),
-          isDiary: isDiary,
+          screenType: isDiary ? ["Adiary"] : ["home"],
         },
         limit: 10000,
         offset: 0,
@@ -138,10 +138,10 @@ const TasksComponent = ({
   );
 
   const handleReviewOrder = useCallback(
-    async ({ filingNumber, caseId, referenceId }) => {
+    async ({ filingNumber, caseId, referenceId, litigant, litigantIndId }) => {
       const orderDetails = await getOrderDetail(referenceId);
       history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Orders`, {
-        orderObj: orderDetails,
+        orderObj: { ...orderDetails, litigant, litigantIndId },
       });
     },
     [getOrderDetail, history, userType]
@@ -303,6 +303,10 @@ const TasksComponent = ({
           const entityType = data?.fields?.find((field) => field.key === "entityType")?.value;
           const individualId = data?.fields?.find((field) => field.key === "additionalDetails.individualId")?.value;
           const caseId = data?.fields?.find((field) => field.key === "additionalDetails.caseId")?.value;
+          const litigant = data?.fields?.find((field) => field.key === "additionalDetails.litigantUuid[0]")?.value;
+          const litigantIndId = data?.fields?.find((field) => field.key === "additionalDetails.litigants[0]")?.value;
+          const screenType = data?.fields?.find((field) => field.key === "screenType")?.value;
+
           const updateReferenceId = referenceId.split("_").pop();
           const defaultObj = { referenceId: updateReferenceId, ...caseDetail };
           const pendingTaskActions = selectTaskType?.[entityType || taskTypeCode];
@@ -337,9 +341,18 @@ const TasksComponent = ({
             isCompleted,
             dueDateColor: due === "Due today" ? "#9E400A" : "",
             redirectUrl,
-            params: { ...additionalDetails, cnrNumber, filingNumber, caseId: caseDetail?.id, referenceId: updateReferenceId },
+            params: {
+              ...additionalDetails,
+              cnrNumber,
+              filingNumber,
+              caseId: caseDetail?.id,
+              referenceId: updateReferenceId,
+              litigant,
+              litigantIndId,
+            },
             isCustomFunction,
             referenceId,
+            screenType,
           };
         })
       );
@@ -396,6 +409,7 @@ const TasksComponent = ({
                   ...responseDoc,
                   additionalDetails: {
                     fileName: `Response (${data?.additionalDetails?.fullName})`,
+                    fileType: "respondent-response",
                   },
                 },
               ],
@@ -404,14 +418,19 @@ const TasksComponent = ({
         }),
       };
     }
-    const response = await updateCaseDetails(newCase, tenantId, "RESPOND");
+    let response;
+    try {
+      response = await updateCaseDetails(newCase, tenantId, "RESPOND");
+    } catch (error) {
+      console.error("error :>> ", error);
+    }
     if (response) {
       try {
         await DRISTIService.customApiService(Urls.pendingTask, {
           pendingTask: {
             name: "Pending Response",
             entityType: "case-default",
-            referenceId: `MANUAL_${pendingTask?.filingNumber}`,
+            referenceId: pendingTask?.referenceId,
             status: "PENDING_RESPONSE",
             assignedTo: [{ uuid: userInfo?.uuid }],
             assignedRole: ["CASE_RESPONDER"],
@@ -468,6 +487,7 @@ const TasksComponent = ({
           actionSaveOnSubmit: async () => {
             await submitResponse(responseDoc);
           },
+          async: true,
           isDisabled: responseDoc?.fileStore ? false : true,
         },
         {

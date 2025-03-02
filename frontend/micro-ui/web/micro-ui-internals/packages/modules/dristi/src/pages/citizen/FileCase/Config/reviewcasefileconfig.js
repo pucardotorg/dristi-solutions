@@ -226,8 +226,8 @@ export const reviewCaseFileFormConfig = [
                 {
                   type: "text",
                   label: "POLICE_STATION",
-                  value: "policeStation.code",
-                  isLocalizationRequired: true,
+                  value: "policeStation.name",
+                  isLocalizationRequired: false,
                 },
                 {
                   type: "date",
@@ -309,6 +309,10 @@ export const reviewCaseFileFormConfig = [
                 //   label: "CS_MODE_OF_DISPATCH",
                 //   value: "modeOfDispatchType.modeOfDispatchType.name",
                 // },
+                {
+                  type: "infoBox",
+                  value: "infoBoxData",
+                },
                 {
                   type: "date",
                   label: "CS_DATE_OF_DISPATCH_LDN",
@@ -431,8 +435,8 @@ export const reviewCaseFileFormConfig = [
               noDataText: "NO_WITNESSES_ADDED",
               config: [
                 {
-                  type: "title",
-                  value: ["firstName", "lastName"],
+                  type: "witnessTitle",
+                  value: ["firstName", "lastName", "witnessDesignation"],
                 },
                 {
                   type: "phonenumber",
@@ -448,11 +452,6 @@ export const reviewCaseFileFormConfig = [
                   type: "text",
                   label: "AGE",
                   value: "witnessAge",
-                },
-                {
-                  type: "text",
-                  label: "WITNESS_DESIGNATION",
-                  value: "witnessDesignation",
                 },
                 {
                   type: "address",

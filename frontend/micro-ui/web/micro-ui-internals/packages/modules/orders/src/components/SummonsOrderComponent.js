@@ -5,6 +5,28 @@ import _ from "lodash";
 import AddParty from "../../../hearings/src/pages/employee/AddParty";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { useTranslation } from "react-i18next";
+import { getFormattedName } from "../utils";
+
+const getUserOptions = (userList, t, displayPartyType) => {
+  return userList?.map((user) => {
+    const { firstName, middleName, lastName, partyType, witnessDesignation } = user?.data || {};
+    const isWitness = partyType?.toLowerCase() === "witness";
+
+    const partyTypeLabel = partyType ? `(${t(displayPartyType[partyType.toLowerCase()])})` : "";
+
+    // Witness formatting logic
+    let label = "";
+    if (isWitness) {
+      label = getFormattedName(firstName, middleName, witnessDesignation, partyTypeLabel);
+    } else {
+      // Default formatting for non-witness users
+      label = getFormattedName(firstName, middleName, lastName, null, partyTypeLabel);
+    }
+
+    return { label, value: user };
+  });
+};
+
 
 const RenderDeliveryChannels = ({ partyDetails, deliveryChannels, handleCheckboxChange }) => {
   const { t } = useTranslation();
@@ -172,6 +194,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
             ...item?.data,
             firstName: item?.data?.firstName,
             lastName: item?.data?.lastName,
+            witnessDesignation : item?.data?.witnessDesignation,
             address: mapAddressDetails(item?.data?.addressDetails),
             partyType: "Witness",
             phone_numbers: item?.data?.phonenumbers?.mobileNumber || [],
@@ -232,8 +255,9 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
 
   const selectedParty = useMemo(() => {
     const partyData = formData?.[config.key]?.party?.data || {};
-    const { firstName = "", middleName = "", lastName = "", partyType } = partyData;
-    const label = [firstName, middleName, lastName, partyType ? `(${t(displayPartyType[partyType.toLowerCase()])})` : ""].filter(Boolean).join(" ");
+    const { firstName = "", middleName = "", lastName = "", partyType, witnessDesignation = "" } = partyData;
+    const partyTypeLabel = partyType ? `(${t(displayPartyType[partyType.toLowerCase()])})` : "";
+    const label = getFormattedName(firstName, middleName, lastName, witnessDesignation, partyTypeLabel);
     return formData[config.key]?.party
       ? {
           label,
@@ -344,17 +368,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
             <div>
               <Dropdown
                 t={t}
-                option={userList?.map((user) => ({
-                  label: [
-                    user?.data?.firstName,
-                    user?.data?.middleName,
-                    user?.data?.lastName,
-                    `(${t(displayPartyType[user?.data?.partyType.toLowerCase()])})`,
-                  ]
-                    .filter(Boolean)
-                    .join(" "),
-                  value: user,
-                }))}
+                option={getUserOptions(userList, t, displayPartyType)}
                 optionKey="label"
                 selected={selectedParty}
                 select={handleDropdownChange}

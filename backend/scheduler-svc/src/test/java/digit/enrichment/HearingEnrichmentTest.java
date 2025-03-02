@@ -4,8 +4,10 @@ import digit.config.Configuration;
 import digit.models.coremodels.AuditDetails;
 import digit.repository.HearingRepository;
 import digit.util.DateUtil;
-import digit.util.IdgenUtil;
-import digit.web.models.*;
+import digit.web.models.MdmsHearing;
+import digit.web.models.MdmsSlot;
+import digit.web.models.ScheduleHearing;
+import digit.web.models.ScheduleHearingRequest;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.junit.jupiter.api.Test;
@@ -23,7 +25,8 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyLong;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class HearingEnrichmentTest {
@@ -54,6 +57,7 @@ public class HearingEnrichmentTest {
         hearing1.setHearingDate(LocalDate.now().toEpochDay());
         hearing1.setJudgeId("judge1");
         hearing1.setHearingType("ADMISSION");
+        hearing1.setStartTime(0L);
 
         ScheduleHearing hearing2 = new ScheduleHearing();
         hearing2.setTenantId("tenantId1");
@@ -61,6 +65,7 @@ public class HearingEnrichmentTest {
         hearing2.setHearingDate(LocalDate.now().toEpochDay());
         hearing2.setJudgeId("judge1");
         hearing2.setHearingType("ADMISSION");
+        hearing2.setStartTime(0L);
 
         List<ScheduleHearing> hearingList = Arrays.asList(hearing1, hearing2);
 
@@ -90,6 +95,8 @@ public class HearingEnrichmentTest {
         hearing1.setHearingDate(LocalDate.now().toEpochDay());
         hearing1.setJudgeId("judge1");
         hearing1.setHearingType("ADMISSION");
+        hearing1.setStartTime(0L);
+        hearing1.setEndTime(0L);
 
         List<ScheduleHearing> hearingList = Collections.singletonList(hearing1);
 
@@ -141,6 +148,8 @@ public class HearingEnrichmentTest {
         ScheduleHearing hearing = new ScheduleHearing();
         hearing.setHearingDate(LocalDate.now().toEpochDay());
         hearing.setHearingType("ADMISSION");
+        hearing.setStartTime(0L);
+        hearing.setEndTime(0L);
 
         List<MdmsSlot> slots = new ArrayList<>();
         MdmsSlot slot = new MdmsSlot();
@@ -202,6 +211,9 @@ public class HearingEnrichmentTest {
         hearing1.setHearingDate(LocalDate.now().toEpochDay());
         hearing1.setJudgeId("judge1");
         hearing1.setHearingType("ADMISSION");
+        hearing1.setStartTime(0L);
+        hearing1.setEndTime(0L);
+
 
         List<ScheduleHearing> hearingList = Collections.singletonList(hearing1);
 

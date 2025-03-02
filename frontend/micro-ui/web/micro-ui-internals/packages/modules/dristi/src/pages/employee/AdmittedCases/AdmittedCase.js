@@ -1351,16 +1351,12 @@ const AdmittedCases = () => {
 
   const handleAdmitDismissCaseOrder = async (generateOrder, type) => {
     try {
-      const orderType = "ADMIT_DISMISS_CASE";
+      const orderType = type === "reject" ? "DISMISS_CASE" : type === "accept" ? "ADMIT_CASE" : null;
       const formdata = {
         orderType: {
           code: orderType,
           type: orderType,
           name: `ORDER_TYPE_${orderType}`,
-        },
-        isCaseAdmittedOrDismissed: {
-          code: type === "reject" ? "DISMISSED" : type === "accept" ? "ADMITTED" : null,
-          name: type === "reject" ? "DISMISSED" : type === "accept" ? "ADMITTED" : null,
         },
       };
       if (generateOrder) {
@@ -1373,6 +1369,8 @@ const AdmittedCases = () => {
             statuteSection: {
               tenantId,
             },
+            orderTitle: orderType,
+            orderCategory: "INTERMEDIATE",
             orderType,
             status: "",
             isActive: true,
@@ -1394,7 +1392,7 @@ const AdmittedCases = () => {
         };
         try {
           const res = await ordersService.createOrder(reqbody, { tenantId });
-          const name = "ADMIT_DISMISS_CASE";
+          const name = orderType;
           DRISTIService.customApiService(Urls.dristi.pendingTask, {
             pendingTask: {
               name: t(name),
@@ -1789,6 +1787,8 @@ const AdmittedCases = () => {
             statuteSection: {
               tenantId: tenantId,
             },
+            orderTitle: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+            orderCategory: "INTERMEDIATE",
             orderType: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
             status: "",
             isActive: true,
@@ -1882,6 +1882,8 @@ const AdmittedCases = () => {
           statuteSection: {
             tenantId,
           },
+          orderTitle: "REFERRAL_CASE_TO_ADR",
+          orderCategory: "INTERMEDIATE",
           orderType: "REFERRAL_CASE_TO_ADR",
           status: "",
           isActive: true,
@@ -1926,6 +1928,8 @@ const AdmittedCases = () => {
           statuteSection: {
             tenantId,
           },
+          orderTitle: "MANDATORY_SUBMISSIONS_RESPONSES",
+          orderCategory: "INTERMEDIATE",
           orderType: "MANDATORY_SUBMISSIONS_RESPONSES",
           status: "",
           isActive: true,
@@ -1987,10 +1991,14 @@ const AdmittedCases = () => {
   };
 
   const handleExtensionRequest = (orderNumber) => {
-    history.push(`/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&isExtension=true`);
+    history.push(
+      `/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&isExtension=true&litigant=${currentOrder?.litigant}&litigantIndId=${currentOrder?.litigantIndId}`
+    );
   };
   const handleSubmitDocument = (orderNumber) => {
-    history.push(`/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}`);
+    history.push(
+      `/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&litigant=${currentOrder?.litigant}&litigantIndId=${currentOrder?.litigantIndId}`
+    );
   };
 
   const openHearingModule = () => {
@@ -2018,6 +2026,8 @@ const AdmittedCases = () => {
         statuteSection: {
           tenantId,
         },
+        orderTitle: "SCHEDULE_OF_HEARING_DATE",
+        orderCategory: "INTERMEDIATE",
         orderType: "SCHEDULE_OF_HEARING_DATE",
         status: "",
         isActive: true,
@@ -2229,7 +2239,7 @@ const AdmittedCases = () => {
               </React.Fragment>
             )}
             <div className="sub-details-text">Code: {caseDetails?.accessCode}</div>
-            {delayCondonationData?.delayCondonationType?.code === "NO" && isJudge && (
+            {delayCondonationData?.delayCondonationType?.code === "NO" && (
               <div className="delay-condonation-chip" style={delayCondonationStylsMain}>
                 <p style={delayCondonationTextStyle}>
                   {(delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" && isDelayApplicationPending) ||

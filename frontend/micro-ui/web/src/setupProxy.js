@@ -52,5 +52,6 @@ module.exports = function (app) {
     "/lock-svc",
     "/ab-diary",
     "/notification",
+    "/kerala-icops",
   ].forEach((location) => app.use(location, createProxy));
 };

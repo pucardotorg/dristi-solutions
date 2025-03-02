@@ -18,6 +18,8 @@ function CitizenHome({ tenantId, setHideBack }) {
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const [isFetching, setIsFetching] = useState(true);
   const [isFetchingAdvoacte, setIsFetchingAdvocate] = useState(true);
+  const userInfoType = Digit.UserService.getType();
+
   const { data, isLoading, refetch } = Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
@@ -41,11 +43,15 @@ function CitizenHome({ tenantId, setHideBack }) {
 
   const individualId = useMemo(() => data?.Individual?.[0]?.individualId, [data?.Individual]);
   const isLitigantPartialRegistered = useMemo(() => {
-    if (!data?.Individual || data.Individual.length === 0) return false;
+    if (userInfoType !== "citizen") return false;
 
-    const address = data.Individual[0]?.address;
+    if (!data?.Individual || data?.Individual.length === 0) return false;
+
+    if (data?.Individual[0]?.userDetails?.roles?.some((role) => role?.code === "ADVOCATE_ROLE")) return false;
+
+    const address = data?.Individual[0]?.address;
     return !address || (Array.isArray(address) && address.length === 0);
-  }, [data?.Individual]);
+  }, [data?.Individual, userInfoType]);
 
   const userType = useMemo(() => data?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value, [data?.Individual]);
   const { data: searchData, isLoading: isSearchLoading, refetch: refetchAdvocateClerk } = Digit.Hooks.dristi.useGetAdvocateClerk(

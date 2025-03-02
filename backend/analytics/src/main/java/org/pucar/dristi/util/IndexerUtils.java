@@ -1,5 +1,6 @@
 package org.pucar.dristi.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
@@ -169,7 +170,7 @@ public class IndexerUtils {
         String cnrNumber = pendingTask.getCnrNumber();
         String filingNumber = pendingTask.getFilingNumber();
         String additionalDetails = "{}";
-        Boolean isDiary = pendingTask.getIsDiary();
+        String screenType = pendingTask.getScreenType();
         try {
             additionalDetails = mapper.writeValueAsString(pendingTask.getAdditionalDetails());
         } catch (Exception e) {
@@ -180,11 +181,11 @@ public class IndexerUtils {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status, assignedTo, assignedRole, cnrNumber, filingNumber, isCompleted, stateSla, businessServiceSla, additionalDetails, isDiary
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status, assignedTo, assignedRole, cnrNumber, filingNumber, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType
         );
     }
 
-    public String buildPayload(String jsonItem, JSONObject requestInfo) {
+    public String buildPayload(String jsonItem, JSONObject requestInfo) throws JsonProcessingException {
 
         String id = JsonPath.read(jsonItem, ID_PATH);
         String entityType = JsonPath.read(jsonItem, BUSINESS_SERVICE_PATH);
@@ -214,7 +215,7 @@ public class IndexerUtils {
         // Validate details map using the utility function
         String cnrNumber = details.get("cnrNumber");
         String filingNumber = details.get("filingNumber");
-        Boolean isDiary = details.containsKey("isDiary");
+        String screenType = details.get("screenType");
         String name = details.get("name");
         isCompleted = isNullOrEmpty(name);
         isGeneric = details.containsKey("isGeneric");
@@ -263,7 +264,7 @@ public class IndexerUtils {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status, assignedTo, assignedRole, cnrNumber, filingNumber, isCompleted, stateSla, businessServiceSla, additionalDetails, isDiary
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status, assignedTo, assignedRole, cnrNumber, filingNumber, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType
         );
     }
 
@@ -336,6 +337,7 @@ public class IndexerUtils {
     public Map<String, String> processEntity(String entityType, String referenceId, String status, String action, Object object, JSONObject requestInfo) {
         Map<String, String> caseDetails = new HashMap<>();
         String name = null;
+        String screenType = null;
         boolean isCompleted = true;
         boolean isGeneric = false;
 
@@ -346,6 +348,7 @@ public class IndexerUtils {
         for (PendingTaskType pendingTaskType : pendingTaskTypeList) {
             if (pendingTaskType.getState().equals(status) && pendingTaskType.getTriggerAction().contains(action)) {
                 name = pendingTaskType.getPendingTask();
+                screenType = pendingTaskType.getScreenType();
                 isCompleted = false;
                 isGeneric = pendingTaskType.getIsgeneric();
                 break;
@@ -365,6 +368,7 @@ public class IndexerUtils {
         // Add additional details to the caseDetails map
         caseDetails.putAll(entityDetails);
         caseDetails.put("name", name);
+        caseDetails.put("screenType", screenType);
         if (isGeneric) caseDetails.put("isGeneric", "Generic");
 
         return caseDetails;
@@ -469,8 +473,6 @@ public class IndexerUtils {
         Map<String, String> caseDetails = new HashMap<>();
         caseDetails.put("cnrNumber", null);
         caseDetails.put("filingNumber", null);
-        caseDetails.put("isDiary", "true");
-
         return caseDetails;
     }
 

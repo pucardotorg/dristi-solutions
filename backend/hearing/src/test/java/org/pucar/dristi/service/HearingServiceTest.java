@@ -4,6 +4,7 @@ import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -13,14 +14,13 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.HearingRegistrationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.HearingRepository;
+import org.pucar.dristi.util.SchedulerUtil;
 import org.pucar.dristi.validator.HearingRegistrationValidator;
 import org.pucar.dristi.web.models.*;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -47,8 +47,37 @@ public class HearingServiceTest {
     @Mock
     private Configuration config;
 
+    @Mock
+    private SchedulerUtil schedulerUtil;
+
     @InjectMocks
     private HearingService hearingService;
+
+    private List<Hearing> hearingList;
+    private Hearing hearing;
+    private ScheduleHearing scheduleHearing;
+    private RequestInfo requestInfo;
+    private HearingUpdateBulkRequest hearingUpdateBulkRequest;
+
+    @BeforeEach
+    void setUp() {
+        hearing = new Hearing();
+        hearing.setId(UUID.randomUUID());
+        hearing.setHearingId("12345");
+        hearing.setStartTime(new Date().getTime());
+        hearing.setEndTime(new Date().getTime());
+
+        hearingList = new ArrayList<>();
+        hearingList.add(hearing);
+
+        scheduleHearing = new ScheduleHearing();
+        scheduleHearing.setHearingBookingId("12345");
+
+        requestInfo = new RequestInfo();
+        hearingUpdateBulkRequest = new HearingUpdateBulkRequest();
+        hearingUpdateBulkRequest.setHearings(hearingList);
+        hearingUpdateBulkRequest.setRequestInfo(requestInfo);
+    }
 
     @Test
     void testCreateHearing_Success() {
@@ -405,5 +434,28 @@ public class HearingServiceTest {
         CustomException exception = assertThrows(CustomException.class, () -> hearingService.uploadWitnessDeposition(hearingRequest));
         assertEquals("Hearing not found", exception.getCode());
         assertTrue(exception.getMessage().contains("custom exception"));
+    }
+
+    @Test
+    void testUpdateBulkHearing_Success() {
+        when(hearingRepository.checkHearingsExist(any(Hearing.class))).thenReturn(Collections.singletonList(hearing));
+        when(schedulerUtil.getScheduledHearings(any())).thenReturn(Collections.singletonList(scheduleHearing));
+        when(config.getBulkRescheduleTopic()).thenReturn("test-topic");
+
+        List<Hearing> result = hearingService.updateBulkHearing(hearingUpdateBulkRequest);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        verify(producer, times(1)).push(eq("test-topic"), any(HearingUpdateBulkRequest.class));
+    }
+
+    @Test
+    void testUpdateBulkHearing_ExceptionHandling() {
+        when(hearingRepository.checkHearingsExist(any(Hearing.class))).thenThrow(new RuntimeException("DB Error"));
+
+        CustomException exception = assertThrows(CustomException.class, () ->
+                hearingService.updateBulkHearing(hearingUpdateBulkRequest));
+
+        assertEquals("Error occurred while updating hearing in bulk: DB Error", exception.getMessage());
     }
 }

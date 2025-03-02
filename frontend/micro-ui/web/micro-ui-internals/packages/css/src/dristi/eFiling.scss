@@ -1005,11 +1005,21 @@
               width: 100%;
               display: flex;
               justify-content: space-between;
+              p {
+                margin-top: 0px;
+              }
+            }
+            .address-info {
+              width: 100%;
+              .address-location{
+                display: flex;
+                justify-content: space-between;
+              }
             }
 
             .address-main {
               padding: 12px 16px;
-
+              gap: 1rem;
               &.error {
                 background-color: #fce8e8;
               }
@@ -1824,10 +1834,12 @@
 
     .column-4 {
       width: 25%;
+      word-break: break-word;
     }
 
     .column-3 {
       width: 33.333333%;
+      word-break: break-word;
     }
 
     td:last-child {

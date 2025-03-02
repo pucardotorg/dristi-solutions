@@ -2,7 +2,6 @@ package digit.kafka.cosumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.service.hearing.HearingProcessor;
-import digit.web.models.ReScheduleHearing;
 import digit.web.models.hearing.HearingRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,8 +28,13 @@ public class HearingConsumer {
     @KafkaListener(topics = {"create-hearing-application"})
     public void listenScheduleHearing(final HashMap<String, Object> record, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
 
-        HearingRequest hearingRequest = mapper.convertValue(record, HearingRequest.class);
-        processor.processCreateHearingRequest(hearingRequest);
+        log.info("Received create hearing message in topic {}", topic);
+        try {
+            HearingRequest hearingRequest = mapper.convertValue(record, HearingRequest.class);
+            processor.processCreateHearingRequest(hearingRequest);
+        } catch (Exception e) {
+            log.error("error occurred while serializing", e);
+        }
 
     }
 

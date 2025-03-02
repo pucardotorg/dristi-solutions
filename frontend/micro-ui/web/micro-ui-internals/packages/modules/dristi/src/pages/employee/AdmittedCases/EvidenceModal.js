@@ -650,7 +650,7 @@ const EvidenceModal = ({
                 fileStoreId={artifact?.file?.fileStore}
                 tenantId={tenantId}
                 docWidth={"calc(80vw * 62 / 100)"}
-                docHeight={"60vh"}
+                docHeight={"unset"}
                 showDownloadOption={false}
               />
             </div>
@@ -664,7 +664,7 @@ const EvidenceModal = ({
                       displayFilename={docSubmission.applicationContent.fileName}
                       tenantId={docSubmission.applicationContent.tenantId}
                       docWidth={"calc(80vw * 62 / 100)"}
-                      docHeight={"60vh"}
+                      docHeight={"unset"}
                       showDownloadOption={false}
                       documentName={docSubmission.applicationContent.fileName}
                     />
@@ -738,6 +738,8 @@ const EvidenceModal = ({
             statuteSection: {
               tenantId,
             },
+            orderTitle: orderType,
+            orderCategory: "INTERMEDIATE",
             orderType,
             status: "",
             isActive: true,
@@ -1041,7 +1043,7 @@ const EvidenceModal = ({
         >
           <div className="evidence-modal-main">
             <div className={"application-details"}>
-              <div style={{ display: "flex", flexDirection: "column" }}>
+              <div style={{ display: "flex", flexDirection: "column", overflowY: "auto", height: "fit-content" }}>
                 {isJudge && documentSubmission?.[0]?.applicationList?.applicationType === "DELAY_CONDONATION" && !Boolean(applicationNumber) && (
                   <div
                     className="dca-infobox-message"

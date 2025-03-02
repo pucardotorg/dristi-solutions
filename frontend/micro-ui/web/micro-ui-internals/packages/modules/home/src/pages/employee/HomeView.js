@@ -88,6 +88,21 @@ const HomeView = () => {
   );
   const individualId = useMemo(() => individualData?.Individual?.[0]?.individualId, [individualData]);
 
+  const isLitigantPartialRegistered = useMemo(() => {
+    if (userInfoType !== "citizen") return false;
+
+    if (!individualData?.Individual || individualData.Individual.length === 0) return false;
+
+    if (individualData?.Individual[0]?.userDetails?.roles?.some((role) => role?.code === "ADVOCATE_ROLE")) return false;
+
+    const address = individualData.Individual[0]?.address;
+    return !address || (Array.isArray(address) && address.length === 0);
+  }, [individualData?.Individual, userInfoType]);
+
+  if (isLitigantPartialRegistered) {
+    history.push(`/${window?.contextPath}/citizen/dristi/home/registration/user-name`);
+  }
+
   const userType = useMemo(() => individualData?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value, [
     individualData?.Individual,
   ]);

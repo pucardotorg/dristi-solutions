@@ -22,6 +22,33 @@ const formatName = (value, capitalize = true) => {
     .join(" ");
 };
 
+const checkChequeDepositDateValidity = (caseDetails, dateOfDispatch) => {
+  let isValid = true;
+  let message = "";
+  const dispatchDateObj = new Date(dateOfDispatch);
+
+  caseDetails?.caseDetails?.chequeDetails?.formdata?.forEach(({ data }) => {
+    if (data?.depositDate) {
+      const depositDateObj = new Date(data.depositDate);
+      const dayDifference = (dispatchDateObj - depositDateObj) / (1000 * 60 * 60 * 24);
+
+      if (dayDifference > 30) {
+        isValid = false;
+        message += `Cheque ${data.chequeNumber} has a deposit date exceeding the allowed 30-day period.\n`;
+      }
+    }
+  });
+
+  return {
+    isValid,
+    info: {
+      header: "WARNING",
+      scrutinyHeader: "CS_LEGAL_WARNING",
+      data: [message.trim()],
+    },
+  };
+};
+
 export const showDemandNoticeModal = ({ selected, setValue, formData, setError, clearErrors, index, setServiceOfDemandNoticeModal, caseDetails }) => {
   if (selected === "demandNoticeDetails") {
     const totalCheques = caseDetails?.caseDetails?.["chequeDetails"]?.formdata && caseDetails?.caseDetails?.["chequeDetails"]?.formdata.length;
@@ -987,8 +1014,8 @@ export const delayApplicationValidation = ({ t, formData, selected, setShowError
 export const witnessDetailsValidation = ({ t, formData, selected, setShowErrorToast, setErrorMsg, toast, setFormErrors }) => {
   if (selected === "witnessDetails") {
     if (!(formData?.firstName || formData?.witnessDesignation)) {
-      setFormErrors("firstName", { message: "FIRST_LAST_NAME_MANDATORY_MESSAGE" });
-      setFormErrors("witnessDesignation", { message: "FIRST_LAST_NAME_MANDATORY_MESSAGE" });
+      // setFormErrors("firstName", { message: "FIRST_LAST_NAME_MANDATORY_MESSAGE" });
+      // setFormErrors("witnessDesignation",{ message: "FIRST_LAST_NAME_MANDATORY_MESSAGE" })
       toast.error(t("AT_LEAST_ONE_OUT_OF_FIRST_NAME_AND_WITNESS_DESIGNATION_IS_MANDATORY"));
       return true;
     }
@@ -2082,8 +2109,10 @@ export const updateCaseDetails = async ({
   }
   if (selected === "witnessDetails") {
     const newFormDataCopy = structuredClone(updatedFormData.filter((item) => item.isenabled));
+
     for (let i = 0; i < newFormDataCopy.length; i++) {
       const obj = newFormDataCopy[i];
+
       if (obj?.data?.phonenumbers) {
         obj.data.phonenumbers.textfieldValue = "";
       }
@@ -2091,6 +2120,7 @@ export const updateCaseDetails = async ({
         obj.data.emails.textfieldValue = "";
       }
     }
+
     data.additionalDetails = {
       ...caseDetails.additionalDetails,
       witnessDetails: {
@@ -2099,8 +2129,10 @@ export const updateCaseDetails = async ({
       },
     };
   }
+
   if (selected === "demandNoticeDetails") {
     let docList = [];
+    let infoBoxData = {};
     const newFormData = await Promise.all(
       updatedFormData
         .filter((item) => item.isenabled)
@@ -2112,6 +2144,7 @@ export const updateCaseDetails = async ({
             proofOfReplyFileUpload: null,
           };
           const fileUploadKeys = Object.keys(demandNoticeDocumentData).filter((key) => data?.data?.[key]?.document);
+          const result = checkChequeDepositDateValidity(caseDetails, data?.data?.dateOfDispatch);
 
           await Promise.all(
             fileUploadKeys.map(async (key) => {
@@ -2138,11 +2171,19 @@ export const updateCaseDetails = async ({
               }
             })
           );
+          // Adding warning message based on a legal demand notice must be sent within 30 days of receiving the cheque return memo
+          if (!data?.data?.infoBoxData) {
+            infoBoxData = result?.isValid ? null : result?.info;
+          } else {
+            infoBoxData = result?.isValid ? null : result?.info;
+          }
+
           return {
             ...data,
             data: {
               ...data.data,
               ...demandNoticeDocumentData,
+              infoBoxData,
             },
           };
         })

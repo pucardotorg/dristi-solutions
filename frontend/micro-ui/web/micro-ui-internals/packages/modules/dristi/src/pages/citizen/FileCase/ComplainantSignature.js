@@ -209,6 +209,7 @@ const ComplainantSignature = ({ path }) => {
   const name = "Signature";
   const complainantPlaceholder = "Complainant Signature";
   const advocatePlaceholder = "Advocate Signature";
+  const [calculationResponse, setCalculationResponse] = useState({});
 
   const uploadModalConfig = useMemo(() => {
     return {
@@ -243,17 +244,20 @@ const ComplainantSignature = ({ path }) => {
     }
   };
 
-  useEffect(() => {
-    const upload = async () => {
-      if (formData?.uploadSignature?.Signature?.length > 0) {
+  const onSubmit = async () => {
+    if (formData?.uploadSignature?.Signature?.length > 0) {
+      try {
         const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
-        setSignatureDocumentId(uploadedFileId[0]?.fileStoreId);
+        setSignatureDocumentId(uploadedFileId?.[0]?.fileStoreId);
         setUploadDoc(true);
+        localStorage.setItem("formData", JSON.stringify(formData));
+        setDocumentUpload(false);
+      } catch (error) {
+        console.error("error", error);
+        setFormData({});
       }
-    };
-
-    upload();
-  }, [formData, tenantId, uploadDocuments]);
+    }
+  };
 
   const { data: caseData, refetch: refetchCaseData, isLoading } = useSearchCaseService(
     {
@@ -329,6 +333,16 @@ const ComplainantSignature = ({ path }) => {
     () => [complainantWorkflowState.UPLOAD_SIGN_DOC, complainantWorkflowState.UPLOAD_SIGN_DOC_SCRUTINY].includes(state),
     [state]
   );
+
+  const isLastPersonSigned = useMemo(() => {
+    if (!litigants?.length) return false;
+    return litigants?.every((litigant) => {
+      const litigantSigned = litigant?.hasSigned;
+      const hasReps = litigant?.representatives?.length > 0;
+      const anyRepresentativeSigned = hasReps ? litigant?.representatives?.some((rep) => rep?.hasSigned) : true;
+      return litigantSigned && anyRepresentativeSigned;
+    });
+  }, [litigants]);
 
   const closePendingTask = async ({ status, assignee, closeUploadDoc }) => {
     const entityType = "case-default";
@@ -618,10 +632,20 @@ const ComplainantSignature = ({ path }) => {
     return tempDocList;
   };
 
-  const handleSubmit = async (state) => {
-    setLoader(true);
+  const handleSubmit = (state) => {
+    if (isSelectedUploadDoc) {
+      updateCase(state);
+    } else {
+      if (isLastPersonSigned && state === "PENDING_PAYMENT") {
+        history.replace(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculationResponse } });
+      } else {
+        history.replace(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
+      }
+    }
+  };
 
-    let calculationResponse = {};
+  const updateCase = async (state) => {
+    setLoader(true);
 
     const caseDocList = updateSignedDocInCaseDoc();
 
@@ -700,28 +724,48 @@ const ComplainantSignature = ({ path }) => {
                 tenantId,
               },
             });
-            calculationResponse = await callCreateDemandAndCalculation(caseDetails, tenantId, caseId);
+            const calculation = await callCreateDemandAndCalculation(caseDetails, tenantId, caseId);
+            setCalculationResponse(calculation);
             setLoader(false);
-            history.replace(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculationResponse } });
+            if (isSelectedUploadDoc) {
+              history.replace(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculationResponse: calculation } });
+            }
           } else {
             setLoader(false);
-            history.replace(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
+            if (isSelectedUploadDoc) {
+              history.replace(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
+            }
           }
         })
         .catch((error) => {
           toast.error(t("SOMETHING_WENT_WRONG"));
+          setEsignSuccess(false);
           throw error;
         });
     } catch (error) {
       console.error("Error:", error);
       toast.error(t("SOMETHING_WENT_WRONG"));
+      setEsignSuccess(false);
       setLoader(false);
     }
   };
 
   const isSubmitEnabled = () => {
-    return isEsignSuccess || uploadDoc;
+    return isEsignSuccess || isCurrentAdvocateSigned || isCurrentLitigantSigned || uploadDoc;
   };
+
+  useEffect(() => {
+    const esignCaseUpdate = async () => {
+      if (isEsignSuccess && caseDetails?.filingNumber) {
+        await updateCase(state).then(async () => {
+          setEsignSuccess(false);
+          await refetchCaseData();
+        });
+      }
+    };
+
+    esignCaseUpdate();
+  }, [isEsignSuccess, caseDetails]);
 
   useEffect(() => {
     const handleCaseUnlocking = async () => {
@@ -749,7 +793,7 @@ const ComplainantSignature = ({ path }) => {
     localStorage.removeItem("isSignSuccess");
     localStorage.removeItem("signStatus");
     localStorage.removeItem("fileStoreId");
-  }, [caseDetails?.filingNumber, tenantId]);
+  }, [caseDetails]);
 
   const isRightPannelEnable = () => {
     if (isAdvocateFilingCase) {
@@ -895,7 +939,7 @@ const ComplainantSignature = ({ path }) => {
       </div>
       <ActionBar>
         <div style={styles.actionBar}>
-          {isFilingParty && (
+          {isFilingParty && ((isSelectedEsign && !isLastPersonSigned) || isSelectedUploadDoc) && (
             <Button
               label={t("EDIT_A_CASE")}
               variation={"secondary"}
@@ -916,7 +960,7 @@ const ComplainantSignature = ({ path }) => {
           <SubmitBar
             label={
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>
-                <span>{t("CS_SUBMIT_CASE")}</span>
+                <span>{isSelectedUploadDoc || isLastPersonSigned ? t("CS_SUBMIT_CASE") : t("ESIGN_GO_TO_HOME")}</span>
                 <RightArrow />
               </div>
             }
@@ -938,6 +982,7 @@ const ComplainantSignature = ({ path }) => {
           formData={formData}
           showWarning={true}
           warningText={t("UPLOAD_SIGNED_DOC_WARNING")}
+          onSubmit={onSubmit}
         />
       )}
       {isEditCaseModal && (

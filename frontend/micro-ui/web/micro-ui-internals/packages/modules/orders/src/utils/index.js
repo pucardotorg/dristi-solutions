@@ -115,9 +115,20 @@ export const constructFullName = (firstName, middleName, lastName) => {
   return [firstName, middleName, lastName].filter(Boolean).join(" ").trim();
 };
 
+export const getFormattedName = (firstName, middleName, lastName, designation, partyTypeLabel) => {
+  const nameParts = [firstName, middleName, lastName].filter(Boolean).join(" ");
+  
+  const nameWithDesignation = designation && nameParts
+    ? `${nameParts} - ${designation}`
+    : designation || nameParts;
+
+  return partyTypeLabel ? `${nameWithDesignation} ${partyTypeLabel}` : nameWithDesignation;
+};
+
 // name format for entity type
 export const getRespondantName = (respondentNameData) => {
-  const partyName = constructFullName(respondentNameData?.firstName, respondentNameData?.middleName, respondentNameData?.lastName);
+  const isWitness = respondentNameData?.partyType?.toLowerCase() === "witness";
+  const partyName = isWitness ? getFormattedName(respondentNameData?.firstName, respondentNameData?.middleName, respondentNameData?.lastName, respondentNameData?.witnessDesignation, null) : constructFullName(respondentNameData?.firstName, respondentNameData?.middleName, respondentNameData?.lastName);
 
   if (respondentNameData?.respondentCompanyName) {
     return `${respondentNameData?.respondentCompanyName} (Represented By ${partyName})`;

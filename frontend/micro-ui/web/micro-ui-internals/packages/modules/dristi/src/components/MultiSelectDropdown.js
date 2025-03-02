@@ -39,6 +39,18 @@ const MultiSelectDropdown = ({
           props
         );
         return newState;
+      case "ADD_ALL":
+        const newStateWithAll = [
+          ...action?.payload?.filter((data) => !data?.isDisabled)?.map((data) => ({ [optionsKey]: data?.[optionsKey], propsData: [null, data] })),
+        ];
+        onSelect(
+          newStateWithAll.map((e) => e.propsData),
+          props
+        );
+        return newStateWithAll;
+      case "REMOVE_ALL":
+        onSelect([], props);
+        return [];
       case "REPLACE_COMPLETE_STATE":
         return action.payload;
       default:
@@ -84,6 +96,11 @@ const MultiSelectDropdown = ({
     setSearchQuery(e.target.value);
   }
 
+  const onSelectAll = (e, payload) => {
+    const isChecked = e.target.checked;
+    isChecked ? dispatch({ type: "ADD_ALL", payload }) : dispatch({ type: "REMOVE_ALL" });
+  };
+
   function onSelectToAddToQueue(...props) {
     const isChecked = arguments[0].target.checked;
     isChecked
@@ -114,11 +131,49 @@ const MultiSelectDropdown = ({
     }
   };
 
+  const SelectAllMenuItem = ({ filteredOptions }) => {
+    const isDisabled = filteredOptions?.every((option) => option?.isDisabled);
+    return (
+      <div key={filteredOptions?.length + 1} className={`${isDisabled ? "disabled" : ""}`} style={{ ...(isDisabled && { background: "#D2D2D2" }) }}>
+        <input
+          type="checkbox"
+          checked={
+            alreadyQueuedSelectedState?.length > 0 &&
+            filteredOptions?.filter((option) => !option?.isDisabled)?.length > 0 &&
+            filteredOptions
+              ?.filter((option) => !option?.isDisabled)
+              ?.every((option) => alreadyQueuedSelectedState.some((selected) => selected[optionsKey] === option[optionsKey]))
+          }
+          onChange={(e) => {
+            onSelectAll(e, filteredOptions);
+          }}
+          style={{ minWidth: "24px", width: "100%" }}
+          disabled={isDisabled || false}
+        />
+        <div className="custom-checkbox">
+          <CheckSvg
+            style={{ innerWidth: "24px", width: "100%", ...(isDisabled && { opacity: 1 }) }}
+            fill={isDisabled ? "#505050" : COLOR_FILL}
+            checkBoxFill={isDisabled ? "#D2D2D2" : undefined}
+            tickStyle={isDisabled ? { opacity: 0 } : {}}
+          />
+        </div>
+        <p className="label">{t("SELECT_ALL")}</p>
+      </div>
+    );
+  };
+
   const MenuItem = ({ option, index }) => (
     <div
       key={index}
       className={`${option.isDisabled ? "disabled" : ""}`}
-      style={isOBPSMultiple ? (index % 2 !== 0 ? { background: "#EEEEEE" } : {}) : {}}
+      style={
+        isOBPSMultiple
+          ? index % 2 !== 0
+            ? { background: "#EEEEEE", ...(option.isDisabled && { background: "#D2D2D2" }) }
+            : { ...(option.isDisabled && { background: "#D2D2D2" }) }
+          : { ...(option.isDisabled && { background: "#D2D2D2" }) }
+      }
     >
       <input
         type="checkbox"
@@ -135,7 +190,12 @@ const MultiSelectDropdown = ({
         disabled={option.isDisabled || false}
       />
       <div className="custom-checkbox">
-        <CheckSvg style={{ innerWidth: "24px", width: "24px" }} fill={option.isDisabled ? "#505050" : COLOR_FILL} />
+        <CheckSvg
+          style={{ innerWidth: "24px", width: "100%", ...(option?.isDisabled && { opacity: 1 }) }}
+          fill={option.isDisabled ? "#505050" : COLOR_FILL}
+          checkBoxFill={option?.isDisabled ? "#D2D2D2" : undefined}
+          tickStyle={option?.isDisabled ? { opacity: 0 } : {}}
+        />
       </div>
       <p
         className="label"
@@ -163,11 +223,14 @@ const MultiSelectDropdown = ({
                 .indexOf(searchQuery.toLowerCase()) >= 0
           )
         : options;
-    return filteredOptions?.map((option, index) => <MenuItem option={option} key={index} index={index} />);
+    return [
+      ...(config?.isSelectAll ? [<SelectAllMenuItem filteredOptions={filteredOptions} />] : []),
+      filteredOptions?.map((option, index) => <MenuItem option={option} key={index} index={index} />),
+    ];
   };
 
   return (
-    <div>
+    <div style={{ marginBottom: "1px" }}>
       <div className={`multi-select-dropdown-wrap ${disable ? "disabled" : ""}`} ref={dropdownRef}>
         <div className={`master${active ? `-active` : ``} ${disable ? "disabled" : ""}`}>
           <input

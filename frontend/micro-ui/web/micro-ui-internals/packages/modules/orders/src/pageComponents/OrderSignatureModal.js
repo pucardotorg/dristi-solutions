@@ -39,7 +39,7 @@ function OrderSignatureModal({
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${orderPdfFileStoreID}`;
   const { uploadDocuments } = useDocumentUpload();
   const name = "Signature";
-  const judgePlaceholder = "Signature";
+  const judgePlaceholder = order?.orderCategory === "COMPOSITE" ? "Fduy44hjb" : "Signature";
   const uploadModalConfig = useMemo(() => {
     return {
       key: "uploadSignature",
@@ -73,18 +73,21 @@ function OrderSignatureModal({
     }
   };
 
-  // check the data from upload
-  useEffect(() => {
-    const upload = async () => {
-      if (formData?.uploadSignature?.Signature?.length > 0) {
+  const onSubmit = async () => {
+    if (formData?.uploadSignature?.Signature?.length > 0) {
+      try {
         const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
         setSignedDocumentUploadID(uploadedFileId?.[0]?.fileStoreId);
         setIsSigned(true);
+        localStorage.setItem("formData", JSON.stringify(formData));
+        setOpenUploadSignatureModal(false);
+      } catch (error) {
+        console.error("error", error);
+        setFormData({});
+        setIsSigned(false);
       }
-    };
-
-    upload();
-  }, [formData]);
+    }
+  };
 
   useEffect(() => {
     checkSignStatus(name, formData, uploadModalConfig, onSelect, setIsSigned);
@@ -172,6 +175,7 @@ function OrderSignatureModal({
       onSelect={onSelect}
       config={uploadModalConfig}
       formData={formData}
+      onSubmit={onSubmit}
     />
   );
 }
