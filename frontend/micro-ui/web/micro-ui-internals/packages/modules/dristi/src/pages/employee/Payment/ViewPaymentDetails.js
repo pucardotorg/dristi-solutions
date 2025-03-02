@@ -212,7 +212,7 @@ const ViewPaymentDetails = ({ location, match }) => {
       });
 
       taskHearingNumber = orderDetails?.hearingNumber || "";
-      const compositeItem = orderDetails?.compositeItems?.find((item) => item?.id === tasksData?.additionDetails?.itemId) || {};
+      const compositeItem = orderDetails?.compositeItems?.find((item) => item?.id === tasksData?.additionalDetails?.itemId) || {};
       taskOrderType = compositeItem?.orderType || orderDetails?.orderType || "";
       if (taskOrderType === "NOTICE") {
         const noticeOrder =
