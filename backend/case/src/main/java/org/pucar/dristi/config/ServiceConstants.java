@@ -126,6 +126,8 @@ public class ServiceConstants {
 
     public static final String PENDING_REGISTRATION = "PENDING_REGISTRATION";
 
+    public static final String CASE_FORWARDED_TO_JUDGE = "JUDGE_ASSIGNED,FSO_VALIDATED";
+    public static final String JUDGE_ASSIGNED = "JUDGE_ASSIGNED";
     public static final String FSO_VALIDATED = "FSO_VALIDATED";
     public static final String CASE_SUBMITTED = "CASE_SUBMITTED";
     public static final String ESIGN_PENDING = "ESIGN_PENDING";

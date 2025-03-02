@@ -261,7 +261,10 @@ public class CaseService {
             String updatedStatus = caseRequest.getCases().getStatus();
             String messageCode = getNotificationStatus(previousStatus, updatedStatus);
             if (messageCode != null) {
-                callNotificationService(caseRequest, messageCode);
+                String[] messageCodes = messageCode.split(",");
+                for (String msgCode : messageCodes) {
+                    callNotificationService(caseRequest, msgCode);
+                }
             }
 
             log.info("Method=updateCase,Result=SUCCESS, CaseId={}", caseRequest.getCases().getId());
@@ -634,7 +637,7 @@ public class CaseService {
         } else if (updatedStatus.equalsIgnoreCase(PAYMENT_PENDING)) {
             return CASE_SUBMITTED;
         } else if (previousStatus.equalsIgnoreCase(UNDER_SCRUTINY) && updatedStatus.equalsIgnoreCase(PENDING_REGISTRATION)) {
-            return FSO_VALIDATED;
+            return CASE_FORWARDED_TO_JUDGE;
         } else if (previousStatus.equalsIgnoreCase(UNDER_SCRUTINY) && updatedStatus.equalsIgnoreCase(CASE_REASSIGNED)) {
             return FSO_SEND_BACK;
         } else if (previousStatus.equalsIgnoreCase(PENDING_REGISTRATION) && updatedStatus.equalsIgnoreCase(PENDING_ADMISSION_HEARING)) {
@@ -721,6 +724,30 @@ public class CaseService {
             caseObj = encryptionDecryptionUtil.decryptObject(caseObj, config.getCaseDecryptSelf(), CourtCase.class, addWitnessRequest.getRequestInfo());
             addWitnessRequest.setAdditionalDetails(caseObj.getAdditionalDetails());
 
+            if (courtCase != null) {
+                SmsTemplateData smsTemplateData = SmsTemplateData.builder()
+                        .efilingNumber(courtCase.getFilingNumber())
+                        .courtCaseNumber(courtCase.getCourtCaseNumber())
+                        .cnrNumber(courtCase.getCnrNumber())
+                        .cmpNumber(courtCase.getCmpNumber())
+                        .build();
+                String additionalDetails = addWitnessRequest.getAdditionalDetails().toString();
+                JsonNode rootNode = objectMapper.readTree(additionalDetails);
+                JsonNode witnessDetails = rootNode.has("witnessDetails") ? rootNode.get("witnessDetails") : null;
+                JsonNode witnessDetailsFormData = null;
+                if (witnessDetails != null) {
+                    witnessDetailsFormData = witnessDetails.has("formdata") ? witnessDetails.get("formdata") : null;
+                }
+                if (witnessDetailsFormData != null && witnessDetailsFormData.isArray()) {
+                    for (JsonNode node : witnessDetailsFormData) {
+                        JsonNode dataNode = node.get("data");
+                        JsonNode mobileNumbers = dataNode.path("phonenumbers").path("mobileNumber");
+                        for (JsonNode mobileNumber : mobileNumbers) {
+                            notificationService.sendNotification(requestInfo,smsTemplateData,"",mobileNumber.textValue());
+                        }
+                    }
+                }
+            }
             return AddWitnessResponse.builder().addWitnessRequest(addWitnessRequest).build();
 
         } catch (CustomException e) {
