@@ -10,7 +10,10 @@ const _getSortedByOrder = (documents) => {
   });
 };
 
-const extractOrderNumber = (orderItemId) => (orderItemId.includes("_") ? orderItemId.split("_").pop() : orderItemId);
+const extractOrderNumber = (orderItemId) => {
+  if (!orderItemId || typeof orderItemId !== "string") return orderItemId || "";
+  return orderItemId?.includes("_") ? orderItemId?.split("_")?.pop() : orderItemId;
+};
 
 const useGetAllOrderApplicationRelatedDocuments = () => {
   const [documents, setDocuments] = useState([]);
