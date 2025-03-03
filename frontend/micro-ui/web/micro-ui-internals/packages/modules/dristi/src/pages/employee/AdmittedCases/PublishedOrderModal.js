@@ -1,12 +1,13 @@
 import { CloseSvg } from "@egovernments/digit-ui-components";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Modal from "../../../components/Modal";
-import { Button, SubmitBar } from "@egovernments/digit-ui-react-components";
+import { Button, SubmitBar, TextInput } from "@egovernments/digit-ui-react-components";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/useGetAllOrderApplicationRelatedDocuments";
 import { DRISTIService } from "../../../services";
 import { getAdvocates } from "@egovernments/digit-ui-module-orders/src/utils/caseUtils";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
+import useGetDiaryEntry from "../../../hooks/dristi/useGetDiaryEntry";
 
 function PublishedOrderModal({
   t,
@@ -58,6 +59,20 @@ function PublishedOrderModal({
   const signedOrder = useMemo(() => order?.documents?.filter((item) => item?.documentType === "SIGNED")[0], [order]);
   const userInfo = Digit.UserService.getUser()?.info;
   const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
+
+  const { data: diaryResponse } = useGetDiaryEntry(
+    {
+      criteria: {
+        referenceId: order?.orderNumber,
+        tenantId,
+        judgeId: "super",
+        caseId: caseDetails?.cmpNumber,
+      },
+    },
+    {},
+    order?.orderNumber + caseDetails?.id,
+    Boolean(order?.orderNumber) && Boolean(caseDetails?.id)
+  );
 
   const showSubmissionButtons = useMemo(() => {
     if (productionOfDocumentApplications?.some((item) => item?.referenceId === order?.id)) {
@@ -221,6 +236,18 @@ function PublishedOrderModal({
       popupStyles={{ minWidth: "880px", width: "80%" }}
     >
       {showDocument}
+      <h3 style={{ marginTop: "24px", marginBottom: "2px" }}>{t("BUSINESS_OF_THE_DAY")} </h3>
+      <div style={{ display: "flex", gap: "10px" }}>
+        <TextInput
+          className="field desktop-w-full"
+          onChange={(e) => {}}
+          disable={true}
+          value={diaryResponse?.entries?.[0]?.businessOfDay}
+          style={{ minWidth: "500px" }}
+          textInputStyle={{ maxWidth: "100%" }}
+        />
+        {<Button isDisabled={true} label={t("SAVE")} variation={"primary"} style={{ padding: 15, boxShadow: "none" }} onButtonClick={() => {}} />}
+      </div>
       <div style={{ display: "flex", width: "100%", justifyContent: "space-between", alignItems: "center", marginTop: "16px" }}>
         <div
           onClick={() => {
