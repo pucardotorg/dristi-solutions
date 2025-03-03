@@ -83,7 +83,7 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
   const [bulkFormData, setBulkFormData] = useState(currentDiaryEntry?.additionalDetails?.formData || bulkNotificationFormData || {});
   const [bulkToDate, setBulkToDate] = useState(bulkFormData?.toDate || selectedDate);
   const [bulkFromDate, setBulkFromDate] = useState(bulkFormData?.fromDate || selectedDate);
-  const [formData, setFormData] = useState(bulkFormData || {});
+  const [signFormData, setSignFormData] = useState({});
   const [newHearingData, setNewHearingData] = useState(bulkNewHearingData);
   const [notificationNumber, setNotificationNumber] = useState(bulkNotificationNumber);
   const [originalHearingData, setOriginalHearingData] = useState(bulkOldHearingData);
@@ -158,10 +158,10 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
 
   const onSelect = (key, value) => {
     if (value?.Signature === null) {
-      setFormData({});
+      setSignFormData({});
       setIsSigned(false);
     } else {
-      setFormData((prevData) => ({
+      setSignFormData((prevData) => ({
         ...prevData,
         [key]: value,
       }));
@@ -291,23 +291,23 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
         });
     } catch (error) {
       console.error("error: ", error);
-      toast.error(t("SOMETHING_WENT_WRONG"));
+      showToast("error", t("SOMETHING_WENT_WRONG"), 5000);
     }
   };
 
   useEffect(() => {
     const upload = async () => {
-      if (formData?.uploadSignature?.Signature?.length > 0) {
-        const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
+      if (signFormData?.uploadSignature?.Signature?.length > 0) {
+        const uploadedFileId = await uploadDocuments(signFormData?.uploadSignature?.Signature, tenantId);
         setSignedDocumentUploadID(uploadedFileId[0]?.fileStoreId);
         setIsSigned(true);
       }
     };
     upload();
-  }, [formData]);
+  }, [signFormData]);
 
   useEffect(() => {
-    checkSignStatus(name, formData, uploadModalConfig, onSelect, setIsSigned);
+    checkSignStatus(name, signFormData, uploadModalConfig, onSelect, setIsSigned);
   }, [checkSignStatus]);
 
   const onCancel = () => {
@@ -323,7 +323,7 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
         {
           type: "dropdown",
           key: "reason",
-          label: "Reason for Reschedule",
+          label: "BULK_RESCHEDULE_REASON",
           isMandatory: true,
           disable: currentDiaryEntry ? true : false,
           populators: {
@@ -343,7 +343,7 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
           component: "CustomDatePicker",
           disable: currentDiaryEntry ? true : false,
           key: "fromDate",
-          label: "Date Range  (From) ",
+          label: "BULK_FROM_DATE",
           isMandatory: true,
           populators: {
             name: "fromDate",
@@ -351,7 +351,7 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
           },
         },
         {
-          label: "Date Range (To)",
+          label: "BULK_TO_DATE",
           isMandatory: true,
           key: "toDate",
           type: "component",
@@ -360,7 +360,7 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
           populators: { name: "toDate", error: "Required" },
         },
         {
-          label: "Slot",
+          label: "BULK_SLOT",
           isMandatory: true,
           key: "slotIds",
           type: "dropdown",
@@ -409,7 +409,7 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
       const date1 = new Date(newFromDate);
       const date2 = new Date(newToDate);
       if (date1 > date2) {
-        setError("toDate", { message: "issue in date" });
+        setError("toDate", { message: "BULK_INVALID_DATE_RANGE" });
         setValue("toDate", null);
         newToDate = null;
       }
@@ -426,18 +426,11 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
 
     if (newFromDate && newToDate && !compareDates(newFromDate, newToDate)) {
       if (formData?.["slotIds"]?.length > 0) setValue("slotIds", []);
-      if (Boolean(formData?.reason && formData?.toDate && formData?.fromDate && Object.keys(formState?.errors) && bulkHearingsCount !== 0)) {
+      if (Boolean(formData?.reason && formData?.toDate && formData?.fromDate && Object.keys(formState?.errors))) {
         setIsBulkRescheduleDisabled(false);
       }
     } else if (
-      Boolean(
-        formData?.slotIds?.length > 0 &&
-          formData?.reason &&
-          formData?.toDate &&
-          formData?.fromDate &&
-          Object.keys(formState?.errors) &&
-          bulkHearingsCount !== 0
-      )
+      Boolean(formData?.slotIds?.length > 0 && formData?.reason && formData?.toDate && formData?.fromDate && Object.keys(formState?.errors))
     ) {
       setIsBulkRescheduleDisabled(false);
     } else if (!isBulkRescheduleDisabled) {
@@ -566,9 +559,22 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
     const downloadFileStoreId = signedDocumentUploadID || localStorage.getItem("fileStoreId");
     downloadPdf(tenantId, downloadFileStoreId);
   };
-  if (Loading) {
-    return <Loader />;
-  }
+
+  const onUploadSubmit = async () => {
+    if (signFormData?.uploadSignature?.Signature?.length > 0) {
+      try {
+        const uploadedFileId = await uploadDocuments(signFormData?.uploadSignature?.Signature, tenantId);
+        setSignedDocumentUploadID(uploadedFileId?.[0]?.fileStoreId);
+        setIsSigned(true);
+        localStorage.setItem("formData", JSON.stringify(signFormData));
+        setOpenUploadSignatureModal(false);
+      } catch (error) {
+        console.error("error", error);
+        setSignFormData({});
+        setIsSigned(false);
+      }
+    }
+  };
 
   return (
     <React.Fragment>
@@ -576,109 +582,125 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
         <Modal
           headerBarEnd={<CloseBtn onClick={() => (currentDiaryEntry ? history.goBack() : onCancel())} />}
           formId="modal-action"
-          headerBarMain={<Heading label={t("CS_CONFIRM_COURT")} />}
+          headerBarMain={<Heading label={t("BULK_RESCHEDULE")} />}
           actionCancelLabel={t("CS_COMMON_CANCEL")}
           actionCancelOnSubmit={onCancel}
           actionSaveOnSubmit={onSumbitReschedule}
           actionSaveLabel={t("CS_COMMON_CONFIRM")}
           style={{ margin: "10px" }}
-          isDisabled={isBulkRescheduleDisabled}
+          isDisabled={isBulkRescheduleDisabled || bulkHearingsCount === 0}
           actionCancelStyle={{ margin: "10px 0px" }}
           hideModalActionbar={currentDiaryEntry ? true : false}
         >
-          <div>
-            <FormComposerV2
-              key="bulk-reschedule"
-              config={modifiedConfig}
-              style={{ width: "100%", margin: "0px", padding: "0px !important" }}
-              onFormValueChange={onFormValueChange}
-              t={t}
-              noBoxShadow
-              inline={true}
-              className={"Bulk-rechedule"}
-              fieldStyle={{ margin: 0, Background: "black" }}
-              cardStyle={{ minWidth: "100%", Background: "blue" }}
-              cardClassName={"card-shec"}
-              headingStyle={{ textAlign: "center" }}
-              defaultValues={defaultValues}
-            />
+          {Loading ? (
+            <Loader />
+          ) : (
+            <div>
+              <FormComposerV2
+                key="bulk-reschedule"
+                config={modifiedConfig}
+                style={{ width: "100%", margin: "0px", padding: "0px !important" }}
+                onFormValueChange={onFormValueChange}
+                t={t}
+                noBoxShadow
+                inline={true}
+                className={"Bulk-rechedule"}
+                fieldStyle={{ margin: 0, Background: "black" }}
+                cardStyle={{ minWidth: "100%", Background: "blue" }}
+                cardClassName={"card-shec"}
+                headingStyle={{ textAlign: "center" }}
+                defaultValues={defaultValues}
+              />
 
-            {currentDiaryEntry && (
-              <div style={{ padding: "10px" }}>
-                <h3 style={{ marginTop: 0, marginBottom: "2px" }}>{t("BUSINESS_OF_THE_DAY")} </h3>
-                <div style={{ display: "flex", gap: "10px" }}>
-                  <TextInput
-                    className="field desktop-w-full"
-                    onChange={(e) => {
-                      setBusinessOfTheDay(e.target.value);
-                    }}
-                    defaultValue={currentDiaryEntry?.businessOfDay}
-                    style={{}}
-                    textInputStyle={{ maxWidth: "100%" }}
-                  />
-                  {currentDiaryEntry && (
-                    <Button
-                      label={t("SAVE")}
-                      variation={"primary"}
-                      style={{ padding: 15, boxShadow: "none" }}
-                      onButtonClick={() => {
-                        handleUpdateBusinessOfDayEntry();
+              {currentDiaryEntry && (
+                <div style={{ padding: "10px" }}>
+                  <h3 style={{ marginTop: 0, marginBottom: "2px" }}>{t("BUSINESS_OF_THE_DAY")} </h3>
+                  <div style={{ display: "flex", gap: "10px" }}>
+                    <TextInput
+                      className="field desktop-w-full"
+                      onChange={(e) => {
+                        setBusinessOfTheDay(e.target.value);
                       }}
+                      defaultValue={currentDiaryEntry?.businessOfDay}
+                      style={{}}
+                      textInputStyle={{ maxWidth: "100%" }}
                     />
-                  )}
+                    {currentDiaryEntry && (
+                      <Button
+                        label={t("SAVE")}
+                        variation={"primary"}
+                        style={{ padding: 15, boxShadow: "none" }}
+                        onButtonClick={() => {
+                          handleUpdateBusinessOfDayEntry();
+                        }}
+                      />
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {!isBulkRescheduleDisabled && !currentDiaryEntry && (
-              <InfoCard
-                variant={"default"}
-                label={t("PLEASE_NOTE")}
-                additionalElements={{}}
-                inline
-                text={t(
-                  `New dates will automatically be assigned to all ${bulkHearingsCount} hearings that fall between ${formatDate(
-                    bulkFromDate
-                  )} and ${formatDate(bulkToDate)}`
-                )}
-                textStyle={{}}
-                className={`custom-info-card`}
-                style={{ width: "100%", maxWidth: "960px" }}
-              />
-            )}
-            {toastMsg && (
-              <Toast
-                error={toastMsg.key === "error"}
-                label={t(toastMsg.action)}
-                onClose={() => setToastMsg(null)}
-                isDleteBtn={true}
-                style={{ maxWidth: "500px" }}
-              />
-            )}
-          </div>
+              {!isBulkRescheduleDisabled && !currentDiaryEntry && bulkHearingsCount !== 0 && (
+                <InfoCard
+                  variant={"default"}
+                  label={t("PLEASE_NOTE")}
+                  additionalElements={{}}
+                  inline
+                  text={t(`${t("BULK_INFO1")} ${bulkHearingsCount} ${t("BULK_INFO2")} ${formatDate(bulkFromDate)} and ${formatDate(bulkToDate)}`)}
+                  textStyle={{}}
+                  className={`custom-info-card`}
+                  style={{ width: "100%", maxWidth: "960px" }}
+                />
+              )}
+              {!isBulkRescheduleDisabled && !currentDiaryEntry && bulkHearingsCount === 0 && (
+                <InfoCard
+                  variant={"default"}
+                  label={t("PLEASE_NOTE")}
+                  additionalElements={{}}
+                  inline
+                  text={t("BULK_NO_HEARINGS_SELECTED")}
+                  textStyle={{}}
+                  className={`custom-info-card`}
+                  style={{ width: "100%", maxWidth: "960px" }}
+                />
+              )}
+              {toastMsg && (
+                <Toast
+                  error={toastMsg.key === "error"}
+                  label={t(toastMsg.action)}
+                  onClose={() => setToastMsg(null)}
+                  isDleteBtn={true}
+                  style={{ maxWidth: "500px" }}
+                />
+              )}
+            </div>
+          )}
         </Modal>
       )}
       {stepper === 2 && (
         <Modal
           headerBarEnd={<CloseBtn onClick={onCancel} />}
           formId="modal-action"
-          headerBarMain={<Heading label={t("CS_CONFIRM_COURT")} />}
+          headerBarMain={<Heading label={t("NOTIFICATION_REVIEW")} />}
           actionSaveOnSubmit={onAddSignature}
           actionSaveLabel={t("ADD_SIGNATURE")}
           popupStyles={{
             width: "70%",
           }}
         >
-          <DocViewerWrapper
-            key={"bulk"}
-            fileStoreId={notificationReviewBlob?.size ? null : notificationFileStoreId}
-            selectedDocs={[notificationReviewBlob]}
-            tenantId={tenantId}
-            docWidth="100%"
-            docHeight="70vh"
-            showDownloadOption={false}
-            documentName={"bulk"}
-          />
+          {Loading ? (
+            <Loader />
+          ) : (
+            <DocViewerWrapper
+              key={"bulk"}
+              fileStoreId={notificationReviewBlob?.size ? null : notificationFileStoreId}
+              selectedDocs={[notificationReviewBlob]}
+              tenantId={tenantId}
+              docWidth="100%"
+              docHeight="70vh"
+              showDownloadOption={false}
+              documentName={"bulk"}
+            />
+          )}
         </Modal>
       )}
       {stepper === 3 && !openUploadSignatureModal && !isSigned && (
@@ -757,7 +779,8 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
           setOpenUploadSignatureModal={setOpenUploadSignatureModal}
           onSelect={onSelect}
           config={uploadModalConfig}
-          formData={formData}
+          formData={signFormData}
+          onSubmit={onUploadSubmit}
         />
       )}
 
@@ -771,60 +794,64 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
           actionSaveOnSubmit={uploadSignedPdf}
           className="add-signature-modal"
         >
-          <div className="add-signature-main-div">
-            <InfoCard
-              variant={"default"}
-              label={t("PLEASE_NOTE")}
-              additionalElements={[
-                <p key="note">
-                  {t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE")}
-                  <span style={{ fontWeight: "bold" }}>{`${t("NOTIFICATION")} `}</span>
-                </p>,
-              ]}
-              inline
-              style={{ marginBottom: "16px" }}
-              textStyle={{}}
-              className={`custom-info-card`}
-            />
-            <div style={{ display: "flex", flexDirection: "row", gap: "16px" }}>
-              <h1
-                style={{
-                  margin: 0,
-                  fontFamily: "Roboto",
-                  fontSize: "24px",
-                  fontWeight: 700,
-                  lineHeight: "28.13px",
-                  textAlign: "left",
-                  color: "#3d3c3c",
-                }}
-              >
-                {t("YOUR_SIGNATURE")}
-              </h1>
-              <h2
-                style={{
-                  margin: 0,
-                  fontFamily: "Roboto",
-                  fontSize: "14px",
-                  fontWeight: 400,
-                  lineHeight: "16.41px",
-                  textAlign: "center",
-                  color: "#00703c",
-                  padding: "6px",
-                  backgroundColor: "#e4f2e4",
-                  borderRadius: "999px",
-                }}
-              >
-                {t("SIGNED")}
-              </h2>
+          {Loading ? (
+            <Loader />
+          ) : (
+            <div className="add-signature-main-div">
+              <InfoCard
+                variant={"default"}
+                label={t("PLEASE_NOTE")}
+                additionalElements={[
+                  <p key="note">
+                    {t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE")}
+                    <span style={{ fontWeight: "bold" }}>{`${t("NOTIFICATION")} `}</span>
+                  </p>,
+                ]}
+                inline
+                style={{ marginBottom: "16px" }}
+                textStyle={{}}
+                className={`custom-info-card`}
+              />
+              <div style={{ display: "flex", flexDirection: "row", gap: "16px" }}>
+                <h1
+                  style={{
+                    margin: 0,
+                    fontFamily: "Roboto",
+                    fontSize: "24px",
+                    fontWeight: 700,
+                    lineHeight: "28.13px",
+                    textAlign: "left",
+                    color: "#3d3c3c",
+                  }}
+                >
+                  {t("YOUR_SIGNATURE")}
+                </h1>
+                <h2
+                  style={{
+                    margin: 0,
+                    fontFamily: "Roboto",
+                    fontSize: "14px",
+                    fontWeight: 400,
+                    lineHeight: "16.41px",
+                    textAlign: "center",
+                    color: "#00703c",
+                    padding: "6px",
+                    backgroundColor: "#e4f2e4",
+                    borderRadius: "999px",
+                  }}
+                >
+                  {t("SIGNED")}
+                </h2>
+              </div>
             </div>
-          </div>
+          )}
         </Modal>
       )}
       {stepper === 4 && (
         <Modal
-          actionCancelLabel={t("DOWNLOAD_ORDER")}
+          actionCancelLabel={t("CS_COMMON_DOWNLOAD")}
           actionCancelOnSubmit={handleDownloadOrders}
-          actionSaveLabel={t("close")}
+          actionSaveLabel={t("CS_CLOSE")}
           actionSaveOnSubmit={() => {
             setSignedDocumentUploadID("");
             localStorage.removeItem("fileStoreId");
@@ -839,7 +866,7 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
               <Banner
                 whichSvg={"tick"}
                 successful={true}
-                message={t("You have successfully a notification")}
+                message={t("SUCCESS_NOTIFICATION_TEXT")}
                 headerStyles={{ fontSize: "32px" }}
                 style={{ minWidth: "100%", marginTop: "10px" }}
               ></Banner>
@@ -849,8 +876,8 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
                   keyStyle={{ margin: "8px 0px" }}
                   valueStyle={{ margin: "8px 0px", fontWeight: 700 }}
                   data={[
-                    { key: "Notification Issue Date", value: new Date().toLocaleDateString("en-GB"), copyData: false },
-                    { key: "Notification ID", value: notificationNumber, copyData: true },
+                    { key: t("NOTIFICATION_DATE"), value: new Date().toLocaleDateString("en-GB"), copyData: false },
+                    { key: t("NOTIFICATION_ID"), value: notificationNumber, copyData: true },
                   ]}
                 />
               }

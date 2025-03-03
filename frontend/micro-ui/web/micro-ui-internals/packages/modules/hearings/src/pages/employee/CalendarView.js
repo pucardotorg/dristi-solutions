@@ -202,7 +202,7 @@ const MonthlyCalendar = () => {
     <React.Fragment>
       {Digit.UserService.getType() === "employee" && (
         <div style={{ display: "flex", justifyContent: "end", paddingRight: "24px", marginTop: "5px" }}>
-          <Button label={"Bulk Reschedule"} onButtonClick={onSubmit}></Button>
+          <Button label={t("BULK_RESCHEDULE")} onButtonClick={onSubmit}></Button>
         </div>
       )}
       <div style={{ display: "flex" }}>

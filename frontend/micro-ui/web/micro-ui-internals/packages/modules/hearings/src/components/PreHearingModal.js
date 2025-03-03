@@ -145,7 +145,7 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
             onButtonClick={() => {
               setStepper(1);
             }}
-            label={t("Bulk Reschedule")}
+            label={t("BULK_RESCHEDULE")}
             variation={"secondary"}
           />
         )}
