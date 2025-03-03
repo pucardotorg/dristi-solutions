@@ -254,6 +254,8 @@ function CaseFileAdmission({ t, path }) {
         statuteSection: {
           tenantId,
         },
+        orderTitle: "NOTICE",
+        orderCategory: "INTERMEDIATE",
         orderType: "NOTICE",
         status: "",
         isActive: true,
@@ -879,6 +881,8 @@ function CaseFileAdmission({ t, path }) {
         statuteSection: {
           tenantId,
         },
+        orderTitle: OrderTypes.SCHEDULE_OF_HEARING_DATE,
+        orderCategory: "INTERMEDIATE",
         orderType: OrderTypes.SCHEDULE_OF_HEARING_DATE,
         status: "",
         isActive: true,

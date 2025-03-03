@@ -401,21 +401,27 @@ const GenerateOrders = () => {
   );
 
   const isDCANoticeGenerated = useMemo(
-    () => noticeOrdersData?.list?.some((notice) => "DCA Notice" === notice?.additionalDetails?.formdata?.noticeType?.code),
+    () =>
+      noticeOrdersData?.list?.some((notice) => {
+        if (notice?.orderCategory === "COMPOSITE") {
+          return notice?.compositeItems?.some((item) => item?.orderSchema?.additionalDetails?.formdata?.noticeType?.code === "DCA Notice");
+        }
+        return notice?.additionalDetails?.formdata?.noticeType?.code === "DCA Notice";
+      }),
     [noticeOrdersData]
   );
 
   const { data: publishedOrdersData, isLoading: isPublishedOrdersLoading } = useSearchOrdersService(
     {
       tenantId,
-      criteria: { filingNumber, applicationNumber: "", cnrNumber, status: OrderWorkflowState.PUBLISHED },
+      criteria: { filingNumber, applicationNumber: "", cnrNumber, status: OrderWorkflowState.PUBLISHED, orderType: "ACCEPT_BAIL" },
       pagination: { limit: 1000, offset: 0 },
     },
     { tenantId },
     filingNumber + OrderWorkflowState.PUBLISHED,
     Boolean(filingNumber && cnrNumber)
   );
-  const publishedBailOrder = useMemo(() => publishedOrdersData?.list?.find((item) => item?.orderType === "BAIL") || {}, [publishedOrdersData]);
+  const publishedBailOrder = useMemo(() => publishedOrdersData?.list?.[0] || {}, [publishedOrdersData]);
   const advocateIds = caseDetails.representatives?.map((representative) => {
     return {
       id: representative.advocateId,

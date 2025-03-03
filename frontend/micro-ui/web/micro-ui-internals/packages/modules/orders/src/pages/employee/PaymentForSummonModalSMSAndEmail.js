@@ -218,7 +218,15 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
   const summonsPincode = useMemo(() => filteredTasks?.[0]?.taskDetails?.respondentDetails?.address?.pincode, [filteredTasks]);
   const channelId = useMemo(() => extractFeeMedium(filteredTasks?.[0]?.taskDetails?.deliveryChannels?.channelName || ""), [filteredTasks]);
 
-  const orderType = useMemo(() => orderDetails?.orderType, [orderDetails?.orderType]);
+  const compositeItem = useMemo(() => orderDetails?.compositeItems?.find((item) => item?.id === filteredTasks?.[0]?.additionalDetails?.itemId), [
+    orderDetails,
+    filteredTasks,
+  ]);
+
+  const orderType = useMemo(() => (orderDetails?.orderCategory === "COMPOSITE" ? compositeItem?.orderType : orderDetails?.orderType), [
+    orderDetails,
+    compositeItem,
+  ]);
 
   const { data: hearingsData } = Digit.Hooks.hearings.useGetHearings(
     {
@@ -446,30 +454,28 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     };
   }, [
     courtFeeAmount,
+    refetchBill,
     billResponse,
-    openPaymentPortal,
-    tenantId,
-    mockSubmitModalInfo,
-    caseDetails?.caseTitle,
     caseDetails?.filingNumber,
+    caseDetails?.caseTitle,
+    tenantId,
+    openPaymentPortal,
+    mockSubmitModalInfo,
     orderDetails?.orderNumber,
     taskNumber,
-    history,
     orderType,
+    history,
     status,
     filteredTasks,
     filingNumber,
   ]);
 
   const infos = useMemo(() => {
-    const name =
-      [
-        orderDetails?.additionalDetails?.formdata?.[orderType === "SUMMONS" ? "SummonsOrder" : "noticeOrder"]?.party?.data?.firstName,
-        orderDetails?.additionalDetails?.formdata?.[orderType === "SUMMONS" ? "SummonsOrder" : "noticeOrder"]?.party?.data?.lastName,
-      ]
-        ?.filter(Boolean)
-        ?.join(" ") ||
-      (orderType === "WARRANT" && orderDetails?.additionalDetails?.formdata?.warrantFor);
+    const formdata =
+      orderDetails?.orderCategory === "COMPOSITE" ? compositeItem?.additionalDetails?.formdata : orderDetails?.additionalDetails?.formdata;
+    const orderKey = orderType === "SUMMONS" ? "SummonsOrder" : "noticeOrder";
+    const partyData = formdata?.[orderKey]?.party?.data;
+    const name = [partyData?.firstName, partyData?.lastName]?.filter(Boolean)?.join(" ") || (orderType === "WARRANT" && formdata?.warrantFor);
 
     const task = filteredTasks?.[0];
     const taskDetails = task?.taskDetails;
@@ -492,7 +498,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
         value: deliveryChannel ? `${deliveryChannel} (${contactDetail})` : "Not available",
       },
     ];
-  }, [orderDetails?.additionalDetails?.formdata, orderType, filteredTasks, hearingsData?.HearingList]);
+  }, [orderDetails, compositeItem, orderType, filteredTasks, hearingsData?.HearingList]);
 
   const orderDate = useMemo(() => {
     return hearingsData?.HearingList?.[0]?.startTime;

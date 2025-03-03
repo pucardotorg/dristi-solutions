@@ -182,7 +182,7 @@ function OrderReviewModal({
         <div className="review-order-body-main">
           <div className="review-order-modal-list-div">
             <div className="review-order-type-side-stepper">
-              <h1> {t(order?.orderType)}</h1>
+              <h1> {order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(order?.orderTitle)}</h1>
             </div>
           </div>
           <div className="review-order-modal-document-div" style={{ padding: 0, overflow: "auto" }}>

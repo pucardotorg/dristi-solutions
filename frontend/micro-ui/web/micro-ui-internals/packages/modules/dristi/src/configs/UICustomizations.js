@@ -946,7 +946,7 @@ export const UICustomizations = {
                     ?.filter((order) => order.order.status !== "DRAFT_IN_PROGRESS")
                     .map((order) => {
                       return {
-                        instance: `ORDER_TYPE_${order.order.orderType.toUpperCase()}`,
+                        instance: order.order.orderTitle,
                         stage: [],
                         date: order.order.auditDetails.createdTime,
                         status: order.order.status,
@@ -954,7 +954,7 @@ export const UICustomizations = {
                     })
                 : data.caseFiles[0]?.orders.map((order) => {
                     return {
-                      instance: `ORDER_TYPE_${order.order.orderType.toUpperCase()}`,
+                      instance: order.order.orderTitle,
                       stage: [],
                       date: order.order.auditDetails.createdTime,
                       status: order.order.status,
