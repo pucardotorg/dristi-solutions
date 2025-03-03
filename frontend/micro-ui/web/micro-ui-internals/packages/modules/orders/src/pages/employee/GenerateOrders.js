@@ -3339,27 +3339,48 @@ const GenerateOrders = () => {
     // otherwise, change the orderCategory to INTERMEDIATE if only 1 item remains.
     if (!currentOrder?.orderNumber) {
       // IF compositeItems length is 1, we are not showing delete icon anyways.
-      const totalEnabled = currentOrder?.compositeItems?.filter((o) => o?.isEnabled)?.length;
-      if (totalEnabled === 2) {
-        // If there are 2 items, after deleting one, make the orderCategory as INTERMEDIATE back from COMPOSITE
-        const nonDeletedItem = currentOrder?.compositeItems?.find((item, index) => index !== deleteOrderItemIndex && item?.isEnabled);
-        setFormList((prev) => {
-          return prev?.map((item, i) => {
-            if (i !== selectedOrder) return item;
+      // const totalEnabled = currentOrder?.compositeItems?.filter((o) => o?.isEnabled)?.length;
+
+      setFormList((prev) => {
+        return prev?.map((item, i) => {
+          if (i !== selectedOrder) return item;
+
+          let updatedCompositeItems = item?.compositeItems?.map((compositeItem, index) => {
+            if (index === deleteOrderItemIndex) {
+              return { ...compositeItem, isEnabled: false, displayindex: -Infinity };
+            }
 
             return {
-              ...item,
-              orderTitle: nonDeletedItem?.orderType || "",
-              orderCategory: "INTERMEDIATE",
-              orderType: nonDeletedItem?.orderType || "",
-              compositeItems: null,
-              additionalDetails: nonDeletedItem?.orderSchema?.additionalDetails || {},
-              orderDetails: nonDeletedItem?.orderSchema?.orderDetails || {},
+              ...compositeItem,
+              displayindex: index > deleteOrderItemIndex ? compositeItem.displayindex - 1 : compositeItem.displayindex,
             };
           });
+
+          // setValueRef.current[deleteOrderItemIndex]?.("");
+          return {
+            ...item,
+            compositeItems: updatedCompositeItems,
+          };
         });
-      } else if (totalEnabled > 2) {
-        // we have remove the particular item from compositeItems list.
+      });
+    } else {
+      // once an order type is composite -> it will be composite even after deleting items.
+      const deletedItemId = currentOrder?.compositeItems?.find((item, index) => index === deleteOrderItemIndex)?.id;
+      if (deletedItemId) {
+        // call delete item api when deleting existing order item
+        try {
+          const response = await deleteOrderItem(currentOrder, deletedItemId);
+          if (response?.order?.orderNumber) {
+            await refetchOrdersData();
+            await refetchOrdersData(); // hard refresh
+          } else {
+            console.error("Delete operation was not successful.");
+          }
+        } catch (error) {
+          console.error("Error deleting order item:", error);
+        }
+      } else {
+        // If item was not a saved order item, just remove the item from formList.
         setFormList((prev) => {
           return prev?.map((item, i) => {
             if (i !== selectedOrder) return item;
@@ -3375,27 +3396,12 @@ const GenerateOrders = () => {
               };
             });
 
-            // setValueRef.current[deleteOrderItemIndex]?.("");
             return {
               ...item,
               compositeItems: updatedCompositeItems,
             };
           });
         });
-      }
-    } else {
-      // once an order type is composite -> it will be composite even after deleting items.
-      const deletedItemId = currentOrder?.compositeItems?.find((item, index) => index === deleteOrderItemIndex)?.id;
-      try {
-        const response = await deleteOrderItem(currentOrder, deletedItemId);
-        if (response?.order?.orderNumber) {
-          await refetchOrdersData();
-          await refetchOrdersData(); // hard refresh
-        } else {
-          console.error("Delete operation was not successful.");
-        }
-      } catch (error) {
-        console.error("Error deleting order item:", error);
       }
     }
     setDeleteOrderItemIndex(null);
@@ -3576,6 +3582,7 @@ const GenerateOrders = () => {
         const updatedCompositeItems = (obj) => {
           let orderTitleNew = obj?.orderTitle;
           let compositeItemsNew = obj?.compositeItems ? [...obj.compositeItems] : [];
+          const totalEnabled = compositeItemsNew?.filter((o) => o?.isEnabled)?.length;
 
           if (compositeItemsNew.length === 0) {
             compositeItemsNew = [
@@ -3595,7 +3602,7 @@ const GenerateOrders = () => {
               {
                 orderType: null,
                 isEnabled: true,
-                displayindex: compositeItemsNew.length,
+                displayindex: totalEnabled,
               },
             ],
             orderTitle: orderTitleNew,
@@ -3736,11 +3743,12 @@ const GenerateOrders = () => {
           if (currentOrder?.orderCategory === "COMPOSITE" && currentOrder?.compositeItems?.[index]?.isEnabled === false) {
             return null;
           }
+          const showDeleteIcon = (currentOrder?.compositeItems?.filter((o) => o?.isEnabled) || []).length > 1;
           return (
             <div key={`${selectedOrder}-${index}`} className="form-wrapper-d" ref={(el) => (submitButtonRefs.current = el)}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <h1>{`${t("ITEM")} ${displayindex + 1}`}</h1>
-                {modifiedFormConfig?.length > 1 && (
+                {showDeleteIcon && (
                   <span
                     style={{ cursor: "pointer" }}
                     onClick={() => {
