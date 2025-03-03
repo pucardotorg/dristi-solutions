@@ -557,6 +557,10 @@ const SubmissionsCreate = ({ path }) => {
         }),
       };
     } else if (hearingId && hearingsData?.HearingList?.[0]?.startTime && applicationTypeUrl) {
+      let selectComplainant = null;
+      if (complainantsList?.length === 1) {
+        selectComplainant = complainantsList?.[0];
+      }
       return {
         submissionType: {
           code: "APPLICATION",
@@ -568,6 +572,7 @@ const SubmissionsCreate = ({ path }) => {
           name: `APPLICATION_TYPE_${applicationTypeUrl}`,
         },
         applicationDate: formatDate(new Date()),
+        ...(selectComplainant !== null ? { selectComplainant } : {}),
       };
     } else if (orderNumber) {
       if ((isComposite ? compositeMandatorySubmissionItem : orderDetails)?.orderType === orderTypes.MANDATORY_SUBMISSIONS_RESPONSES) {
@@ -698,22 +703,30 @@ const SubmissionsCreate = ({ path }) => {
       };
     }
   }, [
-    applicationDetails,
+    applicationDetails?.additionalDetails?.formdata,
     isCitizen,
+    applicationTypeParam,
     hearingId,
-    hearingsData,
+    hearingsData?.HearingList,
+    applicationTypeUrl,
     orderNumber,
     applicationType,
-    applicationTypeParam,
-    orderDetails,
+    orderDetails?.orderType,
+    orderDetails?.additionalDetails?.formdata?.submissionDeadline,
+    orderDetails?.additionalDetails?.formdata?.documentType,
+    orderDetails?.orderNumber,
     isExtension,
+    complainantsList,
     latestExtensionOrder,
-    applicationTypeUrl,
+    litigant,
     isComposite,
     compositeMandatorySubmissionItem,
   ]);
 
-  const formKey = useMemo(() => applicationType + (defaultFormValue?.initialSubmissionDate || ""), [applicationType, defaultFormValue]);
+  const formKey = useMemo(() => applicationType + (defaultFormValue?.initialSubmissionDate || "" + defaultFormValue?.selectComplainant?.name), [
+    applicationType,
+    defaultFormValue,
+  ]);
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     if (
