@@ -37,6 +37,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -255,7 +256,10 @@ public class CaseService {
             String updatedStatus = caseRequest.getCases().getStatus();
             String messageCode = getNotificationStatus(previousStatus, updatedStatus);
             if (messageCode != null) {
-                callNotificationService(caseRequest, messageCode);
+                String[] messageCodes = messageCode.split(",");
+                for (String msgCode : messageCodes) {
+                    callNotificationService(caseRequest, msgCode);
+                }
             }
 
             log.info("Method=updateCase,Result=SUCCESS, CaseId={}", caseRequest.getCases().getId());
@@ -561,7 +565,7 @@ public class CaseService {
         } else if (updatedStatus.equalsIgnoreCase(PAYMENT_PENDING)) {
             return CASE_SUBMITTED;
         } else if (previousStatus.equalsIgnoreCase(UNDER_SCRUTINY) && updatedStatus.equalsIgnoreCase(PENDING_REGISTRATION)) {
-            return FSO_VALIDATED;
+            return CASE_FORWARDED_TO_JUDGE;
         } else if (previousStatus.equalsIgnoreCase(UNDER_SCRUTINY) && updatedStatus.equalsIgnoreCase(CASE_REASSIGNED)) {
             return FSO_SEND_BACK;
         } else if (previousStatus.equalsIgnoreCase(PENDING_REGISTRATION) && updatedStatus.equalsIgnoreCase(PENDING_ADMISSION_HEARING)) {
@@ -648,6 +652,10 @@ public class CaseService {
             caseObj = encryptionDecryptionUtil.decryptObject(caseObj, config.getCaseDecryptSelf(), CourtCase.class, addWitnessRequest.getRequestInfo());
             addWitnessRequest.setAdditionalDetails(caseObj.getAdditionalDetails());
 
+            if (courtCase != null) {
+                smsForNewWitnessAddition(courtCase,addWitnessRequest);
+                smsForOthersAsWitnessAdded(courtCase,addWitnessRequest);
+            }
             return AddWitnessResponse.builder().addWitnessRequest(addWitnessRequest).build();
 
         } catch (CustomException e) {
@@ -1308,5 +1316,63 @@ public class CaseService {
 
         return caseRepository.getCaseSummaryByCaseNumber(request);
 
+    }
+
+    private void smsForNewWitnessAddition(CourtCase courtCase,AddWitnessRequest addWitnessRequest) {
+        RequestInfo requestInfo = addWitnessRequest.getRequestInfo();
+        long currentTimeMillis = System.currentTimeMillis();
+        SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+        String formattedDate = sdf.format(currentTimeMillis);
+        SmsTemplateData smsTemplateData = SmsTemplateData.builder()
+                .efilingNumber(courtCase.getFilingNumber())
+                .courtCaseNumber(courtCase.getCourtCaseNumber())
+                .cnrNumber(courtCase.getCnrNumber())
+                .hearingDate(formattedDate)
+                .cmpNumber(courtCase.getCmpNumber())
+                .tenantId(addWitnessRequest.getRequestInfo().getUserInfo().getTenantId())
+                .build();
+        if (addWitnessRequest.getAdditionalDetails() != null) {
+            Object witnessDetails = ((LinkedHashMap<?, ?>) addWitnessRequest.getAdditionalDetails()).get("witnessDetails");
+            Object witnessDetailsFormData = null;
+            if (witnessDetails != null) {
+                witnessDetailsFormData = ((LinkedHashMap<?, ?>) witnessDetails).get("formdata");
+            }
+            if (witnessDetailsFormData != null) {
+                List<?> witnessDetailsFormDataArray = (List<?>) witnessDetailsFormData;
+                for (Object node : witnessDetailsFormDataArray) {
+                    Object witnessData = ((LinkedHashMap<?, ?>) node).get("data");
+                    Object witnessPhoneNumbers = ((LinkedHashMap<?, ?>) witnessData).get("phonenumbers");
+                    Object mobileNumbers = ((LinkedHashMap<?, ?>) witnessPhoneNumbers).get("mobileNumber");
+                    List<?> mobileNumbersText = (List<?>) mobileNumbers;
+                    for (Object mobileNumber : mobileNumbersText) {
+                        notificationService.sendNotification(requestInfo, smsTemplateData, NEW_WITNESS_ADDED, mobileNumber.toString());
+                    }
+                }
+            }
+        }
+    }
+
+    private void smsForOthersAsWitnessAdded(CourtCase courtCase,AddWitnessRequest addWitnessRequest) {
+        RequestInfo requestInfo = addWitnessRequest.getRequestInfo();
+        long currentTimeMillis = System.currentTimeMillis();
+        SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+        String formattedDate = sdf.format(currentTimeMillis);
+        SmsTemplateData smsTemplateData = SmsTemplateData.builder()
+                .efilingNumber(courtCase.getFilingNumber())
+                .courtCaseNumber(courtCase.getCourtCaseNumber())
+                .cnrNumber(courtCase.getCnrNumber())
+                .hearingDate(formattedDate)
+                .cmpNumber(courtCase.getCmpNumber())
+                .tenantId(addWitnessRequest.getRequestInfo().getUserInfo().getTenantId())
+                .build();
+        Set<String> litigantAndAdvocateIndividualId = getLitigantIndividualId(courtCase);
+        CaseRequest caseRequest = CaseRequest.builder()
+                .cases(courtCase)
+                .build();
+        getAdvocateIndividualId(caseRequest,litigantAndAdvocateIndividualId);
+        Set<String> phoneNumbers = callIndividualService(requestInfo,litigantAndAdvocateIndividualId);
+        for (String number : phoneNumbers) {
+            notificationService.sendNotification(caseRequest.getRequestInfo(), smsTemplateData,NEW_WITNESS_ADDED_SMS_FOR_OTHERS , number);
+        }
     }
 }
