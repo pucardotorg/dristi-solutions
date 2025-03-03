@@ -31,6 +31,7 @@ const SBIEpostPayment = () => {
   const userInfo = Digit.UserService.getUser()?.info;
   const caseDetails = location?.state?.state?.caseDetails;
   const orderData = location?.state?.state?.orderData;
+  const partyIndex = location?.state?.state?.partyIndex;
   const consumerCode = location?.state?.state?.consumerCode;
   const filteredTasks = location?.state?.state?.filteredTasks;
   const filingNumber = location?.state?.state?.filingNumber;
@@ -151,7 +152,7 @@ const SBIEpostPayment = () => {
           isCourtBillPaid: isCourtBillPaid,
           hearingId: hearingId,
           orderType: orderType,
-          partyIndex: orderType === "NOTICE" && orderData?.list?.[0]?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex,
+          partyIndex: orderType === "NOTICE" && partyIndex,
         };
 
         localStorage.setItem("paymentReceiptData", JSON.stringify({ receiptData }));

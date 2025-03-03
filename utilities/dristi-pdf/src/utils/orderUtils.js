@@ -312,10 +312,14 @@ async function handleCompositePDF(req, res, qrCode, order) {
   }
 }
 
+const extractOrderNumber = (orderItemId) =>
+  orderItemId.includes("_") ? orderItemId.split("_").pop() : orderItemId;
+
 module.exports = {
   OrderPreviewOrderTypeMap,
   orderPDFMap,
   applicationStatusType,
   processOrder,
   handleCompositePDF,
+  extractOrderNumber,
 };

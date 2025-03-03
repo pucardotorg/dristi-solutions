@@ -104,6 +104,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
   const [orderNumber, setOrderNumber] = useState(null);
   const [orderId, setOrderId] = useState(null);
   const [orderType, setOrderType] = useState(null);
+  const [itemId, setItemId] = useState(null);
   const [orderLoading, setOrderLoading] = useState(false);
   const userType = Digit.UserService.getType();
   const { data: caseData } = Digit.Hooks.dristi.useSearchCaseService(
@@ -222,7 +223,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
   };
 
   const { data: ordersData } = useSearchOrdersService(
-    { criteria: { tenantId: tenantId, filingNumber } },
+    { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED" } },
     { tenantId },
     filingNumber,
     Boolean(filingNumber)
@@ -233,12 +234,28 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
   const orderListFiltered = useMemo(() => {
     if (!ordersData?.list) return [];
 
-    const filteredOrders = ordersData?.list?.filter(
-      (item) =>
-        (taskOrderType === "NOTICE" ? item.orderType === "NOTICE" : item.orderType === "SUMMONS" || item.orderType === "WARRANT") &&
-        item?.status === "PUBLISHED" &&
-        item?.hearingNumber === hearingId
-    );
+    const filteredOrders = ordersData?.list?.flatMap((order) => {
+      if (order?.orderCategory === "COMPOSITE") {
+        return order?.compositeItems
+          ?.filter(
+            (item) =>
+              (taskOrderType === "NOTICE" ? item?.orderType === "NOTICE" : ["SUMMONS", "WARRANT"].includes(item?.orderType)) &&
+              order?.hearingNumber === hearingId
+          )
+          ?.map((item) => ({
+            ...order,
+            orderType: item?.orderType,
+            additionalDetails: item?.orderSchema?.additionalDetails,
+            orderDetails: item?.orderSchema?.orderDetails,
+            itemId: item?.id,
+          }));
+      } else {
+        return (taskOrderType === "NOTICE" ? order?.orderType === "NOTICE" : ["SUMMONS", "WARRANT"].includes(order?.orderType)) &&
+          order?.hearingNumber === hearingId
+          ? [order]
+          : [];
+      }
+    });
 
     // make orders list by partyTypes Accused and Witness.
     const accusedWiseOrdersList = groupOrdersByParty(filteredOrders);
@@ -252,14 +269,16 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
     setOrderNumber(orderListFiltered?.[0]?.ordersList?.[0]?.orderNumber);
     setOrderType(orderListFiltered?.[0]?.ordersList?.[0]?.orderType);
     setOrderId(orderListFiltered?.[0]?.ordersList?.[0]?.id);
+    setItemId(orderListFiltered?.[0]?.ordersList?.[0]?.itemId);
   }, [orderListFiltered]);
 
-  const config = useMemo(() => summonsConfig({ filingNumber, orderNumber, orderId, orderType, taskCnrNumber }), [
+  const config = useMemo(() => summonsConfig({ filingNumber, orderNumber, orderId, orderType, taskCnrNumber, itemId }), [
     taskCnrNumber,
     filingNumber,
     orderId,
     orderNumber,
     orderType,
+    itemId,
   ]);
 
   const getOrderPartyData = (orderType, orderList) => {
@@ -401,6 +420,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
                 setOrderNumber(item?.ordersList?.[0]?.orderNumber);
                 setOrderType(item?.ordersList?.[0]?.orderType);
                 setOrderId(item?.ordersList?.[0]?.id);
+                setItemId(item?.ordersList?.[0]?.itemId);
                 setTimeout(() => {
                   setOrderLoading((prev) => !prev);
                 }, 0);
@@ -426,6 +446,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
                 setOrderNumber(item?.orderNumber);
                 setOrderType(item?.orderType);
                 setOrderId(item?.id);
+                setItemId(item?.itemId);
                 setTimeout(() => {
                   setOrderLoading((prev) => !prev);
                 }, 0);
