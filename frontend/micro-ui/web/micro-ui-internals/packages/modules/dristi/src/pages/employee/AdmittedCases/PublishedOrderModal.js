@@ -307,7 +307,6 @@ function PublishedOrderModal({
           style={{ minWidth: "500px" }}
           textInputStyle={{ maxWidth: "100%" }}
         />
-        {<Button isDisabled={true} label={t("SAVE")} variation={"primary"} style={{ padding: 15, boxShadow: "none" }} onButtonClick={() => {}} />}
       </div>
       <div style={{ display: "flex", width: "100%", justifyContent: "space-between", alignItems: "center", marginTop: "16px" }}>
         <div
