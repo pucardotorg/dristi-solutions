@@ -699,7 +699,7 @@ const CustomReviewCardRow = ({
                     )
                   : null}
               </div>
-              {showFlagIcon && !(type === "image" && configKey === "litigentDetails" && name === "complainantDetails") && (
+              {showFlagIcon &&(
                 <div
                   className="flag"
                   onClick={(e) => {
