@@ -227,6 +227,7 @@ const GenerateOrders = () => {
   const formValueChangeTriggerRefs = useRef([]);
   const submitButtonRefs = useRef([]);
   const setValueRef = useRef([]);
+  const formStateRef = useRef([]);
   const clearFormErrors = useRef([]);
   const [deleteOrderItemIndex, setDeleteOrderItemIndex] = useState(null);
 
@@ -1475,10 +1476,8 @@ const GenerateOrders = () => {
     //     }
     //   }
     // }
-    setFormErrors.current[index] = setError;
-    clearFormErrors.current[index] = clearErrors;
-    setValueRef.current[index] = setValue;
     if (currentOrder?.orderCategory === "COMPOSITE") {
+      // Validation for order Types check
       if (formData?.orderType?.code) {
         const orderTypeValidationObj = checkOrderValidation(formData?.orderType?.code, index);
         if (orderTypeValidationObj?.showModal) {
@@ -1648,6 +1647,11 @@ const GenerateOrders = () => {
 
       // setCurrentFormData(formData); // TODO: check and update setCurrentFormData here and update where ever currentFormData is being used.
     }
+
+    setFormErrors.current[index] = setError;
+    clearFormErrors.current[index] = clearErrors;
+    setValueRef.current[index] = setValue;
+    formStateRef.current[index] = formState;
 
     if (Object.keys(formState?.errors).length) {
       setIsSubmitDisabled(true);
@@ -3561,33 +3565,45 @@ const GenerateOrders = () => {
   const handleAddForm = () => {
     setFormList((prev) => {
       return prev?.map((item, i) => {
+        if (i !== selectedOrder) return item;
+
         const updatedCompositeItems = (obj) => {
           let orderTitleNew = obj?.orderTitle;
-          const compositeItemsNew = obj?.compositeItems || [];
-          if (compositeItemsNew?.length === 0) {
-            compositeItemsNew.push({
-              orderType: obj?.orderType,
-              ...(obj?.orderNumber && { orderSchema: { orderDetails: obj?.orderDetails } }),
-              isEnabled: true,
-              displayindex: 0,
-            });
+          let compositeItemsNew = obj?.compositeItems ? [...obj.compositeItems] : [];
+
+          if (compositeItemsNew.length === 0) {
+            compositeItemsNew = [
+              {
+                orderType: obj?.orderType,
+                ...(obj?.orderNumber && { orderSchema: { orderDetails: obj?.orderDetails } }),
+                isEnabled: true,
+                displayindex: 0,
+              },
+            ];
             orderTitleNew = `${t(obj?.orderType)} and Other Items`;
           }
-          compositeItemsNew.push({
-            orderType: null,
-            isEnabled: true,
-            displayindex: compositeItemsNew?.length,
-          });
-          return { compositeItems: compositeItemsNew, orderTitle: orderTitleNew };
+
+          return {
+            compositeItems: [
+              ...compositeItemsNew,
+              {
+                orderType: null,
+                isEnabled: true,
+                displayindex: compositeItemsNew.length,
+              },
+            ],
+            orderTitle: orderTitleNew,
+          };
         };
-        return i !== selectedOrder
-          ? item
-          : {
-              ...item,
-              orderCategory: "COMPOSITE",
-              orderTitle: updatedCompositeItems(item)?.orderTitle,
-              compositeItems: updatedCompositeItems(item)?.compositeItems,
-            };
+
+        const updatedItems = updatedCompositeItems(item);
+
+        return {
+          ...item,
+          orderCategory: "COMPOSITE",
+          orderTitle: updatedItems.orderTitle,
+          compositeItems: updatedItems.compositeItems,
+        };
       });
     });
   };
