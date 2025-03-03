@@ -200,6 +200,12 @@ public class Configuration {
 	@Value("${egov.sms.notification.esign.pending.template.id}")
 	private String smsNotificationEsignPendingTemplateId;
 
+	@Value("${egov.sms.notification.new.witness.added.template.id}")
+	private String smsNotificationWitnessAddedTemplateId;
+
+	@Value("${egov.sms.notification.new.witness.added.for.others.template.id}")
+	private String smsNotificationWitnessAddedForOthersTemplateId;
+
 	@Value("${egov.sms.notification.advocate.esign.pending.template.id}")
 	private String smsNotificationAdvocateEsignPendingTemplateId;
 
@@ -214,6 +220,9 @@ public class Configuration {
 
 	@Value("${egov.sms.notification.case.fso.send.back.template.id}")
 	private String smsNotificationCaseFsoSendBackTemplateId;
+
+	@Value("${egov.sms.notification.case.judge.assigned.template.id}")
+	private String smsNotificationCaseJudgeAssignedTemplateId;
 
 	@Value("${egov.sms.notification.case.judge.send.back.template.id}")
 	private String smsNotificationCaseJudgeSendBackTemplateId;

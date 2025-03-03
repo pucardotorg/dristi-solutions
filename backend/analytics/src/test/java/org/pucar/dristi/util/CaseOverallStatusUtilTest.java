@@ -48,7 +48,13 @@ class CaseOverallStatusUtilTest {
     private ObjectMapper mapper;
 
     @Mock
+    private CaseUtil caseUtil;
+
+    @Mock
     private MdmsDataConfig mdmsDataConfig;
+
+    @Mock
+    private Util util;
 
     @InjectMocks
     private CaseOverallStatusUtil caseOverallStatusUtil;
@@ -177,7 +183,7 @@ class CaseOverallStatusUtilTest {
     }
 
     @Test
-    void testCheckCaseOverAllStatusUnsupportedEntityType() throws JSONException {
+     void testCheckCaseOverAllStatusUnsupportedEntityType() throws JSONException, JsonProcessingException {
         // Prepare test data
         String entityType = "unsupported";
         String referenceId = "123";
