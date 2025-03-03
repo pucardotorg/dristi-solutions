@@ -330,4 +330,7 @@ public class Configuration {
 
 	@Value("${egov.task.service.create.endpoint}")
 	private String taskServiceCreateEndpoint;
+
+	@Value("${hearing.case.reference.number.update}")
+	private String caseReferenceUpdateTopic;
 }
