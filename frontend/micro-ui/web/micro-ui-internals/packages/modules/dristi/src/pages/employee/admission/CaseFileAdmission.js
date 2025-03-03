@@ -726,6 +726,8 @@ function CaseFileAdmission({ t, path }) {
           filingNumber: [caseDetails.filingNumber],
           hearingType: purpose,
           status: true,
+          courtCaseNumber: caseDetails?.courtCaseNumber,
+          cmpNumber: caseDetails?.cmpNumber,
           attendees: [
             ...Object.values(participant)
               .map((val) => val.attendees.map((attendee) => JSON.parse(attendee)))

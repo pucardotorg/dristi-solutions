@@ -254,6 +254,7 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
           additionalDetails: {
             filingNumber: hearing?.filingNumber,
             formData: bulkFormData || [],
+            caseId: hearing?.caseId,
           },
         };
       });
@@ -582,7 +583,13 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
         <Modal
           headerBarEnd={<CloseBtn onClick={() => (currentDiaryEntry ? history.goBack() : onCancel())} />}
           formId="modal-action"
-          headerBarMain={<Heading label={t("BULK_RESCHEDULE")} />}
+          headerBarMain={
+            <Heading
+              label={`${t("BULK_RESCHEDULE")}${
+                currentDiaryEntry?.additionalDetails?.caseId ? " - " + currentDiaryEntry?.additionalDetails?.caseId : ""
+              }`}
+            />
+          }
           actionCancelLabel={t("CS_COMMON_CANCEL")}
           actionCancelOnSubmit={onCancel}
           actionSaveOnSubmit={onSumbitReschedule}

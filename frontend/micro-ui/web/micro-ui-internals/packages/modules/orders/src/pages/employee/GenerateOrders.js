@@ -2410,6 +2410,8 @@ const GenerateOrders = () => {
               tenantId: tenantId,
               filingNumber: [filingNumber],
               cnrNumbers: cnrNumber ? [cnrNumber] : [],
+              courtCaseNumber: caseDetails?.courtCaseNumber,
+              cmpNumber: caseDetails?.cmpNumber,
               hearingType: currentOrder?.additionalDetails?.formdata?.hearingPurpose?.type,
               status: true,
               attendees: [

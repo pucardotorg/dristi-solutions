@@ -1428,6 +1428,8 @@ const AdmittedCases = () => {
           tenantId: tenantId,
           filingNumber: [caseDetails.filingNumber],
           hearingType: purpose,
+          courtCaseNumber: caseDetails?.courtCaseNumber,
+          cmpNumber: caseDetails?.cmpNumber,
           status: true,
           attendees: [
             ...Object.values(participant)
