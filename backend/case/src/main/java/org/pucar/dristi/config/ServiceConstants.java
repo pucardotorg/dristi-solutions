@@ -165,6 +165,8 @@ public class ServiceConstants {
     public static final String NOTIFICATION_LOCALIZATION_MSGS_JSONPATH = "$.messages.*.message";
     public static final String CASE_SUMMARY_SEARCH_QUERY_EXCEPTION = "CASE_SUMMARY_SEARCH_QUERY_EXCEPTION";
     public static final String JUDGE_ID = "JUDGE_ID";
+    public static final String NEW_WITNESS_ADDED = "NEW_WITNESS_ADDED";
+    public static final String NEW_WITNESS_ADDED_SMS_FOR_OTHERS = "NEW_WITNESS_ADDED_SMS_FOR_OTHERS";
 
     public static final String FLOW_JAC = "flow_jac";
 
