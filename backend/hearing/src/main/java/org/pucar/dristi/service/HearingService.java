@@ -545,6 +545,8 @@ public class HearingService {
                     .build();
             List<Hearing> hearingList = searchHearing(request);
             for (Hearing hearing : hearingList) {
+                hearing.setCourtCaseNumber(body.get("courtCaseNumber") != null ? body.get("courtCaseNumber").toString() : null);
+                hearing.setCmpNumber(body.get("cmpNumber") != null ? body.get("cmpNumber").toString() : null);
                 if(body.get("courtCaseNumber") != null){
                     hearing.setCaseReferenceNumber(body.get("courtCaseNumber").toString());
                 } else if(body.get("cmpNumber") != null){
