@@ -16,18 +16,6 @@ const JudgementViewCard = ({ caseData, width }) => {
     { name: "OutcomeType" },
   ]);
 
-  const { data: ordersRes, refetch: refetchOrdersData, isLoading: isOrdersLoading } = useGetOrders(
-    {
-      criteria: {
-        filingNumber: caseData?.filingNumber,
-        tenantId: tenantId,
-      },
-    },
-    {},
-    caseData?.filingNumber,
-    caseData?.filingNumber
-  );
-
   const finalOutcomeOrderType = useMemo(() => {
     let orderType = "";
     orderType = outcomeOrderMapping?.case?.OutcomeType?.find((obj) => {
@@ -44,9 +32,21 @@ const JudgementViewCard = ({ caseData, width }) => {
     return orderType;
   }, [outcomeOrderMapping, caseData]);
 
-  const finalOutcomeOrder = useMemo(() => {
-    return ordersRes?.list?.filter((order) => order?.orderType === finalOutcomeOrderType)?.[0];
-  }, [ordersRes, finalOutcomeOrderType]);
+  const { data: ordersRes, refetch: refetchOrdersData, isLoading: isOrdersLoading } = useGetOrders(
+    {
+      criteria: {
+        filingNumber: caseData?.filingNumber,
+        tenantId: tenantId,
+        orderType: finalOutcomeOrderType,
+        status: "PUBLISHED",
+      },
+    },
+    {},
+    caseData?.filingNumber,
+    Boolean(caseData?.filingNumber && tenantId && finalOutcomeOrderType)
+  );
+
+  const finalOutcomeOrder = ordersRes?.list?.[0];
 
   const handleButtonClick = () => {
     setShowFinalOutcomeOrder(true);

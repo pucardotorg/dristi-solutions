@@ -13,6 +13,7 @@ const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { getAdvocates } = require("../applicationHandlers/getAdvocates");
 const { handleApiCall } = require("../utils/handleApiCall");
+const { extractOrderNumber } = require("../utils/orderUtils");
 
 async function orderAcceptExtension(req, res, qrCode, order, compositeOrder) {
   const cnrNumber = req.query.cnrNumber;
@@ -91,8 +92,9 @@ async function orderAcceptExtension(req, res, qrCode, order, compositeOrder) {
     if (!application) {
       return renderError(res, "Application not found", 404);
     }
-    const originalOrderNumber =
-      application.additionalDetails.formdata.refOrderId;
+    const originalOrderNumber = extractOrderNumber(
+      application.additionalDetails.formdata.refOrderId
+    );
     const resOriginalOrder = await handleApiCall(
       res,
       () => search_order(tenantId, originalOrderNumber, requestInfo, true),

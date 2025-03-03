@@ -358,6 +358,17 @@ const AdmittedCases = () => {
     [applicationData, onBehalfOfuuid]
   );
 
+  const submitBailDocumentsApplications = useMemo(
+    () =>
+      applicationData?.applicationList?.filter(
+        (item) =>
+          item?.applicationType === "SUBMIT_BAIL_DOCUMENTS" &&
+          item?.onBehalfOf?.includes(onBehalfOfuuid) &&
+          ![SubmissionWorkflowState.DELETED, SubmissionWorkflowState.ABATED].includes(item?.status)
+      ) || [],
+    [applicationData, onBehalfOfuuid]
+  );
+
   useMemo(() => {
     setIsDelayApplicationPending(
       Boolean(
@@ -1222,6 +1233,8 @@ const AdmittedCases = () => {
         statuteSection: {
           tenantId,
         },
+        orderTitle: "NOTICE",
+        orderCategory: "INTERMEDIATE",
         orderType: "NOTICE",
         status: "",
         isActive: true,
@@ -1505,6 +1518,8 @@ const AdmittedCases = () => {
         statuteSection: {
           tenantId,
         },
+        orderTitle: OrderTypes.SCHEDULE_OF_HEARING_DATE,
+        orderCategory: "INTERMEDIATE",
         orderType: OrderTypes.SCHEDULE_OF_HEARING_DATE,
         status: "",
         isActive: true,
@@ -1643,7 +1658,7 @@ const AdmittedCases = () => {
   );
 
   const { data: ordersData } = useSearchOrdersService(
-    { criteria: { tenantId: tenantId, filingNumber } },
+    { criteria: { tenantId: tenantId, filingNumber, orderType: "NOTICE", status: "PUBLISHED" } },
     { tenantId },
     filingNumber + currentHearingId,
     Boolean(filingNumber),
@@ -1653,21 +1668,27 @@ const AdmittedCases = () => {
   const orderListFiltered = useMemo(() => {
     if (!ordersData?.list) return [];
 
-    const filteredOrders = ordersData?.list?.filter(
-      (item) => item.orderType === "NOTICE" && item?.status === "PUBLISHED" && item?.hearingNumber === currentHearingId
-    );
-
+    const filteredOrders = ordersData?.list?.filter((item) => item?.hearingNumber === currentHearingId);
     const sortedOrders = filteredOrders?.sort((a, b) => new Date(b.auditDetails.createdTime) - new Date(a.auditDetails.createdTime));
 
     // Group by partyIndex
     const groupedOrders = sortedOrders?.reduce((acc, item) => {
-      const partyIndex = item?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex;
-
-      if (partyIndex !== undefined) {
-        acc[partyIndex] = acc[partyIndex] || [];
-        acc[partyIndex].push(item);
+      if (item?.orderCategory === "COMPOSITE") {
+        const compositeItems = item?.compositeItems?.filter((item) => item?.orderType === "NOTICE");
+        compositeItems.forEach((itemDetails) => {
+          const partyIndex = itemDetails?.orderSchema?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex;
+          if (partyIndex !== undefined) {
+            acc[partyIndex] = acc[partyIndex] || [];
+            acc[partyIndex].push(item);
+          }
+        });
+      } else {
+        const partyIndex = item?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex;
+        if (partyIndex !== undefined) {
+          acc[partyIndex] = acc[partyIndex] || [];
+          acc[partyIndex].push(item);
+        }
       }
-
       return acc;
     }, {});
 
@@ -1679,7 +1700,14 @@ const AdmittedCases = () => {
 
     return Object.entries(orderListFiltered)
       ?.map(([partyIndex, orders]) => {
-        const partyName = orders[0]?.orderDetails?.parties?.[0]?.partyName || "";
+        const firstOrder = orders?.[0];
+        const partyName =
+          firstOrder?.orderCategory === "COMPOSITE"
+            ? firstOrder?.compositeItems?.find(
+                (item) =>
+                  item?.orderType === "NOTICE" && item?.orderSchema?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex === partyIndex
+              )?.orderSchema?.orderDetails?.parties?.[0]?.partyName
+            : firstOrder?.orderDetails?.parties?.[0]?.partyName;
         return {
           partyIndex,
           partyName,
@@ -1751,7 +1779,10 @@ const AdmittedCases = () => {
             criteria: { filingNumber, applicationNumber: "", cnrNumber, status: OrderWorkflowState.DRAFT_IN_PROGRESS, hearingNumber: hearingNumber },
             pagination: { limit: 1, offset: 0 },
           });
-          if (orderData?.orderType === "NOTICE") {
+          if (
+            (orderData?.orderCategory === "COMPOSITE" && orderData?.compositeItems?.some((item) => item?.orderType === "NOTICE")) ||
+            orderData?.orderType === "NOTICE"
+          ) {
             history.push(`/digit-ui/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${orderData.orderNumber}`, {
               caseId: caseId,
               tab: "Orders",
@@ -1989,15 +2020,19 @@ const AdmittedCases = () => {
     }
   };
 
-  const handleExtensionRequest = (orderNumber) => {
-    history.push(
-      `/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&isExtension=true&litigant=${currentOrder?.litigant}&litigantIndId=${currentOrder?.litigantIndId}`
-    );
+  const handleExtensionRequest = (orderNumber, itemId, litigant, litigantIndId) => {
+    let url = `/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&isExtension=true&litigant=${
+      currentOrder?.litigant || litigant
+    }&litigantIndId=${currentOrder?.litigantIndId || litigantIndId}`;
+    if (itemId) url += `&itemId=${itemId}`;
+    history.push(url);
   };
-  const handleSubmitDocument = (orderNumber) => {
-    history.push(
-      `/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&litigant=${currentOrder?.litigant}&litigantIndId=${currentOrder?.litigantIndId}`
-    );
+  const handleSubmitDocument = (orderNumber, itemId, litigant, litigantIndId) => {
+    let url = `/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&litigant=${
+      currentOrder?.litigant || litigant
+    }&litigantIndId=${currentOrder?.litigantIndId || litigantIndId}`;
+    if (itemId) url += `&itemId=${itemId}`;
+    history.push(url);
   };
 
   const openHearingModule = () => {
@@ -2450,6 +2485,7 @@ const AdmittedCases = () => {
             caseStatus={caseStatus}
             extensionApplications={extensionApplications}
             productionOfDocumentApplications={productionOfDocumentApplications}
+            submitBailDocumentsApplications={submitBailDocumentsApplications}
           />
         </div>
       )}
@@ -2485,6 +2521,7 @@ const AdmittedCases = () => {
           productionOfDocumentApplications={productionOfDocumentApplications}
           caseStatus={caseStatus}
           handleOrdersTab={handleOrdersTab}
+          submitBailDocumentsApplications={submitBailDocumentsApplications}
         />
       )}
       {showHearingTranscriptModal && (

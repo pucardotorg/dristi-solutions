@@ -237,6 +237,8 @@ function ScheduleNextHearing({
           statuteSection: {
             tenantId,
           },
+          orderTitle: "ASSIGNING_DATE_RESCHEDULED_HEARING",
+          orderCategory: "INTERMEDIATE",
           orderType: "ASSIGNING_DATE_RESCHEDULED_HEARING",
           status: "",
           isActive: true,

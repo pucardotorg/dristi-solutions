@@ -161,7 +161,6 @@ const PaymentForRPADModal = ({ path }) => {
     return caseData?.criteria?.[0]?.responseList?.[0];
   }, [caseData]);
 
-
   const fetchCaseLockStatus = useCallback(async () => {
     try {
       const status = await DRISTIService.getCaseLockStatus(
@@ -222,7 +221,15 @@ const PaymentForRPADModal = ({ path }) => {
   );
   const orderDetails = useMemo(() => orderData?.list?.[0] || {}, [orderData]);
 
-  const orderType = useMemo(() => orderDetails?.orderType || "", [orderDetails?.orderType]);
+  const compositeItem = useMemo(() => orderDetails?.compositeItems?.find((item) => item?.id === filteredTasks?.[0]?.additionalDetails?.itemId), [
+    orderDetails,
+    filteredTasks,
+  ]);
+
+  const orderType = useMemo(() => (orderDetails?.orderCategory === "COMPOSITE" ? compositeItem?.orderType : orderDetails?.orderType), [
+    orderDetails,
+    compositeItem,
+  ]);
 
   const { data: hearingsData, isLoading: isHearingLoading } = Digit.Hooks.hearings.useGetHearings(
     {
@@ -383,7 +390,11 @@ const PaymentForRPADModal = ({ path }) => {
                 stateSla: 3 * dayInMillisecond + todayDate,
                 additionalDetails: {
                   hearingId: hearingsData?.list?.[0]?.hearingId,
-                  partyIndex: orderType === "NOTICE" && orderDetails?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex,
+                  partyIndex:
+                    orderType === "NOTICE" &&
+                    (orderDetails?.orderCategory === "COMPOSITE"
+                      ? compositeItem?.orderSchema?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex
+                      : orderDetails?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex),
                 },
                 tenantId,
               },
