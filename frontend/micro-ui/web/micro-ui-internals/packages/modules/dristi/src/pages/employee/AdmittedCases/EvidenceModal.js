@@ -20,6 +20,7 @@ import { cleanString, getDate, removeInvalidNameParts } from "../../../Utils";
 import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/useGetAllOrderApplicationRelatedDocuments";
 import { useToast } from "../../../components/Toast/useToast";
 import Button from "../../../components/Button";
+import { compositeOrderAllowedTypes } from "@egovernments/digit-ui-module-orders/src/pages/employee/GenerateOrders";
 
 const stateSla = {
   DRAFT_IN_PROGRESS: 2,
@@ -71,6 +72,7 @@ const EvidenceModal = ({
   const toast = useToast();
   const urlParams = new URLSearchParams(window.location.search);
   const applicationNumber = urlParams.get("applicationNumber");
+  const compositeOrderObj = history.location?.state?.compositeOrderObj;
 
   const setData = (data) => {
     setFormData(data);
@@ -705,16 +707,49 @@ const EvidenceModal = ({
     return type === "accept" ? "APPROVED" : "REJECTED";
   };
 
+  const checkOrderTypeValidation = (a, b) => {
+    let errorObj = { isIncompatible: false, isDuplicate: false };
+    for (let i = 0; i < compositeOrderAllowedTypes?.length; i++) {
+      const currentObj = compositeOrderAllowedTypes?.[i];
+      if (currentObj?.orderTypes?.includes(a)) {
+        if (currentObj?.unAllowedOrderTypes?.includes(b)) {
+          if (a === b) {
+            errorObj.isDuplicate = true;
+          } else {
+            errorObj.isIncompatible = true;
+          }
+          break;
+        }
+      }
+    }
+    return errorObj;
+  };
+
+  const checkOrderValidation = (orderType, compositeOrderObj) => {
+    if (compositeOrderObj?.orderCategory === "INTERMEDIATE") {
+      const orderTypeA = compositeOrderObj?.additionalDetails?.formdata?.orderType?.code;
+      const { isIncompatible, isDuplicate } = checkOrderTypeValidation(orderTypeA, orderType);
+      return isIncompatible || isDuplicate;
+    }
+    return compositeOrderObj?.compositeItems?.some((item) => {
+      if (!item?.isEnabled) return false;
+      const orderTypeA = item?.orderSchema?.additionalDetails?.formdata?.orderType?.code;
+      const { isIncompatible, isDuplicate } = checkOrderTypeValidation(orderTypeA, orderType);
+      return isIncompatible || isDuplicate;
+    });
+  };
+
   const handleApplicationAction = async (generateOrder, type) => {
     try {
       const orderType = getOrderTypes(documentSubmission?.[0]?.applicationList?.applicationType, type);
+      const refApplicationId = documentSubmission?.[0]?.applicationList?.applicationNumber;
       const formdata = {
         orderType: {
           code: orderType,
           type: orderType,
           name: `ORDER_TYPE_${orderType}`,
         },
-        refApplicationId: documentSubmission?.[0]?.applicationList?.applicationNumber,
+        refApplicationId: refApplicationId,
         applicationStatus: documentSubmission?.[0]?.applicationList?.applicationType
           ? setApplicationStatus(type, documentSubmission[0].applicationList.applicationType)
           : null,
@@ -726,9 +761,332 @@ const EvidenceModal = ({
         }),
       };
       const linkedOrderNumber = documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.refOrderId;
-      const applicationNumber = [documentSubmission?.[0]?.applicationList?.applicationNumber];
+      const applicationNumber = [refApplicationId];
+      const hearingNumber =
+        ["INITIATING_RESCHEDULING_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE"].includes(orderType) &&
+        documentSubmission?.[0]?.applicationList?.additionalDetails?.hearingId;
+      const parties = documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName && {
+        parties: [{ partyName: documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName }],
+      };
+      const additionalDetails = {
+        formdata,
+        applicationStatus: documentSubmission?.[0]?.applicationList?.applicationType
+          ? setApplicationStatus(type, documentSubmission[0].applicationList.applicationType)
+          : null,
+        ...(linkedOrderNumber && { linkedOrderNumber: linkedOrderNumber }),
+        ...(applicationNumber && { applicationNumber: applicationNumber }),
+        ...(hearingNumber && {
+          hearingNumber: hearingNumber,
+        }),
+      };
+      const isSameOrder =
+        compositeOrderObj?.orderCategory === "COMPOSITE"
+          ? compositeOrderObj?.compositeItems?.some(
+              (item) =>
+                item.orderType === orderType &&
+                item?.isEnabled &&
+                item?.orderSchema?.additionalDetails?.formdata?.refApplicationId === refApplicationId
+            )
+          : compositeOrderObj?.orderType === orderType && compositeOrderObj?.additionalDetails?.formdata?.refApplicationId === refApplicationId;
+      const isNewOrder = isSameOrder || checkOrderValidation(orderType, compositeOrderObj);
 
-      if (generateOrder) {
+      if (generateOrder && compositeOrderObj && compositeOrderObj?.orderTitle && !isNewOrder) {
+        try {
+          if (compositeOrderObj?.orderCategory === "INTERMEDIATE") {
+            if (compositeOrderObj?.orderNumber) {
+              const compositeItems = [
+                {
+                  orderType: compositeOrderObj?.orderType,
+                  orderSchema: {
+                    applicationNumber: compositeOrderObj?.applicationNumber,
+                    orderDetails: compositeOrderObj?.orderDetails,
+                    additionalDetails: {
+                      ...compositeOrderObj?.additionalDetails,
+                      hearingNumber: compositeOrderObj?.hearingNumber,
+                      linkedOrderNumber: compositeOrderObj?.linkedOrderNumber,
+                    },
+                  },
+                },
+                {
+                  orderType: orderType,
+                  orderSchema: {
+                    additionalDetails: additionalDetails,
+                    ...(parties && { orderDetails: parties }),
+                    ...(hearingNumber && {
+                      hearingNumber: hearingNumber,
+                    }),
+                    ...(linkedOrderNumber && { linkedOrderNumber }),
+                    ...(applicationNumber && {
+                      applicationNumber: applicationNumber,
+                    }),
+                  },
+                },
+              ];
+              await ordersService.addOrderItem(
+                {
+                  order: {
+                    ...compositeOrderObj,
+                    additionalDetails: null,
+                    orderDetails: null,
+                    orderType: null,
+                    orderCategory: "COMPOSITE",
+                    applicationNumber: null,
+                    orderTitle: `${t(compositeOrderObj?.orderType)} and Other Items`,
+                    compositeItems,
+                    ...(hearingNumber && {
+                      hearingNumber: hearingNumber,
+                    }),
+                    ...(linkedOrderNumber && { linkedOrderNumber }),
+                    workflow: {
+                      action: OrderWorkflowAction.SAVE_DRAFT,
+                      comments: "Creating order",
+                      assignes: null,
+                      rating: null,
+                      documents: [{}],
+                    },
+                  },
+                },
+                { tenantId }
+              );
+              DRISTIService.customApiService(Urls.dristi.pendingTask, {
+                pendingTask: {
+                  name: `${t(compositeOrderObj?.orderType)} and Other Items`,
+                  entityType: "order-default",
+                  referenceId: `MANUAL_${compositeOrderObj?.orderNumber}`,
+                  status: "DRAFT_IN_PROGRESS",
+                  assignedTo: [],
+                  assignedRole: ["JUDGE_ROLE"],
+                  cnrNumber,
+                  filingNumber,
+                  isCompleted: false,
+                  stateSla: stateSla.DRAFT_IN_PROGRESS * dayInMillisecond + todayDate,
+                  additionalDetails: { orderType },
+                  tenantId,
+                },
+              });
+              history.replace(
+                `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${compositeOrderObj?.orderNumber}`
+              );
+            } else {
+              const response = await ordersService.createOrder(
+                {
+                  order: {
+                    ...compositeOrderObj,
+                    applicationNumber: [...compositeOrderObj?.applicationNumber, refApplicationId],
+                  },
+                },
+                { tenantId }
+              );
+              if (response?.order?.orderNumber) {
+                const compositeItems = [
+                  {
+                    orderType: response?.order?.orderType,
+                    orderSchema: {
+                      orderDetails: response?.order?.orderDetails,
+                      additionalDetails: {
+                        ...response?.order?.additionalDetails,
+                        hearingNumber: response?.order?.hearingNumber,
+                        linkedOrderNumber: response?.order?.linkedOrderNumber,
+                        applicationNumber: response?.order?.applicationNumber,
+                      },
+                    },
+                  },
+                  {
+                    orderType: orderType,
+                    orderSchema: {
+                      ...(parties && { orderDetails: parties }),
+                      additionalDetails: additionalDetails,
+                      ...(hearingNumber && {
+                        hearingNumber: hearingNumber,
+                      }),
+                      ...(linkedOrderNumber && { linkedOrderNumber }),
+                      ...(applicationNumber && {
+                        applicationNumber: applicationNumber,
+                      }),
+                    },
+                  },
+                ];
+                await ordersService.addOrderItem(
+                  {
+                    order: {
+                      ...response?.order,
+                      additionalDetails: null,
+                      orderDetails: null,
+                      orderType: null,
+                      orderCategory: "COMPOSITE",
+                      orderTitle: `${t(response?.order?.orderType)} and Other Items`,
+                      compositeItems,
+                      ...(hearingNumber && {
+                        hearingNumber: hearingNumber,
+                      }),
+                      ...(linkedOrderNumber && { linkedOrderNumber }),
+                      workflow: {
+                        action: OrderWorkflowAction.SAVE_DRAFT,
+                        comments: "Creating order",
+                        assignes: null,
+                        rating: null,
+                        documents: [{}],
+                      },
+                    },
+                  },
+                  { tenantId }
+                );
+                DRISTIService.customApiService(Urls.dristi.pendingTask, {
+                  pendingTask: {
+                    name: `${t(response?.order?.orderType)} and Other Items`,
+                    entityType: "order-default",
+                    referenceId: `MANUAL_${response?.order?.orderNumber}`,
+                    status: "DRAFT_IN_PROGRESS",
+                    assignedTo: [],
+                    assignedRole: ["JUDGE_ROLE"],
+                    cnrNumber,
+                    filingNumber,
+                    isCompleted: false,
+                    stateSla: stateSla.DRAFT_IN_PROGRESS * dayInMillisecond + todayDate,
+                    additionalDetails: { orderType },
+                    tenantId,
+                  },
+                });
+                history.replace(
+                  `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${response?.order?.orderNumber}`
+                );
+              }
+            }
+          } else {
+            if (compositeOrderObj?.orderNumber) {
+              const compositeItems = [
+                ...compositeOrderObj?.compositeItems,
+                {
+                  orderType: orderType,
+                  orderSchema: {
+                    additionalDetails: additionalDetails,
+                    ...(parties && { orderDetails: parties }),
+                    ...(hearingNumber && {
+                      hearingNumber: hearingNumber,
+                    }),
+                    ...(linkedOrderNumber && { linkedOrderNumber }),
+                    ...(applicationNumber && {
+                      applicationNumber: applicationNumber,
+                    }),
+                  },
+                },
+              ];
+              await ordersService.addOrderItem(
+                {
+                  order: {
+                    ...compositeOrderObj?.filter((item) => item?.isEnabled),
+                    compositeItems,
+                    ...(hearingNumber && {
+                      hearingNumber: hearingNumber,
+                    }),
+                    applicationNumber: null,
+                    ...(linkedOrderNumber && { linkedOrderNumber }),
+                    workflow: {
+                      action: OrderWorkflowAction.SAVE_DRAFT,
+                      comments: "Creating order",
+                      assignes: null,
+                      rating: null,
+                      documents: [{}],
+                    },
+                  },
+                },
+                { tenantId }
+              );
+              DRISTIService.customApiService(Urls.dristi.pendingTask, {
+                pendingTask: {
+                  name: `${t(compositeOrderObj?.orderType)} and Other Items`,
+                  entityType: "order-default",
+                  referenceId: `MANUAL_${compositeOrderObj?.orderNumber}`,
+                  status: "DRAFT_IN_PROGRESS",
+                  assignedTo: [],
+                  assignedRole: ["JUDGE_ROLE"],
+                  cnrNumber,
+                  filingNumber,
+                  isCompleted: false,
+                  stateSla: stateSla.DRAFT_IN_PROGRESS * dayInMillisecond + todayDate,
+                  additionalDetails: { orderType },
+                  tenantId,
+                },
+              });
+              history.replace(
+                `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${compositeOrderObj?.orderNumber}`
+              );
+            } else {
+              const response = await ordersService.createOrder(
+                {
+                  order: {
+                    ...compositeOrderObj,
+                    orderCategory: "INTERMEDIATE",
+                    compositeItems: null,
+                    orderTitle: compositeOrderObj?.compositeItems?.[0]?.orderType,
+                    orderType: compositeOrderObj?.compositeItems?.[0]?.orderType,
+                    applicationNumber: [...compositeOrderObj?.applicationNumber, refApplicationId],
+                    status: "",
+                    isActive: true,
+                    workflow: {
+                      action: OrderWorkflowAction.SAVE_DRAFT,
+                      comments: "Creating order",
+                      assignes: null,
+                      rating: null,
+                      documents: [{}],
+                    },
+                    additionalDetails: compositeOrderObj?.compositeItems?.[0]?.orderSchema?.additionalDetails,
+                    orderDetails: compositeOrderObj?.compositeItems?.[0]?.orderSchema?.orderDetails,
+                    ...(hearingNumber && {
+                      hearingNumber: hearingNumber,
+                    }),
+                    ...(linkedOrderNumber && { linkedOrderNumber }),
+                  },
+                },
+                { tenantId }
+              );
+              if (response?.order?.orderNumber) {
+                const enabledCompositeItems = compositeOrderObj?.compositeItems?.filter((item) => item?.isEnabled);
+                await ordersService.addOrderItem(
+                  {
+                    order: {
+                      ...response?.order,
+                      additionalDetails: null,
+                      orderDetails: null,
+                      orderType: null,
+                      orderCategory: compositeOrderObj?.orderCategory,
+                      orderTitle: compositeOrderObj?.orderTitle,
+                      enabledCompositeItems,
+                      workflow: {
+                        action: OrderWorkflowAction.SAVE_DRAFT,
+                        comments: "Creating order",
+                        assignes: null,
+                        rating: null,
+                        documents: [{}],
+                      },
+                    },
+                  },
+                  { tenantId }
+                );
+                DRISTIService.customApiService(Urls.dristi.pendingTask, {
+                  pendingTask: {
+                    name: `${t(response?.order?.orderType)} and Other Items`,
+                    entityType: "order-default",
+                    referenceId: `MANUAL_${response?.order?.orderNumber}`,
+                    status: "DRAFT_IN_PROGRESS",
+                    assignedTo: [],
+                    assignedRole: ["JUDGE_ROLE"],
+                    cnrNumber,
+                    filingNumber,
+                    isCompleted: false,
+                    stateSla: stateSla.DRAFT_IN_PROGRESS * dayInMillisecond + todayDate,
+                    additionalDetails: { orderType },
+                    tenantId,
+                  },
+                });
+                history.replace(
+                  `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${response?.order?.orderNumber}`
+                );
+              }
+            }
+          }
+        } catch (error) {}
+      } else if (generateOrder) {
         const reqbody = {
           order: {
             createdDate: null,
@@ -752,19 +1110,10 @@ const EvidenceModal = ({
               documents: [{}],
             },
             documents: [],
-            additionalDetails: {
-              formdata,
-              applicationStatus: documentSubmission?.[0]?.applicationList?.applicationType
-                ? setApplicationStatus(type, documentSubmission[0].applicationList.applicationType)
-                : null,
-              ...(linkedOrderNumber && { linkedOrderNumber: linkedOrderNumber }),
-              ...(applicationNumber && { applicationNumber: applicationNumber }),
-            },
-            ...(documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName && {
-              orderDetails: { parties: [{ partyName: documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName }] },
-            }),
-            ...(["INITIATING_RESCHEDULING_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE"].includes(orderType) && {
-              hearingNumber: documentSubmission?.[0]?.applicationList?.additionalDetails?.hearingId,
+            additionalDetails: additionalDetails,
+            ...(parties && { orderDetails: parties }),
+            ...(hearingNumber && {
+              hearingNumber: hearingNumber,
             }),
             ...(linkedOrderNumber && { linkedOrderNumber }),
           },
@@ -810,7 +1159,9 @@ const EvidenceModal = ({
   };
 
   const handleBack = () => {
-    if (modalType === "Submissions" && history.location?.state?.applicationDocObj) {
+    if (modalType === "Submissions" && history.location?.state?.applicationDocObj && compositeOrderObj) {
+      history.goBack();
+    } else if (modalType === "Submissions" && history.location?.state?.applicationDocObj) {
       history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Submissions`);
     } else {
       if (currentDiaryEntry) {

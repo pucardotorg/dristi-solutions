@@ -60,9 +60,10 @@ import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/To
 import ErrorDataModal from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/ErrorDataModal";
 import CompositeOrdersErrorModal from "./CompositeOrdersErrorModal";
 import OrderItemDeleteModal from "./OrderItemDeleteModal";
+import TasksComponent from "../../../../home/src/components/TaskComponent";
 
 // any order type from orderTypes can not be paired with any order from unAllowedOrderTypes when creating composite order.
-const compositeOrderAllowedTypes = [
+export const compositeOrderAllowedTypes = [
   {
     key: "finalStageOrders",
     orderTypes: ["REFERRAL_CASE_TO_ADR", "JUDGEMENT", "WITHDRAWAL", "SETTLEMENT", "CASE_TRANSFER"],
@@ -276,6 +277,8 @@ const GenerateOrders = () => {
     Boolean(filingNumber)
   );
   const userInfo = Digit.UserService.getUser()?.info;
+  const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const [taskType, setTaskType] = useState({});
 
   const caseDetails = useMemo(
     () => ({
@@ -3638,7 +3641,7 @@ const GenerateOrders = () => {
 
   return (
     <div className="generate-orders">
-      <div className="orders-list-main">
+      <div className="orders-list-main" style={{ flex: 1 }}>
         <div className="add-order-button" onClick={handleAddOrder}>{`+ ${t("CS_ADD_ORDER")}`}</div>
         <React.Fragment>
           <style>
@@ -3676,7 +3679,7 @@ const GenerateOrders = () => {
           })}
         </React.Fragment>
       </div>
-      <div className="view-order" style={{ marginBottom: "130px" }}>
+      <div className="view-order" style={{ marginBottom: "130px", flex: 3 }}>
         {
           <div className="header-title-icon" style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
             {
@@ -3811,6 +3814,19 @@ const GenerateOrders = () => {
             ></Button>
           </div>
         )}
+      </div>
+      <div style={{ flex: 2 }}>
+        <TasksComponent
+          taskType={taskType}
+          setTaskType={setTaskType}
+          uuid={userInfo?.uuid}
+          userInfoType={userInfoType}
+          filingNumber={filingNumber}
+          inCase={true}
+          hideFilters={true}
+          isApplicationCompositeOrder={true}
+          compositeOrderObj={currentOrder}
+        />
       </div>
       {deleteOrderIndex !== null && (
         <div className="delete-order-warning-modal">

@@ -898,9 +898,7 @@ const SubmissionsCreate = ({ path }) => {
           ...applicationSchema,
           applicationDetails: {
             ...applicationSchema?.applicationDetails,
-            relatedApplication: isComposite
-              ? compositeSetTermBailItem?.orderSchema?.additionalDetails?.applicationNumber
-              : orderDetails?.applicationNumber,
+            relatedApplication: isComposite ? compositeSetTermBailItem?.orderSchema?.applicationNumber : orderDetails?.applicationNumber,
           },
         };
       }
