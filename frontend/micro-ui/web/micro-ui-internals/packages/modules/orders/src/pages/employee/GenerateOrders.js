@@ -1800,6 +1800,8 @@ const GenerateOrders = () => {
       { tenantId }
     );
   };
+  const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
+
   const handleRescheduleHearing = async ({ hearingType, hearingBookingId, rescheduledRequestId, comments, requesterId, date }) => {
     await schedulerService.RescheduleHearing(
       {
@@ -1808,7 +1810,7 @@ const GenerateOrders = () => {
             rescheduledRequestId: rescheduledRequestId,
             hearingBookingId: hearingBookingId,
             tenantId: tenantId,
-            judgeId: "super",
+            judgeId: judgeId,
             caseId: filingNumber,
             hearingType: "ADMISSION",
             requesterId: requesterId,
@@ -2416,6 +2418,8 @@ const GenerateOrders = () => {
               tenantId: tenantId,
               filingNumber: [filingNumber],
               cnrNumbers: cnrNumber ? [cnrNumber] : [],
+              courtCaseNumber: caseDetails?.courtCaseNumber,
+              cmpNumber: caseDetails?.cmpNumber,
               hearingType: currentOrder?.additionalDetails?.formdata?.hearingPurpose?.type,
               status: true,
               attendees: [
@@ -2496,7 +2500,7 @@ const GenerateOrders = () => {
         await DRISTIService.addADiaryEntry(
           {
             diaryEntry: {
-              judgeId: "super",
+              judgeId: judgeId,
               businessOfDay: businessOfTheDay,
               tenantId: tenantId,
               entryDate: new Date().setHours(0, 0, 0, 0),

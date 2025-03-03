@@ -216,6 +216,7 @@ public class CaseService {
             if (CASE_ADMIT_STATUS.equals(caseRequest.getCases().getStatus())) {
                 enrichmentUtil.enrichCourtCaseNumber(caseRequest);
                 caseRequest.getCases().setCaseType(ST);
+                producer.push(config.getCaseReferenceUpdateTopic(), createHearingUpdateRequest(caseRequest));
             }
 
             if (PENDING_ADMISSION_HEARING_STATUS.equals(caseRequest.getCases().getStatus())) {
@@ -223,6 +224,7 @@ public class CaseService {
                 enrichmentUtil.enrichCMPNumber(caseRequest);
                 enrichmentUtil.enrichRegistrationDate(caseRequest);
                 caseRequest.getCases().setCaseType(CMP);
+                producer.push(config.getCaseReferenceUpdateTopic(), createHearingUpdateRequest(caseRequest));
             }
 
             log.info("Encrypting case: {}", caseRequest.getCases().getId());
@@ -272,6 +274,16 @@ public class CaseService {
             throw new CustomException(UPDATE_CASE_ERR, "Exception occurred while updating case: " + e.getMessage());
         }
 
+    }
+
+    private Object createHearingUpdateRequest(CaseRequest caseRequest) {
+        Map<String, Object> hearingUpdateRequest = new HashMap<>();
+        hearingUpdateRequest.put("requestInfo", caseRequest.getRequestInfo());
+        hearingUpdateRequest.put("filingNumber", caseRequest.getCases().getFilingNumber());
+        hearingUpdateRequest.put("cmpNumber", caseRequest.getCases().getCmpNumber());
+        hearingUpdateRequest.put("courtCaseNumber", caseRequest.getCases().getCourtCaseNumber());
+        hearingUpdateRequest.put("tenantId", caseRequest.getCases().getTenantId());
+        return hearingUpdateRequest;
     }
 
     private Boolean checkItsLastSign(CaseRequest caseRequest) {
