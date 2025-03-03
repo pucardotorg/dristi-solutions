@@ -52,7 +52,10 @@ const getFormattedDate = (date) => {
   return `${day}/${month}/${year}`;
 };
 
-const extractOrderNumber = (orderItemId) => (orderItemId.includes("_") ? orderItemId.split("_").pop() : orderItemId);
+const extractOrderNumber = (orderItemId) => {
+  if (!orderItemId || typeof orderItemId !== "string") return orderItemId || "";
+  return orderItemId?.includes("_") ? orderItemId?.split("_")?.pop() : orderItemId;
+};
 
 const BAIL_APPLICATION_EXCLUDED_STATUSES = [
   "PENDING_RESPONSE",
