@@ -312,8 +312,12 @@ async function handleCompositePDF(req, res, qrCode, order) {
   }
 }
 
-const extractOrderNumber = (orderItemId) =>
-  orderItemId.includes("_") ? orderItemId.split("_").pop() : orderItemId;
+const extractOrderNumber = (orderItemId) => {
+  if (!orderItemId || typeof orderItemId !== "string") return orderItemId || "";
+  return orderItemId?.includes("_")
+    ? orderItemId?.split("_")?.pop()
+    : orderItemId;
+};
 
 module.exports = {
   OrderPreviewOrderTypeMap,
