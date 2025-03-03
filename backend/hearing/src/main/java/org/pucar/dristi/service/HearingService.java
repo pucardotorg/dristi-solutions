@@ -134,7 +134,9 @@ public class HearingService {
             hearing.setAdditionalDetails(hearingRequest.getHearing().getAdditionalDetails());
             hearing.setVcLink(hearingRequest.getHearing().getVcLink());
             hearingRequest.setHearing(hearing);
-            workflowService.updateWorkflowStatus(hearingRequest);
+            if(hearing.getWorkflow() != null) {
+                workflowService.updateWorkflowStatus(hearingRequest);
+            }
 
             // Enrich application upon update
             enrichmentUtil.enrichHearingApplicationUponUpdate(hearingRequest);
@@ -530,5 +532,36 @@ public class HearingService {
             updatedBulkHearings.add(hearing);
         }
         return updatedBulkHearings;
+    }
+
+    public void updateCaseReferenceHearing(Map<String, Object> body) {
+        try {
+            log.info("operation=updateCaseReferenceHearing, status=IN_PROGRESS, filingNumber={}", body.get("filingNumber").toString());
+            RequestInfo requestInfo = objectMapper.convertValue(body.get("requestInfo"), RequestInfo.class);
+            String filingNumber = body.get("filingNumber").toString();
+            HearingSearchRequest request = HearingSearchRequest.builder()
+                    .requestInfo(requestInfo)
+                    .criteria(HearingCriteria.builder().filingNumber(filingNumber).build())
+                    .build();
+            List<Hearing> hearingList = searchHearing(request);
+            for (Hearing hearing : hearingList) {
+                if(body.get("courtCaseNumber") != null){
+                    hearing.setCaseReferenceNumber(body.get("courtCaseNumber").toString());
+                } else if(body.get("cmpNumber") != null){
+                    hearing.setCaseReferenceNumber(body.get("cmpNumber").toString());
+                } else {
+                    hearing.setCaseReferenceNumber(filingNumber);
+                }
+                HearingRequest hearingRequest = HearingRequest.builder()
+                        .requestInfo(requestInfo)
+                        .hearing(hearing)
+                        .build();
+                updateHearing(hearingRequest);
+            }
+            log.info("operation=updateCaseReferenceHearing, status=SUCCESS, filingNumber={}", body.get("filingNumber").toString());
+        } catch (Exception e){
+            log.info("operation=updateCaseReferenceHearing, status=FAILURE, filingNumber={}", body.get("filingNumber").toString());
+            throw new CustomException("Error updating case reference number: {}", e.getMessage());
+        }
     }
 }
