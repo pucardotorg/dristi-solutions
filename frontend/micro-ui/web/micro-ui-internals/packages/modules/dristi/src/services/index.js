@@ -3,11 +3,11 @@ import { Urls } from "../hooks";
 
 const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
 const benchId = window?.globalConfigs?.getConfig("BENCH_ID") || "BENCH_ID";
-const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "COURT_ID";
+const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
 const presidedBy = {
-  judgeID: ["JUDGE_ID"],
-  benchID: "BENCH_ID",
-  courtID: "KLKM52",
+  judgeID: [judgeId],
+  benchID: benchId,
+  courtID: courtId,
 };
 
 export const DRISTIService = {

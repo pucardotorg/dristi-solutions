@@ -108,6 +108,7 @@ module.exports = function (app) {
     "/ocr-service",
     "/lock-svc",
     "/ab-diary",
+    "/notification",
     "/kerala-icops",
   ].forEach((location) => app.use(location, createProxy));
   ["/pb-egov-assets"].forEach((location) => app.use(location, assetsProxy));

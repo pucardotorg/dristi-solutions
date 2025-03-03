@@ -535,10 +535,11 @@ const EvidenceModal = ({
         {}
       );
       const nextHearing = response?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
+      const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
       await DRISTIService.addADiaryEntry(
         {
           diaryEntry: {
-            judgeId: "super",
+            judgeId: judgeId,
             businessOfDay: businessOfTheDay,
             tenantId: tenantId,
             entryDate: new Date().setHours(0, 0, 0, 0),
