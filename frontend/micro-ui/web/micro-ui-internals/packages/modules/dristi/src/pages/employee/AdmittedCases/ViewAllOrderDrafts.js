@@ -35,7 +35,7 @@ const ViewAllOrderDrafts = ({ t, setShow, draftOrderList, filingNumber }) => {
         <div style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ width: "75%", display: "flex", flexDirection: "column", gap: "10px" }}>
             <div style={{ fontWeight: 700, fontSize: "16px", lineHeight: "18.75px", color: "#101828" }}>
-              {order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(`ORDER_TYPE_${order?.orderTitle.toUpperCase()}`)}
+              {order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(`ORDER_TYPE_${order?.orderTitle?.toUpperCase()}`)}
             </div>
             <div style={{ display: "flex", gap: "5px" }}>
               <div style={{ fontWeight: 600, fontSize: "14px", lineHeight: "20px", color: "#101828" }}>Deadline: </div>
