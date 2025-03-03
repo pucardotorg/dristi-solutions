@@ -52,6 +52,11 @@ const getFormattedDate = (date) => {
   return `${day}/${month}/${year}`;
 };
 
+const extractOrderNumber = (orderItemId) => {
+  if (!orderItemId || typeof orderItemId !== "string") return orderItemId || "";
+  return orderItemId?.includes("_") ? orderItemId?.split("_")?.pop() : orderItemId;
+};
+
 const BAIL_APPLICATION_EXCLUDED_STATUSES = [
   "PENDING_RESPONSE",
   "PENDING_ADMISSION_HEARING",
@@ -74,6 +79,7 @@ const SubmissionsCreate = ({ path }) => {
     applicationType: applicationTypeUrl,
     litigant,
     litigantIndId,
+    itemId,
   } = Digit.Hooks.useQueryParams();
   const [formdata, setFormdata] = useState({});
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -270,7 +276,9 @@ const SubmissionsCreate = ({ path }) => {
     );
   }, [caseDetails, userInfo?.uuid]);
 
-  const orderRefNumber = useMemo(() => applicationData?.applicationList?.[0]?.additionalDetails?.formdata?.refOrderId, [applicationData]);
+  const orderRefNumber = useMemo(() => extractOrderNumber(applicationData?.applicationList?.[0]?.additionalDetails?.formdata?.refOrderId), [
+    applicationData,
+  ]);
   const referenceId = useMemo(() => applicationData?.applicationList?.[0]?.referenceId, [applicationData]);
 
   const submissionType = useMemo(() => {
@@ -468,9 +476,21 @@ const SubmissionsCreate = ({ path }) => {
     Boolean(filingNumber && caseDetails?.cnrNumber && (orderNumber || orderRefNumber))
   );
   const orderDetails = useMemo(() => orderData?.list?.[0], [orderData]);
+  const isComposite = useMemo(() => orderDetails?.orderCategory === "COMPOSITE", [orderDetails]);
+
+  const compositeMandatorySubmissionItem = useMemo(() => {
+    return orderDetails?.compositeItems?.find((item) => item?.orderType === "MANDATORY_SUBMISSIONS_RESPONSES" && item?.id === itemId);
+  }, [itemId, orderDetails]);
+
+  const compositeSetTermBailItem = useMemo(() => {
+    return orderDetails?.compositeItems?.find((item) => item?.orderType === "SET_BAIL_TERMS" && item?.id === itemId);
+  }, [itemId, orderDetails]);
 
   const { data: allOrdersData, isloading: isAllOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
-    { tenantId, criteria: { filingNumber, applicationNumber: "", cnrNumber: caseDetails?.cnrNumber } },
+    {
+      tenantId,
+      criteria: { filingNumber, applicationNumber: "", cnrNumber: caseDetails?.cnrNumber, orderType: "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE" },
+    },
     { tenantId },
     filingNumber + caseDetails?.cnrNumber + "allOrdersData",
     Boolean(filingNumber && caseDetails?.cnrNumber)
@@ -479,19 +499,26 @@ const SubmissionsCreate = ({ path }) => {
   const extensionOrders = useMemo(
     () =>
       allOrdersList
-        ?.filter(
-          (item) =>
-            item.orderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE" &&
-            item?.additionalDetails?.applicationStatus === "APPROVED" &&
-            item?.linkedOrderNumber === orderDetails?.orderNumber
-        )
+        ?.filter((order) => {
+          if (isComposite) {
+            return order?.compositeItems?.some(
+              (item) =>
+                item?.orderSchema?.additionalDetails?.applicationStatus === "APPROVED" &&
+                item?.orderSchema?.additionalDetails?.linkedOrderNumber === `${itemId}_${orderDetails?.orderNumber}`
+            );
+          } else {
+            return order?.additionalDetails?.applicationStatus === "APPROVED" && order?.linkedOrderNumber === orderDetails?.orderNumber;
+          }
+        })
         ?.sort((a, b) => b?.auditDetails?.lastModifiedTime - a?.auditDetails?.lastModifiedTime),
-    [allOrdersList, orderDetails]
+    [allOrdersList, orderDetails, itemId, isComposite]
   );
   const latestExtensionOrder = useMemo(() => extensionOrders?.[0], [extensionOrders]);
 
   const { entityType, taxHeadMasterCode } = useMemo(() => {
-    const isResponseRequired = orderDetails?.orderDetails?.isResponseRequired?.code === true;
+    const isResponseRequired = isComposite
+      ? compositeMandatorySubmissionItem?.orderSchema?.orderDetails?.isResponseRequired?.code === true
+      : orderDetails?.orderDetails?.isResponseRequired?.code === true;
     if ((orderNumber || orderRefNumber) && referenceId) {
       return {
         entityType: isResponseRequired ? "application-order-submission-feedback" : "application-order-submission-default",
@@ -511,7 +538,7 @@ const SubmissionsCreate = ({ path }) => {
       entityType: "application-voluntary-submission",
       taxHeadMasterCode: "APPLICATION_VOLUNTARY_SUBMISSION_ADVANCE_CARRY_FORWARD",
     };
-  }, [applicationType, orderDetails?.orderDetails?.isResponseRequired?.code, orderNumber, orderRefNumber, referenceId]);
+  }, [applicationType, orderDetails, orderNumber, orderRefNumber, referenceId, isComposite, compositeMandatorySubmissionItem]);
 
   const defaultFormValue = useMemo(() => {
     if (applicationDetails?.additionalDetails?.formdata) {
@@ -530,6 +557,10 @@ const SubmissionsCreate = ({ path }) => {
         }),
       };
     } else if (hearingId && hearingsData?.HearingList?.[0]?.startTime && applicationTypeUrl) {
+      let selectComplainant = null;
+      if (complainantsList?.length === 1) {
+        selectComplainant = complainantsList?.[0];
+      }
       return {
         submissionType: {
           code: "APPLICATION",
@@ -541,16 +572,29 @@ const SubmissionsCreate = ({ path }) => {
           name: `APPLICATION_TYPE_${applicationTypeUrl}`,
         },
         applicationDate: formatDate(new Date()),
+        ...(selectComplainant !== null ? { selectComplainant } : {}),
       };
     } else if (orderNumber) {
-      if (orderDetails?.orderType === orderTypes.MANDATORY_SUBMISSIONS_RESPONSES) {
+      if ((isComposite ? compositeMandatorySubmissionItem : orderDetails)?.orderType === orderTypes.MANDATORY_SUBMISSIONS_RESPONSES) {
         if (isExtension) {
           const currentLitigant = complainantsList?.find((c) => c?.uuid === litigant);
           const selectComplainant = currentLitigant
             ? { code: currentLitigant.code, name: currentLitigant.name, uuid: currentLitigant.uuid }
             : undefined;
           const initialSubmissionDate = latestExtensionOrder
-            ? formatDate(new Date(latestExtensionOrder?.orderDetails.newSubmissionDate))
+            ? formatDate(
+                new Date(
+                  latestExtensionOrder?.orderCategory === "COMPOSITE"
+                    ? latestExtensionOrder?.compositeItems?.find(
+                        (item) =>
+                          item?.orderSchema?.additionalDetails?.linkedOrderNumber === `${itemId}_${orderDetails?.orderNumber}` &&
+                          item?.orderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE"
+                      )?.orderSchema?.orderDetails?.newSubmissionDate
+                    : latestExtensionOrder?.orderDetails?.newSubmissionDate
+                )
+              )
+            : isComposite
+            ? compositeMandatorySubmissionItem?.orderSchema?.additionalDetails?.formdata?.submissionDeadline
             : orderDetails?.additionalDetails?.formdata?.submissionDeadline;
           return {
             submissionType: {
@@ -562,9 +606,11 @@ const SubmissionsCreate = ({ path }) => {
               isactive: true,
               name: "APPLICATION_TYPE_EXTENSION_SUBMISSION_DEADLINE",
             },
-            refOrderId: orderDetails?.orderNumber,
+            refOrderId: isComposite ? `${itemId}_${orderDetails?.orderNumber}` : orderDetails?.orderNumber,
             applicationDate: formatDate(new Date()),
-            documentType: orderDetails?.additionalDetails?.formdata?.documentType,
+            documentType: isComposite
+              ? compositeMandatorySubmissionItem?.orderSchema?.additionalDetails?.formdata?.documentType
+              : orderDetails?.additionalDetails?.formdata?.documentType,
             initialSubmissionDate: initialSubmissionDate,
             ...(selectComplainant !== undefined ? { selectComplainant } : {}),
           };
@@ -584,7 +630,7 @@ const SubmissionsCreate = ({ path }) => {
               isactive: true,
               name: "APPLICATION_TYPE_PRODUCTION_DOCUMENTS",
             },
-            refOrderId: orderDetails?.orderNumber,
+            refOrderId: isComposite ? `${itemId}_${orderDetails?.orderNumber}` : orderDetails?.orderNumber,
             applicationDate: formatDate(new Date()),
             ...(selectComplainant !== undefined ? { selectComplainant } : {}),
           };
@@ -616,7 +662,7 @@ const SubmissionsCreate = ({ path }) => {
             type: "SUBMIT_BAIL_DOCUMENTS",
             name: "APPLICATION_TYPE_SUBMIT_BAIL_DOCUMENTS",
           },
-          refOrderId: orderDetails?.orderNumber,
+          refOrderId: isComposite ? `${itemId}_${orderDetails?.orderNumber}` : orderDetails?.orderNumber,
           applicationDate: formatDate(new Date()),
           ...(selectComplainant !== undefined ? { selectComplainant } : {}),
         };
@@ -657,20 +703,30 @@ const SubmissionsCreate = ({ path }) => {
       };
     }
   }, [
-    applicationDetails,
+    applicationDetails?.additionalDetails?.formdata,
     isCitizen,
+    applicationTypeParam,
     hearingId,
-    hearingsData,
+    hearingsData?.HearingList,
+    applicationTypeUrl,
     orderNumber,
     applicationType,
-    applicationTypeParam,
-    orderDetails,
+    orderDetails?.orderType,
+    orderDetails?.additionalDetails?.formdata?.submissionDeadline,
+    orderDetails?.additionalDetails?.formdata?.documentType,
+    orderDetails?.orderNumber,
     isExtension,
+    complainantsList,
     latestExtensionOrder,
-    applicationTypeUrl,
+    litigant,
+    isComposite,
+    compositeMandatorySubmissionItem,
   ]);
 
-  const formKey = useMemo(() => applicationType + (defaultFormValue?.initialSubmissionDate || ""), [applicationType, defaultFormValue]);
+  const formKey = useMemo(() => applicationType + (defaultFormValue?.initialSubmissionDate || "" + defaultFormValue?.selectComplainant?.name), [
+    applicationType,
+    defaultFormValue,
+  ]);
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     if (
@@ -853,7 +909,12 @@ const SubmissionsCreate = ({ path }) => {
       if (applicationType === "SUBMIT_BAIL_DOCUMENTS") {
         applicationSchema = {
           ...applicationSchema,
-          applicationDetails: { ...applicationSchema?.applicationDetails, relatedApplication: orderDetails?.applicationNumber },
+          applicationDetails: {
+            ...applicationSchema?.applicationDetails,
+            relatedApplication: isComposite
+              ? compositeSetTermBailItem?.orderSchema?.additionalDetails?.applicationNumber
+              : orderDetails?.applicationNumber,
+          },
         };
       }
 
@@ -873,7 +934,7 @@ const SubmissionsCreate = ({ path }) => {
           cnrNumber: caseDetails?.cnrNumber,
           cmpNumber: caseDetails?.cmpNumber,
           caseId: caseDetails?.id,
-          referenceId: isExtension ? null : orderDetails?.id || null,
+          referenceId: isExtension ? null : isComposite ? `${itemId}_${orderDetails?.id}` : orderDetails?.id || null,
           createdDate: new Date().getTime(),
           applicationType,
           status: caseDetails?.status,
@@ -883,14 +944,26 @@ const SubmissionsCreate = ({ path }) => {
           additionalDetails: {
             formdata,
             ...(orderDetails && { orderDate: formatDate(new Date(orderDetails?.auditDetails?.lastModifiedTime)) }),
-            ...(orderDetails?.additionalDetails?.formdata?.documentName && { documentName: orderDetails?.additionalDetails?.formdata?.documentName }),
+            ...(isComposite
+              ? compositeMandatorySubmissionItem?.orderSchema?.additionalDetails?.formdata?.documentName && {
+                  documentName: compositeMandatorySubmissionItem?.orderSchema?.additionalDetails?.formdata?.documentName,
+                }
+              : orderDetails?.additionalDetails?.formdata?.documentName && { documentName: orderDetails?.additionalDetails?.formdata?.documentName }),
             onBehalOfName: formdata?.selectComplainant?.code,
             partyType: sourceType?.toLowerCase(),
-            ...(orderDetails &&
-              orderDetails?.orderDetails?.isResponseRequired?.code === true && {
-                respondingParty: orderDetails?.additionalDetails?.formdata?.responseInfo?.respondingParty,
-              }),
-            isResponseRequired: orderDetails && !isExtension ? orderDetails?.orderDetails?.isResponseRequired?.code === true : true,
+            ...(orderDetails && isComposite
+              ? compositeMandatorySubmissionItem?.orderSchema?.orderDetails?.isResponseRequired?.code === true && {
+                  respondingParty: compositeMandatorySubmissionItem?.orderSchema?.additionalDetails?.formdata?.responseInfo?.respondingParty,
+                }
+              : orderDetails?.orderDetails?.isResponseRequired?.code === true && {
+                  respondingParty: orderDetails?.additionalDetails?.formdata?.responseInfo?.respondingParty,
+                }),
+            isResponseRequired:
+              orderDetails && !isExtension
+                ? isComposite
+                  ? compositeMandatorySubmissionItem?.orderSchema?.orderDetails?.isResponseRequired?.code === true
+                  : orderDetails?.orderDetails?.isResponseRequired?.code === true
+                : true,
             ...(hearingId && { hearingId }),
             owner: cleanString(userInfo?.name),
           },
@@ -1141,7 +1214,10 @@ const SubmissionsCreate = ({ path }) => {
             taskType: "PENDING_TASK",
             tenantId,
             status: "INPROGRESS",
-            duedate: orderDetails?.orderDetails?.dates?.responseDeadlineDate,
+            duedate:
+              orderDetails?.orderCategory === "COMPOSITE"
+                ? compositeMandatorySubmissionItem?.orderSchema?.orderDetails?.dates?.responseDeadlineDate
+                : orderDetails?.orderDetails?.dates?.responseDeadlineDate,
           },
           tenantId,
         });
@@ -1254,7 +1330,7 @@ const SubmissionsCreate = ({ path }) => {
     isOrdersLoading ||
     isApplicationLoading ||
     (applicationNumber ? !applicationDetails?.additionalDetails?.formdata : false) ||
-    (orderNumber ? !orderDetails?.orderType : false) ||
+    (orderNumber ? !orderDetails?.orderTitle : false) ||
     (hearingId ? (hearingsData?.HearingList?.[0]?.startTime ? false : true) : false) ||
     isAllOrdersLoading
   ) {

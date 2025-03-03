@@ -293,6 +293,8 @@ function ScheduleHearing({
           statuteSection: {
             tenantId,
           },
+          orderTitle: "SCHEDULE_OF_HEARING_DATE",
+          orderCategory: "INTERMEDIATE",
           orderType: "SCHEDULE_OF_HEARING_DATE",
           status: "",
           isActive: true,

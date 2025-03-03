@@ -154,6 +154,14 @@ const EpostTrackingPage = () => {
     Boolean(taskData)
   );
 
+  const orderType = useMemo(
+    () =>
+      orderData?.list?.[0]?.orderCategory === "COMPOSITE"
+        ? orderData?.list?.[0]?.compositeItems?.find((item) => item?.id === taskData?.list?.[0]?.additionalDetails?.itemId)?.orderType
+        : orderData?.list?.[0]?.orderType,
+    [orderData, taskData]
+  );
+
   const onUpdateClick = async () => {
     updateFunction();
     const requestBody = {
@@ -167,10 +175,10 @@ const EpostTrackingPage = () => {
       if (rowData?.original?.deliveryStatus === "NOT_DELIVERED") {
         ordersService.customApiService(Urls.orders.pendingTask, {
           pendingTask: {
-            name: `Re-issue ${orderData?.list?.[0]?.orderType === "NOTICE" ? "Notice" : "Summon"}`,
+            name: `Re-issue ${orderType === "NOTICE" ? "Notice" : "Summon"}`,
             entityType: "order-default",
             referenceId: `MANUAL_${orderData?.list[0]?.hearingNumber}`,
-            status: `RE-ISSUE_${orderData?.list?.[0]?.orderType === "NOTICE" ? "NOTICE" : "SUMMON"}`,
+            status: `RE-ISSUE_${orderType === "NOTICE" ? "NOTICE" : "SUMMON"}`,
             assignedTo: [],
             assignedRole: ["JUDGE_ROLE"],
             cnrNumber: taskData?.list[0]?.cnrNumber,
@@ -192,7 +200,7 @@ const EpostTrackingPage = () => {
   const printDocuments = useMemo(() => {
     return [
       {
-        fileName: `${orderData?.list?.[0]?.orderType === "NOTICE" ? "Notice" : "Summon"}s Document`,
+        fileName: `${orderType === "NOTICE" ? "Notice" : "Summon"}s Document`,
         fileStoreId: "03e93220-7254-4877-ac80-bb808a722a61",
         documentName: "file_example_JPG_100kB.jpg",
         documentType: "image/jpeg",

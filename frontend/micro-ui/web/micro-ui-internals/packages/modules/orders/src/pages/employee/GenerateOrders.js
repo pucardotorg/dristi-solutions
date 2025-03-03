@@ -357,21 +357,27 @@ const GenerateOrders = () => {
   );
 
   const isDCANoticeGenerated = useMemo(
-    () => noticeOrdersData?.list?.some((notice) => "DCA Notice" === notice?.additionalDetails?.formdata?.noticeType?.code),
+    () =>
+      noticeOrdersData?.list?.some((notice) => {
+        if (notice?.orderCategory === "COMPOSITE") {
+          return notice?.compositeItems?.some((item) => item?.orderSchema?.additionalDetails?.formdata?.noticeType?.code === "DCA Notice");
+        }
+        return notice?.additionalDetails?.formdata?.noticeType?.code === "DCA Notice";
+      }),
     [noticeOrdersData]
   );
 
   const { data: publishedOrdersData, isLoading: isPublishedOrdersLoading } = useSearchOrdersService(
     {
       tenantId,
-      criteria: { filingNumber, applicationNumber: "", cnrNumber, status: OrderWorkflowState.PUBLISHED },
+      criteria: { filingNumber, applicationNumber: "", cnrNumber, status: OrderWorkflowState.PUBLISHED, orderType: "ACCEPT_BAIL" },
       pagination: { limit: 1000, offset: 0 },
     },
     { tenantId },
     filingNumber + OrderWorkflowState.PUBLISHED,
     Boolean(filingNumber && cnrNumber)
   );
-  const publishedBailOrder = useMemo(() => publishedOrdersData?.list?.find((item) => item?.orderType === "BAIL") || {}, [publishedOrdersData]);
+  const publishedBailOrder = useMemo(() => publishedOrdersData?.list?.[0] || {}, [publishedOrdersData]);
   const advocateIds = caseDetails.representatives?.map((representative) => {
     return {
       id: representative.advocateId,
@@ -640,64 +646,66 @@ const GenerateOrders = () => {
         });
       }
       if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(orderType)) {
-        orderTypeForm = orderTypeForm?.map((section) => {
-          return {
-            ...section,
-            body: section.body.map((field) => {
-              if (field.key === "namesOfPartiesRequired") {
-                return {
-                  ...field,
-                  populators: {
-                    ...field.populators,
-                    options: [...complainants, ...respondents, ...unJoinedLitigant, ...witnesses],
-                  },
-                };
-              }
-              if (field.key === "hearingPurpose") {
-                return {
-                  ...field,
-                  populators: {
-                    ...field.populators,
-                    mdmsConfig: {
-                      ...field.populators?.mdmsConfig,
-                      select: `(data) => {
+        const parties = [...unJoinedLitigant, ...witnesses];
+        orderTypeForm = orderTypeForm
+          ?.filter((section) => !(section?.body?.[0]?.key === "unjoinedPartiesNote" && parties?.length === 0))
+          ?.map((section) => {
+            return {
+              ...section,
+              body: section.body.map((field) => {
+                if (field.key === "namesOfPartiesRequired") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      options: [...complainants, ...respondents, ...unJoinedLitigant, ...witnesses],
+                    },
+                  };
+                }
+                if (field.key === "hearingPurpose") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      mdmsConfig: {
+                        ...field.populators?.mdmsConfig,
+                        select: `(data) => {
                         return (  // based on isDcaFiled condition, we can filter out DCA hearing here if needed.
                           data?.Hearing?.HearingType|| []
                         );
                       }`,
-                    },
-                  },
-                };
-              }
-              if (field.key === "unjoinedPartiesNote") {
-                const parties = [...unJoinedLitigant, ...witnesses];
-                return {
-                  ...field,
-                  populators: {
-                    ...field.populators,
-                    inputs: [
-                      {
-                        ...field.populators.inputs[0],
-                        children: (
-                          <React.Fragment>
-                            {parties.map((party, index) => (
-                              <div className="list-div" key={index}>
-                                <p style={{ margin: "0px", fontSize: "14px" }}>
-                                  {index + 1}. {party?.name}
-                                </p>
-                              </div>
-                            ))}
-                          </React.Fragment>
-                        ),
                       },
-                    ],
-                  },
-                };
-              }
-              return field;
-            }),
-          };
-        });
+                    },
+                  };
+                }
+                if (field.key === "unjoinedPartiesNote") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      inputs: [
+                        {
+                          ...field.populators.inputs[0],
+                          children: (
+                            <React.Fragment>
+                              {parties.map((party, index) => (
+                                <div className="list-div" key={index}>
+                                  <p style={{ margin: "0px", fontSize: "14px" }}>
+                                    {index + 1}. {party?.name}
+                                  </p>
+                                </div>
+                              ))}
+                            </React.Fragment>
+                          ),
+                        },
+                      ],
+                    },
+                  };
+                }
+                return field;
+              }),
+            };
+          });
       }
       if (orderType === "MANDATORY_SUBMISSIONS_RESPONSES") {
         orderTypeForm = orderTypeForm?.map((section) => {

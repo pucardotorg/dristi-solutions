@@ -56,6 +56,7 @@ const TasksComponent = ({
   const [showSubmitResponseModal, setShowSubmitResponseModal] = useState(false);
   const [responsePendingTask, setResponsePendingTask] = useState({});
   const [responseDoc, setResponseDoc] = useState({});
+  const [isResponseApiCalled, setIsResponseApiCalled] = useState(false);
 
   const { data: pendingTaskDetails = [], isLoading, refetch } = useGetPendingTask({
     data: {
@@ -220,6 +221,8 @@ const TasksComponent = ({
           statuteSection: {
             tenantId,
           },
+          orderTitle: orderType,
+          orderCategory: "INTERMEDIATE",
           orderType: orderType,
           status: "",
           isActive: true,
@@ -378,6 +381,7 @@ const TasksComponent = ({
   );
 
   const submitResponse = async (responseDoc) => {
+    setIsResponseApiCalled(true);
     let newCase;
     const pendingTask = joinCaseShowSubmitResponseModal ? joinCaseResponsePendingTask : responsePendingTask;
 
@@ -445,8 +449,12 @@ const TasksComponent = ({
       } catch (err) {
         console.error("err :>> ", err);
       }
+      setIsResponseApiCalled(false);
       return { continue: true };
-    } else return { continue: false };
+    } else {
+      setIsResponseApiCalled(false);
+      return { continue: false };
+    }
   };
 
   const getCaseDetailsUrl = (caseId, filingNumber) =>
@@ -485,10 +493,11 @@ const TasksComponent = ({
             />
           ),
           actionSaveOnSubmit: async () => {
-            await submitResponse(responseDoc);
+            return await submitResponse(responseDoc);
           },
           async: true,
-          isDisabled: responseDoc?.fileStore ? false : true,
+          isDisabled: (responseDoc?.fileStore ? false : true) || isResponseApiCalled,
+          isBackButtonDisabled: isResponseApiCalled,
         },
         {
           type: "success",
