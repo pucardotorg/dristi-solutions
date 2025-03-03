@@ -188,7 +188,6 @@ public class HearingServiceTest {
 
         // Mock validator and workflowService behaviors
         when(validator.validateHearingExistence(requestInfo,hearing)).thenReturn(hearing);
-        doNothing().when(workflowService).updateWorkflowStatus(hearingRequest);
         when(config.getHearingUpdateTopic()).thenReturn("updateTopic");
 
         // Act
