@@ -65,8 +65,8 @@ function PublishedOrderModal({
       criteria: {
         referenceId: order?.orderNumber,
         tenantId,
-        judgeId: window?.globalConfigs?.getConfig("JUDGE_ID") || "super",
-        caseId: caseDetails?.id,
+        judgeId: "super",
+        caseId: caseDetails?.cmpNumber,
       },
     },
     {},
@@ -242,7 +242,7 @@ function PublishedOrderModal({
           className="field desktop-w-full"
           onChange={(e) => {}}
           disable={true}
-          defaultValue={diaryResponse?.entrires?.[0]?.businessOfDay || "No entry found"}
+          value={diaryResponse?.entries?.[0]?.businessOfDay}
           style={{ minWidth: "500px" }}
           textInputStyle={{ maxWidth: "100%" }}
         />
