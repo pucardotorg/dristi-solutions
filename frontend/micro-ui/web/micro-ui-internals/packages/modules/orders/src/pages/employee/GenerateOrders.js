@@ -66,8 +66,8 @@ import TasksComponent from "../../../../home/src/components/TaskComponent";
 export const compositeOrderAllowedTypes = [
   {
     key: "finalStageOrders",
-    orderTypes: ["REFERRAL_CASE_TO_ADR", "JUDGEMENT", "WITHDRAWAL", "SETTLEMENT", "CASE_TRANSFER"],
-    unAllowedOrderTypes: ["REFERRAL_CASE_TO_ADR", "JUDGEMENT", "WITHDRAWAL", "SETTLEMENT", "CASE_TRANSFER"],
+    orderTypes: ["REFERRAL_CASE_TO_ADR", "JUDGEMENT", "WITHDRAWAL", "SETTLEMENT", "CASE_TRANSFER", "DISMISS_CASE"],
+    unAllowedOrderTypes: ["REFERRAL_CASE_TO_ADR", "JUDGEMENT", "WITHDRAWAL", "SETTLEMENT", "CASE_TRANSFER", ""],
   },
   {
     key: "schedule_Reschedule",
@@ -80,9 +80,9 @@ export const compositeOrderAllowedTypes = [
     unAllowedOrderTypes: [],
   },
   {
-    ket: "admit_dismiss",
-    orderTypes: ["ADMIT_DISMISS_CASE"],
-    unAllowedOrderTypes: ["ADMIT_DISMISS_CASE"],
+    key: "admit_case",
+    orderTypes: ["ADMIT_CASE"],
+    unAllowedOrderTypes: ["ADMIT_CASE", "DISMISS_CASE"],
   },
 ];
 
@@ -564,7 +564,6 @@ const GenerateOrders = () => {
   }, [currentDiaryEntry, filingNumber, orderNumber, tenantId]);
 
   const currentOrder = useMemo(() => formList?.[selectedOrder], [formList, selectedOrder]);
-  const referenceId = useMemo(() => currentOrder?.additionalDetails?.formdata?.refApplicationId, [currentOrder]);
   const hearingNumber = useMemo(() => currentOrder?.hearingNumber || currentOrder?.additionalDetails?.hearingId || "", [currentOrder]);
   useEffect(() => {
     const orderTitlesInitial =
@@ -622,15 +621,20 @@ const GenerateOrders = () => {
       criteria: {
         filingNumber: filingNumber,
         tenantId: tenantId,
-        applicationNumber: referenceId,
       },
       tenantId,
     },
     {},
-    referenceId + filingNumber,
-    Boolean(referenceId + filingNumber)
+    filingNumber,
+    Boolean(filingNumber)
   );
-  const applicationDetails = useMemo(() => applicationData?.applicationList?.[0], [applicationData]);
+  const applicationDetails = useMemo(
+    () =>
+      applicationData?.applicationList?.find(
+        (application) => application?.applicationNumber === currentOrder?.additionalDetails?.formdata?.refApplicationId
+      ),
+    [applicationData, currentOrder]
+  );
 
   const isDelayApplicationSubmitted = useMemo(
     () =>
@@ -1254,11 +1258,21 @@ const GenerateOrders = () => {
         };
       }
 
-      let updatedFormdata =
-        currentOrder?.orderCategory !== "COMPOSITE"
-          ? currentOrder?.additionalDetails?.formdata || {}
-          : currentOrder?.compositeItems?.[index]?.orderSchema?.additionalDetails?.formdata || {};
-      const orderType = currentOrder?.orderCategory !== "COMPOSITE" ? currentOrder?.orderType : currentOrder?.compositeItems?.[index]?.orderType;
+      const newCurrentOrder =
+        currentOrder?.orderCategory === "COMPOSITE"
+          ? {
+              ...currentOrder,
+              additionalDetails: currentOrder?.compositeItems?.[index]?.orderSchema?.additionalDetails,
+              orderDetails: currentOrder?.compositeItems?.[index]?.orderSchema?.orderDetails,
+              orderType: currentOrder?.compositeItems?.[index]?.orderType,
+            }
+          : currentOrder;
+
+      let updatedFormdata = newCurrentOrder?.additionalDetails?.formdata || {};
+      const orderType = newCurrentOrder?.orderType;
+      const newApplicationDetails = applicationData?.applicationList?.find(
+        (application) => application?.applicationNumber === newCurrentOrder?.additionalDetails?.formdata?.refApplicationId
+      );
       if (orderType === "JUDGEMENT") {
         const complainantPrimary = caseDetails?.litigants?.find((item) => item?.partyType?.includes("complainant.primary"));
         const respondentPrimary = caseDetails?.litigants?.find((item) => item?.partyType?.includes("respondent.primary"));
@@ -1312,25 +1326,26 @@ const GenerateOrders = () => {
       }
 
       if (orderType === "BAIL") {
-        updatedFormdata.bailType = { type: applicationDetails?.applicationType };
+        updatedFormdata.bailType = { type: newApplicationDetails?.applicationType };
         setValueRef?.current?.[index]?.("bailType", updatedFormdata.bailType);
 
-        updatedFormdata.submissionDocuments = applicationDetails?.additionalDetails?.formdata?.submissionDocuments;
+        updatedFormdata.submissionDocuments = newApplicationDetails?.additionalDetails?.formdata?.submissionDocuments;
         setValueRef?.current?.[index]?.("submissionDocuments", updatedFormdata.submissionDocuments);
 
-        updatedFormdata.bailOf = applicationDetails?.additionalDetails?.onBehalOfName;
+        updatedFormdata.bailOf = newApplicationDetails?.additionalDetails?.onBehalOfName;
         setValueRef?.current?.[index]?.("bailOf", updatedFormdata.bailOf);
       }
 
       if (orderType === "SET_BAIL_TERMS") {
-        updatedFormdata.partyId = applicationDetails?.createdBy;
+        updatedFormdata.partyId = newApplicationDetails?.createdBy;
         setValueRef?.current?.[index]?.("partyId", updatedFormdata.partyId);
       }
       if (orderType === "ACCEPT_BAIL" || orderType === "REJECT_BAIL") {
-        updatedFormdata.bailParty = applicationDetails?.additionalDetails?.onBehalOfName;
+        updatedFormdata.bailParty = newApplicationDetails?.additionalDetails?.onBehalOfName;
         updatedFormdata.submissionDocuments = {
           uploadedDocs:
-            applicationDetails?.additionalDetails?.formdata?.supportingDocuments?.flatMap((doc) => doc.submissionDocuments?.uploadedDocs || []) || [],
+            newApplicationDetails?.additionalDetails?.formdata?.supportingDocuments?.flatMap((doc) => doc.submissionDocuments?.uploadedDocs || []) ||
+            [],
         };
         setValueRef?.current?.[index]?.("bailParty", updatedFormdata.bailParty);
         setValueRef?.current?.[index]?.("submissionDocuments", updatedFormdata.submissionDocuments);
@@ -1345,30 +1360,30 @@ const GenerateOrders = () => {
       // }
 
       if (orderType === "WITHDRAWAL") {
-        if (applicationDetails?.applicationType === applicationTypes.WITHDRAWAL) {
-          updatedFormdata.applicationOnBehalfOf = applicationDetails?.additionalDetails?.onBehalOfName;
+        if (newApplicationDetails?.applicationType === applicationTypes.WITHDRAWAL) {
+          updatedFormdata.applicationOnBehalfOf = newApplicationDetails?.additionalDetails?.onBehalOfName;
           setValueRef?.current?.[index]?.("applicationOnBehalfOf", updatedFormdata.applicationOnBehalfOf);
 
-          updatedFormdata.partyType = t(applicationDetails?.additionalDetails?.partyType);
+          updatedFormdata.partyType = t(newApplicationDetails?.additionalDetails?.partyType);
           setValueRef?.current?.[index]?.("partyType", updatedFormdata.partyType);
 
-          updatedFormdata.reasonForWithdrawal = t(applicationDetails?.additionalDetails?.formdata?.reasonForWithdrawal?.code);
+          updatedFormdata.reasonForWithdrawal = t(newApplicationDetails?.additionalDetails?.formdata?.reasonForWithdrawal?.code);
           setValueRef?.current?.[index]?.("reasonForWithdrawal", updatedFormdata.reasonForWithdrawal);
         }
       }
 
       if (orderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE") {
-        if (applicationDetails?.applicationType === applicationTypes.EXTENSION_SUBMISSION_DEADLINE) {
-          updatedFormdata.documentName = applicationDetails?.additionalDetails?.formdata?.documentType?.value;
+        if (newApplicationDetails?.applicationType === applicationTypes.EXTENSION_SUBMISSION_DEADLINE) {
+          updatedFormdata.documentName = newApplicationDetails?.additionalDetails?.formdata?.documentType?.value;
           setValueRef?.current?.[index]?.("documentName", updatedFormdata.documentName);
 
-          updatedFormdata.originalDeadline = applicationDetails?.additionalDetails?.formdata?.initialSubmissionDate;
+          updatedFormdata.originalDeadline = newApplicationDetails?.additionalDetails?.formdata?.initialSubmissionDate;
           setValueRef?.current?.[index]?.("originalDeadline", updatedFormdata.originalDeadline);
 
-          updatedFormdata.proposedSubmissionDate = applicationDetails?.additionalDetails?.formdata?.changedSubmissionDate;
+          updatedFormdata.proposedSubmissionDate = newApplicationDetails?.additionalDetails?.formdata?.changedSubmissionDate;
           setValueRef?.current?.[index]?.("proposedSubmissionDate", updatedFormdata.proposedSubmissionDate);
 
-          updatedFormdata.originalSubmissionOrderDate = applicationDetails?.additionalDetails?.orderDate;
+          updatedFormdata.originalSubmissionOrderDate = newApplicationDetails?.additionalDetails?.orderDate;
           setValueRef?.current?.[index]?.("originalSubmissionOrderDate", updatedFormdata.originalSubmissionOrderDate);
         }
       }
@@ -1378,10 +1393,10 @@ const GenerateOrders = () => {
           updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
           setValueRef?.current?.[index]?.("dateForHearing", updatedFormdata.dateForHearing);
         }
-        if (currentOrder?.additionalDetails?.selectedParty && currentOrder?.additionalDetails?.selectedParty?.uuid) {
+        if (newCurrentOrder?.additionalDetails?.selectedParty && newCurrentOrder?.additionalDetails?.selectedParty?.uuid) {
           updatedFormdata.SummonsOrder = {
             party: caseDetails?.additionalDetails?.respondentDetails?.formdata
-              ?.filter((data) => data?.data?.uuid === currentOrder?.additionalDetails?.selectedParty?.uuid)
+              ?.filter((data) => data?.data?.uuid === newCurrentOrder?.additionalDetails?.selectedParty?.uuid)
               ?.map((item) => ({
                 ...item,
                 data: {
@@ -1399,23 +1414,26 @@ const GenerateOrders = () => {
                   email: item?.data?.emails?.emailId,
                 },
               }))?.[0],
-            selectedChannels: currentOrder?.additionalDetails?.formdata?.SummonsOrder?.selectedChannels,
+            selectedChannels: newCurrentOrder?.additionalDetails?.formdata?.SummonsOrder?.selectedChannels,
           };
           setValueRef?.current?.[index]?.("SummonsOrder", updatedFormdata.SummonsOrder);
         }
       }
       if (orderType === "NOTICE") {
-        if (hearingDetails?.startTime) {
+        const scheduleHearingOrderItem = newCurrentOrder?.compositeItems?.find((item) => item?.orderType === "SCHEDULE_OF_HEARING_DATE");
+        const rescheduleHearingItem = newCurrentOrder?.compositeItems?.find((item) =>
+          ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE"].includes(item?.orderType)
+        );
+        if (scheduleHearingOrderItem) {
+          updatedFormdata.dateForHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
+        } else if (rescheduleHearingItem) {
+          updatedFormdata.dateForHearing = newCurrentOrder?.additionalDetails?.formdata?.newHearingDate || "";
+        } else {
           updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
-          setValueRef?.current?.[index]?.("dateForHearing", updatedFormdata.dateForHearing);
         }
-        const additionalDetails =
-          currentOrder?.orderCategory !== "COMPOSITE"
-            ? currentOrder?.additionalDetails
-            : currentOrder?.compositeItems?.[index]?.orderSchema?.additionalDetails;
-
-        const partyUuid = additionalDetails?.selectedParty?.uuid;
-        const selectedChannels = additionalDetails?.formdata?.noticeOrder?.selectedChannels;
+        setValueRef?.current?.[index]?.("dateForHearing", updatedFormdata.dateForHearing);
+        const partyUuid = newCurrentOrder?.additionalDetails?.selectedParty?.uuid;
+        const selectedChannels = newCurrentOrder?.additionalDetails?.formdata?.noticeOrder?.selectedChannels;
 
         if (partyUuid) {
           updatedFormdata.noticeOrder = {
@@ -1460,20 +1478,15 @@ const GenerateOrders = () => {
         ].includes(orderType)
       ) {
         updatedFormdata.originalHearingDate =
-          applicationDetails?.additionalDetails?.formdata?.initialHearingDate || currentOrder.additionalDetails?.formdata?.originalHearingDate || "";
+          newCurrentOrder?.additionalDetails?.formdata?.originalHearingDate ||
+          newApplicationDetails?.additionalDetails?.formdata?.initialHearingDate ||
+          "";
         setValueRef?.current?.[index]?.("originalHearingDate", updatedFormdata.originalHearingDate);
-
-        if (!isCaseAdmitted) {
-          updatedFormdata.hearingPurpose = {
-            code: "ADMISSION",
-          };
-          setValueRef?.current?.[index]?.("hearingPurpose", updatedFormdata.hearingPurpose);
-        }
       }
       // setCurrentFormData(updatedFormdata); // TODO: check and update setCurrentFormData here and update where ever currentFormData is being used.
       return updatedFormdata;
     },
-    [currentOrder, hearingDetails]
+    [currentOrder, hearingDetails, applicationData, caseDetails]
   );
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues, index) => {
     // if (Object.keys(formState.errors)?.length) {
@@ -1996,6 +2009,8 @@ const GenerateOrders = () => {
     taskName = "",
     channel = "",
     orderType = "",
+    compositeOrderItemId,
+    newApplicationDetails,
   }) => {
     const formdata = order?.additionalDetails?.formdata;
     let create = createTask;
@@ -2028,7 +2043,9 @@ const GenerateOrders = () => {
           pendingTask: {
             name,
             entityType,
-            referenceId: `MANUAL_${assignee?.assigneeInfo?.individualId}_${assignee?.assigneeInfo?.uuid}_${order?.orderNumber}`,
+            referenceId: `MANUAL_${compositeOrderItemId ? `${compositeOrderItemId}_` : ""}${assignee?.assigneeInfo?.individualId}_${
+              assignee?.assigneeInfo?.uuid
+            }_${order?.orderNumber}`,
             status,
             assignedTo: [assignee?.assigneeInfo],
             assignedRole,
@@ -2069,7 +2086,7 @@ const GenerateOrders = () => {
           pendingTask: {
             name,
             entityType,
-            referenceId: `MANUAL_${assignee?.uuid}_${order?.orderNumber}`,
+            referenceId: `MANUAL_${compositeOrderItemId ? `${compositeOrderItemId}_` : ""}${assignee?.uuid}_${order?.orderNumber}`,
             status,
             assignedTo: [assignee],
             assignedRole,
@@ -2196,7 +2213,7 @@ const GenerateOrders = () => {
         pendingTask: {
           name,
           entityType,
-          referenceId: `MANUAL_${assigneeUuid}_${order?.orderNumber}`,
+          referenceId: `MANUAL_${compositeOrderItemId ? `${compositeOrderItemId}_` : ""}${assigneeUuid}_${order?.orderNumber}`,
           status,
           assignedTo: [{ uuid: assigneeUuid }],
           assignedRole,
@@ -2208,12 +2225,12 @@ const GenerateOrders = () => {
             ...additionalDetails,
             litigants: [
               caseDetails?.litigants?.find(
-                (litigant) => litigant?.additionalDetails?.uuid === applicationDetails?.additionalDetails?.formdata?.selectComplainant?.uuid
+                (litigant) => litigant?.additionalDetails?.uuid === newApplicationDetails?.additionalDetails?.formdata?.selectComplainant?.uuid
               )?.individualId,
             ],
             litigantUuid: [
               caseDetails?.litigants?.find(
-                (litigant) => litigant?.additionalDetails?.uuid === applicationDetails?.additionalDetails?.formdata?.selectComplainant?.uuid
+                (litigant) => litigant?.additionalDetails?.uuid === newApplicationDetails?.additionalDetails?.formdata?.selectComplainant?.uuid
               )?.additionalDetails?.uuid,
             ],
           },
@@ -2308,7 +2325,7 @@ const GenerateOrders = () => {
       else {
         if (order?.orderNumber) {
           count += 1;
-          return addOrderItem(order, OrderWorkflowAction.SAVE_DRAFT, index);
+          return await addOrderItem(order, OrderWorkflowAction.SAVE_DRAFT, index);
         } else {
           // create call first, get order number from response
           // then add item call
@@ -2400,7 +2417,7 @@ const GenerateOrders = () => {
     }
   };
 
-  const handleApplicationAction = async (order) => {
+  const handleApplicationAction = async (order, applicationDetails) => {
     try {
       return await ordersService.customApiService(
         `/application/v1/update`,
@@ -2812,6 +2829,7 @@ const GenerateOrders = () => {
                 status: "DONE",
                 amount: summonsCourtFee,
               },
+              ...(orderData?.itemId && { additionalDetails: { itemId: orderData?.itemId } }),
             },
             tenantId,
           })
@@ -2852,6 +2870,7 @@ const GenerateOrders = () => {
               status: "DONE",
               amount: summonsCourtFee,
             },
+            ...(orderData?.itemId && { additionalDetails: { itemId: orderData?.itemId } }),
           },
           tenantId,
         })
@@ -3057,11 +3076,110 @@ const GenerateOrders = () => {
     } catch (error) {}
   };
 
-  const handleIssueOrder = async (orderType) => {
-    try {
-      setLoader(true);
-      let newhearingId = "";
+  const processHandleIssueOrder = async () => {
+    setLoader(true);
+
+    if (currentOrder?.orderCategory === "COMPOSITE") {
+      const currentOrderUpdated = currentOrder?.compositeItems?.map((item) => {
+        return {
+          ...currentOrder,
+          additionalDetails: item?.orderSchema?.additionalDetails,
+          orderDetails: item?.orderSchema?.orderDetails,
+          orderType: item?.orderType,
+        };
+      });
+      // checking if composite orders has heading order and notice order, then we will have to jump case status directly to Pending_response using action issue_order.
+
+      const compositeItems = currentOrder?.compositeItems || [];
+
+      const isBothHearingAndNoticePresent = compositeItems.reduce(
+        (acc, item) => {
+          if (item?.orderType === "SCHEDULE_OF_HEARING_DATE") acc.hasHearing = true;
+          if (item?.orderType === "NOTICE" && item?.orderSchema?.additionalDetails?.formdata?.noticeType?.code === "Section 223 Notice") {
+            acc.hasNotice = true;
+          }
+          return acc;
+        },
+        { hasHearing: false, hasNotice: false }
+      );
+
+      const result = isBothHearingAndNoticePresent.hasHearing && isBothHearingAndNoticePresent.hasNotice;
       setPrevOrder(currentOrder);
+      await Promise.all(currentOrderUpdated.map((order) => handleIssueOrder(order, order?.orderType, currentOrder?.orderCategory, result)));
+    } else {
+      setPrevOrder(currentOrder);
+      await handleIssueOrder(currentOrder, currentOrder?.orderType, currentOrder?.orderCategory);
+    }
+
+    if (businessOfTheDay) {
+      const response = await Digit.HearingService.searchHearings(
+        {
+          criteria: {
+            tenantId: Digit.ULBService.getCurrentTenantId(),
+            filingNumber: filingNumber,
+          },
+        },
+        {}
+      );
+      const nextHearing = response?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
+      await DRISTIService.addADiaryEntry(
+        {
+          diaryEntry: {
+            judgeId: "super",
+            businessOfDay: businessOfTheDay,
+            tenantId: tenantId,
+            entryDate: new Date().setHours(0, 0, 0, 0),
+            caseNumber: caseDetails?.cmpNumber,
+            referenceId: currentOrder?.orderNumber,
+            referenceType: "Order",
+            hearingDate: (Array.isArray(nextHearing) && nextHearing.length > 0 && nextHearing[0]?.startTime) || null,
+            additionalDetails: {
+              filingNumber: currentOrder?.filingNumber,
+            },
+          },
+        },
+        {}
+      ).catch((error) => {
+        console.error("error: ", error);
+        toast.error(t("SOMETHING_WENT_WRONG"));
+      });
+    }
+
+    const orderResponse = await updateOrder(
+      {
+        ...currentOrder,
+        ...((newHearingNumber || hearingNumber || hearingDetails?.hearingId) && {
+          hearingNumber: newHearingNumber || hearingNumber || hearingDetails?.hearingId,
+        }),
+      },
+      OrderWorkflowAction.ESIGN
+    );
+    if (currentOrder?.orderCategory === "COMPOSITE") {
+      let updatedOrders = [];
+      if (orderResponse) {
+        updatedOrders = orderResponse?.order?.compositeItems?.map((item) => {
+          return {
+            order: {
+              ...orderResponse?.order,
+              additionalDetails: item?.orderSchema?.additionalDetails,
+              orderDetails: item?.orderSchema?.orderDetails,
+              orderType: item?.orderType,
+              itemId: item?.id,
+            },
+          };
+        });
+      }
+      await Promise.all(updatedOrders?.map((item, index) => createTask(item?.order?.orderType, caseDetails, item)));
+    }
+    setLoader(false);
+    setShowSuccessModal(true);
+  };
+
+  const handleIssueOrder = async (currentOrder, orderType, orderCategory, jumpCaseStatusToLatestStage) => {
+    try {
+      let newhearingId = "";
+      const referenceId = currentOrder?.additionalDetails?.formdata?.refApplicationId;
+      const newApplicationDetails = applicationData?.applicationList?.find((application) => application?.applicationNumber === referenceId);
       if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(orderType)) {
         const advocateData = advocateDetails.advocates.map((advocate) => {
           return {
@@ -3119,7 +3237,7 @@ const GenerateOrders = () => {
       }
       if (orderType === "INITIATING_RESCHEDULING_OF_HEARING_DATE") {
         const dateObject = new Date(
-          applicationDetails?.additionalDetails?.formdata?.changedHearingDate || currentOrder?.additionalDetails?.formdata?.originalHearingDate
+          newApplicationDetails?.additionalDetails?.formdata?.changedHearingDate || currentOrder?.additionalDetails?.formdata?.originalHearingDate
         );
         let date = dateObject && dateObject?.getTime();
         if (isNaN(date)) {
@@ -3143,111 +3261,141 @@ const GenerateOrders = () => {
           endTime: Date.parse(currentOrder?.additionalDetails?.formdata?.newHearingDate),
         });
       }
-      referenceId && (await handleApplicationAction(currentOrder));
-      if (businessOfTheDay) {
-        const response = await Digit.HearingService.searchHearings(
-          {
-            criteria: {
-              tenantId: Digit.ULBService.getCurrentTenantId(),
-              filingNumber: filingNumber,
-            },
-          },
-          {}
-        );
-        const nextHearing = response?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
-        await DRISTIService.addADiaryEntry(
-          {
-            diaryEntry: {
-              judgeId: judgeId,
-              businessOfDay: businessOfTheDay,
-              tenantId: tenantId,
-              entryDate: new Date().setHours(0, 0, 0, 0),
-              caseNumber: caseDetails?.cmpNumber,
-              referenceId: currentOrder?.orderNumber,
-              referenceType: "Order",
-              hearingDate: (Array.isArray(nextHearing) && nextHearing.length > 0 && nextHearing[0]?.startTime) || null,
-              additionalDetails: {
-                filingNumber: currentOrder?.filingNumber,
-              },
-            },
-          },
-          {}
-        ).catch((error) => {
-          console.error("error: ", error);
-          toast.error(t("SOMETHING_WENT_WRONG"));
-        });
-      }
-      const orderResponse = await updateOrder(
-        {
-          ...currentOrder,
-          ...((newhearingId || hearingNumber || hearingDetails?.hearingId) && {
-            hearingNumber: newhearingId || hearingNumber || hearingDetails?.hearingId,
-          }),
-        },
-        OrderWorkflowAction.ESIGN
-      );
+      referenceId && (await handleApplicationAction(currentOrder, newApplicationDetails));
       await createPendingTask({
         order: {
           ...currentOrder,
-          ...((newhearingId || hearingNumber || hearingDetails?.hearingId) && {
+          ...((newhearingId || newHearingNumber || hearingNumber || hearingDetails?.hearingId) && {
             hearingNumber: newhearingId || hearingNumber || hearingDetails?.hearingId,
           }),
         },
+        newApplicationDetails: newApplicationDetails,
       });
-      currentOrder?.additionalDetails?.formdata?.refApplicationId && closeManualPendingTask(currentOrder?.orderNumber);
-      if (["SCHEDULE_OF_HEARING_DATE"].includes(orderType)) {
-        closeManualPendingTask(filingNumber);
-        if (!isCaseAdmitted) {
-          updateCaseDetails("SCHEDULE_ADMISSION_HEARING");
+      currentOrder?.additionalDetails?.formdata?.refApplicationId && (await closeManualPendingTask(currentOrder?.orderNumber));
+      if (currentOrder?.orderCategory === "INTERMEDIATE") {
+        if (["SCHEDULE_OF_HEARING_DATE"].includes(orderType)) {
+          closeManualPendingTask(filingNumber);
+          if (!isCaseAdmitted) {
+            updateCaseDetails("SCHEDULE_ADMISSION_HEARING");
+          }
         }
       }
-      closeManualPendingTask(currentOrder?.orderNumber);
-      if (orderType === "SUMMONS") {
-        closeManualPendingTask(currentOrder?.hearingNumber || hearingDetails?.hearingId);
-      }
-      if (orderType === "NOTICE" && currentOrder?.additionalDetails?.formdata?.noticeType?.code === "Section 223 Notice") {
-        closeManualPendingTask(currentOrder?.hearingNumber || hearingDetails?.hearingId);
-        try {
-          await updateCaseDetails("ISSUE_ORDER");
-          const caseDetails = await refetchCaseData();
-          const caseData = caseDetails?.data?.criteria?.[0]?.responseList?.[0];
-          const respondent = caseData?.litigants?.find((litigant) => litigant?.partyType?.includes("respondent"));
-          const advocate = caseData?.representatives?.find((representative) =>
-            representative?.representing?.some((represent) => respondent && represent?.individualId === respondent?.individualId)
-          );
-
-          const assignees = [];
-          if (respondent) assignees.push({ uuid: respondent?.additionalDetails?.uuid });
-          if (advocate) assignees.push({ uuid: advocate?.additionalDetails?.uuid });
-
-          if (respondent && assignees?.length > 0) {
-            try {
-              await DRISTIService.customApiService(Urls.orders.pendingTask, {
-                pendingTask: {
-                  name: "Pending Response",
-                  entityType: "case-default",
-                  referenceId: `MANUAL_${caseData?.filingNumber}`,
-                  status: "PENDING_RESPONSE",
-                  assignedTo: assignees,
-                  assignedRole: ["CASE_RESPONDER"],
-                  cnrNumber: caseData?.cnrNumber,
-                  filingNumber: caseData?.filingNumber,
-                  isCompleted: false,
-                  stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
-                  additionalDetails: {
-                    individualId: respondent?.individualId,
-                    caseId: caseData?.id,
-                    litigants: [respondent?.map((data) => data?.individualId)],
-                  },
-                  tenantId,
-                },
-              });
-            } catch (err) {
-              console.error("err :>> ", err);
+      if (currentOrder?.orderCategory === "COMPOSITE") {
+        if (!jumpCaseStatusToLatestStage) {
+          // IF we have notice order along with hearing order in the composite, we will update the case status in the notice order logic and skip it here.
+          // we will directly jump the case stage to pending response.
+          if (["SCHEDULE_OF_HEARING_DATE"].includes(orderType)) {
+            closeManualPendingTask(filingNumber);
+            if (!isCaseAdmitted) {
+              updateCaseDetails("SCHEDULE_ADMISSION_HEARING");
             }
           }
-        } catch (error) {
-          console.error("error :>> ", error);
+        } else {
+          if (["SCHEDULE_OF_HEARING_DATE"].includes(orderType)) {
+            closeManualPendingTask(filingNumber);
+          }
+        }
+      }
+      await closeManualPendingTask(currentOrder?.orderNumber);
+      if (orderType === "SUMMONS") {
+        await closeManualPendingTask(currentOrder?.hearingNumber || hearingDetails?.hearingId);
+      }
+      if (currentOrder?.orderCategory === "INTERMEDIATE") {
+        if (orderType === "NOTICE" && currentOrder?.additionalDetails?.formdata?.noticeType?.code === "Section 223 Notice") {
+          await closeManualPendingTask(currentOrder?.hearingNumber || hearingDetails?.hearingId);
+          try {
+            await updateCaseDetails("ISSUE_ORDER");
+            const caseDetails = await refetchCaseData();
+            const caseData = caseDetails?.data?.criteria?.[0]?.responseList?.[0];
+            const respondent = caseData?.litigants?.find((litigant) => litigant?.partyType?.includes("respondent"));
+            const advocate = caseData?.representatives?.find((representative) =>
+              representative?.representing?.some((represent) => respondent && represent?.individualId === respondent?.individualId)
+            );
+
+            const assignees = [];
+            if (respondent) assignees.push({ uuid: respondent?.additionalDetails?.uuid });
+            if (advocate) assignees.push({ uuid: advocate?.additionalDetails?.uuid });
+
+            if (respondent && assignees?.length > 0) {
+              try {
+                await DRISTIService.customApiService(Urls.orders.pendingTask, {
+                  pendingTask: {
+                    name: "Pending Response",
+                    entityType: "case-default",
+                    referenceId: `MANUAL_${caseData?.filingNumber}`,
+                    status: "PENDING_RESPONSE",
+                    assignedTo: assignees,
+                    assignedRole: ["CASE_RESPONDER"],
+                    cnrNumber: caseData?.cnrNumber,
+                    filingNumber: caseData?.filingNumber,
+                    isCompleted: false,
+                    stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
+                    additionalDetails: {
+                      individualId: respondent?.individualId,
+                      caseId: caseData?.id,
+                      litigants: [respondent?.map((data) => data?.individualId)],
+                    },
+                    tenantId,
+                  },
+                });
+              } catch (err) {
+                console.error("err :>> ", err);
+              }
+            }
+          } catch (error) {
+            console.error("error :>> ", error);
+          }
+        }
+      }
+      if (currentOrder?.orderCategory === "COMPOSITE") {
+        if (orderType === "NOTICE" && currentOrder?.additionalDetails?.formdata?.noticeType?.code === "Section 223 Notice") {
+          await closeManualPendingTask(currentOrder?.hearingNumber || hearingDetails?.hearingId);
+          const currentCaseStaus = caseDetails?.data?.criteria?.[0]?.responseList?.[0]?.status;
+          if (currentCaseStaus !== "PENDING_RESPONSE") {
+            // Reason for above condition- If we have more than one notices in composite items and case is updated once and reached to pending response
+            // then we should not repeat this case update call.
+            try {
+              await updateCaseDetails("ISSUE_ORDER");
+              const caseDetails = await refetchCaseData();
+              const caseData = caseDetails?.data?.criteria?.[0]?.responseList?.[0];
+              const respondent = caseData?.litigants?.find((litigant) => litigant?.partyType?.includes("respondent"));
+              const advocate = caseData?.representatives?.find((representative) =>
+                representative?.representing?.some((represent) => respondent && represent?.individualId === respondent?.individualId)
+              );
+              const assignees = [];
+              if (respondent) assignees.push({ uuid: respondent?.additionalDetails?.uuid });
+              if (advocate) assignees.push({ uuid: advocate?.additionalDetails?.uuid });
+
+              if (respondent && assignees?.length > 0) {
+                try {
+                  await DRISTIService.customApiService(Urls.orders.pendingTask, {
+                    pendingTask: {
+                      name: "Pending Response",
+                      entityType: "case-default",
+                      referenceId: `MANUAL_${caseData?.filingNumber}`,
+                      status: "PENDING_RESPONSE",
+                      assignedTo: assignees,
+                      assignedRole: ["CASE_RESPONDER"],
+                      cnrNumber: caseData?.cnrNumber,
+                      filingNumber: caseData?.filingNumber,
+                      isCompleted: false,
+                      stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
+                      additionalDetails: {
+                        individualId: respondent?.individualId,
+                        caseId: caseData?.id,
+                        litigants: [respondent?.map((data) => data?.individualId)],
+                      },
+                      tenantId,
+                    },
+                  });
+                } catch (err) {
+                  console.error("err :>> ", err);
+                }
+              }
+            } catch (error) {
+              console.error("eror :>> ", error);
+            }
+          }
         }
       }
       if (["ADMIT_CASE", "DISMISS_CASE"]?.includes(orderType)) {
@@ -3312,9 +3460,6 @@ const GenerateOrders = () => {
           }
         });
       }
-      createTask(orderType, caseDetails, orderResponse);
-      setLoader(false);
-      setShowSuccessModal(true);
     } catch (error) {
       setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
       setLoader(false);
@@ -3415,16 +3560,36 @@ const GenerateOrders = () => {
   };
   const successModalActionSaveLabel = useMemo(() => {
     if (
-      (prevOrder?.orderType === "RESCHEDULE_OF_HEARING_DATE" ||
-        (currentOrder?.orderType === "SCHEDULE_OF_HEARING_DATE" &&
-          currentOrder?.additionalDetails?.formdata?.namesOfPartiesRequired?.some((data) => data?.partyType?.includes("respondent")))) &&
+      (prevOrder?.orderCategory === "COMPOSITE"
+        ? prevOrder?.compositeItems?.some((item) => item?.orderType === "RESCHEDULE_OF_HEARING_DATE")
+        : prevOrder?.orderType === "RESCHEDULE_OF_HEARING_DATE" ||
+          (currentOrder?.orderCategory === "COMPOSITE"
+            ? currentOrder?.compositeItems?.some(
+                (item) =>
+                  item?.orderType === "SCHEDULE_OF_HEARING_DATE" &&
+                  item?.orderSchema?.additionalDetails?.formdata?.namesOfPartiesRequired?.some((data) => data?.partyType?.includes("respondent"))
+              )
+            : currentOrder?.orderType === "SCHEDULE_OF_HEARING_DATE" &&
+              currentOrder?.additionalDetails?.formdata?.namesOfPartiesRequired?.some((data) => data?.partyType?.includes("respondent")))) &&
       isCaseAdmitted
     ) {
-      if (currentOrder?.additionalDetails?.isReIssueNotice) {
+      if (
+        currentOrder?.orderCategory === "COMPOSITE"
+          ? currentOrder?.compositeItems?.some((item) => item?.orderSchema?.additionalDetails?.isReIssueNotice)
+          : currentOrder?.additionalDetails?.isReIssueNotice
+      ) {
         return t("ISSUE_NOTICE_BUTTON");
       }
       return t("ISSUE_SUMMONS_BUTTON");
-    } else if ((prevOrder?.orderType === "RESCHEDULE_OF_HEARING_DATE" || currentOrder?.orderType === "SCHEDULE_OF_HEARING_DATE") && !isCaseAdmitted) {
+    } else if (
+      prevOrder?.orderCategory === "COMPOSITE"
+        ? prevOrder?.compositeItems?.some((item) => item?.orderType === "RESCHEDULE_OF_HEARING_DATE")
+        : prevOrder?.orderType === "RESCHEDULE_OF_HEARING_DATE" ||
+          ((prevOrder?.orderCategory === "COMPOSITE"
+            ? prevOrder?.compositeItems?.some((item) => item?.orderType === "SCHEDULE_OF_HEARING_DATE")
+            : prevOrder?.orderType === "SCHEDULE_OF_HEARING_DATE") &&
+            !isCaseAdmitted)
+    ) {
       return t("ISSUE_NOTICE_BUTTON");
     }
     return t("CS_COMMON_CLOSE");
@@ -3458,30 +3623,42 @@ const GenerateOrders = () => {
 
   const handleReviewOrderClick = () => {
     const items = structuredClone(currentOrder?.orderCategory === "INTERMEDIATE" ? [currentOrder] : currentOrder?.compositeItems);
-    items?.forEach((item, index) => {
+    let hasError = false; // Flag to track if an error occurs
+
+    for (let index = 0; index < items?.length; index++) {
+      const item = items[index];
+
       if (currentOrder?.orderCategory === "INTERMEDIATE" || item?.isEnabled) {
         const formData =
           currentOrder?.orderCategory === "INTERMEDIATE"
             ? currentOrder?.additionalDetails?.formdata
             : currentOrder?.compositeItems?.[index]?.orderSchema?.additionalDetails?.formdata;
         const orderType = item?.orderType;
+        const newApplicationDetails = applicationData?.applicationList?.find(
+          (application) => application?.applicationNumber === formData?.refApplicationId
+        );
+
         if (
-          referenceId &&
+          formData?.refApplicationId &&
           "ACCEPTANCE_REJECTION_DCA" === orderType &&
-          [SubmissionWorkflowState.COMPLETED, SubmissionWorkflowState.REJECTED].includes(applicationDetails?.status)
+          [SubmissionWorkflowState.COMPLETED, SubmissionWorkflowState.REJECTED].includes(newApplicationDetails?.status)
         ) {
           setShowErrorToast({
-            label: applicationDetails?.status === SubmissionWorkflowState.COMPLETED ? t("DCA_APPLICATION_ACCEPTED") : t("DCA_APPLICATION_REJECTED"),
+            label:
+              newApplicationDetails?.status === SubmissionWorkflowState.COMPLETED ? t("DCA_APPLICATION_ACCEPTED") : t("DCA_APPLICATION_REJECTED"),
             error: true,
           });
-          return;
+          hasError = true;
+          break;
         }
-        if (["ADMIT_CASE", "DISMISS_CASE"]?.includes(orderType) && ["CASE_DISMISSED", "CASE_ADMITTED"].includes(caseDetails?.status)) {
+
+        if (["ADMIT_CASE", "DISMISS_CASE"].includes(orderType) && ["CASE_DISMISSED", "CASE_ADMITTED"].includes(caseDetails?.status)) {
           setShowErrorToast({
             label: "CASE_ADMITTED" === caseDetails?.status ? t("CASE_ALREADY_ADMITTED") : t("CASE_ALREADY_REJECTED"),
             error: true,
           });
-          return;
+          hasError = true;
+          break;
         }
 
         if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(orderType) && (isHearingScheduled || isHearingOptout)) {
@@ -3489,65 +3666,84 @@ const GenerateOrders = () => {
             label: isHearingScheduled ? t("HEARING_IS_ALREADY_SCHEDULED_FOR_THIS_CASE") : t("CURRENTLY_A_HEARING_IS_IN_OPTOUT_STATE"),
             error: true,
           });
-          return;
+          hasError = true;
+          break;
         }
+
         if (["INITIATING_RESCHEDULING_OF_HEARING_DATE"].includes(orderType) && !isHearingScheduled) {
           setShowErrorToast({
             label: t("CURRENTLY_NO_HEARING_IS_IN_SCHEDULED_STATE"),
             error: true,
           });
-          return;
+          hasError = true;
+          break;
         }
+
         if (["ASSIGNING_DATE_RESCHEDULED_HEARING"].includes(orderType) && !isHearingOptout) {
           setShowErrorToast({
             label: t("CURRENTLY_NO_HEARING_IS_IN_OPTOUT_STATE"),
             error: true,
           });
-          return;
+          hasError = true;
+          break;
         }
-        if (orderType && ["MANDATORY_SUBMISSIONS_RESPONSES"].includes(orderType)) {
+
+        if (orderType === "MANDATORY_SUBMISSIONS_RESPONSES") {
           if (!formData?.responseInfo?.responseDeadline && formData?.responseInfo?.isResponseRequired?.code === true) {
             setFormErrors?.current?.[index]?.("responseDeadline", { message: t("PROPOSED_DATE_CAN_NOT_BE_BEFORE_SUBMISSION_DEADLINE") });
-            return;
+            hasError = true;
+            break;
           }
           if (
             (!formData?.responseInfo?.respondingParty || formData?.responseInfo?.respondingParty?.length === 0) &&
             formData?.responseInfo?.isResponseRequired?.code === true
           ) {
             setFormErrors?.current?.[index]?.("respondingParty", { message: t("CORE_REQUIRED_FIELD_ERROR") });
-            return;
+            hasError = true;
+            break;
           }
         }
-        if (orderType && ["WARRANT"].includes(orderType)) {
+
+        if (orderType === "WARRANT") {
           if (!formData?.bailInfo?.noOfSureties && formData?.bailInfo?.isBailable?.code === true) {
             setFormErrors?.current?.[index]?.("noOfSureties", { message: t("CORE_REQUIRED_FIELD_ERROR") });
-            return;
+            hasError = true;
+            break;
           }
           if (
             (!formData?.bailInfo?.bailableAmount || formData?.bailInfo?.bailableAmount?.slice(-1) === ".") &&
             formData?.bailInfo?.isBailable?.code === true
           ) {
             setFormErrors?.current?.[index]?.("bailableAmount", { message: t("CS_VALID_AMOUNT_DECIMAL") });
-            return;
+            hasError = true;
+            break;
           }
         }
-        if (referenceId && ![SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(applicationDetails?.status)) {
+
+        if (
+          formData?.refApplicationId &&
+          ![SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(newApplicationDetails?.status)
+        ) {
           setShowErrorToast({
             label:
-              SubmissionWorkflowState.COMPLETED === applicationDetails?.status
+              SubmissionWorkflowState.COMPLETED === newApplicationDetails?.status
                 ? t("SUBMISSION_ALREADY_ACCEPTED")
-                : SubmissionWorkflowState.REJECTED === applicationDetails?.status
+                : SubmissionWorkflowState.REJECTED === newApplicationDetails?.status
                 ? t("SUBMISSION_ALREADY_REJECTED")
                 : t("SUBMISSION_NO_LONGER_VALID"),
             error: true,
           });
           setShowReviewModal(false);
           setShowsignatureModal(false);
-          return;
+          hasError = true;
+          break;
         }
       }
-    });
-    handleSaveDraft({ showReviewModal: true });
+    }
+
+    if (!hasError) {
+      handleSaveDraft({ showReviewModal: true });
+    }
   };
 
   const handleClose = async () => {
@@ -3861,7 +4057,7 @@ const GenerateOrders = () => {
         <OrderSignatureModal
           t={t}
           order={currentOrder}
-          handleIssueOrder={handleIssueOrder}
+          handleIssueOrder={processHandleIssueOrder}
           handleGoBackSignatureModal={handleGoBackSignatureModal}
           setSignedDocumentUploadID={setSignedDocumentUploadID}
           orderPdfFileStoreID={orderPdfFileStoreID}
