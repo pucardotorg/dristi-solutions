@@ -493,7 +493,8 @@
                     "validation": {
                       "required": true,
                       "precision": 15,
-                      "patternType": "latitude",
+                      "upperBound": 37.6,
+                      "lowerBound": 8.4,
                       "errorMessage": "LATITUDE_ERROR_MESSAGE"
                     }
                   },
@@ -505,7 +506,8 @@
                     "validation": {
                       "required": true,
                       "precision": 15,
-                      "patternType": "longitude",
+                      "upperBound": 97.25,
+                      "lowerBound": 68.7,
                       "errorMessage": "LONGITUDE_ERROR_MESSAGE"
                     }
                   },
