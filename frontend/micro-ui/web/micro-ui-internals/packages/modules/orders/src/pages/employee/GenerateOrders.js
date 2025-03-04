@@ -618,7 +618,7 @@ const GenerateOrders = () => {
                   ...field,
                   populators: {
                     ...field.populators,
-                    options: [...complainants, ...respondents],
+                    options: [...complainants],
                   },
                 };
               }
@@ -627,7 +627,7 @@ const GenerateOrders = () => {
                   ...field,
                   populators: {
                     ...field.populators,
-                    options: [...complainants, ...respondents],
+                    options: [...respondents],
                   },
                 };
               }
@@ -637,64 +637,66 @@ const GenerateOrders = () => {
         });
       }
       if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(orderType)) {
-        orderTypeForm = orderTypeForm?.map((section) => {
-          return {
-            ...section,
-            body: section.body.map((field) => {
-              if (field.key === "namesOfPartiesRequired") {
-                return {
-                  ...field,
-                  populators: {
-                    ...field.populators,
-                    options: [...complainants, ...respondents, ...unJoinedLitigant, ...witnesses],
-                  },
-                };
-              }
-              if (field.key === "hearingPurpose") {
-                return {
-                  ...field,
-                  populators: {
-                    ...field.populators,
-                    mdmsConfig: {
-                      ...field.populators?.mdmsConfig,
-                      select: `(data) => {
+        const parties = [...unJoinedLitigant, ...witnesses];
+        orderTypeForm = orderTypeForm
+          ?.filter((section) => !(section?.body?.[0]?.key === "unjoinedPartiesNote" && parties?.length === 0))
+          ?.map((section) => {
+            return {
+              ...section,
+              body: section.body.map((field) => {
+                if (field.key === "namesOfPartiesRequired") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      options: [...complainants, ...respondents, ...unJoinedLitigant, ...witnesses],
+                    },
+                  };
+                }
+                if (field.key === "hearingPurpose") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      mdmsConfig: {
+                        ...field.populators?.mdmsConfig,
+                        select: `(data) => {
                         return (  // based on isDcaFiled condition, we can filter out DCA hearing here if needed.
                           data?.Hearing?.HearingType|| []
                         );
                       }`,
-                    },
-                  },
-                };
-              }
-              if (field.key === "unjoinedPartiesNote") {
-                const parties = [...unJoinedLitigant, ...witnesses];
-                return {
-                  ...field,
-                  populators: {
-                    ...field.populators,
-                    inputs: [
-                      {
-                        ...field.populators.inputs[0],
-                        children: (
-                          <React.Fragment>
-                            {parties.map((party, index) => (
-                              <div className="list-div" key={index}>
-                                <p style={{ margin: "0px", fontSize: "14px" }}>
-                                  {index + 1}. {party?.name}
-                                </p>
-                              </div>
-                            ))}
-                          </React.Fragment>
-                        ),
                       },
-                    ],
-                  },
-                };
-              }
-              return field;
-            }),
-          };
-        });
+                    },
+                  };
+                }
+                if (field.key === "unjoinedPartiesNote") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      inputs: [
+                        {
+                          ...field.populators.inputs[0],
+                          children: (
+                            <React.Fragment>
+                              {parties.map((party, index) => (
+                                <div className="list-div" key={index}>
+                                  <p style={{ margin: "0px", fontSize: "14px" }}>
+                                    {index + 1}. {party?.name}
+                                  </p>
+                                </div>
+                              ))}
+                            </React.Fragment>
+                          ),
+                        },
+                      ],
+                    },
+                  };
+                }
+                return field;
+              }),
+            };
+          });
       }
       if (orderType === "MANDATORY_SUBMISSIONS_RESPONSES") {
         orderTypeForm = orderTypeForm?.map((section) => {
@@ -1155,7 +1157,7 @@ const GenerateOrders = () => {
     } else if (["WARRANT", "SUMMONS", "NOTICE"].includes(type)) {
       parties = orderSchema?.orderDetails?.respondentName ? [orderSchema?.orderDetails?.respondentName] : [];
     } else if (type === "SECTION_202_CRPC") {
-      parties = [orderSchema?.orderDetails.soughtOfDetails];
+      parties = [orderSchema?.orderDetails?.applicationFilledBy, orderSchema?.orderDetails.soughtOfDetails];
     } else if (
       orderSchema?.orderDetails?.parties?.length > 0 &&
       ["BAIL", "REJECT_VOLUNTARY_SUBMISSIONS", "APPROVE_VOLUNTARY_SUBMISSIONS", "REJECTION_RESCHEDULE_REQUEST", "CHECKOUT_REJECT"].includes(type)
@@ -2608,6 +2610,25 @@ const GenerateOrders = () => {
                     tenantId,
                   },
                 });
+                const closePendingResponse = respondents?.map((user) =>
+                  DRISTIService.customApiService(Urls.orders.pendingTask, {
+                    pendingTask: {
+                      name: "Pending Response",
+                      entityType: "case-default",
+                      referenceId: `MANUAL_PENDING_RESPONSE_${caseDetails?.filingNumber}_${user?.individualId}`,
+                      status: "PENDING_RESPONSE",
+                      assignedTo: [],
+                      assignedRole: ["CASE_RESPONDER"],
+                      cnrNumber: caseDetails?.cnrNumber,
+                      filingNumber: caseDetails?.filingNumber,
+                      isCompleted: true,
+                      stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
+                      additionalDetails: {},
+                      tenantId,
+                    },
+                  })
+                );
+                Promise.all(closePendingResponse);
               } catch (error) {
                 console.error("error :>> ", error);
               }

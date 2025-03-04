@@ -56,6 +56,7 @@ const TasksComponent = ({
   const [showSubmitResponseModal, setShowSubmitResponseModal] = useState(false);
   const [responsePendingTask, setResponsePendingTask] = useState({});
   const [responseDoc, setResponseDoc] = useState({});
+  const [isResponseApiCalled, setIsResponseApiCalled] = useState(false);
 
   const { data: pendingTaskDetails = [], isLoading, refetch } = useGetPendingTask({
     data: {
@@ -378,6 +379,7 @@ const TasksComponent = ({
   );
 
   const submitResponse = async (responseDoc) => {
+    setIsResponseApiCalled(true);
     let newCase;
     const pendingTask = joinCaseShowSubmitResponseModal ? joinCaseResponsePendingTask : responsePendingTask;
 
@@ -409,6 +411,7 @@ const TasksComponent = ({
                   ...responseDoc,
                   additionalDetails: {
                     fileName: `Response (${data?.additionalDetails?.fullName})`,
+                    fileType: "respondent-response",
                   },
                 },
               ],
@@ -417,14 +420,19 @@ const TasksComponent = ({
         }),
       };
     }
-    const response = await updateCaseDetails(newCase, tenantId, "RESPOND");
+    let response;
+    try {
+      response = await updateCaseDetails(newCase, tenantId, "RESPOND");
+    } catch (error) {
+      console.error("error :>> ", error);
+    }
     if (response) {
       try {
         await DRISTIService.customApiService(Urls.pendingTask, {
           pendingTask: {
             name: "Pending Response",
             entityType: "case-default",
-            referenceId: `MANUAL_${pendingTask?.filingNumber}`,
+            referenceId: pendingTask?.referenceId,
             status: "PENDING_RESPONSE",
             assignedTo: [{ uuid: userInfo?.uuid }],
             assignedRole: ["CASE_RESPONDER"],
@@ -439,8 +447,12 @@ const TasksComponent = ({
       } catch (err) {
         console.error("err :>> ", err);
       }
+      setIsResponseApiCalled(false);
       return { continue: true };
-    } else return { continue: false };
+    } else {
+      setIsResponseApiCalled(false);
+      return { continue: false };
+    }
   };
 
   const getCaseDetailsUrl = (caseId, filingNumber) =>
@@ -479,9 +491,11 @@ const TasksComponent = ({
             />
           ),
           actionSaveOnSubmit: async () => {
-            await submitResponse(responseDoc);
+            return await submitResponse(responseDoc);
           },
-          isDisabled: responseDoc?.fileStore ? false : true,
+          async: true,
+          isDisabled: (responseDoc?.fileStore ? false : true) || isResponseApiCalled,
+          isBackButtonDisabled: isResponseApiCalled,
         },
         {
           type: "success",

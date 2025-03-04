@@ -582,6 +582,7 @@ export const uploadResponseDocumentConfig = [
         populators: {
           inputs: [
             {
+              multiple: false,
               label: "Upload document",
               type: "documentUpload",
               name: "ID_Proof",

@@ -222,6 +222,10 @@ const SelectParty = ({
                   setParty(value?.map((val) => val[1]));
                 }}
                 customLabel={customLabel}
+                config={{
+                  isSelectAll: true,
+                }}
+                parentRef={targetRef}
               />
             )
           )}

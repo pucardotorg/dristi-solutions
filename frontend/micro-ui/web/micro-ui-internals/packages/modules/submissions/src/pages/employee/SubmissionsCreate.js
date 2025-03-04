@@ -52,6 +52,15 @@ const getFormattedDate = (date) => {
   return `${day}/${month}/${year}`;
 };
 
+const BAIL_APPLICATION_EXCLUDED_STATUSES = [
+  "PENDING_RESPONSE",
+  "PENDING_ADMISSION_HEARING",
+  "ADMISSION_HEARING_SCHEDULED",
+  "PENDING_NOTICE",
+  "CASE_ADMITTED",
+  "PENDING_ADMISSION",
+];
+
 const SubmissionsCreate = ({ path }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const { t } = useTranslation();
@@ -304,7 +313,7 @@ const SubmissionsCreate = ({ path }) => {
                     select: `(data) => {return data['Application'].ApplicationType?.filter((item)=>!["EXTENSION_SUBMISSION_DEADLINE","DOCUMENT","RE_SCHEDULE","CHECKOUT_REQUEST", "SUBMIT_BAIL_DOCUMENTS",${
                       isDelayApplicationPending ? `"DELAY_CONDONATION",` : ""
                     }${
-                      caseDetails?.status !== "CASE_ADMITTED" ? `"REQUEST_FOR_BAIL",` : ""
+                      !BAIL_APPLICATION_EXCLUDED_STATUSES.includes(caseDetails?.status) ? `"REQUEST_FOR_BAIL",` : ""
                     }].includes(item.type)).map((item) => {return { ...item, name: 'APPLICATION_TYPE_'+item.type };});}`,
                   },
                 },
@@ -521,6 +530,10 @@ const SubmissionsCreate = ({ path }) => {
         }),
       };
     } else if (hearingId && hearingsData?.HearingList?.[0]?.startTime && applicationTypeUrl) {
+      let selectComplainant = null;
+      if (complainantsList?.length === 1) {
+        selectComplainant = complainantsList?.[0];
+      }
       return {
         submissionType: {
           code: "APPLICATION",
@@ -532,6 +545,7 @@ const SubmissionsCreate = ({ path }) => {
           name: `APPLICATION_TYPE_${applicationTypeUrl}`,
         },
         applicationDate: formatDate(new Date()),
+        ...(selectComplainant !== null ? { selectComplainant } : {}),
       };
     } else if (orderNumber) {
       if (orderDetails?.orderType === orderTypes.MANDATORY_SUBMISSIONS_RESPONSES) {
@@ -648,20 +662,28 @@ const SubmissionsCreate = ({ path }) => {
       };
     }
   }, [
-    applicationDetails,
+    applicationDetails?.additionalDetails?.formdata,
     isCitizen,
+    applicationTypeParam,
     hearingId,
-    hearingsData,
+    hearingsData?.HearingList,
+    applicationTypeUrl,
     orderNumber,
     applicationType,
-    applicationTypeParam,
-    orderDetails,
+    orderDetails?.orderType,
+    orderDetails?.additionalDetails?.formdata?.submissionDeadline,
+    orderDetails?.additionalDetails?.formdata?.documentType,
+    orderDetails?.orderNumber,
     isExtension,
+    complainantsList,
     latestExtensionOrder,
-    applicationTypeUrl,
+    litigant,
   ]);
 
-  const formKey = useMemo(() => applicationType + (defaultFormValue?.initialSubmissionDate || ""), [applicationType, defaultFormValue]);
+  const formKey = useMemo(() => applicationType + (defaultFormValue?.initialSubmissionDate || "" + defaultFormValue?.selectComplainant?.name), [
+    applicationType,
+    defaultFormValue,
+  ]);
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     if (

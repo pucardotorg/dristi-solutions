@@ -1,5 +1,6 @@
 package org.pucar.dristi.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -89,7 +90,7 @@ public class IndexerServiceTest {
     }
 
     @Test
-    void testBuildBulkRequest() throws JSONException {
+    void testBuildBulkRequest() throws JSONException, JsonProcessingException {
         // Setup mocks
         JSONArray kafkaJsonArray = new JSONArray();
         kafkaJsonArray.put(new JSONObject().put("key", "value"));
@@ -119,7 +120,7 @@ public class IndexerServiceTest {
     }
 
     @Test
-    void testProcessJsonObject() throws JSONException {
+    void testProcessJsonObject() throws JSONException, JsonProcessingException {
         // Setup mocks
         JSONObject jsonObject = new JSONObject().put("key", "value");
         JSONObject requestInfo = new JSONObject();
@@ -136,7 +137,7 @@ public class IndexerServiceTest {
     }
 
     @Test
-    void testProcessJsonObject_BuildPayloadReturnsNull() throws JSONException {
+    void testProcessJsonObject_BuildPayloadReturnsNull() throws JSONException, JsonProcessingException {
         // Setup mocks
         JSONObject jsonObject = new JSONObject().put("key", "value");
         JSONObject requestInfo = new JSONObject();

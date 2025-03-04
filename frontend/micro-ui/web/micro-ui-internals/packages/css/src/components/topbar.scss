@@ -154,3 +154,9 @@ video::-webkit-media-controls-panel {
 .topbarOptionsClassNameCitizen {
   right: -0.5rem !important;
 }
+
+.navbar {
+  .select-wrap .options-card {
+    width: max-content !important;
+  }
+}

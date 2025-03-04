@@ -126,6 +126,8 @@ public class ServiceConstants {
 
     public static final String PENDING_REGISTRATION = "PENDING_REGISTRATION";
 
+    public static final String CASE_FORWARDED_TO_JUDGE = "JUDGE_ASSIGNED,FSO_VALIDATED";
+    public static final String JUDGE_ASSIGNED = "JUDGE_ASSIGNED";
     public static final String FSO_VALIDATED = "FSO_VALIDATED";
     public static final String CASE_SUBMITTED = "CASE_SUBMITTED";
     public static final String ESIGN_PENDING = "ESIGN_PENDING";
@@ -163,6 +165,8 @@ public class ServiceConstants {
     public static final String NOTIFICATION_LOCALIZATION_MSGS_JSONPATH = "$.messages.*.message";
     public static final String CASE_SUMMARY_SEARCH_QUERY_EXCEPTION = "CASE_SUMMARY_SEARCH_QUERY_EXCEPTION";
     public static final String JUDGE_ID = "JUDGE_ID";
+    public static final String NEW_WITNESS_ADDED = "NEW_WITNESS_ADDED";
+    public static final String NEW_WITNESS_ADDED_SMS_FOR_OTHERS = "NEW_WITNESS_ADDED_SMS_FOR_OTHERS";
 
     public static final String FLOW_JAC = "flow_jac";
 
@@ -192,6 +196,8 @@ public class ServiceConstants {
     public static final String SYSTEM="SYSTEM";
 
     public static final String JOIN_CASE_TASK="JOIN_CASE_TASK";
+
+    public static final String ACCUSED_PARTY_TYPE="respondent";
 
     private ServiceConstants() {
     }

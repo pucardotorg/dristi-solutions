@@ -164,7 +164,33 @@ export const documentsTypeMapping = {
   vakalatnamaFileUpload: "VAKALATNAMA_DOC",
   submissionDocuments: "SUBMISSION_DOCUMENTS",
   pipAffidavitFileUpload: "COMPLAINANT_PIP_AFFIDAVIT",
+  pipAffidavitFileUploadRespondent: "RESPONDENT_PIP_AFFIDAVIT",
+  nocJudgeOrder: "NOC_JUDGE_ORDER",
 };
+
+
+export const documentLabels = {
+  "COMPLAINANT_ID_PROOF": "COMPLAINANT_ID_PROOF",
+  "case.authorizationproof.complainant": "COMPLAINANT_AUTHORIZATION_PROOF",
+  "case.affidavit.225bnss": "INQUIRY_AFFIDAVIT",
+  "case.authorizationproof.accused": "ACCUSED_AUTHORIZATION_PROOF",
+  "case.cheque": "DISHONORED_CHEQUE",
+  "case.cheque.depositslip": "PROOF_OF_DEPOSIT_OF_CHEQUE",
+  "case.cheque.returnmemo": "CHEQUE_RETURN_MEMO",
+  "case.demandnotice": "LEGAL_DEMAND_NOTICE",
+  "case.demandnotice.proof": "PROOF_OF_DISPATCH_OF_LEGAL_DEMAND_NOTICE",
+  "case.demandnotice.serviceproof": "PROOF_OF_ACKNOWLEDGMENT",
+  "case.replynotice": "PROOF_OF_REPLY",
+  "case.liabilityproof": "PROOF_OF_DEBT_LIABILITY",
+  "CONDONATION_DOC": "DELAY_CONDONATION_APPLICATION",
+  "case.affidavit.223bnss": "AFFIDAVIT_BNSS_223", 
+  "case.docs": "UPLOADED_DOCUMENT",
+  "VAKALATNAMA_DOC": "VAKALATNAMA_DOCUMENT",
+  "SUBMISSION_DOCUMENTS": "SUBMISSION_DOCUMENTS",
+  "COMPLAINANT_PIP_AFFIDAVIT": "COMPLAINANT_PIP_AFFIDAVIT"
+};
+
+
 
 export const getFileByFileStoreId = async (uri) => {
   const token = localStorage.getItem("token");
@@ -242,10 +268,6 @@ export const getDate = (value) => {
 export const formatAddress = (value) => {
   return value
     .split(" ")
-    .map((word) =>
-      word === word.toUpperCase() || /[A-Z]/.test(word.slice(1)) 
-        ? word
-        : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-    )
+    .map((word) => (word === word.toUpperCase() || /[A-Z]/.test(word.slice(1)) ? word : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()))
     .join(" ");
 };
