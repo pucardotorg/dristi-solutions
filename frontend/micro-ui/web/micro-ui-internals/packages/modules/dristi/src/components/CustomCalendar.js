@@ -85,10 +85,10 @@ function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCu
       <div className="custom-navigator">
         <span>{currentDate.toLocaleDateString("default", { month: "long", year: "numeric" })}</span>
         <span>
-          <button onClick={() => changeShownDate(-1, "monthOffset")}>
+          <button type="button" onClick={() => changeShownDate(-1, "monthOffset")}>
             <CalendarLeftArrow />{" "}
           </button>
-          <button onClick={() => changeShownDate(1, "monthOffset")}>
+          <button type="button" onClick={() => changeShownDate(1, "monthOffset")}>
             <CalendarRightArrow />
           </button>
         </span>

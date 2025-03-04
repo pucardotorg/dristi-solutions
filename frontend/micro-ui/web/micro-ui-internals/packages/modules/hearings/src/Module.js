@@ -6,6 +6,7 @@ import HearingsCard from "./components/HearingsCard";
 import { overrideHooks, updateCustomConfigs } from "./utils";
 import MonthlyCalendar from "./pages/employee/CalendarView";
 import SummonsAndWarrantsModal from "./pages/employee/SummonsAndWarrantsModal";
+import CustomDatePicker from "./components/CustomDatePicker";
 
 export const HearingsModule = ({ stateCode, userType, tenants }) => {
   const { path, url } = useRouteMatch();
@@ -29,6 +30,7 @@ const componentsToRegister = {
   HearingsModule,
   HearingsCard,
   SummonsAndWarrantsModal,
+  CustomDatePicker,
 };
 
 export const initHearingsComponents = () => {

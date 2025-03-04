@@ -164,6 +164,8 @@ export const documentsTypeMapping = {
   vakalatnamaFileUpload: "VAKALATNAMA_DOC",
   submissionDocuments: "SUBMISSION_DOCUMENTS",
   pipAffidavitFileUpload: "COMPLAINANT_PIP_AFFIDAVIT",
+  pipAffidavitFileUploadRespondent: "RESPONDENT_PIP_AFFIDAVIT",
+  nocJudgeOrder: "NOC_JUDGE_ORDER",
 };
 
 

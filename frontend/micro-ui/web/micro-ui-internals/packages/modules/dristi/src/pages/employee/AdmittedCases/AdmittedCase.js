@@ -593,12 +593,13 @@ const AdmittedCases = () => {
         },
       ];
       if ("mark_as_evidence" === item.id || "unmark_as_evidence" === item.id) {
+        const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
         try {
           const nextHearing = hearingDetails?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
           await DRISTIService.addADiaryEntry(
             {
               diaryEntry: {
-                judgeId: "super",
+                judgeId: judgeId,
                 businessOfDay: `${row?.artifactNumber} ${row?.isEvidence ? "unmarked" : "marked"} as evidence`,
                 tenantId: tenantId,
                 entryDate: new Date().setHours(0, 0, 0, 0),
@@ -1440,6 +1441,8 @@ const AdmittedCases = () => {
           tenantId: tenantId,
           filingNumber: [caseDetails.filingNumber],
           hearingType: purpose,
+          courtCaseNumber: caseDetails?.courtCaseNumber,
+          cmpNumber: caseDetails?.cmpNumber,
           status: true,
           attendees: [
             ...Object.values(participant)
