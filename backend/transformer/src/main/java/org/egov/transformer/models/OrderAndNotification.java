@@ -14,11 +14,17 @@ import java.util.List;
 @Builder
 public class OrderAndNotification {
 
+    @JsonProperty("id")
+    private String id;
+
+    @JsonProperty("entityType")
+    private String entityType;
+
     @JsonProperty("type")
     private String type;
 
-    @JsonProperty("id")
-    private String id;
+    @JsonProperty("title")
+    private String title;
 
     @JsonProperty("parties")
     private List<Object> parties;
@@ -32,8 +38,11 @@ public class OrderAndNotification {
     @JsonProperty("tenantId")
     private String tenantId;
 
-    @JsonProperty("filingNumber")
-    private String filingNumber;
+    @JsonProperty("filingNumbers")
+    private List<String> filingNumbers;
+
+    @JsonProperty("caseNumbers")
+    private List<String> caseNumbers;
 
     @JsonProperty("courtId")
     private String courtId;

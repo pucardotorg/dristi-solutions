@@ -7,6 +7,7 @@ import org.egov.transformer.config.TransformerProperties;
 import org.egov.transformer.event.EventListener;
 import org.egov.transformer.models.Notification;
 import org.egov.transformer.models.OrderAndNotification;
+import org.egov.transformer.models.OrderNotificationRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -32,17 +33,23 @@ public class NotificationImpl implements EventListener<Notification, RequestInfo
                 .type(event.getNotificationType())
                 .id(event.getNotificationNumber())
                 .comments(event.getComments())
-                .courtId(event.getCourtId())
+                .courtId(null)  // no court id
                 .parties(new ArrayList<>())  // no parties
                 .status(event.getStatus())
                 .date(event.getCreatedDate())
-                .description(null)  // no description
-                .filingNumber(null) // no filing number
-                .judgeIds(null) // no judges
+                .entityType("Notice")
+                .title(event.getNotificationType())
                 .tenantId(event.getTenantId())
+                .filingNumbers( new ArrayList<>())
+                .caseNumbers(event.getCaseNumber() != null ? event.getCaseNumber() : new ArrayList<>())
+                .judgeIds( new ArrayList<>())
+                .description(null)
                 .build();
 
-        producer.push(properties.getOrderAndNotificationTopic(), orderAndNotification);
+        OrderNotificationRequest request = OrderNotificationRequest.builder()
+                .requestInfo(requestInfo).orderAndNotification(orderAndNotification).build();
+
+        producer.push(properties.getOrderAndNotificationTopic(), request);
 
     }
 }
