@@ -70,6 +70,9 @@ export const formatDate = (date) => {
 };
 
 export const convertToDateInputFormat = (dateInput) => {
+  if (!dateInput) {
+    return "";
+  }
   let date;
 
   if (typeof dateInput === "number") {
@@ -117,10 +120,8 @@ export const constructFullName = (firstName, middleName, lastName) => {
 
 export const getFormattedName = (firstName, middleName, lastName, designation, partyTypeLabel) => {
   const nameParts = [firstName, middleName, lastName].filter(Boolean).join(" ");
-  
-  const nameWithDesignation = designation && nameParts
-    ? `${nameParts} - ${designation}`
-    : designation || nameParts;
+
+  const nameWithDesignation = designation && nameParts ? `${nameParts} - ${designation}` : designation || nameParts;
 
   return partyTypeLabel ? `${nameWithDesignation} ${partyTypeLabel}` : nameWithDesignation;
 };
@@ -128,7 +129,15 @@ export const getFormattedName = (firstName, middleName, lastName, designation, p
 // name format for entity type
 export const getRespondantName = (respondentNameData) => {
   const isWitness = respondentNameData?.partyType?.toLowerCase() === "witness";
-  const partyName = isWitness ? getFormattedName(respondentNameData?.firstName, respondentNameData?.middleName, respondentNameData?.lastName, respondentNameData?.witnessDesignation, null) : constructFullName(respondentNameData?.firstName, respondentNameData?.middleName, respondentNameData?.lastName);
+  const partyName = isWitness
+    ? getFormattedName(
+        respondentNameData?.firstName,
+        respondentNameData?.middleName,
+        respondentNameData?.lastName,
+        respondentNameData?.witnessDesignation,
+        null
+      )
+    : constructFullName(respondentNameData?.firstName, respondentNameData?.middleName, respondentNameData?.lastName);
 
   if (respondentNameData?.respondentCompanyName) {
     return `${respondentNameData?.respondentCompanyName} (Represented By ${partyName})`;

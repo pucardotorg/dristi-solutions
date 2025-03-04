@@ -55,6 +55,11 @@ export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, t
               additionalCustomization: true,
             },
             {
+              label: "DELIEVRY_DATE",
+              jsonPath: "statusChangeDate",
+              additionalCustomization: true,
+            },
+            {
               label: "Remarks",
               jsonPath: "remarks",
             },

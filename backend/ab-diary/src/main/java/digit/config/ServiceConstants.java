@@ -61,7 +61,7 @@ public class ServiceConstants {
     public static final String DIARY_GENERATE_EXCEPTION = "DIARY_GENERATE_EXCEPTION";
     public static final String FILE_STORE_UTILITY_EXCEPTION = "FILE_STORE_UTILITY_EXCEPTION";
     public static final String WORKFLOW_SERVICE_EXCEPTION = "WORKFLOW_SERVICE_EXCEPTION";
-
+    public static final String DIARY_EMPTY_ERROR="No diary entries present for given date: ";
     public static final String ERROR_FROM_CASE = "ERROR_WHILE_FETCHING_FROM_CASE_SERVICE";
 
     public static final String SIGN_ACTION = "SIGN";
@@ -72,6 +72,24 @@ public class ServiceConstants {
 
     public static final String UNSIGNED_DOCUMENT_TYPE = "casediary.unsigned";
 
+    public static final String DIARY_TYPE = "ADiary";
+
     public static final String IST_TIME_ZONE = "Asia/Kolkata";
+
+    public static final String SYSTEM="SYSTEM";
+
+    public static final String INTERNALMICROSERVICEROLE_NAME = "SYSTEM";
+
+    public static final String INTERNALMICROSERVICEROLE_CODE = "SYSTEM";
+
+    public static final String INTERNALMICROSERVICEUSER_NAME = "Internal Microservice User";
+
+    public static final String INTERNALMICROSERVICEUSER_USERNAME = "INTERNAL_SYSTEM_USER";
+
+    public static final String INTERNALMICROSERVICEUSER_MOBILENO = "1234567890";
+
+    public static final String INTERNALMICROSERVICEUSER_TYPE = "SYSTEM";
+
+    public static final String msgId = "1730882648558|en_IN";
 
 }

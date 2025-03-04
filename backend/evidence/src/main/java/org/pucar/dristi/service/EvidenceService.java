@@ -78,7 +78,7 @@ public class EvidenceService {
             } else {
                 producer.push(config.getEvidenceCreateWithoutWorkflowTopic(), body);
             }
-            callNotificationService(body,false);
+            callNotificationService(body,false,true);
             return body.getArtifact();
         } catch (CustomException e) {
             log.error("Custom Exception occurred while creating evidence");
@@ -169,7 +169,7 @@ public class EvidenceService {
             } else {
                 producer.push(config.getUpdateEvidenceWithoutWorkflowKafkaTopic(), evidenceRequest);
             }
-            callNotificationService(evidenceRequest,isEvidence);
+            callNotificationService(evidenceRequest,isEvidence,false);
             return evidenceRequest.getArtifact();
 
         } catch (CustomException e) {
@@ -238,7 +238,7 @@ public class EvidenceService {
         return AuditDetails.builder().createdBy(requestInfo.getUserInfo().getUuid()).createdTime(System.currentTimeMillis()).lastModifiedBy(requestInfo.getUserInfo().getUuid()).lastModifiedTime(System.currentTimeMillis()).build();
     }
 
-    private void callNotificationService(EvidenceRequest evidenceRequest,Boolean isEvidence) {
+    private void callNotificationService(EvidenceRequest evidenceRequest,Boolean isEvidence,Boolean isCreateCall) {
 
         try {
             CaseSearchRequest caseSearchRequest = createCaseSearchRequest(evidenceRequest.getRequestInfo(), evidenceRequest.getArtifact().getFilingNumber());
@@ -246,7 +246,7 @@ public class EvidenceService {
 
             Artifact artifact = evidenceRequest.getArtifact();
 
-            String smsTopic = getSmsTopic(isEvidence, artifact);
+            String smsTopic = getSmsTopic(isEvidence, artifact, isCreateCall);
             log.info("Message Code : {}", smsTopic);
             Set<String> individualIds = extractIndividualIds(caseDetails,null);
 
@@ -257,7 +257,10 @@ public class EvidenceService {
             if (smsTopic != null && smsTopic.equalsIgnoreCase(EVIDENCE_SUBMISSION_CODE)) {
                 String receiverId = evidenceRequest.getRequestInfo().getUserInfo().getUuid();
                 String partyType = getPartyTypeByUUID(caseDetails,receiverId);
-                    String receiverParty = getReceiverParty(partyType);
+                String receiverParty = null;
+                if (partyType != null) {
+                    receiverParty = getReceiverParty(partyType);
+                }
                 filingIndividualIds = extractIndividualIds(caseDetails,receiverParty);
                 oppositeIndividualIds.removeAll(filingIndividualIds);
             }
@@ -271,17 +274,21 @@ public class EvidenceService {
 
                 Set<String> phoneNumbers = callIndividualService(evidenceRequest.getRequestInfo(), individualIds);
                 if (Objects.equals(topic, EVIDENCE_SUBMISSION_MESSAGE_FILING) || Objects.equals(topic, EVIDENCE_SUBMISSION)) {
-                    phoneNumbers = callIndividualService(evidenceRequest.getRequestInfo(),filingIndividualIds);
+                    if (!filingIndividualIds.isEmpty()) {
+                        phoneNumbers = callIndividualService(evidenceRequest.getRequestInfo(), filingIndividualIds);
+                    }
                 }
                 if (Objects.equals(topic, EVIDENCE_SUBMISSION_MESSAGE_OPPOSITE_PARTY)) {
-                    phoneNumbers = callIndividualService(evidenceRequest.getRequestInfo(),oppositeIndividualIds);
+                    if (!oppositeIndividualIds.isEmpty()) {
+                        phoneNumbers = callIndividualService(evidenceRequest.getRequestInfo(), oppositeIndividualIds);
+                    }
                 }
 
                 SmsTemplateData smsTemplateData = SmsTemplateData.builder()
-                        .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").asText() : "")
-                        .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").asText() : "")
+                        .courtCaseNumber(caseDetails.has("courtCaseNumber") ? (caseDetails.get("courtCaseNumber").textValue() != null ? caseDetails.get("courtCaseNumber").textValue() : null) : null)
+                        .cmpNumber(caseDetails.has("cmpNumber") ? (caseDetails.get("cmpNumber").textValue() != null ? caseDetails.get("cmpNumber").textValue() : null) : null)
                         .artifactNumber(artifact.getArtifactNumber())
-                        .cnrNumber(caseDetails.has("cnrNumber") ? caseDetails.get("cnrNumber").asText() : "")
+                        .filingNumber(caseDetails.has("filingNumber") ? caseDetails.get("filingNumber").asText() : "")
                         .tenantId(artifact.getTenantId()).build();
 
 
@@ -296,16 +303,15 @@ public class EvidenceService {
         }
     }
 
-    private String getSmsTopic(Boolean isEvidence, Artifact artifact) {
+    private String getSmsTopic(Boolean isEvidence, Artifact artifact,Boolean isCreateCall) {
         String status = artifact.getStatus();
         String filingType = artifact.getFilingType();
-        Boolean isEvidenceAfterUpdate = artifact.getIsEvidence();
         String smsTopic = null;
         if(artifact.getIsEvidence() && null != artifact.getEvidenceNumber()) {
             smsTopic = "DOCUMENT_MARKED_EXHIBIT";
         }
-        if ((!(status == null) && status.equalsIgnoreCase(SUBMITTED) && filingType.equalsIgnoreCase(DIRECT) && (!isEvidence && !isEvidenceAfterUpdate))
-        || ( (filingType.equalsIgnoreCase(CASE_FILING) || filingType.equalsIgnoreCase(APPLICATION)) && (!isEvidence && !isEvidenceAfterUpdate))) {
+        if ((!(status == null) && status.equalsIgnoreCase(SUBMITTED) && filingType.equalsIgnoreCase(DIRECT) && (!isEvidence && isCreateCall))
+        || ( (filingType.equalsIgnoreCase(CASE_FILING) || filingType.equalsIgnoreCase(APPLICATION)) && (!isEvidence && isCreateCall))) {
             smsTopic = EVIDENCE_SUBMISSION_CODE;
         }
         return smsTopic;

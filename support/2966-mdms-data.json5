@@ -71,5 +71,152 @@
         }
       }
     ]
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "egov-hrms",
+    "masterName": "EmployeeRolesMapping",
+    "mdmsPayload": [
+      {
+        "id": "4ef4222a-8ebb-47f8-af74-fec3d63d7209",
+        "tenantId": "kl",
+        "schemaCode": "egov-hrms.EmployeeRolesMapping",
+        "uniqueIdentifier": "E-Post Personnel",
+        "data": {
+          "roleCodes": [
+            "EMPLOYEE"
+          ],
+          "employeeCode": "E-Post Personnel"
+        },
+        "isActive": true
+      },
+      {
+        "id": "01b1b121-17a2-4276-be53-b86193f26015",
+        "tenantId": "kl",
+        "schemaCode": "egov-hrms.EmployeeRolesMapping",
+        "uniqueIdentifier": "Judge",
+        "data": {
+          "roleCodes": [
+            "CASE_VIEWER",
+            "CASE_EDITOR",
+            "CASE_APPROVER",
+            "HEARING_CREATOR",
+            "HEARING_EDITOR",
+            "HEARING_APPROVER",
+            "HEARING_SCHEDULER",
+            "APPLICATION_CREATOR",
+            "CALCULATION_VIEWER",
+            "HEARING_VIEWER",
+            "ORDER_APPROVER",
+            "ORDER_REASSIGN",
+            "ORDER_ESIGN",
+            "ORDER_CREATOR",
+            "ORDER_VIEWER",
+            "ORDER_DELETE",
+            "WORKFLOW_ADMIN",
+            "WORKFLOW_ABANDON",
+            "APPLICATION_APPROVER",
+            "APPLICATION_REJECTOR",
+            "TASK_VIEWER",
+            "TASK_CREATOR",
+            "EVIDENCE_EDITOR",
+            "DEPOSITION_PUBLISHER",
+            "EVIDENCE_CREATOR",
+            "SUBMISSION_APPROVER",
+            "JUDGE_ROLE",
+            "EMPLOYEE",
+            "TASK_EDITOR",
+            "SUBMISSION_RESPONDER",
+            "DIARY_APPROVER",
+            "DIARY_VIEWER",
+            "DIARY_EDITOR"
+          ],
+          "employeeCode": "Judge"
+        },
+        "isActive": true
+      },
+      {
+        "id": "a5071768-09a5-4cea-b24b-a423081f4b96",
+        "tenantId": "kl",
+        "schemaCode": "egov-hrms.EmployeeRolesMapping",
+        "uniqueIdentifier": "General Court Room Manager",
+        "data": {
+          "roleCodes": [
+            "CASE_REVIEWER",
+            "CASE_VIEWER",
+            "CASE_EDITOR",
+            "EMPLOYEE",
+            "FSO_ROLE",
+            "ORDER_APPROVER",
+            "ORDER_REASSIGN",
+            "ORDER_VIEWER",
+            "HEARING_APPROVER",
+            "HEARING_VIEWER",
+            "GENERAL_COURT_ROOM_MANAGER"
+          ],
+          "employeeCode": "General Court Room Manager"
+        },
+        "isActive": true
+      },
+      {
+        "id": "062602ea-aff7-4298-8ddd-7cd65a183528",
+        "tenantId": "kl",
+        "schemaCode": "egov-hrms.EmployeeRolesMapping",
+        "uniqueIdentifier": "Legal Assistant",
+        "data": {
+          "roleCodes": [
+            "ORDER_VIEWER",
+            "DEPOSITION_PUBLISHER",
+            "SUBMISSION_APPROVER",
+            "SUBMISSION_CREATOR",
+            "APPLICATION_CREATOR",
+            "DIARY_APPROVER",
+            "DIARY_VIEWER",
+            "DIARY_EDITOR",
+            "LEGAL_ASSISTANT"
+          ],
+          "employeeCode": "Legal Assistant"
+        },
+        "isActive": true
+      },
+      {
+        "id": "ae17c777-832e-4020-b2e4-624af1d0c09e",
+        "tenantId": "kl",
+        "schemaCode": "egov-hrms.EmployeeRolesMapping",
+        "uniqueIdentifier": "Court Room Manager",
+        "data": {
+          "roleCodes": [
+            "CASE_EDITOR",
+            "HEARING_VIEWER",
+            "HEARING_CREATOR",
+            "HEARING_EDITOR",
+            "HEARING_APPROVER",
+            "HEARING_SCHEDULER",
+            "ORDER_APPROVER",
+            "ORDER_REASSIGN",
+            "ORDER_CREATOR",
+            "ORDER_VIEWER",
+            "EVIDENCE_CREATOR",
+            "EVIDENCE_EDITOR",
+            "DEPOSITION_PUBLISHER",
+            "EMPLOYEE",
+            "WORKFLOW_ABANDON",
+            "WORKFLOW_ADMIN",
+            "APPLICATION_RESPONDER",
+            "APPLICATION_APPROVER",
+            "APPLICATION_REJECTOR",
+            "TASK_VIEWER",
+            "TASK_CREATOR",
+            "SUBMISSION_APPROVER",
+            "SUBMISSION_CREATOR",
+            "APPLICATION_CREATOR",
+            "SUBMISSION_RESPONDER",
+            "COURT_ROOM_MANAGER"
+          ],
+          "employeeCode": "Court Room Manager"
+        },
+        "isActive": true
+      }
+    ]
   }
 ]

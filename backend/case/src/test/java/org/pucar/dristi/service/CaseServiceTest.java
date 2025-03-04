@@ -598,7 +598,9 @@ public class CaseServiceTest {
         String updatedStatus = "STATUS";
         CourtCase courtCase = new CourtCase(); // Mock case-indexer.yml CourtCase object with required fields
         courtCase.setId(UUID.randomUUID());
-        courtCase.setWorkflow(Workflow.builder().action("action").build());
+        WorkflowObject workflow = new WorkflowObject();
+        workflow.setAction("action");
+        courtCase.setWorkflow(workflow);
         caseRequest.setCases(courtCase);
         courtCase.setStatus(updatedStatus);
         when(validator.validateUpdateRequest(any(CaseRequest.class),any())).thenReturn(true);

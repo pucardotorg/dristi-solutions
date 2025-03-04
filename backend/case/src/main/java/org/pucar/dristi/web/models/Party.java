@@ -57,6 +57,10 @@ public class Party {
 
     private Boolean isActive = true;
 
+    @JsonProperty("isResponseRequired")
+
+    private Boolean isResponseRequired = false;
+
     @JsonProperty("documents")
     @Valid
     private List<Document> documents = null;

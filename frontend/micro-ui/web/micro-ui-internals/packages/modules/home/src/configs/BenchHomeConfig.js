@@ -1,5 +1,5 @@
 const defaultSearchValues = {
-  filingNumber: "",
+  caseSearchText: "",
   caseType: "NIA S138",
   substage: "",
 };

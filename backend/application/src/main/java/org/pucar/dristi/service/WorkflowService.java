@@ -51,7 +51,7 @@ public class WorkflowService {
     public void updateWorkflowStatus(ApplicationRequest applicationRequest) {
         Application application = applicationRequest.getApplication();
         try {
-            ProcessInstance processInstance = getProcessInstance(application, applicationRequest.getRequestInfo());
+            ProcessInstanceObject processInstance = getProcessInstance(application, applicationRequest.getRequestInfo());
             ProcessInstanceRequest workflowRequest = new ProcessInstanceRequest(applicationRequest.getRequestInfo(), Collections.singletonList(processInstance));
             log.info("ProcessInstance Request :: {}", workflowRequest);
             String state = callWorkFlow(workflowRequest).getState();
@@ -80,10 +80,10 @@ public class WorkflowService {
         }
     }
 
-    private ProcessInstance getProcessInstance(Application application, RequestInfo requestInfo) {
+    private ProcessInstanceObject getProcessInstance(Application application, RequestInfo requestInfo) {
         try {
-            Workflow workflow = application.getWorkflow();
-            ProcessInstance processInstance = new ProcessInstance();
+            WorkflowObject workflow = application.getWorkflow();
+            ProcessInstanceObject processInstance = new ProcessInstanceObject();
             processInstance.setBusinessId(application.getApplicationNumber());
             processInstance.setAction(workflow.getAction());
             processInstance.setModuleName("pucar");
@@ -91,6 +91,7 @@ public class WorkflowService {
             processInstance.setBusinessService(getBusinessServiceFromAppplication(application, requestInfo));
             processInstance.setDocuments(workflow.getDocuments());
             processInstance.setComment(workflow.getComments());
+            processInstance.setAdditionalDetails(workflow.getAdditionalDetails());
             if (!CollectionUtils.isEmpty(workflow.getAssignes())) {
                 List<User> users = getUserListFromUserUuid(workflow.getAssignes());
                 processInstance.setAssignes(users);

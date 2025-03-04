@@ -212,6 +212,7 @@ public class IndexerUtilsTest {
                 + "\"assignedRoles\": [\"role\"],"
                 + "\"tenantId\": \"tenantId\","
                 + "\"action\": \"action\","
+                + "\"additionalDetails\" : \"additionalDetails\""
                 + "}";
         JSONObject requestInfo = new JSONObject();
 

@@ -7,10 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.pucar.dristi.web.models.AdvocateMapping;
-import org.pucar.dristi.web.models.CaseRequest;
-import org.pucar.dristi.web.models.CourtCase;
-import org.pucar.dristi.web.models.Party;
+import org.pucar.dristi.web.models.*;
 
 import java.util.Collections;
 import java.util.List;
@@ -27,7 +24,7 @@ public class EnrichWhenCaseSendBackTest {
     private EnrichWhenCaseSendBack enrichWhenCaseSendBack;
     private CaseRequest caseRequest;
     private CourtCase courtCase;
-
+    private WorkflowObject workflow = new WorkflowObject();
     @BeforeEach
     void setUp() {
         enrichWhenCaseSendBack = new EnrichWhenCaseSendBack();
@@ -37,13 +34,15 @@ public class EnrichWhenCaseSendBackTest {
 
     @Test
     void testCanEnrich_True() {
-        courtCase.setWorkflow(Workflow.builder().action(SEND_BACK).build());
+        workflow.setAction(SEND_BACK);
+        courtCase.setWorkflow(workflow);
         assertTrue(enrichWhenCaseSendBack.canEnrich(caseRequest));
     }
 
     @Test
     void testCanEnrich_False() {
-        courtCase.setWorkflow(Workflow.builder().action("OTHER_ACTION").build());
+        workflow.setAction("OTHER_ACTION");
+        courtCase.setWorkflow(workflow);
         assertFalse(enrichWhenCaseSendBack.canEnrich(caseRequest));
     }
 

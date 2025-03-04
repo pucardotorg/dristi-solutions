@@ -73,7 +73,7 @@ public class OrderRegistrationService {
             producer.push(config.getSaveOrderKafkaTopic(), body);
 
             return body.getOrder();
-        } catch (CustomException e) {
+        }catch (CustomException e) {
             log.error("Custom Exception occurred while creating order");
             throw e;
         } catch (Exception e) {
@@ -93,7 +93,7 @@ public class OrderRegistrationService {
             return orderList;
 
         } catch (Exception e) {
-            log.error("Error while fetching to search results :: {}", e.toString());
+            log.error("Error while fetching to search results :: {}",e.toString());
             throw new CustomException(ORDER_SEARCH_EXCEPTION, e.getMessage());
         }
     }
@@ -102,7 +102,7 @@ public class OrderRegistrationService {
 
         try {
             // Validate whether the application that is being requested for update indeed exists
-            if (!validator.validateApplicationExistence(body))
+             if(!validator.validateApplicationExistence(body))
                 throw new CustomException(ORDER_UPDATE_EXCEPTION, "Order don't exist");
 
             // Enrich application upon update
@@ -346,16 +346,16 @@ public class OrderRegistrationService {
         }
     }
 
-    private void workflowUpdate(OrderRequest orderRequest) {
+    private void workflowUpdate(OrderRequest orderRequest){
         Order order = orderRequest.getOrder();
         RequestInfo requestInfo = orderRequest.getRequestInfo();
 
         String tenantId = order.getTenantId();
         String orderNumber = order.getOrderNumber();
-        Workflow workflow = order.getWorkflow();
+        WorkflowObject workflow = order.getWorkflow();
 
         String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, orderNumber, config.getOrderBusinessServiceName(),
-                workflow, config.getOrderBusinessName());
+                    workflow, config.getOrderBusinessName());
         order.setStatus(status);
         if (PUBLISHED.equalsIgnoreCase(status))
             order.setCreatedDate(System.currentTimeMillis());
@@ -366,7 +366,7 @@ public class OrderRegistrationService {
         Set<String> mobileNumber = new HashSet<>();
 
         List<Individual> individuals = individualService.getIndividuals(requestInfo, new ArrayList<>(ids));
-        for (Individual individual : individuals) {
+        for(Individual individual : individuals) {
             if (individual.getMobileNumber() != null) {
                 mobileNumber.add(individual.getMobileNumber());
             }
@@ -374,7 +374,7 @@ public class OrderRegistrationService {
         return mobileNumber;
     }
 
-    public Set<String> extractIndividualIds(JsonNode caseDetails, String receiver) {
+    public  Set<String> extractIndividualIds(JsonNode caseDetails, String receiver) {
         JsonNode litigantNode = caseDetails.get("litigants");
         JsonNode representativeNode = caseDetails.get("representatives");
         String partyTypeToMatch = (receiver != null) ? receiver.toLowerCase() : "";

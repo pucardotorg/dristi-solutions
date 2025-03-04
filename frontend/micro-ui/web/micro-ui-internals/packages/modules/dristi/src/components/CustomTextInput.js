@@ -1,5 +1,6 @@
 import { TextInput } from "@egovernments/digit-ui-react-components";
 import React from "react";
+import { formatAddress } from "../Utils";
 
 function CustomTextInput({ t, config, onSelect, formData = {}, errors, setError, clearErrors }) {
   return (
@@ -7,7 +8,7 @@ function CustomTextInput({ t, config, onSelect, formData = {}, errors, setError,
       {config?.populators?.inputs?.map((input, index) => {
         return (
           <div className="phone-number-verification">
-            <div style={{marginBottom:"3px"}}>{t(input.label)}</div>
+            <div style={{ marginBottom: "3px" }}>{t(input.label)}</div>
             <div style={{ display: "flex", justifyContent: "space-between", position: "relative" }}>
               <div className="field user-details-form-style" style={{ display: "flex", width: "100%" }}>
                 <TextInput
@@ -20,7 +21,10 @@ function CustomTextInput({ t, config, onSelect, formData = {}, errors, setError,
                   disable={input?.disable || config?.disable}
                   isMandatory={errors[input?.name]}
                   onChange={(e) => {
-                    const value = e.target.value;
+                    let value = e.target.value;
+                    if (input?.isFormatRequired) {
+                      value = formatAddress(value);
+                    }
                     onSelect(config?.key, { ...formData?.[config.key], [input?.name]: value });
                   }}
                   textInputStyle={input?.textInputStyle}

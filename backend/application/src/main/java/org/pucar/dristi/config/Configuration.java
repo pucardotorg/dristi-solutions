@@ -233,16 +233,16 @@ public class Configuration {
     @Value("${egov.sms.notification.response.required.template.id}")
     private String smsNotificationResponseRequiredTemplateId;
 
-    @Value("@{egov.sms.notification.bail.application.filed.template.id}")
+    @Value("${egov.sms.notification.bail.application.filed.template.id}")
     private String smsNotificationBailApplicationFiledTemplateId;
 
-    @Value("@{egov.sms.notification.bail.application.rejected.template.id}")
+    @Value("${egov.sms.notification.bail.application.rejected.template.id}")
     private String smsNotificationBailApplicationRejectedTemplateId;
 
-    @Value("@{egov.sms.notification.bail.application.accepted.template.id}")
+    @Value("${egov.sms.notification.bail.application.accepted.template.id}")
     private String smsNotificationBailApplicationAcceptedTemplateId;
 
-    @Value("@{egov.sms.notification.bail.application.granted.template.id}")
+    @Value("${egov.sms.notification.bail.application.granted.template.id}")
     private String smsNotificationBailApplicationGrantedTemplateId;
 
     @Value("${egov.workflow.bail.voluntary.submission.business.service.name}")

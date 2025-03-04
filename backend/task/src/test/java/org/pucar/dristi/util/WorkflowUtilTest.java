@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.ServiceRequestRepository;
+import org.pucar.dristi.web.models.WorkflowObject;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -44,14 +45,14 @@ public class WorkflowUtilTest {
     private RequestInfo requestInfo;
     private String tenantId;
     private String businessServiceCode;
-    private Workflow workflow;
+    private WorkflowObject workflow = new WorkflowObject();
 
     @BeforeEach
     public void setUp() {
         requestInfo = new RequestInfo();
         tenantId = "tenantId";
         businessServiceCode = "businessServiceCode";
-        workflow = Workflow.builder().action("APPROVE").build();
+        workflow.setAction("APPROVE");
     }
 
     @Test

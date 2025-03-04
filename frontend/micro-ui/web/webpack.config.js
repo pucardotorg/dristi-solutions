@@ -7,7 +7,7 @@ module.exports = {
   // mode: 'development',
   entry: {
     main: "./src/index.js",
-//    telemetry: "./public/scripts/telemetry/index.js",
+    //    telemetry: "./public/scripts/telemetry/index.js",
   },
   devtool: "cheap-module-source-map",
   module: {
@@ -18,14 +18,11 @@ module.exports = {
         use: {
           loader: "babel-loader",
           options: {
-            presets: [
-              "@babel/preset-env",  
-              "@babel/preset-react" 
-            ],
+            presets: ["@babel/preset-env", "@babel/preset-react"],
             plugins: [
-              "@babel/plugin-proposal-optional-chaining",  
-              "@babel/plugin-proposal-nullish-coalescing-operator" 
-            ]
+              "@babel/plugin-proposal-optional-chaining",
+              "@babel/plugin-proposal-nullish-coalescing-operator",
+            ],
           },
         },
       },
@@ -36,7 +33,7 @@ module.exports = {
     ],
   },
   output: {
-    filename: "[name].bundle.js",
+    filename: "[name]-[contenthash].bundle.js",
     path: path.resolve(__dirname, "build"),
     publicPath: "/digit-ui/",
   },
@@ -57,4 +54,3 @@ module.exports = {
     new HtmlWebpackPlugin({ inject: true, template: "public/index.html" }),
   ],
 };
-

@@ -157,7 +157,7 @@ public class PaymentUpdateService {
             log.info("Updating pending payment status for task: {}", task);
             switch (task.getTaskType()) {
                 case SUMMON -> {
-                    Workflow workflow = new Workflow();
+                    WorkflowObject workflow = new WorkflowObject();
                     workflow.setAction(MAKE_PAYMENT);
                     task.setWorkflow(workflow);
                     String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, task.getTaskNumber(),
@@ -168,7 +168,7 @@ public class PaymentUpdateService {
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
                 }
                 case NOTICE -> {
-                    Workflow workflow = new Workflow();
+                    WorkflowObject workflow = new WorkflowObject();
                     workflow.setAction(MAKE_PAYMENT);
                     task.setWorkflow(workflow);
                     String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, task.getTaskNumber(),
@@ -179,7 +179,7 @@ public class PaymentUpdateService {
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
                 }
                 case WARRANT -> {
-                    Workflow workflow = new Workflow();
+                    WorkflowObject workflow = new WorkflowObject();
                     workflow.setAction(MAKE_PAYMENT);
                     task.setWorkflow(workflow);
                     String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, task.getTaskNumber(),
@@ -190,7 +190,7 @@ public class PaymentUpdateService {
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
                 }
                 case JOIN_CASE_TASK -> {
-                    Workflow workflow = new Workflow();
+                    WorkflowObject workflow = new WorkflowObject();
                     workflow.setAction("CLOSE");
                     task.setWorkflow(workflow);
 

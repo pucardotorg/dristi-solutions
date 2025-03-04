@@ -47,7 +47,7 @@ public class CaseQueryBuilder {
     private static final String FROM_LINKED_CASE_TABLE = " FROM dristi_linked_case lics";
 
 
-    private static final String BASE_LITIGANT_QUERY = " SELECT ltg.id as id, ltg.tenantid as tenantid, ltg.partycategory as partycategory, ltg.case_id as case_id, " +
+    private static final String BASE_LITIGANT_QUERY = " SELECT ltg.id as id, ltg.tenantid as tenantid, ltg.partycategory as partycategory, ltg.case_id as case_id, ltg.isresponserequired as isresponserequired, " +
             "ltg.individualid as individualid, " +
             " ltg.organisationid as organisationid, ltg.partytype as partytype, ltg.isactive as isactive, ltg.additionaldetails as additionaldetails, ltg.createdby as createdby," +
             " ltg.lastmodifiedby as lastmodifiedby, ltg.createdtime as createdtime, ltg.lastmodifiedtime as lastmodifiedtime , ltg.hassigned as hassigned ";
@@ -457,6 +457,10 @@ public class CaseQueryBuilder {
         return query.replace("{orderBy}", pagination.getSortBy()).replace("{sortingOrder}", pagination.getOrder().name());
     }
 
+    public String addOrderByQueryForLitigants(String query) {
+        return query +  " ORDER BY COALESCE((ltg.additionaldetails->>'currentPosition')::int, 999999);";
+    }
+
     private boolean isEmptyPagination(Pagination pagination) {
         return pagination == null || pagination.getSortBy()==null || pagination.getOrder() == null;
     }
@@ -464,8 +468,8 @@ public class CaseQueryBuilder {
     private boolean addCaseSearchTextCriteria(CaseCriteria criteria, StringBuilder query, boolean firstCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         if (criteria.getCaseSearchText() != null && !criteria.getCaseSearchText().isEmpty()) {
             addClauseIfRequired(query, firstCriteria);
-            query.append(" (LOWER(cases.courtcasenumber) LIKE LOWER(?) OR LOWER(cases.filingnumber) LIKE LOWER(?) OR LOWER(cases.cmpnumber) LIKE LOWER(?))");
-            for (int i = 0; i < 3; i++) {
+            query.append(" (LOWER(cases.courtcasenumber) LIKE LOWER(?) OR LOWER(cases.filingnumber) LIKE LOWER(?) OR LOWER(cases.cmpnumber) LIKE LOWER(?) or LOWER(cases.casetitle) LIKE LOWER(?))");
+            for (int i = 0; i < 4; i++) {
                 preparedStmtList.add("%" + criteria.getCaseSearchText() + "%");
                 preparedStmtArgList.add(Types.VARCHAR);
             }

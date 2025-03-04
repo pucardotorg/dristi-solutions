@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { CustomArrowDownIcon, CustomArrowUpIcon } from "../icons/svgIndex";
 
-function ErrorsAccordion({ handlePageChange, pages, t, showConfirmModal, totalErrorCount, handleGoToPage, selected }) {
+function ErrorsAccordion({ handlePageChange, pages, t, showConfirmModal, totalErrorCount, totalWarningCount, handleGoToPage, selected }) {
   const [isOpen, setIsOpen] = useState(false);
   const handleAccordionClick = () => {
     // disabling accordion Functionality as per the requirements
@@ -30,7 +30,7 @@ function ErrorsAccordion({ handlePageChange, pages, t, showConfirmModal, totalEr
   return (
     <div key={"ErrorAccordion"} className="accordion-wrapper">
       <div className={`accordion-title ${isOpen ? "open" : ""} total-error-count`} style={{ cursor: "default" }} onClick={handleAccordionClick}>
-        <span style={{ color: "#BB2C2F" }}>{`${totalErrorCount} ${t("CS_ERRORS_MARKED")}`}</span>
+        <span style={{ color: "#BB2C2F" }}>{`${totalErrorCount - totalWarningCount} ${t("CS_ERRORS_MARKED")}`}</span>
         <div className="icon">
           <span className="reverse-arrow" style={{ cursor: "pointer" }} onClick={hangelGoToNext}>
             <CustomArrowDownIcon />

@@ -3,6 +3,7 @@ import React from "react";
 import OverlayDropdown from "../components/HearingOverlayDropdown";
 import { hearingService } from "../hooks/services";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
+import { formatNoticeDeliveryDate } from "@egovernments/digit-ui-module-home/src/utils";
 
 function normalizeData(input) {
   try {
@@ -293,6 +294,7 @@ export const UICustomizations = {
                   channelDetails: typeof channelDetails === "object" ? generateAddress({ ...channelDetails }) : channelDetails,
                   status: data?.status,
                   remarks: taskDetail?.remarks?.remark,
+                  statusChangeDate: taskDetail?.deliveryChannels?.statusChangeDate,
                 };
               });
             return { list: taskData };
@@ -316,6 +318,8 @@ export const UICustomizations = {
       switch (key) {
         case "Status":
           return t(value);
+        case "DELIEVRY_DATE":
+          return formatNoticeDeliveryDate(value) || "N/A";
         default:
           return t("ES_COMMON_NA");
       }

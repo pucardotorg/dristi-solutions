@@ -49,7 +49,6 @@ public class ReScheduleHearingService {
     private final ReScheduleRequestValidator validator;
     private final AdvocateUtil advocateUtil;
 
-
     @Autowired
     public ReScheduleHearingService(Configuration config, ReScheduleRequestRepository repository, ReScheduleRequestValidator validator, ReScheduleRequestEnrichment enrichment, Producer producer, HearingService hearingService, CalendarService calendarService, ServiceConstants serviceConstants, MasterDataUtil helper, CaseUtil caseUtil, HearingUtil hearingUtil, ServiceConstants constants, DateUtil dateUtil, AdvocateUtil advocateUtil) {
 

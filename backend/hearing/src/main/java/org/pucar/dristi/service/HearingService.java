@@ -316,7 +316,7 @@ public class HearingService {
         return null;
     }
 
-    public Set<String> extractIndividualIds(JsonNode caseDetails) {
+    public  Set<String> extractIndividualIds(JsonNode caseDetails) {
         JsonNode litigantNode = caseDetails.get("litigants");
         JsonNode representativeNode = caseDetails.get("representatives");
         Set<String> uuids = new HashSet<>();
@@ -324,7 +324,7 @@ public class HearingService {
         if (litigantNode.isArray()) {
             for (JsonNode node : litigantNode) {
                 String uuid = node.path("additionalDetails").get("uuid").asText();
-                if (!uuid.isEmpty()) {
+                if (!uuid.isEmpty() ) {
                     uuids.add(uuid);
                 }
             }
@@ -334,7 +334,7 @@ public class HearingService {
                 JsonNode representingNode = advocateNode.get("representing");
                 if (representingNode.isArray()) {
                     String uuid = advocateNode.path("additionalDetails").get("uuid").asText();
-                    if (!uuid.isEmpty()) {
+                    if (!uuid.isEmpty() ) {
                         uuids.add(uuid);
                     }
                 }
@@ -347,7 +347,7 @@ public class HearingService {
 
         Set<String> mobileNumber = new HashSet<>();
         List<Individual> individuals = individualService.getIndividuals(requestInfo, new ArrayList<>(ids));
-        for (Individual individual : individuals) {
+        for(Individual individual : individuals) {
             if (individual.getMobileNumber() != null) {
                 mobileNumber.add(individual.getMobileNumber());
             }

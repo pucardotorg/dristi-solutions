@@ -150,8 +150,10 @@ async function orderSection202crpc(req, res, qrCode, order, compositeOrder) {
     const year = currentDate.getFullYear();
     const additionalComments = order?.comments || "";
     // Prepare data for PDF generation
-    const complainantName = order?.additionalDetails?.formdata?.applicationFilledBy?.name || "";
-    const respondentName = order?.additionalDetails?.formdata?.detailsSeekedOf?.name || "";
+    const complainantName =
+      order?.additionalDetails?.formdata?.applicationFilledBy?.name || "";
+    const respondentName =
+      order?.additionalDetails?.formdata?.detailsSeekedOf?.name || "";
     const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
     const data = {
       Data: [

@@ -174,16 +174,17 @@ public class CaseOverallStatusUtil {
 			representativeIds = advocateUtil.getAdvocate(requestInfo,representativeIds.stream().toList());
 		}
 		individualIds.addAll(representativeIds);
-		org.pucar.dristi.web.models.SmsTemplateData smsTemplateData = enrichSmsTemplateData(filingNumber);
+		org.pucar.dristi.web.models.SmsTemplateData smsTemplateData = enrichSmsTemplateData(filingNumber,requestInfo);
 		List<String> phoneNumbers = callIndividualService(requestInfo, new ArrayList<>(individualIds));
 		for (String number : phoneNumbers) {
 			notificationService.sendNotification(requestInfo, smsTemplateData, CASE_STATUS_CHANGED_MESSAGE, number);
 		}
 	}
 
-	private SmsTemplateData enrichSmsTemplateData(String filingNumber) {
+	private SmsTemplateData enrichSmsTemplateData(String filingNumber,RequestInfo requestInfo) {
 		return SmsTemplateData.builder()
 				.efilingNumber(filingNumber)
+				.tenantId(requestInfo.getUserInfo().getTenantId())
 				.build();
 	}
 

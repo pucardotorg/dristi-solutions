@@ -38,7 +38,7 @@ public class WorkflowService {
 
     public void updateWorkflowStatus(EvidenceRequest evidenceRequest, String filingType) {
             try {
-                ProcessInstance processInstance = getProcessInstanceForArtifact(evidenceRequest.getArtifact(), filingType);
+                ProcessInstanceObject processInstance = getProcessInstanceForArtifact(evidenceRequest.getArtifact(), filingType);
                 ProcessInstanceRequest workflowRequest = new ProcessInstanceRequest(evidenceRequest.getRequestInfo(), Collections.singletonList(processInstance));
                 String state=callWorkFlow(workflowRequest).getState();
                 evidenceRequest.getArtifact().setStatus(state);
@@ -62,10 +62,10 @@ public class WorkflowService {
             throw new CustomException(WORKFLOW_SERVICE_EXCEPTION,e.toString());
         }
     }
-    ProcessInstance getProcessInstanceForArtifact(Artifact artifact, String filingType) {
+    ProcessInstanceObject getProcessInstanceForArtifact(Artifact artifact, String filingType) {
         try {
-            Workflow workflow = artifact.getWorkflow();
-            ProcessInstance processInstance = new ProcessInstance();
+            WorkflowObject workflow = artifact.getWorkflow();
+            ProcessInstanceObject processInstance = new ProcessInstanceObject();
             processInstance.setBusinessId(artifact.getArtifactNumber());
             processInstance.setAction(workflow.getAction());
             processInstance.setModuleName(getBusinessModule(filingType));
@@ -73,6 +73,7 @@ public class WorkflowService {
             processInstance.setBusinessService(getBusinessServiceName(filingType));
             processInstance.setDocuments(workflow.getDocuments());
             processInstance.setComment(workflow.getComments());
+            processInstance.setAdditionalDetails(workflow.getAdditionalDetails());
             if (!CollectionUtils.isEmpty(workflow.getAssignes())) {
                 List<User> users = new ArrayList<>();
                 workflow.getAssignes().forEach(uuid -> {
