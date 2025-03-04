@@ -873,7 +873,7 @@ const EvidenceModal = ({
                 {
                   order: {
                     ...compositeOrderObj,
-                    applicationNumber: [...compositeOrderObj?.applicationNumber, refApplicationId],
+                    applicationNumber: [...(compositeOrderObj?.applicationNumber || []), refApplicationId],
                   },
                 },
                 { tenantId }
@@ -1021,7 +1021,7 @@ const EvidenceModal = ({
                     compositeItems: null,
                     orderTitle: compositeOrderObj?.compositeItems?.[0]?.orderType,
                     orderType: compositeOrderObj?.compositeItems?.[0]?.orderType,
-                    applicationNumber: [...compositeOrderObj?.applicationNumber, refApplicationId],
+                    applicationNumber: [...(compositeOrderObj?.applicationNumber || []), refApplicationId],
                     status: "",
                     isActive: true,
                     workflow: {

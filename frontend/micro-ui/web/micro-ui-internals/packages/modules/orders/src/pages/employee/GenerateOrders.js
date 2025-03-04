@@ -1925,6 +1925,9 @@ const GenerateOrders = () => {
           ...orderSchema,
           orderDetails: { ...orderSchema?.orderDetails, parties: parties },
           additionalDetails: item?.orderSchema?.additionalDetails,
+          ...(orderSchema?.orderDetails?.refApplicationId && {
+            applicationNumber: [orderSchema.orderDetails.refApplicationId],
+          }),
         };
         compositeItems.push({
           ...(item?.id ? { id: item.id } : {}),
