@@ -664,6 +664,7 @@ export const UICustomizations = {
         case "FILE":
           return showDocument ? <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} /> : "";
         case "DATE_ADDED":
+        case "DATE_ISSUED":
         case "DATE":
           const date = new Date(value);
           const day = date.getDate().toString().padStart(2, "0");
