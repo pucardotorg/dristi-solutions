@@ -58,6 +58,9 @@ public class SmsNotificationService {
         if(messageCode.equalsIgnoreCase(HEARING_ADJOURNED)){
             pushNotification(templateData, message, mobileNumber, config.getSmsNotificationHearingAdjournedTemplateId());
         }
+        if (messageCode.equalsIgnoreCase(VARIABLE_HEARING_SCHEDULED)) {
+            pushNotification(templateData,message,mobileNumber,config.getSmsNotificationVariableHearingScheduled());
+        }
     }
 
     private void pushNotification(SmsTemplateData templateData, String message, String mobileNumber, String templateId) {
@@ -89,6 +92,7 @@ public class SmsNotificationService {
         smsDetails.put("hearingDate", smsTemplateData.getHearingDate());
         smsDetails.put("tenantId", smsTemplateData.getTenantId());
         smsDetails.put("mobileNumber", mobileNumber);
+        smsDetails.put("hearingType",smsTemplateData.getHearingType());
 
         return smsDetails;
     }
@@ -124,7 +128,8 @@ public class SmsNotificationService {
         message = message.replace("{{cnr}}", Optional.ofNullable(userDetailsForSMS.get("courtCaseNumber")).orElse(""))
                 .replace("{{link}}", Optional.ofNullable(userDetailsForSMS.get("link")).orElse(""))
                 .replace("{{cmpNumber}}", Optional.ofNullable(userDetailsForSMS.get("cmpNumber")).orElse(""))
-                .replace("{{hearingDate}}", Optional.ofNullable(userDetailsForSMS.get("hearingDate")).orElse(""));
+                .replace("{{hearingDate}}", Optional.ofNullable(userDetailsForSMS.get("hearingDate")).orElse(""))
+                .replace("{{hearingType}}",Optional.ofNullable(userDetailsForSMS.get("hearingType")).orElse(""));
         return message;
     }
 

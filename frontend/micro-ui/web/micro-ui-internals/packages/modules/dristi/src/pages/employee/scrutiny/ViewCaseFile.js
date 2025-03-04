@@ -112,9 +112,11 @@ function ViewCaseFile({ t, inViewCase = false }) {
         }
         section[key]?.form?.forEach((item) => {
           Object.keys(item)?.forEach((field) => {
-            if (item[field]?.FSOError && field != "image" && field != "title") {
-              total++;
-              inputErrors++;
+            if (item[field]?.FSOError && field != "image" && field != "title" && field != "witnessTitle") {
+              if (!item[field]?.isWarning) {
+                total++;
+                inputErrors++;
+              }
             }
           });
         });
@@ -324,15 +326,9 @@ function ViewCaseFile({ t, inViewCase = false }) {
       additionalDetails: { ...caseDetails.additionalDetails, scrutiny: scrutinyObj },
       caseTitle: newCaseName !== "" ? newCaseName : caseDetails?.caseTitle,
     };
-    const complainantUuid = caseDetails?.litigants?.[0]?.additionalDetails?.uuid;
-    const advocateUuid = caseDetails?.representatives?.[0]?.additionalDetails?.uuid;
+    const caseCreatedByUuid = caseDetails?.auditDetails?.createdBy;
     let assignees = [];
-    if (complainantUuid) {
-      assignees.push(complainantUuid);
-    }
-    if (advocateUuid) {
-      assignees.push(advocateUuid);
-    }
+    assignees.push(caseCreatedByUuid);
 
     return DRISTIService.caseUpdateService(
       {

@@ -23,6 +23,7 @@ import org.pucar.dristi.service.WorkflowService;
 import org.pucar.dristi.web.models.Artifact;
 import org.pucar.dristi.web.models.EvidenceRequest;
 import org.pucar.dristi.web.models.RequestInfoWrapper;
+import org.pucar.dristi.web.models.WorkflowObject;
 import org.springframework.web.client.RestClientException;
 
 import java.util.Arrays;
@@ -50,6 +51,13 @@ public class WorkflowServiceTest {
     @Mock
     private ObjectMapper mapper;
 
+    private WorkflowObject workflow = new WorkflowObject();
+
+    @BeforeEach
+    void setUp(){
+        workflow.setAction("APPROVE");
+    }
+
     @Test
     void updateWorkflowStatus_Exceptions() {
         // Mock EvidenceRequest
@@ -58,7 +66,7 @@ public class WorkflowServiceTest {
         Artifact artifact = new Artifact();
         artifact.setArtifactNumber("ART001");
         artifact.setTenantId("tenant1");
-        artifact.setWorkflow(Workflow.builder().action("APPROVE").build());
+        artifact.setWorkflow(workflow);
         evidenceRequest.setArtifact(artifact);
 
         when(config.getWfHost()).thenReturn("http://localhost:8080");
@@ -206,7 +214,6 @@ public class WorkflowServiceTest {
         Artifact artifact = new Artifact();
         artifact.setArtifactNumber("ART001");
         artifact.setTenantId("tenant1");
-        Workflow workflow = new Workflow();
         workflow.setAction("create");
         artifact.setWorkflow(workflow);
         evidenceRequest.setArtifact(artifact);
@@ -227,7 +234,6 @@ public class WorkflowServiceTest {
         Artifact artifact = new Artifact();
         artifact.setArtifactNumber("ART001");
         artifact.setTenantId("tenant1");
-        Workflow workflow = new Workflow();
         workflow.setAction("create");
         List<String> assignees = Arrays.asList("assignee1", "assignee2");
         workflow.setAssignes(assignees);
@@ -254,7 +260,7 @@ public class WorkflowServiceTest {
     public void testGetProcessInstanceForArtifact_CustomException() {
         // Mock Artifact and Workflow
         Artifact artifact = mock(Artifact.class);
-        Workflow workflow = mock(Workflow.class);
+        WorkflowObject workflow = mock(WorkflowObject.class);
         when(artifact.getWorkflow()).thenReturn(workflow);
         when(workflow.getAction()).thenThrow(new CustomException("CUSTOM_ERROR", "Custom exception occurred"));
 
@@ -271,7 +277,7 @@ public class WorkflowServiceTest {
     public void testGetProcessInstanceForArtifact_GeneralException() {
         // Mock Artifact and Workflow
         Artifact artifact = mock(Artifact.class);
-        Workflow workflow = mock(Workflow.class);
+        WorkflowObject workflow = mock(WorkflowObject.class);
         when(artifact.getWorkflow()).thenReturn(workflow);
         when(workflow.getAction()).thenThrow(new RuntimeException("General exception occurred"));
 

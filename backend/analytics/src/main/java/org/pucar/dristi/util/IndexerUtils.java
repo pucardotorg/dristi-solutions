@@ -1,5 +1,6 @@
 package org.pucar.dristi.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
@@ -169,6 +170,7 @@ public class IndexerUtils {
         String cnrNumber = pendingTask.getCnrNumber();
         String filingNumber = pendingTask.getFilingNumber();
         String additionalDetails = "{}";
+        String screenType = pendingTask.getScreenType();
         try {
             additionalDetails = mapper.writeValueAsString(pendingTask.getAdditionalDetails());
         } catch (Exception e) {
@@ -179,11 +181,11 @@ public class IndexerUtils {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status, assignedTo, assignedRole, cnrNumber, filingNumber, isCompleted, stateSla, businessServiceSla, additionalDetails
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status, assignedTo, assignedRole, cnrNumber, filingNumber, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType
         );
     }
 
-    public String buildPayload(String jsonItem, JSONObject requestInfo) {
+    public String buildPayload(String jsonItem, JSONObject requestInfo) throws JsonProcessingException {
 
         String id = JsonPath.read(jsonItem, ID_PATH);
         String entityType = JsonPath.read(jsonItem, BUSINESS_SERVICE_PATH);
@@ -213,6 +215,7 @@ public class IndexerUtils {
         // Validate details map using the utility function
         String cnrNumber = details.get("cnrNumber");
         String filingNumber = details.get("filingNumber");
+        String screenType = details.get("screenType");
         String name = details.get("name");
         isCompleted = isNullOrEmpty(name);
         isGeneric = details.containsKey("isGeneric");
@@ -241,7 +244,7 @@ public class IndexerUtils {
                     representativeIds = advocateUtil.getAdvocate(request,representativeIds.stream().toList());
                 }
                 individualIds.addAll(representativeIds);
-                org.pucar.dristi.web.models.SmsTemplateData smsTemplateData = enrichSmsTemplateData(details);
+                org.pucar.dristi.web.models.SmsTemplateData smsTemplateData = enrichSmsTemplateData(details,tenantId);
                 List<String> phonenumbers = callIndividualService(request, new ArrayList<>(individualIds));
                 for (String number : phonenumbers) {
                     notificationService.sendNotification(request, smsTemplateData, PENDING_TASK_CREATED, number);
@@ -253,7 +256,7 @@ public class IndexerUtils {
         }
 
         try {
-            additionalDetails = mapper.writeValueAsString(new HashMap<String, Object>());
+            additionalDetails = mapper.writeValueAsString(JsonPath.read(jsonItem, "additionalDetails"));
         } catch (Exception e) {
             log.error("Error while building listener payload");
             throw new CustomException(Pending_Task_Exception, "Error occurred while preparing pending task: " + e);
@@ -261,13 +264,12 @@ public class IndexerUtils {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status, assignedTo, assignedRole, cnrNumber, filingNumber, isCompleted, stateSla, businessServiceSla, additionalDetails
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status, assignedTo, assignedRole, cnrNumber, filingNumber, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType
         );
     }
 
 	public static List<String> extractIndividualIds(JsonNode rootNode) {
 		List<String> individualIds = new ArrayList<>();
-
 
 		JsonNode complainantDetailsNode = rootNode.path("complainantDetails")
 				.path("formdata");
@@ -317,9 +319,10 @@ public class IndexerUtils {
 		return mobileNumber;
 	}
 
-	private SmsTemplateData enrichSmsTemplateData(Map<String, String> details) {
+	private SmsTemplateData enrichSmsTemplateData(Map<String, String> details,String tenantId) {
 		return SmsTemplateData.builder()
-				.cmpNumber(details.get("cmpNumber")).build();
+				.cmpNumber(details.get("cmpNumber"))
+                .tenantId(tenantId).build();
 	}
 
 	public CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, String filingNumber) {
@@ -383,6 +386,8 @@ public class IndexerUtils {
                 return processOrderEntity(object);
             else if (config.getTaskBusinessServiceList().contains(entityType))
                 return processTaskEntity(request, referenceId);
+            else if (config.getADiaryBusinessServiceList().contains(entityType))
+                return processADiaryEntity(request, referenceId);
             else {
                 log.error("Unexpected entityType: {}", entityType);
                 return new HashMap<>();
@@ -418,6 +423,7 @@ public class IndexerUtils {
 
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", filingNumber);
+        caseDetails.put("screenType", HOME);
         return caseDetails;
     }
 
@@ -431,6 +437,7 @@ public class IndexerUtils {
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", referenceId);
         caseDetails.put("cmpNumber", cmpNumber);
+        caseDetails.put("screenType", HOME);
 
         return caseDetails;
     }
@@ -445,6 +452,7 @@ public class IndexerUtils {
 
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", filingNumber);
+        caseDetails.put("screenType", HOME);
 
         return caseDetails;
     }
@@ -458,6 +466,16 @@ public class IndexerUtils {
 
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", filingNumber);
+        caseDetails.put("screenType", HOME);
+
+        return caseDetails;
+    }
+
+    private Map<String, String> processADiaryEntity(JSONObject request, String referenceId) throws InterruptedException {
+        Map<String, String> caseDetails = new HashMap<>();
+        caseDetails.put("cnrNumber", null);
+        caseDetails.put("filingNumber", null);
+        caseDetails.put("screenType", ADIARY);
 
         return caseDetails;
     }
@@ -471,6 +489,7 @@ public class IndexerUtils {
 
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", filingNumber);
+        caseDetails.put("screenType", HOME);
 
         return caseDetails;
     }
@@ -481,6 +500,8 @@ public class IndexerUtils {
         String filingNumber = JsonPath.read(orderObject.toString(), FILING_NUMBER_PATH);
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", filingNumber);
+        caseDetails.put("screenType", HOME);
+
         return caseDetails;
     }
 

@@ -28,6 +28,7 @@ function CustomReviewCard({
       {config.map((item, i) => {
         const dataError = Array.isArray(item.value) ? dataErrors : dataErrors?.[item.value]?.FSOError;
         const prevDataError = Array.isArray(item.value) ? prevDataErrors : prevDataErrors?.[item.value]?.FSOError;
+        const isWarning = Array.isArray(item.value) ? dataErrors : dataErrors?.[item.value]?.isWarning;
         return (
           <CustomReviewCardRow
             config={item}
@@ -49,6 +50,7 @@ function CustomReviewCard({
             setShowImageModal={setShowImageModal}
             isCaseReAssigned={isCaseReAssigned}
             disableScrutiny={input?.disableScrutiny}
+            isWarning={isWarning}
           />
         );
       })}

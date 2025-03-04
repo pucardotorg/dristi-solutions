@@ -160,6 +160,10 @@ public class Configuration {
 	private String orderBusinessServices;
 	private List<String> orderBusinessServiceList;
 
+	@Value("${egov.adiary.business.services}")
+	private String aDiaryBusinessServices;
+	private List<String> aDiaryBusinessServiceList;
+
 	//Localization
 	@Value("${egov.localization.host}")
 	private String localizationHost;
@@ -184,12 +188,24 @@ public class Configuration {
 	@Value("${egov.sms.notification.pending.task.created.template.id}")
 	private String smsNotificationPendingTaskCreatedTemplateId;
 
+	@Value("${egov.sms.notification.case.status.changed.template.id}")
+	private String smsNotificationCaseStatusChangeTemplateId;
+
 	// Advocate Config
 	@Value("${egov.advocate.host}")
 	private String advocateHost;
 
 	@Value("${egov.advocate.path}")
 	private String advocatePath;
+
+	//Elasticsearch config
+
+	@Value("${elastic.pending.task.endpoint}")
+	private String pendingTaskIndexEndpoint;
+
+	@Value("${elastic.pending.task.search}")
+	private String pendingTaskSearchPath;
+
 
 	@PostConstruct
 	public void init() {
@@ -199,6 +215,7 @@ public class Configuration {
 		taskBusinessServiceList = Arrays.asList(taskBusinessServices.split(","));
 		applicationBusinessServiceList = Arrays.asList(applicationBusinessServices.split(","));
 		orderBusinessServiceList = Arrays.asList(orderBusinessServices.split(","));
+		aDiaryBusinessServiceList = Arrays.asList(aDiaryBusinessServices.split(","));
 	}
 
 

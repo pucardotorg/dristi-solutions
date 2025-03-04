@@ -12,24 +12,20 @@ import digit.util.*;
 import digit.web.models.*;
 import digit.web.models.cases.CaseCriteria;
 import digit.web.models.cases.SearchCaseRequest;
-import digit.web.models.hearing.Hearing;
-import digit.web.models.hearing.HearingListSearchRequest;
-import digit.web.models.hearing.HearingSearchCriteria;
-import digit.web.models.hearing.HearingUpdateBulkRequest;
+import digit.web.models.hearing.*;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.models.Document;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
+import org.egov.common.models.individual.Individual;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -71,12 +67,16 @@ public class CauseListService {
 
     private UserService userService;
 
+    private IndividualService individualService;
+
+    private SmsNotificationService notificationService;
+
     @Autowired
     public CauseListService(HearingRepository hearingRepository, CauseListRepository causeListRepository,
                             Producer producer, Configuration config, PdfServiceUtil pdfServiceUtil,
                             MdmsUtil mdmsUtil, ServiceConstants serviceConstants, HearingUtil hearingUtil,
                             CaseUtil caseUtil, DateUtil dateUtil, ObjectMapper objectMapper, ApplicationUtil applicationUtil,
-                            FileStoreUtil fileStoreUtil, UserService userService) {
+                            FileStoreUtil fileStoreUtil, UserService userService, IndividualService individualService, SmsNotificationService notificationService) {
         this.hearingRepository = hearingRepository;
         this.causeListRepository = causeListRepository;
         this.producer = producer;
@@ -91,6 +91,8 @@ public class CauseListService {
         this.applicationUtil = applicationUtil;
         this.fileStoreUtil = fileStoreUtil;
         this.userService = userService;
+        this.individualService = individualService;
+        this.notificationService = notificationService;
     }
 
     public void updateCauseListForTomorrow() {
@@ -192,6 +194,11 @@ public class CauseListService {
             CauseListPdfRequest causeListPdfRequest = CauseListPdfRequest.builder().requestInfo(requestInfo).causeListPdf(causeListPdf).build();
 
             producer.push(config.getCauseListPdfTopic(), causeListPdfRequest);
+            for (Hearing hearing : hearingList) {
+                if (!hearing.getFilingNumber().isEmpty()) {
+                    callNotificationService(hearing.getFilingNumber().get(0),requestInfo,hearingDate);
+                }
+            }
             causeLists.addAll(causeList);
             log.info("operation = generateCauseListForJudge, result = SUCCESS, judgeId = {}", courtId);
         } catch (Exception e) {
@@ -658,4 +665,80 @@ public class CauseListService {
         userInfo.setTenantId(config.getEgovStateTenantId());
         return RequestInfo.builder().userInfo(userInfo).msgId(msgId).build();
     }
+
+    private void callNotificationService(String filingNumber,RequestInfo requestInfo,String hearingDate) {
+
+        try {
+            CaseCriteria criteria = CaseCriteria.builder().filingNumber(filingNumber).build();
+            SearchCaseRequest searchCaseRequest = SearchCaseRequest.builder()
+                    .RequestInfo(createInternalRequestInfo())
+                    .tenantId(config.getEgovStateTenantId())
+                    .criteria(Collections.singletonList(criteria))
+                    .flow(FLOW_JAC)
+                    .build();
+
+            JsonNode caseDetails = caseUtil.getCases(searchCaseRequest).get(0);
+
+            String messageCode = CAUSE_LIST_HEARING_MESSAGE;
+
+            log.info("Message code: {}", messageCode);
+
+            Set<String> individualIds = extractIndividualIds(caseDetails);
+            Set<String> phoneNumbers = callIndividualService(requestInfo, individualIds);
+
+            SmsTemplateData smsTemplateData = SmsTemplateData.builder()
+                    .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").textValue() : "")
+                    .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").textValue() : "")
+                    .hearingDate(hearingDate)
+                    .tenantId(requestInfo.getUserInfo().getTenantId()).build();
+
+            for (String number : phoneNumbers) {
+                notificationService.sendNotification(requestInfo, smsTemplateData, messageCode, number);
+            }
+        } catch (Exception e) {
+            // Log the exception and continue the execution without throwing
+            log.error("Error occurred while sending notification: {}", e.toString());
+        }
+    }
+
+    public Set<String> extractIndividualIds(JsonNode caseDetails) {
+        JsonNode litigantNode = caseDetails.get("litigants");
+        JsonNode representativeNode = caseDetails.get("representatives");
+        Set<String> uuids = new HashSet<>();
+
+        if (litigantNode.isArray()) {
+            for (JsonNode node : litigantNode) {
+                String uuid = node.path("additionalDetails").get("uuid").asText();
+                if (!uuid.isEmpty()) {
+                    uuids.add(uuid);
+                }
+            }
+        }
+        if (representativeNode.isArray()) {
+            for (JsonNode advocateNode : representativeNode) {
+                JsonNode representingNode = advocateNode.get("representing");
+                if (representingNode.isArray()) {
+                    String uuid = advocateNode.path("additionalDetails").get("uuid").asText();
+                    if (!uuid.isEmpty()) {
+                        uuids.add(uuid);
+                    }
+                }
+            }
+        }
+        return uuids;
+    }
+
+    private Set<String> callIndividualService(RequestInfo requestInfo, Set<String> ids) {
+
+        Set<String> mobileNumber = new HashSet<>();
+        List<Individual> individuals = individualService.getIndividuals(requestInfo, new ArrayList<>(ids));
+        for (Individual individual : individuals) {
+            if (individual.getMobileNumber() != null) {
+                mobileNumber.add(individual.getMobileNumber());
+            }
+        }
+        return mobileNumber;
+    }
+
+
 }

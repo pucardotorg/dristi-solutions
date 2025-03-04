@@ -4,7 +4,7 @@
 //   applicationNumber:""
 // };
 
-export const summonsConfig = ({ filingNumber, limit, offset, orderNumber, orderId, orderType }) => {
+export const summonsConfig = ({ filingNumber, limit, offset, orderNumber, orderId, orderType, taskCnrNumber }) => {
   return {
     label: `1(${orderType === "NOTICE" ? "Notice" : "Summon"}s)`,
     type: "search",
@@ -19,6 +19,7 @@ export const summonsConfig = ({ filingNumber, limit, offset, orderNumber, orderI
         apiOperation: "SEARCH",
         criteria: {
           tenantId: Digit.ULBService.getCurrentTenantId(),
+          cnrNumber: taskCnrNumber
         },
       },
       masterName: "commonUiConfig",
@@ -54,6 +55,11 @@ export const summonsConfig = ({ filingNumber, limit, offset, orderNumber, orderI
               additionalCustomization: true,
             },
             {
+              label: "DELIEVRY_DATE",
+              jsonPath: "statusChangeDate",
+              additionalCustomization: true,
+            },
+            {
               label: "Remarks",
               jsonPath: "remarks",
             },
@@ -65,6 +71,6 @@ export const summonsConfig = ({ filingNumber, limit, offset, orderNumber, orderI
         show: true,
       },
     },
-    additionalDetails: { filingNumber, orderNumber, orderId },
+    additionalDetails: { filingNumber, orderNumber, orderId, taskCnrNumber },
   };
 };

@@ -1,0 +1,96 @@
+[
+  {
+    // can be added through work bench ui
+    "tenantId": "kl",
+    "mastername": "actions-test",
+    "moduleName": "ACCESSCONTROL-ACTIONS-TEST",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "uniqueIdentifier": 2710,
+        "data": {
+          "id": 2710,
+          "name": "lock service release",
+          "url": "/lock-svc/v1/_release",
+          "displayName": "lock service release",
+          "serviceCode": "lock-svc",
+          "code": 2710
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "uniqueIdentifier": 2709,
+        "data": {
+          "id": 2709,
+          "name": "lock service set",
+          "url": "/lock-svc/v1/_set",
+          "displayName": "lock service set",
+          "serviceCode": "lock-svc",
+          "code": 2709
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "uniqueIdentifier": 2708,
+        "data": {
+          "id": 2708,
+          "name": "lock service get",
+          "url": "/lock-svc/v1/_get",
+          "displayName": "lock service get",
+          "serviceCode": "lock-svc",
+          "code": 2708
+        },
+        "isActive": true
+      }
+    ]
+  },
+  {
+    // can be added through workbench ui
+    "tenantId": "kl",
+    "mastername": "roleactions",
+    "moduleName": "ACCESSCONTROL-ROLEACTIONS",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "rolecode": "CASE_CREATOR",
+          "actionid": 2710,
+          "actioncode": "2710",
+          "tenantId": "kl"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "rolecode": "CASE_CREATOR",
+          "actionid": 2709,
+          "actioncode": "2709",
+          "tenantId": "kl"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "rolecode": "CASE_CREATOR",
+          "actionid": 2708,
+          "actioncode": "2708",
+          "tenantId": "kl"
+        },
+        "isActive": true
+      }
+    ]
+  }
+]

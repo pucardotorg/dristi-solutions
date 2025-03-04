@@ -17,6 +17,7 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.web.models.Hearing;
 import org.pucar.dristi.web.models.HearingRequest;
+import org.pucar.dristi.web.models.WorkflowObject;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,6 +42,7 @@ class WorkflowServiceTest {
     @Mock
     private ObjectMapper mapper;
 
+    private WorkflowObject workflow = new WorkflowObject();
     @BeforeEach
     public void init() {
         MockitoAnnotations.initMocks(this);
@@ -127,7 +129,9 @@ class WorkflowServiceTest {
         hearing.setTenantId("tenant1");
         List<String> list = new ArrayList<>();
         list.add("assigne1");
-        hearing.setWorkflow(Workflow.builder().action("CREATE").assignes(list).build());
+        workflow.setAction("CREATE");
+        workflow.setAssignes(list);
+        hearing.setWorkflow(workflow);
         HearingRequest hearingRequest = new HearingRequest();
         hearingRequest.setRequestInfo(new RequestInfo());
         hearingRequest.setHearing(hearing);

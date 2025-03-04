@@ -18,10 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -75,6 +72,14 @@ public class TaskService {
 
             producer.push(config.getTaskCreateTopic(), body);
 
+            String status = body.getTask().getStatus();
+            String taskType = body.getTask().getTaskType();
+            String messageCode = status != null ? getMessageCode(taskType, status) : null;
+            log.info("Message Code :: {}", messageCode);
+            if (messageCode != null) {
+                callNotificationService(body, messageCode);
+            }
+
             return body.getTask();
 
         } catch (CustomException e) {
@@ -119,7 +124,6 @@ public class TaskService {
 
             producer.push(config.getTaskUpdateTopic(), body);
 
-            log.info("TaskRequest before calling notificationService: {}", body);
             String messageCode = status != null ? getMessageCode(taskType, status) : null;
             log.info("Message Code :: {}", messageCode);
             if(messageCode != null){
@@ -157,7 +161,7 @@ public class TaskService {
         String taskType = task.getTaskType().toUpperCase();
         String tenantId = task.getTenantId();
         String taskNumber = task.getTaskNumber();
-        Workflow workflow = task.getWorkflow();
+        WorkflowObject workflow = task.getWorkflow();
 
         String status = switch (taskType) {
             case BAIL -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
@@ -212,14 +216,20 @@ public class TaskService {
             Object taskDetailsObject = taskRequest.getTask().getTaskDetails();
             JsonNode taskDetails = objectMapper.readTree(objectMapper.writeValueAsString(taskDetailsObject));
 
+            String accusedName = taskDetails.has("respondentDetails") ? taskDetails.path("respondentDetails").path("name").asText() : "";
+
             Set<String> individualIds = extractComplainantIndividualIds(caseDetails);
+            if (Objects.equals(messageCode, WARRANT_ISSUED)) {
+                 accusedName = accusedName.split(" \\(")[0];
+                individualIds = extractIndividualIds(caseDetails,accusedName);
+            }
 
             Set<String> phoneNumbers = callIndividualService(taskRequest.getRequestInfo(), individualIds);
 
             SmsTemplateData smsTemplateData = SmsTemplateData.builder()
                     .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").asText() : "")
                     .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").asText() : "")
-                    .accusedName(taskDetails.has("respondentDetails") ? taskDetails.path("respondentDetails").path("name").asText() : "")
+                    .accusedName(accusedName)
                     .tenantId(taskRequest.getTask().getTenantId()).build();
 
             for (String number : phoneNumbers) {
@@ -265,6 +275,25 @@ public class TaskService {
         return uuids;
     }
 
+    public Set<String> extractIndividualIds(JsonNode caseDetails,String respondentName) {
+        JsonNode litigantNode = caseDetails.get("litigants");
+        Set<String> uuids = new HashSet<>();
+
+        if (litigantNode.isArray()) {
+            for (JsonNode node : litigantNode) {
+                String name = node.path("additionalDetails").get("fullName").asText();
+                if (Objects.equals(name, respondentName)) {
+                    String uuid = node.path("additionalDetails").get("uuid").asText();
+                    if (uuid != null) {
+                        uuids.add(uuid);
+                    }
+                }
+            }
+        }
+
+        return uuids;
+    }
+
     private Set<String> callIndividualService(RequestInfo requestInfo, Set<String> ids) {
 
         Set<String> mobileNumber = new HashSet<>();
@@ -280,7 +309,6 @@ public class TaskService {
 
     private String getMessageCode(String taskType, String status) {
 
-        log.info("Operation: getMessageCode, Task Type :: {} and Status :: {}", taskType, status);
         if (NOTICE.equalsIgnoreCase(taskType) && DELIVERED.equalsIgnoreCase(status)) {
             return NOTICE_DELIVERED;
         }
@@ -292,6 +320,18 @@ public class TaskService {
         }
         if (SUMMON.equalsIgnoreCase(taskType) && RE_ISSUE.equalsIgnoreCase(status)) {
             return SUMMONS_NOT_DELIVERED;
+        }
+        if (WARRANT.equalsIgnoreCase(taskType) && PENDING_PAYMENT.equalsIgnoreCase(status)) {
+            return WARRANT_ISSUED;
+        }
+        if (WARRANT.equalsIgnoreCase(taskType) && WARRANT_SENT.equalsIgnoreCase(status)) {
+            return WARRANT_ISSUE_SUCCESS;
+        }
+        if (WARRANT.equalsIgnoreCase(taskType) && EXECUTED.equalsIgnoreCase(status)) {
+            return WARRANT_DELIVERED;
+        }
+        if (WARRANT.equalsIgnoreCase(taskType) && NOT_EXECUTED.equalsIgnoreCase(status)) {
+            return WARRANT_NOT_DELIVERED;
         }
         return null;
     }

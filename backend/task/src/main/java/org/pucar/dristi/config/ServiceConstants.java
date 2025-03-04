@@ -90,16 +90,25 @@ public class ServiceConstants {
     public static final String UPLOAD_TASK_DOCUMENT_ERROR = "UPLOAD_TASK_DOCUMENT_ERROR";
     public static final String PENDING_TASK_CREATOR = "PENDING_TASK_CREATOR";
     public static final String PENDING_TASK = "PENDING_TASK";
+    public static final String JOIN_CASE_TASK = "JOIN_CASE_TASK";
 
     public static final String ERROR_WHILE_FETCHING_FROM_CASE ="ERROR_WHILE_FETCHING_FROM_CASE";
 
     public static final String REQUEST_INFO = "RequestInfo";
     public static final String DELIVERED = "DELIVERED";
     public static final String RE_ISSUE = "RE_ISSUE";
+    public static final String PENDING_PAYMENT = "PENDING_PAYMENT";
     public static final String NOTICE_DELIVERED = "NOTICE_DELIVERED";
     public static final String NOTICE_NOT_DELIVERED = "NOTICE_NOT_DELIVERED";
     public static final String SUMMONS_DELIVERED = "SUMMONS_DELIVERED";
     public static final String SUMMONS_NOT_DELIVERED = "SUMMONS_NOT_DELIVERED";
+    public static final String WARRANT_ISSUED = "WARRANT_ISSUED";
+    public static final String WARRANT_ISSUE_SUCCESS = "WARRANT_ISSUE_SUCCESS";
+    public static final String EXECUTED = "EXECUTED";
+    public static final String WARRANT_DELIVERED = "WARRANT_DELIVERED";
+    public static final String NOT_EXECUTED = "NOT_EXECUTED";
+    public static final String WARRANT_NOT_DELIVERED = "WARRANT_NOT_DELIVERED";
+
 
     public static final String NOTIFICATION_ENG_LOCALE_CODE = "en_IN";
 

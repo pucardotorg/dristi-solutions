@@ -1,0 +1,41 @@
+[
+    { //update this schema
+        "tenantId": "kl",
+        "moduleName": "case",
+        "masterName": "PoliceStation",
+        "mdmsPayload": {
+            "id": "6a1ee482-480d-4939-8f1b-d6a8a411a327",
+            "tenantId": "kl",
+            "code": "case.PoliceStation",
+            "description": null,
+            "definition": {
+                "type": "object",
+                "$schema": "http://json-schema.org/draft-07/schema#",
+                "required": [
+                    "code",
+                    "name",
+                    "district"
+                ],
+                "x-unique": [
+                    "code"
+                ],
+                "properties": {
+                    "code": {
+                        "type": "number"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "active": {
+                        "type": "boolean"
+                    },
+                    "district": {
+                        "type": "string"
+                    }
+                },
+                "additionalProperties": false
+            },
+            "isActive": true
+        }
+    }
+]

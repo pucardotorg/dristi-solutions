@@ -1,10 +1,13 @@
 import { CloseSvg } from "@egovernments/digit-ui-components";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Modal from "../../../components/Modal";
-import { Button, SubmitBar } from "@egovernments/digit-ui-react-components";
+import { Button, SubmitBar, TextInput } from "@egovernments/digit-ui-react-components";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/useGetAllOrderApplicationRelatedDocuments";
 import { DRISTIService } from "../../../services";
+import { getAdvocates } from "@egovernments/digit-ui-module-orders/src/utils/caseUtils";
+import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
+import useGetDiaryEntry from "../../../hooks/dristi/useGetDiaryEntry";
 
 function PublishedOrderModal({
   t,
@@ -23,6 +26,8 @@ function PublishedOrderModal({
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
+  const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
+
   const { documents, isLoading, fetchRecursiveData } = useGetAllOrderApplicationRelatedDocuments();
   const [loading, setLoading] = useState(false);
   const Heading = (props) => {
@@ -37,16 +42,55 @@ function PublishedOrderModal({
     );
   };
 
+  const { data: caseData } = useSearchCaseService(
+    {
+      criteria: [
+        {
+          filingNumber: order?.filingNumber,
+        },
+      ],
+      tenantId,
+    },
+    {},
+    `dristi-${order?.filingNumber}`,
+    order?.filingNumber,
+    Boolean(order?.filingNumber)
+  );
+  const caseDetails = useMemo(() => caseData?.criteria?.[0]?.responseList?.[0] || {}, [caseData]);
+
   const signedOrder = useMemo(() => order?.documents?.filter((item) => item?.documentType === "SIGNED")[0], [order]);
   const userInfo = Digit.UserService.getUser()?.info;
+  const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
+
+  const { data: diaryResponse } = useGetDiaryEntry(
+    {
+      criteria: {
+        referenceId: order?.orderNumber,
+        tenantId,
+        judgeId: "super",
+        caseId: caseDetails?.cmpNumber,
+      },
+    },
+    {},
+    order?.orderNumber + caseDetails?.id,
+    Boolean(order?.orderNumber) && Boolean(caseDetails?.id)
+  );
+
   const showSubmissionButtons = useMemo(() => {
     if (productionOfDocumentApplications?.some((item) => item?.referenceId === order?.id)) {
       return false;
     }
 
+    if (!Boolean(caseDetails?.filingNumber) && Object?.keys(allAdvocates)?.length === 0) return false;
+
     //TODO : need to ask
     const isAuthority = order?.additionalDetails?.formdata?.partyId;
-    const submissionParty = order?.additionalDetails?.formdata?.submissionParty?.map((item) => item.uuid)?.flat() || [];
+    const submissionParty =
+      order?.additionalDetails?.formdata?.submissionParty
+        ?.map(
+          (item) => allAdvocates[caseDetails?.litigants?.find((litigant) => litigant?.individualId === item?.individualId)?.additionalDetails?.uuid]
+        )
+        ?.flat() || [];
     const allSubmissionParty = [...submissionParty, isAuthority].filter(Boolean);
     return (
       allSubmissionParty?.includes(userInfo?.uuid) &&
@@ -59,7 +103,7 @@ function PublishedOrderModal({
         CaseWorkflowState.CASE_ADMITTED,
       ].includes(caseStatus)
     );
-  }, [caseStatus, order, userInfo?.uuid, userRoles, productionOfDocumentApplications]);
+  }, [caseStatus, order, userInfo?.uuid, userRoles, productionOfDocumentApplications, caseDetails, allAdvocates]);
 
   const showExtensionButton = useMemo(
     () =>
@@ -194,6 +238,23 @@ function PublishedOrderModal({
       popupStyles={{ minWidth: "880px", width: "80%" }}
     >
       {showDocument}
+      {!isCitizen && (
+        <React.Fragment>
+          {" "}
+          <h3 style={{ marginTop: "24px", marginBottom: "2px" }}>{t("BUSINESS_OF_THE_DAY")} </h3>
+          <div style={{ display: "flex", gap: "10px" }}>
+            <TextInput
+              className="field desktop-w-full"
+              onChange={(e) => {}}
+              disable={true}
+              value={diaryResponse?.entries?.[0]?.businessOfDay}
+              style={{ minWidth: "500px" }}
+              textInputStyle={{ maxWidth: "100%" }}
+            />
+          </div>
+        </React.Fragment>
+      )}
+
       <div style={{ display: "flex", width: "100%", justifyContent: "space-between", alignItems: "center", marginTop: "16px" }}>
         <div
           onClick={() => {

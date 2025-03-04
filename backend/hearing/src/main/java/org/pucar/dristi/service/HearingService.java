@@ -21,12 +21,11 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
+import static org.pucar.dristi.config.ServiceConstants.HEARING_TYPE_MODULE_CODE;
 
 @Service
 @Slf4j
@@ -79,6 +78,10 @@ public class HearingService {
 
             producer.push(config.getHearingCreateTopic(), body);
 
+            // send the sms after creating hearing
+
+            callNotificationService(body,body.getHearing().getStatus());
+
             return body.getHearing();
         } catch (CustomException e) {
             log.error("Custom Exception occurred while creating hearing");
@@ -121,8 +124,6 @@ public class HearingService {
             hearing.setVcLink(hearingRequest.getHearing().getVcLink());
             hearingRequest.setHearing(hearing);
             workflowService.updateWorkflowStatus(hearingRequest);
-
-            log.info("Hearing Request after workflow update: {}", hearingRequest);
 
             // Enrich application upon update
             enrichmentUtil.enrichHearingApplicationUponUpdate(hearingRequest);
@@ -246,8 +247,9 @@ public class HearingService {
             String jsonData = objectMapper.writeValueAsString(additionalDetailsObject);
             JsonNode additionalData = objectMapper.readTree(jsonData);
             boolean caseAdjourned = additionalData.has("purposeOfAdjournment");
+            String hearingType = hearingRequest.getHearing().getHearingType();
 
-            String messageCode = updatedState != null ? getMessageCode(updatedState, caseAdjourned) : null;
+            String messageCode = updatedState != null ? getMessageCode(updatedState, caseAdjourned,hearingType) : null;
             assert messageCode != null;
             log.info("Message code: {}", messageCode);
 
@@ -260,10 +262,16 @@ public class HearingService {
 
             Set<String> phoneNumbers = callIndividualService(hearingRequest.getRequestInfo(), individualIds);
 
+            String localizedHearingType = "";
+            if (hearingType != null && messageCode.equals(VARIABLE_HEARING_SCHEDULED)) {
+                localizedHearingType = getLocalizedMessageOfHearingType(hearingRequest,hearingType);
+            }
+
             SmsTemplateData smsTemplateData = SmsTemplateData.builder()
                     .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").asText() : "")
                     .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").asText() : "")
                     .hearingDate(date)
+                    .hearingType(localizedHearingType)
                     .tenantId(hearingRequest.getHearing().getTenantId()).build();
 
             for (String number : phoneNumbers) {
@@ -283,10 +291,13 @@ public class HearingService {
         caseSearchRequest.addCriteriaItem(caseCriteria);
         return caseSearchRequest;
     }
-    private String getMessageCode(String updatedStatus, Boolean hearingAdjourned) {
+    private String getMessageCode(String updatedStatus, Boolean hearingAdjourned,String hearingType) {
 
         log.info("Operation: getMessage, UpdatedStatus: {}", updatedStatus);
-        if(hearingAdjourned && updatedStatus.equalsIgnoreCase(COMPLETED)){
+        if (!hearingType.isEmpty() && updatedStatus.equalsIgnoreCase(SCHEDULED)) {
+            return getMessageCodeForHearingType(hearingType);
+        }
+        if (hearingAdjourned && updatedStatus.equalsIgnoreCase(COMPLETED)) {
             return HEARING_ADJOURNED;
         }
         return null;
@@ -330,4 +341,28 @@ public class HearingService {
         }
         return mobileNumber;
     }
+
+    private String getMessageCodeForHearingType(String hearingType) {
+        if (hearingType.equalsIgnoreCase(WARRANT) || hearingType.equalsIgnoreCase(BAIL) || hearingType.equalsIgnoreCase(ADR) ||
+                hearingType.equalsIgnoreCase(REPORTS) || hearingType.equalsIgnoreCase(ARGUMENTS) || hearingType.equalsIgnoreCase(PLEA) ||
+                hearingType.equalsIgnoreCase(EXECUTION) || hearingType.equalsIgnoreCase(EXAMINATION_UNDER_S351_BNSS) ||
+                hearingType.equalsIgnoreCase(EVIDENCE_COMPLAINANT) || hearingType.equalsIgnoreCase(EVIDENCE_ACCUSED) ||
+                hearingType.equalsIgnoreCase(APPEARANCE) || hearingType.equalsIgnoreCase(ADMISSION) || hearingType.equalsIgnoreCase(JUDGEMENT))
+        {
+            return VARIABLE_HEARING_SCHEDULED;
+        }
+        return null;
+    }
+
+    private String getLocalizedMessageOfHearingType(HearingRequest request,String hearingType) {
+        RequestInfo requestInfo = request.getRequestInfo();
+        String tenantId = request.getHearing().getTenantId();
+        Map<String, Map<String, String>> localizedMessageMap = notificationService.getLocalisedMessages(requestInfo,tenantId,
+                NOTIFICATION_ENG_LOCALE_CODE, HEARING_TYPE_MODULE_CODE);
+        if (localizedMessageMap.isEmpty()) {
+            return null;
+        }
+        return localizedMessageMap.get(NOTIFICATION_ENG_LOCALE_CODE + "|" + tenantId).get(hearingType);
+    }
+
 }

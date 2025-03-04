@@ -112,8 +112,8 @@ public class ApplicationRepository {
                 if ((applicationExist.getFilingNumber() == null || applicationExist.getFilingNumber().isEmpty()) &&
                         (applicationExist.getCnrNumber() == null || applicationExist.getCnrNumber().isEmpty()) &&
                         (applicationExist.getApplicationNumber() == null || applicationExist.getApplicationNumber().isEmpty()) )
-                    {
-                        applicationExist.setExists(false);
+                {
+                    applicationExist.setExists(false);
                 } else {
                     List<Object> preparedStmtList = new ArrayList<>();
                     String applicationExistQuery = queryBuilder.checkApplicationExistQuery(applicationExist.getFilingNumber(), applicationExist.getCnrNumber(), applicationExist.getApplicationNumber(), preparedStmtList);

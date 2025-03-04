@@ -86,6 +86,9 @@ public class Configuration {
     @Value("${task.kafka.update.topic}")
     private String taskUpdateTopic;
 
+    @Value("${task.kafka.join.case.update.topic}")
+    private String taskJoinCaseUpdateTopic;
+
     @Value("${task.kafka.create.topic}")
     private String taskCreateTopic;
 
@@ -198,6 +201,18 @@ public class Configuration {
 
     @Value("${egov.sms.notification.summons.delivery.failed.template.id}")
     private String smsNotificationSummonsNotDeliveredTemplateId;
+
+    @Value("${egov.sms.notification.warrant.issued.template.id}")
+    private String smsNotificationWarrantIssuedTemplateId;
+
+    @Value("${egov.sms.notification.warrant.delivered.template.id}")
+    private String smsNotificationWarrantDeliveredTemplateId;
+
+    @Value("${egov.sms.notification.warrant.not.delivered.template.id}")
+    private String smsNotificationWarrantNotDeliveredTemplateId;
+
+    @Value("${egov.sms.notification.warrant.issued.success.template.id}")
+    private String smsNotificationWarrantIssueSuccess;
 
     //Individual Service
     @Value("${egov.individual.host}")

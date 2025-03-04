@@ -46,7 +46,10 @@ public class ErrorConstants {
 
 	public static final String HRMS_INVALID_DEPT_CODE = "ERR_HRMS_INVALID_DEPT";
 	public static final String HRMS_INVALID_DEPT_MSG = "Invalid department of employee entered.";
-	
+
+	public static final String HRMS_INVALID_COURT_ESTABLISHMENT="ERR_HRMS_INVALID_COURT_EST";
+	public static final String HRMS_INVALID_COURT_ESTABLISHMENT_MSG="Invalid court establishment of the employee entered.";
+
 	public static final String HRMS_INVALID_DESG_CODE = "ERR_HRMS_INVALID_DESG";
 	public static final String HRMS_INVALID_DESG_MSG = "Invalid designation of employee.";
 
@@ -202,4 +205,8 @@ public class ErrorConstants {
 	public static final String HRMS_INVALID_SEARCH_CITIZEN_CODE = "ERR_HRMS_INVALID_SEARCH_CITIZEN";
 	public static final String HRMS_INVALID_SEARCH_CITIZEN_MSG = "Citizen are not allowed to access employee search with Ids.";
 
+	public static final String HRMS_INVALID_ASSIGNMENT = "ERR_HRMS_INVALID_ASSIGNMENT";
+	public static final String ERR_HRMS_INVALID_ASSIGNMENT = "Cannot add assignment to court room. Judge already present";
+    public static final String HRMS_INVALID_DISTRICT_CODE = "ERR_HRMS_INVALID_DISTRICT";
+	public static final String HRMS_INVALID_DISTRICT_CODE_MSG = "Invalid district entered for the employee.";
 }
