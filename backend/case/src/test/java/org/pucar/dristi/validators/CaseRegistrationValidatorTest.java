@@ -75,6 +75,7 @@ public class CaseRegistrationValidatorTest {
     private Party litigant;
     private Representative representative;
     private Document document;
+    private WorkflowObject workflow = new WorkflowObject();
     @BeforeEach
     void setUp() {
         // Setup done before each test
@@ -86,6 +87,7 @@ public class CaseRegistrationValidatorTest {
         joinCaseRequest.setLitigant(Collections.singletonList(litigant));
         joinCaseRequest.setRepresentative(representative);
         joinCaseRequest.setRequestInfo(requestInfo);
+        workflow.setAction(SUBMIT_CASE_WORKFLOW_ACTION);
     }
 
     @Test
@@ -123,8 +125,6 @@ public class CaseRegistrationValidatorTest {
         courtCase.setStatutesAndSections(List.of(new StatuteSection()));
         courtCase.setFilingDate(System.currentTimeMillis());
 
-        Workflow workflow = new Workflow();
-        workflow.setAction(SUBMIT_CASE_WORKFLOW_ACTION);
         courtCase.setWorkflow(workflow);
 
         request.setCases(courtCase);
@@ -202,8 +202,6 @@ public class CaseRegistrationValidatorTest {
         courtCase.setTenantId("pg");
         courtCase.setFilingDate(System.currentTimeMillis());
         courtCase.setCaseCategory("category1");
-        Workflow workflow = new Workflow();
-        workflow.setAction(SUBMIT_CASE_WORKFLOW_ACTION);
         courtCase.setWorkflow(workflow);
         List<StatuteSection> statuteSectionList = new ArrayList<>();
         statuteSectionList.add(StatuteSection.builder().tenantId("pb").build());
@@ -221,7 +219,6 @@ public class CaseRegistrationValidatorTest {
         courtCase.setTenantId("pg");
         courtCase.setFilingDate(System.currentTimeMillis());
         courtCase.setCaseCategory("category1");
-        Workflow workflow = new Workflow();
         workflow.setAction(DELETE_DRAFT_WORKFLOW_ACTION);
         courtCase.setWorkflow(workflow);
         List<StatuteSection> statuteSectionList = new ArrayList<>();
@@ -242,8 +239,6 @@ public class CaseRegistrationValidatorTest {
         courtCase.setTenantId("pg");
         courtCase.setFilingDate(System.currentTimeMillis());
         courtCase.setCaseCategory("category1");
-        Workflow workflow = new Workflow();
-        workflow.setAction(SUBMIT_CASE_WORKFLOW_ACTION);
         courtCase.setWorkflow(workflow);
         List<StatuteSection> statuteSectionList = new ArrayList<>();
         statuteSectionList.add(StatuteSection.builder().tenantId("pb").build());
@@ -264,8 +259,6 @@ public class CaseRegistrationValidatorTest {
         Document document = new Document();
         document.setFileStore("123");
         courtCase.setDocuments(List.of(document));
-        Workflow workflow = new Workflow();
-        workflow.setAction(SUBMIT_CASE_WORKFLOW_ACTION);
         courtCase.setWorkflow(workflow);
         AdvocateMapping advocateMapping = new AdvocateMapping();
         advocateMapping.setAdvocateId("123");
@@ -314,8 +307,6 @@ public class CaseRegistrationValidatorTest {
         Document document = new Document();
         document.setFileStore("123");
         courtCase.setDocuments(List.of(document));
-        Workflow workflow = new Workflow();
-        workflow.setAction(SUBMIT_CASE_WORKFLOW_ACTION);
         courtCase.setWorkflow(workflow);
         AdvocateMapping advocateMapping = new AdvocateMapping();
         advocateMapping.setAdvocateId("123");
@@ -378,7 +369,6 @@ public class CaseRegistrationValidatorTest {
         courtCase.setTenantId("pg");
         courtCase.setCaseCategory("category");
         courtCase.setStatutesAndSections(Collections.singletonList(StatuteSection.builder().statute("statue").build()));
-        Workflow workflow = new Workflow();
         workflow.setAction("Action");
         courtCase.setWorkflow(workflow);
         courtCase.setLitigants(Collections.singletonList(Party.builder().caseId("id").build()));
@@ -394,7 +384,6 @@ public class CaseRegistrationValidatorTest {
         CourtCase courtCase = new CourtCase();
         CaseCriteria caseCriteria = new CaseCriteria();
         courtCase.setTenantId("pg");
-        Workflow workflow = new Workflow();
         workflow.setAction(SAVE_DRAFT_CASE_WORKFLOW_ACTION);
         courtCase.setWorkflow(workflow);
         CaseRequest caseRequest = new CaseRequest();
@@ -417,8 +406,6 @@ public class CaseRegistrationValidatorTest {
         courtCase.setRepresentatives(List.of(advocateMapping));
         Party party = new Party();
         party.setIndividualId("123");
-        Workflow workflow = new Workflow();
-        workflow.setAction(SUBMIT_CASE_WORKFLOW_ACTION);
         courtCase.setWorkflow(workflow);
         courtCase.setLitigants(List.of(party));
         LinkedCase linkedCase = LinkedCase.builder().id(UUID.randomUUID()).caseNumber("caseNumber").build();
@@ -459,8 +446,6 @@ public class CaseRegistrationValidatorTest {
         CaseCriteria caseCriteria = new CaseCriteria();
         courtCase.setTenantId("pg");
         courtCase.setFilingDate(System.currentTimeMillis());
-        Workflow workflow = new Workflow();
-        workflow.setAction(SUBMIT_CASE_WORKFLOW_ACTION);
         courtCase.setWorkflow(workflow);
         CaseRequest caseRequest = new CaseRequest();
         caseRequest.setCases(courtCase);
@@ -476,8 +461,6 @@ public class CaseRegistrationValidatorTest {
         courtCase.setTenantId("pg");
         courtCase.setFilingDate(System.currentTimeMillis());
         courtCase.setCaseCategory("categ1");
-        Workflow workflow = new Workflow();
-        workflow.setAction(SUBMIT_CASE_WORKFLOW_ACTION);
         courtCase.setWorkflow(workflow);
         CaseCriteria caseCriteria = new CaseCriteria();
         CaseRequest caseRequest = new CaseRequest();
@@ -496,7 +479,6 @@ public class CaseRegistrationValidatorTest {
         courtCase.setCaseCategory("categ1");
         courtCase.setStatutesAndSections(List.of(StatuteSection.builder().tenantId("pb").build()));
         CaseCriteria caseCriteria = new CaseCriteria();
-        Workflow workflow = new Workflow();
         workflow.setAction(DELETE_DRAFT_WORKFLOW_ACTION);
         courtCase.setWorkflow(workflow);
         lenient().when(caseRepository.getCases(any(), any())).thenReturn(List.of(caseCriteria));
@@ -515,8 +497,6 @@ public class CaseRegistrationValidatorTest {
         courtCase.setCaseCategory("categ1");
         courtCase.setStatutesAndSections(List.of(StatuteSection.builder().tenantId("pb").build()));
         CaseCriteria caseCriteria = new CaseCriteria();
-        Workflow workflow = new Workflow();
-        workflow.setAction(SUBMIT_CASE_WORKFLOW_ACTION);
         courtCase.setWorkflow(workflow);
         lenient().when(caseRepository.getCases(any(), any())).thenReturn(List.of(caseCriteria));
         CaseRequest caseRequest = new CaseRequest();
@@ -677,7 +657,6 @@ public class CaseRegistrationValidatorTest {
         courtCase.setTenantId("kl");
         courtCase.setCaseCategory("category");
         courtCase.setStatutesAndSections(List.of(StatuteSection.builder().tenantId("pb").build()));
-        Workflow workflow = new Workflow();
         workflow.setAction(DELETE_DRAFT_WORKFLOW_ACTION);
         courtCase.setWorkflow(workflow);
         CaseRequest caseRequest = new CaseRequest();

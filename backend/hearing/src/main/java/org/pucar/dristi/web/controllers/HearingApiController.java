@@ -25,7 +25,6 @@ import java.util.List;
 @jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2024-04-18T11:14:11.072458+05:30[Asia/Calcutta]")
 @Controller
 @RequestMapping("")
-@Slf4j
 public class HearingApiController {
 
     private HearingService hearingService;
