@@ -3078,101 +3078,114 @@ const GenerateOrders = () => {
 
   const processHandleIssueOrder = async () => {
     setLoader(true);
-
-    if (currentOrder?.orderCategory === "COMPOSITE") {
-      const currentOrderUpdated = currentOrder?.compositeItems?.map((item) => {
-        return {
-          ...currentOrder,
-          additionalDetails: item?.orderSchema?.additionalDetails,
-          orderDetails: item?.orderSchema?.orderDetails,
-          orderType: item?.orderType,
-        };
-      });
-      // checking if composite orders has heading order and notice order, then we will have to jump case status directly to Pending_response using action issue_order.
-
-      const compositeItems = currentOrder?.compositeItems || [];
-
-      const isBothHearingAndNoticePresent = compositeItems.reduce(
-        (acc, item) => {
-          if (item?.orderType === "SCHEDULE_OF_HEARING_DATE") acc.hasHearing = true;
-          if (item?.orderType === "NOTICE" && item?.orderSchema?.additionalDetails?.formdata?.noticeType?.code === "Section 223 Notice") {
-            acc.hasNotice = true;
-          }
-          return acc;
-        },
-        { hasHearing: false, hasNotice: false }
-      );
-
-      const result = isBothHearingAndNoticePresent.hasHearing && isBothHearingAndNoticePresent.hasNotice;
-      setPrevOrder(currentOrder);
-      await Promise.all(currentOrderUpdated.map((order) => handleIssueOrder(order, order?.orderType, currentOrder?.orderCategory, result)));
-    } else {
-      setPrevOrder(currentOrder);
-      await handleIssueOrder(currentOrder, currentOrder?.orderType, currentOrder?.orderCategory);
-    }
-
-    if (businessOfTheDay) {
-      const response = await Digit.HearingService.searchHearings(
-        {
-          criteria: {
-            tenantId: Digit.ULBService.getCurrentTenantId(),
-            filingNumber: filingNumber,
-          },
-        },
-        {}
-      );
-      const nextHearing = response?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
-      await DRISTIService.addADiaryEntry(
-        {
-          diaryEntry: {
-            judgeId: judgeId,
-            businessOfDay: businessOfTheDay,
-            tenantId: tenantId,
-            entryDate: new Date().setHours(0, 0, 0, 0),
-            caseNumber: caseDetails?.cmpNumber,
-            referenceId: currentOrder?.orderNumber,
-            referenceType: "Order",
-            hearingDate: (Array.isArray(nextHearing) && nextHearing.length > 0 && nextHearing[0]?.startTime) || null,
-            additionalDetails: {
-              filingNumber: currentOrder?.filingNumber,
-            },
-          },
-        },
-        {}
-      ).catch((error) => {
-        console.error("error: ", error);
-        toast.error(t("SOMETHING_WENT_WRONG"));
-      });
-    }
-
-    const orderResponse = await updateOrder(
-      {
-        ...currentOrder,
-        ...((newHearingNumber || hearingNumber || hearingDetails?.hearingId) && {
-          hearingNumber: newHearingNumber || hearingNumber || hearingDetails?.hearingId,
-        }),
-      },
-      OrderWorkflowAction.ESIGN
-    );
-    if (currentOrder?.orderCategory === "COMPOSITE") {
-      let updatedOrders = [];
-      if (orderResponse) {
-        updatedOrders = orderResponse?.order?.compositeItems?.map((item) => {
+    try {
+      if (currentOrder?.orderCategory === "COMPOSITE") {
+        const currentOrderUpdated = currentOrder?.compositeItems?.map((item) => {
           return {
-            order: {
-              ...orderResponse?.order,
-              additionalDetails: item?.orderSchema?.additionalDetails,
-              orderDetails: item?.orderSchema?.orderDetails,
-              orderType: item?.orderType,
-              itemId: item?.id,
-            },
+            ...currentOrder,
+            additionalDetails: item?.orderSchema?.additionalDetails,
+            orderDetails: item?.orderSchema?.orderDetails,
+            orderType: item?.orderType,
           };
         });
+
+        // Checking if composite orders contain both hearing and notice orders
+        const compositeItems = currentOrder?.compositeItems || [];
+        const isBothHearingAndNoticePresent = compositeItems.reduce(
+          (acc, item) => {
+            if (item?.orderType === "SCHEDULE_OF_HEARING_DATE") acc.hasHearing = true;
+            if (item?.orderType === "NOTICE" && item?.orderSchema?.additionalDetails?.formdata?.noticeType?.code === "Section 223 Notice") {
+              acc.hasNotice = true;
+            }
+            return acc;
+          },
+          { hasHearing: false, hasNotice: false }
+        );
+
+        const result = isBothHearingAndNoticePresent.hasHearing && isBothHearingAndNoticePresent.hasNotice;
+        setPrevOrder(currentOrder);
+        await Promise.all(currentOrderUpdated.map((order) => handleIssueOrder(order, order?.orderType, currentOrder?.orderCategory, result)));
+      } else {
+        setPrevOrder(currentOrder);
+        await handleIssueOrder(currentOrder, currentOrder?.orderType, currentOrder?.orderCategory);
       }
-      await Promise.all(updatedOrders?.map((item, index) => createTask(item?.order?.orderType, caseDetails, item)));
+
+      if (businessOfTheDay) {
+        const response = await Digit.HearingService.searchHearings(
+          {
+            criteria: {
+              tenantId: Digit.ULBService.getCurrentTenantId(),
+              filingNumber: filingNumber,
+            },
+          },
+          {}
+        );
+
+        const nextHearing = response?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
+
+        await DRISTIService.addADiaryEntry(
+          {
+            diaryEntry: {
+              judgeId: judgeId,
+              businessOfDay: businessOfTheDay,
+              tenantId: tenantId,
+              entryDate: new Date().setHours(0, 0, 0, 0),
+              caseNumber: caseDetails?.cmpNumber,
+              referenceId: currentOrder?.orderNumber,
+              referenceType: "Order",
+              hearingDate: (Array.isArray(nextHearing) && nextHearing.length > 0 && nextHearing[0]?.startTime) || null,
+              additionalDetails: {
+                filingNumber: currentOrder?.filingNumber,
+              },
+            },
+          },
+          {}
+        ).catch((error) => {
+          console.error("Error in adding diary entry: ", error);
+          toast.error(t("SOMETHING_WENT_WRONG"));
+        });
+      }
+
+      const orderResponse = await updateOrder(
+        {
+          ...currentOrder,
+          ...((newHearingNumber || hearingNumber || hearingDetails?.hearingId) && {
+            hearingNumber: newHearingNumber || hearingNumber || hearingDetails?.hearingId,
+          }),
+        },
+        OrderWorkflowAction.ESIGN
+      );
+
+      // Handling composite orders for task creation
+      if (currentOrder?.orderCategory === "COMPOSITE") {
+        let updatedOrders = [];
+        if (orderResponse) {
+          updatedOrders = orderResponse?.order?.compositeItems?.map((item) => {
+            return {
+              order: {
+                ...orderResponse?.order,
+                additionalDetails: item?.orderSchema?.additionalDetails,
+                orderDetails: item?.orderSchema?.orderDetails,
+                orderType: item?.orderType,
+                itemId: item?.id,
+              },
+            };
+          });
+        }
+
+        try {
+          await Promise.all(updatedOrders?.map((item) => createTask(item?.order?.orderType, caseDetails, item)));
+        } catch (error) {
+          console.error("Error in creating tasks:", error);
+        }
+      }
+
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.error("Error in processHandleIssueOrder:", error);
+    } finally {
+      setLoader(false);
     }
-    setLoader(false);
-    setShowSuccessModal(true);
   };
 
   const handleIssueOrder = async (currentOrder, orderType, orderCategory, jumpCaseStatusToLatestStage) => {
