@@ -271,17 +271,21 @@ public class EvidenceService {
 
                 Set<String> phoneNumbers = callIndividualService(evidenceRequest.getRequestInfo(), individualIds);
                 if (Objects.equals(topic, EVIDENCE_SUBMISSION_MESSAGE_FILING) || Objects.equals(topic, EVIDENCE_SUBMISSION)) {
-                    phoneNumbers = callIndividualService(evidenceRequest.getRequestInfo(),filingIndividualIds);
+                    if (!filingIndividualIds.isEmpty()) {
+                        phoneNumbers = callIndividualService(evidenceRequest.getRequestInfo(), filingIndividualIds);
+                    }
                 }
                 if (Objects.equals(topic, EVIDENCE_SUBMISSION_MESSAGE_OPPOSITE_PARTY)) {
-                    phoneNumbers = callIndividualService(evidenceRequest.getRequestInfo(),oppositeIndividualIds);
+                    if (!oppositeIndividualIds.isEmpty()) {
+                        phoneNumbers = callIndividualService(evidenceRequest.getRequestInfo(), oppositeIndividualIds);
+                    }
                 }
 
                 SmsTemplateData smsTemplateData = SmsTemplateData.builder()
                         .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").asText() : "")
                         .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").asText() : "")
                         .artifactNumber(artifact.getArtifactNumber())
-                        .cnrNumber(caseDetails.has("cnrNumber") ? caseDetails.get("cnrNumber").asText() : "")
+                        .filingNumber(caseDetails.has("filingNumber") ? caseDetails.get("filingNumber").asText() : "")
                         .tenantId(artifact.getTenantId()).build();
 
 
