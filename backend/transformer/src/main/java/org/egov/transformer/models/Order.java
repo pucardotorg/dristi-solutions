@@ -108,10 +108,18 @@ public class Order {
     private Workflow workflow = null;
 
     @JsonProperty("orderDetails")
-    private Order orderDetails;
+    private Object orderDetails;
 
     @JsonProperty("taskDetails")
     private Task taskDetails;
+
+    @JsonProperty("compositeItems")
+    private Object compositeItems = null;
+
+    @JsonProperty("orderTitle")
+    @NotNull
+    private String orderTitle = null;
+
 
 
     public Order addApplicationIdsItem(String applicationNumbersItem) {
