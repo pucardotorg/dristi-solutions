@@ -108,7 +108,7 @@ public class Order {
     private Workflow workflow = null;
 
     @JsonProperty("orderDetails")
-    private Order orderDetails;
+    private Object orderDetails;
 
     @JsonProperty("taskDetails")
     private Task taskDetails;

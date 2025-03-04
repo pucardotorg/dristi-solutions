@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.Map;
 
 @Data
 @AllArgsConstructor
@@ -27,7 +28,7 @@ public class OrderAndNotification {
     private String title;
 
     @JsonProperty("parties")
-    private List<Object> parties;
+    private List<Map<String, Object>> parties;
 
     @JsonProperty("status")
     private String status;
@@ -50,9 +51,4 @@ public class OrderAndNotification {
     @JsonProperty("judgeIds")
     private List<String> judgeIds;
 
-    @JsonProperty("description")
-    private String description;
-
-    @JsonProperty("comments")
-    private String comments;
 }

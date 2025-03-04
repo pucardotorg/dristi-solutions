@@ -32,7 +32,6 @@ public class NotificationImpl implements EventListener<Notification, RequestInfo
         OrderAndNotification orderAndNotification = OrderAndNotification.builder()
                 .type(event.getNotificationType())
                 .id(event.getNotificationNumber())
-                .comments(event.getComments())
                 .courtId(null)  // no court id
                 .parties(new ArrayList<>())  // no parties
                 .status(event.getStatus())
@@ -43,7 +42,6 @@ public class NotificationImpl implements EventListener<Notification, RequestInfo
                 .filingNumbers( new ArrayList<>())
                 .caseNumbers(event.getCaseNumber() != null ? event.getCaseNumber() : new ArrayList<>())
                 .judgeIds( new ArrayList<>())
-                .description(null)
                 .build();
 
         OrderNotificationRequest request = OrderNotificationRequest.builder()

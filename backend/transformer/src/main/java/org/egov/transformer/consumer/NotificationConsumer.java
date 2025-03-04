@@ -24,22 +24,6 @@ public class NotificationConsumer {
         this.objectMapper = objectMapper;
     }
 
-    @KafkaListener(topics = {"${transformer.consumer.create.notification.topic}"})
-    public void saveNotification(ConsumerRecord<String, Object> payload,
-                                 @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
-        try {
-            String saveNotificationRequest = objectMapper.writeValueAsString(payload.value());
-            NotificationRequest request = objectMapper.readValue(saveNotificationRequest, NotificationRequest.class);
-            eventManager.notifyByObjects(request.getNotification(), request.getRequestInfo());
-
-        } catch (Exception e) {
-            log.debug("create payload : {}", payload.value());
-            log.error("Error occurred while serializing save notification request", e);
-
-        }
-
-
-    }
 
     @KafkaListener(topics = {"${transformer.consumer.update.notification.topic}"})
     public void updateOrder(ConsumerRecord<String, Object> payload,
