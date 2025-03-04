@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { formatDate } from "../../../cases/src/utils";
 import { formatDateDifference } from "../../../orders/src/utils";
+import { formatNoticeDeliveryDate } from "../utils";
 
 const customColumnStyle = { whiteSpace: "nowrap" };
 
@@ -487,6 +488,7 @@ export const UICustomizations = {
     },
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       const caseDetails = handleTaskDetails(row?.taskDetails);
+      const delieveryDate = formatNoticeDeliveryDate(caseDetails?.deliveryChannels?.statusChangeDate || row?.createdDate);
       switch (key) {
         case "CASE_NAME_ID":
           return `${row?.caseName}, ${value}`;
@@ -498,6 +500,8 @@ export const UICustomizations = {
           return t(value);
         case "DELIEVERY_CHANNEL":
           return caseDetails?.deliveryChannels?.channelName || "N/A";
+        case "DELIEVRY_DATE":
+          return delieveryDate || "-";
         default:
           return t("ES_COMMON_NA");
       }

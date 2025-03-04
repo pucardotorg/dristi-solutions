@@ -112,9 +112,11 @@ function ViewCaseFile({ t, inViewCase = false }) {
         }
         section[key]?.form?.forEach((item) => {
           Object.keys(item)?.forEach((field) => {
-            if (item[field]?.FSOError && field != "image" && field != "title") {
-              total++;
-              inputErrors++;
+            if (item[field]?.FSOError && field != "image" && field != "title" && field != "witnessTitle") {
+              if (!item[field]?.isWarning) {
+                total++;
+                inputErrors++;
+              }
             }
           });
         });
