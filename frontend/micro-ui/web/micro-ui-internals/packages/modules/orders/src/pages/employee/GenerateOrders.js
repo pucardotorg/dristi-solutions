@@ -3125,7 +3125,7 @@ const GenerateOrders = () => {
       await DRISTIService.addADiaryEntry(
         {
           diaryEntry: {
-            judgeId: "super",
+            judgeId: judgeId,
             businessOfDay: businessOfTheDay,
             tenantId: tenantId,
             entryDate: new Date().setHours(0, 0, 0, 0),
