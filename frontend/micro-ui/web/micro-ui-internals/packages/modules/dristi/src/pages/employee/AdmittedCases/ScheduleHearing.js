@@ -40,6 +40,8 @@ const ScheduleHearing = ({
           tenantId: tenantId,
           filingNumber: [caseData.filingNumber],
           hearingType: data.purpose,
+          courtCaseNumber:  caseData?.case?.courtCaseNumber,
+          cmpNumber: caseData?.case?.cmpNumber,
           status: true,
           attendees: [
             ...Object.values(data.participant)

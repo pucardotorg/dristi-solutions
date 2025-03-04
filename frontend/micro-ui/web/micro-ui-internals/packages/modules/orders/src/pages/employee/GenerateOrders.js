@@ -646,64 +646,66 @@ const GenerateOrders = () => {
         });
       }
       if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(orderType)) {
-        orderTypeForm = orderTypeForm?.map((section) => {
-          return {
-            ...section,
-            body: section.body.map((field) => {
-              if (field.key === "namesOfPartiesRequired") {
-                return {
-                  ...field,
-                  populators: {
-                    ...field.populators,
-                    options: [...complainants, ...respondents, ...unJoinedLitigant, ...witnesses],
-                  },
-                };
-              }
-              if (field.key === "hearingPurpose") {
-                return {
-                  ...field,
-                  populators: {
-                    ...field.populators,
-                    mdmsConfig: {
-                      ...field.populators?.mdmsConfig,
-                      select: `(data) => {
+        const parties = [...unJoinedLitigant, ...witnesses];
+        orderTypeForm = orderTypeForm
+          ?.filter((section) => !(section?.body?.[0]?.key === "unjoinedPartiesNote" && parties?.length === 0))
+          ?.map((section) => {
+            return {
+              ...section,
+              body: section.body.map((field) => {
+                if (field.key === "namesOfPartiesRequired") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      options: [...complainants, ...respondents, ...unJoinedLitigant, ...witnesses],
+                    },
+                  };
+                }
+                if (field.key === "hearingPurpose") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      mdmsConfig: {
+                        ...field.populators?.mdmsConfig,
+                        select: `(data) => {
                         return (  // based on isDcaFiled condition, we can filter out DCA hearing here if needed.
                           data?.Hearing?.HearingType|| []
                         );
                       }`,
-                    },
-                  },
-                };
-              }
-              if (field.key === "unjoinedPartiesNote") {
-                const parties = [...unJoinedLitigant, ...witnesses];
-                return {
-                  ...field,
-                  populators: {
-                    ...field.populators,
-                    inputs: [
-                      {
-                        ...field.populators.inputs[0],
-                        children: (
-                          <React.Fragment>
-                            {parties.map((party, index) => (
-                              <div className="list-div" key={index}>
-                                <p style={{ margin: "0px", fontSize: "14px" }}>
-                                  {index + 1}. {party?.name}
-                                </p>
-                              </div>
-                            ))}
-                          </React.Fragment>
-                        ),
                       },
-                    ],
-                  },
-                };
-              }
-              return field;
-            }),
-          };
-        });
+                    },
+                  };
+                }
+                if (field.key === "unjoinedPartiesNote") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      inputs: [
+                        {
+                          ...field.populators.inputs[0],
+                          children: (
+                            <React.Fragment>
+                              {parties.map((party, index) => (
+                                <div className="list-div" key={index}>
+                                  <p style={{ margin: "0px", fontSize: "14px" }}>
+                                    {index + 1}. {party?.name}
+                                  </p>
+                                </div>
+                              ))}
+                            </React.Fragment>
+                          ),
+                        },
+                      ],
+                    },
+                  };
+                }
+                return field;
+              }),
+            };
+          });
       }
       if (orderType === "MANDATORY_SUBMISSIONS_RESPONSES") {
         orderTypeForm = orderTypeForm?.map((section) => {
@@ -1166,7 +1168,7 @@ const GenerateOrders = () => {
     } else if (["WARRANT", "SUMMONS", "NOTICE"].includes(type)) {
       parties = orderSchema?.orderDetails?.respondentName ? [orderSchema?.orderDetails?.respondentName] : [];
     } else if (type === "SECTION_202_CRPC") {
-      parties = [orderSchema?.orderDetails.soughtOfDetails];
+      parties = [orderSchema?.orderDetails?.applicationFilledBy, orderSchema?.orderDetails.soughtOfDetails];
     } else if (
       orderSchema?.orderDetails?.parties?.length > 0 &&
       ["BAIL", "REJECT_VOLUNTARY_SUBMISSIONS", "APPROVE_VOLUNTARY_SUBMISSIONS", "REJECTION_RESCHEDULE_REQUEST", "CHECKOUT_REJECT"].includes(type)
@@ -1798,6 +1800,8 @@ const GenerateOrders = () => {
       { tenantId }
     );
   };
+  const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
+
   const handleRescheduleHearing = async ({ hearingType, hearingBookingId, rescheduledRequestId, comments, requesterId, date }) => {
     await schedulerService.RescheduleHearing(
       {
@@ -1806,7 +1810,7 @@ const GenerateOrders = () => {
             rescheduledRequestId: rescheduledRequestId,
             hearingBookingId: hearingBookingId,
             tenantId: tenantId,
-            judgeId: "super",
+            judgeId: judgeId,
             caseId: filingNumber,
             hearingType: "ADMISSION",
             requesterId: requesterId,
@@ -2414,6 +2418,8 @@ const GenerateOrders = () => {
               tenantId: tenantId,
               filingNumber: [filingNumber],
               cnrNumbers: cnrNumber ? [cnrNumber] : [],
+              courtCaseNumber: caseDetails?.courtCaseNumber,
+              cmpNumber: caseDetails?.cmpNumber,
               hearingType: currentOrder?.additionalDetails?.formdata?.hearingPurpose?.type,
               status: true,
               attendees: [
@@ -2494,7 +2500,7 @@ const GenerateOrders = () => {
         await DRISTIService.addADiaryEntry(
           {
             diaryEntry: {
-              judgeId: "super",
+              judgeId: judgeId,
               businessOfDay: businessOfTheDay,
               tenantId: tenantId,
               entryDate: new Date().setHours(0, 0, 0, 0),

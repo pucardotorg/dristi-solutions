@@ -4,9 +4,6 @@ const {
   search_case,
   search_sunbirdrc_credential_service,
   create_pdf,
-  search_individual,
-  search_application,
-  search_individual_uuid,
   create_pdf_v2,
 } = require("../api");
 const { renderError } = require("../utils/renderError");
@@ -93,60 +90,6 @@ async function orderSection202crpc(req, res, qrCode, order, compositeOrder) {
     //   renderError(res, "Court establishment MDMS master not found", 404);
     // }
 
-    // Search for order details
-
-    const respondentParty = courtCase.litigants.find(
-      (party) => party.partyType === "respondent.primary"
-    );
-    if (!respondentParty) {
-      return renderError(
-        res,
-        "No party with partyType 'respondent.primary' found",
-        400
-      );
-    }
-
-    const resIndividual = await handleApiCall(
-      res,
-      () =>
-        search_individual(tenantId, respondentParty.individualId, requestInfo),
-      "Failed to query individual service using individualId"
-    );
-    const respondentIndividual = resIndividual?.data?.Individual[0];
-    if (!respondentIndividual) {
-      renderError(res, "Respondent individual not found", 404);
-    }
-
-    const resApplication = await handleApiCall(
-      res,
-      () =>
-        search_application(
-          tenantId,
-          order?.additionalDetails?.formdata?.refApplicationId,
-          requestInfo
-        ),
-      "Failed to query application service"
-    );
-    const application = resApplication?.data?.applicationList[0];
-    if (!application) {
-      return renderError(res, "Application not found", 404);
-    }
-
-    const behalfOfIndividual = await handleApiCall(
-      res,
-      () =>
-        search_individual_uuid(
-          tenantId,
-          application.onBehalfOf[0],
-          requestInfo
-        ),
-      "Failed to query individual service using id"
-    );
-    const onbehalfOfIndividual = behalfOfIndividual?.data?.Individual[0];
-    if (!onbehalfOfIndividual) {
-      renderError(res, "Individual not found", 404);
-    }
-
     // Handle QR code if enabled
     let base64Url = "";
     if (qrCode === "true") {
@@ -207,20 +150,8 @@ async function orderSection202crpc(req, res, qrCode, order, compositeOrder) {
     const year = currentDate.getFullYear();
     const additionalComments = order?.comments || "";
     // Prepare data for PDF generation
-    const partyName = [
-      onbehalfOfIndividual.name.givenName,
-      onbehalfOfIndividual.name.otherNames,
-      onbehalfOfIndividual.name.familyName,
-    ]
-      .filter(Boolean)
-      .join(" ");
-    const otherPartyName = [
-      respondentIndividual.name.givenName,
-      respondentIndividual.name.otherNames,
-      respondentIndividual.name.familyName,
-    ]
-      .filter(Boolean)
-      .join(" ");
+    const complainantName = order?.additionalDetails?.formdata?.applicationFilledBy?.name || "";
+    const respondentName = order?.additionalDetails?.formdata?.detailsSeekedOf?.name || "";
     const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
     const data = {
       Data: [
@@ -235,8 +166,8 @@ async function orderSection202crpc(req, res, qrCode, order, compositeOrder) {
           day: day,
           month: month,
           year: year,
-          complainantName: partyName,
-          respondentName: otherPartyName,
+          complainantName: complainantName,
+          respondentName: respondentName,
           section: "202",
           numberOfDays: "",
           additionalComments: additionalComments,
