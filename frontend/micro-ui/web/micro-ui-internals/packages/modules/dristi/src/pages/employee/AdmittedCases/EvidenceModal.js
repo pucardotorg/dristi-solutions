@@ -956,7 +956,7 @@ const EvidenceModal = ({
           } else {
             if (compositeOrderObj?.orderNumber) {
               const compositeItems = [
-                ...compositeOrderObj?.compositeItems,
+                ...compositeOrderObj?.compositeItems?.filter((item) => item?.isEnabled),
                 {
                   orderType: orderType,
                   orderSchema: {
@@ -975,7 +975,7 @@ const EvidenceModal = ({
               await ordersService.addOrderItem(
                 {
                   order: {
-                    ...compositeOrderObj?.filter((item) => item?.isEnabled),
+                    ...compositeOrderObj,
                     compositeItems,
                     ...(hearingNumber && {
                       hearingNumber: hearingNumber,
@@ -1156,7 +1156,9 @@ const EvidenceModal = ({
         setShowSuccessModal(true);
         setShowConfirmationModal(null);
       }
-    } catch (error) {}
+    } catch (error) {
+      toast.error(t("SOMETHING_WENT_WRONG"));
+    }
   };
 
   const handleBack = () => {
