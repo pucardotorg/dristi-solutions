@@ -11,7 +11,11 @@ const Heading = (props) => {
 
 const CloseBtn = (props) => {
   return (
-    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
+    <div
+      className="composite-orders-error-modal-close"
+      onClick={props?.onClick}
+      style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}
+    >
       <CloseSvg />
     </div>
   );
@@ -31,7 +35,6 @@ function CompositeOrdersErrorModal({ t, showOrderValidationModal, setShowOrderVa
       popUpStyleMain={{ zIndex: "1000" }}
     >
       <div>
-        {console.log("showOrderValidationModal", showOrderValidationModal)}
         <h2>{showOrderValidationModal?.errorMessage}</h2>
       </div>
     </Modal>

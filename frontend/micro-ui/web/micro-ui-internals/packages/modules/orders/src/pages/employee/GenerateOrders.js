@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
-import { Header, FormComposerV2, Toast, Button, EditIcon, Modal, CloseButton, TextInput } from "@egovernments/digit-ui-react-components";
+import { Header, FormComposerV2, Toast, Button, EditIcon, Modal, CloseButton, TextInput, CloseSvg } from "@egovernments/digit-ui-react-components";
 import {
   applicationTypeConfig,
   configCheckout,
@@ -150,6 +150,17 @@ const OutlinedInfoIcon = () => (
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
+};
+const CloseBtn = (props) => {
+  return (
+    <div
+      className="composite-orders-error-modal-close"
+      onClick={props?.onClick}
+      style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}
+    >
+      <CloseSvg />
+    </div>
+  );
 };
 
 const stateSlaMap = {
@@ -722,10 +733,10 @@ const GenerateOrders = () => {
         }
       }
       if (error?.isIncompatible && !error?.isDuplicate) {
-        errorMessage = "ORDER_TYPES_CAN_NOT_BE_GROUPED_TOGETHER";
+        errorMessage = t("ORDER_TYPES_CAN_NOT_BE_GROUPED_TOGETHER");
       }
       if (!error?.isIncompatible && error?.isDuplicate) {
-        errorMessage = "ORDER_TYPES_ARE_DUPLICATED";
+        errorMessage = t("ORDER_TYPES_ARE_DUPLICATED");
       }
       if (error?.isIncompatible || error?.isDuplicate) {
         return { showModal: true, errorMessage };
@@ -3894,10 +3905,13 @@ const GenerateOrders = () => {
       </div>
       <div className="view-order" style={{ marginBottom: "130px", flex: 3 }}>
         {
-          <div className="header-title-icon" style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+          <div
+            className="header-title-icon"
+            style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}
+          >
             {
               <Header className="order-header">{`${
-                currentOrder?.orderCategory === "INTERMEDIATE" ? `${t("CS_ORDER")}${selectedOrder + 1}` : OrderTitles?.[selectedOrder]
+                currentOrder?.orderCategory === "INTERMEDIATE" ? `${t("CS_ORDER")} ${selectedOrder + 1}` : OrderTitles?.[selectedOrder]
               }`}</Header>
             }
 
@@ -3908,7 +3922,7 @@ const GenerateOrders = () => {
                   setShowEditTitleNameModal(true);
                 }}
               >
-                <React.Fragment>
+                <div className="edit-order-title-icon">
                   <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`Click`}>
                     {" "}
                     <EditIcon />
@@ -3916,7 +3930,7 @@ const GenerateOrders = () => {
                   <ReactTooltip id={`Click`} place="bottom" content={t("CS_CLICK_TO_EDIT") || ""}>
                     {t("CS_CLICK_TO_EDIT")}
                   </ReactTooltip>
-                </React.Fragment>
+                </div>
               </div>
             )}
           </div>
@@ -4024,6 +4038,7 @@ const GenerateOrders = () => {
               className="add-new-form"
               icon={<CustomAddIcon />}
               label={t("ADD_ITEM")}
+              style={{ border: "none" }}
             ></Button>
           </div>
         )}
@@ -4106,7 +4121,7 @@ const GenerateOrders = () => {
       {showEditTitleNameModal && (
         <Modal
           headerBarEnd={
-            <CloseButton
+            <CloseBtn
               onClick={() => {
                 setShowEditTitleNameModal(false);
               }}

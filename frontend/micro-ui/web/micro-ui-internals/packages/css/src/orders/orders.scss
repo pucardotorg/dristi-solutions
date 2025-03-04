@@ -580,6 +580,15 @@
         }
       }
     }
+
+    .edit-order-title-icon {
+      span {
+        cursor: pointer !important;
+        svg path {
+          fill: black;
+        }
+      }
+    }
   }
 
   .bail-submission {
