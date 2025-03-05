@@ -15,7 +15,7 @@ export const Urls = {
     addBulkDiaryEntries: "/ab-diary/case/diary/v1/bulkEntry",
     createNotification: "/notification/v1/_create",
     updateNotification: "/notification/v1/_update",
-    searchNotification : "/notification/v1/_search",
+    searchNotification: "/notification/v1/_search",
     aDiaryEntryUpdate: "/ab-diary/case/diary/entry/v1/update",
   },
   order: {

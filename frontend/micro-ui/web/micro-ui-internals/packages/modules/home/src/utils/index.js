@@ -81,4 +81,43 @@ export const getTaxPeriodByBusinessService = (taxPeriod = [], businessService) =
   return taxPeriod?.find((data) => data?.service === businessService) || {};
 };
 
+export const formatNoticeDeliveryDate = (inputDate) => {
+  if (!inputDate) return "";
+
+  let dateObj;
+
+  if (!isNaN(inputDate) && inputDate.toString().length >= 10) {
+    dateObj = new Date(Number(inputDate));
+  } else if (typeof inputDate === "string") {
+    let parts;
+    if (inputDate.includes("-")) {
+      parts = inputDate.split("-");
+    } else if (inputDate.includes("/")) {
+      parts = inputDate.split("/");
+    }
+
+    if (parts && parts.length === 3) {
+      if (inputDate.includes("-") && parts[0].length === 4) {
+        const [year, month, day] = parts.map(Number);
+        dateObj = new Date(year, month - 1, day);
+      } else {
+        const [day, month, year] = parts.map(Number);
+        dateObj = new Date(year, month - 1, day);
+      }
+    } else {
+      return "";
+    }
+  } else if (inputDate instanceof Date) {
+    dateObj = inputDate;
+  } else {
+    return "";
+  }
+
+  const dd = String(dateObj.getDate()).padStart(2, "0");
+  const mm = String(dateObj.getMonth() + 1).padStart(2, "0");
+  const yyyy = dateObj.getFullYear();
+
+  return `${dd}-${mm}-${yyyy}`;
+};
+
 export default {};

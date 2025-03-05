@@ -19,6 +19,7 @@ import isEmpty from "lodash/isEmpty";
 import TranscriptComponent from "./Transcription";
 import TasksComponent from "../../../../home/src/components/TaskComponent";
 import { SubmissionWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/submissionWorkflow";
+import { getFormattedName } from "../../utils";
 
 const SECOND = 1000;
 
@@ -188,7 +189,7 @@ const InsideHearingMainPage = () => {
       setAdditionalDetails(responseList?.additionalDetails);
       setOptions(
         responseList?.additionalDetails?.witnessDetails?.formdata?.map((witness) => ({
-          label: [witness?.data?.firstName, witness?.data?.lastName].filter(Boolean).join(" "),
+          label: getFormattedName(witness?.data?.firstName, witness?.data?.middleName, witness?.data?.lastName, witness?.data?.witnessDesignation),
           value: witness.data.uuid,
         }))
       );
@@ -198,7 +199,7 @@ const InsideHearingMainPage = () => {
         hearing?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitnessDefault?.uuid)?.deposition
       );
     }
-  }, [caseDataResponse]);
+  }, [caseDataResponse, hearing?.additionalDetails?.witnessDepositions]);
 
   const handleModal = () => {
     setIsOpen(!isOpen);
@@ -407,7 +408,12 @@ const InsideHearingMainPage = () => {
                 selected={
                   IsSelectedWitness
                     ? {
-                        label: [selectedWitness?.firstName, selectedWitness?.lastName].filter(Boolean).join(" "),
+                        label: getFormattedName(
+                          selectedWitness?.firstName,
+                          selectedWitness?.middleName,
+                          selectedWitness?.lastName,
+                          selectedWitness?.witnessDesignation
+                        ),
                         value: selectedWitness?.uuid,
                       }
                     : {}

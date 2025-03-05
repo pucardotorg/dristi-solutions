@@ -367,6 +367,7 @@ public class CaseRepository {
         List<Integer> preparedStmtArgList = new ArrayList<>();
 
         litigantQuery = queryBuilder.getLitigantSearchQuery(ids, preparedStmtListDoc, preparedStmtArgList);
+        litigantQuery = queryBuilder.addOrderByQueryForLitigants(litigantQuery);
         log.info("Final litigant query :: {}", litigantQuery);
         Map<UUID, List<Party>> litigantMap = jdbcTemplate.query(litigantQuery, preparedStmtListDoc.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), litigantRowMapper);
         if (litigantMap != null) {

@@ -18,11 +18,7 @@ import org.egov.common.contract.workflow.State;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.ServiceRequestRepository;
-import org.pucar.dristi.web.models.CaseCriteria;
-import org.pucar.dristi.web.models.CaseRequest;
-import org.pucar.dristi.web.models.CaseSearchRequest;
-import org.pucar.dristi.web.models.CourtCase;
-import org.pucar.dristi.web.models.RequestInfoWrapper;
+import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -50,7 +46,7 @@ public class WorkflowService {
 
     public void updateWorkflowStatus(CaseRequest caseRequest) {
             try {
-                ProcessInstance processInstance = getProcessInstance(caseRequest.getCases());
+                ProcessInstanceObject processInstance = getProcessInstance(caseRequest.getCases());
                 ProcessInstanceRequest workflowRequest = new ProcessInstanceRequest(caseRequest.getRequestInfo(), Collections.singletonList(processInstance));
                 log.info("ProcessInstance Request :: {}", workflowRequest);
                 String state=callWorkFlow(workflowRequest).getState();
@@ -78,10 +74,10 @@ public class WorkflowService {
         }
     }
 
-    public ProcessInstance getProcessInstance(CourtCase courtCase) {
+    public ProcessInstanceObject getProcessInstance(CourtCase courtCase) {
         try {
-            Workflow workflow = courtCase.getWorkflow();
-            ProcessInstance processInstance = new ProcessInstance();
+            WorkflowObject workflow = courtCase.getWorkflow();
+            ProcessInstanceObject processInstance = new ProcessInstanceObject();
             processInstance.setBusinessId(courtCase.getFilingNumber());
             processInstance.setAction(workflow.getAction());
             processInstance.setModuleName(config.getCaseBusinessName());
@@ -89,6 +85,7 @@ public class WorkflowService {
             processInstance.setBusinessService(config.getCaseBusinessServiceName());
             processInstance.setDocuments(workflow.getDocuments());
             processInstance.setComment(workflow.getComments());
+            processInstance.setAdditionalDetails(workflow.getAdditionalDetails());
             if (!CollectionUtils.isEmpty(workflow.getAssignes())) {
                 List<User> users = new ArrayList<>();
                 workflow.getAssignes().forEach(uuid -> {
