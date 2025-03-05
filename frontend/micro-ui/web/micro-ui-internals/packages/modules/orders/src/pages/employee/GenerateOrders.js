@@ -3698,8 +3698,12 @@ const GenerateOrders = () => {
           const body = modifiedFormConfig?.[i]?.[p]?.body;
 
           for (let k = 0; k < body?.length; k++) {
-            if (body?.[k]?.isMandatory && !formdata[body?.[k]?.key]) {
-              itemErrors.push({ key: body?.[k]?.label || body?.[k]?.key, errorMessage: "THIS_IS MANDATORY_FIELD" });
+            if (body?.[k]?.populators?.hideInForm) {
+              continue;
+            } else {
+              if (body?.[k]?.isMandatory && !formdata[body?.[k]?.key]) {
+                itemErrors.push({ key: body?.[k]?.label || body?.[k]?.key, errorMessage: "THIS_IS_MANDATORY_FIELD" });
+              }
             }
           }
         }

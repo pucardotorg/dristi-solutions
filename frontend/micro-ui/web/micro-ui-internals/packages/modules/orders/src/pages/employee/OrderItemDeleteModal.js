@@ -21,7 +21,6 @@ function OrderItemDeleteModal({ t, deleteOrderItemIndex, setDeleteOrderItemIndex
   const handleOnClose = () => {
     setDeleteOrderItemIndex(null);
   };
-  debugger;
 
   return (
     <Modal
@@ -30,7 +29,7 @@ function OrderItemDeleteModal({ t, deleteOrderItemIndex, setDeleteOrderItemIndex
       actionSaveLabel={t("DELETE_ORDER_ITEM")}
       actionSaveOnSubmit={() => handleDeleteOrderItem(deleteOrderItemIndex)}
       actionCancelOnSubmit={handleOnClose}
-      actionCancelLabel={t("CS_BACK ")}
+      actionCancelLabel={t("CS_BACK")}
       popUpStyleMain={{ zIndex: "1000" }}
     >
       <div>
