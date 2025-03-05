@@ -39,6 +39,7 @@ const TopBarComponent = ({
   // };
   const emblemBigImageLink = window?.globalConfigs?.getConfig("EMBLEM_BIG");
   const onCourtsImageLink = window?.globalConfigs?.getConfig("ON_COURTS_LOGO");
+
   return (
     <div className="navbar" style={{ zIndex: "999" }}>
       <div className="center-container back-wrapper">

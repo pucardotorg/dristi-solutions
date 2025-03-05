@@ -22,7 +22,6 @@ const ChangeLanguage = ({ isProfileComponent, ...prop }) => {
   const selectedLanguageLabel = useMemo(() => languages?.find((language) => language?.value === selected)?.label, [selected]);
 
   if (isLoading) return null;
-  console.log("languages :>> ", languages);
 
   if (isDropdown) {
     return (
