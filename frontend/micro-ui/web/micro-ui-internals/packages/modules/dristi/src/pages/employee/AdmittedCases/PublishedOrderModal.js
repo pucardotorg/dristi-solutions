@@ -305,6 +305,7 @@ function PublishedOrderModal({
               displayFilename={docs?.additionalDetails?.name}
               showDownloadOption={false}
               documentName={docs?.additionalDetails?.name}
+              isLocalizationRequired={false}
             />
           ))
         ) : (

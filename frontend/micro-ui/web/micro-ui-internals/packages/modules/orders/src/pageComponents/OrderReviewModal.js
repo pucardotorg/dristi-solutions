@@ -28,7 +28,7 @@ function OrderReviewModal({
   currentDiaryEntry,
   handleUpdateBusinessOfDayEntry,
   handleReviewGoBack,
-  defaultBOTD,
+  businessOfDay,
 }) {
   const [fileStoreId, setFileStoreID] = useState(null);
   const [fileName, setFileName] = useState();
@@ -38,7 +38,7 @@ function OrderReviewModal({
   const [showErrorToast, setShowErrorToast] = useState(null);
   const [isDisabled, setIsDisabled] = useState();
   const orderFileStore = order?.documents?.find((doc) => doc?.documentType === "SIGNED")?.fileStore;
-  const [businessDay, setBusinessDay] = useState(defaultBOTD);
+  const [businessDay, setBusinessDay] = useState(businessOfDay);
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -197,7 +197,7 @@ function OrderReviewModal({
                   setBusinessOfTheDay(e.target.value);
                 }}
                 disable={isDisabled}
-                defaultValue={currentDiaryEntry?.businessOfDay || defaultBOTD}
+                defaultValue={currentDiaryEntry?.businessOfDay || businessDay}
                 style={{ minWidth: "500px" }}
                 textInputStyle={{ maxWidth: "100%" }}
               />
