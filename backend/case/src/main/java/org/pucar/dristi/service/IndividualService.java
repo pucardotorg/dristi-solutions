@@ -41,7 +41,7 @@ public class IndividualService {
             individualSearchRequest.setIndividual(individualSearch);
 
             StringBuilder uri = new StringBuilder(config.getIndividualHost()).append(config.getIndividualSearchEndpoint());
-            uri.append("?limit=1").append("&offset=0").append("&tenantId=").append(requestInfo.getUserInfo().getTenantId()).append("&includeDeleted=true");
+            uri.append("?limit=1").append("&offset=0").append("&tenantId=").append(requestInfo.getUserInfo().getTenantId());
             Boolean isIndividualValid = individualUtils.individualCall(individualSearchRequest, uri);
             return isIndividualValid;
         } catch (CustomException e) {
@@ -102,8 +102,7 @@ public class IndividualService {
                 .append(config.getIndividualSearchEndpoint())
                 .append("?limit=").append(individualId.size())
                 .append("&offset=0")
-                .append("&tenantId=").append(requestInfo.getUserInfo().getTenantId())
-                .append("&includeDeleted=true");
+                .append("&tenantId=").append(requestInfo.getUserInfo().getTenantId());
     }
 
     public String getIndividualId(RequestInfo requestInfo) {
@@ -116,7 +115,7 @@ public class IndividualService {
             individualSearchRequest.setIndividual(individualSearch);
 
             StringBuilder uri = new StringBuilder(config.getIndividualHost()).append(config.getIndividualSearchEndpoint());
-            uri.append("?limit=1").append("&offset=0").append("&tenantId=").append(requestInfo.getUserInfo().getTenantId()).append("&includeDeleted=true");
+            uri.append("?limit=1").append("&offset=0").append("&tenantId=").append(requestInfo.getUserInfo().getTenantId());
             return individualUtils.getIndividualId(individualSearchRequest, uri);
 
         } catch(CustomException e){

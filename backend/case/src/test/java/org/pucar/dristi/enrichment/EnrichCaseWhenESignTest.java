@@ -36,7 +36,7 @@ class EnrichCaseWhenESignTest {
     private CaseRequest caseRequest;
     private RequestInfo requestInfo;
     private CourtCase courtCase;
-
+    private WorkflowObject workflow = new WorkflowObject();
     @BeforeEach
     void setUp() {
         requestInfo = new RequestInfo();
@@ -46,13 +46,15 @@ class EnrichCaseWhenESignTest {
 
     @Test
     void testCanEnrich_True() {
-        courtCase.setWorkflow(Workflow.builder().action(E_SIGN).build());
+        workflow.setAction(E_SIGN);
+        courtCase.setWorkflow(workflow);
         assertTrue(enrichCaseWhenESign.canEnrich(caseRequest));
     }
 
     @Test
     void testCanEnrich_False() {
-        courtCase.setWorkflow(Workflow.builder().action("OTHER_ACTION").build());
+        workflow.setAction("OTHER_ACTION");
+        courtCase.setWorkflow(workflow);
         assertFalse(enrichCaseWhenESign.canEnrich(caseRequest));
     }
 

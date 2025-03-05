@@ -9,9 +9,7 @@ import org.egov.common.contract.workflow.*;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.ServiceRequestRepository;
-import org.pucar.dristi.web.models.Hearing;
-import org.pucar.dristi.web.models.HearingRequest;
-import org.pucar.dristi.web.models.RequestInfoWrapper;
+import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -45,7 +43,7 @@ public class WorkflowService {
     public void updateWorkflowStatus(HearingRequest hearingRequest) {
         try {
             Hearing hearing = hearingRequest.getHearing();
-            ProcessInstance processInstance = getProcessInstanceForHearing(hearing);
+            ProcessInstanceObject processInstance = getProcessInstanceForHearing(hearing);
             ProcessInstanceRequest workflowRequest = new ProcessInstanceRequest(hearingRequest.getRequestInfo(), Collections.singletonList(processInstance));
             log.info("ProcessInstance Request :: {}", workflowRequest);
             State workflowState = callWorkFlow(workflowRequest);
@@ -86,10 +84,10 @@ public class WorkflowService {
      * @param hearing
      * @return payload for workflow service call
      */
-    ProcessInstance getProcessInstanceForHearing(Hearing hearing) {
+    ProcessInstanceObject getProcessInstanceForHearing(Hearing hearing) {
         try {
-            Workflow workflow = hearing.getWorkflow();
-            ProcessInstance processInstance = new ProcessInstance();
+            WorkflowObject workflow = hearing.getWorkflow();
+            ProcessInstanceObject processInstance = new ProcessInstanceObject();
             processInstance.setBusinessId(hearing.getHearingId());
             processInstance.setAction(workflow.getAction());
             processInstance.setModuleName(config.getHearingBusinessName());
@@ -97,6 +95,7 @@ public class WorkflowService {
             processInstance.setBusinessService(config.getHearingBusinessServiceName());
             processInstance.setDocuments(workflow.getDocuments());
             processInstance.setComment(workflow.getComments());
+            processInstance.setAdditionalDetails(workflow.getAdditionalDetails());
             if (!CollectionUtils.isEmpty(workflow.getAssignes())) {
                 List<User> users = new ArrayList<>();
                 workflow.getAssignes().forEach(uuid -> {
