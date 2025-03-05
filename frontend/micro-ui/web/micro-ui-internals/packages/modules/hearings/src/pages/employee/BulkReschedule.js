@@ -348,7 +348,7 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
           isMandatory: true,
           populators: {
             name: "fromDate",
-            error: "Required",
+            // error: "Required",
           },
         },
         {
@@ -358,7 +358,7 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
           type: "component",
           component: "CustomDatePicker",
           disable: currentDiaryEntry ? true : false,
-          populators: { name: "toDate", error: "Required" },
+          populators: {},
         },
         {
           label: "BULK_SLOT",
@@ -372,7 +372,7 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
             optionsKey: "slotName",
             allowMultiSelect: true,
             isMandatory: true,
-            defaultText: "select slot",
+            // defaultText: "select slot",
             selectedText: "Slot(s)",
             mdmsConfig: {
               masterName: "slots",
@@ -413,9 +413,9 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
         setError("toDate", { message: "BULK_INVALID_DATE_RANGE" });
         setValue("toDate", null);
         newToDate = null;
+      } else if (Object.keys(formState?.errors).includes("toDate") && date2) {
+        clearErrors("toDate");
       }
-    } else if (Object.keys(formState?.errors).includes("toDate") && newToDate) {
-      clearErrors("toDate");
     }
     if (newFromDate && !compareDates(newFromDate, bulkFromDate)) {
       setBulkFromDate(newFromDate);
@@ -539,6 +539,7 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
           notificationType: bulkFormData?.reason?.name,
           courtId: courtId,
           issuedBy: userInfo?.userName,
+          createdDate: new Date().getTime(),
           workflow: { action: "CREATE" },
           isActive: true,
           documents: [
@@ -590,11 +591,11 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
               }`}
             />
           }
-          actionCancelLabel={t("CS_COMMON_CANCEL")}
+          actionCancelLabel={t("CS_COMMON_BACK")}
           actionCancelOnSubmit={onCancel}
           actionSaveOnSubmit={onSumbitReschedule}
-          actionSaveLabel={t("CS_COMMON_CONFIRM")}
-          style={{ margin: "10px" }}
+          actionSaveLabel={t("RESHEDULE_BTN")}
+          style={{ margin: "10px 0px" }}
           isDisabled={isBulkRescheduleDisabled || bulkHearingsCount === 0}
           actionCancelStyle={{ margin: "10px 0px" }}
           hideModalActionbar={currentDiaryEntry ? true : false}
@@ -611,7 +612,7 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
                 t={t}
                 noBoxShadow
                 inline={true}
-                className={"Bulk-rechedule"}
+                className={"bulk-rechedule"}
                 fieldStyle={{ margin: 0, Background: "black" }}
                 cardStyle={{ minWidth: "100%", Background: "blue" }}
                 cardClassName={"card-shec"}
@@ -655,7 +656,7 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
                   text={t(`${t("BULK_INFO1")} ${bulkHearingsCount} ${t("BULK_INFO2")} ${formatDate(bulkFromDate)} and ${formatDate(bulkToDate)}`)}
                   textStyle={{}}
                   className={`custom-info-card`}
-                  style={{ width: "100%", maxWidth: "960px" }}
+                  style={{ margin: "15px" }}
                 />
               )}
               {!isBulkRescheduleDisabled && !currentDiaryEntry && bulkHearingsCount === 0 && (
@@ -667,7 +668,7 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
                   text={t("BULK_NO_HEARINGS_SELECTED")}
                   textStyle={{}}
                   className={`custom-info-card`}
-                  style={{ width: "100%", maxWidth: "960px" }}
+                  style={{ margin: "15px" }}
                 />
               )}
               {toastMsg && (
@@ -705,7 +706,7 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
               docWidth="100%"
               docHeight="70vh"
               showDownloadOption={false}
-              documentName={"bulk"}
+              documentName={t("BULK_RESCHEDULE")}
             />
           )}
         </Modal>
@@ -716,7 +717,7 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
           headerBarEnd={<CloseBtn onClick={onCancel} />}
           actionCancelLabel={t("CS_COMMON_BACK")}
           actionCancelOnSubmit={onCancel}
-          actionSaveLabel={t("submit")}
+          actionSaveLabel={t("CS_COMMON_SUBMIT")}
           isDisabled={!isSigned}
           actionSaveOnSubmit={uploadSignedPdf}
           className="add-signature-modal"
