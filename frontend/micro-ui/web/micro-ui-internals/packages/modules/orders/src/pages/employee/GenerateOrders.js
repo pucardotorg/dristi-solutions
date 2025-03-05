@@ -61,6 +61,7 @@ import ErrorDataModal from "@egovernments/digit-ui-module-dristi/src/pages/citiz
 import CompositeOrdersErrorModal from "./CompositeOrdersErrorModal";
 import OrderItemDeleteModal from "./OrderItemDeleteModal";
 import TasksComponent from "../../../../home/src/components/TaskComponent";
+import MandatoryFieldsErrorModal from "./MandatoryFieldsErrorModal";
 
 // any order type from orderTypes can not be paired with any order from unAllowedOrderTypes when creating composite order.
 export const compositeOrderAllowedTypes = [
@@ -246,6 +247,7 @@ const GenerateOrders = () => {
   const [OrderTitles, setOrderTitles] = useState([]);
   const [showEditTitleNameModal, setShowEditTitleNameModal] = useState(false);
   const [modalTitleName, setModalTitleName] = useState("");
+  const [showMandatoryFieldsErrorModal, setShowMandatoryFieldsErrorModal] = useState({ showModal: false, errorsData: [] });
 
   const currentDiaryEntry = history.location?.state?.diaryEntry;
 
@@ -3648,6 +3650,65 @@ const GenerateOrders = () => {
     }
   };
 
+  function validateValue(masterName, moduleName, value) {
+    // Retrieve the validation function dynamically
+    const validationFn = Digit?.Customizations?.[masterName]?.[moduleName];
+
+    if (typeof validationFn !== "function") {
+      console.error(`Validation function not found for ${masterName}.${moduleName}`);
+      return false;
+    }
+
+    // Get the validation rules by calling the function
+    const rules = validationFn();
+
+    let isValid = true; // Assume valid initially
+
+    // Check pattern validation (for strings)
+    if (rules.pattern && typeof rules.pattern.test === "function") {
+      isValid = rules.pattern.test(value);
+    }
+
+    // Check min validation (for numbers or dates)
+    if (rules.min !== undefined) {
+      isValid = isValid && value >= rules.min;
+    }
+
+    // Check max validation (for numbers or dates)
+    if (rules.max !== undefined) {
+      isValid = isValid && value <= rules.max;
+    }
+
+    return isValid;
+  }
+
+  const getMandatoryFieldsErrors = (modifiedFormConfig, currentOrder) => {
+    // we are doing this only for composite items
+    let errrors = [];
+    for (let i = 0; i < currentOrder?.compositeItems?.length; i++) {
+      if (!currentOrder?.compositeItems?.[i]?.isEnabled) {
+        continue;
+      } else {
+        const formdata = currentOrder?.compositeItems?.[i]?.orderSchema?.additionalDetails?.formdata;
+        const displayindex = currentOrder?.compositeItems?.[i]?.displayindex;
+        const orderType = currentOrder?.compositeItems?.[i]?.orderType;
+        const allFormSections = [];
+        const itemErrors = [];
+        for (let p = 0; p < modifiedFormConfig?.[i]?.length; p++) {
+          const body = modifiedFormConfig?.[i]?.[p]?.body;
+
+          for (let k = 0; k < body?.length; k++) {
+            if (body?.[k]?.isMandatory && !formdata[body?.[k]?.key]) {
+              itemErrors.push({ key: body?.[k]?.label || body?.[k]?.key, errorMessage: "THIS_IS MANDATORY_FIELD" });
+            }
+          }
+        }
+        errrors.push({ index: i, orderType: orderType, errors: itemErrors });
+      }
+    }
+    return errrors;
+  };
+
   const handleReviewOrderClick = () => {
     const items = structuredClone(currentOrder?.orderCategory === "INTERMEDIATE" ? [currentOrder] : currentOrder?.compositeItems);
     let hasError = false; // Flag to track if an error occurs
@@ -3765,6 +3826,17 @@ const GenerateOrders = () => {
           hasError = true;
           break;
         }
+      }
+    }
+
+    // for composite orders, due to issue in validation of multiple forms in formcomposer
+    // a modal will appear on clicking review order if there are errors for mandatory fields.
+    if (currentOrder?.orderCategory === "COMPOSITE") {
+      // calculation for errors in currentOrder
+      const errors = getMandatoryFieldsErrors(modifiedFormConfig, currentOrder);
+      if (errors?.some((obj) => obj?.errors?.length > 0)) {
+        setShowMandatoryFieldsErrorModal({ showModal: true, errorsData: errors });
+        return;
       }
     }
 
@@ -4140,6 +4212,13 @@ const GenerateOrders = () => {
           <h3 className="input-label">{t("CS_TITLE_Name")}</h3>
           <TextInput defaultValue={currentOrder?.orderTitle} type="text" onChange={(e) => setModalTitleName(e.target.value)} />
         </Modal>
+      )}
+      {showMandatoryFieldsErrorModal?.showModal && (
+        <MandatoryFieldsErrorModal
+          t={t}
+          showMandatoryFieldsErrorModal={showMandatoryFieldsErrorModal}
+          setShowMandatoryFieldsErrorModal={setShowMandatoryFieldsErrorModal}
+        ></MandatoryFieldsErrorModal>
       )}
       {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
     </div>
