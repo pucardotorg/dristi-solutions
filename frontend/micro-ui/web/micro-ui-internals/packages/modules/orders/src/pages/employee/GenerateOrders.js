@@ -3277,8 +3277,8 @@ const GenerateOrders = () => {
                 }),
                 ...advocateData,
               ],
-              startTime: Date.parse(currentOrder?.additionalDetails?.formdata?.hearingDate),
-              endTime: Date.parse(currentOrder?.additionalDetails?.formdata?.hearingDate),
+              startTime: new Date(currentOrder?.additionalDetails?.formdata?.hearingDate).setHours(0, 0, 0, 0),
+              endTime: new Date(currentOrder?.additionalDetails?.formdata?.hearingDate).setHours(0, 0, 0, 0),
               workflow: {
                 action: "CREATE",
                 assignes: [],
