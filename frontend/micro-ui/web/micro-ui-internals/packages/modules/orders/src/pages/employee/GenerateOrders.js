@@ -750,11 +750,14 @@ const GenerateOrders = () => {
   const modifiedFormConfig = useMemo(() => {
     if (currentOrder?.orderCategory === "COMPOSITE") {
       return currentOrder?.compositeItems?.map((item) => {
-        let newConfig =
-          currentOrder?.orderNumber && item?.id
-            ? applicationTypeConfig?.map((item) => ({ body: item.body.map((input) => ({ ...input, disable: true })) }))
-            : structuredClone(applicationTypeConfig);
+        // We will disable the order type dropdown as a quick fix to handle formcomposer issue
+        // becuase if we change the order type, there is a match between formconfig and form data in composer
+        // so values are setting in keys of other order type form fields.
         const orderType = item?.orderType;
+        let newConfig = orderType
+          ? applicationTypeConfig?.map((item) => ({ body: item.body.map((input) => ({ ...input, disable: true })) }))
+          : structuredClone(applicationTypeConfig);
+
         if (orderType && configKeys.hasOwnProperty(orderType)) {
           let orderTypeForm = configKeys[orderType];
           if (orderType === "SECTION_202_CRPC") {
