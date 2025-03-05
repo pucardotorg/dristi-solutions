@@ -133,6 +133,9 @@ public class HearingService {
             hearing.setDocuments(hearingRequest.getHearing().getDocuments());
             hearing.setAdditionalDetails(hearingRequest.getHearing().getAdditionalDetails());
             hearing.setVcLink(hearingRequest.getHearing().getVcLink());
+            hearing.setCmpNumber(hearingRequest.getHearing().getCmpNumber() != null ? hearingRequest.getHearing().getCmpNumber() : hearing.getCmpNumber());
+            hearing.setCourtCaseNumber(hearingRequest.getHearing().getCourtCaseNumber() != null ? hearingRequest.getHearing().getCourtCaseNumber() : hearing.getCourtCaseNumber());
+            hearing.setCaseReferenceNumber(hearingRequest.getHearing().getCaseReferenceNumber() != null ? hearingRequest.getHearing().getCaseReferenceNumber() : hearing.getCaseReferenceNumber());
             hearingRequest.setHearing(hearing);
             if(hearing.getWorkflow() != null) {
                 workflowService.updateWorkflowStatus(hearingRequest);
