@@ -79,8 +79,6 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
     if (!value) return null;
 
     const numericValue = parseFloat(value);
-const numericValue = parseFloat(value);
-if (
     if (
       (validation?.lowerBound !== undefined && numericValue < validation.lowerBound) ||
       (validation?.upperBound !== undefined && numericValue > validation.upperBound)
