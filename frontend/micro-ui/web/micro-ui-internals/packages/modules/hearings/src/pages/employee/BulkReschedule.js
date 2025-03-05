@@ -612,7 +612,7 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
                 t={t}
                 noBoxShadow
                 inline={true}
-                className={"bulk-rechedule"}
+                className={"bulk-reschedule"}
                 fieldStyle={{ margin: 0, Background: "black" }}
                 cardStyle={{ minWidth: "100%", Background: "blue" }}
                 cardClassName={"card-shec"}
