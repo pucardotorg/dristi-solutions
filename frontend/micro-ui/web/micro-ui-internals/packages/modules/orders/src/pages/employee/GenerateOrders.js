@@ -3105,6 +3105,7 @@ const GenerateOrders = () => {
             additionalDetails: item?.orderSchema?.additionalDetails,
             orderDetails: item?.orderSchema?.orderDetails,
             orderType: item?.orderType,
+            itemId: item?.id,
           };
         });
 
@@ -3301,6 +3302,7 @@ const GenerateOrders = () => {
             hearingNumber: newhearingId || hearingNumber || hearingDetails?.hearingId,
           }),
         },
+        compositeOrderItemId: currentOrder?.itemId,
         newApplicationDetails: newApplicationDetails,
       });
       currentOrder?.additionalDetails?.formdata?.refApplicationId && (await closeManualPendingTask(currentOrder?.orderNumber));

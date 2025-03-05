@@ -38,6 +38,7 @@ function OrderReviewModal({
   const [showErrorToast, setShowErrorToast] = useState(null);
   const [isDisabled, setIsDisabled] = useState();
   const orderFileStore = order?.documents?.find((doc) => doc?.documentType === "SIGNED")?.fileStore;
+  const [businessDay, setBusinessDay] = useState(defaultBOTD);
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -155,7 +156,7 @@ function OrderReviewModal({
         headerBarMain={<Heading label={t("REVIEW_ORDERS_HEADING")} />}
         headerBarEnd={<CloseBtn onClick={handleReviewGoBack} />}
         actionSaveLabel={showActions && t("ADD_SIGNATURE")}
-        isDisabled={isLoading}
+        isDisabled={isLoading || !businessDay}
         actionSaveOnSubmit={() => {
           if (showActions) {
             const pdfFile = new File([orderPreviewPdf], orderPreviewFileName, { type: "application/pdf" });
@@ -192,6 +193,7 @@ function OrderReviewModal({
               <TextInput
                 className="field desktop-w-full"
                 onChange={(e) => {
+                  setBusinessDay(e.target.value);
                   setBusinessOfTheDay(e.target.value);
                 }}
                 disable={isDisabled}
