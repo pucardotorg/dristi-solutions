@@ -62,6 +62,22 @@ public class DiaryEntryQueryBuilder {
                 query.append("dde.judge_id = ?");
                 preparedStatementValues.add(searchCriteria.getJudgeId());
                 preparedStatementTypeValues.add(Types.VARCHAR);
+                firstCriteria = false;
+            }
+
+            if (searchCriteria.getReferenceId() != null) {
+                addWhereClause(query, firstCriteria);
+                query.append("dde.reference_id = ?");
+                preparedStatementValues.add(searchCriteria.getReferenceId());
+                preparedStatementTypeValues.add(Types.VARCHAR);
+                firstCriteria = false;
+            }
+
+            if (searchCriteria.getReferenceType() != null) {
+                addWhereClause(query, firstCriteria);
+                query.append("dde.reference_type = ?");
+                preparedStatementValues.add(searchCriteria.getReferenceType());
+                preparedStatementTypeValues.add(Types.VARCHAR);
             }
         }
 
