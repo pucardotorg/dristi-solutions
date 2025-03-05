@@ -200,6 +200,7 @@ function OrderReviewModal({
                 defaultValue={currentDiaryEntry?.businessOfDay || businessDay}
                 style={{ minWidth: "500px" }}
                 textInputStyle={{ maxWidth: "100%" }}
+                maxlength={1024}
               />
               {currentDiaryEntry && (
                 <Button
