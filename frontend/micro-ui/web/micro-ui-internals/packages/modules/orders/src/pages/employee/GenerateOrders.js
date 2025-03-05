@@ -4219,7 +4219,7 @@ const GenerateOrders = () => {
           className="edit-case-name-modal"
         >
           <h3 className="input-label">{t("CS_TITLE_Name")}</h3>
-          <TextInput defaultValue={currentOrder?.orderTitle} type="text" onChange={(e) => setModalTitleName(e.target.value)} />
+          <TextInput defaultValue={currentOrder?.orderTitle} type="text" onChange={(e) => setModalTitleName(e.target.value)} maxlength={1024} />
         </Modal>
       )}
       {showMandatoryFieldsErrorModal?.showModal && (
