@@ -486,6 +486,10 @@ const SubmissionsCreate = ({ path }) => {
     return orderDetails?.compositeItems?.find((item) => item?.orderType === "SET_BAIL_TERMS" && item?.id === itemId);
   }, [itemId, orderDetails]);
 
+  const compositeWarrantItem = useMemo(() => {
+    return orderDetails?.compositeItems?.find((item) => item?.orderType === "WARRANT" && item?.id === itemId);
+  }, [itemId, orderDetails]);
+
   const { data: allOrdersData, isloading: isAllOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
     {
       tenantId,
@@ -606,7 +610,7 @@ const SubmissionsCreate = ({ path }) => {
               isactive: true,
               name: "APPLICATION_TYPE_EXTENSION_SUBMISSION_DEADLINE",
             },
-            refOrderId: isComposite ? `${itemId}_${orderDetails?.orderNumber}` : orderDetails?.orderNumber,
+            refOrderId: orderDetails?.orderNumber,
             applicationDate: formatDate(new Date()),
             documentType: isComposite
               ? compositeMandatorySubmissionItem?.orderSchema?.additionalDetails?.formdata?.documentType
@@ -630,12 +634,12 @@ const SubmissionsCreate = ({ path }) => {
               isactive: true,
               name: "APPLICATION_TYPE_PRODUCTION_DOCUMENTS",
             },
-            refOrderId: isComposite ? `${itemId}_${orderDetails?.orderNumber}` : orderDetails?.orderNumber,
+            refOrderId: orderDetails?.orderNumber,
             applicationDate: formatDate(new Date()),
             ...(selectComplainant !== undefined ? { selectComplainant } : {}),
           };
         }
-      } else if (orderDetails?.orderType === orderTypes.WARRANT) {
+      } else if ((isComposite ? compositeWarrantItem : orderDetails)?.orderType === orderTypes.WARRANT) {
         return {
           submissionType: {
             code: "APPLICATION",
@@ -648,7 +652,7 @@ const SubmissionsCreate = ({ path }) => {
           refOrderId: orderDetails?.orderNumber,
           applicationDate: formatDate(new Date()),
         };
-      } else if (orderDetails?.orderType === orderTypes.SET_BAIL_TERMS) {
+      } else if ((isComposite ? compositeSetTermBailItem : orderDetails)?.orderType === orderTypes.SET_BAIL_TERMS) {
         const currentLitigant = complainantsList?.find((c) => c?.uuid === litigant);
         const selectComplainant = currentLitigant
           ? { code: currentLitigant.code, name: currentLitigant.name, uuid: currentLitigant.uuid }
@@ -662,7 +666,7 @@ const SubmissionsCreate = ({ path }) => {
             type: "SUBMIT_BAIL_DOCUMENTS",
             name: "APPLICATION_TYPE_SUBMIT_BAIL_DOCUMENTS",
           },
-          refOrderId: isComposite ? `${itemId}_${orderDetails?.orderNumber}` : orderDetails?.orderNumber,
+          refOrderId: orderDetails?.orderNumber,
           applicationDate: formatDate(new Date()),
           ...(selectComplainant !== undefined ? { selectComplainant } : {}),
         };
@@ -932,7 +936,7 @@ const SubmissionsCreate = ({ path }) => {
           cnrNumber: caseDetails?.cnrNumber,
           cmpNumber: caseDetails?.cmpNumber,
           caseId: caseDetails?.id,
-          referenceId: isExtension ? null : isComposite ? `${itemId}_${orderDetails?.id}` : orderDetails?.id || null,
+          referenceId: isExtension ? null : orderDetails?.id || null,
           createdDate: new Date().getTime(),
           applicationType,
           status: caseDetails?.status,
@@ -940,7 +944,10 @@ const SubmissionsCreate = ({ path }) => {
           createdBy: userInfo?.uuid,
           statuteSection: { tenantId },
           additionalDetails: {
-            formdata,
+            formdata: {
+              ...formdata,
+              refOrderId: isComposite ? `${itemId}_${orderDetails?.orderNumber}` : orderDetails?.orderNumber,
+            },
             ...(orderDetails && { orderDate: formatDate(new Date(orderDetails?.auditDetails?.lastModifiedTime)) }),
             ...(isComposite
               ? compositeMandatorySubmissionItem?.orderSchema?.additionalDetails?.formdata?.documentName && {
@@ -1172,7 +1179,7 @@ const SubmissionsCreate = ({ path }) => {
       ["PRODUCTION_DOCUMENTS"].includes(applicationType) &&
         (orderNumber || orderRefNumber) &&
         createPendingTask({
-          refId: `${litigantIndId}_${userInfo?.uuid}_${orderNumber || orderRefNumber}`,
+          refId: `${itemId ? `${itemId}_` : ""}${litigantIndId}_${userInfo?.uuid}_${orderNumber || orderRefNumber}`,
           isCompleted: true,
           status: "Completed",
         });
