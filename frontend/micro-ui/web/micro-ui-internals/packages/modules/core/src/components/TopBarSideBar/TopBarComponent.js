@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import { useLocation, useHistory } from "react-router-dom";
 // import BackButton from "./BackButton";
 import { Dropdown, Hamburger, NotificationBell } from "@egovernments/digit-ui-react-components";
+import ProfileComponent from "./ProfileComponent";
 
 const TopBarComponent = ({
   img,
@@ -71,7 +72,7 @@ const TopBarComponent = ({
         </div>
 
         <div className="RightMostTopBarOptions">
-          {!hideChangeLangOnSomeUrlsWhenNotLoggedIn ? changeLanguage : null}
+          {!hideChangeLangOnSomeUrlsWhenNotLoggedIn && !isUserLoggedIn ? changeLanguage : null}
           {!hideNotificationIconOnSomeUrlsWhenNotLoggedIn ? (
             <div className="EventNotificationWrapper" onClick={onNotificationIconClick}>
               {notificationCountLoaded && notificationCount ? (
@@ -83,23 +84,14 @@ const TopBarComponent = ({
             </div>
           ) : null}
           {userDetails?.access_token && (
-            <div className="left">
-              <Dropdown
-                option={userOptions}
-                optionKey={"name"}
-                select={handleUserDropdownSelection}
-                showArrow={true}
-                freeze={true}
-                style={mobileView ? { right: 0 } : {}}
-                optionCardStyles={{ overflow: "revert", display: "table" }}
-                topbarOptionsClassName={"topbarOptionsClassNameCitizen"}
-                customSelector={
-                  profilePic == null ? (
-                    <TextToImg name={userDetails?.info?.name || userDetails?.info?.userInfo?.name || "Citizen"} />
-                  ) : (
-                    <img src={profilePic} alt="profile" style={{ height: "48px", width: "48px", borderRadius: "50%", color: "#5B2448" }} />
-                  )
-                }
+            <div className="left" style={{ paddingTop: "10px" }}>
+              <ProfileComponent
+                userDetails={userDetails}
+                userOptions={userOptions}
+                handleUserDropdownSelection={handleUserDropdownSelection}
+                profilePic={profilePic}
+                TextToImg={TextToImg}
+                onLogout={onLogout}
               />
             </div>
           )}
