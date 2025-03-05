@@ -161,7 +161,7 @@ public class TaskService {
         String taskType = task.getTaskType().toUpperCase();
         String tenantId = task.getTenantId();
         String taskNumber = task.getTaskNumber();
-        Workflow workflow = task.getWorkflow();
+        WorkflowObject workflow = task.getWorkflow();
 
         String status = switch (taskType) {
             case BAIL -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,

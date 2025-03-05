@@ -38,7 +38,7 @@ public class IndividualService {
             individualSearch.setIndividualId(individualId);
             individualSearchRequest.setIndividual(individualSearch);
             StringBuilder uri = new StringBuilder(config.getIndividualHost()).append(config.getIndividualSearchEndpoint());
-            uri.append("?limit=1000").append("&offset=0").append("&tenantId=").append(requestInfo.getUserInfo().getTenantId()).append("&includeDeleted=true");
+            uri.append("?limit=1000").append("&offset=0").append("&tenantId=").append(requestInfo.getUserInfo().getTenantId());
             return individualUtils.individualCall(individualSearchRequest, uri, individualUserUUID);
 
 
@@ -78,7 +78,6 @@ public class IndividualService {
                 .append(config.getIndividualSearchEndpoint())
                 .append("?limit=").append(individualId.size())
                 .append("&offset=0")
-                .append("&tenantId=").append(requestInfo.getUserInfo().getTenantId())
-                .append("&includeDeleted=true");
+                .append("&tenantId=").append(requestInfo.getUserInfo().getTenantId());
     }
 }

@@ -226,4 +226,6 @@ public class ServiceConstants {
     public static final String REPRESENTATIVE_JOIN_CASE_TOPIC = "representative-join-case";
     public static final String LITIGANT_JOIN_CASE_TOPIC = "litigant-join-case";
     public static final String COMPOSITE = "composite";
+    public static final String HOME = "home";
+    public static final String ADIARY = "Adiary";
 }

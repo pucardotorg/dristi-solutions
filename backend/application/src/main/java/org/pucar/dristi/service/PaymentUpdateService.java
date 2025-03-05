@@ -138,7 +138,6 @@ public class PaymentUpdateService {
 
                 getSmsAfterPayment(applicationRequest,applicationType);
                 smsNotificationUtil.callNotificationService(applicationRequest, state.getState(), applicationType);
-
                 producer.push(configuration.getApplicationUpdateStatusTopic(), applicationRequest);
             }
         } catch (Exception e) {
