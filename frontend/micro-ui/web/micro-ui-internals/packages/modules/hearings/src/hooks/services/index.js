@@ -3,11 +3,11 @@ import { Urls } from "./Urls";
 
 const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
 const benchId = window?.globalConfigs?.getConfig("BENCH_ID") || "BENCH_ID";
-const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "COURT_ID";
+const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
 const presidedBy = {
-  judgeID: ["JUDGE_ID"],
-  benchID: "BENCH_ID",
-  courtID: "KLKM52",
+  judgeID: [judgeId],
+  benchID: benchId,
+  courtID: courtId,
 };
 
 export const hearingService = {
@@ -97,5 +97,66 @@ export const hearingService = {
       data,
       params,
       userDownload: true,
+    }),
+  bulkReschedule: (data, params) => {
+    return Request({
+      url: Urls.hearing.bulkReschedule,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    });
+  },
+  updateBulkHearing: (data, params) => {
+    return Request({
+      url: Urls.hearing.bulkHearingsUpdate,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    });
+  },
+  createNotification: (data, params) => {
+    return Request({
+      url: Urls.hearing.createNotification,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    });
+  },
+  updateNotification: (data, params) => {
+    return Request({
+      url: Urls.hearing.updateNotification,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    });
+  },
+  addBulkDiaryEntries: (data, params) => {
+    return Request({
+      url: Urls.hearing.addBulkDiaryEntries,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    });
+  },
+  aDiaryEntryUpdate: (data, params) =>
+    Request({
+      url: Urls.hearing.aDiaryEntryUpdate,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  searchNotification: (data, params) =>
+    Request({
+      url: Urls.hearing.searchNotification,
+      useCache: false,
+      userService: false,
+      data,
+      params,
     }),
 };

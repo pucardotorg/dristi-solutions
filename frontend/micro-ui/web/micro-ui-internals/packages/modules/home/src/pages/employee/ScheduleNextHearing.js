@@ -294,6 +294,8 @@ function ScheduleNextHearing({
     } else if (status && status === "OPTOUT") {
       const individualId = await fetchBasicUserInfo();
       setIsSubmitDisabled(true);
+      const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
+
       HomeService.customApiService(
         Urls.submitOptOutDates,
         {
@@ -302,7 +304,7 @@ function ScheduleNextHearing({
             individualId: individualId,
             caseId: filingNumber,
             rescheduleRequestId: referenceId,
-            judgeId: "super",
+            judgeId: judgeId,
             optOutDates: selectedChip,
           },
         },

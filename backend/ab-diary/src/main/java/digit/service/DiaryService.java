@@ -132,7 +132,10 @@ public class DiaryService {
 //            List<CaseDiaryEntry> caseDiaryEntries = new ArrayList<>(diaryEntryService.searchDiaryEntries(caseDiarySearchRequest));
             CaseDiarySearchRequest caseDiarySearchRequest = buildCaseDiarySearchRequest(generateRequest, null);
             List<CaseDiaryEntry> caseDiaryEntries = diaryEntryService.searchDiaryEntries(caseDiarySearchRequest);
-
+            if(caseDiaryEntries.isEmpty()){
+                log.error("operation=generateDiary, status=FAILURE, message={}, date={}", DIARY_EMPTY_ERROR, caseDiarySearchRequest.getCriteria().getDate());
+                throw new Exception(DIARY_EMPTY_ERROR + caseDiarySearchRequest.getCriteria().getDate());
+            }
             caseDiaryEntries.forEach(entry -> {
                 if (entry.getHearingDate() != null) {
                     Date date = new Date(entry.getHearingDate());
@@ -170,7 +173,7 @@ public class DiaryService {
             log.error("Custom exception while generating diary");
             throw e;
         } catch (Exception e) {
-            throw new CustomException(DIARY_GENERATE_EXCEPTION, "Error while generating diary");
+            throw new CustomException(DIARY_GENERATE_EXCEPTION, "Error while generating diary. " + e.getMessage());
         }
 
     }

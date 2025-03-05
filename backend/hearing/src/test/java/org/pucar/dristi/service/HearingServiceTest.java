@@ -1,5 +1,6 @@
 package org.pucar.dristi.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
@@ -49,6 +50,12 @@ public class HearingServiceTest {
 
     @Mock
     private SchedulerUtil schedulerUtil;
+
+    @Mock
+    private ObjectMapper objectMapper;
+
+    @Mock
+    private HearingService hearingServiceMock;
 
     @InjectMocks
     private HearingService hearingService;
@@ -181,7 +188,6 @@ public class HearingServiceTest {
 
         // Mock validator and workflowService behaviors
         when(validator.validateHearingExistence(requestInfo,hearing)).thenReturn(hearing);
-        doNothing().when(workflowService).updateWorkflowStatus(hearingRequest);
         when(config.getHearingUpdateTopic()).thenReturn("updateTopic");
 
         // Act
@@ -457,5 +463,35 @@ public class HearingServiceTest {
                 hearingService.updateBulkHearing(hearingUpdateBulkRequest));
 
         assertEquals("Error occurred while updating hearing in bulk: DB Error", exception.getMessage());
+    }
+
+    @Test
+    void testUpdateCaseReferenceHearing_Success_WithCourtCaseNumber() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("filingNumber", "FN123");
+        body.put("courtCaseNumber", "CCN456");
+        RequestInfo requestInfo = new RequestInfo();
+        body.put("requestInfo", requestInfo);
+
+        Hearing hearing = new Hearing();
+        List<Hearing> hearings = Collections.singletonList(hearing);
+
+        when(objectMapper.convertValue(any(), eq(RequestInfo.class))).thenReturn(requestInfo);
+        hearingService.updateCaseReferenceHearing(body);
+
+    }
+
+    @Test
+    void testUpdateCaseReferenceHearing_ExceptionHandling() {
+        Map<String, Object> body = new HashMap<>();
+        body.put("filingNumber", "FN123");
+        RequestInfo requestInfo = new RequestInfo();
+        body.put("requestInfo", requestInfo);
+
+        when(objectMapper.convertValue(any(), eq(RequestInfo.class))).thenReturn(requestInfo);
+        when(hearingService.searchHearing(any())).thenThrow(new RuntimeException("Database Error"));
+
+        CustomException thrown = assertThrows(CustomException.class, () -> hearingService.updateCaseReferenceHearing(body));
+
     }
 }

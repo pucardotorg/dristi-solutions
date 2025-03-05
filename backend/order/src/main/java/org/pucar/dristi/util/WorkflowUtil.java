@@ -10,6 +10,8 @@ import org.egov.common.contract.workflow.*;
 import org.egov.common.contract.models.*;
 import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.egov.tracer.model.CustomException;
+import org.pucar.dristi.web.models.ProcessInstanceObject;
+import org.pucar.dristi.web.models.WorkflowObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -71,8 +73,8 @@ public class WorkflowUtil {
     * @param wfModuleName
     * @return
     */
-    public String updateWorkflowStatus(RequestInfo requestInfo, String tenantId, String businessId, String businessServiceCode, Workflow workflow, String wfModuleName) {
-        ProcessInstance processInstance = getProcessInstanceForWorkflow(requestInfo, tenantId, businessId, businessServiceCode, workflow, wfModuleName);
+    public String updateWorkflowStatus(RequestInfo requestInfo, String tenantId, String businessId, String businessServiceCode, WorkflowObject workflow, String wfModuleName) {
+        ProcessInstanceObject processInstance = getProcessInstanceForWorkflow(requestInfo, tenantId, businessId, businessServiceCode, workflow, wfModuleName);
 
         ProcessInstanceRequest workflowRequest = new ProcessInstanceRequest(requestInfo, Collections.singletonList(processInstance));
 
@@ -98,19 +100,20 @@ public class WorkflowUtil {
     }
 
     /**
-    * Enriches ProcessInstance Object for Workflow
-    * @param requestInfo
-    * @param tenantId
-    * @param businessId
-    * @param businessService
-    * @param workflow
-    * @param wfModuleName
-    * @return
-    */
-    private ProcessInstance getProcessInstanceForWorkflow(RequestInfo requestInfo, String tenantId,
-        String businessId, String businessService, Workflow workflow, String wfModuleName) {
+     * Enriches ProcessInstance Object for Workflow
+     *
+     * @param requestInfo
+     * @param tenantId
+     * @param businessId
+     * @param businessService
+     * @param workflow
+     * @param wfModuleName
+     * @return
+     */
+    private ProcessInstanceObject getProcessInstanceForWorkflow(RequestInfo requestInfo, String tenantId,
+                                                                String businessId, String businessService, WorkflowObject workflow, String wfModuleName) {
 
-        ProcessInstance processInstance = new ProcessInstance();
+        ProcessInstanceObject processInstance = new ProcessInstanceObject();
         processInstance.setBusinessId(businessId);
         processInstance.setAction(workflow.getAction());
         processInstance.setModuleName(wfModuleName);
@@ -118,7 +121,7 @@ public class WorkflowUtil {
         processInstance.setBusinessService(getBusinessService(requestInfo, tenantId, businessService).getBusinessService());
         processInstance.setDocuments(workflow.getDocuments());
         processInstance.setComment(workflow.getComments());
-
+        processInstance.setAdditionalDetails(workflow.getAdditionalDetails());
         if(!CollectionUtils.isEmpty(workflow.getAssignes())) {
             List<User> users = new ArrayList<>();
 

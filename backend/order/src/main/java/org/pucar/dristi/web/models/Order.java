@@ -112,6 +112,6 @@ public class Order {
 
     @JsonProperty("workflow")
     @Valid
-    private Workflow workflow = null;
+    private WorkflowObject workflow = null;
 
 }
