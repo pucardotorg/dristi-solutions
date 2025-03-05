@@ -144,7 +144,7 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
         const hearingStart = timeToSeconds(formatTimeFromEpoch(hearing.startTime));
 
         return bulkFormData?.slotIds?.some(
-          (slot) => hearingStart >= timeToSeconds(slot.slotStartTime) && hearingStart < timeToSeconds(slot.slotEndTime)
+          (slot) => hearingStart >= timeToSeconds(slot.slotStartTime) && hearingStart <= timeToSeconds(slot.slotEndTime)
         );
       });
 
