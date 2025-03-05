@@ -243,9 +243,9 @@ async function processOrder(
     case "order-set-terms-of-bail":
       return await orderSetTermsOfBail(req, res, qrCode, order, compositeOrder);
     case "order-admit-case":
-      return await orderAdmitCase(req, res, qrCode);
+      return await orderAdmitCase(req, res, qrCode, order, compositeOrder);
     case "order-dismiss-case":
-      return await orderDismissCase(req, res, qrCode);
+      return await orderDismissCase(req, res, qrCode, order, compositeOrder);
     default:
       return await orderGeneric(req, res, qrCode, order, compositeOrder);
   }

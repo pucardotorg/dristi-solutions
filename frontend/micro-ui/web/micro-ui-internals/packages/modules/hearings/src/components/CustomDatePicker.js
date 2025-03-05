@@ -16,8 +16,10 @@ const CustomDatePicker = ({ t, config, formData, onSelect, errors }) => {
   };
 
   return (
-    <div>
-      <LabelFieldPair style={{ border: config?.disable ? "1px solid #9e9e9e" : "1px solid black" }}>
+    <div style={{ marginBottom: "24px" }}>
+      <LabelFieldPair
+        style={{ border: config?.disable ? "1px solid #9e9e9e" : "1px solid black", background: config?.disable ? "#D9D9D9" : "transparent" }}
+      >
         <TextInput
           type="text"
           style={{ border: 0, margin: 0, color: config?.disable ? "#9e9e9e" : "black" }}

@@ -26,7 +26,7 @@ function formatTimeFromEpoch(epoch) {
   const options = {
     timeZone: "Asia/Kolkata",
     hour12: false,
-    hour: "2-digit",  
+    hour: "2-digit",
     minute: "2-digit",
     second: "2-digit"
   };
@@ -179,7 +179,7 @@ const hearingBulkReschedule = async (req, res, qrCode) => {
           "DD-MM-YYYY"
         ) || "";
       const newHearingDate =
-        formatDate(new Date(matchingHearing?.hearingDate), "DD-MM-YYYY") || "";
+        formatDate(new Date(matchingHearing?.startTime), "DD-MM-YYYY") || "";
       const newHearingSlot = _getHearingSlots(
         mdmsCourtSlots,
         matchingHearing?.startTime
