@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { useTranslation } from "react-i18next";
-import { EditProfileIcon, SelectLanguage, LogoutIcon, TriangleIcon } from "../../../../dristi/src/icons/svgIndex";
 import ChangeLanguage from "@egovernments/digit-ui-module-core/src/components/ChangeLanguage";
 import { useHistory } from "react-router-dom/cjs/react-router-dom";
 
 const ProfileComponent = ({ userDetails, userOptions, handleUserDropdownSelection, profilePic, TextToImg, onLogout }) => {
+  const EditProfileIcon = window?.Digit?.ComponentRegistryService?.getComponent("EditProfileIcon");
+  const SelectLanguage = window?.Digit?.ComponentRegistryService?.getComponent("SelectLanguage");
+  const LogoutIcon = window?.Digit?.ComponentRegistryService?.getComponent("LogoutIcon");
+  const TriangleIcon = window?.Digit?.ComponentRegistryService?.getComponent("TriangleIcon");
   const { t } = useTranslation();
   const history = useHistory();
   const [showModal, setShowModal] = useState(false);

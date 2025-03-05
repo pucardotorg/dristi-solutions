@@ -53,7 +53,7 @@ import CustomChooseDate from "./components/CustomChooseDate";
 import CustomCalendar from "./components/CustomCalendar";
 import UploadSignatureModal from "./components/UploadSignatureModal";
 import CommentComponent from "./components/CommentComponent";
-import { RightArrow } from "./icons/svgIndex";
+import { EditProfileIcon, LogoutIcon, RightArrow, SelectLanguage, TriangleIcon } from "./icons/svgIndex";
 import CustomCheckBoxCard from "./components/CustomCheckBoxCard";
 import useBillSearch from "./hooks/dristi/useBillSearch";
 import SelectTranscriptTextArea from "./components/SelectTranscriptTextArea";
@@ -181,6 +181,10 @@ const componentsToRegister = {
   CustomTextInput,
   CustomEmailTextInput,
   OrSeparator,
+  EditProfileIcon,
+  SelectLanguage,
+  LogoutIcon,
+  TriangleIcon,
 };
 
 const overrideHooks = () => {
