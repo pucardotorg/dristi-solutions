@@ -2,7 +2,7 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/";
 import PreHearingModal from "../../components/PreHearingModal";
@@ -81,6 +81,12 @@ const MonthlyCalendar = () => {
   const hearingDetails = useMemo(() => hearingResponse?.HearingList || [], [hearingResponse]);
 
   // const events = useMemo(() => hearingSlots || [], [hearingSlots]);
+
+  useEffect(() => {
+    if (stepper === 0) {
+      refetch();
+    }
+  }, [stepper]);
 
   const mdmsEvents = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "court", [{ name: "slots" }], {
     cacheTime: 0,

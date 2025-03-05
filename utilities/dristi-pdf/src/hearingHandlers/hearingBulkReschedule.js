@@ -189,11 +189,7 @@ const hearingBulkReschedule = async (req, res, qrCode) => {
         messagesMap?.[matchingHearing?.hearingType] ||
         matchingHearing?.hearingType;
 
-      console.debug("startTime : ", matchingHearing?.startTime);
-      console.debug(
-        "newHearingSlot : ",
-        _getHearingSlots(mdmsCourtSlots, matchingHearing?.startTime)
-      );
+      
 
       return {
         caseName: caseTitle,
@@ -204,6 +200,8 @@ const hearingBulkReschedule = async (req, res, qrCode) => {
         newHearingSlot: newHearingSlot,
       };
     });
+
+    console.debug(bulkHearingRescheduleList ,"bulkHearingRescheduleList");
 
     // Handle QR code if enabled
     let base64Url = "";
