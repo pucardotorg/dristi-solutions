@@ -448,5 +448,5 @@ module.exports = {
   search_pdf,
   search_pdf_v2,
   bulk_hearing_reschedule,
-  search_multiple_cases
+  search_multiple_cases,
 };

@@ -244,7 +244,7 @@ public class IndexerUtils {
                     representativeIds = advocateUtil.getAdvocate(request,representativeIds.stream().toList());
                 }
                 individualIds.addAll(representativeIds);
-                org.pucar.dristi.web.models.SmsTemplateData smsTemplateData = enrichSmsTemplateData(details);
+                org.pucar.dristi.web.models.SmsTemplateData smsTemplateData = enrichSmsTemplateData(details,tenantId);
                 List<String> phonenumbers = callIndividualService(request, new ArrayList<>(individualIds));
                 for (String number : phonenumbers) {
                     notificationService.sendNotification(request, smsTemplateData, PENDING_TASK_CREATED, number);
@@ -256,7 +256,7 @@ public class IndexerUtils {
         }
 
         try {
-            additionalDetails = mapper.writeValueAsString(new HashMap<String, Object>());
+            additionalDetails = mapper.writeValueAsString(JsonPath.read(jsonItem, "additionalDetails"));
         } catch (Exception e) {
             log.error("Error while building listener payload");
             throw new CustomException(Pending_Task_Exception, "Error occurred while preparing pending task: " + e);
@@ -319,9 +319,10 @@ public class IndexerUtils {
 		return mobileNumber;
 	}
 
-	private SmsTemplateData enrichSmsTemplateData(Map<String, String> details) {
+	private SmsTemplateData enrichSmsTemplateData(Map<String, String> details,String tenantId) {
 		return SmsTemplateData.builder()
-				.cmpNumber(details.get("cmpNumber")).build();
+				.cmpNumber(details.get("cmpNumber"))
+                .tenantId(tenantId).build();
 	}
 
 	public CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, String filingNumber) {

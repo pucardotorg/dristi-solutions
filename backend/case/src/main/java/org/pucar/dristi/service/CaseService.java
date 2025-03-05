@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
@@ -39,6 +40,9 @@ import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
@@ -212,17 +216,21 @@ public class CaseService {
                 workflowService.updateWorkflowStatus(caseRequest);
             }
 
+            checkItsLastResponse(caseRequest);
 
             if (CASE_ADMIT_STATUS.equals(caseRequest.getCases().getStatus())) {
                 enrichmentUtil.enrichCourtCaseNumber(caseRequest);
                 caseRequest.getCases().setCaseType(ST);
+                producer.push(config.getCaseReferenceUpdateTopic(), createHearingUpdateRequest(caseRequest));
             }
 
             if (PENDING_ADMISSION_HEARING_STATUS.equals(caseRequest.getCases().getStatus())) {
+                enrichmentUtil.enrichAccessCode(caseRequest);
                 enrichmentUtil.enrichCNRNumber(caseRequest);
                 enrichmentUtil.enrichCMPNumber(caseRequest);
                 enrichmentUtil.enrichRegistrationDate(caseRequest);
                 caseRequest.getCases().setCaseType(CMP);
+                producer.push(config.getCaseReferenceUpdateTopic(), createHearingUpdateRequest(caseRequest));
             }
 
             log.info("Encrypting case: {}", caseRequest.getCases().getId());
@@ -272,6 +280,16 @@ public class CaseService {
             throw new CustomException(UPDATE_CASE_ERR, "Exception occurred while updating case: " + e.getMessage());
         }
 
+    }
+
+    private Object createHearingUpdateRequest(CaseRequest caseRequest) {
+        Map<String, Object> hearingUpdateRequest = new HashMap<>();
+        hearingUpdateRequest.put("requestInfo", caseRequest.getRequestInfo());
+        hearingUpdateRequest.put("filingNumber", caseRequest.getCases().getFilingNumber());
+        hearingUpdateRequest.put("cmpNumber", caseRequest.getCases().getCmpNumber());
+        hearingUpdateRequest.put("courtCaseNumber", caseRequest.getCases().getCourtCaseNumber());
+        hearingUpdateRequest.put("tenantId", caseRequest.getCases().getTenantId());
+        return hearingUpdateRequest;
     }
 
     private Boolean checkItsLastSign(CaseRequest caseRequest) {
@@ -326,6 +344,73 @@ public class CaseService {
         }
         log.info("Method=checkItsLastSign, Result= SUCCESS, Not last e-sign for case {}", caseRequest.getCases().getId());
         return false;
+    }
+
+    private void checkItsLastResponse(CaseRequest caseRequest) {
+        if (RESPOND.equalsIgnoreCase(caseRequest.getCases().getWorkflow().getAction())) {
+
+            log.info("Method=checkItsLastResponse, Result= IN_ProgressChecking if its last response by accused advocates {}", caseRequest.getCases().getId());
+
+            CourtCase cases = caseRequest.getCases();
+
+            int noOfAccused = getNoOfAccused(cases.getAdditionalDetails());
+            log.info("No of Accused :: {}", noOfAccused);
+
+            List<Party> noOfAccusedJoined = Optional.ofNullable(cases.getLitigants()).orElse(Collections.emptyList()).stream()
+                    .filter(party -> party.getIsActive() && party.getPartyType().contains(ACCUSED_PARTY_TYPE)).toList();
+
+            log.info("No of accused joined :: {}",noOfAccusedJoined.size());
+            if (noOfAccusedJoined.size() != noOfAccused) {
+                return;
+            }
+
+            for (Party party : noOfAccusedJoined) {
+                if (party.getIsActive() && party.getIsResponseRequired()) {
+                    log.info("Checking if accused with individualId :: {} has submitted response",party.getIndividualId());
+
+                    boolean hasThisAccusedSubmittedResponse = false;
+
+                    for (Document document : Optional.ofNullable(party.getDocuments()).orElse(Collections.emptyList())) {
+                        ObjectNode additionalDetails = objectMapper.convertValue(document.getAdditionalDetails(), ObjectNode.class);
+
+                        if (additionalDetails.has(FILE_TYPE)) {
+                            String fileType = additionalDetails.get(FILE_TYPE).asText();
+                            if (StringUtils.equalsIgnoreCase(RESPONDENT_RESPONSE, fileType)) {
+                                log.info("Party with individualId :: {} has submitted response", party.getIndividualId());
+                                hasThisAccusedSubmittedResponse = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!hasThisAccusedSubmittedResponse) {
+                        log.info("Party with individualId :: {} has not submitted response", party.getIndividualId());
+                        return;
+                    }
+                }
+            }
+
+            log.info("Last response submitted by accused for case {}", caseRequest.getCases().getId());
+            caseRequest.getRequestInfo().getUserInfo().getRoles().add(Role.builder().id(123L).code(SYSTEM).name(SYSTEM).tenantId(caseRequest.getCases().getTenantId()).build());
+            caseRequest.getCases().getWorkflow().setAction(RESPONSE_COMPLETE);
+            log.info("Updating workflow status for case {} in last response submission", caseRequest.getCases().getId());
+            workflowService.updateWorkflowStatus(caseRequest);
+        }
+    }
+
+    private int getNoOfAccused(Object additionalDetails) {
+        int noOfAccused =0;
+        ObjectNode detailsNode = objectMapper.convertValue(additionalDetails, ObjectNode.class);
+
+        if (detailsNode.has("respondentDetails")) {
+            ObjectNode respondentDetails = (ObjectNode) detailsNode.get("respondentDetails");
+
+            if (respondentDetails.has("formdata") && respondentDetails.get("formdata").isArray()) {
+                ArrayNode formData = (ArrayNode) respondentDetails.get("formdata");
+                noOfAccused = formData.size();
+            }
+        }
+        return noOfAccused;
     }
 
     public CourtCase editCase(CaseRequest caseRequest) {
@@ -940,7 +1025,8 @@ public class CaseService {
                 .collect(Collectors.toSet());
     }
 
-    private void verifyRepresentativesAndJoinCase(JoinCaseRequest joinCaseRequest, CourtCase courtCase, CourtCase caseObj, AuditDetails auditDetails, List<String> advocateIds, AdvocateMapping existingRepresentative) {
+    private void verifyRepresentativesAndJoinCase(JoinCaseRequest joinCaseRequest, CourtCase courtCase, CourtCase
+            caseObj, AuditDetails auditDetails, List<String> advocateIds, AdvocateMapping existingRepresentative) {
         //Setting representative ID as null to resolve later as per need
         joinCaseRequest.getRepresentative().setId(null);
 
@@ -1002,7 +1088,8 @@ public class CaseService {
         return partyList;
     }
 
-    private void disableExistingRepresenting(RequestInfo requestInfo, CourtCase courtCase, String joinCasePartyIndividualId, AuditDetails auditDetails, String advocateId) {
+    private void disableExistingRepresenting(RequestInfo requestInfo, CourtCase courtCase, String
+            joinCasePartyIndividualId, AuditDetails auditDetails, String advocateId) {
         if (courtCase.getRepresentatives() != null) {
             courtCase.getRepresentatives().forEach(representative -> {
 
@@ -1091,7 +1178,8 @@ public class CaseService {
         return representingList;
     }
 
-    private void verifyLitigantsAndJoinCase(JoinCaseRequest joinCaseRequest, CourtCase courtCase, CourtCase caseObj, AuditDetails auditDetails) {
+    private void verifyLitigantsAndJoinCase(JoinCaseRequest joinCaseRequest, CourtCase courtCase, CourtCase
+            caseObj, AuditDetails auditDetails) {
 
         if (joinCaseRequest.getIsLitigantPIP() && joinCaseRequest.getLitigant().get(0).getId() != null) {
             Party litigant = Optional.ofNullable(courtCase.getLitigants())
@@ -1110,7 +1198,8 @@ public class CaseService {
         verifyAndEnrichLitigant(joinCaseRequest, courtCase, caseObj, auditDetails);
     }
 
-    private @NotNull CourtCase validateAccessCodeAndReturnCourtCase(JoinCaseRequest joinCaseRequest, List<CaseCriteria> existingApplications) {
+    private @NotNull CourtCase validateAccessCodeAndReturnCourtCase(JoinCaseRequest
+                                                                            joinCaseRequest, List<CaseCriteria> existingApplications) {
         if (existingApplications.isEmpty()) {
             throw new CustomException(CASE_EXIST_ERR, "Case does not exist");
         }
@@ -1188,7 +1277,8 @@ public class CaseService {
     }
 
 
-    private Object editRespondantDetails(Object additionalDetails1, Object additionalDetails2, List<Party> litigants, boolean isLitigantPIP) {
+    private Object editRespondantDetails(Object additionalDetails1, Object
+            additionalDetails2, List<Party> litigants, boolean isLitigantPIP) {
         // Convert the Objects to ObjectNodes for easier manipulation
         ObjectNode details1Node = objectMapper.convertValue(additionalDetails1, ObjectNode.class);
         ObjectNode details2Node = objectMapper.convertValue(additionalDetails2, ObjectNode.class);

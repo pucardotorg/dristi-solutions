@@ -260,7 +260,6 @@ const SelectComponentsMulti = ({ t, config, onSelect, formData, errors, setError
                 <CrossIcon></CrossIcon>
               </span>
             </div>
-
             <LocationComponent
               t={t}
               config={modifiedSelectCompMultiConfig}
