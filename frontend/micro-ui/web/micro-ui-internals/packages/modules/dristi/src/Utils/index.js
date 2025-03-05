@@ -168,9 +168,8 @@ export const documentsTypeMapping = {
   nocJudgeOrder: "NOC_JUDGE_ORDER",
 };
 
-
 export const documentLabels = {
-  "COMPLAINANT_ID_PROOF": "COMPLAINANT_ID_PROOF",
+  COMPLAINANT_ID_PROOF: "COMPLAINANT_ID_PROOF",
   "case.authorizationproof.complainant": "COMPLAINANT_AUTHORIZATION_PROOF",
   "case.affidavit.225bnss": "INQUIRY_AFFIDAVIT",
   "case.authorizationproof.accused": "ACCUSED_AUTHORIZATION_PROOF",
@@ -182,15 +181,13 @@ export const documentLabels = {
   "case.demandnotice.serviceproof": "PROOF_OF_ACKNOWLEDGMENT",
   "case.replynotice": "PROOF_OF_REPLY",
   "case.liabilityproof": "PROOF_OF_DEBT_LIABILITY",
-  "CONDONATION_DOC": "DELAY_CONDONATION_APPLICATION",
-  "case.affidavit.223bnss": "AFFIDAVIT_BNSS_223", 
+  CONDONATION_DOC: "DELAY_CONDONATION_APPLICATION",
+  "case.affidavit.223bnss": "AFFIDAVIT_BNSS_223",
   "case.docs": "UPLOADED_DOCUMENT",
-  "VAKALATNAMA_DOC": "VAKALATNAMA_DOCUMENT",
-  "SUBMISSION_DOCUMENTS": "SUBMISSION_DOCUMENTS",
-  "COMPLAINANT_PIP_AFFIDAVIT": "COMPLAINANT_PIP_AFFIDAVIT"
+  VAKALATNAMA_DOC: "VAKALATNAMA_DOCUMENT",
+  SUBMISSION_DOCUMENTS: "SUBMISSION_DOCUMENTS",
+  COMPLAINANT_PIP_AFFIDAVIT: "COMPLAINANT_PIP_AFFIDAVIT",
 };
-
-
 
 export const getFileByFileStoreId = async (uri) => {
   const token = localStorage.getItem("token");
@@ -270,4 +267,29 @@ export const formatAddress = (value) => {
     .split(" ")
     .map((word) => (word === word.toUpperCase() || /[A-Z]/.test(word.slice(1)) ? word : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()))
     .join(" ");
+};
+
+export const maskEmail = (email) => {
+  if (!email || typeof email !== "string") {
+    return "";
+  }
+
+  try {
+    const emailParts = email.trim().split("@");
+    if (emailParts.length !== 2) {
+      throw new Error("Invalid email format");
+    }
+
+    const [username, domain] = emailParts;
+    if (!username || !domain) {
+      throw new Error("Invalid email parts");
+    }
+
+    const maskedUsername = username.length <= 2 ? username.padEnd(4, "*") : `${username.slice(0, 2)}${"*".repeat(Math.min(8, username.length - 2))}`;
+
+    return `${maskedUsername}@${domain}`;
+  } catch (error) {
+    console.error("Email masking failed:", error);
+    return "****@****";
+  }
 };

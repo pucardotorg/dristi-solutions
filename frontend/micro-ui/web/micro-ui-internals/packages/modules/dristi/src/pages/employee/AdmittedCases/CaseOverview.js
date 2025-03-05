@@ -22,6 +22,7 @@ const CaseOverview = ({
   extensionApplications,
   caseStatus,
   productionOfDocumentApplications,
+  submitBailDocumentsApplications,
 }) => {
   const { t } = useTranslation();
   const filingNumber = caseData.filingNumber;
@@ -264,7 +265,7 @@ const CaseOverview = ({
                           }
                         }}
                       >
-                        {t(`ORDER_TYPE_${order?.orderType.toUpperCase()}`)}
+                        {order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(`ORDER_TYPE_${order?.orderTitle?.toUpperCase()}`)}
                       </div>
                     ))}
                 </div>
@@ -284,6 +285,7 @@ const CaseOverview = ({
                 handleOrdersTab={() => {
                   setShowReviewModal(false);
                 }}
+                submitBailDocumentsApplications={submitBailDocumentsApplications}
               />
             )}
           </div>

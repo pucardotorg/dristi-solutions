@@ -338,6 +338,7 @@ public class IndexerUtils {
     public Map<String, String> processEntity(String entityType, String referenceId, String status, String action, Object object, JSONObject requestInfo) {
         Map<String, String> caseDetails = new HashMap<>();
         String name = null;
+        String screenType = null;
         boolean isCompleted = true;
         boolean isGeneric = false;
 
@@ -348,6 +349,7 @@ public class IndexerUtils {
         for (PendingTaskType pendingTaskType : pendingTaskTypeList) {
             if (pendingTaskType.getState().equals(status) && pendingTaskType.getTriggerAction().contains(action)) {
                 name = pendingTaskType.getPendingTask();
+                screenType = pendingTaskType.getScreenType();
                 isCompleted = false;
                 isGeneric = pendingTaskType.getIsgeneric();
                 break;
@@ -367,6 +369,7 @@ public class IndexerUtils {
         // Add additional details to the caseDetails map
         caseDetails.putAll(entityDetails);
         caseDetails.put("name", name);
+        caseDetails.put("screenType", screenType);
         if (isGeneric) caseDetails.put("isGeneric", "Generic");
 
         return caseDetails;
@@ -423,7 +426,6 @@ public class IndexerUtils {
 
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", filingNumber);
-        caseDetails.put("screenType", HOME);
         return caseDetails;
     }
 
@@ -437,7 +439,6 @@ public class IndexerUtils {
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", referenceId);
         caseDetails.put("cmpNumber", cmpNumber);
-        caseDetails.put("screenType", HOME);
 
         return caseDetails;
     }
@@ -452,7 +453,6 @@ public class IndexerUtils {
 
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", filingNumber);
-        caseDetails.put("screenType", HOME);
 
         return caseDetails;
     }
@@ -466,7 +466,6 @@ public class IndexerUtils {
 
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", filingNumber);
-        caseDetails.put("screenType", HOME);
 
         return caseDetails;
     }
@@ -475,8 +474,6 @@ public class IndexerUtils {
         Map<String, String> caseDetails = new HashMap<>();
         caseDetails.put("cnrNumber", null);
         caseDetails.put("filingNumber", null);
-        caseDetails.put("screenType", ADIARY);
-
         return caseDetails;
     }
 
@@ -489,7 +486,6 @@ public class IndexerUtils {
 
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", filingNumber);
-        caseDetails.put("screenType", HOME);
 
         return caseDetails;
     }
@@ -500,8 +496,6 @@ public class IndexerUtils {
         String filingNumber = JsonPath.read(orderObject.toString(), FILING_NUMBER_PATH);
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", filingNumber);
-        caseDetails.put("screenType", HOME);
-
         return caseDetails;
     }
 

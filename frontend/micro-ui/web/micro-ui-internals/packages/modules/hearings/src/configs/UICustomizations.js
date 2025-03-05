@@ -272,7 +272,12 @@ export const UICustomizations = {
               return `${locality} ${district} ${city} ${state} ${pincode ? ` - ${pincode}` : ""}`.trim();
             };
             const taskData = data?.list
-              ?.filter((data) => data?.filingNumber === additionalDetails?.filingNumber && data?.orderId === additionalDetails?.orderId)
+              ?.filter(
+                (data) =>
+                  data?.filingNumber === additionalDetails?.filingNumber &&
+                  data?.orderId === additionalDetails?.orderId &&
+                  (!additionalDetails?.itemId || data?.additionalDetails?.itemId === additionalDetails?.itemId)
+              )
               ?.map((data) => {
                 let taskDetail = structuredClone(data?.taskDetails);
                 taskDetail = normalizeData(taskDetail);
@@ -289,7 +294,7 @@ export const UICustomizations = {
                   channelDetails: typeof channelDetails === "object" ? generateAddress({ ...channelDetails }) : channelDetails,
                   status: data?.status,
                   remarks: taskDetail?.remarks?.remark,
-                  statusChangeDate:taskDetail?.deliveryChannels?.statusChangeDate
+                  statusChangeDate: taskDetail?.deliveryChannels?.statusChangeDate,
                 };
               });
             return { list: taskData };

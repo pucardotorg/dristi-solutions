@@ -221,6 +221,7 @@ public class CaseService {
             if (CASE_ADMIT_STATUS.equals(caseRequest.getCases().getStatus())) {
                 enrichmentUtil.enrichCourtCaseNumber(caseRequest);
                 caseRequest.getCases().setCaseType(ST);
+                producer.push(config.getCaseReferenceUpdateTopic(), createHearingUpdateRequest(caseRequest));
             }
 
             if (PENDING_ADMISSION_HEARING_STATUS.equals(caseRequest.getCases().getStatus())) {
@@ -229,6 +230,7 @@ public class CaseService {
                 enrichmentUtil.enrichCMPNumber(caseRequest);
                 enrichmentUtil.enrichRegistrationDate(caseRequest);
                 caseRequest.getCases().setCaseType(CMP);
+                producer.push(config.getCaseReferenceUpdateTopic(), createHearingUpdateRequest(caseRequest));
             }
 
             log.info("Encrypting case: {}", caseRequest.getCases().getId());
@@ -278,6 +280,16 @@ public class CaseService {
             throw new CustomException(UPDATE_CASE_ERR, "Exception occurred while updating case: " + e.getMessage());
         }
 
+    }
+
+    private Object createHearingUpdateRequest(CaseRequest caseRequest) {
+        Map<String, Object> hearingUpdateRequest = new HashMap<>();
+        hearingUpdateRequest.put("requestInfo", caseRequest.getRequestInfo());
+        hearingUpdateRequest.put("filingNumber", caseRequest.getCases().getFilingNumber());
+        hearingUpdateRequest.put("cmpNumber", caseRequest.getCases().getCmpNumber());
+        hearingUpdateRequest.put("courtCaseNumber", caseRequest.getCases().getCourtCaseNumber());
+        hearingUpdateRequest.put("tenantId", caseRequest.getCases().getTenantId());
+        return hearingUpdateRequest;
     }
 
     private Boolean checkItsLastSign(CaseRequest caseRequest) {
@@ -741,8 +753,7 @@ public class CaseService {
     }
 
 
-    private void verifyAndEnrichLitigant(JoinCaseRequest joinCaseRequest, CourtCase courtCase, CourtCase
-            caseObj, AuditDetails auditDetails) {
+    private void verifyAndEnrichLitigant(JoinCaseRequest joinCaseRequest, CourtCase courtCase, CourtCase caseObj, AuditDetails auditDetails) {
         log.info("enriching litigants");
         enrichLitigantsOnCreateAndUpdate(caseObj, auditDetails);
 
@@ -785,8 +796,7 @@ public class CaseService {
         publishToJoinCaseIndexer(joinCaseRequest.getRequestInfo(), courtCase);
     }
 
-    private void verifyAndEnrichRepresentative(JoinCaseRequest joinCaseRequest, CourtCase courtCase, CourtCase
-            caseObj, AuditDetails auditDetails) {
+    private void verifyAndEnrichRepresentative(JoinCaseRequest joinCaseRequest, CourtCase courtCase, CourtCase caseObj, AuditDetails auditDetails) {
         log.info("enriching representatives");
         enrichRepresentativesOnCreateAndUpdate(caseObj, auditDetails);
 
@@ -911,11 +921,12 @@ public class CaseService {
 
                     List<Party> partyList = existingRepresentative.getRepresenting();
 
-                    joinCaseRequest.getRepresentative().getRepresenting().forEach(representing -> {
+                    joinCaseRequest.getRepresentative().getRepresenting().forEach(representing->{
                         if (individualIdList.contains(representing.getIndividualId()) && !representing.getIsAdvocateReplacing()) {
                             log.info("Advocate is already representing the individual");
                             throw new CustomException(VALIDATION_ERR, "Advocate is already representing the individual");
-                        } else if (individualIdList.contains(representing.getIndividualId()) && representing.getIsAdvocateReplacing()) {
+                        }
+                        else if (individualIdList.contains(representing.getIndividualId()) && representing.getIsAdvocateReplacing()) {
                             log.info("Advocate is already representing the individual and isAdvocateReplacing is true");
                             Optional<UUID> representingIdOptional = Optional.ofNullable(partyList)
                                     .orElse(Collections.emptyList())
@@ -1029,7 +1040,7 @@ public class CaseService {
             joinCaseRequest.getRepresentative().getRepresenting().forEach(representing -> {
                 representing.setAuditDetails(auditDetails);
                 if (representing.getIsAdvocateReplacing())
-                    disableExistingRepresenting(joinCaseRequest.getRequestInfo(), courtCase, representing.getIndividualId(), auditDetails, joinCaseRequest.getRepresentative().getAdvocateId());
+                    disableExistingRepresenting(joinCaseRequest.getRequestInfo(), courtCase, representing.getIndividualId(), auditDetails,joinCaseRequest.getRepresentative().getAdvocateId());
             });
         }
         AdvocateMapping advocateMapping = mapRepresentativeToAdvocateMapping(joinCaseRequest.getRepresentative());
@@ -1179,7 +1190,7 @@ public class CaseService {
             List<AdvocateMapping> representatives = courtCase.getRepresentatives();
 
             if (representatives != null)
-                disableExistingRepresenting(joinCaseRequest.getRequestInfo(), courtCase, litigant.getIndividualId(), auditDetails, null);
+                disableExistingRepresenting(joinCaseRequest.getRequestInfo(), courtCase, litigant.getIndividualId(), auditDetails,null);
 
         }
 

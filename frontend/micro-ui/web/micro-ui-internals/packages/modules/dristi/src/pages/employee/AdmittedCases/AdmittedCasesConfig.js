@@ -252,7 +252,7 @@ export const TabSearchconfig = {
             columns: [
               {
                 label: "ORDER_TYPE",
-                jsonPath: "orderType",
+                jsonPath: "orderTitle",
                 additionalCustomization: true,
               },
               {

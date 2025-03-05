@@ -65,6 +65,7 @@ import MultipleAdvocatesAndPip from "./components/MultipleAdvocatesAndPip";
 import MultiSelectDropdown from "./components/MultiSelectDropdown";
 import WarningModal from "./components/WarningModal";
 import CustomTextInput from "./components/CustomTextInput";
+import CustomEmailTextInput from "./pages/citizen/registration/CustomEmailTextInput";
 import OrSeparator from "./components/OrSeparator";
 
 export const DRISTIModule = ({ stateCode, userType, tenants }) => {
@@ -178,6 +179,7 @@ const componentsToRegister = {
   MultiSelectDropdown,
   WarningModal,
   CustomTextInput,
+  CustomEmailTextInput,
   OrSeparator,
 };
 
