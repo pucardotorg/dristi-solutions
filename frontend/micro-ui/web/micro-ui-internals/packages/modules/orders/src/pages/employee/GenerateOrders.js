@@ -1866,7 +1866,7 @@ const GenerateOrders = () => {
               documentType: "SIGNED",
               fileStore: signedDoucumentUploadedID || localStorageID,
               documentOrder: documents?.length > 0 ? documents.length + 1 : 1,
-              additionalDetails: { name: `Order: ${t(order?.orderType)}.pdf` },
+              additionalDetails: { name: `Order: ${order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(order?.orderType)}.pdf` },
             }
           : null;
       let orderSchema = {};
@@ -4162,7 +4162,7 @@ const GenerateOrders = () => {
           currentDiaryEntry={currentDiaryEntry}
           handleUpdateBusinessOfDayEntry={handleUpdateBusinessOfDayEntry}
           handleReviewGoBack={handleReviewGoBack}
-          defaultBOTD={defaultBOTD}
+          businessOfDay={businessOfTheDay}
         />
       )}
       {showsignatureModal && (
