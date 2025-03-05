@@ -579,14 +579,15 @@ const GenerateOrders = () => {
   const currentOrder = useMemo(() => formList?.[selectedOrder], [formList, selectedOrder]);
   const hearingNumber = useMemo(() => currentOrder?.hearingNumber || currentOrder?.additionalDetails?.hearingId || "", [currentOrder]);
   useEffect(() => {
+    const formListNew = structuredClone([...(ordersData?.list || [])].reverse());
     const orderTitlesInitial =
-      formList?.map((order) => {
+      formListNew?.map((order) => {
         return `${t(order?.orderTitle)}`;
       }) || [];
     if (!isEqual(orderTitlesInitial, OrderTitles)) {
       setOrderTitles(orderTitlesInitial);
     }
-  }, [currentOrder, t, formList]);
+  }, [ordersData, t]);
   const { data: pendingTaskData = [], isLoading: pendingTasksLoading } = useGetPendingTask({
     data: {
       SearchCriteria: {
@@ -1519,10 +1520,11 @@ const GenerateOrders = () => {
       if (formData?.orderType?.code) {
         const orderTypeValidationObj = checkOrderValidation(formData?.orderType?.code, index);
         if (orderTypeValidationObj?.showModal) {
-          if (!currentOrder?.compositeItems?.[index]?.orderSchema?.additionalDetails?.formdata?.orderType?.code) {
-            setValue("orderType", null); // If we are adding new order- set order type to null if validation fails.
-          }
           setShowOrderValidationModal(orderTypeValidationObj);
+          if (!currentOrder?.compositeItems?.[index]?.orderSchema?.additionalDetails?.formdata?.orderType?.code) {
+            setValue("orderType", undefined); // If we are adding new order- set order type to null if validation fails.
+            return;
+          }
           return;
         }
       }
@@ -1530,6 +1532,35 @@ const GenerateOrders = () => {
     applyMultiSelectDropdownFix(setValue, formData, multiSelectDropdownKeys);
 
     const orderType = currentOrder?.orderCategory === "COMPOSITE" ? currentOrder?.compositeItems?.[index]?.orderType : currentOrder?.orderType;
+
+    if (currentOrder?.orderCategory === "INTERMEDIATE") {
+      setOrderTitles((prevTitles) => {
+        const newValue = currentOrder?.orderType ? t(currentOrder?.orderType) : t("CS_ORDER");
+        if (prevTitles[selectedOrder] === newValue) {
+          return prevTitles;
+        }
+        const updatedTitles = [...prevTitles];
+        updatedTitles[selectedOrder] = newValue;
+        return updatedTitles;
+      });
+    }
+    if (currentOrder?.orderCategory === "COMPOSITE" && !currentOrder?.orderNumber) {
+      const enabledItems = currentOrder?.compositeItems?.filter((compItem) => compItem?.isEnabled) || [];
+      if (enabledItems?.length === 1) {
+        const enabledCompositeItem = enabledItems?.[0];
+        const newTitleValue = t(enabledCompositeItem?.orderType);
+        setOrderTitles((prevTitles) => {
+          if (prevTitles[selectedOrder] === newTitleValue) {
+            return prevTitles;
+          } else {
+            const updatedTitles = [...prevTitles];
+            updatedTitles[selectedOrder] = newTitleValue;
+            return updatedTitles;
+          }
+        });
+      }
+    }
+
     // TODO: use refs for setError,  if done - remove this line
     if (orderType && ["MANDATORY_SUBMISSIONS_RESPONSES"].includes(orderType)) {
       if (formData?.submissionDeadline && formData?.responseInfo?.responseDeadline) {
@@ -2016,6 +2047,7 @@ const GenerateOrders = () => {
       return [...prev, defaultOrderData];
     });
     setSelectedOrder(formList?.length);
+    setOrderTitles([...OrderTitles, t("CS_ORDER")]);
   };
 
   const createPendingTask = async ({
@@ -2332,9 +2364,13 @@ const GenerateOrders = () => {
         if (order?.orderType) {
           count += 1;
           if (order?.orderNumber) {
-            return await updateOrder(order, OrderWorkflowAction.SAVE_DRAFT);
+            const updatedOrder = structuredClone(order);
+            updatedOrder.orderTitle = t(order?.orderTitle);
+            return await updateOrder(updatedOrder, OrderWorkflowAction.SAVE_DRAFT);
           } else {
-            return await createOrder(order);
+            const updatedOrder = structuredClone(order);
+            updatedOrder.orderTitle = t(order?.orderTitle);
+            return await createOrder(updatedOrder);
           }
         } else {
           return Promise.resolve();
@@ -2350,15 +2386,16 @@ const GenerateOrders = () => {
           // then add item call
           count += 1;
           try {
-            const totalEnabled = order?.compositeItems?.filter((compItem) => compItem?.isEnabled)?.length;
+            const totalEnabled = order?.compositeItems?.filter((compItem) => compItem?.isEnabled && compItem?.orderType)?.length;
             // if totalEnabled is 1 -> treat it as composite only and call create api only
             if (totalEnabled === 1) {
               const updatedOrder = structuredClone(order);
-              const compositeItem = order?.compositeItems?.find((item) => item?.isEnabled);
+              const compositeItem = order?.compositeItems?.find((item) => item?.isEnabled && item?.orderType);
               updatedOrder.additionalDetails = compositeItem?.orderSchema?.additionalDetails;
               updatedOrder.compositeItems = null;
-              updatedOrder.orderType = compositeItem?.orderType;
+              updatedOrder.orderType = t(compositeItem?.orderType);
               updatedOrder.orderCategory = "INTERMEDIATE";
+              updatedOrder.orderTitle = t(compositeItem?.orderType); // If total enabled composite items is 1-> send orderTitle as orderType.
               return await createOrder(updatedOrder);
             }
             // if totalEnabled is greater than 1 -> call create api for 1st isEnabled item and get orderNUmber from create reponse and call add item api.
@@ -2382,7 +2419,7 @@ const GenerateOrders = () => {
                 orderForAddItem.orderCategory = "COMPOSITE";
                 orderForAddItem.compositeItems = enabledCompositeItems;
                 // orderForAddItem.orderTitle = currentOrderTitle;
-                orderForAddItem.orderTitle = OrderTitles[index];
+                orderForAddItem.orderTitle = t(OrderTitles[index]);
                 return await addOrderItem(orderForAddItem, OrderWorkflowAction.SAVE_DRAFT, index);
               } else {
                 console.error("Error: Order creation failed, orderNumber missing.");
@@ -2402,7 +2439,10 @@ const GenerateOrders = () => {
         setLoader(false);
       }
 
-      // Refetch orders data after promises resolve successfully
+      // Callling this explicitely because new formdata is not rerendering after one refetch
+      // (specially in case if some api call is failing) - Formcomposer implementation issue
+      //######### DO NOT REMOVE BELOW DOUBLE REFETCH  #########
+      await refetchOrdersData();
       await refetchOrdersData();
 
       // Update the form list
@@ -3913,7 +3953,7 @@ const GenerateOrders = () => {
               {
                 orderType: null,
                 isEnabled: true,
-                displayindex: totalEnabled,
+                displayindex: totalEnabled === 0 ? 1 : totalEnabled,
               },
             ],
             orderTitle: orderTitleNew,
@@ -3930,7 +3970,37 @@ const GenerateOrders = () => {
         };
       });
     });
+    let compositeItemsNew = currentOrder?.compositeItems ? [...currentOrder.compositeItems] : [];
+    const totalEnabled = currentOrder?.compositeItems?.filter((o) => o?.isEnabled)?.length;
+
+    let orderTitleNew = "";
+    if (compositeItemsNew?.length === 0) {
+      orderTitleNew = `${t(currentOrder?.orderType)} and Other Items`;
+    }
+    if (totalEnabled === 1) {
+      const enabledItem = currentOrder?.compositeItems?.find((item) => item?.isEnabled && item?.orderType);
+      orderTitleNew = `${t(enabledItem?.orderType)} and Other Items`;
+    }
+    setOrderTitles((prevTitles) => {
+      if (prevTitles[selectedOrder] === orderTitleNew) {
+        return prevTitles;
+      }
+      const updatedTitles = [...prevTitles];
+      updatedTitles[selectedOrder] = orderTitleNew;
+      return updatedTitles;
+    });
   };
+
+  const showEditTitleIcon = useMemo(() => {
+    if (currentOrder?.orderCategory === "COMPOSITE") {
+      const totalEnabled = currentOrder?.compositeItems?.filter((o) => o?.isEnabled)?.length;
+
+      if (totalEnabled > 1 || ordersData?.list?.find((order) => order?.orderNumber === currentOrder?.orderNumber)?.orderCategory === "COMPOSITE") {
+        return true;
+      }
+    }
+    return false;
+  }, [currentOrder, selectedOrder]);
 
   if (
     loader ||
@@ -3987,7 +4057,7 @@ const GenerateOrders = () => {
           })}
         </React.Fragment>
       </div>
-      <div className="view-order" style={{ marginBottom: "130px", flex: 3 }}>
+      <div className="view-order" style={{ marginBottom: "300px", flex: 3 }}>
         {
           <div
             className="header-title-icon"
@@ -3999,7 +4069,7 @@ const GenerateOrders = () => {
               }`}</Header>
             }
 
-            {currentOrder?.orderCategory === "COMPOSITE" && (
+            {showEditTitleIcon && (
               <div
                 className="case-edit-icon"
                 onClick={() => {
@@ -4219,7 +4289,7 @@ const GenerateOrders = () => {
           className="edit-case-name-modal"
         >
           <h3 className="input-label">{t("CS_TITLE_Name")}</h3>
-          <TextInput defaultValue={currentOrder?.orderTitle} type="text" onChange={(e) => setModalTitleName(e.target.value)} maxlength={1024} />
+          <TextInput defaultValue={t(OrderTitles?.[selectedOrder])} type="text" onChange={(e) => setModalTitleName(e.target.value)} />
         </Modal>
       )}
       {showMandatoryFieldsErrorModal?.showModal && (
