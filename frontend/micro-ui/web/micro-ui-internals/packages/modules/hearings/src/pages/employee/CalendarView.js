@@ -221,7 +221,8 @@ const MonthlyCalendar = () => {
               eventContent={(arg) => {
                 return (
                   <div>
-                    <div>{`${arg.event.extendedProps.slot} : ${arg.event.extendedProps.count}-${t("HEARINGS")}`}</div>
+                    <div>{`${arg.event.extendedProps.slot} :`}</div>
+                    <div>{`${arg.event.extendedProps.count}-${t("HEARINGS")}`}</div>
                     {hearingCount(arg.event.extendedProps.hearings).map((hearingFrequency) => (
                       <div>
                         {hearingFrequency.frequency} - {t(hearingFrequency.type)}
