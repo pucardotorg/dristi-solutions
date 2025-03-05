@@ -648,8 +648,10 @@ function CaseFileAdmission({ t, path }) {
         key: "inquiryAffidavitFileUpload",
       })),
       ...caseDetails?.additionalDetails?.advocateDetails?.formdata?.map((form) => ({
-        document: form?.data?.vakalatnamaFileUpload?.document,
-        key: "vakalatnamaFileUpload",
+        document: form?.data?.multipleAdvocatesAndPip?.vakalatnamaFileUpload
+          ? form?.data?.multipleAdvocatesAndPip?.vakalatnamaFileUpload?.document
+          : form?.data?.multipleAdvocatesAndPip?.pipAffidavitFileUpload?.document,
+        key: form?.data?.multipleAdvocatesAndPip?.vakalatnamaFileUpload ? "vakalatnamaFileUpload" : "pipAffidavitFileUpload",
       })),
     ].flat();
 
