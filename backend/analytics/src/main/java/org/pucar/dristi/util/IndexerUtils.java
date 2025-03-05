@@ -1,5 +1,6 @@
 package org.pucar.dristi.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
@@ -184,7 +185,7 @@ public class IndexerUtils {
         );
     }
 
-    public String buildPayload(String jsonItem, JSONObject requestInfo) {
+    public String buildPayload(String jsonItem, JSONObject requestInfo) throws JsonProcessingException {
 
         String id = JsonPath.read(jsonItem, ID_PATH);
         String entityType = JsonPath.read(jsonItem, BUSINESS_SERVICE_PATH);
@@ -243,7 +244,7 @@ public class IndexerUtils {
                     representativeIds = advocateUtil.getAdvocate(request,representativeIds.stream().toList());
                 }
                 individualIds.addAll(representativeIds);
-                org.pucar.dristi.web.models.SmsTemplateData smsTemplateData = enrichSmsTemplateData(details);
+                org.pucar.dristi.web.models.SmsTemplateData smsTemplateData = enrichSmsTemplateData(details,tenantId);
                 List<String> phonenumbers = callIndividualService(request, new ArrayList<>(individualIds));
                 for (String number : phonenumbers) {
                     notificationService.sendNotification(request, smsTemplateData, PENDING_TASK_CREATED, number);
@@ -318,9 +319,10 @@ public class IndexerUtils {
 		return mobileNumber;
 	}
 
-	private SmsTemplateData enrichSmsTemplateData(Map<String, String> details) {
+	private SmsTemplateData enrichSmsTemplateData(Map<String, String> details,String tenantId) {
 		return SmsTemplateData.builder()
-				.cmpNumber(details.get("cmpNumber")).build();
+				.cmpNumber(details.get("cmpNumber"))
+                .tenantId(tenantId).build();
 	}
 
 	public CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, String filingNumber) {
@@ -336,6 +338,7 @@ public class IndexerUtils {
     public Map<String, String> processEntity(String entityType, String referenceId, String status, String action, Object object, JSONObject requestInfo) {
         Map<String, String> caseDetails = new HashMap<>();
         String name = null;
+        String screenType = null;
         boolean isCompleted = true;
         boolean isGeneric = false;
 
@@ -346,6 +349,7 @@ public class IndexerUtils {
         for (PendingTaskType pendingTaskType : pendingTaskTypeList) {
             if (pendingTaskType.getState().equals(status) && pendingTaskType.getTriggerAction().contains(action)) {
                 name = pendingTaskType.getPendingTask();
+                screenType = pendingTaskType.getScreenType();
                 isCompleted = false;
                 isGeneric = pendingTaskType.getIsgeneric();
                 break;
@@ -365,6 +369,7 @@ public class IndexerUtils {
         // Add additional details to the caseDetails map
         caseDetails.putAll(entityDetails);
         caseDetails.put("name", name);
+        caseDetails.put("screenType", screenType);
         if (isGeneric) caseDetails.put("isGeneric", "Generic");
 
         return caseDetails;
@@ -421,7 +426,6 @@ public class IndexerUtils {
 
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", filingNumber);
-        caseDetails.put("screenType", HOME);
         return caseDetails;
     }
 
@@ -435,7 +439,6 @@ public class IndexerUtils {
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", referenceId);
         caseDetails.put("cmpNumber", cmpNumber);
-        caseDetails.put("screenType", HOME);
 
         return caseDetails;
     }
@@ -450,7 +453,6 @@ public class IndexerUtils {
 
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", filingNumber);
-        caseDetails.put("screenType", HOME);
 
         return caseDetails;
     }
@@ -464,7 +466,6 @@ public class IndexerUtils {
 
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", filingNumber);
-        caseDetails.put("screenType", HOME);
 
         return caseDetails;
     }
@@ -473,8 +474,6 @@ public class IndexerUtils {
         Map<String, String> caseDetails = new HashMap<>();
         caseDetails.put("cnrNumber", null);
         caseDetails.put("filingNumber", null);
-        caseDetails.put("screenType", ADIARY);
-
         return caseDetails;
     }
 
@@ -487,7 +486,6 @@ public class IndexerUtils {
 
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", filingNumber);
-        caseDetails.put("screenType", HOME);
 
         return caseDetails;
     }
@@ -498,8 +496,6 @@ public class IndexerUtils {
         String filingNumber = JsonPath.read(orderObject.toString(), FILING_NUMBER_PATH);
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", filingNumber);
-        caseDetails.put("screenType", HOME);
-
         return caseDetails;
     }
 

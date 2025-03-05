@@ -73,7 +73,6 @@
                             {
                                 "type": "text",
                                 "label": "WITNESS_DESIGNATION",
-                                "labelChildren": "optional",
                                 "populators": {
                                     "name": "witnessDesignation"
                                 }

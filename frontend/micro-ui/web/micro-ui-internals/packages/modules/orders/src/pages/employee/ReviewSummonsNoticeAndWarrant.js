@@ -140,7 +140,15 @@ const ReviewSummonsNoticeAndWarrant = () => {
     Boolean(tasksData)
   );
 
-  const orderType = useMemo(() => orderData?.list[0]?.orderType, [orderData]);
+  const compositeItem = useMemo(
+    () => orderData?.list?.[0]?.compositeItems?.find((item) => item?.id === tasksData?.list[0]?.additionalDetails?.itemId),
+    [orderData, tasksData]
+  );
+
+  const orderType = useMemo(
+    () => (orderData?.list?.[0]?.orderCategory === "COMPOSITE" ? compositeItem?.orderType : orderData?.list?.[0]?.orderType),
+    [orderData, compositeItem]
+  );
 
   const handleSubmitButtonDisable = (disable) => {
     setIsDisabled(disable);

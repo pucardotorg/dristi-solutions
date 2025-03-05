@@ -21,10 +21,12 @@ const MultiSelectDropdown = ({
   disable = false,
   config,
   customLabel = "",
+  parentRef,
 }) => {
   const [active, setActive] = useState(false);
   const [searchQuery, setSearchQuery] = useState();
   const [optionIndex, setOptionIndex] = useState(-1);
+  const [openAbove, setOpenAbove] = useState(false);
   const dropdownRef = useRef();
   const { t } = useTranslation();
 
@@ -229,6 +231,18 @@ const MultiSelectDropdown = ({
     ];
   };
 
+  useEffect(() => {
+    if (active && dropdownRef.current && parentRef?.current) {
+      const dropdownRect = dropdownRef.current.getBoundingClientRect();
+      const parentRect = parentRef.current.getBoundingClientRect();
+
+      const spaceBelow = parentRect.bottom - dropdownRect.bottom;
+      const spaceAbove = dropdownRect.top - parentRect.top;
+
+      setOpenAbove(spaceBelow < 200 && spaceAbove > spaceBelow);
+    }
+  }, [active, parentRef]);
+
   return (
     <div style={{ marginBottom: "1px" }}>
       <div className={`multi-select-dropdown-wrap ${disable ? "disabled" : ""}`} ref={dropdownRef}>
@@ -256,7 +270,17 @@ const MultiSelectDropdown = ({
           </div>
         </div>
         {active ? (
-          <div className="server" id="jk-dropdown-unique" style={ServerStyle ? ServerStyle : {}}>
+          <div
+            className="server"
+            id="jk-dropdown-unique"
+            style={{
+              ...(ServerStyle || {}),
+              position: "absolute",
+              top: openAbove ? "auto" : "100%",
+              bottom: openAbove ? "100%" : "auto",
+              overflowX: "hidden",
+            }}
+          >
             <Menu />
           </div>
         ) : null}

@@ -1,0 +1,149 @@
+{
+  "tenantId": "kl",
+  "mdmsPayload": [
+    {
+      "SchemaDefinition": {
+        "tenantId": "kl",
+        "code": "Order.NonRepeatingCompositeOrders",
+        "description": null,
+        "definition": {
+          "type": "object",
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "required": [
+            "id",
+            "orderType",
+            "path"
+          ],
+          "x-unique": [
+            "id"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "orderType": {
+              "type": "string"
+            },
+            "path": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "isActive": true
+      }
+    },
+    {
+      "SchemaDefinition":
+      {
+        "tenantId": "kl",
+        "code": "Order.NonOverlappingCompositeOrders",
+        "description": null,
+        "definition": {
+          "type": "object",
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "required": [
+            "id",
+            "orderTypeList",
+            "path"
+          ],
+          "x-unique": [
+            "id"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "orderTypeList": {
+              "type": "array",
+              "items": [
+                {
+                  "type": "string"
+                }
+              ]
+          },
+            "path": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "isActive": true
+      }
+    },
+
+    //updated for screenType
+    {
+      "SchemaDefinition": {
+        // "id": "3373e281-d741-462f-9181-2654edfdbfc2",
+        "tenantId": "kl",
+        "code": "common-masters.PendingTaskType",
+        "description": null,
+        "definition": {
+          "type": "object",
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "required": [
+            "id",
+            "pendingTask",
+            "actor",
+            "triggerAction",
+            "state",
+            "workflowModule",
+            "closerAction",
+            "screenType"
+          ],
+          "x-unique": [
+            "id"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "actor": {
+              "type": "string"
+            },
+            "state": {
+              "type": "string"
+            },
+            "isgeneric": {
+              "type": "boolean"
+            },
+            "pendingTask": {
+              "type": "string"
+            },
+            "closerAction": {
+              "type": "array",
+              "items": [
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "triggerAction": {
+              "type": "array",
+              "items": [
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "workflowModule": {
+              "type": "string"
+            },
+            "screenType": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "235cc8b2-1140-45d2-a4a2-33cbd3496bb4",
+          "lastModifiedBy": "235cc8b2-1140-45d2-a4a2-33cbd3496bb4",
+          "createdTime": 1731782778126,
+          "lastModifiedTime": 1731782778126
+        }
+      }
+    }
+  ]
+}

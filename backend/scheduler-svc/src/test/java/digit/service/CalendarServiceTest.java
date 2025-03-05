@@ -164,7 +164,7 @@ class CalendarServiceTest {
         List<JudgeCalendarRule> judgeCalendarRules = Collections.singletonList(mock(JudgeCalendarRule.class));
         when(calendarRepository.getJudgeRule(any())).thenReturn(judgeCalendarRules);
 
-        List<ScheduleHearing> hearings = Collections.singletonList(new ScheduleHearing());
+        List<ScheduleHearing> hearings = Collections.singletonList( ScheduleHearing.builder().startTime(0L).build());
         when(hearingService.search(any(), any(), any())).thenReturn(hearings);
         when(dateUtil.getLocalDateFromEpoch(0)).thenReturn(LocalDate.now());
         List<HearingCalendar> result = calendarService.getJudgeCalendar(request);

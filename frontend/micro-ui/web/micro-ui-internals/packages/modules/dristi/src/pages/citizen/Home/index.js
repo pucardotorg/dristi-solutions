@@ -45,11 +45,11 @@ function CitizenHome({ tenantId, setHideBack }) {
   const isLitigantPartialRegistered = useMemo(() => {
     if (userInfoType !== "citizen") return false;
 
-    if (!data?.Individual || data.Individual.length === 0) return false;
+    if (!data?.Individual || data?.Individual.length === 0) return false;
 
     if (data?.Individual[0]?.userDetails?.roles?.some((role) => role?.code === "ADVOCATE_ROLE")) return false;
 
-    const address = data.Individual[0]?.address;
+    const address = data?.Individual[0]?.address;
     return !address || (Array.isArray(address) && address.length === 0);
   }, [data?.Individual, userInfoType]);
 

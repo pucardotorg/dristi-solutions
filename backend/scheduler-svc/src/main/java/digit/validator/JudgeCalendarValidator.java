@@ -13,23 +13,6 @@ public class JudgeCalendarValidator {
 
 
     public void validateUpdateJudgeCalendar(List<JudgeCalendarRule> judgeCalendarRule) {
-
-//        judgeCalendarRule.forEach(application -> {
-//            if (ObjectUtils.isEmpty(application.getTenantId()))
-//                throw new CustomException("DK_SH_APP_ERR", "tenantId is mandatory for updating judge calendar");
-//
-//            if (ObjectUtils.isEmpty(application.getJudgeId()))
-//                throw new CustomException("DK_SH_APP_ERR", "Judge Id is mandatory for updating judge calendar");
-//
-//            if (ObjectUtils.isEmpty(application.getDate()))
-//                throw new CustomException("DK_SH_APP_ERR", "Date is mandatory for updating judge calendar");
-//
-//            if (application.getDate().isBefore(LocalDate.now()))
-//                throw new CustomException("DK_SH_APP_ERR", "cannot update for past dates");
-//
-//            if (ObjectUtils.isEmpty(application.getRuleType()))
-//                throw new CustomException("DK_SH_APP_ERR", "Rule Type is mandatory for updating judge calendar");
-//        });
     }
 
     public <T extends SearchCriteria> void validateSearchRequest(T criteria) {

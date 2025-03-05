@@ -120,6 +120,8 @@ const SummaryModal = ({
         statuteSection: {
           tenantId: Digit.ULBService.getCurrentTenantId(),
         },
+        orderTitle: "OTHERS",
+        orderCategory: "INTERMEDIATE",
         orderType: "OTHERS",
         status: "",
         isActive: true,

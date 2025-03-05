@@ -664,6 +664,7 @@ export const UICustomizations = {
         case "FILE":
           return showDocument ? <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} /> : "";
         case "DATE_ADDED":
+        case "DATE_ISSUED":
         case "DATE":
           const date = new Date(value);
           const day = date.getDate().toString().padStart(2, "0");
@@ -737,6 +738,8 @@ export const UICustomizations = {
                   statuteSection: {
                     tenantId: row.tenantId,
                   },
+                  orderTitle: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                  orderCategory: "INTERMEDIATE",
                   orderType: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
                   status: "",
                   isActive: true,
@@ -944,7 +947,7 @@ export const UICustomizations = {
                     ?.filter((order) => order.order.status !== "DRAFT_IN_PROGRESS")
                     .map((order) => {
                       return {
-                        instance: `ORDER_TYPE_${order.order.orderType.toUpperCase()}`,
+                        instance: order.order.orderTitle,
                         stage: [],
                         date: order.order.auditDetails.createdTime,
                         status: order.order.status,
@@ -952,7 +955,7 @@ export const UICustomizations = {
                     })
                 : data.caseFiles[0]?.orders.map((order) => {
                     return {
-                      instance: `ORDER_TYPE_${order.order.orderType.toUpperCase()}`,
+                      instance: order.order.orderTitle,
                       stage: [],
                       date: order.order.auditDetails.createdTime,
                       status: order.order.status,
