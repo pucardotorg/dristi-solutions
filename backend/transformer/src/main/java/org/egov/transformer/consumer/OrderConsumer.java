@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.egov.transformer.config.TransformerProperties;
+import org.egov.transformer.event.manager.OrderNotificationEventManager;
 import org.egov.transformer.models.Order;
 import org.egov.transformer.models.OrderRequest;
 import org.egov.transformer.service.OrderService;
@@ -25,26 +26,31 @@ public class OrderConsumer {
     private final ObjectMapper objectMapper;
     private final OrderService orderService;
     private final TransformerProperties transformerProperties;
+    private final OrderNotificationEventManager eventManager;
 
     @Autowired
     public OrderConsumer(ObjectMapper objectMapper,
                          OrderService orderService,
-                         TransformerProperties transformerProperties) {
+                         TransformerProperties transformerProperties, OrderNotificationEventManager eventManager) {
         this.objectMapper = objectMapper;
         this.orderService = orderService;
         this.transformerProperties = transformerProperties;
+        this.eventManager = eventManager;
     }
 
     @KafkaListener(topics = {"${transformer.consumer.create.order.topic}"})
     public void saveOrder(ConsumerRecord<String, Object> payload,
                           @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         publishOrder(payload, transformerProperties.getSaveOrderTopic());
+        pushOrderAndNotification(payload, topic);
+
     }
 
     @KafkaListener(topics = {"${transformer.consumer.update.order.topic}"})
     public void updateOrder(ConsumerRecord<String, Object> payload,
                             @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         publishOrder(payload, transformerProperties.getUpdateOrderTopic());
+        pushOrderAndNotification(payload, topic);
     }
 
 
@@ -57,6 +63,20 @@ public class OrderConsumer {
             orderService.addOrderDetails(order, topic);
         } catch (Exception exception) {
             log.error("error in saving order", exception);
+        }
+    }
+
+    private void pushOrderAndNotification(ConsumerRecord<String, Object> payload, String topic) {
+
+        try {
+            String orderRequest = objectMapper.writeValueAsString(payload.value());
+            OrderRequest request = objectMapper.readValue(orderRequest, OrderRequest.class);
+            eventManager.notifyByObjects(request.getOrder(), request.getRequestInfo());
+
+        } catch (Exception e) {
+            log.debug(" payload : {} , topic : {}", payload.value(), topic);
+            log.error("Error occurred while serializing order request", e);
+
         }
     }
 }
