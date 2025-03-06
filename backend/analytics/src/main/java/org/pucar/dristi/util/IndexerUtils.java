@@ -256,7 +256,7 @@ public class IndexerUtils {
         }
 
         try {
-            additionalDetails = mapper.writeValueAsString(JsonPath.read(jsonItem, "additionalDetails"));
+            additionalDetails = mapper.writeValueAsString(JsonPath.read(jsonItem, "$.additionalDetails"));
         } catch (Exception e) {
             log.error("Error while building listener payload");
             throw new CustomException(Pending_Task_Exception, "Error occurred while preparing pending task: " + e);
