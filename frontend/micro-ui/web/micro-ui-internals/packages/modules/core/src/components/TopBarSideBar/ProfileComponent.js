@@ -54,7 +54,7 @@ const ProfileComponent = ({ userDetails, userOptions, handleUserDropdownSelectio
   };
 
   const userRole = userDetails?.info?.roles?.some((role) => role.name === "ADVOCATE_ROLE") ? t("ADVOCATE") : t("LITIGANT_OPT");
-
+  const showDefaultRole = userDetails?.info?.roles.length !== 1 && userRole;
   return (
     <div className="profile-component">
       <div onClick={toggleModal}>
@@ -71,9 +71,7 @@ const ProfileComponent = ({ userDetails, userOptions, handleUserDropdownSelectio
           </div>
           <div className="profile-header">
             <div className="profile-name">{userDetails?.info?.name}</div>
-            <div className="user-type">
-              {userRole} | {userDetails?.info?.mobileNumber}
-            </div>
+            <div className="user-type">{showDefaultRole ? `${userRole} | ${userDetails?.info?.mobileNumber}` : userDetails?.info?.mobileNumber}</div>
           </div>
           <div className="profile-options">
             <div className="edit-profile" onClick={() => handleSelection({ name: "Edit Profile" })}>
