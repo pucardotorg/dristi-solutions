@@ -49,7 +49,7 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
                 .title(event.getOrderTitle())
                 .tenantId(event.getTenantId())
                 .filingNumbers(event.getFilingNumber() != null ? Collections.singletonList(event.getFilingNumber()) : new ArrayList<>())
-                .caseNumbers(event.getCnrNumber() != null ? Collections.singletonList(event.getCnrNumber()) : new ArrayList<>())
+                .caseNumbers(event.getFilingNumber() != null ? Collections.singletonList(event.getFilingNumber()) : new ArrayList<>())
                 .judgeIds(new ArrayList<>())  /// there is judge id in issued by but its UUID
                 .build();
 
