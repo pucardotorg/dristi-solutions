@@ -31,17 +31,17 @@ function MandatoryFieldsErrorModal({ t, showMandatoryFieldsErrorModal, setShowMa
       popUpStyleMain={{ zIndex: "1000" }}
     >
       <div>
-        {showMandatoryFieldsErrorModal?.errorsData?.map((data) => {
+        {showMandatoryFieldsErrorModal?.errorsData?.map((data, dataIndex) => {
           return data?.errors?.length > 0 ? (
-            <div style={{ marginBottom: "20px" }}>
-              <div style={{ diaplay: "flex", flexDirection: "row", marginBottom: "5px", fontWeight: "bold" }}>
+            <div key={`error-item-${dataIndex}`} style={{ marginBottom: "20px" }}>
+              <div style={{ display: "flex", flexDirection: "row", marginBottom: "5px", fontWeight: "bold" }}>
                 <h1>{`${t("ORDER_ITEM")} : ${data?.index + 1}`}</h1>
                 <h1>{`${t("ORDER_TYPE")} : ${t(data?.orderType)}`}</h1>
               </div>
               <div>
-                {data?.errors?.map((err) => {
+                {data?.errors?.map((err, errIndex) => {
                   return (
-                    <div>
+                    <div key={`error-detail-${dataIndex}-${errIndex}`}>
                       <h1>{`${t("ORDER_FIELD")} : ${t(err?.key)}`}</h1>
                       <h1>{`${t("FIELD_ERROR")} : ${t(err?.errorMessage)}`}</h1>
                     </div>
@@ -50,7 +50,7 @@ function MandatoryFieldsErrorModal({ t, showMandatoryFieldsErrorModal, setShowMa
               </div>
             </div>
           ) : (
-            <div></div>
+            <div key={`empty-error-${dataIndex}`}></div>
           );
         })}
       </div>
