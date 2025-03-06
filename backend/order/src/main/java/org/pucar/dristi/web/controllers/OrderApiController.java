@@ -81,5 +81,22 @@ public class OrderApiController {
             OrderResponse orderResponse = OrderResponse.builder().order(order).responseInfo(responseInfo).build();
             return new ResponseEntity<>(orderResponse, HttpStatus.OK);
     }
+
+    @RequestMapping(value = "/v2/add-item", method = RequestMethod.POST)
+    public ResponseEntity<OrderResponse> orderV2addItem(@Parameter(in = ParameterIn.DEFAULT, description = "Details for the new item/order + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody OrderRequest body) {
+        Order order = orderService.addItem(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true, HttpStatus.OK.getReasonPhrase());
+        OrderResponse orderResponse = OrderResponse.builder().order(order).responseInfo(responseInfo).build();
+        return new ResponseEntity<>(orderResponse, HttpStatus.OK);
+    }
+
+
+    @RequestMapping(value = "/v2/remove-item", method = RequestMethod.POST)
+    public ResponseEntity<OrderResponse> orderV2RemoveItem(@Parameter(in = ParameterIn.DEFAULT, description = "Details for the item/order to be removed + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody RemoveItemRequest body) {
+        Order order = orderService.removeItem(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true, HttpStatus.OK.getReasonPhrase());
+        OrderResponse orderResponse = OrderResponse.builder().order(order).responseInfo(responseInfo).build();
+        return new ResponseEntity<>(orderResponse, HttpStatus.OK);
+    }
 }
 

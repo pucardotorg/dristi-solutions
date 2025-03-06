@@ -2,16 +2,17 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/";
 import PreHearingModal from "../../components/PreHearingModal";
 import TasksComponent from "../../components/TaskComponentCalander";
 import useGetHearings from "../../hooks/hearings/useGetHearings";
 import useGetHearingSlotMetaData from "../../hooks/useGetHearingSlotMetaData";
+import { Button } from "@egovernments/digit-ui-react-components";
+import BulkReschedule from "./BulkReschedule";
 
 const tenantId = window?.Digit.ULBService.getCurrentTenantId();
-
 const MonthlyCalendar = () => {
   const history = useHistory();
   const { t } = useTranslation();
@@ -45,17 +46,19 @@ const MonthlyCalendar = () => {
   const [dateRange, setDateRange] = useState({});
   const [taskType, setTaskType] = useState({});
   const [caseType, setCaseType] = useState({});
+  const [stepper, setStepper] = useState(0);
   const initial = userInfoType === "citizen" ? "timeGridDay" : "dayGridMonth";
 
   const search = window.location.search;
-  const { fromDate, toDate, slot, initialView, count } = useMemo(() => {
+  const { fromDate, toDate, slot, slotId, initialView, count } = useMemo(() => {
     const searchParams = new URLSearchParams(search);
     const fromDate = Number(searchParams.get("from-date")) || null;
     const toDate = Number(searchParams.get("to-date")) || null;
     const slot = searchParams.get("slot") || null;
+    const slotId = searchParams.get("slotId") || null;
     const initialView = searchParams.get("view") || initial;
     const count = searchParams.get("count") || 0;
-    return { fromDate, toDate, slot, initialView, count };
+    return { fromDate, toDate, slot, slotId, initialView, count };
   }, [search]);
 
   const reqBody = {
@@ -77,7 +80,21 @@ const MonthlyCalendar = () => {
   const { data: hearingSlots } = useGetHearingSlotMetaData(true);
   const hearingDetails = useMemo(() => hearingResponse?.HearingList || [], [hearingResponse]);
 
-  const events = useMemo(() => hearingSlots || [], [hearingSlots]);
+  // const events = useMemo(() => hearingSlots || [], [hearingSlots]);
+
+  useEffect(() => {
+    if (stepper === 0) {
+      refetch();
+    }
+  }, [stepper]);
+
+  const mdmsEvents = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "court", [{ name: "slots" }], {
+    cacheTime: 0,
+    select: (data) => {
+      return data?.court?.slots || [];
+    },
+  });
+  const events = mdmsEvents?.data;
 
   function epochToDateTimeObject(epochTime) {
     if (!epochTime || typeof epochTime !== "number") {
@@ -104,10 +121,9 @@ const MonthlyCalendar = () => {
 
     hearingDetails.forEach((hearing) => {
       const dateTimeObj = epochToDateTimeObject(hearing.startTime);
-
       if (dateTimeObj) {
         const dateString = dateTimeObj.date;
-        events.slots.forEach((slot) => {
+        events?.forEach((slot) => {
           if (dateTimeObj.time >= slot.slotStartTime && dateTimeObj.time < slot.slotEndTime) {
             const eventKey = `${dateString}-${slot.slotName}`;
 
@@ -121,6 +137,7 @@ const MonthlyCalendar = () => {
                   count: 1,
                   date: new Date(dateString),
                   slot: slot.slotName,
+                  slotId: slot.id,
                 },
               };
             } else {
@@ -134,7 +151,7 @@ const MonthlyCalendar = () => {
 
     const eventsArray = Object.values(calendarEvents);
     return eventsArray;
-  }, [hearingDetails, events.slots]);
+  }, [hearingDetails, events]);
 
   const getEachHearingType = (hearingList) => {
     return [...new Set(hearingList.map((hearing) => hearing.hearingType))];
@@ -159,6 +176,7 @@ const MonthlyCalendar = () => {
     searchParams.set("from-date", fromDate.getTime());
     searchParams.set("to-date", toDate.getTime());
     searchParams.set("slot", arg.event.extendedProps.slot);
+    searchParams.set("slotId", arg.event.extendedProps.slotId);
     searchParams.set("view", getCurrentViewType());
     searchParams.set("count", count);
     history.replace({ search: searchParams.toString() });
@@ -169,6 +187,7 @@ const MonthlyCalendar = () => {
     searchParams.delete("from-date");
     searchParams.delete("to-date");
     searchParams.delete("slot");
+    searchParams.delete("slotId");
     searchParams.delete("view");
     searchParams.delete("count");
     history.replace({ search: searchParams.toString() });
@@ -182,61 +201,74 @@ const MonthlyCalendar = () => {
     </svg>
   );
 
+  const onSubmit = () => {
+    setStepper((prev) => prev + 1);
+  };
   return (
-    <div style={{ display: "flex" }}>
-      <div style={{ width: "70%" }}>
-        <div>
-          <FullCalendar
-            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-            initialView={initialView}
-            headerToolbar={{
-              start: "prev",
-              center: "title",
-              end: "next,dayGridMonth,timeGridWeek,timeGridDay",
-            }}
-            height={"85vh"}
-            events={Calendar_events}
-            eventContent={(arg) => {
-              return (
-                <div>
-                  <div>{`${arg.event.extendedProps.slot} : ${arg.event.extendedProps.count}-${t("HEARINGS")}`}</div>
-                  {hearingCount(arg.event.extendedProps.hearings).map((hearingFrequency) => (
-                    <div>
-                      {hearingFrequency.frequency} - {t(hearingFrequency.type)}
-                    </div>
-                  ))}
-                </div>
-              );
-            }}
-            eventClick={handleEventClick}
-            datesSet={(dateInfo) => {
-              setDateRange({ start: dateInfo.start, end: dateInfo.end });
-            }}
-            ref={calendarRef}
-          />
-          {fromDate && toDate && slot && (
-            <PreHearingModal
-              courtData={courtData?.["common-masters"]?.Court_Rooms}
-              onCancel={closeModal}
-              hearingData={{ fromDate, toDate, slot, count }}
-              individualId={individualId}
-              userType={userType}
+    <React.Fragment>
+      {Digit.UserService.getType() === "employee" && (
+        <div style={{ display: "flex", justifyContent: "end", paddingRight: "24px", marginTop: "5px" }}>
+          <Button label={t("BULK_RESCHEDULE")} onButtonClick={onSubmit}></Button>
+        </div>
+      )}
+      <div style={{ display: "flex" }}>
+        <div style={{ width: "70%" }}>
+          <div>
+            <FullCalendar
+              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+              initialView={initialView}
+              headerToolbar={{
+                start: "prev",
+                center: "title",
+                end: "next,dayGridMonth,timeGridWeek,timeGridDay",
+              }}
+              height={"85vh"}
+              events={Calendar_events}
+              eventContent={(arg) => {
+                return (
+                  <div>
+                    <div>{`${arg.event.extendedProps.slot} :`}</div>
+                    <div>{`${arg.event.extendedProps.count}-${t("HEARINGS")}`}</div>
+                    {hearingCount(arg.event.extendedProps.hearings).map((hearingFrequency) => (
+                      <div>
+                        {hearingFrequency.frequency} - {t(hearingFrequency.type)}
+                      </div>
+                    ))}
+                  </div>
+                );
+              }}
+              eventClick={handleEventClick}
+              datesSet={(dateInfo) => {
+                setDateRange({ start: dateInfo.start, end: dateInfo.end });
+              }}
+              ref={calendarRef}
             />
-          )}
+            {fromDate && toDate && slot && (
+              <PreHearingModal
+                courtData={courtData?.["common-masters"]?.Court_Rooms}
+                onCancel={closeModal}
+                hearingData={{ fromDate, toDate, slot, slotId, count }}
+                individualId={individualId}
+                userType={userType}
+                events={events}
+              />
+            )}
+          </div>
+        </div>
+        <div className="right-side">
+          <TasksComponent
+            taskType={taskType}
+            setTaskType={setTaskType}
+            caseType={caseType}
+            setCaseType={setCaseType}
+            isLitigant={Boolean(userInfoType === "citizen")}
+            uuid={userInfo?.uuid}
+            userInfoType={userInfoType}
+          />
         </div>
       </div>
-      <div className="right-side">
-        <TasksComponent
-          taskType={taskType}
-          setTaskType={setTaskType}
-          caseType={caseType}
-          setCaseType={setCaseType}
-          isLitigant={Boolean(userInfoType === "citizen")}
-          uuid={userInfo?.uuid}
-          userInfoType={userInfoType}
-        />
-      </div>
-    </div>
+      <BulkReschedule stepper={stepper} setStepper={setStepper} selectedSlot={[]} />
+    </React.Fragment>
   );
 };
 

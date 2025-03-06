@@ -254,6 +254,8 @@ function CaseFileAdmission({ t, path }) {
         statuteSection: {
           tenantId,
         },
+        orderTitle: "NOTICE",
+        orderCategory: "INTERMEDIATE",
         orderType: "NOTICE",
         status: "",
         isActive: true,
@@ -646,8 +648,10 @@ function CaseFileAdmission({ t, path }) {
         key: "inquiryAffidavitFileUpload",
       })),
       ...caseDetails?.additionalDetails?.advocateDetails?.formdata?.map((form) => ({
-        document: form?.data?.vakalatnamaFileUpload?.document,
-        key: "vakalatnamaFileUpload",
+        document: form?.data?.multipleAdvocatesAndPip?.vakalatnamaFileUpload
+          ? form?.data?.multipleAdvocatesAndPip?.vakalatnamaFileUpload?.document
+          : form?.data?.multipleAdvocatesAndPip?.pipAffidavitFileUpload?.document,
+        key: form?.data?.multipleAdvocatesAndPip?.vakalatnamaFileUpload ? "vakalatnamaFileUpload" : "pipAffidavitFileUpload",
       })),
     ].flat();
 
@@ -726,6 +730,8 @@ function CaseFileAdmission({ t, path }) {
           filingNumber: [caseDetails.filingNumber],
           hearingType: purpose,
           status: true,
+          courtCaseNumber: caseDetails?.courtCaseNumber,
+          cmpNumber: caseDetails?.cmpNumber,
           attendees: [
             ...Object.values(participant)
               .map((val) => val.attendees.map((attendee) => JSON.parse(attendee)))
@@ -879,6 +885,8 @@ function CaseFileAdmission({ t, path }) {
         statuteSection: {
           tenantId,
         },
+        orderTitle: OrderTypes.SCHEDULE_OF_HEARING_DATE,
+        orderCategory: "INTERMEDIATE",
         orderType: OrderTypes.SCHEDULE_OF_HEARING_DATE,
         status: "",
         isActive: true,
@@ -963,6 +971,8 @@ function CaseFileAdmission({ t, path }) {
         statuteSection: {
           tenantId,
         },
+        orderTitle: "SCHEDULE_OF_HEARING_DATE",
+        orderCategory: "INTERMEDIATE",
         orderType: "SCHEDULE_OF_HEARING_DATE",
         status: "",
         isActive: true,

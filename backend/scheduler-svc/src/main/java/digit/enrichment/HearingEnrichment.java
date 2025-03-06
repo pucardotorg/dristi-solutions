@@ -1,6 +1,7 @@
 package digit.enrichment;
 
 
+import digit.config.Configuration;
 import digit.models.coremodels.AuditDetails;
 import digit.repository.HearingRepository;
 import digit.util.DateUtil;
@@ -13,22 +14,29 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 @Component
 @Slf4j
 public class HearingEnrichment {
 
+    private final HearingRepository repository;
+    private final DateUtil dateUtil;
+    private final Configuration configuration;
 
     @Autowired
-    private HearingRepository repository;
-
-    @Autowired
-    private DateUtil dateUtil;
+    public HearingEnrichment(HearingRepository repository, DateUtil dateUtil, Configuration configuration) {
+        this.repository = repository;
+        this.dateUtil = dateUtil;
+        this.configuration = configuration;
+    }
 
 
     public void enrichScheduleHearing(ScheduleHearingRequest schedulingRequests, List<MdmsSlot> defaultSlots, Map<String, MdmsHearing> hearingTypeMap) {
-
+        log.info("operation = enrichScheduleHearing , result=IN_PROGRESS ");
         RequestInfo requestInfo = schedulingRequests.getRequestInfo();
         List<ScheduleHearing> hearingList = schedulingRequests.getHearing();
 
@@ -36,42 +44,52 @@ public class HearingEnrichment {
         for (ScheduleHearing hearing : hearingList) {
             hearing.setAuditDetails(auditDetails);
             hearing.setRowVersion(1);
-            if (hearing.getStatus()!=null && hearing.getStatus().equals("BLOCKED")) {
+            if (hearing.getStatus() != null && hearing.getStatus().equals("BLOCKED")) {
                 hearing.setHearingBookingId(UUID.randomUUID().toString());
             }
         }
 
         updateTimingInHearings(hearingList, hearingTypeMap, defaultSlots);
-
+        log.info("operation = enrichScheduleHearing, result=SUCCESS");
     }
 
 
     void updateTimingInHearings(List<ScheduleHearing> hearingList, Map<String, MdmsHearing> hearingTypeMap, List<MdmsSlot> defaultSlots) {
+        log.info("operation = updateTimingInHearings , result=IN_PROGRESS");
 
-        List<String> statuses = new ArrayList<>();
-        statuses.add("SCHEDULED");
-        statuses.add("BLOCKED");
+        List<String> statuses = List.of("SCHEDULED", "BLOCKED");
+
         HashMap<String, List<ScheduleHearing>> sameDayHearings = new HashMap<>();
         for (ScheduleHearing hearing : hearingList) {
 
-            ScheduleHearingSearchCriteria searchCriteria = ScheduleHearingSearchCriteria.builder()
-                    .judgeId(hearing.getJudgeId())
-                    .startDateTime(hearing.getStartTime())
-                    .endDateTime(hearing.getEndTime())
-                    .status(statuses).build();
-
             List<ScheduleHearing> hearings;
-            hearings = repository.getHearings(searchCriteria, null, null);
+
+            String key = hearing.getJudgeId() + "_" + hearing.getStartTime() + "_" + hearing.getEndTime();
+            if (sameDayHearings.containsKey(key)) {
+                hearings = sameDayHearings.get(key);
+            } else {
+                ScheduleHearingSearchCriteria searchCriteria = ScheduleHearingSearchCriteria.builder()
+                        .judgeId(hearing.getJudgeId())
+                        .startDateTime(hearing.getStartTime())
+                        .endDateTime(hearing.getEndTime())
+                        .status(statuses).build();
+
+                hearings = repository.getHearings(searchCriteria, null, null);
+                sameDayHearings.put(key, hearings);
+            }
+
             Integer hearingTime = hearingTypeMap.get(hearing.getHearingType()).getHearingTime();
             updateHearingTime(hearing, defaultSlots, hearings, hearingTime);
-
-
+            sameDayHearings.get(key).add(hearing);
         }
+
+        log.info("operation = updateTimingInHearings, result=SUCCESS");
 
     }
 
 
     public void enrichUpdateScheduleHearing(RequestInfo requestInfo, List<ScheduleHearing> hearingList) {
+        log.info("operation = enrichUpdateScheduleHearing , Result = IN_PROGRESS");
 
         hearingList.forEach((hearing) -> {
 
@@ -81,6 +99,7 @@ public class HearingEnrichment {
             hearing.setRowVersion(hearing.getRowVersion() + 1);
 
         });
+        log.info("operation = enrichUpdateScheduleHearing, Result=SUCCESS");
 
     }
 
@@ -91,6 +110,7 @@ public class HearingEnrichment {
     }
 
     void updateHearingTime(ScheduleHearing hearing, List<MdmsSlot> slots, List<ScheduleHearing> scheduledHearings, int hearingDuration) {
+        log.info("operation = updateHearingTime, Result= IN_PROGRESS, hearingId:{}", hearing.getHearingBookingId());
         long startTime = hearing.getStartTime();
 
         LocalDate date = dateUtil.getLocalDateFromEpoch(startTime);
@@ -117,13 +137,18 @@ public class HearingEnrichment {
 
 
     boolean canScheduleHearings(ScheduleHearing newHearing, List<ScheduleHearing> scheduledHearings, List<MdmsSlot> slots) {
+        log.info("operation = canScheduleHearings , Result=IN_PROGRESS");
         // Check if new Hearings overlaps with existing Hearings and fits within any of the slots
         for (ScheduleHearing hearing : scheduledHearings) {
             if (newHearing.overlapsWith(hearing)) {
+                log.debug("slot overlaps with existing hearing");
+                log.info("operation = canScheduleHearings , Result=SUCCESS");
                 return false;
             }
 
         }
+
+        //todo : here we need to check only one slot no need to check all the slot
         for (MdmsSlot slot : slots) {
 
             // later we can directly compare long
@@ -132,27 +157,36 @@ public class HearingEnrichment {
             LocalDateTime slotEnd = dateUtil.getLocalDateTime(dateUtil.getLocalDateTimeFromEpoch(newHearing.getEndTime()), slot.getSlotEndTime());
 
             if (hearingEndTime.isAfter(slotStart) && hearingEndTime.isBefore(slotEnd)) {
+                log.debug("found slot for hearing, slotId:{}, hearingId:{}", slot.getId(), newHearing.getHearingType());
+                log.info("operation = canScheduleHearings , Result=SUCCESS, slot found for hearing");
                 return true;
             }
         }
+        log.debug("hearing does not fit in the slot");
+        log.info("operation = canScheduleHearings , Result=SUCCESS");
         return false;
     }
 
 
     public void enrichBulkReschedule(ScheduleHearingRequest request, List<MdmsSlot> defaultHearings, Map<String, MdmsHearing> hearingTypeMap) {
 
+        log.info("operation = enrichBulkReschedule, result=IN_PROGRESS");
         List<ScheduleHearing> hearing = request.getHearing();
 
+
+        String uuid = request.getRequestInfo().getUserInfo().getUuid();
+        Long currentTime = System.currentTimeMillis();
         hearing.forEach((element) -> {
 
-            Long currentTime = System.currentTimeMillis();
             element.getAuditDetails().setLastModifiedTime(currentTime);
-            element.getAuditDetails().setLastModifiedBy(request.getRequestInfo().getUserInfo().getUuid());
+            element.getAuditDetails().setLastModifiedBy(uuid);
             element.setRowVersion(element.getRowVersion() + 1);
+            element.setExpiryTime(element.getAuditDetails().getLastModifiedTime() + configuration.getExpiryIntervalMiliSeconds());
 
         });
 
         updateTimingInHearings(hearing, hearingTypeMap, defaultHearings);
+        log.info("operation = enrichBulkReschedule, result=SUCCESS");
     }
 
 

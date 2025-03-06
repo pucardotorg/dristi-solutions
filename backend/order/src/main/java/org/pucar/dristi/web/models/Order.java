@@ -67,11 +67,11 @@ public class Order {
     private IssuedBy issuedBy = null;
 
     @JsonProperty("orderType")
-    @NotNull
     @Valid
     private String orderType = null;
 
     @JsonProperty("orderCategory")
+    @NotNull
     private String orderCategory = null;
 
     @JsonProperty("status")
@@ -95,6 +95,13 @@ public class Order {
 
     @JsonProperty("orderDetails")
     private Object orderDetails = null;
+
+    @JsonProperty("compositeItems")
+    private Object compositeItems = null;
+
+    @JsonProperty("orderTitle")
+    @NotNull
+    private String orderTitle = null;
 
     @JsonProperty("additionalDetails")
     private Object additionalDetails = null;

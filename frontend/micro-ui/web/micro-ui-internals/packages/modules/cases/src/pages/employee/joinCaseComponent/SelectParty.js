@@ -225,6 +225,7 @@ const SelectParty = ({
                 config={{
                   isSelectAll: true,
                 }}
+                parentRef={targetRef}
               />
             )
           )}

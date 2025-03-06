@@ -41,7 +41,9 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
     setIsDisabled(true);
     const userType = params?.userType;
     const userTypeSelcted = params?.userType?.clientDetails?.selectUserType?.code;
-    const Individual = params?.IndividualPayload ? params?.IndividualPayload : { Individual: params?.Individual?.[0] };
+    const Individual = params?.IndividualPayload
+      ? params?.IndividualPayload
+      : { Individual: { ...params?.Individual?.[0], email: userInfo?.emailId } };
 
     const response = await searchIndividualUserWithUuid(userInfo?.uuid, tenantId);
     if (userTypeSelcted === "LITIGANT" && response?.Individual?.length > 0) {

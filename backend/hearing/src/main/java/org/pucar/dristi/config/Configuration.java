@@ -150,6 +150,9 @@ public class Configuration {
     @Value("${egov.filestore.path}")
     private String fileStorePath;
 
+    @Value("${app.zone.id}")
+    private String zoneId;
+
 
     // Pdf Config
     @Value("${egov.pdf.create}")
@@ -178,4 +181,23 @@ public class Configuration {
 
     @Value("${egov.sms.notification.hearing.adjourned.template.id}")
     private String smsNotificationHearingAdjournedTemplateId;
+
+    @Value("${dristi.scheduler.host}")
+    private String schedulerHost;
+
+    @Value("${dristi.scheduler.bulk.reschedule.endpoint}")
+    private String bulkRescheduleEndPoint;
+
+    @Value("${dristi.scheduler.search.endpoint}")
+    private String schedulerSearchEndpoint;
+
+    @Value("${dristi.scheduler.update.endpoint}")
+    private String schedulerUpdateEndpoint;
+
+    @Value("${bulk.reschedule.topic}")
+    private String bulkRescheduleTopic;
+
+    // template for generic message of hearing types
+    @Value("${egov.sms.notification.judge.scheduled.variable.hearing.template.id}")
+    private String smsNotificationVariableHearingScheduled;
 }

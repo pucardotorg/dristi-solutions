@@ -56,8 +56,7 @@ public class IndividualService {
                 .append(config.getIndividualSearchEndpoint())
                 .append("?limit=").append(ids.size())
                 .append("&offset=0")
-                .append("&tenantId=").append(requestInfo.getUserInfo().getTenantId())
-                .append("&includeDeleted=true");
+                .append("&tenantId=").append(requestInfo.getUserInfo().getTenantId());
     }
 
 }

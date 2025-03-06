@@ -15,10 +15,10 @@ const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
 };
 
-const WarningModal = ({ t, heading, onCancel, onSubmit, info, setWarningModal, isSaveDraft, onSaveDraft }) => {
+const WarningModal = ({ t, heading, onCancel, onSubmit, info, setWarningModal }) => {
   const handleSaveOnSubmit = async () => {
     setWarningModal(false);
-    return isSaveDraft ? await onSaveDraft(undefined, true) : await onSubmit("SAVE_DRAFT", false, true);
+    return await onSubmit("SAVE_DRAFT", false, true);
   };
   return (
     <Modal

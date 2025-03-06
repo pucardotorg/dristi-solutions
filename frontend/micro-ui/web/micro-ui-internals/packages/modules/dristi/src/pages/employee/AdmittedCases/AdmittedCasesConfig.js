@@ -252,7 +252,7 @@ export const TabSearchconfig = {
             columns: [
               {
                 label: "ORDER_TYPE",
-                jsonPath: "orderType",
+                jsonPath: "orderTitle",
                 additionalCustomization: true,
               },
               {
@@ -274,7 +274,7 @@ export const TabSearchconfig = {
                 additionalCustomization: true,
               },
               {
-                label: "DATE_ADDED",
+                label: "DATE_ISSUED",
                 jsonPath: "createdDate",
                 additionalCustomization: true,
               },

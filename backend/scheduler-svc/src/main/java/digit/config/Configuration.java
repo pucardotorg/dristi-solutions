@@ -219,4 +219,28 @@ public class Configuration {
 
     @Value("${egov.advocate.path}")
     private String advocatePath;
+
+    //individual
+    @Value("${egov.individual.host}")
+    private String individualHost;
+
+    @Value("${egov.individual.search.path}")
+    private String individualSearchEndpoint;
+
+    //Localization
+    @Value("${egov.localization.host}")
+    private String localizationHost;
+
+    @Value("${egov.localization.context.path}")
+    private String localizationContextPath;
+
+    @Value("${egov.localization.search.endpoint}")
+    private String localizationSearchEndpoint;
+
+    @Value("${egov.sms.notification.hearing.reminder.template.id}")
+    private String smsNotificationHearingReminder;
+
+    @Value("${hearing.expiry.interval.miliseconds}")
+    private Integer expiryIntervalMiliSeconds;
+
 }

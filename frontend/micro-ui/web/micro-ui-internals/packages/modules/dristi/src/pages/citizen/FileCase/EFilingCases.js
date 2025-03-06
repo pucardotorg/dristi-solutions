@@ -226,7 +226,6 @@ function EFilingCases({ path }) {
   const [modalCaseName, setModalCaseName] = useState("");
   const [isFilingParty, setIsFilingParty] = useState(false);
   const [warningModal, setWarningModal] = useState(false);
-  const [isSaveDraft, setSaveDraft] = useState(false);
 
   const [{ showSuccessToast, successMsg }, setSuccessToast] = useState({
     showSuccessToast: false,
@@ -426,10 +425,10 @@ function EFilingCases({ path }) {
         section[key]?.form?.forEach((item) => {
           Object.keys(item)?.forEach((field) => {
             if (item[field]?.FSOError && field != "image" && field != "title" && field != "witnessTitle") {
-                total++;
-                inputErrors++;
-                pageErrorCount++;
-              if(item[field]?.isWarning){
+              total++;
+              inputErrors++;
+              pageErrorCount++;
+              if (item[field]?.isWarning) {
                 warning++;
               }
             }
@@ -456,7 +455,7 @@ function EFilingCases({ path }) {
           total: errorCount[key].total + temp.total,
           sectionErrors: errorCount[key].sectionErrors + temp.sectionErrors,
           inputErrors: errorCount[key].inputErrors + temp.inputErrors,
-          warning : errorCount[key].warning + temp.warning,
+          warning: errorCount[key].warning + temp.warning,
           pages: temp.pages,
         };
       }
@@ -504,7 +503,7 @@ function EFilingCases({ path }) {
       total,
       sectionErrors,
       inputErrors,
-      warningErrors
+      warningErrors,
     };
   }, [scrutinyErrors]);
 
@@ -1083,6 +1082,12 @@ function EFilingCases({ path }) {
               if (selected === "delayApplications") {
                 if (isDelayCondonation && body?.key === "delayCondonationType") {
                   body.disable = true;
+                }
+              }
+
+              if(selected === "respondentDetails"){
+                if(judgeObj && Object.keys(judgeObj).length > 0 && body?.key === "addressDetails"){
+                  body.isJudgeSendBack=true;
                 }
               }
 
@@ -2023,16 +2028,7 @@ function EFilingCases({ path }) {
     }
   };
 
-  const onSaveDraft = (props, isWarning = false) => {
-    if (
-      selected === "complainantDetails" &&
-      !isWarning &&
-      formdata?.some((item) => item?.data?.complainantVerification?.individualDetails === null)
-    ) {
-      setSaveDraft(true);
-      setWarningModal(true);
-      return;
-    }
+  const onSaveDraft = (props) => {
     setParmas({ ...params, [pageConfig.key]: formdata });
     const newCaseDetails = {
       ...caseDetails,
@@ -2471,7 +2467,6 @@ function EFilingCases({ path }) {
 
   const handleCancelWarningModal = () => {
     setWarningModal(!warningModal);
-    setSaveDraft(false);
   };
 
   return (
@@ -2546,7 +2541,7 @@ function EFilingCases({ path }) {
                   children={item.children}
                   parentIndex={index}
                   isOpen={item.isOpen}
-                  errorCount={(scrutinyErrors?.[item.key]?.total - scrutinyErrors?.[item.key]?.warning) || 0}
+                  errorCount={scrutinyErrors?.[item.key]?.total - scrutinyErrors?.[item.key]?.warning || 0}
                   isCaseReAssigned={isCaseReAssigned}
                   isDraftInProgress={isDraftInProgress}
                   isFilingParty={isFilingParty}
@@ -2571,7 +2566,7 @@ function EFilingCases({ path }) {
               parentIndex={index}
               isOpen={item.isOpen}
               showConfirmModal={confirmModalConfig ? true : false}
-              errorCount={(scrutinyErrors?.[item.key]?.total - scrutinyErrors?.[item.key]?.warning) || 0}
+              errorCount={scrutinyErrors?.[item.key]?.total - scrutinyErrors?.[item.key]?.warning || 0}
               isCaseReAssigned={isCaseReAssigned}
               isDraftInProgress={isDraftInProgress}
               isFilingParty={isFilingParty}
@@ -2672,7 +2667,7 @@ function EFilingCases({ path }) {
                   label={showActionsLabels && actionName}
                   config={config}
                   onSubmit={() => onSubmit("SAVE_DRAFT")}
-                  onSecondayActionClick={() => onSaveDraft(undefined, false)}
+                  onSecondayActionClick={onSaveDraft}
                   defaultValues={getDefaultValues(index)}
                   onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
                     onFormValueChange(
@@ -2847,12 +2842,7 @@ function EFilingCases({ path }) {
             onSubmit={() => onSubmit("SAVE_DRAFT")}
           />
           {!(isCaseReAssigned || isPendingReESign) && (
-            <Button
-              className="previous-button"
-              variation="secondary"
-              label={t("CS_SAVE_DRAFT")}
-              onButtonClick={() => onSaveDraft(undefined, false)}
-            />
+            <Button className="previous-button" variation="secondary" label={t("CS_SAVE_DRAFT")} onButtonClick={onSaveDraft} />
           )}
         </ActionBar>
       )}
@@ -2972,8 +2962,6 @@ function EFilingCases({ path }) {
           onCancel={handleCancelWarningModal}
           setWarningModal={setWarningModal}
           onSubmit={onSubmit}
-          isSaveDraft={isSaveDraft}
-          onSaveDraft={onSaveDraft}
         />
       )}
     </div>

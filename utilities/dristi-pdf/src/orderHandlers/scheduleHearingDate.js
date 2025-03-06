@@ -1,17 +1,14 @@
 const cheerio = require("cheerio");
 const config = require("../config");
 const {
-  search_individual_uuid,
   search_case,
-  search_order,
-  search_mdms,
-  search_hrms,
   create_pdf,
   search_sunbirdrc_credential_service,
-  search_application,
   search_message,
+  create_pdf_v2,
 } = require("../api");
 const { renderError } = require("../utils/renderError");
+const { handleApiCall } = require("../utils/handleApiCall");
 
 function formatDate(epochMillis) {
   // Convert epoch milliseconds to a Date object
@@ -28,9 +25,8 @@ function formatDate(epochMillis) {
   return `${day}-${month}-${year}`;
 }
 
-async function scheduleHearingDate(req, res, qrCode) {
+async function scheduleHearingDate(req, res, qrCode, order, compositeOrder) {
   const cnrNumber = req.query.cnrNumber;
-  const orderId = req.query.orderId;
   const tenantId = req.query.tenantId;
   const requestInfo = req.body.RequestInfo;
   const entityId = req.query.entityId;
@@ -38,7 +34,6 @@ async function scheduleHearingDate(req, res, qrCode) {
 
   const missingFields = [];
   if (!cnrNumber) missingFields.push("cnrNumber");
-  if (!orderId) missingFields.push("orderId");
   if (!tenantId) missingFields.push("tenantId");
   if (requestInfo === undefined) missingFields.push("requestInfo");
   if (qrCode === "true" && (!entityId || !code))
@@ -52,18 +47,9 @@ async function scheduleHearingDate(req, res, qrCode) {
     );
   }
 
-  // Function to handle API calls
-  const handleApiCall = async (apiCall, errorMessage) => {
-    try {
-      return await apiCall();
-    } catch (ex) {
-      renderError(res, `${errorMessage}`, 500, ex);
-      throw ex; // Ensure the function stops on error
-    }
-  };
-
   try {
     const resMessage = await handleApiCall(
+      res,
       () =>
         search_message(
           tenantId,
@@ -81,6 +67,7 @@ async function scheduleHearingDate(req, res, qrCode) {
 
     // Search for case details
     const resCase = await handleApiCall(
+      res,
       () => search_case(cnrNumber, tenantId, requestInfo),
       "Failed to query case service"
     );
@@ -129,20 +116,11 @@ async function scheduleHearingDate(req, res, qrCode) {
     //     renderError(res, "Court establishment MDMS master not found", 404);
     // }
 
-    // Search for order details
-    const resOrder = await handleApiCall(
-      () => search_order(tenantId, orderId, requestInfo),
-      "Failed to query order service"
-    );
-    const order = resOrder?.data?.list[0];
-    if (!order) {
-      renderError(res, "Order not found", 404);
-    }
-
     // Handle QR code if enabled
     let base64Url = "";
     if (qrCode === "true") {
       const resCredential = await handleApiCall(
+        res,
         () =>
           search_sunbirdrc_credential_service(
             tenantId,
@@ -212,7 +190,18 @@ async function scheduleHearingDate(req, res, qrCode) {
       qrCode === "true"
         ? config.pdf.schedule_hearing_date_qr
         : config.pdf.schedule_hearing_date;
+
+    if (compositeOrder) {
+      const pdfResponse = await handleApiCall(
+        res,
+        () => create_pdf_v2(tenantId, pdfKey, data, req.body),
+        "Failed to generate PDF of generic order"
+      );
+      return pdfResponse.data;
+    }
+
     const pdfResponse = await handleApiCall(
+      res,
       () => create_pdf(tenantId, pdfKey, data, req.body),
       "Failed to generate PDF of order for Scheduling of Hearing Date"
     );
