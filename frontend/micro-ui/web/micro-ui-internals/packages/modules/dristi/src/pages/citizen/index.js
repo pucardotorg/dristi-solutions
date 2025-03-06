@@ -8,8 +8,9 @@ import AdmittedCases from "../employee/AdmittedCases/AdmittedCase";
 import ApplicationDetails from "../employee/ApplicationDetails";
 import CitizenHome from "./Home";
 import LandingPage from "./Home/LandingPage";
-import { userTypeOptions } from "./registration/config";
+import { newConfig, userTypeOptions } from "./registration/config";
 import Breadcrumb from "../../components/BreadCrumb";
+import SelectEmail from "./registration/SelectEmail";
 
 const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   const [hideBack, setHideBack] = useState(false);
@@ -56,11 +57,11 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   const isLitigantPartialRegistered = useMemo(() => {
     if (userInfoType !== "citizen") return false;
 
-    if (!data?.Individual || data.Individual.length === 0) return false;
+    if (!data?.Individual || data?.Individual.length === 0) return false;
 
     if (data?.Individual[0]?.userDetails?.roles?.some((role) => role?.code === "ADVOCATE_ROLE")) return false;
 
-    const address = data.Individual[0]?.address;
+    const address = data?.Individual[0]?.address;
     return !address || (Array.isArray(address) && address.length === 0);
   }, [data?.Individual, userInfoType]);
 
@@ -163,7 +164,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     <div className={"pt-citizen"}>
       <Switch>
         <React.Fragment>
-          {!hideBack && !(location.pathname.includes("/login") || location.pathname.includes("/registration/user-name") || individualId) && (
+          {!hideBack && !(location.pathname.includes("/login") || location.pathname.includes("/registration/email") || individualId) && (
             <div className="back-button-home">
               <BackButton />
             </div>
@@ -173,6 +174,17 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
           {userType !== "LITIGANT" && (
             <PrivateRoute exact path={`${path}/home/application-details`} component={(props) => <ApplicationDetails {...props} />} />
           )}
+          <PrivateRoute exact path={`${path}/home/edit-profile`}>
+            <SelectEmail
+              config={[newConfig[11]]}
+              t={t}
+              history={history}
+              isUserLoggedIn={isUserLoggedIn}
+              stateCode={stateCode}
+              isProfile={true}
+              setHideBack={setHideBack}
+            />
+          </PrivateRoute>
           <PrivateRoute exact path={`${path}/response`} component={Response} />
           <div
             className={

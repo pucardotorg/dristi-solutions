@@ -3,15 +3,21 @@ package org.pucar.dristi.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import net.minidev.json.JSONArray;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.models.individual.Individual;
 import org.egov.tracer.model.CustomException;
+import org.jetbrains.annotations.NotNull;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.HearingRegistrationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.HearingRepository;
 import org.pucar.dristi.util.CaseUtil;
+import org.pucar.dristi.util.DateUtil;
+import org.pucar.dristi.util.MdmsUtil;
+import org.pucar.dristi.util.SchedulerUtil;
 import org.pucar.dristi.validator.HearingRegistrationValidator;
 import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +47,9 @@ public class HearingService {
     private final ObjectMapper objectMapper;
     private final IndividualService individualService;
     private final SmsNotificationService notificationService;
+    private final MdmsUtil mdmsUtil;
+    private final DateUtil dateUtil;
+    private final SchedulerUtil schedulerUtil;
 
     @Autowired
     public HearingService(
@@ -49,7 +58,7 @@ public class HearingService {
             WorkflowService workflowService,
             HearingRepository hearingRepository,
             Producer producer,
-            Configuration config, CaseUtil caseUtil, ObjectMapper objectMapper, IndividualService individualService, SmsNotificationService notificationService) {
+            Configuration config, CaseUtil caseUtil, ObjectMapper objectMapper, IndividualService individualService, SmsNotificationService notificationService, MdmsUtil mdmsUtil, DateUtil dateUtil, SchedulerUtil schedulerUtil) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.workflowService = workflowService;
@@ -60,6 +69,9 @@ public class HearingService {
         this.objectMapper = objectMapper;
         this.individualService = individualService;
         this.notificationService = notificationService;
+        this.mdmsUtil = mdmsUtil;
+        this.dateUtil = dateUtil;
+        this.schedulerUtil = schedulerUtil;
     }
 
     public Hearing createHearing(HearingRequest body) {
@@ -75,7 +87,6 @@ public class HearingService {
             workflowService.updateWorkflowStatus(body);
 
             // Push the application to the topic for persister to listen and persist
-
             producer.push(config.getHearingCreateTopic(), body);
 
             // send the sms after creating hearing
@@ -122,8 +133,13 @@ public class HearingService {
             hearing.setDocuments(hearingRequest.getHearing().getDocuments());
             hearing.setAdditionalDetails(hearingRequest.getHearing().getAdditionalDetails());
             hearing.setVcLink(hearingRequest.getHearing().getVcLink());
+            hearing.setCmpNumber(hearingRequest.getHearing().getCmpNumber() != null ? hearingRequest.getHearing().getCmpNumber() : hearing.getCmpNumber());
+            hearing.setCourtCaseNumber(hearingRequest.getHearing().getCourtCaseNumber() != null ? hearingRequest.getHearing().getCourtCaseNumber() : hearing.getCourtCaseNumber());
+            hearing.setCaseReferenceNumber(hearingRequest.getHearing().getCaseReferenceNumber() != null ? hearingRequest.getHearing().getCaseReferenceNumber() : hearing.getCaseReferenceNumber());
             hearingRequest.setHearing(hearing);
-            workflowService.updateWorkflowStatus(hearingRequest);
+            if(hearing.getWorkflow() != null) {
+                workflowService.updateWorkflowStatus(hearingRequest);
+            }
 
             // Enrich application upon update
             enrichmentUtil.enrichHearingApplicationUponUpdate(hearingRequest);
@@ -149,7 +165,7 @@ public class HearingService {
         try {
             HearingExists order = body.getOrder();
             HearingCriteria criteria = HearingCriteria.builder().cnrNumber(order.getCnrNumber())
-                    .filingNumber( order.getFilingNumber()).applicationNumber(order.getApplicationNumber()).hearingId(order.getHearingId()).tenantId(body.getRequestInfo().getUserInfo().getTenantId()).build();
+                    .filingNumber(order.getFilingNumber()).applicationNumber(order.getApplicationNumber()).hearingId(order.getHearingId()).tenantId(body.getRequestInfo().getUserInfo().getTenantId()).build();
             Pagination pagination = Pagination.builder().limit(1.0).offSet((double) 0).build();
             HearingSearchRequest hearingSearchRequest = HearingSearchRequest.builder().criteria(criteria).pagination(pagination).build();
             List<Hearing> hearingList = hearingRepository.getHearings(hearingSearchRequest);
@@ -166,7 +182,7 @@ public class HearingService {
 
     public Hearing updateTranscriptAdditionalAttendees(HearingRequest hearingRequest) {
         try {
-            Hearing hearing = validator.validateHearingExistence(hearingRequest.getRequestInfo(),hearingRequest.getHearing());
+            Hearing hearing = validator.validateHearingExistence(hearingRequest.getRequestInfo(), hearingRequest.getHearing());
             enrichmentUtil.enrichHearingApplicationUponUpdate(hearingRequest);
             hearingRepository.updateTranscriptAdditionalAttendees(hearingRequest.getHearing());
             hearing.setTranscript(hearingRequest.getHearing().getTranscript());
@@ -186,11 +202,11 @@ public class HearingService {
 
     public void updateStartAndTime(UpdateTimeRequest body) {
         try {
-            for(Hearing hearing : body.getHearings()){
-                if(hearing.getHearingId()==null || hearing.getHearingId().isEmpty()){
+            for (Hearing hearing : body.getHearings()) {
+                if (hearing.getHearingId() == null || hearing.getHearingId().isEmpty()) {
                     throw new CustomException(HEARING_UPDATE_TIME_EXCEPTION, "Hearing Id is required for updating start and end time");
                 }
-                Hearing existingHearing = validator.validateHearingExistence(body.getRequestInfo(),hearing);
+                Hearing existingHearing = validator.validateHearingExistence(body.getRequestInfo(), hearing);
                 existingHearing.getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
                 existingHearing.getAuditDetails().setLastModifiedBy(body.getRequestInfo().getUserInfo().getUuid());
                 hearing.setAuditDetails(existingHearing.getAuditDetails());
@@ -277,8 +293,7 @@ public class HearingService {
             for (String number : phoneNumbers) {
                 notificationService.sendNotification(hearingRequest.getRequestInfo(), smsTemplateData, messageCode, number);
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             // Log the exception and continue the execution without throwing
             log.error("Error occurred while sending notification: {}", e.toString());
         }
@@ -291,6 +306,7 @@ public class HearingService {
         caseSearchRequest.addCriteriaItem(caseCriteria);
         return caseSearchRequest;
     }
+
     private String getMessageCode(String updatedStatus, Boolean hearingAdjourned,String hearingType) {
 
         log.info("Operation: getMessage, UpdatedStatus: {}", updatedStatus);
@@ -342,6 +358,100 @@ public class HearingService {
         return mobileNumber;
     }
 
+    public List<ScheduleHearing> bulkReschedule(@Valid BulkRescheduleRequest request) {
+        BulkReschedule bulkReschedule = request.getBulkReschedule();
+        RequestInfo requestInfo = request.getRequestInfo();
+        Set<Integer> slotIds = bulkReschedule.getSlotIds();
+
+        validator.validateBulkRescheduleRequest(requestInfo, bulkReschedule);
+
+        List<Hearing> hearingsToReschedule = getHearingsForBulkReschedule(slotIds, bulkReschedule, requestInfo);
+
+        if (hearingsToReschedule.isEmpty()) {
+            log.info("No hearings found for bulk reschedule");
+            return new ArrayList<>();
+        }
+
+        List<String> hearingIds = hearingsToReschedule.stream().map(Hearing::getHearingId).toList();
+        bulkReschedule.setHearingIds(hearingIds);
+        request.setBulkReschedule(bulkReschedule);
+
+        List<ScheduleHearing> scheduleHearings = schedulerUtil.callBulkReschedule(request);
+
+        Map<String, Hearing> scheduleHearingMap = hearingsToReschedule.stream().collect(Collectors.toMap(Hearing::getHearingId, obj -> obj));
+        for (ScheduleHearing scheduleHearing : scheduleHearings) {
+            if (scheduleHearingMap.containsKey(scheduleHearing.getHearingBookingId())) {
+                Hearing hearing = scheduleHearingMap.get(scheduleHearing.getHearingBookingId());
+                scheduleHearing.setOriginalHearingDate(hearing.getStartTime());
+                scheduleHearing.setCaseId(hearing.getCmpNumber());
+                scheduleHearing.setJudgeIds(hearing.getPresidedBy().getJudgeID());
+                scheduleHearing.setFilingNumber(hearing.getFilingNumber());
+                // todo: check for case title
+            }
+        }
+
+        return scheduleHearings;
+    }
+
+
+    private List<Hearing> getHearingsForBulkReschedule(Set<Integer> slotIds, BulkReschedule bulkReschedule, RequestInfo requestInfo) {
+
+        HearingCriteria criteria = HearingCriteria.builder()
+                .tenantId(bulkReschedule.getTenantId()).fromDate(bulkReschedule.getStartTime())
+                .toDate(bulkReschedule.getEndTime())
+                .courtId(bulkReschedule.getCourtId())
+                .build();
+
+        HearingSearchRequest searchRequest = HearingSearchRequest.builder()
+                .requestInfo(requestInfo)
+                .criteria(criteria)
+                .pagination(null)
+                .build();
+
+        List<Hearing> hearingsToReschedule = new ArrayList<>();
+
+        if (!slotIds.isEmpty()) {
+            // check mdms data for slot filtering if any slot id is there
+            Map<String, Map<String, JSONArray>> slotDetails = mdmsUtil.fetchMdmsData(requestInfo, bulkReschedule.getTenantId(), "court", Collections.singletonList("slots"));
+
+            JSONArray slots = slotDetails.get("court").get("slots");
+            for (Object slot : slots) {
+                HearingSlot hearingSlot = objectMapper.convertValue(slot, HearingSlot.class);
+                if (slotIds.contains(hearingSlot.getId())) {
+
+                    Long startDate = bulkReschedule.getStartTime();
+                    Long endDate = bulkReschedule.getEndTime();
+                    String startTime = hearingSlot.getSlotStartTime();
+                    String endTime = hearingSlot.getSlotEndTime();
+
+                    LocalDateTime from = dateUtil.getLocalDateTimeFromEpoch(startDate);
+                    LocalDateTime fromLocalDateTime = dateUtil.getLocalDateTime(from, startTime);
+                    Long fromDate = dateUtil.getEpochFromLocalDateTime(fromLocalDateTime);
+
+                    LocalDateTime to = dateUtil.getLocalDateTimeFromEpoch(endDate);
+                    LocalDateTime toLocalDateTime = dateUtil.getLocalDateTime(to, endTime);
+                    Long toDate = dateUtil.getEpochFromLocalDateTime(toLocalDateTime);
+
+                    criteria.setFromDate(fromDate);
+                    criteria.setToDate(toDate);
+
+                    List<Hearing> hearings = searchHearing(searchRequest);
+                    hearingsToReschedule.addAll(hearings);
+
+                    slotIds.remove(hearingSlot.getId());
+
+                }
+            }
+        } else {
+            hearingsToReschedule = searchHearing(searchRequest);
+
+        }
+
+        return hearingsToReschedule;
+
+
+    }
+
     private String getMessageCodeForHearingType(String hearingType) {
         if (hearingType.equalsIgnoreCase(WARRANT) || hearingType.equalsIgnoreCase(BAIL) || hearingType.equalsIgnoreCase(ADR) ||
                 hearingType.equalsIgnoreCase(REPORTS) || hearingType.equalsIgnoreCase(ARGUMENTS) || hearingType.equalsIgnoreCase(PLEA) ||
@@ -365,4 +475,98 @@ public class HearingService {
         return localizedMessageMap.get(NOTIFICATION_ENG_LOCALE_CODE + "|" + tenantId).get(hearingType);
     }
 
+    public List<Hearing> updateBulkHearing(HearingUpdateBulkRequest request) {
+        try {
+            log.info("operation=updateBulkHearing, status=IN_PROGRESS");
+            List<Hearing> hearingList = request.getHearings();
+            List<Hearing> updatedBulkHearings = getExistingHearings(hearingList);
+            if(!updatedBulkHearings.isEmpty())
+                request.setHearings(updatedBulkHearings);
+            List<ScheduleHearing> scheduleHearings = getScheduledHearings(updatedBulkHearings, request.getRequestInfo());
+
+            scheduleHearings.forEach(schedule -> {
+                updatedBulkHearings.stream()
+                        .filter(hearing -> hearing.getId().toString().equals(schedule.getHearingBookingId()))
+                        .findFirst()
+                        .ifPresent(hearing -> {
+                            if (!Objects.equals(hearing.getStartTime(), schedule.getStartTime())
+                                    || !Objects.equals(hearing.getEndTime(), schedule.getEndTime())){
+                                log.error("Start and End time not matching for hearing: {}", schedule.getHearingBookingId());
+                            } else {
+                                schedule.setExpiryTime(null);
+                            }
+                        });
+            });
+
+            updateSchedulerHearings(scheduleHearings, request.getRequestInfo());
+            log.info("operation=updateBulkHearing, status=SUCCESS");
+            producer.push(config.getBulkRescheduleTopic(), request);
+            return updatedBulkHearings;
+        } catch (Exception e) {
+            log.error("operation=updateBulkHearing, status=FAILURE, message={}", e.getMessage());
+            throw new CustomException(HEARING_UPDATE_EXCEPTION, "Error occurred while updating hearing in bulk: " + e.getMessage());
+        }
+    }
+
+    private void updateSchedulerHearings(List<ScheduleHearing> scheduleHearings, @Valid RequestInfo requestInfo) {
+        ScheduleHearingUpdateRequest request = ScheduleHearingUpdateRequest.builder().requestInfo(requestInfo)
+                .scheduleHearings(scheduleHearings).build();
+        schedulerUtil.updateScheduleHearings(request);
+    }
+
+    private List<ScheduleHearing> getScheduledHearings(List<Hearing> hearingList, @Valid RequestInfo requestInfo) {
+        List<String> hearingIds = hearingList.stream().map(Hearing::getHearingId).toList();
+        ScheduleHearingSearchRequest request = ScheduleHearingSearchRequest.builder().requestInfo(requestInfo).
+                criteria(ScheduleHearingSearchCriteria.builder().hearingIds(hearingIds).build())
+                .build();
+
+        return schedulerUtil.getScheduledHearings(request);
+    }
+
+    @NotNull
+    private List<Hearing> getExistingHearings(List<Hearing> hearingList) {
+        List<Hearing> updatedBulkHearings = new ArrayList<>();
+        for(Hearing hearing : hearingList) {
+            Hearing existingHearing = hearingRepository.checkHearingsExist(hearing).get(0);
+            if(existingHearing == null) {
+                log.error("Hearing does not present for hearingId :: {}", hearing.getHearingId());
+                continue;
+            }
+            updatedBulkHearings.add(hearing);
+        }
+        return updatedBulkHearings;
+    }
+
+    public void updateCaseReferenceHearing(Map<String, Object> body) {
+        try {
+            log.info("operation=updateCaseReferenceHearing, status=IN_PROGRESS, filingNumber={}", body.get("filingNumber").toString());
+            RequestInfo requestInfo = objectMapper.convertValue(body.get("requestInfo"), RequestInfo.class);
+            String filingNumber = body.get("filingNumber").toString();
+            HearingSearchRequest request = HearingSearchRequest.builder()
+                    .requestInfo(requestInfo)
+                    .criteria(HearingCriteria.builder().filingNumber(filingNumber).build())
+                    .build();
+            List<Hearing> hearingList = searchHearing(request);
+            for (Hearing hearing : hearingList) {
+                hearing.setCourtCaseNumber(body.get("courtCaseNumber") != null ? body.get("courtCaseNumber").toString() : null);
+                hearing.setCmpNumber(body.get("cmpNumber") != null ? body.get("cmpNumber").toString() : null);
+                if(body.get("courtCaseNumber") != null){
+                    hearing.setCaseReferenceNumber(body.get("courtCaseNumber").toString());
+                } else if(body.get("cmpNumber") != null){
+                    hearing.setCaseReferenceNumber(body.get("cmpNumber").toString());
+                } else {
+                    hearing.setCaseReferenceNumber(filingNumber);
+                }
+                HearingRequest hearingRequest = HearingRequest.builder()
+                        .requestInfo(requestInfo)
+                        .hearing(hearing)
+                        .build();
+                updateHearing(hearingRequest);
+            }
+            log.info("operation=updateCaseReferenceHearing, status=SUCCESS, filingNumber={}", body.get("filingNumber").toString());
+        } catch (Exception e){
+            log.info("operation=updateCaseReferenceHearing, status=FAILURE, filingNumber={}", body.get("filingNumber").toString());
+            throw new CustomException("Error updating case reference number: {}", e.getMessage());
+        }
+    }
 }

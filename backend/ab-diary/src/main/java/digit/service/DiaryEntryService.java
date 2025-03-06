@@ -5,6 +5,7 @@ import digit.enrichment.ADiaryEntryEnrichment;
 import digit.kafka.Producer;
 import digit.repository.DiaryEntryRepository;
 import digit.validators.ADiaryValidator;
+import digit.web.models.BulkDiaryEntryRequest;
 import digit.web.models.CaseDiaryEntry;
 import digit.web.models.CaseDiaryEntryRequest;
 import digit.web.models.CaseDiarySearchRequest;
@@ -12,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static digit.config.ServiceConstants.*;
@@ -108,4 +110,25 @@ public class DiaryEntryService {
 
     }
 
+    public List<CaseDiaryEntry> bulkDiaryEntry(BulkDiaryEntryRequest request) {
+        try {
+            log.info("operation=bulkDiaryEntry, status=IN_PROGRESS");
+            List<CaseDiaryEntry> diaryEntries = request.getCaseDiaryList();
+            List<CaseDiaryEntry> addedEntries = new ArrayList<>();
+            for(CaseDiaryEntry diaryEntry : diaryEntries) {
+                CaseDiaryEntryRequest caseDiaryEntryRequest = CaseDiaryEntryRequest.builder().requestInfo(request.getRequestInfo()).diaryEntry(diaryEntry).build();
+                CaseDiaryEntry entry = addDiaryEntry(caseDiaryEntryRequest);
+                if(entry == null) {
+                    log.error("Error adding diary entry :: {}", diaryEntry.getId());
+                    continue;
+                }
+                addedEntries.add(entry);
+            }
+            log.info("operation=bulkDiaryEntry, status=SUCCESS");
+            return addedEntries;
+        } catch (Exception e) {
+            log.error("Error adding bulk diary entries: {}", e.getMessage());
+            throw new CustomException("Error adding bulk diary entries.", e.getMessage());
+        }
+    }
 }

@@ -122,6 +122,12 @@ public class Configuration {
     @Value("${mdms.order.module.name}")
     private String orderModule;
 
+    @Value("${egov.mdms.order.nonoverlapping.composite.orders}")
+    private String mdmsNonOverlappingOrders;
+
+    @Value("${egov.mdms.order.nonrepeating.composite.orders}")
+    private String mdmsNonRepeatingCompositeOrders;
+
     // Filestore Config
     @Value("${egov.filestore.host}")
     private String fileStoreHost;
@@ -207,4 +213,7 @@ public class Configuration {
 
     @Value("${egov.advocate.path}")
     private String advocatePath;
+
+    @Value("${egov.tenantId}")
+    private String tenantId;
 }

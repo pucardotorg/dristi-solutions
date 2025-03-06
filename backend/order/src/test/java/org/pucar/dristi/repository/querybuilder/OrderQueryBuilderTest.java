@@ -61,12 +61,13 @@ class OrderQueryBuilderTest {
         criteria.setId("id123");
         criteria.setStatus("status123");
         criteria.setOrderNumber("order123");
+        criteria.setOrderCategory("orderCategory123");
 
         String query = orderQueryBuilder.getOrderSearchQuery(criteria, preparedStmt,preparedStmtArg);
 
         assertNotNull(query);
         assertFalse(preparedStmt.isEmpty());
-        assertEquals(7, preparedStmt.size());
+        assertEquals(8, preparedStmt.size());
     }
 
     @Test

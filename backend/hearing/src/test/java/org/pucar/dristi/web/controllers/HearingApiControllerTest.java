@@ -18,8 +18,7 @@ import org.pucar.dristi.web.models.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -39,9 +38,27 @@ public class HearingApiControllerTest {
     @InjectMocks
     private HearingApiController hearingApiController;
 
+    private List<Hearing> hearingList;
+    private Hearing hearing;
+    private RequestInfo requestInfo;
+    private HearingUpdateBulkRequest hearingUpdateBulkRequest;
+    private HearingUpdateBulkResponse hearingUpdateBulkResponse;
+
     @BeforeEach
-    public void setUp() {
-        MockitoAnnotations.openMocks(this);
+    void setUp() {
+        hearing = new Hearing();
+        hearing.setId(UUID.randomUUID());
+        hearing.setHearingId("12345");
+        hearing.setStartTime(new Date().getTime());
+        hearing.setEndTime(new Date().getTime());
+
+        hearingList = new ArrayList<>();
+        hearingList.add(hearing);
+
+        requestInfo = new RequestInfo();
+        hearingUpdateBulkRequest = new HearingUpdateBulkRequest();
+        hearingUpdateBulkRequest.setHearings(hearingList);
+        hearingUpdateBulkRequest.setRequestInfo(requestInfo);
     }
 
     @Test
@@ -243,5 +260,28 @@ public class HearingApiControllerTest {
         assertNotNull(response.getBody());
         assertEquals(hearing, response.getBody().getHearing());
         assertEquals(responseInfo, response.getBody().getResponseInfo());
+    }
+
+    @Test
+    void testBulkUpdateHearings_Success() {
+        when(hearingService.updateBulkHearing(any(HearingUpdateBulkRequest.class))).thenReturn(hearingList);
+        when(responseInfoFactory.createResponseInfoFromRequestInfo(any(RequestInfo.class), eq(true)))
+                .thenReturn(new ResponseInfo());
+
+        ResponseEntity<HearingUpdateBulkResponse> response = hearingApiController.bulkUpdateHearings(hearingUpdateBulkRequest);
+
+        assertNotNull(response);
+        assertEquals(202, response.getStatusCode().value());
+        assertNotNull(response.getBody());
+        assertEquals(1, response.getBody().getHearings().size());
+    }
+
+    @Test
+    void testBulkUpdateHearings_ExceptionHandling() {
+        when(hearingService.updateBulkHearing(any(HearingUpdateBulkRequest.class)))
+                .thenThrow(new RuntimeException("Service Failure"));
+
+        assertThrows(RuntimeException.class, () ->
+                hearingApiController.bulkUpdateHearings(hearingUpdateBulkRequest));
     }
 }

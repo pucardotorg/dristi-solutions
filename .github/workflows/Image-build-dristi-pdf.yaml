@@ -29,7 +29,13 @@ jobs:
 
       - name: Setup Docker
         uses: docker/setup-buildx-action@v2
-
+      - name: Build and analyze for Dristi-Pdf Service
+        env:
+          GITHUB_TOKEN: ${{ secrets.GHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          npx sonar-scanner -Dsonar.projectKey=solutions_dristi_pdf -Dsonar.organization=solutions -Dsonar.host.url=https://sonarcloud.io -Dsonar.token=${{ secrets.SONAR_TOKEN }} -Dsonar.sources=src -Dsonar.exclusions="node_modules/**,dist/**"
+        working-directory: utilities/dristi-pdf
       # Login to Azure Container Registry
       - name: Login to Azure Container Registry
         run: docker login -u pucarsolutionsdev -p ${{ secrets.ACR_PASSWORD }} pucarsolutionsdev.azurecr.io
@@ -68,8 +74,8 @@ jobs:
             echo "WORKFLOW_FILE=solutions-dev.yaml" >> $GITHUB_ENV
           elif [ "${{ github.ref }}" == "refs/heads/release/0.4" ]; then
             echo "WORKFLOW_FILE=solutions-qa.yaml" >> $GITHUB_ENV
-          elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            echo "WORKFLOW_FILE=solutions-uat.yaml" >> $GITHUB_ENV
+          elif [ "${{ github.ref }}" == "refs/heads/release/0.5" ]; then
+            echo "WORKFLOW_FILE=solutions-dpg-dev.yaml" >> $GITHUB_ENV
           fi
 
       - name: Trigger Deployment Pipeline

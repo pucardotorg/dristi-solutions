@@ -86,7 +86,7 @@ const OrderDrafts = ({ caseData, setOrderModal }) => {
                       color: "#101828",
                     }}
                   >
-                    {t(`ORDER_TYPE_${order?.orderType?.toUpperCase()}`)}
+                    {order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(`ORDER_TYPE_${order?.orderTitle?.toUpperCase()}`)}
                   </div>
                   <CustomArrowOut />
                 </div>

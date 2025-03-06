@@ -279,6 +279,7 @@ function ScheduleHearing({
   const handleClose = () => {
     history.goBack();
   };
+  const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
 
   const handleSubmit = async (data) => {
     if (status !== "OPTOUT") {
@@ -293,6 +294,8 @@ function ScheduleHearing({
           statuteSection: {
             tenantId,
           },
+          orderTitle: "SCHEDULE_OF_HEARING_DATE",
+          orderCategory: "INTERMEDIATE",
           orderType: "SCHEDULE_OF_HEARING_DATE",
           status: "",
           isActive: true,
@@ -355,7 +358,7 @@ function ScheduleHearing({
             individualId: individualId?.individualId,
             caseId: filingNumber,
             rescheduleRequestId: referenceId,
-            judgeId: "super",
+            judgeId: judgeId,
             optOutDates: selectedChip,
           },
         },

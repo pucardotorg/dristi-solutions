@@ -3,8 +3,6 @@ package digit.repository;
 
 import digit.repository.querybuilder.CalendarQueryBuilder;
 import digit.repository.rowmapper.CalendarRowMapper;
-import digit.web.models.CalendarSearchCriteria;
-import digit.web.models.JudgeAvailabilitySearchCriteria;
 import digit.web.models.JudgeCalendarRule;
 import digit.web.models.SearchCriteria;
 import lombok.extern.slf4j.Slf4j;
@@ -19,14 +17,16 @@ import java.util.List;
 @Repository
 public class CalendarRepository {
 
-    @Autowired
-    private CalendarQueryBuilder queryBuilder;
+    private final CalendarQueryBuilder queryBuilder;
+    private final CalendarRowMapper rowMapper;
+    private final JdbcTemplate jdbcTemplate;
 
     @Autowired
-    private CalendarRowMapper rowMapper;
-
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    public CalendarRepository(CalendarQueryBuilder queryBuilder, CalendarRowMapper rowMapper, JdbcTemplate jdbcTemplate) {
+        this.queryBuilder = queryBuilder;
+        this.rowMapper = rowMapper;
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
     public List<JudgeCalendarRule> getJudgeRule(SearchCriteria criteria) {
         List<Object> preparedStmtList = new ArrayList<>();
