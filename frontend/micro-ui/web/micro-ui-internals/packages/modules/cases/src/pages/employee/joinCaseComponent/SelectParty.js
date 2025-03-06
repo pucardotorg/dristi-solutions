@@ -130,6 +130,7 @@ const SelectParty = ({
             { label: t("ADVOCATE_OPT"), value: "Advocate" },
             { label: t("LITIGANT_OPT"), value: "Litigant" },
           ]}
+          additionalWrapperClass={"radio-disabled"}
         />
       </LabelFieldPair>
       <LabelFieldPair className="case-label-field-pair">
@@ -154,6 +155,7 @@ const SelectParty = ({
             { label: t("RESPONDENTS_TEXT"), value: "RESPONDENTS" },
           ]}
           disabled={isAdvocateJoined || isLitigantJoined}
+          additionalWrapperClass={(isAdvocateJoined || isLitigantJoined) && "radio-disabled"}
         />
       </LabelFieldPair>
       {selectPartyData?.userType?.value === "Advocate" && selectPartyData?.partyInvolve?.value && (
