@@ -235,5 +235,34 @@
         "isActive": true
       }
     ]
+  },
+  {
+    // disable morning slot and add this in mdms, can be done through workbench-ui
+    "tenantId": "kl",
+    "masterName": "slots",
+    "moduleName": "court",
+    "mdmsPayload": [
+      {
+        "id": "089036ee-8249-4331-93d9-859ccfaedf5c",
+        "tenantId": "kl",
+        "schemaCode": "court.slots",
+        "uniqueIdentifier": "3",
+        "data": {
+          "id": 3,
+          "slotName": "Morning Slot",
+          "slotEndTime": "13:00:00",
+          "slotDuration": "180",
+          "slotStartTime": "10:00:00",
+          "unitOfMeasurement": "Minutes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1741249575003,
+          "lastModifiedTime": 1741249575003
+        }
+      }
+    ]
   }
 ]
