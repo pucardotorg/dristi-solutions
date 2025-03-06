@@ -1406,10 +1406,20 @@ const GenerateOrders = () => {
       }
 
       if (orderType === "SUMMONS") {
-        if (hearingDetails?.startTime) {
+        const scheduleHearingOrderItem = newCurrentOrder?.compositeItems?.find(
+          (item) => item?.isEnabled && item?.orderType === "SCHEDULE_OF_HEARING_DATE"
+        );
+        const rescheduleHearingItem = newCurrentOrder?.compositeItems?.find(
+          (item) => item?.isEnabled && ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE"].includes(item?.orderType)
+        );
+        if (scheduleHearingOrderItem) {
+          updatedFormdata.dateForHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
+        } else if (rescheduleHearingItem) {
+          updatedFormdata.dateForHearing = newCurrentOrder?.additionalDetails?.formdata?.newHearingDate || "";
+        } else {
           updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
-          setValueRef?.current?.[index]?.("dateForHearing", updatedFormdata.dateForHearing);
         }
+        setValueRef?.current?.[index]?.("dateForHearing", updatedFormdata.dateForHearing);
         if (newCurrentOrder?.additionalDetails?.selectedParty && newCurrentOrder?.additionalDetails?.selectedParty?.uuid) {
           updatedFormdata.SummonsOrder = {
             party: caseDetails?.additionalDetails?.respondentDetails?.formdata
@@ -1437,9 +1447,11 @@ const GenerateOrders = () => {
         }
       }
       if (orderType === "NOTICE") {
-        const scheduleHearingOrderItem = newCurrentOrder?.compositeItems?.find((item) => item?.orderType === "SCHEDULE_OF_HEARING_DATE");
-        const rescheduleHearingItem = newCurrentOrder?.compositeItems?.find((item) =>
-          ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE"].includes(item?.orderType)
+        const scheduleHearingOrderItem = newCurrentOrder?.compositeItems?.find(
+          (item) => item?.isEnabled && item?.orderType === "SCHEDULE_OF_HEARING_DATE"
+        );
+        const rescheduleHearingItem = newCurrentOrder?.compositeItems?.find(
+          (item) => item?.isEnabled && ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE"].includes(item?.orderType)
         );
         if (scheduleHearingOrderItem) {
           updatedFormdata.dateForHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
@@ -1479,10 +1491,20 @@ const GenerateOrders = () => {
         }
       }
       if (orderType === "WARRANT") {
-        if (hearingDetails?.startTime) {
+        const scheduleHearingOrderItem = newCurrentOrder?.compositeItems?.find(
+          (item) => item?.isEnabled && item?.orderType === "SCHEDULE_OF_HEARING_DATE"
+        );
+        const rescheduleHearingItem = newCurrentOrder?.compositeItems?.find(
+          (item) => item?.isEnabled && ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE"].includes(item?.orderType)
+        );
+        if (scheduleHearingOrderItem) {
+          updatedFormdata.dateOfHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
+        } else if (rescheduleHearingItem) {
+          updatedFormdata.dateOfHearing = newCurrentOrder?.additionalDetails?.formdata?.newHearingDate || "";
+        } else {
           updatedFormdata.dateOfHearing = formatDate(new Date(hearingDetails?.startTime));
-          setValueRef?.current?.[index]?.("dateOfHearing", updatedFormdata.dateOfHearing);
         }
+        setValueRef?.current?.[index]?.("dateOfHearing", updatedFormdata.dateOfHearing);
       }
       if (
         [
@@ -3238,6 +3260,8 @@ const GenerateOrders = () => {
         } catch (error) {
           console.error("Error in creating tasks:", error);
         }
+      } else {
+        createTask(currentOrder?.orderType, caseDetails, orderResponse);
       }
 
       setShowSuccessModal(true);
@@ -3375,7 +3399,11 @@ const GenerateOrders = () => {
         await closeManualPendingTask(currentOrder?.hearingNumber || hearingDetails?.hearingId);
       }
       if (currentOrder?.orderCategory === "INTERMEDIATE") {
-        if (orderType === "NOTICE" && currentOrder?.additionalDetails?.formdata?.noticeType?.code === "Section 223 Notice") {
+        if (
+          orderType === "NOTICE" &&
+          currentOrder?.additionalDetails?.formdata?.noticeType?.code === "Section 223 Notice" &&
+          caseDetails?.data?.criteria?.[0]?.responseList?.[0]?.status === "PENDING_NOTICE"
+        ) {
           await closeManualPendingTask(currentOrder?.hearingNumber || hearingDetails?.hearingId);
           try {
             await updateCaseDetails("ISSUE_ORDER");
@@ -3425,7 +3453,7 @@ const GenerateOrders = () => {
         if (orderType === "NOTICE" && currentOrder?.additionalDetails?.formdata?.noticeType?.code === "Section 223 Notice") {
           await closeManualPendingTask(currentOrder?.hearingNumber || hearingDetails?.hearingId);
           const currentCaseStaus = caseDetails?.data?.criteria?.[0]?.responseList?.[0]?.status;
-          if (currentCaseStaus !== "PENDING_RESPONSE") {
+          if (["PENDING_NOTICE", "PENDING_ADMISSION_HEARING"]?.includes(currentCaseStaus)) {
             // Reason for above condition- If we have more than one notices in composite items and case is updated once and reached to pending response
             // then we should not repeat this case update call.
             try {
