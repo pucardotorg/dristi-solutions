@@ -2,8 +2,10 @@ package digit.web.controllers;
 
 
 import digit.service.HearingService;
+import digit.service.hearing.HearingProcessor;
 import digit.util.ResponseInfoFactory;
 import digit.web.models.*;
+import digit.web.models.hearing.HearingRequest;
 import io.swagger.annotations.ApiParam;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -11,6 +13,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,9 +31,13 @@ public class HearingApiController {
 
     private final HearingService hearingService;
 
+    // remove this ones its done
+    private final HearingProcessor processor;
+
     @Autowired
-    public HearingApiController(HearingService hearingService) {
+    public HearingApiController(HearingService hearingService, HearingProcessor processor) {
         this.hearingService = hearingService;
+        this.processor = processor;
     }
 
 
@@ -71,6 +78,15 @@ public class HearingApiController {
         HearingResponse response = HearingResponse.builder().hearings(scheduledHearings).responseInfo(ResponseInfoFactory.createResponseInfo(request.getRequestInfo(), true)).build();
         log.info("api=/hearing/v1/bulk/_update, result = SUCCESS");
         return ResponseEntity.accepted().body(response);
+    }
+
+
+    @RequestMapping(value = "/script", method = RequestMethod.POST)
+    public ResponseEntity<?> script(@Parameter(in = ParameterIn.DEFAULT, description = "Hearing Details and Request Info", required = true, schema = @Schema()) @Valid @RequestBody HearingRequest request) {
+        log.info("api=/script, result = IN_PROGRESS");
+        processor.processCreateHearingRequest(request);
+        log.info("api=/script, result = SUCCESS");
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
 
