@@ -129,7 +129,6 @@ export const sideMenuConfig = [
           "delayReason.reasonForReturnCheque",
           "ifsc",
           "chequeAmount",
-          "policeStation",
           "depositDate",
           "returnMemoFileUpload.document",
         ],
