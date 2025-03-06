@@ -3768,6 +3768,10 @@ const GenerateOrders = () => {
         const allFormSections = [];
         const itemErrors = [];
         for (let p = 0; p < modifiedFormConfig?.[i]?.length; p++) {
+          if (!formdata) {
+            itemErrors.push({ key: "ORDER_TYPE", errorMessage: "SELECT_ORDER_TYPE" });
+            break;
+          }
           const body = modifiedFormConfig?.[i]?.[p]?.body;
 
           for (let k = 0; k < body?.length; k++) {
@@ -3779,6 +3783,10 @@ const GenerateOrders = () => {
               }
             }
           }
+        }
+        if (!formdata) {
+          errrors.push({ index: i, orderType: "NOT_PRESENT", errors: itemErrors });
+          continue;
         }
         errrors.push({ index: i, orderType: orderType, errors: itemErrors });
       }
@@ -3998,25 +4006,27 @@ const GenerateOrders = () => {
         };
       });
     });
-    let compositeItemsNew = currentOrder?.compositeItems ? [...currentOrder.compositeItems] : [];
-    const totalEnabled = currentOrder?.compositeItems?.filter((o) => o?.isEnabled)?.length;
 
-    let orderTitleNew = "";
-    if (compositeItemsNew?.length === 0) {
-      orderTitleNew = `${t(currentOrder?.orderType)} and Other Items`;
-    }
-    if (totalEnabled === 1) {
-      const enabledItem = currentOrder?.compositeItems?.find((item) => item?.isEnabled && item?.orderType);
-      orderTitleNew = `${t(enabledItem?.orderType)} and Other Items`;
-    }
-    setOrderTitles((prevTitles) => {
-      if (prevTitles[selectedOrder] === orderTitleNew) {
-        return prevTitles;
+    if (
+      !currentOrder?.orderNumber ||
+      ordersData?.list?.find((order) => order?.orderNumber === currentOrder?.orderNumber)?.orderCategory === "INTERMEDIATE"
+    ) {
+      let compositeItemsNew = currentOrder?.compositeItems ? [...currentOrder.compositeItems] : [];
+      const totalEnabled = currentOrder?.compositeItems?.filter((o) => o?.isEnabled)?.length;
+
+      if (totalEnabled === 1) {
+        const enabledItem = currentOrder?.compositeItems?.find((item) => item?.isEnabled && item?.orderType);
+        const orderTitleNew = `${t(enabledItem?.orderType)} and Other Items`;
+        setOrderTitles((prevTitles) => {
+          if (prevTitles[selectedOrder] === orderTitleNew) {
+            return prevTitles;
+          }
+          const updatedTitles = [...prevTitles];
+          updatedTitles[selectedOrder] = orderTitleNew;
+          return updatedTitles;
+        });
       }
-      const updatedTitles = [...prevTitles];
-      updatedTitles[selectedOrder] = orderTitleNew;
-      return updatedTitles;
-    });
+    }
   };
 
   const showEditTitleIcon = useMemo(() => {
@@ -4159,7 +4169,7 @@ const GenerateOrders = () => {
           return (
             <div key={`${selectedOrder}-${index}`} className="form-wrapper-d" ref={(el) => (submitButtonRefs.current = el)}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <h1>{`${t("ITEM")} ${displayindex + 1}`}</h1>
+                <h1 style={{ fontWeight: "700", fontSize: "20px" }}>{`${t("ITEM")} ${displayindex + 1}`}</h1>
                 {showDeleteIcon && (
                   <span
                     style={{ cursor: "pointer" }}
@@ -4317,7 +4327,12 @@ const GenerateOrders = () => {
           className="edit-case-name-modal"
         >
           <h3 className="input-label">{t("CS_TITLE_Name")}</h3>
-          <TextInput defaultValue={t(OrderTitles?.[selectedOrder])} type="text" onChange={(e) => setModalTitleName(e.target.value)} />
+          <TextInput
+            defaultValue={t(OrderTitles?.[selectedOrder])}
+            type="text"
+            onChange={(e) => setModalTitleName(e.target.value)}
+            maxlength={1024}
+          />
         </Modal>
       )}
       {showMandatoryFieldsErrorModal?.showModal && (
