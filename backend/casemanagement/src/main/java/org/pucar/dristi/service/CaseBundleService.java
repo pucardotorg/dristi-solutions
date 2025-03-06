@@ -419,7 +419,7 @@ public class CaseBundleService {
             String esUpdateUrl = configuration.getEsHostUrl() + configuration.getCaseBundleIndex() + "/_doc/" + caseId;
             String esRequest;
             try {
-                esRequest = String.format(objectMapper.writeValueAsString(updateIndexJson));
+                esRequest = objectMapper.writeValueAsString(updateIndexJson);
                 esRepository.fetchDocuments(esUpdateUrl, esRequest);
             } catch (IOException e) {
                 log.error("Error updating ElasticSearch index with new data", e);
