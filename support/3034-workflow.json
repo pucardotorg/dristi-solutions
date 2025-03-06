@@ -1,0 +1,186 @@
+[
+  {
+    "tenantId": "kl",
+    "uuid": "894c922b-a45e-4eb9-85a3-1661eb63f6ff",
+    "businessService": "notification-default",
+    "business": "notification",
+    "businessServiceSla": 0,
+    "states": [
+      {
+        "auditDetails": {
+          "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+          "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+          "createdTime": 1740734930136,
+          "lastModifiedTime": 1740734930136
+        },
+        "uuid": "f96a2cb8-dd35-4913-92d4-f9cc9f1abd92",
+        "tenantId": "kl",
+        "businessServiceId": null,
+        "sla": null,
+        "state": null,
+        "applicationStatus": null,
+        "docUploadRequired": false,
+        "isStartState": true,
+        "isTerminateState": false,
+        "isStateUpdatable": true,
+        "actions": [
+          {
+            "auditDetails": {
+              "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+              "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+              "createdTime": 1740734930136,
+              "lastModifiedTime": 1740734930136
+            },
+            "uuid": "88bd6aef-0ce6-4fc6-b368-c698ea052342",
+            "tenantId": "kl",
+            "currentState": "f96a2cb8-dd35-4913-92d4-f9cc9f1abd92",
+            "action": "CREATE",
+            "nextState": "83b35c1f-550f-4ce2-bf04-a78389a9bb97",
+            "roles": [
+              "NOTIFICATION_CREATOR"
+            ],
+            "active": true
+          }
+        ]
+      },
+      {
+        "auditDetails": {
+          "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+          "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+          "createdTime": 1740734930136,
+          "lastModifiedTime": 1740734930136
+        },
+        "uuid": "83b35c1f-550f-4ce2-bf04-a78389a9bb97",
+        "tenantId": "kl",
+        "businessServiceId": null,
+        "sla": null,
+        "state": "PENDING_E-SIGN",
+        "applicationStatus": "INWORKFLOW",
+        "docUploadRequired": false,
+        "isStartState": false,
+        "isTerminateState": false,
+        "isStateUpdatable": true,
+        "actions": [
+          {
+            "auditDetails": {
+              "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+              "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+              "createdTime": 1740734930136,
+              "lastModifiedTime": 1740734930136
+            },
+            "uuid": "57168401-f10c-49fb-ac9a-d785350ed7d7",
+            "tenantId": "kl",
+            "currentState": "83b35c1f-550f-4ce2-bf04-a78389a9bb97",
+            "action": "E-SIGN",
+            "nextState": "46ae65f7-821e-4d8d-9edc-9b4777233359",
+            "roles": [
+              "NOTIFICATION_APPROVER",
+              "SYSTEM",
+              "SYSTEM_ADMIN"
+            ],
+            "active": true
+          },
+          {
+            "auditDetails": {
+              "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+              "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+              "createdTime": 1740734930136,
+              "lastModifiedTime": 1740734930136
+            },
+            "uuid": "20aedd24-1296-4e2d-9417-5f967b8b21c0",
+            "tenantId": "kl",
+            "currentState": "83b35c1f-550f-4ce2-bf04-a78389a9bb97",
+            "action": "DELETE",
+            "nextState": "4e68e03a-5ad6-43b2-9fe0-0eed2d202db2",
+            "roles": [
+              "NOTIFICATION_CREATOR",
+              "NOTIFICATION_APPROVER"
+            ],
+            "active": true
+          },
+          {
+            "auditDetails": {
+              "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+              "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+              "createdTime": 1740734930136,
+              "lastModifiedTime": 1740734930136
+            },
+            "uuid": "d166a479-7d6a-4e24-a0e1-c64d21c5e4cb",
+            "tenantId": "kl",
+            "currentState": "83b35c1f-550f-4ce2-bf04-a78389a9bb97",
+            "action": "ABANDON",
+            "nextState": "b64e3b2f-a721-41b0-a301-43d2e5e20690",
+            "roles": [
+              "SYSTEM",
+              "SYSTEM_ADMIN"
+            ],
+            "active": true
+          }
+        ]
+      },
+      {
+        "auditDetails": {
+          "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+          "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+          "createdTime": 1740734930136,
+          "lastModifiedTime": 1740734930136
+        },
+        "uuid": "46ae65f7-821e-4d8d-9edc-9b4777233359",
+        "tenantId": "kl",
+        "businessServiceId": null,
+        "sla": null,
+        "state": "PUBLISHED",
+        "applicationStatus": "ACTIVE",
+        "docUploadRequired": false,
+        "isStartState": false,
+        "isTerminateState": true,
+        "isStateUpdatable": false,
+        "actions": null
+      },
+      {
+        "auditDetails": {
+          "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+          "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+          "createdTime": 1740734930136,
+          "lastModifiedTime": 1740734930136
+        },
+        "uuid": "4e68e03a-5ad6-43b2-9fe0-0eed2d202db2",
+        "tenantId": "kl",
+        "businessServiceId": null,
+        "sla": null,
+        "state": "DELETED",
+        "applicationStatus": "INACTIVE",
+        "docUploadRequired": false,
+        "isStartState": false,
+        "isTerminateState": true,
+        "isStateUpdatable": false,
+        "actions": null
+      },
+      {
+        "auditDetails": {
+          "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+          "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+          "createdTime": 1740734930136,
+          "lastModifiedTime": 1740734930136
+        },
+        "uuid": "b64e3b2f-a721-41b0-a301-43d2e5e20690",
+        "tenantId": "kl",
+        "businessServiceId": null,
+        "sla": null,
+        "state": "ABATED",
+        "applicationStatus": "INACTIVE",
+        "docUploadRequired": false,
+        "isStartState": false,
+        "isTerminateState": true,
+        "isStateUpdatable": false,
+        "actions": null
+      }
+    ],
+    "auditDetails": {
+      "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+      "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+      "createdTime": 1740734930136,
+      "lastModifiedTime": 1740734930136
+    }
+  }
+]
