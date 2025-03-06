@@ -13,6 +13,7 @@ import { PreviousHearingIcon, RecentOrdersIcon } from "../../../icons/svgIndex";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
 import JudgementViewCard from "./JudgementViewCard";
+import ShowAllTranscriptModal from "../../../components/ShowAllTranscriptModal";
 const CaseOverview = ({
   caseData,
   openHearingModule,
@@ -34,6 +35,7 @@ const CaseOverview = ({
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [currentOrder, setCurrentOrder] = useState({});
   const [taskType, setTaskType] = useState({});
+  const [showAllTranscript, setShowAllTranscript] = useState(false);
   const userInfo = Digit.UserService.getUser()?.info;
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const userRoles = userInfo?.roles?.map((role) => role.code);
@@ -97,9 +99,9 @@ const CaseOverview = ({
     Boolean(filingNumber)
   );
 
-  const previousHearing = hearingRes?.HearingList?.filter((hearing) => hearing.endTime < Date.now()).sort(
+  const previousHearing = hearingRes?.HearingList?.filter((hearing) => !["SCHEDULED", "IN_PROGRESS"].includes(hearing?.status)).sort(
     (hearing1, hearing2) => hearing2.endTime - hearing1.endTime
-  )[0];
+  );
 
   const navigateOrdersGenerate = () => {
     history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}`);
@@ -171,24 +173,32 @@ const CaseOverview = ({
         ) : (
           <div>
             <NextHearingCard caseData={caseData} width={"100%"} />
-            {hearingRes?.HearingList?.filter((hearing) => hearing.endTime < Date.now()).length !== 0 && (
+            {hearingRes?.HearingList?.filter((hearing) => !["SCHEDULED", "IN_PROGRESS"].includes(hearing?.status)).length !== 0 && (
               <Card>
-                <div
-                  style={{
-                    fontWeight: 700,
-                    fontSize: "16px",
-                    lineHeight: "18.75px",
-                    color: "#231F20",
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
-                  <PreviousHearingIcon />
-                  <span style={{ lineHeight: "normal", marginLeft: "12px" }}>
-                    {`Previous Hearing - ${previousHearing?.hearingType.charAt(0).toUpperCase()}${previousHearing?.hearingType
-                      .slice(1)
-                      .toLowerCase()} Hearing`}
-                  </span>
+                <div style={{width: "100%", display: "flex", justifyContent: "space-between"}}>
+                  <div
+                    style={{
+                      fontWeight: 700,
+                      fontSize: "16px",
+                      lineHeight: "18.75px",
+                      color: "#231F20",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    <PreviousHearingIcon />
+                    <span style={{ lineHeight: "normal", marginLeft: "12px" }}>
+                      {`Previous Hearing - ${previousHearing?.[0]?.hearingType.charAt(0).toUpperCase()}${previousHearing?.[0]?.hearingType
+                        .slice(1)
+                        .toLowerCase()} Hearing`}
+                    </span>
+                  </div>
+                  <div
+                    style={{ color: "#007E7E", cursor: "pointer", fontWeight: 700, fontSize: "16px", lineHeight: "18.75px" }}
+                    onClick={() => setShowAllTranscript(true)}
+                  >
+                    {t("ALL_HEARING_TRANSCRIPT")}
+                  </div>
                 </div>
                 <hr style={{ border: "1px solid #FFF6E880" }} />
                 <div
@@ -200,8 +210,8 @@ const CaseOverview = ({
                     lineHeight: "24px",
                   }}
                 >
-                  {previousHearing?.transcript.length
-                    ? previousHearing?.transcript.map((transcript) => <div>{transcript}</div>)
+                  {previousHearing?.[0]?.transcript.length
+                    ? previousHearing?.[0]?.transcript.map((transcript) => <div>{transcript}</div>)
                     : "No Transcript available for this hearing"}
                 </div>
               </Card>
@@ -287,6 +297,9 @@ const CaseOverview = ({
                 }}
                 submitBailDocumentsApplications={submitBailDocumentsApplications}
               />
+            )}
+            {showAllTranscript && (
+              <ShowAllTranscriptModal setShowAllTranscript={setShowAllTranscript} hearingList ={previousHearing}/>
             )}
           </div>
         )}
