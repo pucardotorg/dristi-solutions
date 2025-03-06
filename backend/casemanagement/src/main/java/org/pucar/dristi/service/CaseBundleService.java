@@ -1,7 +1,9 @@
 package org.pucar.dristi.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.AuditDetails;
@@ -15,6 +17,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.egov.tracer.model.CustomException;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +41,25 @@ public class CaseBundleService {
     private final ServiceRequestRepository serviceRequestRepository;
     private final CaseBundleRepository caseBundleRepository;
     private final Producer producer;
+
+    public String readCaseBundleDefaultIndex() throws IOException {
+        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream("CaseBundleDefault.json")) {
+            if (inputStream == null) {
+                throw new CustomException("FETCH_DEFAULT_INDEX_ERROR", "Error while fetching default index json file");
+            }
+
+            // Use BufferedReader to read the InputStream line by line
+            StringBuilder contentBuilder = new StringBuilder();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    contentBuilder.append(line).append(System.lineSeparator());
+                }
+            }
+
+            return contentBuilder.toString();
+        }
+    }
 
     @Autowired
     public CaseBundleService(ElasticSearchRepository esRepository, Configuration configuration, ObjectMapper objectMapper, ServiceRequestRepository serviceRequestRepository,
@@ -112,6 +137,54 @@ public class CaseBundleService {
         caseNumberResponse.setCaseNumber(caseNumber);
 
         return caseNumberResponse;
+    }
+
+    public String getCaseStatus(RequestInfo requestInfo, String caseId, String tenantId) {
+        String caseStatus;
+        CaseSearchRequest caseSearchRequest = new CaseSearchRequest();
+        caseSearchRequest.setTenantId(tenantId);
+        CaseCriteria caseCriteria = new CaseCriteria();
+        caseCriteria.setCaseId(caseId);
+        caseCriteria.setDefaultFields(false);
+        List<CaseCriteria> caseList = new ArrayList<>();
+        caseList.add(caseCriteria);
+        caseSearchRequest.setCriteria(caseList);
+        caseSearchRequest.setRequestInfo(requestInfo);
+
+        StringBuilder uri = new StringBuilder();
+        uri.append(configuration.getCaseHost()).append(configuration.getCaseSearchUrl());
+
+        Object response;
+        try {
+            response = serviceRequestRepository.fetchResult(uri, caseSearchRequest);
+        } catch (Exception e) {
+            log.error("Error while fetching case data from service request repository", e);
+            throw new CustomException("FETCH_RESULT_ERROR", "Error while fetching case data from service request repository");
+        }
+
+
+        try {
+            Map<String, Object> responseMap = (Map<String, Object>) response;
+            List<Map<String, Object>> criteriaList = (List<Map<String, Object>>) responseMap.get("criteria");
+
+            if (criteriaList == null || criteriaList.isEmpty()) {
+                throw new CustomException("CRITERIA_NOT_FOUND", "Criteria not found in response");
+            }
+
+            Map<String, Object> criteria = criteriaList.get(0);
+            List<Map<String, Object>> responseList = (List<Map<String, Object>>) criteria.get("responseList");
+
+            if (responseList == null || responseList.isEmpty()) {
+                throw new CustomException("NO_RESPONSE_LIST", "No response list found in the criteria");
+            }
+
+            Map<String, Object> caseData = responseList.get(0);
+            caseStatus = (String) caseData.get("status");
+            return caseStatus;
+        } catch (Exception e) {
+            log.error("Error processing case response", e);
+            throw new CustomException("PROCESSING_ERROR", "Error processing case response");
+        }
     }
 
     public String getCaseBundle(CaseBundleRequest caseBundleRequest) {
@@ -262,6 +335,101 @@ public class CaseBundleService {
         bulkCaseBundleTracker.setEndTime(System.currentTimeMillis());
         caseBundleRepository.insertBulkCaseTracker(bulkCaseBundleTracker);
         return true;
+    }
+
+    public String getRebuiltCaseBundle(CaseBundleRequest caseBundleRequest)  {
+        String tenantId = caseBundleRequest.getTenantId();
+        String caseId = caseBundleRequest.getCaseId();
+        boolean isCaseIndexFound = false;
+
+        log.info("Retrieving documents from index: {} with id: {}", configuration.getCaseBundleIndex(), caseId);
+        String uri = configuration.getEsHostUrl() + configuration.getCaseBundleIndex() + configuration.getSearchPath();
+        String request = String.format(ES_IDS_QUERY, caseId);
+        String response = "";
+
+        try {
+            response = esRepository.fetchDocuments(uri, request);
+        } catch (Exception e) {
+            log.error("Error while fetching documents from ElasticSearch", e);
+            throw new CustomException("ES_FETCH_ERROR", "Error while fetching documents from ElasticSearch");
+        }
+
+        try {
+            JsonNode rootNode = objectMapper.readTree(response);
+            JsonNode hitsNode = rootNode.path("hits").path("hits");
+
+            if (!(hitsNode.isArray() && hitsNode.isEmpty())) {
+                isCaseIndexFound = true;
+            }
+        }
+        catch (IOException e) {
+            log.error("Error parsing JSON response", e);
+            throw new CustomException("JSON_PARSE_ERROR", "Error parsing JSON response");
+        }
+
+        if(!isCaseIndexFound){
+            log.info("Case index not found. Creating new index for caseId: {}", caseId);
+            String caseStatus = getCaseStatus(caseBundleRequest.getRequestInfo(), caseId, tenantId);
+            ProcessCaseBundlePdfRequest processCaseBundlePdfRequest = new ProcessCaseBundlePdfRequest();
+            processCaseBundlePdfRequest.setRequestInfo(caseBundleRequest.getRequestInfo());
+            processCaseBundlePdfRequest.setCaseId(caseId);
+            processCaseBundlePdfRequest.setTenantId(tenantId);
+            processCaseBundlePdfRequest.setState(caseStatus);
+            processCaseBundlePdfRequest.setIsRebuild(true);
+
+            try {
+                String jsonContent = readCaseBundleDefaultIndex();
+                try {
+                    JsonNode indexJson = objectMapper.readTree(jsonContent);
+                    if (indexJson.isObject()) {
+                        ObjectNode defaultIndex = (ObjectNode) indexJson;
+                        defaultIndex.put("tenantId", tenantId);
+                        defaultIndex.put("caseID", caseId);
+                        processCaseBundlePdfRequest.setIndex(defaultIndex);
+                    }
+                    else{
+                        log.error("Invalid DEFAULT INDEX JSON  for casebundle rebuild");
+                        throw new CustomException("INVALID_JSON", "Invalid DEFAULT INDEX JSON for casebundle rebuild");
+                    }
+                }
+                catch (JsonProcessingException e) {
+                    log.error("Error while parsing JSON for DEFAULT INDEX JSON  for casebundle rebuild", e);
+                    throw new CustomException("JSON_PARSE_ERROR","Error parsing DEFAULT INDEX JSON for casebundle rebuild");
+                }
+            } catch (IOException e) {
+                log.error("Error while reading DEFAULT INDEX JSON for case rebuild from file", e);
+                throw new CustomException("FILE_READ_ERROR", "Error while reading DEFAULT INDEX JSON for case rebuild from file");
+            }
+
+            StringBuilder url = new StringBuilder();
+            url.append(configuration.getCaseBundlePdfHost()).append(configuration.getProcessCaseBundlePdfPath());
+
+            Object pdfResponse;
+            try {
+                pdfResponse = serviceRequestRepository.fetchResult(url, processCaseBundlePdfRequest);
+            } catch (Exception e) {
+                log.error("Error generating PDF", e);
+                throw new CustomException("PDF_GENERATION_ERROR", "Error generating PDF");
+            }
+
+            Map<String, Object> pdfResponseMap = objectMapper.convertValue(pdfResponse, Map.class);
+            Map<String, Object> indexMap = (Map<String, Object>) pdfResponseMap.get("index");
+            JsonNode updateIndexJson = objectMapper.valueToTree(indexMap);
+
+            String esUpdateUrl = configuration.getEsHostUrl() + configuration.getCaseBundleIndex() + "/_doc/" + caseId;
+            String esRequest;
+            try {
+                esRequest = String.format(objectMapper.writeValueAsString(updateIndexJson));
+                esRepository.fetchDocuments(esUpdateUrl, esRequest);
+            } catch (IOException e) {
+                log.error("Error updating ElasticSearch index with new data", e);
+                throw new CustomException("ES_UPDATE_ERROR", "Error updating ElasticSearch index with new data");
+            }
+
+            return "Index build successful";
+        }
+
+        return "No need to rebuild";
     }
 }
 

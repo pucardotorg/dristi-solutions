@@ -65,7 +65,7 @@ router.post(
 router.post(
   "/process-case-bundle",
   asyncMiddleware(async (req, res) => {
-    const { tenantId, caseId, index, state, requestInfo } = req.body;
+    const { tenantId, caseId, index, state, requestInfo, isRebuild } = req.body;
 
     // Validate required inputs
     if (!tenantId || !caseId || !index || !state || !requestInfo) {
@@ -89,7 +89,8 @@ router.post(
         caseId,
         index,
         state,
-        requestInfo
+        requestInfo,
+        isRebuild
       );
 
       // Return the updated index
