@@ -222,6 +222,7 @@ public class ServiceConstants {
     public static final String ERROR_WHILE_FETCHING_PENDING_TASK = "Error fetching pending task.";
     public static final String ERROR_UPDATING_PENDING_TASK = "Error updating pending task.";
 
+    public static final String MANUAL_PENDING_RESPONSE="MANUAL_PENDING_RESPONSE";
     public static final String REPRESENTATIVE_REPLACE_JOIN_CASE="update-representative-join-case";
     public static final String REPRESENTATIVE_JOIN_CASE_TOPIC = "representative-join-case";
     public static final String LITIGANT_JOIN_CASE_TOPIC = "litigant-join-case";
