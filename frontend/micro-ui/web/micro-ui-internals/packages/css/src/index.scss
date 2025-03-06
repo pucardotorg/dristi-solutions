@@ -945,3 +945,11 @@ input[type="number"] {
   font-size: 19px !important;
   font-weight: 700 !important;
 }
+
+.radio-wrap .radio-btn-wrap input:disabled ~ .radio-btn-checkmark:after {
+  background-color: #E6E6E6 !important;
+}
+
+.radio-wrap .radio-btn-wrap input:disabled ~ .radio-btn-checkmark {
+  border-color: #E6E6E6 !important;
+}
