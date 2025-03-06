@@ -1085,6 +1085,12 @@ function EFilingCases({ path }) {
                 }
               }
 
+              if(selected === "respondentDetails"){
+                if(judgeObj && Object.keys(judgeObj).length > 0 && body?.key === "addressDetails"){
+                  body.isJudgeSendBack=true;
+                }
+              }
+
               if (body?.labelChildren === "optional" && Object.keys(caseDetails?.additionalDetails?.scrutiny?.data || {}).length === 0) {
                 body.labelChildren = <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>;
               }
