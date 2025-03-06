@@ -1373,9 +1373,6 @@ function EFilingCases({ path }) {
                   ) {
                     modifiedFormComponent.disable = false;
                   }
-                  if (selected === "chequeDetails" && key === "policeStation") {
-                    key = key + "." + formComponent?.populators?.optionsKey;
-                  }
                   if (selected === "delayApplications" && key === "delayCondonationType.name") {
                     modifiedFormComponent.disable = true;
                   }
