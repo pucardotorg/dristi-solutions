@@ -4053,6 +4053,59 @@ const GenerateOrders = () => {
     return false;
   }, [currentOrder, selectedOrder]);
 
+  const DcaWarning = useMemo(() => {
+    let warningObj = { show: false, message: "" };
+    if (currentOrder?.orderCategory === "INTERMEDIATE") {
+      const showWarning =
+        "NO" === caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code &&
+        "NOTICE" === currentOrder?.additionalDetails?.formdata?.orderType?.code &&
+        (("Section 223 Notice" === currentOrder?.additionalDetails?.formdata?.noticeType?.code && !isDCANoticeGenerated) ||
+          (!isDelayApplicationSubmitted && currentOrder?.additionalDetails?.formdata?.noticeType?.code === "DCA Notice"));
+
+      warningObj.show = showWarning;
+      if (showWarning) {
+        const warningMessage =
+          "Section 223 Notice" === currentOrder?.additionalDetails?.formdata?.noticeType?.code && !isDCANoticeGenerated
+            ? t("DCA_NOTICE_NOT_SENT") + ": " + t("DCA_NOTICE_NOT_SENT_MESSAGE")
+            : !isDelayApplicationSubmitted && currentOrder?.additionalDetails?.formdata?.noticeType?.code === "DCA Notice"
+            ? t("DELAY_APPLICATION_NOT_SUBMITTED")
+            : "";
+        warningObj.message = warningMessage;
+      }
+      return warningObj;
+    } else {
+      if (!isDCANoticeGenerated) {
+        const showWarning = currentOrder?.compositeItems?.some(
+          (orderItem) =>
+            orderItem?.isEnabled &&
+            "NO" === caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code &&
+            "NOTICE" === orderItem?.orderSchema?.additionalDetails?.formdata?.orderType?.code &&
+            "Section 223 Notice" === orderItem?.orderSchema?.additionalDetails?.formdata?.noticeType?.code
+        );
+        warningObj.show = showWarning;
+        if (showWarning) {
+          const warningMessage = t("DCA_NOTICE_NOT_SENT") + ": " + t("DCA_NOTICE_NOT_SENT_MESSAGE");
+          warningObj.message = warningMessage;
+        }
+      }
+      if (!isDelayApplicationSubmitted) {
+        const showWarning = currentOrder?.compositeItems?.some(
+          (orderItem) =>
+            orderItem?.isEnabled &&
+            "NO" === caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code &&
+            "NOTICE" === orderItem?.orderSchema?.additionalDetails?.formdata?.orderType?.code &&
+            orderItem?.orderSchema?.additionalDetails?.formdata?.noticeType?.code === "DCA Notice"
+        );
+        warningObj.show = warningObj.show || showWarning;
+        if (showWarning) {
+          const warningMessage = t("DELAY_APPLICATION_NOT_SUBMITTED");
+          warningObj.message = warningObj?.message ? warningObj.message + " and " + warningMessage : warningMessage;
+        }
+      }
+      return warningObj;
+    }
+  }, [currentOrder, isDelayApplicationSubmitted, caseDetails, isDCANoticeGenerated]);
+
   if (
     loader ||
     isOrdersLoading ||
@@ -4140,36 +4193,29 @@ const GenerateOrders = () => {
             )}
           </div>
         }
-        {/* {"NO" === caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code &&
-          "NOTICE" === currentFormData?.orderType?.code &&
-          (("Section 223 Notice" === currentFormData?.noticeType?.code && !isDCANoticeGenerated) ||
-            (!isDelayApplicationSubmitted && currentFormData?.noticeType?.code === "DCA Notice")) && (
-            <div
-              className="dca-infobox-message"
-              style={{
-                display: "flex",
-                gap: "8px",
-                backgroundColor: "#FEF4F4",
-                border: "1px",
-                borderColor: "#FCE8E8",
-                padding: "8px",
-                borderRadius: "8px",
-                marginBottom: "24px",
-                width: "fit-content",
-              }}
-            >
-              <div className="dca-infobox-icon" style={{}}>
-                <WarningInfoIconYellow />{" "}
-              </div>
-              <div className="dca-infobox-me" style={{}}>
-                {"Section 223 Notice" === currentFormData?.noticeType?.code && !isDCANoticeGenerated
-                  ? t("DCA_NOTICE_NOT_SENT") + ": " + t("DCA_NOTICE_NOT_SENT_MESSAGE")
-                  : !isDelayApplicationSubmitted && currentFormData?.noticeType?.code === "DCA Notice"
-                  ? t("DELAY_APPLICATION_NOT_SUBMITTED")
-                  : ""}
-              </div>
+        {DcaWarning?.show && (
+          <div
+            className="dca-infobox-message"
+            style={{
+              display: "flex",
+              gap: "8px",
+              backgroundColor: "#FEF4F4",
+              border: "1px",
+              borderColor: "#FCE8E8",
+              padding: "8px",
+              borderRadius: "8px",
+              marginBottom: "24px",
+              width: "fit-content",
+            }}
+          >
+            <div className="dca-infobox-icon" style={{}}>
+              <WarningInfoIconYellow />{" "}
             </div>
-          )} */}
+            <div className="dca-infobox-me" style={{}}>
+              {DcaWarning?.message}
+            </div>
+          </div>
+        )}
         {modifiedFormConfig?.map((config, index) => {
           let displayindex = 0;
           if (currentOrder?.orderCategory === "COMPOSITE") {
