@@ -4014,6 +4014,19 @@ const GenerateOrders = () => {
       let compositeItemsNew = currentOrder?.compositeItems ? [...currentOrder.compositeItems] : [];
       const totalEnabled = currentOrder?.compositeItems?.filter((o) => o?.isEnabled)?.length;
 
+      if (compositeItemsNew?.length === 0) {
+        // This case if when we are making new composite from scratch
+        const orderTitleNew = `${t(currentOrder?.orderType)} and Other Items`;
+        setOrderTitles((prevTitles) => {
+          if (prevTitles[selectedOrder] === orderTitleNew) {
+            return prevTitles;
+          }
+          const updatedTitles = [...prevTitles];
+          updatedTitles[selectedOrder] = orderTitleNew;
+          return updatedTitles;
+        });
+      }
+
       if (totalEnabled === 1) {
         const enabledItem = currentOrder?.compositeItems?.find((item) => item?.isEnabled && item?.orderType);
         const orderTitleNew = `${t(enabledItem?.orderType)} and Other Items`;
