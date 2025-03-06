@@ -67,6 +67,7 @@ import WarningModal from "./components/WarningModal";
 import CustomTextInput from "./components/CustomTextInput";
 import CustomEmailTextInput from "./pages/citizen/registration/CustomEmailTextInput";
 import OrSeparator from "./components/OrSeparator";
+import ShowAllTranscriptModal from "./components/ShowAllTranscriptModal";
 
 export const DRISTIModule = ({ stateCode, userType, tenants }) => {
   const Digit = useMemo(() => window?.Digit || {}, []);
@@ -185,6 +186,7 @@ const componentsToRegister = {
   SelectLanguage,
   LogoutIcon,
   TriangleIcon,
+  ShowAllTranscriptModal
 };
 
 const overrideHooks = () => {
