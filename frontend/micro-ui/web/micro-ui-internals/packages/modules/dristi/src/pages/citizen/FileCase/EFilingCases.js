@@ -1328,12 +1328,6 @@ function EFilingCases({ path }) {
                 }
 
                 modifiedFormComponent.disable = scrutiny?.[selected]?.scrutinyMessage?.FSOError || (judgeObj && !isPendingReESign) ? false : true;
-                if (
-                  modifiedFormComponent?.type === "radio" &&
-                  !(scrutiny?.[selected]?.scrutinyMessage?.FSOError || (judgeObj && !isPendingReESign))
-                ) {
-                  modifiedFormComponent.populators.styles = { opacity: 0.5 };
-                }
                 if (judgeObj && !isPendingReESign) {
                   if (selected === "complainantDetails") {
                     const disabledFields = ["firstName", "middleName", "lastName", "complainantType", "complainantAge"];
