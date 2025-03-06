@@ -134,6 +134,7 @@ public class PendingTaskService {
         List<JsonNode> filteredTasks = new ArrayList<>();
         for(Map<String, Object> litigant: parties) {
             List<JsonNode> tasks = filterPendingTaskAdvocate(hitsNode, Collections.singletonList(litigant.get("individualId").toString()));
+            //verify the condition if updating one to one of all to one
             if(topic.equals(REPRESENTATIVE_REPLACE_JOIN_CASE) && litigant.get("isActive").equals(true)) {
                 // Note: If the same pending task is displayed to multiple litigants, this logic will break.
                 replaceAssigneeToPendingTask(tasks, advocateUuid, requestInfo);
@@ -221,7 +222,7 @@ public class PendingTaskService {
                     break;
                 }
             }
-            if (isAssigned && !dataNode.get("referenceId").toString().startsWith(MANUAL_PENDING_RESPONSE)) {
+            if (isAssigned && !dataNode.get("referenceId").asText().startsWith(MANUAL_PENDING_RESPONSE)) {
                 filteredTasks.add(hit);
             }
         }
