@@ -39,6 +39,8 @@ const TasksComponent = ({
   hideFilters = false,
   isDiary = false,
   taskIncludes,
+  isApplicationCompositeOrder = false,
+  compositeOrderObj,
 }) => {
   const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
   const [pendingTasks, setPendingTasks] = useState([]);
@@ -69,14 +71,14 @@ const TasksComponent = ({
           ...(isLitigant && { assignedTo: uuid }),
           ...(!isLitigant && { assignedRole: [...roles] }),
           ...(inCase && { filingNumber: filingNumber }),
-          screenType: isDiary ? ["Adiary"] : ["home"],
+          screenType: isDiary ? ["Adiary"] : isApplicationCompositeOrder ? ["applicationCompositeOrder"] : ["home", "applicationCompositeOrder"],
         },
         limit: 10000,
         offset: 0,
       },
     },
     params: { tenantId },
-    key: `${taskType?.code}-${filingNumber}-${isDiary}`,
+    key: `${taskType?.code}-${filingNumber}-${isDiary}-${isApplicationCompositeOrder}`,
     config: { enabled: Boolean(taskType?.code && tenantId) },
   });
 
@@ -201,13 +203,18 @@ const TasksComponent = ({
       if (isOpenInNewTab) {
         const newTabUrl = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&applicationNumber=${applicationDetails?.applicationNumber}&tab=Submissions`;
         window.open(newTabUrl, "_blank", "noopener,noreferrer");
+      } else if (isApplicationCompositeOrder) {
+        history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Submissions`, {
+          applicationDocObj: docObj,
+          compositeOrderObj: compositeOrderObj,
+        });
       } else {
         history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Submissions`, {
           applicationDocObj: docObj,
         });
       }
     },
-    [getApplicationDetail, history, userType]
+    [getApplicationDetail, history, userType, isApplicationCompositeOrder, compositeOrderObj]
   );
 
   const handleCreateOrder = useCallback(
