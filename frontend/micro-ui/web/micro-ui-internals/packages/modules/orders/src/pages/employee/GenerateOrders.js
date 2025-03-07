@@ -3271,13 +3271,8 @@ const GenerateOrders = () => {
       const orderResponse = await updateOrder(
         {
           ...currentOrder,
-          ...((currentOrder?.orderCategory === "COMPOSITE"
-            ? updatedHearingNumber
-            : "" || newHearingNumber || hearingNumber || hearingDetails?.hearingId) && {
-            hearingNumber:
-              currentOrder?.orderCategory === "COMPOSITE"
-                ? updatedHearingNumber
-                : "" || newHearingNumber || hearingNumber || hearingDetails?.hearingId,
+          ...((updatedHearingNumber || newHearingNumber || hearingNumber || hearingDetails?.hearingId) && {
+            hearingNumber: updatedHearingNumber || newHearingNumber || hearingNumber || hearingDetails?.hearingId,
           }),
         },
         OrderWorkflowAction.ESIGN
