@@ -44,7 +44,7 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
                 .courtId(null)  // no court id
                 .parties(getParties(event))
                 .status(event.getStatus())
-                .date(Long.valueOf(event.getCreatedDate()))
+                .date((event.getCreatedDate()==null || event.getCreatedDate().isEmpty()) ? null:Long.valueOf(event.getCreatedDate()))
                 .entityType("Order")
                 .title(event.getOrderTitle())
                 .tenantId(event.getTenantId())
