@@ -310,7 +310,7 @@ const TasksComponent = ({
   );
 
   const pendingTasks = useMemo(() => {
-    if (isLoading || isOptionsLoading || isCaseDataLoading || pendingTaskActionDetails?.length === 0 || pendingTaskToCaseDetailMap?.size > 0)
+    if (isLoading || isOptionsLoading || isCaseDataLoading || pendingTaskActionDetails?.length === 0 || pendingTaskToCaseDetailMap?.size === 0)
       return [];
     const getCustomFunction = {
       handleCreateOrder,
