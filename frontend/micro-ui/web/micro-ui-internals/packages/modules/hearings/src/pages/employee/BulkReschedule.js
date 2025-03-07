@@ -484,14 +484,14 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
             apiId: "Rainmaker",
           },
           BulkReschedule: {
-            judgeId,
-            courtId,
             reason: bulkFormData?.reason,
-            scheduleAfter: bulkFormData?.toDate + 24 * 60 * 60 * 1000 + 1,
-            tenantId,
-            startTime: bulkFormData?.fromDate,
-            endTime: bulkFormData?.toDate + 24 * 60 * 60 * 1000 - 1,
-            slotIds: bulkFormData?.slotIds?.map((slot) => slot?.id) || [],
+            hearings:
+              tentativeDates?.Hearings?.map(({ filingNumber, startTime, originalHearingDate, hearingType }) => ({
+                filingNumber,
+                startTime,
+                originalHearingDate,
+                hearingType,
+              })) || [],
           },
         },
         {
