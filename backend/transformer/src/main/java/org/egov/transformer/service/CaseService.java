@@ -1,22 +1,25 @@
 package org.egov.transformer.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.egov.transformer.config.ServiceConstants;
 import org.egov.transformer.config.TransformerProperties;
-import org.egov.transformer.models.CaseData;
-import org.egov.transformer.models.CaseRequest;
-import org.egov.transformer.models.CourtCase;
-import org.egov.transformer.models.Order;
+import org.egov.transformer.models.*;
 import org.egov.transformer.producer.TransformerProducer;
+import org.egov.transformer.repository.ServiceRequestRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.LinkedHashMap;
+
+import static org.egov.transformer.config.ServiceConstants.COURT_CASE_JSON_PATH;
 
 @Slf4j
 @Service
@@ -29,13 +32,15 @@ public class CaseService {
     private final TransformerProperties properties;
     private final TransformerProducer producer;
     private final ObjectMapper objectMapper;
+    private final ServiceRequestRepository repository;
 
     @Autowired
-    public CaseService(ElasticSearchService elasticSearchService, TransformerProperties properties, TransformerProducer producer, ObjectMapper objectMapper) {
+    public CaseService(ElasticSearchService elasticSearchService, TransformerProperties properties, TransformerProducer producer, ObjectMapper objectMapper, ServiceRequestRepository repository) {
         this.elasticSearchService = elasticSearchService;
         this.properties = properties;
         this.producer = producer;
         this.objectMapper = objectMapper;
+        this.repository = repository;
     }
 
     public CourtCase fetchCase(String fieldValue) throws IOException {
@@ -72,5 +77,23 @@ public class CaseService {
         }
     }
 
-
+    public CourtCase getCase(String filingNumber, String tenantId, RequestInfo requestInfo) {
+        StringBuilder uri = new StringBuilder();
+        uri.append(properties.getCaseSearchUrlHost()).append(properties.getCaseSearchUrlEndPoint());
+        CaseSearchRequest request = CaseSearchRequest.builder()
+                .requestInfo(requestInfo)
+                .criteria(Collections.singletonList(CaseCriteria.builder()
+                        .filingNumber(filingNumber)
+                        .defaultFields(false)
+                        .build()))
+                .tenantId(tenantId)
+                .build();
+        try {
+            Object response = repository.fetchResult(uri, request);
+            return objectMapper.convertValue(JsonPath.read(response, COURT_CASE_JSON_PATH), CourtCase.class);
+        } catch (Exception e) {
+            log.error("Error executing case search query", e);
+            throw new CustomException("Error fetching case: ", ServiceConstants.ERROR_CASE_SEARCH);
+        }
+    }
 }
