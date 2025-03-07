@@ -28,10 +28,12 @@ function formatTimeFromEpoch(epoch) {
     hour12: false,
     hour: "2-digit",
     minute: "2-digit",
-    second: "2-digit"
+    second: "2-digit",
   };
 
-  const formattedTime = new Intl.DateTimeFormat("en-GB", options).format(new Date(epoch)); 
+  const formattedTime = new Intl.DateTimeFormat("en-GB", options).format(
+    new Date(epoch)
+  );
   return formattedTime;
 }
 
@@ -45,7 +47,9 @@ function _getHearingSlots(courtHearingSlots, startTime) {
   const givenTimeInSeconds = timeToSeconds(givenTimeStr);
 
   const sortedSlots = [...courtHearingSlots].sort((a, b) => {
-    return timeToSeconds(a.data.slotStartTime) - timeToSeconds(b.data.slotStartTime);
+    return (
+      timeToSeconds(a.data.slotStartTime) - timeToSeconds(b.data.slotStartTime)
+    );
   });
 
   let lastMatchingSlot = null;
@@ -69,16 +73,16 @@ const hearingBulkReschedule = async (req, res, qrCode) => {
 
   const missingFields = [];
   if (!tenantId) missingFields.push("tenantId");
-  if (!bulkRescheduleData) missingFields.push("bulkRescheduleData");
+  // if (!bulkRescheduleData) missingFields.push("bulkRescheduleData");
   if (requestInfo === undefined) missingFields.push("requestInfo");
   if (qrCode === "true" && (!entityId || !code))
     missingFields.push("entityId and code");
 
-  requiredFields.forEach((field) => {
-    if (!bulkRescheduleData?.[field]) {
-      missingFields.push(field);
-    }
-  });
+  // requiredFields.forEach((field) => {
+  //   if (!bulkRescheduleData?.[field]) {
+  //     missingFields.push(field);
+  //   }
+  // });
 
   if (missingFields.length > 0) {
     return renderError(
@@ -120,33 +124,32 @@ const hearingBulkReschedule = async (req, res, qrCode) => {
     );
 
     const mdmsCourtSlots = resMdms?.data?.mdms;
-    console.debug("courtClots : ", mdmsCourtSlots);
     if (!mdmsCourtSlots) {
       return renderError(res, "Court slots MDMS master not found", 404);
     }
 
-    const BulkReschedule = {
-      judgeId: bulkRescheduleData?.judgeId,
-      courtId: bulkRescheduleData?.courtId,
-      scheduleAfter: bulkRescheduleData?.scheduleAfter,
-      tenantId: tenantId,
-      startTime: bulkRescheduleData?.startTime,
-      endTime: bulkRescheduleData?.endTime,
-      slotIds: bulkRescheduleData?.slotIds,
-      reason: bulkRescheduleData?.reason,
-    };
+    // const BulkReschedule = {
+    //   judgeId: bulkRescheduleData?.judgeId,
+    //   courtId: bulkRescheduleData?.courtId,
+    //   scheduleAfter: bulkRescheduleData?.scheduleAfter,
+    //   tenantId: tenantId,
+    //   startTime: bulkRescheduleData?.startTime,
+    //   endTime: bulkRescheduleData?.endTime,
+    //   slotIds: bulkRescheduleData?.slotIds,
+    //   reason: bulkRescheduleData?.reason,
+    // };
 
-    // bulk reschedule api call
-    const resBulkHearing = await handleApiCall(
-      () => bulk_hearing_reschedule(tenantId, BulkReschedule, requestInfo),
-      "Failed to query hearing service"
-    );
+    // // bulk reschedule api call
+    // const resBulkHearing = await handleApiCall(
+    //   () => bulk_hearing_reschedule(tenantId, BulkReschedule, requestInfo),
+    //   "Failed to query hearing service"
+    // );
 
-    const resBulkHearingData = resBulkHearing?.data?.Hearings;
-    console.debug("hearings : ", resBulkHearingData);
-    if (!resBulkHearingData) {
-      return renderError(res, "Hearing not found during given slot", 404);
-    }
+    const resBulkHearingData = bulkRescheduleData?.hearings;
+    // console.debug("hearings : ", resBulkHearingData);
+    // if (!resBulkHearingData) {
+    //   return renderError(res, "Hearing not found during given slot", 404);
+    // }
 
     // Extract filingNumber from the response
     const criteria = resBulkHearingData?.map((hearing) => ({
@@ -189,8 +192,6 @@ const hearingBulkReschedule = async (req, res, qrCode) => {
         messagesMap?.[matchingHearing?.hearingType] ||
         matchingHearing?.hearingType;
 
-      
-
       return {
         caseName: caseTitle,
         caseNumber: caseNumber,
@@ -200,8 +201,6 @@ const hearingBulkReschedule = async (req, res, qrCode) => {
         newHearingSlot: newHearingSlot,
       };
     });
-
-    console.debug(bulkHearingRescheduleList ,"bulkHearingRescheduleList");
 
     // Handle QR code if enabled
     let base64Url = "";
