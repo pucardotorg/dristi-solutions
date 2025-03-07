@@ -5,6 +5,7 @@ import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.model.*;
 import org.pucar.dristi.repository.EPostRepository;
 import org.pucar.dristi.util.EpostUtil;
+import org.pucar.dristi.validator.EPostUserValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,11 +18,14 @@ public class EPostService {
 
     private final Producer producer;
 
+    private final EPostUserValidator ePostUserValidator;
+
     @Autowired
-    public EPostService(EPostRepository ePostRepository, EpostUtil epostUtil, Producer producer) {
+    public EPostService(EPostRepository ePostRepository, EpostUtil epostUtil, Producer producer, EPostUserValidator ePostUserValidator) {
         this.ePostRepository = ePostRepository;
         this.epostUtil = epostUtil;
         this.producer = producer;
+        this.ePostUserValidator = ePostUserValidator;
     }
 
     public ChannelMessage sendEPost(TaskRequest request) throws JsonProcessingException {
@@ -35,6 +39,10 @@ public class EPostService {
     }
 
     public EPostResponse getEPost(EPostTrackerSearchRequest searchRequest, int limit, int offset) {
+        enrichPostalHubName(searchRequest);
+        if (searchRequest.getEPostTrackerSearchCriteria().getPostalHub() == null) {
+            return null;
+        }
         return ePostRepository.getEPostTrackerResponse(searchRequest.getEPostTrackerSearchCriteria(),limit,offset);
     }
 
@@ -46,5 +54,14 @@ public class EPostService {
         producer.push("update-epost-tracker",postRequest);
 
         return ePostTracker;
+    }
+
+    private void enrichPostalHubName(EPostTrackerSearchRequest searchRequest) {
+
+        // enriching the postalHub Name based on the user logged in
+        String postalHubName = ePostUserValidator.getPostalHubName(searchRequest);
+        EPostTrackerSearchCriteria searchCriteria = searchRequest.getEPostTrackerSearchCriteria();
+        searchCriteria.setPostalHub(postalHubName);
+
     }
 }
