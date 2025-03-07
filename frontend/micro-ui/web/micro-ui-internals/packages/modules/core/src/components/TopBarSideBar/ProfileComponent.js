@@ -12,7 +12,6 @@ const ProfileComponent = ({ userDetails, userOptions, handleUserDropdownSelectio
   const { t } = useTranslation();
   const history = useHistory();
   const [showModal, setShowModal] = useState(false);
-  console.log("userDetails :>> ", userDetails);
   const isEmployee = window.location.href.includes("/employee");
   const showProfilePage = () => {
     const redirectUrl = isEmployee
