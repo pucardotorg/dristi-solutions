@@ -1,5 +1,6 @@
 package org.egov.transformer.consumer;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -31,7 +32,8 @@ public class NotificationConsumer {
 
         try {
             String updateNotificationRequest = objectMapper.writeValueAsString(payload.value());
-            NotificationRequest request = objectMapper.readValue(updateNotificationRequest, NotificationRequest.class);
+            NotificationRequest request = objectMapper.readValue(updateNotificationRequest, new TypeReference<NotificationRequest>() {
+            });
             eventManager.notifyByObjects(request.getNotification(), request.getRequestInfo());
         } catch (Exception e) {
             log.debug("update payload : {}", payload.value());
