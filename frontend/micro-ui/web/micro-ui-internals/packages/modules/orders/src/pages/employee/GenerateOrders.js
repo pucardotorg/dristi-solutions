@@ -3206,8 +3206,19 @@ const GenerateOrders = () => {
         );
 
         const result = isBothHearingAndNoticePresent.hasHearing && isBothHearingAndNoticePresent.hasNotice;
+        const priorityOrderTypes = ["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"];
+        const priorityOrders = currentOrderUpdated?.filter((order) => priorityOrderTypes?.includes(order?.orderType));
+        const otherOrders = currentOrderUpdated?.filter((order) => !priorityOrderTypes?.includes(order?.orderType));
+        const orderedOrders = [...priorityOrders, ...otherOrders];
         setPrevOrder(currentOrder);
-        await Promise.all(currentOrderUpdated.map((order) => handleIssueOrder(order, order?.orderType, currentOrder?.orderCategory, result)));
+
+        for (const order of orderedOrders) {
+          try {
+            await handleIssueOrder(order, order?.orderType, currentOrder?.orderCategory, result);
+          } catch (error) {
+            console.error(`Failed for order ${order.id}:`, error);
+          }
+        }
       } else {
         setPrevOrder(currentOrder);
         await handleIssueOrder(currentOrder, currentOrder?.orderType, currentOrder?.orderCategory);
@@ -3293,7 +3304,7 @@ const GenerateOrders = () => {
     }
   };
 
-  const handleIssueOrder = async (currentOrder, orderType, orderCategory, jumpCaseStatusToLatestStage) => {
+  const handleIssueOrder = async (currentOrder, orderType, orderCategory, jumpCaseStatusToLatestStage = false) => {
     try {
       let newhearingId = "";
       const referenceId = currentOrder?.additionalDetails?.formdata?.refApplicationId;
@@ -3383,19 +3394,25 @@ const GenerateOrders = () => {
       await createPendingTask({
         order: {
           ...currentOrder,
-          ...((newhearingId || newHearingNumber || hearingNumber || hearingDetails?.hearingId) && {
-            hearingNumber: newhearingId || hearingNumber || hearingDetails?.hearingId,
+          ...((newhearingId ||
+            newHearingNumber ||
+            hearingNumber ||
+            hearingDetails?.hearingId ||
+            newApplicationDetails?.additionalDetails?.hearingId) && {
+            hearingNumber:
+              newhearingId || newHearingNumber || hearingNumber || hearingDetails?.hearingId || newApplicationDetails?.additionalDetails?.hearingId,
           }),
         },
         compositeOrderItemId: currentOrder?.itemId,
         newApplicationDetails: newApplicationDetails,
       });
+
       currentOrder?.additionalDetails?.formdata?.refApplicationId && (await closeManualPendingTask(currentOrder?.orderNumber));
       if (currentOrder?.orderCategory === "INTERMEDIATE") {
         if (["SCHEDULE_OF_HEARING_DATE"].includes(orderType)) {
           closeManualPendingTask(filingNumber);
           if (!isCaseAdmitted) {
-            updateCaseDetails("SCHEDULE_ADMISSION_HEARING");
+            await updateCaseDetails("SCHEDULE_ADMISSION_HEARING");
           }
         }
       }
@@ -3406,12 +3423,12 @@ const GenerateOrders = () => {
           if (["SCHEDULE_OF_HEARING_DATE"].includes(orderType)) {
             closeManualPendingTask(filingNumber);
             if (!isCaseAdmitted) {
-              updateCaseDetails("SCHEDULE_ADMISSION_HEARING");
+              await updateCaseDetails("SCHEDULE_ADMISSION_HEARING");
             }
           }
         } else {
           if (["SCHEDULE_OF_HEARING_DATE"].includes(orderType)) {
-            closeManualPendingTask(filingNumber);
+            await closeManualPendingTask(filingNumber);
           }
         }
       }
@@ -3423,7 +3440,7 @@ const GenerateOrders = () => {
         if (
           orderType === "NOTICE" &&
           currentOrder?.additionalDetails?.formdata?.noticeType?.code === "Section 223 Notice" &&
-          caseDetails?.data?.criteria?.[0]?.responseList?.[0]?.status === "PENDING_NOTICE"
+          caseDetails?.status === "PENDING_NOTICE"
         ) {
           await closeManualPendingTask(currentOrder?.hearingNumber || hearingDetails?.hearingId);
           try {
@@ -3472,8 +3489,12 @@ const GenerateOrders = () => {
       }
       if (currentOrder?.orderCategory === "COMPOSITE") {
         if (orderType === "NOTICE" && currentOrder?.additionalDetails?.formdata?.noticeType?.code === "Section 223 Notice") {
-          await closeManualPendingTask(currentOrder?.hearingNumber || hearingDetails?.hearingId);
-          const currentCaseStaus = caseDetails?.data?.criteria?.[0]?.responseList?.[0]?.status;
+          try {
+            await closeManualPendingTask(currentOrder?.hearingNumber || hearingDetails?.hearingId);
+          } catch (error) {
+            console.error("Error closing manual pending task:", error);
+          }
+          const currentCaseStaus = caseDetails?.status;
           if (["PENDING_NOTICE", "PENDING_ADMISSION_HEARING"]?.includes(currentCaseStaus)) {
             // Reason for above condition- If we have more than one notices in composite items and case is updated once and reached to pending response
             // then we should not repeat this case update call.
