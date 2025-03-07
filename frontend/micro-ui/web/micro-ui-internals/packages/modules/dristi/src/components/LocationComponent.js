@@ -212,7 +212,7 @@ const LocationComponent = ({
                   />
                 ) : input?.type === "Radio" ? (
                   <RadioButtons
-                    style={{ display: "flex", justifyContent: "flex-start", gap: "3rem", ...input.styles }}
+                    style={{ display: "flex", justifyContent: "flex-start", gap: "3rem", ...(disable ? { opacity: 0.5 } : {}), ...input.styles }}
                     selectedOption={currentValue}
                     options={input?.options}
                     optionsKey={"code"}
@@ -220,6 +220,7 @@ const LocationComponent = ({
                     onSelect={(value) => {
                       setValue(value, input?.name);
                     }}
+                    disabled={disable}
                   />
                 ) : (
                   <TextInput
