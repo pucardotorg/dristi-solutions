@@ -55,8 +55,10 @@ public class HearingConsumer {
         try {
             Hearing hearing = (objectMapper.readValue((String) payload.value(), new TypeReference<HearingRequest>() {
             })).getHearing();
+            HearingRequest hearingRequest = objectMapper.convertValue(payload.value(), HearingRequest.class);
             logger.info(objectMapper.writeValueAsString(hearing));
             hearingService.addCaseDetailsToHearing(hearing, topic);
+            hearingService.enrichOpenHearings(hearingRequest);
         } catch (Exception exception) {
             logger.error("error in saving hearing", exception);
         }
