@@ -129,7 +129,6 @@ export const sideMenuConfig = [
           "delayReason.reasonForReturnCheque",
           "ifsc",
           "chequeAmount",
-          "policeStation",
           "depositDate",
           "returnMemoFileUpload.document",
         ],
@@ -377,4 +376,5 @@ export const documentTypeMapping = {
   swornStatement: "SWORN_STATEMENT",
   inquiryAffidavitFileUpload: "AFFIDAVIT_UNDER_225",
   vakalatnamaFileUpload: "VAKALATNAMA",
+  pipAffidavitFileUpload: "COMPLAINANT_PIP_AFFIDAVIT",
 };

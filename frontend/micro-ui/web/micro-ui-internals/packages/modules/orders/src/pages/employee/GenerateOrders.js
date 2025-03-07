@@ -1406,10 +1406,20 @@ const GenerateOrders = () => {
       }
 
       if (orderType === "SUMMONS") {
-        if (hearingDetails?.startTime) {
+        const scheduleHearingOrderItem = newCurrentOrder?.compositeItems?.find(
+          (item) => item?.isEnabled && item?.orderType === "SCHEDULE_OF_HEARING_DATE"
+        );
+        const rescheduleHearingItem = newCurrentOrder?.compositeItems?.find(
+          (item) => item?.isEnabled && ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE"].includes(item?.orderType)
+        );
+        if (scheduleHearingOrderItem) {
+          updatedFormdata.dateForHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
+        } else if (rescheduleHearingItem) {
+          updatedFormdata.dateForHearing = newCurrentOrder?.additionalDetails?.formdata?.newHearingDate || "";
+        } else {
           updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
-          setValueRef?.current?.[index]?.("dateForHearing", updatedFormdata.dateForHearing);
         }
+        setValueRef?.current?.[index]?.("dateForHearing", updatedFormdata.dateForHearing);
         if (newCurrentOrder?.additionalDetails?.selectedParty && newCurrentOrder?.additionalDetails?.selectedParty?.uuid) {
           updatedFormdata.SummonsOrder = {
             party: caseDetails?.additionalDetails?.respondentDetails?.formdata
@@ -1437,9 +1447,11 @@ const GenerateOrders = () => {
         }
       }
       if (orderType === "NOTICE") {
-        const scheduleHearingOrderItem = newCurrentOrder?.compositeItems?.find((item) => item?.orderType === "SCHEDULE_OF_HEARING_DATE");
-        const rescheduleHearingItem = newCurrentOrder?.compositeItems?.find((item) =>
-          ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE"].includes(item?.orderType)
+        const scheduleHearingOrderItem = newCurrentOrder?.compositeItems?.find(
+          (item) => item?.isEnabled && item?.orderType === "SCHEDULE_OF_HEARING_DATE"
+        );
+        const rescheduleHearingItem = newCurrentOrder?.compositeItems?.find(
+          (item) => item?.isEnabled && ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE"].includes(item?.orderType)
         );
         if (scheduleHearingOrderItem) {
           updatedFormdata.dateForHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
@@ -1479,10 +1491,20 @@ const GenerateOrders = () => {
         }
       }
       if (orderType === "WARRANT") {
-        if (hearingDetails?.startTime) {
+        const scheduleHearingOrderItem = newCurrentOrder?.compositeItems?.find(
+          (item) => item?.isEnabled && item?.orderType === "SCHEDULE_OF_HEARING_DATE"
+        );
+        const rescheduleHearingItem = newCurrentOrder?.compositeItems?.find(
+          (item) => item?.isEnabled && ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE"].includes(item?.orderType)
+        );
+        if (scheduleHearingOrderItem) {
+          updatedFormdata.dateOfHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
+        } else if (rescheduleHearingItem) {
+          updatedFormdata.dateOfHearing = newCurrentOrder?.additionalDetails?.formdata?.newHearingDate || "";
+        } else {
           updatedFormdata.dateOfHearing = formatDate(new Date(hearingDetails?.startTime));
-          setValueRef?.current?.[index]?.("dateOfHearing", updatedFormdata.dateOfHearing);
         }
+        setValueRef?.current?.[index]?.("dateOfHearing", updatedFormdata.dateOfHearing);
       }
       if (
         [
@@ -3238,6 +3260,8 @@ const GenerateOrders = () => {
         } catch (error) {
           console.error("Error in creating tasks:", error);
         }
+      } else {
+        createTask(currentOrder?.orderType, caseDetails, orderResponse);
       }
 
       setShowSuccessModal(true);
@@ -3375,7 +3399,11 @@ const GenerateOrders = () => {
         await closeManualPendingTask(currentOrder?.hearingNumber || hearingDetails?.hearingId);
       }
       if (currentOrder?.orderCategory === "INTERMEDIATE") {
-        if (orderType === "NOTICE" && currentOrder?.additionalDetails?.formdata?.noticeType?.code === "Section 223 Notice") {
+        if (
+          orderType === "NOTICE" &&
+          currentOrder?.additionalDetails?.formdata?.noticeType?.code === "Section 223 Notice" &&
+          caseDetails?.data?.criteria?.[0]?.responseList?.[0]?.status === "PENDING_NOTICE"
+        ) {
           await closeManualPendingTask(currentOrder?.hearingNumber || hearingDetails?.hearingId);
           try {
             await updateCaseDetails("ISSUE_ORDER");
@@ -3425,7 +3453,7 @@ const GenerateOrders = () => {
         if (orderType === "NOTICE" && currentOrder?.additionalDetails?.formdata?.noticeType?.code === "Section 223 Notice") {
           await closeManualPendingTask(currentOrder?.hearingNumber || hearingDetails?.hearingId);
           const currentCaseStaus = caseDetails?.data?.criteria?.[0]?.responseList?.[0]?.status;
-          if (currentCaseStaus !== "PENDING_RESPONSE") {
+          if (["PENDING_NOTICE", "PENDING_ADMISSION_HEARING"]?.includes(currentCaseStaus)) {
             // Reason for above condition- If we have more than one notices in composite items and case is updated once and reached to pending response
             // then we should not repeat this case update call.
             try {
@@ -3740,6 +3768,10 @@ const GenerateOrders = () => {
         const allFormSections = [];
         const itemErrors = [];
         for (let p = 0; p < modifiedFormConfig?.[i]?.length; p++) {
+          if (!formdata) {
+            itemErrors.push({ key: "ORDER_TYPE", errorMessage: "SELECT_ORDER_TYPE" });
+            break;
+          }
           const body = modifiedFormConfig?.[i]?.[p]?.body;
 
           for (let k = 0; k < body?.length; k++) {
@@ -3751,6 +3783,10 @@ const GenerateOrders = () => {
               }
             }
           }
+        }
+        if (!formdata) {
+          errrors.push({ index: i, orderType: "NOT_PRESENT", errors: itemErrors });
+          continue;
         }
         errrors.push({ index: i, orderType: orderType, errors: itemErrors });
       }
@@ -3970,25 +4006,40 @@ const GenerateOrders = () => {
         };
       });
     });
-    let compositeItemsNew = currentOrder?.compositeItems ? [...currentOrder.compositeItems] : [];
-    const totalEnabled = currentOrder?.compositeItems?.filter((o) => o?.isEnabled)?.length;
 
-    let orderTitleNew = "";
-    if (compositeItemsNew?.length === 0) {
-      orderTitleNew = `${t(currentOrder?.orderType)} and Other Items`;
-    }
-    if (totalEnabled === 1) {
-      const enabledItem = currentOrder?.compositeItems?.find((item) => item?.isEnabled && item?.orderType);
-      orderTitleNew = `${t(enabledItem?.orderType)} and Other Items`;
-    }
-    setOrderTitles((prevTitles) => {
-      if (prevTitles[selectedOrder] === orderTitleNew) {
-        return prevTitles;
+    if (
+      !currentOrder?.orderNumber ||
+      ordersData?.list?.find((order) => order?.orderNumber === currentOrder?.orderNumber)?.orderCategory === "INTERMEDIATE"
+    ) {
+      let compositeItemsNew = currentOrder?.compositeItems ? [...currentOrder.compositeItems] : [];
+      const totalEnabled = currentOrder?.compositeItems?.filter((o) => o?.isEnabled)?.length;
+
+      if (compositeItemsNew?.length === 0) {
+        // This case if when we are making new composite from scratch
+        const orderTitleNew = `${t(currentOrder?.orderType)} and Other Items`;
+        setOrderTitles((prevTitles) => {
+          if (prevTitles[selectedOrder] === orderTitleNew) {
+            return prevTitles;
+          }
+          const updatedTitles = [...prevTitles];
+          updatedTitles[selectedOrder] = orderTitleNew;
+          return updatedTitles;
+        });
       }
-      const updatedTitles = [...prevTitles];
-      updatedTitles[selectedOrder] = orderTitleNew;
-      return updatedTitles;
-    });
+
+      if (totalEnabled === 1) {
+        const enabledItem = currentOrder?.compositeItems?.find((item) => item?.isEnabled && item?.orderType);
+        const orderTitleNew = `${t(enabledItem?.orderType)} and Other Items`;
+        setOrderTitles((prevTitles) => {
+          if (prevTitles[selectedOrder] === orderTitleNew) {
+            return prevTitles;
+          }
+          const updatedTitles = [...prevTitles];
+          updatedTitles[selectedOrder] = orderTitleNew;
+          return updatedTitles;
+        });
+      }
+    }
   };
 
   const showEditTitleIcon = useMemo(() => {
@@ -4001,6 +4052,59 @@ const GenerateOrders = () => {
     }
     return false;
   }, [currentOrder, selectedOrder]);
+
+  const DcaWarning = useMemo(() => {
+    let warningObj = { show: false, message: "" };
+    if (currentOrder?.orderCategory === "INTERMEDIATE") {
+      const showWarning =
+        "NO" === caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code &&
+        "NOTICE" === currentOrder?.additionalDetails?.formdata?.orderType?.code &&
+        (("Section 223 Notice" === currentOrder?.additionalDetails?.formdata?.noticeType?.code && !isDCANoticeGenerated) ||
+          (!isDelayApplicationSubmitted && currentOrder?.additionalDetails?.formdata?.noticeType?.code === "DCA Notice"));
+
+      warningObj.show = showWarning;
+      if (showWarning) {
+        const warningMessage =
+          "Section 223 Notice" === currentOrder?.additionalDetails?.formdata?.noticeType?.code && !isDCANoticeGenerated
+            ? t("DCA_NOTICE_NOT_SENT") + ": " + t("DCA_NOTICE_NOT_SENT_MESSAGE")
+            : !isDelayApplicationSubmitted && currentOrder?.additionalDetails?.formdata?.noticeType?.code === "DCA Notice"
+            ? t("DELAY_APPLICATION_NOT_SUBMITTED")
+            : "";
+        warningObj.message = warningMessage;
+      }
+      return warningObj;
+    } else {
+      if (!isDCANoticeGenerated) {
+        const showWarning = currentOrder?.compositeItems?.some(
+          (orderItem) =>
+            orderItem?.isEnabled &&
+            "NO" === caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code &&
+            "NOTICE" === orderItem?.orderSchema?.additionalDetails?.formdata?.orderType?.code &&
+            "Section 223 Notice" === orderItem?.orderSchema?.additionalDetails?.formdata?.noticeType?.code
+        );
+        warningObj.show = showWarning;
+        if (showWarning) {
+          const warningMessage = t("DCA_NOTICE_NOT_SENT") + ": " + t("DCA_NOTICE_NOT_SENT_MESSAGE");
+          warningObj.message = warningMessage;
+        }
+      }
+      if (!isDelayApplicationSubmitted) {
+        const showWarning = currentOrder?.compositeItems?.some(
+          (orderItem) =>
+            orderItem?.isEnabled &&
+            "NO" === caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code &&
+            "NOTICE" === orderItem?.orderSchema?.additionalDetails?.formdata?.orderType?.code &&
+            orderItem?.orderSchema?.additionalDetails?.formdata?.noticeType?.code === "DCA Notice"
+        );
+        warningObj.show = warningObj.show || showWarning;
+        if (showWarning) {
+          const warningMessage = t("DELAY_APPLICATION_NOT_SUBMITTED");
+          warningObj.message = warningObj?.message ? warningObj.message + " and " + warningMessage : warningMessage;
+        }
+      }
+      return warningObj;
+    }
+  }, [currentOrder, isDelayApplicationSubmitted, caseDetails, isDCANoticeGenerated]);
 
   if (
     loader ||
@@ -4089,36 +4193,29 @@ const GenerateOrders = () => {
             )}
           </div>
         }
-        {/* {"NO" === caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.delayCondonationType?.code &&
-          "NOTICE" === currentFormData?.orderType?.code &&
-          (("Section 223 Notice" === currentFormData?.noticeType?.code && !isDCANoticeGenerated) ||
-            (!isDelayApplicationSubmitted && currentFormData?.noticeType?.code === "DCA Notice")) && (
-            <div
-              className="dca-infobox-message"
-              style={{
-                display: "flex",
-                gap: "8px",
-                backgroundColor: "#FEF4F4",
-                border: "1px",
-                borderColor: "#FCE8E8",
-                padding: "8px",
-                borderRadius: "8px",
-                marginBottom: "24px",
-                width: "fit-content",
-              }}
-            >
-              <div className="dca-infobox-icon" style={{}}>
-                <WarningInfoIconYellow />{" "}
-              </div>
-              <div className="dca-infobox-me" style={{}}>
-                {"Section 223 Notice" === currentFormData?.noticeType?.code && !isDCANoticeGenerated
-                  ? t("DCA_NOTICE_NOT_SENT") + ": " + t("DCA_NOTICE_NOT_SENT_MESSAGE")
-                  : !isDelayApplicationSubmitted && currentFormData?.noticeType?.code === "DCA Notice"
-                  ? t("DELAY_APPLICATION_NOT_SUBMITTED")
-                  : ""}
-              </div>
+        {DcaWarning?.show && (
+          <div
+            className="dca-infobox-message"
+            style={{
+              display: "flex",
+              gap: "8px",
+              backgroundColor: "#FEF4F4",
+              border: "1px",
+              borderColor: "#FCE8E8",
+              padding: "8px",
+              borderRadius: "8px",
+              marginBottom: "24px",
+              width: "fit-content",
+            }}
+          >
+            <div className="dca-infobox-icon" style={{}}>
+              <WarningInfoIconYellow />{" "}
             </div>
-          )} */}
+            <div className="dca-infobox-me" style={{}}>
+              {DcaWarning?.message}
+            </div>
+          </div>
+        )}
         {modifiedFormConfig?.map((config, index) => {
           let displayindex = 0;
           if (currentOrder?.orderCategory === "COMPOSITE") {
@@ -4131,7 +4228,7 @@ const GenerateOrders = () => {
           return (
             <div key={`${selectedOrder}-${index}`} className="form-wrapper-d" ref={(el) => (submitButtonRefs.current = el)}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <h1>{`${t("ITEM")} ${displayindex + 1}`}</h1>
+                <h1 style={{ fontWeight: "700", fontSize: "20px" }}>{`${t("ITEM")} ${displayindex + 1}`}</h1>
                 {showDeleteIcon && (
                   <span
                     style={{ cursor: "pointer" }}
@@ -4289,7 +4386,12 @@ const GenerateOrders = () => {
           className="edit-case-name-modal"
         >
           <h3 className="input-label">{t("CS_TITLE_Name")}</h3>
-          <TextInput defaultValue={t(OrderTitles?.[selectedOrder])} type="text" onChange={(e) => setModalTitleName(e.target.value)} />
+          <TextInput
+            defaultValue={t(OrderTitles?.[selectedOrder])}
+            type="text"
+            onChange={(e) => setModalTitleName(e.target.value)}
+            maxlength={1024}
+          />
         </Modal>
       )}
       {showMandatoryFieldsErrorModal?.showModal && (

@@ -783,12 +783,9 @@ const EvidenceModal = ({
       const isSameOrder =
         compositeOrderObj?.orderCategory === "COMPOSITE"
           ? compositeOrderObj?.compositeItems?.some(
-              (item) =>
-                item.orderType === orderType &&
-                item?.isEnabled &&
-                item?.orderSchema?.additionalDetails?.formdata?.refApplicationId === refApplicationId
+              (item) => item?.isEnabled && item?.orderSchema?.additionalDetails?.formdata?.refApplicationId === refApplicationId
             )
-          : compositeOrderObj?.orderType === orderType && compositeOrderObj?.additionalDetails?.formdata?.refApplicationId === refApplicationId;
+          : compositeOrderObj?.additionalDetails?.formdata?.refApplicationId === refApplicationId;
       const isNewOrder = isSameOrder || checkOrderValidation(orderType, compositeOrderObj);
 
       if (generateOrder && compositeOrderObj && compositeOrderObj?.orderTitle && !isNewOrder) {

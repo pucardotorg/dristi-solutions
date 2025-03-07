@@ -265,7 +265,7 @@ const CaseOverview = ({
                           }
                         }}
                       >
-                        {order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(`ORDER_TYPE_${order?.orderTitle?.toUpperCase()}`)}
+                        {order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(`ORDER_TYPE_${order?.orderType?.toUpperCase()}`)}
                       </div>
                     ))}
                 </div>

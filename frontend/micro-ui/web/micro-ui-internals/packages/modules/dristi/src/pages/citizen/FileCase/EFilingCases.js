@@ -1328,12 +1328,6 @@ function EFilingCases({ path }) {
                 }
 
                 modifiedFormComponent.disable = scrutiny?.[selected]?.scrutinyMessage?.FSOError || (judgeObj && !isPendingReESign) ? false : true;
-                if (
-                  modifiedFormComponent?.type === "radio" &&
-                  !(scrutiny?.[selected]?.scrutinyMessage?.FSOError || (judgeObj && !isPendingReESign))
-                ) {
-                  modifiedFormComponent.populators.styles = { opacity: 0.5 };
-                }
                 if (judgeObj && !isPendingReESign) {
                   if (selected === "complainantDetails") {
                     const disabledFields = ["firstName", "middleName", "lastName", "complainantType", "complainantAge"];
@@ -1366,9 +1360,6 @@ function EFilingCases({ path }) {
                     scrutiny?.[selected]?.form?.[index]?.["liabilityType.name"]?.FSOError
                   ) {
                     modifiedFormComponent.disable = false;
-                  }
-                  if (selected === "chequeDetails" && key === "policeStation") {
-                    key = key + "." + formComponent?.populators?.optionsKey;
                   }
                   if (selected === "delayApplications" && key === "delayCondonationType.name") {
                     modifiedFormComponent.disable = true;
