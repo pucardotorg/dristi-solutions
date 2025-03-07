@@ -34,7 +34,8 @@ public class EPostRepository {
         Pagination pagination = searchCriteria.getPagination();
         pagination.setTotalCount(0);
         if (searchCriteria.getPostalHub() != null) {
-            getEPostTrackerList(searchCriteria, limit, offset);
+            List<EPostTracker> ePostTrackers = getEPostTrackerList(searchCriteria, limit, offset);
+            ePostTrackerList.addAll(ePostTrackers);
             Integer totalRecords = getTotalCountQuery(searchCriteria);
             pagination.setTotalCount(totalRecords);
         }
