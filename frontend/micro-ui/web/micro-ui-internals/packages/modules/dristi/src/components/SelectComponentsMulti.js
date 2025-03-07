@@ -295,7 +295,7 @@ const SelectComponentsMulti = ({ t, config, onSelect, formData, errors, setError
         ))}
       {!(config?.removeAddLocationButton === true) && (
         <Button
-          isDisabled={config?.disable || (config?.state && config?.state !== CaseWorkflowState.DRAFT_IN_PROGRESS)}
+          isDisabled={config?.disable || (config?.state && config?.state !== CaseWorkflowState.DRAFT_IN_PROGRESS && !config?.isJudgeSendBack)}
           className={"add-location-btn"}
           label={t("ADD_LOCATION")}
           style={{ alignItems: "center", margin: "10px 0px" }}
