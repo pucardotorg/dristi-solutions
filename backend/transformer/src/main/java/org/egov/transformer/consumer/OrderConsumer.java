@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.transformer.config.TransformerProperties;
 import org.egov.transformer.event.manager.OrderNotificationEventManager;
 import org.egov.transformer.models.Order;
@@ -69,9 +70,11 @@ public class OrderConsumer {
     private void pushOrderAndNotification(ConsumerRecord<String, Object> payload, String topic) {
 
         try {
-            String orderRequest = objectMapper.writeValueAsString(payload.value());
-            OrderRequest request = objectMapper.readValue(orderRequest, OrderRequest.class);
-            eventManager.notifyByObjects(request.getOrder(), request.getRequestInfo());
+            Order order = (objectMapper.readValue((String) payload.value(), new TypeReference<OrderRequest>() {
+            })).getOrder();
+            RequestInfo requestInfo = (objectMapper.readValue((String) payload.value(), new TypeReference<OrderRequest>() {
+            })).getRequestInfo();
+            eventManager.notifyByObjects(order, requestInfo);
 
         } catch (Exception e) {
             log.debug(" payload : {} , topic : {}", payload.value(), topic);
