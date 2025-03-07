@@ -1005,6 +1005,28 @@
               width: 100%;
               display: flex;
               justify-content: space-between;
+              p {
+                margin-top: 0px;
+              }
+            }
+            .address-container {
+              display: flex;
+              flex-direction: column;
+              gap: 1rem;
+              width: 100%;
+
+              .address-block {
+                .row {
+                  display: flex;
+                  padding: 4px 0px;
+                  justify-content: space-between;
+                  .value {
+                    p {
+                      margin-bottom: 8px;
+                    }
+                  }
+                }
+              }
             }
 
             .address-main {

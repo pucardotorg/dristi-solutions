@@ -805,16 +805,27 @@ const CustomReviewCardRow = ({
         return (
           <div className={`address-main ${bgclassname}`} style={{ borderBottom: "1px #e8e8e8 solid" }}>
             <div className="address">
-              <div className="label">{t(label)}</div>
-              <div className={`value ${!isScrutiny ? "column" : ""}`}>
-                {address.map((item) => {
-                  return (
-                    <p>
-                      {item?.address}{" "}
-                      <LocationContent latitude={item?.coordinates?.latitude || 31.6160638} longitude={item?.coordinates?.longitude || 74.8978579} />
-                    </p>
-                  );
-                })}
+              <div className="address-container">
+                {address.map((item, index) => (
+                  <div key={index} className="address-block">
+                    <div className="row">
+                      <div className="label">{t("Address")}</div>
+                      <div className="value">
+                        <p>{item?.address}</p>
+                        <LocationContent
+                          latitude={item?.coordinates?.latitude || 31.6160638}
+                          longitude={item?.coordinates?.longitude || 74.8978579}
+                        />
+                      </div>
+                    </div>
+                    {item?.policeStation && (
+                      <div className="row">
+                        <div className="label">{t("Police Station")}</div>
+                        <div className="value">{item?.policeStation}</div>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
 
               {showFlagIcon && (
