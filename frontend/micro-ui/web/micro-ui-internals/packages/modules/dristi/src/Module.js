@@ -53,7 +53,7 @@ import CustomChooseDate from "./components/CustomChooseDate";
 import CustomCalendar from "./components/CustomCalendar";
 import UploadSignatureModal from "./components/UploadSignatureModal";
 import CommentComponent from "./components/CommentComponent";
-import { RightArrow } from "./icons/svgIndex";
+import { EditProfileIcon, LogoutIcon, RightArrow, SelectLanguage, TriangleIcon } from "./icons/svgIndex";
 import CustomCheckBoxCard from "./components/CustomCheckBoxCard";
 import useBillSearch from "./hooks/dristi/useBillSearch";
 import SelectTranscriptTextArea from "./components/SelectTranscriptTextArea";
@@ -65,7 +65,9 @@ import MultipleAdvocatesAndPip from "./components/MultipleAdvocatesAndPip";
 import MultiSelectDropdown from "./components/MultiSelectDropdown";
 import WarningModal from "./components/WarningModal";
 import CustomTextInput from "./components/CustomTextInput";
+import CustomEmailTextInput from "./pages/citizen/registration/CustomEmailTextInput";
 import OrSeparator from "./components/OrSeparator";
+import ShowAllTranscriptModal from "./components/ShowAllTranscriptModal";
 
 export const DRISTIModule = ({ stateCode, userType, tenants }) => {
   const Digit = useMemo(() => window?.Digit || {}, []);
@@ -178,7 +180,13 @@ const componentsToRegister = {
   MultiSelectDropdown,
   WarningModal,
   CustomTextInput,
+  CustomEmailTextInput,
   OrSeparator,
+  EditProfileIcon,
+  SelectLanguage,
+  LogoutIcon,
+  TriangleIcon,
+  ShowAllTranscriptModal
 };
 
 const overrideHooks = () => {

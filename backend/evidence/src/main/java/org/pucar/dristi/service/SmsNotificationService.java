@@ -58,6 +58,15 @@ public class SmsNotificationService {
         if(messageCode.equalsIgnoreCase(DOCUMENT_MARKED_EXHIBIT)){
             pushNotification(templateData, message, mobileNumber, config.getSmsNotificationDocumentMarkedExhibitTemplateId());
         }
+        if (messageCode.equalsIgnoreCase(EVIDENCE_SUBMISSION)) {
+            pushNotification(templateData,message,mobileNumber,config.getSmsNotificationEvidenceSubmitted());
+        }
+        if (messageCode.equalsIgnoreCase(EVIDENCE_SUBMISSION_MESSAGE_FILING)) {
+            pushNotification(templateData,message,mobileNumber,config.getSmsNotificationDocumentSubmissionByParty());
+        }
+        if (messageCode.equalsIgnoreCase(EVIDENCE_SUBMISSION_MESSAGE_OPPOSITE_PARTY)) {
+            pushNotification(templateData,message,mobileNumber,config.getSmsNotificationDocumentSubmissionToOppositeParty());
+        }
     }
 
     private void pushNotification(SmsTemplateData templateData, String message, String mobileNumber, String templateId) {
@@ -89,6 +98,7 @@ public class SmsNotificationService {
         smsDetails.put("tenantId", smsTemplateData.getTenantId());
         smsDetails.put("artifactNumber", smsTemplateData.getArtifactNumber());
         smsDetails.put("mobileNumber", mobileNumber);
+        smsDetails.put("filingNumber",smsTemplateData.getFilingNumber());
 
         return smsDetails;
     }
@@ -127,7 +137,8 @@ public class SmsNotificationService {
                 .replace("{{link}}", Optional.ofNullable(userDetailsForSMS.get("link")).orElse(""))
                 .replace("{{date}}", Optional.ofNullable(userDetailsForSMS.get("date")).orElse(""))
                 .replace("{{cmpNumber}}", Optional.ofNullable(userDetailsForSMS.get("cmpNumber")).orElse(""))
-                .replace("{{artifactNumber}}", Optional.ofNullable(userDetailsForSMS.get("artifactNumber")).orElse(""));
+                .replace("{{artifactNumber}}", Optional.ofNullable(userDetailsForSMS.get("artifactNumber")).orElse(""))
+                .replace("{{filingNumber}}",userDetailsForSMS.get("cmpNumber") != null ? userDetailsForSMS.get("cmpNumber") : userDetailsForSMS.get("filingNumber"));
         return message;
     }
 

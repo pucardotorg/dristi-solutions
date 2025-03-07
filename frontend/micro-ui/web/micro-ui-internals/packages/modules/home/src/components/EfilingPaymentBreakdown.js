@@ -182,7 +182,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
         showToast("success", t("CS_NO_PENDING_PAYMENT"), 50000);
         setIsCaseLocked(true);
         setPayOnlineButtonTitle("CS_BUTTON_PAY_ONLINE_NO_PENDING_PAYMENT");
-        return; 
+        return;
       }
 
       const caseLockStatus = await DRISTIService.getCaseLockStatus(
@@ -348,8 +348,8 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
           </div>
         </div>
         {toastMsg && (
-        <Toast error={toastMsg.key === "error"} label={t(toastMsg.action)} onClose={() => setToastMsg(null)} style={{ maxWidth: "500px" }} />
-      )}
+          <Toast error={toastMsg.key === "error"} label={t(toastMsg.action)} onClose={() => setToastMsg(null)} style={{ maxWidth: "500px" }} />
+        )}
       </Modal>
     </div>
   );

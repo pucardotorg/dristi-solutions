@@ -153,6 +153,9 @@
 /* @import "./home"; */
 @import "./home/home.scss";
 @import "./home//components/reviewCard.scss";
+@import "./components/geoLocationComponent.scss";
+@import "./components/ProfileComponent.scss";
+@import "./hearings/BulkReschedule.scss";
 
 .wbh-header-container {
   display: flex !important;
@@ -941,4 +944,12 @@ input[type="number"] {
 .dristi-font-big-bold {
   font-size: 19px !important;
   font-weight: 700 !important;
+}
+
+.radio-wrap .radio-btn-wrap input:disabled ~ .radio-btn-checkmark:after {
+  background-color: #E6E6E6 !important;
+}
+
+.radio-wrap .radio-btn-wrap input:disabled ~ .radio-btn-checkmark {
+  border-color: #E6E6E6 !important;
 }

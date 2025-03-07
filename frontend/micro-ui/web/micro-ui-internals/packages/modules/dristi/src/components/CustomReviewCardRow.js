@@ -699,7 +699,7 @@ const CustomReviewCardRow = ({
                     )
                   : null}
               </div>
-              {showFlagIcon && !(type === "image" && configKey === "litigentDetails" && name === "complainantDetails") && (
+              {showFlagIcon && (
                 <div
                   className="flag"
                   onClick={(e) => {
@@ -777,7 +777,7 @@ const CustomReviewCardRow = ({
         const addressDetails = extractValue(data, value);
         let address = [""];
         if (Array.isArray(addressDetails)) {
-          address = addressDetails.map(({ addressDetails }) => {
+          address = addressDetails.map(({ addressDetails, geoLocationDetails }) => {
             return {
               address:
                 typeof addressDetails === "string"
@@ -785,7 +785,11 @@ const CustomReviewCardRow = ({
                   : `${addressDetails?.locality || ""}, ${addressDetails?.city || ""}, ${addressDetails?.district || ""}, ${
                       addressDetails?.state || ""
                     } - ${addressDetails?.pincode || ""}`,
-              coordinates: addressDetails?.coordinates,
+              coordinates:
+                geoLocationDetails?.latitude && geoLocationDetails?.longitude
+                  ? { latitude: geoLocationDetails.latitude, longitude: geoLocationDetails.longitude }
+                  : null,
+              policeStation: geoLocationDetails?.policeStation?.name || null,
             };
           });
         } else {
@@ -797,7 +801,11 @@ const CustomReviewCardRow = ({
                   : `${addressDetails?.locality || ""}, ${addressDetails?.city || ""}, ${addressDetails?.district || ""}, ${
                       addressDetails?.state || ""
                     } - ${addressDetails?.pincode || ""}`,
-              coordinates: addressDetails?.coordinates,
+              coordinates:
+                addressDetails?.geoLocationDetails?.latitude && addressDetails?.geoLocationDetails?.longitude
+                  ? { latitude: addressDetails.geoLocationDetails.latitude, longitude: addressDetails.geoLocationDetails.longitude }
+                  : null,
+              policeStation: addressDetails?.geoLocationDetails?.policeStation?.name || null,
             },
           ];
         }

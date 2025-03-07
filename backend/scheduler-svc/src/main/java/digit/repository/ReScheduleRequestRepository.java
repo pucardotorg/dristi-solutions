@@ -16,20 +16,23 @@ import java.util.List;
 @Repository
 public class ReScheduleRequestRepository {
 
-    @Autowired
-    private ReScheduleHearingRowMapper rowMapper;
+    private final ReScheduleHearingRowMapper rowMapper;
+    private final ReScheduleHearingQueryBuilder queryBuilder;
+    private final JdbcTemplate jdbcTemplate;
 
     @Autowired
-    private ReScheduleHearingQueryBuilder queryBuilder;
-
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    public ReScheduleRequestRepository(ReScheduleHearingRowMapper rowMapper, ReScheduleHearingQueryBuilder queryBuilder, JdbcTemplate jdbcTemplate) {
+        this.rowMapper = rowMapper;
+        this.queryBuilder = queryBuilder;
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
     public List<ReScheduleHearing> getReScheduleRequest(ReScheduleHearingReqSearchCriteria criteria, Integer limit, Integer offset) {
 
         List<Object> preparedStmtList = new ArrayList<>();
-        String query = queryBuilder.getReScheduleRequestQuery(criteria, preparedStmtList, limit, offset);
-        log.debug("Final query: " + query);
+        List<Integer> preparedStmtArgList = new ArrayList<>();
+        String query = queryBuilder.getReScheduleRequestQuery(criteria, preparedStmtList, preparedStmtArgList, limit, offset);
+        log.debug("Final query for reScheduleRequest: " + query);
         return jdbcTemplate.query(query, preparedStmtList.toArray(), rowMapper);
 
 

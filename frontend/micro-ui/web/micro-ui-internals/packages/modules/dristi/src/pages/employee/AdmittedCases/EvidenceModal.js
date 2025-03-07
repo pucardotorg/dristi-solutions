@@ -535,10 +535,11 @@ const EvidenceModal = ({
         {}
       );
       const nextHearing = response?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
+      const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
       await DRISTIService.addADiaryEntry(
         {
           diaryEntry: {
-            judgeId: "super",
+            judgeId: judgeId,
             businessOfDay: businessOfTheDay,
             tenantId: tenantId,
             entryDate: new Date().setHours(0, 0, 0, 0),
@@ -726,6 +727,8 @@ const EvidenceModal = ({
         }),
       };
       const linkedOrderNumber = documentSubmission?.[0]?.applicationList?.additionalDetails?.formdata?.refOrderId;
+      const applicationNumber = [documentSubmission?.[0]?.applicationList?.applicationNumber];
+
       if (generateOrder) {
         const reqbody = {
           order: {
@@ -733,10 +736,12 @@ const EvidenceModal = ({
             tenantId,
             cnrNumber,
             filingNumber,
-            applicationNumber: [documentSubmission?.[0]?.applicationList?.applicationNumber],
+            applicationNumber: applicationNumber,
             statuteSection: {
               tenantId,
             },
+            orderTitle: orderType,
+            orderCategory: "INTERMEDIATE",
             orderType,
             status: "",
             isActive: true,
@@ -753,6 +758,8 @@ const EvidenceModal = ({
               applicationStatus: documentSubmission?.[0]?.applicationList?.applicationType
                 ? setApplicationStatus(type, documentSubmission[0].applicationList.applicationType)
                 : null,
+              ...(linkedOrderNumber && { linkedOrderNumber: linkedOrderNumber }),
+              ...(applicationNumber && { applicationNumber: applicationNumber }),
             },
             ...(documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName && {
               orderDetails: { parties: [{ partyName: documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName }] },

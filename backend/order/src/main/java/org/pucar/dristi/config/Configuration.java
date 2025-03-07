@@ -122,6 +122,12 @@ public class Configuration {
     @Value("${mdms.order.module.name}")
     private String orderModule;
 
+    @Value("${egov.mdms.order.nonoverlapping.composite.orders}")
+    private String mdmsNonOverlappingOrders;
+
+    @Value("${egov.mdms.order.nonrepeating.composite.orders}")
+    private String mdmsNonRepeatingCompositeOrders;
+
     // Filestore Config
     @Value("${egov.filestore.host}")
     private String fileStoreHost;
@@ -191,6 +197,9 @@ public class Configuration {
     @Value("${egov.sms.notification.case.decision.available.template.id}")
     private String smsNotificationCaseDecisionAvailableTemplateId;
 
+    @Value("${egov.sms.notification.additional.information.template.id}")
+    private String smsNotificationAdditionalDetails;
+
     //Individual Service
     @Value("${egov.individual.host}")
     private String individualHost;
@@ -204,4 +213,7 @@ public class Configuration {
 
     @Value("${egov.advocate.path}")
     private String advocatePath;
+
+    @Value("${egov.tenantId}")
+    private String tenantId;
 }

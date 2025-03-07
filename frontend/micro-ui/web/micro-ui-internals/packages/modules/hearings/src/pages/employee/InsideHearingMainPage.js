@@ -19,7 +19,7 @@ import isEmpty from "lodash/isEmpty";
 import TranscriptComponent from "./Transcription";
 import TasksComponent from "../../../../home/src/components/TaskComponent";
 import { SubmissionWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/submissionWorkflow";
-import {getFormattedName} from "../../utils"
+import { getFormattedName } from "../../utils";
 
 const SECOND = 1000;
 
@@ -408,7 +408,12 @@ const InsideHearingMainPage = () => {
                 selected={
                   IsSelectedWitness
                     ? {
-                        label: getFormattedName(selectedWitness?.firstName, selectedWitness?.middleName, selectedWitness?.lastName, selectedWitness?.witnessDesignation),
+                        label: getFormattedName(
+                          selectedWitness?.firstName,
+                          selectedWitness?.middleName,
+                          selectedWitness?.lastName,
+                          selectedWitness?.witnessDesignation
+                        ),
                         value: selectedWitness?.uuid,
                       }
                     : {}

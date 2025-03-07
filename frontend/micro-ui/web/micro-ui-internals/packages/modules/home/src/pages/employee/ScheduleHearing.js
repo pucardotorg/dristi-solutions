@@ -306,6 +306,8 @@ function ScheduleHearing({
           statuteSection: {
             tenantId,
           },
+          orderTitle: "SCHEDULE_OF_HEARING_DATE",
+          orderCategory: "INTERMEDIATE",
           orderType: "SCHEDULE_OF_HEARING_DATE",
           status: "",
           isActive: true,
@@ -359,6 +361,8 @@ function ScheduleHearing({
         });
     } else if (status && status === "OPTOUT") {
       const individualId = await fetchBasicUserInfo();
+      const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
+
       setIsSubmitDisabled(true);
       HomeService.customApiService(
         Urls.submitOptOutDates,
@@ -368,7 +372,7 @@ function ScheduleHearing({
             individualId: individualId?.individualId,
             caseId: filingNumber,
             rescheduleRequestId: referenceId,
-            judgeId: "super",
+            judgeId: judgeId,
             optOutDates: selectedChip,
           },
         },
