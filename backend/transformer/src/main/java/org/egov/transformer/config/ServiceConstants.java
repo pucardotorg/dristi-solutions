@@ -18,5 +18,8 @@ public class ServiceConstants {
    public static final String APPLICATION_NUMBER = "Data.applicationDetails.applicationNumber";
    public static final String ERROR_APPLICATION_SEARCH = "error executing application search query";
    public static final String APPLICATION_SEARCH_EMPTY = "No application data found for given filingNumber";
-   
+   public static final String HEARD="HEARD";
+   public static final String ADJOURNED="ADJOURNED";
+   public static final String ABATED="ABATED";
+   public static final String CLOSED="CLOSED";
 }
