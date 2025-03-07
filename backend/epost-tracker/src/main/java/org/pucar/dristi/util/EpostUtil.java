@@ -138,6 +138,7 @@ public class EpostUtil {
         }
         if (postHubNames.size() > 1) {
             log.error("multiple postal hubs found for pin code {}", pinCode);
+            return postHubNames.get(0);
         }
         else if (postHubNames.isEmpty()) {
             log.error("postal hub not found for pin code {}", pinCode);

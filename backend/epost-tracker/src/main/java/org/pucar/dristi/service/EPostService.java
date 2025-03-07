@@ -39,10 +39,7 @@ public class EPostService {
     }
 
     public EPostResponse getEPost(EPostTrackerSearchRequest searchRequest, int limit, int offset) {
-        enrichPostalHubName(searchRequest);
-        if (searchRequest.getEPostTrackerSearchCriteria().getPostalHub() == null) {
-            return null;
-        }
+        enrichSearchRequest(searchRequest);
         return ePostRepository.getEPostTrackerResponse(searchRequest.getEPostTrackerSearchCriteria(),limit,offset);
     }
 
@@ -56,7 +53,7 @@ public class EPostService {
         return ePostTracker;
     }
 
-    private void enrichPostalHubName(EPostTrackerSearchRequest searchRequest) {
+    private void enrichSearchRequest(EPostTrackerSearchRequest searchRequest) {
 
         // enriching the postalHub Name based on the user logged in
         String postalHubName = ePostUserValidator.getPostalHubName(searchRequest);
