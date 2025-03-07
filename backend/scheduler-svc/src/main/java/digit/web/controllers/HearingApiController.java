@@ -30,9 +30,9 @@ import java.util.List;
 public class HearingApiController {
 
     private final HearingService hearingService;
+
     // remove this ones its done
     private final HearingProcessor processor;
-
 
     @Autowired
     public HearingApiController(HearingService hearingService, HearingProcessor processor) {
@@ -79,6 +79,7 @@ public class HearingApiController {
         log.info("api=/hearing/v1/bulk/_update, result = SUCCESS");
         return ResponseEntity.accepted().body(response);
     }
+
 
     @RequestMapping(value = "/script", method = RequestMethod.POST)
     public ResponseEntity<?> script(@Parameter(in = ParameterIn.DEFAULT, description = "Hearing Details and Request Info", required = true, schema = @Schema()) @Valid @RequestBody HearingRequest request) {
