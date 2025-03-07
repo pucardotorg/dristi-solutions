@@ -443,7 +443,6 @@
   .view-order {
     padding: 24px;
     width: 60%;
-    margin-bottom: 100px;
 
     .order-header {
       font-family: Roboto;
@@ -462,7 +461,7 @@
     .order-type-form-composer {
       width: 100%;
       box-shadow: none;
-      margin: 0px !important;
+      margin: 0px;
       padding: 0px;
 
       .label-field-pair {
@@ -577,15 +576,6 @@
           line-height: 18.75px;
           text-align: center;
           color: #007e7e !important;
-        }
-      }
-    }
-
-    .edit-order-title-icon {
-      span {
-        cursor: pointer !important;
-        svg path {
-          fill: black;
         }
       }
     }

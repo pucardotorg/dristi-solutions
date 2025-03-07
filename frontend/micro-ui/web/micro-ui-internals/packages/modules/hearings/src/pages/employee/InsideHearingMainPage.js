@@ -559,7 +559,7 @@ const InsideHearingMainPage = () => {
           userInfoType={userInfoType}
           filingNumber={filingNumber}
           inCase={true}
-          taskIncludes={["Review Delay Condonation application", "Admit/Dismiss case"]}
+          taskIncludes={["Review Delay Condonation application", "Admit-Case"]}
         />
       </div>
       <ActionBar>

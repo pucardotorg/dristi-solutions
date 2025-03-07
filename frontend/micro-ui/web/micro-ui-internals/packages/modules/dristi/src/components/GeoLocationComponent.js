@@ -112,7 +112,7 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
       <div className="police-station-juridiction">
         <CardLabel>{t(config?.juridictionRadioButton?.label)}</CardLabel>
         <RadioButtons
-          additionalWrapperClass={"radio-group"}
+          additionalWrapperClass={disable ? "radio-group-disable" : "radio-group"}
           options={config?.juridictionRadioButton?.options}
           optionsKey="name"
           selectedOption={locationFormData?.[config.key]?.["jurisdictionKnown"] || config?.juridictionRadioButton?.defaultValue}

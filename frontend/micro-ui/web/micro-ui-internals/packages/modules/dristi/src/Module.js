@@ -186,7 +186,7 @@ const componentsToRegister = {
   SelectLanguage,
   LogoutIcon,
   TriangleIcon,
-  ShowAllTranscriptModal,
+  ShowAllTranscriptModal
 };
 
 const overrideHooks = () => {

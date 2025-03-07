@@ -30,10 +30,9 @@ function OrderSucessModal({ order, t, handleDownloadOrders, handleClose, actionS
         copyData: false,
       },
       {
-        key: `${t("ORDER_ID")} : ${order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t("ORDER_TYPE_" + order?.orderType)}`,
+        key: `${t("ORDER_ID")} : ${t("ORDER_TYPE_" + order?.orderType)}`,
         value: order?.orderNumber,
         copyData: true,
-        isLocalization: false,
       },
     ],
   };

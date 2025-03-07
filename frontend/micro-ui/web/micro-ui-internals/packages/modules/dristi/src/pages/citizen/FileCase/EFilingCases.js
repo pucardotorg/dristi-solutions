@@ -1085,9 +1085,9 @@ function EFilingCases({ path }) {
                 }
               }
 
-              if (selected === "respondentDetails") {
-                if (judgeObj && Object.keys(judgeObj).length > 0 && body?.key === "addressDetails") {
-                  body.isJudgeSendBack = true;
+              if(selected === "respondentDetails"){
+                if(judgeObj && Object.keys(judgeObj).length > 0 && body?.key === "addressDetails"){
+                  body.isJudgeSendBack=true;
                 }
               }
 
