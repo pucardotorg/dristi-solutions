@@ -1407,10 +1407,11 @@ const GenerateOrders = () => {
 
       if (orderType === "SUMMONS") {
         const scheduleHearingOrderItem = newCurrentOrder?.compositeItems?.find(
-          (item) => item?.isEnabled && item?.orderType === "SCHEDULE_OF_HEARING_DATE"
+          (item) => item?.isEnabled && ["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(item?.orderType)
         );
         const rescheduleHearingItem = newCurrentOrder?.compositeItems?.find(
-          (item) => item?.isEnabled && ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE"].includes(item?.orderType)
+          (item) =>
+            item?.isEnabled && ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE", "ASSIGNING_DATE_RESCHEDULED_HEARING"].includes(item?.orderType)
         );
         if (scheduleHearingOrderItem) {
           updatedFormdata.dateForHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
@@ -1448,10 +1449,11 @@ const GenerateOrders = () => {
       }
       if (orderType === "NOTICE") {
         const scheduleHearingOrderItem = newCurrentOrder?.compositeItems?.find(
-          (item) => item?.isEnabled && item?.orderType === "SCHEDULE_OF_HEARING_DATE"
+          (item) => item?.isEnabled && ["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(item?.orderType)
         );
         const rescheduleHearingItem = newCurrentOrder?.compositeItems?.find(
-          (item) => item?.isEnabled && ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE"].includes(item?.orderType)
+          (item) =>
+            item?.isEnabled && ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE", "ASSIGNING_DATE_RESCHEDULED_HEARING"].includes(item?.orderType)
         );
         if (scheduleHearingOrderItem) {
           updatedFormdata.dateForHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
@@ -1492,10 +1494,12 @@ const GenerateOrders = () => {
       }
       if (orderType === "WARRANT") {
         const scheduleHearingOrderItem = newCurrentOrder?.compositeItems?.find(
-          (item) => item?.isEnabled && item?.orderType === "SCHEDULE_OF_HEARING_DATE"
+          (item) => item?.isEnabled && ["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(item?.orderType)
         );
         const rescheduleHearingItem = newCurrentOrder?.compositeItems?.find(
-          (item) => item?.isEnabled && ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE"].includes(item?.orderType)
+          (item) =>
+            item?.isEnabled &&
+            ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE", "INITIATING_RESCHEDULING_OF_HEARING_DATE"].includes(item?.orderType)
         );
         if (scheduleHearingOrderItem) {
           updatedFormdata.dateOfHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
@@ -3181,6 +3185,7 @@ const GenerateOrders = () => {
   const processHandleIssueOrder = async () => {
     setLoader(true);
     try {
+      let updatedHearingNumber = "";
       if (currentOrder?.orderCategory === "COMPOSITE") {
         const currentOrderUpdated = currentOrder?.compositeItems?.map((item) => {
           return {
@@ -3214,7 +3219,10 @@ const GenerateOrders = () => {
 
         for (const order of orderedOrders) {
           try {
-            await handleIssueOrder(order, order?.orderType, currentOrder?.orderCategory, result);
+            const hearingNumber = await handleIssueOrder(order, order?.orderType, currentOrder?.orderCategory, result);
+            if (hearingNumber) {
+              updatedHearingNumber = hearingNumber;
+            }
           } catch (error) {
             console.error(`Failed for order ${order.id}:`, error);
           }
@@ -3263,8 +3271,13 @@ const GenerateOrders = () => {
       const orderResponse = await updateOrder(
         {
           ...currentOrder,
-          ...((newHearingNumber || hearingNumber || hearingDetails?.hearingId) && {
-            hearingNumber: newHearingNumber || hearingNumber || hearingDetails?.hearingId,
+          ...((currentOrder?.orderCategory === "COMPOSITE"
+            ? updatedHearingNumber
+            : "" || newHearingNumber || hearingNumber || hearingDetails?.hearingId) && {
+            hearingNumber:
+              currentOrder?.orderCategory === "COMPOSITE"
+                ? updatedHearingNumber
+                : "" || newHearingNumber || hearingNumber || hearingDetails?.hearingId,
           }),
         },
         OrderWorkflowAction.ESIGN
@@ -3603,6 +3616,9 @@ const GenerateOrders = () => {
             }
           }
         });
+      }
+      if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(orderType)) {
+        return newhearingId;
       }
     } catch (error) {
       setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
