@@ -1230,26 +1230,26 @@ export const configsScheduleNextHearingDate = [
       },
     ],
   },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "lastHearingTranscript",
-        isMandatory: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "LAST_HEARING_TRANSCRIPT",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-    ],
-  },
+  // {
+  //   body: [
+  //     {
+  //       type: "component",
+  //       component: "SelectCustomTextArea",
+  //       key: "lastHearingTranscript",
+  //       isMandatory: true,
+  //       populators: {
+  //         inputs: [
+  //           {
+  //             name: "text",
+  //             textAreaSubHeader: "LAST_HEARING_TRANSCRIPT",
+  //             placeholder: "TYPE_HERE_PLACEHOLDER",
+  //             type: "TextAreaComponent",
+  //           },
+  //         ],
+  //       },
+  //     },
+  //   ],
+  // },
   {
     body: [
       {
