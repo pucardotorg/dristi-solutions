@@ -43,7 +43,6 @@ const TasksComponent = ({
   compositeOrderObj,
 }) => {
   const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
-  const [pendingTasks, setPendingTasks] = useState([]);
   const history = useHistory();
   const { t } = useTranslation();
   const roles = useMemo(() => Digit.UserService.getUser()?.info?.roles?.map((role) => role?.code) || [], []);
@@ -60,13 +59,23 @@ const TasksComponent = ({
   const [responseDoc, setResponseDoc] = useState({});
   const [isResponseApiCalled, setIsResponseApiCalled] = useState(false);
 
+  const { data: options, isLoading: isOptionsLoading } = Digit.Hooks.useCustomMDMS(
+    Digit.ULBService.getStateId(),
+    "case",
+    [{ name: "pendingTaskFilterDropdownItem" }],
+    {
+      select: (data) => {
+        return data?.case?.pendingTaskFilterDropdownItem || [];
+      },
+    }
+  );
+
   const { data: pendingTaskDetails = [], isLoading, refetch } = useGetPendingTask({
     data: {
       SearchCriteria: {
         tenantId,
         moduleName: "Pending Tasks Service",
         moduleSearchCriteria: {
-          ...(taskType?.code && { entityType: taskType?.code }),
           isCompleted: false,
           ...(isLitigant && { assignedTo: uuid }),
           ...(!isLitigant && { assignedRole: [...roles] }),
@@ -78,13 +87,9 @@ const TasksComponent = ({
       },
     },
     params: { tenantId },
-    key: `${taskType?.code}-${filingNumber}-${isDiary}-${isApplicationCompositeOrder}`,
-    config: { enabled: Boolean(taskType?.code && tenantId) },
+    key: `${filingNumber}-${isDiary}-${isApplicationCompositeOrder}`,
+    config: { enabled: Boolean(tenantId) },
   });
-
-  useEffect(() => {
-    refetch();
-  }, [refetch, filingNumber]);
 
   const pendingTaskActionDetails = useMemo(() => {
     if (!totalPendingTask) {
@@ -93,18 +98,45 @@ const TasksComponent = ({
     return isLoading ? [] : pendingTaskDetails?.data || [];
   }, [totalPendingTask, isLoading, pendingTaskDetails?.data]);
 
-  const getCaseDetailByFilingNumber = useCallback(
-    async (payload) => {
-      setSearchCaseLoading(true);
-      const caseData = await HomeService.customApiService(Urls.caseSearch, {
-        tenantId,
-        ...payload,
-      });
-      setSearchCaseLoading(false);
-      return caseData || {};
-    },
-    [tenantId]
+  const listOfFilingNumber = useMemo(
+    () =>
+      [...new Set(pendingTaskActionDetails?.map((data) => data?.fields?.find((field) => field.key === "filingNumber")?.value))]?.map((data) => ({
+        filingNumber: data || "",
+      })),
+    [pendingTaskActionDetails]
   );
+
+  const listOfActionName = useMemo(
+    () => new Set(pendingTaskActionDetails?.map((data) => data?.fields?.find((field) => field.key === "name")?.value)),
+    [pendingTaskActionDetails]
+  );
+
+  const filteredOptions = useMemo(() => {
+    return options?.filter((item) => listOfActionName.has(item?.code)) || [];
+  }, [listOfActionName, options]);
+
+  const { data: caseData, isLoading: isCaseDataLoading } = Digit.Hooks.dristi.useSearchCaseService(
+    {
+      criteria: listOfFilingNumber,
+      tenantId,
+    },
+    {},
+    `case-details-${listOfFilingNumber?.length}`,
+    listOfFilingNumber?.length > 0,
+    listOfFilingNumber?.length > 0
+  );
+
+  const pendingTaskToCaseDetailMap = useMemo(() => {
+    const temp = new Map();
+    caseData?.criteria?.forEach((element) => {
+      temp.set(element?.filingNumber, element?.responseList?.[0]);
+    });
+    return temp;
+  }, [caseData?.criteria]);
+
+  useEffect(() => {
+    refetch();
+  }, [refetch, filingNumber]);
 
   const getApplicationDetail = useCallback(
     async (applicationNumber) => {
@@ -277,115 +309,103 @@ const TasksComponent = ({
     [history, tenantId]
   );
 
-  const fetchPendingTasks = useCallback(
-    async function () {
-      if (isLoading || pendingTaskActionDetails?.length === 0) return;
-      const listOfFilingNumber = [
-        ...new Set(pendingTaskActionDetails?.map((data) => data?.fields?.find((field) => field.key === "filingNumber")?.value)),
-      ]?.map((data) => ({
-        filingNumber: data || "",
-      }));
-      const allPendingTaskCaseDetails = await getCaseDetailByFilingNumber({
-        criteria: listOfFilingNumber,
-      });
-      const pendingTaskToCaseDetailMap = new Map();
-      allPendingTaskCaseDetails?.criteria?.forEach((element) => {
-        pendingTaskToCaseDetailMap.set(element?.filingNumber, element?.responseList?.[0]);
-      });
-
-      const getCustomFunction = {
-        handleCreateOrder,
-        handleReviewSubmission,
-        handleReviewOrder,
-      };
-
-      const tasks = await Promise.all(
-        pendingTaskActionDetails?.map(async (data) => {
-          const filingNumber = data?.fields?.find((field) => field.key === "filingNumber")?.value || "";
-          const cnrNumber = data?.fields?.find((field) => field.key === "cnrNumber")?.value || "";
-          const caseDetail = pendingTaskToCaseDetailMap.get(filingNumber);
-          const status = data?.fields?.find((field) => field.key === "status")?.value;
-          const dueInSec = data?.fields?.find((field) => field.key === "businessServiceSla")?.value;
-          const stateSla = data?.fields?.find((field) => field.key === "stateSla")?.value;
-          const isCompleted = data?.fields?.find((field) => field.key === "isCompleted")?.value;
-          const actionName = data?.fields?.find((field) => field.key === "name")?.value;
-          const referenceId = data?.fields?.find((field) => field.key === "referenceId")?.value;
-          const entityType = data?.fields?.find((field) => field.key === "entityType")?.value;
-          const individualId = data?.fields?.find((field) => field.key === "additionalDetails.individualId")?.value;
-          const caseId = data?.fields?.find((field) => field.key === "additionalDetails.caseId")?.value;
-          const litigant = data?.fields?.find((field) => field.key === "additionalDetails.litigantUuid[0]")?.value;
-          const litigantIndId = data?.fields?.find((field) => field.key === "additionalDetails.litigants[0]")?.value;
-          const screenType = data?.fields?.find((field) => field.key === "screenType")?.value;
-
-          const updateReferenceId = referenceId.split("_").pop();
-          const defaultObj = { referenceId: updateReferenceId, ...caseDetail };
-          const pendingTaskActions = selectTaskType?.[entityType || taskTypeCode];
-          const isCustomFunction = Boolean(pendingTaskActions?.[status]?.customFunction);
-          const dayCount = stateSla
-            ? Math.abs(Math.ceil((Number(stateSla) - todayDate) / dayInMillisecond))
-            : dueInSec
-            ? Math.abs(Math.ceil(dueInSec / dayInMillisecond))
-            : null;
-          const additionalDetails = pendingTaskActions?.[status]?.additionalDetailsKeys?.reduce((result, current) => {
-            result[current] = data?.fields?.find((field) => field.key === `additionalDetails.${current}`)?.value;
-            return result;
-          }, {});
-          const searchParams = new URLSearchParams();
-          pendingTaskActions?.[status]?.redirectDetails?.params?.forEach((item) => {
-            searchParams.set(item?.key, item?.value ? defaultObj?.[item?.value] : item?.defaultValue);
-          });
-          const redirectUrl = isCustomFunction
-            ? getCustomFunction[pendingTaskActions?.[status]?.customFunction]
-            : `/${window?.contextPath}/${userType}${pendingTaskActions?.[status]?.redirectDetails?.url}?${searchParams.toString()}`;
-          const due = dayCount > 1 ? `Due in ${dayCount} Days` : dayCount === 1 || dayCount === 0 ? `Due today` : `No Due Date`;
-          return {
-            actionName: actionName || pendingTaskActions?.[status]?.actionName,
-            status,
-            individualId,
-            caseId,
-            caseTitle: caseDetail?.caseTitle || "",
-            filingNumber: filingNumber,
-            caseType: "NIA S138",
-            due: due,
-            dayCount: dayCount ? dayCount : dayCount === 0 ? 0 : Infinity,
-            isCompleted,
-            dueDateColor: due === "Due today" ? "#9E400A" : "",
-            redirectUrl,
-            params: {
-              ...additionalDetails,
-              cnrNumber,
-              filingNumber,
-              caseId: caseDetail?.id,
-              referenceId: updateReferenceId,
-              litigant,
-              litigantIndId,
-            },
-            isCustomFunction,
-            referenceId,
-            screenType,
-          };
-        })
-      );
-      const filteredTasks = tasks.filter((task) => {
-        if (isCourtRoomManager) {
-          // TODO: For court room manager,show only summons pending task, have to confirm which are those and include here.
-          return false;
-        } else return true;
-      });
-      setPendingTasks(filteredTasks);
-    },
-    [
-      getCaseDetailByFilingNumber,
+  const pendingTasks = useMemo(() => {
+    if (isLoading || isOptionsLoading || isCaseDataLoading || pendingTaskActionDetails?.length === 0 || pendingTaskToCaseDetailMap?.size > 0)
+      return [];
+    const getCustomFunction = {
       handleCreateOrder,
-      handleReviewOrder,
       handleReviewSubmission,
-      isLoading,
-      pendingTaskActionDetails,
-      taskTypeCode,
-      todayDate,
-      userType,
-    ]
-  );
+      handleReviewOrder,
+    };
+    const tasks = pendingTaskActionDetails?.map((data) => {
+      const filingNumber = data?.fields?.find((field) => field.key === "filingNumber")?.value || "";
+      const cnrNumber = data?.fields?.find((field) => field.key === "cnrNumber")?.value || "";
+      const caseDetail = pendingTaskToCaseDetailMap.get(filingNumber);
+      const status = data?.fields?.find((field) => field.key === "status")?.value;
+      const dueInSec = data?.fields?.find((field) => field.key === "businessServiceSla")?.value;
+      const stateSla = data?.fields?.find((field) => field.key === "stateSla")?.value;
+      const isCompleted = data?.fields?.find((field) => field.key === "isCompleted")?.value;
+      const actionName = data?.fields?.find((field) => field.key === "name")?.value;
+      const referenceId = data?.fields?.find((field) => field.key === "referenceId")?.value;
+      const entityType = data?.fields?.find((field) => field.key === "entityType")?.value;
+      const individualId = data?.fields?.find((field) => field.key === "additionalDetails.individualId")?.value;
+      const caseId = data?.fields?.find((field) => field.key === "additionalDetails.caseId")?.value;
+      const litigant = data?.fields?.find((field) => field.key === "additionalDetails.litigantUuid[0]")?.value;
+      const litigantIndId = data?.fields?.find((field) => field.key === "additionalDetails.litigants[0]")?.value;
+      const screenType = data?.fields?.find((field) => field.key === "screenType")?.value;
+
+      const updateReferenceId = referenceId.split("_").pop();
+      const defaultObj = { referenceId: updateReferenceId, ...caseDetail };
+      const pendingTaskActions = selectTaskType?.[entityType || taskTypeCode];
+      const isCustomFunction = Boolean(pendingTaskActions?.[status]?.customFunction);
+      const dayCount = stateSla
+        ? Math.abs(Math.ceil((Number(stateSla) - todayDate) / dayInMillisecond))
+        : dueInSec
+        ? Math.abs(Math.ceil(dueInSec / dayInMillisecond))
+        : null;
+      const additionalDetails = pendingTaskActions?.[status]?.additionalDetailsKeys?.reduce((result, current) => {
+        result[current] = data?.fields?.find((field) => field.key === `additionalDetails.${current}`)?.value;
+        return result;
+      }, {});
+      const searchParams = new URLSearchParams();
+      pendingTaskActions?.[status]?.redirectDetails?.params?.forEach((item) => {
+        searchParams.set(item?.key, item?.value ? defaultObj?.[item?.value] : item?.defaultValue);
+      });
+      const redirectUrl = isCustomFunction
+        ? getCustomFunction[pendingTaskActions?.[status]?.customFunction]
+        : `/${window?.contextPath}/${userType}${pendingTaskActions?.[status]?.redirectDetails?.url}?${searchParams.toString()}`;
+      const due = dayCount > 1 ? `Due in ${dayCount} Days` : dayCount === 1 || dayCount === 0 ? `Due today` : `No Due Date`;
+      return {
+        actionName: actionName || pendingTaskActions?.[status]?.actionName,
+        status,
+        individualId,
+        caseId,
+        caseTitle: caseDetail?.caseTitle || "",
+        filingNumber: filingNumber,
+        caseType: "NIA S138",
+        due: due,
+        dayCount: dayCount ? dayCount : dayCount === 0 ? 0 : Infinity,
+        isCompleted,
+        dueDateColor: due === "Due today" ? "#9E400A" : "",
+        redirectUrl,
+        params: {
+          ...additionalDetails,
+          cnrNumber,
+          filingNumber,
+          caseId: caseDetail?.id,
+          referenceId: updateReferenceId,
+          litigant,
+          litigantIndId,
+        },
+        isCustomFunction,
+        referenceId,
+        screenType,
+      };
+    });
+
+    const filteredTasks = tasks.filter((task) => {
+      if (isCourtRoomManager) {
+        // TODO: For court room manager,show only summons pending task, have to confirm which are those and include here.
+        return false;
+      } else return true;
+    });
+    if (taskType?.code) return filteredTasks?.filter((task) => task?.actionName === taskType?.code);
+    else return filteredTasks;
+  }, [
+    handleCreateOrder,
+    handleReviewOrder,
+    handleReviewSubmission,
+    isCaseDataLoading,
+    isCourtRoomManager,
+    isLoading,
+    isOptionsLoading,
+    pendingTaskActionDetails,
+    pendingTaskToCaseDetailMap,
+    taskType?.code,
+    taskTypeCode,
+    todayDate,
+    userType,
+  ]);
 
   const submitResponse = async (responseDoc) => {
     setIsResponseApiCalled(true);
@@ -533,10 +553,6 @@ const TasksComponent = ({
     };
   }, [responseDoc, t, submitResponse, joinCaseShowSubmitResponseModal, joinCaseResponsePendingTask, responsePendingTask]);
 
-  useEffect(() => {
-    fetchPendingTasks();
-  }, [fetchPendingTasks]);
-
   const { pendingTaskDataInWeek, allOtherPendingTask } = useMemo(
     () => ({
       pendingTaskDataInWeek:
@@ -552,7 +568,7 @@ const TasksComponent = ({
           .map((data) => data)
           .sort((data) => data?.dayCount) || [],
     }),
-    [pendingTasks, userType]
+    [pendingTasks]
   );
 
   const taskIncludesPendingTasks = useMemo(() => pendingTasks?.filter((task) => taskIncludes?.includes(task?.actionName)), [
@@ -560,7 +576,7 @@ const TasksComponent = ({
     taskIncludes,
   ]);
 
-  if (isLoading) {
+  if (isLoading || isOptionsLoading || isCaseDataLoading) {
     return <Loader />;
   }
   const customStyles = `
@@ -597,7 +613,7 @@ const TasksComponent = ({
                     </CardLabel>
                     <Dropdown
                       t={t}
-                      option={taskTypes}
+                      option={filteredOptions}
                       optionKey={"name"}
                       selected={taskType}
                       select={(value) => {
