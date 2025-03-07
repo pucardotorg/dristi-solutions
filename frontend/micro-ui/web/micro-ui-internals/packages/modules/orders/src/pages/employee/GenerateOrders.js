@@ -2998,9 +2998,19 @@ const GenerateOrders = () => {
           },
         },
       };
-      const summonsArray = currentOrder?.additionalDetails?.isReIssueSummons
-        ? [{}]
-        : currentOrder?.additionalDetails?.formdata?.namesOfPartiesRequired?.filter((data) => data?.partyType === "respondent");
+
+      const summonsArray =
+        currentOrder?.orderCategory === "COMPOSITE"
+          ? currentOrder?.compositeItems?.some((item) => item?.orderSchema?.additionalDetails?.isReIssueSummons)
+          : currentOrder?.additionalDetails?.isReIssueSummons
+          ? [{}]
+          : currentOrder?.orderCategory === "COMPOSITE"
+          ? currentOrder.compositeItems
+              .map((item) =>
+                (item?.orderSchema?.additionalDetails?.formdata?.namesOfPartiesRequired || []).filter((data) => data?.partyType === "respondent")
+              )
+              .flat()
+          : currentOrder?.additionalDetails?.formdata?.namesOfPartiesRequired?.filter((data) => data?.partyType === "respondent");
       const promiseList = summonsArray?.map((data) =>
         ordersService.createOrder(
           {
@@ -3122,9 +3132,20 @@ const GenerateOrders = () => {
           },
         },
       };
-      const summonsArray = currentOrder?.additionalDetails?.isReIssueNotice
-        ? [{}]
-        : currentOrder?.additionalDetails?.formdata?.namesOfPartiesRequired?.filter((data) => data?.partyType === "respondent");
+
+      const summonsArray =
+        currentOrder?.orderCategory === "COMPOSITE"
+          ? currentOrder?.compositeItems?.some((item) => item?.orderSchema?.additionalDetails?.isReIssueSummons)
+          : currentOrder?.additionalDetails?.isReIssueSummons
+          ? [{}]
+          : currentOrder?.orderCategory === "COMPOSITE"
+          ? currentOrder.compositeItems
+              .map((item) =>
+                (item?.orderSchema?.additionalDetails?.formdata?.namesOfPartiesRequired || []).filter((data) => data?.partyType === "respondent")
+              )
+              .flat()
+          : currentOrder?.additionalDetails?.formdata?.namesOfPartiesRequired?.filter((data) => data?.partyType === "respondent");
+
       const promiseList = summonsArray?.map((data) =>
         ordersService.createOrder(
           {
@@ -3930,6 +3951,25 @@ const GenerateOrders = () => {
     }
   };
 
+  const extractedHearingDate = useMemo(() => {
+    if (currentOrder?.orderCategory === "INTERMEDIATE") {
+      // check and add condition for ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE"].includes orderType if its needed,
+      // and take "newHearingDate" value
+      return currentOrder?.additionalDetails?.formdata?.hearingDate;
+    } else {
+      let updatedHearingDate = "";
+      // check and add condition for ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE"].includes orderType if its needed,
+      // and take "newHearingDate" value
+      const scheduleHearingOrderItem = currentOrder?.compositeItems?.find(
+        (item) => item?.isEnabled && item?.orderType === "SCHEDULE_OF_HEARING_DATE"
+      );
+      if (scheduleHearingOrderItem) {
+        updatedHearingDate = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate;
+      }
+      return updatedHearingDate;
+    }
+  }, [currentOrder]);
+
   const handleClose = async () => {
     localStorage.removeItem("fileStoreId");
     if (successModalActionSaveLabel === t("CS_COMMON_CLOSE")) {
@@ -3940,11 +3980,11 @@ const GenerateOrders = () => {
       return;
     }
     if (successModalActionSaveLabel === t("ISSUE_SUMMONS_BUTTON")) {
-      await handleIssueSummons(currentOrder?.additionalDetails?.formdata?.hearingDate, newHearingNumber || hearingId || hearingNumber);
+      await handleIssueSummons(extractedHearingDate, newHearingNumber || hearingId || hearingNumber);
       history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${createdSummon}`);
     }
     if (successModalActionSaveLabel === t("ISSUE_NOTICE_BUTTON")) {
-      await handleIssueNotice(currentOrder?.additionalDetails?.formdata?.hearingDate, newHearingNumber || hearingId || hearingNumber);
+      await handleIssueNotice(extractedHearingDate, newHearingNumber || hearingId || hearingNumber);
       history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${createdNotice}`);
     }
   };
