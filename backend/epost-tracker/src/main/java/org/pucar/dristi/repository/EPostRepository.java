@@ -30,10 +30,15 @@ public class EPostRepository {
     }
 
     public EPostResponse getEPostTrackerResponse(EPostTrackerSearchCriteria searchCriteria,int limit, int offset){
-        List<EPostTracker> ePostTrackerList = getEPostTrackerList(searchCriteria,limit,offset);
-        Integer totalRecords = getTotalCountQuery(searchCriteria);
+        List<EPostTracker> ePostTrackerList = new ArrayList<>();
         Pagination pagination = searchCriteria.getPagination();
-        pagination.setTotalCount(totalRecords);
+        pagination.setTotalCount(0);
+        if (searchCriteria.getPostalHub() != null) {
+            List<EPostTracker> ePostTrackers = getEPostTrackerList(searchCriteria, limit, offset);
+            ePostTrackerList.addAll(ePostTrackers);
+            Integer totalRecords = getTotalCountQuery(searchCriteria);
+            pagination.setTotalCount(totalRecords);
+        }
         return EPostResponse.builder().ePostTrackers(ePostTrackerList).pagination(pagination).build();
     }
 

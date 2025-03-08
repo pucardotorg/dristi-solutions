@@ -175,7 +175,7 @@ const CaseOverview = ({
             <NextHearingCard caseData={caseData} width={"100%"} />
             {hearingRes?.HearingList?.filter((hearing) => !["SCHEDULED", "IN_PROGRESS"].includes(hearing?.status)).length !== 0 && (
               <Card>
-                <div style={{width: "100%", display: "flex", justifyContent: "space-between"}}>
+                <div style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
                   <div
                     style={{
                       fontWeight: 700,
@@ -275,7 +275,7 @@ const CaseOverview = ({
                           }
                         }}
                       >
-                        {order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(`ORDER_TYPE_${order?.orderTitle?.toUpperCase()}`)}
+                        {order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(`ORDER_TYPE_${order?.orderType?.toUpperCase()}`)}
                       </div>
                     ))}
                 </div>
@@ -298,9 +298,7 @@ const CaseOverview = ({
                 submitBailDocumentsApplications={submitBailDocumentsApplications}
               />
             )}
-            {showAllTranscript && (
-              <ShowAllTranscriptModal setShowAllTranscript={setShowAllTranscript} hearingList ={previousHearing}/>
-            )}
+            {showAllTranscript && <ShowAllTranscriptModal setShowAllTranscript={setShowAllTranscript} hearingList={previousHearing} />}
           </div>
         )}
       </div>

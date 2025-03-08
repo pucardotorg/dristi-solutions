@@ -1,5 +1,5 @@
 import { Card } from "@egovernments/digit-ui-react-components";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import OrderReviewModal from "../../../../../orders/src/pageComponents/OrderReviewModal";
 import useGetOrders from "../../../hooks/dristi/useGetOrders";
@@ -20,6 +20,7 @@ const OrderDrafts = ({ caseData, setOrderModal }) => {
       criteria: {
         filingNumber: filingNumber,
         tenantId: tenantId,
+        status: "DRAFT_IN_PROGRESS",
       },
     },
     {},
@@ -27,7 +28,9 @@ const OrderDrafts = ({ caseData, setOrderModal }) => {
     filingNumber
   );
 
-  return ordersRes?.list?.filter((order) => order.status === "DRAFT_IN_PROGRESS").length ? (
+  const orderResList = useMemo(() => ordersRes?.list, [ordersRes]);
+
+  return orderResList?.length ? (
     <React.Fragment>
       <Card
         style={{
@@ -44,72 +47,66 @@ const OrderDrafts = ({ caseData, setOrderModal }) => {
               color: "#231F20",
             }}
           >
-            Drafts ({ordersRes?.list?.filter((order) => order.status === "DRAFT_IN_PROGRESS").length})
+            Drafts ({orderResList?.length})
           </div>
           <div
-            onClick={() => setOrderModal(ordersRes?.list?.filter((order) => order.status === "DRAFT_IN_PROGRESS"))}
+            onClick={() => setOrderModal(orderResList)}
             style={{ cursor: "pointer", fontWeight: 500, fontSize: "16px", lineHeight: "20px", color: "#0A5757" }}
           >
             {t("VIEW_ALL_LINK")}
           </div>
         </div>
         <div style={{ display: "flex", gap: "16px", marginTop: "10px" }}>
-          {ordersRes?.list
-            ?.filter((order) => order.status === "DRAFT_IN_PROGRESS")
-            .slice(0, 3)
-            .map((order) => (
-              <div
-                style={{
-                  padding: "12px 16px",
-                  borderRadius: "4px",
-                  width: "33%",
-                  cursor: "pointer",
-                  background: "#ECF3FD66",
-                }}
-                onClick={() => {
-                  setCurrentOrder(order);
-                  history.push(
-                    `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${order.orderNumber}`,
-                    {
-                      caseId: caseId,
-                      tab: "Orders",
-                    }
-                  );
-                }}
-              >
-                <div style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
-                  <div
-                    style={{
-                      fontWeight: 700,
-                      fontSize: "16px",
-                      lineHeight: "18.75px",
-                      color: "#101828",
-                    }}
-                  >
-                    {order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(`ORDER_TYPE_${order?.orderTitle?.toUpperCase()}`)}
-                  </div>
-                  <CustomArrowOut />
-                </div>
+          {orderResList?.slice(0, 3)?.map((order) => (
+            <div
+              style={{
+                padding: "12px 16px",
+                borderRadius: "4px",
+                width: "33%",
+                cursor: "pointer",
+                background: "#ECF3FD66",
+              }}
+              onClick={() => {
+                setCurrentOrder(order);
+                history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${order.orderNumber}`, {
+                  caseId: caseId,
+                  tab: "Orders",
+                });
+              }}
+            >
+              <div style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
                 <div
                   style={{
-                    fontWeight: 600,
-                    fontSize: "14px",
-                    lineHeight: "20px",
+                    fontWeight: 700,
+                    fontSize: "16px",
+                    lineHeight: "18.75px",
                     color: "#101828",
-                    marginTop: "12px",
                   }}
                 >
-                  Deadline:{" "}
-                  <span
-                    style={{
-                      fontWeight: 500,
-                      fontSize: "14px",
-                      lineHeight: "20px",
-                    }}
-                  ></span>
+                  {order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(`ORDER_TYPE_${order?.orderType?.toUpperCase()}`)}
                 </div>
+                <CustomArrowOut />
               </div>
-            ))}
+              <div
+                style={{
+                  fontWeight: 600,
+                  fontSize: "14px",
+                  lineHeight: "20px",
+                  color: "#101828",
+                  marginTop: "12px",
+                }}
+              >
+                Deadline:{" "}
+                <span
+                  style={{
+                    fontWeight: 500,
+                    fontSize: "14px",
+                    lineHeight: "20px",
+                  }}
+                ></span>
+              </div>
+            </div>
+          ))}
         </div>
       </Card>
       {showReviewModal && (

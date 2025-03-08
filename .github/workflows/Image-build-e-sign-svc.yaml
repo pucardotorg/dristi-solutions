@@ -83,7 +83,7 @@ jobs:
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             echo "Using main private key"
-            echo "${{ secrets.MAIN_PRIVATE_KEY }}" > backend/e-sign-svc/src/main/resources/privateKey.pem
+            echo "${{ secrets.ESIGN_PRIVATE_KEY }}" > backend/e-sign-svc/src/main/resources/privateKey.pem
           elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
             echo "Using Esign private key"
             echo "${{ secrets.ESIGN_PRIVATE_KEY }}" > backend/e-sign-svc/src/main/resources/privateKey.pem

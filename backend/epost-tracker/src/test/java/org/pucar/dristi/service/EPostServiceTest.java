@@ -12,6 +12,7 @@ import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.model.*;
 import org.pucar.dristi.repository.EPostRepository;
 import org.pucar.dristi.util.EpostUtil;
+import org.pucar.dristi.validator.EPostUserValidator;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -27,6 +28,9 @@ class EPostServiceTest {
 
     @Mock
     private Producer producer;
+
+    @Mock
+    private EPostUserValidator validator;
 
     @InjectMocks
     private EPostService ePostService;
@@ -61,9 +65,12 @@ class EPostServiceTest {
     void testGetEPost() {
         // Arrange
         EPostTrackerSearchRequest searchRequest = new EPostTrackerSearchRequest();
+        EPostTrackerSearchCriteria searchCriteria = EPostTrackerSearchCriteria.builder().build();
+        searchRequest.setEPostTrackerSearchCriteria(searchCriteria);
         EPostResponse ePostResponse = new EPostResponse();
         when(ePostRepository.getEPostTrackerResponse(searchRequest.getEPostTrackerSearchCriteria(), 10, 0))
                 .thenReturn(ePostResponse);
+        when(validator.getPostalHubName(searchRequest)).thenReturn("test");
 
         // Act
         EPostResponse result = ePostService.getEPost(searchRequest, 10, 0);
