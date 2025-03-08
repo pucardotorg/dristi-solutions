@@ -1443,7 +1443,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                   documentType: uploadedData.fileType || document?.documentType,
                   fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
                   documentName: `Vakalatnama (${getFullName(" ", user?.firstName, user?.middleName, user?.lastName)})`,
-                  fileName: `Vakalatnama (${getFullName(" ", user?.firstName, user?.middleName, user?.lastName)})`,
+                  fileName: "VAKALATNAMA",
                 },
               }))
             );
@@ -1670,7 +1670,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                   documentType: uploadedData.fileType || document?.documentType,
                   fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
                   documentName: `Vakalatnama (${getFullName(" ", user?.firstName, user?.middleName, user?.lastName)})`,
-                  fileName: `Vakalatnama (${getFullName(" ", user?.firstName, user?.middleName, user?.lastName)})`,
+                  fileName: "VAKALATNAMA",
                 },
               }))
             );
