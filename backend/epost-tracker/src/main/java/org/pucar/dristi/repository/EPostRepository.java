@@ -1,6 +1,7 @@
 package org.pucar.dristi.repository;
 
 import lombok.extern.slf4j.Slf4j;
+import org.pucar.dristi.config.EPostConfiguration;
 import org.pucar.dristi.model.EPostResponse;
 import org.pucar.dristi.model.EPostTracker;
 import org.pucar.dristi.model.EPostTrackerSearchCriteria;
@@ -22,18 +23,23 @@ public class EPostRepository {
 
     private final EPostRowMapper rowMapper;
 
+    private final EPostConfiguration configuration;
+
     @Autowired
-    public EPostRepository(JdbcTemplate jdbcTemplate, EPostQueryBuilder queryBuilder, EPostRowMapper rowMapper) {
+    public EPostRepository(JdbcTemplate jdbcTemplate, EPostQueryBuilder queryBuilder, EPostRowMapper rowMapper, EPostConfiguration configuration) {
         this.jdbcTemplate = jdbcTemplate;
         this.queryBuilder = queryBuilder;
         this.rowMapper = rowMapper;
+        this.configuration = configuration;
     }
 
     public EPostResponse getEPostTrackerResponse(EPostTrackerSearchCriteria searchCriteria,int limit, int offset){
         List<EPostTracker> ePostTrackerList = new ArrayList<>();
         Pagination pagination = searchCriteria.getPagination();
         pagination.setTotalCount(0);
-        if (searchCriteria.getPostalHub() != null) {
+        // used to update
+        boolean isScriptToUpdatePostalHub = configuration.isScriptToUpdatePostalHub();
+        if (searchCriteria.getPostalHub() != null || isScriptToUpdatePostalHub) {
             List<EPostTracker> ePostTrackers = getEPostTrackerList(searchCriteria, limit, offset);
             ePostTrackerList.addAll(ePostTrackers);
             Integer totalRecords = getTotalCountQuery(searchCriteria);
