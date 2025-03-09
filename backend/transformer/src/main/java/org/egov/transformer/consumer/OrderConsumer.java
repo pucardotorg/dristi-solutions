@@ -42,7 +42,11 @@ public class OrderConsumer {
     @KafkaListener(topics = {"${transformer.consumer.create.order.topic}"})
     public void saveOrder(ConsumerRecord<String, Object> payload,
                           @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
-        publishOrder(payload, transformerProperties.getSaveOrderTopic());
+        try {
+            publishOrder(payload, transformerProperties.getSaveOrderTopic());
+        } catch (Exception e) {
+            log.error("error occurred in publish order method :{}, topic : {}", e, topic);
+        }
         pushOrderAndNotification(payload, topic);
 
     }
@@ -50,7 +54,12 @@ public class OrderConsumer {
     @KafkaListener(topics = {"${transformer.consumer.update.order.topic}"})
     public void updateOrder(ConsumerRecord<String, Object> payload,
                             @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
-        publishOrder(payload, transformerProperties.getUpdateOrderTopic());
+
+        try{
+            publishOrder(payload, transformerProperties.getUpdateOrderTopic());
+        }catch (Exception e) {
+            log.error("error occurred in publish order method :{}, topic : {}", e, topic);
+        }
         pushOrderAndNotification(payload, topic);
     }
 
