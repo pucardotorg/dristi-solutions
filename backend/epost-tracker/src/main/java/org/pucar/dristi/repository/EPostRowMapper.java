@@ -52,6 +52,7 @@ public class EPostRowMapper implements RowMapper<EPostTracker> {
                 .rowVersion(rs.getInt("row_version"))
                 .bookingDate(rs.getString("booking_date"))
                 .receivedDate(rs.getString("received_date"))
+                .postalHub(rs.getString("postal_hub"))
                 .auditDetails(
                         AuditDetails.builder()
                                 .createdBy(rs.getString("createdBy"))

@@ -55,6 +55,7 @@ class EPostRowMapperTest {
         when(resultSet.getString("booking_date")).thenReturn("2023-01-01");
         when(resultSet.getString("received_date")).thenReturn("2023-01-02");
         when(resultSet.getString("createdBy")).thenReturn("creator");
+        when(resultSet.getString("postal_hub")).thenReturn("postal_hub");
         when(resultSet.getString("lastModifiedBy")).thenReturn("modifier");
         when(resultSet.getLong("createdTime")).thenReturn(1000L);
         when(resultSet.getLong("lastModifiedTime")).thenReturn(2000L);
