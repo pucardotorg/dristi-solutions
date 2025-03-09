@@ -5,6 +5,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.pucar.dristi.config.EPostConfiguration;
 import org.pucar.dristi.model.EPostResponse;
 import org.pucar.dristi.model.EPostTracker;
 import org.pucar.dristi.model.EPostTrackerSearchCriteria;
@@ -28,6 +29,9 @@ class EPostRepositoryTest {
 
     @Mock
     private EPostRowMapper rowMapper;
+
+    @Mock
+    private EPostConfiguration configuration;
 
     @InjectMocks
     private EPostRepository ePostRepository;

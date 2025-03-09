@@ -55,4 +55,7 @@ public class EPostConfiguration {
     @Value("${egov.mdms.epost.username.master.name}")
     private String mdmsEPostAndUserNameMasterName;
 
+    @Value("${is.script.to.update.postal.hub}")
+    private boolean isScriptToUpdatePostalHub;
+
 }
