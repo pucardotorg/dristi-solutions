@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.egov.transformer.config.TransformerProperties;
 import org.egov.transformer.models.Hearing;
-import org.egov.transformer.models.HearingBulkRequest;
 import org.egov.transformer.models.HearingRequest;
 import org.egov.transformer.service.HearingService;
 import org.slf4j.Logger;
@@ -16,8 +15,6 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
-
-import java.util.List;
 
 @Component
 @Slf4j
@@ -50,45 +47,7 @@ public class HearingConsumer {
     @KafkaListener(topics = {"${transformer.consumer.update.start.end.time.topic}"})
     public void updateStartEndTime(ConsumerRecord<String, Object> payload,
                               @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
-        publishBulkHearing(payload, transformerProperties.getUpdateHearingTopic());
-    }
-    private void publishBulkHearing(ConsumerRecord<String, Object> payload,
-                                    @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
-        try {
-            HearingBulkRequest bulkRequest = objectMapper.readValue(payload.value().toString(), HearingBulkRequest.class);
-            List<Hearing> hearings = bulkRequest.getHearing();
-            hearings.forEach(hearing -> {
-                HearingRequest hearingRequest = HearingRequest.builder()
-                        .requestInfo(bulkRequest.getRequestInfo())
-                        .hearing(hearing).build();
-                hearingService.enrichOpenHearings(hearingRequest);
-            });
-        } catch (Exception exception) {
-            logger.error("error in saving hearing", exception);
-        }
-    }
-
-
-    @KafkaListener(topics = {"${transformer.bulk.reschedule.topic}"})
-    public void updateBulkHearing(ConsumerRecord<String, Object> payload,
-                              @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
-        publishBulkHearing(payload, transformerProperties.getUpdateHearingTopic());
-    }
-
-    private void publishBulkHearing(ConsumerRecord<String, Object> payload,
-                                    @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
-        try {
-            HearingBulkRequest bulkRequest = objectMapper.readValue(payload.value().toString(), HearingBulkRequest.class);
-            List<Hearing> hearings = bulkRequest.getHearing();
-            hearings.forEach(hearing -> {
-                HearingRequest hearingRequest = HearingRequest.builder()
-                        .requestInfo(bulkRequest.getRequestInfo())
-                        .hearing(hearing).build();
-                hearingService.enrichOpenHearings(hearingRequest);
-            });
-        } catch (Exception exception) {
-            logger.error("error in saving hearing", exception);
-        }
+        publishHearing(payload, transformerProperties.getUpdateHearingTopic());
     }
 
     private void publishHearing(ConsumerRecord<String, Object> payload,
