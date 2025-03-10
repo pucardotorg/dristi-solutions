@@ -1,7 +1,7 @@
 {
   "tenantId": "kl",
   "masterName": "case",
-  "moduleName": "pendingTaskFilterDropdownItem",
+  "moduleName": "pendingTaskFilterText",
   "mdmsPayload": [
     {
       "id": "99ae490c-a222-4b73-883b-caa9ef669de3",
