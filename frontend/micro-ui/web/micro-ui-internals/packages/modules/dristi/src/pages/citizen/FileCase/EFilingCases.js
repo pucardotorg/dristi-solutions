@@ -2449,7 +2449,7 @@ function EFilingCases({ path }) {
     history.push(homepagePath);
   };
 
-  if (isDisableAllFieldsMode && selected !== "reviewCaseFile" && caseDetails) {
+  if (typeof state === "string" && isDisableAllFieldsMode && selected !== "reviewCaseFile" && caseDetails) {
     setPrevSelected(selected);
     history.push(`?caseId=${caseId}&selected=reviewCaseFile`);
   }
