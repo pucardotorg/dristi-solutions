@@ -249,16 +249,18 @@ const SelectComponentsMulti = ({ t, config, onSelect, formData, errors, setError
                     : t("CS_COMMON_ADDRESS_DETAIL")
                 } ${index + 1}`}</h1>
               </b>
-              <span
-                onClick={() => {
-                  if (!config?.disable) {
-                    handleDeleteLocation(data.id);
-                  }
-                }}
-                style={locationData.length === 1 ? { display: "none" } : {}}
-              >
-                <CrossIcon></CrossIcon>
-              </span>
+              {(config?.state === "DRAFT_IN_PROGRESS" || index >= config?.addressLength || config?.isJudgeSendBack) && (
+                <span
+                  onClick={() => {
+                    if (!config?.disable && (config?.state === "DRAFT_IN_PROGRESS" || index >= config?.addressLength || config?.isJudgeSendBack)) {
+                      handleDeleteLocation(data.id);
+                    }
+                  }}
+                  style={locationData.length === 1 ? { display: "none" } : {}}
+                >
+                  <CrossIcon></CrossIcon>
+                </span>
+              )}
             </div>
             <LocationComponent
               t={t}
@@ -271,7 +273,7 @@ const SelectComponentsMulti = ({ t, config, onSelect, formData, errors, setError
               setError={setError}
               clearErrors={clearErrors}
               mapIndex={data.id}
-              disable={config?.disable}
+              disable={(index < config?.addressLength) ? true : config?.disable}
               isAutoFilledDisabled={true}
             ></LocationComponent>
 
@@ -287,7 +289,7 @@ const SelectComponentsMulti = ({ t, config, onSelect, formData, errors, setError
                 setError={setError}
                 clearErrors={clearErrors}
                 mapIndex={data.id}
-                disable={config?.disable}
+                disable={(index < config?.addressLength) ? true : config?.disable}
                 isAutoFilledDisabled={true}
               ></GeoLocationComponent>
             )}
@@ -295,7 +297,7 @@ const SelectComponentsMulti = ({ t, config, onSelect, formData, errors, setError
         ))}
       {!(config?.removeAddLocationButton === true) && (
         <Button
-          isDisabled={config?.disable || (config?.state && config?.state !== CaseWorkflowState.DRAFT_IN_PROGRESS && !config?.isJudgeSendBack)}
+          // isDisabled={config?.disable || (config?.state && config?.state !== CaseWorkflowState.DRAFT_IN_PROGRESS)}
           className={"add-location-btn"}
           label={t("ADD_LOCATION")}
           style={{ alignItems: "center", margin: "10px 0px" }}

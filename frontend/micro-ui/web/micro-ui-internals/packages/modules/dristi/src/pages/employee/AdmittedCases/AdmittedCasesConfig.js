@@ -12,6 +12,13 @@ const defaultSearchValues = {
   artifactNumber: "",
 };
 
+const defaultOrderSearchValues = {
+  parties: "",
+  status: "",
+  id: "",
+  type: "",
+};
+
 //config for tab search sceeen
 export const TabSearchconfig = {
   tenantId: "mz",
@@ -161,22 +168,28 @@ export const TabSearchconfig = {
       displayLabel: "ORDERS_TAB",
       type: "search",
       apiDetails: {
-        serviceName: "/order/v1/search",
-        requestParam: {
-          tenantId: Digit.ULBService.getCurrentTenantId(),
-        },
+        serviceName: "/inbox/v2/index/_search",
+        requestParam: {},
         requestBody: {
-          apiOperation: "SEARCH",
-          Individual: {
+          inbox: {
+            processSearchCriteria: {
+              businessService: ["notification"],
+              moduleName: "Transformer service",
+            },
+            moduleSearchCriteria: {
+              tenantId: Digit.ULBService.getCurrentTenantId(),
+            },
+            limit: 10,
+            offset: 0,
             tenantId: Digit.ULBService.getCurrentTenantId(),
           },
         },
-        masterName: "commonUiConfig",
-        moduleName: "SearchIndividualConfig",
         minParametersForSearchForm: 0,
-        tableFormJsonPath: "requestParam",
-        filterFormJsonPath: "requestBody.Individual",
-        searchFormJsonPath: "requestBody.Individual",
+        masterName: "commonUiConfig",
+        moduleName: "orderInboxConfig",
+        searchFormJsonPath: "requestBody.inbox.moduleSearchCriteria",
+        filterFormJsonPath: "requestBody.inbox.moduleSearchCriteria",
+        tableFormJsonPath: "requestBody.inbox",
       },
       sections: {
         search: {
@@ -185,15 +198,15 @@ export const TabSearchconfig = {
             primaryLabel: "ES_COMMON_SEARCH",
             secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
             minReqFields: 0,
-            defaultValues: defaultSearchValues,
+            defaultValues: defaultOrderSearchValues,
             fields: [
               {
                 label: "TYPE",
                 isMandatory: false,
-                key: "orderType",
+                key: "type",
                 type: "dropdown",
                 populators: {
-                  name: "orderType",
+                  name: "type",
                   optionsKey: "type",
                   mdmsConfig: {
                     masterName: "OrderType",
@@ -202,21 +215,6 @@ export const TabSearchconfig = {
                   },
                 },
               },
-              // {
-              //   label: "Stage",
-              //   isMandatory: false,
-              //   key: "stage",
-              //   type: "dropdown",
-              //   populators: {
-              //     name: "stage",
-              //     optionsKey: "value",
-              //     mdmsConfig: {
-              //       masterName: "Stage",
-              //       moduleName: "case",
-              //       // localePrefix: "SUBMISSION_TYPE",
-              //     },
-              //   },
-              // },
               {
                 label: "STATUS",
                 isMandatory: false,
@@ -233,12 +231,19 @@ export const TabSearchconfig = {
                 },
               },
               {
-                label: "SEARCH_ORDER_ID",
+                label: "PARTIES",
                 isMandatory: false,
-                key: "orderNumber",
+                key: "parties",
+                type: "dropdown",
+                populators: {},
+              },
+              {
+                label: "SEARCH_ID",
+                isMandatory: false,
+                key: "id",
                 type: "text",
                 populators: {
-                  name: "orderNumber",
+                  name: "id",
                 },
               },
             ],
@@ -251,37 +256,33 @@ export const TabSearchconfig = {
           uiConfig: {
             columns: [
               {
-                label: "ORDER_TYPE",
-                jsonPath: "orderTitle",
+                label: "ORDER_TILTE",
+                jsonPath: "businessObject.orderNotification.title",
                 additionalCustomization: true,
               },
               {
-                label: "ORDER_ID",
-                jsonPath: "orderNumber",
+                label: "NOTIFICATION_ORDER_ID",
+                jsonPath: "businessObject.orderNotification.id",
               },
-              // {
-              //   label: "Stage",
-              //   jsonPath: "",
-              // },
               {
                 label: "PARTIES",
-                jsonPath: "orderDetails.parties",
+                jsonPath: "businessObject.orderNotification.parties",
                 additionalCustomization: true,
               },
               {
                 label: "STATUS",
-                jsonPath: "status",
+                jsonPath: "businessObject.orderNotification.status",
                 additionalCustomization: true,
               },
               {
-                label: "DATE_ISSUED",
-                jsonPath: "createdDate",
+                label: "DATE_ADDED",
+                jsonPath: "businessObject.orderNotification.date",
                 additionalCustomization: true,
               },
             ],
 
             enableColumnSort: true,
-            resultsJsonPath: "list",
+            resultsJsonPath: "items",
           },
           show: true,
         },

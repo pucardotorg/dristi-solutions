@@ -73,7 +73,7 @@ export const DRISTIModule = ({ stateCode, userType, tenants }) => {
   const Digit = useMemo(() => window?.Digit || {}, []);
   const { path } = useRouteMatch();
   const history = useHistory();
-  const moduleCode = ["DRISTI", "CASE", "ORDERS", "SUBMISSIONS"];
+  const moduleCode = ["DRISTI", "CASE", "ORDERS", "SUBMISSIONS", "HEARINGS"];
   const tenantID = tenants?.[0]?.code?.split(".")?.[0];
   const language = Digit.StoreData.getCurrentLanguage();
   const { isLoading } = Digit.Services.useStore({ stateCode, moduleCode, language });
@@ -186,7 +186,7 @@ const componentsToRegister = {
   SelectLanguage,
   LogoutIcon,
   TriangleIcon,
-  ShowAllTranscriptModal
+  ShowAllTranscriptModal,
 };
 
 const overrideHooks = () => {

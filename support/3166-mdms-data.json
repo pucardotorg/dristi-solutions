@@ -1,0 +1,254 @@
+{
+  "tenantId": "kl",
+  "masterName": "case",
+  "moduleName": "pendingTaskFilterText",
+  "mdmsPayload": [
+    {
+      "id": "99ae490c-a222-4b73-883b-caa9ef669de3",
+      "tenantId": "kl",
+      "schemaCode": "case.pendingTaskFilterText",
+      "uniqueIdentifier": "13",
+      "data": {
+        "id": "13",
+        "code": "OPTION_BAIL_APPLICATION",
+        "name": "OPTION_BAIL_APPLICATION",
+        "keyword": ["Bail Application"]
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "createdTime": 1741607909304,
+        "lastModifiedTime": 1741607909304
+      }
+    },
+    {
+      "id": "2aeec080-6f13-45e8-993f-9a82f1176a94",
+      "tenantId": "kl",
+      "schemaCode": "case.pendingTaskFilterText",
+      "uniqueIdentifier": "12",
+      "data": {
+        "id": "12",
+        "code": "OPTION_PAYMENT",
+        "name": "OPTION_PAYMENT",
+        "keyword": ["Payment"]
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "createdTime": 1741605683224,
+        "lastModifiedTime": 1741605683224
+      }
+    },
+    {
+      "id": "b053f1e7-bc3d-4886-83f0-f10712ca86a7",
+      "tenantId": "kl",
+      "schemaCode": "case.pendingTaskFilterText",
+      "uniqueIdentifier": "11",
+      "data": {
+        "id": "11",
+        "code": "OPTION_E_SIGN",
+        "name": "OPTION_E_SIGN",
+        "keyword": ["E-Sign", "Esign"]
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "createdTime": 1741605632491,
+        "lastModifiedTime": 1741607071656
+      }
+    },
+    {
+      "id": "f8d7d4c7-ba74-4fdd-a638-67f0cc58d5a3",
+      "tenantId": "kl",
+      "schemaCode": "case.pendingTaskFilterText",
+      "uniqueIdentifier": "10",
+      "data": {
+        "id": "10",
+        "code": "OPTION_RE_ISSUE_NOTICE",
+        "name": "OPTION_RE_ISSUE_NOTICE",
+        "keyword": ["Re-issue Notice"]
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "createdTime": 1741605568862,
+        "lastModifiedTime": 1741605568862
+      }
+    },
+    {
+      "id": "99152aa6-9a80-400d-8027-6752c760461a",
+      "tenantId": "kl",
+      "schemaCode": "case.pendingTaskFilterText",
+      "uniqueIdentifier": "9",
+      "data": {
+        "id": "9",
+        "code": "OPTION_RE_ISSUE_SUMMON",
+        "name": "OPTION_RE_ISSUE_SUMMON",
+        "keyword": ["Re-issue Summon"]
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "createdTime": 1741605528601,
+        "lastModifiedTime": 1741605528601
+      }
+    },
+    {
+      "id": "d4ac8cbc-3a8e-42ec-afa6-fe58d9b511aa",
+      "tenantId": "kl",
+      "schemaCode": "case.pendingTaskFilterText",
+      "uniqueIdentifier": "8",
+      "data": {
+        "id": "8",
+        "code": "OPTION_SCHEDULE_HEARING",
+        "name": "OPTION_SCHEDULE_HEARING",
+        "keyword": ["Schedule Hearing"]
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "createdTime": 1741605480743,
+        "lastModifiedTime": 1741605480743
+      }
+    },
+    {
+      "id": "477427d4-13ad-4e78-b728-df8d8de5aaa9",
+      "tenantId": "kl",
+      "schemaCode": "case.pendingTaskFilterText",
+      "uniqueIdentifier": "7",
+      "data": {
+        "id": "7",
+        "code": "OPTION_EXTENSION_SUBMISSION_DEADLINE",
+        "name": "OPTION_EXTENSION_SUBMISSION_DEADLINE",
+        "keyword": ["Extension of Submission Deadline"]
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "createdTime": 1741605456257,
+        "lastModifiedTime": 1741605456257
+      }
+    },
+    {
+      "id": "950fa4a0-e744-4791-b123-9dee43bd328e",
+      "tenantId": "kl",
+      "schemaCode": "case.pendingTaskFilterText",
+      "uniqueIdentifier": "6",
+      "data": {
+        "id": "6",
+        "code": "OPTION_RESCHEDULING_REQUEST",
+        "name": "OPTION_RESCHEDULING_REQUEST",
+        "keyword": ["Rescheduling Request"]
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "createdTime": 1741605421739,
+        "lastModifiedTime": 1741605421739
+      }
+    },
+    {
+      "id": "f10f3932-b06c-473b-af21-c9fe777f261b",
+      "tenantId": "kl",
+      "schemaCode": "case.pendingTaskFilterText",
+      "uniqueIdentifier": "5",
+      "data": {
+        "id": "5",
+        "code": "OPTION_DELAY_CONDONATION",
+        "name": "OPTION_DELAY_CONDONATION",
+        "keyword": ["Delay Condonation"]
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "createdTime": 1741605361992,
+        "lastModifiedTime": 1741605361992
+      }
+    },
+    {
+      "id": "bbd7fcf6-0e09-4991-9682-d4dc9e140fd7",
+      "tenantId": "kl",
+      "schemaCode": "case.pendingTaskFilterText",
+      "uniqueIdentifier": "4",
+      "data": {
+        "id": "4",
+        "code": "OPTION_NOTICE_STATUS",
+        "name": "OPTION_NOTICE_STATUS",
+        "keyword": ["Notice Status"]
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "createdTime": 1741605315258,
+        "lastModifiedTime": 1741605315258
+      }
+    },
+    {
+      "id": "9b65d655-d721-408c-85cd-a8b0d1dfdb69",
+      "tenantId": "kl",
+      "schemaCode": "case.pendingTaskFilterText",
+      "uniqueIdentifier": "3",
+      "data": {
+        "id": "3",
+        "code": "OPTION_SUMMON_WARRANT_STATUS",
+        "name": "OPTION_SUMMON_WARRANT_STATUS",
+        "keyword": ["summon", "warrant"]
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "createdTime": 1741605278546,
+        "lastModifiedTime": 1741605278546
+      }
+    },
+    {
+      "id": "4c17106e-90cb-4a0e-873b-45ac8410b30e",
+      "tenantId": "kl",
+      "schemaCode": "case.pendingTaskFilterText",
+      "uniqueIdentifier": "2",
+      "data": {
+        "id": "2",
+        "code": "OPTION_APPLICATION",
+        "name": "OPTION_APPLICATION",
+        "keyword": ["Application", "Submission", "Bail Documents"]
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "createdTime": 1741604444161,
+        "lastModifiedTime": 1741609594277
+      }
+    },
+    {
+      "id": "021e9caa-73d8-467f-8249-3cb2cdac1af9",
+      "tenantId": "kl",
+      "schemaCode": "case.pendingTaskFilterText",
+      "uniqueIdentifier": "1",
+      "data": {
+        "id": "1",
+        "code": "OPTION_DRAFT",
+        "name": "OPTION_DRAFT",
+        "keyword": ["Draft"]
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "createdTime": 1741604389864,
+        "lastModifiedTime": 1741604389864
+      }
+    }
+  ]
+}

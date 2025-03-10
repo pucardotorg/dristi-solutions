@@ -372,7 +372,7 @@ public class HearingService {
             return new ArrayList<>();
         }
 
-        List<String> hearingIds = hearingsToReschedule.stream().map(Hearing::getHearingId).toList();
+        List<String> hearingIds = hearingsToReschedule.stream().filter((hearing)-> !Objects.equals(hearing.getStatus(), COMPLETED)).map(Hearing::getHearingId).toList();
         bulkReschedule.setHearingIds(hearingIds);
         request.setBulkReschedule(bulkReschedule);
 

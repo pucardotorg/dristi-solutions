@@ -47,6 +47,7 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
 
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
+  const MemoDocViewerWrapper = React.memo(DocViewerWrapper);
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
 
   const [openUploadSignatureModal, setOpenUploadSignatureModal] = useState(false);
@@ -143,8 +144,9 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
       const filteredHearings = hearingDetails?.HearingList?.filter((hearing) => {
         const hearingStart = timeToSeconds(formatTimeFromEpoch(hearing.startTime));
 
-        return bulkFormData?.slotIds?.some(
-          (slot) => hearingStart >= timeToSeconds(slot.slotStartTime) && hearingStart <= timeToSeconds(slot.slotEndTime)
+        return (
+          hearing?.status != "COMPLETED" &&
+          bulkFormData?.slotIds?.some((slot) => hearingStart >= timeToSeconds(slot.slotStartTime) && hearingStart <= timeToSeconds(slot.slotEndTime))
         );
       });
 
@@ -152,8 +154,8 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
       return filteredHearings?.length || 0;
     }
     setOriginalHearingData(hearingDetails?.HearingList);
-
-    return hearingDetails?.TotalCount || 0;
+    const filteredHearings = hearingDetails?.HearingList?.filter((hearing) => hearing?.status != "COMPLETED");
+    return filteredHearings?.length || 0;
   }, [hearingDetails, bulkFormData?.slotIds]);
 
   const onSelect = (key, value) => {
@@ -217,13 +219,11 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
       const updateNotificationResponse = await hearingService?.updateNotification({
         notification: {
           ...searchNotification?.list?.[0],
-          documents: [
-            ...searchNotification?.list?.[0]?.documents,
-            {
-              fileStore: signedDocumentUploadID || localStorageID,
-              documentType: "Bulk Reschedule signed",
-            },
-          ],
+          documents: searchNotification?.list?.[0]?.documents?.map((doc) =>
+            doc?.documentType === "Bulk Reschedule unsigned"
+              ? { ...doc, fileStore: signedDocumentUploadID || localStorageID, documentType: "Bulk Reschedule signed" }
+              : doc
+          ),
           workflow: {
             action: "E-SIGN",
           },
@@ -251,6 +251,7 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
           hearingDate: hearing?.startTime,
           referenceType: "bulkreschedule",
           caseNumber: hearing?.caseId,
+          referenceId: notificationNumber,
           additionalDetails: {
             filingNumber: hearing?.filingNumber,
             formData: bulkFormData || [],
@@ -484,14 +485,14 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
             apiId: "Rainmaker",
           },
           BulkReschedule: {
-            judgeId,
-            courtId,
             reason: bulkFormData?.reason,
-            scheduleAfter: bulkFormData?.toDate + 24 * 60 * 60 * 1000 + 1,
-            tenantId,
-            startTime: bulkFormData?.fromDate,
-            endTime: bulkFormData?.toDate + 24 * 60 * 60 * 1000 - 1,
-            slotIds: bulkFormData?.slotIds?.map((slot) => slot?.id) || [],
+            hearings:
+              tentativeDates?.Hearings?.map(({ filingNumber, startTime, originalHearingDate, hearingType }) => ({
+                filingNumber,
+                startTime,
+                originalHearingDate,
+                hearingType,
+              })) || [],
           },
         },
         {
@@ -523,10 +524,12 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
 
   const onAddSignature = async () => {
     try {
+      let fileStoreId = notificationFileStoreId;
       if (notificationReviewBlob?.size) {
         const pdfFile = new File([notificationReviewBlob], notificationReviewFilename, { type: "application/pdf" });
         const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", pdfFile, Digit.ULBService.getCurrentTenantId());
-        setNotificationFileStoreId(fileUploadRes?.data?.files?.[0]?.fileStoreId);
+        fileStoreId = fileUploadRes?.data?.files?.[0]?.fileStoreId;
+        setNotificationFileStoreId(fileStoreId);
       } else if (!notificationFileStoreId) {
         showToast("error", t("SOME_ERRORS_IN_HEARING_RESCHEDULE"), 5000);
         return;
@@ -536,7 +539,7 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
         notification: {
           tenantId: tenantId,
           caseNumber: caseNumbers,
-          notificationType: bulkFormData?.reason?.name,
+          notificationType: "Notification for Bulk Reschedule",
           courtId: courtId,
           issuedBy: userInfo?.userName,
           createdDate: new Date().getTime(),
@@ -545,17 +548,17 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
           documents: [
             {
               documentType: "Bulk Reschedule unsigned",
-              fileStore: notificationFileStoreId,
+              fileStore: fileStoreId,
               additionalDetails: {},
             },
           ],
         },
       });
       setNotificationNumber(createNotificationResponse?.notification?.notificationNumber);
+      if (stepper == 2) setStepper(3);
     } catch (error) {
       console.error("Error:", error);
     }
-    setStepper((prev) => prev + 1);
   };
   const handleDownloadOrders = () => {
     const downloadFileStoreId = signedDocumentUploadID || localStorage.getItem("fileStoreId");
@@ -698,7 +701,7 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
           {Loading ? (
             <Loader />
           ) : (
-            <DocViewerWrapper
+            <MemoDocViewerWrapper
               key={"bulk"}
               fileStoreId={notificationReviewBlob?.size ? null : notificationFileStoreId}
               selectedDocs={[notificationReviewBlob]}

@@ -661,8 +661,17 @@ function EFilingCases({ path }) {
   }, [showErrorToast, showSuccessToast]);
 
   useEffect(() => {
-    if (!errorCaseDetails && isCaseReAssigned) {
-      setErrorCaseDetails(caseDetails);
+    if (isCaseReAssigned) {
+      if (!errorCaseDetails) {
+        setErrorCaseDetails(caseDetails);
+      } else {
+        const errorData = errorCaseDetails?.additionalDetails?.[selected]?.formdata || [];
+        const caseData = caseDetails?.additionalDetails?.[selected]?.formdata || [];
+
+        if (errorData?.length > caseData?.length) {
+          setFormdata((prevFormdata) => [...prevFormdata, ...errorData.slice(caseData.length)]);
+        }
+      }
     }
   }, [caseDetails, errorCaseDetails]);
 
@@ -1085,9 +1094,9 @@ function EFilingCases({ path }) {
                 }
               }
 
-              if(selected === "respondentDetails"){
-                if(judgeObj && Object.keys(judgeObj).length > 0 && body?.key === "addressDetails"){
-                  body.isJudgeSendBack=true;
+              if (selected === "respondentDetails") {
+                if (judgeObj && Object.keys(judgeObj).length > 0 && body?.key === "addressDetails") {
+                  body.isJudgeSendBack = true;
                 }
               }
 
@@ -1278,6 +1287,9 @@ function EFilingCases({ path }) {
               scrutiny[key] = scrutinyObj[item][key];
             });
           });
+          const scrutinyFormLength = scrutiny?.[selected]?.form?.length || 0;
+          const SelectUploadDocLength =
+            caseDetails?.additionalDetails?.prayerSwornStatement?.formdata?.[0]?.data?.SelectUploadDocWithName?.length || 0;
           let updatedBody = [];
           if (Object.keys(scrutinyObj).length > 0 || isPendingESign || isPendingReESign) {
             updatedBody = config.body
@@ -1333,10 +1345,37 @@ function EFilingCases({ path }) {
                   );
                 }
 
-                modifiedFormComponent.disable = scrutiny?.[selected]?.scrutinyMessage?.FSOError || (judgeObj && !isPendingReESign) ? false : true;
+                if (
+                  !isDraftInProgress &&
+                  selected === "prayerSwornStatement" &&
+                  SelectUploadDocLength < formdata?.[0]?.data?.SelectUploadDocWithName?.length
+                ) {
+                  modifiedFormComponent.doclength = SelectUploadDocLength;
+                  modifiedFormComponent.disable = false;
+                } else if (!isDraftInProgress && selected === "respondentDetails") {
+                  const resAddressDetailsLength =
+                    caseDetails?.additionalDetails?.respondentDetails?.formdata?.[index]?.data?.addressDetails?.length || 0;
+
+                  if (resAddressDetailsLength < formdata?.[index]?.data?.addressDetails?.length) {
+                    modifiedFormComponent.addressLength = resAddressDetailsLength;
+                    modifiedFormComponent.disable = false;
+                  }
+                  else{
+                    modifiedFormComponent.disable = true;
+                  }
+                } else {
+                  // remove disability for new form
+                  modifiedFormComponent.disable =
+                    index + 1 > scrutinyFormLength
+                      ? false
+                      : scrutiny?.[selected]?.scrutinyMessage?.FSOError || (judgeObj && !isPendingReESign)
+                      ? false
+                      : true;
+                }
+
                 if (
                   modifiedFormComponent?.type === "radio" &&
-                  !(scrutiny?.[selected]?.scrutinyMessage?.FSOError || (judgeObj && !isPendingReESign))
+                  !(index + 1 > scrutinyFormLength || scrutiny?.[selected]?.scrutinyMessage?.FSOError || (judgeObj && !isPendingReESign))
                 ) {
                   modifiedFormComponent.populators.styles = { opacity: 0.5 };
                 }
@@ -2795,7 +2834,7 @@ function EFilingCases({ path }) {
               className="add-new-form"
               icon={<CustomAddIcon />}
               label={t(pageConfig.addFormText)}
-              isDisabled={!isDraftInProgress}
+              isDisabled={!isDraftInProgress && ["chequeDetails", "complainantDetails"].includes(selected)}
             ></Button>
           )}
           {openConfigurationModal && (

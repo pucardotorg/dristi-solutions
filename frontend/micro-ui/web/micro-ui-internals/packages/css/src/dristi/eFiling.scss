@@ -1009,11 +1009,23 @@
                 margin-top: 0px;
               }
             }
-            .address-info {
+            .address-container {
+              display: flex;
+              flex-direction: column;
+              gap: 1rem;
               width: 100%;
-              .address-location {
-                display: flex;
-                justify-content: space-between;
+
+              .address-block {
+                .row {
+                  display: flex;
+                  padding: 4px 0px;
+                  justify-content: space-between;
+                  .value {
+                    p {
+                      margin-bottom: 8px;
+                    }
+                  }
+                }
               }
             }
 
