@@ -8,6 +8,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.pucar.dristi.config.EPostConfiguration;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.model.*;
 import org.pucar.dristi.repository.EPostRepository;
@@ -31,6 +32,9 @@ class EPostServiceTest {
 
     @Mock
     private EPostUserValidator validator;
+
+    @Mock
+    private EPostConfiguration configuration;
 
     @InjectMocks
     private EPostService ePostService;
@@ -70,7 +74,6 @@ class EPostServiceTest {
         EPostResponse ePostResponse = new EPostResponse();
         when(ePostRepository.getEPostTrackerResponse(searchRequest.getEPostTrackerSearchCriteria(), 10, 0))
                 .thenReturn(ePostResponse);
-        when(validator.getPostalHubName(searchRequest)).thenReturn("test");
 
         // Act
         EPostResponse result = ePostService.getEPost(searchRequest, 10, 0);
