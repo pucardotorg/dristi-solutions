@@ -220,7 +220,7 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
         notification: {
           ...searchNotification?.list?.[0],
           documents: searchNotification?.list?.[0]?.documents?.map((doc) =>
-            doc.documentType === "Bulk Reschedule unsigned"
+            doc?.documentType === "Bulk Reschedule unsigned"
               ? { ...doc, fileStore: signedDocumentUploadID || localStorageID, documentType: "Bulk Reschedule signed" }
               : doc
           ),
