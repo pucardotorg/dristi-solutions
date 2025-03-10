@@ -661,8 +661,17 @@ function EFilingCases({ path }) {
   }, [showErrorToast, showSuccessToast]);
 
   useEffect(() => {
-    if (!errorCaseDetails && isCaseReAssigned) {
-      setErrorCaseDetails(caseDetails);
+    if (isCaseReAssigned) {
+      if (!errorCaseDetails) {
+        setErrorCaseDetails(caseDetails);
+      } else {
+        const errorData = errorCaseDetails?.additionalDetails?.[selected]?.formdata || [];
+        const caseData = caseDetails?.additionalDetails?.[selected]?.formdata || [];
+
+        if (errorData?.length > caseData?.length) {
+          setFormdata((prevFormdata) => [...prevFormdata, ...errorData.slice(caseData.length)]);
+        }
+      }
     }
   }, [caseDetails, errorCaseDetails]);
 
