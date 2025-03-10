@@ -55,14 +55,11 @@ public class Order {
     private String hearingNumber = null;
 
     @JsonProperty("orderNumber")
-    @Size(min = 24, max = 256)
     private String orderNumber = null;
 
     @JsonProperty("linkedOrderNumber")
-    @Size(min = 24, max = 256)
     private String linkedOrderNumber = null;
 
-    @NotNull
     @Valid
     private Long createdDate = null;
 
@@ -70,7 +67,6 @@ public class Order {
     private IssuedBy issuedBy = null;
 
     @JsonProperty("orderType")
-    @NotNull
     @Valid
     private String orderType = null;
 
@@ -78,33 +74,27 @@ public class Order {
     private String orderCategory = null;
 
     @JsonProperty("status")
-    @NotNull
     private String status = null;
 
     @JsonProperty("comments")
     private String comments = null;
 
     @JsonProperty("isActive")
-    @NotNull
     private Boolean isActive = null;
 
     @JsonProperty("statuteSection")
-    @Valid
     private StatuteSection statuteSection = null;
 
     @JsonProperty("documents")
-    @Valid
     private List<Document> documents = null;
 
     @JsonProperty("additionalDetails")
     private Object additionalDetails = null;
 
     @JsonProperty("auditDetails")
-    @Valid
     private AuditDetails auditDetails = null;
 
     @JsonProperty("workflow")
-    @Valid
     private Workflow workflow = null;
 
     @JsonProperty("orderDetails")
@@ -117,7 +107,6 @@ public class Order {
     private Object compositeItems = null;
 
     @JsonProperty("orderTitle")
-    @NotNull
     private String orderTitle = null;
 
 
