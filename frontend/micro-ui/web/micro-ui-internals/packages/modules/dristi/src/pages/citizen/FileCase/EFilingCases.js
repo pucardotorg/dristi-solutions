@@ -1278,6 +1278,8 @@ function EFilingCases({ path }) {
               scrutiny[key] = scrutinyObj[item][key];
             });
           });
+          const scrutinyFormLength = scrutiny?.[selected]?.form?.length || 0;
+          const SelectUploadDocLength = caseDetails?.additionalDetails?.prayerSwornStatement?.formdata?.[0]?.data?.SelectUploadDocWithName?.length || 0;
           let updatedBody = [];
           if (Object.keys(scrutinyObj).length > 0 || isPendingESign || isPendingReESign) {
             updatedBody = config.body
@@ -1332,8 +1334,28 @@ function EFilingCases({ path }) {
                     </React.Fragment>
                   );
                 }
+                
+                if(!isDraftInProgress && selected === "prayerSwornStatement" && SelectUploadDocLength < formdata?.[0]?.data?.SelectUploadDocWithName?.length){
+                  modifiedFormComponent.doclength = SelectUploadDocLength;
+                  modifiedFormComponent.disable = false;
+                }
+                else{
 
-                modifiedFormComponent.disable = scrutiny?.[selected]?.scrutinyMessage?.FSOError || (judgeObj && !isPendingReESign) ? false : true;
+                  // remove disability for new form
+                  modifiedFormComponent.disable =
+                    index + 1 > scrutinyFormLength
+                      ? false
+                      : scrutiny?.[selected]?.scrutinyMessage?.FSOError || (judgeObj && !isPendingReESign)
+                      ? false
+                      : true;
+                }
+
+                if (
+                  modifiedFormComponent?.type === "radio" &&
+                  !(index + 1 > scrutinyFormLength || scrutiny?.[selected]?.scrutinyMessage?.FSOError || (judgeObj && !isPendingReESign))
+                ) {
+                  modifiedFormComponent.populators.styles = { opacity: 0.5 };
+                }
                 if (judgeObj && !isPendingReESign) {
                   if (selected === "complainantDetails") {
                     const disabledFields = ["firstName", "middleName", "lastName", "complainantType", "complainantAge"];
@@ -2789,7 +2811,7 @@ function EFilingCases({ path }) {
               className="add-new-form"
               icon={<CustomAddIcon />}
               label={t(pageConfig.addFormText)}
-              isDisabled={!isDraftInProgress}
+              isDisabled={!isDraftInProgress && selected === "chequeDetails"}
             ></Button>
           )}
           {openConfigurationModal && (
