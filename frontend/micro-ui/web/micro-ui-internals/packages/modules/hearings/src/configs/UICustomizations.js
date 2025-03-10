@@ -18,25 +18,20 @@ export const UICustomizations = {
   PreHearingsConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
       const updatedCriteria = {
-        processSearchCriteria: {
-          businessService: ["hearing-default"],
-          moduleName: "Hearing Service",
-          tenantId: requestCriteria?.params?.tenantId,
+        pagination: {
+          ...requestCriteria.state.tableForm,
+          ...requestCriteria?.state?.searchForm?.sortCaseListByStartDate,
         },
-        moduleSearchCriteria: {
-          fromDate: requestCriteria?.params.fromDate,
-          toDate: requestCriteria?.params.toDate,
-          tenantId: requestCriteria?.params?.tenantId,
-        },
-        tenantId: requestCriteria?.params?.tenantId,
-        limit: requestCriteria?.state?.tabeleForm?.limit || 10,
-        offset: requestCriteria?.state?.tabeleForm?.offset || 0,
+        fromDate: requestCriteria?.params.fromDate,
+        toDate: requestCriteria?.params.toDate,
+        attendeeIndividualId: additionalDetails?.attendeeIndividualId ? additionalDetails?.attendeeIndividualId : "",
       };
 
       return {
         ...requestCriteria,
         body: {
-          inbox: updatedCriteria,
+          ...requestCriteria?.body,
+          criteria: updatedCriteria,
         },
       };
     },
@@ -57,21 +52,9 @@ export const UICustomizations = {
                   variation={"secondary"}
                   label={t(`START_HEARING`)}
                   onButtonClick={() => {
-                    hearingService
-                      .searchHearings(
-                        {
-                          criteria: {
-                            hearingId: row?.hearingId,
-                            tenantId: row?.tenantId,
-                          },
-                        },
-                        { tenantId: row?.tenantId }
-                      )
-                      .then((response) => {
-                        hearingService.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
-                          window.location.href = `/${window.contextPath}/${userType}/hearings/inside-hearing?${searchParams.toString()}`;
-                        });
-                      });
+                    hearingService.startHearing({ hearing: row.hearing }).then(() => {
+                      window.location.href = `/${window.contextPath}/${userType}/hearings/inside-hearing?${searchParams.toString()}`;
+                    });
                   }}
                   style={{ marginRight: "1rem" }}
                   textStyles={{
