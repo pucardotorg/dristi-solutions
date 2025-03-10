@@ -6,6 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.egov.transformer.event.manager.OrderNotificationEventManager;
 import org.egov.transformer.models.NotificationRequest;
+import org.egov.transformer.models.Order;
+import org.egov.transformer.models.OrderRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
@@ -31,9 +33,8 @@ public class NotificationConsumer {
                             @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
 
         try {
-            String updateNotificationRequest = objectMapper.writeValueAsString(payload.value());
-            NotificationRequest request = objectMapper.readValue(updateNotificationRequest, new TypeReference<NotificationRequest>() {
-            });
+            NotificationRequest request = (objectMapper.readValue((String) payload.value(), new TypeReference<NotificationRequest>() {
+            }));
             eventManager.notifyByObjects(request.getNotification(), request.getRequestInfo());
         } catch (Exception e) {
             log.debug("update payload : {}", payload.value());
