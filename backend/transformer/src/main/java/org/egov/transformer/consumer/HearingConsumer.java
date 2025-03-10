@@ -50,6 +50,12 @@ public class HearingConsumer {
         publishHearing(payload, transformerProperties.getUpdateHearingTopic());
     }
 
+    @KafkaListener(topics = {"${transformer.bulk.reschedule.topic}"})
+    public void updateBulkHearing(ConsumerRecord<String, Object> payload,
+                              @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        publishHearing(payload, transformerProperties.getUpdateHearingTopic());
+    }
+
     private void publishHearing(ConsumerRecord<String, Object> payload,
                                 @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         try {
