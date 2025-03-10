@@ -1,0 +1,85 @@
+[
+  {
+    "moduleName": "INBOX",
+    "tenantId": "kl",
+    "masterName": "InboxQueryConfiguration",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "INBOX.InboxQueryConfiguration",
+        "uniqueIdentifier": "open-hearing-index",
+        "data": {
+          "index": "open-hearing-index",
+          "module": "Hearing Service",
+          "sortBy": {
+            "path": "Data.hearingDetails.caseNumber.keyword",
+            "defaultOrder": "DESC"
+          },
+          "sourceFilterPathList": [
+            "Data"
+          ],
+          "allowedSearchCriteria": [
+            {
+              "name": "filingNumber",
+              "path": "Data.hearingDetails.filingNumber.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "caseTitle",
+              "path": "Data.hearingDetails.caseTitle.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "caseId",
+              "path": "Data.hearingDetails.caseId.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "hearingNumber",
+              "path": "Data.hearingDetails.hearingNumber.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "caseNumber",
+              "path": "Data.hearingDetails.caseNumber.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "hearingUuid",
+              "path": "Data.hearingDetails.hearingUuid.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "stage",
+              "path": "Data.hearingDetails.stage.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "status",
+              "path": "Data.hearingDetails.status.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "tenantId",
+              "path": "Data.hearingDetails.tenantId.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "fromDate",
+              "path": "Data.hearingDetails.fromDate.keyword",
+              "operator": "GTE",
+              "isMandatory": false
+            },
+            {
+              "name": "toDate",
+              "path": "Data.hearingDetails.toDate.keyword",
+              "operator": "LTE",
+              "isMandatory": false
+            }
+          ]
+        },
+        "isActive": true
+      }
+    ]
+  }
+]
