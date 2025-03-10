@@ -38,7 +38,7 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
     public void process(Order event, RequestInfo requestInfo) {
 
         OrderAndNotification orderAndNotification = OrderAndNotification.builder()
-                .type(event.getOrderType() == null ? event.getOrderCategory() : event.getOrderType())  // if its composite then order type is order category
+                .type(COMPOSITE.equalsIgnoreCase(event.getOrderCategory()) ? event.getOrderCategory() : event.getOrderType())  // if its composite then order type is order category
                 .id(event.getOrderNumber())
                 .courtId(null)  // no court id
                 .parties(getParties(event))
