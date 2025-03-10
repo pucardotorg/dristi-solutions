@@ -204,6 +204,8 @@ const MonthlyCalendar = () => {
   const onSubmit = () => {
     setStepper((prev) => prev + 1);
   };
+
+  const maxHearingCount = 5;
   return (
     <React.Fragment>
       {Digit.UserService.getType() === "employee" && (
@@ -225,15 +227,28 @@ const MonthlyCalendar = () => {
               height={"85vh"}
               events={Calendar_events}
               eventContent={(arg) => {
+                const hearings = hearingCount(arg.event.extendedProps.hearings) || [];
                 return (
                   <div>
                     <div>{`${arg.event.extendedProps.slot} :`}</div>
                     <div>{`${arg.event.extendedProps.count}-${t("HEARINGS")}`}</div>
-                    {hearingCount(arg.event.extendedProps.hearings).map((hearingFrequency) => (
+
+                    {hearings.length <= maxHearingCount ? (
+                      hearings.map((hearingFrequency, index) => (
+                        <div key={index} style={{ whiteSpace: "normal" }}>
+                          {hearingFrequency.frequency} - {t(hearingFrequency.type)}
+                        </div>
+                      ))
+                    ) : (
                       <div>
-                        {hearingFrequency.frequency} - {t(hearingFrequency.type)}
+                        {hearings.slice(0, maxHearingCount).map((hearingFrequency, index) => (
+                          <div key={index} style={{ whiteSpace: "normal" }}>
+                            {hearingFrequency.frequency} - {t(hearingFrequency.type)}
+                          </div>
+                        ))}
+                        <div style={{ color: "green" }}>{`${t("CALENDER_MORE")}`}</div>
                       </div>
-                    ))}
+                    )}
                   </div>
                 );
               }}

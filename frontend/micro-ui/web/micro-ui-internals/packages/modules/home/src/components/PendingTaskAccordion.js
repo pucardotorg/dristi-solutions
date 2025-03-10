@@ -69,7 +69,11 @@ function PendingTaskAccordion({
   };
 
   return (
-    <div key={accordionKey} className="accordion-wrapper" style={{ border: "1px solid #E8E8E8", padding: 16, borderRadius: 4 }}>
+    <div
+      key={`${accordionKey}-${pendingTasks?.map((task) => task.filingNumber).join(",")}`}
+      className="accordion-wrapper"
+      style={{ border: "1px solid #E8E8E8", padding: 16, borderRadius: 4 }}
+    >
       <div
         className={`accordion-title ${isOpen ? "open" : ""}`}
         style={{ cursor: "default", marginBottom: isOpen && totalCount ? 16 : 0, transition: "margin-bottom 0.25s" }}
