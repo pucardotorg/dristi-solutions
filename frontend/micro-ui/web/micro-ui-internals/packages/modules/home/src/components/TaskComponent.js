@@ -62,10 +62,10 @@ const TasksComponent = ({
   const { data: options, isLoading: isOptionsLoading } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
     "case",
-    [{ name: "pendingTaskFilterDropdownItem" }],
+    [{ name: "pendingTaskFilterText" }],
     {
       select: (data) => {
-        return data?.case?.pendingTaskFilterDropdownItem || [];
+        return data?.case?.pendingTaskFilterText || [];
       },
     }
   );
@@ -389,7 +389,8 @@ const TasksComponent = ({
         return false;
       } else return true;
     });
-    if (taskType?.code) return filteredTasks?.filter((task) => task?.actionName === taskType?.code);
+    if (taskType?.code)
+      return filteredTasks?.filter((task) => taskType?.keyword?.some((key) => task?.actionName?.toLowerCase()?.includes(key?.toLowerCase())));
     else return filteredTasks;
   }, [
     handleCreateOrder,
@@ -402,6 +403,7 @@ const TasksComponent = ({
     pendingTaskActionDetails,
     pendingTaskToCaseDetailMap,
     taskType?.code,
+    taskType?.keyword,
     taskTypeCode,
     todayDate,
     userType,
@@ -613,7 +615,7 @@ const TasksComponent = ({
                     </CardLabel>
                     <Dropdown
                       t={t}
-                      option={filteredOptions}
+                      option={options}
                       optionKey={"name"}
                       selected={taskType}
                       select={(value) => {
