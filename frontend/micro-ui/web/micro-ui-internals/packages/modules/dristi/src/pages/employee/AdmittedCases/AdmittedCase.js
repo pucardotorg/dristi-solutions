@@ -557,7 +557,7 @@ const AdmittedCases = () => {
         const notificationResponse = await Digit.HearingService.searchNotification({
           criteria: {
             tenantId: tenantId,
-            notificationNumber:  order?.businessObject?.orderNotification?.id,
+            notificationNumber: order?.businessObject?.orderNotification?.id,
             courtId: courtId,
           },
           pagination: {
@@ -684,8 +684,7 @@ const AdmittedCases = () => {
                   ...tabConfig.apiDetails.requestBody.inbox,
                   moduleSearchCriteria: {
                     ...tabConfig.apiDetails.requestBody.inbox.moduleSearchCriteria,
-                    filingNumbers: filingNumber,
-                    caseNumbers: filingNumber,
+                    caseNumbers: [filingNumber, caseDetails?.cmpNumber, caseDetails?.courtCaseNumber].filter(Boolean),
                   },
                 },
               },
