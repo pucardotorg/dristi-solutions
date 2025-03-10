@@ -179,6 +179,7 @@ class DiaryEntryRowMapperTest {
         when(resultSet.getString("createdBy")).thenReturn(CREATED_BY);
         when(resultSet.getLong("lastModifiedTime")).thenReturn(MODIFIED_TIME);
         when(resultSet.getString("lastModifiedBy")).thenReturn(MODIFIED_BY);
+        when(resultSet.getString("caseId")).thenReturn("caseId");
     }
 
     private void verifyResultSetReads() throws SQLException {
