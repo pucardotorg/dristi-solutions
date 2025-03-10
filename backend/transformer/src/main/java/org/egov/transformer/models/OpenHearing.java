@@ -36,7 +36,19 @@ public class OpenHearing {
     @JsonProperty("stage")
     private String stage = null;
 
+    @JsonProperty("subStage")
+    private String subStage = null;
+
+    @JsonProperty("courtId")
+    private String courtId = null;
+
     @JsonProperty("status")
     private String status = null;
+
+    @JsonProperty("fromDate")
+    private Long fromDate = null;
+
+    @JsonProperty("toDate")
+    private Long toDate = null;
 
 }

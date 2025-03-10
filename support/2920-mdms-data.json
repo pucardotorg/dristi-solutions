@@ -42,7 +42,7 @@
             {
               "name": "caseNumber",
               "path": "Data.hearingDetails.caseNumber.keyword",
-              "isMandatory": true
+              "isMandatory": false
             },
             {
               "name": "hearingUuid",
@@ -62,6 +62,23 @@
             {
               "name": "tenantId",
               "path": "Data.hearingDetails.tenantId.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "fromDate",
+              "path": "Data.hearingDetails.fromDate",
+              "operator": "GTE",
+              "isMandatory": false
+            },
+            {
+              "name": "toDate",
+              "path": "Data.hearingDetails.toDate",
+              "operator": "LTE",
+              "isMandatory": false
+            },
+            {
+              "name": "subStage",
+              "path": "Data.hearingDetails.subStage.keyword",
               "isMandatory": false
             }
           ]

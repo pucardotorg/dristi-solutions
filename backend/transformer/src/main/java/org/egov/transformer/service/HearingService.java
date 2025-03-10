@@ -68,9 +68,13 @@ public class HearingService {
         openHearing.setCaseTitle(courtCase.getCaseTitle());
         openHearing.setCaseNumber(hearing.getCaseReferenceNumber());
         openHearing.setStage(courtCase.getStage());
+        openHearing.setSubStage(courtCase.getSubstage());
         openHearing.setCaseUuid(courtCase.getId().toString());
         openHearing.setStatus(hearing.getStatus());
         openHearing.setTenantId(hearing.getTenantId());
+        openHearing.setFromDate(hearing.getStartTime());
+        openHearing.setToDate(hearing.getEndTime());
+        openHearing.setCourtId(courtCase.getCourtId());
         return openHearing;
     }
 }
