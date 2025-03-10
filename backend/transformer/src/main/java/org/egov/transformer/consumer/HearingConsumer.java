@@ -50,8 +50,16 @@ public class HearingConsumer {
     @KafkaListener(topics = {"${transformer.consumer.update.start.end.time.topic}"})
     public void updateStartEndTime(ConsumerRecord<String, Object> payload,
                               @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        publishHearing(payload, transformerProperties.getUpdateHearingTopic());
+    }
+
+
+    @KafkaListener(topics = {"${transformer.bulk.reschedule.topic}"})
+    public void updateBulkHearing(ConsumerRecord<String, Object> payload,
+                              @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         publishBulkHearing(payload, transformerProperties.getUpdateHearingTopic());
     }
+
     private void publishBulkHearing(ConsumerRecord<String, Object> payload,
                                     @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         try {
@@ -66,12 +74,6 @@ public class HearingConsumer {
         } catch (Exception exception) {
             logger.error("error in saving hearing", exception);
         }
-    }
-
-    @KafkaListener(topics = {"${transformer.bulk.reschedule.topic}"})
-    public void updateBulkHearing(ConsumerRecord<String, Object> payload,
-                              @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
-        publishHearing(payload, transformerProperties.getUpdateHearingTopic());
     }
 
     private void publishHearing(ConsumerRecord<String, Object> payload,
