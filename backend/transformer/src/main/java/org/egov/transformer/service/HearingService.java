@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.Objects;
 
 import static org.egov.transformer.config.ServiceConstants.*;
@@ -46,7 +47,7 @@ public class HearingService {
         producer.push(properties.getSaveHearingTopic(), hearingRequest);
     }
 
-    public void enrichOpenHearings(HearingRequest hearingRequest) {
+    public void enrichOpenHearings(HearingRequest hearingRequest) throws ParseException {
         Hearing hearing = hearingRequest.getHearing();
         RequestInfo requestInfo = hearingRequest.getRequestInfo();
         CourtCase courtCase = caseService.getCase(hearing.getFilingNumber().get(0), hearing.getTenantId(), requestInfo);
@@ -60,7 +61,7 @@ public class HearingService {
     }
 
     @NotNull
-    private static OpenHearing getOpenHearing(Hearing hearing, CourtCase courtCase) {
+    private static OpenHearing getOpenHearing(Hearing hearing, CourtCase courtCase) throws ParseException {
         OpenHearing openHearing = new OpenHearing();
         openHearing.setHearingUuid(hearing.getId().toString());
         openHearing.setHearingNumber(hearing.getHearingId());
@@ -71,8 +72,8 @@ public class HearingService {
         openHearing.setCaseUuid(courtCase.getId().toString());
         openHearing.setStatus(hearing.getStatus());
         openHearing.setTenantId(hearing.getTenantId());
-        openHearing.setFromDate(hearing.getStartTime());
-        openHearing.setToDate(hearing.getEndTime());
+        openHearing.setFromDate(hearing.convertDateToLong(hearing.getStartTime(), "dd/MM/yyyy HH:mm"));
+        openHearing.setToDate(hearing.convertDateToLong(hearing.getEndTime(), "dd/MM/yyyy HH:mm"));
         return openHearing;
     }
 }
