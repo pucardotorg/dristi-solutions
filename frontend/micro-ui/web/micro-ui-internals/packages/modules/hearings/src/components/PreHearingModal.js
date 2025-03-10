@@ -45,7 +45,6 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
       fromDate: hearingData.fromDate,
       toDate: hearingData.toDate,
       slot: hearingData.slot,
-      tenantId:tenantId
     };
     configCopy.additionalDetails = {
       attendeeIndividualId: userType === "citizen" && individualId,

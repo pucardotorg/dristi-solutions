@@ -261,8 +261,8 @@ export const TabSearchconfig = {
                 additionalCustomization: true,
               },
               {
-                label: "NOTIFICATION_ORDER_ID",
-                jsonPath: "businessObject.orderNotification.id",
+                label: "ORDER_ID",
+                jsonPath: "orderNumber",
               },
               {
                 label: "PARTIES",
