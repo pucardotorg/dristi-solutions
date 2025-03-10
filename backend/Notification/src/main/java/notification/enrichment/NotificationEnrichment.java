@@ -5,11 +5,14 @@ import notification.util.IdgenUtil;
 import notification.web.models.Notification;
 import notification.web.models.NotificationRequest;
 import org.egov.common.contract.models.AuditDetails;
+import org.egov.common.contract.models.Document;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Component
@@ -57,6 +60,8 @@ public class NotificationEnrichment {
 
     public void enrichUpdateNotificationRequest(NotificationRequest request, Notification dbNotification) {
 
+        // this method is used to enrich id for new documents
+        enrichDocumentId(request,dbNotification);
         AuditDetails auditDetails = getAuditDetailForUpdate(request.getRequestInfo(), dbNotification.getAuditDetails());
         request.getNotification().setAuditDetails(auditDetails);
     }
@@ -94,5 +99,23 @@ public class NotificationEnrichment {
         auditDetails.setLastModifiedTime(System.currentTimeMillis());
 
         return auditDetails;
+    }
+
+    private void enrichDocumentId(NotificationRequest notificationRequest, Notification dbNotification) {
+
+        Set<String> documentsIdFromDb = new HashSet<>();
+
+        List<Document> documentsFromDb = dbNotification.getDocuments();
+        documentsFromDb.forEach(document -> {
+            documentsIdFromDb.add(document.getId());
+        });
+
+        List<Document> documents = notificationRequest.getNotification().getDocuments();
+
+        documents.forEach(document -> {
+            if (!(document.getId() != null && documentsIdFromDb.contains(document.getId()))) {
+                document.setId(String.valueOf(UUID.randomUUID()));
+            }
+        });
     }
 }

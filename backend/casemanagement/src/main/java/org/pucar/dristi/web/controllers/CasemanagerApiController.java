@@ -138,4 +138,12 @@ public class CasemanagerApiController {
         return new ResponseEntity<>(caseBundleBulkResponse, HttpStatus.OK);
     }
 
+    @PostMapping("/casemanager/case/v1/_rebuildcasebundle")
+    public ResponseEntity<Object> rebuildCaseBundle(@Valid @RequestBody CaseBundleRequest caseBundleRequest) {
+        String message = caseBundleService.getRebuiltCaseBundle(caseBundleRequest);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(caseBundleRequest.getRequestInfo(), true);
+        CaseBundleCreateIndexResponse caseBundleCreateIndexResponse = CaseBundleCreateIndexResponse.builder().responseInfo(responseInfo).message(message).build();
+        return new ResponseEntity<>(caseBundleCreateIndexResponse, HttpStatus.OK);
+    }
+
 }

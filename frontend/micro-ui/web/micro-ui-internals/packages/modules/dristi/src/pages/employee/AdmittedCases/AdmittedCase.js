@@ -39,6 +39,7 @@ import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hoo
 import VoidSubmissionBody from "./VoidSubmissionBody";
 import DocumentModal from "@egovernments/digit-ui-module-orders/src/components/DocumentModal";
 import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
+import PublishedNotificationModal from "./publishedNotificationModal";
 
 const defaultSearchValues = {};
 
@@ -145,6 +146,8 @@ const formatDate = (date) => {
   return "";
 };
 
+const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
+
 const AdmittedCases = () => {
   const { t } = useTranslation();
   const { path } = useRouteMatch();
@@ -190,6 +193,8 @@ const AdmittedCases = () => {
   const [isDelayApplicationPending, setIsDelayApplicationPending] = useState(false);
   const [isOpenDCA, setIsOpenDCA] = useState(false);
   const [isOpenFromPendingTask, setIsOpenFromPendingTask] = useState(false);
+  const [currentNotification, setCurrentNotification] = useState(null);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
 
   const history = useHistory();
   const isCitizen = userRoles.includes("CITIZEN");
@@ -547,17 +552,40 @@ const AdmittedCases = () => {
       }
     };
 
-    const orderSetFunc = (order) => {
-      if (isCitizen) {
-        // for citizen, only those orders should be visible which are published
-        setCurrentOrder(order);
-        setShowOrderReviewModal(true);
+    const orderSetFunc = async (order) => {
+      if (order?.businessObject?.orderNotification?.entityType === "Notification") {
+        const notificationResponse = await Digit.HearingService.searchNotification({
+          criteria: {
+            tenantId: tenantId,
+            notificationNumber: order?.businessObject?.orderNotification?.id,
+            courtId: courtId,
+          },
+          pagination: {
+            limit: 100,
+          },
+        });
+        const notification = notificationResponse?.list?.[0];
+        setShowNotificationModal(true);
+        setCurrentNotification(notification);
       } else {
-        if (order?.status === OrderWorkflowState.DRAFT_IN_PROGRESS) {
-          history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${order?.orderNumber}`);
-        } else {
+        if (order?.businessObject?.orderNotification?.entityType === "Order") {
+          const orderResponse = await ordersService.searchOrder(
+            { criteria: { tenantId: tenantId, filingNumber: filingNumber, orderNumber: order?.businessObject?.orderNotification?.id } },
+            { tenantId }
+          );
+          order = orderResponse?.list?.[0];
+        }
+        if (isCitizen) {
+          // for citizen, only those orders should be visible which are published
           setCurrentOrder(order);
           setShowOrderReviewModal(true);
+        } else {
+          if (order?.status === OrderWorkflowState.DRAFT_IN_PROGRESS) {
+            history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${order?.orderNumber}`);
+          } else {
+            setCurrentOrder(order);
+            setShowOrderReviewModal(true);
+          }
         }
       }
     };
@@ -652,9 +680,12 @@ const AdmittedCases = () => {
               ...tabConfig.apiDetails,
               requestBody: {
                 ...tabConfig.apiDetails.requestBody,
-                criteria: {
-                  filingNumber: filingNumber,
-                  tenantId: tenantId,
+                inbox: {
+                  ...tabConfig.apiDetails.requestBody.inbox,
+                  moduleSearchCriteria: {
+                    ...tabConfig.apiDetails.requestBody.inbox.moduleSearchCriteria,
+                    caseNumbers: [filingNumber, caseDetails?.cmpNumber, caseDetails?.courtCaseNumber]?.filter(Boolean),
+                  },
                 },
               },
             },
@@ -664,22 +695,21 @@ const AdmittedCases = () => {
                 ...tabConfig.sections.search,
                 uiConfig: {
                   ...tabConfig.sections.search.uiConfig,
-                  fields: [
-                    {
-                      label: "PARTIES",
-                      isMandatory: false,
-                      key: "parties",
-                      type: "dropdown",
-                      populators: {
-                        name: "parties",
-                        optionsKey: "name",
-                        options: caseRelatedData.parties.map((party) => {
-                          return { code: removeInvalidNameParts(party.name), name: removeInvalidNameParts(party.name) };
-                        }),
-                      },
-                    },
-                    ...tabConfig.sections.search.uiConfig.fields,
-                  ],
+                  fields: tabConfig.sections.search.uiConfig.fields.map((field) =>
+                    field.key === "parties"
+                      ? {
+                          ...field,
+                          populators: {
+                            name: "parties",
+                            optionsKey: "name",
+                            options: caseRelatedData.parties.map((party) => ({
+                              code: removeInvalidNameParts(party.name),
+                              name: removeInvalidNameParts(party.name),
+                            })),
+                          },
+                        }
+                      : field
+                  ),
                 },
               },
               searchResult: {
@@ -687,7 +717,7 @@ const AdmittedCases = () => {
                 uiConfig: {
                   ...tabConfig.sections.searchResult.uiConfig,
                   columns: tabConfig.sections.searchResult.uiConfig.columns.map((column) => {
-                    return column.label === "ORDER_TYPE"
+                    return column.label === "ORDER_TILTE"
                       ? {
                           ...column,
                           clickFunc: orderSetFunc,
@@ -1668,6 +1698,34 @@ const AdmittedCases = () => {
     0
   );
 
+  const groupByHearingNumberDescending = (list) => {
+    const grouped = new Map();
+
+    list.forEach((item) => {
+      const match = item.hearingNumber.match(/^(.*HR)(\d+)$/);
+      if (!match) return;
+
+      const prefix = match[1];
+      const number = parseInt(match[2], 10);
+
+      if (!grouped.has(number)) {
+        grouped.set(number, { hearingNumber: `${prefix}${number}`, cases: [] });
+      }
+      grouped.get(number).cases.push(item);
+    });
+
+    return Array.from(grouped.values()).sort((a, b) => b.hearingNumber.match(/\d+$/) - a.hearingNumber.match(/\d+$/));
+  };
+
+  const groupNoticeOrderByHearingNumber = useMemo(() => {
+    if (!ordersData?.list) return [];
+
+    const noticeOrder = ordersData?.list?.filter((item) => item?.orderType === "NOTICE" && item?.hearingNumber);
+
+    const groupedByhearingNumber = groupByHearingNumberDescending(noticeOrder);
+    return groupedByhearingNumber;
+  }, [ordersData?.list]);
+
   const orderListFiltered = useMemo(() => {
     if (!ordersData?.list) return [];
 
@@ -2019,7 +2077,8 @@ const AdmittedCases = () => {
     if (history.location?.state?.orderObj) {
       history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Orders`);
     } else {
-      setShowOrderReviewModal(false);
+      if (showOrderReviewModal) setShowOrderReviewModal(false);
+      if (showNotificationModal) setShowNotificationModal(false);
     }
   };
 
@@ -2174,6 +2233,12 @@ const AdmittedCases = () => {
           },
         },
       });
+    }
+  };
+
+  const handleAllNoticeGeneratedForHearing = async (hearingNumber) => {
+    if (hearingNumber) {
+      history.push(`${path}?filingNumber=${filingNumber}&caseId=${caseId}&taskOrderType=NOTICE&hearingId=${hearingNumber}&tab=${config?.label}`);
     }
   };
 
@@ -2363,7 +2428,28 @@ const AdmittedCases = () => {
           )}
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          {noticeFailureCount?.map(
+          {groupNoticeOrderByHearingNumber?.map((orders, index) => (
+            <React.Fragment>
+              {userType === "employee" && orders?.cases?.length > 0 && (
+                <div key={orders?.hearingNumber} className="notice-failed-notification" style={styles.container}>
+                  <div className="notice-failed-icon" style={styles.icon}>
+                    <InfoIconRed style={styles.icon} />
+                  </div>
+                  <p className="notice-failed-text" style={styles.text}>
+                    {`${t("NOTICE_GENERATED_FOR")} ${
+                      index === 0
+                        ? t("CURRENT_HEARING") + " (" + orders?.hearingNumber + ")"
+                        : t("PREVIOUS_HEARING") + " (" + orders?.hearingNumber + ")"
+                    }, `}
+                    <span onClick={() => handleAllNoticeGeneratedForHearing(orders?.hearingNumber)} className="click-here" style={styles.link}>
+                      {t("NOTICE_CLICK_HERE")}
+                    </span>
+                  </p>
+                </div>
+              )}
+            </React.Fragment>
+          ))}
+          {/* {noticeFailureCount?.map(
             ({ partyIndex, partyName, failureCount }, index) =>
               failureCount > 0 &&
               !isCaseAdmitted &&
@@ -2380,7 +2466,7 @@ const AdmittedCases = () => {
                   </p>
                 </div>
               )
-          )}
+          )} */}
         </div>
 
         <CustomCaseInfoDiv t={t} data={caseBasicDetails} column={6} />
@@ -2462,7 +2548,10 @@ const AdmittedCases = () => {
           )}
         </div>
       )}
-      <div className="inbox-search-wrapper" style={showActionBar && !isWorkFlowFetching ? { marginBottom: "56px" } : {}}>
+      <div
+        className={`inbox-search-wrapper ${activeTab === "Orders" && "orders-tab-inobox-wrapper"}`}
+        style={showActionBar && !isWorkFlowFetching ? { marginBottom: "56px" } : {}}
+      >
         {/* Pass defaultValues as props to InboxSearchComposer */}
         <InboxSearchComposer
           key={`${config?.label}-${updateCounter}`}
@@ -2669,6 +2758,15 @@ const AdmittedCases = () => {
         />
       )}
       {showVoidModal && <DocumentModal config={voidModalConfig} />}
+      {showNotificationModal && (
+        <PublishedNotificationModal
+          t={t}
+          notification={currentNotification}
+          handleDownload={handleDownload}
+          filingNumber={filingNumber}
+          handleOrdersTab={handleOrdersTab}
+        />
+      )}
     </div>
   );
 };
