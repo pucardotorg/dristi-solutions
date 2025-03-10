@@ -38,6 +38,9 @@ public class CaseDiarySearchCriteria {
 
     private String caseId = null;
 
+    @JsonProperty("caseUuid")
+    private String caseUuid = null;
+
     @JsonProperty("diaryType")
 
     private String diaryType = null;
