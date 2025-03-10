@@ -217,7 +217,11 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
         <CardLabel>
           {
             <div className="police-station-label">
-              {t(config?.policeStationDropdown?.header)}
+              {
+                <React.Fragment>
+                  {t(config?.policeStationDropdown?.header)} <span style={{ opacity: 0.5 }}>{t("IS_OPTIONAL")}</span>
+                </React.Fragment>
+              }
               <CustomErrorTooltip message={t("POLICE_STATION_HEADER_TOOLTIP")} showTooltip={"visible"} icon />
             </div>
           }
