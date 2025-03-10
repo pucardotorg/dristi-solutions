@@ -68,10 +68,27 @@ public class HearingConsumer {
         }
     }
 
+
     @KafkaListener(topics = {"${transformer.bulk.reschedule.topic}"})
     public void updateBulkHearing(ConsumerRecord<String, Object> payload,
                               @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
-        publishHearing(payload, transformerProperties.getUpdateHearingTopic());
+        publishBulkHearing(payload, transformerProperties.getUpdateHearingTopic());
+    }
+
+    private void publishBulkHearing(ConsumerRecord<String, Object> payload,
+                                    @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        try {
+            HearingBulkRequest bulkRequest = objectMapper.readValue(payload.value().toString(), HearingBulkRequest.class);
+            List<Hearing> hearings = bulkRequest.getHearing();
+            hearings.forEach(hearing -> {
+                HearingRequest hearingRequest = HearingRequest.builder()
+                        .requestInfo(bulkRequest.getRequestInfo())
+                        .hearing(hearing).build();
+                hearingService.enrichOpenHearings(hearingRequest);
+            });
+        } catch (Exception exception) {
+            logger.error("error in saving hearing", exception);
+        }
     }
 
     private void publishHearing(ConsumerRecord<String, Object> payload,
