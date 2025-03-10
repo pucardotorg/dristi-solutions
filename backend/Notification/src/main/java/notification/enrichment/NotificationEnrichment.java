@@ -113,8 +113,7 @@ public class NotificationEnrichment {
         List<Document> documents = notificationRequest.getNotification().getDocuments();
 
         documents.forEach(document -> {
-            if (!(document.getId() != null && documentsIdFromDb.contains(document.getId())) ||
-                    (document.getId() == null )) {
+            if (!(document.getId() != null && documentsIdFromDb.contains(document.getId()))) {
                 document.setId(String.valueOf(UUID.randomUUID()));
             }
         });
