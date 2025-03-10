@@ -56,5 +56,8 @@ public class TransformerProperties {
     @Value("${transformer.producer.update.application.topic}")
     private String updateApplicationTopic;
 
+    @Value("${transformer.producer.order.notification.topic}")
+    private String orderAndNotificationTopic;
+
 
 }
