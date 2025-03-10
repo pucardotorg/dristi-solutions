@@ -273,24 +273,6 @@
           "createdTime": 1740482152554,
           "lastModifiedTime": 1740586668167
         }
-      },
-      {
-        "id": "3b29b52b-1481-441d-9f3f-cc8299e3191a",
-        "tenantId": "kl",
-        "schemaCode": "Order.NonRepeatingCompositeOrders",
-        "uniqueIdentifier": "1",
-        "data": {
-          "id": "1",
-          "path": "$.applicationNumber[0]",
-          "orderType": "MANDATORY_SUBMISSIONS_RESPONSES"
-        },
-        "isActive": true,
-        "auditDetails": {
-          "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
-          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
-          "createdTime": 1740482142805,
-          "lastModifiedTime": 1740586796404
-        }
       }
     ]
 
@@ -644,7 +626,7 @@
           "actor": "Advocate/Litigant",
           "state": "PENDINGPAYMENT",
           "isgeneric": false,
-          "screenType": "applicationCompositeOrder",
+          "screenType": "home",
           "pendingTask": "Complete Submission",
           "closerAction": [
             "PAY",
@@ -738,7 +720,7 @@
           "actor": "Advocate",
           "state": "PENDINGAPPROVAL",
           "isgeneric": false,
-          "screenType": "applicationCompositeOrder",
+          "screenType": "home",
           "pendingTask": "Update Response",
           "closerAction": [
             "APPROVE",
@@ -769,7 +751,7 @@
           "actor": "Advocate/Litigant",
           "state": "PENDINGESIGN",
           "isgeneric": false,
-          "screenType": "applicationCompositeOrder",
+          "screenType": "home",
           "pendingTask": "Complete Submission",
           "closerAction": [
             "ESIGN",
