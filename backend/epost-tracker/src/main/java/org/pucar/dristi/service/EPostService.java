@@ -1,6 +1,7 @@
 package org.pucar.dristi.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.pucar.dristi.config.EPostConfiguration;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.model.*;
 import org.pucar.dristi.repository.EPostRepository;
@@ -8,6 +9,8 @@ import org.pucar.dristi.util.EpostUtil;
 import org.pucar.dristi.validator.EPostUserValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
 
 @Service
 public class EPostService {
@@ -20,12 +23,15 @@ public class EPostService {
 
     private final EPostUserValidator ePostUserValidator;
 
+    private final EPostConfiguration configuration;
+
     @Autowired
-    public EPostService(EPostRepository ePostRepository, EpostUtil epostUtil, Producer producer, EPostUserValidator ePostUserValidator) {
+    public EPostService(EPostRepository ePostRepository, EpostUtil epostUtil, Producer producer, EPostUserValidator ePostUserValidator, EPostConfiguration configuration) {
         this.ePostRepository = ePostRepository;
         this.epostUtil = epostUtil;
         this.producer = producer;
         this.ePostUserValidator = ePostUserValidator;
+        this.configuration = configuration;
     }
 
     public ChannelMessage sendEPost(TaskRequest request) throws JsonProcessingException {
@@ -39,7 +45,20 @@ public class EPostService {
     }
 
     public EPostResponse getEPost(EPostTrackerSearchRequest searchRequest, int limit, int offset) {
-        enrichSearchRequest(searchRequest);
+        // isGetDataBasedOnUserLoggedIn is used to get data based on the user logged in
+        if (configuration.isGetDataBasedOnUserLoggedIn()) {
+            enrichSearchRequest(searchRequest);
+            EPostTrackerSearchCriteria searchCriteria = searchRequest.getEPostTrackerSearchCriteria();
+            if (searchCriteria.getPostalHub() != null) {
+                return ePostRepository.getEPostTrackerResponse(searchRequest.getEPostTrackerSearchCriteria(), limit, offset);
+            }
+            else {
+                return EPostResponse.builder()
+                        .ePostTrackers(new ArrayList<>())
+                        .pagination(Pagination.builder().totalCount(0).build())
+                        .build();
+            }
+        }
         return ePostRepository.getEPostTrackerResponse(searchRequest.getEPostTrackerSearchCriteria(),limit,offset);
     }
 

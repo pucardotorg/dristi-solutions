@@ -11,7 +11,8 @@ export const OrderName = ({ rowData, colData, value = "" }) => {
       }}
       onClick={() => colData?.clickFunc(rowData)}
     >
-      {rowData?.orderCategory === "COMPOSITE" ? rowData?.orderTitle : t(`ORDER_TYPE_${rowData?.orderType?.toUpperCase()}`)}
+      {t(value)}
+      {/* {rowData?.orderCategory === "COMPOSITE" ? rowData?.orderTitle : t(`ORDER_TYPE_${rowData?.orderType?.toUpperCase()}`)} */}
     </div>
   );
 };

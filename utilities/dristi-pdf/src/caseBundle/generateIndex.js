@@ -642,51 +642,63 @@ async function processPendingAdmissionCase({
 }
 
 // Main Function
-async function processCaseBundle(tenantId, caseId, index, state, requestInfo) {
+async function processCaseBundle(tenantId, caseId, index, state, requestInfo, isRebuild) {
   logger.info(`Processing caseId: ${caseId}, state: ${state}`);
 
   // let fileStoreIds = [];
 
   let updatedIndex;
 
-  switch (state.toUpperCase()) {
-    case "PENDING_ADMISSION_HEARING": {
-      updatedIndex = await processPendingAdmissionCase({
-        tenantId,
-        caseId,
-        index,
-        requestInfo,
-        state,
-      });
+  if(isRebuild){
+    updatedIndex = await processPendingAdmissionCase({
+      tenantId,
+      caseId,
+      index,
+      requestInfo,
+      state,
+    });
+  }
+  
+  else{
+    switch (state.toUpperCase()) {
+      case "PENDING_ADMISSION_HEARING": {
+        updatedIndex = await processPendingAdmissionCase({
+          tenantId,
+          caseId,
+          index,
+          requestInfo,
+          state,
+        });
 
-      //for (const section of index.sections) {
-      //  if (["filings", "affidavit", "vakalat"].includes(section.name)) {
-      //    const sectionFileStoreIds = await processSectionDocuments(
-      //      tenantId,
-      //      section,
-      //      requestInfo
-      //    );
-      //    fileStoreIds.push(...sectionFileStoreIds);
-      //  }
-      //}
-      break;
+        //for (const section of index.sections) {
+        //  if (["filings", "affidavit", "vakalat"].includes(section.name)) {
+        //    const sectionFileStoreIds = await processSectionDocuments(
+        //      tenantId,
+        //      section,
+        //      requestInfo
+        //    );
+        //    fileStoreIds.push(...sectionFileStoreIds);
+        //  }
+        //}
+        break;
+      }
+
+      case "CASE_ADMITTED": {
+        updatedIndex = cloneDeep(index);
+        updatedIndex.contentLastModified = Date.now();
+        break;
+      }
+
+      case "CASE_REASSIGNED": {
+        updatedIndex = cloneDeep(index);
+        updatedIndex.isRegistered = false;
+        break;
+      }
+
+      default:
+        logger.error(`Unknown state: ${state}`);
+        throw new Error(`Unknown state: ${state}`);
     }
-
-    case "CASE_ADMITTED": {
-      updatedIndex = cloneDeep(index);
-      updatedIndex.contentLastModified = Date.now();
-      break;
-    }
-
-    case "CASE_REASSIGNED": {
-      updatedIndex = cloneDeep(index);
-      updatedIndex.isRegistered = false;
-      break;
-    }
-
-    default:
-      logger.error(`Unknown state: ${state}`);
-      throw new Error(`Unknown state: ${state}`);
   }
 
   return updatedIndex;

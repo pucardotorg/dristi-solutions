@@ -55,4 +55,7 @@ public class EPostConfiguration {
     @Value("${egov.mdms.epost.username.master.name}")
     private String mdmsEPostAndUserNameMasterName;
 
+    @Value("${get.data.based.user.logged.in}")
+    private boolean getDataBasedOnUserLoggedIn;
+
 }

@@ -6,6 +6,7 @@ import notification.util.IdgenUtil;
 import notification.web.models.Notification;
 import notification.web.models.NotificationRequest;
 import org.egov.common.contract.models.AuditDetails;
+import org.egov.common.contract.models.Document;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.junit.jupiter.api.BeforeEach;
@@ -78,8 +79,14 @@ class NotificationEnrichmentTest {
                 .lastModifiedTime(1690000000000L)
                 .build();
 
+        RequestInfo requestInfo1 = request.getRequestInfo();
         Notification dbNotification = new Notification();
+        dbNotification.setDocuments(Collections.singletonList(mock(Document.class)));
+        notification.setAuditDetails(existingAuditDetails);
         dbNotification.setAuditDetails(existingAuditDetails);
+        request = new NotificationRequest();
+        request.setRequestInfo(requestInfo1);
+        request.setNotification(dbNotification);
 
         notificationEnrichment.enrichUpdateNotificationRequest(request, dbNotification);
 
