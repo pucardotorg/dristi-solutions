@@ -4,12 +4,12 @@
     {
       "SchemaDefinition": {
         "tenantId": "kl",
-        "code": "case.pendingTaskFilterDropdownItem",
+        "code": "case.pendingTaskFilterText",
         "description": null,
         "definition": {
           "type": "object",
           "$schema": "http://json-schema.org/draft-07/schema#",
-          "required": ["id", "code", "name"],
+          "required": ["id", "code", "name", "keyword"],
           "x-unique": ["id"],
           "properties": {
             "id": {
@@ -20,17 +20,17 @@
             },
             "name": {
               "type": "string"
+            },
+            "keyword": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           },
           "additionalProperties": false
         },
-        "isActive": true,
-        "auditDetails": {
-          "createdBy": "677300e7-2ff3-4216-a3dc-c2cbb0d63d31",
-          "lastModifiedBy": "677300e7-2ff3-4216-a3dc-c2cbb0d63d31",
-          "createdTime": 1725440092143,
-          "lastModifiedTime": 1725440092143
-        }
+        "isActive": true
       }
     }
   ]
