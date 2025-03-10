@@ -1668,6 +1668,34 @@ const AdmittedCases = () => {
     0
   );
 
+  const groupByHearingNumberDescending = (list) => {
+    const grouped = new Map();
+
+    list.forEach((item) => {
+      const match = item.hearingNumber.match(/^(.*HR)(\d+)$/);
+      if (!match) return;
+
+      const prefix = match[1];
+      const number = parseInt(match[2], 10);
+
+      if (!grouped.has(number)) {
+        grouped.set(number, { hearingNumber: `${prefix}${number}`, cases: [] });
+      }
+      grouped.get(number).cases.push(item);
+    });
+
+    return Array.from(grouped.values()).sort((a, b) => b.hearingNumber.match(/\d+$/) - a.hearingNumber.match(/\d+$/));
+  };
+
+  const groupNoticeOrderByHearingNumber = useMemo(() => {
+    if (!ordersData?.list) return [];
+
+    const noticeOrder = ordersData?.list?.filter((item) => item?.orderType === "NOTICE" && item?.hearingNumber);
+
+    const groupedByhearingNumber = groupByHearingNumberDescending(noticeOrder);
+    return groupedByhearingNumber;
+  }, [ordersData?.list]);
+
   const orderListFiltered = useMemo(() => {
     if (!ordersData?.list) return [];
 
@@ -2177,6 +2205,12 @@ const AdmittedCases = () => {
     }
   };
 
+  const handleAllNoticeGeneratedForHearing = async (hearingNumber) => {
+    if (hearingNumber) {
+      history.push(`${path}?filingNumber=${filingNumber}&caseId=${caseId}&taskOrderType=NOTICE&hearingId=${hearingNumber}&tab=${config?.label}`);
+    }
+  };
+
   const handleDownloadPDF = async () => {
     const caseId = caseDetails?.id;
     const caseStatus = caseDetails?.status;
@@ -2363,7 +2397,28 @@ const AdmittedCases = () => {
           )}
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          {noticeFailureCount?.map(
+          {groupNoticeOrderByHearingNumber?.map((orders, index) => (
+            <React.Fragment>
+              {userType === "employee" && orders?.cases?.length > 0 && (
+                <div key={orders?.hearingNumber} className="notice-failed-notification" style={styles.container}>
+                  <div className="notice-failed-icon" style={styles.icon}>
+                    <InfoIconRed style={styles.icon} />
+                  </div>
+                  <p className="notice-failed-text" style={styles.text}>
+                    {`${t("NOTICE_GENERATED_FOR")} ${
+                      index === 0
+                        ? t("CURRENT_HEARING") + " (" + orders?.hearingNumber + ")"
+                        : t("PREVIOUS_HEARING") + " (" + orders?.hearingNumber + ")"
+                    }, `}
+                    <span onClick={() => handleAllNoticeGeneratedForHearing(orders?.hearingNumber)} className="click-here" style={styles.link}>
+                      {t("NOTICE_CLICK_HERE")}
+                    </span>
+                  </p>
+                </div>
+              )}
+            </React.Fragment>
+          ))}
+          {/* {noticeFailureCount?.map(
             ({ partyIndex, partyName, failureCount }, index) =>
               failureCount > 0 &&
               !isCaseAdmitted &&
@@ -2380,7 +2435,7 @@ const AdmittedCases = () => {
                   </p>
                 </div>
               )
-          )}
+          )} */}
         </div>
 
         <CustomCaseInfoDiv t={t} data={caseBasicDetails} column={6} />
