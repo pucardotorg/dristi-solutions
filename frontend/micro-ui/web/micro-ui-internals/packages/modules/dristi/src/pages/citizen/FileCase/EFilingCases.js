@@ -1288,7 +1288,8 @@ function EFilingCases({ path }) {
             });
           });
           const scrutinyFormLength = scrutiny?.[selected]?.form?.length || 0;
-          const SelectUploadDocLength = caseDetails?.additionalDetails?.prayerSwornStatement?.formdata?.[0]?.data?.SelectUploadDocWithName?.length || 0;
+          const SelectUploadDocLength =
+            caseDetails?.additionalDetails?.prayerSwornStatement?.formdata?.[0]?.data?.SelectUploadDocWithName?.length || 0;
           let updatedBody = [];
           if (Object.keys(scrutinyObj).length > 0 || isPendingESign || isPendingReESign) {
             updatedBody = config.body
@@ -1343,13 +1344,15 @@ function EFilingCases({ path }) {
                     </React.Fragment>
                   );
                 }
-                
-                if(!isDraftInProgress && selected === "prayerSwornStatement" && SelectUploadDocLength < formdata?.[0]?.data?.SelectUploadDocWithName?.length){
+
+                if (
+                  !isDraftInProgress &&
+                  selected === "prayerSwornStatement" &&
+                  SelectUploadDocLength < formdata?.[0]?.data?.SelectUploadDocWithName?.length
+                ) {
                   modifiedFormComponent.doclength = SelectUploadDocLength;
                   modifiedFormComponent.disable = false;
-                }
-                else{
-
+                } else {
                   // remove disability for new form
                   modifiedFormComponent.disable =
                     index + 1 > scrutinyFormLength
@@ -2820,7 +2823,7 @@ function EFilingCases({ path }) {
               className="add-new-form"
               icon={<CustomAddIcon />}
               label={t(pageConfig.addFormText)}
-              isDisabled={!isDraftInProgress && selected === "chequeDetails"}
+              isDisabled={!isDraftInProgress && ["chequeDetails", "complainantDetails"].includes(selected)}
             ></Button>
           )}
           {openConfigurationModal && (
