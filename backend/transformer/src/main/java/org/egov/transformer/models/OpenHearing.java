@@ -39,4 +39,10 @@ public class OpenHearing {
     @JsonProperty("status")
     private String status = null;
 
+    @JsonProperty("fromDate")
+    private Long fromDate = null;
+
+    @JsonProperty("toDate")
+    private Long toDate = null;
+
 }
