@@ -1,6 +1,5 @@
 package org.egov.transformer.event.impl;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
@@ -39,12 +38,12 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
     public void process(Order event, RequestInfo requestInfo) {
 
         OrderAndNotification orderAndNotification = OrderAndNotification.builder()
-                .type(event.getOrderType())
+                .type(COMPOSITE.equalsIgnoreCase(event.getOrderCategory()) ? event.getOrderCategory() : event.getOrderType())  // if its composite then order type is order category
                 .id(event.getOrderNumber())
                 .courtId(null)  // no court id
                 .parties(getParties(event))
                 .status(event.getStatus())
-                .date((event.getCreatedDate()==null) ? null:Long.valueOf(event.getCreatedDate()))
+                .date((event.getCreatedDate() == null) ? null : Long.valueOf(event.getCreatedDate()))
                 .entityType("Order")
                 .title(event.getOrderTitle())
                 .tenantId(event.getTenantId())
