@@ -3,7 +3,7 @@
     "tenantId": "kl",
     "masterName": "actions-test",
     "moduleName": "ACCESSCONTROL-ACTIONS-TEST",
-    "mdmsPayload":[
+    "mdmsPayload": [
       {
         "tenantId": "kl",
         "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
@@ -17,7 +17,8 @@
           "displayName": "Bulk Diary Entry",
           "serviceCode": "A-Diary"
         },
-        "isActive": true      }
+        "isActive": true
+      }
     ]
   },
   {
@@ -44,7 +45,7 @@
     "tenantId": "kl",
     "masterName": "actions-test",
     "moduleName": "ACCESSCONTROL-ACTIONS-TEST",
-    "mdmsPayload":[
+    "mdmsPayload": [
       {
         "tenantId": "kl",
         "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
@@ -56,8 +57,8 @@
           "name": "notification for bulk rescheduling",
           "displayName": "notification for bulk rescheduling",
           "serviceCode": "pdf-service"
-      },
-        "isActive": true      
+        },
+        "isActive": true
       }
     ]
   },
@@ -87,58 +88,90 @@
     "moduleName": "Hearing",
     "mdmsPayload": [
       {
-          "id": "4beedec3-bf6a-4c8c-8b96-1ea182575791",
-          "tenantId": "kl",
-          "schemaCode": "Hearing.BulkRescheduleReason",
-          "uniqueIdentifier": "COURT_NON_WORKING_DAY",
-          "data": {
-              "code": "COURT_NON_WORKING_DAY",
-              "name": "Court Non-Working Day"
-          },
-          "isActive": true,
-          "auditDetails": {
-              "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
-              "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
-              "createdTime": 1741243327280,
-              "lastModifiedTime": 1741243327280
-          }
+        "id": "4beedec3-bf6a-4c8c-8b96-1ea182575791",
+        "tenantId": "kl",
+        "schemaCode": "Hearing.BulkRescheduleReason",
+        "uniqueIdentifier": "COURT_NON_WORKING_DAY",
+        "data": {
+          "code": "COURT_NON_WORKING_DAY",
+          "name": "Court Non-Working Day"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "createdTime": 1741243327280,
+          "lastModifiedTime": 1741243327280
+        }
       },
       {
-          "id": "f48ff5a1-a7cb-42a4-98da-bf5492d87305",
-          "tenantId": "kl",
-          "schemaCode": "Hearing.BulkRescheduleReason",
-          "uniqueIdentifier": "JUDGE_PLANNED_LEAVE",
-          "data": {
-              "code": "JUDGE_PLANNED_LEAVE",
-              "name": "Judge’s Planned Leave"
-          },
-          "isActive": true,
-          "auditDetails": {
-              "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
-              "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
-              "createdTime": 1741243315695,
-              "lastModifiedTime": 1741243315695
-          }
+        "id": "f48ff5a1-a7cb-42a4-98da-bf5492d87305",
+        "tenantId": "kl",
+        "schemaCode": "Hearing.BulkRescheduleReason",
+        "uniqueIdentifier": "JUDGE_PLANNED_LEAVE",
+        "data": {
+          "code": "JUDGE_PLANNED_LEAVE",
+          "name": "Judge’s Planned Leave"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "createdTime": 1741243315695,
+          "lastModifiedTime": 1741243315695
+        }
       },
       {
-          "id": "df8d01e6-6e62-44a5-87ec-5f87e524851e",
-          "tenantId": "kl",
-          "schemaCode": "Hearing.BulkRescheduleReason",
-          "uniqueIdentifier": "JUDGE_EMERGENCY_LEAVE",
-          "data": {
-              "code": "JUDGE_EMERGENCY_LEAVE",
-              "name": "Judge’s Emergency Leave"
-          },
-          "isActive": true,
-          "auditDetails": {
-              "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
-              "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
-              "createdTime": 1741243301053,
-              "lastModifiedTime": 1741243301053
-          }
+        "id": "df8d01e6-6e62-44a5-87ec-5f87e524851e",
+        "tenantId": "kl",
+        "schemaCode": "Hearing.BulkRescheduleReason",
+        "uniqueIdentifier": "JUDGE_EMERGENCY_LEAVE",
+        "data": {
+          "code": "JUDGE_EMERGENCY_LEAVE",
+          "name": "Judge’s Emergency Leave"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "createdTime": 1741243301053,
+          "lastModifiedTime": 1741243301053
+        }
       }
-  ]
-  }, {
+    ]
+  },
+  {
+    "tenantId": "kl",
+    "masterName": "OrderType",
+    "moduleName": "Order",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "Order.OrderType",
+        "uniqueIdentifier": "32",
+        "data": {
+          "id": 32,
+          "code": "Notification for Bulk Reschedule",
+          "type": "Notification for Bulk Reschedule",
+          "isactive": true
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "Order.OrderType",
+        "uniqueIdentifier": "33",
+        "data": {
+          "id": 33,
+          "code": "COMPOSITE",
+          "type": "COMPOSITE",
+          "isactive": true
+        },
+        "isActive": true
+      }
+    ]
+  },
+  {
     "id": "01b1b121-17a2-4276-be53-b86193f26015",
     "tenantId": "kl",
     "schemaCode": "egov-hrms.EmployeeRolesMapping",
