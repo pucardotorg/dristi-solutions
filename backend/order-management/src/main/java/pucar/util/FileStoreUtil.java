@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import pucar.config.Configuration;
+import pucar.repository.ServiceRequestRepository;
 
 import static pucar.config.ServiceConstants.FILE_STORE_UTILITY_EXCEPTION;
 
@@ -29,12 +30,14 @@ public class FileStoreUtil {
 
     private Configuration configs;
     private final ObjectMapper mapper;
+    private final ServiceRequestRepository serviceRequestRepository;
 
 
     @Autowired
-    public FileStoreUtil(Configuration configs, ObjectMapper mapper) {
+    public FileStoreUtil(Configuration configs, ObjectMapper mapper, ServiceRequestRepository serviceRequestRepository) {
         this.configs = configs;
         this.mapper = mapper;
+        this.serviceRequestRepository = serviceRequestRepository;
     }
 
     public byte[] getFile(String tenantId, String fileStoreId) {
@@ -42,8 +45,11 @@ public class FileStoreUtil {
         try {
             StringBuilder uri = new StringBuilder(configs.getFileStoreHost()).append(configs.getFileStorePath());
             uri.append("tenantId=").append(tenantId).append("&").append("fileStoreId=").append(fileStoreId);
-            ResponseEntity<Resource> responseEntity = restTemplate.getForEntity(uri.toString(), Resource.class);
-            return responseEntity.getBody().getContentAsByteArray();
+            ResponseEntity<Resource> responseEntity = serviceRequestRepository.fetchResultGetForEntity(uri);
+            Resource resource = responseEntity.getBody();
+            if (resource != null) {
+                pdfBytes = resource.getContentAsByteArray();
+            }
         } catch (Exception e) {
             log.error("Document {} is not found in the Filestore for tenantId {} ! An exception occurred!",
                     fileStoreId,
@@ -56,7 +62,7 @@ public class FileStoreUtil {
     public Document saveDocumentToFileStore(ByteArrayResource byteArrayResource, String tenantId) {
 
         try {
-            String uri = new String();
+            String uri = "";
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
@@ -65,7 +71,7 @@ public class FileStoreUtil {
 
             HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
 
-            ResponseEntity<Object> responseEntity = restTemplate.postForEntity(uri, requestEntity, Object.class);
+            ResponseEntity<Object> responseEntity = serviceRequestRepository.fetchResultPostForEntity(uri,requestEntity);
 
             return extractDocumentFromResponse(responseEntity);
         } catch (Exception e) {

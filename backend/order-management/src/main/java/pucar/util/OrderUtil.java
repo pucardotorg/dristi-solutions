@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import pucar.config.Configuration;
+import pucar.repository.ServiceRequestRepository;
 import pucar.web.models.OrderExistsRequest;
 import pucar.web.models.OrderExistsResponse;
 
@@ -21,11 +22,13 @@ public class OrderUtil {
 
     private final Configuration configuration;
     private final ObjectMapper objectMapper;
+    private final ServiceRequestRepository serviceRequestRepository;
 
     @Autowired
-    public OrderUtil(RestTemplate restTemplate, ObjectMapper objectMapper, Configuration configuration) {
+    public OrderUtil(RestTemplate restTemplate, ObjectMapper objectMapper, Configuration configuration, ServiceRequestRepository serviceRequestRepository) {
         this.configuration = configuration;
         this.objectMapper = objectMapper;
+        this.serviceRequestRepository = serviceRequestRepository;
     }
 
     public Boolean fetchOrderDetails(OrderExistsRequest orderExistsRequest) {
@@ -35,7 +38,7 @@ public class OrderUtil {
         Object response = new HashMap<>();
         OrderExistsResponse orderExistsResponse;
         try {
-            response = restTemplate.postForObject(uri.toString(), orderExistsRequest, Map.class);
+            response = serviceRequestRepository.fetchResult(uri,orderExistsRequest);
             orderExistsResponse = objectMapper.convertValue(response, OrderExistsResponse.class);
         } catch (Exception e) {
             log.error(ERROR_WHILE_FETCHING_FROM_ORDER, e);
