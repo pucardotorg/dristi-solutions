@@ -15,8 +15,25 @@ import org.springframework.stereotype.Component;
 @Getter
 public class Configuration {
 
+    // Filestore Config
+    @Value("${pucar.filestore.host}")
+    private String fileStoreHost;
+
+    @Value("${pucar.file.store.save.endpoint}")
+    private String fileStoreSaveEndPoint;
+
+    @Value("${pucar.filestore.path}")
+    private String fileStorePath;
+
+    // Order Config
+    @Value("${pucar.order.host}")
+    private String orderHost;
+
+    @Value("${pucar.order.path}")
+    private String orderExistsPath;
+
 
     //SMSNotification
-    @Value("${egov.sms.notification.topic}")
+    @Value("${pucar.sms.notification.topic}")
     private String smsNotificationTopic;
 }

@@ -1,7 +1,6 @@
 package pucar.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,18 +18,9 @@ import org.springframework.validation.annotation.Validated;
 @Builder
 public class OrderToSign {
 
-    @JsonProperty("fileStoreID")
-    private String fileStoreID = null;
-
     @JsonProperty("orderNumber")
     private String orderNumber = null;
 
-    @JsonProperty("orderData")
-    @NotNull
-    private String orderData = null;
-
-    @JsonProperty("signaturePlaceholder")
-    private String signaturePlaceholder = null;
-
-
+    @JsonProperty("request")
+    private String request;
 }

@@ -23,7 +23,7 @@ import java.util.List;
 @Builder
 public class OrdersToSignResponse {
 
-    @JsonProperty("requestInfo")
+    @JsonProperty("ResponseInfo")
     @Valid
     private ResponseInfo requestInfo = null;
 
