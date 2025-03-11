@@ -502,11 +502,12 @@ const ReviewSummonsNoticeAndWarrant = () => {
           remarks={remarks}
           setRemarks={setRemarks}
           setUpdateStatusDate={setUpdateStatusDate}
+          isDisabled={isDisabled || ["DELIVERED", "UNDELIVERED", "EXECUTED", "NOT_EXECUTED"].includes(rowData?.status)}
         />
       ),
       actionSaveOnSubmit: handleUpdateStatus,
       actionCancelOnSubmit: handleDownload,
-      isDisabled: isDisabled,
+      isDisabled: isDisabled || ["DELIVERED", "UNDELIVERED", "EXECUTED", "NOT_EXECUTED"].includes(rowData?.status),
     };
   }, [handleCloseActionModal, handleDownload, handleUpdateStatus, infos, isDisabled, links, orderType, rowData, selectedDelievery, t]);
 
@@ -524,10 +525,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
   }, [rowData]);
 
   const handleRowClick = (props) => {
-    if (["DELIVERED", "UNDELIVERED", "EXECUTED", "NOT_EXECUTED"].includes(props?.original?.status)) {
-      return; // Do nothing if the row's status is 'Completed'
-    }
-
     setRemarks("");
     setRowData(props?.original);
     setActionModalType(props?.original?.documentStatus);
