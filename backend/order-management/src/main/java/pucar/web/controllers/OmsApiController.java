@@ -34,13 +34,13 @@ public class OmsApiController {
     }
 
     @RequestMapping(value = "/v1/_getOrdersToSign", method = RequestMethod.POST)
-    public ResponseEntity<OrdersToSignResponse> getOrdersToSign(@Parameter(in = ParameterIn.DEFAULT, description = "", required = true, schema = @Schema()) @Valid @RequestBody OrdersToSignRequest body) {
+    public ResponseEntity<OrdersToSignResponse> getOrdersToSign(@Parameter(in = ParameterIn.DEFAULT, description = "", required = true, schema = @Schema()) @Valid @RequestBody OrdersToSignRequest request) {
 
         return new ResponseEntity<OrdersToSignResponse>(HttpStatus.NOT_IMPLEMENTED);
     }
 
     @RequestMapping(value = "/oms/v1/_updateSignedOrders", method = RequestMethod.POST)
-    public ResponseEntity<Void> updateSignedOrders(@Parameter(in = ParameterIn.DEFAULT, description = "", required = true, schema = @Schema()) @Valid @RequestBody List<UpdateSignedOrderRequest> body) {
+    public ResponseEntity<Void> updateSignedOrders(@Parameter(in = ParameterIn.DEFAULT, description = "", required = true, schema = @Schema()) @Valid @RequestBody UpdateSignedOrderRequest request) {
         return new ResponseEntity<Void>(HttpStatus.NOT_IMPLEMENTED);
     }
 
