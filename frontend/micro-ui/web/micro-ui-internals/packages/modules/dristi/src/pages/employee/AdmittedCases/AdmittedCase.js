@@ -1947,6 +1947,10 @@ const AdmittedCases = () => {
     history.push(`/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}`);
   };
 
+  const handleSubmitDocuments = () => {
+    history.push(`/digit-ui/citizen/submissions/submit-document?filingNumber=${filingNumber}`);
+  };
+
   const handleCitizenAction = (option) => {
     if (option.value === "RAISE_APPLICATION") {
       history.push(`/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}`);
@@ -2531,19 +2535,27 @@ const AdmittedCases = () => {
             </div>
           )}
           {isCitizen && config?.label === "Submissions" && (
-            <div style={{ display: "flex", gap: "10px" }}>
+            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
               {showMakeSubmission && (
                 <div
                   onClick={handleMakeSubmission}
                   style={{ fontWeight: 500, fontSize: "16px", lineHeight: "20px", color: "#0A5757", cursor: "pointer" }}
                 >
-                  {t("MAKE_SUBMISSION")}
+                  {t("MAKE_APPLICATION")}
                 </div>
               )}
 
               {/* <div style={{ fontWeight: 500, fontSize: "16px", lineHeight: "20px", color: "#0A5757", cursor: "pointer" }}>
                 {t("DOWNLOAD_ALL_LINK")}
               </div> */}
+              {showMakeSubmission && (
+                <div
+                  onClick={handleSubmitDocuments}
+                  style={{ fontWeight: 500, fontSize: "16px", lineHeight: "20px", color: "#0A5757", cursor: "pointer" }}
+                >
+                  {t("SUBMIT_DOCUMENTS")}
+                </div>
+              )}
             </div>
           )}
         </div>
