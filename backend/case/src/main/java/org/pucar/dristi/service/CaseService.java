@@ -466,6 +466,61 @@ public class CaseService {
 
     }
 
+    public CourtCase createEditProfileRequest(CaseRequest caseRequest) {
+
+        try {
+            log.debug("Inside create edit profile request");
+
+            validator.validateProfileEdit(caseRequest);
+
+            CourtCase courtCase = searchRedisCache(caseRequest.getRequestInfo(), String.valueOf(caseRequest.getCases().getId()));
+
+            if (courtCase == null) {
+                log.debug("CourtCase not found in Redis cache for caseId :: {}", caseRequest.getCases().getId());
+                List<CaseCriteria> existingApplications = caseRepository.getCases(Collections.singletonList(CaseCriteria.builder().caseId(String.valueOf(caseRequest.getCases().getId())).build()), caseRequest.getRequestInfo());
+
+                if (existingApplications.get(0).getResponseList().isEmpty()) {
+                    log.debug("CourtCase not found in DB for caseId :: {}", caseRequest.getCases().getId());
+                    throw new CustomException(VALIDATION_ERR, "Case Application does not exist");
+                } else {
+                    courtCase = existingApplications.get(0).getResponseList().get(0);
+                }
+            }
+
+            CourtCase decryptedCourtCase = encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, caseRequest.getRequestInfo());
+
+            AuditDetails auditDetails = courtCase.getAuditdetails();
+            auditDetails.setLastModifiedTime(System.currentTimeMillis());
+            auditDetails.setLastModifiedBy(caseRequest.getRequestInfo().getUserInfo().getUuid());
+
+            decryptedCourtCase.setAdditionalDetails(caseRequest.getCases().getAdditionalDetails());
+            decryptedCourtCase.setCaseTitle(caseRequest.getCases().getCaseTitle());
+            decryptedCourtCase.setAuditdetails(auditDetails);
+
+            caseRequest.setCases(decryptedCourtCase);
+
+            log.info("Encrypting :: {}", caseRequest);
+
+            caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), config.getCourtCaseEncryptNew(), CourtCase.class));
+            cacheService.save(caseRequest.getCases().getTenantId() + ":" + caseRequest.getCases().getId(), caseRequest.getCases());
+
+            producer.push(config.getCaseEditTopic(), caseRequest);
+
+            CourtCase cases = encryptionDecryptionUtil.decryptObject(caseRequest.getCases(), null, CourtCase.class, caseRequest.getRequestInfo());
+            cases.setAccessCode(null);
+
+            return cases;
+
+
+        } catch (CustomException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error occurred while editing profile :: {}", e.toString());
+            throw new CustomException(EDIT_CASE_ERR, "Exception occurred while editing profile: " + e.getMessage());
+        }
+
+    }
+
     public void callNotificationService(CaseRequest caseRequest, String messageCode) {
         try {
             CourtCase courtCase = caseRequest.getCases();
