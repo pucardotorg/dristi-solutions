@@ -282,4 +282,19 @@ public class Configuration {
 
     @Value("${dristi.court.address}")
     private String courtAddress;
+
+    @Value("${dristi.infoPdf.url}")
+    private String infoPdfUrl;
+
+    @Value("${dristi.lokAdalat.url}")
+    private String lokAdalatUrl;
+
+    @Value("${dristi.helpline.number}")
+    private String helplineNumber;
+
+    @Value("${dristi.qrCodeFirst.url}")
+    private String qrCodeFirstUrl;
+
+    @Value("${drsiti.qrCodeSecond.url}")
+    private String qrCodeSecondUrl;
 }
