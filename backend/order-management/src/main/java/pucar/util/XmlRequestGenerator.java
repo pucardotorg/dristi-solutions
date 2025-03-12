@@ -40,6 +40,8 @@ public class XmlRequestGenerator {
             // Convert Document to String
             TransformerFactory transformerFactory = TransformerFactory.newInstance();
             Transformer transformer = transformerFactory.newTransformer();
+            // Omit XML declaration
+            transformer.setOutputProperty("omit-xml-declaration", "yes");
             StringWriter writer = new StringWriter();
             transformer.transform(new DOMSource(document), new StreamResult(writer));
 

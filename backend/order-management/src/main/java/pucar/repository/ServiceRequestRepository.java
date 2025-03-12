@@ -24,7 +24,6 @@ import static pucar.config.ServiceConstants.SEARCHER_SERVICE_EXCEPTION;
 public class ServiceRequestRepository {
 
     private final ObjectMapper mapper;
-
     private final RestTemplate restTemplate;
 
 

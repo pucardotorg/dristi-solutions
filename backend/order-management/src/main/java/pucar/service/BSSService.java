@@ -2,6 +2,7 @@ package pucar.service;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.models.Document;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -13,6 +14,8 @@ import pucar.web.models.*;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
+
+import static pucar.config.ServiceConstants.*;
 
 @Service
 @Slf4j
@@ -117,7 +120,7 @@ public class BSSService {
         Map<String, Object> pdf = new LinkedHashMap<>();
         pdf.put("page", pageNumber);
         pdf.put("cood", coordination);
-        pdf.put("size", "");   // check on this
+        pdf.put("size", "200,100");   // check on this
         requestData.put("pdf", pdf);
 
         // Data section  // enrich this section
@@ -141,21 +144,50 @@ public class BSSService {
             if (isSigned) {
                 //update order with signed doc
                 try {
-                    MultipartFile multipartFile = cipherUtil.decodeBase64ToPdf(signedOrderData, orderNumber);
+
+                    OrderCriteria criteria = OrderCriteria.builder()
+                            .orderNumber(orderNumber)
+                            .tenantId(tenantId).build();
+                    OrderSearchRequest searchRequest = OrderSearchRequest.builder()
+                            .criteria(criteria).build();
+
+                    OrderListResponse orders = orderUtil.getOrders(searchRequest);
+
+                    if (orders.getList().isEmpty()) {
+                        throw new CustomException(); // error msg here
+                    }
+                    Order order = orders.getList().get(0);
+
+                    String pdfName = COMPOSITE.equalsIgnoreCase(order.getOrderCategory()) ? order.getOrderTitle() + ".pdf" : order.getOrderType() + ".pdf";
+                    MultipartFile multipartFile = cipherUtil.decodeBase64ToPdf(signedOrderData, pdfName);
                     String fileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
 
                     // fetch order here
 
+                    Document document = Document.builder().build();
+                    document.setFileStore(fileStoreId);
+                    document.setDocumentType(SIGNED);
+                    document.setAdditionalDetails(Map.of("name", pdfName));
+
+                    WorkflowObject workflowObject = new WorkflowObject();
+                    workflowObject.setAction(E_SIGN);
+
+                    order.setWorkflow(workflowObject);
+                    order.getDocuments().add(document);
+
+
                     // update order here
+                    OrderRequest orderUpdateRequest = OrderRequest.builder()
+                            .requestInfo(request.getRequestInfo())
+                            .order(order).build();
 
-//                    orderUtil
-
+                    orderUtil.updateOrder(orderUpdateRequest);
 
                 } catch (Exception e) {
                     throw new CustomException(); // add log here
                 }
             }
-            
+
         }
 
     }

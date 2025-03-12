@@ -20,4 +20,7 @@ public class ServiceConstants {
     public static final String RES_MSG_ID = "uief87324";
     public static final String SUCCESSFUL = "successful";
     public static final String FAILED = "failed";
+    public static final String E_SIGN = "E-SIGN";
+    public static final String SIGNED = "SIGNED";
+    public static final String COMPOSITE = "COMPOSITE";
 }
