@@ -1,14 +1,13 @@
 package pucar.service;
 
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
-import pucar.util.CipherUtil;
-import pucar.util.ESignUtil;
-import pucar.util.FileStoreUtil;
-import pucar.util.XmlRequestGenerator;
+import org.springframework.web.multipart.MultipartFile;
+import pucar.util.*;
 import pucar.web.models.*;
 
 import java.time.ZoneId;
@@ -23,13 +22,15 @@ public class BSSService {
     private final ESignUtil eSignUtil;
     private final FileStoreUtil fileStoreUtil;
     private final CipherUtil cipherUtil;
+    private final OrderUtil orderUtil;
 
     @Autowired
-    public BSSService(XmlRequestGenerator xmlRequestGenerator, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil) {
+    public BSSService(XmlRequestGenerator xmlRequestGenerator, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, OrderUtil orderUtil) {
         this.xmlRequestGenerator = xmlRequestGenerator;
         this.eSignUtil = eSignUtil;
         this.fileStoreUtil = fileStoreUtil;
         this.cipherUtil = cipherUtil;
+        this.orderUtil = orderUtil;
     }
 
     public List<OrderToSign> createOrderToSignRequest(OrdersToSignRequest request) {
@@ -126,5 +127,36 @@ public class BSSService {
         String xmlRequest = xmlRequestGenerator.createXML("request", requestData);
 
         return xmlRequest;
+    }
+
+    public void updateOrderWithSignDoc(@Valid UpdateSignedOrderRequest request) {
+
+        for (SignedOrder signedOrder : request.getSignedOrders()) {
+            String orderNumber = signedOrder.getOrderNumber();
+            String signedOrderData = signedOrder.getSignedOrderData();
+            String errorMsg = signedOrder.getErrorMsg();
+            Boolean isSigned = signedOrder.getSigned();
+            String tenantId = signedOrder.getTenantId();
+
+            if (isSigned) {
+                //update order with signed doc
+                try {
+                    MultipartFile multipartFile = cipherUtil.decodeBase64ToPdf(signedOrderData, orderNumber);
+                    String fileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
+
+                    // fetch order here
+
+                    // update order here
+
+//                    orderUtil
+
+
+                } catch (Exception e) {
+                    throw new CustomException(); // add log here
+                }
+            }
+            
+        }
+
     }
 }

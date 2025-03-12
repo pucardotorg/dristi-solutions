@@ -35,7 +35,7 @@ public class Configuration {
     @Value("${pucar.order.host}")
     private String orderHost;
 
-    @Value("${pucar.order.path}")
+    @Value("${pucar.order.exists.path}")
     private String orderExistsPath;
 
     @Value("${pucar.order.update.path}")
@@ -44,12 +44,12 @@ public class Configuration {
     @Value("${pucar.order.search.path}")
     private String orderSearchPath;
 
-    // Order Config
+    // ESign Config
     @Value("${pucar.esign.host}")
     private String esignHost;
 
-    @Value("${pucar.order.endpoint}")
-    private String esignEndPoint;
+    @Value("${pucar.esign.location.endpoint}")
+    private String esignLocationEndPoint;
 
 
     //SMSNotification

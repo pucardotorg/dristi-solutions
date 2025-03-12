@@ -34,5 +34,8 @@ public class SignedOrder {
     @JsonProperty("errorMsg")
     private String errorMsg = null;
 
+    @JsonProperty("tenantId")
+    private String tenantId;
+
 
 }

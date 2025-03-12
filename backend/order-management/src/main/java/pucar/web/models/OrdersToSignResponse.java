@@ -25,7 +25,7 @@ public class OrdersToSignResponse {
 
     @JsonProperty("ResponseInfo")
     @Valid
-    private ResponseInfo requestInfo = null;
+    private ResponseInfo responseInfo = null;
 
     @JsonProperty("orderList")
     @Valid

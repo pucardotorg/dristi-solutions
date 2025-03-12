@@ -16,4 +16,8 @@ public class ServiceConstants {
 
     public static final String FILE_STORE_SERVICE_EXCEPTION_CODE = "";
     public static final String FILE_STORE_SERVICE_EXCEPTION_MESSAGE = "";
+
+    public static final String RES_MSG_ID = "uief87324";
+    public static final String SUCCESSFUL = "successful";
+    public static final String FAILED = "failed";
 }

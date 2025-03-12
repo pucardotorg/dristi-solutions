@@ -34,7 +34,7 @@ public class ESignUtil {
 
     public List<Coordinate> getCoordinateForSign(CoordinateRequest request) {
         StringBuilder uri = new StringBuilder();
-        uri.append(configuration.getEsignHost()).append(configuration.getEsignEndPoint());
+        uri.append(configuration.getEsignHost()).append(configuration.getEsignLocationEndPoint());
 
         try {
             Object response = repository.fetchResult(uri, request);
