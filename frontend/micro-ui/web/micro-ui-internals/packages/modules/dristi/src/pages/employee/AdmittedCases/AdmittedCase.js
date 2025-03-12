@@ -2224,7 +2224,7 @@ const AdmittedCases = () => {
         tertiaryAction.action ||
         ([CaseWorkflowState.PENDING_NOTICE, CaseWorkflowState.PENDING_RESPONSE].includes(caseDetails?.status) && !isCitizen)) &&
       !isCourtRoomManager,
-    [caseDetails, primaryAction.action, secondaryAction.action, tertiaryAction.action, isCitizen]
+    [primaryAction.action, secondaryAction.action, tertiaryAction.action, caseDetails?.status, isCitizen, isCourtRoomManager]
   );
 
   const handleOpenSummonNoticeModal = async (partyIndex) => {
@@ -2661,38 +2661,40 @@ const AdmittedCases = () => {
       {toast && toastDetails && (
         <Toast error={toastDetails?.isError} label={t(toastDetails?.message)} onClose={() => setToast(false)} style={{ maxWidth: "670px" }} />
       )}
-      {showActionBar && !isWorkFlowFetching && (
-        <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
-          <div style={{ width: "fit-content", display: "flex", gap: 20 }}>
-            {currentHearingStatus === HearingWorkflowState.SCHEDULED && tertiaryAction.action && (
-              <Button className="previous-button" variation="secondary" label={t(tertiaryAction.label)} onButtonClick={onSaveDraft} />
-            )}
-            {primaryAction && (
-              <SubmitBar
-                label={t(isPendingNoticeStatus ? "ISSUE_BNSS_NOTICE" : primaryAction?.label)}
-                submit="submit"
-                disabled={""}
-                onSubmit={onSubmit}
+      {showActionBar &&
+        !isWorkFlowFetching &&
+        ((currentHearingStatus === HearingWorkflowState.SCHEDULED && tertiaryAction.action) || primaryAction?.label || secondaryAction.action) && (
+          <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
+            <div style={{ width: "fit-content", display: "flex", gap: 20 }}>
+              {currentHearingStatus === HearingWorkflowState.SCHEDULED && tertiaryAction.action && (
+                <Button className="previous-button" variation="secondary" label={t(tertiaryAction.label)} onButtonClick={onSaveDraft} />
+              )}
+              {primaryAction?.label && (
+                <SubmitBar
+                  label={t(isPendingNoticeStatus ? "ISSUE_BNSS_NOTICE" : primaryAction?.label)}
+                  submit="submit"
+                  disabled={""}
+                  onSubmit={onSubmit}
+                />
+              )}
+            </div>
+            {secondaryAction.action && (
+              <Button
+                className="previous-button"
+                variation="secondary"
+                style={{
+                  border: "none",
+                  marginLeft: 0,
+                  fontSize: 16,
+                  fontWeight: 700,
+                  color: secondaryAction.action === "REJECT" && "#BB2C2F",
+                }}
+                label={t(secondaryAction.label)}
+                onButtonClick={onSendBack}
               />
             )}
-          </div>
-          {secondaryAction.action && (
-            <Button
-              className="previous-button"
-              variation="secondary"
-              style={{
-                border: "none",
-                marginLeft: 0,
-                fontSize: 16,
-                fontWeight: 700,
-                color: secondaryAction.action === "REJECT" && "#BB2C2F",
-              }}
-              label={t(secondaryAction.label)}
-              onButtonClick={onSendBack}
-            />
-          )}
-        </ActionBar>
-      )}
+          </ActionBar>
+        )}
       {isOpenDCA && <DocumentModal config={dcaConfirmModalConfig} />}
 
       {showModal && (
