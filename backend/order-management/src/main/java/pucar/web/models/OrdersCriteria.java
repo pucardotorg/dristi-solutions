@@ -27,5 +27,8 @@ public class OrdersCriteria {
     @JsonProperty("placeholder")
     private String placeholder = null;
 
+    @JsonProperty("tenantId")
+    private String tenantId = null;
+
 
 }

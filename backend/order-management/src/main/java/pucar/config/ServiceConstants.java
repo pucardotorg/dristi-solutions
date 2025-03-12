@@ -12,4 +12,5 @@ public class ServiceConstants {
 
     public static final String ERROR_WHILE_FETCHING_FROM_ORDER = "";
     public static final String FILE_STORE_UTILITY_EXCEPTION = "";
+    public static final String ESIGN_SERVICE_EXCEPTION = "";
 }

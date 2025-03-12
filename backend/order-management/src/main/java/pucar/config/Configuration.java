@@ -32,6 +32,13 @@ public class Configuration {
     @Value("${pucar.order.path}")
     private String orderExistsPath;
 
+    // Order Config
+    @Value("${pucar.esign.host}")
+    private String esignHost;
+
+    @Value("${pucar.order.endpoint}")
+    private String esignEndPoint;
+
 
     //SMSNotification
     @Value("${pucar.sms.notification.topic}")

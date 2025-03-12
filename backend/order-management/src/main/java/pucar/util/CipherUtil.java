@@ -17,7 +17,7 @@ public class CipherUtil {
     private final ByteArrayMultipartFile multipartFileUtil;
 
     @Autowired
-    public CypherUtil(ByteArrayMultipartFile multipartFileUtil) {
+    public CipherUtil(ByteArrayMultipartFile multipartFileUtil) {
         this.multipartFileUtil = multipartFileUtil;
     }
 
