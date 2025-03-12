@@ -76,7 +76,7 @@ public class BSSService {
                 order.setOrderNumber(orderNumber);
                 order.setRequest(xmlRequest);
 
-
+                orderToSign.add(order);
             } catch (Exception e) {
                 throw new CustomException(); // add msg here
             }
@@ -96,21 +96,21 @@ public class BSSService {
 
         // Certificate section with attributes
         Map<String, Object> certificate = new LinkedHashMap<>();
-        certificate.put("attribute", Map.of("@attributes", Map.of("name", "Cn"), "value", ""));
-        certificate.put("attribute1", Map.of("@attributes", Map.of("name", "O"), "value", ""));
-        certificate.put("attribute2", Map.of("@attributes", Map.of("name", "OU"), "value", ""));
-        certificate.put("attribute3", Map.of("@attributes", Map.of("name", "T"), "value", ""));
-        certificate.put("attribute4", Map.of("@attributes", Map.of("name", "E"), "value", ""));
-        certificate.put("attribute5", Map.of("@attributes", Map.of("name", "SN"), "value", ""));
-        certificate.put("attribute6", Map.of("@attributes", Map.of("name", "CA"), "value", ""));
-        certificate.put("attribute7", Map.of("@attributes", Map.of("name", "TC"), "value", ""));
-        certificate.put("attribute8", Map.of("@attributes", Map.of("name", "AP"), "value", ""));
-        certificate.put("attribute9", Map.of("@attributes", Map.of("name", "VD"), "value", ""));
+        certificate.put("attribute", new HashMap<>(Map.of("@attributes", new HashMap<>(Map.of("name", "Cn")), "value", "")));
+        certificate.put("attribute1", new HashMap<>(Map.of("@attributes", new HashMap<>(Map.of("name", "O")), "value", "")));
+        certificate.put("attribute2", new HashMap<>(Map.of("@attributes", new HashMap<>(Map.of("name", "OU")), "value", "")));
+        certificate.put("attribute3", new HashMap<>(Map.of("@attributes", new HashMap<>(Map.of("name", "T")), "value", "")));
+        certificate.put("attribute4", new HashMap<>(Map.of("@attributes", new HashMap<>(Map.of("name", "E")), "value", "")));
+        certificate.put("attribute5", new HashMap<>(Map.of("@attributes", new HashMap<>(Map.of("name", "SN")), "value", "")));
+        certificate.put("attribute6", new HashMap<>(Map.of("@attributes", new HashMap<>(Map.of("name", "CA")), "value", "")));
+        certificate.put("attribute7", new HashMap<>(Map.of("@attributes", new HashMap<>(Map.of("name", "TC")), "value", "")));
+        certificate.put("attribute8", new HashMap<>(Map.of("@attributes", new HashMap<>(Map.of("name", "AP")), "value", "")));
+        certificate.put("attribute9", new HashMap<>(Map.of("@attributes", new HashMap<>(Map.of("name", "VD")), "value", "")));
         requestData.put("certificate", certificate);
 
         // File section with attribute
         Map<String, Object> file = new LinkedHashMap<>();
-        file.put("attribute", Map.of("@attributes", Map.of("name", "type"), "value", "pdf"));// rn this is hardcode once we support other feature we will dynamically fetch this
+        file = (Map.of("attribute", new HashMap<>(Map.of("@attributes", new HashMap<>(Map.of("name", "type")), "value", "pdf"))));// rn this is hardcode once we support other feature we will dynamically fetch this
         requestData.put("file", file);
 
         // PDF section // enrich this section
