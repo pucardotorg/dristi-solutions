@@ -167,6 +167,11 @@ const SubmissionDocuments = ({ path }) => {
     history.replace(`/digit-ui/citizen/submissions/submit-document?filingNumber=${filingNumber}`);
   };
 
+  const handleClose = () => {
+    setShowSubmissionSuccessModal(false);
+    history.replace(`/digit-ui/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}`);
+  };
+
   const handleSuccessDownloadSubmission = () => {
     const fileStoreId = localStorage.getItem("fileStoreId");
     downloadPdf(tenantId, signedDocumentUploadedID || fileStoreId);
@@ -366,9 +371,9 @@ const SubmissionDocuments = ({ path }) => {
         return body;
       }),
     });
-  
+
     const originalFormConfig = submissionDocumentDetailsConfig.formConfig;
-  
+
     if (!artifactNumber) {
       return originalFormConfig?.map((config) => applyUiChanges(config));
     } else {
@@ -380,7 +385,6 @@ const SubmissionDocuments = ({ path }) => {
       );
     }
   }, [artifactNumber, t]);
-  
 
   if (loader || isFilingTypeLoading || isEvidenceLoading) {
     return <Loader />;
@@ -436,7 +440,8 @@ const SubmissionDocuments = ({ path }) => {
         {showSubmissionSuccessModal && (
           <SubmissionDocumentSuccessModal
             t={t}
-            handleClose={handleNextSubmission}
+            handleClose={handleClose}
+            handleNextSubmission={handleNextSubmission}
             handleSuccessDownloadSubmission={handleSuccessDownloadSubmission}
             documentSubmissionNumber={evidenceDetails?.artifactNumber}
           />
