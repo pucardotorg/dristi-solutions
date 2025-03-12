@@ -2542,6 +2542,7 @@ function EFilingCases({ path }) {
                 showConfirmModal={confirmModalConfig ? true : false}
                 handleGoToPage={handleGoToPage}
                 selected={selected}
+                onSubmit={onSubmit}
               />
             )}
             <div className="total-error-note">
