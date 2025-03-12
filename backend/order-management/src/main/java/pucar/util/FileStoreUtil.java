@@ -5,18 +5,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.Document;
 import org.egov.tracer.model.CustomException;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.multipart.MultipartFile;
 import pucar.config.Configuration;
-import pucar.repository.ServiceRequestRepository;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static pucar.config.ServiceConstants.FILE_STORE_UTILITY_EXCEPTION;
 
@@ -30,39 +31,19 @@ public class FileStoreUtil {
 
     private Configuration configs;
     private final ObjectMapper mapper;
-    private final ServiceRequestRepository serviceRequestRepository;
 
 
     @Autowired
-    public FileStoreUtil(Configuration configs, ObjectMapper mapper, ServiceRequestRepository serviceRequestRepository) {
+    public FileStoreUtil(Configuration configs, ObjectMapper mapper) {
         this.configs = configs;
         this.mapper = mapper;
-        this.serviceRequestRepository = serviceRequestRepository;
     }
 
-    public byte[] getFile(String tenantId, String fileStoreId) {
-        byte[] pdfBytes = null;
-        try {
-            StringBuilder uri = new StringBuilder(configs.getFileStoreHost()).append(configs.getFileStorePath());
-            uri.append("tenantId=").append(tenantId).append("&").append("fileStoreId=").append(fileStoreId);
-            ResponseEntity<Resource> responseEntity = serviceRequestRepository.fetchResultGetForEntity(uri);
-            Resource resource = responseEntity.getBody();
-            if (resource != null) {
-                pdfBytes = resource.getContentAsByteArray();
-            }
-        } catch (Exception e) {
-            log.error("Document {} is not found in the Filestore for tenantId {} ! An exception occurred!",
-                    fileStoreId,
-                    tenantId,
-                    e);
-        }
-        return pdfBytes;
-    }
 
     public Document saveDocumentToFileStore(ByteArrayResource byteArrayResource, String tenantId) {
 
         try {
-            String uri = "";
+            String uri = new String();
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
@@ -71,7 +52,7 @@ public class FileStoreUtil {
 
             HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
 
-            ResponseEntity<Object> responseEntity = serviceRequestRepository.fetchResultPostForEntity(uri,requestEntity);
+            ResponseEntity<Object> responseEntity = restTemplate.postForEntity(uri, requestEntity, Object.class);
 
             return extractDocumentFromResponse(responseEntity);
         } catch (Exception e) {
@@ -94,4 +75,102 @@ public class FileStoreUtil {
             throw new CustomException("INVALID_FILE_STORE_RESPONSE", "Failed to get valid file store id from file store service");
         }
     }
+
+
+    public Resource fetchFileStoreObjectById(String fileStoreId, String tenantId) {
+        if (!isValidFileStoreId(fileStoreId) || !isValidTenantId(tenantId)) {
+            throw new CustomException("INVALID_INPUT", "Invalid fileStoreId or tenantId");
+        }
+        StringBuilder uri = new StringBuilder();
+        uri.append(configs.getFilestoreHost()).append(configs.getFilestoreSearchEndPoint());
+        uri = appendQueryParams(uri, "fileStoreId", fileStoreId, "tenantId", tenantId);
+        Resource object;
+        try {
+            object = restTemplate.getForObject(uri.toString(), Resource.class);
+            return object;
+
+        } catch (Exception e) {
+            throw new CustomException(FILE_STORE_SERVICE_EXCEPTION_CODE, FILE_STORE_SERVICE_EXCEPTION_MESSAGE);
+
+        }
+
+
+    }
+
+    private boolean isValidFileStoreId(String fileStoreId) {
+        return fileStoreId != null && fileStoreId.matches("[a-zA-Z0-9_-]+");
+    }
+
+    private boolean isValidTenantId(String tenantId) {
+        return tenantId != null && tenantId.matches("[a-zA-Z0-9_-]+");
+    }
+
+
+    public String storeFileInFileStore(MultipartFile file, String tenantId) {
+
+        if (!FileValidationUtil.isValidFile(file)) {
+            throw new IllegalArgumentException("Invalid file type");
+        }
+        String module = "signed";  // fixme: take me from constant file
+        StringBuilder uri = new StringBuilder();
+        uri.append(configs.getFilestoreHost()).append(configs.getFilestoreCreateEndPoint());
+
+        List<MultipartFile> files = new ArrayList<>();
+        files.add(file);
+
+        MultiValueMap<String, Object> request = new LinkedMultiValueMap<>();
+        request.add("file", file.getResource());
+        request.add("tenantId", tenantId);
+        request.add("module", module);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+        HttpEntity<MultiValueMap<String, Object>> entity = new HttpEntity<>(request, headers);
+
+
+        ResponseEntity<String> response = restTemplate.exchange(uri.toString(), HttpMethod.POST, entity, String.class);
+        String body = response.getBody();
+        JSONObject jsonObject = new JSONObject(body);
+        JSONObject fileObject = jsonObject.getJSONArray("files").getJSONObject(0);
+        return fileObject.getString("fileStoreId");
+
+
+    }
+
+    public StringBuilder appendQueryParams(StringBuilder uri, String paramName1, String paramValue1, String paramName2, String paramValue2) {
+        if (uri.indexOf("?") == -1) {
+            uri.append("?");
+        } else {
+            uri.append("&");
+        }
+        uri.append(paramName1).append("=").append(paramValue1).append("&");
+        uri.append(paramName2).append("=").append(paramValue2);
+        return uri;
+    }
+
+    public List<String> deleteFileFromFileStore(String filestoreId, String tenantId, Boolean isSoftDelete) {
+
+        StringBuilder uri = new StringBuilder();
+        uri.append(configs.getFilestoreHost())
+                .append(configs.getFilestoreDeleteEndPoint())
+                .append("?tenantId=").append(tenantId);
+
+        MultiValueMap<String, Object> request = new LinkedMultiValueMap<>();
+        request.add("fileStoreIds", filestoreId);
+        request.add("isSoftDelete", isSoftDelete);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+        // hit the serviceRequest Repo
+
+        HttpEntity<MultiValueMap<String, Object>> entity = new HttpEntity<>(request, headers);
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(uri.toString(), HttpMethod.POST, entity, String.class);
+        } catch (Exception e) {
+            throw new CustomException("FILESTORE_SERVICE_EXCEPTION","Error occurred while deleting file from filestore");
+        }
+
+        return null; // list of filestore ids which is deleted
+    }
+
 }
