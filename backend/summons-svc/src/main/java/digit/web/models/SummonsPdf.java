@@ -105,10 +105,4 @@ public class SummonsPdf  {
 
     @JsonProperty("helplineNumber")
     private String helplineNumber;
-
-    @JsonProperty("qrCodeUrlFirst")
-    private String qrCodeSummonFirst;
-
-    @JsonProperty("qrCodeUrlSecond")
-    private String qrCodeSummonSecond;
 }
