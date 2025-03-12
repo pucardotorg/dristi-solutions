@@ -19,7 +19,6 @@ const UpdateDeliveryStatusComponent = ({
   remarks,
   setRemarks,
   setUpdateStatusDate,
-  isDisabled,
 }) => {
   const [date, setDate] = useState(
     rowData?.taskDetails?.deliveryChannels?.statusChangeDate
@@ -40,8 +39,7 @@ const UpdateDeliveryStatusComponent = ({
 
   useEffect(() => {
     if (date) setUpdateStatusDate(date);
-    if (selectedDelievery && !["DELIVERED", "UNDELIVERED", "EXECUTED", "NOT_EXECUTED"].includes(rowData?.status) && date)
-      handleSubmitButtonDisable(false);
+    if (selectedDelievery && date) handleSubmitButtonDisable(false);
     else handleSubmitButtonDisable(true);
   }, [selectedDelievery, date]);
 
@@ -49,14 +47,7 @@ const UpdateDeliveryStatusComponent = ({
     <div className="update-delivery-status" style={{ width: 616 }}>
       <LabelFieldPair className="case-label-field-pair">
         <CardLabel className="case-input-label">{`${t("Update Delivery Status")}`}</CardLabel>
-        <Dropdown
-          disable={isDisabled}
-          t={t}
-          option={deliveryOptions}
-          selected={selectedDelievery}
-          optionKey={"value"}
-          select={(e) => setSelectedDelievery(e)}
-        />
+        <Dropdown t={t} option={deliveryOptions} selected={selectedDelievery} optionKey={"value"} select={(e) => setSelectedDelievery(e)} />
       </LabelFieldPair>
       {selectedDelievery && (
         <LabelFieldPair className="case-label-field-pair">
@@ -70,7 +61,6 @@ const UpdateDeliveryStatusComponent = ({
               setUpdateStatusDate(e?.target?.value);
               console.log("date :>> ", e.target.value);
             }}
-            disable={isDisabled}
           />
         </LabelFieldPair>
       )}
@@ -85,7 +75,6 @@ const UpdateDeliveryStatusComponent = ({
             setRemarks(e?.target?.value);
             console.log("remarks :>> ", e.target.value);
           }}
-          disable={isDisabled}
         />
       </LabelFieldPair>
 
