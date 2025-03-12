@@ -375,6 +375,7 @@ public class HearingService {
         List<String> hearingIds = hearingsToReschedule.stream().filter((hearing)-> !Objects.equals(hearing.getStatus(), COMPLETED)).map(Hearing::getHearingId).toList();
         bulkReschedule.setHearingIds(hearingIds);
         request.setBulkReschedule(bulkReschedule);
+        log.info("no of hearings to reschedule: {}", hearingIds.size());
 
         List<ScheduleHearing> scheduleHearings = schedulerUtil.callBulkReschedule(request);
 
@@ -432,10 +433,17 @@ public class HearingService {
                     LocalDateTime toLocalDateTime = dateUtil.getLocalDateTime(to, endTime);
                     Long toDate = dateUtil.getEpochFromLocalDateTime(toLocalDateTime);
 
+                    log.info("fromDate: {}, toDate: {}", fromDate, toDate);
                     criteria.setFromDate(fromDate);
                     criteria.setToDate(toDate);
 
+                    if (fromDate == null || toDate == null ) {
+                        throw new CustomException("SOMETHING_WENT_WRONG", "Start date and end date are required");
+
+                    }
+
                     List<Hearing> hearings = searchHearing(searchRequest);
+                    log.info("hearings in slot Id {}: Hearing {}", hearingSlot.getId(), hearings.size());
                     hearingsToReschedule.addAll(hearings);
 
                     slotIds.remove(hearingSlot.getId());
