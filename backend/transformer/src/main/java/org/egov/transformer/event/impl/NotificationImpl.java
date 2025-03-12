@@ -36,7 +36,7 @@ public class NotificationImpl implements EventListener<Notification, RequestInfo
                 .parties(new ArrayList<>())  // no parties
                 .status(event.getStatus())
                 .date(event.getCreatedDate())
-                .entityType("Notice")
+                .entityType("Notification")
                 .title(event.getNotificationType())
                 .tenantId(event.getTenantId())
                 .filingNumbers( new ArrayList<>())

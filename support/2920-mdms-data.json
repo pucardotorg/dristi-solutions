@@ -66,14 +66,19 @@
             },
             {
               "name": "fromDate",
-              "path": "Data.hearingDetails.fromDate.keyword",
+              "path": "Data.hearingDetails.fromDate",
               "operator": "GTE",
               "isMandatory": false
             },
             {
               "name": "toDate",
-              "path": "Data.hearingDetails.toDate.keyword",
+              "path": "Data.hearingDetails.toDate",
               "operator": "LTE",
+              "isMandatory": false
+            },
+            {
+              "name": "subStage",
+              "path": "Data.hearingDetails.subStage.keyword",
               "isMandatory": false
             }
           ]
