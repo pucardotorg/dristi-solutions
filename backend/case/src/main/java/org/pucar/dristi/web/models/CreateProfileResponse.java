@@ -15,7 +15,7 @@ import org.springframework.validation.annotation.Validated;
 @Validated
 public class CreateProfileResponse {
 
-    @JsonProperty("responseInfo")
+    @JsonProperty("ResponseInfo")
     private ResponseInfo responseInfo;
 
     @JsonProperty("cases")

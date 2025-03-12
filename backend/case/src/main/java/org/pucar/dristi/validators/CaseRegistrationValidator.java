@@ -258,9 +258,8 @@ public class CaseRegistrationValidator {
 
 	public void validateProfileEdit(CreateProfileRequest profileRequest) throws CustomException {
 
-		if (ObjectUtils.isEmpty(profileRequest.getProfile().getFilingNumber()) ||
-            ObjectUtils.isEmpty(profileRequest.getProfile().getCaseId())) {
-			throw new CustomException(VALIDATION_ERR, "case Id or filingNumber cannot be empty");
+		if (ObjectUtils.isEmpty(profileRequest.getProfile().getCaseId())) {
+			throw new CustomException(VALIDATION_ERR, "case Id cannot be empty");
 		}
 
 		if (ObjectUtils.isEmpty(profileRequest.getProfile().getLitigantDetails())) {
@@ -276,7 +275,7 @@ public class CaseRegistrationValidator {
         JsonNode editorDetails = profileEdit.get("editorDetails");
 
         // Validate litigantDetails
-        if (litigantDetails == null || litigantDetails.get("uniqueId") == null) {
+        if (litigantDetails == null || litigantDetails.get("individualId") == null) {
             throw new CustomException(VALIDATION_ERR, "Missing litigantDetails or uniqueId in request.");
         }
 

@@ -29,9 +29,6 @@ public class Profile {
     @JsonProperty("pendingTaskRefId")
     private String pendingTaskRefId;
 
-    @JsonProperty("filingNumber")
-    private String filingNumber;
-
     @JsonProperty("newData")
     private Object newData;
 

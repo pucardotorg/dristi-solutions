@@ -477,11 +477,11 @@ public class CaseService {
             CourtCase courtCase = searchRedisCache(profileRequest.getRequestInfo(), String.valueOf(profileRequest.getProfile().getCaseId()));
 
             if (courtCase == null) {
-                log.debug("CourtCase not found in Redis cache for filingNumber :: {}", profileRequest.getProfile().getFilingNumber());
-                List<CaseCriteria> existingApplications = caseRepository.getCases(Collections.singletonList(CaseCriteria.builder().filingNumber(profileRequest.getProfile().getFilingNumber()).build()), profileRequest.getRequestInfo());
+                log.debug("CourtCase not found in Redis cache for filingNumber :: {}", profileRequest.getProfile().getCaseId());
+                List<CaseCriteria> existingApplications = caseRepository.getCases(Collections.singletonList(CaseCriteria.builder().filingNumber(profileRequest.getProfile().getCaseId()).build()), profileRequest.getRequestInfo());
 
                 if (existingApplications.get(0).getResponseList().isEmpty()) {
-                    log.debug("CourtCase not found in DB for filingNumber :: {}", profileRequest.getProfile().getFilingNumber());
+                    log.debug("CourtCase not found in DB for filingNumber :: {}", profileRequest.getProfile().getCaseId());
                     throw new CustomException(VALIDATION_ERR, "Case Application does not exist");
                 } else {
                     courtCase = existingApplications.get(0).getResponseList().get(0);
