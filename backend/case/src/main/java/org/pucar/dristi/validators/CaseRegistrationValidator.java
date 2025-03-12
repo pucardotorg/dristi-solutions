@@ -256,82 +256,39 @@ public class CaseRegistrationValidator {
         }
     }
 
-	public void validateProfileEdit(CaseRequest caseRequest) throws CustomException {
+	public void validateProfileEdit(CreateProfileRequest profileRequest) throws CustomException {
 
-		if (ObjectUtils.isEmpty(caseRequest.getCases().getId())) {
-			throw new CustomException(VALIDATION_ERR, "case Id cannot be empty");
+		if (ObjectUtils.isEmpty(profileRequest.getProfile().getFilingNumber()) ||
+            ObjectUtils.isEmpty(profileRequest.getProfile().getCaseId())) {
+			throw new CustomException(VALIDATION_ERR, "case Id or filingNumber cannot be empty");
 		}
 
-		if (ObjectUtils.isEmpty(caseRequest.getCases().getAdditionalDetails())) {
-			throw new CustomException(VALIDATION_ERR, "additionalDetails cannot be empty");
+		if (ObjectUtils.isEmpty(profileRequest.getProfile().getLitigantDetails())) {
+			throw new CustomException(VALIDATION_ERR, "litigantDetails cannot be empty");
 		}
 
-		ObjectNode additionalDetails = objectMapper.convertValue(caseRequest.getCases().getAdditionalDetails(), ObjectNode.class);
+		ObjectNode profileEdit = objectMapper.convertValue(profileRequest.getProfile(), ObjectNode.class);
 
-		// Set to track unique mappings of (advocate UUID + litigant UniqueId)
-		Set<String> uniqueMappings = new HashSet<>();
+        log.info("Processing ProfileEdit :: {}", profileEdit);
 
-		//Set to track no litigant as pip can raise two request
-		Set<String> litigantPip = new HashSet<>();
+        // Safely extract litigantDetails and editorDetails
+        JsonNode litigantDetails = profileEdit.get("litigantDetails");
+        JsonNode editorDetails = profileEdit.get("editorDetails");
 
-		if (additionalDetails.has("profileEditRequests")) {
-			ArrayNode profileEditRequests = (ArrayNode) additionalDetails.get("profileEditRequests");
+        // Validate litigantDetails
+        if (litigantDetails == null || litigantDetails.get("uniqueId") == null) {
+            throw new CustomException(VALIDATION_ERR, "Missing litigantDetails or uniqueId in request.");
+        }
 
-			if (profileEditRequests.isEmpty()) {
-				throw new CustomException(VALIDATION_ERR, "profileEditRequests array is empty.");
-			}
+        // Validate editorDetails
+        if (editorDetails == null || editorDetails.get("isAdvocate") == null) {
+            throw new CustomException(VALIDATION_ERR, "Missing editorDetails or isAdvocate in request.");
+        }
 
-			for (int i = 0; i < profileEditRequests.size(); i++) {
-				ObjectNode profileEdit = (ObjectNode) profileEditRequests.get(i);
-
-				log.info("Processing ProfileEdit :: {}", profileEdit);
-
-				// Safely extract litigantDetails and editorDetails
-				JsonNode litigantDetails = profileEdit.get("litigantDetails");
-				JsonNode editorDetails = profileEdit.get("editorDetails");
-
-				// Validate litigantDetails
-				if (litigantDetails == null || litigantDetails.get("uniqueId") == null) {
-					throw new CustomException(VALIDATION_ERR, "Missing litigantDetails or uniqueId in request.");
-				}
-
-				// Validate editorDetails
-				if (editorDetails == null || editorDetails.get("isAdvocate") == null) {
-					throw new CustomException(VALIDATION_ERR, "Missing editorDetails or isAdvocate in request.");
-				}
-
-				// Extract values
-				String uniqueId = litigantDetails.get("uniqueId").asText();
-				boolean isAdvocate = editorDetails.get("isAdvocate").asBoolean();
-
-				// Handle Advocate Request
-				if (isAdvocate) {
-					if (editorDetails.get("uuid") == null) {
-						throw new CustomException(VALIDATION_ERR, "Missing UUID for advocate.");
-					}
-
-					String uuid = editorDetails.get("uuid").asText();
-					String mappingKey = uuid + "|" + uniqueId;
-
-					// Check if this (UUID + uniqueId) already exists
-					if (!uniqueMappings.add(mappingKey)) {
-						throw new CustomException(VALIDATION_ERR, "Duplicate profile edit request found for UUID: " + uuid + " and UniqueId: " + uniqueId);
-					}
-				}
-
-				// Handle Non-Advocate Request
-				else {
-					if (!litigantPip.add(uniqueId)) {
-						throw new CustomException(VALIDATION_ERR, "Duplicate profile edit request for litigant UniqueId: " + uniqueId);
-					}
-				}
-			}
-
-			log.info("All profile edits are valid.");
-		} else {
-			throw new CustomException(VALIDATION_ERR, "profileEditRequests not found for CaseId: " + caseRequest.getCases().getId());
-		}
-	}
+        if (editorDetails.get("uuid") == null) {
+            throw new CustomException(VALIDATION_ERR, "Missing UUID for advocate.");
+        }
+    }
 
     private List<String> createMasterDetails() {
         List<String> masterList = new ArrayList<>();

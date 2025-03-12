@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.jayway.jsonpath.JsonPath;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -466,33 +467,38 @@ public class CaseService {
 
     }
 
-    public CourtCase createEditProfileRequest(CaseRequest caseRequest) {
+    public CourtCase createEditProfileRequest(CreateProfileRequest profileRequest) {
 
         try {
             log.debug("Inside create edit profile request");
 
-            validator.validateProfileEdit(caseRequest);
+            validator.validateProfileEdit(profileRequest);
 
-            CourtCase courtCase = searchRedisCache(caseRequest.getRequestInfo(), String.valueOf(caseRequest.getCases().getId()));
+            CourtCase courtCase = searchRedisCache(profileRequest.getRequestInfo(), String.valueOf(profileRequest.getProfile().getCaseId()));
 
             if (courtCase == null) {
-                log.debug("CourtCase not found in Redis cache for caseId :: {}", caseRequest.getCases().getId());
-                List<CaseCriteria> existingApplications = caseRepository.getCases(Collections.singletonList(CaseCriteria.builder().caseId(String.valueOf(caseRequest.getCases().getId())).build()), caseRequest.getRequestInfo());
+                log.debug("CourtCase not found in Redis cache for filingNumber :: {}", profileRequest.getProfile().getFilingNumber());
+                List<CaseCriteria> existingApplications = caseRepository.getCases(Collections.singletonList(CaseCriteria.builder().filingNumber(profileRequest.getProfile().getFilingNumber()).build()), profileRequest.getRequestInfo());
 
                 if (existingApplications.get(0).getResponseList().isEmpty()) {
-                    log.debug("CourtCase not found in DB for caseId :: {}", caseRequest.getCases().getId());
+                    log.debug("CourtCase not found in DB for filingNumber :: {}", profileRequest.getProfile().getFilingNumber());
                     throw new CustomException(VALIDATION_ERR, "Case Application does not exist");
                 } else {
                     courtCase = existingApplications.get(0).getResponseList().get(0);
                 }
             }
 
-            CourtCase decryptedCourtCase = encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, caseRequest.getRequestInfo());
+            CourtCase decryptedCourtCase = encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, profileRequest.getRequestInfo());
 
+            CaseRequest caseRequest = CaseRequest.builder()
+                    .requestInfo(profileRequest.getRequestInfo())
+                    .cases(decryptedCourtCase)
+                    .build();
             AuditDetails auditDetails = courtCase.getAuditdetails();
             auditDetails.setLastModifiedTime(System.currentTimeMillis());
             auditDetails.setLastModifiedBy(caseRequest.getRequestInfo().getUserInfo().getUuid());
 
+            updateAdditionalDetails(decryptedCourtCase, profileRequest.getProfile());
             decryptedCourtCase.setAdditionalDetails(caseRequest.getCases().getAdditionalDetails());
             decryptedCourtCase.setCaseTitle(caseRequest.getCases().getCaseTitle());
             decryptedCourtCase.setAuditdetails(auditDetails);
@@ -520,6 +526,38 @@ public class CaseService {
         }
 
     }
+
+    private void updateAdditionalDetails(CourtCase decryptedCourtCase, Profile profile) {
+        if (decryptedCourtCase == null || profile == null) {
+            throw new IllegalArgumentException("CourtCase and Profile cannot be null");
+        }
+
+        Object additionalDetailsMap  = decryptedCourtCase.getAdditionalDetails();
+
+        JsonNode additionalDetailsNode = objectMapper.valueToTree(additionalDetailsMap);
+        JsonNode profileRequestsNode = additionalDetailsNode.get("profileRequests");
+
+        ArrayNode profileRequestsArray;
+        if (profileRequestsNode == null || !profileRequestsNode.isArray()) {
+            profileRequestsArray = objectMapper.createArrayNode();
+        } else {
+            profileRequestsArray = (ArrayNode) profileRequestsNode;
+        }
+
+        for (JsonNode profileRequest : profileRequestsArray) {
+            if (profileRequest.get("pendingTaskRefId").asText().equals(profile.getPendingTaskRefId())) {
+                throw new CustomException("ERROR_CREATING_REQUEST", "Request already exists for the pending task.");
+            }
+        }
+
+        profile.setId(UUID.randomUUID().toString());
+        JsonNode newProfileNode = objectMapper.valueToTree(profile);
+        profileRequestsArray.add(newProfileNode);
+
+        ((ObjectNode) additionalDetailsNode).set("profileRequests", profileRequestsArray);
+        decryptedCourtCase.setAdditionalDetails(objectMapper.convertValue(additionalDetailsNode, Map.class));
+    }
+
 
     public void callNotificationService(CaseRequest caseRequest, String messageCode) {
         try {
