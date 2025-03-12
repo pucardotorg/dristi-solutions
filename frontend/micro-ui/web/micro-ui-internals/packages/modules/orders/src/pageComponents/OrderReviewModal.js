@@ -6,6 +6,7 @@ import Modal from "../../../dristi/src/components/Modal";
 import { Urls } from "../hooks/services/Urls";
 import { Toast, TextInput } from "@egovernments/digit-ui-react-components";
 import Button from "@egovernments/digit-ui-module-dristi/src/components/Button";
+import { OrderWorkflowAction } from "../utils/orderWorkflow";
 
 const onDocumentUpload = async (fileData, filename) => {
   try {
@@ -29,6 +30,8 @@ function OrderReviewModal({
   handleUpdateBusinessOfDayEntry,
   handleReviewGoBack,
   businessOfDay,
+  updateOrder,
+  setShowBulkModal,
 }) {
   const [fileStoreId, setFileStoreID] = useState(null);
   const [fileName, setFileName] = useState();
@@ -150,34 +153,57 @@ function OrderReviewModal({
     );
   }, [orderPreviewPdf, fileName, isLoading, t]);
 
+  const handleDocumentUpload = async (onSuccess) => {
+    try {
+      const pdfFile = new File([orderPreviewPdf], orderPreviewFileName, { type: "application/pdf" });
+      const document = await onDocumentUpload(pdfFile, pdfFile.name);
+      const fileStoreId = document.file?.files?.[0]?.fileStoreId;
+
+      if (fileStoreId) {
+        await onSuccess(fileStoreId);
+      }
+    } catch (e) {
+      setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
+      console.error("Failed to upload document:", e);
+    }
+  };
+
+  const handleAddSignature = () => {
+    if (showActions) {
+      handleDocumentUpload((fileStoreId) => {
+        setOrderPdfFileStoreID(fileStoreId);
+        setShowsignatureModal(true);
+        setShowReviewModal(false);
+      });
+    }
+  };
+
+  const handleSignLater = () => {
+    if (showActions) {
+      handleDocumentUpload((fileStoreId) => {
+        updateOrder(order, OrderWorkflowAction.SAVE_DRAFT, fileStoreId)
+          .then(() => {
+            setShowReviewModal(false);
+            setShowBulkModal(true);
+          })
+          .catch((e) => {
+            setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
+            console.error("Failed to save draft:", e);
+          });
+      });
+    }
+  };
+
   return (
     <React.Fragment>
       <Modal
         headerBarMain={<Heading label={t("REVIEW_ORDERS_HEADING")} />}
         headerBarEnd={<CloseBtn onClick={handleReviewGoBack} />}
-        actionSaveLabel={showActions && t("ADD_SIGNATURE")}
-        isDisabled={isLoading || !businessDay}
-        actionSaveOnSubmit={() => {
-          if (showActions) {
-            const pdfFile = new File([orderPreviewPdf], orderPreviewFileName, { type: "application/pdf" });
-
-            onDocumentUpload(pdfFile, pdfFile.name)
-              .then((document) => {
-                const fileStoreId = document.file?.files?.[0]?.fileStoreId;
-                if (fileStoreId) {
-                  setOrderPdfFileStoreID(fileStoreId);
-                }
-              })
-              .then(() => {
-                setShowsignatureModal(true);
-                setShowReviewModal(false);
-              })
-              .catch((e) => {
-                setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
-                console.error("Failed to upload document:", e);
-              });
-          }
-        }}
+        actionCancelLabel={showActions && t("ADD_SIGNATURE")}
+        actionSaveLabel={t("SIGN_LATER")}
+        isBackButtonDisabled={isLoading || !businessDay}
+        actionCancelOnSubmit={handleAddSignature}
+        actionSaveOnSubmit={handleSignLater}
         className={"review-order-modal"}
       >
         <div className="review-order-body-main">

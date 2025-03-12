@@ -176,3 +176,14 @@ export const SBIPaymentService = {
       params,
     }),
 };
+
+export const orderManagementService = {
+  getOrdersToSign: (data, params) =>
+    Request({
+      url: Urls.orderManagement.getOrdersToSign,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+};

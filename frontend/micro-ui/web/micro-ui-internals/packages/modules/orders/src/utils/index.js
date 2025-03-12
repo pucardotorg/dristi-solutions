@@ -153,3 +153,40 @@ export const getComplainantName = (complainantDetails) => {
   }
   return `${complainantDetails?.complainantCompanyName} (Represented By ${partyName})` || "";
 };
+
+export const numberToWords = (num) => {
+  if (num === 0) return "zero";
+
+  const ones = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
+  const teens = ["", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+  const tens = ["", "ten", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+  const thousands = ["", "thousand"];
+
+  let words = "";
+
+  if (num >= 1000) {
+    words += ones[Math.floor(num / 1000)] + " " + thousands[1] + " ";
+    num %= 1000;
+  }
+
+  if (num >= 100) {
+    words += ones[Math.floor(num / 100)] + " hundred ";
+    num %= 100;
+  }
+
+  if (num >= 11 && num <= 19) {
+    words += teens[num - 10] + " ";
+    return words.trim();
+  }
+
+  if (num >= 10) {
+    words += tens[Math.floor(num / 10)] + " ";
+    num %= 10;
+  }
+
+  if (num > 0) {
+    words += ones[num] + " ";
+  }
+
+  return words.trim();
+};

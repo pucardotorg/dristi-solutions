@@ -83,9 +83,7 @@ const Modal = ({
                   isDisabled={isBackButtonDisabled}
                   textClassName={cancelTextClassName}
                 />
-              ) : (
-                <div></div>
-              )}
+              ) : null}
               {actionCustomLabel ? (
                 <ButtonSelector
                   textStyles={{ margin: "0px", ...(customActionTextStyle ? customActionTextStyle : {}) }}
