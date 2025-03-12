@@ -8,8 +8,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import pucar.config.Configuration;
 import pucar.repository.ServiceRequestRepository;
-import pucar.web.models.OrderExistsRequest;
-import pucar.web.models.OrderExistsResponse;
+import pucar.web.models.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -47,4 +46,37 @@ public class OrderUtil {
         }
         return orderExistsResponse.getOrder().get(0).getExists();
     }
+
+    public OrderResponse updateOrder(OrderRequest orderRequest) {
+        StringBuilder uri = new StringBuilder();
+        uri.append(configuration.getOrderHost()).append(configuration.getOrderUpdatePath());
+        Object response;
+        OrderResponse orderResponse;
+        try {
+            response = serviceRequestRepository.fetchResult(uri,orderRequest);
+            orderResponse = objectMapper.convertValue(response, OrderResponse.class);
+        } catch (Exception e) {
+            log.error(ERROR_WHILE_FETCHING_FROM_ORDER, e);
+            throw new CustomException(ERROR_WHILE_FETCHING_FROM_ORDER, e.getMessage());
+
+        }
+        return orderResponse;
+    }
+
+    public OrderListResponse getOrders(OrderSearchRequest searchRequest) {
+        StringBuilder uri = new StringBuilder();
+        uri.append(configuration.getOrderHost()).append(configuration.getOrderSearchPath());
+        Object response;
+        OrderListResponse orderListResponse;
+        try {
+            response = serviceRequestRepository.fetchResult(uri,searchRequest);
+            orderListResponse = objectMapper.convertValue(response, OrderListResponse.class);
+        } catch (Exception e) {
+            log.error(ERROR_WHILE_FETCHING_FROM_ORDER, e);
+            throw new CustomException(ERROR_WHILE_FETCHING_FROM_ORDER, e.getMessage());
+
+        }
+        return orderListResponse;
+    }
+
 }

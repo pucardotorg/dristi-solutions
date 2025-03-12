@@ -38,6 +38,12 @@ public class Configuration {
     @Value("${pucar.order.path}")
     private String orderExistsPath;
 
+    @Value("${pucar.order.update.path}")
+    private String orderUpdatePath;
+
+    @Value("${pucar.order.search.path}")
+    private String orderSearchPath;
+
     // Order Config
     @Value("${pucar.esign.host}")
     private String esignHost;
