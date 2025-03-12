@@ -14,12 +14,6 @@ import java.util.Base64;
 @Slf4j
 public class CipherUtil {
 
-    private final ByteArrayMultipartFile multipartFileUtil;
-
-    @Autowired
-    public CipherUtil(ByteArrayMultipartFile multipartFileUtil) {
-        this.multipartFileUtil = multipartFileUtil;
-    }
 
     public String encodePdfToBase64(Resource resource) throws IOException {
         try (InputStream inputStream = resource.getInputStream()) {
@@ -28,11 +22,10 @@ public class CipherUtil {
         }
     }
 
-    public MultipartFile decodeBase64ToPdf(String base64) throws IOException {
+    public MultipartFile decodeBase64ToPdf(String base64, String fileName) throws IOException {
         byte[] decodedBytes = Base64.getDecoder().decode(base64);
 
-
-
+        return new ByteArrayMultipartFile(fileName, decodedBytes);
 
     }
 }

@@ -25,6 +25,12 @@ public class Configuration {
     @Value("${pucar.filestore.path}")
     private String fileStorePath;
 
+    @Value("${pucar.filestore.search.endpoint}")
+    private String fileStoreSearchEndpoint;
+
+    @Value("${pucar.filestore.delete.endpoint}")
+    private String fileStoreDeleteEndPoint;
+
     // Order Config
     @Value("${pucar.order.host}")
     private String orderHost;
