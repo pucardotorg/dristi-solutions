@@ -13,13 +13,15 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import pucar.config.Configuration;
+import pucar.repository.ServiceRequestRepository;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static pucar.config.ServiceConstants.FILE_STORE_UTILITY_EXCEPTION;
+import static pucar.config.ServiceConstants.*;
 
 @Component
 @Slf4j
@@ -29,14 +31,18 @@ public class FileStoreUtil {
     private static final String FILES_KEY = "files";
     private static final String DOCUMENT_TYPE_PDF = "application/pdf";
 
-    private Configuration configs;
+    private final Configuration configs;
     private final ObjectMapper mapper;
+    private final ServiceRequestRepository repository;
+    private final RestTemplate restTemplate;
 
 
     @Autowired
-    public FileStoreUtil(Configuration configs, ObjectMapper mapper) {
+    public FileStoreUtil(Configuration configs, ObjectMapper mapper, ServiceRequestRepository repository, RestTemplate restTemplate) {
         this.configs = configs;
         this.mapper = mapper;
+        this.repository = repository;
+        this.restTemplate = restTemplate;
     }
 
 
@@ -82,18 +88,17 @@ public class FileStoreUtil {
             throw new CustomException("INVALID_INPUT", "Invalid fileStoreId or tenantId");
         }
         StringBuilder uri = new StringBuilder();
-        uri.append(configs.getFilestoreHost()).append(configs.getFilestoreSearchEndPoint());
+        uri.append(configs.getFileStoreHost()).append(configs.getFileStoreSearchEndpoint());
         uri = appendQueryParams(uri, "fileStoreId", fileStoreId, "tenantId", tenantId);
         Resource object;
         try {
-            object = restTemplate.getForObject(uri.toString(), Resource.class);
+            object = repository.fetchResultGetForResource(uri);
             return object;
 
         } catch (Exception e) {
             throw new CustomException(FILE_STORE_SERVICE_EXCEPTION_CODE, FILE_STORE_SERVICE_EXCEPTION_MESSAGE);
 
         }
-
 
     }
 
@@ -113,7 +118,7 @@ public class FileStoreUtil {
         }
         String module = "signed";  // fixme: take me from constant file
         StringBuilder uri = new StringBuilder();
-        uri.append(configs.getFilestoreHost()).append(configs.getFilestoreCreateEndPoint());
+        uri.append(configs.getFileStoreHost()).append(configs.getFileStoreSaveEndPoint());
 
         List<MultipartFile> files = new ArrayList<>();
         files.add(file);
@@ -151,8 +156,8 @@ public class FileStoreUtil {
     public List<String> deleteFileFromFileStore(String filestoreId, String tenantId, Boolean isSoftDelete) {
 
         StringBuilder uri = new StringBuilder();
-        uri.append(configs.getFilestoreHost())
-                .append(configs.getFilestoreDeleteEndPoint())
+        uri.append(configs.getFileStoreHost())
+                .append(configs.getFileStoreDeleteEndPoint())
                 .append("?tenantId=").append(tenantId);
 
         MultiValueMap<String, Object> request = new LinkedMultiValueMap<>();
@@ -167,7 +172,7 @@ public class FileStoreUtil {
         try {
             ResponseEntity<String> response = restTemplate.exchange(uri.toString(), HttpMethod.POST, entity, String.class);
         } catch (Exception e) {
-            throw new CustomException("FILESTORE_SERVICE_EXCEPTION","Error occurred while deleting file from filestore");
+            throw new CustomException("FILESTORE_SERVICE_EXCEPTION", "Error occurred while deleting file from filestore");
         }
 
         return null; // list of filestore ids which is deleted

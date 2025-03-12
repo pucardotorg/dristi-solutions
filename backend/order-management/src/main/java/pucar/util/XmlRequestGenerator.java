@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -18,10 +20,7 @@ import java.util.Map;
 import org.w3c.dom.CDATASection;
 
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
+@Component
 public class XmlRequestGenerator {
 
 

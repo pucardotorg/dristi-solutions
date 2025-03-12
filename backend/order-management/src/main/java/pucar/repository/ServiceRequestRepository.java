@@ -80,4 +80,19 @@ public class ServiceRequestRepository {
         }
         return response;
     }
+
+    public Resource fetchResultGetForResource(StringBuilder uri) {
+        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        Resource response = null;
+        try {
+            response = restTemplate.getForObject(uri.toString(), Resource.class);
+        } catch (HttpClientErrorException e) {
+            log.error(EXTERNAL_SERVICE_EXCEPTION, e);
+            throw new ServiceCallException(e.getResponseBodyAsString());
+        } catch (Exception e) {
+            log.error(SEARCHER_SERVICE_EXCEPTION, e);
+        }
+
+        return response;
+    }
 }
