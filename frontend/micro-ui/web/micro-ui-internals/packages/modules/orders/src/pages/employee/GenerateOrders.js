@@ -1902,8 +1902,9 @@ const GenerateOrders = () => {
           currentOrder?.orderDetails?.isDcaAcceptedOrRejected === "ACCEPTED" ? "allowed" : "dismissed"
         }`;
       case "ADMIT_CASE":
-      case "DISMISS_CASE":
         return `Cognizance of the offence taken on file as ${caseDetails?.cmpNumber} under Section 138 of the Negotiable Instruments Act`;
+      case "DISMISS_CASE":
+        return `Case has been dismissed`;
       default:
         return "";
     }
