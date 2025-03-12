@@ -1,57 +1,88 @@
 package pucar.web.controllers;
 
-import org.junit.Test;
-import org.junit.Ignore;
-import org.junit.runner.RunWith;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.context.annotation.Import;
-import org.springframework.http.MediaType;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import pucar.TestConfiguration;
+import org.egov.common.contract.request.RequestInfo;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.ResponseEntity;
+import pucar.service.BSSService;
+import pucar.web.models.*;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import java.util.Collections;
+import java.util.List;
 
-/**
-* API tests for OmsApiController
-*/
-@Ignore
-@RunWith(SpringRunner.class)
-@WebMvcTest(OmsApiController.class)
-@Import(TestConfiguration.class)
-public class OmsApiControllerTest {
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-    @Autowired
-    private MockMvc mockMvc;
+@ExtendWith(MockitoExtension.class)
+class OmsApiControllerTest {
 
-    @Test
-    public void getOrdersToSignSuccess() throws Exception {
-        mockMvc.perform(post("/oms/v1/_getOrdersToSign").contentType(MediaType
-        .APPLICATION_JSON_UTF8))
-        .andExpect(status().isOk());
+    @Mock
+    private BSSService bssService;
+
+    @InjectMocks
+    private OmsApiController omsApiController;
+
+    private OrdersToSignRequest ordersToSignRequest;
+    private UpdateSignedOrderRequest updateSignedOrderRequest;
+
+    @BeforeEach
+    void setUp() {
+        ordersToSignRequest = new OrdersToSignRequest();
+        ordersToSignRequest.setRequestInfo(new RequestInfo()); // Mock request info
+
+        updateSignedOrderRequest = new UpdateSignedOrderRequest();
     }
 
     @Test
-    public void getOrdersToSignFailure() throws Exception {
-        mockMvc.perform(post("/oms/v1/_getOrdersToSign").contentType(MediaType
-        .APPLICATION_JSON_UTF8))
-        .andExpect(status().isBadRequest());
+    void testGetOrdersToSign_Success() {
+        // Mock response
+        List<OrderToSign> mockOrderList = Collections.singletonList(new OrderToSign());
+        when(bssService.createOrderToSignRequest(ordersToSignRequest)).thenReturn(mockOrderList);
+
+        // Execute method
+        ResponseEntity<OrdersToSignResponse> response = omsApiController.getOrdersToSign(ordersToSignRequest);
+
+        // Assertions
+        assertNotNull(response);
+        assertEquals(200, response.getStatusCodeValue());
+        assertNotNull(response.getBody());
+        assertEquals(mockOrderList, response.getBody().getOrderList());
+
+        verify(bssService, times(1)).createOrderToSignRequest(ordersToSignRequest);
     }
 
     @Test
-    public void updateSignedOrdersSuccess() throws Exception {
-        mockMvc.perform(post("/oms/v1/_updateSignedOrders").contentType(MediaType
-        .APPLICATION_JSON_UTF8))
-        .andExpect(status().isOk());
+    void testGetOrdersToSign_Exception() {
+        when(bssService.createOrderToSignRequest(ordersToSignRequest)).thenThrow(new RuntimeException("Service failure"));
+
+        // Verify exception handling
+        assertThrows(RuntimeException.class, () -> omsApiController.getOrdersToSign(ordersToSignRequest));
+
+        verify(bssService, times(1)).createOrderToSignRequest(ordersToSignRequest);
     }
 
     @Test
-    public void updateSignedOrdersFailure() throws Exception {
-        mockMvc.perform(post("/oms/v1/_updateSignedOrders").contentType(MediaType
-        .APPLICATION_JSON_UTF8))
-        .andExpect(status().isBadRequest());
+    void testUpdateSignedOrders_Success() {
+        // Execute method
+        ResponseEntity<Void> response = omsApiController.updateSignedOrders(updateSignedOrderRequest);
+
+        // Assertions
+        assertNotNull(response);
+        assertEquals(501, response.getStatusCodeValue());
+
+        verify(bssService, times(1)).updateOrderWithSignDoc(updateSignedOrderRequest);
     }
 
+    @Test
+    void testUpdateSignedOrders_Exception() {
+        doThrow(new RuntimeException("Service failure")).when(bssService).updateOrderWithSignDoc(updateSignedOrderRequest);
+
+        assertThrows(RuntimeException.class, () -> omsApiController.updateSignedOrders(updateSignedOrderRequest));
+
+        verify(bssService, times(1)).updateOrderWithSignDoc(updateSignedOrderRequest);
+    }
 }
