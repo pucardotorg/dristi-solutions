@@ -1414,9 +1414,9 @@ components:
         ProcessInfo:
           type: object
           properties:
-            filingNumber:
+            caseId:
               type: string
-              description: "Filing number associated with the case"
+              description: "uuid of the case"
             action:
               type: string
               enum: [ "APPROVE", "REJECT" ]
@@ -1460,9 +1460,9 @@ components:
         pendingTaskRefId:
           type: string
           description: "Reference ID for the pending task"
-        filingNumber:
+        caseId:
           type: string
-          description: "Filing number associated with the case"
+          description: "uuid of the case"
         uuid:
           type: string
           description: "UUID of the profile"
