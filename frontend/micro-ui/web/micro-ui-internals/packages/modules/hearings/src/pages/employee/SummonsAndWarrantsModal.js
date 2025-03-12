@@ -12,7 +12,7 @@ import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 const modalPopup = {
   height: "70%",
   minHeight: "40rem",
-  width: "50%",
+  width: "80%",
   minWidth: "40rem",
   position: "absolute",
   bottom: "50%",
@@ -452,11 +452,9 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
                 }, 0);
               }}
               className={`round-item ${index === activeIndex?.orderIndex ? "active" : ""}`}
-              style={{ height: "50px" }}
             >
               <div style={{ display: "flex", flexDirection: "column", width: "90px" }}>
-                <span>{item?.orderType}</span>
-                <span>{item.createdDate && formatDate(new Date(item.createdDate), "DD-MM-YYYY")}</span>
+                <span>{`${orderList?.length - index} (${item?.orderType})`}</span>
               </div>
             </div>
           ))}
