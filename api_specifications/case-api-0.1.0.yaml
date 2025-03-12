@@ -1466,6 +1466,12 @@ components:
         uuid:
           type: string
           description: "UUID of the profile"
+        reason:
+          type: string
+          description: "reason for change"
+        document:
+          $ref: >-
+            https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Document
         newData:
           type: object
           properties:
