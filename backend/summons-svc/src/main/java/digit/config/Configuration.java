@@ -291,10 +291,4 @@ public class Configuration {
 
     @Value("${dristi.helpline.number}")
     private String helplineNumber;
-
-    @Value("${dristi.qrCodeFirst.url}")
-    private String qrCodeFirstUrl;
-
-    @Value("${drsiti.qrCodeSecond.url}")
-    private String qrCodeSecondUrl;
 }

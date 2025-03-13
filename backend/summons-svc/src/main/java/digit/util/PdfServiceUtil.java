@@ -159,16 +159,12 @@ public class PdfServiceUtil {
     private SummonsPdf createSummonsPdfFromTask(Task task) {
         Long issueDate = null;
         String docSubType = null;
-        String qrCodeSummonFirst = "";
-        String qrCodeSumonSecond = "";
         if (NOTICE.equals(task.getTaskType())) {
             issueDate = task.getTaskDetails().getNoticeDetails().getIssueDate();
             docSubType = task.getTaskDetails().getNoticeDetails().getDocSubType();
         } else if (SUMMON.equals(task.getTaskType())) {
             issueDate = task.getTaskDetails().getSummonDetails().getIssueDate();
             docSubType = task.getTaskDetails().getSummonDetails().getDocSubType();
-            qrCodeSummonFirst = convertImageUrlToBase64Url(config.getQrCodeFirstUrl());
-            qrCodeSumonSecond = convertImageUrlToBase64Url(config.getQrCodeSecondUrl());
         }
         else if(WARRANT.equals(task.getTaskType())){
             issueDate = task.getTaskDetails().getWarrantDetails().getIssueDate();
@@ -217,8 +213,6 @@ public class PdfServiceUtil {
                 .lokAdalatUrl(config.getLokAdalatUrl())
                 .infoPdfUrl(config.getInfoPdfUrl())
                 .helplineNumber(config.getHelplineNumber())
-                .qrCodeSummonFirst(qrCodeSummonFirst)
-                .qrCodeSummonSecond(qrCodeSumonSecond)
                 .build();
     }
 
@@ -279,26 +273,6 @@ public class PdfServiceUtil {
             };
         } catch (Exception e) {
             log.error("Failed to get Date in String format from : {}", millis);
-            return "";
-        }
-    }
-
-    private String convertImageUrlToBase64Url(String imageUrl){
-        try {
-            if(imageUrl == null || imageUrl.isEmpty()){
-                return "";
-            }
-
-            URL url = new URL(imageUrl);
-            InputStream inputStream = url.openStream();
-
-            byte[] imageBytes = inputStream.readAllBytes();
-            inputStream.close();
-
-            String base64Encoded = Base64.getEncoder().encodeToString(imageBytes);
-            return base64Encoded.replace("+", "-").replace("/", "_").replace("=", "");
-        } catch (Exception e) {
-            log.error("Failed to convert image url to base64Url : {}", imageUrl);
             return "";
         }
     }
