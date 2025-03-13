@@ -1441,9 +1441,9 @@ components:
               type: string
               enum: [ "complainant", "respondent" ]
               description: "The type of party (complainant or respondent)"
-            individualId:
+            uniqueId:
               type: string
-              description: "Individual Id for the litigant"
+              description: "Individual Id in case of  complainant / uuid of Respondent in additional details"
         editorDetails:
           type: object
           properties:
