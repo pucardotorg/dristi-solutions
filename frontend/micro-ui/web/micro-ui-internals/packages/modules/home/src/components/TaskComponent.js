@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { CardLabel, Dropdown } from "@egovernments/digit-ui-components";
-import { LabelFieldPair } from "@egovernments/digit-ui-react-components";
+import { Button, LabelFieldPair } from "@egovernments/digit-ui-react-components";
 import { Loader } from "@egovernments/digit-ui-react-components";
 import { useGetPendingTask } from "../hooks/useGetPendingTask";
 import { useTranslation } from "react-i18next";
@@ -41,6 +41,8 @@ const TasksComponent = ({
   taskIncludes,
   isApplicationCompositeOrder = false,
   compositeOrderObj,
+  pendingSignOrderList,
+  setShowBulkSignAllModal,
 }) => {
   const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
   const history = useHistory();
@@ -590,6 +592,15 @@ const TasksComponent = ({
       {!hideTaskComponent && (
         <React.Fragment>
           <h2>{!isLitigant ? t("YOUR_TASK") : t("ALL_PENDING_TASK_TEXT")}</h2>
+          {pendingSignOrderList && (
+            <Button
+              label={`${t("BULK_SIGN")} ${pendingSignOrderList?.length} ${t("BULK_PENDING_ORDERS")}`}
+              textStyles={{ margin: "0px", fontSize: "16px", fontWeight: 700, textAlign: "center" }}
+              style={{ padding: "18px", width: "fit-content", boxShadow: "none" }}
+              onButtonClick={() => setShowBulkSignAllModal(true)}
+              isDisabled={pendingSignOrderList?.length === 0}
+            />
+          )}
           {totalPendingTask !== undefined && totalPendingTask > 0 ? (
             <React.Fragment>
               {!hideFilters && (
