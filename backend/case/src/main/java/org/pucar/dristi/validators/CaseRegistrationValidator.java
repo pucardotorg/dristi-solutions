@@ -266,13 +266,15 @@ public class CaseRegistrationValidator {
 			throw new CustomException(VALIDATION_ERR, "litigantDetails cannot be empty");
 		}
 
-		ObjectNode profileEdit = objectMapper.convertValue(profileRequest.getProfile(), ObjectNode.class);
-
+        Profile profileEdit = profileRequest.getProfile();
         log.info("Processing ProfileEdit :: {}", profileEdit);
 
+        // Set to track unique mappings of (advocate UUID + litigant UniqueId)
+        Set<String> uniqueMappings = new HashSet<>();
+
         // Safely extract litigantDetails and editorDetails
-        JsonNode litigantDetails = profileEdit.get("litigantDetails");
-        JsonNode editorDetails = profileEdit.get("editorDetails");
+        JsonNode litigantDetails = objectMapper.convertValue(profileEdit.getLitigantDetails(), JsonNode.class);
+        JsonNode editorDetails = objectMapper.convertValue(profileEdit.getEditorDetails(), JsonNode.class);
 
         // Validate litigantDetails
         if (litigantDetails == null || litigantDetails.get("individualId") == null) {
@@ -286,6 +288,16 @@ public class CaseRegistrationValidator {
 
         if (editorDetails.get("uuid") == null) {
             throw new CustomException(VALIDATION_ERR, "Missing UUID for advocate.");
+        }
+
+        String individualId = litigantDetails.get("individualId").asText();
+
+        String uuid = editorDetails.get("uuid").asText();
+        String mappingKey = uuid + "|" + individualId;
+
+        // Check if this (UUID + uniqueId) already exists
+        if (!uniqueMappings.add(mappingKey)) {
+            throw new CustomException(VALIDATION_ERR, "Duplicate profile edit request found for UUID: " + uuid + " and UniqueId: " + individualId);
         }
     }
 
