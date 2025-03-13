@@ -40,9 +40,6 @@ import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
@@ -465,6 +462,91 @@ public class CaseService {
         }
 
     }
+
+    public CourtCase createEditProfileRequest(CreateProfileRequest profileRequest) {
+
+        try {
+            log.debug("Inside create edit profile request");
+
+            CourtCase courtCase = searchRedisCache(profileRequest.getRequestInfo(), String.valueOf(profileRequest.getProfile().getCaseId()));
+
+            if (courtCase == null) {
+                log.debug("CourtCase not found in Redis cache for caseId :: {}", profileRequest.getProfile().getCaseId());
+                List<CaseCriteria> existingApplications = caseRepository.getCases(Collections.singletonList(CaseCriteria.builder().filingNumber(profileRequest.getProfile().getCaseId()).build()), profileRequest.getRequestInfo());
+
+                if (existingApplications.get(0).getResponseList().isEmpty()) {
+                    log.debug("CourtCase not found in DB for caseId :: {}", profileRequest.getProfile().getCaseId());
+                    throw new CustomException(VALIDATION_ERR, "Case Application does not exist");
+                } else {
+                    courtCase = existingApplications.get(0).getResponseList().get(0);
+                }
+            }
+            validator.validateProfileEdit(profileRequest, courtCase);
+
+            CourtCase decryptedCourtCase = encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, profileRequest.getRequestInfo());
+
+            CaseRequest caseRequest = CaseRequest.builder()
+                    .requestInfo(profileRequest.getRequestInfo())
+                    .cases(decryptedCourtCase)
+                    .build();
+            AuditDetails auditDetails = courtCase.getAuditdetails();
+            auditDetails.setLastModifiedTime(System.currentTimeMillis());
+            auditDetails.setLastModifiedBy(caseRequest.getRequestInfo().getUserInfo().getUuid());
+
+            updateAdditionalDetails(decryptedCourtCase, profileRequest.getProfile());
+            decryptedCourtCase.setAdditionalDetails(caseRequest.getCases().getAdditionalDetails());
+            decryptedCourtCase.setCaseTitle(caseRequest.getCases().getCaseTitle());
+            decryptedCourtCase.setAuditdetails(auditDetails);
+
+            caseRequest.setCases(decryptedCourtCase);
+
+            log.info("Encrypting profile edit for caseId: {}", caseRequest.getCases().getId());
+
+            caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), config.getCourtCaseEncryptNew(), CourtCase.class));
+            cacheService.save(caseRequest.getCases().getTenantId() + ":" + caseRequest.getCases().getId(), caseRequest.getCases());
+
+            producer.push(config.getCaseUpdateTopic(), caseRequest);
+
+            CourtCase cases = encryptionDecryptionUtil.decryptObject(caseRequest.getCases(), null, CourtCase.class, caseRequest.getRequestInfo());
+            cases.setAccessCode(null);
+
+            return cases;
+
+
+        } catch (CustomException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error occurred while editing profile :: {}", e.toString());
+            throw new CustomException(EDIT_CASE_ERR, "Exception occurred while editing profile: " + e.getMessage());
+        }
+
+    }
+
+    private void updateAdditionalDetails(CourtCase decryptedCourtCase, Profile profile) {
+        if (decryptedCourtCase == null || profile == null) {
+            throw new IllegalArgumentException("CourtCase and Profile cannot be null");
+        }
+
+        Object additionalDetailsMap  = decryptedCourtCase.getAdditionalDetails();
+
+        JsonNode additionalDetailsNode = objectMapper.valueToTree(additionalDetailsMap);
+        JsonNode profileRequestsNode = additionalDetailsNode.get("profileRequests");
+
+        ArrayNode profileRequestsArray;
+        if (profileRequestsNode == null || !profileRequestsNode.isArray()) {
+            profileRequestsArray = objectMapper.createArrayNode();
+        } else {
+            profileRequestsArray = (ArrayNode) profileRequestsNode;
+        }
+
+        profile.setId(UUID.randomUUID().toString());
+        JsonNode newProfileNode = objectMapper.valueToTree(profile);
+        profileRequestsArray.add(newProfileNode);
+
+        ((ObjectNode) additionalDetailsNode).set("profileRequests", profileRequestsArray);
+        decryptedCourtCase.setAdditionalDetails(objectMapper.convertValue(additionalDetailsNode, Map.class));
+    }
+
 
     public void callNotificationService(CaseRequest caseRequest, String messageCode) {
         try {
