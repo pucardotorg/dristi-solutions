@@ -1,11 +1,7 @@
 package pucar.util;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
+import org.w3c.dom.CDATASection;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -16,15 +12,15 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.StringWriter;
+import java.util.List;
 import java.util.Map;
-import org.w3c.dom.CDATASection;
 
 
 @Component
 public class XmlRequestGenerator {
 
 
-    public  String createXML(String rootElement, Map<String, Object> data) {
+    public String createXML(String rootElement, Map<String, Object> data) {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
@@ -53,44 +49,64 @@ public class XmlRequestGenerator {
         }
     }
 
-    private  void buildXML(Document document, Element parent, Map<String, Object> data) {
-        for (Map.Entry<String, Object> entry : data.entrySet()) {
-            String key = entry.getKey();
-            Object value = entry.getValue();
+    private void buildXML(Document document, Element parent, Object data) {
+        if (data instanceof Map) {
+            Map<String, Object> mapData = (Map<String, Object>) data;
 
-            if (value instanceof Map) {
-                // Handle nested elements
-                Map<String, Object> nestedData = (Map<String, Object>) value;
+            for (Map.Entry<String, Object> entry : mapData.entrySet()) {
+                String key = entry.getKey();
+                Object value = entry.getValue();
 
-                if (nestedData.containsKey("@attributes")) {
-                    // Handle attributes inside the element
-                    Map<String, String> attributes = (Map<String, String>) nestedData.get("@attributes");
+                if ("certificate".equals(key) && value instanceof List) {
+                    // Create a single <certificate> tag
+                    Element certificateElement = document.createElement("certificate");
+                    parent.appendChild(certificateElement);
+
+                    List<Map<String, Object>> attributesList = (List<Map<String, Object>>) value;
+                    for (Map<String, Object> attr : attributesList) {
+                        buildXML(document, certificateElement, attr);
+                    }
+                } else if ("attribute".equals(key) && value instanceof Map) {
+                    // Create <attribute name="XYZ"></attribute> even if empty
+                    Map<String, String> attributeData = (Map<String, String>) value;
+                    Element attributeElement = document.createElement("attribute");
+                    attributeElement.setAttribute("name", attributeData.get("name"));
+
+                    String textValue = attributeData.get("value");
+
+                    if (textValue != null) {
+                        if (textValue.startsWith("<![CDATA[")) {
+                            CDATASection cdata = document.createCDATASection(
+                                    textValue.replace("<![CDATA[", "").replace("]]>", "")
+                            );
+                            attributeElement.appendChild(cdata);
+                        } else {
+                            attributeElement.appendChild(document.createTextNode(textValue));
+                        }
+                    } else {
+                        // Add an empty text node to avoid self-closing tag
+                        attributeElement.appendChild(document.createTextNode(""));
+                    }
+
+                    parent.appendChild(attributeElement);
+                } else if (value instanceof Map) {
                     Element element = document.createElement(key);
-                    for (Map.Entry<String, String> attr : attributes.entrySet()) {
-                        element.setAttribute(attr.getKey(), attr.getValue());
+                    parent.appendChild(element);
+                    buildXML(document, element, value);
+                } else {
+                    Element element = document.createElement(key);
+                    if (value instanceof String && ((String) value).startsWith("<![CDATA[")) {
+                        CDATASection cdata = document.createCDATASection(
+                                ((String) value).replace("<![CDATA[", "").replace("]]>", "")
+                        );
+                        element.appendChild(cdata);
+                    } else {
+                        element.appendChild(document.createTextNode(value != null ? value.toString() : ""));
                     }
                     parent.appendChild(element);
-
-                    // Remove attributes before processing nested children
-                    nestedData.remove("@attributes");
-                    buildXML(document, element, nestedData);
-                } else {
-                    // Just a nested element without attributes
-                    Element element = document.createElement(key);
-                    parent.appendChild(element);
-                    buildXML(document, element, nestedData);
                 }
-            } else if (value instanceof String && ((String) value).startsWith("<![CDATA[")) {
-                // Handle CDATA section
-                Element element = document.createElement(key);
-                CDATASection cdata = document.createCDATASection(((String) value).replace("<![CDATA[", "").replace("]]>", ""));
-                element.appendChild(cdata);
-                parent.appendChild(element);
-            } else {
-                // Simple text value
-                Element element = document.createElement(key);
-                element.appendChild(document.createTextNode(value.toString()));
-                parent.appendChild(element);
             }
         }
-    }}
+    }
+
+}
