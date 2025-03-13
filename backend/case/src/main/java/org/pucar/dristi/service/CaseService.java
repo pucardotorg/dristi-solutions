@@ -475,7 +475,7 @@ public class CaseService {
 
             if (courtCase == null) {
                 log.debug("CourtCase not found in Redis cache for caseId :: {}", profileRequest.getProfile().getCaseId());
-                List<CaseCriteria> existingApplications = caseRepository.getCases(Collections.singletonList(CaseCriteria.builder().filingNumber(profileRequest.getProfile().getCaseId()).build()), profileRequest.getRequestInfo());
+                List<CaseCriteria> existingApplications = caseRepository.getCases(Collections.singletonList(CaseCriteria.builder().caseId(profileRequest.getProfile().getCaseId()).build()), profileRequest.getRequestInfo());
 
                 if (existingApplications.get(0).getResponseList().isEmpty()) {
                     log.debug("CourtCase not found in DB for caseId :: {}", profileRequest.getProfile().getCaseId());
