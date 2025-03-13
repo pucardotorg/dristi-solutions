@@ -1,0 +1,72 @@
+[
+  {
+    "tenantId": "kl",
+    "moduleName": "ACCESSCONTROL-ACTIONS-TEST",
+    "masterName": "actions-test",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "data": {
+          "id": 2728,
+          "url": "/case/v2/profilerequest/create",
+          "code": "null",
+          "name": "Profile edit request",
+          "path": "",
+          "enabled": false,
+          "displayName": "Profile edit request",
+          "orderNumber": 1,
+          "serviceCode": "case",
+          "parentModule": ""
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "data": {
+          "id": 2729,
+          "url": "/case/v2/profilerequest/process",
+          "code": "null",
+          "name": "Profile process request",
+          "path": "",
+          "enabled": false,
+          "displayName": "Profile process request",
+          "orderNumber": 1,
+          "serviceCode": "case",
+          "parentModule": ""
+        },
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "ACCESSCONTROL-ROLEACTIONS",
+    "masterName": "roleactions",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "rolecode": "ADVOCATE_ROLE",
+          "actionid": 2728,
+          "isactive": true
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "rolecode": "JUDGE_ROLE",
+          "actionid": 2729,
+          "isactive": true
+        },
+        "isActive": true
+      }
+    ]
+  }
+]
