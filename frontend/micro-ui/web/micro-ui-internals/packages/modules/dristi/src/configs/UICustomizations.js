@@ -506,7 +506,6 @@ export const UICustomizations = {
   orderInboxConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
       const tenantId = window?.Digit.ULBService.getStateId();
-      const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
       const moduleSearchCriteria = {
         ...(Object.keys(requestCriteria?.state?.searchForm?.type || {})?.length && {
           type: requestCriteria?.state?.searchForm?.type?.type,
