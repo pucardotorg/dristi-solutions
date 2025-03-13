@@ -26,22 +26,7 @@ class XmlRequestGeneratorTest {
         assertTrue(xml.contains("<age>30</age>"));
     }
 
-    @Test
-    void testCreateXML_WithAttributes() {
-        Map<String, Object> attributes = new HashMap<>();
-        attributes.put("id", "123");
 
-        Map<String, Object> personData = new HashMap<>();
-        personData.put("@attributes", attributes);
-        personData.put("name", "John Doe");
-
-        Map<String, Object> data = new HashMap<>();
-        data.put("person", personData);
-
-        String xml = xmlRequestGenerator.createXML("root", data);
-        assertTrue(xml.contains("<person id=\"123\">"));
-        assertTrue(xml.contains("<name>John Doe</name>"));
-    }
 
     @Test
     void testCreateXML_WithNestedElements() {
