@@ -2217,14 +2217,16 @@ const AdmittedCases = () => {
     [t, userRoles]
   );
 
+  // outcome always null unless case went on final stage
   const showActionBar = useMemo(
     () =>
       (primaryAction.action ||
         secondaryAction.action ||
         tertiaryAction.action ||
         ([CaseWorkflowState.PENDING_NOTICE, CaseWorkflowState.PENDING_RESPONSE].includes(caseDetails?.status) && !isCitizen)) &&
+      !caseDetails?.outcome &&
       !isCourtRoomManager,
-    [primaryAction.action, secondaryAction.action, tertiaryAction.action, caseDetails?.status, isCitizen, isCourtRoomManager]
+    [primaryAction.action, secondaryAction.action, tertiaryAction.action, caseDetails?.status, caseDetails?.outcome, isCitizen, isCourtRoomManager]
   );
 
   const handleOpenSummonNoticeModal = async (partyIndex) => {
