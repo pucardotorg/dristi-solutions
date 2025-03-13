@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.jayway.jsonpath.JsonPath;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -41,9 +40,6 @@ import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
@@ -475,11 +471,11 @@ public class CaseService {
             CourtCase courtCase = searchRedisCache(profileRequest.getRequestInfo(), String.valueOf(profileRequest.getProfile().getCaseId()));
 
             if (courtCase == null) {
-                log.debug("CourtCase not found in Redis cache for filingNumber :: {}", profileRequest.getProfile().getCaseId());
+                log.debug("CourtCase not found in Redis cache for caseId :: {}", profileRequest.getProfile().getCaseId());
                 List<CaseCriteria> existingApplications = caseRepository.getCases(Collections.singletonList(CaseCriteria.builder().filingNumber(profileRequest.getProfile().getCaseId()).build()), profileRequest.getRequestInfo());
 
                 if (existingApplications.get(0).getResponseList().isEmpty()) {
-                    log.debug("CourtCase not found in DB for filingNumber :: {}", profileRequest.getProfile().getCaseId());
+                    log.debug("CourtCase not found in DB for caseId :: {}", profileRequest.getProfile().getCaseId());
                     throw new CustomException(VALIDATION_ERR, "Case Application does not exist");
                 } else {
                     courtCase = existingApplications.get(0).getResponseList().get(0);
@@ -504,7 +500,7 @@ public class CaseService {
 
             caseRequest.setCases(decryptedCourtCase);
 
-            log.info("Encrypting :: {}", caseRequest);
+            log.info("Encrypting profile edit for caseId: {}", caseRequest.getCases().getId());
 
             caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), config.getCourtCaseEncryptNew(), CourtCase.class));
             cacheService.save(caseRequest.getCases().getTenantId() + ":" + caseRequest.getCases().getId(), caseRequest.getCases());

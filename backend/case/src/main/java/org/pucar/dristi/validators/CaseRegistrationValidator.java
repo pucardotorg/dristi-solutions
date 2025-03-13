@@ -278,8 +278,8 @@ public class CaseRegistrationValidator {
         JsonNode editorDetails = objectMapper.convertValue(profileEdit.getEditorDetails(), JsonNode.class);
 
         // Validate litigantDetails
-        if (litigantDetails == null || litigantDetails.get("individualId") == null) {
-            throw new CustomException(VALIDATION_ERR, "Missing litigantDetails or individualId in request.");
+        if (litigantDetails == null || litigantDetails.get("uniqueId") == null) {
+            throw new CustomException(VALIDATION_ERR, "Missing litigantDetails or uniqueId in request.");
         }
 
         // Validate editorDetails
@@ -291,10 +291,10 @@ public class CaseRegistrationValidator {
             throw new CustomException(VALIDATION_ERR, "Missing UUID for advocate or litigant.");
         }
 
-        String individualId = litigantDetails.get("individualId").asText();
+        String uniqueId = litigantDetails.get("uniqueId").asText();
 
         String uuid = editorDetails.get("uuid").asText();
-        String mappingKey = uuid + "|" + individualId;
+        String mappingKey = uuid + "|" + uniqueId;
         uniqueMappings.add(mappingKey);
 
         // Check if this (UUID + uniqueId) already exists
@@ -303,9 +303,9 @@ public class CaseRegistrationValidator {
         if(profileRequests != null){
             for (JsonNode existProfile : profileRequests) {
                 String existMappingKey = existProfile.get("editorDetails").get("uuid").asText() +
-                        "|" + existProfile.get("litigantDetails").get("individualId").asText();
+                        "|" + existProfile.get("litigantDetails").get("uniqueId").asText();
                 if (!uniqueMappings.add(existMappingKey)) {
-                    throw new CustomException(VALIDATION_ERR, "Duplicate profile edit request found for UUID: " + uuid + " and IndividualId: " + individualId);
+                    throw new CustomException(VALIDATION_ERR, "Duplicate profile edit request found for UUID: " + uuid + " and uniqueId: " + uniqueId);
                 }
             }
         }
