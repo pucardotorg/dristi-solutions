@@ -133,9 +133,10 @@ public class TaskCaseQueryBuilder {
 
         if (!ObjectUtils.isEmpty(taskCaseSearchCriteria.getSearchText())) {
             addClauseIfRequired(query, preparedStmtList);
-            query.append("(task.tasknumber ILIKE ").append(" ? ").append(" or task.cnrnumber ILIKE ").append(" ? ").append(" )");
-            preparedStmtList.add(taskCaseSearchCriteria.getSearchText());
-            preparedStmtList.add(taskCaseSearchCriteria.getSearchText());
+            query.append("(task.tasknumber ILIKE ").append(" ? ").append(" or task.cnrnumber ILIKE ").append(" ? ").append(" or task.filingnumber ILIKE ").append(" ? ").append(" or c.caseTitle ILIKE ").append(" ? ").append(" )");
+            for (int i = 0; i < 4; i++) {
+                preparedStmtList.add("%" + taskCaseSearchCriteria.getSearchText() + "%");
+            }
         }
 
     }

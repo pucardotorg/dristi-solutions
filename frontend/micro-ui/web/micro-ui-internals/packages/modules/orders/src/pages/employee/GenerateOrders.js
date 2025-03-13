@@ -62,6 +62,7 @@ import CompositeOrdersErrorModal from "./CompositeOrdersErrorModal";
 import OrderItemDeleteModal from "./OrderItemDeleteModal";
 import TasksComponent from "../../../../home/src/components/TaskComponent";
 import MandatoryFieldsErrorModal from "./MandatoryFieldsErrorModal";
+import OrderAddToBulkSuccessModal from "../../pageComponents/OrderAddToBulkSuccessModal";
 
 // any order type from orderTypes can not be paired with any order from unAllowedOrderTypes when creating composite order.
 export const compositeOrderAllowedTypes = [
@@ -214,6 +215,8 @@ const GenerateOrders = () => {
   const [showsignatureModal, setShowsignatureModal] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [formList, setFormList] = useState([]);
+  const [showBulkModal, setShowBulkModal] = useState(false);
+
   const [prevOrder, setPrevOrder] = useState();
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
   const [showErrorToast, setShowErrorToast] = useState(null);
@@ -1913,7 +1916,28 @@ const GenerateOrders = () => {
     setBusinessOfTheDay(defaultBOTD);
   }, [defaultBOTD]);
 
-  const updateOrder = async (order, action) => {
+  const getUpdateDocuments = (documents, documentsFile) => {
+    if (!documentsFile) return documents;
+
+    if (documentsFile?.documentType === "UNSIGNED") {
+      const existingUnsignedDoc = documents?.find((doc) => doc?.documentType === "UNSIGNED");
+
+      if (existingUnsignedDoc) {
+        return documents?.map((doc) =>
+          doc?.documentType === "UNSIGNED"
+            ? {
+                ...doc,
+                fileStore: documentsFile?.fileStore,
+                additionalDetails: documentsFile?.additionalDetails,
+              }
+            : doc
+        );
+      }
+    }
+    return [...documents, documentsFile];
+  };
+
+  const updateOrder = async (order, action, unsignedFileStoreId) => {
     try {
       const localStorageID = localStorage.getItem("fileStoreId");
       const documents = Array.isArray(order?.documents) ? order.documents : [];
@@ -1925,7 +1949,16 @@ const GenerateOrders = () => {
               documentOrder: documents?.length > 0 ? documents.length + 1 : 1,
               additionalDetails: { name: `Order: ${order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(order?.orderType)}.pdf` },
             }
+          : unsignedFileStoreId
+          ? {
+              documentType: "UNSIGNED",
+              fileStore: unsignedFileStoreId,
+              documentOrder: documents?.length > 0 ? documents.length + 1 : 1,
+              additionalDetails: { name: `Order: ${order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(order?.orderType)}.pdf` },
+            }
           : null;
+
+      const updatedDocuments = getUpdateDocuments(documents, documentsFile);
       let orderSchema = {};
       try {
         let orderTypeDropDownConfig = order?.orderNumber
@@ -1948,7 +1981,7 @@ const GenerateOrders = () => {
           order: {
             ...order,
             ...orderSchema,
-            documents: documentsFile ? [...documents, documentsFile] : documents,
+            documents: updatedDocuments,
             workflow: { ...order.workflow, action, documents: [{}] },
           },
         },
@@ -4402,6 +4435,8 @@ const GenerateOrders = () => {
           handleUpdateBusinessOfDayEntry={handleUpdateBusinessOfDayEntry}
           handleReviewGoBack={handleReviewGoBack}
           businessOfDay={businessOfTheDay}
+          updateOrder={updateOrder}
+          setShowBulkModal={setShowBulkModal}
         />
       )}
       {showsignatureModal && (
@@ -4472,6 +4507,16 @@ const GenerateOrders = () => {
           showMandatoryFieldsErrorModal={showMandatoryFieldsErrorModal}
           setShowMandatoryFieldsErrorModal={setShowMandatoryFieldsErrorModal}
         ></MandatoryFieldsErrorModal>
+      )}
+      {showBulkModal && (
+        <OrderAddToBulkSuccessModal
+          t={t}
+          order={currentOrder}
+          handleDownloadOrders={handleDownloadOrders}
+          handleClose={handleClose}
+          handleCloseSuccessModal={handleCloseSuccessModal}
+          actionSaveLabel={successModalActionSaveLabel}
+        ></OrderAddToBulkSuccessModal>
       )}
       {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
     </div>
