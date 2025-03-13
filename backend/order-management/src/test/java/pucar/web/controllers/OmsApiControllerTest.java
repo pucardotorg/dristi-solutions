@@ -68,11 +68,11 @@ class OmsApiControllerTest {
     @Test
     void testUpdateSignedOrders_Success() {
         // Execute method
-        ResponseEntity<Void> response = omsApiController.updateSignedOrders(updateSignedOrderRequest);
+        ResponseEntity<UpdateSignedOrderResponse> response = omsApiController.updateSignedOrders(updateSignedOrderRequest);
 
         // Assertions
         assertNotNull(response);
-        assertEquals(501, response.getStatusCodeValue());
+        assertEquals(200, response.getStatusCodeValue());
 
         verify(bssService, times(1)).updateOrderWithSignDoc(updateSignedOrderRequest);
     }

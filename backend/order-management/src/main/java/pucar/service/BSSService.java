@@ -112,7 +112,8 @@ public class BSSService {
 
         // File section with attribute
         Map<String, Object> file = new LinkedHashMap<>();
-        file.put("attribute", Map.of("name", "type", "value", "pdf"));;// rn this is hardcode once we support other feature we will dynamically fetch this
+        file.put("attribute", Map.of("name", "type", "value", "pdf"));
+        ;// rn this is hardcode once we support other feature we will dynamically fetch this
         requestData.put("file", file);
 
         // PDF section // enrich this section
@@ -131,8 +132,9 @@ public class BSSService {
         return xmlRequest;
     }
 
-    public void updateOrderWithSignDoc(@Valid UpdateSignedOrderRequest request) {
+    public List<Order> updateOrderWithSignDoc(@Valid UpdateSignedOrderRequest request) {
 
+        List<Order> updatedOrder = new ArrayList<>();
         for (SignedOrder signedOrder : request.getSignedOrders()) {
             String orderNumber = signedOrder.getOrderNumber();
             String signedOrderData = signedOrder.getSignedOrderData();
@@ -180,7 +182,8 @@ public class BSSService {
                             .requestInfo(request.getRequestInfo())
                             .order(order).build();
 
-                    orderUtil.updateOrder(orderUpdateRequest);
+                    OrderResponse response = orderUtil.updateOrder(orderUpdateRequest);
+                    updatedOrder.add(response.getOrder());
 
                 } catch (Exception e) {
                     throw new CustomException(); // add log here
@@ -189,9 +192,11 @@ public class BSSService {
 
         }
 
+        return updatedOrder;
+
     }
 
-    private  Map<String, Object> createAttribute(String name, String value) {
+    private Map<String, Object> createAttribute(String name, String value) {
         Map<String, Object> attribute = new LinkedHashMap<>();
         Map<String, String> attrData = new LinkedHashMap<>();
         attrData.put("name", name);
