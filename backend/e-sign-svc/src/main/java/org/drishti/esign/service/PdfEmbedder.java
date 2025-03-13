@@ -38,7 +38,7 @@ public class PdfEmbedder {
     }
 
 
-    private Coordinate findLocationToSign(PdfReader reader, String signaturePlace) {
+    public Coordinate findLocationToSign(PdfReader reader, String signaturePlace) {
 
         log.info("Method=findLocationToSign ,Result=Inprogress ,placeholder={}", signaturePlace);
 
