@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.request.RequestInfo;
@@ -256,7 +257,7 @@ public class CaseRegistrationValidator {
         }
     }
 
-	public void validateProfileEdit(CreateProfileRequest profileRequest) throws CustomException {
+	public void validateProfileEdit(CreateProfileRequest profileRequest, CourtCase courtCase) throws CustomException {
 
 		if (ObjectUtils.isEmpty(profileRequest.getProfile().getCaseId())) {
 			throw new CustomException(VALIDATION_ERR, "case Id cannot be empty");
@@ -278,7 +279,7 @@ public class CaseRegistrationValidator {
 
         // Validate litigantDetails
         if (litigantDetails == null || litigantDetails.get("individualId") == null) {
-            throw new CustomException(VALIDATION_ERR, "Missing litigantDetails or uniqueId in request.");
+            throw new CustomException(VALIDATION_ERR, "Missing litigantDetails or individualId in request.");
         }
 
         // Validate editorDetails
@@ -287,17 +288,26 @@ public class CaseRegistrationValidator {
         }
 
         if (editorDetails.get("uuid") == null) {
-            throw new CustomException(VALIDATION_ERR, "Missing UUID for advocate.");
+            throw new CustomException(VALIDATION_ERR, "Missing UUID for advocate or litigant.");
         }
 
         String individualId = litigantDetails.get("individualId").asText();
 
         String uuid = editorDetails.get("uuid").asText();
         String mappingKey = uuid + "|" + individualId;
+        uniqueMappings.add(mappingKey);
 
         // Check if this (UUID + uniqueId) already exists
-        if (!uniqueMappings.add(mappingKey)) {
-            throw new CustomException(VALIDATION_ERR, "Duplicate profile edit request found for UUID: " + uuid + " and UniqueId: " + individualId);
+        JsonNode additionalDetails = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
+        JsonNode profileRequests = additionalDetails.get("profileRequests");
+        if(profileRequests != null){
+            for (JsonNode existProfile : profileRequests) {
+                String existMappingKey = existProfile.get("editorDetails").get("uuid").asText() +
+                        "|" + existProfile.get("litigantDetails").get("individualId").asText();
+                if (!uniqueMappings.add(existMappingKey)) {
+                    throw new CustomException(VALIDATION_ERR, "Duplicate profile edit request found for UUID: " + uuid + " and IndividualId: " + individualId);
+                }
+            }
         }
     }
 

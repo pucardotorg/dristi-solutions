@@ -472,8 +472,6 @@ public class CaseService {
         try {
             log.debug("Inside create edit profile request");
 
-            validator.validateProfileEdit(profileRequest);
-
             CourtCase courtCase = searchRedisCache(profileRequest.getRequestInfo(), String.valueOf(profileRequest.getProfile().getCaseId()));
 
             if (courtCase == null) {
@@ -487,6 +485,7 @@ public class CaseService {
                     courtCase = existingApplications.get(0).getResponseList().get(0);
                 }
             }
+            validator.validateProfileEdit(profileRequest, courtCase);
 
             CourtCase decryptedCourtCase = encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, profileRequest.getRequestInfo());
 
@@ -510,7 +509,7 @@ public class CaseService {
             caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), config.getCourtCaseEncryptNew(), CourtCase.class));
             cacheService.save(caseRequest.getCases().getTenantId() + ":" + caseRequest.getCases().getId(), caseRequest.getCases());
 
-            producer.push(config.getCaseEditTopic(), caseRequest);
+            producer.push(config.getCaseUpdateTopic(), caseRequest);
 
             CourtCase cases = encryptionDecryptionUtil.decryptObject(caseRequest.getCases(), null, CourtCase.class, caseRequest.getRequestInfo());
             cases.setAccessCode(null);
@@ -542,12 +541,6 @@ public class CaseService {
             profileRequestsArray = objectMapper.createArrayNode();
         } else {
             profileRequestsArray = (ArrayNode) profileRequestsNode;
-        }
-
-        for (JsonNode profileRequest : profileRequestsArray) {
-            if (profileRequest.get("pendingTaskRefId").asText().equals(profile.getPendingTaskRefId())) {
-                throw new CustomException("ERROR_CREATING_REQUEST", "Request already exists for the pending task.");
-            }
         }
 
         profile.setId(UUID.randomUUID().toString());

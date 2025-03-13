@@ -34,4 +34,10 @@ public class Profile {
 
     @JsonProperty("caseId")
     private String caseId;
+
+    @JsonProperty("document")
+    private Document document;
+
+    @JsonProperty("reason")
+    private String reason;
 }
