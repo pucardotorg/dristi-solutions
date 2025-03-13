@@ -506,6 +506,7 @@ export const UICustomizations = {
   orderInboxConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
       const tenantId = window?.Digit.ULBService.getStateId();
+      const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
       const moduleSearchCriteria = {
         ...(Object.keys(requestCriteria?.state?.searchForm?.type || {})?.length && {
           type: requestCriteria?.state?.searchForm?.type?.type,
@@ -513,9 +514,14 @@ export const UICustomizations = {
         ...(Object.keys(requestCriteria?.state?.searchForm?.parties || {})?.length > 0 && {
           partyName: requestCriteria?.state?.searchForm?.parties?.code,
         }),
-        ...(Object.keys(requestCriteria?.state?.searchForm?.status || {})?.length > 0 && {
-          status: requestCriteria?.state?.searchForm?.status?.code,
-        }),
+        ...(userRoles.includes("CITIZEN")
+          ? Object.keys(requestCriteria?.state?.searchForm?.status || {})?.length > 0 &&
+            requestCriteria?.state?.searchForm?.status?.code != "PUBLISHED"
+            ? { status: "EMPTY" }
+            : { status: "PUBLISHED" }
+          : Object.keys(requestCriteria?.state?.searchForm?.status || {})?.length > 0 && {
+              status: requestCriteria?.state?.searchForm?.status?.code,
+            }),
         ...(requestCriteria?.state?.searchForm?.id && {
           id: requestCriteria?.state?.searchForm?.id,
         }),
@@ -529,6 +535,7 @@ export const UICustomizations = {
           tenantId: requestCriteria?.body?.inbox?.moduleSearchCriteria?.tenantId,
         }),
       };
+
       return {
         ...requestCriteria,
         body: {
