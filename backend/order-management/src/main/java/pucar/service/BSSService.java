@@ -98,22 +98,22 @@ public class BSSService {
         requestData.put("txn", txnId);  //enrich this
 
         // Certificate section with attributes
-        Map<String, Object> certificate = new LinkedHashMap<>();
-        certificate.put("attribute", new HashMap<>(Map.of("@attributes", new HashMap<>(Map.of("name", "Cn")), "value", "")));
-        certificate.put("attribute1", new HashMap<>(Map.of("@attributes", new HashMap<>(Map.of("name", "O")), "value", "")));
-        certificate.put("attribute2", new HashMap<>(Map.of("@attributes", new HashMap<>(Map.of("name", "OU")), "value", "")));
-        certificate.put("attribute3", new HashMap<>(Map.of("@attributes", new HashMap<>(Map.of("name", "T")), "value", "")));
-        certificate.put("attribute4", new HashMap<>(Map.of("@attributes", new HashMap<>(Map.of("name", "E")), "value", "")));
-        certificate.put("attribute5", new HashMap<>(Map.of("@attributes", new HashMap<>(Map.of("name", "SN")), "value", "")));
-        certificate.put("attribute6", new HashMap<>(Map.of("@attributes", new HashMap<>(Map.of("name", "CA")), "value", "")));
-        certificate.put("attribute7", new HashMap<>(Map.of("@attributes", new HashMap<>(Map.of("name", "TC")), "value", "")));
-        certificate.put("attribute8", new HashMap<>(Map.of("@attributes", new HashMap<>(Map.of("name", "AP")), "value", "")));
-        certificate.put("attribute9", new HashMap<>(Map.of("@attributes", new HashMap<>(Map.of("name", "VD")), "value", "")));
-        requestData.put("certificate", certificate);
+        List<Map<String, Object>> certificateAttributes = new ArrayList<>();
+        certificateAttributes.add(createAttribute("Cn", ""));
+        certificateAttributes.add(createAttribute("O", ""));
+        certificateAttributes.add(createAttribute("OU", ""));
+        certificateAttributes.add(createAttribute("T", ""));
+        certificateAttributes.add(createAttribute("E", ""));
+        certificateAttributes.add(createAttribute("SN", ""));
+        certificateAttributes.add(createAttribute("CA", ""));
+        certificateAttributes.add(createAttribute("TC", ""));
+        certificateAttributes.add(createAttribute("AP", ""));
+        certificateAttributes.add(createAttribute("VD", ""));
+        requestData.put("certificate", certificateAttributes);
 
         // File section with attribute
         Map<String, Object> file = new LinkedHashMap<>();
-        file = (Map.of("attribute", new HashMap<>(Map.of("@attributes", new HashMap<>(Map.of("name", "type")), "value", "pdf"))));// rn this is hardcode once we support other feature we will dynamically fetch this
+        file.put("attribute", Map.of("name", "type", "value", "pdf"));;// rn this is hardcode once we support other feature we will dynamically fetch this
         requestData.put("file", file);
 
         // PDF section // enrich this section
@@ -190,5 +190,14 @@ public class BSSService {
 
         }
 
+    }
+
+    private  Map<String, Object> createAttribute(String name, String value) {
+        Map<String, Object> attribute = new LinkedHashMap<>();
+        Map<String, String> attrData = new LinkedHashMap<>();
+        attrData.put("name", name);
+        attrData.put("value", value);
+        attribute.put("attribute", attrData);
+        return attribute;
     }
 }
