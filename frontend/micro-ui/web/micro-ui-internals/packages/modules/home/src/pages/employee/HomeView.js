@@ -117,10 +117,10 @@ const HomeView = () => {
   const { data: ordersData, refetch: refetchOrdersData, isLoading: isOrdersLoading } = useSearchOrdersService(
     {
       tenantId,
-      criteria: { status: OrderWorkflowState.DRAFT_IN_PROGRESS },
+      criteria: { status: OrderWorkflowState.PENDING_BULK_E_SIGN },
     },
     { tenantId },
-    OrderWorkflowState.DRAFT_IN_PROGRESS,
+    OrderWorkflowState.PENDING_BULK_E_SIGN,
     true
   );
 

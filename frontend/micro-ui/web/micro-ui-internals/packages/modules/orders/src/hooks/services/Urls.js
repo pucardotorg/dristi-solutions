@@ -30,5 +30,6 @@ export const Urls = {
   },
   orderManagement: {
     getOrdersToSign: "/order-management/v1/_getOrdersToSign",
+    updateSignedOrders: "/order-management/v1/_updateSignedOrders",
   },
 };

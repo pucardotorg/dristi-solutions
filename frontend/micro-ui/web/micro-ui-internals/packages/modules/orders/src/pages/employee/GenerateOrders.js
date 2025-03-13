@@ -1916,6 +1916,27 @@ const GenerateOrders = () => {
     setBusinessOfTheDay(defaultBOTD);
   }, [defaultBOTD]);
 
+  const getUpdateDocuments = (documents, documentsFile) => {
+    if (!documentsFile) return documents;
+
+    if (documentsFile?.documentType === "UNSIGNED") {
+      const existingUnsignedDoc = documents?.find((doc) => doc?.documentType === "UNSIGNED");
+
+      if (existingUnsignedDoc) {
+        return documents?.map((doc) =>
+          doc?.documentType === "UNSIGNED"
+            ? {
+                ...doc,
+                fileStore: documentsFile?.fileStore,
+                additionalDetails: documentsFile?.additionalDetails,
+              }
+            : doc
+        );
+      }
+    }
+    return [...documents, documentsFile];
+  };
+
   const updateOrder = async (order, action, unsignedFileStoreId) => {
     try {
       const localStorageID = localStorage.getItem("fileStoreId");
@@ -1936,6 +1957,8 @@ const GenerateOrders = () => {
               additionalDetails: { name: `Order: ${order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(order?.orderType)}.pdf` },
             }
           : null;
+
+      const updatedDocuments = getUpdateDocuments(documents, documentsFile);
       let orderSchema = {};
       try {
         let orderTypeDropDownConfig = order?.orderNumber
@@ -1958,7 +1981,7 @@ const GenerateOrders = () => {
           order: {
             ...order,
             ...orderSchema,
-            documents: documentsFile ? [...documents, documentsFile] : documents,
+            documents: updatedDocuments,
             workflow: { ...order.workflow, action, documents: [{}] },
           },
         },

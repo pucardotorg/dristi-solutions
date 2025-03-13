@@ -6,6 +6,15 @@ import { OrderWorkflowAction } from "../utils/orderWorkflow";
 import { orderManagementService, ordersService } from "../hooks/services";
 import { Loader } from "@egovernments/digit-ui-react-components";
 import axios from "axios";
+import qs from "qs";
+
+const parseXml = (xmlString, tagName) => {
+  const parser = new DOMParser();
+  const xmlDoc = parser.parseFromString(xmlString, "application/xml");
+
+  const element = xmlDoc.getElementsByTagName(tagName)[0];
+  return element ? element.textContent.trim() : null;
+};
 
 function OrderBulkReviewModal({ t, showActions, refetchOrdersData, pendingSignOrderList, setShowBulkSignAllModal, setIssueBulkSuccessData }) {
   const [pendingOrderList, setPendingOrderList] = useState(pendingSignOrderList);
@@ -16,6 +25,7 @@ function OrderBulkReviewModal({ t, showActions, refetchOrdersData, pendingSignOr
   const [deleteOrder, setDeleteOrder] = useState(null);
   const [showErrorToast, setShowErrorToast] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -106,17 +116,39 @@ function OrderBulkReviewModal({ t, showActions, refetchOrdersData, pendingSignOr
 
     const requests = orderRequestList?.map(async (order) => {
       try {
-        const response = await axios.post("http://localhost:1620/", {
-          criteria: order,
+        // URL encoding the XML request
+        const formData = qs.stringify({ response: order?.request });
+        const response = await axios.post(bulkSignUrl, formData, {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+          },
         });
-        responses?.push(response?.data);
+
+        const data = response?.data;
+
+        if (parseXml(data, "status") !== "failed") {
+          responses.push({
+            orderNumber: order?.orderNumber,
+            signedOrderData: parseXml(data, "data"),
+            signed: true,
+            errorMsg: null,
+            tenantId: tenantId,
+          });
+        } else {
+          responses.push({
+            orderNumber: order?.orderNumber,
+            signedOrderData: parseXml(data, "data"),
+            signed: false,
+            errorMsg: parseXml(data, "error"),
+            tenantId: tenantId,
+          });
+        }
       } catch (error) {
-        console.error(`Error fetching order ${order?.orderNumebr}:`, error);
+        console.error(`Error fetching order ${order?.orderNumber}:`, error);
       }
     });
 
     await Promise.allSettled(requests);
-    console.log("Successful Responses:", responses);
     return responses;
   };
 
@@ -127,6 +159,7 @@ function OrderBulkReviewModal({ t, showActions, refetchOrdersData, pendingSignOr
         fileStoreId: order?.documents?.find((doc) => doc?.documentType === "UNSIGNED")?.fileStore || "",
         orderNumber: order?.orderNumber,
         placeholder: order?.orderCategory === "COMPOSITE" ? "Fduy44hjb" : "Signature",
+        tenantId: tenantId,
       };
     });
     try {
@@ -134,12 +167,18 @@ function OrderBulkReviewModal({ t, showActions, refetchOrdersData, pendingSignOr
         {
           criteria: criteriaList,
         },
-        { tenantId }
+        {}
       );
-      fetchResponseFromXmlRequest(response?.orderList)
-        .then((data) => console.log("Final Response List:", data))
-        .catch((err) => console.error("Unexpected Error:", err));
-      setIssueBulkSuccessData({ show: true, bulkSignOrderListLength: response?.orderList?.length });
+      await fetchResponseFromXmlRequest(response?.orderList).then(async (responseArray) => {
+        const updateOrderResponse = await orderManagementService.updateSignedOrders(
+          {
+            signedOrders: responseArray,
+          },
+          {}
+        );
+        setIssueBulkSuccessData({ show: true, bulkSignOrderListLength: updateOrderResponse?.orders?.length });
+        setShowBulkSignAllModal(false);
+      });
     } catch (e) {
       setShowErrorToast({ label: t("FAILED_TO_PERFORM_BULK_SIGN"), error: true });
       console.error("Failed to perform bulk sign", e);
@@ -155,6 +194,7 @@ function OrderBulkReviewModal({ t, showActions, refetchOrdersData, pendingSignOr
         headerBarEnd={
           <CloseBtn
             onClick={async () => {
+              if (isLoading) return;
               setShowBulkSignAllModal(false);
               await refetchOrdersData();
             }}
@@ -167,26 +207,34 @@ function OrderBulkReviewModal({ t, showActions, refetchOrdersData, pendingSignOr
       >
         {
           <div className="review-order-body-main">
-            <div className="review-bulk-order-modal-list-div">
-              {pendingOrderList?.map((order) => (
-                <div
-                  className="review-bulk-order-type-side-stepper"
-                  style={selectedOrder?.id === order?.id ? { backgroundColor: "#E8E8E8" } : { background: "none" }}
-                  onClick={() => {
-                    setSelectedOrder(order);
-                  }}
-                >
-                  <h1>{order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(order?.orderType)}</h1>
-                  <CloseBtn
-                    onClick={() => {
-                      setShowOrderDeleteModal(true);
-                      setDeleteOrder(order);
-                    }}
-                  />
+            {isLoading ? (
+              <div style={{ alignContent: "center", width: "100%" }}>
+                <Loader />
+              </div>
+            ) : (
+              <React.Fragment>
+                <div className="review-bulk-order-modal-list-div">
+                  {pendingOrderList?.map((order) => (
+                    <div
+                      className="review-bulk-order-type-side-stepper"
+                      style={selectedOrder?.id === order?.id ? { backgroundColor: "#E8E8E8" } : { background: "none" }}
+                      onClick={() => {
+                        setSelectedOrder(order);
+                      }}
+                    >
+                      <h1>{order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(order?.orderType)}</h1>
+                      <CloseBtn
+                        onClick={() => {
+                          setShowOrderDeleteModal(true);
+                          setDeleteOrder(order);
+                        }}
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-            <div className="review-bulk-order-modal-document-div">{showDocument}</div>
+                <div className="review-bulk-order-modal-document-div">{showDocument}</div>
+              </React.Fragment>
+            )}
           </div>
         }
         {showErrorToast && (
@@ -211,10 +259,10 @@ function OrderBulkReviewModal({ t, showActions, refetchOrdersData, pendingSignOr
           }
           actionCancelLabel={t("CS_BULK_BACK")}
           actionCancelOnSubmit={() => {
-            setShowOrderDeleteModal(false);
+            !isLoading && setShowOrderDeleteModal(false);
           }}
           actionSaveLabel={t("CS_BULK_REMOVE")}
-          actionSaveOnSubmit={() => handleRemoveOrderFromBulkList(OrderWorkflowAction.DELETE)}
+          actionSaveOnSubmit={() => handleRemoveOrderFromBulkList(OrderWorkflowAction.SAVE_DRAFT)}
           style={{ height: "40px", background: "#BB2C2F" }}
           popupStyles={{ width: "35%" }}
           className={"review-order-modal"}

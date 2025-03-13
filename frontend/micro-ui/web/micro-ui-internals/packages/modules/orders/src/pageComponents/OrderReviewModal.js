@@ -42,6 +42,7 @@ function OrderReviewModal({
   const [isDisabled, setIsDisabled] = useState();
   const orderFileStore = order?.documents?.find((doc) => doc?.documentType === "SIGNED")?.fileStore;
   const [businessDay, setBusinessDay] = useState(businessOfDay);
+  const [isUpdateLoading, setUpdateLoading] = useState(false);
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -165,6 +166,7 @@ function OrderReviewModal({
     } catch (e) {
       setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
       console.error("Failed to upload document:", e);
+      setUpdateLoading(false);
     }
   };
 
@@ -180,16 +182,21 @@ function OrderReviewModal({
 
   const handleSignLater = () => {
     if (showActions) {
-      handleDocumentUpload((fileStoreId) => {
-        updateOrder(order, OrderWorkflowAction.SAVE_DRAFT, fileStoreId)
-          .then(() => {
-            setShowReviewModal(false);
-            setShowBulkModal(true);
-          })
-          .catch((e) => {
-            setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
-            console.error("Failed to save draft:", e);
-          });
+      setUpdateLoading(true);
+      handleDocumentUpload(async (fileStoreId) => {
+        if (fileStoreId) {
+          await updateOrder(order, OrderWorkflowAction.SUBMIT_BULK_E_SIGN, fileStoreId)
+            .then(() => {
+              setShowReviewModal(false);
+              setShowBulkModal(true);
+              setUpdateLoading(false);
+            })
+            .catch((e) => {
+              setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
+              console.error("Failed to save draft:", e);
+              setUpdateLoading(false);
+            });
+        }
       });
     }
   };
@@ -201,7 +208,8 @@ function OrderReviewModal({
         headerBarEnd={<CloseBtn onClick={handleReviewGoBack} />}
         actionCancelLabel={showActions && t("ADD_SIGNATURE")}
         actionSaveLabel={t("SIGN_LATER")}
-        isBackButtonDisabled={isLoading || !businessDay}
+        isBackButtonDisabled={isLoading || isUpdateLoading || !businessDay}
+        isDisabled={isLoading || isUpdateLoading || !businessDay}
         actionCancelOnSubmit={handleAddSignature}
         actionSaveOnSubmit={handleSignLater}
         className={"review-order-modal"}

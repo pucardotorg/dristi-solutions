@@ -186,4 +186,12 @@ export const orderManagementService = {
       data,
       params,
     }),
+  updateSignedOrders: (data, params) =>
+    Request({
+      url: Urls.orderManagement.updateSignedOrders,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
 };
