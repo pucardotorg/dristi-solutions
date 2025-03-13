@@ -69,7 +69,7 @@ public class BSSService {
             Resource resource = fileStoreUtil.fetchFileStoreObjectById(coordinate.getFileStoreId(), coordinate.getTenantId());
             try {
                 String base64Document = cipherUtil.encodePdfToBase64(resource);
-                String coord = coordinate.getX() + "," + coordinate.getY();
+                String coord = (int )Math.floor(coordinate.getX()) + "," +(int) Math.floor(coordinate.getY());
                 String txnId = UUID.randomUUID().toString();
                 String pageNo = String.valueOf(coordinate.getPageNumber());
                 ZonedDateTime timestamp = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));  // read form config
@@ -99,21 +99,21 @@ public class BSSService {
 
         // Certificate section with attributes
         List<Map<String, Object>> certificateAttributes = new ArrayList<>();
-        certificateAttributes.add(createAttribute("Cn", ""));
+        certificateAttributes.add(createAttribute("CN", ""));
         certificateAttributes.add(createAttribute("O", ""));
         certificateAttributes.add(createAttribute("OU", ""));
         certificateAttributes.add(createAttribute("T", ""));
         certificateAttributes.add(createAttribute("E", ""));
         certificateAttributes.add(createAttribute("SN", ""));
         certificateAttributes.add(createAttribute("CA", ""));
-        certificateAttributes.add(createAttribute("TC", ""));
-        certificateAttributes.add(createAttribute("AP", ""));
-        certificateAttributes.add(createAttribute("VD", ""));
+        certificateAttributes.add(createAttribute("TC", "SG"));
+        certificateAttributes.add(createAttribute("AP", "1"));
         requestData.put("certificate", certificateAttributes);
 
         // File section with attribute
         Map<String, Object> file = new LinkedHashMap<>();
-        file.put("attribute", Map.of("name", "type", "value", "pdf"));;// rn this is hardcode once we support other feature we will dynamically fetch this
+        file.put("attribute", Map.of("name", "type", "value", "pdf"));
+        ;// rn this is hardcode once we support other feature we will dynamically fetch this
         requestData.put("file", file);
 
         // PDF section // enrich this section
@@ -132,8 +132,9 @@ public class BSSService {
         return xmlRequest;
     }
 
-    public void updateOrderWithSignDoc(@Valid UpdateSignedOrderRequest request) {
+    public List<Order> updateOrderWithSignDoc(@Valid UpdateSignedOrderRequest request) {
 
+        List<Order> updatedOrder = new ArrayList<>();
         for (SignedOrder signedOrder : request.getSignedOrders()) {
             String orderNumber = signedOrder.getOrderNumber();
             String signedOrderData = signedOrder.getSignedOrderData();
@@ -181,7 +182,8 @@ public class BSSService {
                             .requestInfo(request.getRequestInfo())
                             .order(order).build();
 
-                    orderUtil.updateOrder(orderUpdateRequest);
+                    OrderResponse response = orderUtil.updateOrder(orderUpdateRequest);
+                    updatedOrder.add(response.getOrder());
 
                 } catch (Exception e) {
                     throw new CustomException(); // add log here
@@ -190,9 +192,11 @@ public class BSSService {
 
         }
 
+        return updatedOrder;
+
     }
 
-    private  Map<String, Object> createAttribute(String name, String value) {
+    private Map<String, Object> createAttribute(String name, String value) {
         Map<String, Object> attribute = new LinkedHashMap<>();
         Map<String, String> attrData = new LinkedHashMap<>();
         attrData.put("name", name);

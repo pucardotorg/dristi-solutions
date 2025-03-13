@@ -14,10 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import pucar.service.BSSService;
 import pucar.util.ResponseInfoFactory;
-import pucar.web.models.OrderToSign;
-import pucar.web.models.OrdersToSignRequest;
-import pucar.web.models.OrdersToSignResponse;
-import pucar.web.models.UpdateSignedOrderRequest;
+import pucar.web.models.*;
 
 import java.util.List;
 
@@ -46,10 +43,12 @@ public class OmsApiController {
     }
 
     @RequestMapping(value = "/v1/_updateSignedOrders", method = RequestMethod.POST)
-    public ResponseEntity<Void> updateSignedOrders(@Parameter(in = ParameterIn.DEFAULT, description = "", required = true, schema = @Schema()) @Valid @RequestBody UpdateSignedOrderRequest request) {
+    public ResponseEntity<UpdateSignedOrderResponse> updateSignedOrders(@Parameter(in = ParameterIn.DEFAULT, description = "", required = true, schema = @Schema()) @Valid @RequestBody UpdateSignedOrderRequest request) {
 
-        bssService.updateOrderWithSignDoc(request);
-        return new ResponseEntity<>(HttpStatus.NOT_IMPLEMENTED);
+        List<Order> orders = bssService.updateOrderWithSignDoc(request);
+        UpdateSignedOrderResponse response = UpdateSignedOrderResponse.builder()
+                .orders(orders).responseInfo(ResponseInfoFactory.createResponseInfo(request.getRequestInfo(), true)).build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
 }
