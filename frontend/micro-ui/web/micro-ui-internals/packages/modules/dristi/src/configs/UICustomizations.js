@@ -562,6 +562,7 @@ export const UICustomizations = {
           );
         case "STATUS":
           return <CustomChip text={t(value)} shade={value === "PUBLISHED" ? "green" : "orange"} />;
+        case "DATE_ISSUED":
         case "DATE_ADDED":
           const date = new Date(value);
           const day = date.getDate().toString().padStart(2, "0");

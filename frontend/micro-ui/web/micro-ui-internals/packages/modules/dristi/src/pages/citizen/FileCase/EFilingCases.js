@@ -1352,6 +1352,16 @@ function EFilingCases({ path }) {
                 ) {
                   modifiedFormComponent.doclength = SelectUploadDocLength;
                   modifiedFormComponent.disable = false;
+                } else if (!isDraftInProgress && selected === "respondentDetails") {
+                  const resAddressDetailsLength =
+                    caseDetails?.additionalDetails?.respondentDetails?.formdata?.[index]?.data?.addressDetails?.length || 0;
+
+                  if (resAddressDetailsLength < formdata?.[index]?.data?.addressDetails?.length) {
+                    modifiedFormComponent.addressLength = resAddressDetailsLength;
+                    modifiedFormComponent.disable = false;
+                  } else {
+                    modifiedFormComponent.disable = true;
+                  }
                 } else {
                   // remove disability for new form
                   modifiedFormComponent.disable =
@@ -2531,6 +2541,7 @@ function EFilingCases({ path }) {
                 showConfirmModal={confirmModalConfig ? true : false}
                 handleGoToPage={handleGoToPage}
                 selected={selected}
+                onSubmit={onSubmit}
               />
             )}
             <div className="total-error-note">

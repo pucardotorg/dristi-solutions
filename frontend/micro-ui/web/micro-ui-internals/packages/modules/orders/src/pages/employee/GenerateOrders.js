@@ -1835,10 +1835,10 @@ const GenerateOrders = () => {
         )}`;
       case "RESCHEDULE_OF_HEARING_DATE":
         return `Hearing for ${formatDate(
-          new Date(currentOrder?.orderDetails?.newHearingDate),
+          new Date(currentOrder?.additionalDetails?.formdata?.newHearingDate),
           "DD-MM-YYYY"
         )} rescheduled on petition. Hearing Date to be announced on ${formatDate(
-          new Date(currentOrder?.orderDetails?.newHearingDate),
+          new Date(currentOrder?.additionalDetails?.formdata?.newHearingDate),
           "DD-MM-YYYY"
         )}`;
       case "CHECKOUT_ACCEPTANCE":
@@ -1854,10 +1854,10 @@ const GenerateOrders = () => {
         return "Initiated the process for rescheduling the hearing";
       case "ASSIGNING_DATE_RESCHEDULED_HEARING":
         return `Hearing for ${formatDate(
-          new Date(currentOrder?.orderDetails?.newHearingDate),
+          new Date(currentOrder?.additionalDetails?.formdata?.newHearingDate),
           "DD-MM-YYYY"
         )} rescheduled on petition. Hearing Date to be announced on ${formatDate(
-          new Date(currentOrder?.orderDetails?.newHearingDate),
+          new Date(currentOrder?.additionalDetails?.formdata?.newHearingDate),
           "DD-MM-YYYY"
         )}`;
       case "ASSIGNING_NEW_HEARING_DATE":

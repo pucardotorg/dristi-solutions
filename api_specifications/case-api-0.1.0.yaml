@@ -403,6 +403,62 @@ paths:
                 $ref: >-
                   https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes
 
+  /case/v2/profilerequest/create:
+    post:
+      tags:
+        - Case
+      summary: Create a profile request
+      description: |
+        API to create profile edit request
+      requestBody:
+        description: Details for creating profile edit request.
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/CreateProfileRequest'
+        required: true
+      responses:
+        '200':
+          description: ResponseInfo with case details updated successfully
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/CreateProfileResponse'
+        '400':
+          description: Profile Request create failed
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes'
+
+  /case/v2/profilerequest/process:
+    post:
+      tags:
+        - Case
+      summary: Process a profile edit request
+      description: |
+        API to process profile edit request , approve/reject action can happen
+      requestBody:
+        description: Details for processing profile edit request + RequestInfo meta data.
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/ProcessProfileRequest'
+        required: true
+      responses:
+        '200':
+          description: ResponseInfo with case details updated successfully
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ProcessProfileResponse'
+        '400':
+          description: Process request failed
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes'
+
 components:
   schemas:
     CourtCase:
@@ -1340,3 +1396,106 @@ components:
           description: >-
             Any extra fields that are not captured as first class fields can be
             stored here as key/value pairs. Implementation specific.
+
+
+    CreateProfileRequest:
+      type: object
+      properties:
+        requestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        Profile:
+          $ref: '#/components/schemas/Profile'
+
+    ProcessProfileRequest:
+      type: object
+      properties:
+        requestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        ProcessInfo:
+          type: object
+          properties:
+            caseId:
+              type: string
+              description: "uuid of the case"
+            action:
+              type: string
+              enum: [ "APPROVE", "REJECT" ]
+              description: "action  taken on  profile request by judge"
+            pendingTaskRefId:
+              type: string
+              description: "Reference ID for the pending task"
+            tenantId:
+              type: string
+              description: "id of the tenant"
+
+    Profile:
+      type: object
+      properties:
+        tenantId:
+          type: string
+          description: "id of the tenant"
+        litigantDetails:
+          type: object
+          properties:
+            partyType:
+              type: string
+              enum: [ "complainant", "respondent" ]
+              description: "The type of party (complainant or respondent)"
+            individualId:
+              type: string
+              description: "Individual Id for the litigant"
+        editorDetails:
+          type: object
+          properties:
+            isAdvocate:
+              type: boolean
+              description: "Indicates whether the editor is an advocate"
+            partyType:
+              type: string
+              enum: [ "complainant", "respondent" ]
+              description: "The type of party for the editor (complainant or respondent)"
+            uuid:
+              type: string
+              description: "UUID of the advocate who is editing"
+        pendingTaskRefId:
+          type: string
+          description: "Reference ID for the pending task"
+        caseId:
+          type: string
+          description: "uuid of the case"
+        uuid:
+          type: string
+          description: "UUID of the profile"
+        reason:
+          type: string
+          description: "reason for change"
+        document:
+          $ref: >-
+            https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Document
+        newData:
+          type: object
+          properties:
+            complainantDetails:
+              type: object
+              description: "Details of the complainant"
+            respondentDetails:
+              type: object
+              description: "Details of the respondent"
+
+    ProcessProfileResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: >-
+            https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo
+        case:
+          $ref: '#/components/schemas/CourtCase'
+
+    CreateProfileResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: >-
+            https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo
+        case:
+          $ref: '#/components/schemas/CourtCase'

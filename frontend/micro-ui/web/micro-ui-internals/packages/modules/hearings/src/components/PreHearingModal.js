@@ -45,7 +45,7 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
       fromDate: hearingData.fromDate,
       toDate: hearingData.toDate,
       slot: hearingData.slot,
-      tenantId:tenantId
+      tenantId: tenantId,
     };
     configCopy.additionalDetails = {
       attendeeIndividualId: userType === "citizen" && individualId,
@@ -92,6 +92,12 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
   useEffect(() => {
     getTotalCount();
   }, [updatedConfig, tenantId]);
+
+  useEffect(() => {
+    if (stepper === 4) {
+      onCancel();
+    }
+  }, [stepper]);
 
   const popUpStyle = {
     width: "70%",
