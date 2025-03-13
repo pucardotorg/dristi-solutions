@@ -275,7 +275,7 @@ export const TabSearchconfig = {
                 additionalCustomization: true,
               },
               {
-                label: "DATE_ADDED",
+                label: "DATE_ISSUED",
                 jsonPath: "businessObject.orderNotification.date",
                 additionalCustomization: true,
               },
