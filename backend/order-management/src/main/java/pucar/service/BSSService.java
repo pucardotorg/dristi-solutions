@@ -69,7 +69,7 @@ public class BSSService {
             Resource resource = fileStoreUtil.fetchFileStoreObjectById(coordinate.getFileStoreId(), coordinate.getTenantId());
             try {
                 String base64Document = cipherUtil.encodePdfToBase64(resource);
-                String coord = coordinate.getX() + "," + coordinate.getY();
+                String coord = (int )Math.floor(coordinate.getX()) + "," +(int) Math.floor(coordinate.getY());
                 String txnId = UUID.randomUUID().toString();
                 String pageNo = String.valueOf(coordinate.getPageNumber());
                 ZonedDateTime timestamp = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));  // read form config
@@ -99,16 +99,15 @@ public class BSSService {
 
         // Certificate section with attributes
         List<Map<String, Object>> certificateAttributes = new ArrayList<>();
-        certificateAttributes.add(createAttribute("Cn", ""));
+        certificateAttributes.add(createAttribute("CN", ""));
         certificateAttributes.add(createAttribute("O", ""));
         certificateAttributes.add(createAttribute("OU", ""));
         certificateAttributes.add(createAttribute("T", ""));
         certificateAttributes.add(createAttribute("E", ""));
         certificateAttributes.add(createAttribute("SN", ""));
         certificateAttributes.add(createAttribute("CA", ""));
-        certificateAttributes.add(createAttribute("TC", ""));
-        certificateAttributes.add(createAttribute("AP", ""));
-        certificateAttributes.add(createAttribute("VD", ""));
+        certificateAttributes.add(createAttribute("TC", "SG"));
+        certificateAttributes.add(createAttribute("AP", "1"));
         requestData.put("certificate", certificateAttributes);
 
         // File section with attribute
