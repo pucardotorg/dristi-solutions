@@ -107,7 +107,11 @@ const PaymentForSummonComponent = ({
                     />
                   ) : (
                     <p className="offline-process-text">
-                      {t("THIS_OFFLINE_TEXT")} <span className="learn-more-text">{t("LEARN_MORE")}</span>
+                      {t("THIS_OFFLINE_TEXT")}
+                      <span className="learn-more-text">
+                        {t("LEARN_MORE")}
+                        <p className="text-tooltip">{orderType === "SUMMONS" ? t("SUMMONS_LEARN_MORE") : t("NOTICE_LEARN_MORE")}</p>
+                      </span>
                     </p>
                   )}
                 </div>
