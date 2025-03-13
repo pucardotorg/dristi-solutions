@@ -557,7 +557,7 @@ const AdmittedCases = () => {
         const notificationResponse = await Digit.HearingService.searchNotification({
           criteria: {
             tenantId: tenantId,
-            notificationNumber:  order?.businessObject?.orderNotification?.id,
+            notificationNumber: order?.businessObject?.orderNotification?.id,
             courtId: courtId,
           },
           pagination: {
@@ -684,8 +684,7 @@ const AdmittedCases = () => {
                   ...tabConfig.apiDetails.requestBody.inbox,
                   moduleSearchCriteria: {
                     ...tabConfig.apiDetails.requestBody.inbox.moduleSearchCriteria,
-                    filingNumbers: filingNumber,
-                    caseNumbers: filingNumber,
+                    caseNumbers: [filingNumber, caseDetails?.cmpNumber, caseDetails?.courtCaseNumber]?.filter(Boolean),
                   },
                 },
               },
@@ -1948,6 +1947,10 @@ const AdmittedCases = () => {
     history.push(`/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}`);
   };
 
+  const handleSubmitDocuments = () => {
+    history.push(`/digit-ui/citizen/submissions/submit-document?filingNumber=${filingNumber}`);
+  };
+
   const handleCitizenAction = (option) => {
     if (option.value === "RAISE_APPLICATION") {
       history.push(`/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}`);
@@ -2214,14 +2217,16 @@ const AdmittedCases = () => {
     [t, userRoles]
   );
 
+  // outcome always null unless case went on final stage
   const showActionBar = useMemo(
     () =>
       (primaryAction.action ||
         secondaryAction.action ||
         tertiaryAction.action ||
         ([CaseWorkflowState.PENDING_NOTICE, CaseWorkflowState.PENDING_RESPONSE].includes(caseDetails?.status) && !isCitizen)) &&
+      !caseDetails?.outcome &&
       !isCourtRoomManager,
-    [caseDetails, primaryAction.action, secondaryAction.action, tertiaryAction.action, isCitizen]
+    [primaryAction.action, secondaryAction.action, tertiaryAction.action, caseDetails?.status, caseDetails?.outcome, isCitizen, isCourtRoomManager]
   );
 
   const handleOpenSummonNoticeModal = async (partyIndex) => {
@@ -2532,19 +2537,27 @@ const AdmittedCases = () => {
             </div>
           )}
           {isCitizen && config?.label === "Submissions" && (
-            <div style={{ display: "flex", gap: "10px" }}>
+            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
               {showMakeSubmission && (
                 <div
                   onClick={handleMakeSubmission}
                   style={{ fontWeight: 500, fontSize: "16px", lineHeight: "20px", color: "#0A5757", cursor: "pointer" }}
                 >
-                  {t("MAKE_SUBMISSION")}
+                  {t("MAKE_APPLICATION")}
                 </div>
               )}
 
               {/* <div style={{ fontWeight: 500, fontSize: "16px", lineHeight: "20px", color: "#0A5757", cursor: "pointer" }}>
                 {t("DOWNLOAD_ALL_LINK")}
               </div> */}
+              {showMakeSubmission && (
+                <div
+                  onClick={handleSubmitDocuments}
+                  style={{ fontWeight: 500, fontSize: "16px", lineHeight: "20px", color: "#0A5757", cursor: "pointer" }}
+                >
+                  {t("SUBMIT_DOCUMENTS")}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -2650,38 +2663,40 @@ const AdmittedCases = () => {
       {toast && toastDetails && (
         <Toast error={toastDetails?.isError} label={t(toastDetails?.message)} onClose={() => setToast(false)} style={{ maxWidth: "670px" }} />
       )}
-      {showActionBar && !isWorkFlowFetching && (
-        <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
-          <div style={{ width: "fit-content", display: "flex", gap: 20 }}>
-            {currentHearingStatus === HearingWorkflowState.SCHEDULED && tertiaryAction.action && (
-              <Button className="previous-button" variation="secondary" label={t(tertiaryAction.label)} onButtonClick={onSaveDraft} />
-            )}
-            {primaryAction && (
-              <SubmitBar
-                label={t(isPendingNoticeStatus ? "ISSUE_BNSS_NOTICE" : primaryAction?.label)}
-                submit="submit"
-                disabled={""}
-                onSubmit={onSubmit}
+      {showActionBar &&
+        !isWorkFlowFetching &&
+        ((currentHearingStatus === HearingWorkflowState.SCHEDULED && tertiaryAction.action) || primaryAction?.label || secondaryAction.action) && (
+          <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
+            <div style={{ width: "fit-content", display: "flex", gap: 20 }}>
+              {currentHearingStatus === HearingWorkflowState.SCHEDULED && tertiaryAction.action && (
+                <Button className="previous-button" variation="secondary" label={t(tertiaryAction.label)} onButtonClick={onSaveDraft} />
+              )}
+              {primaryAction?.label && (
+                <SubmitBar
+                  label={t(isPendingNoticeStatus ? "ISSUE_BNSS_NOTICE" : primaryAction?.label)}
+                  submit="submit"
+                  disabled={""}
+                  onSubmit={onSubmit}
+                />
+              )}
+            </div>
+            {secondaryAction.action && (
+              <Button
+                className="previous-button"
+                variation="secondary"
+                style={{
+                  border: "none",
+                  marginLeft: 0,
+                  fontSize: 16,
+                  fontWeight: 700,
+                  color: secondaryAction.action === "REJECT" && "#BB2C2F",
+                }}
+                label={t(secondaryAction.label)}
+                onButtonClick={onSendBack}
               />
             )}
-          </div>
-          {secondaryAction.action && (
-            <Button
-              className="previous-button"
-              variation="secondary"
-              style={{
-                border: "none",
-                marginLeft: 0,
-                fontSize: 16,
-                fontWeight: 700,
-                color: secondaryAction.action === "REJECT" && "#BB2C2F",
-              }}
-              label={t(secondaryAction.label)}
-              onButtonClick={onSendBack}
-            />
-          )}
-        </ActionBar>
-      )}
+          </ActionBar>
+        )}
       {isOpenDCA && <DocumentModal config={dcaConfirmModalConfig} />}
 
       {showModal && (

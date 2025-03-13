@@ -219,13 +219,11 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
       const updateNotificationResponse = await hearingService?.updateNotification({
         notification: {
           ...searchNotification?.list?.[0],
-          documents: [
-            ...searchNotification?.list?.[0]?.documents,
-            {
-              fileStore: signedDocumentUploadID || localStorageID,
-              documentType: "Bulk Reschedule signed",
-            },
-          ],
+          documents: searchNotification?.list?.[0]?.documents?.map((doc) =>
+            doc?.documentType === "Bulk Reschedule unsigned"
+              ? { ...doc, fileStore: signedDocumentUploadID || localStorageID, documentType: "Bulk Reschedule signed" }
+              : doc
+          ),
           workflow: {
             action: "E-SIGN",
           },
@@ -253,6 +251,7 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
           hearingDate: hearing?.startTime,
           referenceType: "bulkreschedule",
           caseNumber: hearing?.caseId,
+          referenceId: notificationNumber,
           additionalDetails: {
             filingNumber: hearing?.filingNumber,
             formData: bulkFormData || [],
@@ -540,7 +539,7 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
         notification: {
           tenantId: tenantId,
           caseNumber: caseNumbers,
-          notificationType: bulkFormData?.reason?.name,
+          notificationType: "Notification for Bulk Reschedule",
           courtId: courtId,
           issuedBy: userInfo?.userName,
           createdDate: new Date().getTime(),

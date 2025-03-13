@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { CustomArrowDownIcon, CustomArrowUpIcon } from "../icons/svgIndex";
 
-function ErrorsAccordion({ handlePageChange, pages, t, showConfirmModal, totalErrorCount, totalWarningCount, handleGoToPage, selected }) {
+function ErrorsAccordion({ handlePageChange, pages, t, showConfirmModal, totalErrorCount, totalWarningCount, handleGoToPage, selected, onSubmit }) {
   const [isOpen, setIsOpen] = useState(false);
   const handleAccordionClick = () => {
     // disabling accordion Functionality as per the requirements
@@ -12,12 +12,18 @@ function ErrorsAccordion({ handlePageChange, pages, t, showConfirmModal, totalEr
   const index = pages.findIndex((page) => page.key === selected);
   const resultIndex = index === -1 ? pages.length : index + 1;
 
-  const hangelGoToNext = () => {
+  const handleGoToNext = async () => {
+    if (index !== -1) {
+      await onSubmit("SAVE_DRAFT");
+    }
     if (resultIndex < pages.length) {
       handleGoToPage(pages[resultIndex]?.key);
     }
   };
-  const handleGoToPrev = () => {
+  const handleGoToPrev = async () => {
+    if (index !== -1) {
+      await onSubmit("SAVE_DRAFT");
+    }
     if (selected === pages[resultIndex - 1]?.key) {
       if (resultIndex > 1) {
         handleGoToPage(pages[resultIndex - 2]?.key);
@@ -32,7 +38,7 @@ function ErrorsAccordion({ handlePageChange, pages, t, showConfirmModal, totalEr
       <div className={`accordion-title ${isOpen ? "open" : ""} total-error-count`} style={{ cursor: "default" }} onClick={handleAccordionClick}>
         <span style={{ color: "#BB2C2F" }}>{`${totalErrorCount - totalWarningCount} ${t("CS_ERRORS_MARKED")}`}</span>
         <div className="icon">
-          <span className="reverse-arrow" style={{ cursor: "pointer" }} onClick={hangelGoToNext}>
+          <span className="reverse-arrow" style={{ cursor: "pointer" }} onClick={handleGoToNext}>
             <CustomArrowDownIcon />
           </span>
           <span>{`${resultIndex}/${pages.length}`}</span>

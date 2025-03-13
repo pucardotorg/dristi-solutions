@@ -16,10 +16,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.InputStream;
+import java.net.URL;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -207,6 +210,9 @@ public class PdfServiceUtil {
                 .courtContact(config.getCourtContact())
                 .barCouncilUrl(config.getBarCouncilUrl())
                 .courtAddress(config.getCourtAddress())
+                .lokAdalatUrl(config.getLokAdalatUrl())
+                .infoPdfUrl(config.getInfoPdfUrl())
+                .helplineNumber(config.getHelplineNumber())
                 .build();
     }
 

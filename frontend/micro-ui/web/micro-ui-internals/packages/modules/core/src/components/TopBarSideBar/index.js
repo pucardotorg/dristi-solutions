@@ -38,7 +38,14 @@ const TopBarSideBar = ({
     setShowDialog(true);
   };
   const handleOnSubmit = () => {
-    Digit.UserService.logout();
+    Digit.UserService.logoutUser();
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+    if (CITIZEN) {
+      window.location.replace(`/${window?.contextPath}/citizen`);
+    } else {
+      window.location.replace(`/${window?.contextPath}/employee/user/language-selection`);
+    }
     setShowDialog(false);
   };
   const handleOnCancel = () => {

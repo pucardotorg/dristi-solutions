@@ -4,6 +4,7 @@ const defaultSearchValues = {
     type: "NIA S138",
   },
   caseNameOrId: "",
+  caseId: "",
   sortCaseListByStartDate: "",
 };
 
@@ -12,13 +13,11 @@ export const preHearingConfig = {
   type: "search",
   customHookName: "hearings.usePreHearingModalData",
   apiDetails: {
-    serviceName: "/hearing/v1/search",
+    serviceName: "/inbox/v2/index/_search",
     requestParam: {
       tenantId: Digit.ULBService.getCurrentTenantId(),
     },
-    requestBody: {
-      criteria: {},
-    },
+    requestBody: {},
     minParametersForSearchForm: 0,
     masterName: "commonUiConfig",
     moduleName: "PreHearingsConfig",
@@ -53,26 +52,26 @@ export const preHearingConfig = {
             icon: "UpDownArrowIcon",
             populators: {},
           },
-          {
-            label: "Type",
-            isMandatory: false,
-            key: "type",
-            type: "dropdown",
-            populators: {
-              styles: { width: "150px" },
-              name: "type",
-              error: "Required",
-              optionsKey: "type",
-              options: [
-                {
-                  type: "NIA S138",
-                },
-                {
-                  type: "CIA S138",
-                },
-              ],
-            },
-          },
+          // {
+          //   label: "Type",
+          //   isMandatory: false,
+          //   key: "type",
+          //   type: "dropdown",
+          //   populators: {
+          //     styles: { width: "150px" },
+          //     name: "type",
+          //     error: "Required",
+          //     optionsKey: "type",
+          //     options: [
+          //       {
+          //         type: "NIA S138",
+          //       },
+          //       {
+          //         type: "CIA S138",
+          //       },
+          //     ],
+          //   },
+          // },
           {
             label: "Stage",
             isMandatory: false,
@@ -91,12 +90,21 @@ export const preHearingConfig = {
             },
           },
           {
-            label: "Search Case Name or ID",
+            label: "SEARCH_CASE_NAME",
             isMandatory: false,
             key: "caseNameOrId",
             type: "text",
             populators: {
               name: "caseNameOrId",
+            },
+          },
+          {
+            label: "SEARCH_CASE_ID",
+            isMandatory: false,
+            key: "caseId",
+            type: "text",
+            populators: {
+              name: "caseId",
             },
           },
         ],
@@ -108,23 +116,23 @@ export const preHearingConfig = {
       uiConfig: {
         columns: [
           {
-            label: "Case Name",
+            label: "CASE_TITLE",
             jsonPath: "caseName",
           },
           {
-            label: "Stage",
+            label: "CS_STAGE",
             jsonPath: "subStage",
           },
           {
-            label: "Case Type",
+            label: "CASE_TYPE",
             jsonPath: "caseType",
           },
           {
-            label: "Case Id",
+            label: "CASE_NUMBER",
             jsonPath: "caseNumber",
           },
           {
-            label: "Pending Tasks",
+            label: "PENDING_TASK",
             jsonPath: "pendingTasks",
           },
           {

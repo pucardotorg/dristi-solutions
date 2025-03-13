@@ -81,7 +81,7 @@ function PublishedNotificationModal({ t, notification, handleDownload, filingNum
       popupStyles={{ minWidth: "880px", width: "80%" }}
     >
       {showDocument}
-      {!isCitizen && (
+      {!isCitizen && diaryResponse?.entries?.[0]?.businessOfDay && (
         <React.Fragment>
           {" "}
           <h3 style={{ marginTop: "24px", marginBottom: "2px" }}>{t("BUSINESS_OF_THE_DAY")} </h3>

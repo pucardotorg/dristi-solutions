@@ -835,10 +835,10 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                         vakalatnamaFileUpload: {
                           document: [
                             {
-                              documentType: party?.uploadedVakalatnama?.documentType,
-                              fileStore: party?.uploadedVakalatnama?.fileStore,
-                              documentName: party?.uploadedVakalatnama?.documentName,
-                              fileName: party?.uploadedVakalatnama?.fileName,
+                              documentType: matchedUser?.uploadedVakalatnama?.documentType,
+                              fileStore: matchedUser?.uploadedVakalatnama?.fileStore,
+                              documentName: matchedUser?.uploadedVakalatnama?.documentName,
+                              fileName: matchedUser?.uploadedVakalatnama?.fileName,
                             },
                           ],
                         },
@@ -848,10 +848,10 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                           document: [
                             ...(formdataItem?.data?.multipleAdvocatesAndPip?.vakalatnamaFileUpload?.document || []),
                             {
-                              documentType: party?.uploadedVakalatnama?.documentType,
-                              fileStore: party?.uploadedVakalatnama?.fileStore,
-                              documentName: party?.uploadedVakalatnama?.documentName,
-                              fileName: party?.uploadedVakalatnama?.fileName,
+                              documentType: matchedUser?.uploadedVakalatnama?.documentType,
+                              fileStore: matchedUser?.uploadedVakalatnama?.fileStore,
+                              documentName: matchedUser?.uploadedVakalatnama?.documentName,
+                              fileName: matchedUser?.uploadedVakalatnama?.fileName,
                             },
                           ],
                         },
@@ -1443,7 +1443,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                   documentType: uploadedData.fileType || document?.documentType,
                   fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
                   documentName: `Vakalatnama (${getFullName(" ", user?.firstName, user?.middleName, user?.lastName)})`,
-                  fileName: `Vakalatnama (${getFullName(" ", user?.firstName, user?.middleName, user?.lastName)})`,
+                  fileName: "VAKALATNAMA",
                 },
               }))
             );
@@ -1670,7 +1670,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                   documentType: uploadedData.fileType || document?.documentType,
                   fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
                   documentName: `Vakalatnama (${getFullName(" ", user?.firstName, user?.middleName, user?.lastName)})`,
-                  fileName: `Vakalatnama (${getFullName(" ", user?.firstName, user?.middleName, user?.lastName)})`,
+                  fileName: "VAKALATNAMA",
                 },
               }))
             );
@@ -1786,7 +1786,11 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
               additionalDetails: {
                 ...caseDetails?.additionalDetails,
                 ...(selectPartyData?.partyInvolve?.value !== "RESPONDENTS" && {
-                  advocateDetails: getAdvocatesDetails(caseDetails?.additionalDetails?.advocateDetails, documentUploadResult),
+                  advocateDetails: getAdvocatesDetails(
+                    caseDetails?.additionalDetails?.advocateDetails,
+                    documentUploadResult,
+                    selectPartyData?.isReplaceAdvocate
+                  ),
                 }),
                 ...(selectPartyData?.partyInvolve?.value === "RESPONDENTS" && {
                   respondentDetails,

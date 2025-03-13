@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { CardLabel, Dropdown } from "@egovernments/digit-ui-components";
-import { LabelFieldPair } from "@egovernments/digit-ui-react-components";
+import { Button, LabelFieldPair } from "@egovernments/digit-ui-react-components";
 import { Loader } from "@egovernments/digit-ui-react-components";
 import { useGetPendingTask } from "../hooks/useGetPendingTask";
 import { useTranslation } from "react-i18next";
@@ -41,6 +41,8 @@ const TasksComponent = ({
   taskIncludes,
   isApplicationCompositeOrder = false,
   compositeOrderObj,
+  pendingSignOrderList,
+  setShowBulkSignAllModal,
 }) => {
   const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
   const history = useHistory();
@@ -62,10 +64,10 @@ const TasksComponent = ({
   const { data: options, isLoading: isOptionsLoading } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
     "case",
-    [{ name: "pendingTaskFilterDropdownItem" }],
+    [{ name: "pendingTaskFilterText" }],
     {
       select: (data) => {
-        return data?.case?.pendingTaskFilterDropdownItem || [];
+        return data?.case?.pendingTaskFilterText || [];
       },
     }
   );
@@ -389,7 +391,8 @@ const TasksComponent = ({
         return false;
       } else return true;
     });
-    if (taskType?.code) return filteredTasks?.filter((task) => task?.actionName === taskType?.code);
+    if (taskType?.code)
+      return filteredTasks?.filter((task) => taskType?.keyword?.some((key) => task?.actionName?.toLowerCase()?.includes(key?.toLowerCase())));
     else return filteredTasks;
   }, [
     handleCreateOrder,
@@ -402,6 +405,7 @@ const TasksComponent = ({
     pendingTaskActionDetails,
     pendingTaskToCaseDetailMap,
     taskType?.code,
+    taskType?.keyword,
     taskTypeCode,
     todayDate,
     userType,
@@ -588,6 +592,15 @@ const TasksComponent = ({
       {!hideTaskComponent && (
         <React.Fragment>
           <h2>{!isLitigant ? t("YOUR_TASK") : t("ALL_PENDING_TASK_TEXT")}</h2>
+          {pendingSignOrderList && (
+            <Button
+              label={`${t("BULK_SIGN")} ${pendingSignOrderList?.length} ${t("BULK_PENDING_ORDERS")}`}
+              textStyles={{ margin: "0px", fontSize: "16px", fontWeight: 700, textAlign: "center" }}
+              style={{ padding: "18px", width: "fit-content", boxShadow: "none" }}
+              onButtonClick={() => setShowBulkSignAllModal(true)}
+              isDisabled={pendingSignOrderList?.length === 0}
+            />
+          )}
           {totalPendingTask !== undefined && totalPendingTask > 0 ? (
             <React.Fragment>
               {!hideFilters && (
@@ -613,7 +626,7 @@ const TasksComponent = ({
                     </CardLabel>
                     <Dropdown
                       t={t}
-                      option={filteredOptions}
+                      option={options}
                       optionKey={"name"}
                       selected={taskType}
                       select={(value) => {

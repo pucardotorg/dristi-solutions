@@ -28,4 +28,8 @@ export const Urls = {
   SBIPayment: {
     payment: "/sbi-backend/payment/v1/_processTransaction",
   },
+  orderManagement: {
+    getOrdersToSign: "/order-management/v1/_getOrdersToSign",
+    updateSignedOrders: "/order-management/v1/_updateSignedOrders",
+  },
 };

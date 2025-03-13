@@ -219,11 +219,11 @@
     .search-field-wrapper.search.custom-both-clear-search {
       display: flex;
       .label-field-pair {
-        width: 170px;
+        width: 200px;
         .select-wrap {
           .options-card {
             top: 40px;
-            height: 160px;
+            max-height: 160px;
             overflow-y: auto;
           }
         }
@@ -231,7 +231,7 @@
       .search-button-wrapper {
         margin-left: auto;
         .submit-bar {
-          width: 170px !important;
+          width: 200px !important;
           box-shadow: none;
         }
       }
