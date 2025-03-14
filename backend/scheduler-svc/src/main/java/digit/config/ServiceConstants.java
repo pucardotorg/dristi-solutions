@@ -70,4 +70,15 @@ public class ServiceConstants {
 
     public static final String DATE_FORMAT = "dd-MM-yyyy";
 
+    public static final String INDIVIDUAL_UTILITY_EXCEPTION = "INDIVIDUAL_UTILITY_EXCEPTION";
+    public static final String INDIVIDUAL_SERVICE_EXCEPTION = "INDIVIDUAL_SERVICE_EXCEPTION";
+
+    public static final String NOTIFICATION_ENG_LOCALE_CODE = "en_IN";
+    public static final String NOTIFICATION_MODULE_CODE = "notification";
+    public static final String NOTIFICATION_LOCALIZATION_CODES_JSONPATH = "$.messages.*.code";
+    public static final String NOTIFICATION_LOCALIZATION_MSGS_JSONPATH = "$.messages.*.message";
+
+    // sms code for getting hearing reminder notification when cause list is generated
+    public static final String CAUSE_LIST_HEARING_MESSAGE = "CAUSE_LIST_HEARING_MESSAGE";
+
 }

@@ -19,11 +19,9 @@ const filterCaseData = ([filingNumber, caseData], stage, type, caseNameOrId) => 
   const trimmedCaseNameOrId = caseNameOrId?.trim();
   const matchesStage = !stage || caseData?.substage === stage?.code;
   const matchesCaseType = shortNameForCaseType(caseData) === type?.type;
-  const matchesCaseNameOrId = !trimmedCaseNameOrId || [
-    caseData?.caseTitle,
-    caseData?.cmpNumber,
-    caseData?.courtCaseNumber
-  ].some(value => value?.trim() === trimmedCaseNameOrId);
+  const matchesCaseNameOrId =
+    !trimmedCaseNameOrId ||
+    [caseData?.caseTitle, caseData?.cmpNumber, caseData?.courtCaseNumber].some((value) => value?.trim() === trimmedCaseNameOrId);
 
   return matchesStage && matchesCaseType && matchesCaseNameOrId;
 };
@@ -36,6 +34,7 @@ const usePreHearingModalData = ({ url, params, body, config = {}, plainAccessReq
 
   const { searchForm } = state;
   const { stage, type = defaultType, caseNameOrId } = searchForm;
+  const tenantId = body?.inbox?.tenantId;
 
   const idPattern = /^F-C\.\d{4}\.\d{3}-\d{4}-\d{6}$/;
 
@@ -45,6 +44,7 @@ const usePreHearingModalData = ({ url, params, body, config = {}, plainAccessReq
       filingNumber: caseNameOrId,
     };
   }
+
   body.pagination = {
     ...body.criteria?.pagination,
     offSet: body.criteria?.pagination.offset,
@@ -59,6 +59,8 @@ const usePreHearingModalData = ({ url, params, body, config = {}, plainAccessReq
       params,
       body,
       plainAccessRequest,
+      useCache: false,
+      userService: false,
     }).then((response) => ({
       ...response,
     }));
@@ -67,6 +69,7 @@ const usePreHearingModalData = ({ url, params, body, config = {}, plainAccessReq
     /**
      * @type {Map<string,any[]>}
      */
+
     const filingNumberToHearing = new Map();
     for (const hearing of hearingListResponse.HearingList) {
       const filingNumber = hearing.filingNumber[0];

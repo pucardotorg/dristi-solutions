@@ -17,15 +17,16 @@ import java.util.List;
 @Slf4j
 public class RescheduleRequestOptOutRepository {
 
-    @Autowired
-    private RescheduleRequestOptOutRowMapper rescheduleRequestOptOutRowMapper;
+    private final RescheduleRequestOptOutRowMapper rescheduleRequestOptOutRowMapper;
+    private final RescheduleRequestOptOutQueryBuilder optOutQueryBuilder;
+    private final JdbcTemplate jdbcTemplate;
 
     @Autowired
-    private RescheduleRequestOptOutQueryBuilder optOutQueryBuilder;
-
-
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+    public RescheduleRequestOptOutRepository(RescheduleRequestOptOutRowMapper rescheduleRequestOptOutRowMapper, RescheduleRequestOptOutQueryBuilder optOutQueryBuilder, JdbcTemplate jdbcTemplate) {
+        this.rescheduleRequestOptOutRowMapper = rescheduleRequestOptOutRowMapper;
+        this.optOutQueryBuilder = optOutQueryBuilder;
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
     public List<OptOut> getOptOut(OptOutSearchCriteria optOutSearchCriteria, Integer limit, Integer offset) {
 

@@ -70,9 +70,6 @@ public class CalendarService {
         JudgeAvailabilitySearchCriteria criteria = searchCriteriaRequest.getCriteria();
         log.info("operation = getJudgeAvailability, result = IN_PROGRESS, judgeId = {},tenantId ={}, courtId = {}", criteria.getJudgeId(), criteria.getTenantId(), criteria.getCourtId());
 
-        // validating required fields
-//        validator.validateSearchRequest(criteria);
-
         List<AvailabilityDTO> resultList = new ArrayList<>();
         HashMap<String, Double> dateMap = new HashMap<>();
 
@@ -92,7 +89,8 @@ public class CalendarService {
         int calendarLength = judgeCalendarRule.size();
 
         // fetch available dates of  judge for next 6 month
-        ScheduleHearingSearchCriteria scheduleHearingSearchCriteria = ScheduleHearingSearchCriteria.builder().judgeId(criteria.getJudgeId()).build();
+        ScheduleHearingSearchCriteria scheduleHearingSearchCriteria = ScheduleHearingSearchCriteria.builder().judgeId(criteria.getJudgeId())
+                .courtId(criteria.getCourtId()).tenantId(criteria.getTenantId()).status(List.of("SCHEDULED", "BLOCKED")).build();
 
         List<AvailabilityDTO> availableDateForHearing;
 
@@ -169,8 +167,6 @@ public class CalendarService {
 
         CalendarSearchCriteria criteria = searchCriteriaRequest.getCriteria();
         log.info("operation = getJudgeCalendar, result = IN_PROGRESS, tenantId= {}, judgeId = {}, courtId = {}", criteria.getTenantId(), criteria.getJudgeId(), criteria.getCourtId());
-
-//        validator.validateSearchRequest(criteria);
 
         List<HearingCalendar> calendar = new ArrayList<>();
         HashMap<LocalDate, List<ScheduleHearing>> dayHearingMap = new HashMap<>();

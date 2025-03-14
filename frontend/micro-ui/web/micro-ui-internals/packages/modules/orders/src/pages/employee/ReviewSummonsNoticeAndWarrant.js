@@ -15,6 +15,7 @@ import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services
 import { useHistory } from "react-router-dom";
 import isEqual from "lodash/isEqual";
 import axios from "axios";
+import ReviewNoticeModal from "../../components/ReviewNoticeModal";
 const defaultSearchValues = {
   eprocess: "",
   caseId: "",
@@ -42,6 +43,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const [defaultValues, setDefaultValues] = useState(defaultSearchValues);
   const [config, setConfig] = useState(SummonsTabsConfig?.SummonsTabsConfig?.[0]);
   const [showActionModal, setShowActionModal] = useState(false);
+  const [showNoticeModal, setshowNoticeModal] = useState(false);
   const [isSigned, setIsSigned] = useState(false);
   const [actionModalType, setActionModalType] = useState("");
   const [isDisabled, setIsDisabled] = useState(true);
@@ -140,7 +142,15 @@ const ReviewSummonsNoticeAndWarrant = () => {
     Boolean(tasksData)
   );
 
-  const orderType = useMemo(() => orderData?.list[0]?.orderType, [orderData]);
+  const compositeItem = useMemo(
+    () => orderData?.list?.[0]?.compositeItems?.find((item) => item?.id === tasksData?.list[0]?.additionalDetails?.itemId),
+    [orderData, tasksData]
+  );
+
+  const orderType = useMemo(
+    () => (orderData?.list?.[0]?.orderCategory === "COMPOSITE" ? compositeItem?.orderType : orderData?.list?.[0]?.orderType),
+    [orderData, compositeItem]
+  );
 
   const handleSubmitButtonDisable = (disable) => {
     setIsDisabled(disable);
@@ -517,7 +527,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const handleRowClick = (props) => {
     if (["DELIVERED", "UNDELIVERED", "EXECUTED", "NOT_EXECUTED"].includes(props?.original?.status)) {
-      return; // Do nothing if the row's status is 'Completed'
+      setRowData(props?.original);
+      setshowNoticeModal(true);
+      return;
     }
 
     setRemarks("");
@@ -535,6 +547,11 @@ const ReviewSummonsNoticeAndWarrant = () => {
       getTaskDetailsByTaskNumber();
     }
   }, [taskNumber, getTaskDetailsByTaskNumber]);
+
+  const handleCloseNoticeModal = useCallback(() => {
+    setshowNoticeModal(false);
+    setRowData({});
+  }, []);
 
   return (
     <div className="review-summon-warrant">
@@ -563,6 +580,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
             currentStep={step}
           />
         )}
+        {showNoticeModal && <ReviewNoticeModal rowData={rowData} handleCloseNoticeModal={handleCloseNoticeModal} t={t} />}
       </div>
     </div>
   );

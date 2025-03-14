@@ -249,11 +249,18 @@ function ViewCaseFile({ t, inViewCase = false }) {
                   inputs: section.populators.inputs?.map((input) => {
                     delete input.data;
                     if (input?.key === "submissionFromAccused") {
-                      const responseDocuments = caseDetails?.litigants?.filter((litigant) => litigant?.partyType?.includes("respondent"))?.[0]
-                        ?.documents;
-                      const vakalatnamaDocument = caseDetails?.representatives?.filter((representative) =>
-                        representative?.representing?.some((represent) => represent?.partyType?.includes("respondent"))
-                      )?.[0]?.additionalDetails?.document?.vakalatnamaFileUpload;
+                      const responseDocuments = caseDetails?.litigants
+                        ?.filter((litigant) => litigant?.partyType?.includes("respondent") && litigant?.document?.length > 0)
+                        ?.map((litigant) => litigant?.documents)
+                        ?.flat();
+                      const vakalatnamaDocument = caseDetails?.representatives
+                        ?.filter((representative) => representative?.representing?.some((represent) => represent?.partyType?.includes("respondent")))
+                        ?.flatMap((item) =>
+                          item.representing.flatMap((rep) => [
+                            ...(rep.documents || []),
+                            ...(rep.additionalDetails?.document?.vakalatnamaFileUpload || []),
+                          ])
+                        );
                       return {
                         ...input,
                         data: [

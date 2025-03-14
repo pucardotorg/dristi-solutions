@@ -17,7 +17,6 @@ export const preHearingConfig = {
       tenantId: Digit.ULBService.getCurrentTenantId(),
     },
     requestBody: {
-      criteria: {},
     },
     minParametersForSearchForm: 0,
     masterName: "commonUiConfig",
@@ -91,7 +90,7 @@ export const preHearingConfig = {
             },
           },
           {
-            label: "Search Case Name or ID",
+            label: "SEARCH_CASE_NAME",
             isMandatory: false,
             key: "caseNameOrId",
             type: "text",
@@ -108,23 +107,23 @@ export const preHearingConfig = {
       uiConfig: {
         columns: [
           {
-            label: "Case Name",
+            label: "CASE_TITLE",
             jsonPath: "caseName",
           },
           {
-            label: "Stage",
+            label: "CS_STAGE",
             jsonPath: "subStage",
           },
           {
-            label: "Case Type",
+            label: "CASE_TYPE",
             jsonPath: "caseType",
           },
           {
-            label: "Case Id",
+            label: "CASE_NUMBER",
             jsonPath: "caseNumber",
           },
           {
-            label: "Pending Tasks",
+            label: "PENDING_TASK",
             jsonPath: "pendingTasks",
           },
           {

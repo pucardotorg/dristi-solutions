@@ -197,6 +197,8 @@ function AdmissionActionModal({
         statuteSection: {
           tenantId,
         },
+        orderTitle: "NOTICE",
+        orderCategory: "INTERMEDIATE",
         orderType: "NOTICE",
         status: "",
         isActive: true,

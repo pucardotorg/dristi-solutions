@@ -503,6 +503,85 @@ export const UICustomizations = {
       }
     },
   },
+  orderInboxConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
+      const moduleSearchCriteria = {
+        ...(Object.keys(requestCriteria?.state?.searchForm?.type || {})?.length && {
+          type: requestCriteria?.state?.searchForm?.type?.type,
+        }),
+        ...(Object.keys(requestCriteria?.state?.searchForm?.parties || {})?.length > 0 && {
+          partyName: requestCriteria?.state?.searchForm?.parties?.code,
+        }),
+        ...(userRoles.includes("CITIZEN")
+          ? Object.keys(requestCriteria?.state?.searchForm?.status || {})?.length > 0 &&
+            requestCriteria?.state?.searchForm?.status?.code != "PUBLISHED"
+            ? { status: "EMPTY" }
+            : { status: "PUBLISHED" }
+          : Object.keys(requestCriteria?.state?.searchForm?.status || {})?.length > 0 && {
+              status: requestCriteria?.state?.searchForm?.status?.code,
+            }),
+        ...(requestCriteria?.state?.searchForm?.id && {
+          id: requestCriteria?.state?.searchForm?.id,
+        }),
+        ...(requestCriteria?.body?.inbox?.moduleSearchCriteria?.caseNumbers && {
+          caseNumbers: requestCriteria?.body?.inbox?.moduleSearchCriteria?.caseNumbers,
+        }),
+        ...(requestCriteria?.body?.inbox?.moduleSearchCriteria?.filingNumbers && {
+          filingNumbers: requestCriteria?.body?.inbox?.moduleSearchCriteria?.filingNumbers,
+        }),
+        ...(requestCriteria?.body?.inbox?.moduleSearchCriteria?.tenantId && {
+          tenantId: requestCriteria?.body?.inbox?.moduleSearchCriteria?.tenantId,
+        }),
+      };
+
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria?.body,
+          inbox: {
+            ...requestCriteria?.body?.inbox,
+            limit: requestCriteria?.state?.tableForm?.limit,
+            offset: requestCriteria?.state?.tableForm?.offset,
+            tenantId: tenantId,
+            moduleSearchCriteria: moduleSearchCriteria,
+          },
+        },
+      };
+    },
+    additionalCustomizations: (row, key, column, value, t, searchResult) => {
+      switch (key) {
+        case "PARTIES":
+          if (value === null || value === undefined || value === "undefined" || value === "null") {
+            return null;
+          }
+          return (
+            <div>
+              {value?.length > 2 && (
+                <ReactTooltip id={`hearing-list`}>{value?.map((party) => party?.partyName || party?.name).join(", ")}</ReactTooltip>
+              )}
+              <span data-tip data-for={`hearing-list`}>{`${value
+                ?.slice(0, 2)
+                ?.map((party) => party?.partyName || party?.name)
+                ?.join(", ")}${value?.length > 2 ? `+${value?.length - 2}` : ""}`}</span>
+            </div>
+          );
+        case "STATUS":
+          return <CustomChip text={t(value)} shade={value === "PUBLISHED" ? "green" : "orange"} />;
+        case "DATE_ISSUED":
+        case "DATE_ADDED":
+          const date = new Date(value);
+          const day = date.getDate().toString().padStart(2, "0");
+          const month = (date.getMonth() + 1).toString().padStart(2, "0");
+          const year = date.getFullYear();
+          const formattedDate = `${day}-${month}-${year}`;
+          return <span>{value && value !== "0" ? formattedDate : ""}</span>;
+        case "ORDER_TILTE":
+          return <OrderName rowData={row} colData={column} value={value} />;
+      }
+    },
+  },
   litigantInboxConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
       // We need to change tenantId "processSearchCriteria" here
@@ -664,6 +743,7 @@ export const UICustomizations = {
         case "FILE":
           return showDocument ? <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} /> : "";
         case "DATE_ADDED":
+        case "DATE_ISSUED":
         case "DATE":
           const date = new Date(value);
           const day = date.getDate().toString().padStart(2, "0");
@@ -737,6 +817,8 @@ export const UICustomizations = {
                   statuteSection: {
                     tenantId: row.tenantId,
                   },
+                  orderTitle: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                  orderCategory: "INTERMEDIATE",
                   orderType: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
                   status: "",
                   isActive: true,
@@ -944,7 +1026,7 @@ export const UICustomizations = {
                     ?.filter((order) => order.order.status !== "DRAFT_IN_PROGRESS")
                     .map((order) => {
                       return {
-                        instance: `ORDER_TYPE_${order.order.orderType.toUpperCase()}`,
+                        instance: order.order.orderTitle,
                         stage: [],
                         date: order.order.auditDetails.createdTime,
                         status: order.order.status,
@@ -952,7 +1034,7 @@ export const UICustomizations = {
                     })
                 : data.caseFiles[0]?.orders.map((order) => {
                     return {
-                      instance: `ORDER_TYPE_${order.order.orderType.toUpperCase()}`,
+                      instance: order.order.orderTitle,
                       stage: [],
                       date: order.order.auditDetails.createdTime,
                       status: order.order.status,
@@ -1041,8 +1123,6 @@ export const UICustomizations = {
           return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} value={value} showAsHeading={true} />;
         case "TYPE":
           return t(row?.filingType) || "";
-        case "STAGE":
-          return "";
         case "FILE":
           return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} />;
         case "STATUS":

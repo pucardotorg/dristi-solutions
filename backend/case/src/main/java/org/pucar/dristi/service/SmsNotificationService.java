@@ -61,6 +61,12 @@ public class SmsNotificationService {
         if(messageCode.equalsIgnoreCase(ESIGN_PENDING)){
             pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationEsignPendingTemplateId());
         }
+        else if (messageCode.equalsIgnoreCase(NEW_WITNESS_ADDED)) {
+            pushNotification(smsTemplateData,message,mobileNumber,config.getSmsNotificationWitnessAddedTemplateId());
+        }
+        else if (messageCode.equalsIgnoreCase(NEW_WITNESS_ADDED_SMS_FOR_OTHERS)) {
+            pushNotification(smsTemplateData,message,mobileNumber,config.getSmsNotificationWitnessAddedForOthersTemplateId());
+        }
         else if(messageCode.equalsIgnoreCase(CASE_SUBMITTED)) {
             pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationCaseSubmittedTemplateId());
         }
@@ -69,6 +75,10 @@ public class SmsNotificationService {
         }
         else if(messageCode.equalsIgnoreCase(FSO_VALIDATED)){
             pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationCaseFsoValidationTemplateId());
+        }
+        else if(messageCode.equalsIgnoreCase(JUDGE_ASSIGNED)) {
+            pushNotification(smsTemplateData,message,mobileNumber,config.getSmsNotificationCaseJudgeAssignedTemplateId());
+
         }
         else if(messageCode.equalsIgnoreCase(FSO_SEND_BACK)){
             pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationCaseFsoSendBackTemplateId());
@@ -126,6 +136,7 @@ public class SmsNotificationService {
         smsDetails.put("link", "");
         smsDetails.put("tenantId", smsTemplateData.getTenantId().split("\\.")[0]);
         smsDetails.put("mobileNumber", mobileNumber);
+        smsDetails.put("hearingDate",smsTemplateData.getHearingDate());
 
         return smsDetails;
     }
@@ -165,7 +176,8 @@ public class SmsNotificationService {
                 .replace("{{date}}", Optional.ofNullable(userDetailsForSMS.get("date")).orElse(""))
                 .replace("{{cmpNumber}}", Optional.ofNullable(userDetailsForSMS.get("cmpNumber")).orElse(""))
                 .replace("{{courtCaseNumber}}", Optional.ofNullable(userDetailsForSMS.get("courtCaseNumber")).orElse(""))
-                .replace("{{advocateName}}", Optional.ofNullable(userDetailsForSMS.get("advocateName")).orElse(""));
+                .replace("{{advocateName}}", Optional.ofNullable(userDetailsForSMS.get("advocateName")).orElse(""))
+                .replace("{{hearingDate}}",Optional.ofNullable(userDetailsForSMS.get("hearingDate")).orElse(""));
         return message;
     }
 

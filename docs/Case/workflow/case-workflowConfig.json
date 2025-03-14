@@ -311,6 +311,13 @@
                             "roles": [
                                 "CASE_APPROVER"
                             ]
+                        },
+                        {
+                            "action": "ISSUE_ORDER",
+                            "nextState": "PENDING_RESPONSE",
+                            "roles": [
+                                "CASE_APPROVER"
+                            ]
                         }
                     ]
                 },

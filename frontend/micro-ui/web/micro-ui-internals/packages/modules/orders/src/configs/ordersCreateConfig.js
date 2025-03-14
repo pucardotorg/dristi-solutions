@@ -1230,26 +1230,26 @@ export const configsScheduleNextHearingDate = [
       },
     ],
   },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "lastHearingTranscript",
-        isMandatory: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "LAST_HEARING_TRANSCRIPT",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-    ],
-  },
+  // {
+  //   body: [
+  //     {
+  //       type: "component",
+  //       component: "SelectCustomTextArea",
+  //       key: "lastHearingTranscript",
+  //       isMandatory: true,
+  //       populators: {
+  //         inputs: [
+  //           {
+  //             name: "text",
+  //             textAreaSubHeader: "LAST_HEARING_TRANSCRIPT",
+  //             placeholder: "TYPE_HERE_PLACEHOLDER",
+  //             type: "TextAreaComponent",
+  //           },
+  //         ],
+  //       },
+  //     },
+  //   ],
+  // },
   {
     body: [
       {
@@ -4356,6 +4356,144 @@ export const configsAdmitDismissCase = [
         component: "SelectCustomTextArea",
         key: "additionalCommentsAdmitDismissCase",
         schemaKeyPath: "orderDetails.additionalCommentsAdmitDismissCase",
+        transformer: "customTextArea",
+        isMandatory: false,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "ADMIT_DISMISS_ADDITIONAL_COMMENTS",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+              isOptional: true,
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
+
+export const configsAdmitCase = [
+  {
+    body: [
+      {
+        label: "WAS_ACCUSED_EXAMINED",
+        isMandatory: true,
+        key: "wasExamined",
+        schemaKeyPath: "orderDetails.wasExamined",
+        transformer: "customDropdown",
+        type: "radio",
+        populators: {
+          name: "wasExamined",
+          optionsKey: "name",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          required: true,
+          isMandatory: true,
+          options: [
+            {
+              code: "YES",
+              name: "YES",
+            },
+            {
+              code: "NO",
+              name: "NO",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "reasonForAdmitCase",
+        schemaKeyPath: "orderDetails.reasonForAdmitCase",
+        transformer: "customTextArea",
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "REASON_ADMIT_DISMISS",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "additionalCommentsAdmitCase",
+        schemaKeyPath: "orderDetails.additionalCommentsAdmitCase",
+        transformer: "customTextArea",
+        isMandatory: false,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "ADMIT_DISMISS_ADDITIONAL_COMMENTS",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+              isOptional: true,
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
+
+export const configsDismissCase = [
+  {
+    body: [
+      {
+        label: "WAS_ACCUSED_EXAMINED",
+        isMandatory: true,
+        key: "wasAccusedExamined",
+        schemaKeyPath: "orderDetails.wasAccusedExamined",
+        transformer: "customDropdown",
+        type: "radio",
+        populators: {
+          name: "wasAccusedExamined",
+          optionsKey: "name",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          required: true,
+          isMandatory: true,
+          options: [
+            {
+              code: "YES",
+              name: "YES",
+            },
+            {
+              code: "NO",
+              name: "NO",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "reasonForDismissCase",
+        schemaKeyPath: "orderDetails.reasonForDismissCase",
+        transformer: "customTextArea",
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "REASON_ADMIT_DISMISS",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "additionalCommentsDismissCase",
+        schemaKeyPath: "orderDetails.additionalCommentsDismissCase",
         transformer: "customTextArea",
         isMandatory: false,
         populators: {

@@ -398,6 +398,35 @@ async function search_message(tenantId, module, locale, requestinfo) {
   });
 }
 
+async function bulk_hearing_reschedule(tenantId, BulkReschedule, requestinfo) {
+  return await axios({
+    method: "post",
+    url: URL.resolve(config.host.hearing, config.paths.hearing_bulk_reschedule),
+    data: {
+      RequestInfo: requestinfo,
+      tenantId: tenantId,
+      BulkReschedule: BulkReschedule,
+    },
+  });
+}
+
+async function search_multiple_cases(criteria, tenantId, requestinfo) {
+  try {
+    return await axios({
+      method: "post",
+      url: URL.resolve(config.host.case, config.paths.case_search),
+      data: {
+        RequestInfo: requestinfo,
+        tenantId: tenantId,
+        criteria: criteria,
+      },
+    });
+  } catch (error) {
+    logger.error(`Error in ${config.paths.case_search}: ${error.message}`);
+    throw error;
+  }
+}
+
 module.exports = {
   pool,
   create_pdf,
@@ -418,4 +447,6 @@ module.exports = {
   create_file_v2,
   search_pdf,
   search_pdf_v2,
+  bulk_hearing_reschedule,
+  search_multiple_cases,
 };

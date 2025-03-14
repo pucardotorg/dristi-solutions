@@ -76,7 +76,7 @@ public class IndividualServiceTest {
 
         when(config.getIndividualHost()).thenReturn("individualHost");
         when(config.getIndividualSearchEndpoint()).thenReturn("searchEndpoint");
-        when(individualUtil.individualCall(individualSearchRequest, new StringBuilder("individualHost").append("searchEndpoint").append("?limit=1000").append("&offset=0").append("&tenantId=tenantId").append("&includeDeleted=true"), individualUserUUID))
+        when(individualUtil.individualCall(individualSearchRequest, new StringBuilder("individualHost").append("searchEndpoint").append("?limit=1000").append("&offset=0").append("&tenantId=tenantId"), individualUserUUID))
                 .thenThrow(new RuntimeException("Error"));
 
         // Act & Assert

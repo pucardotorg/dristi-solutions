@@ -1,0 +1,101 @@
+.geo-location-component {
+  .geolocation-header {
+    margin-bottom: 20px;
+  }
+  .custom-note-main-div {
+    margin-bottom: 12px;
+  }
+
+  .coordinate-container {
+    display: flex;
+    flex-direction: row;
+    align-items: start;
+    gap: 24px;
+    justify-content: space-between;
+
+    .custom-button-policeStation {
+      padding: 8px;
+      margin-top: 26px;
+      width: 190px;
+      height: 40px;
+      border: 1px solid #007e7e;
+      background-color: #fff !important;
+      box-shadow: none;
+      h2 {
+        color: #007e7e !important;
+        text-align: center;
+      }
+    }
+    .lat-long {
+      display: flex;
+      gap: 24px;
+      width: 100%;
+      .latlong-input input:disabled {
+        background-color: #d9d9d9;
+      }
+      .label-field-pair {
+        flex: 1;
+      }
+    }
+  }
+  .police-station-dropdown {
+    display: flex;
+    justify-content: space-between;
+    max-width: 100%;
+    width: 100%;
+    margin-bottom: 0px !important;
+    .options-card {
+      height: 30vh;
+      margin-top: 42px;
+      overflow-y: auto;
+      width: 100% !important;
+    }
+  }
+
+  .police-station-label {
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+    .custom-error-tooltip {
+      margin-top: 2px;
+    }
+  }
+
+  .select.disabled {
+    background-color: #d9d9d9 !important;
+  }
+
+  .app-container form .card {
+    .custom-button-policeStation {
+      white-space: nowrap;
+      h2 {
+        color: #007e7e !important;
+      }
+    }
+  }
+}
+
+.police-station-juridiction {
+  display: flex;
+  flex-direction: row;
+  gap: 3rem;
+  padding-bottom: 1rem;
+
+  .radio-group {
+    display: flex;
+    justify-content: flex-start;
+    gap: 3rem;
+  }
+}
+
+.coordinate-error {
+  width: 100%;
+  margin-top: -15px;
+  font-size: 16px;
+  margin-bottom: 12px;
+  color: #ff0000;
+
+  .error-text {
+    color: #ff0000;
+  }
+}

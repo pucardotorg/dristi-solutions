@@ -1,6 +1,7 @@
 package org.pucar.dristi.validator;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.request.RequestInfo;
@@ -199,4 +200,11 @@ public class HearingRegistrationValidator {
         }
     }
 
+    public void validateBulkRescheduleRequest(@Valid RequestInfo requestInfo, BulkReschedule bulkReschedule) {
+    }
+
+    public Hearing validateBulkUpdateHearing(@Valid RequestInfo requestInfo, Hearing hearing) {
+        List<Hearing> existingHearing = repository.checkHearingsExist(hearing);
+        return existingHearing.get(0);
+    }
 }

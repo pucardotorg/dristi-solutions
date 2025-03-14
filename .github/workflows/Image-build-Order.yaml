@@ -31,7 +31,12 @@ jobs:
 
       - name: Setup Docker
         uses: docker/setup-buildx-action@v2
-
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
       - name: Dependency check
         uses: dependency-check/Dependency-Check_Action@main
         env:
@@ -46,6 +51,11 @@ jobs:
         with:
           sarif_file: reports/dependency-check-report.sarif
         if: always()
+      - name: Build and analyze for order
+        env:
+          GITHUB_TOKEN: ${{ secrets.GHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: mvn -B -f backend/order/pom.xml package org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=solutions_order -Dsonar.organization=solutions -Dsonar.host.url=https://sonarcloud.io/
 
       # Login to Azure Container Registry
       - name: Login to Azure Container Registry
@@ -91,8 +101,8 @@ jobs:
             echo "WORKFLOW_FILE=solutions-dev.yaml" >> $GITHUB_ENV
           elif [ "${{ github.ref }}" == "refs/heads/release/0.4" ]; then
             echo "WORKFLOW_FILE=solutions-qa.yaml" >> $GITHUB_ENV
-          elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            echo "WORKFLOW_FILE=solutions-uat.yaml" >> $GITHUB_ENV
+          elif [ "${{ github.ref }}" == "refs/heads/release/0.5" ]; then
+            echo "WORKFLOW_FILE=solutions-dpg-dev.yaml" >> $GITHUB_ENV
           fi
 
       - name: Trigger Deployment Pipeline

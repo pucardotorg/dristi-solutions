@@ -1,5 +1,5 @@
 import { Dropdown, Hamburger } from "@egovernments/digit-ui-react-components";
-import React from "react";
+import React, { useMemo } from "react";
 import { useHistory, useLocation } from "react-router-dom";
 import ChangeCity from "../ChangeCity";
 import ChangeLanguage from "../ChangeLanguage";
@@ -25,6 +25,9 @@ const TopBar = ({
   showLanguageChange = true,
 }) => {
   const [profilePic, setProfilePic] = React.useState(null);
+
+  const roles = Digit.UserService.getUser()?.info?.roles;
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
 
   React.useEffect(async () => {
     const tenant = Digit.ULBService.getCurrentTenantId();
@@ -146,8 +149,12 @@ const TopBar = ({
       <div
         className="hambuger-back-wrapper"
         onClick={() => {
-          const homePageRedirect = pathname.split("/").slice(0, 3).join("/");
-          history.push(homePageRedirect);
+          if (isEpostUser) {
+            history.push(pathname);
+          } else {
+            const homePageRedirect = pathname.split("/").slice(0, 3).join("/");
+            history.push(homePageRedirect);
+          }
         }}
       >
         {mobileView ? <Hamburger handleClick={toggleSidebar} color="#9E9E9E" /> : null}

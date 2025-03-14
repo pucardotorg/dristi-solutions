@@ -80,7 +80,6 @@ public class ServiceConstants {
 
     public static final String ORDER_ISSUED = "ORDER_ISSUED";
 
-    public static final String SCHEDULE_OF_HEARING_DATE = "SCHEDULE_OF_HEARING_DATE";
     public static final String SCHEDULING_NEXT_HEARING = "SCHEDULING_NEXT_HEARING";
     public static final String ASSIGNING_DATE_RESCHEDULED_HEARING = "ASSIGNING_DATE_RESCHEDULED_HEARING";
     public static final String HEARING_RESCHEDULED = "HEARING_RESCHEDULED";
@@ -102,6 +101,7 @@ public class ServiceConstants {
     public static final String ORDER_PUBLISHED = "ORDER_PUBLISHED";
     public static final String MANDATORY_SUBMISSIONS_RESPONSES = "MANDATORY_SUBMISSIONS_RESPONSES";
     public static final String EVIDENCE_REQUESTED = "EVIDENCE_REQUESTED";
+    public static final String ADDITIONAL_INFORMATION_MESSAGE = "ADDITIONAL_INFORMATION_MESSAGE";
     public static final String EVIDENCE = "Evidence";
     public static final String NOTICE = "NOTICE";
     public static final String NOTICE_ISSUED = "NOTICE_ISSUED";
@@ -109,4 +109,6 @@ public class ServiceConstants {
     public static final String NEXT_HEARING_SCHEDULED = "NEXT_HEARING_SCHEDULED";
     public static final String RESPONDENT = "RESPONDENT";
     public static final String COMPLAINANT = "COMPLAINANT";
+    public static final String INTERMEDIATE = "INTERMEDIATE";
+    public static final String COMPOSITE = "COMPOSITE";
 }

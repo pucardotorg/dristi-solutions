@@ -209,4 +209,13 @@ public class Configuration {
 	@Value("${egov.sms.notification.document.marked.exhibit.template.id}")
 	private String smsNotificationDocumentMarkedExhibitTemplateId;
 
+	@Value("${egov.sms.notification.document.evidence.submitted.template.id}")
+	private String smsNotificationEvidenceSubmitted;
+
+	@Value("${egov.sms.notification.document.evidence.submission.filing.party.template.id}")
+	private String smsNotificationDocumentSubmissionByParty;
+
+	@Value("${egov.sms.notification.document.evidence.submission.opposite.party.template.id}")
+	private String smsNotificationDocumentSubmissionToOppositeParty;
+
 }

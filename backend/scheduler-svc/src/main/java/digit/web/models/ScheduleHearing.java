@@ -44,13 +44,16 @@ public class ScheduleHearing {
     private String status;
 
     @JsonProperty("hearingDate")
-    private long hearingDate;
+    private Long hearingDate;
 
     @JsonProperty("startTime")
-    private long startTime;
+    private Long startTime;
 
     @JsonProperty("endTime")
-    private long endTime;
+    private Long endTime;
+
+    @JsonProperty("expiryTime")
+    private Long expiryTime;
 
     @JsonProperty("auditDetails")
     private AuditDetails auditDetails;

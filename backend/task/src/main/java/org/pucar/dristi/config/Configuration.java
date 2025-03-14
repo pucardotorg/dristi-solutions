@@ -202,6 +202,18 @@ public class Configuration {
     @Value("${egov.sms.notification.summons.delivery.failed.template.id}")
     private String smsNotificationSummonsNotDeliveredTemplateId;
 
+    @Value("${egov.sms.notification.warrant.issued.template.id}")
+    private String smsNotificationWarrantIssuedTemplateId;
+
+    @Value("${egov.sms.notification.warrant.delivered.template.id}")
+    private String smsNotificationWarrantDeliveredTemplateId;
+
+    @Value("${egov.sms.notification.warrant.not.delivered.template.id}")
+    private String smsNotificationWarrantNotDeliveredTemplateId;
+
+    @Value("${egov.sms.notification.warrant.issued.success.template.id}")
+    private String smsNotificationWarrantIssueSuccess;
+
     //Individual Service
     @Value("${egov.individual.host}")
     private String individualHost;

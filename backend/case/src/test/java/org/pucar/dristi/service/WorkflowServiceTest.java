@@ -47,7 +47,7 @@ public class WorkflowServiceTest {
 
     @Mock
     private ObjectMapper mapper;
-    
+
     private WorkflowObject workflow = new WorkflowObject();
     @BeforeEach
     void setUp() {

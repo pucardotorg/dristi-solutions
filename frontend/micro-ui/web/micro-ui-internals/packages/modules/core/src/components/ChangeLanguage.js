@@ -1,5 +1,5 @@
 import { CustomButton, Dropdown } from "@egovernments/digit-ui-react-components";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 
 const GlobalIcon = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -9,7 +9,7 @@ const GlobalIcon = () => (
     />
   </svg>
 );
-const ChangeLanguage = (prop) => {
+const ChangeLanguage = ({ isProfileComponent, ...prop }) => {
   const isDropdown = prop.dropdown || false;
   const { data: storeData, isLoading } = Digit.Hooks.useStore.getInitData();
   const { languages, stateInfo } = storeData || {};
@@ -19,12 +19,13 @@ const ChangeLanguage = (prop) => {
     setselected(language.value);
     Digit.LocalizationService.changeLanguage(language.value, stateInfo.code);
   };
+  const selectedLanguageLabel = useMemo(() => languages?.find((language) => language?.value === selected)?.label, [selected]);
 
   if (isLoading) return null;
 
   if (isDropdown) {
     return (
-      <div style={prop.style}>
+      <div className="select-language" style={prop.style}>
         <Dropdown
           option={languages}
           selected={languages.find((language) => language.value === selectedLanguage)}
@@ -36,15 +37,21 @@ const ChangeLanguage = (prop) => {
               className={`cp ${prop.dropdownClassName}`}
               style={{ color: "black", display: "flex", gap: "4px", alignItems: "center", height: "40px" }}
             >
-              <span style={{ display: "flex", alignItems: "center" }}>
-                <GlobalIcon />
-              </span>
-              <span>
-                {languages
-                  .find((language) => language.value === selected)
-                  .label?.substring(0, 2)
-                  ?.toUpperCase()}
-              </span>
+              {!isProfileComponent && (
+                <span style={{ display: "flex", alignItems: "center" }}>
+                  <GlobalIcon />
+                </span>
+              )}
+              {isProfileComponent ? (
+                <span>{`${selectedLanguageLabel[0]?.toUpperCase()}${selectedLanguageLabel?.slice(1)?.toLowerCase()}`}</span>
+              ) : (
+                <span>
+                  {languages
+                    .find((language) => language.value === selected)
+                    .label?.substring(0, 2)
+                    ?.toUpperCase()}
+                </span>
+              )}
             </label>
           }
         />

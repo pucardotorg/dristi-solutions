@@ -77,11 +77,32 @@ public class ServiceConstants {
     public static final String ACCUSED = "ACCUSED";
     public static final String COMPLAINANT = "COMPLAINANT";
     public static final String COMPLETED = "COMPLETED";
+    public static final String SCHEDULED = "SCHEDULED";
     public static final String HEARING_ADJOURNED = "HEARING_ADJOURNED";
     public static final String NOTIFICATION_ENG_LOCALE_CODE = "en_IN";
     public static final String NOTIFICATION_MODULE_CODE = "notification";
     public static final String NOTIFICATION_LOCALIZATION_CODES_JSONPATH = "$.messages.*.code";
     public static final String NOTIFICATION_LOCALIZATION_MSGS_JSONPATH = "$.messages.*.message";
+
+    // module for localized hearing types
+    public static final String HEARING_TYPE_MODULE_CODE = "hearingTypes";
+
+    // Hearing Types
+    public static final String WARRANT = "WARRANT";
+    public static final String EXAMINATION_UNDER_S351_BNSS = "EXAMINATION_UNDER_S351_BNSS";
+    public static final String EVIDENCE_COMPLAINANT = "EVIDENCE_COMPLAINANT";
+    public static final String EVIDENCE_ACCUSED = "EVIDENCE_ACCUSED";
+    public static final String APPEARANCE = "APPEARANCE";
+    public static final String JUDGEMENT = "JUDGEMENT";
+    public static final String BAIL = "BAIL";
+    public static final String ADR = "ADR";
+    public static final String REPORTS = "REPORTS";
+    public static final String ARGUMENTS = "ARGUMENTS";
+    public static final String PLEA = "PLEA";
+    public static final String EXECUTION = "EXECUTION";
+    public static final String ADMISSION = "ADMISSION";
+    // generic message code for all hearing types
+    public static final String VARIABLE_HEARING_SCHEDULED = "VARIABLE_HEARING_SCHEDULED";
 
 
 }

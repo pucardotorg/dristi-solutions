@@ -56,6 +56,7 @@ class EPostRowMapperTest {
         when(resultSet.getString("received_date")).thenReturn("2023-01-02");
         when(resultSet.getString("createdBy")).thenReturn("creator");
         when(resultSet.getString("lastModifiedBy")).thenReturn("modifier");
+        when(resultSet.getString("postal_hub")).thenReturn("postal_hub");
         when(resultSet.getLong("createdTime")).thenReturn(1000L);
         when(resultSet.getLong("lastModifiedTime")).thenReturn(2000L);
 
@@ -73,6 +74,7 @@ class EPostRowMapperTest {
         assertEquals("123456", result.getPinCode());
         assertEquals(deliveryStatus, result.getDeliveryStatus());
         assertEquals("Remarks", result.getRemarks());
+        assertEquals("postal_hub",result.getPostalHub());
         assertEquals(additionalFields, result.getAdditionalDetails());
         assertEquals(1, result.getRowVersion());
         assertEquals("2023-01-01", result.getBookingDate());

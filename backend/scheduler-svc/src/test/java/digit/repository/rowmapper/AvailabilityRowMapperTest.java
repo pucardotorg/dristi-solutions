@@ -27,8 +27,8 @@ public class AvailabilityRowMapperTest {
 
     @Test
     public void testMapRow() throws SQLException {
-        when(resultSet.getString("date")).thenReturn("2024-07-04");
-        when(resultSet.getDouble("hours")).thenReturn(8.0);
+        when(resultSet.getString("hearing_date")).thenReturn("2024-07-04");
+        when(resultSet.getDouble("total_mins")).thenReturn(8.0);
 
         AvailabilityDTO availabilityDTO = mapper.mapRow(resultSet, 1);
 

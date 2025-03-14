@@ -1,0 +1,1 @@
+UPDATE dristi_orders SET orderCategory = 'INTERMEDIATE' where orderCategory is null;

@@ -136,16 +136,22 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect }) {
             <div key={index} className="file-uploader-with-name-sub">
               <div className="file-uploader-with-name-header">
                 <h1>{`${t("DOCUMENT_NUMBER_HEADING")} ${index + 1}`}</h1>
-                <span
-                  onClick={() => {
-                    if (!config?.disable) {
-                      handleDeleteDocument(index);
-                    }
-                  }}
-                  style={{ cursor: "pointer" }}
-                >
-                  <DeleteFileIcon />
-                </span>
+
+                {(config?.state === "DRAFT_IN_PROGRESS" || index >= config?.doclength) && (
+                  <span
+                    onClick={() => {
+                      if (!config?.disable && (config?.state === "DRAFT_IN_PROGRESS" || index >= config?.doclength)) {
+                        handleDeleteDocument(index);
+                      }
+                    }}
+                    style={{
+                      cursor: config?.disable ? "not-allowed" : "pointer",
+                      opacity: config?.disable ? 0.5 : 1,
+                    }}
+                  >
+                    <DeleteFileIcon />
+                  </span>
+                )}
               </div>
               <div className="drag-drop-visible-main-with-custom-name">
                 {inputs.map((input) => {
@@ -161,7 +167,7 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect }) {
                           onChange={(e) => {
                             handleOnTextChange(e.target.value, input, index);
                           }}
-                          disable={input?.isDisabled || config?.disable}
+                          disable={input?.isDisabled || (index < config?.doclength ? true : config?.disable)}
                           defaultValue={undefined}
                           {...input?.validation}
                         />
@@ -189,7 +195,7 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect }) {
                             t={t}
                             uploadErrorInfo={fileErrors}
                             input={input}
-                            disableUploadDelete={config?.disable}
+                            disableUploadDelete={index < config?.doclength ? true : config?.disable}
                           />
                         )}
                         {showFileUploader && (
@@ -216,7 +222,7 @@ function SelectUploadDocWithName({ t, config, formData = {}, onSelect }) {
           );
         })}
       <Button
-        isDisabled={config?.disable || (config?.state && config?.state !== CaseWorkflowState.DRAFT_IN_PROGRESS)}
+        // isDisabled={config?.disable || (config?.state && config?.state !== CaseWorkflowState.DRAFT_IN_PROGRESS)}
         variation="secondary"
         onButtonClick={handleAddDocument}
         className="add-new-document"

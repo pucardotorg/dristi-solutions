@@ -1,0 +1,52 @@
+[
+  {
+    "tenantId": "kl",
+    "masterName": "common-masters",
+    "moduleName": "PendingTaskType",
+    "mdmsPayload": [
+      {
+        "id": "63822e4b-f574-4e0c-9fce-1cd702dde0b1",
+        "tenantId": "kl",
+        "schemaCode": "common-masters.PendingTaskType",
+        "uniqueIdentifier": "12",
+        "data": {
+          "id": "12",
+          "actor": "Advocate/Litigant",
+          "state": "PENDINGPAYMENT",
+          "isgeneric": false,
+          "screenType": "home",
+          "pendingTask": "Complete Submission",
+          "closerAction": ["PAY", "DELETE"],
+          "triggerAction": ["ESIGN"],
+          "workflowModule": "application-voluntary-submission"
+        },
+        "isActive": false
+      }
+    ]
+  },
+  {
+    "tenantId": "kl",
+    "masterName": "common-masters",
+    "moduleName": "PendingTaskType",
+    "mdmsPayload": [
+      {
+        "id": "3c380fb7-2fe7-46af-a6c6-112720f9f9db",
+        "tenantId": "kl",
+        "schemaCode": "common-masters.PendingTaskType",
+        "uniqueIdentifier": "11",
+        "data": {
+          "id": "11",
+          "actor": "Advocate/Litigant",
+          "state": "PENDINGESIGN",
+          "isgeneric": false,
+          "screenType": "home",
+          "pendingTask": "Complete Submission",
+          "closerAction": ["ESIGN", "DELETE"],
+          "triggerAction": ["CREATE"],
+          "workflowModule": "application-voluntary-submission"
+        },
+        "isActive": false
+      }
+    ]
+  }
+]

@@ -47,5 +47,11 @@ public class CaseDiarySearchCriteria {
 
     private String judgeId = null;
 
+    @JsonProperty("referenceId")
+    private String referenceId = null;
+
+    @JsonProperty("referenceType")
+    private String referenceType = null;
+
 
 }

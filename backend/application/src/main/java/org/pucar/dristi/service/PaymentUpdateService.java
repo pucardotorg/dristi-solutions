@@ -1,5 +1,7 @@
 package org.pucar.dristi.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
@@ -12,6 +14,7 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.ApplicationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.ApplicationRepository;
+import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.SmsNotificationUtil;
 import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +24,8 @@ import org.springframework.util.CollectionUtils;
 
 import java.util.*;
 
-import static org.pucar.dristi.config.ServiceConstants.PENDINGAPPROVAL;
+import static org.pucar.dristi.config.ServiceConstants.*;
+import static org.pucar.dristi.util.SmsNotificationUtil.*;
 
 @Slf4j
 @Service
@@ -35,9 +39,13 @@ public class PaymentUpdateService {
     private final ApplicationEnrichment enrichment;
     private final List<String> allowedBusinessServices;
     private final SmsNotificationUtil smsNotificationUtil;
+    private final CaseUtil caseUtil;
+    private final ObjectMapper objectMapper;
+    private final IndividualService individualService;
+    private final SmsNotificationService notificationService;
 
     @Autowired
-    public PaymentUpdateService(WorkflowService workflowService, ObjectMapper mapper, ApplicationRepository repository, Producer producer, Configuration configuration, ApplicationEnrichment enrichment, SmsNotificationUtil smsNotificationUtil) {
+    public PaymentUpdateService(WorkflowService workflowService, ObjectMapper mapper, ApplicationRepository repository, Producer producer, Configuration configuration, ApplicationEnrichment enrichment, SmsNotificationUtil smsNotificationUtil, CaseUtil caseUtil, ObjectMapper objectMapper, IndividualService individualService, SmsNotificationService notificationService) {
         this.workflowService = workflowService;
         this.mapper = mapper;
         this.repository = repository;
@@ -51,6 +59,10 @@ public class PaymentUpdateService {
                 configuration.getBailVoluntarySubBusinessServiceName()
         );
         this.smsNotificationUtil = smsNotificationUtil;
+        this.caseUtil = caseUtil;
+        this.objectMapper = objectMapper;
+        this.individualService = individualService;
+        this.notificationService = notificationService;
     }
 
     public void process(Map<String, Object> record) {
@@ -124,6 +136,7 @@ public class PaymentUpdateService {
 
                 String applicationType = application.getApplicationType();
 
+                getSmsAfterPayment(applicationRequest,applicationType);
                 smsNotificationUtil.callNotificationService(applicationRequest, state.getState(), applicationType);
                 producer.push(configuration.getApplicationUpdateStatusTopic(), applicationRequest);
             }
@@ -131,5 +144,77 @@ public class PaymentUpdateService {
             log.error("Error updating workflow for application payment: {}", e.getMessage(), e);
         }
     }
+
+    private void getSmsAfterPayment(ApplicationRequest applicationRequest,String applicationType) throws JsonProcessingException {
+        CaseSearchRequest caseSearchRequest = createCaseSearchRequest(applicationRequest.getRequestInfo(), applicationRequest.getApplication().getFilingNumber());
+        JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+
+        Object additionalDetailsObject = applicationRequest.getApplication().getAdditionalDetails();
+        String jsonData = objectMapper.writeValueAsString(additionalDetailsObject);
+        JsonNode additionalData = objectMapper.readTree(jsonData);
+
+        String owner = additionalData.get("onBehalOfName").asText();
+        String party = getPartyTypeByName(caseDetails.get("litigants"), owner);
+        JsonNode formData = additionalData.path("formdata");
+
+        Set<String> individualIds = extractIndividualIds(caseDetails, party);
+
+        Set<String> phoneNumbers = callIndividualService(applicationRequest.getRequestInfo(), individualIds);
+
+        SmsTemplateData smsTemplateData = SmsTemplateData.builder()
+                .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").asText() : "")
+                .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").asText() : "")
+                .applicationType(applicationType)
+                .originalHearingDate(formData.has("initialHearingDate") ? formData.get("initialHearingDate").asText() : "")
+                .reScheduledHearingDate(formData.has("changedHearingDate") ? formData.get("changedHearingDate").asText() : "")
+                .tenantId(applicationRequest.getApplication().getTenantId()).build();
+
+        for (String number : phoneNumbers) {
+            notificationService.sendNotification(applicationRequest.getRequestInfo(), smsTemplateData, PAYMENT_COMPLETED_SUCCESSFULLY, number);
+        }
+    }
+
+    private CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, String fillingNUmber) {
+        CaseSearchRequest caseSearchRequest = new CaseSearchRequest();
+        caseSearchRequest.setRequestInfo(requestInfo);
+        CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(fillingNUmber).defaultFields(false).build();
+        caseSearchRequest.addCriteriaItem(caseCriteria);
+        return caseSearchRequest;
+    }
+
+    public  Set<String> extractIndividualIds(JsonNode caseDetails, String receiver) {
+        Set<String> uuids = new HashSet<>();
+        String partyTypeToMatch = (receiver != null) ? receiver.toLowerCase() : "";
+
+        JsonNode litigantNode = caseDetails.get("litigants");
+        if (litigantNode.isArray()) {
+            for (JsonNode node : litigantNode) {
+                String partyType = node.get("partyType").asText().toLowerCase();
+                if (partyType.contains(partyTypeToMatch)) {
+                    String uuid = node.path("additionalDetails").get("uuid").asText();
+                    if (!uuid.isEmpty()) {
+                        uuids.add(uuid);
+                    }
+                }
+            }
+        }
+        return uuids;
+    }
+
+    private Set<String> callIndividualService(RequestInfo requestInfo, Set<String> ids) {
+
+        Set<String> mobileNumber = new HashSet<>();
+
+        List<Individual> individuals = individualService.getIndividualsBylId(requestInfo, new ArrayList<>(ids));
+        for(Individual individual : individuals) {
+            if (individual.getMobileNumber() != null) {
+                mobileNumber.add(individual.getMobileNumber());
+            }
+        }
+
+        return mobileNumber;
+    }
+
+
 
 }

@@ -6,26 +6,22 @@ import digit.web.models.OptOutSearchCriteria;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
 
 import java.util.List;
 
 @Component
 public class RescheduleRequestOptOutQueryBuilder {
 
-    @Autowired
-    private QueryBuilderHelper queryBuilderHelper;
-
-
-    private final String BASE_APPLICATION_QUERY = "SELECT  oo.id ,oo.individual_id ,oo.judge_id ,oo.case_id ,oo.reschedule_request_id ,oo.opt_out_dates , oo.created_by,oo.last_modified_by,oo.created_time,oo.last_modified_time, oo.row_version , oo.tenant_id ";
-
+    private static final String BASE_APPLICATION_QUERY = "SELECT  oo.id ,oo.individual_id ,oo.judge_id ,oo.case_id ,oo.reschedule_request_id ,oo.opt_out_dates , oo.created_by,oo.last_modified_by,oo.created_time,oo.last_modified_time, oo.row_version , oo.tenant_id ";
     private static final String FROM_TABLES = " FROM reschedule_request_opt_out_detail oo ";
+    private static final String LIMIT_OFFSET = " LIMIT ? OFFSET ?";
 
-    private final String ORDER_BY = " ORDER BY ";
+    private final QueryBuilderHelper queryBuilderHelper;
 
-    private final String GROUP_BY = " GROUP BY ";
-
-    private final String LIMIT_OFFSET = " LIMIT ? OFFSET ?";
+    @Autowired
+    public RescheduleRequestOptOutQueryBuilder(QueryBuilderHelper queryBuilderHelper) {
+        this.queryBuilderHelper = queryBuilderHelper;
+    }
 
     public String getOptOutQuery(OptOutSearchCriteria optOutSearchCriteria, List<Object> preparedStmtList, Integer limit, Integer offset) {
         StringBuilder query = new StringBuilder(BASE_APPLICATION_QUERY);

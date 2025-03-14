@@ -246,7 +246,6 @@ const SelectComponents = ({ t, config, onSelect, formData = {}, errors, formStat
                       justifyContent: "flex-start",
                       gap: "3rem",
                       ...input.styles,
-                      ...(input?.disable && { opacity: 0.5 }),
                     }}
                     selectedOption={formData?.[config?.key]?.[input?.name]}
                     options={input?.options}

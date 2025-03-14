@@ -2,21 +2,16 @@ const cheerio = require("cheerio");
 const config = require("../config");
 const {
   search_case,
-  search_order,
-  search_mdms,
-  search_hrms,
   search_sunbirdrc_credential_service,
   create_pdf,
-  search_individual,
-  search_application,
-  search_individual_uuid,
+  create_pdf_v2,
 } = require("../api");
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
+const { handleApiCall } = require("../utils/handleApiCall");
 
-async function orderSection202crpc(req, res, qrCode) {
+async function orderSection202crpc(req, res, qrCode, order, compositeOrder) {
   const cnrNumber = req.query.cnrNumber;
-  const orderId = req.query.orderId;
   const entityId = req.query.entityId;
   const code = req.query.code;
   const tenantId = req.query.tenantId;
@@ -24,7 +19,6 @@ async function orderSection202crpc(req, res, qrCode) {
 
   const missingFields = [];
   if (!cnrNumber) missingFields.push("cnrNumber");
-  if (!orderId) missingFields.push("orderId");
   if (!tenantId) missingFields.push("tenantId");
   if (qrCode === "true" && (!entityId || !code))
     missingFields.push("entityId and code");
@@ -38,19 +32,10 @@ async function orderSection202crpc(req, res, qrCode) {
     );
   }
 
-  // Function to handle API calls
-  const handleApiCall = async (apiCall, errorMessage) => {
-    try {
-      return await apiCall();
-    } catch (ex) {
-      renderError(res, `${errorMessage}`, 500, ex);
-      throw ex; // Ensure the function stops on error
-    }
-  };
-
   try {
     // Search for case details
     const resCase = await handleApiCall(
+      res,
       () => search_case(cnrNumber, tenantId, requestInfo),
       "Failed to query case service"
     );
@@ -105,70 +90,11 @@ async function orderSection202crpc(req, res, qrCode) {
     //   renderError(res, "Court establishment MDMS master not found", 404);
     // }
 
-    // Search for order details
-
-    const respondentParty = courtCase.litigants.find(
-      (party) => party.partyType === "respondent.primary"
-    );
-    if (!respondentParty) {
-      return renderError(
-        res,
-        "No party with partyType 'respondent.primary' found",
-        400
-      );
-    }
-
-    const resIndividual = await handleApiCall(
-      () =>
-        search_individual(tenantId, respondentParty.individualId, requestInfo),
-      "Failed to query individual service using individualId"
-    );
-    const respondentIndividual = resIndividual?.data?.Individual[0];
-    if (!respondentIndividual) {
-      renderError(res, "Respondent individual not found", 404);
-    }
-
-    const resOrder = await handleApiCall(
-      () => search_order(tenantId, orderId, requestInfo),
-      "Failed to query order service"
-    );
-    const order = resOrder?.data?.list[0];
-    if (!order) {
-      renderError(res, "Order not found", 404);
-    }
-
-    const resApplication = await handleApiCall(
-      () =>
-        search_application(
-          tenantId,
-          order?.additionalDetails?.formdata?.refApplicationId,
-          requestInfo
-        ),
-      "Failed to query application service"
-    );
-    const application = resApplication?.data?.applicationList[0];
-    if (!application) {
-      return renderError(res, "Application not found", 404);
-    }
-
-    const behalfOfIndividual = await handleApiCall(
-      () =>
-        search_individual_uuid(
-          tenantId,
-          application.onBehalfOf[0],
-          requestInfo
-        ),
-      "Failed to query individual service using id"
-    );
-    const onbehalfOfIndividual = behalfOfIndividual?.data?.Individual[0];
-    if (!onbehalfOfIndividual) {
-      renderError(res, "Individual not found", 404);
-    }
-
     // Handle QR code if enabled
     let base64Url = "";
     if (qrCode === "true") {
       const resCredential = await handleApiCall(
+        res,
         () =>
           search_sunbirdrc_credential_service(
             tenantId,
@@ -224,20 +150,10 @@ async function orderSection202crpc(req, res, qrCode) {
     const year = currentDate.getFullYear();
     const additionalComments = order?.comments || "";
     // Prepare data for PDF generation
-    const partyName = [
-      onbehalfOfIndividual.name.givenName,
-      onbehalfOfIndividual.name.otherNames,
-      onbehalfOfIndividual.name.familyName,
-    ]
-      .filter(Boolean)
-      .join(" ");
-    const otherPartyName = [
-      respondentIndividual.name.givenName,
-      respondentIndividual.name.otherNames,
-      respondentIndividual.name.familyName,
-    ]
-      .filter(Boolean)
-      .join(" ");
+    const complainantName =
+      order?.additionalDetails?.formdata?.applicationFilledBy?.name || "";
+    const respondentName =
+      order?.additionalDetails?.formdata?.detailsSeekedOf?.name || "";
     const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
     const data = {
       Data: [
@@ -252,8 +168,8 @@ async function orderSection202crpc(req, res, qrCode) {
           day: day,
           month: month,
           year: year,
-          complainantName: partyName,
-          respondentName: otherPartyName,
+          complainantName: complainantName,
+          respondentName: respondentName,
           section: "202",
           numberOfDays: "",
           additionalComments: additionalComments,
@@ -271,7 +187,18 @@ async function orderSection202crpc(req, res, qrCode) {
       qrCode === "true"
         ? config.pdf.order_section202_crpc_qr
         : config.pdf.order_section202_crpc;
+
+    if (compositeOrder) {
+      const pdfResponse = await handleApiCall(
+        res,
+        () => create_pdf_v2(tenantId, pdfKey, data, req.body),
+        "Failed to generate PDF of generic order"
+      );
+      return pdfResponse.data;
+    }
+
     const pdfResponse = await handleApiCall(
+      res,
       () => create_pdf(tenantId, pdfKey, data, req.body),
       "Failed to generate PDF of order Section202 Crpc"
     );

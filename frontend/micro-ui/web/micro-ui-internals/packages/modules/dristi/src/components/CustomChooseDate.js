@@ -11,7 +11,7 @@ function convertEpochToDate(item) {
 
 const Chip = ({ label, isSelected, handleClick, item, isDisabled }) => {
   const chipStyle = {
-    backgroundColor: isDisabled ? "#E8E8E8" : "#FAFAFA",
+    backgroundColor: isDisabled ? "#E8E8E8" : isSelected ? "#ecf3fd" : "#FAFAFA",
     color: "#505A5F",
     border: isSelected ? "1px solid #007E7E" : "1px solid #D6D5D4",
     borderRadius: "8px",

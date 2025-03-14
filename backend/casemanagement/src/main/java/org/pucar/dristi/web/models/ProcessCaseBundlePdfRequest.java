@@ -36,4 +36,7 @@ public class ProcessCaseBundlePdfRequest {
     @NotNull
     @Valid
     private String caseId = null;
+
+    @JsonProperty("isRebuild")
+    private Boolean isRebuild = false;
 }

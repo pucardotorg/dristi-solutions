@@ -2,33 +2,23 @@ const cheerio = require("cheerio");
 const config = require("../config");
 const {
   search_case,
-  search_mdms,
-  search_hrms,
   search_sunbirdrc_credential_service,
   search_application,
   create_pdf,
-  search_order,
+  create_pdf_v2,
 } = require("../api");
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
+const { handleApiCall } = require("../utils/handleApiCall");
 
-function getOrdinalSuffix(day) {
-  if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
-  switch (day % 10) {
-    case 1:
-      return "st"; // 1st, 21st, 31st
-    case 2:
-      return "nd"; // 2nd, 22nd
-    case 3:
-      return "rd"; // 3rd, 23rd
-    default:
-      return "th"; // 4th, 5th, 6th, etc.
-  }
-}
-
-const orderForRejectionReschedulingRequest = async (req, res, qrCode) => {
+const orderForRejectionReschedulingRequest = async (
+  req,
+  res,
+  qrCode,
+  order,
+  compositeOrder
+) => {
   const cnrNumber = req.query.cnrNumber;
-  const orderId = req.query.orderId;
   const tenantId = req.query.tenantId;
   const entityId = req.query.entityId;
   const code = req.query.code;
@@ -36,7 +26,6 @@ const orderForRejectionReschedulingRequest = async (req, res, qrCode) => {
 
   const missingFields = [];
   if (!cnrNumber) missingFields.push("cnrNumber");
-  if (!orderId) missingFields.push("orderId");
   if (!tenantId) missingFields.push("tenantId");
   if (requestInfo === undefined) missingFields.push("requestInfo");
   if (qrCode === "true" && (!entityId || !code))
@@ -50,18 +39,10 @@ const orderForRejectionReschedulingRequest = async (req, res, qrCode) => {
     );
   }
 
-  // Function to handle API calls
-  const handleApiCall = async (apiCall, errorMessage) => {
-    try {
-      return await apiCall();
-    } catch (ex) {
-      renderError(res, `${errorMessage}`, 500, ex);
-      throw ex; // Ensure the function stops on error
-    }
-  };
   // Search for case details
   try {
     const resCase = await handleApiCall(
+      res,
       () => search_case(cnrNumber, tenantId, requestInfo),
       "Failed to query case service"
     );
@@ -89,15 +70,8 @@ const orderForRejectionReschedulingRequest = async (req, res, qrCode) => {
     const mdmsCourtRoom = config.constants.mdmsCourtRoom;
     const judgeDetails = config.constants.judgeDetails;
 
-    const resOrder = await handleApiCall(
-      () => search_order(tenantId, orderId, requestInfo),
-      "Failed to query order service"
-    );
-    const order = resOrder?.data?.list[0];
-    if (!order) {
-      renderError(res, "Order not found", 404);
-    }
     const resApplication = await handleApiCall(
+      res,
       () =>
         search_application(
           tenantId,
@@ -125,6 +99,7 @@ const orderForRejectionReschedulingRequest = async (req, res, qrCode) => {
     let base64Url = "";
     if (qrCode === "true") {
       const resCredential = await handleApiCall(
+        res,
         () =>
           search_sunbirdrc_credential_service(
             tenantId,
@@ -146,41 +121,9 @@ const orderForRejectionReschedulingRequest = async (req, res, qrCode) => {
       base64Url = imgTag.attr("src");
     }
 
-    let caseYear;
-    if (typeof courtCase.filingDate === "string") {
-      caseYear = courtCase.filingDate.slice(-4);
-    } else if (courtCase.filingDate instanceof Date) {
-      caseYear = courtCase.filingDate.getFullYear();
-    } else if (typeof courtCase.filingDate === "number") {
-      // Assuming the number is in milliseconds (epoch time)
-      caseYear = new Date(courtCase.filingDate).getFullYear();
-    } else {
-      return renderError(res, "Invalid filingDate format", 500);
-    }
-
-    const months = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ];
-
     const currentDate = new Date();
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
-
-    const day = currentDate.getDate();
-    const month = months[currentDate.getMonth()];
     const year = currentDate.getFullYear();
-
-    const ordinalSuffix = getOrdinalSuffix(day);
     const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
     const data = {
       Data: [
@@ -211,7 +154,18 @@ const orderForRejectionReschedulingRequest = async (req, res, qrCode) => {
       qrCode === "true"
         ? config.pdf.order_for_rejection_rescheduling_request_qr
         : config.pdf.order_for_rejection_rescheduling_request;
+
+    if (compositeOrder) {
+      const pdfResponse = await handleApiCall(
+        res,
+        () => create_pdf_v2(tenantId, pdfKey, data, req.body),
+        "Failed to generate PDF of generic order"
+      );
+      return pdfResponse.data;
+    }
+
     const pdfResponse = await handleApiCall(
+      res,
       () => create_pdf(tenantId, pdfKey, data, req.body),
       "Failed to generate PDF of Bail Rejection"
     );
