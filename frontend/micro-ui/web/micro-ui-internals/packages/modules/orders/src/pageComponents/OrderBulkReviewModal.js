@@ -176,6 +176,7 @@ function OrderBulkReviewModal({ t, showActions, refetchOrdersData, pendingSignOr
           },
           {}
         );
+        await refetchOrdersData();
         setIssueBulkSuccessData({ show: true, bulkSignOrderListLength: updateOrderResponse?.orders?.length });
         setShowBulkSignAllModal(false);
       });
