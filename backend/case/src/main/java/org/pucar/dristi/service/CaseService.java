@@ -1766,10 +1766,7 @@ public class CaseService {
 
                 for (JsonNode data : formData) {
                     if (data.at(getIndividualIdPath(detailsKey)).asText().equals(uniqueId)) {
-                        String firstName = data.get("data").get("firstName").asText("");
-                        String middleName = data.get("data").get("middleName").asText("");
-                        String lastName = data.get("data").get("lastName").asText("");
-                        String fullName = (firstName + " " + middleName + " " + lastName).replaceAll("\\s+", " ").trim();
+                        String fullName = getFullName(data, detailsKey);
                         ((ObjectNode) additionalDetailsNode).put("fullName", fullName);
                         litigant.setAdditionalDetails(objectMapper.convertValue(additionalDetailsNode, Object.class));
                         break;
@@ -1782,5 +1779,21 @@ public class CaseService {
             log.error("ERROR_UPDATING_LITIGANTS", e);
             throw new CustomException("ERROR_UPDATING_LITIGANTS", e.getMessage());
         }
+    }
+
+    private String getFullName(JsonNode data, String detailsKey) {
+        String fullName = null;
+        if(detailsKey.equals("complainantDetails")) {
+            String firstName = data.get("data").get("firstName").asText("");
+            String middleName = data.get("data").get("middleName").asText("");
+            String lastName = data.get("data").get("lastName").asText("");
+            fullName = (firstName + " " + middleName + " " + lastName).replaceAll("\\s+", " ").trim();
+        } else if(detailsKey.equals("respondentDetails")) {
+            String firstName = data.get("data").get("respondentFirstName").asText("");
+            String middleName = data.get("data").get("respondentMiddleName").asText("");
+            String lastName = data.get("data").get("respondentLastName").asText("");
+            fullName = (firstName + " " + middleName + " " + lastName).replaceAll("\\s+", " ").trim();
+        }
+        return fullName;
     }
 }
