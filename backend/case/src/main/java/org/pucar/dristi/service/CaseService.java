@@ -528,7 +528,7 @@ public class CaseService {
             throw new IllegalArgumentException("CourtCase and Profile cannot be null");
         }
 
-        Object additionalDetailsMap  = decryptedCourtCase.getAdditionalDetails();
+        Object additionalDetailsMap = decryptedCourtCase.getAdditionalDetails();
 
         JsonNode additionalDetailsNode = objectMapper.valueToTree(additionalDetailsMap);
         JsonNode profileRequestsNode = additionalDetailsNode.get("profileRequests");
@@ -1576,6 +1576,11 @@ public class CaseService {
                         JsonNode newDetails = profile.get("newData").get(detailsKey);
                         updatePartyDetails(uniqueId, additionalDetails, newDetails, detailsKey);
 
+                        if (detailsKey.equals("respondentDetails")) {
+                            String individualId = extractIndividualIdIfPresent(additionalDetails, uniqueId);
+                            uniqueId = individualId != null ? individualId : uniqueId;
+                        }
+
                         Party litigant = extractLitigant(courtCase.getLitigants(), uniqueId);
                         if (litigant != null) {
                             Party updatedLitigant = replaceLitigantDetails(uniqueId, litigant, additionalDetails.get(detailsKey), detailsKey);
@@ -1588,15 +1593,15 @@ public class CaseService {
                     }
                 }
 
-                if(idToRemove != null){
+                if (idToRemove != null) {
                     removeProfileRequest(idToRemove, profileRequests);
                 }
                 ((ObjectNode) additionalDetails).set("profileRequests", objectMapper.convertValue(profileRequests, JsonNode.class));
 
             } else if (request.getProcessInfo().getAction().equals(ActionType.REJECT)) {
                 JsonNode profileRequests = additionalDetails.get("profileRequests");
-                for(JsonNode profile: profileRequests) {
-                    if(profile.get("pendingTaskRefId").asText().equals(request.getProcessInfo().getPendingTaskRefId())) {
+                for (JsonNode profile : profileRequests) {
+                    if (profile.get("pendingTaskRefId").asText().equals(request.getProcessInfo().getPendingTaskRefId())) {
                         removeProfileRequest(profile.get("uuid").asText(), profileRequests);
                         ((ObjectNode) additionalDetails).set("profileRequests", objectMapper.convertValue(profileRequests, JsonNode.class));
                         break;
@@ -1619,6 +1624,25 @@ public class CaseService {
             log.error(ERROR_PROCESS_REQUEST, e);
             throw new CustomException(ERROR_PROCESS_REQUEST, e.getMessage());
         }
+    }
+
+    private String extractIndividualIdIfPresent(JsonNode rootNode, String uniqueId) {
+        JsonNode respondentDetailsNode = rootNode.path("respondentDetails")
+                .path("formdata");
+        if (respondentDetailsNode.isArray()) {
+            for (JsonNode respondentNode : respondentDetailsNode) {
+                JsonNode respondentVerificationNode = respondentNode.path("data")
+                        .path("respondentVerification")
+                        .path("individualDetails");
+                if (!respondentVerificationNode.isMissingNode()) {
+                    String individualId = respondentVerificationNode.path("individualId").asText();
+                    if (!individualId.isEmpty() && individualId.equals(uniqueId)) {
+                        return individualId;
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     private void removeProfileRequest(String idToRemove, JsonNode profileRequests) {
@@ -1739,7 +1763,7 @@ public class CaseService {
                         String firstName = data.get("data").get("firstName").asText("");
                         String middleName = data.get("data").get("middleName").asText("");
                         String lastName = data.get("data").get("lastName").asText("");
-                        String fullName =  (firstName + " " + middleName + " " + lastName).trim();
+                        String fullName = (firstName + " " + middleName + " " + lastName).trim();
                         ((ObjectNode) additionalDetailsNode).put("fullName", fullName);
                         litigant.setAdditionalDetails(objectMapper.writeValueAsString(additionalDetailsNode));
                         break;
