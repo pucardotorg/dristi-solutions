@@ -199,6 +199,13 @@ public class ServiceConstants {
 
     public static final String ACCUSED_PARTY_TYPE="respondent";
 
+    public static final String COMPLAINANT_INDIVIDUAL_ID_PATH="/data/complainantVerification/individualDetails/individualId";
+    public static final String RESPONDENT_INDIVIDUAL_ID_PATH="/data/respondentVerification/individualDetails/individualId";
+    public static final String BOX_COMPLAINANT_ID_PATH = "/data/multipleAdvocatesAndPip/boxComplainant/individualId";
+    public static final String ERROR_PROCESS_REQUEST= "Error Processing profile request: ";
+    public static final String ACCEPT_PROFILE_REQUEST = "ACCEPT_PROFILE_REQUEST";
+    public static final String REJECT_PROFILE_REQUEST =  "REJECT_PROFILE_REQUEST";
+    public static final String BOX_COMPLAINANT_PATH ="/data/multipleAdvocatesAndPip/boxComplainant";
     private ServiceConstants() {
     }
 }
