@@ -1,12 +1,10 @@
 package org.pucar.dristi.service;
 
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.jayway.jsonpath.JsonPath;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -1578,18 +1576,13 @@ public class CaseService {
                         JsonNode newDetails = profile.get("newData").get(detailsKey);
                         updatePartyDetails(uniqueId, additionalDetails, newDetails, detailsKey);
 
-                        if (courtCase.getLitigants() != null) {
-                            Party litigant = extractLitigant(courtCase.getLitigants(), uniqueId);
-                            assert litigant != null;
+                        Party litigant = extractLitigant(courtCase.getLitigants(), uniqueId);
+                        if (litigant != null) {
                             Party updatedLitigant = replaceLitigantDetails(uniqueId, litigant, additionalDetails.get(detailsKey), detailsKey);
                             List<Party> updatedLitigants = updateLitigant(courtCase.getLitigants(), updatedLitigant);
                             courtCase.setLitigants(updatedLitigants);
-                        }
-
-                        if (courtCase.getRepresentatives() != null) {
                             updateAdvocateRepresentation(courtCase, uniqueId, additionalDetails, detailsKey);
                         }
-
                         courtCase.setAdditionalDetails(additionalDetails);
                         idToRemove = profile.get("uuid").asText();
                     }
@@ -1614,7 +1607,7 @@ public class CaseService {
 
             log.info("Encrypting case object with caseId: {}", courtCase.getId());
             courtCase = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncryptNew(), CourtCase.class);
-            cacheService.save(courtCase.getId().toString(), courtCase);
+            cacheService.save(courtCase.getTenantId() + ":" + courtCase.getId().toString(), courtCase);
             CaseRequest caseRequest = CaseRequest.builder()
                     .requestInfo(request.getRequestInfo())
                     .cases(courtCase)
