@@ -1769,7 +1769,7 @@ public class CaseService {
                         String firstName = data.get("data").get("firstName").asText("");
                         String middleName = data.get("data").get("middleName").asText("");
                         String lastName = data.get("data").get("lastName").asText("");
-                        String fullName = (firstName + " " + middleName + " " + lastName).trim();
+                        String fullName = (firstName + " " + middleName + " " + lastName).replaceAll("\\s+", " ").trim();
                         ((ObjectNode) additionalDetailsNode).put("fullName", fullName);
                         litigant.setAdditionalDetails(objectMapper.writeValueAsString(additionalDetailsNode));
                         break;
