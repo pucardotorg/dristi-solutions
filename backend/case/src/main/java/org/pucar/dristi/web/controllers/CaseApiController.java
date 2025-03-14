@@ -186,6 +186,16 @@ public class CaseApiController {
         return new ResponseEntity<>(caseSummaryResponse, HttpStatus.OK);
     }
 
+    @PostMapping(value = "/v2/profilerequest/process")
+    public ResponseEntity<CaseResponse> updateProfileRequest(@Parameter(in = ParameterIn.DEFAULT, description = "Details for the profile update + RequestInfo meta data", required = true, schema = @Schema()) @Valid @RequestBody ProcessProfileRequest request) {
+        CourtCase courtCase = caseService.processProfileRequest(request);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+        CaseResponse response = CaseResponse.builder()
+                .responseInfo(responseInfo)
+                .cases(Collections.singletonList(courtCase))
+                .build();
+        return ResponseEntity.ok(response);
+    }
 
     @PostMapping(value = "/v2/profilerequest/create")
     public ResponseEntity<CaseResponse> caseV1EditProfile(

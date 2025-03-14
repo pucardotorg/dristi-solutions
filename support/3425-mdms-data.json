@@ -1,0 +1,2022 @@
+[
+  {
+    "tenantId": "kl",
+    "moduleName": "ACCESSCONTROL-ACTIONS-TEST",
+    "masterName": "actions-test",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "data": {
+          "id": 2728,
+          "url": "/case/v2/profilerequest/create",
+          "code": "null",
+          "name": "Profile edit request",
+          "path": "",
+          "enabled": false,
+          "displayName": "Profile edit request",
+          "orderNumber": 1,
+          "serviceCode": "case",
+          "parentModule": ""
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "data": {
+          "id": 2729,
+          "url": "/case/v2/profilerequest/process",
+          "code": "null",
+          "name": "Profile process request",
+          "path": "",
+          "enabled": false,
+          "displayName": "Profile process request",
+          "orderNumber": 1,
+          "serviceCode": "case",
+          "parentModule": ""
+        },
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "ACCESSCONTROL-ROLEACTIONS",
+    "masterName": "roleactions",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "rolecode": "ADVOCATE_ROLE",
+          "actionid": 2728,
+          "isactive": true
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "rolecode": "JUDGE_ROLE",
+          "actionid": 2729,
+          "isactive": true
+        },
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "DataSecurity",
+    "masterName": "SecurityPolicy",
+    "mdmsPayload": [
+      {
+        "id": "79c24ebb-ac1c-4dca-8c95-63245692deb7",
+        "tenantId": "kl",
+        "schemaCode": "DataSecurity.SecurityPolicy",
+        "uniqueIdentifier": "CaseDecryptSelfNew",
+        "data": {
+          "model": "CaseDecryptSelfNew",
+          "attributes": [
+            {
+              "name": "payerName",
+              "jsonPath": "additionalDetails/payerName",
+              "patternId": "002",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "payerMobileNo",
+              "jsonPath": "additionalDetails/payerMobileNo",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "accessCode",
+              "jsonPath": "accessCode",
+              "patternId": "004",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "lastName",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/lastName",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-lastName",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/lastName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "firstName",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/firstName",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-firstName",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/firstName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "middleName",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/middleName",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-middleName",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/middleName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "city",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails/city",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-city",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails/city",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "state",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails/state",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-state",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails/state",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "pincode",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails/pincode",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-pincode",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails/pincode",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "district",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails/district",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-district",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails/district",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "locality",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails/locality",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-locality",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails/locality",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "latitude",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails/coordinates/latitude",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-latitude",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails/coordinates/latitude",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "longitude",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails/coordinates/longitude",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-longitude",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails/coordinates/longitude",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "city",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails-select/city",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-city",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails-select/city",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "state",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails-select/state",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-state",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails-select/state",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "pincode",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails-select/pincode",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-pincode",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails-select/pincode",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "district",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails-select/district",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-district",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails-select/district",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "locality",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails-select/locality",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-locality",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails-select/locality",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "mobileNumber",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/mobileNumber",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-mobileNumber",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/mobileNumber",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "city",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails/city",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-city",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails/city",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "state",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails/state",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-state",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails/state",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "pincode",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails/pincode",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-pincode",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails/pincode",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "district",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails/district",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-district",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails/district",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "locality",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails/locality",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-locality",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails/locality",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "latitude",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails/coordinates/latitude",
+              "patternId": "002",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-latitude",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails/coordinates/latitude",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "longitude",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails/coordinates/longitude",
+              "patternId": "002",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-longitude",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails/coordinates/longitude",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "city",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails-select/city",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-city",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails-select/city",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "state",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails-select/state",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-state",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails-select/state",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "pincode",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails-select/pincode",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-pincode",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails-select/pincode",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "district",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails-select/district",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-district",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails-select/district",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "locality",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails-select/locality",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-locality",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails-select/locality",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "otpNumber",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/otpNumber",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-otpNumber",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/otpNumber",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "emailId",
+              "jsonPath": "additionalDetails/witnessDetails/formdata/*/data/emails/emailId",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "lastName",
+              "jsonPath": "additionalDetails/witnessDetails/formdata/*/data/lastName",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "firstName",
+              "jsonPath": "additionalDetails/witnessDetails/formdata/*/data/firstName",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "middleName",
+              "jsonPath": "additionalDetails/witnessDetails/formdata/*/data/middleName",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "mobileNumber",
+              "jsonPath": "additionalDetails/witnessDetails/formdata/*/data/phonenumbers/mobileNumber",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "city",
+              "jsonPath": "additionalDetails/witnessDetails/formdata/*/data/addressDetails/*/addressDetails/city",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "state",
+              "jsonPath": "additionalDetails/witnessDetails/formdata/*/data/addressDetails/*/addressDetails/state",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "pincode",
+              "jsonPath": "additionalDetails/witnessDetails/formdata/*/data/addressDetails/*/addressDetails/pincode",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "district",
+              "jsonPath": "additionalDetails/witnessDetails/formdata/*/data/addressDetails/*/addressDetails/district",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "locality",
+              "jsonPath": "additionalDetails/witnessDetails/formdata/*/data/addressDetails/*/addressDetails/locality",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "latitude",
+              "jsonPath": "additionalDetails/witnessDetails/formdata/*/data/addressDetails/*/addressDetails/coordinates/latitude",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "longitude",
+              "jsonPath": "additionalDetails/witnessDetails/formdata/*/data/addressDetails/*/addressDetails/coordinates/longitude",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "emailId",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/emails/emailId",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-emailId",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/emails/emailId",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "mobileNumber",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/phonenumbers/mobileNumber",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-mobileNumber",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/phonenumbers/mobileNumber",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "city",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/addressDetails/*/addressDetails/city",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-city",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/addressDetails/*/addressDetails/city",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "state",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/addressDetails/*/addressDetails/state",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-state",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/addressDetails/*/addressDetails/state",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "pincode",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/addressDetails/*/addressDetails/pincode",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-pincode",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/addressDetails/*/addressDetails/pincode",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "district",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/addressDetails/*/addressDetails/district",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-district",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/addressDetails/*/addressDetails/district",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "locality",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/addressDetails/*/addressDetails/locality",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-locality",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/addressDetails/*/addressDetails/locality",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "latitude",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/addressDetails/*/addressDetails/coordinates/latitude",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-latitude",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/addressDetails/*/addressDetails/coordinates/latitude",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "longitude",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/addressDetails/*/addressDetails/coordinates/longitude",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-longitude",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/addressDetails/*/addressDetails/coordinates/longitude",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "respondentLastName",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/respondentLastName",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-respondentLastName",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/respondentLastName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "respondentFirstName",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/respondentFirstName",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-respondentFirstName",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/respondentFirstName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "respondentMiddleName",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/respondentMiddleName",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-respondentMiddleName",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/respondentMiddleName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "firstName",
+              "jsonPath": "additionalDetails/advocateDetails/formdata/*/data/multipleAdvocatesAndPip/boxComplainant/firstName",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "middleName",
+              "jsonPath": "additionalDetails/advocateDetails/formdata/*/data/multipleAdvocatesAndPip/boxComplainant/middleName",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "lastName",
+              "jsonPath": "additionalDetails/advocateDetails/formdata/*/data/multipleAdvocatesAndPip/boxComplainant/lastName",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "mobileNumber",
+              "jsonPath": "additionalDetails/advocateDetails/formdata/*/data/multipleAdvocatesAndPip/boxComplainant/mobileNumber",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "lastName",
+              "jsonPath": "additionalDetails/advocateDetails/formdata/*/data/multipleAdvocatesAndPip/multipleAdvocateNameDetails/*/advocateNameDetails/lastName",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "firstName",
+              "jsonPath": "additionalDetails/advocateDetails/formdata/*/data/multipleAdvocatesAndPip/multipleAdvocateNameDetails/*/advocateNameDetails/firstName",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "middleName",
+              "jsonPath": "additionalDetails/advocateDetails/formdata/*/data/multipleAdvocatesAndPip/multipleAdvocateNameDetails/*/advocateNameDetails/middleName",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "advocateMobileNumber",
+              "jsonPath": "additionalDetails/advocateDetails/formdata/*/data/multipleAdvocatesAndPip/multipleAdvocateNameDetails/*/advocateNameDetails/advocateMobileNumber",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "advocateName",
+              "jsonPath": "additionalDetails/advocateDetails/formdata/*/data/multipleAdvocatesAndPip/multipleAdvocateNameDetails/*/advocateBarRegNumberWithName/advocateName",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            }
+          ],
+          "uniqueIdentifier": {
+            "name": "id",
+            "jsonPath": "/id"
+          },
+          "roleBasedDecryptionPolicy": [
+            {
+              "roles": [
+                "EMPLOYEE"
+              ],
+              "attributeAccessList": [
+                {
+                  "attribute": "otpNumber",
+                  "firstLevelVisibility": "PLAIN",
+                  "secondLevelVisibility": "PLAIN"
+                }
+              ]
+            }
+          ]
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "cf0b78ba-c58d-4314-ab02-aa69111f48e6",
+          "createdTime": 1738232519522,
+          "lastModifiedTime": 1741888615302
+        }
+      },
+      {
+        "id": "b21efb4a-14b0-4b4d-87f9-f97f4e3c078f",
+        "tenantId": "kl",
+        "schemaCode": "DataSecurity.SecurityPolicy",
+        "uniqueIdentifier": "CourtCaseNew",
+        "data": {
+          "model": "CourtCaseNew",
+          "attributes": [
+            {
+              "name": "payerName",
+              "jsonPath": "additionalDetails/payerName",
+              "patternId": "002",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "payerMobileNo",
+              "jsonPath": "additionalDetails/payerMobileNo",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "lastName",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/lastName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-lastName",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/lastName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "firstName",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/firstName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-firstName",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/firstName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "middleName",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/middleName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-middleName",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/middleName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "city",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails/city",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-city",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails/city",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "state",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails/state",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-state",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails/state",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "pincode",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails/pincode",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-pincode",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails/pincode",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "district",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails/district",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-district",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails/district",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "locality",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails/locality",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-locality",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails/locality",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "latitude",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails/coordinates/latitude",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-latitude",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails/coordinates/latitude",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "longitude",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails/coordinates/longitude",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-longitude",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails/coordinates/longitude",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "city",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails-select/city",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-city",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails-select/city",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "state",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails-select/state",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-state",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails-select/state",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "pincode",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails-select/pincode",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-pincode",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails-select/pincode",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "district",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails-select/district",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-district",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails-select/district",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "locality",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails-select/locality",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-locality",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails-select/locality",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "mobileNumber",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/mobileNumber",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-mobileNumber",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/mobileNumber",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "city",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails/city",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-city",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails/city",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "state",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails/state",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-state",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails/state",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "pincode",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails/pincode",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-pincode",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails/pincode",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "district",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails/district",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-district",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails/district",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "locality",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails/locality",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-locality",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails/locality",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "latitude",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails/coordinates/latitude",
+              "patternId": "002",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-latitude",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails/coordinates/latitude",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "longitude",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails/coordinates/longitude",
+              "patternId": "002",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-longitude",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails/coordinates/longitude",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "city",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails-select/city",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-city",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails-select/city",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "state",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails-select/state",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-state",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails-select/state",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "pincode",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails-select/pincode",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-pincode",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails-select/pincode",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "district",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails-select/district",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-district",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails-select/district",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "locality",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails-select/locality",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-locality",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails-select/locality",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "accessCode",
+              "jsonPath": "accessCode",
+              "patternId": "004",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "otpNumber",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/otpNumber",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-otpNumber",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/otpNumber",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "emailId",
+              "jsonPath": "additionalDetails/witnessDetails/formdata/*/data/emails/emailId",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "mobileNumber",
+              "jsonPath": "additionalDetails/witnessDetails/formdata/*/data/phonenumbers/mobileNumber",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "city",
+              "jsonPath": "additionalDetails/witnessDetails/formdata/*/data/addressDetails/*/addressDetails/city",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "state",
+              "jsonPath": "additionalDetails/witnessDetails/formdata/*/data/addressDetails/*/addressDetails/state",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "pincode",
+              "jsonPath": "additionalDetails/witnessDetails/formdata/*/data/addressDetails/*/addressDetails/pincode",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "district",
+              "jsonPath": "additionalDetails/witnessDetails/formdata/*/data/addressDetails/*/addressDetails/district",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "locality",
+              "jsonPath": "additionalDetails/witnessDetails/formdata/*/data/addressDetails/*/addressDetails/locality",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "latitude",
+              "jsonPath": "additionalDetails/witnessDetails/formdata/*/data/addressDetails/*/addressDetails/coordinates/latitude",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "longitude",
+              "jsonPath": "additionalDetails/witnessDetails/formdata/*/data/addressDetails/*/addressDetails/coordinates/longitude",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "emailId",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/emails/emailId",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-emailId",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/emails/emailId",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "mobileNumber",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/phonenumbers/mobileNumber",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-mobileNumber",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/phonenumbers/mobileNumber",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "city",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/addressDetails/*/addressDetails/city",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-city",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/addressDetails/*/addressDetails/city",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "state",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/addressDetails/*/addressDetails/state",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-state",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/addressDetails/*/addressDetails/state",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "pincode",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/addressDetails/*/addressDetails/pincode",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-pincode",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/addressDetails/*/addressDetails/pincode",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "district",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/addressDetails/*/addressDetails/district",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-district",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/addressDetails/*/addressDetails/district",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "locality",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/addressDetails/*/addressDetails/locality",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-locality",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/addressDetails/*/addressDetails/locality",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "latitude",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/addressDetails/*/addressDetails/coordinates/latitude",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-latitude",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/addressDetails/*/addressDetails/coordinates/latitude",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "longitude",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/addressDetails/*/addressDetails/coordinates/longitude",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-longitude",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/addressDetails/*/addressDetails/coordinates/longitude",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "respondentLastName",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/respondentLastName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-respondentLastName",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/respondentLastName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "respondentFirstName",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/respondentFirstName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-respondentFirstName",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/respondentFirstName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "respondentMiddleName",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/respondentMiddleName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-respondentMiddleName",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/respondentMiddleName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "lastName",
+              "jsonPath": "additionalDetails/witnessDetails/formdata/*/data/lastName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "firstName",
+              "jsonPath": "additionalDetails/witnessDetails/formdata/*/data/firstName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "middleName",
+              "jsonPath": "additionalDetails/witnessDetails/formdata/*/data/middleName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "firstName",
+              "jsonPath": "additionalDetails/advocateDetails/formdata/*/data/multipleAdvocatesAndPip/boxComplainant/firstName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "middleName",
+              "jsonPath": "additionalDetails/advocateDetails/formdata/*/data/multipleAdvocatesAndPip/boxComplainant/middleName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "lastName",
+              "jsonPath": "additionalDetails/advocateDetails/formdata/*/data/multipleAdvocatesAndPip/boxComplainant/lastName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "mobileNumber",
+              "jsonPath": "additionalDetails/advocateDetails/formdata/*/data/multipleAdvocatesAndPip/boxComplainant/mobileNumber",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "lastName",
+              "jsonPath": "additionalDetails/advocateDetails/formdata/*/data/multipleAdvocatesAndPip/multipleAdvocateNameDetails/*/advocateNameDetails/lastName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "firstName",
+              "jsonPath": "additionalDetails/advocateDetails/formdata/*/data/multipleAdvocatesAndPip/multipleAdvocateNameDetails/*/advocateNameDetails/firstName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "middleName",
+              "jsonPath": "additionalDetails/advocateDetails/formdata/*/data/multipleAdvocatesAndPip/multipleAdvocateNameDetails/*/advocateNameDetails/middleName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "advocateMobileNumber",
+              "jsonPath": "additionalDetails/advocateDetails/formdata/*/data/multipleAdvocatesAndPip/multipleAdvocateNameDetails/*/advocateNameDetails/advocateMobileNumber",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "advocateName",
+              "jsonPath": "additionalDetails/advocateDetails/formdata/*/data/multipleAdvocatesAndPip/multipleAdvocateNameDetails/*/advocateBarRegNumberWithName/advocateName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            }
+          ],
+          "uniqueIdentifier": {
+            "name": "id",
+            "jsonPath": "/id"
+          },
+          "roleBasedDecryptionPolicy": [
+            {
+              "roles": [
+                "EMPLOYEE"
+              ],
+              "attributeAccessList": [
+                {
+                  "attribute": "otpNumber",
+                  "firstLevelVisibility": "PLAIN",
+                  "secondLevelVisibility": "PLAIN"
+                }
+              ]
+            }
+          ]
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "cf0b78ba-c58d-4314-ab02-aa69111f48e6",
+          "createdTime": 1738232195601,
+          "lastModifiedTime": 1741888570865
+        }
+      },
+      {
+        "id": "e317129c-718c-4854-9c2a-065ca5a50a8c",
+        "tenantId": "kl",
+        "schemaCode": "DataSecurity.SecurityPolicy",
+        "uniqueIdentifier": "CaseDecryptOther",
+        "data": {
+          "model": "CaseDecryptOther",
+          "attributes": [
+            {
+              "name": "accessCode",
+              "jsonPath": "accessCode",
+              "patternId": "004",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "payerName",
+              "jsonPath": "additionalDetails/payerName",
+              "patternId": "002",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "payerMobileNo",
+              "jsonPath": "additionalDetails/payerMobileNo",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "lastName",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/lastName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-lastName",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/lastName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "firstName",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/firstName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-firstName",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/firstName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "middleName",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/middleName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-middleName",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/middleName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "city",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails/city",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-city",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails/city",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "state",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails/state",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-state",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails/state",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "pincode",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails/pincode",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-pincode",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails/pincode",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "district",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails/district",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-district",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails/district",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "locality",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails/locality",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-locality",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails/locality",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "latitude",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails/coordinates/latitude",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-latitude",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails/coordinates/latitude",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "longitude",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails/coordinates/longitude",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-longitude",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails/coordinates/longitude",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "city",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails-select/city",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-city",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails-select/city",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "state",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails-select/state",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-state",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails-select/state",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "pincode",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails-select/pincode",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-pincode",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails-select/pincode",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "district",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails-select/district",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-district",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails-select/district",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "locality",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/addressDetails-select/locality",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-locality",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/addressDetails-select/locality",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "mobileNumber",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/mobileNumber",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-mobileNumber",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/mobileNumber",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "city",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails/city",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-city",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails/city",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "state",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails/state",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-state",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails/state",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "pincode",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails/pincode",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-pincode",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails/pincode",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "district",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails/district",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-district",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails/district",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "locality",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails/locality",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-locality",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails/locality",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "latitude",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails/coordinates/latitude",
+              "patternId": "002",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-latitude",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails/coordinates/latitude",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "longitude",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails/coordinates/longitude",
+              "patternId": "002",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-longitude",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails/coordinates/longitude",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "city",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails-select/city",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-city",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails-select/city",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "state",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails-select/state",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-state",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails-select/state",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "pincode",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails-select/pincode",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-pincode",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails-select/pincode",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "district",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails-select/district",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-district",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails-select/district",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "locality",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/individualDetails/addressDetails-select/locality",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-locality",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/individualDetails/addressDetails-select/locality",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "otpNumber",
+              "jsonPath": "additionalDetails/complainantDetails/formdata/*/data/complainantVerification/otpNumber",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "edit-otpNumber",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/complainantDetails/data/complainantVerification/otpNumber",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "emailId",
+              "jsonPath": "additionalDetails/witnessDetails/formdata/*/data/emails/emailId",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "mobileNumber",
+              "jsonPath": "additionalDetails/witnessDetails/formdata/*/data/phonenumbers/mobileNumber",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "city",
+              "jsonPath": "additionalDetails/witnessDetails/formdata/*/data/addressDetails/*/addressDetails/city",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "state",
+              "jsonPath": "additionalDetails/witnessDetails/formdata/*/data/addressDetails/*/addressDetails/state",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "pincode",
+              "jsonPath": "additionalDetails/witnessDetails/formdata/*/data/addressDetails/*/addressDetails/pincode",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "district",
+              "jsonPath": "additionalDetails/witnessDetails/formdata/*/data/addressDetails/*/addressDetails/district",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "locality",
+              "jsonPath": "additionalDetails/witnessDetails/formdata/*/data/addressDetails/*/addressDetails/locality",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "latitude",
+              "jsonPath": "additionalDetails/witnessDetails/formdata/*/data/addressDetails/*/addressDetails/coordinates/latitude",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "longitude",
+              "jsonPath": "additionalDetails/witnessDetails/formdata/*/data/addressDetails/*/addressDetails/coordinates/longitude",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "emailId",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/emails/emailId",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-emailId",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/emails/emailId",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "mobileNumber",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/phonenumbers/mobileNumber",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-mobileNumber",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/phonenumbers/mobileNumber",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "city",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/addressDetails/*/addressDetails/city",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-city",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/addressDetails/*/addressDetails/city",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "state",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/addressDetails/*/addressDetails/state",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-state",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/addressDetails/*/addressDetails/state",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "pincode",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/addressDetails/*/addressDetails/pincode",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-pincode",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/addressDetails/*/addressDetails/pincode",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "district",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/addressDetails/*/addressDetails/district",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-district",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/addressDetails/*/addressDetails/district",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "locality",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/addressDetails/*/addressDetails/locality",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-locality",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/addressDetails/*/addressDetails/locality",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "latitude",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/addressDetails/*/addressDetails/coordinates/latitude",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-latitude",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/addressDetails/*/addressDetails/coordinates/latitude",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "longitude",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/addressDetails/*/addressDetails/coordinates/longitude",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-longitude",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/addressDetails/*/addressDetails/coordinates/longitude",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "respondentLastName",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/respondentLastName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-respondentLastName",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/respondentLastName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "respondentFirstName",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/respondentFirstName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-respondentFirstName",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/respondentFirstName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "respondentMiddleName",
+              "jsonPath": "additionalDetails/respondentDetails/formdata/*/data/respondentMiddleName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "edit-respondentMiddleName",
+              "jsonPath": "additionalDetails/profileRequests/*/newData/respondentDetails/data/respondentMiddleName",
+              "patternId": "003",
+              "defaultVisibility": "MASKED"
+            }
+          ],
+          "uniqueIdentifier": {
+            "name": "id",
+            "jsonPath": "/id"
+          },
+          "roleBasedDecryptionPolicy": [
+            {
+              "roles": [
+                "EMPLOYEE"
+              ],
+              "attributeAccessList": [
+                {
+                  "attribute": "otpNumber",
+                  "firstLevelVisibility": "PLAIN",
+                  "secondLevelVisibility": "PLAIN"
+                }
+              ]
+            }
+          ]
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "cf0b78ba-c58d-4314-ab02-aa69111f48e6",
+          "createdTime": 1726129329029,
+          "lastModifiedTime": 1741888634792
+        }
+      }
+  }
+]
