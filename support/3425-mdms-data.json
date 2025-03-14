@@ -50,7 +50,7 @@
         "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
         "uniqueIdentifier": null,
         "data": {
-          "rolecode": "ADVOCATE_ROLE",
+          "rolecode": "CASE_CREATOR",
           "actionid": 2728,
           "isactive": true
         },
@@ -61,7 +61,7 @@
         "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
         "uniqueIdentifier": null,
         "data": {
-          "rolecode": "JUDGE_ROLE",
+          "rolecode": "CASE_APPROVER",
           "actionid": 2729,
           "isactive": true
         },
@@ -2018,5 +2018,6 @@
           "lastModifiedTime": 1741888634792
         }
       }
+    ]
   }
 ]
