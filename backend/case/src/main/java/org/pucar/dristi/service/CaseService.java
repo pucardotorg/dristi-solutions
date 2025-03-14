@@ -1576,17 +1576,23 @@ public class CaseService {
                         JsonNode newDetails = profile.get("newData").get(detailsKey);
                         updatePartyDetails(uniqueId, additionalDetails, newDetails, detailsKey);
 
+                        String individualId;
                         if (detailsKey.equals("respondentDetails")) {
-                            String individualId = extractIndividualIdIfPresent(additionalDetails, uniqueId);
-                            uniqueId = individualId != null ? individualId : uniqueId;
+                            individualId = extractIndividualIdIfPresent(additionalDetails, uniqueId);
+                            if(individualId == null)
+                                log.info("Respondent has not joined case yet.");
+                        } else {
+                            individualId = uniqueId;
                         }
 
-                        Party litigant = extractLitigant(courtCase.getLitigants(), uniqueId);
-                        if (litigant != null) {
-                            Party updatedLitigant = replaceLitigantDetails(uniqueId, litigant, additionalDetails.get(detailsKey), detailsKey);
-                            List<Party> updatedLitigants = updateLitigant(courtCase.getLitigants(), updatedLitigant);
-                            courtCase.setLitigants(updatedLitigants);
-                            updateAdvocateRepresentation(courtCase, uniqueId, additionalDetails, detailsKey);
+                        if(individualId != null) {
+                            Party litigant = extractLitigant(courtCase.getLitigants(), individualId);
+                            if (litigant != null) {
+                                Party updatedLitigant = replaceLitigantDetails(individualId, litigant, additionalDetails.get(detailsKey), detailsKey);
+                                List<Party> updatedLitigants = updateLitigant(courtCase.getLitigants(), updatedLitigant);
+                                courtCase.setLitigants(updatedLitigants);
+                                updateAdvocateRepresentation(courtCase, individualId, additionalDetails, detailsKey);
+                            }
                         }
                         courtCase.setAdditionalDetails(additionalDetails);
                         idToRemove = profile.get("uuid").asText();
