@@ -1564,7 +1564,7 @@ public class CaseService {
                 List<CaseCriteria> existingApplications = caseRepository.getCases(searchRequest.getCriteria(), searchRequest.getRequestInfo());
                 courtCase = existingApplications.get(0).getResponseList().get(0);
             }
-
+            courtCase = encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, request.getRequestInfo());
             JsonNode additionalDetails = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
             if (request.getProcessInfo().getAction().equals(ActionType.ACCEPT)) {
                 JsonNode profileRequests = additionalDetails.get("profileRequests");
@@ -1591,7 +1591,7 @@ public class CaseService {
                         }
 
                         courtCase.setAdditionalDetails(additionalDetails);
-                        idToRemove = profile.get("uuid").toString();
+                        idToRemove = profile.get("uuid").asText();
                     }
                 }
 
@@ -1611,6 +1611,10 @@ public class CaseService {
                 }
             }
             sendProfileProcessNotification(request, courtCase);
+
+            log.info("Encrypting case object with caseId: {}", courtCase.getId());
+            courtCase = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncryptNew(), CourtCase.class);
+            cacheService.save(courtCase.getId().toString(), courtCase);
             CaseRequest caseRequest = CaseRequest.builder()
                     .requestInfo(request.getRequestInfo())
                     .cases(courtCase)
@@ -1739,9 +1743,10 @@ public class CaseService {
 
                 for (JsonNode data : formData) {
                     if (data.at(getIndividualIdPath(detailsKey)).asText().equals(uniqueId)) {
-                        String fullName = data.get("data").get("firstName").asText() + " "
-                                + data.get("data").get("middleName").asText() + " "
-                                + data.get("data").get("lastName");
+                        String firstName = data.get("data").get("firstName").asText("");
+                        String middleName = data.get("data").get("middleName").asText("");
+                        String lastName = data.get("data").get("lastName").asText("");
+                        String fullName =  (firstName + " " + middleName + " " + lastName).trim();
                         ((ObjectNode) additionalDetailsNode).put("fullName", fullName);
                         litigant.setAdditionalDetails(objectMapper.writeValueAsString(additionalDetailsNode));
                         break;
