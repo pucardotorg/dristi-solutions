@@ -72,7 +72,7 @@ public class PdfServiceUtil {
             }
 
             if (WARRANT.equalsIgnoreCase(taskRequest.getTask().getTaskType())) {
-                String executorName = getExecutorName(taskRequest);
+                 String executorName = getExecutorName(taskRequest);
                 var warrantDetails = taskRequest.getTask().getTaskDetails().getWarrantDetails();
                 summonsPdf.setExecutorName(executorName);
                 String docSubType = warrantDetails.getDocSubType();
@@ -134,8 +134,11 @@ public class PdfServiceUtil {
     private String getExecutorName(TaskRequest taskRequest) {
         Coordinate coordinate = taskRequest.getTask().getTaskDetails().getRespondentDetails().getAddress().getCoordinate();
 
-        if (coordinate == null) {
-            throw new CustomException(COORDINATE_NOT_FOUND,"coordinate object is missing in address field of respondentDetails");
+        if (coordinate == null || coordinate.toString().trim().isEmpty()) {
+            //TODO:  need to fix when icops integration is done
+//            throw new CustomException(COORDINATE_NOT_FOUND,"coordinate object is missing in address field of respondentDetails");
+            log.error("coordinate object is missing in address field of respondentDetails");
+            return "";
         }
 
         String latitude = coordinate.getLatitude();
