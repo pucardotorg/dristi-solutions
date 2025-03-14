@@ -1771,14 +1771,14 @@ public class CaseService {
                         String lastName = data.get("data").get("lastName").asText("");
                         String fullName = (firstName + " " + middleName + " " + lastName).replaceAll("\\s+", " ").trim();
                         ((ObjectNode) additionalDetailsNode).put("fullName", fullName);
-                        litigant.setAdditionalDetails(objectMapper.writeValueAsString(additionalDetailsNode));
+                        litigant.setAdditionalDetails(objectMapper.convertValue(additionalDetailsNode, Object.class));
                         break;
                     }
                 }
             }
             log.info("operation=replaceLitigantDetails, status=SUCCESS, uniqueId: {}", uniqueId);
             return litigant;
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("ERROR_UPDATING_LITIGANTS", e);
             throw new CustomException("ERROR_UPDATING_LITIGANTS", e.getMessage());
         }
