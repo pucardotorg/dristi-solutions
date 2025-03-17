@@ -81,9 +81,10 @@ class AdvocateQueryBuilderTest {
         String status = null;
         List<Object> preparedStmtList = new ArrayList<>();
         String tenantId = null;
+        String barId = null;
 
         // Act
-        String query = advocateQueryBuilder.getAdvocateSearchQueryByStatus(status, preparedStmtList, new ArrayList<>(), tenantId, limit, offset);
+        String query = advocateQueryBuilder.getAdvocateSearchQueryByStatus(barId, status, preparedStmtList, new ArrayList<>(), tenantId, limit, offset);
 
         // Assert
         assertNotNull(query);
@@ -98,7 +99,7 @@ class AdvocateQueryBuilderTest {
         String tenantId = "tenant1";
 
         // Act
-        String query = advocateQueryBuilder.getAdvocateSearchQueryByStatus(status, preparedStmtList, new ArrayList<>(), tenantId, limit, offset);
+        String query = advocateQueryBuilder.getAdvocateSearchQueryByStatus(null ,status, preparedStmtList, new ArrayList<>(), tenantId, limit, offset);
 
         // Assert
         assertNotNull(query);
@@ -195,7 +196,7 @@ class AdvocateQueryBuilderTest {
         String tenantId = "tenant1";
         Integer limit = 10;
         Integer offset = 0;
-        advocateQueryBuilder.getAdvocateSearchQueryByStatus(status, preparedStmtList, new ArrayList<>(), tenantId, limit, offset);
+        advocateQueryBuilder.getAdvocateSearchQueryByStatus(null, status, preparedStmtList, new ArrayList<>(), tenantId, limit, offset);
     }
 
     @Test

@@ -56,10 +56,15 @@ public class AdvocateRepository {
         }
     }
 
-    public List<Advocate> getListApplicationsByStatus(String status, String tenantId, Integer limit, Integer offset ) {
+    public List<Advocate> getListApplicationsByStatus(AdvocateSearchCriteria searchCriteria, String status, String tenantId, Integer limit, Integer offset ) {
 
         try {
-            List<Advocate> advocateList = performAdvocateQueryByStatus(status, tenantId, limit, offset);
+            String barId = null;
+            if (searchCriteria != null && searchCriteria.getBarRegistrationNumber() != null && !searchCriteria.getBarRegistrationNumber().isEmpty()) {
+                barId = searchCriteria.getBarRegistrationNumber();
+            }
+
+            List<Advocate> advocateList = performAdvocateQueryByStatus(barId, status, tenantId, limit, offset);
             if (!advocateList.isEmpty()) {
                 fetchDocumentsForAdvocates(advocateList);
             }
@@ -100,10 +105,10 @@ public class AdvocateRepository {
         return jdbcTemplate.query(advocateQuery, preparedStmtList.toArray(),preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), rowMapper);
     }
 
-    private List<Advocate> performAdvocateQueryByStatus(String status, String tenantId, Integer limit, Integer offset) {
+    private List<Advocate> performAdvocateQueryByStatus(String barId, String status, String tenantId, Integer limit, Integer offset) {
         List<Object> preparedStmtList = new ArrayList<>();
         List<Integer> preparedStmtArgList = new ArrayList<>();
-        String advocateQuery = queryBuilder.getAdvocateSearchQueryByStatus(status, preparedStmtList, preparedStmtArgList,tenantId, limit, offset);
+        String advocateQuery = queryBuilder.getAdvocateSearchQueryByStatus(barId, status, preparedStmtList, preparedStmtArgList,tenantId, limit, offset);
         log.info(ADVOCATE_LIST_QUERY, advocateQuery);
         if(preparedStmtList.size()!=preparedStmtArgList.size()){
             log.info("Search by status Arg size :: {}, and ArgType size :: {}", preparedStmtList.size(),preparedStmtArgList.size());
