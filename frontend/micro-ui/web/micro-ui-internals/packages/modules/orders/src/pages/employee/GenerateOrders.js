@@ -2669,7 +2669,7 @@ const GenerateOrders = () => {
     const noticeType = orderData?.additionalDetails?.formdata?.noticeType?.type;
     const respondentAddress = orderFormData?.addressDetails
       ? orderFormData?.addressDetails?.map((data) => ({ ...data?.addressDetails }))
-      : caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.addressDetails?.map((data) => data?.addressDetails);
+      :respondentNameData?.address ?respondentNameData?.address : caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.addressDetails?.map((data) => data?.addressDetails);
     const partyIndex = orderFormData?.party?.data?.partyIndex || "";
     const respondentName = getRespondantName(respondentNameData);
     const respondentPhoneNo = orderFormData?.party?.data?.phone_numbers || [];
