@@ -453,7 +453,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
               }}
               className={`round-item ${index === activeIndex?.orderIndex ? "active" : ""}`}
             >
-              <div style={{ display: "flex", flexDirection: "column", width: "90px" }}>
+              <div style={{ display: "flex", flexDirection: "row", alignItems: "center", width: "auto", whiteSpace: "nowrap" }}>
                 <span>{`${orderList?.length - index} (${item?.orderType})`}</span>
               </div>
             </div>
