@@ -2406,7 +2406,11 @@ const GenerateOrders = () => {
       else {
         if (order?.orderNumber) {
           count += 1;
-          return await addOrderItem(order, OrderWorkflowAction.SAVE_DRAFT, index);
+          const updatedOrder = {
+            ...order,
+            compositeItems: order?.compositeItems?.filter((item) => item?.isEnabled),
+          };
+          return await addOrderItem(updatedOrder, OrderWorkflowAction.SAVE_DRAFT, index);
         } else {
           // create call first, get order number from response
           // then add item call
