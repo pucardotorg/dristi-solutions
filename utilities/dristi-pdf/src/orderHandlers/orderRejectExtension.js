@@ -13,7 +13,7 @@ const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { getAdvocates } = require("../applicationHandlers/getAdvocates");
 const { handleApiCall } = require("../utils/handleApiCall");
-const { extractOrderNumber } = require("../utils/orderUtils");
+const { extractOrderNumber } = require("../utils/extractOrderNumber");
 
 async function orderRejectExtension(req, res, qrCode, order, compositeOrder) {
   const cnrNumber = req.query.cnrNumber;
