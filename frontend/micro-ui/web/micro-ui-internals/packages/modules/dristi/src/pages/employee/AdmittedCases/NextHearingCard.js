@@ -38,6 +38,20 @@ const NextHearingCard = ({ caseData, width }) => {
     (hearing) => ![HearingWorkflowState.COMPLETED, HearingWorkflowState?.OPTOUT, HearingWorkflowState?.ABATED].includes(hearing?.status)
   ).sort((hearing1, hearing2) => hearing1.startTime - hearing2.startTime)[0];
 
+  const hiddenOutcomes = [
+    "DISMISSED",
+    "WITHDRAWN",
+    "PARTIALLYALLOWED",
+    "PARTIALLYCONVICTED",
+    "TRANSFERRED",
+    "ALLOWED",
+    "CONVICTED",
+    "ABATED",
+    "SETTLED",
+  ];
+
+  const shouldShowButton = !hiddenOutcomes.includes(caseData?.case?.outcome);
+
   const formattedTime = () => {
     const date1 = new Date(scheduledHearing?.startTime);
     const date2 = new Date(scheduledHearing?.endTime);
@@ -137,20 +151,22 @@ const NextHearingCard = ({ caseData, width }) => {
             </div>
           </div>
         </div>
-        <Button
-          variation={"outlined"}
-          onButtonClick={handleButtonClick}
-          isDisabled={isCourtRoomManager || (userRoles.includes("CITIZEN") && scheduledHearing?.status === "SCHEDULED")}
-          label={
-            userRoles.includes("CITIZEN")
-              ? scheduledHearing?.status === "SCHEDULED"
-                ? t("AWAIT_START_HEARING")
+        {shouldShowButton && (
+          <Button
+            variation={"outlined"}
+            onButtonClick={handleButtonClick}
+            isDisabled={isCourtRoomManager || (userRoles.includes("CITIZEN") && scheduledHearing?.status === "SCHEDULED")}
+            label={
+              userRoles.includes("CITIZEN")
+                ? scheduledHearing?.status === "SCHEDULED"
+                  ? t("AWAIT_START_HEARING")
+                  : t("JOIN_HEARING")
+                : scheduledHearing?.status === "SCHEDULED"
+                ? t("START_NOW")
                 : t("JOIN_HEARING")
-              : scheduledHearing?.status === "SCHEDULED"
-              ? t("START_NOW")
-              : t("JOIN_HEARING")
-          }
-        />
+            }
+          />
+        )}
       </div>
     </Card>
   );
