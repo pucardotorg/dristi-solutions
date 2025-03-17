@@ -55,4 +55,8 @@ public class Configuration {
     //SMSNotification
     @Value("${pucar.sms.notification.topic}")
     private String smsNotificationTopic;
+
+    // zone id
+    @Value("${app.zone.id}")
+    private String zoneId;
 }

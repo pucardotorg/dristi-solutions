@@ -54,7 +54,7 @@ public class FileStoreUtil {
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-            body.add("file", byteArrayResource);
+            body.add(FILE, byteArrayResource);
 
             HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
 
@@ -63,7 +63,7 @@ public class FileStoreUtil {
             return extractDocumentFromResponse(responseEntity);
         } catch (Exception e) {
             log.error("Error while saving document to file store: {}", e.getMessage(), e);
-            throw new CustomException(FILE_STORE_UTILITY_EXCEPTION, "Error occurred when getting saving document in File Store");
+            throw new CustomException(FILE_STORE_UTILITY_EXCEPTION, FILE_STORE_UTILITY_MESSAGE_CODE);
         }
     }
 
@@ -77,15 +77,15 @@ public class FileStoreUtil {
             log.info("File Store Details: {}", document);
             return document;
         } else {
-            log.error("Failed to get valid file store id from File Store Service Response");
-            throw new CustomException("INVALID_FILE_STORE_RESPONSE", "Failed to get valid file store id from file store service");
+            log.error(FILE_STORE_SERVICE_EXCEPTION_MESSAGE_CODE);
+            throw new CustomException(INVALID_FILE_STORE_RESPONSE, FILE_STORE_SERVICE_EXCEPTION_MESSAGE_CODE);
         }
     }
 
 
     public Resource fetchFileStoreObjectById(String fileStoreId, String tenantId) {
         if (!isValidFileStoreId(fileStoreId) || !isValidTenantId(tenantId)) {
-            throw new CustomException("INVALID_INPUT", "Invalid fileStoreId or tenantId");
+            throw new CustomException(INVALID_INPUT, "Invalid fileStoreId or tenantId");
         }
         StringBuilder uri = new StringBuilder();
         uri.append(configs.getFileStoreHost()).append(configs.getFileStoreSearchEndpoint());
@@ -124,7 +124,7 @@ public class FileStoreUtil {
         files.add(file);
 
         MultiValueMap<String, Object> request = new LinkedMultiValueMap<>();
-        request.add("file", file.getResource());
+        request.add(FILE, file.getResource());
         request.add("tenantId", tenantId);
         request.add("module", module);
         HttpHeaders headers = new HttpHeaders();
@@ -172,7 +172,7 @@ public class FileStoreUtil {
         try {
             ResponseEntity<String> response = restTemplate.exchange(uri.toString(), HttpMethod.POST, entity, String.class);
         } catch (Exception e) {
-            throw new CustomException("FILESTORE_SERVICE_EXCEPTION", "Error occurred while deleting file from filestore");
+            throw new CustomException(FILESTORE_SERVICE_EXCEPTION, "Error occurred while deleting file from filestore");
         }
 
         return null; // list of filestore ids which is deleted

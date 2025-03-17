@@ -20,6 +20,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static pucar.config.ServiceConstants.VALUE;
 
 @ExtendWith(MockitoExtension.class)
 class ServiceRequestRepositoryTest {
@@ -42,10 +43,10 @@ class ServiceRequestRepositoryTest {
 
     @Test
     void fetchResult_Success() {
-        when(restTemplate.postForObject(anyString(), any(), eq(Map.class))).thenReturn(Collections.singletonMap("key", "value"));
+        when(restTemplate.postForObject(anyString(), any(), eq(Map.class))).thenReturn(Collections.singletonMap("key", VALUE));
         Object result = serviceRequestRepository.fetchResult(testUri, new Object());
         assertNotNull(result);
-        assertEquals("value", ((Map<?, ?>) result).get("key"));
+        assertEquals(VALUE, ((Map<?, ?>) result).get("key"));
     }
 
     @Test

@@ -9,6 +9,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.Resource;
+import pucar.config.Configuration;
 import pucar.util.*;
 import pucar.web.models.*;
 
@@ -37,6 +38,9 @@ class BSSServiceTest {
     @Mock
     private OrderUtil orderUtil;
 
+    @Mock
+    private Configuration configuration;
+
     @InjectMocks
     private BSSService bssService;
 
@@ -62,6 +66,7 @@ class BSSServiceTest {
         when(fileStoreUtil.fetchFileStoreObjectById(anyString(), anyString())).thenReturn(mock(Resource.class));
         when(cipherUtil.encodePdfToBase64(any())).thenReturn("base64EncodedString");
         when(xmlRequestGenerator.createXML(anyString(), any())).thenReturn("<xmlRequest>");
+        when(configuration.getZoneId()).thenReturn("Asia/Kolkata");
 
         List<OrderToSign> result = bssService.createOrderToSignRequest(request);
 
