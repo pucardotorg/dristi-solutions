@@ -106,6 +106,10 @@ public class AdvocateService {
 
     public List<Advocate> searchAdvocateByStatus(AdvocateSimpleSearchRequest body, String status, String tenantId, Integer limit, Integer offset) {
         try {
+            if (body == null) {
+                throw new CustomException(ADVOCATE_SEARCH_EXCEPTION, "Request body cannot be null");
+            }
+
             RequestInfo requestInfo = body.getRequestInfo();
             AdvocateSearchCriteria searchCriteria = null;
             if (body.getAdvocateSearchCriteria() != null) {
