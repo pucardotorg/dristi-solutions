@@ -140,7 +140,7 @@ const GeoLocationComponent = ({ t, config, locationFormData, onGeoLocationSelect
       )}
 
       <div className="geolocation-header">
-        <b>{t("GEOLOCATION_TITLE")}</b> <span>{`(${t("CAPITAL_OPTIONAL")})`}</span>
+        <b>{t("GEOLOCATION_TITLE")}</b> <span style={{ color: "#77787B" }}>{`(${t("CAPITAL_OPTIONAL")})`}</span>
       </div>
 
       <div className="coordinate-container">

@@ -5,7 +5,7 @@ import { FileDownloadIcon } from "../../../dristi/src/icons/svgIndex";
 import { Banner, CardLabel } from "@egovernments/digit-ui-react-components";
 import { formatDate } from "../utils";
 
-function SubmissionDocumentSuccessModal({ documentSubmissionNumber, t, handleSuccessDownloadSubmission, handleNextSubmission, handleClose }) {
+function SubmissionDocumentSuccessModal({ documentSubmissionNumber, t, handleSuccessDownloadSubmission, handleClose }) {
   const submissionModalInfo = {
     header: "DOCUMENT_SUBMISSION_SUCCESSFUL",
     subHeader: "",
@@ -27,8 +27,6 @@ function SubmissionDocumentSuccessModal({ documentSubmissionNumber, t, handleSuc
     <Modal
       actionCancelLabel={t("DOWNLOAD_DOCUMENT_SUBMISSION")}
       actionCancelOnSubmit={handleSuccessDownloadSubmission}
-      actionCustomLabel={t("CS_ANOTHER_SUBMISSION")}
-      actionCustomLabelSubmit={handleNextSubmission}
       actionSaveLabel={t("CS_CLOSE")}
       actionSaveOnSubmit={handleClose}
       className={"orders-success-modal"}

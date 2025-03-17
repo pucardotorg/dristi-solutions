@@ -162,14 +162,9 @@ const SubmissionDocuments = ({ path }) => {
     }
   }, [showErrorToast]);
 
-  const handleNextSubmission = () => {
-    localStorage.removeItem("fileStoreId");
-    history.replace(`/digit-ui/citizen/submissions/submit-document?filingNumber=${filingNumber}`);
-  };
-
   const handleClose = () => {
     setShowSubmissionSuccessModal(false);
-    history.replace(`/digit-ui/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}`);
+    history.replace(`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}`);
   };
 
   const handleSuccessDownloadSubmission = () => {
@@ -441,7 +436,6 @@ const SubmissionDocuments = ({ path }) => {
           <SubmissionDocumentSuccessModal
             t={t}
             handleClose={handleClose}
-            handleNextSubmission={handleNextSubmission}
             handleSuccessDownloadSubmission={handleSuccessDownloadSubmission}
             documentSubmissionNumber={evidenceDetails?.artifactNumber}
           />
