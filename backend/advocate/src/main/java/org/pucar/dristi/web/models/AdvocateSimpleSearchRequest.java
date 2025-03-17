@@ -24,4 +24,8 @@ public class AdvocateSimpleSearchRequest {
 	@Valid
 	private RequestInfo requestInfo = null;
 
+	@JsonProperty("criteria")
+	@Valid
+	private AdvocateSearchCriteria advocateSearchCriteria;
+
 }
