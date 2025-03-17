@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import pucar.config.Configuration;
 import pucar.util.*;
 import pucar.web.models.*;
 
@@ -26,14 +27,16 @@ public class BSSService {
     private final FileStoreUtil fileStoreUtil;
     private final CipherUtil cipherUtil;
     private final OrderUtil orderUtil;
+    private final Configuration configuration;
 
     @Autowired
-    public BSSService(XmlRequestGenerator xmlRequestGenerator, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, OrderUtil orderUtil) {
+    public BSSService(XmlRequestGenerator xmlRequestGenerator, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, OrderUtil orderUtil, Configuration configuration) {
         this.xmlRequestGenerator = xmlRequestGenerator;
         this.eSignUtil = eSignUtil;
         this.fileStoreUtil = fileStoreUtil;
         this.cipherUtil = cipherUtil;
         this.orderUtil = orderUtil;
+        this.configuration = configuration;
     }
 
     public List<OrderToSign> createOrderToSignRequest(OrdersToSignRequest request) {
@@ -59,7 +62,7 @@ public class BSSService {
         List<Coordinate> coordinateForSign = eSignUtil.getCoordinateForSign(coordinateRequest);
 
         if (coordinateForSign.isEmpty() || coordinateForSign.size() != request.getCriteria().size()) {
-            throw new CustomException(); // write msg and code
+            throw new CustomException(COORDINATES_ERROR,"error in co-ordinates");
         }
 
 
@@ -72,7 +75,7 @@ public class BSSService {
                 String coord = (int )Math.floor(coordinate.getX()) + "," +(int) Math.floor(coordinate.getY());
                 String txnId = UUID.randomUUID().toString();
                 String pageNo = String.valueOf(coordinate.getPageNumber());
-                ZonedDateTime timestamp = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));  // read form config
+                ZonedDateTime timestamp = ZonedDateTime.now(ZoneId.of(configuration.getZoneId()));
 
                 String xmlRequest = generateRequest(base64Document, timestamp.toString(), txnId, coord, pageNo);
                 String orderNumber = ordersCriteriaMap.get(coordinate.getFileStoreId()).getOrderNumber();  // error handling
@@ -81,7 +84,7 @@ public class BSSService {
 
                 orderToSign.add(order);
             } catch (Exception e) {
-                throw new CustomException(); // add msg here
+                throw new CustomException(ORDER_SIGN_ERROR,"some thing went wrong while signing");
             }
 
         }
@@ -93,9 +96,9 @@ public class BSSService {
     private String generateRequest(String base64Doc, String timeStamp, String txnId, String coordination, String pageNumber) {
         Map<String, Object> requestData = new LinkedHashMap<>();
 
-        requestData.put("command", "pkiNetworkSign");
-        requestData.put("ts", timeStamp);   //enrich this
-        requestData.put("txn", txnId);  //enrich this
+        requestData.put(COMMAND, PKI_NETWORK_SIGN);
+        requestData.put(TIME_STAMP, timeStamp);   //enrich this
+        requestData.put(TXN, txnId);  //enrich this
 
         // Certificate section with attributes
         List<Map<String, Object>> certificateAttributes = new ArrayList<>();
@@ -108,23 +111,23 @@ public class BSSService {
         certificateAttributes.add(createAttribute("CA", ""));
         certificateAttributes.add(createAttribute("TC", "SG"));
         certificateAttributes.add(createAttribute("AP", "1"));
-        requestData.put("certificate", certificateAttributes);
+        requestData.put(CERTIFICATE, certificateAttributes);
 
         // File section with attribute
         Map<String, Object> file = new LinkedHashMap<>();
-        file.put("attribute", Map.of("name", "type", "value", "pdf"));
+        file.put(ATTRIBUTE, Map.of(NAME, TYPE, VALUE, PDF));
         ;// rn this is hardcode once we support other feature we will dynamically fetch this
-        requestData.put("file", file);
+        requestData.put(FILE, file);
 
         // PDF section // enrich this section
         Map<String, Object> pdf = new LinkedHashMap<>();
-        pdf.put("page", pageNumber);
-        pdf.put("cood", coordination);
-        pdf.put("size", "200,100");   // check on this
-        requestData.put("pdf", pdf);
+        pdf.put(PAGE, pageNumber);
+        pdf.put(CO_ORDINATES, coordination);
+        pdf.put(SIZE, "200,100");   // check on this
+        requestData.put(PDF, pdf);
 
         // Data section  // enrich this section
-        requestData.put("data", base64Doc);
+        requestData.put(DATA, base64Doc);
 
         // Generate XML
         String xmlRequest = xmlRequestGenerator.createXML("request", requestData);
@@ -155,7 +158,7 @@ public class BSSService {
                     OrderListResponse orders = orderUtil.getOrders(searchRequest);
 
                     if (orders.getList().isEmpty()) {
-                        throw new CustomException(); // error msg here
+                        throw new CustomException(EMPTY_ORDERS_ERROR,"empty orders found for the given criteria");
                     }
                     Order order = orders.getList().get(0);
 
@@ -168,7 +171,7 @@ public class BSSService {
                     Document document = Document.builder().build();
                     document.setFileStore(fileStoreId);
                     document.setDocumentType(SIGNED);
-                    document.setAdditionalDetails(Map.of("name", pdfName));
+                    document.setAdditionalDetails(Map.of(NAME, pdfName));
 
                     WorkflowObject workflowObject = new WorkflowObject();
                     workflowObject.setAction(E_SIGN);
@@ -186,7 +189,8 @@ public class BSSService {
                     updatedOrder.add(response.getOrder());
 
                 } catch (Exception e) {
-                    throw new CustomException(); // add log here
+                    log.error(UPDATE_ORDER_SIGN_ERROR_MESSAGE);
+                    throw new CustomException(UPDATE_ORDER_SIGN_ERROR,UPDATE_ORDER_SIGN_ERROR_MESSAGE);
                 }
             }
 
@@ -199,9 +203,9 @@ public class BSSService {
     private Map<String, Object> createAttribute(String name, String value) {
         Map<String, Object> attribute = new LinkedHashMap<>();
         Map<String, String> attrData = new LinkedHashMap<>();
-        attrData.put("name", name);
-        attrData.put("value", value);
-        attribute.put("attribute", attrData);
+        attrData.put(NAME, name);
+        attrData.put(VALUE, value);
+        attribute.put(ATTRIBUTE, attrData);
         return attribute;
     }
 }
