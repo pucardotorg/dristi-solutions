@@ -503,12 +503,12 @@ public class CaseService {
 
             log.info("Encrypting profile edit for caseId: {}", caseRequest.getCases().getId());
 
-            caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), config.getCourtCaseEncryptNew(), CourtCase.class));
+            caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), config.getCourtCaseEncrypt(), CourtCase.class));
             cacheService.save(caseRequest.getCases().getTenantId() + ":" + caseRequest.getCases().getId(), caseRequest.getCases());
 
             producer.push(config.getCaseUpdateTopic(), caseRequest);
 
-            CourtCase cases = encryptionDecryptionUtil.decryptObject(caseRequest.getCases(), null, CourtCase.class, caseRequest.getRequestInfo());
+            CourtCase cases = encryptionDecryptionUtil.decryptObject(caseRequest.getCases(), config.getCaseDecryptSelf(), CourtCase.class, caseRequest.getRequestInfo());
             cases.setAccessCode(null);
 
             return cases;
@@ -1617,7 +1617,7 @@ public class CaseService {
             sendProfileProcessNotification(request, courtCase);
 
             log.info("Encrypting case object with caseId: {}", courtCase.getId());
-            courtCase = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncryptNew(), CourtCase.class);
+            courtCase = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncrypt(), CourtCase.class);
             cacheService.save(courtCase.getTenantId() + ":" + courtCase.getId().toString(), courtCase);
             CaseRequest caseRequest = CaseRequest.builder()
                     .requestInfo(request.getRequestInfo())
