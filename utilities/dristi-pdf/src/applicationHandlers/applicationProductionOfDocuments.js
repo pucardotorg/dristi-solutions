@@ -2,8 +2,6 @@ const cheerio = require("cheerio");
 const config = require("../config");
 const {
   search_case,
-  search_mdms,
-  search_hrms,
   search_sunbirdrc_credential_service,
   search_application,
   create_pdf,
@@ -11,7 +9,6 @@ const {
   search_message,
 } = require("../api");
 const { renderError } = require("../utils/renderError");
-const { getAdvocates } = require("./getAdvocates");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
 
@@ -86,7 +83,6 @@ async function applicationProductionOfDocuments(req, res, qrCode) {
     if (!courtCase) {
       return renderError(res, "Court case not found", 404);
     }
-    const allAdvocates = getAdvocates(courtCase);
     // Search for HRMS details
     // const resHrms = await handleApiCall(
     //   () => search_hrms(tenantId, "JUDGE", courtCase.courtId, requestInfo),
@@ -143,6 +139,7 @@ async function applicationProductionOfDocuments(req, res, qrCode) {
     }
 
     let barRegistrationNumber = "";
+    let advocateName = "";
     const advocateIndividualId =
       application?.applicationDetails?.advocateIndividualId;
     if (advocateIndividualId) {
@@ -155,14 +152,10 @@ async function applicationProductionOfDocuments(req, res, qrCode) {
         (item) => item.isActive === true
       );
       barRegistrationNumber = advocateDetails?.barRegistrationNumber || "";
+      advocateName =
+        cleanName(advocateDetails?.additionalDetails?.username) || "";
     }
 
-    const onBehalfOfuuid = application?.onBehalfOf?.[0];
-    const advocate = allAdvocates[onBehalfOfuuid]?.[0]?.additionalDetails
-      ?.advocateName
-      ? allAdvocates[onBehalfOfuuid]?.[0]
-      : {};
-    const advocateName = cleanName(advocate?.additionalDetails?.advocateName || "");
     const partyName = application?.additionalDetails?.onBehalOfName || "";
     // Handle QR code if enabled
     let base64Url = "";
