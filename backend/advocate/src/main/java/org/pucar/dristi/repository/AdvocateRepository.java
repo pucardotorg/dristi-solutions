@@ -60,7 +60,7 @@ public class AdvocateRepository {
 
         try {
             String barId = null;
-            if (searchCriteria != null && !searchCriteria.getBarRegistrationNumber().isEmpty()) {
+            if (searchCriteria != null && searchCriteria.getBarRegistrationNumber() != null && !searchCriteria.getBarRegistrationNumber().isEmpty()) {
                 barId = searchCriteria.getBarRegistrationNumber();
             }
 
