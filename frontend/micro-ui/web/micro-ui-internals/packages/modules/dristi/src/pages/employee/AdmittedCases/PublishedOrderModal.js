@@ -154,22 +154,24 @@ function PublishedOrderModal({
 
   const mandatorySubmissionLitigantIndId = useMemo(
     () =>
-      compositeMandatorySubmissionItems
-        ?.find((item) => item?.id === mandatorySubmissionItemId)
-        ?.orderSchema?.additionalDetails?.formdata?.submissionParty?.find(
-          (party) => [...party?.uuid]?.includes(userInfo?.uuid) || userInfo?.uuid === party?.partyUuid
-        )?.individualId,
-    [compositeMandatorySubmissionItems, mandatorySubmissionItemId, userInfo?.uuid]
+      (isComposite
+        ? compositeMandatorySubmissionItems?.find((item) => item?.id === mandatorySubmissionItemId)?.orderSchema
+        : order
+      )?.additionalDetails?.formdata?.submissionParty?.find(
+        (party) => [...party?.uuid]?.includes(userInfo?.uuid) || userInfo?.uuid === party?.partyUuid
+      )?.individualId,
+    [compositeMandatorySubmissionItems, mandatorySubmissionItemId, userInfo?.uuid, order, isComposite]
   );
 
   const mandatorySubmissionLitigant = useMemo(
     () =>
-      compositeMandatorySubmissionItems
-        ?.find((item) => item?.id === mandatorySubmissionItemId)
-        ?.orderSchema?.additionalDetails?.formdata?.submissionParty?.find(
-          (party) => [...party?.uuid]?.includes(userInfo?.uuid) || userInfo?.uuid === party?.partyUuid
-        )?.partyUuid,
-    [compositeMandatorySubmissionItems, mandatorySubmissionItemId, userInfo?.uuid]
+      (isComposite
+        ? compositeMandatorySubmissionItems?.find((item) => item?.id === mandatorySubmissionItemId)?.orderSchema
+        : order
+      )?.additionalDetails?.formdata?.submissionParty?.find(
+        (party) => [...party?.uuid]?.includes(userInfo?.uuid) || userInfo?.uuid === party?.partyUuid
+      )?.partyUuid,
+    [compositeMandatorySubmissionItems, mandatorySubmissionItemId, userInfo?.uuid, order, isComposite]
   );
 
   const showSubmissionButtons = useMemo(() => {
@@ -365,8 +367,8 @@ function PublishedOrderModal({
                 handleRequestLabel(
                   order.orderNumber,
                   setTermBailItemId || mandatorySubmissionItemId,
-                  (setTermBailItemId && litigant) || (mandatorySubmissionItemId && mandatorySubmissionLitigant),
-                  (setTermBailItemId && litigantIndId) || (mandatorySubmissionItemId && mandatorySubmissionLitigantIndId)
+                  litigant || mandatorySubmissionLitigant,
+                  litigantIndId || mandatorySubmissionLitigantIndId
                 );
               }}
               className="primary-label-btn"
@@ -380,8 +382,8 @@ function PublishedOrderModal({
                 handleSubmitDocument(
                   order.orderNumber,
                   setTermBailItemId || mandatorySubmissionItemId,
-                  (setTermBailItemId && litigant) || (mandatorySubmissionItemId && mandatorySubmissionLitigant),
-                  (setTermBailItemId && litigantIndId) || (mandatorySubmissionItemId && mandatorySubmissionLitigantIndId)
+                  litigant || mandatorySubmissionLitigant,
+                  litigantIndId || mandatorySubmissionLitigantIndId
                 );
               }}
               className="primary-label-btn"
