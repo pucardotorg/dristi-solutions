@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.util.HashMap;
 import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
+import static pucar.config.ServiceConstants.NAME;
 
 class XmlRequestGeneratorTest {
 
@@ -18,7 +19,7 @@ class XmlRequestGeneratorTest {
     @Test
     void testCreateXML_SimpleElements() {
         Map<String, Object> data = new HashMap<>();
-        data.put("name", "John Doe");
+        data.put(NAME, "John Doe");
         data.put("age", "30");
 
         String xml = xmlRequestGenerator.createXML("person", data);
@@ -35,7 +36,7 @@ class XmlRequestGeneratorTest {
         address.put("zip", "10001");
 
         Map<String, Object> person = new HashMap<>();
-        person.put("name", "John Doe");
+        person.put(NAME, "John Doe");
         person.put("address", address);
 
         String xml = xmlRequestGenerator.createXML("person", person);
