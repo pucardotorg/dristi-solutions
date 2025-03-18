@@ -182,32 +182,30 @@ function OrderReviewModal({
   };
 
   const handleSignLater = () => {
-    if (showActions) {
-      setUpdateLoading(true);
-      handleDocumentUpload(async (fileStoreId) => {
-        if (fileStoreId) {
-          const updatedOrder = {
-            ...order,
-            additionalDetails: {
-              ...order.additionalDetails,
-              businessOfTheDay: businessDay,
-            },
-          };
-          await updateOrder(updatedOrder, OrderWorkflowAction.SUBMIT_BULK_E_SIGN, fileStoreId)
-            .then((response) => {
-              setShowReviewModal(false);
-              setShowBulkModal(true);
-              setUpdateLoading(false);
-              setPrevOrder(response?.order);
-            })
-            .catch((e) => {
-              setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
-              console.error("Failed to save draft:", e);
-              setUpdateLoading(false);
-            });
-        }
-      });
-    }
+    setUpdateLoading(true);
+    handleDocumentUpload(async (fileStoreId) => {
+      if (fileStoreId) {
+        const updatedOrder = {
+          ...order,
+          additionalDetails: {
+            ...order.additionalDetails,
+            businessOfTheDay: businessDay,
+          },
+        };
+        await updateOrder(updatedOrder, OrderWorkflowAction.SUBMIT_BULK_E_SIGN, fileStoreId)
+          .then((response) => {
+            setShowReviewModal(false);
+            setShowBulkModal(true);
+            setUpdateLoading(false);
+            setPrevOrder(response?.order);
+          })
+          .catch((e) => {
+            setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
+            console.error("Failed to save draft:", e);
+            setUpdateLoading(false);
+          });
+      }
+    });
   };
 
   return (

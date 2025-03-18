@@ -4071,6 +4071,11 @@ const GenerateOrders = () => {
     });
   };
 
+  const handleBulkCloseSuccessModal = () => {
+    setShowBulkModal(false);
+    history.push(`/${window.contextPath}/employee/dristi/home/view-case?tab=${"Orders"}&caseId=${caseDetails?.id}&filingNumber=${filingNumber}`);
+  };
+
   if (!filingNumber) {
     history.push("/employee/home/home-pending-task");
   }
@@ -4523,9 +4528,7 @@ const GenerateOrders = () => {
           t={t}
           order={currentOrder}
           handleDownloadOrders={handleBulkDownloadOrder}
-          handleClose={handleClose}
-          handleCloseSuccessModal={handleCloseSuccessModal}
-          actionSaveLabel={successModalActionSaveLabel}
+          handleCloseSuccessModal={handleBulkCloseSuccessModal}
         ></OrderAddToBulkSuccessModal>
       )}
       {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
