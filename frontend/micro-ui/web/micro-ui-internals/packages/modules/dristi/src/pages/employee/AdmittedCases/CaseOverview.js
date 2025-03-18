@@ -269,6 +269,8 @@ const CaseOverview = ({
                             history.push(
                               `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${order?.orderNumber}`
                             );
+                          } else if (order?.status === OrderWorkflowState.PENDING_BULK_E_SIGN) {
+                            history.push(`/${window.contextPath}/employee/home/home-pending-task`, { isBulkEsignSelected: true });
                           } else {
                             setShowReviewModal(true);
                             setCurrentOrder(order);
