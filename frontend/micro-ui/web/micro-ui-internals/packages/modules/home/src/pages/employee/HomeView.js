@@ -60,6 +60,7 @@ const HomeView = () => {
 
   const [showSubmitResponseModal, setShowSubmitResponseModal] = useState(false);
   const [responsePendingTask, setResponsePendingTask] = useState({});
+  const isBulkEsignSelected = history.location?.state?.isBulkEsignSelected;
   const [showBulkSignAllModal, setShowBulkSignAllModal] = useState(false);
   const [issueBulkSuccessData, setIssueBulkSuccessData] = useState({
     show: false,
@@ -174,7 +175,10 @@ const HomeView = () => {
 
   useEffect(() => {
     state && state.taskType && setTaskType(state.taskType);
-  }, [state]);
+    if (isBulkEsignSelected) {
+      setShowBulkSignAllModal(true);
+    }
+  }, [state, isBulkEsignSelected]);
 
   const { isLoading: isOutcomeLoading, data: outcomeTypeData } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
@@ -467,6 +471,9 @@ const HomeView = () => {
       {showBulkSignAllModal && (
         <OrderBulkReviewModal
           t={t}
+          history={history}
+          location={location}
+          isBulkEsignSelected={isBulkEsignSelected}
           showActions={isJudge}
           refetchOrdersData={refetchOrdersData}
           pendingSignOrderList={ordersData?.list}
