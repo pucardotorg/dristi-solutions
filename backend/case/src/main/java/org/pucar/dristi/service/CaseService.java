@@ -508,7 +508,7 @@ public class CaseService {
 
             producer.push(config.getCaseUpdateTopic(), caseRequest);
 
-            CourtCase cases = encryptionDecryptionUtil.decryptObject(caseRequest.getCases(), config.getCaseDecryptSelf(), CourtCase.class, caseRequest.getRequestInfo());
+            CourtCase cases = encryptionDecryptionUtil.decryptObject(caseRequest.getCases(), null, CourtCase.class, caseRequest.getRequestInfo());
             cases.setAccessCode(null);
 
             return cases;
@@ -1624,6 +1624,7 @@ public class CaseService {
                     .cases(courtCase)
                     .build();
             producer.push(config.getCaseUpdateTopic(), caseRequest);
+            courtCase = encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, request.getRequestInfo());
             log.info("operation=processProfileRequest, status=SUCCESS, pendingTaskId: {}", request.getProcessInfo().getPendingTaskRefId());
             return courtCase;
         } catch (Exception e) {
