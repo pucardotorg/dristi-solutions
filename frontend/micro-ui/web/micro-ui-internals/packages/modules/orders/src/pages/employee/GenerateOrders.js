@@ -3799,6 +3799,11 @@ const GenerateOrders = () => {
     // });
   };
 
+  const handleBulkDownloadOrder = () => {
+    const fileStoreId = prevOrder?.documents?.find((doc) => doc?.documentType === "UNSIGNED")?.fileStore;
+    downloadPdf(tenantId, fileStoreId);
+  };
+
   const handleCustomSubmit = () => {
     modifiedFormConfig.forEach((_, index) => {
       formValueChangeTriggerRefs.current[index]();
@@ -4437,6 +4442,7 @@ const GenerateOrders = () => {
           businessOfDay={businessOfTheDay}
           updateOrder={updateOrder}
           setShowBulkModal={setShowBulkModal}
+          setPrevOrder={setPrevOrder}
         />
       )}
       {showsignatureModal && (
@@ -4512,7 +4518,7 @@ const GenerateOrders = () => {
         <OrderAddToBulkSuccessModal
           t={t}
           order={currentOrder}
-          handleDownloadOrders={handleDownloadOrders}
+          handleDownloadOrders={handleBulkDownloadOrder}
           handleClose={handleClose}
           handleCloseSuccessModal={handleCloseSuccessModal}
           actionSaveLabel={successModalActionSaveLabel}
