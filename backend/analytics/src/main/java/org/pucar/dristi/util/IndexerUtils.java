@@ -391,7 +391,9 @@ public class IndexerUtils {
                 return processTaskEntity(request, referenceId);
             else if (config.getADiaryBusinessServiceList().contains(entityType))
                 return processADiaryEntity(request, referenceId);
-            else {
+            else if (config.getJoinCaseBusinessServiceList().contains(entityType)) {
+                return processJoinCaseEntity();
+            } else {
                 log.error("Unexpected entityType: {}", entityType);
                 return new HashMap<>();
             }
@@ -497,6 +499,10 @@ public class IndexerUtils {
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", filingNumber);
         return caseDetails;
+    }
+
+    private Map<String, String> processJoinCaseEntity() {
+        return null;
     }
 
     public void esPost(String uri, String request) {
