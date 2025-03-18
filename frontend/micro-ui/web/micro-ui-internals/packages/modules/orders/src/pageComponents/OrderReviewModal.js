@@ -32,6 +32,7 @@ function OrderReviewModal({
   businessOfDay,
   updateOrder,
   setShowBulkModal,
+  setPrevOrder,
 }) {
   const [fileStoreId, setFileStoreID] = useState(null);
   const [fileName, setFileName] = useState();
@@ -193,10 +194,11 @@ function OrderReviewModal({
             },
           };
           await updateOrder(updatedOrder, OrderWorkflowAction.SUBMIT_BULK_E_SIGN, fileStoreId)
-            .then(() => {
+            .then((response) => {
               setShowReviewModal(false);
               setShowBulkModal(true);
               setUpdateLoading(false);
+              setPrevOrder(response?.order);
             })
             .catch((e) => {
               setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
