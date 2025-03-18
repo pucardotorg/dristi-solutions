@@ -1689,6 +1689,12 @@ components:
         isJudgeApproving:
           type: boolean
           description: Indicates whether the judge is approving the joining of the advocate
+        reason:
+          type: string
+          description: Reason for joining the case
+        reasonDocument:
+            $ref: >-
+                https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Document
         litigantRepresenting:
           type: array
           items:
