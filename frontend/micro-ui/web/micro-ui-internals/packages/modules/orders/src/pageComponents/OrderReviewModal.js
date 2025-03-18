@@ -185,7 +185,14 @@ function OrderReviewModal({
       setUpdateLoading(true);
       handleDocumentUpload(async (fileStoreId) => {
         if (fileStoreId) {
-          await updateOrder(order, OrderWorkflowAction.SUBMIT_BULK_E_SIGN, fileStoreId)
+          const updatedOrder = {
+            ...order,
+            additionalDetails: {
+              ...order.additionalDetails,
+              businessOfTheDay: businessDay,
+            },
+          };
+          await updateOrder(updatedOrder, OrderWorkflowAction.SUBMIT_BULK_E_SIGN, fileStoreId)
             .then(() => {
               setShowReviewModal(false);
               setShowBulkModal(true);
