@@ -80,10 +80,10 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
     }
 
     private void addOpenHearingIndexSort(Map<String, Object> baseEsQuery) {
-        baseEsQuery.put(SORT_KEY, sortClauseList(baseEsQuery));
+        baseEsQuery.put(SORT_KEY, sortClauseList());
     }
 
-    private List<Map<String, Object>> sortClauseList(Map<String, Object> baseEsQuery) {
+    private List<Map<String, Object>> sortClauseList() {
         List<Map<String, Object>> outerClauseList = new ArrayList<>();
         outerClauseList.add(getScriptObject(TYPE_SORTING_SCRIPT));
         outerClauseList.add(getScriptObject(YEAR_SORTING_SCRIPT));
