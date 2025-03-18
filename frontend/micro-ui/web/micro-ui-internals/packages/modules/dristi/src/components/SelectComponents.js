@@ -3,6 +3,7 @@ import Axios from "axios";
 import React, { useMemo, useState } from "react";
 import LocationSearch from "./LocationSearch";
 import { generateUUID, formatAddress } from "../Utils";
+import SelectCustomNote from "./SelectCustomNote";
 
 const getLocation = (places, code) => {
   let location = null;
@@ -180,6 +181,8 @@ const SelectComponents = ({ t, config, onSelect, formData = {}, errors, formStat
   };
   return (
     <div>
+      {<SelectCustomNote t={t} config={config?.notes} onClick={() => {}} />}
+      <br></br>
       {inputs?.map((input, index) => {
         let currentValue = (formData && formData[configKey] && formData[configKey][input.name]) || "";
         let isFirstRender = true;
