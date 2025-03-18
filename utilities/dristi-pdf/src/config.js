@@ -259,6 +259,12 @@ module.exports = {
       process.env.HEARING_BULK_RESCHEDULE || "order-bulk-reschedule",
     hearing_bulk_reschedule_qr:
       process.env.HEARING_BULK_RESCHEDULE_QR || "order-bulk-reschedule-qr",
+    order_approval_rejection_litigant_details_change:
+      process.env.ORDER_APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE ||
+      "order-approval-rejection-litigant-details",
+    order_approval_rejection_litigant_details_change_qr:
+      process.env.ORDER_APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE_QR ||
+      "order-approval-rejection-litigant-details-qr",
   },
 
   app: {
