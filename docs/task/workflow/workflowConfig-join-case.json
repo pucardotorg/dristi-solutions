@@ -2,7 +2,7 @@
   "BusinessServices": [
     {
       "tenantId": "kl",
-      "businessService": "task-default",
+      "businessService": "task-join-case",
       "business": "task",
       "businessServiceSla": null,
       "states": [
@@ -10,14 +10,14 @@
           "sla": null,
           "state": null,
           "applicationStatus": null,
-          "docUploadRequired": true,
+          "docUploadRequired": false,
           "isStartState": true,
           "isTerminateState": false,
           "isStateUpdatable": true,
           "actions": [
             {
               "action": "CREATE",
-              "nextState": "IN_PROGRESS",
+              "nextState": "PENDING_APPROVAL",
               "roles": [
                 "TASK_CREATOR",
                 "PENDING_TASK_CREATOR",
@@ -29,7 +29,7 @@
         },
         {
           "sla": null,
-          "state": "IN_PROGRESS",
+          "state": "PENDING_APPROVAL",
           "applicationStatus": "INWORKFLOW",
           "docUploadRequired": false,
           "isStartState": false,
@@ -37,27 +37,30 @@
           "isStateUpdatable": true,
           "actions": [
             {
-              "action": "CLOSE",
-              "nextState": "COMPLETED",
+              "action": "APPROVE",
+              "nextState": "APPROVED",
               "roles": [
                 "TASK_EDITOR",
+                "PENDING_TASK_CREATOR",
                 "SYSTEM",
                 "SYSTEM_ADMIN"
               ]
             },
             {
-              "action": "ABANDON",
-              "nextState": "ABATED",
+              "action": "REJECT",
+              "nextState": "REJECTED",
               "roles": [
                 "SYSTEM",
-                "SYSTEM_ADMIN"
+                "SYSTEM_ADMIN",
+                "TASK_EDITOR",
+                "PENDING_TASK_CREATOR"
               ]
             }
           ]
         },
         {
           "sla": null,
-          "state": "COMPLETED",
+          "state": "APPROVED",
           "applicationStatus": "ACTIVE",
           "isStateUpdatable": false,
           "docUploadRequired": false,
@@ -66,7 +69,7 @@
         },
         {
           "sla": null,
-          "state": "ABATED",
+          "state": "REJECTED",
           "applicationStatus": "INACTIVE",
           "isStateUpdatable": false,
           "docUploadRequired": false,
