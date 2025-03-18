@@ -12,7 +12,7 @@ const CloseBtn = (props) => {
   );
 };
 
-function OrderAddToBulkSuccessModal({ order, t, handleDownloadOrders, handleClose, actionSaveLabel, handleCloseSuccessModal }) {
+function OrderAddToBulkSuccessModal({ order, t, handleDownloadOrders, handleCloseSuccessModal }) {
   const orderModalInfo = {
     header: "CS_ORDER_ADDED_TO_BULK_SIGN_LIST",
     subHeader: "CS_ORDER_ADDED_TO_BULK_SIGN_LIST_SUBTEXT",
@@ -28,12 +28,10 @@ function OrderAddToBulkSuccessModal({ order, t, handleDownloadOrders, handleClos
 
   return (
     <Modal
-      headerBarMain={actionSaveLabel !== "Close" && true}
-      headerBarEnd={actionSaveLabel !== "Close" && <CloseBtn onClick={handleCloseSuccessModal} />}
       actionCancelLabel={t("DOWNLOAD_ORDER")}
       actionCancelOnSubmit={handleDownloadOrders}
-      actionSaveLabel={actionSaveLabel}
-      actionSaveOnSubmit={handleClose}
+      actionSaveLabel={t("CS_COMMON_CLOSE")}
+      actionSaveOnSubmit={handleCloseSuccessModal}
       className={"orders-add-bulk-list-modal"}
       cancelButtonBody={<FileDownloadIcon></FileDownloadIcon>}
     >
