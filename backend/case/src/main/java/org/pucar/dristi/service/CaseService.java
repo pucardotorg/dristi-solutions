@@ -503,7 +503,7 @@ public class CaseService {
 
             log.info("Encrypting profile edit for caseId: {}", caseRequest.getCases().getId());
 
-            caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), config.getCourtCaseEncryptNew(), CourtCase.class));
+            caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), config.getCourtCaseEncrypt(), CourtCase.class));
             cacheService.save(caseRequest.getCases().getTenantId() + ":" + caseRequest.getCases().getId(), caseRequest.getCases());
 
             producer.push(config.getCaseUpdateTopic(), caseRequest);
@@ -1617,13 +1617,14 @@ public class CaseService {
             sendProfileProcessNotification(request, courtCase);
 
             log.info("Encrypting case object with caseId: {}", courtCase.getId());
-            courtCase = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncryptNew(), CourtCase.class);
+            courtCase = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncrypt(), CourtCase.class);
             cacheService.save(courtCase.getTenantId() + ":" + courtCase.getId().toString(), courtCase);
             CaseRequest caseRequest = CaseRequest.builder()
                     .requestInfo(request.getRequestInfo())
                     .cases(courtCase)
                     .build();
             producer.push(config.getCaseUpdateTopic(), caseRequest);
+            courtCase = encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, request.getRequestInfo());
             log.info("operation=processProfileRequest, status=SUCCESS, pendingTaskId: {}", request.getProcessInfo().getPendingTaskRefId());
             return courtCase;
         } catch (Exception e) {
