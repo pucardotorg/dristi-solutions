@@ -27,8 +27,14 @@ public class PaymentConfiguration {
     @Value("${treasury-client-id}")
     private String clientId;
 
-    @Value("${treasury_head_id}")
-    private String headId;
+    @Value("${treasury_head_id1}")
+    private String headId1;
+
+    @Value("${treasury_head_id2}")
+    private String headId2;
+
+    @Value("${treasury_head_id3}")
+    private String headId3;
 
     @Value("${service-dept-code}")
     private String serviceDeptCode;

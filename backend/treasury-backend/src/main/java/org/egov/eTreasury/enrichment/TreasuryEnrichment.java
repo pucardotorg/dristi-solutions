@@ -37,15 +37,26 @@ public class TreasuryEnrichment {
         } else {
             challanAmount = String.valueOf(challanData.getTotalDue());
         }
+        challanAmount = "3";
         log.info("Challan Amount: {}", challanAmount);
         log.info("eTreasury in test mode: {}", config.isTest());
-        String noOfHeads = String.valueOf(1);
+        String noOfHeads = String.valueOf(3);
         List<HeadDetails> headDetailsList = new ArrayList<>();
-        HeadDetails headDetails  = HeadDetails.builder()
-                .amount(challanAmount)
-                .headId(config.getHeadId())
-                .build();
-        headDetailsList.add(headDetails);
+
+        headDetailsList.add(HeadDetails.builder()
+                .amount("1")
+                .headId(config.getHeadId1())
+                .build());
+
+        headDetailsList.add(HeadDetails.builder()
+                .amount("1")
+                .headId(config.getHeadId2())
+                .build());
+
+        headDetailsList.add(HeadDetails.builder()
+                .amount("1")
+                .headId(config.getHeadId3())
+                .build());
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         LocalDate currentDate = LocalDate.now();
