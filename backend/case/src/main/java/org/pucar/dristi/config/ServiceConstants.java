@@ -136,6 +136,8 @@ public class ServiceConstants {
 
     public static final String FSO_SEND_BACK = "FSO_SEND_BACK";
 
+    public static final String JUDGE_SEND_BACK_E_SIGN_CODE = "JUDGE_SEND_BACK,ESIGN_PENDING";
+
     public static final String JUDGE_SEND_BACK = "JUDGE_SEND_BACK";
 
     public static final String PENDING_ADMISSION_HEARING = "PENDING_ADMISSION_HEARING";
