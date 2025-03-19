@@ -36,24 +36,25 @@ public class TreasuryEnrichment {
             challanAmount = String.valueOf(config.getChallanTestAmount());
         } else {
             challanAmount = String.valueOf(challanData.getTotalDue());
+            challanAmount = "3";
         }
         log.info("Challan Amount: {}", challanAmount);
         log.info("eTreasury in test mode: {}", config.isTest());
-        String noOfHeads = String.valueOf(1);
+        String noOfHeads = String.valueOf(3);
         List<HeadDetails> headDetailsList = new ArrayList<>();
 
         headDetailsList.add(HeadDetails.builder()
-                .amount(challanAmount)
+                .amount("1")
                 .headId(config.getHeadId1())
                 .build());
 
         headDetailsList.add(HeadDetails.builder()
-                .amount(challanAmount)
+                .amount("1")
                 .headId(config.getHeadId2())
                 .build());
 
         headDetailsList.add(HeadDetails.builder()
-                .amount(challanAmount)
+                .amount("1")
                 .headId(config.getHeadId3())
                 .build());
 
