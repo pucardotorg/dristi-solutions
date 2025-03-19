@@ -74,7 +74,7 @@ import ErrorDataModal from "./ErrorDataModal";
 import WarningModal from "../../../components/WarningModal";
 import { documentLabels } from "../../../Utils";
 
-const OutlinedInfoIcon = () => (
+export const OutlinedInfoIcon = () => (
   <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: "absolute", right: -22, top: 0 }}>
     <g clip-path="url(#clip0_7603_50401)">
       <path
@@ -102,7 +102,7 @@ function isEmptyValue(value) {
   }
 }
 
-const extractValue = (data, key) => {
+export const extractValue = (data, key) => {
   if (!key.includes(".") && data && typeof data === "object") {
     return data[key];
   }
@@ -148,7 +148,7 @@ const getTotalCountFromSideMenuConfig = (sideMenuConfig, selected) => {
   return countObj;
 };
 
-const extractCodeFromErrorMsg = (error) => {
+export const extractCodeFromErrorMsg = (error) => {
   const statusCodeMatch = error?.message.match(/status code (\d+)/);
   const statusCode = statusCodeMatch ? parseInt(statusCodeMatch[1], 10) : null;
   return statusCode;

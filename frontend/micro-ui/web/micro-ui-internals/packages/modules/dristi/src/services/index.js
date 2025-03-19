@@ -407,4 +407,20 @@ export const DRISTIService = {
       data,
       params,
     }),
+  createProfileRequest: (data, params) =>
+    Request({
+      url: Urls.dristi.createProfileRequest,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  processProfileRequest: (data, params) =>
+    Request({
+      url: Urls.dristi.processProfileRequest,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
 };

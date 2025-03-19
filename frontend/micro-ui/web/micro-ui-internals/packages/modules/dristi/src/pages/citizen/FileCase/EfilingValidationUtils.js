@@ -1,14 +1,14 @@
 import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
 import { getUserDetails } from "../../../hooks/useGetAccessToken";
 import { DRISTIService } from "../../../services";
-import { combineMultipleFiles, documentsTypeMapping } from "../../../Utils";
+import { combineMultipleFiles, documentsTypeMapping, generateUUID } from "../../../Utils";
 import { DocumentUploadError } from "../../../Utils/errorUtil";
 
 import { userTypeOptions } from "../registration/config";
 import { efilingDocumentKeyAndTypeMapping } from "./Config/efilingDocumentKeyAndTypeMapping";
 import isMatch from "lodash/isMatch";
 
-const formatName = (value, capitalize = true) => {
+export const formatName = (value, capitalize = true) => {
   let cleanedValue = value
     .replace(/[^a-zA-Z\s]/g, "")
     .trimStart()
@@ -1205,7 +1205,7 @@ export const updateIndividualUser = async ({ data, documentData, tenantId, indiv
   return response;
 };
 
-const onDocumentUpload = async (documentType = "Document", fileData, filename, tenantId) => {
+export const onDocumentUpload = async (documentType = "Document", fileData, filename, tenantId) => {
   if (fileData?.fileStore) return fileData;
   try {
     const fileUploadRes = await window?.Digit.UploadServices.Filestorage("DRISTI", fileData, tenantId);
@@ -1215,7 +1215,7 @@ const onDocumentUpload = async (documentType = "Document", fileData, filename, t
   }
 };
 
-const sendDocumentForOcr = async (key, fileStoreId, filingNumber, tenantId, document) => {
+export const sendDocumentForOcr = async (key, fileStoreId, filingNumber, tenantId, document) => {
   if ((efilingDocumentKeyAndTypeMapping[key] && document?.type === "image/jpeg") || document?.type === "application/pdf")
     await window?.Digit?.DRISTIService.sendDocuemntForOCR(
       {
@@ -1907,6 +1907,7 @@ export const updateCaseDetails = async ({
               ...data.data,
               ...documentData,
             },
+            uniqueId: data?.uniqueId || generateUUID(),
           };
         })
     );
