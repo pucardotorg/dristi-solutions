@@ -682,6 +682,23 @@ components:
           type: string
           description: The outcome of the case. This can be a judgement, a settlement or
             any other outcome.
+        pendingAdvocateRequest:
+          type: array
+          items:
+            properties:
+                advocateId:
+                    type: string
+                    description: advocate uuid of the advocate
+                status:
+                  type: string
+                  description: >-
+                      The status of the request. This can be PENDING, PARTIALLY JOINED
+                  enum: [PENDING, PARTIALLY JOINED]
+                taskReferenceNoList:
+                    type: array
+                    items:
+                        type: string
+                        description: task reference number
         workflow:
           $ref: >-
             https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Workflow
