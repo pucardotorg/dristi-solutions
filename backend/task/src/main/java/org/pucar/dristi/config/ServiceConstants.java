@@ -61,6 +61,7 @@ public class ServiceConstants {
     public static final String SEARCH_TASK_ERR = "Error while searching task";
     public static final String BAIL = "BAIL";
     public static final String SUMMON = "SUMMONS";
+    public static final String JOIN_CASE_TASK="JOIN_CASE_TASK";
 
     public static final String MAKE_PAYMENT = "MAKE_PAYMENT";
 
