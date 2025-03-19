@@ -124,6 +124,19 @@ function PendingTaskAccordion({
               onClick={() => {
                 if (item?.status === "PENDING_SIGN" && item?.screenType === "Adiary") {
                   history.push(`/${window.contextPath}/employee/home/adiary?date=${item?.params?.referenceId}`);
+                } else if (item?.status === "PROFILE_EDIT_REQUEST") {
+                  const caseId = item?.params?.caseId;
+                  const referenceId = item?.referenceId;
+                  const dateOfApplication = item?.params?.dateOfApplication;
+                  const uniqueId = item?.params?.uniqueId;
+
+                  history.push(
+                    `/${window.contextPath}/employee/dristi/home/view-case/review-litigant-details?caseId=${caseId}&referenceId=${referenceId}`,
+                    {
+                      dateOfApplication,
+                      uniqueId,
+                    }
+                  );
                 } else if (item?.status === "PENDING_RESPONSE") {
                   if (isJudge) {
                     const caseId = item?.params?.caseId;
