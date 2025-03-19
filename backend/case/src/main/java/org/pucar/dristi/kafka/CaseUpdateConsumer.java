@@ -3,6 +3,7 @@ package org.pucar.dristi.kafka;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.service.CaseService;
 import org.pucar.dristi.service.PaymentUpdateService;
 import org.pucar.dristi.web.models.CourtCase;
@@ -10,6 +11,8 @@ import org.pucar.dristi.web.models.analytics.CaseOutcome;
 import org.pucar.dristi.web.models.analytics.CaseOverallStatus;
 import org.pucar.dristi.web.models.analytics.CaseStageSubStage;
 import org.pucar.dristi.web.models.analytics.Outcome;
+import org.pucar.dristi.web.models.task.Task;
+import org.pucar.dristi.web.models.task.TaskRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +57,28 @@ public class CaseUpdateConsumer {
             caseService.updateCaseOutcome(caseOutcome);
         } catch (final Exception e) {
             logger.error("Error while listening to case outcome on topic: {}: ", topic, e);
+        }
+    }
+
+    @KafkaListener(topics = {"${task.join.case.approved.topic}"})
+    public void updateCaseObjectApprovedTask(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        try {
+            logger.info("Received join case approve request on topic : {} ", topic);
+            Task task = objectMapper.convertValue(payload, Task.class);
+            caseService.updateJoinCaseApproved(task);
+        } catch (CustomException e) {
+            logger.info("Error while listening to join case approve on topic ; {}: ", topic, e);
+        }
+    }
+
+    @KafkaListener(topics = {"${task.join.case.rejected.topic}"})
+    public void updateCaseObjectRejectedTask(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        try {
+            logger.info("Received join case approve request on topic : {} ", topic);
+            TaskRequest taskRequest = objectMapper.convertValue(payload, TaskRequest.class);
+            caseService.updateJoinCaseRejected(taskRequest);
+        } catch (CustomException e) {
+            logger.info("Error while listening to join case approve on topic ; {}: ", topic, e);
         }
     }
 

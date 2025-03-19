@@ -199,6 +199,9 @@ public class ServiceConstants {
 
     public static final String ACCUSED_PARTY_TYPE="respondent";
 
+    public static final String PARTIALLY_JOINED = "PARTIALLY JOINED";
+    public static final String PENDING = "PENDING";
+
     public static final String COMPLAINANT_INDIVIDUAL_ID_PATH="/data/complainantVerification/individualDetails/individualId";
     public static final String RESPONDENT_INDIVIDUAL_ID_PATH="/data/respondentVerification/individualDetails/individualId";
     public static final String BOX_COMPLAINANT_ID_PATH = "/data/multipleAdvocatesAndPip/boxComplainant/individualId";

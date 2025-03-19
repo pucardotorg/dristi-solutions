@@ -3,6 +3,7 @@ package org.pucar.dristi.enrichment;
 import lombok.extern.slf4j.Slf4j;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.kafka.Producer;
+import org.pucar.dristi.web.models.TaskRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -28,9 +29,9 @@ public class RejectedTopic implements TopicStrategy{
     }
 
     @Override
-    public void pushToTopic(Object joinCaseBody) {
+    public void pushToTopic(TaskRequest taskRequest) {
         String topicName = configuration.getTaskJoinCaseRejectedTopic();
         log.info("pushing into topic {} ", topicName);
-        producer.push(topicName,joinCaseBody);
+        producer.push(topicName,taskRequest);
     }
 }

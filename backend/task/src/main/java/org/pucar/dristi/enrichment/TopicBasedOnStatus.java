@@ -1,5 +1,6 @@
 package org.pucar.dristi.enrichment;
 
+import org.pucar.dristi.web.models.TaskRequest;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -14,10 +15,10 @@ public class TopicBasedOnStatus {
     }
 
 
-    public void pushToTopicBasedOnStatus(String status, Object joinCaseBody) {
+    public void pushToTopicBasedOnStatus(String status, TaskRequest taskRequest) {
         topicStrategies.stream()
                 .filter(topicStrategy -> topicStrategy.canPush(status))
-                .forEach(topicStrategy -> topicStrategy.pushToTopic(joinCaseBody));
+                .forEach(topicStrategy -> topicStrategy.pushToTopic(taskRequest));
     }
 
 }

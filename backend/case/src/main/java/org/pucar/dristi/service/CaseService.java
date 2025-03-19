@@ -1797,4 +1797,97 @@ public class CaseService {
         }
         return fullName;
     }
+
+    public void updateJoinCaseRejected(TaskRequest taskRequest) {
+
+        Task task = taskRequest.getTask();
+
+        String filingNumber = task.getFilingNumber();
+        CaseCriteria caseCriteria = CaseCriteria.builder()
+                .filingNumber(filingNumber)
+                .build();
+        List<CaseCriteria> caseSearchCriteria = Collections.singletonList(caseCriteria);
+
+        CaseCriteria caseCriteriaResponse = caseRepository.getCases(caseSearchCriteria, RequestInfo.builder().build()).get(0);
+        List<CourtCase> courtCaseList = caseCriteriaResponse.getResponseList();
+
+        if (courtCaseList.isEmpty()) {
+            log.error("no case found for the given criteria");
+        }
+        else {
+            CourtCase courtCase = courtCaseList.get(0);
+            List<PendingAdvocateRequest> pendingAdvocateRequests = courtCase.getPendingAdvocateRequests();
+            JoinCaseV2Request joinCaseRequest = objectMapper.convertValue(task.getAdditionalDetails(), JoinCaseV2Request.class);
+            // uuid of advocate who is trying to replace
+            String advocateUuid = joinCaseRequest.getAdvocateDetails().getAdvocateUuid();
+            String taskNumber = task.getTaskNumber();
+
+            for (PendingAdvocateRequest request : pendingAdvocateRequests) {
+                if (request.getAdvocateId().equalsIgnoreCase(advocateUuid)) {
+                    request.getTaskReferenceNoList().remove(taskNumber);
+                }
+            }
+            courtCase.setPendingAdvocateRequests(pendingAdvocateRequests);
+
+            updateStatusOfAdvocate(courtCase,advocateUuid);
+        }
+
+    }
+
+    public void updateJoinCaseApproved(Task task) {
+
+        JoinCaseV2Request joinCaseRequest = objectMapper.convertValue(task.getAdditionalDetails(), JoinCaseV2Request.class);
+
+        String filingNumber = task.getFilingNumber();
+        CaseCriteria caseCriteria = CaseCriteria.builder()
+                .filingNumber(filingNumber)
+                .build();
+        List<CaseCriteria> caseSearchCriteria = Collections.singletonList(caseCriteria);
+
+        List<CaseCriteria> courtCaseList = caseRepository.getCases(caseSearchCriteria, RequestInfo.builder().build());
+
+        if (courtCaseList.isEmpty()) {
+            log.error("no cases found for the given criteria");
+        }
+        else {
+            CaseCriteria caseCriteriaResponse = courtCaseList.get(0);
+            CourtCase courtCase = caseCriteriaResponse.getResponseList().get(0);
+        }
+
+    }
+
+    private void updateStatusOfAdvocate(CourtCase courtCase,String advocateUuid) {
+        List<AdvocateMapping> advocateMappings = courtCase.getRepresentatives();
+        List<PendingAdvocateRequest> pendingAdvocateRequests = courtCase.getPendingAdvocateRequests();
+
+        List<AdvocateMapping> mappingList = advocateMappings.stream().filter(advocateMapping -> advocateMapping
+                .getAdvocateId().equalsIgnoreCase(advocateUuid)).toList();
+
+        List<PendingAdvocateRequest> pendingAdvocateRequestList = pendingAdvocateRequests.stream()
+                .filter(pendingAdvocateRequest -> pendingAdvocateRequest.getAdvocateId()
+                        .equalsIgnoreCase(advocateUuid)).toList();
+
+        PendingAdvocateRequest pendingAdvocateRequest = pendingAdvocateRequestList.get(0);
+
+        if (!mappingList.isEmpty() && pendingAdvocateRequest.getTaskReferenceNoList().isEmpty()) {
+            pendingAdvocateRequests.remove(pendingAdvocateRequest);
+            courtCase.setPendingAdvocateRequests(pendingAdvocateRequests);
+        }
+
+        if (!mappingList.isEmpty() && !pendingAdvocateRequest.getTaskReferenceNoList().isEmpty()) {
+            for (PendingAdvocateRequest request : pendingAdvocateRequests) {
+                if (pendingAdvocateRequest.getAdvocateId().equalsIgnoreCase(advocateUuid)) {
+                    request.setStatus(PARTIALLY_JOINED);
+                }
+            }
+        }
+
+        if (mappingList.isEmpty() && !pendingAdvocateRequest.getTaskReferenceNoList().isEmpty()) {
+            for (PendingAdvocateRequest request : pendingAdvocateRequests) {
+                if (pendingAdvocateRequest.getAdvocateId().equalsIgnoreCase(advocateUuid)) {
+                    request.setStatus(PENDING);
+                }
+            }
+        }
+    }
 }

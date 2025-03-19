@@ -128,8 +128,9 @@ public class TaskService {
                 producer.push(config.getTaskIssueSummonTopic(), body);
 
             // push to join case topic based on status
-            Object joinCaseBody = new Object();
-            topicBasedOnStatus.pushToTopicBasedOnStatus(status,joinCaseBody);
+            if (taskType.equalsIgnoreCase(JOIN_CASE)) {
+                topicBasedOnStatus.pushToTopicBasedOnStatus(status, body);
+            }
 
             producer.push(config.getTaskUpdateTopic(), body);
 
