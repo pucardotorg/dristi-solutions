@@ -38,7 +38,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -923,6 +922,52 @@ public class CaseService {
         joinCaseRequest.setAdditionalDetails(additionalDetails);
     }
 
+    private void verifyAndEnrichRepresentativeJoinCase(JoinCaseV2Request joinCaseRequest, CourtCase courtCase, CourtCase caseObj, AuditDetails auditDetails) {
+        JoinCaseDataV2 joinCaseData = joinCaseRequest.getJoinCaseData();
+
+        log.info("enriching representatives");
+        enrichRepresentativesOnCreateAndUpdate(caseObj, auditDetails);
+
+        joinCaseData.setRepresentative(mapAdvocateMappingToRepresentative(caseObj.getRepresentatives().get(0)));
+        log.info("Pushing join case representative details :: {}", joinCaseData.getRepresentative());
+        producer.push(config.getRepresentativeJoinCaseTopic(), joinCaseData);
+
+        String tenantId = joinCaseData.getTenantId();
+
+        if (courtCase.getRepresentatives() != null) {
+            List<AdvocateMapping> representatives = courtCase.getRepresentatives();
+            representatives.add(mapRepresentativeToAdvocateMapping(joinCaseData.getRepresentative()));
+        } else {
+            courtCase.setRepresentatives(Collections.singletonList(mapRepresentativeToAdvocateMapping(joinCaseData.getRepresentative())));
+        }
+
+        Object additionalDetails = joinCaseData.getAdditionalDetails();
+        if (joinCaseData.getAdditionalDetails() != null) {
+            log.info("EnrichRepresentative, additional details :: {}", joinCaseData.getAdditionalDetails());
+            caseObj.setAdditionalDetails(editAdvocateDetails(joinCaseData.getAdditionalDetails(), courtCase.getAdditionalDetails()));
+            caseObj = encryptionDecryptionUtil.encryptObject(caseObj, config.getCourtCaseEncrypt(), CourtCase.class);
+            courtCase = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncrypt(), CourtCase.class);
+            joinCaseData.setAdditionalDetails(caseObj.getAdditionalDetails());
+            log.info("EnrichRepresentative,Pushing additional details :: {}", joinCaseData.getAdditionalDetails());
+            producer.push(config.getAdditionalJoinCaseTopic(), joinCaseRequest);
+
+            courtCase.setAdditionalDetails(joinCaseData.getAdditionalDetails());
+
+            updateCourtCaseInRedis(tenantId, courtCase);
+
+            caseObj.setAuditdetails(courtCase.getAuditdetails());
+            caseObj = encryptionDecryptionUtil.decryptObject(caseObj, config.getCaseDecryptSelf(), CourtCase.class, joinCaseRequest.getRequestInfo());
+            joinCaseData.setAdditionalDetails(caseObj.getAdditionalDetails());
+        } else {
+            CourtCase encryptedCourtCase = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncrypt(), CourtCase.class);
+            updateCourtCaseInRedis(tenantId, encryptedCourtCase);
+        }
+
+        publishToJoinCaseIndexer(joinCaseRequest.getRequestInfo(), courtCase);
+
+        joinCaseData.setAdditionalDetails(additionalDetails);
+    }
+
     public JoinCaseResponse verifyJoinCaseRequest(JoinCaseRequest joinCaseRequest, Boolean isPaymentCompleted) {
         try {
             String filingNumber = joinCaseRequest.getCaseFilingNumber();
@@ -1061,6 +1106,157 @@ public class CaseService {
         }
     }
 
+    public JoinCaseV2Response processJoinCaseRequest(JoinCaseV2Request joinCaseRequest) {
+        try {
+            String filingNumber = joinCaseRequest.getJoinCaseData().getFilingNumber();
+            List<CaseCriteria> existingCases = caseRepository.getCases(Collections.singletonList(CaseCriteria.builder().filingNumber(filingNumber).build()), joinCaseRequest.getRequestInfo());
+            log.info("Existing case list size :: {}", existingCases.size());
+
+            CourtCase courtCase = validateAccessCodeAndReturnCourtCase(joinCaseRequest, existingCases);
+
+            UUID caseId = courtCase.getId();
+
+            JoinCaseDataV2 joinCaseData=joinCaseRequest.getJoinCaseData();
+
+            AuditDetails auditDetails = AuditDetails.builder()
+                    .createdBy(joinCaseRequest.getRequestInfo().getUserInfo().getUuid())
+                    .createdTime(System.currentTimeMillis())
+                    .lastModifiedBy(joinCaseRequest.getRequestInfo().getUserInfo().getUuid())
+                    .lastModifiedTime(System.currentTimeMillis()).build();
+
+            CourtCase caseObj = CourtCase.builder()
+                    .id(caseId)
+                    .build();
+
+            // Stream over the litigants to create a list of individualIds
+            List<String> individualIds = Optional.ofNullable(courtCase.getLitigants())
+                    .orElse(Collections.emptyList())
+                    .stream()
+                    .map(Party::getIndividualId)
+                    .toList();
+
+            //For litigant join case
+            if (joinCaseData.getLitigant() != null && !joinCaseData.getLitigant().isEmpty() && joinCaseData.getRepresentative() == null) {
+
+                //litigant join case validation
+                if (!validator.validateLitigantJoinCase(joinCaseRequest))
+                    throw new CustomException(VALIDATION_ERR, JOIN_CASE_INVALID_REQUEST);
+
+                for (JoinCaseLitigant litigant : joinCaseData.getLitigant()) {
+                    if (litigant.getIndividualId() != null && individualIds.contains(litigant.getIndividualId()) && !litigant.getIsPip()) {
+                        throw new CustomException(VALIDATION_ERR, "Litigant is already a part of the given case");
+                    }
+                }
+
+                verifyLitigantsJoinCase(joinCaseRequest, courtCase, caseObj, auditDetails);
+
+            }
+
+            //For advocate join case
+            if (joinCaseData.getRepresentative() != null) {
+
+                //advocate join case validation
+                if (!validator.validateRepresentativeJoinCase(joinCaseRequest))
+                    throw new CustomException(VALIDATION_ERR, JOIN_CASE_INVALID_REQUEST);
+
+                if (joinCaseData.getLitigant() != null && !joinCaseData.getLitigant().isEmpty()) {
+                    if (!validator.validateLitigantJoinCase(joinCaseRequest))
+                        throw new CustomException(VALIDATION_ERR, JOIN_CASE_INVALID_REQUEST);
+                }
+
+                // Stream over the representatives to create a list of advocateIds
+                List<String> advocateIds = Optional.ofNullable(courtCase.getRepresentatives())
+                        .orElse(Collections.emptyList())
+                        .stream()
+                        .map(AdvocateMapping::getAdvocateId)
+                        .toList();
+                AdvocateMapping existingRepresentative = null;
+
+                // If advocate is already representing the individual throw exception
+                if (!advocateIds.isEmpty() && joinCaseData.getRepresentative().getAdvocateUUID() != null && advocateIds.contains(joinCaseData.getRepresentative().getAdvocateUUID())) {
+
+                    Optional<AdvocateMapping> existingRepresentativeOptional = courtCase.getRepresentatives().stream()
+                            .filter(advocateMapping -> joinCaseData.getRepresentative().getAdvocateUUID().equals(advocateMapping.getAdvocateId()))
+                            .findFirst();
+
+                    if (existingRepresentativeOptional.isEmpty())
+                        throw new CustomException(INVALID_ADVOCATE_ID, INVALID_ADVOCATE_DETAILS);
+
+                    existingRepresentative = existingRepresentativeOptional.get();
+                    List<String> individualIdList = existingRepresentative.getRepresenting().stream()
+                            .map(Party::getIndividualId)
+                            .toList();
+
+                    joinCaseData.getRepresentative().getRepresenting().forEach(representing -> {
+                        if (individualIdList.contains(representing.getIndividualId())) {
+                            log.info("Advocate is already representing the individual");
+                            throw new CustomException(VALIDATION_ERR, "Advocate is already representing the individual");
+                        }
+                    });
+
+                }
+
+                verifyRepresentativeJoinCase(joinCaseRequest, courtCase, caseObj, auditDetails, advocateIds, existingRepresentative);
+
+                if (joinCaseData.getLitigant() != null && !joinCaseData.getLitigant().isEmpty()){
+                    verifyLitigantsJoinCase(joinCaseRequest, courtCase, caseObj, auditDetails);
+                }
+            }
+        } catch (CustomException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Invalid join case request :: {}", e.toString());
+            throw new CustomException(JOIN_CASE_ERR, JOIN_CASE_INVALID_REQUEST);
+        }
+        return null;
+    }
+
+    private void verifyAndEnrichLitigantJoinCase(JoinCaseV2Request joinCaseRequest, CourtCase courtCase, CourtCase caseObj, AuditDetails auditDetails) {
+
+        JoinCaseDataV2 joinCaseData = joinCaseRequest.getJoinCaseData();
+
+        log.info("enriching litigants");
+        enrichLitigantsOnCreateAndUpdate(caseObj, auditDetails);
+
+        log.info("Pushing join case litigant details :: {}", joinCaseData.getLitigant());
+        producer.push(config.getLitigantJoinCaseTopic(), joinCaseData);
+
+        String tenantId = joinCaseData.getTenantId();
+
+        if (courtCase.getLitigants() != null) {
+            List<Party> litigants = courtCase.getLitigants();
+            litigants.addAll(joinCaseData.getLitigant());
+        } else {
+            courtCase.setLitigants((List<Party>) (List<?>) joinCaseRequest.getJoinCaseData().getLitigant());
+        }
+
+        if (joinCaseData.getAdditionalDetails() != null) {
+            log.info("EnrichLitigant, Additional details :: {}", joinCaseData.getAdditionalDetails());
+            caseObj.setAdditionalDetails(editRespondantDetails(joinCaseData.getAdditionalDetails(), courtCase.getAdditionalDetails(), joinCaseData.getLitigant(), joinCaseData.getIsLitigantPIP()));
+            courtCase.setAdditionalDetails(caseObj.getAdditionalDetails());
+            caseObj = encryptionDecryptionUtil.encryptObject(caseObj, config.getCourtCaseEncrypt(), CourtCase.class);
+            courtCase = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncrypt(), CourtCase.class);
+            joinCaseData.setAdditionalDetails(caseObj.getAdditionalDetails());
+
+            log.info("EnrichLitigant,Pushing additional details :: {}", joinCaseData.getAdditionalDetails());
+            producer.push(config.getAdditionalJoinCaseTopic(), joinCaseRequest);
+
+            courtCase.setAdditionalDetails(joinCaseData.getAdditionalDetails());
+             updateCourtCaseInRedis(tenantId, courtCase);
+
+            caseObj.setAuditdetails(courtCase.getAuditdetails());
+            caseObj = encryptionDecryptionUtil.decryptObject(caseObj, config.getCaseDecryptSelf(), CourtCase.class, joinCaseRequest.getRequestInfo());
+            courtCase = encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, joinCaseRequest.getRequestInfo());
+            joinCaseData.setAdditionalDetails(caseObj.getAdditionalDetails());
+            courtCase.setAdditionalDetails(joinCaseData.getAdditionalDetails());
+        } else {
+            CourtCase encryptedCourtCase = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncrypt(), CourtCase.class);
+             updateCourtCaseInRedis(tenantId, encryptedCourtCase);
+        }
+
+         publishToJoinCaseIndexer(joinCaseRequest.getRequestInfo(), courtCase);
+    }
+
     private void createTaskAndDemand(JoinCaseRequest joinCaseRequest) {
         TaskRequest taskRequest = new TaskRequest();
         Task task = new Task();
@@ -1132,6 +1328,31 @@ public class CaseService {
         verifyAndEnrichRepresentative(joinCaseRequest, courtCase, caseObj, auditDetails);
     }
 
+    private void verifyRepresentativeJoinCase(JoinCaseV2Request joinCaseRequest, CourtCase courtCase, CourtCase caseObj, AuditDetails auditDetails, List<String> advocateIds, AdvocateMapping existingRepresentative) {
+        JoinCaseDataV2 joinCaseData = joinCaseRequest.getJoinCaseData();
+        //Setting representative ID as null to resolve later as per need
+        joinCaseData.getRepresentative().setId(null);
+
+        //when advocate is part of the case
+        if (!advocateIds.isEmpty() && joinCaseData.getRepresentative().getAdvocateUUID() != null && advocateIds.contains(joinCaseData.getRepresentative().getAdvocateUUID())) {
+            log.info("Advocate is not representing the individual");
+            joinCaseData.getRepresentative().setId(existingRepresentative.getId());
+        }
+
+        if (joinCaseData.getRepresentative().getRepresenting() != null) {
+            joinCaseData.getRepresentative().getRepresenting().forEach(representing -> {
+                representing.setAuditDetails(auditDetails);
+                if (representing.getIsAdvocateReplacing())
+                    disableExistingRepresenting(joinCaseRequest.getRequestInfo(), courtCase, representing.getIndividualId(), auditDetails, joinCaseData.getRepresentative().getAdvocateUUID());
+            });
+        }
+        AdvocateMapping advocateMapping = mapRepresentativeToAdvocateMapping(joinCaseData.getRepresentative());
+
+        caseObj.setRepresentatives(Collections.singletonList(advocateMapping));
+        joinCaseData.getRepresentative().setAuditDetails(auditDetails);
+        verifyAndEnrichRepresentativeJoinCase(joinCaseData, courtCase, caseObj, auditDetails);
+    }
+
     public static AdvocateMapping mapRepresentativeToAdvocateMapping(Representative representative) {
         AdvocateMapping advocateMapping = new AdvocateMapping();
         advocateMapping.setId(representative.getId());
@@ -1170,8 +1391,7 @@ public class CaseService {
         return partyList;
     }
 
-    private void disableExistingRepresenting(RequestInfo requestInfo, CourtCase courtCase, String
-            joinCasePartyIndividualId, AuditDetails auditDetails, String advocateId) {
+    private void disableExistingRepresenting(RequestInfo requestInfo, CourtCase courtCase, String joinCasePartyIndividualId, AuditDetails auditDetails, String advocateId) {
         if (courtCase.getRepresentatives() != null) {
             courtCase.getRepresentatives().forEach(representative -> {
 
@@ -1260,10 +1480,10 @@ public class CaseService {
         return representingList;
     }
 
-    private void verifyLitigantsAndJoinCase(JoinCaseRequest joinCaseRequest, CourtCase courtCase, CourtCase
-            caseObj, AuditDetails auditDetails) {
+    private void verifyLitigantsAndJoinCase(JoinCaseRequest joinCaseRequest, CourtCase courtCase, CourtCase caseObj, AuditDetails auditDetails) {
 
         if (joinCaseRequest.getIsLitigantPIP() && joinCaseRequest.getLitigant().get(0).getId() != null) {
+
             Party litigant = Optional.ofNullable(courtCase.getLitigants())
                     .orElse(Collections.emptyList())
                     .stream()
@@ -1280,8 +1500,50 @@ public class CaseService {
         verifyAndEnrichLitigant(joinCaseRequest, courtCase, caseObj, auditDetails);
     }
 
-    private @NotNull CourtCase validateAccessCodeAndReturnCourtCase(JoinCaseRequest
-                                                                            joinCaseRequest, List<CaseCriteria> existingApplications) {
+    private void verifyLitigantsJoinCase(JoinCaseV2Request joinCaseRequest, CourtCase courtCase, CourtCase caseObj, AuditDetails auditDetails) {
+
+        for (JoinCaseLitigant litigantJoinCase : joinCaseRequest.getJoinCaseData().getLitigant()) {
+
+            if (litigantJoinCase.getIsPip() && litigantJoinCase.getIndividualId() != null) {
+                Party litigant = Optional.ofNullable(courtCase.getLitigants())
+                        .orElse(Collections.emptyList())
+                        .stream()
+                        .filter(p -> p.getIndividualId().equalsIgnoreCase(litigantJoinCase.getIndividualId())).toList().get(0);
+
+                List<AdvocateMapping> representatives = courtCase.getRepresentatives();
+
+                if (representatives != null)
+                    disableExistingRepresenting(null, courtCase, litigant.getIndividualId(), auditDetails, null);
+            }
+        }
+        caseObj.setLitigants((List<Party>) (List<?>) joinCaseRequest.getJoinCaseData().getLitigant());
+
+        verifyAndEnrichLitigantJoinCase(joinCaseRequest, courtCase, caseObj, auditDetails);
+    }
+
+    private @NotNull CourtCase validateAccessCodeAndReturnCourtCase(JoinCaseRequest joinCaseRequest, List<CaseCriteria> existingApplications) {
+        if (existingApplications.isEmpty()) {
+            throw new CustomException(CASE_EXIST_ERR, "Case does not exist");
+        }
+        List<CourtCase> courtCaseList = existingApplications.get(0).getResponseList();
+        if (courtCaseList.isEmpty()) {
+            throw new CustomException(CASE_EXIST_ERR, "Case does not exist");
+        }
+
+        CourtCase courtCase = encryptionDecryptionUtil.decryptObject(courtCaseList.get(0), config.getCaseDecryptSelf(), CourtCase.class, joinCaseRequest.getRequestInfo());
+
+        if (courtCase.getAccessCode() == null || courtCase.getAccessCode().isEmpty()) {
+            throw new CustomException(VALIDATION_ERR, "Access code not generated");
+        }
+        String caseAccessCode = courtCase.getAccessCode();
+
+        if (!joinCaseRequest.getAccessCode().equalsIgnoreCase(caseAccessCode)) {
+            throw new CustomException(VALIDATION_ERR, "Invalid access code");
+        }
+        return courtCase;
+    }
+
+    private @NotNull CourtCase validateAccessCodeAndReturnCourtCase(JoinCaseV2Request joinCaseRequest, List<CaseCriteria> existingApplications) {
         if (existingApplications.isEmpty()) {
             throw new CustomException(CASE_EXIST_ERR, "Case does not exist");
         }
@@ -1359,8 +1621,7 @@ public class CaseService {
     }
 
 
-    private Object editRespondantDetails(Object additionalDetails1, Object
-            additionalDetails2, List<Party> litigants, boolean isLitigantPIP) {
+    private Object editRespondantDetails(Object additionalDetails1, Object additionalDetails2, List<Party> litigants, boolean isLitigantPIP) {
         // Convert the Objects to ObjectNodes for easier manipulation
         ObjectNode details1Node = objectMapper.convertValue(additionalDetails1, ObjectNode.class);
         ObjectNode details2Node = objectMapper.convertValue(additionalDetails2, ObjectNode.class);
@@ -1579,13 +1840,13 @@ public class CaseService {
                         String individualId;
                         if (detailsKey.equals("respondentDetails")) {
                             individualId = extractIndividualIdIfPresent(additionalDetails, uniqueId);
-                            if(individualId == null)
+                            if (individualId == null)
                                 log.info("Respondent has not joined case yet.");
                         } else {
                             individualId = uniqueId;
                         }
 
-                        if(individualId != null) {
+                        if (individualId != null) {
                             Party litigant = extractLitigant(courtCase.getLitigants(), individualId);
                             if (litigant != null) {
                                 Party updatedLitigant = replaceLitigantDetails(individualId, litigant, additionalDetails.get(detailsKey), detailsKey);
@@ -1783,12 +2044,12 @@ public class CaseService {
 
     private String getFullName(JsonNode data, String detailsKey) {
         String fullName = null;
-        if(detailsKey.equals("complainantDetails")) {
+        if (detailsKey.equals("complainantDetails")) {
             String firstName = data.get("data").get("firstName").asText("");
             String middleName = data.get("data").get("middleName").asText("");
             String lastName = data.get("data").get("lastName").asText("");
             fullName = (firstName + " " + middleName + " " + lastName).replaceAll("\\s+", " ").trim();
-        } else if(detailsKey.equals("respondentDetails")) {
+        } else if (detailsKey.equals("respondentDetails")) {
             String firstName = data.get("data").get("respondentFirstName").asText("");
             String middleName = data.get("data").get("respondentMiddleName").asText("");
             String lastName = data.get("data").get("respondentLastName").asText("");
