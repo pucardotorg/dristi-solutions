@@ -4511,3 +4511,72 @@ export const configsDismissCase = [
     ],
   },
 ];
+
+export const configsApproveRejectLitigantDetailsChange = [
+  {
+    body: [
+      {
+        label: "GRANTED_REJECTED",
+        isMandatory: true,
+        key: "applicationGrantedRejected",
+        schemaKeyPath: "orderDetails.applicationGrantedRejected",
+        transformer: "customDropdown",
+        type: "radio",
+        populators: {
+          name: "applicationGrantedRejected",
+          optionsKey: "name",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          required: true,
+          isMandatory: true,
+          options: [
+            {
+              code: "GRANTED",
+              name: "GRANTED",
+            },
+            {
+              code: "REJECTED",
+              name: "REJECTED",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "reasonForLitigantDetailsChange",
+        schemaKeyPath: "orderDetails.reasonForLitigantDetailsChange",
+        transformer: "customTextArea",
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "REASON_FOR_LITIGANT_DETAIL_CHANGE",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "additionalCommentsLitigantsDetailChange",
+        schemaKeyPath: "orderDetails.additionalCommentsLitigantsDetailChange",
+        transformer: "customTextArea",
+        isMandatory: false,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "LITIGANT_DETAIL_CHANGE_ADDITIONAL_COMMENTS",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+              isOptional: true,
+            },
+          ],
+        },
+      },
+    ],
+  },
+];

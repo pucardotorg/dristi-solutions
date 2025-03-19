@@ -39,13 +39,20 @@ const CustomRadioInfoComponent = ({ t, config, onSelect, formData = {}, errors, 
     }
   }
 
+  const radioStyleFlex = {
+    display: "flex",
+    flexDirection: "row",
+    gap: "50px",
+  };
+
   return (
-    <React.Fragment>
-      {config?.noteDependentOnValue
-        ? extractValue(formData, config?.noteDependentOn) === config?.noteDependentOnValue && (
-            <SelectCustomNote t={t} config={config?.notes} onClick={() => {}} />
-          )
-        : extractValue(formData, config?.noteDependentOn) && <SelectCustomNote t={t} config={config?.notes} onClick={() => {}} />}
+    <div style={config?.isProfileEdit ? { ...radioStyleFlex } : {}}>
+      {!config?.isProfileEdit &&
+        (config?.noteDependentOnValue
+          ? extractValue(formData, config?.noteDependentOn) === config?.noteDependentOnValue && (
+              <SelectCustomNote t={t} config={config?.notes} onClick={() => {}} />
+            )
+          : extractValue(formData, config?.noteDependentOn) && <SelectCustomNote t={t} config={config?.notes} onClick={() => {}} />)}
       <CardSectionHeader style={{ margin: "5px 0px" }}>{t(config.head)}</CardSectionHeader>
       <div className="select-user-type-component">
         <React.Fragment>
@@ -75,7 +82,7 @@ const CustomRadioInfoComponent = ({ t, config, onSelect, formData = {}, errors, 
           </LabelFieldPair>
         </React.Fragment>
       </div>
-    </React.Fragment>
+    </div>
   );
 };
 
