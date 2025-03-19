@@ -1610,6 +1610,7 @@ public class CaseService {
                     if (profile.get("pendingTaskRefId").asText().equals(request.getProcessInfo().getPendingTaskRefId())) {
                         removeProfileRequest(profile.get("uuid").asText(), profileRequests);
                         ((ObjectNode) additionalDetails).set("profileRequests", objectMapper.convertValue(profileRequests, JsonNode.class));
+                        courtCase.setAdditionalDetails(additionalDetails);
                         break;
                     }
                 }
