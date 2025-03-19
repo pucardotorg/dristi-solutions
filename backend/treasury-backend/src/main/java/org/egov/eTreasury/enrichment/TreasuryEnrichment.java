@@ -41,11 +41,21 @@ public class TreasuryEnrichment {
         log.info("eTreasury in test mode: {}", config.isTest());
         String noOfHeads = String.valueOf(1);
         List<HeadDetails> headDetailsList = new ArrayList<>();
-        HeadDetails headDetails  = HeadDetails.builder()
+
+        headDetailsList.add(HeadDetails.builder()
                 .amount(challanAmount)
-                .headId(config.getHeadId())
-                .build();
-        headDetailsList.add(headDetails);
+                .headId(config.getHeadId1())
+                .build());
+
+        headDetailsList.add(HeadDetails.builder()
+                .amount(challanAmount)
+                .headId(config.getHeadId2())
+                .build());
+
+        headDetailsList.add(HeadDetails.builder()
+                .amount(challanAmount)
+                .headId(config.getHeadId3())
+                .build());
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         LocalDate currentDate = LocalDate.now();
