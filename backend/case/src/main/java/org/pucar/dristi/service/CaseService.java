@@ -1257,6 +1257,39 @@ public class CaseService {
          publishToJoinCaseIndexer(joinCaseRequest.getRequestInfo(), courtCase);
     }
 
+    private TaskResponse createTask(JoinCaseV2Request joinCaseRequest) {
+        try {
+            TaskRequest taskRequest = new TaskRequest();
+            Task task = new Task();
+            task.setTaskType(JOIN_CASE_TASK);
+            task.setStatus("");
+            task.setTenantId(joinCaseRequest.getRequestInfo().getUserInfo().getTenantId());
+            task.setFilingNumber(joinCaseRequest.getJoinCaseData().getFilingNumber());
+            Workflow workflow = new Workflow();
+            workflow.setAction("CREATE");
+            RequestInfo requestInfo = joinCaseRequest.getRequestInfo();
+            Role role = new Role();
+            role.setName("TASK_CREATOR");
+            role.setCode("TASK_CREATOR");
+            List<Role> roles = requestInfo.getUserInfo().getRoles();
+            roles.add(role);
+            requestInfo.getUserInfo().setRoles(roles);
+            task.setWorkflow(workflow);
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            Object additionalDetails = objectMapper.convertValue(joinCaseRequest, Object.class);
+            task.setTaskDetails(additionalDetails);
+
+            taskRequest.setTask(task);
+            taskRequest.setRequestInfo(joinCaseRequest.getRequestInfo());
+            return taskUtil.callCreateTask(taskRequest);
+
+        } catch (Exception e) {
+            log.error("Error occurred while creating task for join case request :: {}", e.toString());
+            throw new CustomException(JOIN_CASE_ERR, TASK_SERVICE_ERROR);
+        }
+    }
+
     private void createTaskAndDemand(JoinCaseRequest joinCaseRequest) {
         TaskRequest taskRequest = new TaskRequest();
         Task task = new Task();
