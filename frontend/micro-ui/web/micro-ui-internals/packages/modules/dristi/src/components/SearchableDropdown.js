@@ -14,7 +14,7 @@ const SearchableDropdown = ({ t, isCaseReAssigned, selectedAdvocatesList, value,
       status: "ACTIVE",
       tenantId: window?.Digit.ULBService.getStateId(),
       offset: 0,
-      limit: 1000,
+      limit: 100,
     }
   );
 
@@ -45,7 +45,7 @@ const SearchableDropdown = ({ t, isCaseReAssigned, selectedAdvocatesList, value,
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
-    }, 500);
+    }, 1000);
 
     return () => clearTimeout(handler);
   }, [searchTerm]);
@@ -163,7 +163,7 @@ const SearchableDropdown = ({ t, isCaseReAssigned, selectedAdvocatesList, value,
                 borderBottom: "1px solid #ccc",
               }}
             >
-              <span style={{ fontWeight: "bold" }}>Loading...</span>
+              <span style={{ fontWeight: "bold" }}>{t("LOADING")}</span>
             </li>
           ) : finalAdvocatesBarRegAndNameList?.length === 0 ? (
             <li
@@ -176,7 +176,7 @@ const SearchableDropdown = ({ t, isCaseReAssigned, selectedAdvocatesList, value,
                 borderBottom: "1px solid #ccc",
               }}
             >
-              <span style={{ fontWeight: "bold" }}>no data found...</span>
+              <span style={{ fontWeight: "bold" }}>{t("NO_DATA_FOUND")}</span>
             </li>
           ) : (
             finalAdvocatesBarRegAndNameList?.map((role) => (
