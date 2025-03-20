@@ -31,8 +31,8 @@ public class TreasuryEnrichment {
 
     public ChallanDetails generateChallanDetails(ChallanData challanData, RequestInfo requestInfo) {
 
-        String departmentId = idgenUtil.getIdList(requestInfo, config.getEgovStateTenantId(), config.getIdName(), null, 1).get(0);
 
+        String departmentId = config.getTreasuryIdPrefix() + idgenUtil.getIdList(requestInfo,config.getEgovStateTenantId(),config.getIdName(),null,1).get(0);
         String challanAmount;
         if (config.isTest()) {
             challanAmount = String.valueOf(config.getChallanTestAmount());

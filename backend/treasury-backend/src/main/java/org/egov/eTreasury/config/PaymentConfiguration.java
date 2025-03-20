@@ -131,6 +131,7 @@ public class PaymentConfiguration {
     @Value("${pucar.tsb.account2.type}")
     private String tsbAccount2Type;
 
+
     @Value("${pucar.tsb.receipt}")
     private String tsbReceipt;
 
@@ -152,6 +153,10 @@ public class PaymentConfiguration {
         accountNumberList = Arrays.asList(accountNumber.split(","));
         accountTypeList = Arrays.asList(accountType.split(","));
     }
+
+
+    @Value("${treasury.id.prefix}")
+    private String treasuryIdPrefix;
 
 
 }

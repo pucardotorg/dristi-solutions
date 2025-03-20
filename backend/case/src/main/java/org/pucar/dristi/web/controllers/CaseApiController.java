@@ -206,4 +206,14 @@ public class CaseApiController {
         CaseResponse caseResponse = CaseResponse.builder().cases(Collections.singletonList(cases)).responseInfo(responseInfo).build();
         return new ResponseEntity<>(caseResponse, HttpStatus.OK);
     }
+
+    @PostMapping(value = "/v2/joincase/_verifycode")
+    public ResponseEntity<CaseCodeResponse> verifyCodeV2JoinCase(
+            @Parameter(in = ParameterIn.DEFAULT, description = "verify that the access code provided to join a case is indeed the code the case has", required = true, schema = @Schema()) @Valid @RequestBody CaseCodeRequest body) {
+
+        CaseCodeResponse caseCodeResponse = caseService.verifyJoinCaseCodeV2Request(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
+        caseCodeResponse.setResponseInfo(responseInfo);
+        return new ResponseEntity<>(caseCodeResponse, HttpStatus.OK);
+    }
 }
