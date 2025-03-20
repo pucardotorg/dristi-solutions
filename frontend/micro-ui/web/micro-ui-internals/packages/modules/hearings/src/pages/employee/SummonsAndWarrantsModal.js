@@ -496,7 +496,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
             )
           )}
           <Button
-            label={t(`Re-Issue ${orderType === "SUMMONS" ? "Summon" : "Notice"}`)}
+            label={t(`Re-Issue ${orderType === "SUMMONS" ? "Summon" : orderType === "NOTICE" ? "Notice" : "Warrant"}`)}
             onButtonClick={() => {
               handleNavigate();
             }}
