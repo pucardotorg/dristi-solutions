@@ -8,10 +8,10 @@
         "barRegistrationNumber": {
           "type": "string"
         },
-        "name": {
+        "advocateId": {
           "type": "string"
         },
-        "advocateUuid": {
+        "advocateUserUuid": {
           "type": "string"
         },
         "mobileNumber": {
@@ -19,14 +19,67 @@
         },
         "requestedDate": {
           "type": "integer"
+        },
+        "individualDetails": {
+          "type": "object",
+          "properties": {
+            "firstName": {
+              "type": "string"
+            },
+            "lastName": {
+              "type": "string"
+            },
+            "middleName": {
+              "type": "string"
+            },
+            "individualId": {
+              "type": "string"
+            },
+            "advocateIdProof": {
+              "type": "array",
+              "items": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "fileName": {
+                      "type": "string"
+                    },
+                    "fileStore": {
+                      "type": "string"
+                    },
+                    "documentName": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "fileName",
+                    "fileStore",
+                    "documentName"
+                  ]
+                }
+              ]
+            }
+          },
+          "required": [
+            "firstName",
+            "lastName",
+            "middleName",
+            "individualId",
+            "advocateIdProof"
+          ]
         }
       },
       "required": [
         "barRegistrationNumber",
-        "name",
-        "advocateUuid",
+        "advocateId",
+        "advocateUserUuid",
         "mobileNumber",
-        "requestedDate"
+        "requestedDate",
+        "individualDetails"
       ]
     },
     "reason": {
@@ -35,12 +88,12 @@
     "reasonDocument": {
       "type": "object",
       "properties": {
-        "fileStoreId": {
+        "fileStore": {
           "type": "string"
         }
       },
       "required": [
-        "fileStoreId"
+        "fileStore"
       ]
     },
     "rePlacementDetails": {
@@ -99,12 +152,32 @@
                 "userUuid"
               ]
             },
+            "document": {
+              "type": "object",
+              "properties": {
+                "fileStore": {
+                  "type": "string"
+                },
+                "additionalDetails": {
+                  "type": "object"
+                },
+                "documentType": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "fileStore",
+                "additionalDetails",
+                "documentType"
+              ]
+            },
             "isLitigantPip": {
               "type": "boolean"
             }
           },
           "required": [
             "litigantDetails",
+            "document",
             "isLitigantPip"
           ]
         }
