@@ -499,10 +499,6 @@ public class IndexerUtils {
         return caseDetails;
     }
 
-    private Map<String, String> processJoinCaseEntity() {
-        return null;
-    }
-
     public void esPost(String uri, String request) {
         try {
             log.debug("Record being indexed: {}", request);
