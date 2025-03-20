@@ -4,6 +4,7 @@ const defaultSearchValues = {
     type: "NIA S138",
   },
   caseNameOrId: "",
+  caseId:"",
   sortCaseListByStartDate: "",
 };
 
@@ -12,7 +13,7 @@ export const preHearingConfig = {
   type: "search",
   customHookName: "hearings.usePreHearingModalData",
   apiDetails: {
-    serviceName: "/hearing/v1/search",
+    serviceName: "/inbox/v2/index/_search",
     requestParam: {
       tenantId: Digit.ULBService.getCurrentTenantId(),
     },
@@ -52,26 +53,26 @@ export const preHearingConfig = {
             icon: "UpDownArrowIcon",
             populators: {},
           },
-          {
-            label: "Type",
-            isMandatory: false,
-            key: "type",
-            type: "dropdown",
-            populators: {
-              styles: { width: "150px" },
-              name: "type",
-              error: "Required",
-              optionsKey: "type",
-              options: [
-                {
-                  type: "NIA S138",
-                },
-                {
-                  type: "CIA S138",
-                },
-              ],
-            },
-          },
+          // {
+          //   label: "Type",
+          //   isMandatory: false,
+          //   key: "type",
+          //   type: "dropdown",
+          //   populators: {
+          //     styles: { width: "150px" },
+          //     name: "type",
+          //     error: "Required",
+          //     optionsKey: "type",
+          //     options: [
+          //       {
+          //         type: "NIA S138",
+          //       },
+          //       {
+          //         type: "CIA S138",
+          //       },
+          //     ],
+          //   },
+          // },
           {
             label: "Stage",
             isMandatory: false,
@@ -96,6 +97,15 @@ export const preHearingConfig = {
             type: "text",
             populators: {
               name: "caseNameOrId",
+            },
+          },
+          {
+            label: "SEARCH_CASE_ID",
+            isMandatory: false,
+            key: "caseId",
+            type: "text",
+            populators: {
+              name: "caseId",
             },
           },
         ],
