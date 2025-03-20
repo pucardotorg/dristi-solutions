@@ -14,7 +14,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class JoinCaseV2Request {
+public class JoinCaseTaskRequest {
 
     @JsonProperty("advocateDetails")
     private AdvocateDetails advocateDetails;
@@ -25,7 +25,7 @@ public class JoinCaseV2Request {
     @JsonProperty("reasonDocument")
     private Document reasonDocument;
 
-    @JsonProperty("rePlacementDetails")
+    @JsonProperty("replacementDetails")
     private List<ReplacementDetails> replacementDetails;
 
 }

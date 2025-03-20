@@ -17,8 +17,8 @@ public class AdvocateDetails {
     @JsonProperty("barRegistrationNumber")
     private String barRegistrationNumber;
 
-    @JsonProperty("name")
-    private String name;
+    @JsonProperty("advocateId")
+    private String advocateId;
 
     @JsonProperty("advocateUuid")
     private String advocateUuid;
@@ -28,5 +28,14 @@ public class AdvocateDetails {
 
     @JsonProperty("requestedDate")
     private Long requestedDate;
+
+    @JsonProperty("individualDetails")
+    private IndividualDetails individualDetails;
+
+    @JsonProperty("Document")
+    private Document document;
+
+    @JsonProperty("individualId")
+    private String individualId;
 
 }

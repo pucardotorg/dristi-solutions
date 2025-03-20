@@ -201,6 +201,7 @@ public class ServiceConstants {
 
     public static final String PARTIALLY_JOINED = "PARTIALLY JOINED";
     public static final String PENDING = "PENDING";
+    public static final String UPLOAD_VAKALATNAMA = "UPLOAD_VAKALATNAMA";
 
     public static final String COMPLAINANT_INDIVIDUAL_ID_PATH="/data/complainantVerification/individualDetails/individualId";
     public static final String RESPONDENT_INDIVIDUAL_ID_PATH="/data/respondentVerification/individualDetails/individualId";

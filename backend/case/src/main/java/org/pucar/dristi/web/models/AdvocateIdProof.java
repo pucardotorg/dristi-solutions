@@ -12,17 +12,17 @@ import org.springframework.validation.annotation.Validated;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ReplacementDetails {
+public class AdvocateIdProof {
 
-    @JsonProperty("advocateDetails")
-    private AdvocateDetails advocateDetails;
+    @JsonProperty("name")
+    private String name;
 
-    @JsonProperty("litigantDetails")
-    private LitigantDetails litigantDetails;
+    @JsonProperty("fileName")
+    private String fileName;
 
-    @JsonProperty("isLitigantPip")
-    private Boolean isLitigantPip;
+    @JsonProperty("fileStore")
+    private String fileStore;
 
-    @JsonProperty("document")
-    private Document document;
+    @JsonProperty("documentName")
+    private String documentName;
 }

@@ -64,8 +64,8 @@ public class CaseUpdateConsumer {
     public void updateCaseObjectApprovedTask(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         try {
             logger.info("Received join case approve request on topic : {} ", topic);
-            Task task = objectMapper.convertValue(payload, Task.class);
-            caseService.updateJoinCaseApproved(task);
+            TaskRequest taskRequest = objectMapper.convertValue(payload, TaskRequest.class);
+            caseService.updateJoinCaseApproved(taskRequest);
         } catch (CustomException e) {
             logger.info("Error while listening to join case approve on topic ; {}: ", topic, e);
         }
@@ -74,11 +74,11 @@ public class CaseUpdateConsumer {
     @KafkaListener(topics = {"${task.join.case.rejected.topic}"})
     public void updateCaseObjectRejectedTask(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         try {
-            logger.info("Received join case approve request on topic : {} ", topic);
+            logger.info("Received join case reject request on topic : {} ", topic);
             TaskRequest taskRequest = objectMapper.convertValue(payload, TaskRequest.class);
             caseService.updateJoinCaseRejected(taskRequest);
         } catch (CustomException e) {
-            logger.info("Error while listening to join case approve on topic ; {}: ", topic, e);
+            logger.info("Error while listening to join case reject on topic ; {}: ", topic, e);
         }
     }
 
