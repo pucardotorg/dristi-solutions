@@ -7,6 +7,7 @@ import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
@@ -114,6 +115,12 @@ public class EvidenceService {
         try {
             // Fetch applications from database according to the given search criteria
             enrichEvidenceSearch(requestInfo, evidenceSearchCriteria);
+            String tenantId = evidenceSearchCriteria.getTenantId();
+            if(requestInfo.getUserInfo().getRoles().contains(Role.builder().name(BENCH_CLERK).code(BENCH_CLERK).tenantId(tenantId).build()))
+            {
+                evidenceSearchCriteria.setIsCourtEmployee(false);
+                evidenceSearchCriteria.setBenchClerk(true);
+            }
             List<Artifact> artifacts = repository.getArtifacts(evidenceSearchCriteria, pagination);
 
             // If no applications are found matching the given criteria, return an empty list
@@ -139,6 +146,7 @@ public class EvidenceService {
                 }
                 case EMPLOYEE_UPPER -> {
                     searchCriteria.setIsCourtEmployee(true);
+                    searchCriteria.setUserUuid(userInfo.getUuid());
                 }
             }
         }
