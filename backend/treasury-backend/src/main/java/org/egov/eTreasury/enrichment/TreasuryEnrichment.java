@@ -8,6 +8,7 @@ import org.egov.eTreasury.model.ChallanDetails;
 import org.egov.eTreasury.model.HeadDetails;
 import org.egov.eTreasury.model.TsbData;
 import org.egov.eTreasury.util.IdgenUtil;
+import org.egov.tracer.model.CustomException;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -30,6 +31,7 @@ public class TreasuryEnrichment {
 
     public ChallanDetails generateChallanDetails(ChallanData challanData, RequestInfo requestInfo) {
 
+
         String departmentId = config.getTreasuryIdPrefix() + idgenUtil.getIdList(requestInfo,config.getEgovStateTenantId(),config.getIdName(),null,1).get(0);
         String challanAmount;
         if (config.isTest()) {
@@ -37,37 +39,36 @@ public class TreasuryEnrichment {
         } else {
             challanAmount = String.valueOf(challanData.getTotalDue());
         }
-        challanAmount = "3";
         log.info("Challan Amount: {}", challanAmount);
         log.info("eTreasury in test mode: {}", config.isTest());
-        String noOfHeads = String.valueOf(3);
+
+        int headSize = config.getHeadsList().size();
+        String noOfHeads = String.valueOf(headSize);
         List<HeadDetails> headDetailsList = new ArrayList<>();
 
-        headDetailsList.add(HeadDetails.builder()
-                .amount("1")
-                .headId(config.getHeadId1())
-                .build());
+        for (String head : config.getHeadsList()) {
+            headDetailsList.add(HeadDetails.builder()
+                    .amount(String.valueOf(Integer.parseInt(challanAmount) / headSize))
+                    .headId(head)
+                    .build());
+        }
 
-        headDetailsList.add(HeadDetails.builder()
-                .amount("1")
-                .headId(config.getHeadId2())
-                .build());
+        List<String> accountTypeList = config.getAccountTypeList();
 
-        headDetailsList.add(HeadDetails.builder()
-                .amount("1")
-                .headId(config.getHeadId3())
-                .build());
+        List<String> accountNumberList = config.getAccountNumberList();
+
+        if (!(accountTypeList.size() == accountNumberList.size())) {
+            throw new CustomException("CHECK_SIZE_NIGGA", "Check size of account type and account number");
+        }
 
         List<TsbData> tsbData = new ArrayList<>();
+        for (int i = 0; i < accountNumberList.size(); i++){
+            tsbData.add(TsbData.builder().tsbAccNo(accountNumberList.get(i))
+                    .tsbAccType(accountTypeList.get(i))
+                    .tsbAmount(1.0)
+                    .tsbPurpose("Fee").build());
+        }
 
-        tsbData.add(TsbData.builder().tsbAccNo(config.getTsbAccount1Number())
-                .tsbAccType(config.getTsbAccount1Type())
-                .tsbAmount(1.0)
-                .tsbPurpose("Fee").build());
-        tsbData.add(TsbData.builder().tsbAccNo(config.getTsbAccount2Number())
-                .tsbAccType(config.getTsbAccount2Type())
-                .tsbAmount(1.0)
-                .tsbPurpose("Fee").build());
 
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -85,7 +86,7 @@ public class TreasuryEnrichment {
                 .serviceDeptCode(config.getServiceDeptCode())
                 .officeCode(config.getOfficeCode())
                 .partyName(challanData.getPaidBy())
-                .tsbReceipts("Y")
+                .tsbReceipts(config.getTsbReceipt())
                 .tsbData(tsbData)
                 .build();
     }
