@@ -6,6 +6,7 @@ import org.egov.eTreasury.config.PaymentConfiguration;
 import org.egov.eTreasury.model.ChallanData;
 import org.egov.eTreasury.model.ChallanDetails;
 import org.egov.eTreasury.model.HeadDetails;
+import org.egov.eTreasury.model.TsbData;
 import org.egov.eTreasury.util.IdgenUtil;
 import org.springframework.stereotype.Component;
 
@@ -58,6 +59,18 @@ public class TreasuryEnrichment {
                 .headId(config.getHeadId3())
                 .build());
 
+        List<TsbData> tsbData = new ArrayList<>();
+
+        tsbData.add(TsbData.builder().tsbAccNo(config.getTsbAccount1Number())
+                .tsbAccType(config.getTsbAccount1Type())
+                .tsbAmount(1.0)
+                .tsbPurpose("Fee").build());
+        tsbData.add(TsbData.builder().tsbAccNo(config.getTsbAccount2Number())
+                .tsbAccType(config.getTsbAccount2Type())
+                .tsbAmount(1.0)
+                .tsbPurpose("Fee").build());
+
+
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         LocalDate currentDate = LocalDate.now();
         String formattedDate = currentDate.format(formatter);
@@ -73,7 +86,8 @@ public class TreasuryEnrichment {
                 .serviceDeptCode(config.getServiceDeptCode())
                 .officeCode(config.getOfficeCode())
                 .partyName(challanData.getPaidBy())
-                .tsbReceipts("N")
+                .tsbReceipts("Y")
+                .tsbData(tsbData)
                 .build();
     }
 }
