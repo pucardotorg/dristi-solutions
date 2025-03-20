@@ -1327,7 +1327,9 @@ public class CaseService {
             task.setWorkflow(workflow);
             ObjectMapper objectMapper = new ObjectMapper();
 
-            Object taskDetails = objectMapper.convertValue(joinCaseRequest, Object.class);
+            TaskJoinCase taskJoinCase= new TaskJoinCase();
+
+            Object taskDetails = objectMapper.convertValue(taskJoinCase, Object.class);
             task.setTaskDetails(taskDetails);
 
             taskRequest.setTask(task);
