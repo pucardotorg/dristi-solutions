@@ -180,7 +180,7 @@ public class CaseService {
                 });
                 caseCriteria.setResponseList(decryptedCourtCases);
             });
-            
+
 
         } catch (CustomException e) {
             throw e;
@@ -760,7 +760,7 @@ public class CaseService {
         } else if (previousStatus.equalsIgnoreCase(PENDING_REGISTRATION) && updatedStatus.equalsIgnoreCase(PENDING_ADMISSION_HEARING)) {
             return CASE_REGISTERED;
         } else if (previousStatus.equalsIgnoreCase(PENDING_REGISTRATION) && updatedStatus.equalsIgnoreCase(CASE_REASSIGNED)) {
-            return JUDGE_SEND_BACK;
+            return JUDGE_SEND_BACK_E_SIGN_CODE;
         } else if (previousStatus.equalsIgnoreCase(PENDING_ADMISSION_HEARING) && updatedStatus.equalsIgnoreCase(ADMISSION_HEARING_SCHEDULED)) {
             return ADMISSION_HEARING_SCHEDULED;
         } else if (previousStatus.equalsIgnoreCase(PENDING_RESPONSE) && updatedStatus.equalsIgnoreCase(CASE_ADMITTED)) {
@@ -943,7 +943,6 @@ public class CaseService {
 
         joinCaseRequest.setAdditionalDetails(additionalDetails);
     }
-
 
     public JoinCaseResponse verifyJoinCaseRequest(JoinCaseRequest joinCaseRequest, Boolean isPaymentCompleted) {
         try {
@@ -2010,6 +2009,26 @@ public class CaseService {
         return RequestInfo.builder().userInfo(userInfo).msgId(msgId).build();
     }
 
+    public CaseCodeResponse verifyJoinCaseCodeV2Request(CaseCodeRequest caseCodeRequest) {
+        try {
+            String filingNumber = caseCodeRequest.getCode().getFilingNumber();
+            List<CaseCriteria> existingApplications = caseRepository.getCases(Collections.singletonList(CaseCriteria.builder().filingNumber(filingNumber).build()), caseCodeRequest.getRequestInfo());
+            log.info("Existing application list :: {}", existingApplications.size());
+            if (existingApplications.isEmpty()) {
+                throw new CustomException(CASE_EXIST_ERR, "Case does not exist");
+            }
+            Boolean isValid = validateAccessCode(caseCodeRequest, existingApplications.get(0).getResponseList().get(0));
+            return CaseCodeResponse.builder().isValid(isValid).build();
+        }
+        catch (CustomException e){
+            throw e;
+        }
+        catch (Exception e){
+            log.error("Failed to verify the given litigants and representatives to be added to the case :: {}", e.toString());
+            throw new CustomException(JOIN_CASE_ERR, JOIN_CASE_CODE_INVALID_REQUEST);
+        }
+    }
+
     private void createTaskAndDemand(JoinCaseRequest joinCaseRequest) {
         TaskRequest taskRequest = new TaskRequest();
         Task task = new Task();
@@ -2443,6 +2462,18 @@ public class CaseService {
         return courtCase;
     }
 
+    private @NotNull Boolean validateAccessCode(CaseCodeRequest caseCodeRequest, CourtCase existingCourtCase) {
+
+        CourtCase courtCase = encryptionDecryptionUtil.decryptObject(existingCourtCase, config.getCaseDecryptSelf(), CourtCase.class, caseCodeRequest.getRequestInfo());
+
+        if (courtCase.getAccessCode() == null || courtCase.getAccessCode().isEmpty()) {
+            throw new CustomException(VALIDATION_ERR, "Access code not generated");
+        }
+        String caseAccessCode = courtCase.getAccessCode();
+
+        return caseCodeRequest.getCode().getCode().equalsIgnoreCase(caseAccessCode);
+    }
+
     private String getRedisKey(RequestInfo requestInfo, String caseId) {
         return requestInfo.getUserInfo().getTenantId() + ":" + caseId;
     }
@@ -2499,7 +2530,8 @@ public class CaseService {
     }
 
 
-    private Object editRespondantDetails(Object additionalDetails1, Object additionalDetails2, List<Party> litigants, boolean isLitigantPIP) {
+    private Object editRespondantDetails(Object additionalDetails1, Object
+            additionalDetails2, List<Party> litigants, boolean isLitigantPIP) {
         // Convert the Objects to ObjectNodes for easier manipulation
         ObjectNode details1Node = objectMapper.convertValue(additionalDetails1, ObjectNode.class);
         ObjectNode details2Node = objectMapper.convertValue(additionalDetails2, ObjectNode.class);
@@ -2749,6 +2781,7 @@ public class CaseService {
                     if (profile.get("pendingTaskRefId").asText().equals(request.getProcessInfo().getPendingTaskRefId())) {
                         removeProfileRequest(profile.get("uuid").asText(), profileRequests);
                         ((ObjectNode) additionalDetails).set("profileRequests", objectMapper.convertValue(profileRequests, JsonNode.class));
+                        courtCase.setAdditionalDetails(additionalDetails);
                         break;
                     }
                 }
@@ -2923,12 +2956,12 @@ public class CaseService {
 
     private String getFullName(JsonNode data, String detailsKey) {
         String fullName = null;
-        if (detailsKey.equals("complainantDetails")) {
+        if(detailsKey.equals("complainantDetails")) {
             String firstName = data.get("data").get("firstName").asText("");
             String middleName = data.get("data").get("middleName").asText("");
             String lastName = data.get("data").get("lastName").asText("");
             fullName = (firstName + " " + middleName + " " + lastName).replaceAll("\\s+", " ").trim();
-        } else if (detailsKey.equals("respondentDetails")) {
+        } else if(detailsKey.equals("respondentDetails")) {
             String firstName = data.get("data").get("respondentFirstName").asText("");
             String middleName = data.get("data").get("respondentMiddleName").asText("");
             String lastName = data.get("data").get("respondentLastName").asText("");
