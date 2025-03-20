@@ -68,6 +68,7 @@ public class CaseService {
     private final AdvocateUtil advocateUtil;
     private final TaskUtil taskUtil;
     private final AnalyticsUtil analyticsUtil;
+    private final UserService userService;
 
 
     @Autowired
@@ -81,6 +82,7 @@ public class CaseService {
                        BillingUtil billingUtil,
                        EncryptionDecryptionUtil encryptionDecryptionUtil,
                        AnalyticsUtil analyticsUtil,
+                       UserService userService,
                        ObjectMapper objectMapper, CacheService cacheService, EnrichmentService enrichmentService, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
@@ -92,6 +94,7 @@ public class CaseService {
         this.billingUtil = billingUtil;
         this.encryptionDecryptionUtil = encryptionDecryptionUtil;
         this.analyticsUtil = analyticsUtil;
+        this.userService = userService;
         this.objectMapper = objectMapper;
         this.cacheService = cacheService;
         this.enrichmentService = enrichmentService;
@@ -1085,13 +1088,12 @@ public class CaseService {
             //For litigant join case
             if (joinCaseData.getLitigant() != null && !joinCaseData.getLitigant().isEmpty() && joinCaseData.getRepresentative() == null) {
 
-                if (!validator.validateLitigantJoinCase(joinCaseRequest))
-                    throw new CustomException(VALIDATION_ERR, JOIN_CASE_INVALID_REQUEST);
+//                if (!validator.validateLitigantJoinCase(joinCaseRequest))
+//                    throw new CustomException(VALIDATION_ERR, JOIN_CASE_INVALID_REQUEST);
 
                 validateLitigantAlreadyPartOfCase(courtCase, joinCaseData);
 
                 addLitigantToCase(joinCaseRequest, courtCase, caseObj, auditDetails);
-
             }
 
             //For advocate join case
@@ -1192,6 +1194,7 @@ public class CaseService {
 
             joinCaseData.getRepresentative().getRepresenting().forEach(representingJoinCase -> {
                 Party party = new Party();
+                party.setId(UUID.randomUUID());
                 party.setIndividualId(representingJoinCase.getIndividualId());
                 representingList.add(party);
             });
@@ -1264,8 +1267,6 @@ public class CaseService {
         pendingTask.setStatus(taskResponse.getTask().getStatus());
         pendingTask.setScreenType("home");
 
-
-
         User user = new User();
         user.setUuid(userUUID);
         pendingTask.setAssignedTo(List.of(user));
@@ -1282,8 +1283,8 @@ public class CaseService {
         log.info("enriching litigants");
         enrichLitigantsOnCreateAndUpdate(caseObj, auditDetails);
 
-        log.info("Pushing join case litigant details :: {}", joinCaseData.getLitigant());
-        producer.push(config.getLitigantJoinCaseTopic(), caseObj.getLitigants());
+        log.info("Pushing join case litigant details :: {}", caseObj);
+        producer.push(config.getLitigantJoinCaseTopic(), caseObj);
     }
 
     public void mapAndSetLitigants(JoinCaseDataV2 joinCaseData, CourtCase caseObj) {
@@ -1322,13 +1323,7 @@ public class CaseService {
             workflow.setAction("CREATE");
             if(assignes!=null)
              workflow.setAssignes(List.of(assignes));
-            RequestInfo requestInfo = joinCaseRequest.getRequestInfo();
-            Role role = new Role();
-            role.setName("SYSTEM");
-            role.setCode("SYSTEM");
-            List<Role> roles = requestInfo.getUserInfo().getRoles();
-            roles.add(role);
-            requestInfo.getUserInfo().setRoles(roles);
+            RequestInfo requestInfo = createInternalRequestInfo();
             task.setWorkflow(workflow);
             ObjectMapper objectMapper = new ObjectMapper();
 
@@ -1336,13 +1331,22 @@ public class CaseService {
             task.setTaskDetails(taskDetails);
 
             taskRequest.setTask(task);
-            taskRequest.setRequestInfo(joinCaseRequest.getRequestInfo());
+            taskRequest.setRequestInfo(requestInfo);
             return taskUtil.callCreateTask(taskRequest);
 
         } catch (Exception e) {
             log.error("Error occurred while creating task for join case request :: {}", e.toString());
             throw new CustomException(JOIN_CASE_ERR, TASK_SERVICE_ERROR);
         }
+    }
+
+    private RequestInfo createInternalRequestInfo() {
+        User userInfo = new User();
+        userInfo.setType(SYSTEM);
+        userInfo.setUuid(userService.internalMicroserviceRoleUuid);
+        userInfo.setRoles(userService.internalMicroserviceRoles);
+        userInfo.setTenantId(config.getTenantId());
+        return RequestInfo.builder().userInfo(userInfo).msgId(msgId).build();
     }
 
 //    private void createTaskAndDemand(JoinCaseRequest joinCaseRequest) {
@@ -1614,14 +1618,14 @@ public class CaseService {
 
         CourtCase courtCase = encryptionDecryptionUtil.decryptObject(courtCaseList.get(0), config.getCaseDecryptSelf(), CourtCase.class, joinCaseRequest.getRequestInfo());
 
-        if (courtCase.getAccessCode() == null || courtCase.getAccessCode().isEmpty()) {
-            throw new CustomException(VALIDATION_ERR, "Access code not generated");
-        }
-        String caseAccessCode = courtCase.getAccessCode();
-
-        if (!joinCaseRequest.getJoinCaseData().getAccessCode().equalsIgnoreCase(caseAccessCode)) {
-            throw new CustomException(VALIDATION_ERR, "Invalid access code");
-        }
+//        if (courtCase.getAccessCode() == null || courtCase.getAccessCode().isEmpty()) {
+//            throw new CustomException(VALIDATION_ERR, "Access code not generated");
+//        }
+//        String caseAccessCode = courtCase.getAccessCode();
+//
+//        if (!joinCaseRequest.getJoinCaseData().getAccessCode().equalsIgnoreCase(caseAccessCode)) {
+//            throw new CustomException(VALIDATION_ERR, "Invalid access code");
+//        }
         return courtCase;
     }
 

@@ -207,6 +207,19 @@ public class ServiceConstants {
     public static final String ACCEPT_PROFILE_REQUEST = "ACCEPT_PROFILE_REQUEST";
     public static final String REJECT_PROFILE_REQUEST =  "REJECT_PROFILE_REQUEST";
     public static final String BOX_COMPLAINANT_PATH ="/data/multipleAdvocatesAndPip/boxComplainant";
+
+    public static final String INTERNALMICROSERVICEROLE_NAME = "SYSTEM";
+
+    public static final String INTERNALMICROSERVICEROLE_CODE = "SYSTEM";
+
+    public static final String INTERNALMICROSERVICEUSER_NAME = "Internal Microservice User";
+
+    public static final String INTERNALMICROSERVICEUSER_USERNAME = "INTERNAL_SYSTEM_USER";
+
+    public static final String INTERNALMICROSERVICEUSER_MOBILENO = "1234567890";
+
+    public static final String INTERNALMICROSERVICEUSER_TYPE = "SYSTEM";
+    public static final String msgId = "1730882648558|en_IN";
     private ServiceConstants() {
     }
 }

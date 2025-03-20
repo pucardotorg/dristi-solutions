@@ -174,6 +174,9 @@ public class Configuration {
 	@Value("${mdms.case.module.name}")
 	private String caseModule;
 
+	@Value("${state.level.tenant.id}")
+	private String tenantId;
+
 	@Value("${egov.localization.statelevel}")
 	private Boolean isLocalizationStateLevel;
 
