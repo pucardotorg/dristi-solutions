@@ -46,10 +46,10 @@ public class    EvidenceRepository {
             String artifactQuery = queryBuilder.getArtifactSearchQuery(preparedStmtList,preparedStmtArgList,evidenceSearchCriteria);
             if(evidenceSearchCriteria.getIsCourtEmployee()){
                 List<String> statusList = List.of(PENDING_E_SIGN);
-                String courtEmployeeQuery = queryBuilder.getStatusQuery(statusList, preparedStmtList, preparedStmtArgList);
+                String courtEmployeeQuery = queryBuilder.getEmployeeQuery(statusList, evidenceSearchCriteria, preparedStmtList, preparedStmtArgList);
                 artifactQuery += courtEmployeeQuery;
             }
-            if(evidenceSearchCriteria.getIsCitizen() || evidenceSearchCriteria.isBenchClerk()){
+            if(evidenceSearchCriteria.getIsCitizen()){
                 List<String> statusList = List.of(PENDING_E_SIGN);
                 String citizenQuery = queryBuilder.getCitizenQuery(statusList, evidenceSearchCriteria, preparedStmtList, preparedStmtArgList);
                 artifactQuery += citizenQuery;

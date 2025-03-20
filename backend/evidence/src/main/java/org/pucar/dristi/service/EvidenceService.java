@@ -118,7 +118,6 @@ public class EvidenceService {
             String tenantId = evidenceSearchCriteria.getTenantId();
             if(requestInfo.getUserInfo().getRoles().contains(Role.builder().name(BENCH_CLERK).code(BENCH_CLERK).tenantId(tenantId).build()))
             {
-                evidenceSearchCriteria.setIsCourtEmployee(false);
                 evidenceSearchCriteria.setBenchClerk(true);
             }
             List<Artifact> artifacts = repository.getArtifacts(evidenceSearchCriteria, pagination);
