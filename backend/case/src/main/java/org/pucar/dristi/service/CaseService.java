@@ -1227,7 +1227,7 @@ public class CaseService {
     }
 
     private void createTaskAndPendingTaskForJudge(JoinCaseV2Request joinCaseRequest) {
-        TaskResponse taskResponse = createTask(joinCaseRequest);
+        TaskResponse taskResponse = createTask(joinCaseRequest,null);
         PendingTaskRequest pendingTaskRequest = new PendingTaskRequest();
         PendingTask pendingTask = new PendingTask();
 
@@ -1245,7 +1245,16 @@ public class CaseService {
     }
 
     private void createTaskAndPendingTask(JoinCaseV2Request joinCaseRequest, String individualId, String advocateId) {
-        TaskResponse taskResponse = createTask(joinCaseRequest);
+        String userUUID;
+        if (individualId != null) {
+            userUUID = individualService.getIndividualsByIndividualId(joinCaseRequest.getRequestInfo(), individualId).get(0).getUserUuid();
+        } else {
+            // Otherwise, if advocateId is provided, use it to get user UUID
+            String individualIdForAdvocate = advocateUtil.getAdvocate(joinCaseRequest.getRequestInfo(), List.of(advocateId)).stream().findFirst().orElse(null);
+            userUUID = individualService.getIndividualsByIndividualId(joinCaseRequest.getRequestInfo(), individualIdForAdvocate).get(0).getUserUuid();
+        }
+
+        TaskResponse taskResponse = createTask(joinCaseRequest, userUUID);
         PendingTaskRequest pendingTaskRequest = new PendingTaskRequest();
         PendingTask pendingTask = new PendingTask();
 
@@ -1255,14 +1264,7 @@ public class CaseService {
         pendingTask.setStatus(taskResponse.getTask().getStatus());
         pendingTask.setScreenType("home");
 
-        String userUUID;
-        if (individualId != null) {
-            userUUID = individualService.getIndividualsByIndividualId(joinCaseRequest.getRequestInfo(), individualId).get(0).getUserUuid();
-        } else {
-            // Otherwise, if advocateId is provided, use it to get user UUID
-            String individualIdForAdvocate = advocateUtil.getAdvocate(joinCaseRequest.getRequestInfo(), List.of(advocateId)).stream().findFirst().orElse(null);
-            userUUID = individualService.getIndividualsByIndividualId(joinCaseRequest.getRequestInfo(), individualIdForAdvocate).get(0).getUserUuid();
-        }
+
 
         User user = new User();
         user.setUuid(userUUID);
@@ -1308,7 +1310,7 @@ public class CaseService {
         caseObj.setLitigants(litigants);
     }
 
-    private TaskResponse createTask(JoinCaseV2Request joinCaseRequest) {
+    private TaskResponse createTask(JoinCaseV2Request joinCaseRequest, String assignes) {
         try {
             TaskRequest taskRequest = new TaskRequest();
             Task task = new Task();
@@ -1318,7 +1320,8 @@ public class CaseService {
             task.setFilingNumber(joinCaseRequest.getJoinCaseData().getFilingNumber());
             Workflow workflow = new Workflow();
             workflow.setAction("CREATE");
-            workflow.setAssignes();
+            if(assignes!=null)
+             workflow.setAssignes(List.of(assignes));
             RequestInfo requestInfo = joinCaseRequest.getRequestInfo();
             Role role = new Role();
             role.setName("SYSTEM");
@@ -1329,8 +1332,8 @@ public class CaseService {
             task.setWorkflow(workflow);
             ObjectMapper objectMapper = new ObjectMapper();
 
-            Object additionalDetails = objectMapper.convertValue(joinCaseRequest, Object.class);
-            task.setTaskDetails(additionalDetails);
+            Object taskDetails = objectMapper.convertValue(joinCaseRequest, Object.class);
+            task.setTaskDetails(taskDetails);
 
             taskRequest.setTask(task);
             taskRequest.setRequestInfo(joinCaseRequest.getRequestInfo());
