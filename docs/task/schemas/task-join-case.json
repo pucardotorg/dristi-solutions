@@ -96,7 +96,7 @@
         "fileStore"
       ]
     },
-    "rePlacementDetails": {
+    "replacementDetails": {
       "type": "array",
       "items": [
         {
