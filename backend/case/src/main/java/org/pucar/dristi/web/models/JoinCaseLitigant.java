@@ -2,6 +2,7 @@ package org.pucar.dristi.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.springframework.validation.annotation.Validated;
 
 @EqualsAndHashCode(callSuper = true)
@@ -9,7 +10,7 @@ import org.springframework.validation.annotation.Validated;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
+@SuperBuilder
 public class JoinCaseLitigant extends Party{
 
     @JsonProperty("isPip")

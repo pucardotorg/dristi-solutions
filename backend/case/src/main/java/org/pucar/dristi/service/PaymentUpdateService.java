@@ -92,7 +92,7 @@ public class PaymentUpdateService {
             Object additionalDetails = taskRequest.getTask().getAdditionalDetails();
             ObjectMapper objectMapper = new ObjectMapper();
             JoinCaseRequest joinCaseRequest  = objectMapper.convertValue(additionalDetails, JoinCaseRequest.class);
-            caseService.verifyJoinCaseRequest(joinCaseRequest,true);
+         //   caseService.verifyJoinCaseRequest(joinCaseRequest,true);
         } catch (Exception e) {
             log.error("KAFKA_PROCESS_ERROR:", e);
         }
