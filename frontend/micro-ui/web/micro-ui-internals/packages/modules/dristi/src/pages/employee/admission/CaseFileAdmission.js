@@ -4,7 +4,7 @@ import { Redirect, useHistory, useLocation } from "react-router-dom/cjs/react-ro
 import CustomCaseInfoDiv from "../../../components/CustomCaseInfoDiv";
 import { Urls } from "../../../hooks";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
-import { CustomArrowDownIcon, FileDownloadIcon, RightArrow } from "../../../icons/svgIndex";
+import { CustomArrowDownIcon, FileDownloadIcon, RightArrow, WarningInfoRedIcon } from "../../../icons/svgIndex";
 import { DRISTIService } from "../../../services";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import { OrderTypes, OrderWorkflowAction } from "../../../Utils/orderWorkflow";
@@ -1104,6 +1104,25 @@ function CaseFileAdmission({ t, path }) {
                 </div>
               </div>
               <CustomCaseInfoDiv t={t} data={caseInfo} style={{ margin: "24px 0px" }} />
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  backgroundColor: "#fdf7ec",
+                  padding: "10px",
+                  fontSize: "14px",
+                  fontFamily: "Arial, sans-serif",
+                  margin: "16px 0px",
+                }}
+              >
+                <div style={{ marginRight: "8px" }}>
+                  <WarningInfoRedIcon />
+                </div>
+                <p style={{ margin: 0, fontWeight: "bold" }}>
+                  {t("FSO_COMMENTS")} <span style={{ fontWeight: "normal" }}>{caseDetails?.additionalDetails?.scrutinyComment}</span>
+                </p>
+              </div>
+
               <FormComposerV2
                 // by disabling label, we hide the action bar for court room manager.
                 label={isCourtRoomManager ? false : isCaseApprover ? t(primaryAction?.label || "") : false}
