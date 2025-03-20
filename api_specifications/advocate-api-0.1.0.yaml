@@ -68,6 +68,13 @@ paths:
       tags:
         - Advocate
       summary: search for advocates using the status of their registration
+      requestBody:
+        description: Details of the registered advocate + RequestInfo meta data.
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/AdvocateSimpleSearchRequest'
+        required: true
       parameters:
         - name: status
           in: query
@@ -374,6 +381,20 @@ components:
             stored here as key/value pairs. Implementation specific.
 
 
+    AdvocateSimpleSearchRequest:
+      type: object
+      description: advocate search is based on an array of criteria object.
+      properties:
+        RequestInfo:
+          $ref: >-
+            https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo
+        tenantId:
+          type: string
+        criteria:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdvocateSearchCriteria'
+            
     AdvocateSearchRequest:
       type: object
       description: advocate search is based on an array of criteria object.
