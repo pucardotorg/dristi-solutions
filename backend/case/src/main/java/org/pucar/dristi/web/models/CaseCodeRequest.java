@@ -19,7 +19,7 @@ public class CaseCodeRequest {
     @Valid
     private RequestInfo requestInfo = null;
 
-    @JsonProperty("CaseCodeCriteria")
+    @JsonProperty("code")
     @Valid
     private CaseCodeCriteria code = null;
 }

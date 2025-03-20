@@ -1066,7 +1066,10 @@ public class CaseService {
             String filingNumber = caseCodeRequest.getCode().getFilingNumber();
             List<CaseCriteria> existingApplications = caseRepository.getCases(Collections.singletonList(CaseCriteria.builder().filingNumber(filingNumber).build()), caseCodeRequest.getRequestInfo());
             log.info("Existing application list :: {}", existingApplications.size());
-            Boolean isValid = validateAccessCode(caseCodeRequest, existingApplications);
+            if (existingApplications.isEmpty()) {
+                throw new CustomException(CASE_EXIST_ERR, "Case does not exist");
+            }
+            Boolean isValid = validateAccessCode(caseCodeRequest, existingApplications.get(0).getResponseList().get(0));
             return CaseCodeResponse.builder().isValid(isValid).build();
         }
         catch (CustomException e){
@@ -1320,16 +1323,9 @@ public class CaseService {
         return courtCase;
     }
 
-    private @NotNull Boolean validateAccessCode(CaseCodeRequest caseCodeRequest, List<CaseCriteria> existingApplications) {
-        if (existingApplications.isEmpty()) {
-            throw new CustomException(CASE_EXIST_ERR, "Case does not exist");
-        }
-        List<CourtCase> courtCaseList = existingApplications.get(0).getResponseList();
-        if (courtCaseList.isEmpty()) {
-            throw new CustomException(CASE_EXIST_ERR, "Case does not exist");
-        }
+    private @NotNull Boolean validateAccessCode(CaseCodeRequest caseCodeRequest, CourtCase existingCourtCase) {
 
-        CourtCase courtCase = encryptionDecryptionUtil.decryptObject(courtCaseList.get(0), config.getCaseDecryptSelf(), CourtCase.class, caseCodeRequest.getRequestInfo());
+        CourtCase courtCase = encryptionDecryptionUtil.decryptObject(existingCourtCase, config.getCaseDecryptSelf(), CourtCase.class, caseCodeRequest.getRequestInfo());
 
         if (courtCase.getAccessCode() == null || courtCase.getAccessCode().isEmpty()) {
             throw new CustomException(VALIDATION_ERR, "Access code not generated");

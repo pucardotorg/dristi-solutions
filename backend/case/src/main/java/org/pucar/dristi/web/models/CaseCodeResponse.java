@@ -9,8 +9,6 @@ import lombok.NoArgsConstructor;
 import org.egov.common.contract.response.ResponseInfo;
 import org.springframework.validation.annotation.Validated;
 
-import java.net.http.HttpResponse;
-
 @Validated
 @Data
 @AllArgsConstructor
