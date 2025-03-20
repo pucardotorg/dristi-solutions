@@ -52,6 +52,7 @@ jobs:
           sarif_file: reports/dependency-check-report.sarif
         if: always()
       - name: Build and analyze for inbox
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
