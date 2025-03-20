@@ -124,5 +124,7 @@ public class PaymentConfiguration {
     @Value("${pucar.tsb.account2.type}")
     private String tsbAccount2Type;
 
+    @Value("${treasury.id.prefix}")
+    private String treasuryIdPrefix;
 
 }
