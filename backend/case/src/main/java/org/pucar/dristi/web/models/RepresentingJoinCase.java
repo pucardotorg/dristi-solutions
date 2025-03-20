@@ -24,14 +24,8 @@ public class RepresentingJoinCase {
     @JsonProperty("individualId")
     private String individualId = null;
 
-    @JsonProperty("isReplacing")
-    private Boolean isReplacing = false;
-
     @JsonProperty("isAlreadyPip")
     private Boolean isAlreadyPip = false;
-
-    @JsonProperty("advocateUUID")
-    private String advocateUUID = null;
 
     @JsonProperty("documents")
     @Valid

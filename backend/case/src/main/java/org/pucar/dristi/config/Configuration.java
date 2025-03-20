@@ -333,4 +333,10 @@ public class Configuration {
 
 	@Value("${hearing.case.reference.number.update}")
 	private String caseReferenceUpdateTopic;
+
+	@Value("${egov.analytics.host}")
+	private String analyticsServiceHost;
+
+	@Value("${egov.analytics.path}")
+	private String analyticsServicePath;
 }
