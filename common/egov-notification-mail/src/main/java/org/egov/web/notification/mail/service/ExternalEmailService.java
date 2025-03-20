@@ -128,8 +128,10 @@ public class ExternalEmailService implements EmailService {
 	}
 	private String[] getEmailAddress(Email email) {
 		if(properties.getMailSenderTest()) {
+			log.info("Sending Test email to {}", properties.getTestEmail());
 			return new String[]{properties.getTestEmail()};
 		}
+		log.info("Sending email to {}", email.getEmailTo());
 		return email.getEmailTo().toArray(new String[0]);
 	}
 
