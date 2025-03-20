@@ -1244,7 +1244,13 @@ export const UICustomizations = {
               return false;
             };
 
+            const checkIfAdvocateIsEditor = () => {
+              const representatives = data?.criteria?.[0]?.responseList?.[0]?.representatives;
+              return Boolean(representatives?.some((rep) => rep?.additionalDetails?.uuid === editorUuid));
+            };
+
             const isEditable = checkIfEditable();
+            const isAdvocateEditor = checkIfAdvocateIsEditor();
             const unjoinedAccused =
               data.criteria[0].responseList[0]?.additionalDetails?.respondentDetails?.formdata
                 ?.filter((data) => !data?.data?.respondentVerification?.individualDetails?.individualId)
@@ -1262,6 +1268,7 @@ export const UICustomizations = {
                     partyType: "unJoinedAccused",
                     caseId: data?.criteria[0]?.responseList[0]?.id,
                     isEditable,
+                    ...(isEditable && { isAdvocateEditor }),
                   };
                 }) || [];
             const litigants = data.criteria[0].responseList[0].litigants?.length > 0 ? data.criteria[0].responseList[0].litigants : [];
@@ -1270,6 +1277,7 @@ export const UICustomizations = {
                 ...litigant,
                 name: removeInvalidNameParts(litigant.additionalDetails?.fullName),
                 isEditable,
+                ...(isEditable && { isAdvocateEditor }),
               };
             });
             const reps = data.criteria[0].responseList[0].representatives?.length > 0 ? data.criteria[0].responseList[0].representatives : [];
@@ -1363,7 +1371,7 @@ export const UICustomizations = {
         ? row?.uniqueId
         : row?.individualId;
       const caseId = row?.caseId;
-      const isAdvocate = row?.partyType === "ADVOCATE";
+      const isAdvocate = row?.isAdvocateEditor;
       const editorUuid = userInfo?.uuid;
 
       return [
