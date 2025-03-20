@@ -1906,6 +1906,7 @@ public class CaseService {
                     advocates.get(0).getRepresenting().add(party);
                     advocates.get(0).getDocuments().add(replacementDetails.getDocument());
                 }
+                inactivateOldAdvocate(replacementDetails,courtCase);
             }
 
             if (partyType.contains("complainant")) {
@@ -1917,6 +1918,20 @@ public class CaseService {
         }
 
     }
+
+    private void inactivateOldAdvocate(ReplacementDetails replacementDetails, CourtCase courtCase) {
+        String advocateId = replacementDetails.getAdvocateDetails().getAdvocateId();
+        String litigantId = replacementDetails.getLitigantDetails().getIndividualId();
+
+        courtCase.getRepresentatives().stream()
+                .filter(mapping -> mapping.getAdvocateId().equalsIgnoreCase(advocateId))
+                .findFirst()
+                .ifPresent(mapping -> {
+                    mapping.getRepresenting().removeIf(representing -> representing.getIndividualId().equalsIgnoreCase(litigantId));
+                    mapping.setIsActive(!mapping.getRepresenting().isEmpty());
+                });
+    }
+
 
     private JsonNode enrichNewAdvocateDetails(AdvocateDetails advocateDetails, ReplacementDetails replacementDetails) {
         IndividualDetails individual = advocateDetails.getIndividualDetails();

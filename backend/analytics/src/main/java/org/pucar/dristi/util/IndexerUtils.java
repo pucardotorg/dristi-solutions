@@ -391,9 +391,7 @@ public class IndexerUtils {
                 return processTaskEntity(request, referenceId);
             else if (config.getADiaryBusinessServiceList().contains(entityType))
                 return processADiaryEntity(request, referenceId);
-            else if (config.getJoinCaseBusinessServiceList().contains(entityType)) {
-                return processJoinCaseEntity();
-            } else {
+            else {
                 log.error("Unexpected entityType: {}", entityType);
                 return new HashMap<>();
             }

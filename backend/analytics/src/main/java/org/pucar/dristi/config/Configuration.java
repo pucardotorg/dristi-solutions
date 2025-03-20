@@ -164,10 +164,6 @@ public class Configuration {
 	private String aDiaryBusinessServices;
 	private List<String> aDiaryBusinessServiceList;
 
-	@Value("${egov.join.case.business.services}")
-	private String joinCaseBusinessServices;
-	private List<String> joinCaseBusinessServiceList;
-
 	//Localization
 	@Value("${egov.localization.host}")
 	private String localizationHost;
@@ -220,7 +216,6 @@ public class Configuration {
 		applicationBusinessServiceList = Arrays.asList(applicationBusinessServices.split(","));
 		orderBusinessServiceList = Arrays.asList(orderBusinessServices.split(","));
 		aDiaryBusinessServiceList = Arrays.asList(aDiaryBusinessServices.split(","));
-		joinCaseBusinessServiceList = Arrays.asList(joinCaseBusinessServices.split(","));
 	}
 
 
