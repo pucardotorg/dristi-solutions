@@ -5,6 +5,8 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.springframework.validation.annotation.Validated;
 
+import java.util.List;
+
 @EqualsAndHashCode(callSuper = true)
 @Validated
 @Data
@@ -15,5 +17,17 @@ public class JoinCaseLitigant extends Party{
 
     @JsonProperty("isPip")
     private Boolean isPip = false;
+
+    @JsonProperty("name")
+    private String name;
+
+    @JsonProperty("email")
+    private List<String> email;
+
+    @JsonProperty("phoneNumber")
+    private List<String> phoneNumber;
+
+    @JsonProperty("address")
+    private List<String> address;
 
 }

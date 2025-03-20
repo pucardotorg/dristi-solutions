@@ -27,6 +27,9 @@ public class JoinCaseRepresentative {
     @JsonProperty("advocateUUID")
     private String advocateUUID = null;
 
+    @JsonProperty("reason")
+    private String reason = null;
+
     @JsonProperty("documents")
     @Valid
     private List<Document> documents = null;
