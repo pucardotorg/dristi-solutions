@@ -74,15 +74,15 @@ public class CaseApiController {
         return new ResponseEntity<>(caseResponse, HttpStatus.OK);
     }
 
-//    @PostMapping(value = "/v1/_verify")
-//    public ResponseEntity<JoinCaseResponse> verifyV1JoinCase(
-//            @Parameter(in = ParameterIn.DEFAULT, description = "Search criteria + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody JoinCaseRequest body) {
-//
-//        JoinCaseResponse joinCaseResponse = caseService.verifyJoinCaseRequest(body,true);
-//        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
-//        joinCaseResponse.setResponseInfo(responseInfo);
-//        return new ResponseEntity<>(joinCaseResponse, HttpStatus.OK);
-//    }
+    @PostMapping(value = "/v1/_verify")
+    public ResponseEntity<JoinCaseResponse> verifyV1JoinCase(
+            @Parameter(in = ParameterIn.DEFAULT, description = "Search criteria + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody JoinCaseRequest body) {
+
+        JoinCaseResponse joinCaseResponse = caseService.verifyJoinCaseRequest(body,true);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
+        joinCaseResponse.setResponseInfo(responseInfo);
+        return new ResponseEntity<>(joinCaseResponse, HttpStatus.OK);
+    }
 
     @PostMapping(value = "/v1/joincase/_joincase")
     public ResponseEntity<JoinCaseV2Response> joinCaseV2(@Parameter(in = ParameterIn.DEFAULT, description = "Search criteria + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody JoinCaseV2Request body) {
