@@ -16,10 +16,6 @@ export const editComplainantValidation = ({
   clearFormDataErrors,
 }) => {
   if (selected === "complainantDetails") {
-    if (!formData?.complainantId?.complainantId) {
-      setShowErrorToast(true);
-      return true;
-    }
     if (
       formData?.complainantType?.code !== "INDIVIDUAL" &&
       !formData?.complainantTypeOfEntity?.code &&
@@ -314,6 +310,7 @@ export const updateProfileData = async ({
   formdata,
   complainantIdProofFileName,
   setFormDataValue,
+  history,
 }) => {
   function cloneFormDataRemoveIcon(originalFormDataArray) {
     return originalFormDataArray.map((originalFormData) => {
@@ -630,6 +627,9 @@ export const updateProfileData = async ({
       tenantId
     );
     toast.success(t("PROFILE_EDIT_REQUEST_CREATED_SUCCESSFULLY"));
+    setTimeout(() => {
+      history.goBack();
+    }, 3000);
   } catch (error) {
     toast.error(t("SOMETHING_WENT_WRONG"));
     console.error(error);

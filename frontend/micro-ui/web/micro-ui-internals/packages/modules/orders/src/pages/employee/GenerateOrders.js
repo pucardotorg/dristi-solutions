@@ -914,6 +914,22 @@ const GenerateOrders = () => {
               };
             });
           }
+          if (orderType === "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE") {
+            orderTypeForm = orderTypeForm?.map((section) => {
+              return {
+                ...section,
+                body: section.body.map((field) => {
+                  if (field.key === "applicationGrantedRejected") {
+                    return {
+                      ...field,
+                      disable: true,
+                    };
+                  }
+                  return field;
+                }),
+              };
+            });
+          }
           if (orderType === "JUDGEMENT") {
             orderTypeForm = orderTypeForm?.map((section) => {
               return {
@@ -1146,6 +1162,23 @@ const GenerateOrders = () => {
                           : [...respondents, ...unJoinedLitigant].map((data) => data?.name || "")),
                       ],
                     },
+                  };
+                }
+                return field;
+              }),
+            };
+          });
+        }
+
+        if (orderType === "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE") {
+          orderTypeForm = orderTypeForm?.map((section) => {
+            return {
+              ...section,
+              body: section.body.map((field) => {
+                if (field.key === "applicationGrantedRejected") {
+                  return {
+                    ...field,
+                    disable: true,
                   };
                 }
                 return field;
@@ -2675,7 +2708,9 @@ const GenerateOrders = () => {
     const noticeType = orderData?.additionalDetails?.formdata?.noticeType?.type;
     const respondentAddress = orderFormData?.addressDetails
       ? orderFormData?.addressDetails?.map((data) => ({ ...data?.addressDetails }))
-      :respondentNameData?.address ?respondentNameData?.address : caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.addressDetails?.map((data) => data?.addressDetails);
+      : respondentNameData?.address
+      ? respondentNameData?.address
+      : caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.addressDetails?.map((data) => data?.addressDetails);
     const partyIndex = orderFormData?.party?.data?.partyIndex || "";
     const respondentName = getRespondantName(respondentNameData);
     const respondentPhoneNo = orderFormData?.party?.data?.phone_numbers || [];
@@ -3409,6 +3444,28 @@ const GenerateOrders = () => {
           action: HearingWorkflowAction.BULK_RESCHEDULE,
           startTime: Date.parse(currentOrder?.additionalDetails?.formdata?.newHearingDate),
           endTime: Date.parse(currentOrder?.additionalDetails?.formdata?.newHearingDate),
+        });
+      }
+      if (orderType === "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE") {
+        let processInfoObj = {
+          caseId: caseDetails?.id,
+          action: currentOrder?.additionalDetails?.formdata?.applicationGrantedRejected?.code === "REJECTED" ? "REJECT" : "ACCEPT",
+          pendingTaskRefId: currentOrder?.additionalDetails?.pendingTaskRefId,
+          tenantId,
+        };
+        await DRISTIService.processProfileRequest({
+          processInfo: { ...processInfoObj },
+          tenantId: tenantId,
+        });
+
+        await ordersService.customApiService(Urls.orders.pendingTask, {
+          pendingTask: {
+            referenceId: currentOrder?.additionalDetails?.pendingTaskRefId,
+            status: "PROFILE_EDIT_REQUEST",
+            filingNumber: filingNumber,
+            isCompleted: true,
+            tenantId,
+          },
         });
       }
       if (orderType === "INITIATING_RESCHEDULING_OF_HEARING_DATE") {
