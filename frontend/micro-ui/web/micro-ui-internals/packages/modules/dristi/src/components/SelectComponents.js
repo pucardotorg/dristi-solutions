@@ -181,7 +181,7 @@ const SelectComponents = ({ t, config, onSelect, formData = {}, errors, formStat
   };
   return (
     <div>
-      {<SelectCustomNote t={t} config={config?.notes} onClick={() => {}} />}
+      {config?.notes && <SelectCustomNote t={t} config={config?.notes} onClick={() => {}} />}
       <br></br>
       {inputs?.map((input, index) => {
         let currentValue = (formData && formData[configKey] && formData[configKey][input.name]) || "";
