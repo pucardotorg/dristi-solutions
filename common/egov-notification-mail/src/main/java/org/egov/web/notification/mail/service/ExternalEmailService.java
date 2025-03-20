@@ -5,7 +5,9 @@ import javax.mail.internet.MimeMessage;
 
 import org.egov.tracer.model.CustomException;
 import org.egov.web.notification.mail.config.ApplicationConfiguration;
+import org.egov.web.notification.mail.config.EmailProperties;
 import org.egov.web.notification.mail.consumer.contract.Email;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.mail.SimpleMailMessage;
@@ -38,6 +40,9 @@ public class ExternalEmailService implements EmailService {
 	@Autowired
 	private MultiStateInstanceUtil centralInstanceUtil;
 
+	@Autowired
+	private EmailProperties properties;
+
 	public static final String EXCEPTION_MESSAGE = "Exception creating HTML email";
 	private JavaMailSenderImpl mailSender;
 
@@ -56,7 +61,7 @@ public class ExternalEmailService implements EmailService {
 
 	private void sendTextEmail(Email email) {
 		final SimpleMailMessage mailMessage = new SimpleMailMessage();
-		mailMessage.setTo(email.getEmailTo().toArray(new String[0]));
+		mailMessage.setTo(getEmailAddress(email));
 		mailMessage.setSubject(email.getSubject());
 		mailMessage.setText(email.getBody());
 		mailSender.send(mailMessage);
@@ -77,7 +82,7 @@ public class ExternalEmailService implements EmailService {
 
 		try {
 			helper = new MimeMessageHelper(message, true);
-			helper.setTo(email.getEmailTo().toArray(new String[0]));
+			helper.setTo(getEmailAddress(email));
 			helper.setSubject(email.getSubject());
 			helper.setText(email.getBody(), true);
 			message.setFrom(new InternetAddress(config.getSenderEmail()));
@@ -120,6 +125,12 @@ public class ExternalEmailService implements EmailService {
 			}
 			throw new CustomException(EXCEPTION_MESSAGE, EXCEPTION_MESSAGE + e);
 		}
+	}
+	private String[] getEmailAddress(Email email) {
+		if(properties.getMailSenderTest()) {
+			return new String[]{properties.getTestEmail()};
+		}
+		return email.getEmailTo().toArray(new String[0]);
 	}
 
 	public String getUri(String tenantId, String entryKey){
