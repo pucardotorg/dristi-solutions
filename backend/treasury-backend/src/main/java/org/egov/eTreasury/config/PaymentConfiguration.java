@@ -110,4 +110,19 @@ public class PaymentConfiguration {
 
     @Value("${challan.test.amount}")
     private String challanTestAmount;
+
+    @Value("${pucar.tsb.account1.number}")
+    private String tsbAccount1Number;
+
+    @Value("${pucar.tsb.account2.number}")
+    private String tsbAccount2Number;
+
+
+    @Value("${pucar.tsb.account1.type}")
+    private String tsbAccount1Type;
+
+    @Value("${pucar.tsb.account2.type}")
+    private String tsbAccount2Type;
+
+
 }
