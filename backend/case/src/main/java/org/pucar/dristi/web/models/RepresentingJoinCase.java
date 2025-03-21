@@ -16,21 +16,22 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class IndividualDetails {
+public class RepresentingJoinCase {
 
-    @JsonProperty("firstName")
-    private String firstName;
-
-    @JsonProperty("lastName")
-    private String lastName;
-
-    @JsonProperty("middleName")
-    private String middleName;
+    @JsonProperty("uniqueId")
+    private String uniqueId = null;
 
     @JsonProperty("individualId")
-    private String individualId;
+    private String individualId = null;
 
-    @JsonProperty("advocateIdProof")
-    private AdvocateIdProof advocateIdProof;
+    @JsonProperty("isAlreadyPip")
+    private Boolean isAlreadyPip = false;
+
+    @JsonProperty("documents")
+    @Valid
+    private List<Document> documents = null;
+
+    @JsonProperty("replaceAdvocates")
+    private List<String> replaceAdvocates = null;
 
 }

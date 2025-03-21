@@ -3,9 +3,6 @@ package org.pucar.dristi.validators;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.request.RequestInfo;
@@ -220,19 +217,47 @@ public class CaseRegistrationValidator {
 
     }
 
+    public boolean validateLitigantJoinCase(JoinCaseV2Request joinCaseRequest) {
+        RequestInfo requestInfo = joinCaseRequest.getRequestInfo();
+        List<JoinCaseLitigant> litigants = joinCaseRequest.getJoinCaseData().getLitigant();
+
+        for (JoinCaseLitigant litigant : litigants) {
+            if (litigant.getIndividualId() != null) {
+                // validation for IndividualId for litigant
+                if (!individualService.searchIndividual(requestInfo, litigant.getIndividualId()))
+                    throw new CustomException(INDIVIDUAL_NOT_FOUND, INVALID_COMPLAINANT_DETAILS);
+            } else {
+                throw new CustomException(INDIVIDUAL_NOT_FOUND, INVALID_COMPLAINANT_DETAILS);
+            }
+
+            if (litigant.getDocuments() != null && !litigant.getDocuments().isEmpty()) {
+                // validation for documents for litigant
+                litigant.getDocuments().forEach(document -> {
+                    if (document.getFileStore() != null) {
+                        if (!fileStoreUtil.doesFileExist(joinCaseRequest.getJoinCaseData().getTenantId(), document.getFileStore()))
+                            throw new CustomException(INVALID_FILESTORE_ID, INVALID_DOCUMENT_DETAILS);
+                    } else
+                        throw new CustomException(INVALID_FILESTORE_ID, INVALID_DOCUMENT_DETAILS);
+                });
+            }
+        }
+        return true;
+
+    }
+
     public boolean canRepresentativeJoinCase(JoinCaseRequest joinCaseRequest) {
         RequestInfo requestInfo = joinCaseRequest.getRequestInfo();
         Representative representative = joinCaseRequest.getRepresentative();
 
-        if (representative.getAdvocateId() != null) { // validation for advocateId for representative
+        if (representative.getAdvocateId() != null) {
+            // validation for advocateId for representative
             if (!advocateUtil.doesAdvocateExist(requestInfo, representative.getAdvocateId()))
                 throw new CustomException(INVALID_ADVOCATE_ID, INVALID_ADVOCATE_DETAILS);
         } else {
             throw new CustomException(INVALID_ADVOCATE_ID, INVALID_ADVOCATE_DETAILS);
         }
         if (representative.getDocuments() != null && !representative.getDocuments().isEmpty()) { // validation for
-            // documents for
-            // representative
+            // documents for representative
             representative.getDocuments().forEach(document -> {
                 if (document.getFileStore() != null) {
                     if (!fileStoreUtil.doesFileExist(representative.getTenantId(), document.getFileStore()))
@@ -241,6 +266,28 @@ public class CaseRegistrationValidator {
                     throw new CustomException(INVALID_FILESTORE_ID, INVALID_DOCUMENT_DETAILS);
                 }
             });
+        }
+        return true;
+    }
+
+    public boolean validateRepresentativeJoinCase(JoinCaseV2Request joinCaseRequest) {
+        RequestInfo requestInfo = joinCaseRequest.getRequestInfo();
+        JoinCaseRepresentative representative = joinCaseRequest.getJoinCaseData().getRepresentative();
+
+        if (representative.getAdvocateUUID() != null) {
+            // validation for advocateId for representative
+            if (!advocateUtil.doesAdvocateExist(requestInfo, representative.getAdvocateUUID()))
+                throw new CustomException(INVALID_ADVOCATE_ID, INVALID_ADVOCATE_DETAILS);
+        } else {
+            throw new CustomException(INVALID_ADVOCATE_ID, INVALID_ADVOCATE_DETAILS);
+        }
+        if (representative.getReasonDocument() != null) {
+            if (representative.getReasonDocument().getFileStore() != null) {
+                if (!fileStoreUtil.doesFileExist(joinCaseRequest.getJoinCaseData().getTenantId(), representative.getReasonDocument().getFileStore()))
+                    throw new CustomException(INVALID_FILESTORE_ID, INVALID_DOCUMENT_DETAILS);
+            } else {
+                throw new CustomException(INVALID_FILESTORE_ID, INVALID_DOCUMENT_DETAILS);
+            }
         }
         return true;
     }
@@ -257,15 +304,15 @@ public class CaseRegistrationValidator {
         }
     }
 
-	public void validateProfileEdit(CreateProfileRequest profileRequest, CourtCase courtCase) throws CustomException {
+    public void validateProfileEdit(CreateProfileRequest profileRequest, CourtCase courtCase) throws CustomException {
 
-		if (ObjectUtils.isEmpty(profileRequest.getProfile().getCaseId())) {
-			throw new CustomException(VALIDATION_ERR, "case Id cannot be empty");
-		}
+        if (ObjectUtils.isEmpty(profileRequest.getProfile().getCaseId())) {
+            throw new CustomException(VALIDATION_ERR, "case Id cannot be empty");
+        }
 
-		if (ObjectUtils.isEmpty(profileRequest.getProfile().getLitigantDetails())) {
-			throw new CustomException(VALIDATION_ERR, "litigantDetails cannot be empty");
-		}
+        if (ObjectUtils.isEmpty(profileRequest.getProfile().getLitigantDetails())) {
+            throw new CustomException(VALIDATION_ERR, "litigantDetails cannot be empty");
+        }
 
         Profile profileEdit = profileRequest.getProfile();
         log.info("Processing ProfileEdit :: {}", profileEdit);
@@ -300,7 +347,7 @@ public class CaseRegistrationValidator {
         // Check if this (UUID + uniqueId) already exists
         JsonNode additionalDetails = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
         JsonNode profileRequests = additionalDetails.get("profileRequests");
-        if(profileRequests != null){
+        if (profileRequests != null) {
             for (JsonNode existProfile : profileRequests) {
                 String existMappingKey = existProfile.get("editorDetails").get("uuid").asText() +
                         "|" + existProfile.get("litigantDetails").get("uniqueId").asText();

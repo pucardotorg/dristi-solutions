@@ -9,27 +9,31 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 
+import java.util.List;
+
 @Validated
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ReplacementDetails {
+public class TaskJoinCase {
+    @NotNull
     @Valid
     @JsonProperty("advocateDetails")
-    private ReplacementAdvocateDetails advocateDetails;
+    private AdvocateDetails advocateDetails;
+
+    @NotNull
+    @JsonProperty("reason")
+    private String reason;
 
     @NotNull
     @Valid
-    @JsonProperty("litigantDetails")
-    private LitigantDetails litigantDetails;
+    @JsonProperty("reasonDocument")
+    private ReasonDocument reasonDocument;
 
     @NotNull
     @Valid
-    @JsonProperty("document")
-    private ReplacementDocumentDetails document;
-
-    @NotNull
-    @JsonProperty("isLitigantPip")
-    private Boolean isLitigantPip;
+    @JsonProperty("replacementDetails")
+    private List<ReplacementDetails> replacementDetails;
 }
+

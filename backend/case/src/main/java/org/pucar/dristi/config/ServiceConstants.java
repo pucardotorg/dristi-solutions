@@ -103,6 +103,7 @@ public class ServiceConstants {
     public static final String INVALID_DOCUMENT_DETAILS = "Invalid document details";
     public static final String INVALID_ADVOCATE_DETAILS = "Invalid advocate details";
     public static final String ENCRYPTION_SERVICE_ERROR = "Error occurred while calling Encryption Service";
+    public static final String TASK_SERVICE_ERROR = "Error occurred while creating task";
     public static final String PURPOSE = "purpose";
     // Roles required for decryption
     public static final String JUDGE_ROLE = "JUDGE_ROLE";
@@ -195,7 +196,7 @@ public class ServiceConstants {
 
     public static final String SYSTEM="SYSTEM";
 
-    public static final String JOIN_CASE_TASK="JOIN_CASE_TASK";
+    public static final String JOIN_CASE="JOIN_CASE";
 
     public static final String ACCUSED_PARTY_TYPE="respondent";
 
@@ -210,6 +211,19 @@ public class ServiceConstants {
     public static final String ACCEPT_PROFILE_REQUEST = "ACCEPT_PROFILE_REQUEST";
     public static final String REJECT_PROFILE_REQUEST =  "REJECT_PROFILE_REQUEST";
     public static final String BOX_COMPLAINANT_PATH ="/data/multipleAdvocatesAndPip/boxComplainant";
+
+    public static final String INTERNALMICROSERVICEROLE_NAME = "SYSTEM";
+
+    public static final String INTERNALMICROSERVICEROLE_CODE = "SYSTEM";
+
+    public static final String INTERNALMICROSERVICEUSER_NAME = "Internal Microservice User";
+
+    public static final String INTERNALMICROSERVICEUSER_USERNAME = "INTERNAL_SYSTEM_USER";
+
+    public static final String INTERNALMICROSERVICEUSER_MOBILENO = "1234567890";
+
+    public static final String INTERNALMICROSERVICEUSER_TYPE = "SYSTEM";
+    public static final String msgId = "1730882648558|en_IN";
     private ServiceConstants() {
     }
 }

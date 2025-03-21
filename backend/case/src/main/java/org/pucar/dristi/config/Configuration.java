@@ -174,6 +174,9 @@ public class Configuration {
 	@Value("${mdms.case.module.name}")
 	private String caseModule;
 
+	@Value("${state.level.tenant.id}")
+	private String tenantId;
+
 	@Value("${egov.localization.statelevel}")
 	private Boolean isLocalizationStateLevel;
 
@@ -333,4 +336,10 @@ public class Configuration {
 
 	@Value("${hearing.case.reference.number.update}")
 	private String caseReferenceUpdateTopic;
+
+	@Value("${egov.analytics.host}")
+	private String analyticsServiceHost;
+
+	@Value("${egov.analytics.path}")
+	private String analyticsServicePath;
 }

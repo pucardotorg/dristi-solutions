@@ -31,10 +31,7 @@ import org.pucar.dristi.enrichment.EnrichmentService;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.CaseRepository;
 import org.pucar.dristi.repository.ServiceRequestRepository;
-import org.pucar.dristi.util.AdvocateUtil;
-import org.pucar.dristi.util.BillingUtil;
-import org.pucar.dristi.util.EncryptionDecryptionUtil;
-import org.pucar.dristi.util.TaskUtil;
+import org.pucar.dristi.util.*;
 import org.pucar.dristi.validators.CaseRegistrationValidator;
 import org.pucar.dristi.web.OpenApiCaseSummary;
 import org.pucar.dristi.web.models.*;
@@ -74,6 +71,12 @@ public class CaseServiceTest {
 
     @Mock
     private TaskUtil taskUtil;
+
+    @Mock
+    private UserService userService;
+
+    @Mock
+    private AnalyticsUtil analyticsUtil;
 
     @Mock
     private EnrichmentService enrichmentService;
@@ -131,7 +134,7 @@ public class CaseServiceTest {
         courtCase = new CourtCase();
         objectMapper = new ObjectMapper();
         enrichmentService = new EnrichmentService(new ArrayList<>());
-        caseService = new CaseService(validator,enrichmentUtil,caseRepository,workflowService,config,producer,taskUtil,new BillingUtil(new RestTemplate(),config),encryptionDecryptionUtil,objectMapper,cacheService,enrichmentService, notificationService, individualService, advocateUtil);
+        caseService = new CaseService(validator,enrichmentUtil,caseRepository,workflowService,config,producer,taskUtil,new BillingUtil(new RestTemplate(),config),encryptionDecryptionUtil,analyticsUtil,userService,objectMapper,cacheService,enrichmentService, notificationService, individualService, advocateUtil);
     }
 
     CaseCriteria setupTestCaseCriteria(CourtCase courtCase) {

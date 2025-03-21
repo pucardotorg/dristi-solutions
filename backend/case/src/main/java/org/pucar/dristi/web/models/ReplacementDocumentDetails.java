@@ -13,19 +13,17 @@ import org.springframework.validation.annotation.Validated;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class AdvocateIdProof {
-    @NotNull
-    @JsonProperty("name")
-    private String name;
-
-    @NotNull
-    @JsonProperty("fileName")
-    private String fileName;
-
+public class ReplacementDocumentDetails {
     @NotNull
     @JsonProperty("fileStore")
     private String fileStore;
 
-    @JsonProperty("documentName")
-    private String documentName;
+    @NotNull
+    @JsonProperty("additionalDetails")
+    private Object additionalDetails;
+
+    @NotNull
+    @JsonProperty("documentType")
+    private String documentType;
+
 }
