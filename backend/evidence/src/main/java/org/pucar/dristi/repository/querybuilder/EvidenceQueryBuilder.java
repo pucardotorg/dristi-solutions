@@ -75,7 +75,7 @@ public class EvidenceQueryBuilder {
 
         if (searchCriteria.getOwner() == null) {
             queryBuilder.append(" AND ( ");
-            queryBuilder.append(addCitizenCriteria(loggedInUserUuid, searchCriteria.getFilingNumber(), preparedStmtList, preparedStmtArgList));
+            queryBuilder.append(addUserCriteria(loggedInUserUuid, searchCriteria.getFilingNumber(), preparedStmtList, preparedStmtArgList));
             queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList));
             queryBuilder.append(" )) ");
         }
@@ -87,7 +87,30 @@ public class EvidenceQueryBuilder {
         return queryBuilder.toString();
     }
 
-    private String addCitizenCriteria(String loggedInUserUuid, String filingNumber, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+    public String getEmployeeQuery(List<String> statusList, EvidenceSearchCriteria searchCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+        StringBuilder queryBuilder = new StringBuilder();
+        String loggedInUserUuid = searchCriteria.getUserUuid();
+
+        if(searchCriteria.isBenchClerk()){
+            if (searchCriteria.getOwner() == null) {
+                queryBuilder.append(" AND ( ");
+                queryBuilder.append(addUserCriteria(loggedInUserUuid, searchCriteria.getFilingNumber(), preparedStmtList, preparedStmtArgList));
+                queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList));
+                queryBuilder.append(" )) ");
+            }
+
+            else if(!searchCriteria.getOwner().toString().equals(loggedInUserUuid)) {
+                queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList));
+            }
+        }
+        else{
+            queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList));
+        }
+
+        return queryBuilder.toString();
+    }
+
+    private String addUserCriteria(String loggedInUserUuid, String filingNumber, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         StringBuilder queryBuilder = new StringBuilder();
         queryBuilder.append(" art.createdBy = ? ");
         preparedStmtList.add(loggedInUserUuid);

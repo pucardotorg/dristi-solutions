@@ -29,6 +29,7 @@ public class EvidenceSearchCriteria {
     private String artifactNumber;
     private String filingNumber;
     private UUID owner;
+    private String tenantId;
 
     @JsonIgnore
     private String userUuid;
@@ -38,6 +39,9 @@ public class EvidenceSearchCriteria {
 
     @JsonIgnore
     private boolean isCourtEmployee = false;
+
+    @JsonIgnore
+    private boolean isBenchClerk = false;
     // Getters and setters
 
     public String getId() {
