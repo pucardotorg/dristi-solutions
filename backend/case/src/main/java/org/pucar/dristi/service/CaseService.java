@@ -2363,14 +2363,19 @@ public class CaseService {
         ObjectNode advocateNameDetails = objectMapper.createObjectNode();
         advocateNameDetails.put("name", fullName);
         advocateNameDetails.put("advocateMobileNumber", advocateDetails.getMobileNumber());
-        ObjectNode advocateIdProof = objectMapper.createObjectNode();
-        AdvocateIdProof advocateIdProofDocument = individual.getAdvocateIdProof();
-        advocateIdProof.put("name", advocateIdProofDocument.getName());
-        advocateIdProof.put("fileName", advocateIdProofDocument.getFileName());
-        advocateIdProof.put("fileStore", advocateIdProofDocument.getFileStore());
-        advocateIdProof.put("documentName", advocateIdProofDocument.getDocumentName());
-        advocateIdProof.put("fileStore", advocateIdProofDocument.getFileStore());
-        advocateNameDetails.put("advocateIdProof", advocateIdProof);
+        ArrayNode advocateIdProofArray = objectMapper.createArrayNode();
+        List<AdvocateIdProof> advocateIdProofDocuments = individual.getAdvocateIdProof();
+        for (AdvocateIdProof advocateIdProofDocument : advocateIdProofDocuments) {
+            ObjectNode advocateIdProof = objectMapper.createObjectNode();
+            advocateIdProof.put("name", advocateIdProofDocument.getName());
+            advocateIdProof.put("fileName", advocateIdProofDocument.getFileName());
+            advocateIdProof.put("fileStore", advocateIdProofDocument.getFileStore());
+            advocateIdProof.put("documentName", advocateIdProofDocument.getDocumentName());
+
+            advocateIdProofArray.add(advocateIdProof);
+        }
+
+        advocateNameDetails.set("advocateIdProof", advocateIdProofArray);
 
         // Create advocateBarRegNumberWithName object
         ObjectNode advocateBarRegNumberWithName = objectMapper.createObjectNode();
