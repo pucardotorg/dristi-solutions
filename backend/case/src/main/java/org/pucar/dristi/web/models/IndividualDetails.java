@@ -28,9 +28,11 @@ public class IndividualDetails {
     private String middleName;
 
     @JsonProperty("individualId")
+    @NotNull
     private String individualId;
 
     @JsonProperty("advocateIdProof")
+    @NotNull
     private AdvocateIdProof advocateIdProof;
 
 }

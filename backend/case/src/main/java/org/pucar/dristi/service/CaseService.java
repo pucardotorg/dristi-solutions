@@ -1332,7 +1332,7 @@ public class CaseService {
 
             JoinCaseDataV2 joinCaseData = joinCaseRequest.getJoinCaseData();
 
-            TaskJoinCase taskJoinCase = new TaskJoinCase();
+            JoinCaseTaskRequest taskJoinCase = new JoinCaseTaskRequest();
             AdvocateDetails advocateDetails = new AdvocateDetails();
             advocateDetails.setAdvocateId(joinCaseData.getRepresentative().getAdvocateUUID());
             advocateDetails.setRequestedDate(System.currentTimeMillis());
@@ -2302,7 +2302,7 @@ public class CaseService {
             Party party = enrichParty(replacementDetails, courtCase);
             LitigantDetails litigantDetails = replacementDetails.getLitigantDetails();
             String partyType = litigantDetails.getPartyType();
-            AdvocateDetails advocateDetailsToBeReplaced = replacementDetails.getAdvocateDetails();
+            ReplacementAdvocateDetails advocateDetailsToBeReplaced = replacementDetails.getAdvocateDetails();
             String advocateUuidToBeReplaced = advocateDetailsToBeReplaced.getAdvocateUuid();
             if (replacementDetails.getIsLitigantPip()) {
                 List<Party> litigantParties = courtCase.getLitigants();
@@ -2310,7 +2310,8 @@ public class CaseService {
                     enrichAdvocateDetailsInRepresentativesList(courtCase, advocateUuid, replacementDetails, party, auditDetails, advocateDetails);
                 } else {
                     advocates.get(0).getRepresenting().add(party);
-                    advocates.get(0).getDocuments().add(replacementDetails.getDocument());
+                    Document replacementDetailsDocument = objectMapper.convertValue(replacementDetails.getDocument(), Document.class);
+                    advocates.get(0).getDocuments().add(replacementDetailsDocument);
                 }
                 for (Party litigantParty : litigantParties) {
                     if (litigantParty.getIndividualId().equalsIgnoreCase(litigantDetails.getIndividualId())) {
@@ -2322,7 +2323,8 @@ public class CaseService {
                     enrichAdvocateDetailsInRepresentativesList(courtCase, advocateUuid, replacementDetails, party, auditDetails, advocateDetails);
                 } else {
                     advocates.get(0).getRepresenting().add(party);
-                    advocates.get(0).getDocuments().add(replacementDetails.getDocument());
+                    Document replacementDetailsDocument = objectMapper.convertValue(replacementDetails.getDocument(), Document.class);
+                    advocates.get(0).getDocuments().add(replacementDetailsDocument);
                 }
                 inactivateOldAdvocate(replacementDetails,courtCase);
             }
@@ -2338,7 +2340,7 @@ public class CaseService {
     }
 
     private void inactivateOldAdvocate(ReplacementDetails replacementDetails, CourtCase courtCase) {
-        String advocateId = replacementDetails.getAdvocateDetails().getAdvocateId();
+        String advocateId = replacementDetails.getAdvocateDetails().getAdvocateUuid();
         String litigantId = replacementDetails.getLitigantDetails().getIndividualId();
 
         courtCase.getRepresentatives().stream()
@@ -2452,7 +2454,7 @@ public class CaseService {
                 .get("document");
 
         ObjectNode document = objectMapper.createObjectNode();
-        Document vakalatanamaDocument = replacementDetails.getDocument();
+        Document vakalatanamaDocument = objectMapper.convertValue(replacementDetails.getDocument(),Document.class);
         document.put("fileName", UPLOAD_VAKALATNAMA);
         document.put("fileStore", vakalatanamaDocument.getFileStore());
         document.put("documentType", vakalatanamaDocument.getDocumentType());
@@ -2488,6 +2490,8 @@ public class CaseService {
     private void enrichAdvocateDetailsInRepresentativesList(CourtCase courtCase, String advocateUuid, ReplacementDetails replacementDetails, Party party,
                                                             AuditDetails auditDetails, AdvocateDetails advocateDetails) {
 
+        Document document = objectMapper.convertValue(replacementDetails.getDocument(),Document.class);
+
 
         AdvocateMapping advocateMapping = AdvocateMapping.builder()
                 .id(UUID.randomUUID().toString())
@@ -2495,7 +2499,7 @@ public class CaseService {
                 .advocateId(advocateUuid)
                 .caseId(String.valueOf(courtCase.getId()))
                 .isActive(true)
-                .documents(Collections.singletonList(replacementDetails.getDocument()))
+                .documents(Collections.singletonList(document))
                 .representing(Collections.singletonList(party))
                 .auditDetails(auditDetails)
                 .additionalDetails(advocateDetails)

@@ -17,21 +17,27 @@ import org.springframework.validation.annotation.Validated;
 public class AdvocateDetails {
 
     @JsonProperty("barRegistrationNumber")
+    @NotNull
     private String barRegistrationNumber;
 
     @JsonProperty("advocateId")
+    @NotNull
     private String advocateId;
 
-    @JsonProperty("advocateUuid")
+    @JsonProperty("advocateUserUuid")
+    @NotNull
     private String advocateUuid;
 
     @JsonProperty("mobileNumber")
+    @NotNull
     private String mobileNumber;
 
     @JsonProperty("requestedDate")
+    @NotNull
     private Long requestedDate;
 
     @JsonProperty("individualDetails")
+    @NotNull
     private IndividualDetails individualDetails;
 
     @JsonProperty("Document")
