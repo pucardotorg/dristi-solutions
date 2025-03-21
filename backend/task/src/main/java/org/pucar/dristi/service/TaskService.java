@@ -8,6 +8,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.TaskRegistrationEnrichment;
+import org.pucar.dristi.enrichment.TopicBasedOnStatus;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.TaskRepository;
 import org.pucar.dristi.util.CaseUtil;
@@ -36,6 +37,7 @@ public class TaskService {
     private final ObjectMapper objectMapper;
     private final SmsNotificationService notificationService;
     private final IndividualService individualService;
+    private final TopicBasedOnStatus topicBasedOnStatus;
 
     @Autowired
     public TaskService(TaskRegistrationValidator validator,
@@ -43,7 +45,7 @@ public class TaskService {
                        TaskRepository taskRepository,
                        WorkflowUtil workflowUtil,
                        Configuration config,
-                       Producer producer, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService) {
+                       Producer producer, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService, TopicBasedOnStatus topicBasedOnStatus) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.taskRepository = taskRepository;
@@ -54,6 +56,7 @@ public class TaskService {
         this.objectMapper = objectMapper;
         this.notificationService = notificationService;
         this.individualService = individualService;
+        this.topicBasedOnStatus = topicBasedOnStatus;
     }
 
     @Autowired
@@ -115,12 +118,19 @@ public class TaskService {
             // Enrich application upon update
             enrichmentUtil.enrichCaseApplicationUponUpdate(body);
 
+            // get data
+
             workflowUpdate(body);
 
             String status = body.getTask().getStatus();
             String taskType = body.getTask().getTaskType();
             if (SUMMON_SENT.equalsIgnoreCase(status) || NOTICE_SENT.equalsIgnoreCase(status) || WARRANT_SENT.equalsIgnoreCase(status))
                 producer.push(config.getTaskIssueSummonTopic(), body);
+
+            // push to join case topic based on status
+            if (taskType.equalsIgnoreCase(JOIN_CASE)) {
+                topicBasedOnStatus.pushToTopicBasedOnStatus(status, body);
+            }
 
             producer.push(config.getTaskUpdateTopic(), body);
 
@@ -172,8 +182,8 @@ public class TaskService {
                     config.getTaskWarrantBusinessServiceName(), workflow, config.getTaskWarrantBusinessName());
             case NOTICE -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskNoticeBusinessServiceName(), workflow, config.getTaskNoticeBusinessName());
-            case JOIN_CASE_TASK -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
-                    config.getTaskJoinCaseBusinessServiceName(), workflow, config.getTaskjoinCaseBusinessName());
+            case JOIN_CASE -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
+                    config.getTaskJoinCaseBusinessService(), workflow, config.getTaskJoinCaseBusinessServiceName());
             default -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskBusinessServiceName(), workflow, config.getTaskBusinessName());
         };

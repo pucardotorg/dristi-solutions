@@ -13,7 +13,7 @@ import org.springframework.validation.annotation.Validated;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-class AdvocateIdProof {
+public class AdvocateIdProof {
     @NotNull
     @JsonProperty("name")
     private String name;
@@ -26,7 +26,6 @@ class AdvocateIdProof {
     @JsonProperty("fileStore")
     private String fileStore;
 
-    @NotNull
     @JsonProperty("documentName")
     private String documentName;
 }

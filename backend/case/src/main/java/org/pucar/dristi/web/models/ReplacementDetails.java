@@ -15,7 +15,6 @@ import org.springframework.validation.annotation.Validated;
 @NoArgsConstructor
 @Builder
 public class ReplacementDetails {
-
     @Valid
     @JsonProperty("advocateDetails")
     private ReplacementAdvocateDetails advocateDetails;

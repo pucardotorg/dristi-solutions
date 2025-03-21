@@ -16,7 +16,17 @@ const parseXml = (xmlString, tagName) => {
   return element ? element.textContent.trim() : null;
 };
 
-function OrderBulkReviewModal({ t, showActions, refetchOrdersData, pendingSignOrderList, setShowBulkSignAllModal, setIssueBulkSuccessData }) {
+function OrderBulkReviewModal({
+  t,
+  history,
+  location,
+  isBulkEsignSelected,
+  showActions,
+  refetchOrdersData,
+  pendingSignOrderList,
+  setShowBulkSignAllModal,
+  setIssueBulkSuccessData,
+}) {
   const [pendingOrderList, setPendingOrderList] = useState(pendingSignOrderList);
   const [selectedOrder, setSelectedOrder] = useState(pendingOrderList?.[0]);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
@@ -39,6 +49,12 @@ function OrderBulkReviewModal({ t, showActions, refetchOrdersData, pendingSignOr
       return () => clearTimeout(timer);
     }
   }, [showErrorToast]);
+
+  useEffect(() => {
+    if (pendingOrderList?.length === 0) {
+      setShowBulkSignAllModal(false);
+    }
+  });
 
   const Heading = (props) => {
     return <h1 className="heading-m">{props.label}</h1>;
@@ -198,6 +214,9 @@ function OrderBulkReviewModal({ t, showActions, refetchOrdersData, pendingSignOr
               if (isLoading) return;
               setShowBulkSignAllModal(false);
               await refetchOrdersData();
+              if (isBulkEsignSelected) {
+                history.replace({ ...location, state: null });
+              }
             }}
           />
         }
