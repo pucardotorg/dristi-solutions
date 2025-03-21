@@ -535,11 +535,9 @@ const GenerateOrders = () => {
     }
     const isSignSuccess = localStorage.getItem("esignProcess");
     const savedOrderPdf = localStorage.getItem("orderPDF");
-    const businessOfTheDay = localStorage.getItem("businessOfTheDay");
     if (isSignSuccess) {
       setShowsignatureModal(true);
       setOrderPdfFileStoreID(savedOrderPdf);
-      setBusinessOfTheDay(businessOfTheDay);
       localStorage.removeItem("esignProcess");
       localStorage.removeItem("orderPDF");
     }
@@ -1912,7 +1910,13 @@ const GenerateOrders = () => {
   }, [t, applicationDetails, caseDetails, currentOrder]);
 
   useEffect(() => {
-    setBusinessOfTheDay(defaultBOTD);
+    const businessOfTheDay = localStorage.getItem("businessOfTheDay");
+    if(businessOfTheDay){
+      setBusinessOfTheDay(businessOfTheDay);
+    }
+    else{
+      setBusinessOfTheDay(defaultBOTD);
+    }
   }, [defaultBOTD]);
 
   const updateOrder = async (order, action) => {
