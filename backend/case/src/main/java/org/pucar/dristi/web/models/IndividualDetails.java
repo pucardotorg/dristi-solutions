@@ -33,6 +33,6 @@ public class IndividualDetails {
 
     @JsonProperty("advocateIdProof")
     @NotNull
-    private AdvocateIdProof advocateIdProof;
+    private List<AdvocateIdProof> advocateIdProof;
 
 }
