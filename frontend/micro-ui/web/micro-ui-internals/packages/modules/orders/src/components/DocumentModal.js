@@ -95,6 +95,7 @@ const DocumentModal = ({ config, setShow, currentStep, documentStyle = {} }) => 
           ""
         )
       }
+      hideModalActionbar={config?.isStepperModal ? config?.steps[step]?.hideModalActionbar || false : config?.hideModalActionbar || false}
       className={
         config?.isStepperModal
           ? config.steps[step]?.type === "document"

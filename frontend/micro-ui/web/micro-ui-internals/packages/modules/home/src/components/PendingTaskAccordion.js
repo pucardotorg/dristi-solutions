@@ -5,21 +5,16 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 // import { CustomArrowDownIcon, CustomArrowUpIcon } from "../icons/svgIndex";
 
 function PendingTaskAccordion({
-  handlePageChange,
   pendingTasks,
   t,
-  showConfirmModal,
   totalCount,
-  handleGoToPage,
-  selected,
   accordionHeader = "COMPLETE_THIS_WEEK",
   accordionKey = "accordion",
   isHighlighted = false,
   isAccordionOpen = false,
   setShowSubmitResponseModal,
   setResponsePendingTask,
-  allPendingTasks,
-  isOpenInNewTab,
+  setPendingTaskActionModals,
 }) {
   const history = useHistory();
   const [isOpen, setIsOpen] = useState(isAccordionOpen);
@@ -139,6 +134,11 @@ function PendingTaskAccordion({
                   );
                 } else if (item?.status === "PENDING_RESPONSE") {
                   if (isJudge) {
+                    setPendingTaskActionModals((pendingTaskActionModals) => ({
+                      ...pendingTaskActionModals,
+                      joinCaseConfirmModal: true,
+                    }));
+                    return;
                     const caseId = item?.params?.caseId;
                     const filingNumber = item?.params?.filingNumber;
                     history.push(`/${window.contextPath}/employee/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview`, {
