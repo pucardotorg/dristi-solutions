@@ -73,7 +73,7 @@ public class EmailProperties {
 
     @Value("${mail.smtps.ssl.enable}")
     @Getter
-    private String mailStartSslEnabled;
+    private String mailSslEnable;
 
     @Value("${mail.smtps.starttls.enable}")
     @Getter
