@@ -535,9 +535,11 @@ const GenerateOrders = () => {
     }
     const isSignSuccess = localStorage.getItem("esignProcess");
     const savedOrderPdf = localStorage.getItem("orderPDF");
+    const businessOfTheDay = localStorage.getItem("businessOfTheDay");
     if (isSignSuccess) {
       setShowsignatureModal(true);
       setOrderPdfFileStoreID(savedOrderPdf);
+      setBusinessOfTheDay(businessOfTheDay);
       localStorage.removeItem("esignProcess");
       localStorage.removeItem("orderPDF");
     }
@@ -3246,7 +3248,7 @@ const GenerateOrders = () => {
           },
           {}
         );
-
+        localStorage.removeItem("businessOfTheDay");
         const nextHearing = response?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
 
         await DRISTIService.addADiaryEntry(
@@ -4417,6 +4419,7 @@ const GenerateOrders = () => {
           setSignedDocumentUploadID={setSignedDocumentUploadID}
           orderPdfFileStoreID={orderPdfFileStoreID}
           saveOnsubmitLabel={"ISSUE_ORDER"}
+          businessOfDay={businessOfTheDay}
         />
       )}
       {showSuccessModal && (
