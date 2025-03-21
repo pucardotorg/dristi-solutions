@@ -299,6 +299,32 @@
   background-color: #e5e5e5;
   border-radius: 8px;
 }
+.case-label-field-pair.reason-for-replacement-text-area {
+  .custom-text-area-header-div {
+    margin: 0px 0px 8px;
+    h2 {
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 24px;
+      color: #0b0c0c;
+    }
+  }
+  .custom-textarea-style {
+    padding: 0px;
+    height: 100px;
+    textarea {
+      width: 100%;
+      padding: 8px 12px;
+      height: 100%;
+      resize: none;
+      border: 1px #3d3c3c solid;
+      color: #3d3c3c;
+      &::placeholder {
+        color: #bbbbbd;
+      }
+    }
+  }
+}
 
 .join-a-case-advocate-search {
   min-width: 100%;
@@ -435,4 +461,166 @@
   align-items: center;
   justify-content: flex-end;
   gap: 7px;
+}
+
+.advocate-replacement-request-container {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  height: 100%;
+}
+
+.advocate-replacement-request {
+  display: flex;
+  flex-direction: column;
+  padding: 40px;
+  gap: 24px;
+  height: calc(100% - 40px);
+  overflow-y: auto;
+}
+
+.advocate-replacement-request-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  gap: 8px;
+  border: 1px solid #d9d9d9;
+  padding: 16px;
+}
+
+.advocate-replacement-request-body .info-row {
+  display: flex;
+
+  .data {
+    font-family: Roboto;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 100%;
+    letter-spacing: 0px;
+    color: #0b0c0c;
+    margin: 0px;
+    word-break: break-all;
+    &.item-1 {
+      width: 100%;
+    }
+    &.item-2 {
+      width: 50%;
+    }
+    &.item-3 {
+      width: 33.333333%;
+    }
+    &.head {
+      font-weight: 700;
+    }
+    &:nth-child(2) {
+      text-align: center;
+    }
+    &:nth-child(3) {
+      text-align: right;
+    }
+  }
+
+  .label {
+    width: 40%;
+    color: #0b0c0c;
+    font-family: Roboto;
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 100%;
+    letter-spacing: 0px;
+    margin: 0px;
+  }
+
+  .value {
+    width: 60%;
+    color: #0b0c0c;
+    font-family: Roboto;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 24px;
+    letter-spacing: 0px;
+    text-align: right;
+    margin: 0px;
+
+    &.litigants-list {
+      .litigant-item {
+        margin-bottom: 4px;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+    }
+  }
+}
+
+.advocate-replacement-request-footer {
+  display: flex;
+  gap: 40px;
+  justify-content: center;
+  margin-bottom: 40px;
+
+  .advocate-replacement-request-cancel-button,
+  .advocate-replacement-request-submit-button {
+    padding: 9px 24px;
+    color: #ffffff;
+    height: fit-content;
+    box-shadow: none;
+    height: 40px;
+
+    h2 {
+      font-family: Roboto;
+      font-weight: 500;
+      font-size: 16px;
+      line-height: 24px;
+      letter-spacing: 0px;
+      text-align: center;
+    }
+  }
+
+  .advocate-replacement-request-cancel-button {
+    background: #bb2c2f;
+  }
+}
+
+.advocate-replacement-request-modal {
+  .confirm-modal-content {
+    padding: 24px 24px 0px;
+    &.reject {
+      padding: 24px;
+    }
+    .confirm-modal-content-text {
+      font-family: Roboto;
+      font-weight: 400;
+      font-size: 16px;
+      line-height: 135%;
+      letter-spacing: 0%;
+      margin: 0px;
+    }
+  }
+  .popup-module-action-bar {
+    .selector-button-primary-disabled,
+    .reject-button,
+    .approve-button {
+      h2 {
+        color: #ffffff !important;
+        font-family: Roboto;
+        font-weight: 700;
+        font-size: 16px;
+        line-height: 100%;
+        letter-spacing: 0%;
+        text-align: center;
+      }
+    }
+  }
+  .popup-module-main .popup-module-action-bar button.reject-button.selector-button-primary {
+    background-color: #bb2c2f !important;
+    border: none !important;
+  }
+  .popup-module-main .popup-module-action-bar button.selector-button-primary-disabled,
+  .popup-module-main .popup-module-action-bar button.approve-button.selector-button-primary {
+    background-color: #007e7e !important;
+    border: none !important;
+  }
 }

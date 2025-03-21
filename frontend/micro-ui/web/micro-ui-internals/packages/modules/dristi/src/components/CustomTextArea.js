@@ -9,9 +9,9 @@ const CustomTextArea = (props) => {
   return (
     <div style={props.style}>
       <div>
-        <h2>{props.info}</h2>
+        <h2 className="custom-text-area-header-div">{props.info}</h2>
       </div>
-      <div>
+      <div className="custom-textarea-style">
         <textarea
           placeholder={props.placeholder}
           name={props.name}
