@@ -1318,7 +1318,7 @@ public class CaseService {
         try {
             TaskRequest taskRequest = new TaskRequest();
             Task task = new Task();
-            task.setTaskType(JOIN_CASE_TASK);
+            task.setTaskType(JOIN_CASE);
             task.setStatus("");
             task.setTenantId(joinCaseRequest.getRequestInfo().getUserInfo().getTenantId());
             task.setFilingNumber(joinCaseRequest.getJoinCaseData().getFilingNumber());
@@ -1394,7 +1394,7 @@ public class CaseService {
     private void createTaskAndDemand(JoinCaseRequest joinCaseRequest) {
         TaskRequest taskRequest = new TaskRequest();
         Task task = new Task();
-        task.setTaskType(JOIN_CASE_TASK);
+        task.setTaskType(JOIN_CASE);
         task.setStatus("");
         task.setTenantId(joinCaseRequest.getRequestInfo().getUserInfo().getTenantId());
         task.setFilingNumber(joinCaseRequest.getCaseFilingNumber());

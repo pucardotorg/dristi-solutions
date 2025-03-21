@@ -196,7 +196,7 @@ public class ServiceConstants {
 
     public static final String SYSTEM="SYSTEM";
 
-    public static final String JOIN_CASE_TASK="JOIN_CASE_TASK";
+    public static final String JOIN_CASE="JOIN_CASE";
 
     public static final String ACCUSED_PARTY_TYPE="respondent";
 
