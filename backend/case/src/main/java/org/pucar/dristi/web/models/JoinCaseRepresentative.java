@@ -30,9 +30,9 @@ public class JoinCaseRepresentative {
     @JsonProperty("reason")
     private String reason = null;
 
-    @JsonProperty("documents")
+    @JsonProperty("reasonDocument")
     @Valid
-    private List<Document> documents = null;
+    private ReasonDocument reasonDocument = null;
 
     @JsonProperty("representing")
     private List<RepresentingJoinCase> representing = null;

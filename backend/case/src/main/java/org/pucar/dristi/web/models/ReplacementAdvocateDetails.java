@@ -13,7 +13,7 @@ import org.springframework.validation.annotation.Validated;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-class ReplacementAdvocateDetails {
+public class ReplacementAdvocateDetails {
     @NotNull
     @JsonProperty("barRegistrationNumber")
     private String barRegistrationNumber;

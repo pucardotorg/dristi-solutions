@@ -14,7 +14,7 @@ import org.springframework.validation.annotation.Validated;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-class AdvocateDetails {
+public class AdvocateDetails {
     @NotNull
     @JsonProperty("barRegistrationNumber")
     private String barRegistrationNumber;

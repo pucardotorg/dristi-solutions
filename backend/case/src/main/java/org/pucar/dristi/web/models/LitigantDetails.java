@@ -13,7 +13,7 @@ import org.springframework.validation.annotation.Validated;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-class LitigantDetails {
+public class LitigantDetails {
     @NotNull
     @JsonProperty("name")
     private String name;

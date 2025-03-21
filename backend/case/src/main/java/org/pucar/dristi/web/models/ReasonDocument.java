@@ -13,7 +13,7 @@ import org.springframework.validation.annotation.Validated;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-class ReasonDocument {
+public class ReasonDocument {
     @NotNull
     @JsonProperty("fileStore")
     private String fileStore;
