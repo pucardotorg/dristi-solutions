@@ -3,6 +3,8 @@ package org.pucar.dristi.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.jayway.jsonpath.JsonPath;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +16,7 @@ import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.util.MdmsV2Util;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.messaging.handler.annotation.Headers;
 import org.springframework.stereotype.Component;
 import org.springframework.core.io.Resource;
 
@@ -231,4 +234,42 @@ public class CaseBundleIndexBuilderService {
 
     }
 
+    @KafkaListener(topics = {"${kafka.case.update.last.modified.time}"})
+    public void listen(ConsumerRecord<String, Object> record) {
+        log.info("Received Topic {} with value {}", record.topic(), record.value());
+        String caseId = JsonPath.read(record.value(), "$.id");
+        String uri = configuration.getEsHostUrl() + configuration.getCaseBundleIndex() + configuration.getSearchPath();
+        String request = String.format(ES_IDS_QUERY, caseId);
+        String response =null;
+
+        try {
+            response = esRepository.fetchDocuments(uri, request);
+        } catch (Exception e) {
+            log.error("Error while fetching documents from ElasticSearch", e);
+        }
+
+        try {
+            JsonNode rootNode = objectMapper.readTree(response);
+            JsonNode hitsNode = rootNode.path("hits").path("hits");
+
+            if (hitsNode.isArray() && hitsNode.isEmpty()) {
+                log.error("Not able to get data from es for given case ID: {}", caseId);
+            } else {
+                JsonNode indexJson = hitsNode.get(0).path("_source");
+                ObjectNode indexJsonObject = (ObjectNode) indexJson;
+                indexJsonObject.put("contentLastModified", System.currentTimeMillis());
+                String esUpdateUrl = configuration.getEsHostUrl() + configuration.getCaseBundleIndex() + "/_update/" + caseId;
+                String esRequest;
+                try {
+                    esRequest = String.format(ES_UPDATE_QUERY, objectMapper.writeValueAsString(indexJson));
+                    esRepository.fetchDocuments(esUpdateUrl, esRequest);
+                } catch (IOException e) {
+                    log.error("Error updating ElasticSearch index with new data", e);
+                }
+            }
+        }catch(Exception e){
+            log.error("Not able to parse json body.", e);
+        }
+
+    }
 }
