@@ -23,7 +23,7 @@ public class JoinCaseTaskRequest {
     private String reason;
 
     @JsonProperty("reasonDocument")
-    private Document reasonDocument;
+    private ReasonDocument reasonDocument;
 
     @JsonProperty("replacementDetails")
     private List<ReplacementDetails> replacementDetails;
