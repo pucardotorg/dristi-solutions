@@ -109,6 +109,9 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
     userType: { label: "", value: "" },
     partyInvolve: { label: "", value: "" },
     isReplaceAdvocate: { label: "", value: "" },
+    advocateToReplaceList: [],
+    approver: { label: "", value: "" },
+    reasonForReplacement: "",
     affidavit: {},
   });
   const [successScreenData, setSuccessScreenData] = useState({
@@ -120,7 +123,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const [party, setParty] = useState({});
-  const [validationCode, setValidationCode] = useState("");
+  const [validationCode, setValidationCode] = useState("799690");
   const [isDisabled, setIsDisabled] = useState(false);
   const [isApiCalled, setIsApiCalled] = useState(false);
   const [isPipApiCalled, setIsPipApiCalled] = useState(false);
@@ -312,7 +315,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
         selectPartyData?.partyInvolve?.value &&
         party?.length > 0 &&
         selectPartyData?.isReplaceAdvocate?.value &&
-        ((selectPartyData?.isReplaceAdvocate?.value === "YES" && selectPartyData?.affidavit?.affidavitData) ||
+        ((selectPartyData?.isReplaceAdvocate?.value === "YES" && selectPartyData?.approver?.label && selectPartyData?.reasonForReplacement) ||
           selectPartyData?.isReplaceAdvocate?.value === "NO")
       ) {
         setIsDisabled(false);
@@ -343,6 +346,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
     selectPartyData?.partyInvolve,
     selectPartyData?.affidavit,
     selectPartyData?.isReplaceAdvocate?.value,
+    selectPartyData,
   ]);
 
   const fetchBasicUserInfo = async () => {
@@ -1406,7 +1410,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
             ...parties?.filter((party) => party?.phoneNumberVerification?.mobileNumber)?.map((party) => party?.phoneNumberVerification?.mobileNumber),
           ]);
           if (
-            (selectPartyData?.isReplaceAdvocate?.value === "YES" && selectPartyData?.affidavit?.affidavitData) ||
+            (selectPartyData?.isReplaceAdvocate?.value === "YES" && selectPartyData?.approver?.label && selectPartyData?.reasonForReplacement) ||
             selectPartyData?.isReplaceAdvocate?.value === "NO"
           ) {
             setIsDisabled(true);
@@ -1710,54 +1714,57 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
               })
             );
 
-            const affidavitUpload = await onDocumentUpload(
-              selectPartyData?.affidavit?.affidavitData?.document?.[0],
-              selectPartyData?.affidavit?.affidavitData?.document?.name,
-              tenantId
-            ).then((uploadedData) => ({
-              document: [
-                {
-                  documentType: uploadedData.fileType || document?.documentType,
-                  fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
-                  documentName: `NOC_JUDGE_ORDER`,
-                  fileName: `NOC_JUDGE_ORDER`,
-                },
-              ],
-            }));
-
-            evidenceApiPromise.push(
-              DRISTIService.createEvidence({
-                artifact: {
-                  artifactType: documentsTypeMapping["nocJudgeOrder"],
-                  sourceType: documentUploadResult?.[0]?.isComplainant ? "COMPLAINANT" : "ACCUSED",
-                  sourceID: individual?.individualId,
-                  caseId: caseDetails?.id,
-                  filingNumber: caseDetails?.filingNumber,
-                  cnrNumber: caseDetails?.cnrNumber,
-                  tenantId,
-                  comments: [],
-                  file: {
-                    documentType: affidavitUpload?.document?.[0]?.documentType,
-                    fileName: affidavitUpload?.document?.[0]?.fileName,
-                    documentName: affidavitUpload?.document?.[0]?.documentName,
-                    fileStore: affidavitUpload?.document?.[0]?.fileStore,
+            let affidavitUpload;
+            if (selectPartyData?.affidavit?.affidavitData?.document?.[0]) {
+              affidavitUpload = await onDocumentUpload(
+                selectPartyData?.affidavit?.affidavitData?.document?.[0],
+                selectPartyData?.affidavit?.affidavitData?.document?.name,
+                tenantId
+              ).then((uploadedData) => ({
+                document: [
+                  {
+                    documentType: uploadedData.fileType || document?.documentType,
+                    fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
+                    documentName: `NOC_JUDGE_ORDER`,
+                    fileName: `NOC_JUDGE_ORDER`,
                   },
-                  filingType: filingType,
-                  workflow: {
-                    action: "TYPE DEPOSITION",
-                    documents: [
-                      {
-                        documentType: affidavitUpload?.document?.[0]?.documentType,
-                        fileName: affidavitUpload?.document?.[0]?.fileName,
-                        documentName: affidavitUpload?.document?.[0]?.documentName,
-                        fileStoreId: affidavitUpload?.document?.[0]?.fileStore,
-                      },
-                    ],
+                ],
+              }));
+            }
+            if (affidavitUpload) {
+              evidenceApiPromise.push(
+                DRISTIService.createEvidence({
+                  artifact: {
+                    artifactType: documentsTypeMapping["nocJudgeOrder"],
+                    sourceType: documentUploadResult?.[0]?.isComplainant ? "COMPLAINANT" : "ACCUSED",
+                    sourceID: individual?.individualId,
+                    caseId: caseDetails?.id,
+                    filingNumber: caseDetails?.filingNumber,
+                    cnrNumber: caseDetails?.cnrNumber,
+                    tenantId,
+                    comments: [],
+                    file: {
+                      documentType: affidavitUpload?.document?.[0]?.documentType,
+                      fileName: affidavitUpload?.document?.[0]?.fileName,
+                      documentName: affidavitUpload?.document?.[0]?.documentName,
+                      fileStore: affidavitUpload?.document?.[0]?.fileStore,
+                    },
+                    filingType: filingType,
+                    workflow: {
+                      action: "TYPE DEPOSITION",
+                      documents: [
+                        {
+                          documentType: affidavitUpload?.document?.[0]?.documentType,
+                          fileName: affidavitUpload?.document?.[0]?.fileName,
+                          documentName: affidavitUpload?.document?.[0]?.documentName,
+                          fileStoreId: affidavitUpload?.document?.[0]?.fileStore,
+                        },
+                      ],
+                    },
                   },
-                },
-              })
-            );
-
+                })
+              );
+            }
             const representingData = [
               ...documentUploadResult?.map((party) => {
                 const { isFound } = searchLitigantInRepresentives(caseDetails?.representatives, party?.individualId);
@@ -1811,13 +1818,15 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                   advocateName: getFullName(" ", givenName, otherNames, familyName),
                   uuid: individual?.userUuid,
                 },
-                documents: [
-                  {
-                    documentType: affidavitUpload?.document?.[0]?.documentType,
-                    fileStore: affidavitUpload?.document?.[0]?.fileStore,
-                    additionalDetails: { documentName: "NOC_JUDGE_ORDER" },
-                  },
-                ],
+                ...(affidavitUpload && {
+                  documents: [
+                    {
+                      documentType: affidavitUpload?.document?.[0]?.documentType,
+                      fileStore: affidavitUpload?.document?.[0]?.fileStore,
+                      additionalDetails: { documentName: "NOC_JUDGE_ORDER" },
+                    },
+                  ],
+                }),
               },
             };
             const [res, err] = await submitJoinCase(joinAdvocatePayloadWithReplace);
@@ -1962,10 +1971,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
       caseDetails?.additionalDetails,
       caseDetails?.id,
       caseDetails?.status,
-      selectPartyData?.userType,
-      selectPartyData?.partyInvolve?.value,
-      selectPartyData?.isReplaceAdvocate,
-      selectPartyData?.affidavit?.affidavitData,
+      selectPartyData,
       individualId,
       searchCase,
       caseNumber,
@@ -2067,6 +2073,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
           setPartyInPerson={setPartyInPerson}
           isLitigantJoined={isLitigantJoined}
           isAdvocateJoined={isAdvocateJoined}
+          searchLitigantInRepresentives={searchLitigantInRepresentives}
         />
       ),
     },
@@ -2097,7 +2104,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
       modalMain: (
         <JoinCaseSuccess
           success={success}
-          messageHeader={messageHeader}
+          messageHeader={selectPartyData?.isReplaceAdvocate?.value === "YES" ? t("REPLACE_ADVOCATE_SUCCESS_MESSAGE") : messageHeader}
           caseDetails={caseDetails}
           closeModal={closeModal}
           refreshInbox={refreshInbox}
@@ -2159,6 +2166,9 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                     partyInvolve: {},
                     isReplaceAdvocate: {},
                     affidavit: {},
+                    approver: {},
+                    reasonForReplacement: "",
+                    advocateToReplaceList: [],
                   }));
                   setParty([]);
                 } else {
@@ -2166,6 +2176,9 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                     ...selectPartyData,
                     isReplaceAdvocate: {},
                     affidavit: {},
+                    approver: {},
+                    reasonForReplacement: "",
+                    advocateToReplaceList: [],
                   }));
                   setParty([]);
                 }
