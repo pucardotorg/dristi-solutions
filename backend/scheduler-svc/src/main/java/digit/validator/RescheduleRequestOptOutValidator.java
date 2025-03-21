@@ -20,22 +20,15 @@ import static digit.config.ServiceConstants.OPT_OUT_SELECTION_LIMIT;
 @Component
 public class RescheduleRequestOptOutValidator {
 
-
     private final RescheduleRequestOptOutRepository repository;
     private final ReScheduleHearingService reScheduleHearingService;
-    private final Configuration config;
-
-
     private final MasterDataUtil mdmsUtil;
     private final ServiceConstants constants;
 
-
     @Autowired
-    public RescheduleRequestOptOutValidator(RescheduleRequestOptOutRepository repository, ReScheduleHearingService reScheduleHearingService, Configuration config, MasterDataUtil mdmsUtil, ServiceConstants constants) {
+    public RescheduleRequestOptOutValidator(RescheduleRequestOptOutRepository repository, ReScheduleHearingService reScheduleHearingService, MasterDataUtil mdmsUtil, ServiceConstants constants) {
         this.repository = repository;
         this.reScheduleHearingService = reScheduleHearingService;
-        this.config = config;
-
         this.mdmsUtil = mdmsUtil;
         this.constants = constants;
     }
@@ -60,14 +53,6 @@ public class RescheduleRequestOptOutValidator {
         if (ServiceConstants.INACTIVE.equals(rescheduleReq.getStatus())) {
             throw new CustomException("DK_OO_REQUEST_COMPLETED", "Opt out is no longer supported for request");
         }
-
-
-        Set<String> litigants = rescheduleReq.getLitigants();
-        Set<String> representatives = rescheduleReq.getRepresentatives();
-
-        // if (!(representatives.contains(optOut.getIndividualId()) || litigants.contains(optOut.getIndividualId()))) {
-        //     throw new CustomException("DK_OO_INVALID_REQUESTER_ID", "User is not authorised for opt out");
-        // }
 
         List<SchedulerConfig> dataFromMDMS = mdmsUtil.getDataFromMDMS(SchedulerConfig.class, constants.SCHEDULER_CONFIG_MASTER_NAME, constants.SCHEDULER_CONFIG_MODULE_NAME);
 

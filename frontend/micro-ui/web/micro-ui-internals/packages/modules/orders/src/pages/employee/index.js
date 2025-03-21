@@ -10,28 +10,35 @@ import PaymentStatus from "../../components/PaymentStatus";
 import EpostTrackingPage from "./E-PostTracking";
 import PaymentForSummonModal from "./PaymentForSummonModal";
 import ReviewSummonsNoticeAndWarrant from "./ReviewSummonsNoticeAndWarrant";
-import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
 const bredCrumbStyle = { maxWidth: "min-content" };
 
 const ProjectBreadCrumb = ({ location }) => {
+  const { pathname } = useLocation();
+
+  const roles = Digit.UserService.getUser()?.info?.roles;
+  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
   const userInfo = Digit?.UserService?.getUser()?.info;
   let userType = "employee";
   if (userInfo) {
     userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
   }
   const { t } = useTranslation();
-  const crumbs = [
-    {
-      path: `/${window?.contextPath}/${userType}/home/home-pending-task`,
-      content: t("ES_COMMON_HOME"),
-      show: true,
-    },
-    {
-      path: `/${window?.contextPath}/${userType}`,
-      content: t(location.pathname.split("/").pop()),
-      show: true,
-    },
-  ];
+  const crumbs = useMemo(
+    () => [
+      {
+        path: isEpostUser ? pathname : `/${window?.contextPath}/${userType}/home/home-pending-task`,
+        content: t("ES_COMMON_HOME"),
+        show: true,
+      },
+      {
+        path: `/${window?.contextPath}/${userType}`,
+        content: t(location.pathname.split("/").pop()),
+        show: true,
+      },
+    ],
+    [isEpostUser, location.pathname, pathname, t, userType]
+  );
   return <BreadCrumb crumbs={crumbs} spanStyle={bredCrumbStyle} style={{ color: "rgb(0, 126, 126)" }} />;
 };
 

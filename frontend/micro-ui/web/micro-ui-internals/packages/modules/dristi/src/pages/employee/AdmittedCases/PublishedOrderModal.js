@@ -1,12 +1,13 @@
 import { CloseSvg } from "@egovernments/digit-ui-components";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Modal from "../../../components/Modal";
-import { Button, SubmitBar } from "@egovernments/digit-ui-react-components";
+import { Button, SubmitBar, TextInput } from "@egovernments/digit-ui-react-components";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/useGetAllOrderApplicationRelatedDocuments";
 import { DRISTIService } from "../../../services";
 import { getAdvocates } from "@egovernments/digit-ui-module-orders/src/utils/caseUtils";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
+import useGetDiaryEntry from "../../../hooks/dristi/useGetDiaryEntry";
 
 function PublishedOrderModal({
   t,
@@ -18,13 +19,16 @@ function PublishedOrderModal({
   handleOrdersTab,
   extensionApplications = [],
   productionOfDocumentApplications = [],
+  submitBailDocumentsApplications = [],
 }) {
   const [fileStoreId, setFileStoreID] = useState(null);
   const [fileName, setFileName] = useState();
-  const [isTaskCompleted, setIsTaskCompleted] = useState(false);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
+  const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
+  const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
+
   const { documents, isLoading, fetchRecursiveData } = useGetAllOrderApplicationRelatedDocuments();
   const [loading, setLoading] = useState(false);
   const Heading = (props) => {
@@ -59,21 +63,153 @@ function PublishedOrderModal({
   const userInfo = Digit.UserService.getUser()?.info;
   const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
 
-  const showSubmissionButtons = useMemo(() => {
-    if (productionOfDocumentApplications?.some((item) => item?.referenceId === order?.id)) {
-      return false;
+  const { data: diaryResponse } = useGetDiaryEntry(
+    {
+      criteria: {
+        referenceId: order?.orderNumber,
+        tenantId,
+        judgeId: judgeId,
+        caseId: caseDetails?.cmpNumber,
+      },
+    },
+    {},
+    order?.orderNumber + caseDetails?.id,
+    Boolean(order?.orderNumber) && !Boolean(isCitizen) && Boolean(caseDetails?.id)
+  );
+
+  const isComposite = useMemo(() => order?.orderCategory === "COMPOSITE", [order]);
+
+  const compositeMandatorySubmissionItems = useMemo(
+    () => order?.compositeItems?.filter((item) => item?.orderType === "MANDATORY_SUBMISSIONS_RESPONSES") || [],
+    [order]
+  );
+
+  const mandatorySubmissionItemId = useMemo(() => {
+    for (const compositeItem of compositeMandatorySubmissionItems) {
+      const isCurrentUserPresent = compositeItem?.orderSchema?.additionalDetails?.formdata?.submissionParty?.some(
+        (party) => [...party?.uuid]?.includes(userInfo?.uuid) || userInfo?.uuid === party?.partyUuid
+      );
+      const isCompleted = productionOfDocumentApplications?.some(
+        (item) => item?.additionalDetails?.formdata?.refOrderId === `${compositeItem?.id}_${order?.orderNumber}`
+      );
+
+      if (!isCompleted && isCurrentUserPresent) {
+        return compositeItem?.id;
+      }
     }
+    return null;
+  }, [order, compositeMandatorySubmissionItems, productionOfDocumentApplications, userInfo]);
+
+  const compositeSetTermsOfBailItems = useMemo(() => order?.compositeItems?.filter((item) => item?.orderType === "SET_BAIL_TERMS") || [], [order]);
+
+  const setTermBailItemId = useMemo(() => {
+    for (const compositeItem of compositeSetTermsOfBailItems) {
+      const isMatched = submitBailDocumentsApplications?.some(
+        (item) => item?.additionalDetails?.formdata?.refOrderId === `${compositeItem?.id}_${order?.orderNumber}`
+      );
+
+      if (!isMatched) {
+        return compositeItem?.id;
+      }
+    }
+    return null;
+  }, [order, compositeSetTermsOfBailItems, submitBailDocumentsApplications]);
+
+  const applicationNumberSetTerms = useMemo(() => {
+    return isComposite
+      ? compositeSetTermsOfBailItems?.find((item) => item?.id === setTermBailItemId)?.orderSchema?.additionalDetails?.formdata?.applicationNumber?.[0]
+      : order?.applicationNumber?.[0];
+  }, [order, compositeSetTermsOfBailItems, setTermBailItemId, isComposite]);
+
+  const { data: applicationData, isLoading: isApplicationDetailsLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
+    {
+      criteria: {
+        filingNumber: order?.filingNumber,
+        tenantId: tenantId,
+        applicationNumber: applicationNumberSetTerms,
+      },
+      tenantId,
+    },
+    {},
+    applicationNumberSetTerms + order?.filingNumber,
+    Boolean(applicationNumberSetTerms && order?.filingNumber)
+  );
+  const applicationDetails = useMemo(() => applicationData?.applicationList?.[0], [applicationData]);
+
+  const litigantIndId = useMemo(
+    () =>
+      caseDetails?.litigants?.find(
+        (litigant) => litigant?.additionalDetails?.uuid === applicationDetails?.additionalDetails?.formdata?.selectComplainant?.uuid
+      )?.individualId,
+    [applicationDetails, caseDetails]
+  );
+
+  const litigant = useMemo(
+    () =>
+      caseDetails?.litigants?.find(
+        (litigant) => litigant?.additionalDetails?.uuid === applicationDetails?.additionalDetails?.formdata?.selectComplainant?.uuid
+      )?.additionalDetails?.uuid,
+    [applicationDetails, caseDetails]
+  );
+
+  const mandatorySubmissionLitigantIndId = useMemo(
+    () =>
+      (isComposite
+        ? compositeMandatorySubmissionItems?.find((item) => item?.id === mandatorySubmissionItemId)?.orderSchema
+        : order
+      )?.additionalDetails?.formdata?.submissionParty?.find(
+        (party) => [...party?.uuid]?.includes(userInfo?.uuid) || userInfo?.uuid === party?.partyUuid
+      )?.individualId,
+    [compositeMandatorySubmissionItems, mandatorySubmissionItemId, userInfo?.uuid, order, isComposite]
+  );
+
+  const mandatorySubmissionLitigant = useMemo(
+    () =>
+      (isComposite
+        ? compositeMandatorySubmissionItems?.find((item) => item?.id === mandatorySubmissionItemId)?.orderSchema
+        : order
+      )?.additionalDetails?.formdata?.submissionParty?.find(
+        (party) => [...party?.uuid]?.includes(userInfo?.uuid) || userInfo?.uuid === party?.partyUuid
+      )?.partyUuid,
+    [compositeMandatorySubmissionItems, mandatorySubmissionItemId, userInfo?.uuid, order, isComposite]
+  );
+
+  const showSubmissionButtons = useMemo(() => {
+    const hasMatchingReference = (compositeItems, itemId, applications) =>
+      isComposite ? compositeItems?.length > 0 && itemId === null : applications?.some((item) => item?.referenceId === order?.id);
+
+    const hasMandatorySubmissionMatchingReference = hasMatchingReference(
+      compositeMandatorySubmissionItems,
+      mandatorySubmissionItemId,
+      productionOfDocumentApplications
+    );
+    const hasBailMatchingReference = hasMatchingReference(compositeSetTermsOfBailItems, setTermBailItemId, submitBailDocumentsApplications);
+
+    if (hasMandatorySubmissionMatchingReference && hasBailMatchingReference) return false;
 
     if (!Boolean(caseDetails?.filingNumber) && Object?.keys(allAdvocates)?.length === 0) return false;
 
     //TODO : need to ask
-    const isAuthority = order?.additionalDetails?.formdata?.partyId;
-    const submissionParty =
-      order?.additionalDetails?.formdata?.submissionParty
-        ?.map(
-          (item) => allAdvocates[caseDetails?.litigants?.find((litigant) => litigant?.individualId === item?.individualId)?.additionalDetails?.uuid]
+    const isAuthority = isComposite
+      ? order?.compositeItems?.find((item) => item?.orderType === "SET_BAIL_TERMS")?.orderSchema?.additionalDetails?.formdata?.partyId
+      : order?.additionalDetails?.formdata?.partyId;
+
+    let submissionParty = [];
+    const formDataList = isComposite
+      ? order?.compositeItems
+          ?.filter((item) => item?.orderType === "MANDATORY_SUBMISSIONS_RESPONSES")
+          ?.map((item) => item?.orderSchema?.additionalDetails?.formdata)
+      : [order?.additionalDetails?.formdata];
+
+    submissionParty =
+      formDataList
+        ?.flatMap((formData) =>
+          formData?.submissionParty?.map(
+            (item) => allAdvocates[caseDetails?.litigants?.find((litigant) => litigant?.individualId === item?.individualId)?.additionalDetails?.uuid]
+          )
         )
-        ?.flat() || [];
+        ?.flat()
+        ?.filter(Boolean) || [];
     const allSubmissionParty = [...submissionParty, isAuthority].filter(Boolean);
     return (
       allSubmissionParty?.includes(userInfo?.uuid) &&
@@ -86,15 +222,30 @@ function PublishedOrderModal({
         CaseWorkflowState.CASE_ADMITTED,
       ].includes(caseStatus)
     );
-  }, [caseStatus, order, userInfo?.uuid, userRoles, productionOfDocumentApplications, caseDetails, allAdvocates]);
+  }, [
+    compositeMandatorySubmissionItems,
+    mandatorySubmissionItemId,
+    compositeSetTermsOfBailItems,
+    setTermBailItemId,
+    caseDetails,
+    allAdvocates,
+    isComposite,
+    order,
+    userInfo?.uuid,
+    userRoles,
+    caseStatus,
+    productionOfDocumentApplications,
+    submitBailDocumentsApplications,
+  ]);
 
-  const showExtensionButton = useMemo(
-    () =>
+  const showExtensionButton = useMemo(() => {
+    const hasSetBailTerms = isComposite ? setTermBailItemId : order?.orderType === "SET_BAIL_TERMS";
+    return (
       showSubmissionButtons &&
       !extensionApplications?.some((item) => item?.additionalDetails?.formdata?.refOrderId === order?.orderNumber) &&
-      order?.orderType !== "SET_BAIL_TERMS",
-    [extensionApplications, order, showSubmissionButtons]
-  );
+      !hasSetBailTerms
+    );
+  }, [extensionApplications, order, showSubmissionButtons, isComposite, setTermBailItemId]);
 
   useEffect(() => {
     const onDocumentUpload = async (fileData, filename) => {
@@ -123,52 +274,12 @@ function PublishedOrderModal({
     }
   }, [order, tenantId]);
 
-  // tracking of appliction based on order Generated for bail
-  const fetchAndCheckTasks = useCallback(
-    async function () {
-      try {
-        setLoading(true);
-        const pendingTasks = await DRISTIService.getPendingTaskService(
-          {
-            SearchCriteria: {
-              tenantId,
-              moduleName: "Pending Tasks Service",
-              moduleSearchCriteria: {
-                filingNumber: order?.filingNumber,
-                isCompleted: true,
-                referenceId: `MANUAL_${userInfo?.uuid}_${order?.orderNumber}`,
-              },
-              limit: 10000,
-              offset: 0,
-            },
-          },
-          { tenantId }
-        );
-
-        const taskCompleted = pendingTasks?.data?.some((task) => {
-          const refIdField = task?.fields?.find((field) => field?.key === "referenceId");
-          const isCompletedField = task?.fields?.find((field) => field?.key === "isCompleted");
-
-          return refIdField?.value === `MANUAL_${userInfo?.uuid}_${order?.orderNumber}` && isCompletedField?.value === true;
-        });
-
-        setIsTaskCompleted(taskCompleted);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching pending tasks:", error);
-      }
-    },
-    [order?.filingNumber, order?.orderNumber, tenantId, userInfo?.uuid]
-  );
-
-  useEffect(() => {
-    fetchAndCheckTasks();
-  }, [tenantId, order.filingNumber, order.orderNumber, userInfo.uuid, fetchAndCheckTasks]);
-
-  const showSubmitDocumentButton = useMemo(
-    () => (order?.orderType === "SET_BAIL_TERMS" ? showSubmissionButtons && !isTaskCompleted : showSubmissionButtons),
-    [isTaskCompleted, order?.orderType, showSubmissionButtons]
-  );
+  const showSubmitDocumentButton = useMemo(() => {
+    const hasSetBailTerms = isComposite
+      ? order?.compositeItems?.some((item) => item?.orderType === "SET_BAIL_TERMS")
+      : order?.orderType === "SET_BAIL_TERMS";
+    return hasSetBailTerms ? showSubmissionButtons : showSubmissionButtons;
+  }, [order, showSubmissionButtons, isComposite]);
 
   const showDocument = useMemo(() => {
     return (
@@ -196,6 +307,7 @@ function PublishedOrderModal({
               displayFilename={docs?.additionalDetails?.name}
               showDownloadOption={false}
               documentName={docs?.additionalDetails?.name}
+              isLocalizationRequired={false}
             />
           ))
         ) : (
@@ -221,6 +333,23 @@ function PublishedOrderModal({
       popupStyles={{ minWidth: "880px", width: "80%" }}
     >
       {showDocument}
+      {!isCitizen && (
+        <React.Fragment>
+          {" "}
+          <h3 style={{ marginTop: "24px", marginBottom: "2px" }}>{t("BUSINESS_OF_THE_DAY")} </h3>
+          <div style={{ display: "flex", gap: "10px" }}>
+            <TextInput
+              className="field desktop-w-full"
+              onChange={(e) => {}}
+              disable={true}
+              value={diaryResponse?.entries?.[0]?.businessOfDay}
+              style={{ minWidth: "500px" }}
+              textInputStyle={{ maxWidth: "100%" }}
+            />
+          </div>
+        </React.Fragment>
+      )}
+
       <div style={{ display: "flex", width: "100%", justifyContent: "space-between", alignItems: "center", marginTop: "16px" }}>
         <div
           onClick={() => {
@@ -235,7 +364,12 @@ function PublishedOrderModal({
             <Button
               variation="secondary"
               onButtonClick={() => {
-                handleRequestLabel(order.orderNumber);
+                handleRequestLabel(
+                  order.orderNumber,
+                  setTermBailItemId || mandatorySubmissionItemId,
+                  litigant || mandatorySubmissionLitigant,
+                  litigantIndId || mandatorySubmissionLitigantIndId
+                );
               }}
               className="primary-label-btn"
               label={t("EXTENSION_REQUEST_LABEL")}
@@ -245,7 +379,12 @@ function PublishedOrderModal({
             <SubmitBar
               variation="primary"
               onSubmit={() => {
-                handleSubmitDocument(order.orderNumber);
+                handleSubmitDocument(
+                  order.orderNumber,
+                  setTermBailItemId || mandatorySubmissionItemId,
+                  litigant || mandatorySubmissionLitigant,
+                  litigantIndId || mandatorySubmissionLitigantIndId
+                );
               }}
               className="primary-label-btn"
               label={t("SUBMIT_DOCUMENT_LABEL")}

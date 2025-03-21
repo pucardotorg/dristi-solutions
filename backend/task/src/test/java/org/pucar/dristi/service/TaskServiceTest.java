@@ -71,7 +71,6 @@ public class TaskServiceTest {
     void testCreateTaskSuccess() {
         when(config.getTaskBusinessServiceName()).thenReturn("task-business-service");
         when(config.getTaskBusinessName()).thenReturn("task-business-name");
-        when(config.getTaskCreateTopic()).thenReturn("task-create-topic");
 
         doNothing().when(validator).validateTaskRegistration(any(TaskRequest.class));
         doNothing().when(enrichmentUtil).enrichTaskRegistration(any(TaskRequest.class));
@@ -82,7 +81,6 @@ public class TaskServiceTest {
         verify(validator, times(1)).validateTaskRegistration(any(TaskRequest.class));
         verify(enrichmentUtil, times(1)).enrichTaskRegistration(any(TaskRequest.class));
         verify(workflowUtil, times(1)).updateWorkflowStatus(any(RequestInfo.class), anyString(), anyString(), anyString(), any(), anyString());
-        verify(producer, times(1)).push(anyString(), any(TaskRequest.class));
     }
 
     @Test

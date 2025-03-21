@@ -435,9 +435,31 @@
           color: #3d3c3c;
 
           .learn-more-text {
+            position: relative;
             font-weight: 700;
             text-decoration: underline;
             cursor: pointer;
+            .text-tooltip {
+              display: none;
+              position: absolute;
+              top: 30%;
+              right: 0%;
+              background-color: white;
+              max-width: 600px;
+              width: max-content;
+              font-weight: 300;
+              color: black;
+              padding: 5px 10px;
+              border-radius: 4px;
+              z-index: 100;
+              border: 1px solid #bbbbbd;
+              white-space: normal;
+              word-wrap: break-word;
+              overflow-wrap: break-word;
+            }
+            &:hover .text-tooltip {
+              display: block;
+            }
           }
         }
       }

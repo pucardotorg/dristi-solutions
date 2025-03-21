@@ -28,8 +28,8 @@ public class ServiceConstants {
     public static final String DELAY_CONDONATION = "DELAY_CONDONATION";
 
     public static final String OPT_OUT_SELECTION_LIMIT = "OPT_OUT_SELECTION_LIMIT";
-    public final String COMPLAINANT= "complainant.primary";
-    public final String RESPONDENT= "respondent.primary";
+    public final String COMPLAINANT = "complainant.primary";
+    public final String RESPONDENT = "respondent.primary";
     public final String ADVOCATE_NAME = "advocateName";
     public final String SYSTEM_ADMIN = "SYSTEM_ADMIN";
     public static final String CAUSE_LIST_NOT_FOUND = "Cause list not found for given date or court, please generate one.";
@@ -46,11 +46,11 @@ public class ServiceConstants {
     public final String SCHEDULER_CONFIG_MASTER_NAME = "config";
     public final String SCHEDULER_CONFIG_MODULE_NAME = "SCHEDULER-CONFIG";
 
-    public static final String PENDING_TASK_ENTITY_TYPE ="order-managelifecycle";
+    public static final String PENDING_TASK_ENTITY_TYPE = "order-managelifecycle";
     public static final String PENDING_TASK_NAME = "Create Order for rescheduling the hearing";
     public static final String PENDING_TASK_STATUS = "RESCHEDULE_HEARING";
 
-    public static final String STATUS_RESCHEDULE="RESCHEDULE";
+    public static final String STATUS_RESCHEDULE = "RESCHEDULE";
 
     public static final String INTERNALMICROSERVICEROLE_NAME = "Internal Microservice Role";
 
@@ -69,5 +69,18 @@ public class ServiceConstants {
     public static final String msgId = "1730882648558|en_IN";
 
     public static final String DATE_FORMAT = "dd-MM-yyyy";
+
+    public static final String INDIVIDUAL_UTILITY_EXCEPTION = "INDIVIDUAL_UTILITY_EXCEPTION";
+    public static final String INDIVIDUAL_SERVICE_EXCEPTION = "INDIVIDUAL_SERVICE_EXCEPTION";
+
+    public static final String NOTIFICATION_ENG_LOCALE_CODE = "en_IN";
+    public static final String NOTIFICATION_MODULE_CODE = "notification";
+    public static final String NOTIFICATION_LOCALIZATION_CODES_JSONPATH = "$.messages.*.code";
+    public static final String NOTIFICATION_LOCALIZATION_MSGS_JSONPATH = "$.messages.*.message";
+
+    // sms code for getting hearing reminder notification when cause list is generated
+    public static final String CAUSE_LIST_HEARING_MESSAGE = "CAUSE_LIST_HEARING_MESSAGE";
+
+    public static final String SCREEN_TYPE = "home";
 
 }

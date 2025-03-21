@@ -6,6 +6,7 @@ import digit.kafka.Producer;
 import digit.repository.DiaryEntryRepository;
 import digit.validators.ADiaryValidator;
 import digit.web.models.*;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,8 +15,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -38,11 +38,15 @@ public class DiaryEntryServiceTest {
     @Mock
     private DiaryEntryRepository diaryEntryRepository;
 
+    @Mock
+    private DiaryEntryService diaryEntryServiceMock;
+
     @InjectMocks
     private DiaryEntryService diaryEntryService;
 
     private CaseDiaryEntryRequest diaryEntryRequest;
     private CaseDiaryEntry diaryEntry;
+    private BulkDiaryEntryRequest bulkDiaryEntryRequest;
 
     @BeforeEach
     void setUp() {
@@ -132,4 +136,31 @@ public class DiaryEntryServiceTest {
         verifyNoInteractions(diaryEntryRepository);
     }
 
+    @Test
+    void testBulkEntry_Success() {
+        diaryEntry = CaseDiaryEntry.builder().id(UUID.randomUUID()).build();
+        bulkDiaryEntryRequest = BulkDiaryEntryRequest.builder()
+                .requestInfo(RequestInfo.builder().build())
+                .caseDiaryList(List.of(diaryEntry)).build();
+        lenient().when(diaryEntryServiceMock.addDiaryEntry(any())).thenReturn(diaryEntry);
+
+        List<CaseDiaryEntry> diaryEntryList = diaryEntryService.bulkDiaryEntry(bulkDiaryEntryRequest);
+
+        assertNotNull(diaryEntryList);
+        assertEquals(1, diaryEntryList.size());
+    }
+    @Test
+    void testBulkDiaryEntry_Exception() {
+        CaseDiaryEntry caseDiaryEntry = new CaseDiaryEntry();
+        bulkDiaryEntryRequest = new BulkDiaryEntryRequest();
+        bulkDiaryEntryRequest.setCaseDiaryList(List.of(caseDiaryEntry));
+
+        when(diaryEntryService.addDiaryEntry(diaryEntryRequest))
+                .thenThrow(new RuntimeException("Test Exception"));
+
+        CustomException exception = assertThrows(CustomException.class,
+                () -> diaryEntryService.bulkDiaryEntry(bulkDiaryEntryRequest));
+
+        assertEquals("Test Exception", exception.getMessage());
+    }
 }

@@ -39,6 +39,7 @@ import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hoo
 import VoidSubmissionBody from "./VoidSubmissionBody";
 import DocumentModal from "@egovernments/digit-ui-module-orders/src/components/DocumentModal";
 import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
+import PublishedNotificationModal from "./publishedNotificationModal";
 
 const defaultSearchValues = {};
 
@@ -145,6 +146,8 @@ const formatDate = (date) => {
   return "";
 };
 
+const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
+
 const AdmittedCases = () => {
   const { t } = useTranslation();
   const { path } = useRouteMatch();
@@ -190,6 +193,8 @@ const AdmittedCases = () => {
   const [isDelayApplicationPending, setIsDelayApplicationPending] = useState(false);
   const [isOpenDCA, setIsOpenDCA] = useState(false);
   const [isOpenFromPendingTask, setIsOpenFromPendingTask] = useState(false);
+  const [currentNotification, setCurrentNotification] = useState(null);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
 
   const history = useHistory();
   const isCitizen = userRoles.includes("CITIZEN");
@@ -352,6 +357,17 @@ const AdmittedCases = () => {
       applicationData?.applicationList?.filter(
         (item) =>
           item?.applicationType === "PRODUCTION_DOCUMENTS" &&
+          item?.onBehalfOf?.includes(onBehalfOfuuid) &&
+          ![SubmissionWorkflowState.DELETED, SubmissionWorkflowState.ABATED].includes(item?.status)
+      ) || [],
+    [applicationData, onBehalfOfuuid]
+  );
+
+  const submitBailDocumentsApplications = useMemo(
+    () =>
+      applicationData?.applicationList?.filter(
+        (item) =>
+          item?.applicationType === "SUBMIT_BAIL_DOCUMENTS" &&
           item?.onBehalfOf?.includes(onBehalfOfuuid) &&
           ![SubmissionWorkflowState.DELETED, SubmissionWorkflowState.ABATED].includes(item?.status)
       ) || [],
@@ -536,17 +552,40 @@ const AdmittedCases = () => {
       }
     };
 
-    const orderSetFunc = (order) => {
-      if (isCitizen) {
-        // for citizen, only those orders should be visible which are published
-        setCurrentOrder(order);
-        setShowOrderReviewModal(true);
+    const orderSetFunc = async (order) => {
+      if (order?.businessObject?.orderNotification?.entityType === "Notification") {
+        const notificationResponse = await Digit.HearingService.searchNotification({
+          criteria: {
+            tenantId: tenantId,
+            notificationNumber: order?.businessObject?.orderNotification?.id,
+            courtId: courtId,
+          },
+          pagination: {
+            limit: 100,
+          },
+        });
+        const notification = notificationResponse?.list?.[0];
+        setShowNotificationModal(true);
+        setCurrentNotification(notification);
       } else {
-        if (order?.status === OrderWorkflowState.DRAFT_IN_PROGRESS) {
-          history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${order?.orderNumber}`);
-        } else {
+        if (order?.businessObject?.orderNotification?.entityType === "Order") {
+          const orderResponse = await ordersService.searchOrder(
+            { criteria: { tenantId: tenantId, filingNumber: filingNumber, orderNumber: order?.businessObject?.orderNotification?.id } },
+            { tenantId }
+          );
+          order = orderResponse?.list?.[0];
+        }
+        if (isCitizen) {
+          // for citizen, only those orders should be visible which are published
           setCurrentOrder(order);
           setShowOrderReviewModal(true);
+        } else {
+          if (order?.status === OrderWorkflowState.DRAFT_IN_PROGRESS) {
+            history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${order?.orderNumber}`);
+          } else {
+            setCurrentOrder(order);
+            setShowOrderReviewModal(true);
+          }
         }
       }
     };
@@ -582,12 +621,13 @@ const AdmittedCases = () => {
         },
       ];
       if ("mark_as_evidence" === item.id || "unmark_as_evidence" === item.id) {
+        const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
         try {
           const nextHearing = hearingDetails?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
           await DRISTIService.addADiaryEntry(
             {
               diaryEntry: {
-                judgeId: "super",
+                judgeId: judgeId,
                 businessOfDay: `${row?.artifactNumber} ${row?.isEvidence ? "unmarked" : "marked"} as evidence`,
                 tenantId: tenantId,
                 entryDate: new Date().setHours(0, 0, 0, 0),
@@ -640,9 +680,12 @@ const AdmittedCases = () => {
               ...tabConfig.apiDetails,
               requestBody: {
                 ...tabConfig.apiDetails.requestBody,
-                criteria: {
-                  filingNumber: filingNumber,
-                  tenantId: tenantId,
+                inbox: {
+                  ...tabConfig.apiDetails.requestBody.inbox,
+                  moduleSearchCriteria: {
+                    ...tabConfig.apiDetails.requestBody.inbox.moduleSearchCriteria,
+                    caseNumbers: [filingNumber, caseDetails?.cmpNumber, caseDetails?.courtCaseNumber]?.filter(Boolean),
+                  },
                 },
               },
             },
@@ -652,22 +695,21 @@ const AdmittedCases = () => {
                 ...tabConfig.sections.search,
                 uiConfig: {
                   ...tabConfig.sections.search.uiConfig,
-                  fields: [
-                    {
-                      label: "PARTIES",
-                      isMandatory: false,
-                      key: "parties",
-                      type: "dropdown",
-                      populators: {
-                        name: "parties",
-                        optionsKey: "name",
-                        options: caseRelatedData.parties.map((party) => {
-                          return { code: removeInvalidNameParts(party.name), name: removeInvalidNameParts(party.name) };
-                        }),
-                      },
-                    },
-                    ...tabConfig.sections.search.uiConfig.fields,
-                  ],
+                  fields: tabConfig.sections.search.uiConfig.fields.map((field) =>
+                    field.key === "parties"
+                      ? {
+                          ...field,
+                          populators: {
+                            name: "parties",
+                            optionsKey: "name",
+                            options: caseRelatedData.parties.map((party) => ({
+                              code: removeInvalidNameParts(party.name),
+                              name: removeInvalidNameParts(party.name),
+                            })),
+                          },
+                        }
+                      : field
+                  ),
                 },
               },
               searchResult: {
@@ -675,7 +717,7 @@ const AdmittedCases = () => {
                 uiConfig: {
                   ...tabConfig.sections.searchResult.uiConfig,
                   columns: tabConfig.sections.searchResult.uiConfig.columns.map((column) => {
-                    return column.label === "ORDER_TYPE"
+                    return column.label === "ORDER_TILTE"
                       ? {
                           ...column,
                           clickFunc: orderSetFunc,
@@ -1222,6 +1264,8 @@ const AdmittedCases = () => {
         statuteSection: {
           tenantId,
         },
+        orderTitle: "NOTICE",
+        orderCategory: "INTERMEDIATE",
         orderType: "NOTICE",
         status: "",
         isActive: true,
@@ -1350,16 +1394,12 @@ const AdmittedCases = () => {
 
   const handleAdmitDismissCaseOrder = async (generateOrder, type) => {
     try {
-      const orderType = "ADMIT_DISMISS_CASE";
+      const orderType = type === "reject" ? "DISMISS_CASE" : type === "accept" ? "ADMIT_CASE" : null;
       const formdata = {
         orderType: {
           code: orderType,
           type: orderType,
           name: `ORDER_TYPE_${orderType}`,
-        },
-        isCaseAdmittedOrDismissed: {
-          code: type === "reject" ? "DISMISSED" : type === "accept" ? "ADMITTED" : null,
-          name: type === "reject" ? "DISMISSED" : type === "accept" ? "ADMITTED" : null,
         },
       };
       if (generateOrder) {
@@ -1372,6 +1412,8 @@ const AdmittedCases = () => {
             statuteSection: {
               tenantId,
             },
+            orderTitle: orderType,
+            orderCategory: "INTERMEDIATE",
             orderType,
             status: "",
             isActive: true,
@@ -1393,7 +1435,7 @@ const AdmittedCases = () => {
         };
         try {
           const res = await ordersService.createOrder(reqbody, { tenantId });
-          const name = "ADMIT_DISMISS_CASE";
+          const name = orderType;
           DRISTIService.customApiService(Urls.dristi.pendingTask, {
             pendingTask: {
               name: t(name),
@@ -1429,6 +1471,8 @@ const AdmittedCases = () => {
           tenantId: tenantId,
           filingNumber: [caseDetails.filingNumber],
           hearingType: purpose,
+          courtCaseNumber: caseDetails?.courtCaseNumber,
+          cmpNumber: caseDetails?.cmpNumber,
           status: true,
           attendees: [
             ...Object.values(participant)
@@ -1507,6 +1551,8 @@ const AdmittedCases = () => {
         statuteSection: {
           tenantId,
         },
+        orderTitle: OrderTypes.SCHEDULE_OF_HEARING_DATE,
+        orderCategory: "INTERMEDIATE",
         orderType: OrderTypes.SCHEDULE_OF_HEARING_DATE,
         status: "",
         isActive: true,
@@ -1630,10 +1676,15 @@ const AdmittedCases = () => {
     }
   }, [hearingDetails]);
 
-  const currentHearingId = useMemo(
+  const currentHearingAdmissionHearing = useMemo(
     () =>
       hearingDetails?.HearingList?.find((list) => list?.hearingType === "ADMISSION" && !(list?.status === "COMPLETED" || list?.status === "ABATED"))
         ?.hearingId,
+    [hearingDetails?.HearingList]
+  );
+
+  const currentHearingId = useMemo(
+    () => hearingDetails?.HearingList?.find((list) => ["SCHEDULED", "IN_PROGRESS"].includes(list?.status))?.hearingId,
     [hearingDetails?.HearingList]
   );
 
@@ -1645,31 +1696,74 @@ const AdmittedCases = () => {
   );
 
   const { data: ordersData } = useSearchOrdersService(
-    { criteria: { tenantId: tenantId, filingNumber } },
+    { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED" } },
     { tenantId },
     filingNumber + currentHearingId,
     Boolean(filingNumber),
     0
   );
 
+  const groupByHearingNumberDescending = (list) => {
+    const grouped = new Map();
+
+    list.forEach((item) => {
+      const match = item.hearingNumber.match(/^(.*HR)(\d+)$/);
+      if (!match) return;
+
+      const prefix = match[1];
+      const number = parseInt(match[2], 10);
+
+      if (!grouped.has(number)) {
+        grouped.set(number, { hearingNumber: `${prefix}${number}`, cases: [] });
+      }
+      grouped.get(number).cases.push(item);
+    });
+
+    return Array.from(grouped.values()).sort((a, b) => b.hearingNumber.match(/\d+$/) - a.hearingNumber.match(/\d+$/));
+  };
+
+  const groupNoticeOrderByHearingNumber = useMemo(() => {
+    if (!ordersData?.list) return [];
+
+    const noticeOrder = ordersData?.list?.filter((item) => item?.orderType === "NOTICE" && item?.hearingNumber);
+
+    const groupedByhearingNumber = groupByHearingNumberDescending(noticeOrder);
+    return groupedByhearingNumber;
+  }, [ordersData?.list]);
+
+  const groupSummonWarrantOrderByHearingNumber = useMemo(() => {
+    if (!ordersData?.list) return [];
+
+    const noticeOrder = ordersData?.list?.filter((item) => ["SUMMONS", "WARRANT"].includes(item?.orderType) && item?.hearingNumber);
+
+    const groupedByhearingNumber = groupByHearingNumberDescending(noticeOrder);
+    return groupedByhearingNumber;
+  }, [ordersData?.list]);
+
   const orderListFiltered = useMemo(() => {
     if (!ordersData?.list) return [];
 
-    const filteredOrders = ordersData?.list?.filter(
-      (item) => item.orderType === "NOTICE" && item?.status === "PUBLISHED" && item?.hearingNumber === currentHearingId
-    );
-
+    const filteredOrders = ordersData?.list?.filter((item) => item?.hearingNumber === currentHearingId);
     const sortedOrders = filteredOrders?.sort((a, b) => new Date(b.auditDetails.createdTime) - new Date(a.auditDetails.createdTime));
 
     // Group by partyIndex
     const groupedOrders = sortedOrders?.reduce((acc, item) => {
-      const partyIndex = item?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex;
-
-      if (partyIndex !== undefined) {
-        acc[partyIndex] = acc[partyIndex] || [];
-        acc[partyIndex].push(item);
+      if (item?.orderCategory === "COMPOSITE") {
+        const compositeItems = item?.compositeItems?.filter((item) => item?.orderType === "NOTICE");
+        compositeItems.forEach((itemDetails) => {
+          const partyIndex = itemDetails?.orderSchema?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex;
+          if (partyIndex !== undefined) {
+            acc[partyIndex] = acc[partyIndex] || [];
+            acc[partyIndex].push(item);
+          }
+        });
+      } else {
+        const partyIndex = item?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex;
+        if (partyIndex !== undefined) {
+          acc[partyIndex] = acc[partyIndex] || [];
+          acc[partyIndex].push(item);
+        }
       }
-
       return acc;
     }, {});
 
@@ -1681,7 +1775,14 @@ const AdmittedCases = () => {
 
     return Object.entries(orderListFiltered)
       ?.map(([partyIndex, orders]) => {
-        const partyName = orders[0]?.orderDetails?.parties?.[0]?.partyName || "";
+        const firstOrder = orders?.[0];
+        const partyName =
+          firstOrder?.orderCategory === "COMPOSITE"
+            ? firstOrder?.compositeItems?.find(
+                (item) =>
+                  item?.orderType === "NOTICE" && item?.orderSchema?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex === partyIndex
+              )?.orderSchema?.orderDetails?.parties?.[0]?.partyName
+            : firstOrder?.orderDetails?.parties?.[0]?.partyName;
         return {
           partyIndex,
           partyName,
@@ -1753,7 +1854,10 @@ const AdmittedCases = () => {
             criteria: { filingNumber, applicationNumber: "", cnrNumber, status: OrderWorkflowState.DRAFT_IN_PROGRESS, hearingNumber: hearingNumber },
             pagination: { limit: 1, offset: 0 },
           });
-          if (orderData?.orderType === "NOTICE") {
+          if (
+            (orderData?.orderCategory === "COMPOSITE" && orderData?.compositeItems?.some((item) => item?.orderType === "NOTICE")) ||
+            orderData?.orderType === "NOTICE"
+          ) {
             history.push(`/digit-ui/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${orderData.orderNumber}`, {
               caseId: caseId,
               tab: "Orders",
@@ -1788,6 +1892,8 @@ const AdmittedCases = () => {
             statuteSection: {
               tenantId: tenantId,
             },
+            orderTitle: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+            orderCategory: "INTERMEDIATE",
             orderType: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
             status: "",
             isActive: true,
@@ -1855,6 +1961,10 @@ const AdmittedCases = () => {
     history.push(`/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}`);
   };
 
+  const handleSubmitDocuments = () => {
+    history.push(`/digit-ui/citizen/submissions/submit-document?filingNumber=${filingNumber}`);
+  };
+
   const handleCitizenAction = (option) => {
     if (option.value === "RAISE_APPLICATION") {
       history.push(`/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}`);
@@ -1881,6 +1991,8 @@ const AdmittedCases = () => {
           statuteSection: {
             tenantId,
           },
+          orderTitle: "REFERRAL_CASE_TO_ADR",
+          orderCategory: "INTERMEDIATE",
           orderType: "REFERRAL_CASE_TO_ADR",
           status: "",
           isActive: true,
@@ -1925,6 +2037,8 @@ const AdmittedCases = () => {
           statuteSection: {
             tenantId,
           },
+          orderTitle: "MANDATORY_SUBMISSIONS_RESPONSES",
+          orderCategory: "INTERMEDIATE",
           orderType: "MANDATORY_SUBMISSIONS_RESPONSES",
           status: "",
           isActive: true,
@@ -1981,19 +2095,24 @@ const AdmittedCases = () => {
     if (history.location?.state?.orderObj) {
       history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Orders`);
     } else {
-      setShowOrderReviewModal(false);
+      if (showOrderReviewModal) setShowOrderReviewModal(false);
+      if (showNotificationModal) setShowNotificationModal(false);
     }
   };
 
-  const handleExtensionRequest = (orderNumber) => {
-    history.push(
-      `/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&isExtension=true&litigant=${currentOrder?.litigant}&litigantIndId=${currentOrder?.litigantIndId}`
-    );
+  const handleExtensionRequest = (orderNumber, itemId, litigant, litigantIndId) => {
+    let url = `/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&isExtension=true&litigant=${
+      currentOrder?.litigant || litigant
+    }&litigantIndId=${currentOrder?.litigantIndId || litigantIndId}`;
+    if (itemId) url += `&itemId=${itemId}`;
+    history.push(url);
   };
-  const handleSubmitDocument = (orderNumber) => {
-    history.push(
-      `/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&litigant=${currentOrder?.litigant}&litigantIndId=${currentOrder?.litigantIndId}`
-    );
+  const handleSubmitDocument = (orderNumber, itemId, litigant, litigantIndId) => {
+    let url = `/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&litigant=${
+      currentOrder?.litigant || litigant
+    }&litigantIndId=${currentOrder?.litigantIndId || litigantIndId}`;
+    if (itemId) url += `&itemId=${itemId}`;
+    history.push(url);
   };
 
   const openHearingModule = () => {
@@ -2021,6 +2140,8 @@ const AdmittedCases = () => {
         statuteSection: {
           tenantId,
         },
+        orderTitle: "SCHEDULE_OF_HEARING_DATE",
+        orderCategory: "INTERMEDIATE",
         orderType: "SCHEDULE_OF_HEARING_DATE",
         status: "",
         isActive: true,
@@ -2110,14 +2231,16 @@ const AdmittedCases = () => {
     [t, userRoles]
   );
 
+  // outcome always null unless case went on final stage
   const showActionBar = useMemo(
     () =>
       (primaryAction.action ||
         secondaryAction.action ||
         tertiaryAction.action ||
         ([CaseWorkflowState.PENDING_NOTICE, CaseWorkflowState.PENDING_RESPONSE].includes(caseDetails?.status) && !isCitizen)) &&
+      !caseDetails?.outcome &&
       !isCourtRoomManager,
-    [caseDetails, primaryAction.action, secondaryAction.action, tertiaryAction.action, isCitizen]
+    [primaryAction.action, secondaryAction.action, tertiaryAction.action, caseDetails?.status, caseDetails?.outcome, isCitizen, isCourtRoomManager]
   );
 
   const handleOpenSummonNoticeModal = async (partyIndex) => {
@@ -2130,6 +2253,18 @@ const AdmittedCases = () => {
           },
         },
       });
+    }
+  };
+
+  const handleAllNoticeGeneratedForHearing = async (hearingNumber) => {
+    if (hearingNumber) {
+      history.push(`${path}?filingNumber=${filingNumber}&caseId=${caseId}&taskOrderType=NOTICE&hearingId=${hearingNumber}&tab=${config?.label}`);
+    }
+  };
+
+  const handleAllSummonWarrantGeneratedForHearing = async (hearingNumber) => {
+    if (hearingNumber) {
+      history.push(`${path}?filingNumber=${filingNumber}&caseId=${caseId}&taskOrderType=SUMMONS&hearingId=${hearingNumber}&tab=${config?.label}`);
     }
   };
 
@@ -2319,7 +2454,50 @@ const AdmittedCases = () => {
           )}
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          {noticeFailureCount?.map(
+          {groupSummonWarrantOrderByHearingNumber?.map((orders, index) => (
+            <React.Fragment>
+              {userType === "employee" && orders?.cases?.length > 0 && (
+                <div key={orders?.hearingNumber} className="notice-failed-notification" style={styles.container}>
+                  <div className="notice-failed-icon" style={styles.icon}>
+                    <InfoIconRed style={styles.icon} />
+                  </div>
+                  <p className="notice-failed-text" style={styles.text}>
+                    {`${t("SUMMON_WARRANT_FOR")} ${
+                      currentHearingId === orders?.hearingNumber
+                        ? t("CURRENT_HEARING") + " (" + orders?.hearingNumber + ")"
+                        : t("PREVIOUS_HEARING") + " (" + orders?.hearingNumber + ")"
+                    }, `}
+                    <span onClick={() => handleAllSummonWarrantGeneratedForHearing(orders?.hearingNumber)} className="click-here" style={styles.link}>
+                      {t("NOTICE_CLICK_HERE")}
+                    </span>
+                  </p>
+                </div>
+              )}
+            </React.Fragment>
+          ))}
+
+          {groupNoticeOrderByHearingNumber?.map((orders, index) => (
+            <React.Fragment>
+              {userType === "employee" && orders?.cases?.length > 0 && (
+                <div key={orders?.hearingNumber} className="notice-failed-notification" style={styles.container}>
+                  <div className="notice-failed-icon" style={styles.icon}>
+                    <InfoIconRed style={styles.icon} />
+                  </div>
+                  <p className="notice-failed-text" style={styles.text}>
+                    {`${t("NOTICE_GENERATED_FOR")} ${
+                      currentHearingId === orders?.hearingNumber
+                        ? t("CURRENT_HEARING") + " (" + orders?.hearingNumber + ")"
+                        : t("PREVIOUS_HEARING") + " (" + orders?.hearingNumber + ")"
+                    }, `}
+                    <span onClick={() => handleAllNoticeGeneratedForHearing(orders?.hearingNumber)} className="click-here" style={styles.link}>
+                      {t("NOTICE_CLICK_HERE")}
+                    </span>
+                  </p>
+                </div>
+              )}
+            </React.Fragment>
+          ))}
+          {/* {noticeFailureCount?.map(
             ({ partyIndex, partyName, failureCount }, index) =>
               failureCount > 0 &&
               !isCaseAdmitted &&
@@ -2336,7 +2514,7 @@ const AdmittedCases = () => {
                   </p>
                 </div>
               )
-          )}
+          )} */}
         </div>
 
         <CustomCaseInfoDiv t={t} data={caseBasicDetails} column={6} />
@@ -2401,24 +2579,35 @@ const AdmittedCases = () => {
             </div>
           )}
           {isCitizen && config?.label === "Submissions" && (
-            <div style={{ display: "flex", gap: "10px" }}>
+            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
               {showMakeSubmission && (
                 <div
                   onClick={handleMakeSubmission}
                   style={{ fontWeight: 500, fontSize: "16px", lineHeight: "20px", color: "#0A5757", cursor: "pointer" }}
                 >
-                  {t("MAKE_SUBMISSION")}
+                  {t("MAKE_APPLICATION")}
                 </div>
               )}
 
               {/* <div style={{ fontWeight: 500, fontSize: "16px", lineHeight: "20px", color: "#0A5757", cursor: "pointer" }}>
                 {t("DOWNLOAD_ALL_LINK")}
               </div> */}
+              {showMakeSubmission && (
+                <div
+                  onClick={handleSubmitDocuments}
+                  style={{ fontWeight: 500, fontSize: "16px", lineHeight: "20px", color: "#0A5757", cursor: "pointer" }}
+                >
+                  {t("SUBMIT_DOCUMENTS")}
+                </div>
+              )}
             </div>
           )}
         </div>
       )}
-      <div className="inbox-search-wrapper" style={showActionBar && !isWorkFlowFetching ? { marginBottom: "56px" } : {}}>
+      <div
+        className={`inbox-search-wrapper ${activeTab === "Orders" && "orders-tab-inobox-wrapper"}`}
+        style={showActionBar && !isWorkFlowFetching ? { marginBottom: "56px" } : {}}
+      >
         {/* Pass defaultValues as props to InboxSearchComposer */}
         <InboxSearchComposer
           key={`${config?.label}-${updateCounter}`}
@@ -2444,6 +2633,7 @@ const AdmittedCases = () => {
             caseStatus={caseStatus}
             extensionApplications={extensionApplications}
             productionOfDocumentApplications={productionOfDocumentApplications}
+            submitBailDocumentsApplications={submitBailDocumentsApplications}
           />
         </div>
       )}
@@ -2479,6 +2669,7 @@ const AdmittedCases = () => {
           productionOfDocumentApplications={productionOfDocumentApplications}
           caseStatus={caseStatus}
           handleOrdersTab={handleOrdersTab}
+          submitBailDocumentsApplications={submitBailDocumentsApplications}
         />
       )}
       {showHearingTranscriptModal && (
@@ -2514,38 +2705,40 @@ const AdmittedCases = () => {
       {toast && toastDetails && (
         <Toast error={toastDetails?.isError} label={t(toastDetails?.message)} onClose={() => setToast(false)} style={{ maxWidth: "670px" }} />
       )}
-      {showActionBar && !isWorkFlowFetching && (
-        <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
-          <div style={{ width: "fit-content", display: "flex", gap: 20 }}>
-            {currentHearingStatus === HearingWorkflowState.SCHEDULED && tertiaryAction.action && (
-              <Button className="previous-button" variation="secondary" label={t(tertiaryAction.label)} onButtonClick={onSaveDraft} />
-            )}
-            {primaryAction && (
-              <SubmitBar
-                label={t(isPendingNoticeStatus ? "ISSUE_BNSS_NOTICE" : primaryAction?.label)}
-                submit="submit"
-                disabled={""}
-                onSubmit={onSubmit}
+      {showActionBar &&
+        !isWorkFlowFetching &&
+        ((currentHearingStatus === HearingWorkflowState.SCHEDULED && tertiaryAction.action) || primaryAction?.label || secondaryAction.action) && (
+          <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
+            <div style={{ width: "fit-content", display: "flex", gap: 20 }}>
+              {currentHearingStatus === HearingWorkflowState.SCHEDULED && tertiaryAction.action && (
+                <Button className="previous-button" variation="secondary" label={t(tertiaryAction.label)} onButtonClick={onSaveDraft} />
+              )}
+              {primaryAction?.label && (
+                <SubmitBar
+                  label={t(isPendingNoticeStatus ? "ISSUE_BNSS_NOTICE" : primaryAction?.label)}
+                  submit="submit"
+                  disabled={""}
+                  onSubmit={onSubmit}
+                />
+              )}
+            </div>
+            {secondaryAction.action && (
+              <Button
+                className="previous-button"
+                variation="secondary"
+                style={{
+                  border: "none",
+                  marginLeft: 0,
+                  fontSize: 16,
+                  fontWeight: 700,
+                  color: secondaryAction.action === "REJECT" && "#BB2C2F",
+                }}
+                label={t(secondaryAction.label)}
+                onButtonClick={onSendBack}
               />
             )}
-          </div>
-          {secondaryAction.action && (
-            <Button
-              className="previous-button"
-              variation="secondary"
-              style={{
-                border: "none",
-                marginLeft: 0,
-                fontSize: 16,
-                fontWeight: 700,
-                color: secondaryAction.action === "REJECT" && "#BB2C2F",
-              }}
-              label={t(secondaryAction.label)}
-              onButtonClick={onSendBack}
-            />
-          )}
-        </ActionBar>
-      )}
+          </ActionBar>
+        )}
       {isOpenDCA && <DocumentModal config={dcaConfirmModalConfig} />}
 
       {showModal && (
@@ -2565,7 +2758,7 @@ const AdmittedCases = () => {
           handleScheduleNextHearing={handleScheduleNextHearing}
           caseAdmitLoader={caseAdmitLoader}
           caseDetails={caseDetails}
-          isAdmissionHearingAvailable={Boolean(currentHearingId)}
+          isAdmissionHearingAvailable={Boolean(currentHearingAdmissionHearing)}
           setOpenAdmitCaseModal={setOpenAdmitCaseModal}
           delayCondonationData={delayCondonationData}
           hearingDetails={hearingDetails}
@@ -2623,6 +2816,15 @@ const AdmittedCases = () => {
         />
       )}
       {showVoidModal && <DocumentModal config={voidModalConfig} />}
+      {showNotificationModal && (
+        <PublishedNotificationModal
+          t={t}
+          notification={currentNotification}
+          handleDownload={handleDownload}
+          filingNumber={filingNumber}
+          handleOrdersTab={handleOrdersTab}
+        />
+      )}
     </div>
   );
 };

@@ -1,10 +1,26 @@
 import React from "react";
 import Modal from "./Modal";
-import { CloseSvg } from "@egovernments/digit-ui-react-components";
+import { CloseSvg, TextArea } from "@egovernments/digit-ui-react-components";
 import SelectCustomNote from "./SelectCustomNote";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
-function SendCaseBackModal({ totalErrors, onCancel, onSubmit, t, heading, type, actionCancelLabel, actionSaveLabel, handleCloseModal }) {
+function SendCaseBackModal({
+  comment,
+  setComment,
+  totalErrors,
+  onCancel,
+  onSubmit,
+  t,
+  heading,
+  type,
+  actionCancelLabel,
+  actionSaveLabel,
+  handleCloseModal,
+}) {
+  const handleChange = (event) => {
+    setComment(event.target.value);
+  };
+
   const Heading = (props) => {
     return <h1 className="heading-m">{props.label}</h1>;
   };
@@ -15,6 +31,9 @@ function SendCaseBackModal({ totalErrors, onCancel, onSubmit, t, heading, type, 
         <CloseSvg />
       </div>
     );
+  };
+  const textAreaHeader = {
+    registerCase: t("COMMENTS_FOR_JUDGE"),
   };
   const subtexts = {
     registerCase: t("CS_NO_ERROR_MARKED"),
@@ -54,15 +73,23 @@ function SendCaseBackModal({ totalErrors, onCancel, onSubmit, t, heading, type, 
       className="case-types"
     >
       <div style={{ padding: "16px 24px" }}>
-        <SelectCustomNote
-          config={nodeConfig}
-          t={t}
-          onClick={() => {
-            handleCloseModal ? handleCloseModal() : onCancel();
-          }}
-        />
+        <div>
+          <SelectCustomNote
+            config={nodeConfig}
+            t={t}
+            onClick={() => {
+              handleCloseModal ? handleCloseModal() : onCancel();
+            }}
+          />
+        </div>
+        <p>{subtexts[type]}</p>
+        {type === "registerCase" && (
+          <React.Fragment>
+            <p>{textAreaHeader[type]}</p>
+            <TextArea style={{ marginBottom: "0px" }} name={t("COMMENTS_FOR_JUDGE")} value={comment} onChange={handleChange}></TextArea>
+          </React.Fragment>
+        )}
       </div>
-      <p style={{ padding: "0px 25px" }}>{subtexts[type]}</p>
     </Modal>
   );
 }

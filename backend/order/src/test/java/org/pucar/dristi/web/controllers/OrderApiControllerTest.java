@@ -152,6 +152,96 @@ class OrderApiControllerTest {
     }
 
     @Test
+    void testOrderV2AddItem_Success() {
+        // Mock OrderService response
+        Order expectedOrder = new Order();
+        when(orderRegistrationService.addItem(any(OrderRequest.class)))
+                .thenReturn(expectedOrder);
+
+        // Mock ResponseInfoFactory response
+        ResponseInfo expectedResponseInfo = new ResponseInfo();
+        when(responseInfoFactory.createResponseInfoFromRequestInfo(any(RequestInfo.class), any(Boolean.class), anyString()))
+                .thenReturn(expectedResponseInfo);
+
+        // Create mock OrderRequest
+        OrderRequest requestBody = new OrderRequest();
+        requestBody.setRequestInfo(new RequestInfo());
+
+        // Perform POST request
+        ResponseEntity<OrderResponse> response = controller.orderV2addItem(requestBody);
+
+        // Verify response status and content
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        OrderResponse actualResponse = response.getBody();
+        assertNotNull(actualResponse);
+        assertEquals(expectedOrder, actualResponse.getOrder());
+        assertEquals(expectedResponseInfo, actualResponse.getResponseInfo());
+    }
+
+    @Test
+    void testOrderV2RemoveItem_Success() {
+        // Mock OrderService response
+        Order expectedOrder = new Order();
+        when(orderRegistrationService.removeItem(any(RemoveItemRequest.class)))
+                .thenReturn(expectedOrder);
+
+        // Mock ResponseInfoFactory response
+        ResponseInfo expectedResponseInfo = new ResponseInfo();
+        when(responseInfoFactory.createResponseInfoFromRequestInfo(any(RequestInfo.class), any(Boolean.class), anyString()))
+                .thenReturn(expectedResponseInfo);
+
+        // Create mock RemoveItemRequest
+        RemoveItemRequest requestBody = new RemoveItemRequest();
+        requestBody.setRequestInfo(new RequestInfo());
+
+        // Perform POST request
+        ResponseEntity<OrderResponse> response = controller.orderV2RemoveItem(requestBody);
+
+        // Verify response status and content
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        OrderResponse actualResponse = response.getBody();
+        assertNotNull(actualResponse);
+        assertEquals(expectedOrder, actualResponse.getOrder());
+        assertEquals(expectedResponseInfo, actualResponse.getResponseInfo());
+    }
+
+    @Test
+    void testOrderV2AddItem_InvalidRequest() {
+        // Prepare invalid request
+        OrderRequest requestBody = new OrderRequest();  // Missing required fields
+
+        // Expected validation error
+        when(orderRegistrationService.addItem(requestBody)).thenThrow(new IllegalArgumentException("Invalid add item request"));
+
+        // Perform POST request
+        try {
+            controller.orderV2addItem(requestBody);
+            fail("Expected exception was not thrown");
+        } catch (Exception e) {
+            assertInstanceOf(IllegalArgumentException.class, e);
+            assertEquals("Invalid add item request", e.getMessage());
+        }
+    }
+
+    @Test
+    void testOrderV2RemoveItem_InvalidRequest() {
+        // Prepare invalid request
+        RemoveItemRequest requestBody = new RemoveItemRequest();  // Missing required fields
+
+        // Expected validation error
+        when(orderRegistrationService.removeItem(requestBody)).thenThrow(new IllegalArgumentException("Invalid remove item request"));
+
+        // Perform POST request
+        try {
+            controller.orderV2RemoveItem(requestBody);
+            fail("Expected exception was not thrown");
+        } catch (Exception e) {
+            assertInstanceOf(IllegalArgumentException.class, e);
+            assertEquals("Invalid remove item request", e.getMessage());
+        }
+    }
+
+    @Test
     void testOrderV1CreatePost_InvalidRequest() throws Exception {
         // Prepare invalid request
         OrderRequest requestBody = new OrderRequest();  // Missing required fields
@@ -246,5 +336,4 @@ class OrderApiControllerTest {
             assertEquals("Invalid request", e.getMessage());
         }
     }
-
 }

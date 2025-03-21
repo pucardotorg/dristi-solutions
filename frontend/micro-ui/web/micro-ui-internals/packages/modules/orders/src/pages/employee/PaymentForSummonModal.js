@@ -218,7 +218,23 @@ const PaymentForSummonModal = ({ path }) => {
     Boolean(filteredTasks?.[0]?.orderId)
   );
 
-  const orderType = useMemo(() => orderData?.list?.[0]?.orderType, [orderData]);
+  const compositeItem = useMemo(
+    () => orderData?.list?.[0]?.compositeItems?.find((item) => item?.id === filteredTasks?.[0]?.additionalDetails?.itemId),
+    [orderData, filteredTasks]
+  );
+
+  const orderType = useMemo(
+    () => (orderData?.list?.[0]?.orderCategory === "COMPOSITE" ? compositeItem?.orderType : orderData?.list?.[0]?.orderType),
+    [orderData, compositeItem]
+  );
+
+  const partyIndex = useMemo(
+    () =>
+      orderData?.list?.[0]?.orderCategory === "COMPOSITE"
+        ? compositeItem?.orderSchema?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex
+        : orderData?.list?.[0]?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex,
+    [orderData, compositeItem]
+  );
 
   const { data: hearingsData, isLoading: isHearingLoading } = Digit.Hooks.hearings.useGetHearings(
     {
@@ -360,7 +376,7 @@ const PaymentForSummonModal = ({ path }) => {
                 stateSla: 3 * dayInMillisecond + todayDate,
                 additionalDetails: {
                   hearingId: hearingsData?.list?.[0]?.hearingId,
-                  partyIndex: orderType === "NOTICE" && orderData?.list?.[0]?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex,
+                  partyIndex: orderType === "NOTICE" && partyIndex,
                 },
                 tenantId,
               },
@@ -431,6 +447,7 @@ const PaymentForSummonModal = ({ path }) => {
             caseDetails: caseDetails,
             consumerCode: `${taskNumber}_POST_PROCESS`,
             orderData: orderData,
+            partyIndex: partyIndex,
             filteredTasks: filteredTasks,
             filingNumber: filingNumber,
             isCourtBillPaid: courtBillResponse?.Bill?.[0]?.status === "PAID",

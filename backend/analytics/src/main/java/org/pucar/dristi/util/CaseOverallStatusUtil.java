@@ -1,15 +1,22 @@
 package org.pucar.dristi.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.models.individual.Individual;
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.config.MdmsDataConfig;
 import org.pucar.dristi.kafka.Producer;
+import org.pucar.dristi.service.IndividualService;
+import org.pucar.dristi.service.SmsNotificationService;
 import org.pucar.dristi.util.HearingUtil;
 import org.pucar.dristi.util.OrderUtil;
 import org.pucar.dristi.web.models.*;
@@ -22,7 +29,10 @@ import org.pucar.dristi.web.models.Outcome;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -37,19 +47,33 @@ public class CaseOverallStatusUtil {
 	private final ObjectMapper mapper;
 	private final MdmsDataConfig mdmsDataConfig;
 	private List<org.pucar.dristi.web.models.CaseOverallStatusType> caseOverallStatusTypeList;
+	private final Util util;
+
+	private final CaseUtil caseUtil;
+
+	private final AdvocateUtil advocateUtil;
+
+	private final IndividualService individualService;
+
+	private final SmsNotificationService notificationService;
 
 
 	@Autowired
-	public CaseOverallStatusUtil(Configuration config, HearingUtil hearingUtil, OrderUtil orderUtil, Producer producer, ObjectMapper mapper, MdmsDataConfig mdmsDataConfig) {
+	public CaseOverallStatusUtil(Configuration config, HearingUtil hearingUtil, OrderUtil orderUtil, Producer producer, ObjectMapper mapper, MdmsDataConfig mdmsDataConfig, CaseUtil caseUtil, AdvocateUtil advocateUtil, IndividualService individualService, SmsNotificationService notificationService,Util util) {
 		this.config = config;
         this.hearingUtil = hearingUtil;
         this.orderUtil = orderUtil;
         this.producer = producer;
 		this.mapper = mapper;
         this.mdmsDataConfig = mdmsDataConfig;
+        this.caseUtil = caseUtil;
+        this.advocateUtil = advocateUtil;
+        this.individualService = individualService;
+        this.notificationService = notificationService;
+		this.util = util;
     }
 
-	public Object checkCaseOverAllStatus(String entityType, String referenceId, String status, String action, String tenantId, JSONObject requestInfo) {
+	public Object checkCaseOverAllStatus(String entityType, String referenceId, String status, String action, String tenantId, JSONObject requestInfo) throws JsonProcessingException {
 		try {
 			JSONObject request = new JSONObject();
 			request.put("RequestInfo", requestInfo);
@@ -72,18 +96,40 @@ public class CaseOverallStatusUtil {
 		}
 	}
 
-	private Object processOrderOverallStatus(JSONObject request, String referenceId, String status, String tenantId) throws InterruptedException {
-		Thread.sleep(config.getApiCallDelayInSeconds()*1000);
-		Object orderObject = orderUtil.getOrder(request, referenceId, config.getStateLevelTenantId());
-		String filingNumber = JsonPath.read(orderObject.toString(), FILING_NUMBER_PATH);
-		String orderType = JsonPath.read(orderObject.toString(), ORDER_TYPE_PATH);
-		publishToCaseOverallStatus(determineOrderStage(filingNumber, tenantId, orderType, status),request);
-		publishToCaseOutcome(determineCaseOutcome(filingNumber, tenantId, orderType, status, orderObject),request);
-		return orderObject;
-	}
+    private Object processOrderOverallStatus(JSONObject request, String referenceId, String status, String tenantId) throws InterruptedException {
+        Thread.sleep(config.getApiCallDelayInSeconds() * 1000);
+        Object orderObject = orderUtil.getOrder(request, referenceId, config.getStateLevelTenantId());
+        String filingNumber = JsonPath.read(orderObject.toString(), FILING_NUMBER_PATH);
+        String orderCategory = JsonPath.read(orderObject.toString(), ORDER_CATEGORY_PATH);
+        try {
+            if (COMPOSITE.equalsIgnoreCase(orderCategory)) {
 
-	private Object processCaseOverallStatus(JSONObject request, String referenceId, String status, String action, String tenantId) {
-		publishToCaseOverallStatus(determineCaseStage(referenceId,tenantId,status,action), request);
+                JSONArray compositeItems = util.constructArray(orderObject.toString(), ORDER_COMPOSITE_ITEMS_PATH);
+                if (compositeItems == null || compositeItems.length() == 0) {
+                    log.warn("No composite items found for filing number: {}", filingNumber);
+                    return orderObject;
+                }
+                for (int i = 0; i < compositeItems.length(); i++) {
+                    JSONObject compositeItem = compositeItems.getJSONObject(i);
+                    processIndividualOrder(request, filingNumber, tenantId, status, compositeItem.toString(), orderObject);
+                }
+
+            } else {
+                processIndividualOrder(request, filingNumber, tenantId, status, orderObject.toString(), orderObject);
+            }
+        } catch (JSONException e) {
+            log.error("Error processing JSON structure in composite items: {}, for filing number: {}", e.getMessage(), filingNumber, e);
+        } catch (PathNotFoundException e) {
+            log.error("Required JSON path not found in composite items: {} for filing number: {}", e.getMessage(), filingNumber, e);
+        } catch (Exception e) {
+            log.error("Unexpected error while processing composite items: {} for filing number: {}", e.getMessage(), filingNumber, e);
+        }
+        return orderObject;
+    }
+
+	private Object processCaseOverallStatus(JSONObject request, String referenceId, String status, String action, String tenantId) throws JsonProcessingException {
+		RequestInfo requestInfo = mapper.readValue(request.getJSONObject("RequestInfo").toString(), RequestInfo.class);
+		publishToCaseOverallStatus(determineCaseStage(referenceId,tenantId,status,action,requestInfo), request);
 		return null;
 	}
 
@@ -104,15 +150,62 @@ public class CaseOverallStatusUtil {
 		return hearingObject;
 	}
 
-	private org.pucar.dristi.web.models.CaseOverallStatus determineCaseStage(String filingNumber, String tenantId, String status, String action) {
+	private org.pucar.dristi.web.models.CaseOverallStatus determineCaseStage(String filingNumber, String tenantId, String status, String action,RequestInfo requestInfo) {
 		for (org.pucar.dristi.web.models.CaseOverallStatusType statusType : caseOverallStatusTypeList) {
 			log.info("CaseOverallStatusType MDMS action ::{} and status :: {}",statusType.getAction(),statusType.getState());
 			if (statusType.getAction().equalsIgnoreCase(action) && statusType.getState().equalsIgnoreCase(status)){
 				log.info("Creating CaseOverallStatus for action ::{} and status :: {}",statusType.getAction(),statusType.getState());
+				sendSmsForCaseStatusChange(filingNumber,requestInfo);
 				return new org.pucar.dristi.web.models.CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), statusType.getSubstage());
 			}
 		}
 		return null;
+	}
+
+	private void sendSmsForCaseStatusChange(String filingNumber,RequestInfo requestInfo) {
+		org.pucar.dristi.web.models.CaseSearchRequest caseSearchRequest = createCaseSearchRequest(requestInfo, filingNumber);
+		JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+		JsonNode litigants = caseUtil.getLitigants(caseDetails);
+		Set<String> individualIds = caseUtil.getIndividualIds(litigants);
+		JsonNode representatives = caseUtil.getRepresentatives(caseDetails);
+		Set<String> representativeIds = caseUtil.getAdvocateIds(representatives);
+
+		if(!representativeIds.isEmpty()){
+			representativeIds = advocateUtil.getAdvocate(requestInfo,representativeIds.stream().toList());
+		}
+		individualIds.addAll(representativeIds);
+		org.pucar.dristi.web.models.SmsTemplateData smsTemplateData = enrichSmsTemplateData(filingNumber,requestInfo);
+		List<String> phoneNumbers = callIndividualService(requestInfo, new ArrayList<>(individualIds));
+		for (String number : phoneNumbers) {
+			notificationService.sendNotification(requestInfo, smsTemplateData, CASE_STATUS_CHANGED_MESSAGE, number);
+		}
+	}
+
+	private SmsTemplateData enrichSmsTemplateData(String filingNumber,RequestInfo requestInfo) {
+		return SmsTemplateData.builder()
+				.efilingNumber(filingNumber)
+				.tenantId(requestInfo.getUserInfo().getTenantId())
+				.build();
+	}
+
+	private CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, String filingNumber) {
+		CaseSearchRequest caseSearchRequest = new CaseSearchRequest();
+		caseSearchRequest.setRequestInfo(requestInfo);
+		CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(filingNumber).defaultFields(false).build();
+		caseSearchRequest.addCriteriaItem(caseCriteria);
+		return caseSearchRequest;
+	}
+
+	private List<String> callIndividualService(RequestInfo requestInfo, List<String> individualIds) {
+
+		List<String> mobileNumber = new ArrayList<>();
+		for(String id : individualIds){
+			List<Individual> individuals = individualService.getIndividualsByIndividualId(requestInfo, id);
+			if(individuals.get(0).getMobileNumber() != null){
+				mobileNumber.add(individuals.get(0).getMobileNumber());
+			}
+		}
+		return mobileNumber;
 	}
 
 	private org.pucar.dristi.web.models.CaseOverallStatus determineHearingStage(String filingNumber, String tenantId, String hearingType, String action) {
@@ -212,4 +305,10 @@ public class CaseOverallStatusUtil {
 			log.error("Error in publishToCaseOutcome method", e);
 		}
 	}
+
+    private void processIndividualOrder(JSONObject request, String filingNumber, String tenantId, String status, String orderItemJson, Object orderObject) {
+        String orderType = JsonPath.read(orderItemJson, ORDER_TYPE_PATH);
+        publishToCaseOverallStatus(determineOrderStage(filingNumber, tenantId, orderType, status), request);
+        publishToCaseOutcome(determineCaseOutcome(filingNumber, tenantId, orderType, status, orderObject), request);
+    }
 }

@@ -18,15 +18,10 @@ import java.util.List;
 public class RescheduleRequestOptOutService {
 
     private final RescheduleRequestOptOutRepository optOutRepository;
-
     private final RescheduleRequestOptOutValidator optOutValidator;
-
     private final RescheduleRequestOptOutEnrichment optOutEnrichment;
-
     private final Producer producer;
-
     private final Configuration config;
-
     private final ReScheduleHearingService reScheduleHearingService;
 
     @Autowired

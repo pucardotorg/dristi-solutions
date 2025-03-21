@@ -39,7 +39,8 @@ public class CaseDiaryApiControllerTest {
 
     private CaseDiaryEntryRequest diaryEntryRequest;
     private CaseDiaryEntry diaryEntry;
-
+    private BulkDiaryEntryRequest bulkDiaryEntryRequest;
+    private List<CaseDiaryEntry> diaryEntries;
     @BeforeEach
     void setUp() {
         diaryEntryRequest = new CaseDiaryEntryRequest();
@@ -190,5 +191,30 @@ public class CaseDiaryApiControllerTest {
             caseDiaryApiController.getDiaryStoreId("tenantId","judgeId","diaryType",17000L,UUID.randomUUID());
         });
     }
+
+    @Test
+    void testBulkDiaryEntry_Success() {
+        bulkDiaryEntryRequest = BulkDiaryEntryRequest.builder()
+                .requestInfo(RequestInfo.builder().build())
+                .caseDiaryList(diaryEntries)
+                .build();
+        when(diaryEntryService.bulkDiaryEntry(any())).thenReturn(diaryEntries);
+        when(responseInfoFactory.createResponseInfoFromRequestInfo(any(), eq(true))).thenReturn(new ResponseInfo());
+
+        ResponseEntity<BulkDiaryEntryResponse> response = caseDiaryApiController.bulkDiary(bulkDiaryEntryRequest);
+
+        assertNotNull(response.getBody());
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+    }
+
+    @Test
+    void testBulkDiaryEntry_Failure() {
+        when(diaryEntryService.bulkDiaryEntry(bulkDiaryEntryRequest)).thenThrow(new RuntimeException("Error adding entry"));
+
+        assertThrows(RuntimeException.class, () -> {
+            caseDiaryApiController.bulkDiary(bulkDiaryEntryRequest);
+        });
+    }
+
 
 }

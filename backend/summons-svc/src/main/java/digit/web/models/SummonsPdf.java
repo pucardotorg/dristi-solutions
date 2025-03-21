@@ -96,4 +96,13 @@ public class SummonsPdf  {
 
     @JsonProperty("courtAddress")
     private String courtAddress;
+
+    @JsonProperty("infoPdfUrl")
+    private String infoPdfUrl;
+
+    @JsonProperty("lokAdalatUrl")
+    private String lokAdalatUrl;
+
+    @JsonProperty("helplineNumber")
+    private String helplineNumber;
 }

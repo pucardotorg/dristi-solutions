@@ -77,7 +77,7 @@ public class PendingTaskService {
                 updatePendingTaskForLitigant(joinCaseJson, pendingTaskNode);
             } else if (Objects.equals(topic, REPRESENTATIVE_JOIN_CASE_TOPIC) || Objects.equals(topic, REPRESENTATIVE_REPLACE_JOIN_CASE)) {
                 log.debug("operation=updatePendingTask, topic={}", topic);
-                updatePendingTaskForAdvocate(joinCaseJson, pendingTaskNode);
+                updatePendingTaskForAdvocate(joinCaseJson, pendingTaskNode, topic);
             }
             log.info("operation=updatePendingTask, result=SUCCESS, topic={}, filingNumber={}", topic, filingNumber);
         } catch (Exception e) {
@@ -107,7 +107,7 @@ public class PendingTaskService {
 
     }
 
-    public void updatePendingTaskForAdvocate(Map<String, Object> joinCaseJson, JsonNode pendingTaskNode) {
+    public void updatePendingTaskForAdvocate(Map<String, Object> joinCaseJson, JsonNode pendingTaskNode, String topic) {
         try {
             log.info("operation=updatePendingTaskForAdvocate, status=IN_PROGRESS");
             Map<String, Object> representative = (Map<String, Object>) joinCaseJson.get("representative");
@@ -118,7 +118,10 @@ public class PendingTaskService {
             String advocateUuid = getAdvocateUuid(requestInfo, representative);
 
             JsonNode hitsNode = pendingTaskNode.path("hits").path("hits");
-            List<JsonNode> updatedTasks = updatePendingTasksAdvocate(hitsNode, parties, advocateUuid, requestInfo);
+            List<JsonNode> updatedTasks = new ArrayList<>();
+            if(representative.get("isActive").equals(true)){
+                updatedTasks = updatePendingTasksAdvocate(hitsNode, parties, advocateUuid, requestInfo, topic);
+            }
             pendingTaskUtil.updatePendingTask(updatedTasks);
             log.info("operation=updatePendingTaskAdvocate, status=SUCCESS");
         } catch (Exception e){
@@ -127,11 +130,12 @@ public class PendingTaskService {
         }
     }
 
-    private List<JsonNode> updatePendingTasksAdvocate(JsonNode hitsNode, List<Map<String, Object>> parties, String advocateUuid, RequestInfo requestInfo) {
+    private List<JsonNode> updatePendingTasksAdvocate(JsonNode hitsNode, List<Map<String, Object>> parties, String advocateUuid, RequestInfo requestInfo, String topic) {
         List<JsonNode> filteredTasks = new ArrayList<>();
         for(Map<String, Object> litigant: parties) {
             List<JsonNode> tasks = filterPendingTaskAdvocate(hitsNode, Collections.singletonList(litigant.get("individualId").toString()));
-            if(litigant.get("isAdvocateReplacing").equals(true)) {
+            //verify the condition if updating one to one of all to one
+            if(topic.equals(REPRESENTATIVE_REPLACE_JOIN_CASE) && litigant.get("isActive").equals(true)) {
                 // Note: If the same pending task is displayed to multiple litigants, this logic will break.
                 replaceAssigneeToPendingTask(tasks, advocateUuid, requestInfo);
             } else {
@@ -218,7 +222,7 @@ public class PendingTaskService {
                     break;
                 }
             }
-            if (isAssigned) {
+            if (isAssigned && !dataNode.get("referenceId").asText().startsWith(MANUAL_PENDING_RESPONSE)) {
                 filteredTasks.add(hit);
             }
         }

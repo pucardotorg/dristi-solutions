@@ -13,16 +13,16 @@ import java.util.List;
 @Slf4j
 public class CalendarQueryBuilder {
 
-    @Autowired
-    private QueryBuilderHelper queryBuilderHelper;
-
-    private final String BASE_APPLICATION_QUERY = "SELECT jc.judge_id, jc.id, jc.rule_type, jc.date, jc.notes, jc.created_by,jc.last_modified_by,jc.created_time,jc.last_modified_time, jc.row_version ,jc.tenant_id ";
-
+    private static final String BASE_APPLICATION_QUERY = "SELECT jc.judge_id, jc.id, jc.rule_type, jc.date, jc.notes, jc.created_by,jc.last_modified_by,jc.created_time,jc.last_modified_time, jc.row_version ,jc.tenant_id ";
     private static final String FROM_TABLES = " FROM judge_calendar_rules jc ";
 
-    private final String ORDER_BY = " ORDER BY ";
+    private final QueryBuilderHelper queryBuilderHelper;
 
-    private final String LIMIT_OFFSET = " LIMIT ? OFFSET ?";
+    @Autowired
+    public CalendarQueryBuilder(QueryBuilderHelper queryBuilderHelper) {
+        this.queryBuilderHelper = queryBuilderHelper;
+    }
+
 
     public String getJudgeCalendarQuery(SearchCriteria searchCriteria, List<Object> preparedStmtList) {
 

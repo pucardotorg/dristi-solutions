@@ -330,6 +330,7 @@ const HomeView = () => {
         "PENDING_NOTICE",
         "PENDING_RESPONSE",
         "UNDER_SCRUTINY",
+        "CASE_DISMISSED",
       ];
       if (statusArray.includes(row?.original?.status)) {
         history.push(getRedirectUrl(row?.original?.status, row?.original?.id, row?.original?.filingNumber));

@@ -38,7 +38,8 @@ const DocViewerWrapper = ({
   docWidth = "262px",
   docHeight = "206px",
   preview,
-  pdfZoom= 1.1
+  pdfZoom = 1.1,
+  isLocalizationRequired = true,
 }) => {
   const Digit = window?.Digit || {};
   const { t } = useTranslation();
@@ -106,9 +107,10 @@ const DocViewerWrapper = ({
             overflow: "hidden",
             textOverflow: "ellipsis",
             margin: 8,
+            minWidth: "fit-content",
           }}
         >
-          {t(documentName)}
+          {isLocalizationRequired ? t(documentName) : documentName}
         </p>
       )}
     </div>

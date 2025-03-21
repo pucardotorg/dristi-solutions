@@ -16,6 +16,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.pucar.dristi.config.EPostConfiguration;
+import org.pucar.dristi.config.MdmsDataConfig;
 import org.pucar.dristi.model.*;
 import org.pucar.dristi.repository.EPostRepository;
 
@@ -50,6 +51,9 @@ class EpostUtilTest {
 
     @Mock
     private ObjectMapper objectMapper;
+
+    @Mock
+    private MdmsDataConfig mdmsDataConfig;
 
     @BeforeEach
     void setUp() {

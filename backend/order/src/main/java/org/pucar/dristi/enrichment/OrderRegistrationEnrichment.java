@@ -1,11 +1,17 @@
 package org.pucar.dristi.enrichment;
 
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.util.IdgenUtil;
+import org.pucar.dristi.web.models.CompositeItem;
 import org.pucar.dristi.web.models.OrderRequest;
 import org.springframework.stereotype.Component;
 
@@ -20,10 +26,12 @@ public class OrderRegistrationEnrichment {
 
     private IdgenUtil idgenUtil;
     private Configuration configuration;
+    private ObjectMapper objectMapper;
 
-    public OrderRegistrationEnrichment(IdgenUtil idgenUtil, Configuration configuration) {
+    public OrderRegistrationEnrichment(IdgenUtil idgenUtil, Configuration configuration, ObjectMapper objectMapper) {
         this.idgenUtil = idgenUtil;
         this.configuration = configuration;
+        this.objectMapper = objectMapper;
     }
 
     public void enrichOrderRegistration(OrderRequest orderRequest) {
@@ -64,9 +72,8 @@ public class OrderRegistrationEnrichment {
 
     public void enrichOrderRegistrationUponUpdate(OrderRequest orderRequest) {
         try {
-            // Enrich lastModifiedTime and lastModifiedBy in case of update
-            orderRequest.getOrder().getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
-            orderRequest.getOrder().getAuditDetails().setLastModifiedBy(orderRequest.getRequestInfo().getUserInfo().getUuid());
+
+            enrichAuditDetails(orderRequest);
 
             if (orderRequest.getOrder().getDocuments() != null) {
                 orderRequest.getOrder().getDocuments().forEach(document -> {
@@ -75,8 +82,38 @@ public class OrderRegistrationEnrichment {
                 });
             }
         } catch (Exception e) {
-            log.error("Error enriching advocate application upon update :: {}", e.toString());
+            log.error("Error enriching order application upon update :: {}", e.toString());
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in order enrichment service during order update process: " + e.getMessage());
+        }
+    }
+
+    public void enrichAuditDetails(OrderRequest orderRequest) {
+        // Enrich lastModifiedTime and lastModifiedBy in case of update
+        orderRequest.getOrder().getAuditDetails().setLastModifiedTime(System.currentTimeMillis());
+        orderRequest.getOrder().getAuditDetails().setLastModifiedBy(orderRequest.getRequestInfo().getUserInfo().getUuid());
+    }
+
+    public void enrichCompositeOrderItemIdOnAddItem(OrderRequest orderRequest) {
+        try {
+            if (orderRequest.getOrder().getCompositeItems() != null) {
+                Object compositeOrderItem = orderRequest.getOrder().getCompositeItems();
+                ArrayNode arrayNode = objectMapper.convertValue(compositeOrderItem, ArrayNode.class);
+
+                if (arrayNode != null && !arrayNode.isEmpty()) {
+                    for (int i = 0; i < arrayNode.size(); i++) {
+                        ObjectNode itemNode = (ObjectNode) arrayNode.get(i);
+                        if (!itemNode.has("id")) {
+                            String newId = UUID.randomUUID().toString();
+                            itemNode.put("id", newId);
+                            log.info("Enriched CompositeItem ID with new value: {}", newId);
+                        }
+                    }
+                }
+                orderRequest.getOrder().setCompositeItems(arrayNode);
+            }
+        } catch (Exception e) {
+            log.error("Error enriching composite order item id add item :: {}", e.toString());
+            throw new CustomException(ENRICHMENT_EXCEPTION, "Error in order enrichment service during add item: " + e.getMessage());
         }
     }
 }

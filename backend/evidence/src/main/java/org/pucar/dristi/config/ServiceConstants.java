@@ -41,6 +41,7 @@ public class ServiceConstants {
 	public static final String USER = "user";
 	public static final String COMMENT_ADD_ERR = "COMMENT_ADD_ERR";
 	public static final String COMPLAINANT = "COMPLAINANT";
+	public static final String RESPONDENT = "RESPONDENT";
 	public static final String ACCUSED = "ACCUSED";
 	public static final String COURT = "COURT";
 
@@ -89,5 +90,13 @@ public class ServiceConstants {
     public static final String APPLICATION_NUMBER_PATH = "$.application.applicationNumber";
 
     public static final String APPLICATION_STATUS_PATH = "$.application.status";
+
+	public static final String SUBMITTED = "SUBMITTED";
+	public static final String EVIDENCE_SUBMISSION_CODE = "EVIDENCE_SUBMISSION,EVIDENCE_SUBMISSION_MESSAGE_FILING,EVIDENCE_SUBMISSION_MESSAGE_OPPOSITE_PARTY";
+	public static final String EVIDENCE_SUBMISSION_MESSAGE_FILING = "EVIDENCE_SUBMISSION_MESSAGE_FILING";
+	public static final String EVIDENCE_SUBMISSION = "EVIDENCE_SUBMISSION";
+	public static final String EVIDENCE_SUBMISSION_MESSAGE_OPPOSITE_PARTY = "EVIDENCE_SUBMISSION_MESSAGE_OPPOSITE_PARTY";
+	public static final String DIRECT = "DIRECT";
+	public static final String APPLICATION = "APPLICATION";
 
 }

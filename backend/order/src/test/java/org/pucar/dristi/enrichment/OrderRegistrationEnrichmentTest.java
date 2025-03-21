@@ -1,5 +1,8 @@
 package org.pucar.dristi.enrichment;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
@@ -18,8 +21,7 @@ import java.util.Collections;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 class OrderRegistrationEnrichmentTest {
@@ -29,6 +31,9 @@ class OrderRegistrationEnrichmentTest {
 
     @Mock
     private Configuration configuration;
+
+    @Mock
+    private ObjectMapper objectMapper;
 
     @InjectMocks
     private OrderRegistrationEnrichment orderRegistrationEnrichment;
@@ -132,6 +137,36 @@ class OrderRegistrationEnrichmentTest {
         // When & Then
         CustomException exception = assertThrows(CustomException.class, () -> {
             orderRegistrationEnrichment.enrichOrderRegistrationUponUpdate(orderRequest);
+        });
+        assertEquals("ENRICHMENT_EXCEPTION", exception.getCode());
+    }
+
+    @Test
+    void testEnrichCompositeOrderItemIdOnAddItem_Success() {
+        OrderRequest orderRequest = createMockOrderRequest();
+        ArrayNode compositeItems = new ObjectMapper().createArrayNode();
+        compositeItems.add(new ObjectMapper().createObjectNode());
+        orderRequest.getOrder().setCompositeItems(compositeItems);
+
+        ObjectNode realObjectNode = new ObjectMapper().createObjectNode();
+        ArrayNode realArrayNode = new ObjectMapper().createArrayNode();
+        realArrayNode.add(realObjectNode);
+
+        when(objectMapper.convertValue(any(), eq(ArrayNode.class))).thenReturn(realArrayNode);
+
+        orderRegistrationEnrichment.enrichCompositeOrderItemIdOnAddItem(orderRequest);
+
+        assertTrue(realObjectNode.has("id"));
+        assertNotNull(realObjectNode.get("id").asText());
+    }
+
+
+    @Test
+    void testEnrichCompositeOrderItemIdOnAddItem_ThrowsCustomException() {
+        OrderRequest orderRequest = new OrderRequest();
+
+        CustomException exception = assertThrows(CustomException.class, () -> {
+            orderRegistrationEnrichment.enrichCompositeOrderItemIdOnAddItem(orderRequest);
         });
         assertEquals("ENRICHMENT_EXCEPTION", exception.getCode());
     }

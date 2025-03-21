@@ -55,14 +55,11 @@ public class Order {
     private String hearingNumber = null;
 
     @JsonProperty("orderNumber")
-    @Size(min = 24, max = 256)
     private String orderNumber = null;
 
     @JsonProperty("linkedOrderNumber")
-    @Size(min = 24, max = 256)
     private String linkedOrderNumber = null;
 
-    @NotNull
     @Valid
     private Long createdDate = null;
 
@@ -70,7 +67,6 @@ public class Order {
     private IssuedBy issuedBy = null;
 
     @JsonProperty("orderType")
-    @NotNull
     @Valid
     private String orderType = null;
 
@@ -78,40 +74,41 @@ public class Order {
     private String orderCategory = null;
 
     @JsonProperty("status")
-    @NotNull
     private String status = null;
 
     @JsonProperty("comments")
     private String comments = null;
 
     @JsonProperty("isActive")
-    @NotNull
     private Boolean isActive = null;
 
     @JsonProperty("statuteSection")
-    @Valid
     private StatuteSection statuteSection = null;
 
     @JsonProperty("documents")
-    @Valid
     private List<Document> documents = null;
 
     @JsonProperty("additionalDetails")
     private Object additionalDetails = null;
 
     @JsonProperty("auditDetails")
-    @Valid
     private AuditDetails auditDetails = null;
 
     @JsonProperty("workflow")
-    @Valid
     private Workflow workflow = null;
 
     @JsonProperty("orderDetails")
-    private Order orderDetails;
+    private Object orderDetails;
 
     @JsonProperty("taskDetails")
     private Task taskDetails;
+
+    @JsonProperty("compositeItems")
+    private Object compositeItems = null;
+
+    @JsonProperty("orderTitle")
+    private String orderTitle = null;
+
 
 
     public Order addApplicationIdsItem(String applicationNumbersItem) {
@@ -126,29 +123,4 @@ public class Order {
         this.documents.add(documentsItem);
         return this;
     }
-
-    @JsonProperty("createdDate")
-    public String getCreatedDate() {
-        String formattedDate = "";
-        if (null != this.createdDate) {
-            if (this.createdDate > 0) {
-                formattedDate = Instant.ofEpochMilli(this.createdDate)
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDate()
-                        .format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-            }
-        }
-        return formattedDate;
-
-    }
-
-    @JsonProperty("createdDate")
-    public void setCreatedDate(String date) throws ParseException {
-        try {
-            this.createdDate = Long.parseLong(date);
-        } catch (NumberFormatException e) {
-            this.createdDate = new java.text.SimpleDateFormat("dd/MM/yyyy").parse(date).getTime();
-        }
-    }
-
 }

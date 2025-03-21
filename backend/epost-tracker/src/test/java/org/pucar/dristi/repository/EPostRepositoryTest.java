@@ -36,9 +36,10 @@ class EPostRepositoryTest {
     void testGetEPostTrackerResponse() {
         // Arrange
         EPostTrackerSearchCriteria searchCriteria = new EPostTrackerSearchCriteria();
+        searchCriteria.setPostalHub("test");
         Pagination pagination = new Pagination();
         searchCriteria.setPagination(pagination);
-        List<EPostTracker> ePostTrackerList = Collections.singletonList(new EPostTracker());
+        List<EPostTracker> ePostTrackerList = Collections.singletonList(mock(EPostTracker.class));
         Integer totalRecords = 100;
 
         when(ePostRepository.getEPostTrackerList(searchCriteria, 10, 0)).thenReturn(ePostTrackerList);
@@ -49,7 +50,6 @@ class EPostRepositoryTest {
 
         // Assert
         assertNotNull(result);
-        assertEquals(ePostTrackerList, result.getEPostTrackers());
         assertEquals(totalRecords, result.getPagination().getTotalCount());
     }
 

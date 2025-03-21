@@ -194,6 +194,7 @@ const SelectUserTypeComponent = ({ t, config, onSelect, formData = {}, errors, f
                       config={input}
                       errorStyle={errors?.[input.name]}
                       disable={config?.disable}
+                      additionalWrapperClass={config?.disable && "radio-disabled"}
                     />
                   )}
                   {["date"].includes(input?.type) && (

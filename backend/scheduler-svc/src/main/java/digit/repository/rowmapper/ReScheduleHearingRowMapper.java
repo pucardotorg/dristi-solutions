@@ -12,14 +12,18 @@ import org.springframework.stereotype.Component;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collections;
 
 
 @Component
 @Slf4j
 public class ReScheduleHearingRowMapper implements RowMapper<ReScheduleHearing> {
+
+    private final ObjectMapper objectMapper;
+
     @Autowired
-    private ObjectMapper objectMapper;
+    public ReScheduleHearingRowMapper(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
 
     @Override
     public ReScheduleHearing mapRow(ResultSet resultSet, int rowNum) throws SQLException {

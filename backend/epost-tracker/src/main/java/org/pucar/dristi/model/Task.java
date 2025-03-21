@@ -82,6 +82,9 @@ public class Task {
     @JsonProperty("isActive")
     private Boolean isActive = null;
 
+    @JsonProperty("postalHub")
+    private String postalHub = null;
+
     @JsonProperty("documents")
     @Valid
     private List<Document> documents = new ArrayList<>();

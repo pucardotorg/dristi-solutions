@@ -3,18 +3,15 @@ const config = require("../config");
 const {
   search_case,
   search_order,
-  search_mdms,
-  search_hrms,
-  search_individual_uuid,
   search_sunbirdrc_credential_service,
   search_application,
   create_pdf,
   search_advocate,
 } = require("../api");
 const { renderError } = require("../utils/renderError");
-const { getAdvocates } = require("./getAdvocates");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
+const { extractOrderNumber } = require("../utils/extractOrderNumber");
 
 function getOrdinalSuffix(day) {
   if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
@@ -76,11 +73,11 @@ async function applicationSubmissionExtension(req, res, qrCode) {
     }
 
     // Search for HRMS details
-    const resHrms = await handleApiCall(
-      () => search_hrms(tenantId, "JUDGE", courtCase.courtId, requestInfo),
-      "Failed to query HRMS service"
-    );
-    const employee = resHrms?.data?.Employees[0];
+    // const resHrms = await handleApiCall(
+    //   () => search_hrms(tenantId, "JUDGE", courtCase.courtId, requestInfo),
+    //   "Failed to query HRMS service"
+    // );
+    // const employee = resHrms?.data?.Employees[0];
     // if (!employee) {
     //   renderError(res, "Employee not found", 404);
     // }
@@ -130,21 +127,37 @@ async function applicationSubmissionExtension(req, res, qrCode) {
       renderError(res, "Application not found", 404);
     }
 
-    const refOrderNumber = application?.additionalDetails?.formdata?.refOrderId;
+    const refOrderNumber = extractOrderNumber(
+      application?.additionalDetails?.formdata?.refOrderId
+    );
+
     const resOrder = await handleApiCall(
       () => search_order(tenantId, refOrderNumber, requestInfo, true),
       "Failed to query order service"
     );
 
-    const order = resOrder?.data?.list[0];
+    let order = resOrder?.data?.list[0];
     if (!order) {
       renderError(res, "Order not found", 404);
+    }
+
+    if (order.orderCategory === "COMPOSITE") {
+      const itemDetails = order.compositeItems?.find(
+        (item) => item.orderType === "MANDATORY_SUBMISSIONS_RESPONSES"
+      );
+      order = {
+        ...order,
+        orderType: itemDetails.orderType,
+        additionalDetails: itemDetails.orderSchema.additionalDetails,
+        orderDetails: itemDetails.orderSchema.orderDetails,
+      };
     }
 
     const documentSubmissionName = order?.orderDetails?.documentName || "";
     const documentId = order?.orderDetails?.documentType?.value | "";
 
     let barRegistrationNumber = "";
+    let advocateName = "";
     const advocateIndividualId =
       application?.applicationDetails?.advocateIndividualId;
     if (advocateIndividualId) {
@@ -157,15 +170,10 @@ async function applicationSubmissionExtension(req, res, qrCode) {
         (item) => item.isActive === true
       );
       barRegistrationNumber = advocateDetails?.barRegistrationNumber || "";
+      advocateName =
+        cleanName(advocateDetails?.additionalDetails?.username) || "";
     }
 
-    const onBehalfOfuuid = application?.onBehalfOf?.[0];
-    const allAdvocates = getAdvocates(courtCase);
-    const advocate = allAdvocates[onBehalfOfuuid]?.[0]?.additionalDetails
-      ?.advocateName
-      ? allAdvocates[onBehalfOfuuid]?.[0]
-      : {};
-    const advocateName = cleanName(advocate?.additionalDetails?.advocateName || "");
     const partyName = application?.additionalDetails?.onBehalOfName || "";
     const additionalComments =
       application?.applicationDetails?.additionalComments || "";

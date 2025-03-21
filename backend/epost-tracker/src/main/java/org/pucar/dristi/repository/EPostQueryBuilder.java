@@ -13,7 +13,7 @@ import java.util.List;
 @Slf4j
 public class EPostQueryBuilder {
 
-    private static final String BASE_APPLICATION_QUERY = "SELECT process_number, tenant_id, file_store_id, task_number, tracking_number, pincode, address, delivery_status, remarks, additional_details, row_version, booking_date, received_date, createdBy, lastModifiedBy, createdTime, lastModifiedTime ";
+    private static final String BASE_APPLICATION_QUERY = "SELECT process_number, tenant_id, file_store_id, task_number, tracking_number, pincode, address, delivery_status, remarks, additional_details, row_version, booking_date, received_date, postal_hub, createdBy, lastModifiedBy, createdTime, lastModifiedTime ";
 
     private static final String FROM_TABLES = " FROM dristi_epost_tracker ";
 
@@ -59,6 +59,11 @@ public class EPostQueryBuilder {
             addClauseIfRequired(query,preparedStmtList);
             query.append(" received_date = ? ");
             preparedStmtList.add(searchCriteria.getTrackingNumber());
+        }
+        if (searchCriteria.getPostalHub() != null) {
+            addClauseIfRequired(query,preparedStmtList);
+            query.append(" postal_hub = ? ");
+            preparedStmtList.add(searchCriteria.getPostalHub());
         }
         return query.toString();
     }

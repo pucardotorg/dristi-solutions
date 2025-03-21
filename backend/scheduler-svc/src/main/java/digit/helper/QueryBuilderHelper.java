@@ -3,6 +3,7 @@ package digit.helper;
 
 import org.springframework.stereotype.Component;
 
+import java.sql.Types;
 import java.util.List;
 
 @Component
@@ -28,10 +29,11 @@ public class QueryBuilderHelper {
     }
 
 
-    public void addToPreparedStatement(List<Object> preparedStmtList, List<String> ids) {
-        ids.forEach(id -> {
-            preparedStmtList.add(id);
-        });
+    public void addToPreparedStatement(List<Object> preparedStmtList,List<Integer> preparedStmtArgList, List<String> ids) {
+        preparedStmtList.addAll(ids);
+        for (int i = 0; i < ids.size(); i++) {
+            preparedStmtArgList.add(Types.VARCHAR);
+        }
     }
 
 

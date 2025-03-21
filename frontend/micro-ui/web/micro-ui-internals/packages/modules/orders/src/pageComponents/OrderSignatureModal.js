@@ -28,6 +28,7 @@ function OrderSignatureModal({
   saveOnsubmitLabel,
   setSignedDocumentUploadID,
   orderPdfFileStoreID,
+  businessOfDay
 }) {
   const [isSigned, setIsSigned] = useState(false);
   const { handleEsign, checkSignStatus } = useESign();
@@ -39,7 +40,7 @@ function OrderSignatureModal({
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${orderPdfFileStoreID}`;
   const { uploadDocuments } = useDocumentUpload();
   const name = "Signature";
-  const judgePlaceholder = "Signature";
+  const judgePlaceholder = order?.orderCategory === "COMPOSITE" ? "Fduy44hjb" : "Signature";
   const uploadModalConfig = useMemo(() => {
     return {
       key: "uploadSignature",
@@ -130,6 +131,7 @@ function OrderSignatureModal({
                   // setOpenAadharModal(true);
                   // setIsSigned(true);
                   localStorage.setItem("orderPDF", orderPdfFileStoreID);
+                  localStorage.setItem("businessOfTheDay", businessOfDay);
                   handleEsign(name, pageModule, orderPdfFileStoreID, judgePlaceholder);
                 }}
                 className={"aadhar-sign-in"}

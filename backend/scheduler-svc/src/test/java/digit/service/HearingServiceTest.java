@@ -160,13 +160,13 @@ public class HearingServiceTest {
         ScheduleHearingSearchCriteria criteria = new ScheduleHearingSearchCriteria();
         List<AvailabilityDTO> expectedDates = List.of(new AvailabilityDTO());
 
-        when(hearingRepository.getAvailableDatesOfJudges(criteria)).thenReturn(expectedDates);
+        when(hearingRepository.getHearingDayAndOccupiedBandwidthForDay(criteria)).thenReturn(expectedDates);
 
         List<AvailabilityDTO> result = hearingService.getAvailableDateForHearing(criteria);
 
         assertNotNull(result);
         assertEquals(expectedDates, result);
-        verify(hearingRepository, times(1)).getAvailableDatesOfJudges(criteria);
+        verify(hearingRepository, times(1)).getHearingDayAndOccupiedBandwidthForDay(criteria);
     }
 
 

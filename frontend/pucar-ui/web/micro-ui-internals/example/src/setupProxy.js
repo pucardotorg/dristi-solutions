@@ -102,12 +102,14 @@ module.exports = function (app) {
     "/case/case/v1/_search",
     "/case/*",
     "/order/*",
-    "/application/*" ,
+    "/application/*",
     "/order",
     "/e-sign-svc",
     "/ocr-service",
     "/lock-svc",
-    "/ab-diary"
+    "/ab-diary",
+    "/notification",
+    "/kerala-icops",
   ].forEach((location) => app.use(location, createProxy));
   ["/pb-egov-assets"].forEach((location) => app.use(location, assetsProxy));
   ["/mdms-v2/v2/_create"].forEach((location) => app.use(location, mdmsProxy));

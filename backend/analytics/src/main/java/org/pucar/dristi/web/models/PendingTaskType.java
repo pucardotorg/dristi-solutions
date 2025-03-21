@@ -49,6 +49,9 @@ public class PendingTaskType {
     @Valid
     private String workflowModule = null;
 
+    @JsonProperty("screenType")
+    private String screenType = null;
+
     @JsonProperty("closerAction")
     @Valid
     private List<String> closerAction = new ArrayList<>();

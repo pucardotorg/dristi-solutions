@@ -56,7 +56,7 @@ export const showDemandNoticeModal = ({ selected, setValue, formData, setError, 
     for (const key in formData) {
       switch (key) {
         case "dateOfService":
-          if (formData?.dateOfService && new Date(formData?.dateOfService).getTime() + 15 * 24 * 60 * 60 * 1000 > new Date().getTime()) {
+          if (formData?.dateOfService && new Date(formData?.dateOfService).getTime() + 16 * 24 * 60 * 60 * 1000 > new Date().getTime()) {
             setServiceOfDemandNoticeModal(true);
             setError("dateOfService", { message: " CS_SERVICE_DATE_ERROR_MSG" });
             setValue("dateOfAccrual", "");
@@ -70,7 +70,7 @@ export const showDemandNoticeModal = ({ selected, setValue, formData, setError, 
             clearErrors("dateOfService");
             let formattedDate = "";
             if (formData?.dateOfService) {
-              const milliseconds = new Date(formData?.dateOfService).getTime() + 15 * 24 * 60 * 60 * 1000;
+              const milliseconds = new Date(formData?.dateOfService).getTime() + 16 * 24 * 60 * 60 * 1000;
               const date = new Date(milliseconds);
               const year = date.getFullYear();
               const month = String(date.getMonth() + 1).padStart(2, "0");

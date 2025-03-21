@@ -46,6 +46,15 @@ public class Hearing {
     @Valid
     private String hearingId = null;
 
+    @JsonProperty("courtCaseNumber")
+    private String courtCaseNumber = null;
+
+    @JsonProperty("caseReferenceNumber")
+    private String caseReferenceNumber = null;
+
+    @JsonProperty("cmpNumber")
+    private String cmpNumber = null;
+
     @JsonProperty("filingNumber")
 
     private List<String> filingNumber = new ArrayList<>();
@@ -170,75 +179,75 @@ public class Hearing {
         return formattedDateTime;
     }
 
-    @JsonProperty("startTime")
-    public String getStartTime() {
-        return getFormattedDateTime(this.startTime, "dd/MM/yyyy HH:mm");
-    }
+//    @JsonProperty("startTime")
+//    public String getStartTime() {
+//        return getFormattedDateTime(this.startTime, "dd/MM/yyyy HH:mm");
+//    }
+//
+//    @JsonProperty("endTime")
+//    public String getEndTime() {
+//        return getFormattedDateTime(this.endTime, "dd/MM/yyyy HH:mm");
+//    }
 
-    @JsonProperty("endTime")
-    public String getEndTime() {
-        return getFormattedDateTime(this.endTime, "dd/MM/yyyy HH:mm");
-    }
-
-    @JsonProperty("filingDate")
-    public String getFilingDate() {
-        return getFormattedDateTime(this.filingDate, "dd/MM/yyyy");
-    }
-
-    @JsonProperty("registrationDate")
-    public String getRegistrationDate() {
-        return getFormattedDateTime(this.registrationDate, "dd/MM/yyyy");
-    }
-
-
-    public Long convertDateToLong(String dateTime, String pattern) throws ParseException {
-        return new java.text.SimpleDateFormat(pattern).parse(dateTime).getTime();
-    }
-
-    @JsonProperty("startTime")
-    public void setStartTime(String dateTime) throws ParseException {
-        try {
-            this.startTime = Long.parseLong(dateTime);
-        } catch (NumberFormatException e) {
-            this.startTime = convertDateToLong(dateTime, "dd/MM/yyyy HH:mm");
-        }
-    }
-
-    @JsonProperty("endTime")
-    public void setEndTime(String dateTime) throws ParseException {
-        try {
-            this.endTime = Long.parseLong(dateTime);
-        } catch (NumberFormatException e) {
-            this.endTime = convertDateToLong(dateTime, "dd/MM/yyyy HH:mm");
-        }
-    }
+//    @JsonProperty("filingDate")
+//    public String getFilingDate() {
+//        return getFormattedDateTime(this.filingDate, "dd/MM/yyyy");
+//    }
+//
+//    @JsonProperty("registrationDate")
+//    public String getRegistrationDate() {
+//        return getFormattedDateTime(this.registrationDate, "dd/MM/yyyy");
+//    }
 
 
-    @JsonProperty("filingDate")
-    public void setFilingDate(String date) throws ParseException {
-        try {
-            this.filingDate = Long.parseLong(date);
-        } catch (NumberFormatException e) {
-            this.filingDate = convertDateToLong(date, "dd/MM/yyyy");
-        }
-    }
+//    public Long convertDateToLong(String dateTime, String pattern) throws ParseException {
+//        return new java.text.SimpleDateFormat(pattern).parse(dateTime).getTime();
+//    }
 
-    @JsonProperty("registrationDate")
-    public void setRegistrationDate(String date) throws ParseException {
-        try {
-            this.registrationDate = Long.parseLong(date);
-        } catch (NumberFormatException e) {
-            this.registrationDate = convertDateToLong(date, "dd/MM/yyyy");
-        }
-    }
+//    @JsonProperty("startTime")
+//    public void setStartTime(String dateTime) throws ParseException {
+//        try {
+//            this.startTime = Long.parseLong(dateTime);
+//        } catch (NumberFormatException e) {
+//            this.startTime = convertDateToLong(dateTime, "dd/MM/yyyy HH:mm");
+//        }
+//    }
+//
+//    @JsonProperty("endTime")
+//    public void setEndTime(String dateTime) throws ParseException {
+//        try {
+//            this.endTime = Long.parseLong(dateTime);
+//        } catch (NumberFormatException e) {
+//            this.endTime = convertDateToLong(dateTime, "dd/MM/yyyy HH:mm");
+//        }
+//    }
 
-    @JsonProperty("filingDate")
-    public void setFilingDate(Long date) {
-        this.filingDate = date;
-    }
 
-    @JsonProperty("registrationDate")
-    public void setRegistrationDate(Long date) {
-        this.registrationDate = date;
-    }
+//    @JsonProperty("filingDate")
+//    public void setFilingDate(String date) throws ParseException {
+//        try {
+//            this.filingDate = Long.parseLong(date);
+//        } catch (NumberFormatException e) {
+//            this.filingDate = convertDateToLong(date, "dd/MM/yyyy");
+//        }
+//    }
+//
+//    @JsonProperty("registrationDate")
+//    public void setRegistrationDate(String date) throws ParseException {
+//        try {
+//            this.registrationDate = Long.parseLong(date);
+//        } catch (NumberFormatException e) {
+//            this.registrationDate = convertDateToLong(date, "dd/MM/yyyy");
+//        }
+//    }
+
+//    @JsonProperty("filingDate")
+//    public void setFilingDate(Long date) {
+//        this.filingDate = date;
+//    }
+//
+//    @JsonProperty("registrationDate")
+//    public void setRegistrationDate(Long date) {
+//        this.registrationDate = date;
+//    }
 }

@@ -699,7 +699,7 @@ const CustomReviewCardRow = ({
                     )
                   : null}
               </div>
-              {showFlagIcon && !(type === "image" && configKey === "litigentDetails" && name === "complainantDetails") && (
+              {showFlagIcon && (
                 <div
                   className="flag"
                   onClick={(e) => {
@@ -777,7 +777,7 @@ const CustomReviewCardRow = ({
         const addressDetails = extractValue(data, value);
         let address = [""];
         if (Array.isArray(addressDetails)) {
-          address = addressDetails.map(({ addressDetails }) => {
+          address = addressDetails.map(({ addressDetails, geoLocationDetails }) => {
             return {
               address:
                 typeof addressDetails === "string"
@@ -785,7 +785,11 @@ const CustomReviewCardRow = ({
                   : `${addressDetails?.locality || ""}, ${addressDetails?.city || ""}, ${addressDetails?.district || ""}, ${
                       addressDetails?.state || ""
                     } - ${addressDetails?.pincode || ""}`,
-              coordinates: addressDetails?.coordinates,
+              coordinates:
+                geoLocationDetails?.latitude && geoLocationDetails?.longitude
+                  ? { latitude: geoLocationDetails.latitude, longitude: geoLocationDetails.longitude }
+                  : null,
+              policeStation: geoLocationDetails?.policeStation?.name || null,
             };
           });
         } else {
@@ -797,7 +801,11 @@ const CustomReviewCardRow = ({
                   : `${addressDetails?.locality || ""}, ${addressDetails?.city || ""}, ${addressDetails?.district || ""}, ${
                       addressDetails?.state || ""
                     } - ${addressDetails?.pincode || ""}`,
-              coordinates: addressDetails?.coordinates,
+              coordinates:
+                addressDetails?.geoLocationDetails?.latitude && addressDetails?.geoLocationDetails?.longitude
+                  ? { latitude: addressDetails.geoLocationDetails.latitude, longitude: addressDetails.geoLocationDetails.longitude }
+                  : null,
+              policeStation: addressDetails?.geoLocationDetails?.policeStation?.name || null,
             },
           ];
         }
@@ -805,16 +813,41 @@ const CustomReviewCardRow = ({
         return (
           <div className={`address-main ${bgclassname}`} style={{ borderBottom: "1px #e8e8e8 solid" }}>
             <div className="address">
-              <div className="label">{t(label)}</div>
-              <div className={`value ${!isScrutiny ? "column" : ""}`}>
-                {address.map((item) => {
-                  return (
-                    <p>
-                      {item?.address}{" "}
-                      <LocationContent latitude={item?.coordinates?.latitude || 31.6160638} longitude={item?.coordinates?.longitude || 74.8978579} />
-                    </p>
-                  );
-                })}
+              <div className="address-container" style={{ display: "flex", flexDirection: "column", gap: "1rem", width: "100%" }}>
+                {address.map((item, index) => (
+                  <div key={index} className="address-block">
+                    <div
+                      className="row"
+                      style={{
+                        display: "flex",
+                        padding: "4px 0px",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <div className="label">{t("Address")}</div>
+                      <div className="value">
+                        <p style={{ marginBottom: "8px" }}>{item?.address}</p>
+                        <LocationContent
+                          latitude={item?.coordinates?.latitude || 31.6160638}
+                          longitude={item?.coordinates?.longitude || 74.8978579}
+                        />
+                      </div>
+                    </div>
+                    {item?.policeStation && (
+                      <div
+                        className="row"
+                        style={{
+                          display: "flex",
+                          padding: "4px 0px",
+                          justifyContent: "space-between",
+                        }}
+                      >
+                        <div className="label">{t("Police Station")}</div>
+                        <div className="value">{item?.policeStation}</div>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
 
               {showFlagIcon && (

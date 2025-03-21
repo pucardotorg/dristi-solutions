@@ -22,4 +22,5 @@ public class SmsTemplateData {
     private String submissionDate;
 
     private String cmpNumber;
+
 }
