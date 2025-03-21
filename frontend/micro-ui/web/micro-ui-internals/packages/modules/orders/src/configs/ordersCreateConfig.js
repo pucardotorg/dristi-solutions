@@ -4374,6 +4374,76 @@ export const configsAdmitDismissCase = [
   },
 ];
 
+export const replaceAdvocateConfig = [
+  {
+    body: [
+      {
+        label: "ADVOCATE_REPLACEMENT_GRANTED_OR_REJECTED",
+        isMandatory: true,
+        key: "replaceAdvocateStatus",
+        schemaKeyPath: "orderDetails.replaceAdvocateStatus",
+        transformer: "customDropdown",
+        type: "radio",
+        disable: true,
+        populators: {
+          name: "replaceAdvocateStatus",
+          optionsKey: "name",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          required: true,
+          isMandatory: true,
+          options: [
+            {
+              code: "GRANT",
+              name: "GRANT",
+            },
+            {
+              code: "REJECT",
+              name: "REJECT",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "reasonForWithdrawal",
+        schemaKeyPath: "orderDetails.reasonForWithdrawal",
+        transformer: "customTextArea",
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "BRIEF_SUMMARY_OF_REASONS_FOR_WITHDRAWAL",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "additionalComments",
+        schemaKeyPath: "orderDetails.additionalComments",
+        transformer: "customTextArea",
+        isMandatory: false,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "ADMIT_DISMISS_ADDITIONAL_COMMENTS",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+              isOptional: true,
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
+
 export const configsAdmitCase = [
   {
     body: [
