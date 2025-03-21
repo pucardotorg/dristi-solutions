@@ -1335,6 +1335,7 @@ public class CaseService {
             TaskJoinCase taskJoinCase = new TaskJoinCase();
             AdvocateDetails advocateDetails = new AdvocateDetails();
             advocateDetails.setAdvocateId(joinCaseData.getRepresentative().getAdvocateUUID());
+            advocateDetails.setRequestedDate(System.currentTimeMillis());
 
             List<ReplacementDetails> replacementDetailsList = new ArrayList<>();
 
