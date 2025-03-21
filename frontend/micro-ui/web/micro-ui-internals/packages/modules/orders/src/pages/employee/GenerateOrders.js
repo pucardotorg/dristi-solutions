@@ -37,6 +37,7 @@ import {
   configsAdmitCase,
   configsDismissCase,
   configsApproveRejectLitigantDetailsChange,
+  replaceAdvocateConfig,
 } from "../../configs/ordersCreateConfig";
 import { CustomAddIcon, CustomDeleteIcon, WarningInfoIconYellow } from "../../../../dristi/src/icons/svgIndex";
 import OrderReviewModal from "../../pageComponents/OrderReviewModal";
@@ -126,6 +127,7 @@ const configKeys = {
   ADMIT_CASE: configsAdmitCase,
   DISMISS_CASE: configsDismissCase,
   APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE: configsApproveRejectLitigantDetailsChange,
+  ADVOCATE_REPLACEMENT_APPROVAL: replaceAdvocateConfig,
 };
 
 function applyMultiSelectDropdownFix(setValue, formData, keys) {
