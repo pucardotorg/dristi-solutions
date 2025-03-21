@@ -14,6 +14,9 @@ import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
+import org.egov.common.models.individual.AdditionalFields;
+import org.egov.common.models.individual.Field;
+import org.egov.common.models.individual.Identifier;
 import org.egov.tracer.model.CustomException;
 import org.jetbrains.annotations.NotNull;
 import org.pucar.dristi.config.Configuration;
@@ -1334,9 +1337,16 @@ public class CaseService {
 
             JoinCaseTaskRequest taskJoinCase = new JoinCaseTaskRequest();
 
-            AdvocateDetails advocateDetails = new AdvocateDetails();
-            advocateDetails.setAdvocateId(joinCaseData.getRepresentative().getAdvocateUUID());
-            advocateDetails.setRequestedDate(System.currentTimeMillis());
+            List<Advocate> advocatesList = advocateUtil.fetchAdvocatesById(requestInfo, joinCaseData.getRepresentative().getAdvocateUUID());
+            Advocate joinCaseAdvocate = advocatesList.get(0);
+
+            List<Individual> individualsList = individualService.getIndividualsByIndividualId(requestInfo, joinCaseAdvocate.getIndividualId());
+            Individual individual = individualsList.get(0);
+
+            IndividualDetails individualDetails = enrichIndividualDetailsInJoinCaseTaskRequest(individual);
+            AdvocateDetails advocateDetails = enrichAdvocateDetailsInJoinCaseTaskRequest(individualDetails, joinCaseAdvocate, individual, joinCaseData);
+
+            taskJoinCase.setAdvocateDetails(advocateDetails);
 
             List<ReplacementDetails> replacementDetailsList = new ArrayList<>();
 
@@ -2592,6 +2602,53 @@ public class CaseService {
                 .createdBy(requestInfo.getUserInfo().getUuid())
                 .lastModifiedTime(System.currentTimeMillis())
                 .lastModifiedBy(requestInfo.getUserInfo().getUuid())
+                .build();
+    }
+
+    private AdvocateDetails enrichAdvocateDetailsInJoinCaseTaskRequest(IndividualDetails individualDetails, Advocate joinCaseAdvocate, Individual individual,
+                                                                        JoinCaseDataV2 joinCaseData){
+        return AdvocateDetails.builder()
+                .barRegistrationNumber(joinCaseAdvocate.getBarRegistrationNumber())
+                .advocateId(joinCaseData.getRepresentative().getAdvocateUUID())
+                .advocateUuid(individual.getUserUuid())
+                .mobileNumber(individual.getMobileNumber())
+                .requestedDate(System.currentTimeMillis())
+                .individualDetails(individualDetails)
+                .build();
+    }
+
+    private IndividualDetails enrichIndividualDetailsInJoinCaseTaskRequest(Individual individual) throws JsonProcessingException {
+        Identifier identifier = individual.getIdentifiers().get(0);
+        AdditionalFields additionalFields = individual.getAdditionalFields();
+
+        List<Field> fields = additionalFields.getFields();
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        String fileStoreId = null;
+        String filename = null;
+
+        for (Field field : fields) {
+            if ("identifierIdDetails".equals(field.getKey())) {
+                JsonNode jsonNode = objectMapper.readTree(field.getValue());
+                fileStoreId = jsonNode.has("fileStoreId") ? jsonNode.get("fileStoreId").asText() : null;
+                filename = jsonNode.has("filename") ? jsonNode.get("filename").asText() : null;
+                break;
+            }
+        }
+
+        AdvocateIdProof advocateIdProof = AdvocateIdProof.builder()
+                .fileStore(fileStoreId)
+                .name(identifier.getIdentifierType())
+                .fileName(identifier.getIdentifierType() + " Card")
+                .documentName(filename)
+                .build();
+
+        return IndividualDetails.builder()
+                .firstName(individual.getName().getGivenName())
+                .lastName(individual.getName().getFamilyName())
+                .middleName(individual.getName().getOtherNames())
+                .individualId(individual.getIndividualId())
+                .advocateIdProof(advocateIdProof)
                 .build();
     }
 }

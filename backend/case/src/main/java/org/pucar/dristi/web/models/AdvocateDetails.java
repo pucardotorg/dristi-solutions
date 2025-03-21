@@ -39,10 +39,4 @@ public class AdvocateDetails {
     @JsonProperty("individualDetails")
     @NotNull
     private IndividualDetails individualDetails;
-
-    @JsonProperty("Document")
-    private Document document;
-
-    @JsonProperty("individualId")
-    private String individualId;
 }
