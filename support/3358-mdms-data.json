@@ -639,7 +639,7 @@
                           {
                             "type": "text",
                             "label": "POLICE_STATION",
-                            "value": "policeStation.code",
+                            "value": "policeStation.name",
                             "isLocalizationRequired": true
                           },
                           {
