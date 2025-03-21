@@ -41,7 +41,6 @@ const AccessCodeValidation = ({ caseDetails, validationCode, setValidationCode, 
       <InfoCard
         variant={"default"}
         label={t("PLEASE_NOTE")}
-        additionalElements={{}}
         inline
         text={t("SIX_DIGIT_CODE_INFO")}
         textStyle={{}}
