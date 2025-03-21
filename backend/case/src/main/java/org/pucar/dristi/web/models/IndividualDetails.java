@@ -16,25 +16,21 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-class IndividualDetails {
-    @NotNull
+public class IndividualDetails {
+
     @JsonProperty("firstName")
     private String firstName;
 
-    @NotNull
     @JsonProperty("lastName")
     private String lastName;
 
-    @NotNull
     @JsonProperty("middleName")
     private String middleName;
 
-    @NotNull
     @JsonProperty("individualId")
     private String individualId;
 
-    @NotNull
-    @Valid
     @JsonProperty("advocateIdProof")
-    private List<AdvocateIdProof> advocateIdProof;
+    private AdvocateIdProof advocateIdProof;
+
 }

@@ -32,6 +32,7 @@ function OrderReviewModal({
   businessOfDay,
   updateOrder,
   setShowBulkModal,
+  setPrevOrder,
 }) {
   const [fileStoreId, setFileStoreID] = useState(null);
   const [fileName, setFileName] = useState();
@@ -185,11 +186,19 @@ function OrderReviewModal({
       setUpdateLoading(true);
       handleDocumentUpload(async (fileStoreId) => {
         if (fileStoreId) {
-          await updateOrder(order, OrderWorkflowAction.SUBMIT_BULK_E_SIGN, fileStoreId)
-            .then(() => {
+          const updatedOrder = {
+            ...order,
+            additionalDetails: {
+              ...order.additionalDetails,
+              businessOfTheDay: businessDay,
+            },
+          };
+          await updateOrder(updatedOrder, OrderWorkflowAction.SUBMIT_BULK_E_SIGN, fileStoreId)
+            .then((response) => {
               setShowReviewModal(false);
               setShowBulkModal(true);
               setUpdateLoading(false);
+              setPrevOrder(response?.order);
             })
             .catch((e) => {
               setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });

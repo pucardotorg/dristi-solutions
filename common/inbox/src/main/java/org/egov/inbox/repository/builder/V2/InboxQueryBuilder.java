@@ -1,19 +1,8 @@
 package org.egov.inbox.repository.builder.V2;
 
-import static org.egov.inbox.util.InboxConstants.BOOL_KEY;
-import static org.egov.inbox.util.InboxConstants.MUST_KEY;
-import static org.egov.inbox.util.InboxConstants.ORDER_KEY;
-import static org.egov.inbox.util.InboxConstants.QUERY_KEY;
-import static org.egov.inbox.util.InboxConstants.SORT_BY_CONSTANT;
-import static org.egov.inbox.util.InboxConstants.SORT_KEY;
-import static org.egov.inbox.util.InboxConstants.SORT_ORDER_CONSTANT;
-import static org.egov.inbox.util.InboxConstants.SOURCE_KEY;
+import java.util.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.egov.inbox.util.ErrorConstants;
 import org.egov.inbox.util.MDMSUtil;
 import org.egov.inbox.web.model.InboxRequest;
@@ -33,6 +22,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 
 import lombok.extern.slf4j.Slf4j;
+
+import static org.egov.inbox.util.InboxConstants.*;
 
 
 @Slf4j
@@ -57,7 +48,12 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
             // Adds sort clause to the inbox ES query only in case pagination is present, else not
             String sortClauseFieldPath = configuration.getSortParam().getPath();
             SortParam.Order sortOrder = inboxRequest.getInbox().getModuleSearchCriteria().containsKey(SORT_ORDER_CONSTANT) ? SortParam.Order.valueOf((String) inboxRequest.getInbox().getModuleSearchCriteria().get(SORT_ORDER_CONSTANT)) : configuration.getSortParam().getOrder();
-            addSortClauseToBaseQuery(baseEsQuery, sortClauseFieldPath, sortOrder);
+
+            if(configuration.getIndex().equals(OPEN_HEARING_INDEX)) {
+                addOpenHearingIndexSort(baseEsQuery);
+            } else {
+                addSortClauseToBaseQuery(baseEsQuery, sortClauseFieldPath, sortOrder);
+            }
 
             // Adds source filter only when requesting for inbox items.
             List<String> sourceFilterPathList = configuration.getSourceFilterPathList();
@@ -81,6 +77,26 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
         innerBoolClause.put(MUST_KEY, mustClauseList);
 
         return baseEsQuery;
+    }
+
+    private void addOpenHearingIndexSort(Map<String, Object> baseEsQuery) {
+        baseEsQuery.put(SORT_KEY, sortClauseList());
+    }
+
+    private List<Map<String, Object>> sortClauseList() {
+        List<Map<String, Object>> outerClauseList = new ArrayList<>();
+        outerClauseList.add(getScriptObject(TYPE_SORTING_SCRIPT));
+        outerClauseList.add(getScriptObject(YEAR_SORTING_SCRIPT));
+        outerClauseList.add(getScriptObject(NUMBER_SORTING_SCRIPT));
+        return outerClauseList;
+    }
+
+    private Map<String, Object> getScriptObject(String scriptType) {
+        try {
+            return (Map<String, Object>) objectMapper.readValue(scriptType, Object.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public Map<String, Object> getESQueryForSimpleSearch(SearchRequest searchRequest, Boolean isPaginationRequired) {

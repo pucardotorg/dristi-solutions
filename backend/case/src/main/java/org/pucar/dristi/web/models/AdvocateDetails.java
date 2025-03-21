@@ -15,28 +15,28 @@ import org.springframework.validation.annotation.Validated;
 @NoArgsConstructor
 @Builder
 public class AdvocateDetails {
-    @NotNull
+
     @JsonProperty("barRegistrationNumber")
     private String barRegistrationNumber;
 
-    @NotNull
     @JsonProperty("advocateId")
     private String advocateId;
 
-    @NotNull
-    @JsonProperty("advocateUserUuid")
-    private String advocateUserUuid;
+    @JsonProperty("advocateUuid")
+    private String advocateUuid;
 
-    @NotNull
     @JsonProperty("mobileNumber")
     private String mobileNumber;
 
-    @NotNull
     @JsonProperty("requestedDate")
     private Long requestedDate;
 
-    @NotNull
-    @Valid
     @JsonProperty("individualDetails")
     private IndividualDetails individualDetails;
+
+    @JsonProperty("Document")
+    private Document document;
+
+    @JsonProperty("individualId")
+    private String individualId;
 }
