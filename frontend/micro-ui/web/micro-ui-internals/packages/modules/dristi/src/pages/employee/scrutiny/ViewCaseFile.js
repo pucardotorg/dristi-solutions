@@ -83,6 +83,7 @@ function ViewCaseFile({ t, inViewCase = false }) {
   const [newCaseName, setNewCaseName] = useState("");
   const [modalCaseName, setModalCaseName] = useState("");
   const [highlightChecklist, setHighlightChecklist] = useState(false);
+  const [comment, setComment] = useState("");
 
   const { downloadPdf } = useDownloadCasePdf();
 
@@ -330,7 +331,11 @@ function ViewCaseFile({ t, inViewCase = false }) {
     const scrutinyObj = action === CaseWorkflowAction.VALIDATE ? {} : CaseWorkflowAction.SEND_BACK && isPrevScrutiny ? newScrutinyData : formdata;
     const newcasedetails = {
       ...caseDetails,
-      additionalDetails: { ...caseDetails.additionalDetails, scrutiny: scrutinyObj },
+      additionalDetails: {
+        ...caseDetails.additionalDetails,
+        scrutiny: scrutinyObj,
+        ...(comment && { scrutinyComment: comment }),
+      },
       caseTitle: newCaseName !== "" ? newCaseName : caseDetails?.caseTitle,
     };
     const caseCreatedByUuid = caseDetails?.auditDetails?.createdBy;
@@ -686,6 +691,8 @@ function ViewCaseFile({ t, inViewCase = false }) {
           )}
           {actionModal == "registerCase" && (
             <SendCaseBackModal
+              comment={comment}
+              setComment={setComment}
               actionCancelLabel={"CS_COMMON_BACK"}
               actionSaveLabel={"CS_COMMON_CONFIRM"}
               t={t}

@@ -1910,7 +1910,13 @@ const GenerateOrders = () => {
   }, [t, applicationDetails, caseDetails, currentOrder]);
 
   useEffect(() => {
-    setBusinessOfTheDay(defaultBOTD);
+    const businessOfTheDay = localStorage.getItem("businessOfTheDay");
+    if(businessOfTheDay){
+      setBusinessOfTheDay(businessOfTheDay);
+    }
+    else{
+      setBusinessOfTheDay(defaultBOTD);
+    }
   }, [defaultBOTD]);
 
   const updateOrder = async (order, action) => {
@@ -2406,7 +2412,11 @@ const GenerateOrders = () => {
       else {
         if (order?.orderNumber) {
           count += 1;
-          return await addOrderItem(order, OrderWorkflowAction.SAVE_DRAFT, index);
+          const updatedOrder = {
+            ...order,
+            compositeItems: order?.compositeItems?.filter((item) => item?.isEnabled),
+          };
+          return await addOrderItem(updatedOrder, OrderWorkflowAction.SAVE_DRAFT, index);
         } else {
           // create call first, get order number from response
           // then add item call
@@ -3242,7 +3252,7 @@ const GenerateOrders = () => {
           },
           {}
         );
-
+        localStorage.removeItem("businessOfTheDay");
         const nextHearing = response?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
 
         await DRISTIService.addADiaryEntry(
@@ -4413,6 +4423,7 @@ const GenerateOrders = () => {
           setSignedDocumentUploadID={setSignedDocumentUploadID}
           orderPdfFileStoreID={orderPdfFileStoreID}
           saveOnsubmitLabel={"ISSUE_ORDER"}
+          businessOfDay={businessOfTheDay}
         />
       )}
       {showSuccessModal && (

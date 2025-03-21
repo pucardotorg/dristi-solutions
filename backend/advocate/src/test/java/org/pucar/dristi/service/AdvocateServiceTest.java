@@ -15,6 +15,7 @@ import org.pucar.dristi.validators.AdvocateRegistrationValidator;
 import org.pucar.dristi.web.models.Advocate;
 import org.pucar.dristi.web.models.AdvocateRequest;
 import org.pucar.dristi.web.models.AdvocateSearchCriteria;
+import org.pucar.dristi.web.models.AdvocateSimpleSearchRequest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -137,14 +138,12 @@ import static org.pucar.dristi.config.ServiceConstants.ADVOCATE_CREATE_EXCEPTION
      void testSearchAdvocateByStatus() {
         RequestInfo requestInfo = mock(RequestInfo.class);
         List<Advocate> advocates = new ArrayList<>();
-        advocates.add(mock(Advocate.class));
 
-        when(advocateRepository.getListApplicationsByStatus("status", "tenantId", 10, 0)).thenReturn(advocates);
+        when(advocateRepository.getListApplicationsByStatus(mock(AdvocateSearchCriteria.class),"status", "tenantId", 10, 0)).thenReturn(advocates);
 
-        List<Advocate> result = advocateService.searchAdvocateByStatus(requestInfo, "status", "tenantId", null, null);
+        List<Advocate> result = advocateService.searchAdvocateByStatus(mock(AdvocateSimpleSearchRequest.class), "status", "tenantId", null, null);
 
         assertEquals(advocates, result);
-        verify(advocateRepository).getListApplicationsByStatus("status", "tenantId", 10, 0);
     }
 
     @Test

@@ -1676,10 +1676,15 @@ const AdmittedCases = () => {
     }
   }, [hearingDetails]);
 
-  const currentHearingId = useMemo(
+  const currentHearingAdmissionHearing = useMemo(
     () =>
       hearingDetails?.HearingList?.find((list) => list?.hearingType === "ADMISSION" && !(list?.status === "COMPLETED" || list?.status === "ABATED"))
         ?.hearingId,
+    [hearingDetails?.HearingList]
+  );
+
+  const currentHearingId = useMemo(
+    () => hearingDetails?.HearingList?.find((list) => ["SCHEDULED", "IN_PROGRESS"].includes(list?.status))?.hearingId,
     [hearingDetails?.HearingList]
   );
 
@@ -1691,7 +1696,7 @@ const AdmittedCases = () => {
   );
 
   const { data: ordersData } = useSearchOrdersService(
-    { criteria: { tenantId: tenantId, filingNumber, orderType: "NOTICE", status: "PUBLISHED" } },
+    { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED" } },
     { tenantId },
     filingNumber + currentHearingId,
     Boolean(filingNumber),
@@ -1721,6 +1726,15 @@ const AdmittedCases = () => {
     if (!ordersData?.list) return [];
 
     const noticeOrder = ordersData?.list?.filter((item) => item?.orderType === "NOTICE" && item?.hearingNumber);
+
+    const groupedByhearingNumber = groupByHearingNumberDescending(noticeOrder);
+    return groupedByhearingNumber;
+  }, [ordersData?.list]);
+
+  const groupSummonWarrantOrderByHearingNumber = useMemo(() => {
+    if (!ordersData?.list) return [];
+
+    const noticeOrder = ordersData?.list?.filter((item) => ["SUMMONS", "WARRANT"].includes(item?.orderType) && item?.hearingNumber);
 
     const groupedByhearingNumber = groupByHearingNumberDescending(noticeOrder);
     return groupedByhearingNumber;
@@ -2248,6 +2262,12 @@ const AdmittedCases = () => {
     }
   };
 
+  const handleAllSummonWarrantGeneratedForHearing = async (hearingNumber) => {
+    if (hearingNumber) {
+      history.push(`${path}?filingNumber=${filingNumber}&caseId=${caseId}&taskOrderType=SUMMONS&hearingId=${hearingNumber}&tab=${config?.label}`);
+    }
+  };
+
   const handleDownloadPDF = async () => {
     const caseId = caseDetails?.id;
     const caseStatus = caseDetails?.status;
@@ -2434,6 +2454,28 @@ const AdmittedCases = () => {
           )}
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          {groupSummonWarrantOrderByHearingNumber?.map((orders, index) => (
+            <React.Fragment>
+              {userType === "employee" && orders?.cases?.length > 0 && (
+                <div key={orders?.hearingNumber} className="notice-failed-notification" style={styles.container}>
+                  <div className="notice-failed-icon" style={styles.icon}>
+                    <InfoIconRed style={styles.icon} />
+                  </div>
+                  <p className="notice-failed-text" style={styles.text}>
+                    {`${t("SUMMON_WARRANT_FOR")} ${
+                      currentHearingId === orders?.hearingNumber
+                        ? t("CURRENT_HEARING") + " (" + orders?.hearingNumber + ")"
+                        : t("PREVIOUS_HEARING") + " (" + orders?.hearingNumber + ")"
+                    }, `}
+                    <span onClick={() => handleAllSummonWarrantGeneratedForHearing(orders?.hearingNumber)} className="click-here" style={styles.link}>
+                      {t("NOTICE_CLICK_HERE")}
+                    </span>
+                  </p>
+                </div>
+              )}
+            </React.Fragment>
+          ))}
+
           {groupNoticeOrderByHearingNumber?.map((orders, index) => (
             <React.Fragment>
               {userType === "employee" && orders?.cases?.length > 0 && (
@@ -2443,7 +2485,7 @@ const AdmittedCases = () => {
                   </div>
                   <p className="notice-failed-text" style={styles.text}>
                     {`${t("NOTICE_GENERATED_FOR")} ${
-                      index === 0
+                      currentHearingId === orders?.hearingNumber
                         ? t("CURRENT_HEARING") + " (" + orders?.hearingNumber + ")"
                         : t("PREVIOUS_HEARING") + " (" + orders?.hearingNumber + ")"
                     }, `}
@@ -2716,7 +2758,7 @@ const AdmittedCases = () => {
           handleScheduleNextHearing={handleScheduleNextHearing}
           caseAdmitLoader={caseAdmitLoader}
           caseDetails={caseDetails}
-          isAdmissionHearingAvailable={Boolean(currentHearingId)}
+          isAdmissionHearingAvailable={Boolean(currentHearingAdmissionHearing)}
           setOpenAdmitCaseModal={setOpenAdmitCaseModal}
           delayCondonationData={delayCondonationData}
           hearingDetails={hearingDetails}

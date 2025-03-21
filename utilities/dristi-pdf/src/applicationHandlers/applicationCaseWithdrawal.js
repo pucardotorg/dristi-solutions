@@ -2,8 +2,6 @@ const cheerio = require("cheerio");
 const config = require("../config");
 const {
   search_case,
-  search_mdms,
-  search_hrms,
   search_sunbirdrc_credential_service,
   search_application,
   create_pdf,
@@ -11,23 +9,8 @@ const {
   search_message,
 } = require("../api");
 const { renderError } = require("../utils/renderError");
-const { getAdvocates } = require("./getAdvocates");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
-
-function getOrdinalSuffix(day) {
-  if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
-  switch (day % 10) {
-    case 1:
-      return "st"; // 1st, 21st, 31st
-    case 2:
-      return "nd"; // 2nd, 22nd
-    case 3:
-      return "rd"; // 3rd, 23rd
-    default:
-      return "th"; // 4th, 5th, 6th, etc.
-  }
-}
 
 const applicationCaseWithdrawal = async (req, res, qrCode) => {
   const cnrNumber = req.query.cnrNumber;
@@ -116,6 +99,7 @@ const applicationCaseWithdrawal = async (req, res, qrCode) => {
     }
 
     let barRegistrationNumber = "";
+    let advocateName = "";
     const advocateIndividualId =
       application?.applicationDetails?.advocateIndividualId;
     if (advocateIndividualId) {
@@ -128,15 +112,11 @@ const applicationCaseWithdrawal = async (req, res, qrCode) => {
         (item) => item.isActive === true
       );
       barRegistrationNumber = advocateDetails?.barRegistrationNumber || "";
+      advocateName =
+        cleanName(advocateDetails?.additionalDetails?.username) || "";
     }
 
     const onBehalfOfuuid = application?.onBehalfOf?.[0];
-    const allAdvocates = getAdvocates(courtCase);
-    const advocate = allAdvocates[onBehalfOfuuid]?.[0]?.additionalDetails
-      ?.advocateName
-      ? allAdvocates[onBehalfOfuuid]?.[0]
-      : {};
-    const advocateName = cleanName(advocate?.additionalDetails?.advocateName || "");
     const partyName = application?.additionalDetails?.onBehalOfName || "";
     const additionalComments =
       application?.applicationDetails?.additionalComments || "";

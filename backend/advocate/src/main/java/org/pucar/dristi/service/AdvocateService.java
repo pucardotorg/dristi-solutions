@@ -10,10 +10,7 @@ import org.pucar.dristi.enrichment.AdvocateRegistrationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.AdvocateRepository;
 import org.pucar.dristi.validators.AdvocateRegistrationValidator;
-import org.pucar.dristi.web.models.Advocate;
-import org.pucar.dristi.web.models.AdvocateRequest;
-import org.pucar.dristi.web.models.AdvocateSearchCriteria;
-import org.pucar.dristi.web.models.SmsTemplateData;
+import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -107,15 +104,24 @@ public class AdvocateService {
         }
     }
 
-    public List<Advocate> searchAdvocateByStatus(RequestInfo requestInfo, String status, String tenantId, Integer limit, Integer offset) {
+    public List<Advocate> searchAdvocateByStatus(AdvocateSimpleSearchRequest body, String status, String tenantId, Integer limit, Integer offset) {
         try {
+            if (body == null) {
+                throw new CustomException(ADVOCATE_SEARCH_EXCEPTION, "Request body cannot be null");
+            }
+
+            RequestInfo requestInfo = body.getRequestInfo();
+            AdvocateSearchCriteria searchCriteria = null;
+            if (body.getAdvocateSearchCriteria() != null) {
+                searchCriteria = body.getAdvocateSearchCriteria();
+            }
             if (limit == null)
                 limit = 10;
             if (offset == null)
                 offset = 0;
 
             // Fetch applications from database according to the given search criteria
-            List<Advocate> applications = advocateRepository.getListApplicationsByStatus(status, tenantId, limit, offset);
+            List<Advocate> applications = advocateRepository.getListApplicationsByStatus(searchCriteria, status, tenantId, limit, offset);
             log.info("Application size :: {}", applications.size());
 
             // If no applications are found matching the given criteria, return an empty list

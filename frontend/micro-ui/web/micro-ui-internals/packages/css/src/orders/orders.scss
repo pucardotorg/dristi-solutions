@@ -309,6 +309,9 @@
           height: 40px;
           width: 50%;
           padding: 8px 24px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
 
           h2 {
             font-family: Roboto;

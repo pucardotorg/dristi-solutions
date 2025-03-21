@@ -78,7 +78,7 @@ public class AdvocateQueryBuilder {
         return firstCriteria;
     }
 
-    public String getAdvocateSearchQueryByStatus(String status, List<Object> preparedStmtList, List<Integer> preparedStmtArguList, String tenantId, Integer limit, Integer offset){
+    public String getAdvocateSearchQueryByStatus(String barId, String status, List<Object> preparedStmtList, List<Integer> preparedStmtArguList, String tenantId, Integer limit, Integer offset){
         try {
             StringBuilder query = new StringBuilder(BASE_ATR_QUERY);
             query.append(FROM_ADVOCATES_TABLE);
@@ -96,6 +96,12 @@ public class AdvocateQueryBuilder {
                 addClauseIfRequiredForTenantId(query, firstCriteria);
                 query.append("LOWER(adv.tenantid) LIKE LOWER(?)");
                 preparedStmtList.add(tenantId.toLowerCase());
+                preparedStmtArguList.add(Types.VARCHAR);
+            }
+            if(barId != null){
+                addClauseIfRequiredForStatus(query, firstCriteria);
+                query.append("LOWER(adv.barregistrationnumber) LIKE LOWER(?)");
+                preparedStmtList.add("%" + barId + "%");
                 preparedStmtArguList.add(Types.VARCHAR);
             }
 

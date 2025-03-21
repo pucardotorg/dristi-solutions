@@ -63,7 +63,7 @@ import static org.mockito.Mockito.when;
      void testAdvocateV1StatusSearchPost() {
         String status = "active";
         String tenantId = "tenantId";
-        List<Advocate> advocateList = Arrays.asList(new Advocate());
+        List<Advocate> advocateList = new ArrayList<>();
         AdvocateSimpleSearchRequest advocateSimpleSearchRequest = new AdvocateSimpleSearchRequest();
         RequestInfo requestInfo = new RequestInfo();
         User userInfo = new User();
@@ -72,7 +72,7 @@ import static org.mockito.Mockito.when;
         requestInfo.setUserInfo(userInfo);
         advocateSimpleSearchRequest.setRequestInfo(requestInfo);
 
-        when(advocateService.searchAdvocateByStatus(requestInfo, status, tenantId, 10, 0)).thenReturn(advocateList);
+        when(advocateService.searchAdvocateByStatus(null , status, tenantId, 10, 0)).thenReturn(advocateList);
         when(responseInfoFactory.createResponseInfoFromRequestInfo(null, true)).thenReturn(new ResponseInfo());
 
         ResponseEntity<AdvocateResponse> responseEntity = advocateApiController.advocateV1StatusSearchPost(status, tenantId, 10, 0, advocateSimpleSearchRequest);

@@ -68,7 +68,7 @@ public class AdvocateApiController {
 																	   @Min(0) @ApiParam(value = "Pagination - offset from which records should be returned in response", required = false) @javax.validation.Valid @RequestParam(value = "offset", required = false) Integer offset,
 																	   @Parameter(in = ParameterIn.DEFAULT, description = "RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody AdvocateSimpleSearchRequest body) {
 
-		List<Advocate> advocateList = advocateService.searchAdvocateByStatus(body.getRequestInfo(), status, tenantId,limit, offset);
+		List<Advocate> advocateList = advocateService.searchAdvocateByStatus(body, status, tenantId,limit, offset);
 		ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(null, true);
 		AdvocateResponse advocateResponse = AdvocateResponse.builder().advocates(advocateList).responseInfo(responseInfo).build();
 		return new ResponseEntity<>(advocateResponse, HttpStatus.OK);

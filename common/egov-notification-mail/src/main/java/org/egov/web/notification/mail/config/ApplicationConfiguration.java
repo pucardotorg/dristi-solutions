@@ -67,7 +67,8 @@ public class ApplicationConfiguration {
         mailSender.setPassword(emailProperties.getMailSenderPassword());
         final Properties mailProperties = new Properties();
         mailProperties.setProperty("mail.smtp.auth", emailProperties.getMailSmtpsAuth());
-        mailProperties.setProperty("mail.smtp.starttls.enable", emailProperties.getMailStartTlsEnabled());
+        mailProperties.setProperty("mail.smtp.ssl.enable", emailProperties.getMailSslEnable());
+        mailProperties.setProperty("mail.smtp.starttls.enable", emailProperties.getMailStartTlsEnable());
         mailProperties.setProperty("mail.smtp.debug", emailProperties.getMailSmtpsDebug());
         mailSender.setJavaMailProperties(mailProperties);
         return mailSender;
