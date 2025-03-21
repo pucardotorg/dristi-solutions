@@ -28,6 +28,7 @@ function OrderSignatureModal({
   saveOnsubmitLabel,
   setSignedDocumentUploadID,
   orderPdfFileStoreID,
+  businessOfTheDay
 }) {
   const [isSigned, setIsSigned] = useState(false);
   const { handleEsign, checkSignStatus } = useESign();
@@ -130,6 +131,7 @@ function OrderSignatureModal({
                   // setOpenAadharModal(true);
                   // setIsSigned(true);
                   localStorage.setItem("orderPDF", orderPdfFileStoreID);
+                  localStorage.setItem("businessOfTheDay", businessOfTheDay);
                   handleEsign(name, pageModule, orderPdfFileStoreID, judgePlaceholder);
                 }}
                 className={"aadhar-sign-in"}

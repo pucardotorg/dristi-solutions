@@ -1676,10 +1676,15 @@ const AdmittedCases = () => {
     }
   }, [hearingDetails]);
 
-  const currentHearingId = useMemo(
+  const currentHearingAdmissionHearing = useMemo(
     () =>
       hearingDetails?.HearingList?.find((list) => list?.hearingType === "ADMISSION" && !(list?.status === "COMPLETED" || list?.status === "ABATED"))
         ?.hearingId,
+    [hearingDetails?.HearingList]
+  );
+
+  const currentHearingId = useMemo(
+    () => hearingDetails?.HearingList?.find((list) => ["SCHEDULED", "IN_PROGRESS"].includes(list?.status))?.hearingId,
     [hearingDetails?.HearingList]
   );
 
@@ -2449,28 +2454,6 @@ const AdmittedCases = () => {
           )}
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          {groupNoticeOrderByHearingNumber?.map((orders, index) => (
-            <React.Fragment>
-              {userType === "employee" && orders?.cases?.length > 0 && (
-                <div key={orders?.hearingNumber} className="notice-failed-notification" style={styles.container}>
-                  <div className="notice-failed-icon" style={styles.icon}>
-                    <InfoIconRed style={styles.icon} />
-                  </div>
-                  <p className="notice-failed-text" style={styles.text}>
-                    {`${t("NOTICE_GENERATED_FOR")} ${
-                      index === 0
-                        ? t("CURRENT_HEARING") + " (" + orders?.hearingNumber + ")"
-                        : t("PREVIOUS_HEARING") + " (" + orders?.hearingNumber + ")"
-                    }, `}
-                    <span onClick={() => handleAllNoticeGeneratedForHearing(orders?.hearingNumber)} className="click-here" style={styles.link}>
-                      {t("NOTICE_CLICK_HERE")}
-                    </span>
-                  </p>
-                </div>
-              )}
-            </React.Fragment>
-          ))}
-
           {groupSummonWarrantOrderByHearingNumber?.map((orders, index) => (
             <React.Fragment>
               {userType === "employee" && orders?.cases?.length > 0 && (
@@ -2480,11 +2463,33 @@ const AdmittedCases = () => {
                   </div>
                   <p className="notice-failed-text" style={styles.text}>
                     {`${t("SUMMON_WARRANT_FOR")} ${
-                      index === 0
+                      currentHearingId === orders?.hearingNumber
                         ? t("CURRENT_HEARING") + " (" + orders?.hearingNumber + ")"
                         : t("PREVIOUS_HEARING") + " (" + orders?.hearingNumber + ")"
                     }, `}
                     <span onClick={() => handleAllSummonWarrantGeneratedForHearing(orders?.hearingNumber)} className="click-here" style={styles.link}>
+                      {t("NOTICE_CLICK_HERE")}
+                    </span>
+                  </p>
+                </div>
+              )}
+            </React.Fragment>
+          ))}
+
+          {groupNoticeOrderByHearingNumber?.map((orders, index) => (
+            <React.Fragment>
+              {userType === "employee" && orders?.cases?.length > 0 && (
+                <div key={orders?.hearingNumber} className="notice-failed-notification" style={styles.container}>
+                  <div className="notice-failed-icon" style={styles.icon}>
+                    <InfoIconRed style={styles.icon} />
+                  </div>
+                  <p className="notice-failed-text" style={styles.text}>
+                    {`${t("NOTICE_GENERATED_FOR")} ${
+                      currentHearingId === orders?.hearingNumber
+                        ? t("CURRENT_HEARING") + " (" + orders?.hearingNumber + ")"
+                        : t("PREVIOUS_HEARING") + " (" + orders?.hearingNumber + ")"
+                    }, `}
+                    <span onClick={() => handleAllNoticeGeneratedForHearing(orders?.hearingNumber)} className="click-here" style={styles.link}>
                       {t("NOTICE_CLICK_HERE")}
                     </span>
                   </p>
@@ -2753,7 +2758,7 @@ const AdmittedCases = () => {
           handleScheduleNextHearing={handleScheduleNextHearing}
           caseAdmitLoader={caseAdmitLoader}
           caseDetails={caseDetails}
-          isAdmissionHearingAvailable={Boolean(currentHearingId)}
+          isAdmissionHearingAvailable={Boolean(currentHearingAdmissionHearing)}
           setOpenAdmitCaseModal={setOpenAdmitCaseModal}
           delayCondonationData={delayCondonationData}
           hearingDetails={hearingDetails}
