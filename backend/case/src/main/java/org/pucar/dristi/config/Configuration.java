@@ -342,4 +342,7 @@ public class Configuration {
 
 	@Value("${egov.analytics.path}")
 	private String analyticsServicePath;
+
+	@Value("${egov.pending.advocate.request.join.case.kafka.topic}")
+	private String updatePendingAdvocateRequestKafkaTopic;
 }
