@@ -265,6 +265,10 @@ module.exports = {
     order_approval_rejection_litigant_details_change_qr:
       process.env.ORDER_APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE_QR ||
       "order-approval-rejection-litigant-details-qr",
+    order_change_advocate:
+      process.env.ORDER_CHANGE_ADVOCATE || "order-replace-advocate",
+    order_change_advocate_qr:
+      process.env.ORDER_CHANGE_ADVOCATE_QR || "order-replace-advocate-qr",
   },
 
   app: {
