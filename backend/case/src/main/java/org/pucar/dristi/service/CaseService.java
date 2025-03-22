@@ -1265,7 +1265,7 @@ public class CaseService {
                         ArrayNode document = objectMapper.createArrayNode();
 
                         ObjectNode documentNode = objectMapper.createObjectNode();
-                        documentNode.put("fileStore",  representingJoinCase.getDocuments().get(0).getFileStore());
+                        documentNode.put("fileStore", representingJoinCase.getDocuments().get(0).getFileStore());
                         documentNode.put("documentType", representingJoinCase.getDocuments().get(0).getDocumentType());
 
                         document.add(documentNode);
@@ -1349,46 +1349,50 @@ public class CaseService {
 
         if (joinCaseRequest.getJoinCaseData().getRepresentative().getIsJudgeApproving()) {
             createTaskAndPendingTaskForJudge(joinCaseRequest, courtCase);
-        }
-
-        Set<String> uniqueAdvocateIds = new HashSet<>();
-
-        List<PendingAdvocateRequest> pendingAdvocateRequestList = courtCase.getPendingAdvocateRequests();
-        if (pendingAdvocateRequestList == null) {
-            pendingAdvocateRequestList = new ArrayList<>();
-        }
-        PendingAdvocateRequest pendingAdvocateRequest = new PendingAdvocateRequest();
-        pendingAdvocateRequest.setAdvocateId(advocateId);
-        boolean isPartOfCase = !courtCase.getRepresentatives().stream().filter(adv -> adv.getAdvocateId().equalsIgnoreCase(advocateId)).toList().isEmpty();
-        if (isPartOfCase) {
-            pendingAdvocateRequest.setStatus("PARTIALLY_JOINED");
         } else {
-            pendingAdvocateRequest.setStatus("PENDING");
-        }
+            Set<String> uniqueAdvocateIds = new HashSet<>();
 
-        List<String> taskReferenceNoList = new ArrayList<>();
-        joinCaseRequest.getJoinCaseData().getRepresentative().getRepresenting().forEach(representingJoinCase -> {
-            if (representingJoinCase.getIsAlreadyPip()) {
-                // Handle already PIP case
-                TaskResponse taskResponse = createTaskAndPendingTask(joinCaseRequest, representingJoinCase.getIndividualId(), null, courtCase);
-                taskReferenceNoList.add(taskResponse.getTask().getTaskNumber());
-
-            } else {
-                uniqueAdvocateIds.addAll(representingJoinCase.getReplaceAdvocates());
+            List<PendingAdvocateRequest> pendingAdvocateRequestList = courtCase.getPendingAdvocateRequests();
+            if (pendingAdvocateRequestList == null) {
+                pendingAdvocateRequestList = new ArrayList<>();
             }
-        });
+            PendingAdvocateRequest pendingAdvocateRequest = new PendingAdvocateRequest();
+            pendingAdvocateRequest.setAdvocateId(advocateId);
+            boolean isPartOfCase = courtCase.getRepresentatives() != null &&
+                    !courtCase.getRepresentatives().stream()
+                            .filter(adv -> adv.getAdvocateId() != null && adv.getAdvocateId().equalsIgnoreCase(advocateId))
+                            .toList()
+                            .isEmpty();
+            if (isPartOfCase) {
+                pendingAdvocateRequest.setStatus("PARTIALLY_JOINED");
+            } else {
+                pendingAdvocateRequest.setStatus("PENDING");
+            }
 
-        //handle task creation for each advocate
-        uniqueAdvocateIds.forEach(replaceAdvocateId -> {
-            TaskResponse taskResponse = createTaskAndPendingTask(joinCaseRequest, null, replaceAdvocateId, courtCase);
-            taskReferenceNoList.add(taskResponse.getTask().getTaskNumber());
-        });
+            List<String> taskReferenceNoList = new ArrayList<>();
+            joinCaseRequest.getJoinCaseData().getRepresentative().getRepresenting().forEach(representingJoinCase -> {
+                if (representingJoinCase.getIsAlreadyPip()) {
+                    // Handle already PIP case
+                    TaskResponse taskResponse = createTaskAndPendingTask(joinCaseRequest, representingJoinCase.getIndividualId(), null, courtCase);
+                    taskReferenceNoList.add(taskResponse.getTask().getTaskNumber());
 
-        pendingAdvocateRequest.setTaskReferenceNoList(taskReferenceNoList);
-        pendingAdvocateRequestList.add(pendingAdvocateRequest);
-        courtCase.setPendingAdvocateRequests(pendingAdvocateRequestList);
+                } else {
+                    uniqueAdvocateIds.addAll(representingJoinCase.getReplaceAdvocates());
+                }
+            });
 
-        producer.push(config.getUpdatePendingAdvocateRequestKafkaTopic(), courtCase);
+            //handle task creation for each advocate
+            uniqueAdvocateIds.forEach(replaceAdvocateId -> {
+                TaskResponse taskResponse = createTaskAndPendingTask(joinCaseRequest, null, replaceAdvocateId, courtCase);
+                taskReferenceNoList.add(taskResponse.getTask().getTaskNumber());
+            });
+
+            pendingAdvocateRequest.setTaskReferenceNoList(taskReferenceNoList);
+            pendingAdvocateRequestList.add(pendingAdvocateRequest);
+            courtCase.setPendingAdvocateRequests(pendingAdvocateRequestList);
+
+            producer.push(config.getUpdatePendingAdvocateRequestKafkaTopic(), courtCase);
+        }
 
     }
 
@@ -2560,7 +2564,7 @@ public class CaseService {
             courtCase.setPendingAdvocateRequests(pendingAdvocateRequests);
 
             updateStatusOfAdvocate(courtCase, advocateUuid, pendingAdvocateRequest);
-            producer.push(config.getUpdatePendingAdvocateRequestKafkaTopic(),courtCase);
+            producer.push(config.getUpdatePendingAdvocateRequestKafkaTopic(), courtCase);
         }
 
     }
@@ -2593,7 +2597,7 @@ public class CaseService {
 
             updateStatusOfAdvocate(courtCase, advocateUuid, pendingAdvocateRequest);
 
-            producer.push(config.getUpdatePendingAdvocateRequestKafkaTopic(),courtCase);
+            producer.push(config.getUpdatePendingAdvocateRequestKafkaTopic(), courtCase);
 
             updateCourtCaseObject(courtCase, joinCaseRequest, advocateUuid, requestInfo);
         }
@@ -2681,7 +2685,7 @@ public class CaseService {
                     mapping.getRepresenting().removeIf(representing -> representing.getIndividualId().equalsIgnoreCase(litigantId));
                     mapping.setIsActive(!mapping.getRepresenting().isEmpty());
                 });
-        producer.push(config.getUpdateRepresentativeJoinCaseTopic(),courtCase);
+        producer.push(config.getUpdateRepresentativeJoinCaseTopic(), courtCase);
     }
 
 
