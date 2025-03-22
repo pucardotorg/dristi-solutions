@@ -235,7 +235,7 @@ public class CaseBundleIndexBuilderService {
     }
 
     @KafkaListener(topics = {"${kafka.case.update.last.modified.time}"})
-    public void listen(ConsumerRecord<String, Object> record) {
+    public void listenForCaseLastModifiedUpdates(ConsumerRecord<String, Object> record) {
         log.info("Received Topic {} with value {}", record.topic(), record.value());
         String caseId = JsonPath.read(record.value(), "$.id");
         String uri = configuration.getEsHostUrl() + configuration.getCaseBundleIndex() + configuration.getSearchPath();
@@ -268,7 +268,7 @@ public class CaseBundleIndexBuilderService {
                 }
             }
         }catch(Exception e){
-            log.error("Not able to parse json body.", e);
+            log.error("Not able to parse json body for case ID: {}", caseId, e);
         }
 
     }
