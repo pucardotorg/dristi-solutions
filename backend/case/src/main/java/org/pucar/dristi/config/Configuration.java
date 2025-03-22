@@ -333,4 +333,7 @@ public class Configuration {
 
 	@Value("${hearing.case.reference.number.update}")
 	private String caseReferenceUpdateTopic;
+
+	@Value("${kafka.case.update.last.modified.time}")
+	private String caseUpdateLastModifiedTimeTopic;
 }
