@@ -1106,6 +1106,7 @@ public class CaseService {
                 if (!validator.validateRepresentativeJoinCase(joinCaseRequest))
                     throw new CustomException(VALIDATION_ERR, JOIN_CASE_INVALID_REQUEST);
 
+                //To check if advocate is already representing the individual and return existingRepresentative if advocate is part of  the case
                 AdvocateMapping existingRepresentative = validateAdvocateAlreadyRepresenting(courtCase, joinCaseData);
 
                 if (joinCaseData.getRepresentative().getIsReplacing()) {
@@ -1154,7 +1155,7 @@ public class CaseService {
         AdvocateMapping existingRepresentative = null;
 
         // If advocate is already representing the individual throw exception
-        if (!advocateIds.isEmpty() && joinCaseData.getRepresentative().getAdvocateUUID() != null && advocateIds.contains(joinCaseData.getRepresentative().getAdvocateUUID())) {
+        if (!advocateIds.isEmpty() && advocateIds.contains(joinCaseData.getRepresentative().getAdvocateUUID())) {
 
             Optional<AdvocateMapping> existingRepresentativeOptional = courtCase.getRepresentatives().stream()
                     .filter(advocateMapping -> joinCaseData.getRepresentative().getAdvocateUUID().equals(advocateMapping.getAdvocateId()))
@@ -1342,11 +1343,7 @@ public class CaseService {
             }
         } catch (JsonProcessingException e) {
             // Handle JSON processing exceptions (e.g., invalid JSON syntax)
-        } catch (IOException e) {
-            // Handle IO exceptions (e.g., issues reading input)
         }
-
-
     }
 
 
@@ -1444,8 +1441,9 @@ public class CaseService {
 //        analyticsUtil.createPendingTask(pendingTaskRequest);
     }
 
-    private void enrichAndPushLitigantJoinCase(JoinCaseV2Request joinCaseRequest, CourtCase caseObj, CourtCase courtCase, AuditDetails auditDetails) {
+    private void enrichAndPushLitigantJoinCase(JoinCaseV2Request joinCaseRequest, CourtCase caseObj, AuditDetails auditDetails) {
 
+        caseObj.setAuditdetails(auditDetails);
         JoinCaseDataV2 joinCaseData = joinCaseRequest.getJoinCaseData();
         mapAndSetLitigants(joinCaseData, caseObj);
 
@@ -1900,7 +1898,7 @@ public class CaseService {
                     disableRepresenting(courtCase, litigant.getIndividualId(), auditDetails);
             }
         }
-        enrichAndPushLitigantJoinCase(joinCaseRequest, caseObj, courtCase, auditDetails);
+        enrichAndPushLitigantJoinCase(joinCaseRequest, caseObj, auditDetails);
 
         Object additionalDetails = courtCase.getAdditionalDetails();
         joinCaseRequest.getJoinCaseData().getLitigant().forEach(joinCaseLitigant -> {
