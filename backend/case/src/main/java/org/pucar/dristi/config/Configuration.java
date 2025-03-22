@@ -169,6 +169,9 @@ public class Configuration {
 	@Value("${egov.additional.join.case.kafka.topic}")
 	private String additionalJoinCaseTopic;
 
+	@Value("${egov.update.additional.join.case.kafka.topic}")
+	private String updateAdditionalJoinCaseTopic;
+
 	//Mdms
 
 	@Value("${mdms.case.module.name}")

@@ -2309,15 +2309,18 @@ public class CaseService {
             // uuid of advocate who is trying to replace
             String advocateUuid = joinCaseRequest.getAdvocateDetails().getAdvocateUuid();
             String taskNumber = task.getTaskNumber();
+            PendingAdvocateRequest pendingAdvocateRequest = new PendingAdvocateRequest();
 
             for (PendingAdvocateRequest request : pendingAdvocateRequests) {
-                if (request.getAdvocateId().equalsIgnoreCase(advocateUuid)) {
+                if (request.getAdvocateId().equalsIgnoreCase(advocateUuid) && request.getTaskReferenceNoList().contains(taskNumber)) {
                     request.getTaskReferenceNoList().remove(taskNumber);
+                    pendingAdvocateRequest = request;
                 }
             }
             courtCase.setPendingAdvocateRequests(pendingAdvocateRequests);
 
-            updateStatusOfAdvocate(courtCase, advocateUuid);
+            updateStatusOfAdvocate(courtCase, advocateUuid, pendingAdvocateRequest);
+            producer.push(config.getUpdatePendingAdvocateRequestKafkaTopic(),courtCase);
         }
 
     }
@@ -2338,14 +2341,20 @@ public class CaseService {
             String advocateUuid = joinCaseRequest.getAdvocateDetails().getAdvocateUuid();
             String taskNumber = task.getTaskNumber();
 
+            PendingAdvocateRequest pendingAdvocateRequest = new PendingAdvocateRequest();
+
             for (PendingAdvocateRequest request : pendingAdvocateRequests) {
-                if (request.getAdvocateId().equalsIgnoreCase(advocateUuid)) {
+                if (request.getAdvocateId().equalsIgnoreCase(advocateUuid) && request.getTaskReferenceNoList().contains(taskNumber)) {
                     request.getTaskReferenceNoList().remove(taskNumber);
+                    pendingAdvocateRequest = request;
                 }
             }
             courtCase.setPendingAdvocateRequests(pendingAdvocateRequests);
 
-            updateStatusOfAdvocate(courtCase, advocateUuid);
+            updateStatusOfAdvocate(courtCase, advocateUuid, pendingAdvocateRequest);
+
+            producer.push(config.getUpdatePendingAdvocateRequestKafkaTopic(),courtCase);
+
             updateCourtCaseObject(courtCase, joinCaseRequest, advocateUuid, requestInfo);
         }
 
@@ -2409,6 +2418,8 @@ public class CaseService {
                 inactivateOldAdvocate(replacementDetails, courtCase);
             }
 
+            producer.push(config.getRepresentativeJoinCaseTopic(), courtCase);
+
             if (partyType.contains("complainant")) {
                 Object additionalDetails = courtCase.getAdditionalDetails();
                 JsonNode additionalDetailsJsonNode = objectMapper.convertValue(additionalDetails, JsonNode.class);
@@ -2430,6 +2441,7 @@ public class CaseService {
                     mapping.getRepresenting().removeIf(representing -> representing.getIndividualId().equalsIgnoreCase(litigantId));
                     mapping.setIsActive(!mapping.getRepresenting().isEmpty());
                 });
+        producer.push(config.getUpdateRepresentativeJoinCaseTopic(),courtCase);
     }
 
 
@@ -2485,6 +2497,8 @@ public class CaseService {
                 newAdvocateDetail, replacementDetails);
 
         courtCase.setAdditionalDetails(additionalDetailsJsonNode);
+
+        producer.push(config.getUpdateAdditionalJoinCaseTopic(), courtCase);
     }
 
     private boolean hasValidAdvocateDetails(JsonNode additionalDetailsJsonNode) {
@@ -2589,44 +2603,38 @@ public class CaseService {
     }
 
 
-    private void updateStatusOfAdvocate(CourtCase courtCase, String advocateUuid) {
+    private void updateStatusOfAdvocate(CourtCase courtCase, String advocateUuid, PendingAdvocateRequest pendingAdvocateRequest) {
         List<AdvocateMapping> advocateMappings = courtCase.getRepresentatives();
         List<PendingAdvocateRequest> pendingAdvocateRequests = courtCase.getPendingAdvocateRequests();
 
-        // TODO need to simply into boolean
-        List<AdvocateMapping> mappingList = advocateMappings.stream().filter(advocateMapping -> advocateMapping
-                .getAdvocateId().equalsIgnoreCase(advocateUuid)).toList();
+        boolean hasMapping = advocateMappings.stream()
+                .anyMatch(mapping -> mapping.getAdvocateId().equalsIgnoreCase(advocateUuid));
 
-        List<PendingAdvocateRequest> pendingAdvocateRequestList = pendingAdvocateRequests.stream()
-                .filter(pendingAdvocateRequest -> pendingAdvocateRequest.getAdvocateId()
-                        .equalsIgnoreCase(advocateUuid)).toList();
 
-        PendingAdvocateRequest pendingAdvocateRequest = pendingAdvocateRequestList.get(0);
-
-        if (!mappingList.isEmpty() && pendingAdvocateRequest.getTaskReferenceNoList().isEmpty()) {
+        if (hasMapping && pendingAdvocateRequest.getTaskReferenceNoList().isEmpty()) {
             pendingAdvocateRequests.remove(pendingAdvocateRequest);
             courtCase.setPendingAdvocateRequests(pendingAdvocateRequests);
         }
 
-        if (!mappingList.isEmpty() && !pendingAdvocateRequest.getTaskReferenceNoList().isEmpty()) {
+        if (hasMapping && !pendingAdvocateRequest.getTaskReferenceNoList().isEmpty()) {
             for (PendingAdvocateRequest request : pendingAdvocateRequests) {
-                if (pendingAdvocateRequest.getAdvocateId().equalsIgnoreCase(advocateUuid)) {
+                if (request.equals(pendingAdvocateRequest)) {
                     request.setStatus(PARTIALLY_JOINED);
                     return;
                 }
             }
         }
 
-        if (mappingList.isEmpty() && !pendingAdvocateRequest.getTaskReferenceNoList().isEmpty()) {
+        if (!hasMapping && !pendingAdvocateRequest.getTaskReferenceNoList().isEmpty()) {
             for (PendingAdvocateRequest request : pendingAdvocateRequests) {
-                if (pendingAdvocateRequest.getAdvocateId().equalsIgnoreCase(advocateUuid)) {
+                if (pendingAdvocateRequest.equals(request)) {
                     request.setStatus(PENDING);
                     return;
                 }
             }
         }
 
-        if (mappingList.isEmpty() && pendingAdvocateRequest.getTaskReferenceNoList().isEmpty()) {
+        if (!hasMapping && pendingAdvocateRequest.getTaskReferenceNoList().isEmpty()) {
             pendingAdvocateRequests.remove(pendingAdvocateRequest);
             courtCase.setPendingAdvocateRequests(pendingAdvocateRequests);
         }
