@@ -1,17 +1,16 @@
 package org.pucar.dristi.validators;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.common.internals.KafkaFutureImpl;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.repository.TaskRepository;
 import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.OrderUtil;
-import org.pucar.dristi.web.models.Task;
-import org.pucar.dristi.web.models.TaskCriteria;
-import org.pucar.dristi.web.models.TaskExists;
-import org.pucar.dristi.web.models.TaskRequest;
+import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
@@ -27,12 +26,14 @@ public class TaskRegistrationValidator {
     private final TaskRepository repository;
     private final OrderUtil orderUtil;
     private final CaseUtil caseUtil;
+    private final ObjectMapper objectMapper;
 
     @Autowired
-    public TaskRegistrationValidator(TaskRepository repository, OrderUtil orderUtil, CaseUtil caseUtil) {
+    public TaskRegistrationValidator(TaskRepository repository, OrderUtil orderUtil, CaseUtil caseUtil, ObjectMapper objectMapper) {
         this.repository = repository;
         this.orderUtil = orderUtil;
         this.caseUtil = caseUtil;
+        this.objectMapper = objectMapper;
     }
 
 
@@ -60,7 +61,7 @@ public class TaskRegistrationValidator {
             }
 
         } else {
-            if(JOIN_CASE_TASK.equalsIgnoreCase(task.getTaskType())){
+            if(JOIN_CASE.equalsIgnoreCase(task.getTaskType())){
                 return;
             }
             if (isPendingTaskRole) {
@@ -114,4 +115,84 @@ public class TaskRegistrationValidator {
                 .orElseThrow(() -> new CustomException(UPLOAD_TASK_DOCUMENT_ERROR, "No task found for the given criteria"));
 
     }
+
+    public void validateJoinCaseTask(TaskRequest taskRequest) throws CustomException {
+        RequestInfo requestInfo = taskRequest.getRequestInfo();
+        Task task = taskRequest.getTask();
+        JoinCaseTaskRequest joinCaseTaskRequest = objectMapper.convertValue(task.getTaskDetails(), JoinCaseTaskRequest.class);
+
+        // Get case details and validate case existence
+        List<CourtCase> courtCaseList = caseUtil.getCaseDetails(taskRequest);
+        if (courtCaseList.isEmpty()) {
+            throw new CustomException(UPDATE_TASK_ERR, "Case not found");
+        }
+
+        CourtCase courtCase = courtCaseList.get(0);
+        String userUuid = requestInfo.getUserInfo().getUuid();
+
+        // Find replacement details for current user
+        ReplacementDetails replacementDetails = findReplacementDetailsForUser(joinCaseTaskRequest, userUuid);
+        if (replacementDetails == null) {
+            throw new CustomException(UPDATE_TASK_ERR, "You are not allowed to make this change");
+        }
+
+        // Validate user authorization based on their role
+        validateUserAuthorization(courtCase, replacementDetails, userUuid);
+    }
+
+    private ReplacementDetails findReplacementDetailsForUser(JoinCaseTaskRequest joinCaseTaskRequest, String userUuid) {
+        List<ReplacementDetails> replacementDetailsList = joinCaseTaskRequest.getReplacementDetails();
+        return replacementDetailsList.stream()
+                .filter(rep -> rep.getAdvocateDetails().getUserUuid().equalsIgnoreCase(userUuid))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private void validateUserAuthorization(CourtCase courtCase, ReplacementDetails replacementDetails, String userUuid)
+            throws CustomException {
+        LitigantDetails litigantDetails = replacementDetails.getLitigantDetails();
+        String litigantDetailsIndividualId = litigantDetails.getIndividualId();
+
+        if (replacementDetails.getIsLitigantPip()) {
+            validateLitigantAccess(courtCase, litigantDetailsIndividualId);
+        } else {
+            validateAdvocateAccess(courtCase, userUuid, litigantDetailsIndividualId);
+        }
+    }
+
+    private void validateLitigantAccess(CourtCase courtCase, String litigantDetailsIndividualId)
+            throws CustomException {
+        List<Party> litigantList = courtCase.getLitigants();
+        Party litigant = litigantList.stream()
+                .filter(lit -> lit.getIndividualId().equalsIgnoreCase(litigantDetailsIndividualId))
+                .findFirst()
+                .orElse(null);
+
+        if (litigant == null || !litigant.getIsActive()) {
+            throw new CustomException(PENDNIG_TASK_VALIDATION_ERROR, "You are not allowed to make this change");
+        }
+    }
+
+    private void validateAdvocateAccess(CourtCase courtCase, String userUuid, String litigantDetailsIndividualId)
+            throws CustomException {
+        List<AdvocateMapping> advocateMappingList = courtCase.getRepresentatives();
+        AdvocateMapping advocateMapping = advocateMappingList.stream()
+                .filter(adv -> adv.getAdvocateId().equalsIgnoreCase(userUuid))
+                .findFirst()
+                .orElse(null);
+
+        if (advocateMapping == null) {
+            throw new CustomException(PENDNIG_TASK_VALIDATION_ERROR, "You are not allowed to make this change");
+        }
+
+        Party party = advocateMapping.getRepresenting().stream()
+                .filter(representing -> representing.getIndividualId().equalsIgnoreCase(litigantDetailsIndividualId))
+                .findFirst()
+                .orElse(null);
+
+        if (!advocateMapping.getIsActive() || party == null || !party.getIsActive()) {
+            throw new CustomException(PENDNIG_TASK_VALIDATION_ERROR, "You are not allowed to make this change");
+        }
+    }
+
 }

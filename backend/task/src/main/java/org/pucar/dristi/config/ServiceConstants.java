@@ -95,6 +95,7 @@ public class ServiceConstants {
     public static final String JOIN_CASE = "JOIN_CASE";
     public static final String APPROVED = "APPROVED";
     public static final String REJECTED = "REJECTED";
+    public static final String PENDNIG_TASK_VALIDATION_ERROR = "PENDING_TASK_VALIDATION_ERROR";
 
     public static final String ERROR_WHILE_FETCHING_FROM_CASE ="ERROR_WHILE_FETCHING_FROM_CASE";
 
@@ -122,5 +123,5 @@ public class ServiceConstants {
 
     public static final String INDIVIDUAL_UTILITY_EXCEPTION = "INDIVIDUAL_UTILITY_EXCEPTION";
 
-
+    public static final String ERROR_FROM_CASE = "ERROR_WHILE_FETCHING_FROM_CASE_SERVICE";
 }

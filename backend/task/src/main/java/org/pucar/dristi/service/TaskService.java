@@ -129,6 +129,7 @@ public class TaskService {
 
             // push to join case topic based on status
             if (taskType.equalsIgnoreCase(JOIN_CASE)) {
+                validator.validateJoinCaseTask(body);
                 topicBasedOnStatus.pushToTopicBasedOnStatus(status, body);
             }
 

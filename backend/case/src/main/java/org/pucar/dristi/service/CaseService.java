@@ -2548,6 +2548,7 @@ public class CaseService {
             log.error("no case found for the given criteria");
         } else {
             CourtCase courtCase = courtCaseList.get(0);
+            courtCase = encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, taskRequest.getRequestInfo());
             List<PendingAdvocateRequest> pendingAdvocateRequests = courtCase.getPendingAdvocateRequests();
             JoinCaseTaskRequest joinCaseRequest = objectMapper.convertValue(task.getAdditionalDetails(), JoinCaseTaskRequest.class);
             // uuid of advocate who is trying to replace
@@ -2579,6 +2580,7 @@ public class CaseService {
             log.error("no case found for the given criteria");
         } else {
             CourtCase courtCase = courtCaseList.get(0);
+            courtCase = encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, taskRequest.getRequestInfo());
             List<PendingAdvocateRequest> pendingAdvocateRequests = courtCase.getPendingAdvocateRequests();
             JoinCaseTaskRequest joinCaseRequest = objectMapper.convertValue(task.getAdditionalDetails(), JoinCaseTaskRequest.class);
             // uuid of advocate who is trying to replace
@@ -2741,8 +2743,9 @@ public class CaseService {
                 newAdvocateDetail, replacementDetails);
 
         courtCase.setAdditionalDetails(additionalDetailsJsonNode);
+        CourtCase encrptedCourtCase = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncrypt(), CourtCase.class);
 
-        producer.push(config.getUpdateAdditionalJoinCaseTopic(), courtCase);
+        producer.push(config.getUpdateAdditionalJoinCaseTopic(), encrptedCourtCase);
     }
 
     private boolean hasValidAdvocateDetails(JsonNode additionalDetailsJsonNode) {
