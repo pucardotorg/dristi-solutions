@@ -134,9 +134,6 @@ public class Configuration {
     @Value("${egov.workflow.task.join.case.business.name}")
     private String taskJoinCaseBusinessService;
 
-    @Value("${egov.workflow.task.join.case.business.service.name}")
-    private String taskJoinCaseBusinessServiceName;
-
     @Value("${task.join.case.approved.topic}")
     private String taskJoinCaseApprovedTopic;
 
