@@ -2540,6 +2540,8 @@ public class CaseService {
     }
 
     public void updateJoinCaseRejected(TaskRequest taskRequest) {
+        //this method is used rejecting the request
+        log.info("operation=updateJoinCaseRejected, status=IN_PROGRESS, pendingTaskId: {}", taskRequest);
 
         List<CourtCase> courtCaseList = getCaseFromDb(taskRequest);
         Task task = taskRequest.getTask();
@@ -2548,6 +2550,8 @@ public class CaseService {
             log.error("no case found for the given criteria");
         } else {
             CourtCase courtCase = courtCaseList.get(0);
+            courtCase = encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, taskRequest.getRequestInfo());
+            // get the pending requests of advocates in the case
             List<PendingAdvocateRequest> pendingAdvocateRequests = courtCase.getPendingAdvocateRequests();
             JoinCaseTaskRequest joinCaseRequest = objectMapper.convertValue(task.getAdditionalDetails(), JoinCaseTaskRequest.class);
             // uuid of advocate who is trying to replace
@@ -2556,7 +2560,9 @@ public class CaseService {
             PendingAdvocateRequest pendingAdvocateRequest = new PendingAdvocateRequest();
 
             for (PendingAdvocateRequest request : pendingAdvocateRequests) {
+                // check the pending requests of the advocate in case
                 if (request.getAdvocateId().equalsIgnoreCase(advocateUuid) && request.getTaskReferenceNoList().contains(taskNumber)) {
+                    // remove the taskReference number of the pending task from the case object
                     request.getTaskReferenceNoList().remove(taskNumber);
                     pendingAdvocateRequest = request;
                 }
@@ -2564,12 +2570,19 @@ public class CaseService {
             courtCase.setPendingAdvocateRequests(pendingAdvocateRequests);
 
             updateStatusOfAdvocate(courtCase, advocateUuid, pendingAdvocateRequest);
+
             producer.push(config.getUpdatePendingAdvocateRequestKafkaTopic(), courtCase);
+            updateCourtCaseInRedis(courtCase.getTenantId(), courtCase);
+
+            log.info("operation=updateJoinCaseRejected, status=SUCCESS, taskRequest: {}", taskRequest);
+
         }
 
     }
 
     public void updateJoinCaseApproved(TaskRequest taskRequest) {
+
+        log.info("operation=updateJoinCaseApproved, status=IN_PROGRESS, taskRequest: {}", taskRequest);
 
         List<CourtCase> courtCaseList = getCaseFromDb(taskRequest);
         Task task = taskRequest.getTask();
@@ -2579,6 +2592,8 @@ public class CaseService {
             log.error("no case found for the given criteria");
         } else {
             CourtCase courtCase = courtCaseList.get(0);
+            courtCase = encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, taskRequest.getRequestInfo());
+            // get the pending requests of advocates in the case
             List<PendingAdvocateRequest> pendingAdvocateRequests = courtCase.getPendingAdvocateRequests();
             JoinCaseTaskRequest joinCaseRequest = objectMapper.convertValue(task.getAdditionalDetails(), JoinCaseTaskRequest.class);
             // uuid of advocate who is trying to replace
@@ -2588,7 +2603,9 @@ public class CaseService {
             PendingAdvocateRequest pendingAdvocateRequest = new PendingAdvocateRequest();
 
             for (PendingAdvocateRequest request : pendingAdvocateRequests) {
+                // check the pending requests of the advocate in case
                 if (request.getAdvocateId().equalsIgnoreCase(advocateUuid) && request.getTaskReferenceNoList().contains(taskNumber)) {
+                    // remove the taskReference number of the pending task from the case object
                     request.getTaskReferenceNoList().remove(taskNumber);
                     pendingAdvocateRequest = request;
                 }
@@ -2599,7 +2616,11 @@ public class CaseService {
 
             producer.push(config.getUpdatePendingAdvocateRequestKafkaTopic(), courtCase);
 
+            updateCourtCaseInRedis(courtCase.getTenantId(), courtCase);
+
             updateCourtCaseObject(courtCase, joinCaseRequest, advocateUuid, requestInfo);
+
+            log.info("operation=updateJoinCaseApproved, status=SUCCESS, taskRequest: {}", taskRequest);
         }
 
     }
@@ -2622,8 +2643,11 @@ public class CaseService {
     private void updateCourtCaseObject(CourtCase courtCase, JoinCaseTaskRequest joinCaseRequest, String advocateUuid,
                                        RequestInfo requestInfo) {
 
+        log.info("operation=updateJoinCaseApproved, status=IN_PROGRESS, joinCaseRequest, advocateUuid : {}, {}",joinCaseRequest, advocateUuid);
+
         List<AdvocateMapping> advocateMappings = courtCase.getRepresentatives();
 
+        // checking weather advocate is present in case or not
         List<AdvocateMapping> advocates = advocateMappings.stream().filter(advocateMapping ->
                 advocateMapping.getAdvocateId().equalsIgnoreCase(advocateUuid)).toList();
 
@@ -2640,21 +2664,26 @@ public class CaseService {
             if (replacementDetails.getIsLitigantPip()) {
                 List<Party> litigantParties = courtCase.getLitigants();
                 if (advocates.isEmpty()) {
+                    // adding the advocate in representatives list as he is new joining the case
                     enrichAdvocateDetailsInRepresentativesList(courtCase, advocateUuid, replacementDetails, party, auditDetails, advocateDetails);
                 } else {
+                    // adding the litigant details into representing list of the advocate
                     advocates.get(0).getRepresenting().add(party);
                     Document replacementDetailsDocument = objectMapper.convertValue(replacementDetails.getDocument(), Document.class);
                     advocates.get(0).getDocuments().add(replacementDetailsDocument);
                 }
                 for (Party litigantParty : litigantParties) {
                     if (litigantParty.getIndividualId().equalsIgnoreCase(litigantDetails.getIndividualId())) {
+                        // inactive the litigant from pip as advocate going to represent him
                         litigantParty.setPartyInPerson(false);
                     }
                 }
             } else {
                 if (advocates.isEmpty()) {
+                    // adding the advocate in representatives list as he is new joining the case
                     enrichAdvocateDetailsInRepresentativesList(courtCase, advocateUuid, replacementDetails, party, auditDetails, advocateDetails);
                 } else {
+                    // adding the litigant details into representing list of the advocate
                     advocates.get(0).getRepresenting().add(party);
                     Document replacementDetailsDocument = objectMapper.convertValue(replacementDetails.getDocument(), Document.class);
                     advocates.get(0).getDocuments().add(replacementDetailsDocument);
@@ -2664,19 +2693,25 @@ public class CaseService {
 
             producer.push(config.getRepresentativeJoinCaseTopic(), courtCase);
 
+            updateCourtCaseInRedis(courtCase.getTenantId(), courtCase);
+
             if (partyType.contains("complainant")) {
                 Object additionalDetails = courtCase.getAdditionalDetails();
                 JsonNode additionalDetailsJsonNode = objectMapper.convertValue(additionalDetails, JsonNode.class);
                 JsonNode newAdvoacteDetailsJsonNode = enrichNewAdvocateDetails(advocateDetails, replacementDetails);
                 enrichAdditionalDetails(courtCase, additionalDetailsJsonNode, replacementDetails, litigantDetails.getIndividualId(), advocateUuidToBeReplaced, newAdvoacteDetailsJsonNode);
             }
+
+            log.info("operation=updateJoinCaseApproved, status=SUCCESS, joinCaseRequest, advocateUuid : {}, {}",joinCaseRequest, advocateUuid);
         }
 
     }
 
     private void inactivateOldAdvocate(ReplacementDetails replacementDetails, CourtCase courtCase) {
+        log.info("operation=inactivateOldAdvocate, status=IN_PROGRESS");
         String advocateId = replacementDetails.getAdvocateDetails().getAdvocateUuid();
         String litigantId = replacementDetails.getLitigantDetails().getIndividualId();
+        //  remove the litigant in old advocate's representing list as another advocate is trying to replace
 
         courtCase.getRepresentatives().stream()
                 .filter(mapping -> mapping.getAdvocateId().equalsIgnoreCase(advocateId))
@@ -2686,10 +2721,15 @@ public class CaseService {
                     mapping.setIsActive(!mapping.getRepresenting().isEmpty());
                 });
         producer.push(config.getUpdateRepresentativeJoinCaseTopic(), courtCase);
+
+        updateCourtCaseInRedis(courtCase.getTenantId(), courtCase);
+        log.info("operation=inactivateOldAdvocate, status=SUCCESS");
     }
 
 
     private JsonNode enrichNewAdvocateDetails(AdvocateDetails advocateDetails, ReplacementDetails replacementDetails) {
+
+        // enrich advocate details of new advocate who is trying to join to enrich in addtional details
         IndividualDetails individual = advocateDetails.getIndividualDetails();
         String fullName = individual.getFirstName() + individual.getMiddleName() + individual.getLastName();
         ObjectMapper objectMapper = new ObjectMapper();
@@ -2741,8 +2781,11 @@ public class CaseService {
                 newAdvocateDetail, replacementDetails);
 
         courtCase.setAdditionalDetails(additionalDetailsJsonNode);
+        CourtCase encrptedCourtCase = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncrypt(), CourtCase.class);
 
-        producer.push(config.getUpdateAdditionalJoinCaseTopic(), courtCase);
+        producer.push(config.getUpdateAdditionalJoinCaseTopic(), encrptedCourtCase);
+
+        updateCourtCaseInRedis(courtCase.getTenantId(), encrptedCourtCase);
     }
 
     private boolean hasValidAdvocateDetails(JsonNode additionalDetailsJsonNode) {
@@ -2753,6 +2796,8 @@ public class CaseService {
     private void findAndProcessMatchingLitigant(ArrayNode formData, String litigantIndividualId,
                                                 String advocateUuidToReplace, JsonNode newAdvocateDetail,
                                                 ReplacementDetails replacementDetails) {
+        log.info("operation=findAndProcessMatchingLitigant , status=IN_PROGRESS , formData , litigantIndividualId ,  advocateUuidToReplace , newAdvocateDetail ," +
+                "replacementDetails : {}, {} , {} ,{} ,{} ",formData, litigantIndividualId, advocateUuidToReplace, newAdvocateDetail, replacementDetails);
         for (int i = 0; i < formData.size(); i++) {
             JsonNode item = formData.get(i);
 
@@ -2769,6 +2814,8 @@ public class CaseService {
             // We found a matching litigant
             addVakalatnamaDocument(item, replacementDetails);
             replaceAdvocateIfFound(item, advocateUuidToReplace, newAdvocateDetail);
+            log.info("operation=findAndProcessMatchingLitigant , status=SUCCESS , formData , litigantIndividualId ,  advocateUuidToReplace , newAdvocateDetail ," +
+                    "replacementDetails : {}, {} , {} ,{} ,{} ",formData, litigantIndividualId, advocateUuidToReplace, newAdvocateDetail, replacementDetails);
             break; // Exit loop after processing the matching litigant
         }
     }
@@ -2848,6 +2895,8 @@ public class CaseService {
 
 
     private void updateStatusOfAdvocate(CourtCase courtCase, String advocateUuid, PendingAdvocateRequest pendingAdvocateRequest) {
+        log.info("operation=updateStatusOfAdvocate, status=IN_PROGRESS,courtCase advocateUuid,pendingAdvocateRequest : {}, {} ,{}", courtCase, advocateUuid,
+                pendingAdvocateRequest);
         List<AdvocateMapping> advocateMappings = courtCase.getRepresentatives();
         List<PendingAdvocateRequest> pendingAdvocateRequests = courtCase.getPendingAdvocateRequests();
 
@@ -2856,6 +2905,8 @@ public class CaseService {
 
 
         if (hasMapping && pendingAdvocateRequest.getTaskReferenceNoList().isEmpty()) {
+            // remove the pending request of the advocate
+            log.info("advocate has joined the case , advocateUuid : {} " ,advocateUuid);
             pendingAdvocateRequests.remove(pendingAdvocateRequest);
             courtCase.setPendingAdvocateRequests(pendingAdvocateRequests);
         }
@@ -2863,6 +2914,8 @@ public class CaseService {
         if (hasMapping && !pendingAdvocateRequest.getTaskReferenceNoList().isEmpty()) {
             for (PendingAdvocateRequest request : pendingAdvocateRequests) {
                 if (request.equals(pendingAdvocateRequest)) {
+                    // advocate is partially joined as some approvals are pending and he is part of the case
+                    log.info("advocate status is partially joined in the case , advocateUuid : {} " ,advocateUuid);
                     request.setStatus(PARTIALLY_JOINED);
                     return;
                 }
@@ -2872,6 +2925,8 @@ public class CaseService {
         if (!hasMapping && !pendingAdvocateRequest.getTaskReferenceNoList().isEmpty()) {
             for (PendingAdvocateRequest request : pendingAdvocateRequests) {
                 if (pendingAdvocateRequest.equals(request)) {
+                    // advocate status is pending as some approvals are pending as he has pending approvals and not part of the case
+                    log.info("advocate status is pending in the case , advocateUuid : {} " ,advocateUuid);
                     request.setStatus(PENDING);
                     return;
                 }
@@ -2879,6 +2934,8 @@ public class CaseService {
         }
 
         if (!hasMapping && pendingAdvocateRequest.getTaskReferenceNoList().isEmpty()) {
+            // advocate status is reject as he is not part of the case and no approvals are left
+            log.info("advocate status is rejected the case , advocateUuid : {} " ,advocateUuid);
             pendingAdvocateRequests.remove(pendingAdvocateRequest);
             courtCase.setPendingAdvocateRequests(pendingAdvocateRequests);
         }
