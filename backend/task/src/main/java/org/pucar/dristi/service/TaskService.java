@@ -110,6 +110,7 @@ public class TaskService {
     public Task updateTask(TaskRequest body) {
 
         try {
+            log.info("operation=updateTask, status=IN_PROGRESS, BODY: {}", body);
             // Validate whether the application that is being requested for update indeed exists
             if (!validator.validateApplicationExistence(body.getTask(), body.getRequestInfo()))
                 throw new CustomException(VALIDATION_ERR, "Task Application does not exist");
@@ -123,6 +124,7 @@ public class TaskService {
                 isValidTask = validator.isValidJoinCasePendingTask(body);
                 if (!isValidTask) {
                     body.getTask().getWorkflow().setAction(REJECT);
+                    log.info("pending task is no more valid rejecting by system");
                 }
             }
 
@@ -130,6 +132,7 @@ public class TaskService {
 
             String status = body.getTask().getStatus();
             String taskType = body.getTask().getTaskType();
+            log.info("status , taskType : {} , {} ", status, taskType);
             if (SUMMON_SENT.equalsIgnoreCase(status) || NOTICE_SENT.equalsIgnoreCase(status) || WARRANT_SENT.equalsIgnoreCase(status))
                 producer.push(config.getTaskIssueSummonTopic(), body);
 
@@ -151,6 +154,7 @@ public class TaskService {
                 callNotificationService(body, messageCode);
             }
 
+            log.info("operation=updateTask, status=SUCCESS, BODY: {}", body);
             return body.getTask();
 
         } catch (CustomException e) {

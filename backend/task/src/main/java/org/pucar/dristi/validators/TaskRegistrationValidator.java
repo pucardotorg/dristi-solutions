@@ -117,6 +117,7 @@ public class TaskRegistrationValidator {
     }
 
     public boolean isValidJoinCasePendingTask(TaskRequest body) {
+        log.info("operation=isValidJoinCasePendingTask, status=IN_PROGRESS, task request: {}", body);
         Task task = body.getTask();
         JoinCaseTaskRequest joinCaseTaskRequest = objectMapper.convertValue(task.getTaskDetails(), JoinCaseTaskRequest.class);
 
@@ -126,10 +127,11 @@ public class TaskRegistrationValidator {
         for (ReplacementDetails replacement : replacementDetailsList) {
             // Return false immediately if any replacement is invalid
             if (!isValidReplacement(replacement, courtCase)) {
+                log.info("operation=isValidJoinCasePendingTask, status=FAILURE, task request: {}", body);
                 return false;
             }
         }
-
+        log.info("operation=isValidJoinCasePendingTask, status=SUCCESS, task request: {}", body);
         return true;
     }
 
@@ -153,12 +155,13 @@ public class TaskRegistrationValidator {
     }
 
     private boolean isValidPipLitigantReplacement(String litigantId, CourtCase courtCase) {
+        log.info("operation=isValidPipLitigantReplacement, status=IN_PROGRESS, litigantId , courtCase: {} , {}",litigantId,courtCase);
         // Check if litigant exists and is active
         Party litigant = findActiveLitigantById(litigantId, courtCase.getLitigants());
         if (litigant == null) {
+            log.info("operation=isValidPipLitigantReplacement, status=FAILURE, litigantId , courtCase: {} , {}",litigantId,courtCase);
             return false;
         }
-
         // Check if litigant is still self-represented (PIP)
         return isLitigantStillSelfRepresented(litigantId, courtCase.getRepresentatives());
     }
@@ -171,6 +174,7 @@ public class TaskRegistrationValidator {
     }
 
     private boolean isLitigantStillSelfRepresented(String litigantId, List<AdvocateMapping> advocateMappings) {
+        log.info("operation=isLitigantStillSelfRepresented, status=IN_PROGRESS, litigantId , advocateMappings: {} , {}",litigantId, advocateMappings);
         for (AdvocateMapping mapping : advocateMappings) {
             Party litigantParty = mapping.getRepresenting().stream()
                     .filter(party -> party.getIndividualId().equalsIgnoreCase(litigantId) && party.getIsActive())
@@ -179,25 +183,29 @@ public class TaskRegistrationValidator {
 
             // If litigant is actively represented by an advocate, they're not self-represented
             if (litigantParty != null) {
+                log.info("operation=isLitigantStillSelfRepresented, status=FAILURE, litigantId , advocateMappings: {} , {}, {}",litigantId, advocateMappings, litigantParty);
                 return false;
             }
         }
-
+        log.info("operation=isLitigantStillSelfRepresented, status=SUCCESS, litigantId , advocateMappings: {} ,{}",litigantId, advocateMappings);
         return true;
     }
 
     private boolean isValidAdvocateReplacement(ReplacementDetails replacement, CourtCase courtCase) {
+        log.info("operation=isValidAdvocateReplacement, status=IN_PROGRESS, replacement details , courtCase: {} , {}",replacement,courtCase);
         String advocateId = replacement.getAdvocateDetails().getAdvocateUuid();
         String litigantId = replacement.getLitigantDetails().getIndividualId();
 
         // Check if the advocate exists and is active
         AdvocateMapping advocateMapping = findActiveAdvocateById(advocateId, courtCase.getRepresentatives());
         if (advocateMapping == null) {
+            log.info("operation=isValidAdvocateReplacement, status=FAILURE, replacement details , courtCase: {} , {}",replacement,courtCase);
             return false;
         }
 
         // Check if the advocate is representing the specified litigant and the litigant is active
         if (!isAdvocateRepresentingActiveLitigant(advocateMapping, litigantId)) {
+            log.info("operation=isValidAdvocateReplacement, status=FAILURE, replacement details , courtCase, advocateMapping: {} , {}, {}",replacement,courtCase, advocateMapping);
             return false;
         }
 
@@ -226,11 +234,12 @@ public class TaskRegistrationValidator {
                         .orElse(null);
 
                 if (litigantParty != null) {
+                    log.info("operation=isAdvocateAlreadyRepresentingLitigant, status=SUCCESS, advocateId, litigantId , {} , {}",advocateId, litigantId);
                     return true;
                 }
             }
         }
-
+        log.info("operation=isAdvocateAlreadyRepresentingLitigant, status=FAILURE, advocateId, litigantId , {} , {}",advocateId, litigantId);
         return false;
     }
 }
