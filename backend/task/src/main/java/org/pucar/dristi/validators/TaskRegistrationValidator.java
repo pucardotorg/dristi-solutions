@@ -150,7 +150,12 @@ public class TaskRegistrationValidator {
         }
 
         // Validate user authorization based on their role
-        validateUserAuthorization(courtCase, replacementDetails, userUuid);
+        for (ReplacementDetails replacementDetails : replacementDetailsList) {
+            if (isJudgeRole) {
+                userUuid = replacementDetails.getAdvocateDetails().getUserUuid();
+            }
+            validateUserAuthorization(courtCase, replacementDetails, userUuid);
+        }
     }
 
     private ReplacementDetails findReplacementDetailsForUser(JoinCaseTaskRequest joinCaseTaskRequest, String userUuid) {
