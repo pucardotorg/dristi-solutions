@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
+import java.util.Collections;
 import java.util.List;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
@@ -118,6 +119,9 @@ public class TaskRegistrationValidator {
 
     public void validateJoinCaseTask(TaskRequest taskRequest) throws CustomException {
         RequestInfo requestInfo = taskRequest.getRequestInfo();
+        List<Role> roles = requestInfo.getUserInfo().getRoles();
+        boolean isJudgeRole = false;
+
         Task task = taskRequest.getTask();
         JoinCaseTaskRequest joinCaseTaskRequest = objectMapper.convertValue(task.getTaskDetails(), JoinCaseTaskRequest.class);
 
@@ -130,9 +134,18 @@ public class TaskRegistrationValidator {
         CourtCase courtCase = courtCaseList.get(0);
         String userUuid = requestInfo.getUserInfo().getUuid();
 
-        // Find replacement details for current user
-        ReplacementDetails replacementDetails = findReplacementDetailsForUser(joinCaseTaskRequest, userUuid);
-        if (replacementDetails == null) {
+        for (Role role : roles) {
+            isJudgeRole = role.getCode().equalsIgnoreCase(JUDGE_ROLE);
+        }
+
+        List<ReplacementDetails> replacementDetailsList = joinCaseTaskRequest.getReplacementDetails();
+
+        if (!isJudgeRole) {
+            // Find replacement details for current user
+            replacementDetailsList = Collections.singletonList(findReplacementDetailsForUser(joinCaseTaskRequest, userUuid));
+        }
+
+        if (replacementDetailsList == null || replacementDetailsList.isEmpty()) {
             throw new CustomException(UPDATE_TASK_ERR, "You are not allowed to make this change");
         }
 
