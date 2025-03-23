@@ -2568,6 +2568,7 @@ public class CaseService {
 
             updateStatusOfAdvocate(courtCase, advocateUuid, pendingAdvocateRequest);
             producer.push(config.getUpdatePendingAdvocateRequestKafkaTopic(),courtCase);
+            updateCourtCaseInRedis(courtCase.getTenantId(), courtCase);
         }
 
     }
@@ -2602,6 +2603,8 @@ public class CaseService {
             updateStatusOfAdvocate(courtCase, advocateUuid, pendingAdvocateRequest);
 
             producer.push(config.getUpdatePendingAdvocateRequestKafkaTopic(),courtCase);
+
+            updateCourtCaseInRedis(courtCase.getTenantId(), courtCase);
 
             updateCourtCaseObject(courtCase, joinCaseRequest, advocateUuid, requestInfo);
         }
@@ -2668,6 +2671,8 @@ public class CaseService {
 
             producer.push(config.getRepresentativeJoinCaseTopic(), courtCase);
 
+            updateCourtCaseInRedis(courtCase.getTenantId(), courtCase);
+
             if (partyType.contains("complainant")) {
                 Object additionalDetails = courtCase.getAdditionalDetails();
                 JsonNode additionalDetailsJsonNode = objectMapper.convertValue(additionalDetails, JsonNode.class);
@@ -2690,6 +2695,8 @@ public class CaseService {
                     mapping.setIsActive(!mapping.getRepresenting().isEmpty());
                 });
         producer.push(config.getUpdateRepresentativeJoinCaseTopic(),courtCase);
+
+        updateCourtCaseInRedis(courtCase.getTenantId(), courtCase);
     }
 
 
@@ -2748,6 +2755,8 @@ public class CaseService {
         CourtCase encrptedCourtCase = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncrypt(), CourtCase.class);
 
         producer.push(config.getUpdateAdditionalJoinCaseTopic(), encrptedCourtCase);
+
+        updateCourtCaseInRedis(courtCase.getTenantId(), courtCase);
     }
 
     private boolean hasValidAdvocateDetails(JsonNode additionalDetailsJsonNode) {
