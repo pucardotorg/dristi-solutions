@@ -3,7 +3,6 @@ package org.pucar.dristi.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
@@ -111,6 +110,7 @@ public class TaskService {
     public Task updateTask(TaskRequest body) {
 
         try {
+            log.info("operation=updateTask, status=IN_PROGRESS, BODY: {}", body);
             // Validate whether the application that is being requested for update indeed exists
             if (!validator.validateApplicationExistence(body.getTask(), body.getRequestInfo()))
                 throw new CustomException(VALIDATION_ERR, "Task Application does not exist");
@@ -118,12 +118,21 @@ public class TaskService {
             // Enrich application upon update
             enrichmentUtil.enrichCaseApplicationUponUpdate(body);
 
-            // get data
+            boolean isValidTask = true;
+
+            if (body.getTask().getTaskType().equalsIgnoreCase(JOIN_CASE)) {
+                isValidTask = validator.isValidJoinCasePendingTask(body);
+                if (!isValidTask) {
+                    body.getTask().getWorkflow().setAction(REJECT);
+                    log.info("pending task is no more valid rejecting by system");
+                }
+            }
 
             workflowUpdate(body);
 
             String status = body.getTask().getStatus();
             String taskType = body.getTask().getTaskType();
+            log.info("status , taskType : {} , {} ", status, taskType);
             if (SUMMON_SENT.equalsIgnoreCase(status) || NOTICE_SENT.equalsIgnoreCase(status) || WARRANT_SENT.equalsIgnoreCase(status))
                 producer.push(config.getTaskIssueSummonTopic(), body);
 
@@ -134,12 +143,18 @@ public class TaskService {
 
             producer.push(config.getTaskUpdateTopic(), body);
 
+            if (!isValidTask) {
+                // join case pending task is not valid
+                throw new CustomException(INVALID_PENDING_TASK,"the pending task is not valid");
+            }
+
             String messageCode = status != null ? getMessageCode(taskType, status) : null;
             log.info("Message Code :: {}", messageCode);
             if(messageCode != null){
                 callNotificationService(body, messageCode);
             }
 
+            log.info("operation=updateTask, status=SUCCESS, BODY: {}", body);
             return body.getTask();
 
         } catch (CustomException e) {
