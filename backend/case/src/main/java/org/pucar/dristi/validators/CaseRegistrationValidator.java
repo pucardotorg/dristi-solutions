@@ -274,9 +274,9 @@ public class CaseRegistrationValidator {
         RequestInfo requestInfo = joinCaseRequest.getRequestInfo();
         JoinCaseRepresentative representative = joinCaseRequest.getJoinCaseData().getRepresentative();
 
-        if (representative.getAdvocateUUID() != null) {
+        if (representative.getAdvocateId() != null) {
             // validation for advocateId for representative
-            if (!advocateUtil.doesAdvocateExist(requestInfo, representative.getAdvocateUUID()))
+            if (!advocateUtil.doesAdvocateExist(requestInfo, representative.getAdvocateId()))
                 throw new CustomException(INVALID_ADVOCATE_ID, INVALID_ADVOCATE_DETAILS);
         } else {
             throw new CustomException(INVALID_ADVOCATE_ID, INVALID_ADVOCATE_DETAILS);

@@ -1110,7 +1110,7 @@ public class CaseService {
                 AdvocateMapping existingRepresentative = validateAdvocateAlreadyRepresenting(courtCase, joinCaseData);
 
                 if (joinCaseData.getRepresentative().getIsReplacing()) {
-                    replaceAdvocate(joinCaseRequest, courtCase, joinCaseData.getRepresentative().getAdvocateUUID());
+                    replaceAdvocate(joinCaseRequest, courtCase, joinCaseData.getRepresentative().getAdvocateId());
                 } else {
                     addAdvocateToCase(joinCaseRequest, caseObj, courtCase, auditDetails, existingRepresentative);
 
@@ -1155,10 +1155,10 @@ public class CaseService {
         AdvocateMapping existingRepresentative = null;
 
         // If advocate is already representing the individual throw exception
-        if (!advocateIds.isEmpty() && advocateIds.contains(joinCaseData.getRepresentative().getAdvocateUUID())) {
+        if (!advocateIds.isEmpty() && advocateIds.contains(joinCaseData.getRepresentative().getAdvocateId())) {
 
             Optional<AdvocateMapping> existingRepresentativeOptional = courtCase.getRepresentatives().stream()
-                    .filter(advocateMapping -> joinCaseData.getRepresentative().getAdvocateUUID().equals(advocateMapping.getAdvocateId()))
+                    .filter(advocateMapping -> joinCaseData.getRepresentative().getAdvocateId().equals(advocateMapping.getAdvocateId()))
                     .findFirst();
 
             if (existingRepresentativeOptional.isEmpty())
@@ -1197,7 +1197,7 @@ public class CaseService {
             document.setFileStore(joinCaseData.getRepresentative().getReasonDocument().getFileStore());
             representative.setDocuments(List.of(document));
             representative.setTenantId(joinCaseData.getTenantId());
-            representative.setAdvocateId(joinCaseData.getRepresentative().getAdvocateUUID());
+            representative.setAdvocateId(joinCaseData.getRepresentative().getAdvocateId());
             List<Party> representingList = new ArrayList<>();
 
             joinCaseData.getRepresentative().getRepresenting().forEach(representingJoinCase -> {
@@ -1277,7 +1277,7 @@ public class CaseService {
                         // Ensure multipleAdvocateNameDetails is initialized and clear it
                         ArrayNode multipleAdvocateNameDetails = ensureArrayNodeInitialized(dataNode.get("multipleAdvocatesAndPip").get("multipleAdvocateNameDetails"));
 
-                        List<Advocate> advocatesList = advocateUtil.fetchAdvocatesById(requestInfo, joinCaseRepresentative.getAdvocateUUID());
+                        List<Advocate> advocatesList = advocateUtil.fetchAdvocatesById(requestInfo, joinCaseRepresentative.getAdvocateId());
                         Advocate joinCaseAdvocate = advocatesList.get(0);
 
                         List<Individual> individualsList = individualService.getIndividualsByIndividualId(requestInfo, joinCaseAdvocate.getIndividualId());
@@ -1473,7 +1473,7 @@ public class CaseService {
                     ObjectNode dataNode = (ObjectNode) formData.get(i).path("data");
 
                     log.info("dataNode :: {}", dataNode);
-                    String uniqueIdRespondent = dataNode.get("uniqueId").asText();
+                    String uniqueIdRespondent = formData.get(i).get("uniqueId").asText();
 
                     if (!dataNode.has("respondentVerification") && uniqueIdRespondent.equalsIgnoreCase(joinCaseLitigant.getUniqueId())) {
                         // Create the respondentVerification object
@@ -1535,7 +1535,7 @@ public class CaseService {
 
             JoinCaseTaskRequest taskJoinCase = new JoinCaseTaskRequest();
 
-            List<Advocate> advocatesList = advocateUtil.fetchAdvocatesById(requestInfo, joinCaseData.getRepresentative().getAdvocateUUID());
+            List<Advocate> advocatesList = advocateUtil.fetchAdvocatesById(requestInfo, joinCaseData.getRepresentative().getAdvocateId());
             Advocate joinCaseAdvocate = advocatesList.get(0);
 
             List<Individual> individualsList = individualService.getIndividualsByIndividualId(requestInfo, joinCaseAdvocate.getIndividualId());
@@ -1560,7 +1560,7 @@ public class CaseService {
                         ReplacementDetails replacementDetails = new ReplacementDetails();
 
                         ReplacementAdvocateDetails replacementAdvocateDetails = new ReplacementAdvocateDetails();
-                        replacementAdvocateDetails.setAdvocateUuid(joinCaseData.getRepresentative().getAdvocateUUID());
+                        replacementAdvocateDetails.setAdvocateUuid(joinCaseData.getRepresentative().getAdvocateId());
                         replacementDetails.setAdvocateDetails(replacementAdvocateDetails);
 
                         replacementDetails.setIsLitigantPip(representingJoinCase.getIsAlreadyPip());
@@ -1904,7 +1904,6 @@ public class CaseService {
                     disableRepresenting(courtCase, litigant.getIndividualId(), auditDetails);
             }
         }
-        enrichAndPushLitigantJoinCase(joinCaseRequest, caseObj, auditDetails);
 
         joinCaseRequest.getJoinCaseData().getLitigant().forEach(joinCaseLitigant -> {
             if (joinCaseLitigant.getPartyType().contains("complainant") && joinCaseLitigant.getIsPip()) {
@@ -1919,13 +1918,15 @@ public class CaseService {
         log.info("Pushing additional details :: {}", encrptedCourtCase);
         producer.push(config.getUpdateAdditionalJoinCaseTopic(), encrptedCourtCase);
 
+        enrichAndPushLitigantJoinCase(joinCaseRequest, caseObj, auditDetails);
+
         updateCourtCaseInRedis(joinCaseRequest.getJoinCaseData().getTenantId(), encrptedCourtCase);
 
         publishToJoinCaseIndexer(joinCaseRequest.getRequestInfo(), encrptedCourtCase);
     }
 
     private Object modifyAdvocateDetails(Object additionalDetails, JoinCaseLitigant joinCaseLitigant) {
-        // Convert the additionalDetails object to an ObjectNode for easier manipulation
+
         ObjectNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, ObjectNode.class);
 
         // Check if advocateDetails exist
@@ -2972,7 +2973,7 @@ public class CaseService {
                                                                        JoinCaseDataV2 joinCaseData) {
         return AdvocateDetails.builder()
                 .barRegistrationNumber(joinCaseAdvocate.getBarRegistrationNumber())
-                .advocateId(joinCaseData.getRepresentative().getAdvocateUUID())
+                .advocateId(joinCaseData.getRepresentative().getAdvocateId())
                 .advocateUuid(individual.getUserUuid())
                 .mobileNumber(individual.getMobileNumber())
                 .requestedDate(System.currentTimeMillis())

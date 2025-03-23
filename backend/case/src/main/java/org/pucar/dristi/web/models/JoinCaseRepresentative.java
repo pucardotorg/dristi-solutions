@@ -24,8 +24,8 @@ public class JoinCaseRepresentative {
     @JsonProperty("isReplacing")
     private Boolean isReplacing = false;
 
-    @JsonProperty("advocateUUID")
-    private String advocateUUID = null;
+    @JsonProperty("advocateId")
+    private String advocateId = null;
 
     @JsonProperty("reason")
     private String reason = null;
