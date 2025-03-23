@@ -60,7 +60,7 @@ public class TaskRegistrationValidator {
             }
 
         } else {
-            if(JOIN_CASE_TASK.equalsIgnoreCase(task.getTaskType())){
+            if(JOIN_CASE.equalsIgnoreCase(task.getTaskType())){
                 return;
             }
             if (isPendingTaskRole) {
