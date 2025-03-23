@@ -183,7 +183,7 @@ public class TaskService {
             case NOTICE -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskNoticeBusinessServiceName(), workflow, config.getTaskNoticeBusinessName());
             case JOIN_CASE -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
-                    config.getTaskJoinCaseBusinessService(), workflow, config.getTaskJoinCaseBusinessServiceName());
+                    config.getTaskJoinCaseBusinessServiceName(), workflow, config.getTaskjoinCaseBusinessName());
             default -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskBusinessServiceName(), workflow, config.getTaskBusinessName());
         };
