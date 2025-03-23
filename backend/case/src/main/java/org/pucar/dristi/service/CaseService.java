@@ -1215,7 +1215,7 @@ public class CaseService {
 
         joinCaseRequest.getJoinCaseData().getRepresentative().getRepresenting().forEach(representingJoinCase -> {
             if (representingJoinCase.getUniqueId() == null) {
-                modifyAdditionalDetails(joinCaseRequest.getRequestInfo(), courtCase.getAdditionalDetails(), representingJoinCase, joinCaseData.getRepresentative());
+               courtCase.setAdditionalDetails(modifyAdditionalDetails(joinCaseRequest.getRequestInfo(), courtCase.getAdditionalDetails(), representingJoinCase, joinCaseData.getRepresentative()));
             }
         });
 
@@ -1232,10 +1232,11 @@ public class CaseService {
         publishToJoinCaseIndexer(joinCaseRequest.getRequestInfo(), encrptedCourtCase);
     }
 
-    private void modifyAdditionalDetails(RequestInfo requestInfo, Object additionalDetails, RepresentingJoinCase representingJoinCase, JoinCaseRepresentative joinCaseRepresentative) {
+    private Object modifyAdditionalDetails(RequestInfo requestInfo, Object additionalDetails, RepresentingJoinCase representingJoinCase, JoinCaseRepresentative joinCaseRepresentative) {
+        ObjectNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, ObjectNode.class);
+
         try {
             // Convert the additionalDetails object to an ObjectNode for easier manipulation
-            ObjectNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, ObjectNode.class);
 
             // Check if advocateDetails exist
             if (additionalDetailsNode.has("advocateDetails")) {
@@ -1271,6 +1272,7 @@ public class CaseService {
                         document.add(documentNode);
 
                         vakalatnamaFileUpload.set("document", document);
+                        multipleAdvocatesAndPip.set("vakalatnamaFileUpload",vakalatnamaFileUpload);
 
                         // Ensure multipleAdvocateNameDetails is initialized and clear it
                         ArrayNode multipleAdvocateNameDetails = ensureArrayNodeInitialized(dataNode.get("multipleAdvocatesAndPip").get("multipleAdvocateNameDetails"));
@@ -1342,6 +1344,7 @@ public class CaseService {
         } catch (JsonProcessingException e) {
             // Handle JSON processing exceptions (e.g., invalid JSON syntax)
         }
+        return objectMapper.convertValue(additionalDetailsNode, additionalDetails.getClass());
     }
 
 
@@ -1456,7 +1459,7 @@ public class CaseService {
         producer.push(config.getLitigantJoinCaseTopic(), caseObj);
     }
 
-    private void updateRespondentDetails(Object additionalDetails, JoinCaseLitigant joinCaseLitigant) {
+    private Object updateRespondentDetails(Object additionalDetails, JoinCaseLitigant joinCaseLitigant) {
 
         ObjectNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, ObjectNode.class);
 
@@ -1485,6 +1488,7 @@ public class CaseService {
                 }
             }
         }
+        return objectMapper.convertValue(additionalDetailsNode, additionalDetails.getClass());
     }
 
     public void mapAndSetLitigants(JoinCaseDataV2 joinCaseData, CourtCase caseObj) {
@@ -1904,9 +1908,9 @@ public class CaseService {
 
         joinCaseRequest.getJoinCaseData().getLitigant().forEach(joinCaseLitigant -> {
             if (joinCaseLitigant.getPartyType().contains("complainant") && joinCaseLitigant.getIsPip()) {
-                modifyAdvocateDetails(courtCase.getAdditionalDetails(), joinCaseLitigant);
+               courtCase.setAdditionalDetails(modifyAdvocateDetails(courtCase.getAdditionalDetails(), joinCaseLitigant));
             } else if (joinCaseLitigant.getPartyType().contains("respondent")) {
-                updateRespondentDetails(courtCase.getAdditionalDetails(), joinCaseLitigant);
+                courtCase.setAdditionalDetails(updateRespondentDetails(courtCase.getAdditionalDetails(), joinCaseLitigant));
             }
         });
 
@@ -1920,7 +1924,7 @@ public class CaseService {
         publishToJoinCaseIndexer(joinCaseRequest.getRequestInfo(), encrptedCourtCase);
     }
 
-    private void modifyAdvocateDetails(Object additionalDetails, JoinCaseLitigant joinCaseLitigant) {
+    private Object modifyAdvocateDetails(Object additionalDetails, JoinCaseLitigant joinCaseLitigant) {
         // Convert the additionalDetails object to an ObjectNode for easier manipulation
         ObjectNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, ObjectNode.class);
 
@@ -1974,6 +1978,7 @@ public class CaseService {
 
                     document.add(documentNode);
                     pipAffidavitFileUpload.set("document", document);
+                    multipleAdvocatesAndPip.set("pipAffidavitFileUpload",pipAffidavitFileUpload);
 
                     // Ensure vakalatnamaFileUpload is initialized and clear it
                     ArrayNode vakalatnamaFileUpload = ensureArrayNodeInitialized(dataNode.get("multipleAdvocatesAndPip").get("vakalatnamaFileUpload"));
@@ -1988,6 +1993,7 @@ public class CaseService {
                 }
             }
         }
+        return objectMapper.convertValue(additionalDetailsNode, additionalDetails.getClass());
     }
 
     // Utility method to ensure ArrayNode is initialized and not null
