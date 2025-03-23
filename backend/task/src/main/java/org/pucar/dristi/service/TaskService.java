@@ -3,7 +3,6 @@ package org.pucar.dristi.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
@@ -118,7 +117,14 @@ public class TaskService {
             // Enrich application upon update
             enrichmentUtil.enrichCaseApplicationUponUpdate(body);
 
-            // get data
+            boolean isValidTask = true;
+
+            if (body.getTask().getTaskType().equalsIgnoreCase(JOIN_CASE)) {
+                isValidTask = validator.isValidJoinCasePendingTask(body);
+                if (!isValidTask) {
+                    body.getTask().getWorkflow().setAction(REJECT);
+                }
+            }
 
             workflowUpdate(body);
 
@@ -133,6 +139,11 @@ public class TaskService {
             }
 
             producer.push(config.getTaskUpdateTopic(), body);
+
+            if (!isValidTask) {
+                // join case pending task is not valid
+                throw new CustomException(INVALID_PENDING_TASK,"the pending task is not valid");
+            }
 
             String messageCode = status != null ? getMessageCode(taskType, status) : null;
             log.info("Message Code :: {}", messageCode);
