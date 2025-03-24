@@ -20,10 +20,6 @@ CREATE TABLE dristi_advocate_clerk_association (
     CONSTRAINT fk_dristi_advocate_clerk_association_clerk
         FOREIGN KEY (clerk_id)
         REFERENCES dristi_advocate_clerk(id),
-    CONSTRAINT ck_dristi_advocate_clerk_association_access_type
-        CHECK (access_type IN ('ALL', 'SPECIFIC')),
-    CONSTRAINT uq_dristi_advocate_clerk_association_clerk
-        UNIQUE (tenant_id, clerk_id)
 );
 
 -- Indexes for efficient querying

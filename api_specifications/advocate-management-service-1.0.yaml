@@ -221,17 +221,24 @@ components:
       properties:
         RequestInfo:
           $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
-        clerkDeletion:
-          type: object
-          required:
-            - associationId
-          properties:
-            associationId:
-              type: string
-              description: ID of the association to delete
-            reason:
-              type: string
-              description: Optional reason for deletion
+        criteria:
+          $ref: '#/components/schemas/ClerkDeleteCriteria'
+
+    ClerkDeleteCriteria:
+      type: object
+      description: IDs of the clerks to be deleted. Note that this is a soft delete action
+      properties:
+        tenantId:
+          type: string
+          description: Tenant identifier
+        advocateId:
+          type: string
+          description: ID of the Advocate
+        clerkIds:
+          type: array
+          description: ID of the clerks to delete
+          items:
+            type: string
 
     ClerkCaseRemovalRequest:
       type: object
@@ -239,11 +246,27 @@ components:
       properties:
         RequestInfo:
           $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
-          caseIds:
-            type: array
-            description: List of case IDs/Numbers to remove the clerk from
-            items:
-              type: string
+        criteria:
+          $ref: '#/components/schemas/ClerkRemovalCriteria'
+
+    ClerkRemovalCriteria:
+      type: object
+      description: IDs of the cases from which the clerk has to be removed
+      properties:
+        tenantId:
+          type: string
+          description: Tenant identifier
+        advocateId:
+          type: string
+          description: ID of the Advocate
+        clerkId:
+          type: string
+          description: ID of the clerk
+        caseIds:
+          type: array
+          description: ID/Number of the case from which the clerk has to be removed
+          items:
+            type: string
 
     ClerkSearchRequest:
       type: object
