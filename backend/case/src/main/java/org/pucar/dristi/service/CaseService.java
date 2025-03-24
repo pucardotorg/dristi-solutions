@@ -2719,7 +2719,7 @@ public class CaseService {
 
         for (ReplacementDetails replacementDetails : replacementDetailsList) {
             AuditDetails auditDetails = enrichAuditDetails(requestInfo);
-            Party party = enrichParty(replacementDetails, courtCase);
+            Party party = enrichParty(replacementDetails, courtCase, auditDetails);
             LitigantDetails litigantDetails = replacementDetails.getLitigantDetails();
             String partyType = litigantDetails.getPartyType();
             ReplacementAdvocateDetails advocateDetailsToBeReplaced = replacementDetails.getAdvocateDetails();
@@ -3000,7 +3000,7 @@ public class CaseService {
         }
     }
 
-    private Party enrichParty(ReplacementDetails replacementDetails, CourtCase courtCase) {
+    private Party enrichParty(ReplacementDetails replacementDetails, CourtCase courtCase, AuditDetails auditDetails) {
 
         LitigantDetails litigantDetails = replacementDetails.getLitigantDetails();
         Document document = new Document();
@@ -3016,7 +3016,8 @@ public class CaseService {
                 .tenantId(courtCase.getTenantId())
                 .isActive(true)
                 .documents(List.of(document))
-                .id(UUID.fromString(litigantDetails.getUserUuid()))
+                .auditDetails(auditDetails)
+                .id(UUID.randomUUID())
                 .build();
     }
 
