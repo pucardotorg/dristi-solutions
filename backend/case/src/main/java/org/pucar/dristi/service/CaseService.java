@@ -1486,7 +1486,7 @@ public class CaseService {
                     ObjectNode dataNode = (ObjectNode) formData.get(i).path("data");
 
                     log.info("dataNode :: {}", dataNode);
-                    String uniqueIdRespondent = formData.get(i).get("uniqueId").asText();
+                    String uniqueIdRespondent = dataNode.get(i).get("uniqueId").asText();
 
                     if (!dataNode.has("respondentVerification") && uniqueIdRespondent.equalsIgnoreCase(joinCaseLitigant.getUniqueId())) {
                         // Create the respondentVerification object
@@ -2056,14 +2056,14 @@ public class CaseService {
 
         CourtCase courtCase = encryptionDecryptionUtil.decryptObject(courtCaseList.get(0), config.getCaseDecryptSelf(), CourtCase.class, joinCaseRequest.getRequestInfo());
 
-        if (courtCase.getAccessCode() == null || courtCase.getAccessCode().isEmpty()) {
-            throw new CustomException(VALIDATION_ERR, "Access code not generated");
-        }
-        String caseAccessCode = courtCase.getAccessCode();
-
-        if (!joinCaseRequest.getJoinCaseData().getAccessCode().equalsIgnoreCase(caseAccessCode)) {
-            throw new CustomException(VALIDATION_ERR, "Invalid access code");
-        }
+//        if (courtCase.getAccessCode() == null || courtCase.getAccessCode().isEmpty()) {
+//            throw new CustomException(VALIDATION_ERR, "Access code not generated");
+//        }
+//        String caseAccessCode = courtCase.getAccessCode();
+//
+//        if (!joinCaseRequest.getJoinCaseData().getAccessCode().equalsIgnoreCase(caseAccessCode)) {
+//            throw new CustomException(VALIDATION_ERR, "Invalid access code");
+//        }
         return courtCase;
     }
 
