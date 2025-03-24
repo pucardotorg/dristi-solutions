@@ -1,0 +1,298 @@
+openapi: 3.0.0
+info:
+  title: Advocate Management Service
+  description: |
+    This service manages the relationship between advocates and their clerks, including access permissions.
+    It provides APIs to add, update, and manage clerk associations with advocates and their case access levels. The actual case IDs are not stored by this service but is managed by the Case API itself
+  version: 1.0.0
+
+tags:
+  - name: AdvocateClerkManagement
+    description: APIs to manage advocate-clerk relationships and permissions
+
+paths:
+  /advocate-management/v1/clerk/_create:
+    post:
+      tags:
+        - AdvocateClerkManagement
+      summary: Associate a new clerk with an advocate
+      description: |
+        API to create a new association between an advocate and a clerk, including access permissions.
+        When access type is 'ALL', the clerk will be automatically added to all of the advocate's active cases.
+        When access type is 'SPECIFIC', the clerk will be added only to the specified cases.
+      requestBody:
+        description: Details for clerk association and access permissions
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/ClerkAssociationRequest'
+        required: true
+      responses:
+        '201':
+          description: Clerk association created successfully
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ClerkAssociationResponse'
+        '400':
+          description: Invalid input
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes'
+
+  /advocate-management/v1/clerk/_update:
+    post:
+      tags:
+        - AdvocateClerkManagement
+      summary: Update clerk's access permissions
+      description: |
+        API to update existing clerk's access permissions or association details.
+        Changes in access type or specific case access will be reflected in the case system.
+      requestBody:
+        description: Updated clerk association and access details
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/ClerkAssociationRequest'
+        required: true
+      responses:
+        '200':
+          description: Clerk association updated successfully
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ClerkAssociationResponse'
+        '400':
+          description: Invalid input
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes'
+
+  /advocate-management/v1/clerk/_delete:
+    post:
+      tags:
+        - AdvocateClerkManagement
+      summary: Soft delete a clerk association
+      description: |
+        API to soft delete a clerk association. This will:
+        1. Mark the association as inactive
+        2. Remove the clerk from all associated cases
+        3. Maintain historical records
+      requestBody:
+        description: Clerk deletion request
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/ClerkDeletionRequest'
+        required: true
+      responses:
+        '200':
+          description: Clerk association deleted successfully
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ClerkAssociationResponse'
+        '400':
+          description: Invalid input
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes'
+
+  /advocate-management/v1/clerk/cases/_remove:
+    post:
+      tags:
+        - AdvocateClerkManagement
+      summary: Remove clerk from specific cases
+      description: |
+        API to remove a clerk's access from specific cases while maintaining the overall association. This will call the Case API to remove the clerk from the case
+      requestBody:
+        description: Case removal request
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/ClerkCaseRemovalRequest'
+        required: true
+      responses:
+        '200':
+          description: Clerk removed from specified cases successfully
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ClerkAssociationResponse'
+        '400':
+          description: Invalid input
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes'
+
+  /advocate-management/v1/clerks/_search:
+    post:
+      tags:
+        - AdvocateClerkManagement
+      summary: Search clerk associations
+      description: |
+        API to search for clerk associations based on various criteria
+      requestBody:
+        description: Search criteria
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/ClerkSearchRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful search response
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ClerkAssociationListResponse'
+        '400':
+          description: Invalid input
+          content:
+            '*/*':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ErrorRes'
+
+components:
+  schemas:
+    ClerkAssociation:
+      type: object
+      required:
+        - id
+        - tenantId
+        - advocateId
+        - clerkId
+        - accessType
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the association
+          readOnly: true
+          minLength: 36
+          maxLength: 36
+        tenantId:
+          type: string
+          description: Tenant identifier
+          minLength: 2
+          maxLength: 64
+        advocateId:
+          type: string
+          description: Advocate's unique identifier
+        clerkId:
+          type: string
+          description: Clerk's unique identifier
+        accessType:
+          type: string
+          description: master data for type of access permission for the clerk
+          example:
+            - ALL
+            - SPECIFIC
+        specificCaseIds:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: List of specific case IDs/Numbers the clerk has access to (only applicable when accessType is SPECIFIC). When specified, this is iterate over the case API to add the clerk to all the mentioned cases. The value can be sent as null, when the access type is 'all'
+        active:
+          type: boolean
+          description: Whether the association is currently active
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails'
+        additionalDetails:
+          type: object
+          description: Any extra fields that are not captured as first class fields can be stored here as key/value pairs. Implementation specific.
+
+    ClerkAssociationRequest:
+      type: object
+      description: Contract for clerk association request
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        clerkAssociation:
+          $ref: '#/components/schemas/ClerkAssociation'
+
+    ClerkDeletionRequest:
+      type: object
+      description: Contract for clerk deletion request
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        clerkDeletion:
+          type: object
+          required:
+            - associationId
+          properties:
+            associationId:
+              type: string
+              description: ID of the association to delete
+            reason:
+              type: string
+              description: Optional reason for deletion
+
+    ClerkCaseRemovalRequest:
+      type: object
+      description: Contract for removing clerk from cases
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+          caseIds:
+            type: array
+            description: List of case IDs/Numbers to remove the clerk from
+            items:
+              type: string
+
+    ClerkSearchRequest:
+      type: object
+      description: Contract for searching clerk associations
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/RequestInfo'
+        criteria:
+          $ref: '#/components/schemas/ClerkSearchCriteria'
+
+
+    ClerkSearchCriteria:
+      type: object
+      required:
+        - tenantId
+      properties:
+        tenantId:
+          type: string
+          description: Tenant identifier
+        advocateId:
+          type: string
+          description: Advocate's unique identifier
+        clerkId:
+          type: string
+          description: Clerk's unique identifier
+        accessType:
+          $ref: '#/components/schemas/AccessType'
+        includeInactive:
+          type: boolean
+          description: Whether to include inactive (deleted) associations
+
+    ClerkAssociationResponse:
+      type: object
+      description: Contract for clerk association response
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        clerkAssociation:
+          $ref: '#/components/schemas/ClerkAssociation'
+
+    ClerkAssociationListResponse:
+      type: object
+      description: Contract for clerk association list response
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/ResponseInfo'
+        clerkAssociations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClerkAssociation'
+        pagination:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Pagination'
