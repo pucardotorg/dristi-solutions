@@ -1287,7 +1287,7 @@ public class CaseService {
                         multipleAdvocatesAndPip.set("vakalatnamaFileUpload",vakalatnamaFileUpload);
 
                         // Ensure multipleAdvocateNameDetails is initialized and clear it
-                        ArrayNode multipleAdvocateNameDetails = ensureArrayNodeInitialized(dataNode.get("multipleAdvocatesAndPip").get("multipleAdvocateNameDetails"));
+                        ArrayNode multipleAdvocateNameDetails = ensureArrayNodeInitialized(multipleAdvocatesAndPip.get("multipleAdvocateNameDetails"));
 
                         List<Advocate> advocatesList = advocateUtil.fetchAdvocatesById(requestInfo, joinCaseRepresentative.getAdvocateId());
                         Advocate joinCaseAdvocate = advocatesList.get(0);
@@ -2059,14 +2059,14 @@ public class CaseService {
 
         CourtCase courtCase = encryptionDecryptionUtil.decryptObject(courtCaseList.get(0), config.getCaseDecryptSelf(), CourtCase.class, joinCaseRequest.getRequestInfo());
 
-//        if (courtCase.getAccessCode() == null || courtCase.getAccessCode().isEmpty()) {
-//            throw new CustomException(VALIDATION_ERR, "Access code not generated");
-//        }
-//        String caseAccessCode = courtCase.getAccessCode();
-//
-//        if (!joinCaseRequest.getJoinCaseData().getAccessCode().equalsIgnoreCase(caseAccessCode)) {
-//            throw new CustomException(VALIDATION_ERR, "Invalid access code");
-//        }
+        if (courtCase.getAccessCode() == null || courtCase.getAccessCode().isEmpty()) {
+            throw new CustomException(VALIDATION_ERR, "Access code not generated");
+        }
+        String caseAccessCode = courtCase.getAccessCode();
+
+        if (!joinCaseRequest.getJoinCaseData().getAccessCode().equalsIgnoreCase(caseAccessCode)) {
+            throw new CustomException(VALIDATION_ERR, "Invalid access code");
+        }
         return courtCase;
     }
 
