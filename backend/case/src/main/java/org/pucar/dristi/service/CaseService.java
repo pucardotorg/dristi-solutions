@@ -1265,6 +1265,13 @@ public class CaseService {
 
                         // Ensure vakalatnamaFileUpload is initialized
                         ObjectNode multipleAdvocatesAndPip = (ObjectNode) dataNode.get("multipleAdvocatesAndPip");
+                        // Update isComplainantPip
+                        ObjectNode isComplainantPipNode = objectMapper.createObjectNode();
+                        isComplainantPipNode.put("code", "NO");
+                        isComplainantPipNode.put("name", "no");
+                        isComplainantPipNode.put("isEnabled", true);
+                        multipleAdvocatesAndPip.set("isComplainantPip", isComplainantPipNode);
+
                         ObjectNode vakalatnamaFileUpload = objectMapper.createObjectNode();
 
                         // Initialize the 'document' array
@@ -1330,16 +1337,17 @@ public class CaseService {
 
                         // Add the new advocate node to the multipleAdvocateNameDetails array
                         multipleAdvocateNameDetails.add(newAdvocateNode);
+                        multipleAdvocatesAndPip.set("multipleAdvocateNameDetails",multipleAdvocateNameDetails);
 
                         // Ensure the multipleAdvocatesAndPip object exists, if not create one
-                        ObjectNode pipNode = (ObjectNode) dataNode.get("multipleAdvocatesAndPip");
-                        dataNode.set("multipleAdvocatesAndPip", pipNode);
+//                        ObjectNode pipNode = (ObjectNode) dataNode.get("multipleAdvocatesAndPip");
+//                        dataNode.set("multipleAdvocatesAndPip", pipNode);
 
                         // Set updated multipleAdvocateNameDetails back to pipNode
-                        pipNode.set("multipleAdvocateNameDetails", multipleAdvocateNameDetails);
+                       // pipNode.set("multipleAdvocateNameDetails", multipleAdvocateNameDetails);
 
                         // Ensure vakalatnamaFileUpload is properly set after modification
-                        pipNode.set("vakalatnamaFileUpload", vakalatnamaFileUpload);
+                        multipleAdvocatesAndPip.set("vakalatnamaFileUpload", vakalatnamaFileUpload);
 
                         // No need to explicitly set pipNode again to dataNode as it's already updated within
                         break;
