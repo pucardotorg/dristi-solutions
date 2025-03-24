@@ -1026,7 +1026,13 @@ function EFilingCases({ path }) {
         config.body.forEach((body) => {
           if ("disableConfigFields" in body && "disableConfigKey" in body && "key" in body) {
             if (!!data?.[body.key]?.[body.disableConfigKey]) {
-              disableConfigFields = [...disableConfigFields, ...body.disableConfigFields];
+              const currentScrutinyObj = scrutinyObj?.litigentDetails?.complainantDetails?.form?.[index];
+              const isAddressDetailsMarked = currentScrutinyObj?.hasOwnProperty?.("addressDetails");
+              if (isAddressDetailsMarked) {
+                disableConfigFields = [...disableConfigFields, ...["firstName", "middleName", "lastName"]];
+              } else {
+                disableConfigFields = [...disableConfigFields, ...body.disableConfigFields];
+              }
             }
           }
         });
