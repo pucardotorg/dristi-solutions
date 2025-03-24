@@ -71,7 +71,6 @@ import ConfirmCaseDetailsModal from "./ConfirmCaseDetailsModal";
 import { DocumentUploadError } from "../../../Utils/errorUtil";
 import ConfirmDcaSkipModal from "./ConfirmDcaSkipModal";
 import ErrorDataModal from "./ErrorDataModal";
-import WarningModal from "../../../components/WarningModal";
 import { documentLabels } from "../../../Utils";
 
 export const OutlinedInfoIcon = () => (
@@ -225,7 +224,6 @@ function EFilingCases({ path }) {
   const [showEditCaseNameModal, setShowEditCaseNameModal] = useState(false);
   const [modalCaseName, setModalCaseName] = useState("");
   const [isFilingParty, setIsFilingParty] = useState(false);
-  const [warningModal, setWarningModal] = useState(false);
 
   const [{ showSuccessToast, successMsg }, setSuccessToast] = useState({
     showSuccessToast: false,
@@ -1935,15 +1933,6 @@ function EFilingCases({ path }) {
       return;
     }
 
-    if (
-      selected === "complainantDetails" &&
-      !isWarning &&
-      formdata?.some((item) => item?.data?.complainantVerification?.individualDetails === null)
-    ) {
-      setWarningModal(true);
-      return;
-    }
-
     if (selected === "reviewCaseFile" && isCaseReAssigned && !openConfirmCorrectionModal && !isCaseLocked) {
       setOpenConfirmCorrectionModal(true);
       return;
@@ -2503,10 +2492,6 @@ function EFilingCases({ path }) {
   }
 `;
 
-  const handleCancelWarningModal = () => {
-    setWarningModal(!warningModal);
-  };
-
   return (
     <div className="file-case">
       <style>{customStyles}</style>
@@ -2992,16 +2977,6 @@ function EFilingCases({ path }) {
           <h3 className="input-label">{t("CS_CASE_NAME")}</h3>
           <TextInput defaultValue={newCaseName || caseDetails?.caseTitle} type="text" onChange={(e) => setModalCaseName(e.target.value)} />
         </Modal>
-      )}
-      {warningModal && (
-        <WarningModal
-          t={t}
-          heading={t("CONFIRM_COMPLAINT_DETAILS")}
-          info={t("COMPLAINT_INFO")}
-          onCancel={handleCancelWarningModal}
-          setWarningModal={setWarningModal}
-          onSubmit={onSubmit}
-        />
       )}
     </div>
   );
