@@ -749,7 +749,6 @@ const EditProfile = ({ path }) => {
                   actionClassName="e-filing-action-bar"
                   className={"edit-profile-style"}
                   noBreakLine
-                  submitIcon={<RightArrow />}
                 />
               </div>
             ) : null;
@@ -765,6 +764,7 @@ const EditProfile = ({ path }) => {
               }}
             />
           }
+          actionCancelLabel={t("CS_COMMON_BACK")}
           actionCancelOnSubmit={() => setShowConfirmSubmission(false)}
           actionSaveLabel={t("CS_COMMON_CONFIRM")}
           actionSaveOnSubmit={() => {
@@ -773,7 +773,7 @@ const EditProfile = ({ path }) => {
           }}
           formId="modal-action"
           headerBarMain={<Heading label={t("CS_CONFIRM_SUBMISSION")} />}
-          className="edit-case-name-modal"
+          popmoduleClassName="profile-editing-submission-modal"
         >
           <h3 className="input-label">{t("THIS_WILL_CREATE_REQUEST_FOR_APPROVAL_BY_JUDGE")}</h3>
         </Modal>
