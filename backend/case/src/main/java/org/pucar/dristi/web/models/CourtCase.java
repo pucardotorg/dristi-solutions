@@ -87,7 +87,7 @@ public class CourtCase {
 	@JsonProperty("outcome")
 	private String outcome = null;
 
-	@JsonProperty("pendingAdvocateRequest")
+	@JsonProperty("pendingAdvocateRequests")
 	private List<PendingAdvocateRequest> pendingAdvocateRequests;
 
 	@JsonProperty("courtId")
