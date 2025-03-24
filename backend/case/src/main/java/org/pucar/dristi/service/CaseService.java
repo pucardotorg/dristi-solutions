@@ -1571,6 +1571,17 @@ public class CaseService {
                 litigantDetails.setIndividualId(representingJoinCase.getIndividualId());
                 litigantDetails.setPartyType(litigant.getPartyType());
 
+                List<Individual> individualsListForLitigant = individualService.getIndividualsByIndividualId(joinCaseRequest.getRequestInfo(), litigant.getIndividualId());
+                Individual individualForLitigant = individualsListForLitigant.get(0);
+
+                // Check if individualForLitigant and its name details are not null
+                if (individualForLitigant != null && individualForLitigant.getName() != null) {
+                    String name = getName(individualForLitigant);
+                    log.warn("Setting individual name details");
+                    litigantDetails.setName(name);
+                    litigantDetails.setUserUuid(individualForLitigant.getUserUuid());
+                }
+
                 if (!representingJoinCase.getIsAlreadyPip()) {
                     representingJoinCase.getReplaceAdvocates().forEach(advocateId -> {
                         ReplacementDetails replacementDetails = new ReplacementDetails();
@@ -1629,6 +1640,18 @@ public class CaseService {
             log.error("Error occurred while creating task for join case request :: {}", e.toString());
             throw new CustomException(JOIN_CASE_ERR, TASK_SERVICE_ERROR);
         }
+    }
+
+    private static @NotNull String getName(Individual individualForLitigant) {
+        String givenName = individualForLitigant.getName().getGivenName();
+        String otherNames = individualForLitigant.getName().getOtherNames();
+        String familyName = individualForLitigant.getName().getFamilyName();
+
+        // Concatenate the name with spaces, ensuring null values are handled
+        String name = (givenName != null ? givenName : "")+
+                (otherNames != null ? " " + otherNames : "")+
+                (familyName != null ? " " + familyName : "");
+        return name;
     }
 
     private RequestInfo createInternalRequestInfo() {
@@ -1912,15 +1935,16 @@ public class CaseService {
         for (JoinCaseLitigant litigantJoinCase : joinCaseRequest.getJoinCaseData().getLitigant()) {
 
             if (litigantJoinCase.getIsPip() && litigantJoinCase.getIndividualId() != null) {
-                Party litigant = Optional.ofNullable(courtCase.getLitigants())
+                List<Party> litigant = Optional.ofNullable(courtCase.getLitigants())
                         .orElse(Collections.emptyList())
                         .stream()
-                        .filter(p -> p.getIndividualId().equalsIgnoreCase(litigantJoinCase.getIndividualId())).toList().get(0);
+                        .filter(p -> p.getIndividualId().equalsIgnoreCase(litigantJoinCase.getIndividualId())).collect(Collectors.toList());;
 
+                log.info("litigant size :: {}",litigant.size());
                 List<AdvocateMapping> representatives = courtCase.getRepresentatives();
 
-                if (representatives != null)
-                    disableRepresenting(courtCase, litigant.getIndividualId(), auditDetails);
+                if (representatives != null && !litigant.isEmpty())
+                    disableRepresenting(courtCase, litigant.get(0).getIndividualId(), auditDetails);
             }
         }
 
