@@ -1542,7 +1542,7 @@ public class CaseService {
                 workflow.setAdditionalDetails("{\"excludeRoles\":[\"TASK_EDITOR\"]}");
                 workflow.setAssignes(List.of(assignes));
             }
-            RequestInfo requestInfo = createInternalRequestInfo();
+          //  RequestInfo requestInfo = createInternalRequestInfo();
             task.setWorkflow(workflow);
             ObjectMapper objectMapper = new ObjectMapper();
 
@@ -1618,7 +1618,10 @@ public class CaseService {
             task.setTaskDetails(taskDetails);
 
             taskRequest.setTask(task);
-            taskRequest.setRequestInfo(joinCaseRequest.getRequestInfo());
+            RequestInfo requestInfo = joinCaseRequest.getRequestInfo();
+            Role role = Role.builder().code("TASK_CREATOR").name("TASK_CREATOR").tenantId(joinCaseAdvocate.getTenantId()).build();
+            requestInfo.getUserInfo().getRoles().add(role);
+            taskRequest.setRequestInfo(requestInfo);
             return taskUtil.callCreateTask(taskRequest);
 
         } catch (Exception e) {
