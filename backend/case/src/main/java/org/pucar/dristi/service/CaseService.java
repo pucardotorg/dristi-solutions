@@ -1486,7 +1486,7 @@ public class CaseService {
                     ObjectNode dataNode = (ObjectNode) formData.get(i).path("data");
 
                     log.info("dataNode :: {}", dataNode);
-                    String uniqueIdRespondent = dataNode.get(i).get("uniqueId").asText();
+                    String uniqueIdRespondent = formData.get(i).get("uniqueId").asText();
 
                     if (!dataNode.has("respondentVerification") && uniqueIdRespondent.equalsIgnoreCase(joinCaseLitigant.getUniqueId())) {
                         // Create the respondentVerification object
