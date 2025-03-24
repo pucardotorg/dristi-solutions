@@ -1212,6 +1212,7 @@ public class CaseService {
                 representingList.add(party);
             });
             representative.setRepresenting(representingList);
+            representative.setAdditionalDetails(joinCaseData.getRepresentative().getAdditionalDetails());
             caseObj.setRepresentatives(List.of(representative));
         }
 
