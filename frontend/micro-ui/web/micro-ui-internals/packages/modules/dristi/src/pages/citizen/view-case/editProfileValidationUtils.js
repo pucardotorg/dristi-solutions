@@ -579,6 +579,13 @@ export const updateProfileData = async ({
       }
     }
     const { reasonForChange, supportingDocument, ...remainingFormData } = newFormDataCopy?.[0]?.data || {};
+    const currentRespondent = caseDetails?.additionalDetails?.[selected]?.formdata?.find(
+      (item, index) => item?.data?.respondentVerification?.individualDetails?.individualId === uniqueId || item?.uniqueId === uniqueId
+    );
+    const respVerification = currentRespondent?.data?.respondentVerification;
+    if (respVerification) {
+      remainingFormData.respondentVerification = { ...respVerification };
+    }
     profilePayload = {
       tenantId,
       caseId,
