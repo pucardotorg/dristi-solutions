@@ -3847,6 +3847,7 @@ const GenerateOrders = () => {
   }, [currentOrder, prevOrder?.orderType, t, isCaseAdmitted]);
 
   const handleGoBackSignatureModal = () => {
+    localStorage.removeItem("fileStoreId");
     setShowsignatureModal(false);
     setShowReviewModal(true);
   };
