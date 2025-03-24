@@ -1193,9 +1193,6 @@ public class CaseService {
 
         } else {
             AdvocateMapping representative = new AdvocateMapping();
-            Document document = new Document();
-            document.setFileStore(joinCaseData.getRepresentative().getReasonDocument().getFileStore());
-            representative.setDocuments(List.of(document));
             representative.setTenantId(joinCaseData.getTenantId());
             representative.setAdvocateId(joinCaseData.getRepresentative().getAdvocateId());
             List<Party> representingList = new ArrayList<>();
@@ -1204,6 +1201,14 @@ public class CaseService {
                 Party party = new Party();
                 party.setId(UUID.randomUUID());
                 party.setIndividualId(representingJoinCase.getIndividualId());
+                if(representingJoinCase.getDocuments()!=null && !representingJoinCase.getDocuments().isEmpty()){
+                    Document document = new Document();
+                    document.setFileStore(representingJoinCase.getDocuments().get(0).getFileStore());
+                    document.setDocumentType(representingJoinCase.getDocuments().get(0).getFileStore());
+                    document.setAdditionalDetails(representingJoinCase.getDocuments().get(0).getFileStore());
+                    party.setDocuments(List.of(document));
+                }
+
                 representingList.add(party);
             });
             representative.setRepresenting(representingList);
@@ -1523,10 +1528,12 @@ public class CaseService {
             task.setStatus("");
             task.setTenantId(joinCaseRequest.getRequestInfo().getUserInfo().getTenantId());
             task.setFilingNumber(joinCaseRequest.getJoinCaseData().getFilingNumber());
-            Workflow workflow = new Workflow();
+            WorkflowObject workflow = new WorkflowObject();
             workflow.setAction("CREATE");
-            if (assignes != null)
+            if (assignes != null){
+                workflow.setAdditionalDetails("{\"excludeRoles\":[\"TASK_EDITOR\"]}");
                 workflow.setAssignes(List.of(assignes));
+            }
             RequestInfo requestInfo = createInternalRequestInfo();
             task.setWorkflow(workflow);
             ObjectMapper objectMapper = new ObjectMapper();
