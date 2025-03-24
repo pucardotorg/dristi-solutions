@@ -122,11 +122,12 @@ public class TaskRegistrationValidator {
         JoinCaseTaskRequest joinCaseTaskRequest = objectMapper.convertValue(task.getTaskDetails(), JoinCaseTaskRequest.class);
 
         CourtCase courtCase = getCourtCase(body);
+        AdvocateDetails advocateDetails = joinCaseTaskRequest.getAdvocateDetails();
         List<ReplacementDetails> replacementDetailsList = joinCaseTaskRequest.getReplacementDetails();
 
         for (ReplacementDetails replacement : replacementDetailsList) {
             // Return false immediately if any replacement is invalid
-            if (!isValidReplacement(replacement, courtCase)) {
+            if (!isValidReplacement(replacement, courtCase, advocateDetails)) {
                 log.info("operation=isValidJoinCasePendingTask, status=FAILURE, task request: {}", body);
                 return false;
             }
@@ -144,13 +145,13 @@ public class TaskRegistrationValidator {
         return cases.get(0);
     }
 
-    private boolean isValidReplacement(ReplacementDetails replacement, CourtCase courtCase) {
+    private boolean isValidReplacement(ReplacementDetails replacement, CourtCase courtCase, AdvocateDetails advocateDetails) {
         String litigantId = replacement.getLitigantDetails().getIndividualId();
 
         if (replacement.getIsLitigantPip()) {
             return isValidPipLitigantReplacement(litigantId, courtCase);
         } else {
-            return isValidAdvocateReplacement(replacement, courtCase);
+            return isValidAdvocateReplacement(replacement, courtCase, advocateDetails);
         }
     }
 
@@ -191,8 +192,9 @@ public class TaskRegistrationValidator {
         return true;
     }
 
-    private boolean isValidAdvocateReplacement(ReplacementDetails replacement, CourtCase courtCase) {
+    private boolean isValidAdvocateReplacement(ReplacementDetails replacement, CourtCase courtCase, AdvocateDetails advocateDetails) {
         log.info("operation=isValidAdvocateReplacement, status=IN_PROGRESS, replacement details , courtCase: {} , {}",replacement,courtCase);
+        String newAdvocateId = advocateDetails.getAdvocateId();
         String advocateId = replacement.getAdvocateDetails().getAdvocateUuid();
         String litigantId = replacement.getLitigantDetails().getIndividualId();
 
@@ -210,7 +212,7 @@ public class TaskRegistrationValidator {
         }
 
         // Check if the replacement advocate is already representing the litigant in another task
-        return !isAdvocateAlreadyRepresentingLitigant(advocateId, litigantId, courtCase.getRepresentatives());
+        return !isAdvocateAlreadyRepresentingLitigant(newAdvocateId, litigantId, courtCase.getRepresentatives());
     }
 
     private AdvocateMapping findActiveAdvocateById(String advocateId, List<AdvocateMapping> advocateMappings) {
