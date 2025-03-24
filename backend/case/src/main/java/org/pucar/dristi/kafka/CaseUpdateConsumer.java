@@ -64,7 +64,7 @@ public class CaseUpdateConsumer {
     public void updateCaseObjectApprovedTask(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         try {
             logger.info("Received join case approve request on topic : {} ", topic);
-            TaskRequest taskRequest = objectMapper.convertValue(payload, TaskRequest.class);
+            TaskRequest taskRequest = objectMapper.convertValue(payload.value(), TaskRequest.class);
             caseService.updateJoinCaseApproved(taskRequest);
         } catch (CustomException e) {
             logger.info("Error while listening to join case approve on topic ; {}: ", topic, e);
