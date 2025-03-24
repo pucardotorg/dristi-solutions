@@ -2732,8 +2732,6 @@ public class CaseService {
                 } else {
                     // adding the litigant details into representing list of the advocate
                     advocates.get(0).getRepresenting().add(party);
-                    Document replacementDetailsDocument = objectMapper.convertValue(replacementDetails.getDocument(), Document.class);
-                    advocates.get(0).getDocuments().add(replacementDetailsDocument);
                 }
                 for (Party litigantParty : litigantParties) {
                     if (litigantParty.getIndividualId().equalsIgnoreCase(litigantDetails.getIndividualId())) {
@@ -2748,8 +2746,6 @@ public class CaseService {
                 } else {
                     // adding the litigant details into representing list of the advocate
                     advocates.get(0).getRepresenting().add(party);
-                    Document replacementDetailsDocument = objectMapper.convertValue(replacementDetails.getDocument(), Document.class);
-                    advocates.get(0).getDocuments().add(replacementDetailsDocument);
                 }
                 inactivateOldAdvocate(replacementDetails, courtCase);
             }
@@ -3007,11 +3003,19 @@ public class CaseService {
     private Party enrichParty(ReplacementDetails replacementDetails, CourtCase courtCase) {
 
         LitigantDetails litigantDetails = replacementDetails.getLitigantDetails();
+        Document document = new Document();
+        if(replacementDetails.getDocument()!=null){
+            document.setAdditionalDetails(replacementDetails.getDocument().getAdditionalDetails());
+            document.setDocumentType(replacementDetails.getDocument().getDocumentType());
+            document.setFileStore(replacementDetails.getDocument().getFileStore());
+        }
+
         return Party.builder()
                 .individualId(litigantDetails.getIndividualId())
                 .partyType(litigantDetails.getPartyType())
                 .tenantId(courtCase.getTenantId())
                 .isActive(true)
+                .documents(List.of(document))
                 .id(UUID.fromString(litigantDetails.getUserUuid()))
                 .build();
     }
