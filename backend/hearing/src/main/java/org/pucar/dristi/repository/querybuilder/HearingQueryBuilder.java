@@ -27,6 +27,13 @@ public class HearingQueryBuilder {
     private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY createdtime DESC ";
     private static final String ORDERBY_CLAUSE = " ORDER BY {orderBy} {sortingOrder} ";
 
+    private static final List<String> ALLOWED_SORT_FIELDS = List.of(
+            "id", "tenantId", "hearingId", "hearingType", "status",
+            "startTime", "endTime", "vcLink", "isActive", "notes",
+            "createdBy", "lastModifiedBy", "createdTime", "lastModifiedTime"
+    );
+
+
     private final ObjectMapper mapper;
 
     @Autowired
@@ -82,12 +89,14 @@ public class HearingQueryBuilder {
         }
     }
     public String addOrderByQuery(String query, Pagination pagination) {
-        if (isPaginationInvalid(pagination) || pagination.getSortBy().contains(";"))  {
+        if (isPaginationInvalid(pagination) || ALLOWED_SORT_FIELDS.stream().noneMatch(field -> field.equalsIgnoreCase(pagination.getSortBy()))) {
             return query + DEFAULT_ORDERBY_CLAUSE;
         } else {
             query = query + ORDERBY_CLAUSE;
         }
-        return query.replace("{orderBy}", pagination.getSortBy()).replace("{sortingOrder}", pagination.getOrder().name());
+
+        return query.replace("{orderBy}", pagination.getSortBy())
+                .replace("{sortingOrder}", pagination.getOrder().name());
     }
 
     private static boolean isPaginationInvalid(Pagination pagination) {

@@ -3,10 +3,12 @@ package org.pucar.dristi.repository;
 import lombok.extern.slf4j.Slf4j;
 import org.pucar.dristi.model.EPostTrackerSearchCriteria;
 import org.pucar.dristi.model.Pagination;
+import org.pucar.dristi.model.Sort;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
+import java.util.EnumSet;
 import java.util.List;
 
 @Component
@@ -73,13 +75,13 @@ public class EPostQueryBuilder {
     }
 
     public String addPaginationQuery(String query, List<Object> preparedStmtList, Pagination pagination,int limit,int offset) {
-        if (pagination != null && !ObjectUtils.isEmpty(pagination.getSortBy())) {
+        if (pagination != null && !ObjectUtils.isEmpty(pagination.getSortBy()) && EnumSet.allOf(Sort.class).contains(pagination.getSortBy())) {
             query += ORDER_BY_CLAUSE.replace("{sortBy}", pagination.getSortBy().name());
         } else {
             query += DEFAULT_ORDER_BY_CLAUSE;
         }
 
-        if (pagination != null && !ObjectUtils.isEmpty(pagination.getOrderBy())) {
+        if (pagination != null && !ObjectUtils.isEmpty(pagination.getOrderBy()) && EnumSet.allOf(Sort.class).contains(pagination.getSortBy())) {
             query += pagination.getOrderBy().name();
         } else {
             query += DEFAULT_SORTING_ORDER;

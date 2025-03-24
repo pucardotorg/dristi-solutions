@@ -30,6 +30,18 @@ public class DiaryQueryBuilder {
 
     private static final String ORDER_BY_CLAUSE = " ORDER BY {orderBy} {sortingOrder} ";
 
+    private static final List<String> ALLOWED_SORT_FIELDS = List.of(
+            // Fields from dristi_casediary
+            "id", "tenantId", "caseNumber", "diaryDate", "diaryType", "judgeId",
+            "diaryCreateBy", "diaryLastModifiedBy", "diaryCreatedTime", "diaryLastModifiedTime",
+
+            // Fields from dristi_casediary_documents
+            "filestoreId", "documentUid", "documentName", "documentType",
+            "casediaryId", "isActive", "documentCreatedBy", "documentLastModifiedBy",
+            "documentCreatedTime", "documentLastModifiedTime"
+    );
+
+
     public String getCaseDiaryQuery(CaseDiarySearchCriteria searchCriteria, List<Object> preparedStatementValues, List<Integer> preparedStatementTypeValues) {
 
         StringBuilder query = new StringBuilder(BASE_DIARY_QUERY);
@@ -102,12 +114,14 @@ public class DiaryQueryBuilder {
     }
 
     public String addOrderByQuery(String query, Pagination pagination) {
-        if (isPaginationInvalid(pagination) || pagination.getSortBy().contains(";")) {
+        if (isPaginationInvalid(pagination) || ALLOWED_SORT_FIELDS.stream().noneMatch(field -> field.equalsIgnoreCase(pagination.getSortBy()))) {
             return query + DEFAULT_ORDER_BY_CLAUSE;
         } else {
             query = query + ORDER_BY_CLAUSE;
         }
-        return query.replace("{orderBy}", pagination.getSortBy()).replace("{sortingOrder}", pagination.getOrder().name());
+
+        return query.replace("{orderBy}", pagination.getSortBy())
+                .replace("{sortingOrder}", pagination.getOrder().name());
     }
 
     private static boolean isPaginationInvalid(Pagination pagination) {

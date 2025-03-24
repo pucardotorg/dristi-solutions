@@ -87,6 +87,16 @@ public class CaseSummaryQueryBuilder {
                     LEFT_JOIN + FROM_REPRESENTING_TABLE + " ON rep.id = rpst.representative_id " +
                     " ) ON uc.id = rep.case_id ";
 
+    private static final List<String> ALLOWED_SORT_FIELDS = List.of(
+            "id", "tenantId", "caseTitle", "filingNumber", "caseNumber",
+            "cnrNumber", "courtCaseNumber", "accessCode", "courtId", "benchId",
+            "filingDate", "registrationDate", "caseCategory", "natureOfPleading",
+            "status", "remarks", "isActive", "createdBy", "lastModifiedBy",
+            "createdTime", "lastModifiedTime"
+    );
+
+
+
 
     public void addClauseIfRequired(StringBuilder query, List<Object> preparedStmtList) {
         if (preparedStmtList.isEmpty()) {
@@ -106,14 +116,15 @@ public class CaseSummaryQueryBuilder {
 
     }
 
-    public String addOrderByQuery(String caseSummaryQuery, @Valid Pagination pagination) {
-
-        if (isEmptyPagination(pagination) || pagination.getSortBy().contains(";")) {
+    public String addOrderByQuery(String caseSummaryQuery,@Valid Pagination pagination) {
+        if (isEmptyPagination(pagination) || ALLOWED_SORT_FIELDS.stream().noneMatch(field -> field.equalsIgnoreCase(pagination.getSortBy()))) {
             return caseSummaryQuery + DEFAULT_ORDERBY_CLAUSE;
         } else {
             caseSummaryQuery = caseSummaryQuery + ORDERBY_CLAUSE;
         }
-        return caseSummaryQuery.replace("{orderBy}", pagination.getSortBy()).replace("{sortingOrder}", pagination.getOrder().name());
+
+        return caseSummaryQuery.replace("{orderBy}", pagination.getSortBy())
+                .replace("{sortingOrder}", pagination.getOrder().name());
     }
 
     public String addPaginationQuery(String caseSummaryQuery, List<Object> preparedStmtList, @Valid Pagination pagination, List<Integer> preparedStmtArgList) {
