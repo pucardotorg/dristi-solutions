@@ -115,11 +115,6 @@ public class EvidenceService {
         try {
             // Fetch applications from database according to the given search criteria
             enrichEvidenceSearch(requestInfo, evidenceSearchCriteria);
-            String tenantId = evidenceSearchCriteria.getTenantId();
-            if(requestInfo.getUserInfo().getRoles().contains(Role.builder().name(BENCH_CLERK).code(BENCH_CLERK).tenantId(tenantId).build()))
-            {
-                evidenceSearchCriteria.setBenchClerk(true);
-            }
             List<Artifact> artifacts = repository.getArtifacts(evidenceSearchCriteria, pagination);
 
             // If no applications are found matching the given criteria, return an empty list
@@ -146,6 +141,9 @@ public class EvidenceService {
                 case EMPLOYEE_UPPER -> {
                     searchCriteria.setIsCourtEmployee(true);
                     searchCriteria.setUserUuid(userInfo.getUuid());
+                    if(requestInfo.getUserInfo().getRoles().contains(Role.builder().name(BENCH_CLERK).code(BENCH_CLERK).tenantId(searchCriteria.getTenantId()).build())) {
+                        searchCriteria.setBenchClerk(true);
+                    }
                 }
             }
         }
