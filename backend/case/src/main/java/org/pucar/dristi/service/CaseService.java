@@ -1587,7 +1587,20 @@ public class CaseService {
                         ReplacementDetails replacementDetails = new ReplacementDetails();
 
                         ReplacementAdvocateDetails replacementAdvocateDetails = new ReplacementAdvocateDetails();
-                        replacementAdvocateDetails.setAdvocateUuid(joinCaseData.getRepresentative().getAdvocateId());
+                        replacementAdvocateDetails.setAdvocateUuid(advocateId);
+
+                        List<Advocate> replacedvocatesList = advocateUtil.fetchAdvocatesById(joinCaseRequest.getRequestInfo(), advocateId);
+                        Advocate replaceAdvocate = replacedvocatesList.get(0);
+
+                        List<Individual> individualList = individualService.getIndividualsByIndividualId(joinCaseRequest.getRequestInfo(), replaceAdvocate.getIndividualId());
+                        Individual individualAdvocate = individualList.get(0);
+
+                        String name = getName(individualAdvocate);
+                        replacementAdvocateDetails.setBarRegistrationNumber(replaceAdvocate.getBarRegistrationNumber());
+                        replacementAdvocateDetails.setMobileNumber(individualAdvocate.getMobileNumber());
+                        replacementAdvocateDetails.setName(name);
+                        replacementAdvocateDetails.setUserUuid(individualAdvocate.getUserUuid());
+
                         replacementDetails.setAdvocateDetails(replacementAdvocateDetails);
 
                         replacementDetails.setIsLitigantPip(representingJoinCase.getIsAlreadyPip());
