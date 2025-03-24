@@ -1542,10 +1542,10 @@ public class CaseService {
 
             JoinCaseTaskRequest taskJoinCase = new JoinCaseTaskRequest();
 
-            List<Advocate> advocatesList = advocateUtil.fetchAdvocatesById(requestInfo, joinCaseData.getRepresentative().getAdvocateId());
+            List<Advocate> advocatesList = advocateUtil.fetchAdvocatesById(joinCaseRequest.getRequestInfo(), joinCaseData.getRepresentative().getAdvocateId());
             Advocate joinCaseAdvocate = advocatesList.get(0);
 
-            List<Individual> individualsList = individualService.getIndividualsByIndividualId(requestInfo, joinCaseAdvocate.getIndividualId());
+            List<Individual> individualsList = individualService.getIndividualsByIndividualId(joinCaseRequest.getRequestInfo(), joinCaseAdvocate.getIndividualId());
             Individual individual = individualsList.get(0);
 
             IndividualDetails individualDetails = enrichIndividualDetailsInJoinCaseTaskRequest(individual);
@@ -1610,7 +1610,7 @@ public class CaseService {
             task.setTaskDetails(taskDetails);
 
             taskRequest.setTask(task);
-            taskRequest.setRequestInfo(requestInfo);
+            taskRequest.setRequestInfo(joinCaseRequest.getRequestInfo());
             return taskUtil.callCreateTask(taskRequest);
 
         } catch (Exception e) {
