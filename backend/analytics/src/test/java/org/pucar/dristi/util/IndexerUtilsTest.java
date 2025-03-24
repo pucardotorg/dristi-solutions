@@ -221,6 +221,7 @@ public class IndexerUtilsTest {
         when(caseOverallStatusUtil.checkCaseOverAllStatus(anyString(), anyString(), anyString(), anyString(), anyString(), any()))
                 .thenReturn(new Object());
         when(mapper.writeValueAsString(any())).thenReturn("{\"key\":\"value\"}");
+        when(mapper.convertValue(anyString(), eq(String.class))).thenReturn("{\"key\":\"value\"}");
 
         String expected = String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,

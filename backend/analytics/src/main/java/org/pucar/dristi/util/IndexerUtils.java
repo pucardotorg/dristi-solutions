@@ -259,7 +259,7 @@ public class IndexerUtils {
         try {
             additionalDetails = mapper.writeValueAsString(JsonPath.read(jsonItem, "$.additionalDetails"));
             JsonNode additonalDetailsJsonNode = mapper.convertValue(additionalDetails, JsonNode.class);
-            if (additonalDetailsJsonNode.has("excludeRoles")) {
+            if (additonalDetailsJsonNode != null && additonalDetailsJsonNode.has("excludeRoles")) {
                 log.info("additional details contains exclude roles");
                 JsonNode excludeRoles = additonalDetailsJsonNode.path("excludeRoles");
                 if (excludeRoles.isArray()) {
