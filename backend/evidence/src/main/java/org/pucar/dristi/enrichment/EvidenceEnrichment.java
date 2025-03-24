@@ -115,6 +115,9 @@ public class EvidenceEnrichment {
                     idFormat=configuration.getCourtFormat();
                 }
             }
+            if(evidenceRequest.getArtifact().getStatus().equals(PUBLISHED_STATE)){
+                evidenceRequest.getArtifact().setPublishedDate(System.currentTimeMillis());
+            }
 
             String tenantId = getTenantId(evidenceRequest.getArtifact().getFilingNumber());
 
