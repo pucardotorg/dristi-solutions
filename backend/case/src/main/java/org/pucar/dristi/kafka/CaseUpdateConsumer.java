@@ -75,7 +75,7 @@ public class CaseUpdateConsumer {
     public void updateCaseObjectRejectedTask(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         try {
             logger.info("Received join case reject request on topic : {} ", topic);
-            TaskRequest taskRequest = objectMapper.convertValue(payload, TaskRequest.class);
+            TaskRequest taskRequest = objectMapper.convertValue(payload.value(), TaskRequest.class);
             caseService.updateJoinCaseRejected(taskRequest);
         } catch (CustomException e) {
             logger.info("Error while listening to join case reject on topic ; {}: ", topic, e);

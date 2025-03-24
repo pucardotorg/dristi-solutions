@@ -2616,7 +2616,7 @@ public class CaseService {
             courtCase = encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, taskRequest.getRequestInfo());
             // get the pending requests of advocates in the case
             List<PendingAdvocateRequest> pendingAdvocateRequests = courtCase.getPendingAdvocateRequests();
-            JoinCaseTaskRequest joinCaseRequest = objectMapper.convertValue(task.getAdditionalDetails(), JoinCaseTaskRequest.class);
+            JoinCaseTaskRequest joinCaseRequest = objectMapper.convertValue(task.getTaskDetails(), JoinCaseTaskRequest.class);
             // uuid of advocate who is trying to replace
             String advocateUuid = joinCaseRequest.getAdvocateDetails().getAdvocateUuid();
             String taskNumber = task.getTaskNumber();
@@ -2658,7 +2658,7 @@ public class CaseService {
             courtCase = encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, taskRequest.getRequestInfo());
             // get the pending requests of advocates in the case
             List<PendingAdvocateRequest> pendingAdvocateRequests = courtCase.getPendingAdvocateRequests();
-            JoinCaseTaskRequest joinCaseRequest = objectMapper.convertValue(task.getAdditionalDetails(), JoinCaseTaskRequest.class);
+            JoinCaseTaskRequest joinCaseRequest = objectMapper.convertValue(task.getTaskDetails(), JoinCaseTaskRequest.class);
             // uuid of advocate who is trying to replace
             String advocateUuid = joinCaseRequest.getAdvocateDetails().getAdvocateUuid();
             String taskNumber = task.getTaskNumber();
