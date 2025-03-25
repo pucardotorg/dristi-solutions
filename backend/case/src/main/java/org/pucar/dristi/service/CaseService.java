@@ -1450,13 +1450,14 @@ public class CaseService {
 
                     } else {
                         representingJoinCase.getReplaceAdvocates().forEach(replaceAdvocateId -> {
+                            List<RepresentingJoinCase> representingJoinCaseList;
                             if (!replaceAdvocateRepresentingMap.containsKey(replaceAdvocateId)) {
-                                replaceAdvocateRepresentingMap.put(replaceAdvocateId, List.of(representingJoinCase));
+                                representingJoinCaseList = new ArrayList<>();
                             } else {
-                                List<RepresentingJoinCase> representingJoinCaseList = replaceAdvocateRepresentingMap.get(replaceAdvocateId);
-                                representingJoinCaseList.add(representingJoinCase);
-                                replaceAdvocateRepresentingMap.put(replaceAdvocateId, representingJoinCaseList);
+                                representingJoinCaseList = replaceAdvocateRepresentingMap.get(replaceAdvocateId);
                             }
+                            representingJoinCaseList.add(representingJoinCase);
+                            replaceAdvocateRepresentingMap.put(replaceAdvocateId, representingJoinCaseList);
 
                         });
                     }
