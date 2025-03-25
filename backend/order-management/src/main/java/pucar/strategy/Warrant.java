@@ -13,9 +13,7 @@ import pucar.web.models.WorkflowObject;
 import pucar.web.models.adiary.CaseDiaryEntry;
 import pucar.web.models.courtCase.CourtCase;
 import pucar.web.models.courtCase.Party;
-import pucar.web.models.task.Amount;
-import pucar.web.models.task.Task;
-import pucar.web.models.task.TaskRequest;
+import pucar.web.models.task.*;
 
 import java.util.*;
 
@@ -98,57 +96,53 @@ public class Warrant implements OrderUpdateStrategy {
     }
 
 
-    public Object createTask(String orderType, CourtCase caseDetails, Order orderData) throws JsonProcessingException {
-        Map<String, Object> payload = new HashMap<>();
+    public TaskRequest createTask(String orderType, CourtCase caseDetails, Order orderData) throws JsonProcessingException {
+        Task task = new Task();
         List<Party> litigants = caseDetails.getLitigants();
-
         Optional<String> complainantIndividualId = litigants.stream()
                 .filter(item -> "complainant.primary".equals(item.getPartyType()))
                 .map(Party::getIndividualId)
                 .findFirst();
 
 
-        ///  individual service call
-        CompletableFuture<IndividualDetail> individualDetailFuture =
-                Digit.DRISTIService.searchIndividualUser(new IndividualRequest(complainantIndividualId.orElse(null)));
-
+//        ///  individual service call
+//        CompletableFuture<IndividualDetail> individualDetailFuture =
+//                Digit.DRISTIService.searchIndividualUser(new IndividualRequest(complainantIndividualId.orElse(null)));
+//
         JsonNode orderFormData = getFormData(orderType, orderData);
-        Object additionalDetailsObj = orderData.getAdditionalDetails();
-        JsonNode additionalDetails = objectMapper.readTree(additionalDetailsObj.toString());
-
+        JsonNode additionalDetails = objectMapper.convertValue(orderData.getAdditionalDetails(), JsonNode.class);
         JsonNode respondentNameData = getOrderData(orderType, orderFormData);
-
         List<String> selectedChannels = additionalDetails.has(orderType.equals("NOTICE") ? "noticeOrder" : "SummonsOrder")
                 ? additionalDetails.get(orderType.equals("NOTICE") ? "noticeOrder" : "SummonsOrder").get("selectedChannels").findValuesAsText("name")
                 : Collections.emptyList();
-
         JsonNode respondentAddress = orderFormData.has("addressDetails") ? orderFormData.get("addressDetails")
-                : respondentNameData.has("address") ? respondentNameData.get("address")
-                : objectMapper.readTree(caseDetails.getAdditionalDetails().toString()).get("respondentDetails").get("formdata").get(0).get("data").get("addressDetails");
+                : (respondentNameData.has("address") ? respondentNameData.get("address")
+                : objectMapper.readTree(caseDetails.getAdditionalDetails().toString()).get("respondentDetails").get("formdata").get(0).get("data").get("addressDetails"));
 
-        Respondent respondentDetails = new Respondent(getRespondentName(respondentNameData), respondentAddress.get(0));
+        JsonNode orderFormValue = additionalDetails.get("formdata");
 
+
+//        Respondent respondentDetails = new Respondent(getRespondentName(respondentNameData), respondentAddress.get(0));
+//
         switch (orderType) {
-            case "SUMMONS":
-                payload.put("summonDetails", new SummonDetails(orderData.getAuditDetails().getLastModifiedTime(), caseDetails.getFilingDate()));
-                payload.put("respondentDetails", respondentDetails);
-                payload.put("caseDetails", new CaseDetail(caseDetails.getCaseTitle(), caseDetails.getFilingDate()));
-                break;
-
-            case "NOTICE":
-                payload.put("noticeDetails", new NoticeDetails(orderData.getAuditDetails().getLastModifiedTime(), caseDetails.getFilingDate()));
-                payload.put("respondentDetails", respondentDetails);
-                payload.put("caseDetails", new CaseDetail(caseDetails.getCaseTitle(), caseDetails.getFilingDate()));
-                break;
-
+//            case "SUMMONS":
+//                payload.put("summonDetails", new SummonDetails(orderData.getAuditDetails().getLastModifiedTime(), caseDetails.getFilingDate()));
+//                payload.put("respondentDetails", respondentDetails);
+//                payload.put("caseDetails", new CaseDetail(caseDetails.getCaseTitle(), caseDetails.getFilingDate()));
+//                break;
+//
+//            case "NOTICE":
+//                payload.put("noticeDetails", new NoticeDetails(orderData.getAuditDetails().getLastModifiedTime(), caseDetails.getFilingDate()));
+//                payload.put("respondentDetails", respondentDetails);
+//                payload.put("caseDetails", new CaseDetail(caseDetails.getCaseTitle(), caseDetails.getFilingDate()));
+//                break;
+//
             case "WARRANT":
-                payload.put("warrantDetails", new WarrantDetails(orderData.getAuditDetails().getLastModifiedTime(), caseDetails.getFilingDate()));
-                payload.put("respondentDetails", respondentDetails);
-                payload.put("caseDetails", new CaseDetail(caseDetails.getCaseTitle(), caseDetails.getFilingDate()));
-                break;
+                task.getTaskDetails().setWarrantDetails(buildWarrantDetails(orderData, caseDetails, orderFormValue));
+
         }
 
-        return payload;
+        return taskRequest;
     }
 
     private JsonNode getFormData(String orderType, Order order)  {
@@ -174,6 +168,18 @@ public class Warrant implements OrderUpdateStrategy {
         }
         return orderFormData;
     }
+
+    private WarrantDetails buildWarrantDetails(Order orderData, CourtCase courtCase, JsonNode orderFormValue) {
+        return WarrantDetails.builder()
+                .issueDate(orderData.getAuditDetails().getLastModifiedTime())
+                .caseFilingDate(courtCase.getFilingDate())
+                .docType(orderFormValue.get("warrantType").get("code").asText())
+                .docSubType(orderFormValue.get("bailInfo").get("isBailable").get("code").asBoolean() ? "BAILABLE" : "NON_BAILABLE")
+                .surety(orderFormValue.get("bailInfo").get("noOfSureties").get("code").asText())
+                .bailableAmount(orderFormValue.get("bailInfo").get("bailableAmount").asDouble())
+                .build();
+    }
+
 
 }
 

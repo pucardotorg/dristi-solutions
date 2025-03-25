@@ -1,5 +1,6 @@
 package pucar.util;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
 import org.springframework.http.HttpEntity;
@@ -49,7 +50,7 @@ public class TaskUtil {
     }
 
 
-    public  String getRespondentName(Object respondentNameData) {
+    public  String getRespondentName(JsonNode respondentNameData) {
         if (respondentNameData == null) {
             return "";
         }
