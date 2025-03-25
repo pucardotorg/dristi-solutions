@@ -140,19 +140,19 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
     return hours * 3600 + minutes * 60 + seconds;
   }
   const bulkHearingsCount = useMemo(() => {
-    if (bulkFormData?.slotIds?.length > 0) {
-      const filteredHearings = hearingDetails?.HearingList?.filter((hearing) => {
-        const hearingStart = timeToSeconds(formatTimeFromEpoch(hearing.startTime));
+    // if (bulkFormData?.slotIds?.length > 0) {
+    //   const filteredHearings = hearingDetails?.HearingList?.filter((hearing) => {
+    //     const hearingStart = timeToSeconds(formatTimeFromEpoch(hearing.startTime));
 
-        return (
-          hearing?.status != "COMPLETED" &&
-          bulkFormData?.slotIds?.some((slot) => hearingStart >= timeToSeconds(slot.slotStartTime) && hearingStart <= timeToSeconds(slot.slotEndTime))
-        );
-      });
+    //     return (
+    //       hearing?.status != "COMPLETED" &&
+    //       bulkFormData?.slotIds?.some((slot) => hearingStart >= timeToSeconds(slot.slotStartTime) && hearingStart <= timeToSeconds(slot.slotEndTime))
+    //     );
+    //   });
 
-      setOriginalHearingData(filteredHearings);
-      return filteredHearings?.length || 0;
-    }
+    //   setOriginalHearingData(filteredHearings);
+    //   return filteredHearings?.length || 0;
+    // }
     setOriginalHearingData(hearingDetails?.HearingList);
     const filteredHearings = hearingDetails?.HearingList?.filter((hearing) => hearing?.status != "COMPLETED");
     return filteredHearings?.length || 0;
