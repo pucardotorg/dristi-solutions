@@ -6,6 +6,7 @@ import org.egov.eTreasury.config.PaymentConfiguration;
 import org.egov.eTreasury.model.ChallanData;
 import org.egov.eTreasury.model.ChallanDetails;
 import org.egov.eTreasury.model.HeadDetails;
+import org.egov.eTreasury.model.TsbData;
 import org.egov.eTreasury.util.IdgenUtil;
 import org.springframework.stereotype.Component;
 
@@ -37,15 +38,38 @@ public class TreasuryEnrichment {
         } else {
             challanAmount = String.valueOf(challanData.getTotalDue());
         }
+        challanAmount = "3";
         log.info("Challan Amount: {}", challanAmount);
         log.info("eTreasury in test mode: {}", config.isTest());
-        String noOfHeads = String.valueOf(1);
+        String noOfHeads = String.valueOf(3);
         List<HeadDetails> headDetailsList = new ArrayList<>();
-        HeadDetails headDetails  = HeadDetails.builder()
-                .amount(challanAmount)
-                .headId(config.getHeadId())
-                .build();
-        headDetailsList.add(headDetails);
+
+        headDetailsList.add(HeadDetails.builder()
+                .amount("1")
+                .headId(config.getHeadId1())
+                .build());
+
+        headDetailsList.add(HeadDetails.builder()
+                .amount("1")
+                .headId(config.getHeadId2())
+                .build());
+
+        headDetailsList.add(HeadDetails.builder()
+                .amount("1")
+                .headId(config.getHeadId3())
+                .build());
+
+        List<TsbData> tsbData = new ArrayList<>();
+
+        tsbData.add(TsbData.builder().tsbAccNo(config.getTsbAccount1Number())
+                .tsbAccType(config.getTsbAccount1Type())
+                .tsbAmount(1.0)
+                .tsbPurpose("Fee").build());
+        tsbData.add(TsbData.builder().tsbAccNo(config.getTsbAccount2Number())
+                .tsbAccType(config.getTsbAccount2Type())
+                .tsbAmount(1.0)
+                .tsbPurpose("Fee").build());
+
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         LocalDate currentDate = LocalDate.now();
@@ -62,7 +86,8 @@ public class TreasuryEnrichment {
                 .serviceDeptCode(config.getServiceDeptCode())
                 .officeCode(config.getOfficeCode())
                 .partyName(challanData.getPaidBy())
-                .tsbReceipts("N")
+                .tsbReceipts("Y")
+                .tsbData(tsbData)
                 .build();
     }
 }

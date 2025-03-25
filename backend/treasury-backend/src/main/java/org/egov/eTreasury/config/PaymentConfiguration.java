@@ -27,8 +27,14 @@ public class PaymentConfiguration {
     @Value("${treasury-client-id}")
     private String clientId;
 
-    @Value("${treasury_head_id}")
-    private String headId;
+    @Value("${treasury_head_id1}")
+    private String headId1;
+
+    @Value("${treasury_head_id2}")
+    private String headId2;
+
+    @Value("${treasury_head_id3}")
+    private String headId3;
 
     @Value("${service-dept-code}")
     private String serviceDeptCode;
@@ -104,4 +110,19 @@ public class PaymentConfiguration {
 
     @Value("${challan.test.amount}")
     private String challanTestAmount;
+
+    @Value("${pucar.tsb.account1.number}")
+    private String tsbAccount1Number;
+
+    @Value("${pucar.tsb.account2.number}")
+    private String tsbAccount2Number;
+
+
+    @Value("${pucar.tsb.account1.type}")
+    private String tsbAccount1Type;
+
+    @Value("${pucar.tsb.account2.type}")
+    private String tsbAccount2Type;
+
+
 }

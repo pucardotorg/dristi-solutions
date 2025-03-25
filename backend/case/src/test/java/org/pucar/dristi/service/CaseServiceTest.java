@@ -944,4 +944,125 @@ public class CaseServiceTest {
 
         assertNotNull(response);
     }
+
+    @Test
+    void testVerifyJoinCaseCodeV2Request_ValidAccessCode() {
+        // Setup
+        CaseCodeRequest caseCodeRequest = new CaseCodeRequest();
+        CaseCodeCriteria caseCode = new CaseCodeCriteria();
+        caseCode.setFilingNumber(TEST_FILING_NUMBER);
+        caseCode.setCode("VALID_CODE");
+        caseCodeRequest.setCode(caseCode);
+        caseCodeRequest.setRequestInfo(requestInfo);
+
+        CourtCase courtCase = new CourtCase();
+        courtCase.setAccessCode("VALID_CODE");
+        CaseCriteria caseCriteria = setupTestCaseCriteria(courtCase);
+        List<CaseCriteria> existingApplications = Collections.singletonList(caseCriteria);
+
+        when(caseRepository.getCases(any(), any())).thenReturn(existingApplications);
+        when(encryptionDecryptionUtil.decryptObject(any(), any(), any(), any())).thenReturn(courtCase);
+
+        // Execute
+        CaseCodeResponse response = caseService.verifyJoinCaseCodeV2Request(caseCodeRequest);
+
+        // Verify
+        assertNotNull(response);
+        assertTrue(response.getIsValid());
+        verify(caseRepository, times(1)).getCases(any(), any());
+        verify(encryptionDecryptionUtil, times(1)).decryptObject(any(), any(), any(), any());
+    }
+
+    @Test
+    void testVerifyJoinCaseCodeV2Request_InvalidAccessCode() {
+        // Setup
+        CaseCodeRequest caseCodeRequest = new CaseCodeRequest();
+        CaseCodeCriteria caseCode = new CaseCodeCriteria();
+        caseCode.setFilingNumber(TEST_FILING_NUMBER);
+        caseCode.setCode("INVALID_CODE");
+        caseCodeRequest.setCode(caseCode);
+        caseCodeRequest.setRequestInfo(requestInfo);
+
+        CourtCase courtCase = new CourtCase();
+        courtCase.setAccessCode("VALID_CODE");
+        CaseCriteria caseCriteria = setupTestCaseCriteria(courtCase);
+        List<CaseCriteria> existingApplications = Collections.singletonList(caseCriteria);
+
+        when(caseRepository.getCases(any(), any())).thenReturn(existingApplications);
+        when(encryptionDecryptionUtil.decryptObject(any(), any(), any(), any())).thenReturn(courtCase);
+
+        // Execute
+        CaseCodeResponse response = caseService.verifyJoinCaseCodeV2Request(caseCodeRequest);
+
+        // Verify
+        assertNotNull(response);
+        assertFalse(response.getIsValid());
+        verify(caseRepository, times(1)).getCases(any(), any());
+        verify(encryptionDecryptionUtil, times(1)).decryptObject(any(), any(), any(), any());
+    }
+
+    @Test
+    void testVerifyJoinCaseCodeV2Request_CaseDoesNotExist() {
+        // Setup
+        CaseCodeRequest caseCodeRequest = new CaseCodeRequest();
+        CaseCodeCriteria caseCode = new CaseCodeCriteria();
+        caseCode.setFilingNumber(TEST_FILING_NUMBER);
+        caseCode.setCode("SOME_CODE");
+        caseCodeRequest.setCode(caseCode);
+        caseCodeRequest.setRequestInfo(requestInfo);
+
+        when(caseRepository.getCases(any(), any())).thenReturn(Collections.emptyList());
+
+        // Execute & Verify
+        CustomException exception = assertThrows(CustomException.class, () -> caseService.verifyJoinCaseCodeV2Request(caseCodeRequest));
+        assertEquals(CASE_EXIST_ERR, exception.getCode());
+        assertEquals("Case does not exist", exception.getMessage());
+        verify(caseRepository, times(1)).getCases(any(), any());
+    }
+
+    @Test
+    void testVerifyJoinCaseCodeV2Request_CaseHasNoAccessCode() {
+        // Setup
+        CaseCodeRequest caseCodeRequest = new CaseCodeRequest();
+        CaseCodeCriteria caseCode = new CaseCodeCriteria();
+        caseCode.setFilingNumber(TEST_FILING_NUMBER);
+        caseCode.setCode("SOME_CODE");
+        caseCodeRequest.setCode(caseCode);
+        caseCodeRequest.setRequestInfo(requestInfo);
+
+        CourtCase courtCase = new CourtCase();
+        courtCase.setAccessCode(null); // No access code set
+        CaseCriteria caseCriteria = setupTestCaseCriteria(courtCase);
+        List<CaseCriteria> existingApplications = Collections.singletonList(caseCriteria);
+
+        when(caseRepository.getCases(any(), any())).thenReturn(existingApplications);
+        when(encryptionDecryptionUtil.decryptObject(any(), any(), any(), any())).thenReturn(courtCase);
+
+        // Execute & Verify
+        CustomException exception = assertThrows(CustomException.class, () -> caseService.verifyJoinCaseCodeV2Request(caseCodeRequest));
+        assertEquals(VALIDATION_ERR, exception.getCode());
+        assertEquals("Access code not generated", exception.getMessage());
+        verify(caseRepository, times(1)).getCases(any(), any());
+        verify(encryptionDecryptionUtil, times(1)).decryptObject(any(), any(), any(), any());
+    }
+
+    @Test
+    void testVerifyJoinCaseCodeV2Request_ExceptionHandling() {
+        // Setup
+        CaseCodeRequest caseCodeRequest = new CaseCodeRequest();
+        CaseCodeCriteria caseCode = new CaseCodeCriteria();
+        caseCode.setFilingNumber(TEST_FILING_NUMBER);
+        caseCode.setCode("SOME_CODE");
+        caseCodeRequest.setCode(caseCode);
+        caseCodeRequest.setRequestInfo(requestInfo);
+
+        when(caseRepository.getCases(any(), any())).thenThrow(new RuntimeException("Database error"));
+
+        // Execute & Verify
+        CustomException exception = assertThrows(CustomException.class, () -> caseService.verifyJoinCaseCodeV2Request(caseCodeRequest));
+        assertEquals(JOIN_CASE_ERR, exception.getCode());
+        assertEquals(JOIN_CASE_CODE_INVALID_REQUEST, exception.getMessage());
+        verify(caseRepository, times(1)).getCases(any(), any());
+    }
+
 }

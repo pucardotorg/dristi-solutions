@@ -1061,6 +1061,26 @@ public class CaseService {
         }
     }
 
+    public CaseCodeResponse verifyJoinCaseCodeV2Request(CaseCodeRequest caseCodeRequest) {
+        try {
+            String filingNumber = caseCodeRequest.getCode().getFilingNumber();
+            List<CaseCriteria> existingApplications = caseRepository.getCases(Collections.singletonList(CaseCriteria.builder().filingNumber(filingNumber).build()), caseCodeRequest.getRequestInfo());
+            log.info("Existing application list :: {}", existingApplications.size());
+            if (existingApplications.isEmpty()) {
+                throw new CustomException(CASE_EXIST_ERR, "Case does not exist");
+            }
+            Boolean isValid = validateAccessCode(caseCodeRequest, existingApplications.get(0).getResponseList().get(0));
+            return CaseCodeResponse.builder().isValid(isValid).build();
+        }
+        catch (CustomException e){
+            throw e;
+        }
+        catch (Exception e){
+            log.error("Failed to verify the given litigants and representatives to be added to the case :: {}", e.toString());
+            throw new CustomException(JOIN_CASE_ERR, JOIN_CASE_CODE_INVALID_REQUEST);
+        }
+    }
+
     private void createTaskAndDemand(JoinCaseRequest joinCaseRequest) {
         TaskRequest taskRequest = new TaskRequest();
         Task task = new Task();
@@ -1301,6 +1321,18 @@ public class CaseService {
             throw new CustomException(VALIDATION_ERR, "Invalid access code");
         }
         return courtCase;
+    }
+
+    private @NotNull Boolean validateAccessCode(CaseCodeRequest caseCodeRequest, CourtCase existingCourtCase) {
+
+        CourtCase courtCase = encryptionDecryptionUtil.decryptObject(existingCourtCase, config.getCaseDecryptSelf(), CourtCase.class, caseCodeRequest.getRequestInfo());
+
+        if (courtCase.getAccessCode() == null || courtCase.getAccessCode().isEmpty()) {
+            throw new CustomException(VALIDATION_ERR, "Access code not generated");
+        }
+        String caseAccessCode = courtCase.getAccessCode();
+
+        return caseCodeRequest.getCode().getCode().equalsIgnoreCase(caseAccessCode);
     }
 
     private String getRedisKey(RequestInfo requestInfo, String caseId) {

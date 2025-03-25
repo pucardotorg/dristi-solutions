@@ -103,6 +103,7 @@ public class ServiceConstants {
     public static final String INVALID_DOCUMENT_DETAILS = "Invalid document details";
     public static final String INVALID_ADVOCATE_DETAILS = "Invalid advocate details";
     public static final String ENCRYPTION_SERVICE_ERROR = "Error occurred while calling Encryption Service";
+    public static final String JOIN_CASE_CODE_INVALID_REQUEST = "Failed to verify the given litigants and representatives to be added to the case";
     public static final String PURPOSE = "purpose";
     // Roles required for decryption
     public static final String JUDGE_ROLE = "JUDGE_ROLE";
