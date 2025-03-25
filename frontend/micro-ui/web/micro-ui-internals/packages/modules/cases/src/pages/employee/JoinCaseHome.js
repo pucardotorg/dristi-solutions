@@ -1530,7 +1530,10 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                 if (documentUploadResult?.[0]?.isComplainant) {
                   setSuccessScreenData((successScreenData) => ({
                     ...successScreenData,
-                    complainantAdvocateList: [...successScreenData?.complainantAdvocateList, getFullName(" ", givenName, otherNames, familyName)],
+                    complainantAdvocateList: [
+                      ...(successScreenData?.complainantAdvocateList || []),
+                      getFullName(" ", givenName, otherNames, familyName),
+                    ],
                   }));
                 } else {
                   setSuccessScreenData((successScreenData) => ({
