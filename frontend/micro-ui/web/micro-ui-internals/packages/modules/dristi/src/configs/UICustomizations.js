@@ -1185,17 +1185,17 @@ export const UICustomizations = {
               },
             ]
           : []),
-        ...(userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE") && row.isEvidence
-          ? [
-              {
-                label: "UNMARK_AS_EVIDENCE",
-                id: "unmark_as_evidence",
-                hide: false,
-                disabled: false,
-                action: column.clickFunc,
-              },
-            ]
-          : []),
+        // ...(userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE") && row.isEvidence
+        //   ? [
+        //       {
+        //         label: "UNMARK_AS_EVIDENCE",
+        //         id: "unmark_as_evidence",
+        //         hide: false,
+        //         disabled: false,
+        //         action: column.clickFunc,
+        //       },
+        //     ]
+        //   : []),
         ...(row?.isVoid && row?.filingType === "DIRECT"
           ? [
               {
