@@ -173,15 +173,30 @@ public class CaseService {
                 List<CourtCase> decryptedCourtCases = new ArrayList<>();
                 caseCriteria.getResponseList().forEach(cases -> {
                     decryptedCourtCases.add(encryptionDecryptionUtil.decryptObject(cases, config.getCaseDecryptSelf(), CourtCase.class, caseSearchRequests.getRequestInfo()));
+                    decryptedCourtCases.forEach(
+                            courtCase -> {
+                                enrichAdvocateJoinedStatus(courtCase, caseCriteria.getAdvocateId());
+                            });
                 });
                 caseCriteria.setResponseList(decryptedCourtCases);
             });
+            
 
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
             log.error("Error while fetching to search results :: {}", e.toString());
             throw new CustomException(SEARCH_CASE_ERR, e.getMessage());
+        }
+    }
+
+    private void enrichAdvocateJoinedStatus(CourtCase courtCase, String advocateId) {
+        if (advocateId != null) {
+            Optional<PendingAdvocateRequest> foundPendingAdvocateRequest = courtCase.getPendingAdvocateRequests().stream().filter(pendingAdvocateRequest -> pendingAdvocateRequest.getAdvocateId().equalsIgnoreCase(advocateId)).findFirst();
+            foundPendingAdvocateRequest.ifPresentOrElse(
+                    pendingAdvocateRequest -> courtCase.setAdvocateStatus(pendingAdvocateRequest.getStatus()),
+                    () -> courtCase.setAdvocateStatus("JOINED")
+            );
         }
     }
 

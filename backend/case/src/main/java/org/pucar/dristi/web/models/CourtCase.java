@@ -170,4 +170,7 @@ public class CourtCase {
 	@Valid
 	private AuditDetails auditdetails = null;
 
+	@JsonProperty("advocateStatus")
+	private String advocateStatus = null;
+
 }
