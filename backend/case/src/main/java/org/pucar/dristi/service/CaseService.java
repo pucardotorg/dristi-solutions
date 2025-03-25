@@ -191,7 +191,7 @@ public class CaseService {
     }
 
     private void enrichAdvocateJoinedStatus(CourtCase courtCase, String advocateId) {
-        if (advocateId != null) {
+        if (advocateId != null && courtCase.getPendingAdvocateRequests() != null) {
             Optional<PendingAdvocateRequest> foundPendingAdvocateRequest = courtCase.getPendingAdvocateRequests().stream().filter(pendingAdvocateRequest -> pendingAdvocateRequest.getAdvocateId().equalsIgnoreCase(advocateId)).findFirst();
             foundPendingAdvocateRequest.ifPresentOrElse(
                     pendingAdvocateRequest -> courtCase.setAdvocateStatus(pendingAdvocateRequest.getStatus()),
