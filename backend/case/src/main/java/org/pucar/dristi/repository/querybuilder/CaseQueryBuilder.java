@@ -201,9 +201,9 @@ public class CaseQueryBuilder {
                     " OR EXISTS (SELECT 1 FROM jsonb_array_elements(pendingAdvocateRequests) elem WHERE elem->>'advocateId' = ?) ) AND (cases.status NOT IN ('DELETED_DRAFT'))");
             preparedStmtList.add(criteria.getAdvocateId());
             preparedStmtArgList.add(Types.VARCHAR);
-            preparedStmtList.add(criteria.getAdvocateId());
-            preparedStmtArgList.add(Types.VARCHAR);
             preparedStmtList.add(requestInfo.getUserInfo().getUuid());
+            preparedStmtArgList.add(Types.VARCHAR);
+            preparedStmtList.add(criteria.getAdvocateId());
             preparedStmtArgList.add(Types.VARCHAR);
             firstCriteria = false;
         }
