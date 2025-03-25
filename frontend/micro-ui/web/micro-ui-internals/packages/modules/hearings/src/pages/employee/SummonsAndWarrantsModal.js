@@ -8,6 +8,7 @@ import { formatDate } from "../../utils";
 import { hearingService } from "../../hooks/services";
 import { Urls } from "../../hooks/services/Urls";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
+import { constructFullName } from "@egovernments/digit-ui-module-orders/src/utils";
 
 const modalPopup = {
   height: "70%",
@@ -55,37 +56,67 @@ const ModalHeading = ({ label, orderList }) => {
 };
 
 function groupOrdersByParty(filteredOrders) {
-  const accusedWiseOrdersMap = new Map();
+  const respondentOrdersMap = new Map();
+  const otherOrdersMap = new Map();
 
+  // Group respondents by uniqueId and witnesses by partyName
   filteredOrders.forEach((order) => {
-    const party = order.orderDetails?.parties?.[0];
+    const party = order?.additionalDetails?.formdata?.noticeOrder?.party?.data || order?.additionalDetails?.formdata?.SummonsOrder?.party?.data;
     if (!party) return;
 
-    let partyName = party.partyName.trim();
+    const firstName = party?.firstName?.trim();
+    const middleName = party?.middleName?.trim();
+    const lastName = party?.lastName?.trim();
+    let partyName = constructFullName(firstName, middleName, lastName);
     let partyType = party.partyType.toLowerCase();
+    let uniqueId = party?.uniqueId || "";
+
     if (partyType === "respondent") {
       partyType = "Accused";
+      if (!uniqueId) return;
+      if (!respondentOrdersMap.has(uniqueId)) {
+        respondentOrdersMap.set(uniqueId, { uniqueId, partyType, ordersList: [] });
+      }
+      respondentOrdersMap.get(uniqueId).ordersList.push(order);
+    } else {
+      if (partyType === "witness") {
+        partyType = "Witness";
+      }
+      if (!otherOrdersMap.has(partyName)) {
+        otherOrdersMap.set(partyName, { partyType, partyName, ordersList: [] });
+      }
+      otherOrdersMap.get(partyName).ordersList.push(order);
     }
-    if (partyType === "witness") {
-      partyType = "Witness";
-    }
-
-    if (!accusedWiseOrdersMap.has(partyName)) {
-      accusedWiseOrdersMap.set(partyName, { partyType, partyName, ordersList: [] });
-    }
-
-    accusedWiseOrdersMap.get(partyName).ordersList.push(order);
   });
 
-  const accusedWiseOrdersList = Array.from(accusedWiseOrdersMap.values());
+  // Determine the latest partyName for each respondent (Accused)
+  respondentOrdersMap.forEach((group, uniqueId) => {
+    const latestOrder = group.ordersList.reduce((latest, current) =>
+      new Date(current.createdDate) > new Date(latest.createdDate) ? current : latest
+    );
 
-  // Sort first by partyType: "respondent", then "witness"
+    const latestParty =
+      latestOrder?.additionalDetails?.formdata?.noticeOrder?.party?.data || latestOrder?.additionalDetails?.formdata?.SummonsOrder?.party?.data;
+    const firstName = latestParty?.firstName?.trim();
+    const middleName = latestParty?.middleName?.trim();
+    const lastName = latestParty?.lastName?.trim();
+    let partyName = constructFullName(firstName, middleName, lastName);
+    group.partyName = partyName;
+  });
+
+  const accusedWiseOrdersList = [
+    ...Array.from(respondentOrdersMap.values()), // Respondents (grouped by uniqueId)
+    ...Array.from(otherOrdersMap.values()), // Witnesses/others (grouped by partyName)
+  ];
+
+  // Sort list so "Accused" comes before "Witness"
   accusedWiseOrdersList.sort((a, b) => {
     if (a.partyType === "Accused" && b.partyType !== "Accused") return -1;
     if (a.partyType !== "Accused" && b.partyType === "Accused") return 1;
     return 0;
   });
 
+  //Sort orders within each party by createdTime
   accusedWiseOrdersList.forEach((party) => {
     party.ordersList.sort((a, b) => b.auditDetails.createdTime - a.auditDetails.createdTime);
   });
