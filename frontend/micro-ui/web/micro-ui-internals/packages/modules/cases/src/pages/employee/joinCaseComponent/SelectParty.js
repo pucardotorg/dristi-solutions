@@ -343,7 +343,7 @@ const SelectParty = ({
                       optionsKey={"label"}
                       options={[
                         { label: t("JUDGE"), value: "JUDGE" },
-                        { label: t("EXISTING_ADVOCATE"), value: "EXISTING_ADVOCATES" },
+                        { label: t("EXISTING_ADVOCATES"), value: "EXISTING_ADVOCATES" },
                       ]}
                     />
                   </LabelFieldPair>
