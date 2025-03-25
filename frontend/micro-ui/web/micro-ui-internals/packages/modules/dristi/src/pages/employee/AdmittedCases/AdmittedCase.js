@@ -1710,7 +1710,7 @@ const AdmittedCases = () => {
   );
 
   const { data: ordersData } = useSearchOrdersService(
-    { criteria: { tenantId: tenantId, filingNumber, orderType: "NOTICE", status: "PUBLISHED" } },
+    { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED" } },
     { tenantId },
     filingNumber + currentHearingId,
     Boolean(filingNumber),
@@ -1740,6 +1740,15 @@ const AdmittedCases = () => {
     if (!ordersData?.list) return [];
 
     const noticeOrder = ordersData?.list?.filter((item) => item?.orderType === "NOTICE" && item?.hearingNumber);
+
+    const groupedByhearingNumber = groupByHearingNumberDescending(noticeOrder);
+    return groupedByhearingNumber;
+  }, [ordersData?.list]);
+
+  const groupSummonWarrantOrderByHearingNumber = useMemo(() => {
+    if (!ordersData?.list) return [];
+
+    const noticeOrder = ordersData?.list?.filter((item) => ["SUMMONS", "WARRANT"].includes(item?.orderType) && item?.hearingNumber);
 
     const groupedByhearingNumber = groupByHearingNumberDescending(noticeOrder);
     return groupedByhearingNumber;
@@ -2267,6 +2276,12 @@ const AdmittedCases = () => {
     }
   };
 
+  const handleAllSummonWarrantGeneratedForHearing = async (hearingNumber) => {
+    if (hearingNumber) {
+      history.push(`${path}?filingNumber=${filingNumber}&caseId=${caseId}&taskOrderType=SUMMONS&hearingId=${hearingNumber}&tab=${config?.label}`);
+    }
+  };
+
   const handleDownloadPDF = async () => {
     const caseId = caseDetails?.id;
     const caseStatus = caseDetails?.status;
@@ -2467,6 +2482,28 @@ const AdmittedCases = () => {
                         : t("PREVIOUS_HEARING") + " (" + orders?.hearingNumber + ")"
                     }, `}
                     <span onClick={() => handleAllNoticeGeneratedForHearing(orders?.hearingNumber)} className="click-here" style={styles.link}>
+                      {t("NOTICE_CLICK_HERE")}
+                    </span>
+                  </p>
+                </div>
+              )}
+            </React.Fragment>
+          ))}
+
+          {groupSummonWarrantOrderByHearingNumber?.map((orders, index) => (
+            <React.Fragment>
+              {userType === "employee" && orders?.cases?.length > 0 && (
+                <div key={orders?.hearingNumber} className="notice-failed-notification" style={styles.container}>
+                  <div className="notice-failed-icon" style={styles.icon}>
+                    <InfoIconRed style={styles.icon} />
+                  </div>
+                  <p className="notice-failed-text" style={styles.text}>
+                    {`${t("SUMMON_WARRANT_FOR")} ${
+                      index === 0
+                        ? t("CURRENT_HEARING") + " (" + orders?.hearingNumber + ")"
+                        : t("PREVIOUS_HEARING") + " (" + orders?.hearingNumber + ")"
+                    }, `}
+                    <span onClick={() => handleAllSummonWarrantGeneratedForHearing(orders?.hearingNumber)} className="click-here" style={styles.link}>
                       {t("NOTICE_CLICK_HERE")}
                     </span>
                   </p>

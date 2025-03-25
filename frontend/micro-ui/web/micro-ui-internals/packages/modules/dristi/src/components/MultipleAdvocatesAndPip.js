@@ -15,6 +15,7 @@ import { FileUploader } from "react-drag-drop-files";
 import { useToast } from "./Toast/useToast";
 import { FSOErrorIcon } from "../icons/svgIndex";
 import { CaseWorkflowState } from "../Utils/caseWorkflow";
+import SearchableDropdown from "./SearchableDropdown";
 
 function ScrutinyInfoAdvocate({ message, t }) {
   return (
@@ -264,33 +265,6 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     }
     return false;
   }, [caseDetails, advocateAndPipData]);
-
-  const { data: allAdvocatesData, isLoading: isAllAdvocateSearchLoading } = Digit?.Hooks?.dristi?.useGetAllAdvocates(
-    { tenantId: window?.Digit.ULBService.getStateId() },
-    {
-      status: "ACTIVE",
-      tenantId: window?.Digit.ULBService.getStateId(),
-      offset: 0,
-      limit: 1000,
-    }
-  );
-
-  const allAdvocatesList = useMemo(() => {
-    return allAdvocatesData?.advocates || [];
-  }, [allAdvocatesData]);
-
-  const allAdvocatesBarRegAndNameList = useMemo(() => {
-    return allAdvocatesList.map((adv) => {
-      return {
-        barRegistrationNumber: `${adv?.barRegistrationNumber} (${removeInvalidNameParts(adv?.additionalDetails?.username)})`,
-        advocateName: removeInvalidNameParts(adv?.additionalDetails?.username),
-        advocateId: adv?.id,
-        barRegistrationNumberOriginal: adv?.barRegistrationNumber,
-        advocateUuid: adv?.auditDetails?.createdBy,
-        individualId: adv?.individualId,
-      };
-    });
-  }, [allAdvocatesList]);
 
   const { data, isLoading, refetch } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
@@ -619,142 +593,11 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     setAdvocateAndPipData(newData);
   };
 
-  const SearchableDropdown = ({ advocatesList, value, onChange, disabled }) => {
-    const [searchTerm, setSearchTerm] = useState("");
-    const [isDropdownVisible, setDropdownVisible] = useState(false);
-
-    const filteredRoles = useMemo(() => {
-      if (!searchTerm.trim()) {
-        return advocatesList;
-      }
-      return advocatesList.filter(
-        (role) =>
-          role.advocateName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          role.barRegistrationNumberOriginal.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }, [searchTerm, advocatesList]);
-
-    useEffect(() => {
-      const handleClickOutside = (event) => {
-        if (!event.target.closest(".dropdown-container")) {
-          setDropdownVisible(false);
-        }
-      };
-
-      document.addEventListener("click", handleClickOutside);
-
-      return () => {
-        document.removeEventListener("click", handleClickOutside);
-      };
-    }, []);
-
-    const handleSelectOption = (role) => {
-      onChange(role);
-      setSearchTerm("");
-      setDropdownVisible(false);
-    };
-
-    // reset the onChnage value when search term is empty
-    const handleInputChange = (e) => {
-      setSearchTerm(e.target.value);
-      if (e.target.value === "") {
-        onChange(null);
-      }
-    };
-
-    return (
-      <div
-        className="dropdown-container"
-        style={{ position: "relative", width: "100%", marginBottom: "20px", pointerEvents: !isCaseReAssigned ? "auto" : "none" }}
-      >
-        <input
-          type="text"
-          placeholder={t("ADVOCATE_PLACEHOLDER")}
-          value={searchTerm || value?.barRegistrationNumberOriginal || ""}
-          onFocus={() => {
-            setDropdownVisible(true);
-            if (!searchTerm) {
-              setSearchTerm("");
-            }
-          }}
-          onChange={handleInputChange}
-          style={{
-            width: "100%",
-            padding: "10px",
-            fontSize: "16px",
-            marginBottom: "30px",
-            boxSizing: "border-box",
-            border: "1px solid rgb(61, 60, 60)",
-            borderRadius: "0px",
-          }}
-          disabled={disabled}
-        />
-        <div
-          onClick={(e) => {
-            e.stopPropagation();
-            setDropdownVisible((prev) => !prev);
-          }}
-          disabled={disabled}
-          style={{
-            position: "absolute",
-            right: "10px",
-            top: "50%",
-            transform: "translateY(-50%)",
-            fontSize: "14px",
-            color: "black",
-            cursor: "pointer",
-            zIndex: 10,
-            pointerEvents: disabled || isCaseReAssigned ? "none" : "auto",
-          }}
-        >
-          <ArrowDown />
-        </div>
-        {isDropdownVisible && (
-          <ul
-            style={{
-              position: "absolute",
-              top: "calc(100% + 5px)",
-              left: 0,
-              width: "100%",
-              border: "1px solid #ccc",
-              backgroundColor: "white",
-              borderRadius: "4px",
-              maxHeight: "150px",
-              overflowY: "auto",
-              zIndex: 1000,
-              padding: "0",
-              margin: "0",
-              listStyle: "none",
-            }}
-          >
-            {filteredRoles.map((role) => (
-              <li
-                key={role.advocateId}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  padding: "10px",
-                  cursor: "pointer",
-                  backgroundColor: value?.advocateId === role.advocateId ? "#e6e6e6" : "white",
-                  borderBottom: "1px solid #ccc",
-                }}
-                onClick={() => handleSelectOption(role)}
-              >
-                <span style={{ fontWeight: "bold" }}>{role.barRegistrationNumberOriginal}</span>
-                <span style={{ color: "#555" }}>{role.advocateName}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    );
-  };
-
   const disableRadio = useMemo(() => {
     return Boolean(userType === "ADVOCATE" && advocateAndPipData?.boxComplainant?.index === 0 && advocateAndPipData?.boxComplainant?.individualId);
   }, [userType, advocateAndPipData]);
 
-  if (isAllAdvocateSearchLoading || isCaseLoading || isAllAdvocateSearchLoading) {
+  if (isCaseLoading) {
     return <Loader></Loader>;
   }
 
@@ -861,14 +704,6 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
           {Array.isArray(advocateAndPipData?.multipleAdvocateNameDetails) &&
             Object.keys(advocateAndPipData?.multipleAdvocateNameDetails?.[0] || {})?.length !== 0 &&
             advocateAndPipData?.multipleAdvocateNameDetails.map((data, index) => {
-              const advocatesList = allAdvocatesBarRegAndNameList?.filter(
-                (obj) =>
-                  !advocateAndPipData?.multipleAdvocateNameDetails?.find(
-                    (o) =>
-                      o?.advocateBarRegNumberWithName?.barRegistrationNumberOriginal === obj?.barRegistrationNumberOriginal &&
-                      obj?.barRegistrationNumberOriginal !== data?.advocateBarRegNumberWithName?.barRegistrationNumberOriginal
-                  )
-              );
               return (
                 <div
                   key={index}
@@ -908,7 +743,9 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "left", gap: "0px" }}>
                     <h1 style={{ fontSize: "14px" }}> {t("BAR_REGISTRATON")}</h1>
                     <SearchableDropdown
-                      advocatesList={advocatesList}
+                      t={t}
+                      isCaseReAssigned={isCaseReAssigned}
+                      selectedAdvocatesList={advocateAndPipData?.multipleAdvocateNameDetails}
                       value={data?.advocateBarRegNumberWithName}
                       onChange={(value) => handleInputChange(index, "advocateBarRegNumberWithName", value)}
                       disabled={data?.advocateBarRegNumberWithName?.individualId === individualId}

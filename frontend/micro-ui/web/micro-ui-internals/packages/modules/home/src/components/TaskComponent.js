@@ -15,6 +15,7 @@ import { uploadResponseDocumentConfig } from "@egovernments/digit-ui-module-dris
 import isEqual from "lodash/isEqual";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { updateCaseDetails } from "../../../cases/src/utils/joinCaseUtils";
+import AdvocateReplacementComponent from "./AdvocateReplacementComponent";
 
 export const CaseWorkflowAction = {
   SAVE_DRAFT: "SAVE_DRAFT",
@@ -60,6 +61,10 @@ const TasksComponent = ({
   const [responsePendingTask, setResponsePendingTask] = useState({});
   const [responseDoc, setResponseDoc] = useState({});
   const [isResponseApiCalled, setIsResponseApiCalled] = useState(false);
+  const [{ joinCaseConfirmModal, data }, setPendingTaskActionModals] = useState({
+    joinCaseConfirmModal: false,
+    data: {},
+  });
 
   const { data: options, isLoading: isOptionsLoading } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
@@ -584,6 +589,38 @@ const TasksComponent = ({
     taskIncludes,
   ]);
 
+  const joinCaseConfirmConfig = useMemo(() => {
+    if (!data?.filingNumber || !data?.taskNumber) return null;
+    return {
+      handleClose: () => {
+        setPendingTaskActionModals((pendingTaskActionModals) => {
+          const data = pendingTaskActionModals?.data;
+          delete data.filingNumber;
+          delete data.taskNumber;
+          return {
+            ...pendingTaskActionModals,
+            joinCaseConfirmModal: false,
+            data: data,
+          };
+        });
+      },
+      heading: {
+        label: t("ADVOCATE_REPLACEMENT_REQUEST"),
+      },
+      isStepperModal: false,
+      modalBody: (
+        <AdvocateReplacementComponent
+          filingNumber={data?.filingNumber}
+          taskNumber={data?.taskNumber}
+          setPendingTaskActionModals={setPendingTaskActionModals}
+          refetch={refetch}
+        />
+      ),
+      type: "document",
+      hideModalActionbar: true,
+    };
+  }, [t, data, refetch, setPendingTaskActionModals]);
+
   if (isLoading || isOptionsLoading || isCaseDataLoading) {
     return <Loader />;
   }
@@ -658,6 +695,7 @@ const TasksComponent = ({
                           isOpenInNewTab={true}
                           setShowSubmitResponseModal={setShowSubmitResponseModal}
                           setResponsePendingTask={setResponsePendingTask}
+                          setPendingTaskActionModals={setPendingTaskActionModals}
                         />
                       </div>
                     ) : (
@@ -673,6 +711,7 @@ const TasksComponent = ({
                             isAccordionOpen={true}
                             setShowSubmitResponseModal={setShowSubmitResponseModal}
                             setResponsePendingTask={setResponsePendingTask}
+                            setPendingTaskActionModals={setPendingTaskActionModals}
                           />
                         </div>
                         <div className="task-section">
@@ -684,6 +723,7 @@ const TasksComponent = ({
                             totalCount={allOtherPendingTask?.length}
                             setShowSubmitResponseModal={setShowSubmitResponseModal}
                             setResponsePendingTask={setResponsePendingTask}
+                            setPendingTaskActionModals={setPendingTaskActionModals}
                           />
                         </div>
                       </React.Fragment>
@@ -711,6 +751,7 @@ const TasksComponent = ({
       )}
 
       {(showSubmitResponseModal || joinCaseShowSubmitResponseModal) && <DocumentModal config={sumbitResponseConfig} />}
+      {joinCaseConfirmModal && <DocumentModal config={joinCaseConfirmConfig} />}
     </div>
   );
 };
