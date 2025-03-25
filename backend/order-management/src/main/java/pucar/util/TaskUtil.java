@@ -50,34 +50,35 @@ public class TaskUtil {
     }
 
 
-    public  String getRespondentName(JsonNode respondentNameData) {
-        if (respondentNameData == null) {
-            return "";
-        }
+    public String getRespondentName(Object respondentNameData) {
+//        if (respondentNameData == null) {
+//            return "";
+//        }
+//
+//        boolean isWitness = "witness".equalsIgnoreCase(respondentNameData.getPartyType());
+//
+//        String partyName = isWitness
+//                ? getFormattedName(
+//                respondentNameData.getFirstName(),
+//                respondentNameData.getMiddleName(),
+//                respondentNameData.getLastName(),
+//                respondentNameData.getWitnessDesignation(),
+//                null)
+//                : constructFullName(
+//                respondentNameData.getFirstName(),
+//                respondentNameData.getMiddleName(),
+//                respondentNameData.getLastName());
+//
+//        if (respondentNameData.getRespondentCompanyName() != null && !respondentNameData.getRespondentCompanyName().isEmpty()) {
+//            return respondentNameData.getRespondentCompanyName() + " (Represented By " + partyName + ")";
+//        }
 
-        boolean isWitness = "witness".equalsIgnoreCase(respondentNameData.getPartyType());
-
-        String partyName = isWitness
-                ? getFormattedName(
-                respondentNameData.getFirstName(),
-                respondentNameData.getMiddleName(),
-                respondentNameData.getLastName(),
-                respondentNameData.getWitnessDesignation(),
-                null)
-                : constructFullName(
-                respondentNameData.getFirstName(),
-                respondentNameData.getMiddleName(),
-                respondentNameData.getLastName());
-
-        if (respondentNameData.getRespondentCompanyName() != null && !respondentNameData.getRespondentCompanyName().isEmpty()) {
-            return respondentNameData.getRespondentCompanyName() + " (Represented By " + partyName + ")";
-        }
-
-        return partyName != null && !partyName.isEmpty() ? partyName : "";
+//        return partyName != null && !partyName.isEmpty() ? partyName : "";
+        return null;
     }
 
 
-    public  String constructFullName(String firstName, String middleName, String lastName) {
+    public String constructFullName(String firstName, String middleName, String lastName) {
         return Stream.of(firstName, middleName, lastName)
                 .filter(name -> name != null && !name.isEmpty()) // Remove null and empty values
                 .collect(Collectors.joining(" ")) // Join with space

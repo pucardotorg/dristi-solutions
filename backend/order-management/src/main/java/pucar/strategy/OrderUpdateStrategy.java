@@ -14,7 +14,7 @@ public interface OrderUpdateStrategy {
 
     OrderRequest postProcess(OrderRequest orderRequest);
 
-    boolean supportsCommon();
+    boolean supportsCommon(OrderRequest request);
 
     CaseDiaryEntry execute(OrderRequest request);
 

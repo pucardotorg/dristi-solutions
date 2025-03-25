@@ -58,7 +58,7 @@ public class Warrant implements OrderUpdateStrategy {
                 .cnrNumber(order.getCnrNumber())
                 .createdDate(System.currentTimeMillis())  // this is ist
                 .taskType(order.getOrderType())
-                .taskDetails(getTaskDetails())
+//                .taskDetails(getTaskDetails())
                 .amount(Amount.builder().type("FINE").status("DONE")
                         .amount("getting from mdms").build())
                 .status("IN_PROGRESS")
@@ -72,7 +72,7 @@ public class Warrant implements OrderUpdateStrategy {
     }
 
     @Override
-    public boolean supportsCommon() {
+    public boolean supportsCommon(OrderRequest orderRequest) {
         return false;
     }
 

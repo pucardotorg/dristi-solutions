@@ -50,7 +50,7 @@ public class AdmitCase implements OrderUpdateStrategy {
     }
 
     @Override
-    public boolean supportsCommon() {
+    public boolean supportsCommon(OrderRequest orderRequest) {
         return false;
     }
 

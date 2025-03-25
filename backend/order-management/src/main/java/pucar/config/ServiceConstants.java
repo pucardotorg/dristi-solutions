@@ -81,6 +81,7 @@ public class ServiceConstants {
     public static final String SEND_BACK ="SEND_BACK";
     public static final String REJECT ="REJECT";
     public static final String SCHEDULED ="SCHEDULED";
+    public static final String INTERMEDIATE ="INTERMEDIATE";
 
 
 

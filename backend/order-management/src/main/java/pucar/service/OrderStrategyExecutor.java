@@ -9,7 +9,7 @@ import java.util.List;
 
 @RequiredArgsConstructor
 @Service
-public class StrategyExecutor {
+public class OrderStrategyExecutor {
 
     private final List<OrderUpdateStrategy> enrichmentStrategies;
 
@@ -19,5 +19,19 @@ public class StrategyExecutor {
                 .forEach(strategy -> strategy.preProcess(orderRequest));
 
         // we can collect here all the order request and send it for botd
+    }
+
+    public void afterPublish(OrderRequest orderRequest) {
+        enrichmentStrategies.stream()
+                .filter(strategy -> strategy.supportsPostProcessing(orderRequest))
+                .forEach(strategy -> strategy.postProcess(orderRequest));
+
+    }
+
+    public void commonProcess(OrderRequest orderRequest) {
+        enrichmentStrategies.stream()
+                .filter(strategy -> strategy.supportsCommon(orderRequest))
+                .forEach(strategy -> strategy.execute(orderRequest));
+
     }
 }
