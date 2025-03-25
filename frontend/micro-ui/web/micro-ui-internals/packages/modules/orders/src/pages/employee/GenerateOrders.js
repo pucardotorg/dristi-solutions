@@ -43,7 +43,7 @@ import { CustomAddIcon, CustomDeleteIcon, WarningInfoIconYellow } from "../../..
 import OrderReviewModal from "../../pageComponents/OrderReviewModal";
 import OrderSignatureModal from "../../pageComponents/OrderSignatureModal";
 import OrderDeleteModal from "../../pageComponents/OrderDeleteModal";
-import { ordersService, schedulerService } from "../../hooks/services";
+import { ordersService, schedulerService, taskService } from "../../hooks/services";
 import { Loader } from "@egovernments/digit-ui-components";
 import OrderSucessModal from "../../pageComponents/OrderSucessModal";
 import { applicationTypes } from "../../utils/applicationTypes";
@@ -3733,6 +3733,27 @@ const GenerateOrders = () => {
         });
       }
       if ("ADVOCATE_REPLACEMENT_APPROVAL" === orderType) {
+        const taskData = await DRISTIService.customApiService(Urls.orders.searchTasks, {
+          criteria: {
+            tenantId: tenantId,
+            taskNumber: currentOrder?.additionalDetails?.taskNumber,
+          },
+        });
+        const task = taskData?.list?.[0];
+
+        try {
+          const reqBody = {
+            task: {
+              ...task,
+              workflow: {
+                action: currentOrder?.additionalDetails?.formdata?.replaceAdvocateStatus?.code === "GRANT" ? "APPROVE" : "REJECT",
+              },
+            },
+          };
+          await taskService.updateTask(reqBody, { tenantId });
+        } catch (error) {
+          console.error("Error updating task data:", error);
+        }
         return;
       }
       if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(orderType)) {
