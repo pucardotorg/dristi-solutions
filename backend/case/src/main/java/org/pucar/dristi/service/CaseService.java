@@ -3389,6 +3389,7 @@ public class CaseService {
         LitigantDetails litigantDetails = replacementDetails.getLitigantDetails();
         Document document = new Document();
         if (replacementDetails.getDocument() != null) {
+            document.setId(UUID.randomUUID().toString());
             document.setAdditionalDetails(replacementDetails.getDocument().getAdditionalDetails());
             document.setDocumentType(replacementDetails.getDocument().getDocumentType());
             document.setFileStore(replacementDetails.getDocument().getFileStore());
