@@ -3710,6 +3710,9 @@ const GenerateOrders = () => {
           }
         });
       }
+      if ("ADVOCATE_REPLACEMENT_APPROVAL" === orderType) {
+        return;
+      }
       if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(orderType)) {
         return newhearingId;
       }

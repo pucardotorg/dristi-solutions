@@ -2,11 +2,13 @@ import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/
 import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { OrderWorkflowAction } from "@egovernments/digit-ui-module-dristi/src/Utils/orderWorkflow";
-import { ordersService } from "@egovernments/digit-ui-module-orders/src/hooks/services";
+import { ordersService, taskService } from "@egovernments/digit-ui-module-orders/src/hooks/services";
 import { CloseSvg, CheckBox } from "@egovernments/digit-ui-react-components";
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
+import { formatDate } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const CloseBtn = (props) => {
   return (
@@ -23,17 +25,20 @@ const Heading = (props) => {
   );
 };
 
-const AdvocateReplacementComponent = ({ filingNumber = "KL-001069-2025", taskId }) => {
+const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTaskActionModals, refetch }) => {
   const { t } = useTranslation();
   const history = useHistory();
 
   const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
+  const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), []);
+
   const Modal = useMemo(() => window?.Digit?.ComponentRegistryService?.getComponent("Modal"), []);
+  const DocViewerWrapper = useMemo(() => window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper"), []);
   const [submitConfirmed, setSubmitConfirmed] = useState(false);
 
   const [{ modalType, isOpen }, setConfirmModal] = useState({ modalType: null, isOpen: false });
 
-  const { data: caseData, isLoading: isCaseDetailsLoading, refetch: refetchCaseData } = Digit.Hooks.dristi.useSearchCaseService(
+  const { data: caseData } = Digit.Hooks.dristi.useSearchCaseService(
     {
       criteria: [
         {
@@ -48,6 +53,50 @@ const AdvocateReplacementComponent = ({ filingNumber = "KL-001069-2025", taskId 
     Boolean(filingNumber)
   );
 
+  const { data: tasksData } = Digit.Hooks.hearings.useGetTaskList(
+    {
+      criteria: {
+        tenantId: tenantId,
+        taskNumber: taskNumber,
+      },
+    },
+    {},
+    taskNumber,
+    Boolean(taskNumber)
+  );
+
+  const task = useMemo(() => tasksData?.list?.[0], [tasksData]);
+
+  const updateReplaceAdvocateTask = useCallback(
+    async (action) => {
+      try {
+        const reqBody = {
+          task: {
+            ...task,
+            workflow: {
+              action: action,
+            },
+          },
+        };
+        await taskService.updateTask(reqBody, { tenantId });
+        setPendingTaskActionModals((pendingTaskActionModals) => {
+          const data = pendingTaskActionModals?.data;
+          delete data.filingNumber;
+          delete data.taskNumber;
+          return {
+            ...pendingTaskActionModals,
+            joinCaseConfirmModal: false,
+            data: data,
+          };
+        });
+        refetch();
+      } catch (error) {
+        console.error("Error updating task data:", error);
+      }
+    },
+    [task, tenantId, setPendingTaskActionModals, refetch]
+  );
+
   const caseDetails = useMemo(
     () => ({
       ...caseData?.criteria?.[0]?.responseList?.[0],
@@ -55,10 +104,7 @@ const AdvocateReplacementComponent = ({ filingNumber = "KL-001069-2025", taskId 
     [caseData]
   );
 
-  //   const { data: AdvocateReplacementData } = Digit.Hooks.dristi.useGetAdvocateReplacement(tenantId);
-
   const replaceAdvocateOrderCreate = async (type) => {
-    debugger;
     const formdata = {
       orderType: {
         code: "ADVOCATE_REPLACEMENT_APPROVAL",
@@ -72,7 +118,7 @@ const AdvocateReplacementComponent = ({ filingNumber = "KL-001069-2025", taskId 
     };
     const additionalDetails = {
       formdata,
-      taskId: taskId,
+      taskNumber: taskNumber,
     };
     const reqbody = {
       order: {
@@ -99,7 +145,6 @@ const AdvocateReplacementComponent = ({ filingNumber = "KL-001069-2025", taskId 
         additionalDetails: additionalDetails,
       },
     };
-    debugger;
     try {
       const res = await ordersService.createOrder(reqbody, { tenantId });
       DRISTIService.customApiService(Urls.dristi.pendingTask, {
@@ -119,30 +164,41 @@ const AdvocateReplacementComponent = ({ filingNumber = "KL-001069-2025", taskId 
         },
       });
       history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
-    } catch (error) {}
+    } catch (error) {
+      console.error("error", error);
+    }
   };
 
   const advocateReplacementData = useMemo(() => {
+    if (!task || !task?.taskDetails) return null;
+    const taskDetails = task?.taskDetails;
+    const { firstName, middleName, lastName } = taskDetails?.advocateDetails?.individualDetails;
     return {
       basicDetails: [
-        { label: "ADVOCATE_NAME", value: "Saul Goodman" },
-        { label: "BAR_REGISTRATION_NO", value: "356278SGH789" },
-        { label: "MOBILE_NUMBER", value: "+91 94784 75875" },
-        { label: "REQUEST_DATE", value: "21-02-2024" },
+        { label: "ADVOCATE_NAME", value: getFullName(" ", firstName, middleName, lastName) },
+        { label: "BAR_REGISTRATION_NO", value: taskDetails?.advocateDetails?.barRegistrationNumber },
+        { label: "MOBILE_NUMBER", value: taskDetails?.advocateDetails?.mobileNumber },
+        { label: "REQUEST_DATE", value: formatDate(new Date(taskDetails?.advocateDetails?.requestedDate)) },
       ],
       reasonForReplacement: [
-        { label: "REASON_FOR_REPLACEMENT", value: "Reason for Replacement" },
-        { label: "SUPPORTING_DOCUMENT", value: "Document Preview URL" },
+        { label: "REASON_FOR_REPLACEMENT", value: taskDetails?.reason },
+        { label: "SUPPORTING_DOCUMENT", type: "file", value: taskDetails?.reasonDocument?.fileStore },
       ],
-      litigants: [
-        { type: "head", data: ["Advocates to be replaced", "LITIGANTS_FOR_WHOM_REPLACEMENT_IS_REQUESTED", "BAR Registration Number"] },
-        { type: "body", data: ["Saul", "Anshumanth", "356278SGH789"] },
-        { type: "body", data: ["Saul", "Mehul (Complainant 2)", "356278SGH789"] },
-        { type: "body", data: ["Goodman", "Anshumanth", "356278SGH789"] },
-        { type: "body", data: ["Saul", "Anshumanth", "356278SGH789"] },
-      ],
+      litigants: isCitizen
+        ? [
+            { type: "head", data: ["LITIGANTS_FOR_WHOM_REPLACEMENT_IS_REQUESTED"] },
+            ...taskDetails?.replacementDetails?.map((item) => ({ type: "body", data: [item?.litigantDetails?.name || "Maruthi"] })),
+          ]
+        : [
+            { type: "head", data: ["ADVOCATES_TO_BE_REPLACED", "LITIGANTS_FOR_WHOM_REPLACEMENT_IS_REQUESTED", "BAR_REGISTRATION_NO"] },
+            ...taskDetails?.replacementDetails?.map((item) => ({
+              type: "body",
+              data: [item?.advocateDetails?.name, item?.litigantDetails?.name, item?.advocateDetails?.barRegistrationNumber],
+            })),
+          ],
     };
-  }, []);
+  }, [task, isCitizen]);
+
   return (
     <div className="advocate-replacement-request-container">
       <div className="advocate-replacement-request">
@@ -158,7 +214,13 @@ const AdvocateReplacementComponent = ({ filingNumber = "KL-001069-2025", taskId 
           {advocateReplacementData?.reasonForReplacement?.map((item) => (
             <div className="info-row" key={item.label}>
               <p className="label">{t(item.label)}</p>
-              <p className="value">{item.value}</p>
+              {item?.type === "file" ? (
+                <div className="reason-document-wrapper">
+                  <DocViewerWrapper fileStoreId={item.value} tenantId={tenantId} displayFilename={t("REASON_FOR_REPLACEMENT")} />
+                </div>
+              ) : (
+                <p className="value">{item.value}</p>
+              )}
             </div>
           ))}
         </div>
@@ -176,16 +238,22 @@ const AdvocateReplacementComponent = ({ filingNumber = "KL-001069-2025", taskId 
         <ButtonSelector
           label={t("REJECT")}
           onSubmit={async () => {
-            setConfirmModal({ isOpen: true, modalType: "reject" });
-            await replaceAdvocateOrderCreate("reject");
+            if (isCitizen) {
+              setConfirmModal({ isOpen: true, modalType: "reject" });
+            } else {
+              await replaceAdvocateOrderCreate("reject");
+            }
           }}
           className="advocate-replacement-request-cancel-button"
         />
         <ButtonSelector
           label={t("APPROVE")}
           onSubmit={async () => {
-            setConfirmModal({ isOpen: true, modalType: "approve" });
-            await replaceAdvocateOrderCreate("approve");
+            if (isCitizen) {
+              setConfirmModal({ isOpen: true, modalType: "approve" });
+            } else {
+              await replaceAdvocateOrderCreate("approve");
+            }
           }}
           className="advocate-replacement-request-submit-button"
         />
@@ -195,9 +263,12 @@ const AdvocateReplacementComponent = ({ filingNumber = "KL-001069-2025", taskId 
           headerBarEnd={<CloseBtn onClick={() => setConfirmModal({ isOpen: false, modalType: null })} />}
           formId="modal-action"
           headerBarMainStyle={{ display: "flex" }}
-          headerBarMain={<Heading label={modalType === "reject" ? t("REJECT") : t("APPROVE")} />}
+          headerBarMain={<Heading label={modalType === "reject" ? t("ADVOCATE_REPLACEMENT_REJECT") : t("ADVOCATE_REPLACEMENT_APPROVE")} />}
           actionSaveLabel={modalType === "reject" ? t("REJECT") : t("APPROVE")}
-          actionSaveOnSubmit={() => {}}
+          actionSaveOnSubmit={async () => {
+            await updateReplaceAdvocateTask(modalType === "reject" ? "REJECT" : "APPROVE");
+            setConfirmModal({ isOpen: false, modalType: null });
+          }}
           actionCancelLabel={t("BACK")}
           actionCancelOnSubmit={() => {
             setSubmitConfirmed(false);
@@ -208,11 +279,13 @@ const AdvocateReplacementComponent = ({ filingNumber = "KL-001069-2025", taskId 
           submitClassName={modalType === "approve" ? "approve-button" : "reject-button"}
         >
           <div className={`confirm-modal-content ${modalType === "approve" ? "approve" : "reject"}`}>
-            <p className="confirm-modal-content-text">{modalType === "reject" ? t("REJECT_MESSAGE") : t("APPROVE_MESSAGE")}</p>
+            <p className="confirm-modal-content-text">
+              {modalType === "reject" ? t("ADVOCATE_REPLACEMENT_REJECT_MESSAGE") : t("ADVOCATE_REPLACEMENT_APPROVE_MESSAGE")}
+            </p>
             {modalType === "approve" && (
               <CheckBox
                 value={submitConfirmed}
-                label={t("CASE_SUBMISSION_CONFIRMATION")}
+                label={t("ADVOCATE_REPLACEMENT_CONFIRMATION")}
                 wrkflwStyle={{}}
                 onChange={() => setSubmitConfirmed(!submitConfirmed)}
               />
