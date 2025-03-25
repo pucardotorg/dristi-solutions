@@ -278,6 +278,7 @@ module.exports = {
   },
 
   host: {
+    task: process.env.DRISTI_TASK_HOST || "http://localhost:8096",
     mdms: process.env.EGOV_MDMS_HOST || "http://localhost:8081",
     pdf: process.env.EGOV_PDF_HOST || "http://localhost:8070",
     case: process.env.DRISTI_CASE_HOST || "http://localhost:8091",
@@ -312,6 +313,7 @@ module.exports = {
     filestore_search: "/filestore/v1/files/url",
     filestore_search_id: "/filestore/v1/files/id",
     hearing_bulk_reschedule: "/hearing/v1/bulk/_reschedule",
+    task_search: "task/v1/search",
   },
 
   constraints: {

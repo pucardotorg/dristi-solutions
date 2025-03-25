@@ -5,10 +5,15 @@ const {
   create_pdf,
   search_sunbirdrc_credential_service,
   create_pdf_v2,
+  search_task,
 } = require("../api");
 const { renderError } = require("../utils/renderError");
 const config = require("../config");
 const { formatDate } = require("./formatDate");
+
+const getFullName = (seperator, ...strings) => {
+  return strings.filter(Boolean).join(seperator);
+};
 
 const orderChangeAdvocate = async (req, res, qrCode, order, compositeOrder) => {
   const cnrNumber = req.query.cnrNumber;
@@ -24,6 +29,7 @@ const orderChangeAdvocate = async (req, res, qrCode, order, compositeOrder) => {
     order?.additionalDetails?.formdata?.additionalComments?.text || "";
   const reasonForWithdrawal =
     order?.additionalDetails?.formdata?.reasonForWithdrawal?.text || "";
+  const taskNumber = order?.additionalDetails?.taskNumber || "";
 
   const missingFields = [];
   if (!cnrNumber) missingFields.push("cnrNumber");
@@ -52,8 +58,26 @@ const orderChangeAdvocate = async (req, res, qrCode, order, compositeOrder) => {
       return renderError(res, "Court case not found", 404);
     }
 
+    const resTask = await handleApiCall(
+      res,
+      () => search_task(taskNumber, tenantId, requestInfo),
+      "Failed to query task service"
+    );
+    const task = resTask?.data?.list?.[0];
+    if (!task) {
+      return renderError(res, "Task not found", 404);
+    }
+
     const mdmsCourtRoom = config.constants.mdmsCourtRoom;
     const judgeDetails = config.constants.judgeDetails;
+    const { firstName, middleName, lastName } =
+      task?.taskDetails?.advocateDetails?.individualDetails;
+
+    const partyName = getFullName(" ", firstName, middleName, lastName);
+    const dateOfMotion = formatDate(
+      new Date(task?.taskDetails?.advocateDetails?.requestedDate),
+      "DD-MM-YYYY"
+    );
 
     // Handle QR code if enabled
     let base64Url = "";
@@ -106,11 +130,11 @@ const orderChangeAdvocate = async (req, res, qrCode, order, compositeOrder) => {
           year: caseYear,
           caseName: courtCase.caseTitle,
           date: formattedToday,
-          partyName: "John Doe",
-          dateOfMotion: "March 15, 2025",
+          partyName,
+          dateOfMotion,
           briefReasonOfWithdrawal: reasonForWithdrawal,
           response,
-          advocateName: "Mr. Richard Smith",
+          advocateName: partyName,
           additionalComments,
           judgeSignature: judgeDetails.judgeSignature,
           judgeName: judgeDetails.name,
