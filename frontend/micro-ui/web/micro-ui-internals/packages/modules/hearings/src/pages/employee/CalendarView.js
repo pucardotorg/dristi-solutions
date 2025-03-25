@@ -124,27 +124,27 @@ const MonthlyCalendar = () => {
       if (dateTimeObj) {
         const dateString = dateTimeObj.date;
         events?.forEach((slot) => {
-          if (dateTimeObj.time >= slot.slotStartTime && dateTimeObj.time < slot.slotEndTime) {
-            const eventKey = `${dateString}-${slot.slotName}`;
+          // if (dateTimeObj.time >= slot.slotStartTime && dateTimeObj.time < slot.slotEndTime) {
+          const eventKey = `${dateString}-${slot.slotName}`;
 
-            if (!calendarEvents[eventKey]) {
-              calendarEvents[eventKey] = {
-                title: `${slot.slotName} Hearing`,
-                start: `${dateString}T${slot.slotStartTime}`,
-                end: `${dateString}T${slot.slotEndTime}`,
-                extendedProps: {
-                  hearings: [hearing],
-                  count: 1,
-                  date: new Date(dateString),
-                  slot: slot.slotName,
-                  slotId: slot.id,
-                },
-              };
-            } else {
-              calendarEvents[eventKey].extendedProps.count += 1;
-              calendarEvents[eventKey].extendedProps.hearings.push(hearing);
-            }
+          if (!calendarEvents[eventKey]) {
+            calendarEvents[eventKey] = {
+              title: `${slot.slotName} Hearing`,
+              start: `${dateString}T${slot.slotStartTime}`,
+              end: `${dateString}T${slot.slotEndTime}`,
+              extendedProps: {
+                hearings: [hearing],
+                count: 1,
+                date: new Date(dateString),
+                slot: slot.slotName,
+                slotId: slot.id,
+              },
+            };
+          } else {
+            calendarEvents[eventKey].extendedProps.count += 1;
+            calendarEvents[eventKey].extendedProps.hearings.push(hearing);
           }
+          // }
         });
       }
     });
