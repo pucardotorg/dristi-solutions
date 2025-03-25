@@ -20,6 +20,16 @@ import lombok.Setter;
 @Getter
 public class Configuration {
 
+	//Hearing
+	@Value("${egov.hearing.host}")
+	private String hearingHost;
+
+	@Value("${egov.hearing.path}")
+	private String hearingPath;
+
+	@Value("${egov.hearing.search.path}")
+	private String hearingSearchPath;
+
 	// User Config
 	@Value("${egov.user.host}")
 	private String userHost;
