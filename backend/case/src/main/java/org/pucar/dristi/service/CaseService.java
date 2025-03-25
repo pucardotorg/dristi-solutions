@@ -3079,6 +3079,15 @@ public class CaseService {
 
         List<AdvocateMapping> advocateMappings = courtCase.getRepresentatives();
 
+        AuditDetails auditDetails = enrichAuditDetails(requestInfo);
+
+        CourtCase courtCaseObj = CourtCase.builder()
+                .filingNumber(courtCase.getFilingNumber())
+                .auditdetails(auditDetails)
+                .tenantId(courtCase.getTenantId())
+                .id(courtCase.getId())
+                .build();
+
         // checking weather advocate is present in case or not
         List<AdvocateMapping> advocates = advocateMappings.stream().filter(advocateMapping ->
                 advocateMapping.getAdvocateId().equalsIgnoreCase(advocateUuid)).toList();
@@ -3087,7 +3096,6 @@ public class CaseService {
         AdvocateDetails advocateDetails = joinCaseRequest.getAdvocateDetails();
 
         for (ReplacementDetails replacementDetails : replacementDetailsList) {
-            AuditDetails auditDetails = enrichAuditDetails(requestInfo);
             Party party = enrichParty(replacementDetails, courtCase, auditDetails);
             LitigantDetails litigantDetails = replacementDetails.getLitigantDetails();
             String partyType = litigantDetails.getPartyType();
@@ -3097,7 +3105,7 @@ public class CaseService {
                 List<Party> litigantParties = courtCase.getLitigants();
                 if (advocates.isEmpty()) {
                     // adding the advocate in representatives list as he is new joining the case
-                    enrichAdvocateDetailsInRepresentativesList(courtCase, advocateUuid, replacementDetails, party, auditDetails, advocateDetails);
+                    enrichAdvocateDetailsInRepresentativesList(courtCase, advocateUuid, replacementDetails, party, auditDetails, advocateDetails, courtCaseObj);
                 } else {
                     // adding the litigant details into representing list of the advocate
                     advocates.get(0).getRepresenting().add(party);
@@ -3111,15 +3119,16 @@ public class CaseService {
             } else {
                 if (advocates.isEmpty()) {
                     // adding the advocate in representatives list as he is new joining the case
-                    enrichAdvocateDetailsInRepresentativesList(courtCase, advocateUuid, replacementDetails, party, auditDetails, advocateDetails);
+                    enrichAdvocateDetailsInRepresentativesList(courtCase, advocateUuid, replacementDetails, party, auditDetails, advocateDetails,courtCaseObj);
                 } else {
                     // adding the litigant details into representing list of the advocate
                     advocates.get(0).getRepresenting().add(party);
+                    courtCaseObj.setRepresentatives(List.of(advocates.get(0)));
                 }
                 inactivateOldAdvocate(replacementDetails, courtCase);
             }
 
-            producer.push(config.getRepresentativeJoinCaseTopic(), courtCase);
+            producer.push(config.getRepresentativeJoinCaseTopic(), courtCaseObj);
 
             updateCourtCaseInRedis(courtCase.getTenantId(), courtCase);
 
@@ -3306,7 +3315,7 @@ public class CaseService {
 
 
     private void enrichAdvocateDetailsInRepresentativesList(CourtCase courtCase, String advocateUuid, ReplacementDetails replacementDetails, Party party,
-                                                            AuditDetails auditDetails, AdvocateDetails advocateDetails) {
+                                                            AuditDetails auditDetails, AdvocateDetails advocateDetails, CourtCase courtCaseObj) {
 
         Document document = objectMapper.convertValue(replacementDetails.getDocument(), Document.class);
 
@@ -3323,7 +3332,7 @@ public class CaseService {
                 .additionalDetails(advocateDetails)
                 .hasSigned(false)
                 .build();
-        courtCase.getRepresentatives().add(advocateMapping);
+        courtCaseObj.setRepresentatives(List.of(advocateMapping));
     }
 
 
@@ -3384,6 +3393,12 @@ public class CaseService {
             document.setFileStore(replacementDetails.getDocument().getFileStore());
         }
 
+        ObjectNode additionalDetails = objectMapper.createObjectNode();
+
+        additionalDetails.put("uuid", litigantDetails.getUserUuid());
+        additionalDetails.put("fullName",litigantDetails.getName());
+
+
         return Party.builder()
                 .individualId(litigantDetails.getIndividualId())
                 .partyType(litigantDetails.getPartyType())
@@ -3391,6 +3406,7 @@ public class CaseService {
                 .isActive(true)
                 .documents(List.of(document))
                 .auditDetails(auditDetails)
+                .additionalDetails(additionalDetails)
                 .id(UUID.randomUUID())
                 .build();
     }
