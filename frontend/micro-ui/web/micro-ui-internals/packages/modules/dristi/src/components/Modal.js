@@ -41,6 +41,9 @@ const Modal = ({
   titleSaveButton,
   hideModalActionbar = false,
   popupModuleMianClassName,
+  cancelClassName,
+  customActionClassName,
+  submitClassName,
 }) => {
   /**
    * TODO: It needs to be done from the desgin changes
@@ -82,6 +85,7 @@ const Modal = ({
                   ButtonBody={cancelButtonBody}
                   isDisabled={isBackButtonDisabled}
                   textClassName={cancelTextClassName}
+                  className={cancelClassName}
                 />
               ) : null}
               {actionCustomLabel ? (
@@ -93,6 +97,7 @@ const Modal = ({
                   isDisabled={isCustomButtonDisabled}
                   style={customActionStyle}
                   textClassName={customActionTextClassName}
+                  className={customActionClassName}
                 />
               ) : null}
               {actionSaveLabel && !hideSubmit ? (
@@ -103,6 +108,7 @@ const Modal = ({
                   formId={formId}
                   isDisabled={isDisabled}
                   style={style}
+                  className={submitClassName}
                   textClassName={submitTextClassName}
                   title={titleSaveButton ? titleSaveButton : ""}
                 />
