@@ -232,6 +232,9 @@ const SelectParty = ({
               freeze={true}
               topbarOptionsClassName={"top-bar-option"}
               disable={isLitigantJoined}
+              style={{
+                marginBottom: "1px",
+              }}
             />
           ) : (
             selectPartyData?.isReplaceAdvocate?.value && (
@@ -351,7 +354,6 @@ const SelectParty = ({
                       name="reasonForReplacement"
                       value={selectPartyData?.reasonForReplacement}
                       onTextChange={(value) => {
-                        debugger;
                         setSelectPartyData((selectPartyData) => ({
                           ...selectPartyData,
                           reasonForReplacement: value,
@@ -370,7 +372,7 @@ const SelectParty = ({
             (selectPartyData?.userType?.value === "Advocate" &&
               selectPartyData?.isReplaceAdvocate?.value === "YES" &&
               party?.length > 0 &&
-              selectPartyData?.advocateToReplaceList?.length > 0)) && (
+              (selectPartyData?.advocateToReplaceList?.length > 0 || advocateToReplaceList?.length === 0))) && (
             <FormComposerV2
               key={2}
               config={advocateVakalatnamaConfig}

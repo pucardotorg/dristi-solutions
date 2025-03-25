@@ -117,6 +117,17 @@ function PendingTaskAccordion({
               key={item?.filingNumber}
               style={{ cursor: "pointer" }}
               onClick={() => {
+                if (item?.actionName === "Review Advocate Replace Request") {
+                  setPendingTaskActionModals((pendingTaskActionModals) => ({
+                    ...pendingTaskActionModals,
+                    joinCaseConfirmModal: true,
+                    data: {
+                      filingNumber: item?.filingNumber,
+                      taskNumber: item?.referenceId,
+                    },
+                  }));
+                  return;
+                }
                 if (item?.status === "PENDING_SIGN" && item?.screenType === "Adiary") {
                   history.push(`/${window.contextPath}/employee/home/adiary?date=${item?.params?.referenceId}`);
                 } else if (item?.status === "PROFILE_EDIT_REQUEST") {
@@ -134,11 +145,6 @@ function PendingTaskAccordion({
                   );
                 } else if (item?.status === "PENDING_RESPONSE") {
                   if (isJudge) {
-                    setPendingTaskActionModals((pendingTaskActionModals) => ({
-                      ...pendingTaskActionModals,
-                      joinCaseConfirmModal: true,
-                    }));
-                    return;
                     const caseId = item?.params?.caseId;
                     const filingNumber = item?.params?.filingNumber;
                     history.push(`/${window.contextPath}/employee/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview`, {

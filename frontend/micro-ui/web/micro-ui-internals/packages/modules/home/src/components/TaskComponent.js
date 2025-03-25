@@ -61,8 +61,9 @@ const TasksComponent = ({
   const [responsePendingTask, setResponsePendingTask] = useState({});
   const [responseDoc, setResponseDoc] = useState({});
   const [isResponseApiCalled, setIsResponseApiCalled] = useState(false);
-  const [{ joinCaseConfirmModal }, setPendingTaskActionModals] = useState({
+  const [{ joinCaseConfirmModal, data }, setPendingTaskActionModals] = useState({
     joinCaseConfirmModal: false,
+    data: {},
   });
 
   const { data: options, isLoading: isOptionsLoading } = Digit.Hooks.useCustomMDMS(
@@ -589,17 +590,36 @@ const TasksComponent = ({
   ]);
 
   const joinCaseConfirmConfig = useMemo(() => {
+    if (!data?.filingNumber || !data?.taskNumber) return null;
     return {
-      handleClose: () => {},
+      handleClose: () => {
+        setPendingTaskActionModals((pendingTaskActionModals) => {
+          const data = pendingTaskActionModals?.data;
+          delete data.filingNumber;
+          delete data.taskNumber;
+          return {
+            ...pendingTaskActionModals,
+            joinCaseConfirmModal: false,
+            data: data,
+          };
+        });
+      },
       heading: {
         label: t("ADVOCATE_REPLACEMENT_REQUEST"),
       },
       isStepperModal: false,
-      modalBody: <AdvocateReplacementComponent />,
+      modalBody: (
+        <AdvocateReplacementComponent
+          filingNumber={data?.filingNumber}
+          taskNumber={data?.taskNumber}
+          setPendingTaskActionModals={setPendingTaskActionModals}
+          refetch={refetch}
+        />
+      ),
       type: "document",
       hideModalActionbar: true,
     };
-  }, [t]);
+  }, [t, data, refetch, setPendingTaskActionModals]);
 
   if (isLoading || isOptionsLoading || isCaseDataLoading) {
     return <Loader />;

@@ -2677,7 +2677,9 @@ const GenerateOrders = () => {
     const noticeType = orderData?.additionalDetails?.formdata?.noticeType?.type;
     const respondentAddress = orderFormData?.addressDetails
       ? orderFormData?.addressDetails?.map((data) => ({ ...data?.addressDetails }))
-      :respondentNameData?.address ?respondentNameData?.address : caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.addressDetails?.map((data) => data?.addressDetails);
+      : respondentNameData?.address
+      ? respondentNameData?.address
+      : caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.addressDetails?.map((data) => data?.addressDetails);
     const partyIndex = orderFormData?.party?.data?.partyIndex || "";
     const respondentName = getRespondantName(respondentNameData);
     const respondentPhoneNo = orderFormData?.party?.data?.phone_numbers || [];
@@ -3652,6 +3654,9 @@ const GenerateOrders = () => {
             }
           }
         });
+      }
+      if ("ADVOCATE_REPLACEMENT_APPROVAL" === orderType) {
+        return;
       }
       if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(orderType)) {
         return newhearingId;
