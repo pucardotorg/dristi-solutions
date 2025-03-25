@@ -71,7 +71,7 @@ public class CaseService {
 
     private final AdvocateUtil advocateUtil;
     private final TaskUtil taskUtil;
-    private final AnalyticsUtil analyticsUtil;
+    private final HearingUtil hearingUtil;
     private final UserService userService;
 
 
@@ -85,7 +85,7 @@ public class CaseService {
                        TaskUtil taskUtil,
                        BillingUtil billingUtil,
                        EncryptionDecryptionUtil encryptionDecryptionUtil,
-                       AnalyticsUtil analyticsUtil,
+                       HearingUtil analyticsUtil,
                        UserService userService,
                        ObjectMapper objectMapper, CacheService cacheService, EnrichmentService enrichmentService, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil) {
         this.validator = validator;
@@ -97,7 +97,7 @@ public class CaseService {
         this.taskUtil = taskUtil;
         this.billingUtil = billingUtil;
         this.encryptionDecryptionUtil = encryptionDecryptionUtil;
-        this.analyticsUtil = analyticsUtil;
+        this.hearingUtil = analyticsUtil;
         this.userService = userService;
         this.objectMapper = objectMapper;
         this.cacheService = cacheService;
@@ -1416,7 +1416,7 @@ public class CaseService {
             if (joinCaseRequest.getJoinCaseData().getRepresentative().getIsJudgeApproving()) {
                 createTaskForJudge(joinCaseRequest, courtCase);
             } else {
-                HashMap<String, List<RepresentingJoinCase>> replaceAdvocateRepresentingMap = new HashMap<>();
+                Map<String, List<RepresentingJoinCase>> replaceAdvocateRepresentingMap = new LinkedHashMap<>();
 
                 List<PendingAdvocateRequest> pendingAdvocateRequestList = courtCase.getPendingAdvocateRequests();
                 if (pendingAdvocateRequestList == null) {
@@ -1450,13 +1450,14 @@ public class CaseService {
 
                     } else {
                         representingJoinCase.getReplaceAdvocates().forEach(replaceAdvocateId -> {
+                            List<RepresentingJoinCase> representingJoinCaseList;
                             if (!replaceAdvocateRepresentingMap.containsKey(replaceAdvocateId)) {
-                                replaceAdvocateRepresentingMap.put(replaceAdvocateId, List.of(representingJoinCase));
+                                representingJoinCaseList = new ArrayList<>();
                             } else {
-                                List<RepresentingJoinCase> representingJoinCaseList = replaceAdvocateRepresentingMap.get(replaceAdvocateId);
-                                representingJoinCaseList.add(representingJoinCase);
-                                replaceAdvocateRepresentingMap.put(replaceAdvocateId, representingJoinCaseList);
+                                representingJoinCaseList = replaceAdvocateRepresentingMap.get(replaceAdvocateId);
                             }
+                            representingJoinCaseList.add(representingJoinCase);
+                            replaceAdvocateRepresentingMap.put(replaceAdvocateId, representingJoinCaseList);
 
                         });
                     }
