@@ -35,6 +35,25 @@ const pool = new Pool({
 
 const auth_token = config.auth_token;
 
+async function search_task(taskNumber, tenantId, requestinfo) {
+  try {
+    return await axios({
+      method: "post",
+      url: URL.resolve(config.host.task, config.paths.task_search),
+      data: {
+        RequestInfo: requestinfo,
+        criteria: {
+          tenantId: tenantId,
+          taskNumber: taskNumber,
+        },
+      },
+    });
+  } catch (error) {
+    logger.error(`Error in ${config.paths.task_search}: ${error.message}`);
+    throw error;
+  }
+}
+
 async function search_case(cnrNumber, tenantId, requestinfo) {
   try {
     return await axios({
@@ -449,4 +468,5 @@ module.exports = {
   search_pdf_v2,
   bulk_hearing_reschedule,
   search_multiple_cases,
+  search_task,
 };

@@ -22,7 +22,7 @@ public class EvidenceQueryBuilder {
             "art.comments as comments, art.file as file, art.createdDate as createdDate, art.isActive as isActive, art.isEvidence as isEvidence, art.status as status, art.description as description, " +
             "art.artifactDetails as artifactDetails, art.additionalDetails as additionalDetails, art.createdBy as createdBy, " +
             "art.lastModifiedBy as lastModifiedBy, art.createdTime as createdTime, art.lastModifiedTime as lastModifiedTime, " +
-            "art.isVoid as isVoid, art.reason as reason, art.filingType as filingType";
+            "art.isVoid as isVoid, art.reason as reason, art.filingType as filingType, art.publishedDate as publishedDate";
 
     private  static  final String TOTAL_COUNT_QUERY = "SELECT COUNT(*) FROM ({baseQuery}) total_result";
     private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY art.createdtime DESC ";
@@ -75,7 +75,7 @@ public class EvidenceQueryBuilder {
 
         if (searchCriteria.getOwner() == null) {
             queryBuilder.append(" AND ( ");
-            queryBuilder.append(addCitizenCriteria(loggedInUserUuid, searchCriteria.getFilingNumber(), preparedStmtList, preparedStmtArgList));
+            queryBuilder.append(addUserCriteria(loggedInUserUuid, searchCriteria.getFilingNumber(), preparedStmtList, preparedStmtArgList));
             queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList));
             queryBuilder.append(" )) ");
         }
@@ -87,7 +87,30 @@ public class EvidenceQueryBuilder {
         return queryBuilder.toString();
     }
 
-    private String addCitizenCriteria(String loggedInUserUuid, String filingNumber, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+    public String getEmployeeQuery(List<String> statusList, EvidenceSearchCriteria searchCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+        StringBuilder queryBuilder = new StringBuilder();
+        String loggedInUserUuid = searchCriteria.getUserUuid();
+
+        if(searchCriteria.isBenchClerk()){
+            if (searchCriteria.getOwner() == null) {
+                queryBuilder.append(" AND ( ");
+                queryBuilder.append(addUserCriteria(loggedInUserUuid, searchCriteria.getFilingNumber(), preparedStmtList, preparedStmtArgList));
+                queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList));
+                queryBuilder.append(" )) ");
+            }
+
+            else if(!searchCriteria.getOwner().toString().equals(loggedInUserUuid)) {
+                queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList));
+            }
+        }
+        else{
+            queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList));
+        }
+
+        return queryBuilder.toString();
+    }
+
+    private String addUserCriteria(String loggedInUserUuid, String filingNumber, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         StringBuilder queryBuilder = new StringBuilder();
         queryBuilder.append(" art.createdBy = ? ");
         preparedStmtList.add(loggedInUserUuid);

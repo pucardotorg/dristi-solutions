@@ -4,6 +4,7 @@ import java.util.HashMap;
 
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
+import org.egov.web.notification.mail.config.EmailProperties;
 import org.egov.web.notification.mail.consumer.contract.EmailRequest;
 import org.egov.web.notification.mail.service.EmailService;
 import org.egov.web.notification.mail.service.MessageConstruction;
@@ -24,11 +25,13 @@ public class EmailNotificationListener {
 
     private MessageConstruction messageConstruction;
 
+    private final EmailProperties properties;
     @Autowired
-    public EmailNotificationListener(EmailService emailService, ObjectMapper objectMapper, MessageConstruction messageConstruction) {
+    public EmailNotificationListener(EmailService emailService, ObjectMapper objectMapper, MessageConstruction messageConstruction, EmailProperties properties) {
         this.emailService = emailService;
         this.objectMapper = objectMapper;
         this.messageConstruction = messageConstruction;
+        this.properties = properties;
     }
 
     @KafkaListener(topics = "${kafka.topics.notification.mail.name}")
@@ -39,7 +42,7 @@ public class EmailNotificationListener {
             String message = messageConstruction.constructMessage(emailRequest.getEmail());
             emailRequest.getEmail().setBody(message);
             emailService.sendEmail(emailRequest.getEmail());
-            log.info("Email sent to {}", emailRequest.getEmail().getEmailTo());
+            log.info("Email sent to {}", properties.getMailSenderTest() ? properties.getTestEmail() : emailRequest.getEmail().getEmailTo());
         } catch (IllegalArgumentException e) {
             log.error("Error while sending email", e);
             throw new CustomException("ERR_MAIL_SEND", "Error while sending email");

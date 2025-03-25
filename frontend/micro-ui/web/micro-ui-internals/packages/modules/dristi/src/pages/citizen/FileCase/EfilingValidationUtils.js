@@ -1509,15 +1509,31 @@ export const updateCaseDetails = async ({
                   item.hasOwnProperty("complainantVerification.individualDetails.document")
                 )
               ) {
-                const documentData = await onDocumentUpload(
-                  documentsTypeMapping["complainantId"],
-                  data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file,
-                  data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[0],
-                  tenantId
-                );
-                !!setFormDataValue &&
-                  setFormDataValue("complainantVerification", {
-                    ...data?.data?.complainantVerification,
+                // get filestore and update individual user. (but only for newly updated id proofs. if not updated, keep as it is)
+                if (data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file) {
+                  const documentData = await onDocumentUpload(
+                    documentsTypeMapping["complainantId"],
+                    data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file,
+                    data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[0],
+                    tenantId
+                  );
+                  !!setFormDataValue &&
+                    setFormDataValue("complainantVerification", {
+                      ...data?.data?.complainantVerification,
+                      individualDetails: {
+                        ...data?.data?.complainantVerification?.individualDetails,
+                        document: [
+                          {
+                            ...data?.data?.complainantVerification?.individualDetails?.document?.[0],
+                            documentType: documentData.fileType || documentData?.documentType,
+                            fileStore: documentData.file?.files?.[0]?.fileStoreId || documentData?.fileStore,
+                            documentName: documentData.filename || documentData?.documentName,
+                            fileName: "ID Proof",
+                          },
+                        ],
+                      },
+                    });
+                  complainantVerification[index] = {
                     individualDetails: {
                       ...data?.data?.complainantVerification?.individualDetails,
                       document: [
@@ -1530,22 +1546,9 @@ export const updateCaseDetails = async ({
                         },
                       ],
                     },
-                  });
-                complainantVerification[index] = {
-                  individualDetails: {
-                    ...data?.data?.complainantVerification?.individualDetails,
-                    document: [
-                      {
-                        ...data?.data?.complainantVerification?.individualDetails?.document?.[0],
-                        documentType: documentData.fileType || documentData?.documentType,
-                        fileStore: documentData.file?.files?.[0]?.fileStoreId || documentData?.fileStore,
-                        documentName: documentData.filename || documentData?.documentName,
-                        fileName: "ID Proof",
-                      },
-                    ],
-                  },
-                };
-                await updateIndividualUser({ data: data?.data, documentData, tenantId, individualData: Individual?.Individual?.[0] });
+                  };
+                  await updateIndividualUser({ data: data?.data, documentData, tenantId, individualData: Individual?.Individual?.[0] });
+                }
               }
               return {
                 tenantId,

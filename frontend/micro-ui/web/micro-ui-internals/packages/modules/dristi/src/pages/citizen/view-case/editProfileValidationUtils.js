@@ -579,6 +579,13 @@ export const updateProfileData = async ({
       }
     }
     const { reasonForChange, supportingDocument, ...remainingFormData } = newFormDataCopy?.[0]?.data || {};
+    const currentRespondent = caseDetails?.additionalDetails?.[selected]?.formdata?.find(
+      (item, index) => item?.data?.respondentVerification?.individualDetails?.individualId === uniqueId || item?.uniqueId === uniqueId
+    );
+    const respVerification = currentRespondent?.data?.respondentVerification;
+    if (respVerification) {
+      remainingFormData.respondentVerification = { ...respVerification };
+    }
     profilePayload = {
       tenantId,
       caseId,
@@ -600,38 +607,43 @@ export const updateProfileData = async ({
     };
   }
 
-  try {
-    await DRISTIService.customApiService(Urls.dristi.pendingTask, {
-      pendingTask: {
-        name: "Review Litigant Details Change",
-        entityType: "case-default",
-        referenceId: `MANUAL_${uniqueId}_${editorUuid}_${caseDetails?.id}`,
-        status: "PROFILE_EDIT_REQUEST",
-        assignedTo: [],
-        assignedRole: ["JUDGE_ROLE"],
-        cnrNumber: caseDetails?.cnrNumber,
-        filingNumber: caseDetails?.filingNumber,
-        isCompleted: false,
-        additionalDetails: {
-          dateOfApplication: new Date().getTime(),
-          uniqueId: uniqueId,
-        },
-        tenantId,
-      },
-    });
+  const referenceId = `MANUAL_${uniqueId}_${editorUuid}_${caseDetails?.id}`;
+  const ifProfileRequestAlreadyExists = caseDetails?.additionalDetails?.profileRequests?.find((req) => req?.pendingTaskRefId === referenceId);
 
-    await DRISTIService.createProfileRequest(
-      {
-        profile: { ...profilePayload },
-      },
-      tenantId
-    );
-    toast.success(t("PROFILE_EDIT_REQUEST_CREATED_SUCCESSFULLY"));
-    setTimeout(() => {
+  if (ifProfileRequestAlreadyExists) {
+    toast.error(t("AN_EDIT_PROFILE_REQUEST_ALREADY_EXISTS"));
+    history.goBack();
+  } else {
+    try {
+      await DRISTIService.customApiService(Urls.dristi.pendingTask, {
+        pendingTask: {
+          name: "Review Litigant Details Change",
+          entityType: "case-default",
+          referenceId,
+          status: "PROFILE_EDIT_REQUEST",
+          assignedTo: [],
+          assignedRole: ["JUDGE_ROLE"],
+          cnrNumber: caseDetails?.cnrNumber,
+          filingNumber: caseDetails?.filingNumber,
+          isCompleted: false,
+          additionalDetails: {
+            dateOfApplication: new Date().getTime(),
+            uniqueId: uniqueId,
+          },
+          tenantId,
+        },
+      });
+
+      await DRISTIService.createProfileRequest(
+        {
+          profile: { ...profilePayload },
+        },
+        tenantId
+      );
       history.goBack();
-    }, 3000);
-  } catch (error) {
-    toast.error(t("SOMETHING_WENT_WRONG"));
-    console.error(error);
+    } catch (error) {
+      toast.error(t("SOMETHING_WENT_WRONG"));
+      console.error(error);
+    }
   }
 };

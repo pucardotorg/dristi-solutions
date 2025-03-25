@@ -5,21 +5,16 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 // import { CustomArrowDownIcon, CustomArrowUpIcon } from "../icons/svgIndex";
 
 function PendingTaskAccordion({
-  handlePageChange,
   pendingTasks,
   t,
-  showConfirmModal,
   totalCount,
-  handleGoToPage,
-  selected,
   accordionHeader = "COMPLETE_THIS_WEEK",
   accordionKey = "accordion",
   isHighlighted = false,
   isAccordionOpen = false,
   setShowSubmitResponseModal,
   setResponsePendingTask,
-  allPendingTasks,
-  isOpenInNewTab,
+  setPendingTaskActionModals,
 }) {
   const history = useHistory();
   const [isOpen, setIsOpen] = useState(isAccordionOpen);
@@ -122,6 +117,17 @@ function PendingTaskAccordion({
               key={item?.filingNumber}
               style={{ cursor: "pointer" }}
               onClick={() => {
+                if (item?.actionName === "Review Advocate Replace Request") {
+                  setPendingTaskActionModals((pendingTaskActionModals) => ({
+                    ...pendingTaskActionModals,
+                    joinCaseConfirmModal: true,
+                    data: {
+                      filingNumber: item?.filingNumber,
+                      taskNumber: item?.referenceId,
+                    },
+                  }));
+                  return;
+                }
                 if (item?.status === "PENDING_SIGN" && item?.screenType === "Adiary") {
                   history.push(`/${window.contextPath}/employee/home/adiary?date=${item?.params?.referenceId}`);
                 } else if (item?.status === "PROFILE_EDIT_REQUEST") {
