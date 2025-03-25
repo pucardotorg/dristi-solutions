@@ -674,6 +674,23 @@ const AdmittedCases = () => {
                 ],
               },
             },
+
+            sections: {
+              ...tabConfig.sections,
+              searchResult: {
+                ...tabConfig.sections.searchResult,
+                uiConfig: {
+                  ...tabConfig.sections.searchResult.uiConfig,
+                  columns: tabConfig.sections.searchResult.uiConfig.columns.filter((column) => {
+                    // We don't want to show actions column in parties tab for employees
+                    if (column?.label === "ACTIONS" && userType === "employee") {
+                      return false;
+                    }
+                    return true;
+                  }),
+                },
+              },
+            },
           }
         : tabConfig.label === "Orders"
         ? {

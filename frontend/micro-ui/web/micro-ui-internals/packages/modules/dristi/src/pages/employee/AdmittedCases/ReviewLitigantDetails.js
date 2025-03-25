@@ -6,13 +6,13 @@ import { FormComposerV2, Loader } from "@egovernments/digit-ui-react-components"
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
 import { useToast } from "../../../components/Toast/useToast";
 import { reviewCaseFileFormConfig } from "../../citizen/FileCase/Config/reviewcasefileconfig";
-import ReviewProfileEditModal from "./ReviewProfileEditModal";
 import { DRISTIService } from "../../../services";
 import DocViewerWrapper from "../docViewerWrapper";
 import { Urls } from "../../../hooks";
 import { OrderWorkflowAction } from "@egovernments/digit-ui-module-orders/src/utils/orderWorkflow";
 import { HomeService } from "../../../../../home/src/hooks/services";
 import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
+import ImageModal from "../../../components/ImageModal";
 
 const noteConfig = [
   {
@@ -44,9 +44,9 @@ const ReviewLitigantDetails = ({ path }) => {
   const toast = useToast();
   const urlParams = new URLSearchParams(window.location.search);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
-  const [showApproveRejectRequestModal, setShowApproveRejectRequestModal] = useState({ show: false, action: "" });
   const caseId = urlParams.get("caseId");
   const referenceId = urlParams.get("referenceId");
+  const [showDocModal, setShowDocModal] = useState(false);
 
   const { data: caseData, refetch: refetchCaseData, isLoading } = useSearchCaseService(
     {
@@ -68,7 +68,7 @@ const ReviewLitigantDetails = ({ path }) => {
     () => ({
       ...caseData?.criteria?.[0]?.responseList?.[0],
     }),
-    [caseData, caseId]
+    [caseData]
   );
 
   const profileRequest = useMemo(() => {
@@ -77,15 +77,15 @@ const ReviewLitigantDetails = ({ path }) => {
 
   const partyType = useMemo(() => {
     return profileRequest?.litigantDetails?.partyType;
-  }, [caseDetails, referenceId, profileRequest]);
+  }, [profileRequest]);
 
   const uniqueId = useMemo(() => {
     return profileRequest?.litigantDetails?.uniqueId;
-  }, [caseDetails, referenceId, profileRequest]);
+  }, [profileRequest]);
 
   const newData = useMemo(() => {
     return profileRequest?.newData;
-  }, [caseDetails, referenceId, profileRequest]);
+  }, [profileRequest]);
 
   const oldData = useMemo(() => {
     if (partyType === "complainant") {
@@ -97,7 +97,7 @@ const ReviewLitigantDetails = ({ path }) => {
         (item) => item?.data?.respondentVerification?.individualDetails?.individualId === uniqueId || item?.uniqueId === uniqueId
       );
     }
-  }, [profileRequest, caseDetails, referenceId, partyType]);
+  }, [caseDetails, partyType, uniqueId]);
 
   const getFormConfig = (formConfigData, userType) => {
     if (!caseDetails) return null;
@@ -191,32 +191,8 @@ const ReviewLitigantDetails = ({ path }) => {
     return false;
   }, [profileRequest, caseDetails]);
 
-  const handleApproveReject = async () => {
-    let processInfoObj = {
-      caseId,
-      action: showApproveRejectRequestModal?.action,
-      pendingTaskRefId: referenceId,
-      tenantId,
-    };
-
-    const applicationStatus = showApproveRejectRequestModal?.action === "ACCEPT" ? "GRANTED" : "REJECTED";
-
+  const handleApproveReject = async (action) => {
     try {
-      await Promise.all([
-        DRISTIService.processProfileRequest({
-          processInfo: { ...processInfoObj },
-          tenantId: tenantId,
-        }),
-        DRISTIService.customApiService(Urls.dristi.pendingTask, {
-          pendingTask: {
-            referenceId: referenceId,
-            isCompleted: true,
-            tenantId,
-            filingNumber: caseDetails?.filingNumber,
-            status: "PROFILE_EDIT_REQUEST",
-          },
-        }),
-      ]);
       const reqBody = {
         order: {
           createdDate: null,
@@ -247,13 +223,15 @@ const ReviewLitigantDetails = ({ path }) => {
                 name: "ORDER_TYPE_APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE",
               },
               applicationGrantedRejected: {
-                code: applicationStatus,
-                name: applicationStatus,
+                code: action === "ACCEPT" ? "GRANTED" : "REJECTED",
+                name: action === "ACCEPT" ? "GRANTED" : "REJECTED",
               },
+              reasonForLitigantDetailsChange: { text: profileRequest?.reason || "" },
             },
             dateOfApplication: location?.state?.dateOfApplication,
             uniqueId: location?.state?.uniqueId,
             applicantPartyUuid: profileRequest?.editorDetails?.uuid,
+            pendingTaskRefId: referenceId,
           },
         },
       };
@@ -267,8 +245,6 @@ const ReviewLitigantDetails = ({ path }) => {
     } catch (error) {
       toast.error(t("SOMETHING_WENT_WRONG"));
       console.error(error);
-    } finally {
-      setShowApproveRejectRequestModal({ show: false, action: "" });
     }
   };
 
@@ -279,11 +255,21 @@ const ReviewLitigantDetails = ({ path }) => {
     } else {
       return caseDetails?.litigants?.find((lit) => lit?.additionalDetails?.uuid === profileRequest?.editorDetails?.uuid)?.additionalDetails?.fullName;
     }
-  }, [profileRequest]);
+  }, [profileRequest, caseDetails]);
 
   const profileRequestDetails = useMemo(() => {
     return (
-      <div style={{ display: "flex", flexDirection: "column", width: "85%", gap: "5px", marginTop: "10px" }}>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          width: "85%",
+          gap: "10px",
+          marginTop: "10px",
+          border: "solid 1px #e6e6e6",
+          padding: "15px 5px 5px 5px",
+        }}
+      >
         <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", margin: "0 8px" }}>
           <span style={{ fontWeight: "700" }}>{t("REQUEST_RAISED_BY")}</span>
           <span>{requestorName || ""}</span>
@@ -300,7 +286,11 @@ const ReviewLitigantDetails = ({ path }) => {
           <span style={{ fontWeight: "700" }}>{t("SUPPORTING_DOCUMENT")}</span>
           <span>{profileRequest?.document?.fileName || ""}</span>
         </div>
-        <div style={{ marginTop: "-25px", marginLeft: "10px" }}>
+        <div
+          className="supporting-document"
+          style={{ marginTop: "-25px", marginLeft: "10px", cursor: "pointer" }}
+          onClick={() => setShowDocModal(true)}
+        >
           <DocViewerWrapper
             fileStoreId={profileRequest?.document?.fileStore}
             tenantId={tenantId}
@@ -311,7 +301,18 @@ const ReviewLitigantDetails = ({ path }) => {
         </div>
       </div>
     );
-  }, [profileRequest]);
+  }, [profileRequest, requestorName]);
+
+  const imageInfo = useMemo(() => {
+    const imageInfo = {
+      data: {
+        filerName: t(profileRequest?.document?.documentType),
+        documentName: t(profileRequest?.document?.documentType),
+        fileStore: profileRequest?.document?.fileStore,
+      },
+    };
+    return imageInfo;
+  }, [profileRequest, t]);
 
   if (isLoading) {
     return <Loader />;
@@ -365,10 +366,10 @@ const ReviewLitigantDetails = ({ path }) => {
             label={t("CS_APPROVE")}
             config={newDataFormConfig}
             onSubmit={() => {
-              setShowApproveRejectRequestModal({ show: true, action: "ACCEPT" });
+              handleApproveReject("ACCEPT");
             }}
             onSecondayActionClick={() => {
-              setShowApproveRejectRequestModal({ show: true, action: "REJECT" });
+              handleApproveReject("REJECT");
             }}
             cardStyle={{ minWidth: "100%" }}
             cardClassName={`e-filing-card-form-style review-case-file`}
@@ -378,14 +379,7 @@ const ReviewLitigantDetails = ({ path }) => {
           />
         </div>
       </div>
-      {showApproveRejectRequestModal?.show && (
-        <ReviewProfileEditModal
-          t={t}
-          showApproveRejectRequestModal={showApproveRejectRequestModal}
-          setShowApproveRejectRequestModal={setShowApproveRejectRequestModal}
-          handleSubmitOnModal={handleApproveReject}
-        ></ReviewProfileEditModal>
-      )}
+      {showDocModal && <ImageModal imageInfo={imageInfo} handleCloseModal={() => setShowDocModal(false)}></ImageModal>}
     </div>
   );
 };

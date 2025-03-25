@@ -106,6 +106,9 @@ public class Artifact {
 
 	private Long createdDate = null;
 
+	@JsonProperty("publishedDate")
+	private Long publishedDate = null;
+
 	@JsonProperty("isActive")
 
 	private Boolean isActive = true;

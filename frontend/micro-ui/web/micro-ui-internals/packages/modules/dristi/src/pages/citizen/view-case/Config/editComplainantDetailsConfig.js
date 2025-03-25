@@ -333,6 +333,22 @@ const editComplainantDetailsFormConfig = [
         type: "component",
         addUUID: true,
         component: "SelectComponents",
+        notes: {
+          key: "personalDetailsNote",
+          type: "component",
+          component: "SelectCustomNote",
+          populators: {
+            inputs: [
+              {
+                type: "InfoComponent",
+                infoText: "CS_ADDRESS_MATCHES_ID_PROOF",
+                infoHeader: "CS_PLEASE_COMMON_NOTE",
+                infoTooltipMessage: "CS_ADDRESS_MATCHES_ID_PROOF",
+              },
+            ],
+          },
+          withoutLabel: true,
+        },
         populators: {
           inputs: [
             {

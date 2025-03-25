@@ -51,11 +51,12 @@ const EditProfile = ({ path }) => {
   const [showErrorToast, setShowErrorToast] = useState(false);
   const [showConfirmSubmission, setShowConfirmSubmission] = useState(false);
   const [complainantIdProofFileName, setComplainantIdProofFileName] = useState("");
+  const [isLoader, setIsLoader] = useState(false);
 
   const [errorMsg, setErrorMsg] = useState("");
   const selected = urlParams.get("type") || "";
   const caseId = urlParams.get("caseId");
-  const isAdvocate = urlParams.get("isAdvocate");
+  const isAdvocate = urlParams.get("isAdvocate") === "true";
   const editorUuid = urlParams.get("editorUuid");
   const uniqueId = urlParams.get("uniqueId");
 
@@ -578,8 +579,6 @@ const EditProfile = ({ path }) => {
     setFormDataValue.current = setValue;
     clearFormDataErrors.current = clearErrors;
 
-    console.log("formState?.errors", formState?.errors, formData);
-
     if (Object.keys(formState?.errors).length) {
       setIsSubmitDisabled(true);
     } else {
@@ -643,26 +642,26 @@ const EditProfile = ({ path }) => {
       return;
     }
 
-    // if (
-    //   formdata
-    //     .filter((data) => data.isenabled)
-    //     .some((data) =>
-    //       editComplainantValidation({
-    //         formData: data?.data,
-    //         t,
-    //         caseDetails,
-    //         selected,
-    //         setShowErrorToast,
-    //         toast,
-    //         setFormErrors: setFormErrors.current,
-    //         formState: setFormState.current,
-    //         clearFormDataErrors: clearFormDataErrors.current,
-    //       })
-    //     )
-    // ) {
-    //   return;
-    // }
-    else {
+    if (
+      formdata
+        .filter((data) => data.isenabled)
+        .some((data) =>
+          editComplainantValidation({
+            formData: data?.data,
+            t,
+            caseDetails,
+            selected,
+            setShowErrorToast,
+            toast,
+            setFormErrors: setFormErrors.current,
+            formState: setFormState.current,
+            clearFormDataErrors: clearFormDataErrors.current,
+          })
+        )
+    ) {
+      return;
+    } else {
+      setIsLoader(true);
       try {
         await updateProfileData({
           t,
@@ -681,11 +680,8 @@ const EditProfile = ({ path }) => {
           complainantIdProofFileName,
           setFormDataValue: setFormDataValue.current,
           action,
+          history,
         });
-
-        if (resetFormData.current) {
-          resetFormData.current();
-        }
       } catch (error) {
         let message = t("SOMETHING_WENT_WRONG");
         if (error instanceof DocumentUploadError) {
@@ -696,11 +692,13 @@ const EditProfile = ({ path }) => {
         toast.error(message);
         console.error("An error occurred:", error);
         return { error };
+      } finally {
+        setIsLoader(false);
       }
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isLoader) {
     return <Loader />;
   }
 
@@ -746,12 +744,11 @@ const EditProfile = ({ path }) => {
                   isDisabled={isSubmitDisabled}
                   cardStyle={{ minWidth: "100%" }}
                   cardClassName={`e-filing-card-form-style ${pageConfig.className}`}
-                  secondaryLabel={t("CS_BACK")}
+                  secondaryLabel={t("CS_COMMON_BACK")}
                   showSecondaryLabel={true}
                   actionClassName="e-filing-action-bar"
                   className={"edit-profile-style"}
                   noBreakLine
-                  submitIcon={<RightArrow />}
                 />
               </div>
             ) : null;
@@ -767,6 +764,7 @@ const EditProfile = ({ path }) => {
               }}
             />
           }
+          actionCancelLabel={t("CS_COMMON_BACK")}
           actionCancelOnSubmit={() => setShowConfirmSubmission(false)}
           actionSaveLabel={t("CS_COMMON_CONFIRM")}
           actionSaveOnSubmit={() => {
@@ -775,7 +773,7 @@ const EditProfile = ({ path }) => {
           }}
           formId="modal-action"
           headerBarMain={<Heading label={t("CS_CONFIRM_SUBMISSION")} />}
-          className="edit-case-name-modal"
+          popmoduleClassName="profile-editing-submission-modal"
         >
           <h3 className="input-label">{t("THIS_WILL_CREATE_REQUEST_FOR_APPROVAL_BY_JUDGE")}</h3>
         </Modal>
