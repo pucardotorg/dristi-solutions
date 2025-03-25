@@ -358,4 +358,7 @@ public class Configuration {
 
 	@Value("${egov.pending.advocate.request.join.case.kafka.topic}")
 	private String updatePendingAdvocateRequestKafkaTopic;
+  
+	@Value("${kafka.case.update.last.modified.time}")
+	private String caseUpdateLastModifiedTimeTopic;
 }

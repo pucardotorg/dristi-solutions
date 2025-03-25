@@ -73,21 +73,4 @@ public class ChallanDetails {
     private List<TsbData> tsbData;
 }
 
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
-class TsbData {
 
-    @JsonProperty("TSB_ACCTYPE")
-    private String tsbAccType;
-
-    @JsonProperty("TSB_ACCNO")
-    private String tsbAccNo;
-
-    @JsonProperty("TSB_AMOUNT")
-    private Double tsbAmount; // Double for monetary values
-
-    @JsonProperty("TSB_PURPOSE")
-    private String tsbPurpose;
-}

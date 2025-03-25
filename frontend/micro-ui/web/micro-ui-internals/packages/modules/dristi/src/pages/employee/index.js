@@ -14,6 +14,7 @@ import ViewPaymentDetails from "./Payment/ViewPaymentDetails";
 import CaseFileAdmission from "./admission/CaseFileAdmission";
 import Home from "./home";
 import ViewCaseFile from "./scrutiny/ViewCaseFile";
+import ReviewLitigantDetails from "./AdmittedCases/ReviewLitigantDetails";
 
 const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileStoreId }) => {
   const { t } = useTranslation();
@@ -37,9 +38,15 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
       isLast: false,
     },
     {
-      path: `${path}/view-case`,
+      path: `${path}/home/view-case`,
       content: t("VIEW_CASE"),
       show: location.pathname.includes("/view-case"),
+      isLast: !location.pathname.includes("/review-litigant-details"),
+    },
+    {
+      path: `${path}/home/view-case/review-litigant-details`,
+      content: t("REVIEW_LITIGANT_DETAILS"),
+      show: location.pathname.includes("/review-litigant-details"),
       isLast: true,
     },
     {
@@ -110,6 +117,7 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
           <PrivateRoute exact path={`${path}/cases`} component={Home} />
           <PrivateRoute exact path={`${path}/admission`} component={(props) => <CaseFileAdmission {...props} t={t} path={path} />} />
           <PrivateRoute exact path={`${path}/home/view-case`} component={(props) => <AdmittedCases />} />
+          <PrivateRoute exact path={`${path}/home/view-case/review-litigant-details`} component={(props) => <ReviewLitigantDetails />} />
           <PrivateRoute exact path={`${path}/case`} component={(props) => <ViewCaseFile {...props} t={t} />} />
         </div>
         {toastMessage && (

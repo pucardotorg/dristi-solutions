@@ -2797,6 +2797,10 @@ public class CaseService {
                     .cases(courtCase)
                     .build();
             producer.push(config.getCaseUpdateTopic(), caseRequest);
+            if(request.getProcessInfo().getAction().equals(ActionType.ACCEPT)) {
+                producer.push(config.getCaseUpdateLastModifiedTimeTopic(), courtCase);
+            }
+
             courtCase = encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, request.getRequestInfo());
             log.info("operation=processProfileRequest, status=SUCCESS, pendingTaskId: {}", request.getProcessInfo().getPendingTaskRefId());
             return courtCase;

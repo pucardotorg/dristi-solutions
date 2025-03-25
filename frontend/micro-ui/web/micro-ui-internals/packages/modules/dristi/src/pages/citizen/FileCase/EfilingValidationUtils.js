@@ -1,14 +1,14 @@
 import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
 import { getUserDetails } from "../../../hooks/useGetAccessToken";
 import { DRISTIService } from "../../../services";
-import { combineMultipleFiles, documentsTypeMapping } from "../../../Utils";
+import { combineMultipleFiles, documentsTypeMapping, generateUUID } from "../../../Utils";
 import { DocumentUploadError } from "../../../Utils/errorUtil";
 
 import { userTypeOptions } from "../registration/config";
 import { efilingDocumentKeyAndTypeMapping } from "./Config/efilingDocumentKeyAndTypeMapping";
 import isMatch from "lodash/isMatch";
 
-const formatName = (value, capitalize = true) => {
+export const formatName = (value, capitalize = true) => {
   let cleanedValue = value
     .replace(/[^a-zA-Z\s]/g, "")
     .trimStart()
@@ -1205,7 +1205,7 @@ export const updateIndividualUser = async ({ data, documentData, tenantId, indiv
   return response;
 };
 
-const onDocumentUpload = async (documentType = "Document", fileData, filename, tenantId) => {
+export const onDocumentUpload = async (documentType = "Document", fileData, filename, tenantId) => {
   if (fileData?.fileStore) return fileData;
   try {
     const fileUploadRes = await window?.Digit.UploadServices.Filestorage("DRISTI", fileData, tenantId);
@@ -1215,7 +1215,7 @@ const onDocumentUpload = async (documentType = "Document", fileData, filename, t
   }
 };
 
-const sendDocumentForOcr = async (key, fileStoreId, filingNumber, tenantId, document) => {
+export const sendDocumentForOcr = async (key, fileStoreId, filingNumber, tenantId, document) => {
   if ((efilingDocumentKeyAndTypeMapping[key] && document?.type === "image/jpeg") || document?.type === "application/pdf")
     await window?.Digit?.DRISTIService.sendDocuemntForOCR(
       {
@@ -1509,15 +1509,31 @@ export const updateCaseDetails = async ({
                   item.hasOwnProperty("complainantVerification.individualDetails.document")
                 )
               ) {
-                const documentData = await onDocumentUpload(
-                  documentsTypeMapping["complainantId"],
-                  data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file,
-                  data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[0],
-                  tenantId
-                );
-                !!setFormDataValue &&
-                  setFormDataValue("complainantVerification", {
-                    ...data?.data?.complainantVerification,
+                // get filestore and update individual user. (but only for newly updated id proofs. if not updated, keep as it is)
+                if (data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file) {
+                  const documentData = await onDocumentUpload(
+                    documentsTypeMapping["complainantId"],
+                    data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file,
+                    data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[0],
+                    tenantId
+                  );
+                  !!setFormDataValue &&
+                    setFormDataValue("complainantVerification", {
+                      ...data?.data?.complainantVerification,
+                      individualDetails: {
+                        ...data?.data?.complainantVerification?.individualDetails,
+                        document: [
+                          {
+                            ...data?.data?.complainantVerification?.individualDetails?.document?.[0],
+                            documentType: documentData.fileType || documentData?.documentType,
+                            fileStore: documentData.file?.files?.[0]?.fileStoreId || documentData?.fileStore,
+                            documentName: documentData.filename || documentData?.documentName,
+                            fileName: "ID Proof",
+                          },
+                        ],
+                      },
+                    });
+                  complainantVerification[index] = {
                     individualDetails: {
                       ...data?.data?.complainantVerification?.individualDetails,
                       document: [
@@ -1530,22 +1546,9 @@ export const updateCaseDetails = async ({
                         },
                       ],
                     },
-                  });
-                complainantVerification[index] = {
-                  individualDetails: {
-                    ...data?.data?.complainantVerification?.individualDetails,
-                    document: [
-                      {
-                        ...data?.data?.complainantVerification?.individualDetails?.document?.[0],
-                        documentType: documentData.fileType || documentData?.documentType,
-                        fileStore: documentData.file?.files?.[0]?.fileStoreId || documentData?.fileStore,
-                        documentName: documentData.filename || documentData?.documentName,
-                        fileName: "ID Proof",
-                      },
-                    ],
-                  },
-                };
-                await updateIndividualUser({ data: data?.data, documentData, tenantId, individualData: Individual?.Individual?.[0] });
+                  };
+                  await updateIndividualUser({ data: data?.data, documentData, tenantId, individualData: Individual?.Individual?.[0] });
+                }
               }
               return {
                 tenantId,
@@ -1907,6 +1910,7 @@ export const updateCaseDetails = async ({
               ...data.data,
               ...documentData,
             },
+            uniqueId: data?.uniqueId || generateUUID(),
           };
         })
     );

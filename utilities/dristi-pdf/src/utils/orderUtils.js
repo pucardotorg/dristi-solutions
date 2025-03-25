@@ -29,6 +29,8 @@ const orderAcceptanceRejectionDca = require("../orderHandlers/orderAcceptanceRej
 const orderSetTermsOfBail = require("../orderHandlers/orderSetTermsOfBail");
 const orderAdmitCase = require("../orderHandlers/orderAdmitCase");
 const orderDismissCase = require("../orderHandlers/orderDismissCase");
+const orderApprovalRejectionLitigantDetails = require("../orderHandlers/orderApprovalRejectionLitigantDetails");
+const orderChangeAdvocate = require("../orderHandlers/orderChangeAdvocate");
 
 const OrderPreviewOrderTypeMap = {
   MANDATORY_SUBMISSIONS_RESPONSES: "mandatory-async-submissions-responses",
@@ -66,6 +68,9 @@ const OrderPreviewOrderTypeMap = {
   ACCEPT_BAIL: "order-bail-acceptance",
   ADMIT_CASE: "order-admit-case",
   DISMISS_CASE: "order-dismiss-case",
+  APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE:
+    "order-approval-rejection-litigant-details",
+  ADVOCATE_REPLACEMENT_APPROVAL: "order-replace-advocate",
 };
 
 const orderPDFMap = {
@@ -246,6 +251,16 @@ async function processOrder(
       return await orderAdmitCase(req, res, qrCode, order, compositeOrder);
     case "order-dismiss-case":
       return await orderDismissCase(req, res, qrCode, order, compositeOrder);
+    case "order-approval-rejection-litigant-details":
+      return await orderApprovalRejectionLitigantDetails(
+        req,
+        res,
+        qrCode,
+        order,
+        compositeOrder
+      );
+    case "order-replace-advocate":
+      return await orderChangeAdvocate(req, res, qrCode, order, compositeOrder);
     default:
       return await orderGeneric(req, res, qrCode, order, compositeOrder);
   }

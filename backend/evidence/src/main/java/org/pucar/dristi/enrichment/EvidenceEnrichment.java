@@ -115,7 +115,6 @@ public class EvidenceEnrichment {
                     idFormat=configuration.getCourtFormat();
                 }
             }
-
             String tenantId = getTenantId(evidenceRequest.getArtifact().getFilingNumber());
 
             List<String> evidenceNumberList = idgenUtil.getIdList(
@@ -127,6 +126,7 @@ public class EvidenceEnrichment {
                     false
             );
 
+            evidenceRequest.getArtifact().setPublishedDate(System.currentTimeMillis());
             evidenceRequest.getArtifact().setEvidenceNumber(evidenceRequest.getArtifact().getFilingNumber()+"-"+evidenceNumberList.get(0));
             evidenceRequest.getArtifact().setIsEvidence(true);
         } catch (Exception e) {
