@@ -1585,6 +1585,8 @@ public class CaseService {
         Role role = Role.builder().code("TASK_CREATOR").name("TASK_CREATOR").tenantId(joinCaseAdvocate.getTenantId()).build();
         requestInfo.getUserInfo().getRoles().add(role);
         taskRequest.setRequestInfo(requestInfo);
+        taskUtil.callCreateTask(taskRequest);
+
     }
 
     private TaskResponse createTaskPip(JoinCaseV2Request joinCaseRequest, RepresentingJoinCase representingJoinCase, String advocateId, CourtCase courtCase) throws JsonProcessingException {
@@ -1769,7 +1771,7 @@ public class CaseService {
 
         caseObj.setAuditdetails(auditDetails);
         JoinCaseDataV2 joinCaseData = joinCaseRequest.getJoinCaseData();
-        mapAndSetLitigants(joinCaseData, caseObj);
+        mapAndSetLitigants(joinCaseData, caseObj, joinCaseRequest.getRequestInfo());
 
         log.info("enriching litigants");
         enrichLitigantsOnCreateAndUpdate(caseObj, auditDetails);
@@ -1810,7 +1812,7 @@ public class CaseService {
         return objectMapper.convertValue(additionalDetailsNode, additionalDetails.getClass());
     }
 
-    public void mapAndSetLitigants(JoinCaseDataV2 joinCaseData, CourtCase caseObj) {
+    public void mapAndSetLitigants(JoinCaseDataV2 joinCaseData, CourtCase caseObj, RequestInfo requestInfo) {
         List<Party> litigants = joinCaseData.getLitigant().stream()
                 .map(litigant -> {
                     Party party = new Party();
@@ -1824,7 +1826,19 @@ public class CaseService {
                     party.setIsResponseRequired(litigant.getIsResponseRequired());
                     party.setDocuments(litigant.getDocuments());
                     party.setAuditDetails(litigant.getAuditDetails());
-                    party.setAdditionalDetails(litigant.getAdditionalDetails());
+
+
+                    List<Individual> individualsList = individualService.getIndividualsByIndividualId(requestInfo, litigant.getIndividualId());
+                    Individual individual = individualsList.get(0);
+
+                    ObjectNode additionalDetails = objectMapper.createObjectNode();
+
+                    additionalDetails.put("uuid", individual.getUserUuid());
+                    additionalDetails.put("fullName", getName(individual));
+
+                    Object additionalDetailsObject = objectMapper.convertValue(additionalDetails, additionalDetails.getClass());
+                    party.setAdditionalDetails(additionalDetailsObject);
+
                     party.setHasSigned(litigant.getHasSigned());
 
                     return party;
