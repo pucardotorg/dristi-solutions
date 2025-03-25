@@ -3318,6 +3318,7 @@ public class CaseService {
                                                             AuditDetails auditDetails, AdvocateDetails advocateDetails, CourtCase courtCaseObj) {
 
         Document document = objectMapper.convertValue(replacementDetails.getDocument(), Document.class);
+        document.setId(UUID.randomUUID().toString());
 
 
         AdvocateMapping advocateMapping = AdvocateMapping.builder()
