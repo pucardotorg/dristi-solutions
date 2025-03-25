@@ -3320,6 +3320,13 @@ public class CaseService {
         Document document = objectMapper.convertValue(replacementDetails.getDocument(), Document.class);
         document.setId(UUID.randomUUID().toString());
 
+        IndividualDetails individualDetails = advocateDetails.getIndividualDetails();
+        String fullName = individualDetails.getFirstName() + individualDetails.getMiddleName() + individualDetails.getLastName();
+
+        ObjectNode advocateAdditionalDetails = objectMapper.createObjectNode();
+        advocateAdditionalDetails.put("advocateName",fullName);
+        advocateAdditionalDetails.put("uuid",advocateDetails.getAdvocateUuid());
+
 
         AdvocateMapping advocateMapping = AdvocateMapping.builder()
                 .id(UUID.randomUUID().toString())
@@ -3330,7 +3337,7 @@ public class CaseService {
                 .documents(Collections.singletonList(document))
                 .representing(Collections.singletonList(party))
                 .auditDetails(auditDetails)
-                .additionalDetails(advocateDetails)
+                .additionalDetails(advocateAdditionalDetails)
                 .hasSigned(false)
                 .build();
         courtCaseObj.setRepresentatives(List.of(advocateMapping));
