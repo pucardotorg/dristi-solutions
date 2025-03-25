@@ -1209,8 +1209,32 @@ public class CaseService {
                     party.setDocuments(List.of(document));
                 }
 
+                List<Individual> individualsList = individualService.getIndividualsByIndividualId(joinCaseRequest.getRequestInfo(), representingJoinCase.getIndividualId());
+                Individual individual = individualsList.get(0);
+
+                ObjectNode additionalDetails = objectMapper.createObjectNode();
+
+                additionalDetails.put("uuid", individual.getUserUuid());
+                additionalDetails.put("fullName", getName(individual));
+
+                Object additionalDetailsObject = objectMapper.convertValue(additionalDetails, additionalDetails.getClass());
+                party.setAdditionalDetails(additionalDetailsObject);
                 representingList.add(party);
             });
+            List<Advocate> advocatesList = advocateUtil.fetchAdvocatesById(joinCaseRequest.getRequestInfo(), joinCaseData.getRepresentative().getAdvocateId());
+            Advocate joinCaseAdvocate = advocatesList.get(0);
+
+            List<Individual> individualsList = individualService.getIndividualsByIndividualId(joinCaseRequest.getRequestInfo(), joinCaseAdvocate.getIndividualId());
+            Individual individual = individualsList.get(0);
+
+            ObjectNode additionalDetails = objectMapper.createObjectNode();
+
+            additionalDetails.put("uuid", individual.getUserUuid());
+            additionalDetails.put("advocateName", getName(individual));
+
+            Object additionalDetailsObject = objectMapper.convertValue(additionalDetails, additionalDetails.getClass());
+            representative.setAdditionalDetails(additionalDetailsObject);
+
             representative.setRepresenting(representingList);
             caseObj.setRepresentatives(List.of(representative));
         }
@@ -1629,7 +1653,6 @@ public class CaseService {
     }
 
     private TaskResponse createTaskAdvocate(JoinCaseV2Request joinCaseRequest, String replaceAdvocateId, List<RepresentingJoinCase> representingJoinCaseList, CourtCase courtCase) throws JsonProcessingException {
-
         String individualIdForAdvocate = advocateUtil.getAdvocate(joinCaseRequest.getRequestInfo(), List.of(replaceAdvocateId)).stream().findFirst().orElse(null);
         String userUUID = individualService.getIndividualsByIndividualId(joinCaseRequest.getRequestInfo(), individualIdForAdvocate).get(0).getUserUuid();
 
