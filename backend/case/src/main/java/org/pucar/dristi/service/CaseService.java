@@ -3408,6 +3408,7 @@ public class CaseService {
                 .documents(List.of(document))
                 .auditDetails(auditDetails)
                 .additionalDetails(additionalDetails)
+                .caseId(courtCase.getId().toString())
                 .id(UUID.randomUUID())
                 .build();
     }
