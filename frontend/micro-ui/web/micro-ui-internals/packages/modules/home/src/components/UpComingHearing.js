@@ -83,6 +83,7 @@ const UpcomingHearings = ({ t, userInfoType, ...props }) => {
   const [isAdvocateLoading, setIsAdvocateLoading] = useState(false);
   const [isCaseLoading, setIsCaseLoading] = useState(false);
   const [isAdvocate, setIsAdvocate] = useState(false);
+  const { data: slotTime } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "court", [{ name: "slots" }]);
 
   // Get the current date
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -348,7 +349,7 @@ const UpcomingHearings = ({ t, userInfoType, ...props }) => {
                 {hearingCount > 0 && (
                   <div className="time-hearing-type">
                     <div className="timeText">
-                      {formatTimeTo12Hour(earliestHearingSlot.slotStartString)} - {formatTimeTo12Hour(earliestHearingSlot.slotEndString)}
+                      {formatTimeTo12Hour(slotTime?.court?.slots[0]?.slotStartTime)} {" -"}
                     </div>
                     <div style={{ display: "flex", gap: "8px" }}>
                       <Link
