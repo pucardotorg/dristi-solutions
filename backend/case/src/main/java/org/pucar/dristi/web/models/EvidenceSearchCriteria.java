@@ -29,7 +29,6 @@ public class EvidenceSearchCriteria {
     private String artifactNumber;
     private String filingNumber;
     private UUID owner;
-    private String fileStoreId;
 
     @JsonIgnore
     private String userUuid;

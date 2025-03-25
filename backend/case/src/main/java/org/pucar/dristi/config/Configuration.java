@@ -358,4 +358,14 @@ public class Configuration {
 
 	@Value("${egov.pending.advocate.request.join.case.kafka.topic}")
 	private String updatePendingAdvocateRequestKafkaTopic;
+
+	// evidence
+	@Value("${egov.evidence.host}")
+	private String evidenceServiceHost;
+
+	@Value("${egov.evidence.create.path}")
+	private String evidenceServiceCreatePath;
+
+	@Value("${egov.evidence.search.path}")
+	private String evidenceServiceSearchPath;
 }

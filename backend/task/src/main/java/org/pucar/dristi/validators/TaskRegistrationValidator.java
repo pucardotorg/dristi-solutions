@@ -236,12 +236,12 @@ public class TaskRegistrationValidator {
                         .orElse(null);
 
                 if (litigantParty != null) {
-                    log.info("operation=isAdvocateAlreadyRepresentingLitigant, status=SUCCESS, advocateId, litigantId , {} , {}",advocateId, litigantId);
+                    log.info("operation=isAdvocateAlreadyRepresentingLitigant, status=FAILURE, advocateId, litigantId , {} , {}",advocateId, litigantId);
                     return true;
                 }
             }
         }
-        log.info("operation=isAdvocateAlreadyRepresentingLitigant, status=FAILURE, advocateId, litigantId , {} , {}",advocateId, litigantId);
+        log.info("operation=isAdvocateAlreadyRepresentingLitigant, status=SUCCESS, advocateId, litigantId , {} , {}",advocateId, litigantId);
         return false;
     }
 }
