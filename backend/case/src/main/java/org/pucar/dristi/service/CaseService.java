@@ -1187,6 +1187,18 @@ public class CaseService {
             joinCaseData.getRepresentative().getRepresenting().forEach(representingJoinCase -> {
                 Party party = new Party();
                 party.setIndividualId(representingJoinCase.getIndividualId());
+
+                List<Individual> individualsList = individualService.getIndividualsByIndividualId(joinCaseRequest.getRequestInfo(), representingJoinCase.getIndividualId());
+                Individual individual = individualsList.get(0);
+
+                ObjectNode additionalDetails = objectMapper.createObjectNode();
+
+                additionalDetails.put("uuid", individual.getUserUuid());
+                additionalDetails.put("fullName", getName(individual));
+
+                Object additionalDetailsObject = objectMapper.convertValue(additionalDetails, additionalDetails.getClass());
+                party.setAdditionalDetails(additionalDetailsObject);
+
                 existingRepresentative.getRepresenting().add(party);
             });
             caseObj.setRepresentatives(List.of(existingRepresentative));
