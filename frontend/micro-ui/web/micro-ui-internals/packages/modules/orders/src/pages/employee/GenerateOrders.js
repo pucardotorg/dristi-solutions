@@ -420,6 +420,28 @@ const GenerateOrders = () => {
     Boolean(filingNumber)
   );
 
+  // Get all the published orders corresponding to approval/rejection of litigants profile change request.
+  const { data: approveRejectLitigantDetailsChangeOrderData } = useSearchOrdersService(
+    {
+      tenantId,
+      criteria: {
+        filingNumber,
+        applicationNumber: "",
+        cnrNumber,
+        orderType: "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE",
+        status: OrderWorkflowState.PUBLISHED,
+      },
+      pagination: { limit: 1000, offset: 0 },
+    },
+    { tenantId },
+    filingNumber + OrderWorkflowState.PUBLISHED,
+    Boolean(filingNumber && cnrNumber)
+  );
+
+  const publishedLitigantDetailsChangeOrders = useMemo(() => approveRejectLitigantDetailsChangeOrderData?.list || [], [
+    approveRejectLitigantDetailsChangeOrderData,
+  ]);
+
   const isDCANoticeGenerated = useMemo(
     () =>
       noticeOrdersData?.list?.some((notice) => {
@@ -3952,19 +3974,46 @@ const GenerateOrders = () => {
   const handleReviewOrderClick = () => {
     const items = structuredClone(currentOrder?.orderCategory === "INTERMEDIATE" ? [currentOrder] : currentOrder?.compositeItems);
     let hasError = false; // Flag to track if an error occurs
-
     for (let index = 0; index < items?.length; index++) {
       const item = items[index];
 
       if (currentOrder?.orderCategory === "INTERMEDIATE" || item?.isEnabled) {
-        const formData =
+        const additionalDetails =
           currentOrder?.orderCategory === "INTERMEDIATE"
-            ? currentOrder?.additionalDetails?.formdata
-            : currentOrder?.compositeItems?.[index]?.orderSchema?.additionalDetails?.formdata;
+            ? currentOrder?.additionalDetails
+            : currentOrder?.compositeItems?.[index]?.orderSchema?.additionalDetails;
+        const formData = additionalDetails?.formdata;
         const orderType = item?.orderType;
         const newApplicationDetails = applicationData?.applicationList?.find(
           (application) => application?.applicationNumber === formData?.refApplicationId
         );
+
+        if (["APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE"].includes(orderType)) {
+          // we will check if for the current referenceid, if an order is already published for a
+          // previous profile request(check by dateofApplication) -> then  don't allow another oorder get published.
+          const isPublished = publishedLitigantDetailsChangeOrders?.some((order) => {
+            const itemAdditionalDetails =
+              order?.orderCategory === "INTERMEDIATE"
+                ? order?.additionalDetails
+                : order?.compositeItems?.find((item) => item?.orderSchema?.orderType === "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE")?.orderSchema
+                    ?.additionalDetails;
+            if (
+              itemAdditionalDetails?.dateOfApplication === additionalDetails?.dateOfApplication &&
+              itemAdditionalDetails?.pendingTaskRefId === additionalDetails?.pendingTaskRefId
+            ) {
+              return true;
+            }
+            return false;
+          });
+          if (isPublished) {
+            setShowErrorToast({
+              label: t("AN_ORDER_HAS_ALREADY_BEEN_PUBLISHED_FOR_THIS_PROFILE_EDIT_REQUEST"),
+              error: true,
+            });
+            hasError = true;
+            break;
+          }
+        }
 
         if (
           formData?.refApplicationId &&
@@ -4154,7 +4203,9 @@ const GenerateOrders = () => {
             compositeItemsNew = [
               {
                 orderType: obj?.orderType,
-                ...(obj?.orderNumber && { orderSchema: { orderDetails: obj?.orderDetails } }),
+                ...(obj?.orderNumber && {
+                  orderSchema: { orderDetails: obj?.orderDetails, additionalDetails: obj?.additionalDetails, orderType: obj?.orderType },
+                }),
                 isEnabled: true,
                 displayindex: 0,
               },
