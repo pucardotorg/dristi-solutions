@@ -28,9 +28,9 @@ public class DiaryEntryQueryBuilder {
     private static final String ORDERBY_CLAUSE = " ORDER BY {orderBy} {sortingOrder} ";
 
     private static final List<String> ALLOWED_SORT_FIELDS = List.of(
-            "id", "tenantId", "caseNumber", "entryDate", "businessOfDay",
-            "referenceId", "referenceType", "hearingDate", "createdBy",
-            "lastModifiedBy", "createdTime", "lastModifiedTime", "judgeId"
+            "id", "tenant_id", "case_number", "entry_date", "businessOfDay",
+            "reference_id", "reference_type", "hearingDate", "created_by",
+            "last_modified_by", "created_time", "last_modified_time", "judge_id"
     );
 
 

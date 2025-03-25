@@ -42,6 +42,12 @@ public class TaskCaseQueryBuilder {
     private static final String DOCUMENT_LEFT_JOIN = " LEFT JOIN dristi_task_document dtd ON task.id = dtd.task_id ";
     private static final String TASK_CASE_SELECT_QUERY = " SELECT * FROM task_case_results ";
     private static final String ROW_NUM_WHERE_CLAUSE = " WHERE row_num = 1 ";
+    private static final List<String> ALLOWED_SORT_FIELDS = List.of(
+            "id", "tenantId", "orderId", "filingNumber", "cnrNumber", "taskNumber",
+            "createdDate", "dateCloseBy", "dateClosed", "taskDescription", "taskType",
+            "status", "assignedTo", "isActive", "createdBy", "lastModifiedBy",
+            "createdTime", "lastModifiedTime"
+    );
 
     public String getTaskTableSearchQuery(TaskCaseSearchCriteria criteria, List<Object> preparedStmtList) {
         try {
@@ -80,12 +86,14 @@ public class TaskCaseQueryBuilder {
     }
 
     public String addOrderByQuery(String query, Pagination pagination) {
-        if (isPaginationInvalid(pagination) || pagination.getSortBy().contains(";")) {
+        if (isPaginationInvalid(pagination) || ALLOWED_SORT_FIELDS.stream().noneMatch(field -> field.equalsIgnoreCase(pagination.getSortBy()))) {
             return query + DEFAULT_ORDERBY_CLAUSE;
         } else {
             query = query + ORDERBY_CLAUSE;
         }
-        return query.replace("{orderBy}", pagination.getSortBy()).replace("{sortingOrder}", pagination.getOrder().name());
+
+        return query.replace("{orderBy}", pagination.getSortBy())
+                .replace("{sortingOrder}", pagination.getOrder().name());
     }
 
     private static boolean isPaginationInvalid(Pagination pagination) {

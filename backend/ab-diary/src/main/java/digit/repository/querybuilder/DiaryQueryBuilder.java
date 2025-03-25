@@ -28,17 +28,11 @@ public class DiaryQueryBuilder {
 
     private static final String DEFAULT_ORDER_BY_CLAUSE = " ORDER BY dcd.created_time DESC ";
 
-    private static final String ORDER_BY_CLAUSE = " ORDER BY {orderBy} {sortingOrder} ";
+    private static final String ORDER_BY_CLAUSE = " ORDER BY dcd.{orderBy} {sortingOrder} ";
 
     private static final List<String> ALLOWED_SORT_FIELDS = List.of(
-            // Fields from dristi_casediary
-            "id", "tenantId", "caseNumber", "diaryDate", "diaryType", "judgeId",
-            "diaryCreateBy", "diaryLastModifiedBy", "diaryCreatedTime", "diaryLastModifiedTime",
-
-            // Fields from dristi_casediary_documents
-            "filestoreId", "documentUid", "documentName", "documentType",
-            "casediaryId", "isActive", "documentCreatedBy", "documentLastModifiedBy",
-            "documentCreatedTime", "documentLastModifiedTime"
+            "id", "tenant_id", "case_number", "diary_date", "diary_type", "judge_id",
+            "created_by", "last_modified_by", "created_time", "last_modified_time"
     );
 
 
