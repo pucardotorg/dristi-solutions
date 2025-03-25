@@ -3108,7 +3108,8 @@ public class CaseService {
                     enrichAdvocateDetailsInRepresentativesList(courtCase, advocateUuid, replacementDetails, party, auditDetails, advocateDetails, courtCaseObj);
                 } else {
                     // adding the litigant details into representing list of the advocate
-                    advocates.get(0).getRepresenting().add(party);
+                    advocates.get(0).setRepresenting(List.of(party));
+                    courtCaseObj.setRepresentatives(advocates);
                 }
                 for (Party litigantParty : litigantParties) {
                     if (litigantParty.getIndividualId().equalsIgnoreCase(litigantDetails.getIndividualId())) {
@@ -3122,8 +3123,8 @@ public class CaseService {
                     enrichAdvocateDetailsInRepresentativesList(courtCase, advocateUuid, replacementDetails, party, auditDetails, advocateDetails,courtCaseObj);
                 } else {
                     // adding the litigant details into representing list of the advocate
-                    advocates.get(0).getRepresenting().add(party);
-                    courtCaseObj.setRepresentatives(List.of(advocates.get(0)));
+                    advocates.get(0).setRepresenting(List.of(party));
+                    courtCaseObj.setRepresentatives(advocates);
                 }
                 inactivateOldAdvocate(replacementDetails, courtCase);
             }
