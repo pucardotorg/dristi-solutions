@@ -1122,9 +1122,11 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
           try {
             const [res, err] = await submitJoinCase(
               {
-                filingNumber: caseDetails?.filingNumber,
-                tenantId: tenantId,
-                code: validationCode,
+                code: {
+                  filingNumber: caseDetails?.filingNumber,
+                  tenantId: tenantId,
+                  code: validationCode,
+                },
               },
               "VERIFY"
             );
@@ -1777,6 +1779,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
           setAlreadyJoinedMobileNumber={setAlreadyJoinedMobileNumber}
           isDisabled={isDisabled}
           setIsDisabled={setIsDisabled}
+          selectPartyData={selectPartyData}
         />
       ),
     },
