@@ -548,6 +548,10 @@ export const TabSearchconfig = {
                 jsonPath: "artifactNumber",
               },
               {
+                label: "EVIDENCE_NUMBER",
+                jsonPath: "evidenceNumber",
+              },
+              {
                 label: "TYPE",
                 additionalCustomization: true,
               },
@@ -559,11 +563,11 @@ export const TabSearchconfig = {
                 label: "OWNER",
                 jsonPath: "owner",
               },
-              {
-                label: "FILE",
-                jsonPath: "file",
-                additionalCustomization: true,
-              },
+              // {
+              //   label: "FILE",
+              //   jsonPath: "file",
+              //   additionalCustomization: true,
+              // },
               {
                 label: "CS_ACTIONS",
                 additionalCustomization: true,
