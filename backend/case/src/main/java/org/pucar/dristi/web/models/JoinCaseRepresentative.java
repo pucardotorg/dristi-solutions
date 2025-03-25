@@ -36,8 +36,4 @@ public class JoinCaseRepresentative {
 
     @JsonProperty("representing")
     private List<RepresentingJoinCase> representing = null;
-
-    @JsonProperty("additionalDetails")
-    private Object additionalDetails = null;
-
 }

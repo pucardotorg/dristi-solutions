@@ -1201,7 +1201,7 @@ public class CaseService {
                 Party party = new Party();
                 party.setId(UUID.randomUUID());
                 party.setIndividualId(representingJoinCase.getIndividualId());
-                if(representingJoinCase.getDocuments()!=null && !representingJoinCase.getDocuments().isEmpty()){
+                if (representingJoinCase.getDocuments() != null && !representingJoinCase.getDocuments().isEmpty()) {
                     Document document = new Document();
                     document.setFileStore(representingJoinCase.getDocuments().get(0).getFileStore());
                     document.setDocumentType(representingJoinCase.getDocuments().get(0).getFileStore());
@@ -1212,7 +1212,6 @@ public class CaseService {
                 representingList.add(party);
             });
             representative.setRepresenting(representingList);
-            representative.setAdditionalDetails(joinCaseData.getRepresentative().getAdditionalDetails());
             caseObj.setRepresentatives(List.of(representative));
         }
 
@@ -1221,7 +1220,7 @@ public class CaseService {
 
         joinCaseRequest.getJoinCaseData().getRepresentative().getRepresenting().forEach(representingJoinCase -> {
             if (representingJoinCase.getUniqueId() == null) {
-               courtCase.setAdditionalDetails(modifyAdditionalDetails(joinCaseRequest.getRequestInfo(), courtCase.getAdditionalDetails(), representingJoinCase, joinCaseData.getRepresentative()));
+                courtCase.setAdditionalDetails(modifyAdditionalDetails(joinCaseRequest.getRequestInfo(), courtCase.getAdditionalDetails(), representingJoinCase, joinCaseData.getRepresentative()));
             }
         });
 
@@ -1285,7 +1284,7 @@ public class CaseService {
                         document.add(documentNode);
 
                         vakalatnamaFileUpload.set("document", document);
-                        multipleAdvocatesAndPip.set("vakalatnamaFileUpload",vakalatnamaFileUpload);
+                        multipleAdvocatesAndPip.set("vakalatnamaFileUpload", vakalatnamaFileUpload);
 
                         // Ensure multipleAdvocateNameDetails is initialized and clear it
                         ArrayNode multipleAdvocateNameDetails = ensureArrayNodeInitialized(multipleAdvocatesAndPip.get("multipleAdvocateNameDetails"));
@@ -1338,14 +1337,14 @@ public class CaseService {
 
                         // Add the new advocate node to the multipleAdvocateNameDetails array
                         multipleAdvocateNameDetails.add(newAdvocateNode);
-                        multipleAdvocatesAndPip.set("multipleAdvocateNameDetails",multipleAdvocateNameDetails);
+                        multipleAdvocatesAndPip.set("multipleAdvocateNameDetails", multipleAdvocateNameDetails);
 
                         // Ensure the multipleAdvocatesAndPip object exists, if not create one
 //                        ObjectNode pipNode = (ObjectNode) dataNode.get("multipleAdvocatesAndPip");
 //                        dataNode.set("multipleAdvocatesAndPip", pipNode);
 
                         // Set updated multipleAdvocateNameDetails back to pipNode
-                       // pipNode.set("multipleAdvocateNameDetails", multipleAdvocateNameDetails);
+                        // pipNode.set("multipleAdvocateNameDetails", multipleAdvocateNameDetails);
 
                         // Ensure vakalatnamaFileUpload is properly set after modification
                         multipleAdvocatesAndPip.set("vakalatnamaFileUpload", vakalatnamaFileUpload);
@@ -1363,101 +1362,372 @@ public class CaseService {
 
 
     private void replaceAdvocate(JoinCaseV2Request joinCaseRequest, CourtCase courtCase, String advocateId) {
-
-        if (joinCaseRequest.getJoinCaseData().getRepresentative().getIsJudgeApproving()) {
-            createTaskAndPendingTaskForJudge(joinCaseRequest, courtCase);
-        } else {
-            Set<String> uniqueAdvocateIds = new HashSet<>();
-
-            List<PendingAdvocateRequest> pendingAdvocateRequestList = courtCase.getPendingAdvocateRequests();
-            if (pendingAdvocateRequestList == null) {
-                pendingAdvocateRequestList = new ArrayList<>();
-            }
-            PendingAdvocateRequest pendingAdvocateRequest = new PendingAdvocateRequest();
-            pendingAdvocateRequest.setAdvocateId(advocateId);
-            boolean isPartOfCase = courtCase.getRepresentatives() != null &&
-                    !courtCase.getRepresentatives().stream()
-                            .filter(adv -> adv.getAdvocateId() != null && adv.getAdvocateId().equalsIgnoreCase(advocateId))
-                            .toList()
-                            .isEmpty();
-            if (isPartOfCase) {
-                pendingAdvocateRequest.setStatus("PARTIALLY_JOINED");
+        try {
+            if (joinCaseRequest.getJoinCaseData().getRepresentative().getIsJudgeApproving()) {
+                createTaskForJudge(joinCaseRequest, courtCase);
             } else {
-                pendingAdvocateRequest.setStatus("PENDING");
+                HashMap<String, List<RepresentingJoinCase>> replaceAdvocateRepresentingMap = new HashMap<>();
+
+                List<PendingAdvocateRequest> pendingAdvocateRequestList = courtCase.getPendingAdvocateRequests();
+                if (pendingAdvocateRequestList == null) {
+                    pendingAdvocateRequestList = new ArrayList<>();
+                }
+                PendingAdvocateRequest pendingAdvocateRequest = new PendingAdvocateRequest();
+                pendingAdvocateRequest.setAdvocateId(advocateId);
+                boolean isPartOfCase = courtCase.getRepresentatives() != null &&
+                        !courtCase.getRepresentatives().stream()
+                                .filter(adv -> adv.getAdvocateId() != null && adv.getAdvocateId().equalsIgnoreCase(advocateId))
+                                .toList()
+                                .isEmpty();
+                if (isPartOfCase) {
+                    pendingAdvocateRequest.setStatus("PARTIALLY_JOINED");
+                } else {
+                    pendingAdvocateRequest.setStatus("PENDING");
+                }
+
+                List<String> taskReferenceNoList = new ArrayList<>();
+                joinCaseRequest.getJoinCaseData().getRepresentative().getRepresenting().forEach(representingJoinCase -> {
+                    if (representingJoinCase.getIsAlreadyPip()) {
+                        // Handle already PIP case
+                        TaskResponse taskResponse = null;
+                        try {
+                            taskResponse = createTaskPip(joinCaseRequest, representingJoinCase, advocateId, courtCase);
+                        } catch (JsonProcessingException e) {
+                            log.error("Error occurred while creating task for pip :: {}", e.toString());
+                            throw new CustomException(JOIN_CASE_ERR, TASK_SERVICE_ERROR);
+                        }
+                        taskReferenceNoList.add(taskResponse.getTask().getTaskNumber());
+
+                    } else {
+                        representingJoinCase.getReplaceAdvocates().forEach(replaceAdvocateId -> {
+                            if (!replaceAdvocateRepresentingMap.containsKey(replaceAdvocateId)) {
+                                replaceAdvocateRepresentingMap.put(replaceAdvocateId, List.of(representingJoinCase));
+                            } else {
+                                List<RepresentingJoinCase> representingJoinCaseList = replaceAdvocateRepresentingMap.get(replaceAdvocateId);
+                                representingJoinCaseList.add(representingJoinCase);
+                                replaceAdvocateRepresentingMap.put(replaceAdvocateId, representingJoinCaseList);
+                            }
+
+                        });
+                    }
+                });
+
+                //handle task creation for each advocate
+                replaceAdvocateRepresentingMap.forEach((key, value) -> {
+                    TaskResponse taskResponse = null;
+                    try {
+                        taskResponse = createTaskAdvocate(joinCaseRequest, key, value, courtCase);
+                    } catch (JsonProcessingException e) {
+                        log.error("Error occurred while creating task for advocate :: {}", e.toString());
+                        throw new CustomException(JOIN_CASE_ERR, TASK_SERVICE_ERROR);
+                    }
+                    taskReferenceNoList.add(taskResponse.getTask().getTaskNumber());
+                });
+
+                pendingAdvocateRequest.setTaskReferenceNoList(taskReferenceNoList);
+                pendingAdvocateRequestList.add(pendingAdvocateRequest);
+                courtCase.setPendingAdvocateRequests(pendingAdvocateRequestList);
+
+                producer.push(config.getUpdatePendingAdvocateRequestKafkaTopic(), courtCase);
+            }
+        } catch (Exception e) {
+            log.error("Error occurred while creating task for join case request :: {}", e.toString());
+            throw new CustomException(JOIN_CASE_ERR, TASK_SERVICE_ERROR);
+        }
+
+    }
+
+    private void createTaskForJudge(JoinCaseV2Request joinCaseRequest, CourtCase courtCase) throws JsonProcessingException {
+        TaskRequest taskRequest = new TaskRequest();
+        Task task = new Task();
+        task.setTaskType(JOIN_CASE);
+        task.setStatus("");
+        task.setTenantId(joinCaseRequest.getRequestInfo().getUserInfo().getTenantId());
+        task.setFilingNumber(joinCaseRequest.getJoinCaseData().getFilingNumber());
+        WorkflowObject workflow = new WorkflowObject();
+        workflow.setAction("CREATE");
+        task.setWorkflow(workflow);
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        JoinCaseDataV2 joinCaseData = joinCaseRequest.getJoinCaseData();
+
+        JoinCaseTaskRequest taskJoinCase = new JoinCaseTaskRequest();
+
+        List<Advocate> advocatesList = advocateUtil.fetchAdvocatesById(joinCaseRequest.getRequestInfo(), joinCaseData.getRepresentative().getAdvocateId());
+        Advocate joinCaseAdvocate = advocatesList.get(0);
+
+        List<Individual> individualsList = individualService.getIndividualsByIndividualId(joinCaseRequest.getRequestInfo(), joinCaseAdvocate.getIndividualId());
+        Individual individual = individualsList.get(0);
+
+        IndividualDetails individualDetails = enrichIndividualDetailsInJoinCaseTaskRequest(individual);
+        AdvocateDetails advocateDetails = enrichAdvocateDetailsInJoinCaseTaskRequest(individualDetails, joinCaseAdvocate, individual, joinCaseData);
+
+        taskJoinCase.setAdvocateDetails(advocateDetails);
+
+        List<ReplacementDetails> replacementDetailsList = new ArrayList<>();
+
+        joinCaseData.getRepresentative().getRepresenting().forEach(representingJoinCase -> {
+
+            LitigantDetails litigantDetails = new LitigantDetails();
+            Party litigant = courtCase.getLitigants().stream().filter(lit -> lit.getIndividualId().equalsIgnoreCase(representingJoinCase.getIndividualId())).findFirst().get();
+            litigantDetails.setIndividualId(representingJoinCase.getIndividualId());
+            litigantDetails.setPartyType(litigant.getPartyType());
+
+            List<Individual> individualsListForLitigant = individualService.getIndividualsByIndividualId(joinCaseRequest.getRequestInfo(), litigant.getIndividualId());
+            Individual individualForLitigant = individualsListForLitigant.get(0);
+
+            // Check if individualForLitigant and its name details are not null
+            if (individualForLitigant != null && individualForLitigant.getName() != null) {
+                String name = getName(individualForLitigant);
+                log.warn("Setting individual name details");
+                litigantDetails.setName(name);
+                litigantDetails.setUserUuid(individualForLitigant.getUserUuid());
             }
 
-            List<String> taskReferenceNoList = new ArrayList<>();
-            joinCaseRequest.getJoinCaseData().getRepresentative().getRepresenting().forEach(representingJoinCase -> {
-                if (representingJoinCase.getIsAlreadyPip()) {
-                    // Handle already PIP case
-                    TaskResponse taskResponse = createTaskAndPendingTask(joinCaseRequest, representingJoinCase.getIndividualId(), null, courtCase);
-                    taskReferenceNoList.add(taskResponse.getTask().getTaskNumber());
+            if (!representingJoinCase.getIsAlreadyPip()) {
+                representingJoinCase.getReplaceAdvocates().forEach(advocateId -> {
+                    ReplacementDetails replacementDetails = new ReplacementDetails();
 
-                } else {
-                    uniqueAdvocateIds.addAll(representingJoinCase.getReplaceAdvocates());
+                    ReplacementAdvocateDetails replacementAdvocateDetails = new ReplacementAdvocateDetails();
+                    replacementAdvocateDetails.setAdvocateUuid(advocateId);
+
+                    List<Advocate> replacedvocatesList = advocateUtil.fetchAdvocatesById(joinCaseRequest.getRequestInfo(), advocateId);
+                    Advocate replaceAdvocate = replacedvocatesList.get(0);
+
+                    List<Individual> individualList = individualService.getIndividualsByIndividualId(joinCaseRequest.getRequestInfo(), replaceAdvocate.getIndividualId());
+                    Individual individualAdvocate = individualList.get(0);
+
+                    String name = getName(individualAdvocate);
+                    replacementAdvocateDetails.setBarRegistrationNumber(replaceAdvocate.getBarRegistrationNumber());
+                    replacementAdvocateDetails.setMobileNumber(individualAdvocate.getMobileNumber());
+                    replacementAdvocateDetails.setName(name);
+                    replacementAdvocateDetails.setUserUuid(individualAdvocate.getUserUuid());
+
+                    replacementDetails.setAdvocateDetails(replacementAdvocateDetails);
+
+                    replacementDetails.setIsLitigantPip(representingJoinCase.getIsAlreadyPip());
+
+                    replacementDetails.setLitigantDetails(litigantDetails);
+
+                    if (representingJoinCase.getDocuments() != null && !representingJoinCase.getDocuments().isEmpty()) {
+                        ReplacementDocumentDetails document = new ReplacementDocumentDetails();
+                        document.setFileStore(representingJoinCase.getDocuments().get(0).getFileStore());
+                        document.setDocumentType(representingJoinCase.getDocuments().get(0).getDocumentType());
+                        document.setAdditionalDetails(representingJoinCase.getDocuments().get(0).getAdditionalDetails());
+                        replacementDetails.setDocument(document);
+                    }
+                    replacementDetailsList.add(replacementDetails);
+                });
+            } else {
+                ReplacementDetails replacementDetails = new ReplacementDetails();
+
+                replacementDetails.setIsLitigantPip(representingJoinCase.getIsAlreadyPip());
+                replacementDetails.setLitigantDetails(litigantDetails);
+
+                if (representingJoinCase.getDocuments() != null && !representingJoinCase.getDocuments().isEmpty()) {
+                    ReplacementDocumentDetails document = new ReplacementDocumentDetails();
+                    document.setFileStore(representingJoinCase.getDocuments().get(0).getFileStore());
+                    document.setDocumentType(representingJoinCase.getDocuments().get(0).getDocumentType());
+                    document.setAdditionalDetails(representingJoinCase.getDocuments().get(0).getAdditionalDetails());
+                    replacementDetails.setDocument(document);
                 }
-            });
+                replacementDetailsList.add(replacementDetails);
+            }
 
-            //handle task creation for each advocate
-            uniqueAdvocateIds.forEach(replaceAdvocateId -> {
-                TaskResponse taskResponse = createTaskAndPendingTask(joinCaseRequest, null, replaceAdvocateId, courtCase);
-                taskReferenceNoList.add(taskResponse.getTask().getTaskNumber());
-            });
+        });
 
-            pendingAdvocateRequest.setTaskReferenceNoList(taskReferenceNoList);
-            pendingAdvocateRequestList.add(pendingAdvocateRequest);
-            courtCase.setPendingAdvocateRequests(pendingAdvocateRequestList);
+        taskJoinCase.setReplacementDetails(replacementDetailsList);
+        taskJoinCase.setAdvocateDetails(advocateDetails);
+        taskJoinCase.setReason(joinCaseData.getRepresentative().getReason());
+        taskJoinCase.setReasonDocument(joinCaseRequest.getJoinCaseData().getRepresentative().getReasonDocument());
 
-            producer.push(config.getUpdatePendingAdvocateRequestKafkaTopic(), courtCase);
-        }
+        Object taskDetails = objectMapper.convertValue(taskJoinCase, Object.class);
+        task.setTaskDetails(taskDetails);
 
+        taskRequest.setTask(task);
+        RequestInfo requestInfo = joinCaseRequest.getRequestInfo();
+        Role role = Role.builder().code("TASK_CREATOR").name("TASK_CREATOR").tenantId(joinCaseAdvocate.getTenantId()).build();
+        requestInfo.getUserInfo().getRoles().add(role);
+        taskRequest.setRequestInfo(requestInfo);
     }
 
-    private void createTaskAndPendingTaskForJudge(JoinCaseV2Request joinCaseRequest, CourtCase courtCase) {
-        TaskResponse taskResponse = createTask(joinCaseRequest, null, courtCase);
-//        PendingTaskRequest pendingTaskRequest = new PendingTaskRequest();
-//        PendingTask pendingTask = new PendingTask();
-//
-//        pendingTaskRequest.setRequestInfo(joinCaseRequest.getRequestInfo());
-//
-//        pendingTask.setFilingNumber(joinCaseRequest.getJoinCaseData().getFilingNumber());
-//        pendingTask.setReferenceId(taskResponse.getTask().getTaskNumber());
-//        pendingTask.setStatus(taskResponse.getTask().getStatus());
-//        pendingTask.setScreenType("home");
-//
-//        pendingTask.setAssignedRole(List.of("TASK_EDITOR"));
-//        pendingTaskRequest.setPendingTask(pendingTask);
-//
-//        analyticsUtil.createPendingTask(pendingTaskRequest);
-    }
+    private TaskResponse createTaskPip(JoinCaseV2Request joinCaseRequest, RepresentingJoinCase representingJoinCase, String advocateId, CourtCase courtCase) throws JsonProcessingException {
+        String userUUID = individualService.getIndividualsByIndividualId(joinCaseRequest.getRequestInfo(), representingJoinCase.getIndividualId()).get(0).getUserUuid();
+        TaskRequest taskRequest = new TaskRequest();
+        Task task = new Task();
+        task.setTaskType(JOIN_CASE);
+        task.setStatus("");
+        task.setTenantId(joinCaseRequest.getRequestInfo().getUserInfo().getTenantId());
+        task.setFilingNumber(joinCaseRequest.getJoinCaseData().getFilingNumber());
+        WorkflowObject workflow = new WorkflowObject();
+        workflow.setAction("CREATE");
+        workflow.setAdditionalDetails("{\"excludeRoles\":[\"TASK_EDITOR\"]}");
+        workflow.setAssignes(List.of(userUUID));
+        task.setWorkflow(workflow);
+        ObjectMapper objectMapper = new ObjectMapper();
 
-    private TaskResponse createTaskAndPendingTask(JoinCaseV2Request joinCaseRequest, String individualId, String advocateId, CourtCase courtCase) {
-        String userUUID;
-        if (individualId != null) {
-            userUUID = individualService.getIndividualsByIndividualId(joinCaseRequest.getRequestInfo(), individualId).get(0).getUserUuid();
-        } else {
-            // Otherwise, if advocateId is provided, use it to get user UUID
-            String individualIdForAdvocate = advocateUtil.getAdvocate(joinCaseRequest.getRequestInfo(), List.of(advocateId)).stream().findFirst().orElse(null);
-            userUUID = individualService.getIndividualsByIndividualId(joinCaseRequest.getRequestInfo(), individualIdForAdvocate).get(0).getUserUuid();
+        JoinCaseDataV2 joinCaseData = joinCaseRequest.getJoinCaseData();
+
+        JoinCaseTaskRequest taskJoinCase = new JoinCaseTaskRequest();
+
+        //Set advocate details
+        List<Advocate> advocatesList = advocateUtil.fetchAdvocatesById(joinCaseRequest.getRequestInfo(), advocateId);
+        Advocate joinCaseAdvocate = advocatesList.get(0);
+
+        List<Individual> individualsList = individualService.getIndividualsByIndividualId(joinCaseRequest.getRequestInfo(), joinCaseAdvocate.getIndividualId());
+        Individual individual = individualsList.get(0);
+
+        IndividualDetails individualDetails = enrichIndividualDetailsInJoinCaseTaskRequest(individual);
+        AdvocateDetails advocateDetails = enrichAdvocateDetailsInJoinCaseTaskRequest(individualDetails, joinCaseAdvocate, individual, joinCaseData);
+        taskJoinCase.setAdvocateDetails(advocateDetails);
+
+        List<ReplacementDetails> replacementDetailsList = new ArrayList<>();
+        ReplacementDetails replacementDetails = new ReplacementDetails();
+
+        LitigantDetails litigantDetails = new LitigantDetails();
+        Party litigant = courtCase.getLitigants().stream().filter(lit -> lit.getIndividualId().equalsIgnoreCase(representingJoinCase.getIndividualId())).findFirst().get();
+        litigantDetails.setIndividualId(representingJoinCase.getIndividualId());
+        litigantDetails.setPartyType(litigant.getPartyType());
+
+        List<Individual> individualsListForLitigant = individualService.getIndividualsByIndividualId(joinCaseRequest.getRequestInfo(), litigant.getIndividualId());
+        Individual individualForLitigant = individualsListForLitigant.get(0);
+
+        // Check if individualForLitigant and its name details are not null
+        if (individualForLitigant != null && individualForLitigant.getName() != null) {
+            String name = getName(individualForLitigant);
+            log.warn("Setting individual name details");
+            litigantDetails.setName(name);
+            litigantDetails.setUserUuid(individualForLitigant.getUserUuid());
         }
 
-        return createTask(joinCaseRequest, userUUID, courtCase);
+        replacementDetails.setIsLitigantPip(representingJoinCase.getIsAlreadyPip());
+        replacementDetails.setLitigantDetails(litigantDetails);
 
-//        PendingTaskRequest pendingTaskRequest = new PendingTaskRequest();
-//        PendingTask pendingTask = new PendingTask();
-//
-//        pendingTaskRequest.setRequestInfo(joinCaseRequest.getRequestInfo());
-//        pendingTask.setFilingNumber(joinCaseRequest.getJoinCaseData().getFilingNumber());
-//        pendingTask.setReferenceId(taskResponse.getTask().getTaskNumber());
-//        pendingTask.setStatus(taskResponse.getTask().getStatus());
-//        pendingTask.setScreenType("home");
-//
-//        User user = new User();
-//        user.setUuid(userUUID);
-//        pendingTask.setAssignedTo(List.of(user));
-//
-//        pendingTaskRequest.setPendingTask(pendingTask);
-//        analyticsUtil.createPendingTask(pendingTaskRequest);
+        if (representingJoinCase.getDocuments() != null && !representingJoinCase.getDocuments().isEmpty()) {
+            ReplacementDocumentDetails document = new ReplacementDocumentDetails();
+            document.setFileStore(representingJoinCase.getDocuments().get(0).getFileStore());
+            document.setDocumentType(representingJoinCase.getDocuments().get(0).getDocumentType());
+            document.setAdditionalDetails(representingJoinCase.getDocuments().get(0).getAdditionalDetails());
+            replacementDetails.setDocument(document);
+        }
+        replacementDetailsList.add(replacementDetails);
+
+        taskJoinCase.setReplacementDetails(replacementDetailsList);
+        taskJoinCase.setAdvocateDetails(advocateDetails);
+        taskJoinCase.setReason(joinCaseData.getRepresentative().getReason());
+        taskJoinCase.setReasonDocument(joinCaseRequest.getJoinCaseData().getRepresentative().getReasonDocument());
+
+        Object taskDetails = objectMapper.convertValue(taskJoinCase, Object.class);
+        task.setTaskDetails(taskDetails);
+
+        taskRequest.setTask(task);
+        RequestInfo requestInfo = joinCaseRequest.getRequestInfo();
+        Role role = Role.builder().code("TASK_CREATOR").name("TASK_CREATOR").tenantId(joinCaseAdvocate.getTenantId()).build();
+        requestInfo.getUserInfo().getRoles().add(role);
+        taskRequest.setRequestInfo(requestInfo);
+        return taskUtil.callCreateTask(taskRequest);
+    }
+
+    private TaskResponse createTaskAdvocate(JoinCaseV2Request joinCaseRequest, String replaceAdvocateId, List<RepresentingJoinCase> representingJoinCaseList, CourtCase courtCase) throws JsonProcessingException {
+
+        String individualIdForAdvocate = advocateUtil.getAdvocate(joinCaseRequest.getRequestInfo(), List.of(replaceAdvocateId)).stream().findFirst().orElse(null);
+        String userUUID = individualService.getIndividualsByIndividualId(joinCaseRequest.getRequestInfo(), individualIdForAdvocate).get(0).getUserUuid();
+
+        TaskRequest taskRequest = new TaskRequest();
+        Task task = new Task();
+        task.setTaskType(JOIN_CASE);
+        task.setStatus("");
+        task.setTenantId(joinCaseRequest.getRequestInfo().getUserInfo().getTenantId());
+        task.setFilingNumber(joinCaseRequest.getJoinCaseData().getFilingNumber());
+        WorkflowObject workflow = new WorkflowObject();
+        workflow.setAction("CREATE");
+        workflow.setAdditionalDetails("{\"excludeRoles\":[\"TASK_EDITOR\"]}");
+        workflow.setAssignes(List.of(userUUID));
+        task.setWorkflow(workflow);
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        JoinCaseDataV2 joinCaseData = joinCaseRequest.getJoinCaseData();
+
+        JoinCaseTaskRequest taskJoinCase = new JoinCaseTaskRequest();
+
+        List<Advocate> advocatesList = advocateUtil.fetchAdvocatesById(joinCaseRequest.getRequestInfo(), joinCaseData.getRepresentative().getAdvocateId());
+        Advocate joinCaseAdvocate = advocatesList.get(0);
+
+        List<Individual> individualsList = individualService.getIndividualsByIndividualId(joinCaseRequest.getRequestInfo(), joinCaseAdvocate.getIndividualId());
+        Individual individual = individualsList.get(0);
+
+        IndividualDetails individualDetails = enrichIndividualDetailsInJoinCaseTaskRequest(individual);
+        AdvocateDetails advocateDetails = enrichAdvocateDetailsInJoinCaseTaskRequest(individualDetails, joinCaseAdvocate, individual, joinCaseData);
+
+        taskJoinCase.setAdvocateDetails(advocateDetails);
+
+        List<ReplacementDetails> replacementDetailsList = new ArrayList<>();
+
+        representingJoinCaseList.forEach(representingJoinCase -> {
+
+            ReplacementDetails replacementDetails = new ReplacementDetails();
+
+            LitigantDetails litigantDetails = new LitigantDetails();
+            Party litigant = courtCase.getLitigants().stream().filter(lit -> lit.getIndividualId().equalsIgnoreCase(representingJoinCase.getIndividualId())).findFirst().get();
+            litigantDetails.setIndividualId(representingJoinCase.getIndividualId());
+            litigantDetails.setPartyType(litigant.getPartyType());
+
+            List<Individual> individualsListForLitigant = individualService.getIndividualsByIndividualId(joinCaseRequest.getRequestInfo(), litigant.getIndividualId());
+            Individual individualForLitigant = individualsListForLitigant.get(0);
+
+            // Check if individualForLitigant and its name details are not null
+            if (individualForLitigant != null && individualForLitigant.getName() != null) {
+                String name = getName(individualForLitigant);
+                log.warn("Setting individual name details");
+                litigantDetails.setName(name);
+                litigantDetails.setUserUuid(individualForLitigant.getUserUuid());
+            }
+
+            ReplacementAdvocateDetails replacementAdvocateDetails = new ReplacementAdvocateDetails();
+            replacementAdvocateDetails.setAdvocateUuid(replaceAdvocateId);
+
+            List<Advocate> replacedvocatesList = advocateUtil.fetchAdvocatesById(joinCaseRequest.getRequestInfo(), replaceAdvocateId);
+            Advocate replaceAdvocate = replacedvocatesList.get(0);
+
+            List<Individual> individualList = individualService.getIndividualsByIndividualId(joinCaseRequest.getRequestInfo(), replaceAdvocate.getIndividualId());
+            Individual individualAdvocate = individualList.get(0);
+
+            String name = getName(individualAdvocate);
+            replacementAdvocateDetails.setBarRegistrationNumber(replaceAdvocate.getBarRegistrationNumber());
+            replacementAdvocateDetails.setMobileNumber(individualAdvocate.getMobileNumber());
+            replacementAdvocateDetails.setName(name);
+            replacementAdvocateDetails.setUserUuid(individualAdvocate.getUserUuid());
+
+            replacementDetails.setAdvocateDetails(replacementAdvocateDetails);
+
+            replacementDetails.setIsLitigantPip(representingJoinCase.getIsAlreadyPip());
+
+            replacementDetails.setLitigantDetails(litigantDetails);
+
+            if (representingJoinCase.getDocuments() != null && !representingJoinCase.getDocuments().isEmpty()) {
+                ReplacementDocumentDetails document = new ReplacementDocumentDetails();
+                document.setFileStore(representingJoinCase.getDocuments().get(0).getFileStore());
+                document.setDocumentType(representingJoinCase.getDocuments().get(0).getDocumentType());
+                document.setAdditionalDetails(representingJoinCase.getDocuments().get(0).getAdditionalDetails());
+                replacementDetails.setDocument(document);
+            }
+            replacementDetailsList.add(replacementDetails);
+        });
+
+        taskJoinCase.setReplacementDetails(replacementDetailsList);
+        taskJoinCase.setAdvocateDetails(advocateDetails);
+        taskJoinCase.setReason(joinCaseData.getRepresentative().getReason());
+        taskJoinCase.setReasonDocument(joinCaseRequest.getJoinCaseData().getRepresentative().getReasonDocument());
+
+        Object taskDetails = objectMapper.convertValue(taskJoinCase, Object.class);
+        task.setTaskDetails(taskDetails);
+
+        taskRequest.setTask(task);
+        RequestInfo requestInfo = joinCaseRequest.getRequestInfo();
+        Role role = Role.builder().code("TASK_CREATOR").name("TASK_CREATOR").tenantId(joinCaseAdvocate.getTenantId()).build();
+        requestInfo.getUserInfo().getRoles().add(role);
+        taskRequest.setRequestInfo(requestInfo);
+        return taskUtil.callCreateTask(taskRequest);
     }
 
     private void enrichAndPushLitigantJoinCase(JoinCaseV2Request joinCaseRequest, CourtCase caseObj, AuditDetails auditDetails) {
@@ -1539,11 +1809,11 @@ public class CaseService {
             task.setFilingNumber(joinCaseRequest.getJoinCaseData().getFilingNumber());
             WorkflowObject workflow = new WorkflowObject();
             workflow.setAction("CREATE");
-            if (assignes != null){
+            if (assignes != null) {
                 workflow.setAdditionalDetails("{\"excludeRoles\":[\"TASK_EDITOR\"]}");
                 workflow.setAssignes(List.of(assignes));
             }
-          //  RequestInfo requestInfo = createInternalRequestInfo();
+            //  RequestInfo requestInfo = createInternalRequestInfo();
             task.setWorkflow(workflow);
             ObjectMapper objectMapper = new ObjectMapper();
 
@@ -1661,8 +1931,8 @@ public class CaseService {
         String familyName = individualForLitigant.getName().getFamilyName();
 
         // Concatenate the name with spaces, ensuring null values are handled
-        String name = (givenName != null ? givenName : "")+
-                (otherNames != null ? " " + otherNames : "")+
+        String name = (givenName != null ? givenName : "") +
+                (otherNames != null ? " " + otherNames : "") +
                 (familyName != null ? " " + familyName : "");
         return name;
     }
@@ -1951,9 +2221,10 @@ public class CaseService {
                 List<Party> litigant = Optional.ofNullable(courtCase.getLitigants())
                         .orElse(Collections.emptyList())
                         .stream()
-                        .filter(p -> p.getIndividualId().equalsIgnoreCase(litigantJoinCase.getIndividualId())).collect(Collectors.toList());;
+                        .filter(p -> p.getIndividualId().equalsIgnoreCase(litigantJoinCase.getIndividualId())).collect(Collectors.toList());
+                ;
 
-                log.info("litigant size :: {}",litigant.size());
+                log.info("litigant size :: {}", litigant.size());
                 List<AdvocateMapping> representatives = courtCase.getRepresentatives();
 
                 if (representatives != null && !litigant.isEmpty())
@@ -1963,7 +2234,7 @@ public class CaseService {
 
         joinCaseRequest.getJoinCaseData().getLitigant().forEach(joinCaseLitigant -> {
             if (joinCaseLitigant.getPartyType().contains("complainant") && joinCaseLitigant.getIsPip()) {
-               courtCase.setAdditionalDetails(modifyAdvocateDetails(courtCase.getAdditionalDetails(), joinCaseLitigant));
+                courtCase.setAdditionalDetails(modifyAdvocateDetails(courtCase.getAdditionalDetails(), joinCaseLitigant));
             } else if (joinCaseLitigant.getPartyType().contains("respondent")) {
                 courtCase.setAdditionalDetails(updateRespondentDetails(courtCase.getAdditionalDetails(), joinCaseLitigant));
             }
@@ -2035,7 +2306,7 @@ public class CaseService {
 
                     document.add(documentNode);
                     pipAffidavitFileUpload.set("document", document);
-                    multipleAdvocatesAndPip.set("pipAffidavitFileUpload",pipAffidavitFileUpload);
+                    multipleAdvocatesAndPip.set("pipAffidavitFileUpload", pipAffidavitFileUpload);
 
                     // Ensure vakalatnamaFileUpload is initialized and clear it
                     ArrayNode vakalatnamaFileUpload = ensureArrayNodeInitialized(dataNode.get("multipleAdvocatesAndPip").get("vakalatnamaFileUpload"));
@@ -2706,7 +2977,7 @@ public class CaseService {
     private void updateCourtCaseObject(CourtCase courtCase, JoinCaseTaskRequest joinCaseRequest, String advocateUuid,
                                        RequestInfo requestInfo) {
 
-        log.info("operation=updateJoinCaseApproved, status=IN_PROGRESS, joinCaseRequest, advocateUuid : {}, {}",joinCaseRequest, advocateUuid);
+        log.info("operation=updateJoinCaseApproved, status=IN_PROGRESS, joinCaseRequest, advocateUuid : {}, {}", joinCaseRequest, advocateUuid);
 
         List<AdvocateMapping> advocateMappings = courtCase.getRepresentatives();
 
@@ -2761,7 +3032,7 @@ public class CaseService {
                 enrichAdditionalDetails(courtCase, additionalDetailsJsonNode, replacementDetails, litigantDetails.getIndividualId(), advocateUuidToBeReplaced, newAdvoacteDetailsJsonNode);
             }
 
-            log.info("operation=updateJoinCaseApproved, status=SUCCESS, joinCaseRequest, advocateUuid : {}, {}",joinCaseRequest, advocateUuid);
+            log.info("operation=updateJoinCaseApproved, status=SUCCESS, joinCaseRequest, advocateUuid : {}, {}", joinCaseRequest, advocateUuid);
         }
 
     }
@@ -2861,7 +3132,7 @@ public class CaseService {
                                                 String advocateUuidToReplace, JsonNode newAdvocateDetail,
                                                 ReplacementDetails replacementDetails) {
         log.info("operation=findAndProcessMatchingLitigant , status=IN_PROGRESS , formData , litigantIndividualId ,  advocateUuidToReplace , newAdvocateDetail ," +
-                "replacementDetails : {}, {} , {} ,{} ,{} ",formData, litigantIndividualId, advocateUuidToReplace, newAdvocateDetail, replacementDetails);
+                "replacementDetails : {}, {} , {} ,{} ,{} ", formData, litigantIndividualId, advocateUuidToReplace, newAdvocateDetail, replacementDetails);
         for (int i = 0; i < formData.size(); i++) {
             JsonNode item = formData.get(i);
 
@@ -2879,7 +3150,7 @@ public class CaseService {
             addVakalatnamaDocument(item, replacementDetails);
             replaceAdvocateIfFound(item, advocateUuidToReplace, newAdvocateDetail);
             log.info("operation=findAndProcessMatchingLitigant , status=SUCCESS , formData , litigantIndividualId ,  advocateUuidToReplace , newAdvocateDetail ," +
-                    "replacementDetails : {}, {} , {} ,{} ,{} ",formData, litigantIndividualId, advocateUuidToReplace, newAdvocateDetail, replacementDetails);
+                    "replacementDetails : {}, {} , {} ,{} ,{} ", formData, litigantIndividualId, advocateUuidToReplace, newAdvocateDetail, replacementDetails);
             break; // Exit loop after processing the matching litigant
         }
     }
@@ -2970,7 +3241,7 @@ public class CaseService {
 
         if (hasMapping && pendingAdvocateRequest.getTaskReferenceNoList().isEmpty()) {
             // remove the pending request of the advocate
-            log.info("advocate has joined the case , advocateUuid : {} " ,advocateUuid);
+            log.info("advocate has joined the case , advocateUuid : {} ", advocateUuid);
             pendingAdvocateRequests.remove(pendingAdvocateRequest);
             courtCase.setPendingAdvocateRequests(pendingAdvocateRequests);
         }
@@ -2979,7 +3250,7 @@ public class CaseService {
             for (PendingAdvocateRequest request : pendingAdvocateRequests) {
                 if (request.equals(pendingAdvocateRequest)) {
                     // advocate is partially joined as some approvals are pending and he is part of the case
-                    log.info("advocate status is partially joined in the case , advocateUuid : {} " ,advocateUuid);
+                    log.info("advocate status is partially joined in the case , advocateUuid : {} ", advocateUuid);
                     request.setStatus(PARTIALLY_JOINED);
                     return;
                 }
@@ -2990,7 +3261,7 @@ public class CaseService {
             for (PendingAdvocateRequest request : pendingAdvocateRequests) {
                 if (pendingAdvocateRequest.equals(request)) {
                     // advocate status is pending as some approvals are pending as he has pending approvals and not part of the case
-                    log.info("advocate status is pending in the case , advocateUuid : {} " ,advocateUuid);
+                    log.info("advocate status is pending in the case , advocateUuid : {} ", advocateUuid);
                     request.setStatus(PENDING);
                     return;
                 }
@@ -2999,7 +3270,7 @@ public class CaseService {
 
         if (!hasMapping && pendingAdvocateRequest.getTaskReferenceNoList().isEmpty()) {
             // advocate status is reject as he is not part of the case and no approvals are left
-            log.info("advocate status is rejected the case , advocateUuid : {} " ,advocateUuid);
+            log.info("advocate status is rejected the case , advocateUuid : {} ", advocateUuid);
             pendingAdvocateRequests.remove(pendingAdvocateRequest);
             courtCase.setPendingAdvocateRequests(pendingAdvocateRequests);
         }
@@ -3009,7 +3280,7 @@ public class CaseService {
 
         LitigantDetails litigantDetails = replacementDetails.getLitigantDetails();
         Document document = new Document();
-        if(replacementDetails.getDocument()!=null){
+        if (replacementDetails.getDocument() != null) {
             document.setAdditionalDetails(replacementDetails.getDocument().getAdditionalDetails());
             document.setDocumentType(replacementDetails.getDocument().getDocumentType());
             document.setFileStore(replacementDetails.getDocument().getFileStore());
