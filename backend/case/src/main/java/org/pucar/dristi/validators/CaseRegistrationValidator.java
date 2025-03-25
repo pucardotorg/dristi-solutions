@@ -285,8 +285,6 @@ public class CaseRegistrationValidator {
             if (representative.getReasonDocument().getFileStore() != null) {
                 if (!fileStoreUtil.doesFileExist(joinCaseRequest.getJoinCaseData().getTenantId(), representative.getReasonDocument().getFileStore()))
                     throw new CustomException(INVALID_FILESTORE_ID, INVALID_DOCUMENT_DETAILS);
-            } else {
-                throw new CustomException(INVALID_FILESTORE_ID, INVALID_DOCUMENT_DETAILS);
             }
         }
         return true;

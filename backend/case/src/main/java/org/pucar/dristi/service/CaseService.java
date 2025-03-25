@@ -3159,8 +3159,11 @@ public class CaseService {
                 .filter(mapping -> mapping.getAdvocateId().equalsIgnoreCase(advocateId))
                 .findFirst()
                 .ifPresent(mapping -> {
-                    mapping.getRepresenting().removeIf(representing -> representing.getIndividualId().equalsIgnoreCase(litigantId));
-                    mapping.setIsActive(!mapping.getRepresenting().isEmpty());
+                    mapping.getRepresenting().stream()
+                            .filter(representing -> representing.getIndividualId().equalsIgnoreCase(litigantId))
+                            .forEach(representing -> representing.setIsActive(false)); // Use forEach to modify elements
+
+                    mapping.setIsActive(mapping.getRepresenting().stream().anyMatch(Party::getIsActive));
                 });
         producer.push(config.getUpdateRepresentativeJoinCaseTopic(), courtCase);
 
