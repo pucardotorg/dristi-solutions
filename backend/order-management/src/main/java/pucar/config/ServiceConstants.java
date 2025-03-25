@@ -54,4 +54,35 @@ public class ServiceConstants {
     public static final String DATA = "data";
     public static final String OMIT_XML_DECLARATION = "omit-xml-declaration";
 
+    public static final String ERROR_WHILE_FETCHING_FROM_ADVOCATE = "ERROR_WHILE_FETCHING_FROM_ADVOCATE";
+    public static final String ERROR_WHILE_CREATING_DEMAND_FOR_CASE = "ERROR_WHILE_CREATING_DEMAND_FOR_CASE";
+
+    public static final String ERROR_WHILE_FETCHING_FROM_APPLICATION_SERVICE = "";
+
+    public static final String ERROR_WHILE_FETCHING_FROM_CASE = "";
+
+    //
+
+
+    public static final String SCHEDULE_OF_HEARING_DATE = "";
+
+    public static final String CASE_ADMITTED = "CASE_ADMITTED";
+    public static final String SCHEDULE_ADMISSION_HEARING = "SCHEDULE_ADMISSION_HEARING";
+
+    public static final String BULK_RESCHEDULE ="BULK_RESCHEDULE";
+    public static final String SETDATE ="SETDATE";
+    public static final String ADMIT ="ADMIT";
+    public static final String ADMISSION ="ADMISSION";
+    public static final String ABANDON ="ABANDON";
+    public static final String COMPLETED ="COMPLETED";
+    public static final String ABATED ="ABATED";
+    public static final String MANUAL ="MANUAL_";
+    public static final String APPROVE ="APPROVE";
+    public static final String SEND_BACK ="SEND_BACK";
+    public static final String REJECT ="REJECT";
+    public static final String SCHEDULED ="SCHEDULED";
+
+
+
+
 }

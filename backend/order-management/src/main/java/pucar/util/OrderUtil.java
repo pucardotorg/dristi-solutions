@@ -1,6 +1,8 @@
 package pucar.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,8 +14,9 @@ import pucar.web.models.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
-import static pucar.config.ServiceConstants.ERROR_WHILE_FETCHING_FROM_ORDER;
+import static pucar.config.ServiceConstants.*;
 
 @Component
 @Slf4j
@@ -37,7 +40,7 @@ public class OrderUtil {
         Object response = new HashMap<>();
         OrderExistsResponse orderExistsResponse;
         try {
-            response = serviceRequestRepository.fetchResult(uri,orderExistsRequest);
+            response = serviceRequestRepository.fetchResult(uri, orderExistsRequest);
             orderExistsResponse = objectMapper.convertValue(response, OrderExistsResponse.class);
         } catch (Exception e) {
             log.error(ERROR_WHILE_FETCHING_FROM_ORDER, e);
@@ -53,7 +56,7 @@ public class OrderUtil {
         Object response;
         OrderResponse orderResponse;
         try {
-            response = serviceRequestRepository.fetchResult(uri,orderRequest);
+            response = serviceRequestRepository.fetchResult(uri, orderRequest);
             orderResponse = objectMapper.convertValue(response, OrderResponse.class);
         } catch (Exception e) {
             log.error(ERROR_WHILE_FETCHING_FROM_ORDER, e);
@@ -69,7 +72,7 @@ public class OrderUtil {
         Object response;
         OrderListResponse orderListResponse;
         try {
-            response = serviceRequestRepository.fetchResult(uri,searchRequest);
+            response = serviceRequestRepository.fetchResult(uri, searchRequest);
             orderListResponse = objectMapper.convertValue(response, OrderListResponse.class);
         } catch (Exception e) {
             log.error(ERROR_WHILE_FETCHING_FROM_ORDER, e);
@@ -79,4 +82,69 @@ public class OrderUtil {
         return orderListResponse;
     }
 
+
+    public String getReferenceId(Order order) {
+        String referenceId = null;
+        try {
+            referenceId = (String) Optional.ofNullable(order)
+                    .map(Order::getAdditionalDetails)
+                    .filter(Map.class::isInstance)
+                    .map(map -> (Map<?, ?>) map)
+                    .map(map -> map.get("formdata"))
+                    .filter(Map.class::isInstance)
+                    .map(map -> (Map<?, ?>) map)
+                    .map(map -> map.get("refApplicationId"))
+                    .filter(String.class::isInstance).orElse(null);
+        } catch (Exception e) {
+            log.error("Error getting refApplicationId from order", e);
+            throw new CustomException(ERROR_WHILE_FETCHING_FROM_ORDER, e.getMessage());
+        }
+        if (referenceId == null) {
+            log.error("refApplicationId not found in order");
+        }
+        return referenceId;
+
+    }
+
+    public String getHearingNumberFormApplicationAdditionalDetails(Object additionalDetails) {
+        return Optional.ofNullable(additionalDetails)
+                .filter(Map.class::isInstance)
+                .map(map -> (Map<?, ?>) map)
+                .map(map -> map.get("hearingId"))
+                .filter(String.class::isInstance)
+                .map(String.class::cast).orElse(null);
+    }
+
+    public String getActionForApplication(Object additionalDetails) {
+
+        String applicationStatus = Optional.ofNullable(additionalDetails)
+                .filter(Map.class::isInstance)
+                .map(map -> (Map<?, ?>) map)
+                .map(map -> map.get("applicationStatus"))
+                .filter(String.class::isInstance)
+                .map(String.class::cast).orElseThrow(()->new CustomException("",""));
+
+        return applicationStatusType(applicationStatus);
+
+
+    }
+
+
+    private String applicationStatusType(String type) {
+        return switch (type) {
+            case "APPROVED" -> APPROVE;
+            case "SET_TERM_BAIL" -> SEND_BACK;
+            default -> REJECT;
+        };
+    }
+
+    public  String getBusinessOfTheDay(Object additionalDetails) {
+
+        return Optional.ofNullable(additionalDetails)
+                .filter(Map.class::isInstance)
+                .map(map -> (Map<?, ?>) map)
+                .map(map -> map.get("businessOfTheDay"))
+                .filter(String.class::isInstance)
+                .map(String.class::cast).orElse(null);
+    }
 }
