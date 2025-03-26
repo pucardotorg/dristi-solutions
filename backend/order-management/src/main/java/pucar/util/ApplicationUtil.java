@@ -25,12 +25,13 @@ public class ApplicationUtil {
     private final ObjectMapper objectMapper;
     private final Configuration configuration;
     private final ServiceRequestRepository serviceRequestRepository;
-
+    private final CacheUtil cacheUtil;
     @Autowired
-    public ApplicationUtil(ObjectMapper objectMapper, Configuration configuration, ServiceRequestRepository serviceRequestRepository) {
+    public ApplicationUtil(ObjectMapper objectMapper, Configuration configuration, ServiceRequestRepository serviceRequestRepository, CacheUtil cacheUtil) {
         this.objectMapper = objectMapper;
         this.configuration = configuration;
         this.serviceRequestRepository = serviceRequestRepository;
+        this.cacheUtil = cacheUtil;
     }
 
     // return list of application
@@ -40,8 +41,14 @@ public class ApplicationUtil {
         Object response = serviceRequestRepository.fetchResult(uri, request);
 
         try {
+            Object redisResponse = cacheUtil.findById(request.getCriteria().getTenantId() + ":" + request.getCriteria().getApplicationNumber());
+            if (redisResponse != null) {
+                Application application = objectMapper.readValue(redisResponse.toString(), Application.class);
+                return List.of(application);
+            }
             JsonNode jsonNode = objectMapper.valueToTree(response);
             ApplicationListResponse applicationSearchResult = objectMapper.readValue(jsonNode.toString(), ApplicationListResponse.class);
+            cacheUtil.save(applicationSearchResult.getApplicationList().get(0).getTenantId() + ":" + applicationSearchResult.getApplicationList().get(0).getApplicationNumber(), applicationSearchResult.getApplicationList().get(0));
             return applicationSearchResult.getApplicationList();
 
         } catch (HttpClientErrorException e) {
@@ -49,7 +56,7 @@ public class ApplicationUtil {
             throw new ServiceCallException(e.getResponseBodyAsString());
         } catch (Exception e) {
             log.error(SEARCHER_SERVICE_EXCEPTION, e);
-            throw new CustomException(); // add log and code
+            throw new CustomException(SEARCHER_SERVICE_EXCEPTION, e.getMessage()); // add log and code
         }
     }
 
@@ -60,13 +67,18 @@ public class ApplicationUtil {
         Object response = serviceRequestRepository.fetchResult(uri, request);
         try {
             JsonNode jsonNode = objectMapper.valueToTree(response);
-            return objectMapper.readValue(jsonNode.toString(), ApplicationResponse.class);
+            ApplicationResponse applicationResponse = objectMapper.readValue(jsonNode.toString(), ApplicationResponse.class);
+            if(applicationResponse != null) {
+                Application application = objectMapper.convertValue(applicationResponse.getApplication(), Application.class);
+                cacheUtil.save(application.getTenantId() + ":" + application.getApplicationNumber(), application);
+            }
+            return applicationResponse;
         } catch (HttpClientErrorException e) {
             log.error(EXTERNAL_SERVICE_EXCEPTION, e);
             throw new ServiceCallException(e.getResponseBodyAsString());
         } catch (Exception e) {
             log.error(SEARCHER_SERVICE_EXCEPTION, e);
-            throw new CustomException(); // add log and code
+            throw new CustomException(SEARCHER_SERVICE_EXCEPTION, e.getMessage()); // add log and code
         }
 
     }

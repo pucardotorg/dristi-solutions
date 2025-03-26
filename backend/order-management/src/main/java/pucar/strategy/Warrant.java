@@ -3,10 +3,12 @@ package pucar.strategy;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.JsonPath;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import pucar.util.TaskUtil;
+import pucar.web.models.CourtDetails;
 import pucar.web.models.Order;
 import pucar.web.models.OrderRequest;
 import pucar.web.models.WorkflowObject;
@@ -15,6 +17,8 @@ import pucar.web.models.courtCase.CourtCase;
 import pucar.web.models.courtCase.Party;
 import pucar.web.models.task.*;
 
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.*;
 
 @Component
@@ -105,10 +109,10 @@ public class Warrant implements OrderUpdateStrategy {
                 .findFirst();
 
 
-//        ///  individual service call
-//        CompletableFuture<IndividualDetail> individualDetailFuture =
-//                Digit.DRISTIService.searchIndividualUser(new IndividualRequest(complainantIndividualId.orElse(null)));
-//
+        ///  individual service call
+        CompletableFuture<IndividualDetail> individualDetailFuture =
+                Digit.DRISTIService.searchIndividualUser(new IndividualRequest(complainantIndividualId.orElse(null)));
+
         JsonNode orderFormData = getFormData(orderType, orderData);
         JsonNode additionalDetails = objectMapper.convertValue(orderData.getAdditionalDetails(), JsonNode.class);
         JsonNode respondentNameData = getOrderData(orderType, orderFormData);
@@ -122,8 +126,8 @@ public class Warrant implements OrderUpdateStrategy {
         JsonNode orderFormValue = additionalDetails.get("formdata");
 
 
-//        Respondent respondentDetails = new Respondent(getRespondentName(respondentNameData), respondentAddress.get(0));
-//
+        Respondent respondentDetails = new Respondent(getRespondentName(respondentNameData), respondentAddress.get(0));
+
         switch (orderType) {
 //            case "SUMMONS":
 //                payload.put("summonDetails", new SummonDetails(orderData.getAuditDetails().getLastModifiedTime(), caseDetails.getFilingDate()));
@@ -139,10 +143,11 @@ public class Warrant implements OrderUpdateStrategy {
 //
             case "WARRANT":
                 task.getTaskDetails().setWarrantDetails(buildWarrantDetails(orderData, caseDetails, orderFormValue));
+                task.getTaskDetails().setCaseDetails(buildCaseDetails(caseDetails, orderData, null)); //need to build courtdetails
 
         }
 
-        return taskRequest;
+        return TaskRequest.builder().task(task).build();
     }
 
     private JsonNode getFormData(String orderType, Order order)  {
@@ -176,10 +181,25 @@ public class Warrant implements OrderUpdateStrategy {
                 .docType(orderFormValue.get("warrantType").get("code").asText())
                 .docSubType(orderFormValue.get("bailInfo").get("isBailable").get("code").asBoolean() ? "BAILABLE" : "NON_BAILABLE")
                 .surety(orderFormValue.get("bailInfo").get("noOfSureties").get("code").asText())
-                .bailableAmount(orderFormValue.get("bailInfo").get("bailableAmount").asDouble())
+                .bailableAmount(Double.valueOf(orderFormValue.get("bailInfo").get("bailableAmount").asDouble()))
                 .build();
     }
 
+    private CaseDetails buildCaseDetails(CourtCase courtCase, Order orderData, CourtDetails courtDetails) {
+        return CaseDetails.builder()
+                .caseTitle(courtCase.getCaseTitle())
+                .caseYear(String.valueOf(Instant.ofEpochMilli(courtCase.getRegistrationDate())
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDate()
+                        .getYear()))
+                .hearingDate(JsonPath.read(orderData.getAdditionalDetails(), "$.formdata.dateOfHearing"))
+                .judgeName(courtCase.getJudgeId())
+                .courtName(courtDetails.getCourtName())
+                .courtAddress(courtDetails.getCourtAddress())
+                .courtId(courtDetails.getCourtId())
+                .phoneNumber(courtDetails.getPhoneNumber())
+                .build();
+    }
 
 }
 

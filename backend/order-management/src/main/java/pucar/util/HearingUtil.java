@@ -40,12 +40,13 @@ public class HearingUtil {
     private final Configuration configuration;
     private final ServiceRequestRepository serviceRequestRepository;
     private final AdvocateUtil advocateUtil;
-
-    public HearingUtil(ObjectMapper objectMapper, Configuration configuration, ServiceRequestRepository serviceRequestRepository, AdvocateUtil advocateUtil) {
+    private final CacheUtil cacheUtil;
+    public HearingUtil(ObjectMapper objectMapper, Configuration configuration, ServiceRequestRepository serviceRequestRepository, AdvocateUtil advocateUtil, CacheUtil cacheUtil) {
         this.objectMapper = objectMapper;
         this.configuration = configuration;
         this.serviceRequestRepository = serviceRequestRepository;
         this.advocateUtil = advocateUtil;
+        this.cacheUtil = cacheUtil;
     }
 
 
@@ -53,6 +54,10 @@ public class HearingUtil {
         objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
         StringBuilder uri = new StringBuilder(configuration.getHearingHost().concat(configuration.getHearingSearchEndPoint()));
 
+        Object redisResponse = cacheUtil.findById(request.getCriteria().getTenantId() + ":" + request.getCriteria().getHearingId());
+        if(redisResponse != null) {
+            return List.of(objectMapper.convertValue(redisResponse, Hearing.class));
+        }
         Object response = serviceRequestRepository.fetchResult(uri, request);
         List<Hearing> hearingList = null;
         try {
@@ -60,6 +65,7 @@ public class HearingUtil {
             JsonNode hearingListNode = jsonNode.get("HearingList");
             hearingList = objectMapper.readValue(hearingListNode.toString(), new TypeReference<>() {
             });
+            cacheUtil.save(hearingList.get(0).getTenantId() + ":" + hearingList.get(0).getHearingId(), hearingList.get(0));
         } catch (HttpClientErrorException e) {
             log.error(EXTERNAL_SERVICE_EXCEPTION, e);
             throw new ServiceCallException(e.getResponseBodyAsString());
@@ -77,7 +83,9 @@ public class HearingUtil {
         Object response = serviceRequestRepository.fetchResult(uri, request);
         try {
             JsonNode jsonNode = objectMapper.valueToTree(response);
-            return objectMapper.readValue(jsonNode.toString(), HearingResponse.class);
+            HearingResponse hearingResponse =  objectMapper.readValue(jsonNode.toString(), HearingResponse.class);
+            cacheUtil.save(hearingResponse.getHearing().getTenantId() + ":" + hearingResponse.getHearing().getHearingId(), hearingResponse.getHearing());
+            return hearingResponse;
         } catch (HttpClientErrorException e) {
             log.error(EXTERNAL_SERVICE_EXCEPTION, e);
             throw new ServiceCallException(e.getResponseBodyAsString());

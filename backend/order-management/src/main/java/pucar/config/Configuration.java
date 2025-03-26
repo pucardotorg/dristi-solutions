@@ -140,5 +140,7 @@ public class Configuration {
     @Value("${dristi.scheduler.reschedule.endpoint}")
     private String rescheduleEndPoint;
 
+    @Value("${spring.redis.timeout}")
+    private Long redisTimeout;
 
 }

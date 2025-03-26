@@ -18,6 +18,9 @@ import java.util.List;
 public class CaseCriteria {
 
 
+    @JsonProperty("tenantId")
+    private String tenantId = null;
+
     @JsonProperty("caseId")
     private String caseId = null;
 
