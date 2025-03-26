@@ -173,21 +173,19 @@ const SelectComponents = ({ t, config, onSelect, formData = {}, errors, formStat
     } else {
       onSelect(`${configKey}.${input}`, value, { shouldValidate: true });
       onSelect(config.key, { ...formData?.[config.key], [input]: value }, { shouldValidate: true });
-      if (config?.state === "CASE_REASSIGNED") {
-        onSelect("complainantVerification", {
-          ...formData?.["complainantVerification"],
-          individualDetails: {
-            ...formData?.["complainantVerification"]?.individualDetails,
-            "addressDetails-select": { ...formData?.["addressDetails-select"], [input]: value },
-            addressDetails: {
-              ...formData?.["addressDetails"],
-              [input]: value,
-              coordinates: formData?.["addressDetails"]?.coordinates ? formData["addressDetails"].coordinates : { longitude: "", latitude: "" },
-            },
+      onSelect("complainantVerification", {
+        ...formData?.["complainantVerification"],
+        individualDetails: {
+          ...formData?.["complainantVerification"]?.individualDetails,
+          "addressDetails-select": { ...formData?.["addressDetails-select"], [input]: value },
+          addressDetails: {
+            ...formData?.["addressDetails"],
+            [input]: value,
+            coordinates: formData?.["addressDetails"]?.coordinates ? formData["addressDetails"].coordinates : { longitude: "", latitude: "" },
           },
-          isUserVerified: true,
-        });
-      }
+        },
+        isUserVerified: true,
+      });
     }
   }
 
