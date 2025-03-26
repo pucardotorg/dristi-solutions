@@ -29,8 +29,8 @@ export const UICustomizations = {
           tenantId: requestCriteria?.params?.tenantId,
         },
         tenantId: requestCriteria?.params?.tenantId,
-        limit: requestCriteria?.state?.tabeleForm?.limit || 10,
-        offset: requestCriteria?.state?.tabeleForm?.offset || 0,
+        limit: requestCriteria?.state?.tableForm?.limit || 10,
+        offset: requestCriteria?.state?.tableForm?.offset || 0,
       };
 
       return {
