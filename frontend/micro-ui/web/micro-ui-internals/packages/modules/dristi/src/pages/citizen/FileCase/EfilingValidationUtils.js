@@ -1494,7 +1494,7 @@ export const updateCaseDetails = async ({
         updatedFormData
           .filter((item) => item.isenabled)
           .map(async (data, index) => {
-            if (data?.data?.complainantVerification?.individualDetails) {
+            if (data?.data?.complainantVerification?.individualDetails?.document) {
               const Individual = await DRISTIService.searchIndividualUser(
                 {
                   Individual: {
@@ -1711,6 +1711,7 @@ export const updateCaseDetails = async ({
       updatedFormData
         .filter((item) => item.isenabled)
         .map(async (data, index) => {
+          let updatedComplainantVerification = structuredClone(complainantVerification[index] || {});
           let documentData = {
             companyDetailsUpload: null,
           };
@@ -1744,6 +1745,9 @@ export const updateCaseDetails = async ({
             };
             docList.push(doc);
             individualDetails.document = [uploadedData];
+            updatedComplainantVerification.individualDetails = updatedComplainantVerification?.individualDetails
+              ? { ...updatedComplainantVerification?.individualDetails, document: [doc] }
+              : { ...data?.data?.complainantVerification?.individualDetails, document: [doc] };
           }
           if (
             !data?.data?.complainantVerification?.isUserVerified &&
@@ -1757,7 +1761,7 @@ export const updateCaseDetails = async ({
               ...data?.data?.complainantVerification?.individualDetails?.document?.[0],
               documentType: documentsTypeMapping["complainantId"],
             };
-            docList.push(doc);
+            !individualDetails?.document && docList.push(doc);
           }
           if (data?.data?.companyDetailsUpload?.document) {
             documentData.companyDetailsUpload = {};
@@ -1789,7 +1793,7 @@ export const updateCaseDetails = async ({
               ...documentData,
               complainantVerification: {
                 ...data?.data?.complainantVerification,
-                ...complainantVerification[index],
+                ...updatedComplainantVerification,
                 isUserVerified: Boolean(data?.data?.complainantVerification?.mobileNumber && data?.data?.complainantVerification?.otpNumber),
               },
               ...(data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file && idProof),
