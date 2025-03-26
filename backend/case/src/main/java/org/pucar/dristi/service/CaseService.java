@@ -1466,7 +1466,10 @@ public class CaseService {
                         .filter(pendingAdvocateRequest -> pendingAdvocateRequest.getAdvocateId().equalsIgnoreCase(advocateId))
                         .findFirst();
                 PendingAdvocateRequest pendingAdvocateRequest = pendingAdvocateRequestOptional.orElseGet(PendingAdvocateRequest::new);
-                pendingAdvocateRequest.setAdvocateId(advocateId);
+                boolean isExisting = pendingAdvocateRequestOptional.isPresent();
+                if(!isExisting) {
+                    pendingAdvocateRequest.setAdvocateId(advocateId);
+                }
                 boolean isPartOfCase = courtCase.getRepresentatives() != null &&
                         !courtCase.getRepresentatives().stream()
                                 .filter(adv -> adv.getAdvocateId() != null && adv.getAdvocateId().equalsIgnoreCase(advocateId))
@@ -1480,7 +1483,9 @@ public class CaseService {
 
 
                 pendingAdvocateRequest.addTaskReferenceNoList(taskReferenceNoList);
-                pendingAdvocateRequestList.add(pendingAdvocateRequest);
+                if(!isExisting) {
+                    pendingAdvocateRequestList.add(pendingAdvocateRequest);
+                }
                 courtCase.setPendingAdvocateRequests(pendingAdvocateRequestList);
 
                 producer.push(config.getUpdatePendingAdvocateRequestKafkaTopic(), courtCase);
