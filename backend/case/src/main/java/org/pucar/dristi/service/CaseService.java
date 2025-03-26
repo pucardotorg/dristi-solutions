@@ -1231,8 +1231,14 @@ public class CaseService {
                 ObjectNode additionalDetails = objectMapper.createObjectNode();
 
                 additionalDetails.put("uuid", individual.getUserUuid());
-                additionalDetails.put("fullName", getName(individual));
 
+                if(representingJoinCase.getUniqueId()!=null){
+                    //respondent name enrich
+                    additionalDetails.put("fullName", getRespondentNameByUniqueId(courtCase.getAdditionalDetails(),representingJoinCase.getUniqueId()));
+                }else{
+                    //complainant name enrich
+                    additionalDetails.put("fullName", getComplainantNameByIndividualId(courtCase.getAdditionalDetails(),representingJoinCase.getIndividualId()));
+                }
                 Object additionalDetailsObject = objectMapper.convertValue(additionalDetails, additionalDetails.getClass());
                 party.setAdditionalDetails(additionalDetailsObject);
                 party.setCaseId(String.valueOf(courtCase.getId()));
@@ -1271,7 +1277,14 @@ public class CaseService {
                 ObjectNode additionalDetails = objectMapper.createObjectNode();
 
                 additionalDetails.put("uuid", individual.getUserUuid());
-                additionalDetails.put("fullName", getName(individual));
+
+                if(representingJoinCase.getUniqueId()!=null){
+                    //respondent name enrich
+                    additionalDetails.put("fullName", getRespondentNameByUniqueId(courtCase.getAdditionalDetails(),representingJoinCase.getUniqueId()));
+                }else{
+                    //complainant name enrich
+                    additionalDetails.put("fullName", getComplainantNameByIndividualId(courtCase.getAdditionalDetails(),representingJoinCase.getIndividualId()));
+                }
 
                 Object additionalDetailsObject = objectMapper.convertValue(additionalDetails, additionalDetails.getClass());
                 party.setAdditionalDetails(additionalDetailsObject);
@@ -1816,11 +1829,11 @@ public class CaseService {
         return taskUtil.callCreateTask(taskRequest);
     }
 
-    private void enrichAndPushLitigantJoinCase(JoinCaseV2Request joinCaseRequest, CourtCase caseObj, AuditDetails auditDetails) {
+    private void enrichAndPushLitigantJoinCase(JoinCaseV2Request joinCaseRequest, CourtCase caseObj, CourtCase courtCase, AuditDetails auditDetails) {
 
         caseObj.setAuditdetails(auditDetails);
         JoinCaseDataV2 joinCaseData = joinCaseRequest.getJoinCaseData();
-        mapAndSetLitigants(joinCaseData, caseObj, joinCaseRequest.getRequestInfo());
+        mapAndSetLitigants(joinCaseData, caseObj,courtCase, joinCaseRequest.getRequestInfo());
 
         log.info("enriching litigants");
         enrichLitigantsOnCreateAndUpdate(caseObj, auditDetails);
@@ -1861,7 +1874,7 @@ public class CaseService {
         return objectMapper.convertValue(additionalDetailsNode, additionalDetails.getClass());
     }
 
-    public void mapAndSetLitigants(JoinCaseDataV2 joinCaseData, CourtCase caseObj, RequestInfo requestInfo) {
+    public void mapAndSetLitigants(JoinCaseDataV2 joinCaseData, CourtCase caseObj, CourtCase courtCase, RequestInfo requestInfo) {
         List<Party> litigants = joinCaseData.getLitigant().stream()
                 .map(litigant -> {
                     Party party = new Party();
@@ -1876,14 +1889,20 @@ public class CaseService {
                     party.setDocuments(litigant.getDocuments());
                     party.setAuditDetails(litigant.getAuditDetails());
 
-
                     List<Individual> individualsList = individualService.getIndividualsByIndividualId(requestInfo, litigant.getIndividualId());
                     Individual individual = individualsList.get(0);
 
                     ObjectNode additionalDetails = objectMapper.createObjectNode();
 
                     additionalDetails.put("uuid", individual.getUserUuid());
-                    additionalDetails.put("fullName", getName(individual));
+
+                    if(litigant.getUniqueId()!=null){
+                        //respondent name enrich
+                        additionalDetails.put("fullName", getRespondentNameByUniqueId(courtCase.getAdditionalDetails(),litigant.getUniqueId()));
+                    }else{
+                        //complainant name enrich
+                        additionalDetails.put("fullName", getComplainantNameByIndividualId(courtCase.getAdditionalDetails(),litigant.getIndividualId()));
+                    }
 
                     Object additionalDetailsObject = objectMapper.convertValue(additionalDetails, additionalDetails.getClass());
                     party.setAdditionalDetails(additionalDetailsObject);
@@ -1895,6 +1914,80 @@ public class CaseService {
                 .collect(Collectors.toList());
 
         caseObj.setLitigants(litigants);
+    }
+
+    private String getRespondentNameByUniqueId(Object additionalDetails, String uniqueId) {
+
+        ObjectNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, ObjectNode.class);
+
+        if (additionalDetailsNode.has("respondentDetails")) {
+            ObjectNode respondentDetails = (ObjectNode) additionalDetailsNode.get("respondentDetails");
+
+            if (respondentDetails.has("formdata") && respondentDetails.get("formdata").isArray()) {
+                ArrayNode formData = (ArrayNode) respondentDetails.get("formdata");
+
+                for (int i = 0; i < formData.size(); i++) {
+                    ObjectNode dataNode = (ObjectNode) formData.get(i).path("data");
+
+                    String uniqueIdRespondent = formData.get(i).get("uniqueId").asText();
+
+                    if (uniqueIdRespondent.equalsIgnoreCase(uniqueId)) {
+                        // Found the matching respondent, now extract the name details
+                        String firstName = dataNode.path("respondentFirstName").asText();
+                        String middleName = dataNode.path("respondentMiddleName").asText();
+                        String lastName = dataNode.path("respondentLastName").asText();
+
+                        // Concatenate with a space between names, ensuring no leading or trailing spaces
+                        String fullName = (firstName.isEmpty() ? "" : firstName) +
+                                (middleName.isEmpty() ? "" : " " + middleName) +
+                                (lastName.isEmpty() ? "" : " " + lastName);
+
+                        return fullName.trim();
+                    }
+                }
+            }
+        }
+        return "";
+    }
+
+    private String getComplainantNameByIndividualId(Object additionalDetails, String individualId) {
+
+        ObjectNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, ObjectNode.class);
+
+        // Check if advocateDetails exist
+        if (additionalDetailsNode.has("advocateDetails")) {
+            ObjectNode advocateDetails = (ObjectNode) additionalDetailsNode.get("advocateDetails");
+
+            // Check if the formdata array exists within advocateDetails
+            if (advocateDetails.has("formdata") && advocateDetails.get("formdata").isArray()) {
+                ArrayNode formData = (ArrayNode) advocateDetails.get("formdata");
+
+                // Iterate over each element in the formData array
+                for (int i = 0; i < formData.size(); i++) {
+                    ObjectNode dataNode = (ObjectNode) formData.get(i).get("data");
+
+                    // Get the boxComplainant object for matching the litigant
+                    ObjectNode boxComplainant = (ObjectNode) dataNode.get("multipleAdvocatesAndPip").get("boxComplainant");
+
+                    // Skip if the litigant doesn't match
+
+                    if (boxComplainant.get("individualId").textValue().equalsIgnoreCase(individualId)){
+                        // Extract firstName, middleName, and lastName
+                        String firstName = boxComplainant.path("firstName").asText();
+                        String middleName = boxComplainant.path("middleName").asText();
+                        String lastName = boxComplainant.path("lastName").asText();
+
+                        // Concatenate the names with a space, ensuring no extra spaces if any part is empty
+                        String fullName = firstName +
+                                (middleName.isEmpty() ? "" : " " + middleName) +
+                                (lastName.isEmpty() ? "" : " " + lastName);
+
+                        return fullName.trim();
+                    }
+                }
+            }
+        }
+        return "";
     }
 
     private TaskResponse createTask(JoinCaseV2Request joinCaseRequest, String assignes, CourtCase courtCase) {
@@ -2356,12 +2449,12 @@ public class CaseService {
             }
         });
 
+        enrichAndPushLitigantJoinCase(joinCaseRequest, caseObj, courtCase,auditDetails);
+
         CourtCase encrptedCourtCase = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncryptNew(), CourtCase.class);
 
         log.info("Pushing additional details :: {}", encrptedCourtCase);
         producer.push(config.getUpdateAdditionalJoinCaseTopic(), encrptedCourtCase);
-
-        enrichAndPushLitigantJoinCase(joinCaseRequest, caseObj, auditDetails);
 
         updateCourtCaseInRedis(joinCaseRequest.getJoinCaseData().getTenantId(), encrptedCourtCase);
 
