@@ -21,6 +21,7 @@ import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/use
 import { useToast } from "../../../components/Toast/useToast";
 import Button from "../../../components/Button";
 import { compositeOrderAllowedTypes } from "@egovernments/digit-ui-module-orders/src/pages/employee/GenerateOrders";
+import useSearchEvidenceService from "../../../../../submissions/src/hooks/submissions/useSearchEvidenceService";
 
 const stateSla = {
   DRAFT_IN_PROGRESS: 2,
@@ -524,6 +525,23 @@ const EvidenceModal = ({
     counterUpdate();
   };
 
+  const artifactNumber = documentSubmission?.[0]?.artifactList?.artifactNumber;
+  const { data: evidenceData, isloading: isEvidenceLoading, refetch: evidenceRefetch } = useSearchEvidenceService(
+    {
+      criteria: {
+        filingNumber,
+        artifactNumber,
+        tenantId,
+      },
+      tenantId,
+    },
+    {},
+    artifactNumber,
+    Boolean(artifactNumber)
+  );
+
+  const evidenceDetails = useMemo(() => evidenceData?.artifacts?.[0], [evidenceData]);
+
   const handleEvidenceAction = async () => {
     if (businessOfTheDay) {
       setIsSubmitDisabled(true);
@@ -538,6 +556,15 @@ const EvidenceModal = ({
       );
       const nextHearing = response?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
       const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
+      let evidenceReqBody = {};
+      let evidence = {};
+      evidenceReqBody = {
+        artifact: {
+          ...evidenceDetails,
+          publishedDate: new Date().getTime(),
+        },
+      };
+      await DRISTIService.updateEvidence(evidenceReqBody);
       await DRISTIService.addADiaryEntry(
         {
           diaryEntry: {
@@ -1357,6 +1384,7 @@ const EvidenceModal = ({
       </style>
       {!showConfirmationModal && !showSuccessModal && (
         <Modal
+          hideModalActionbar={actionSaveLabel === t("UNMARK_AS_EVIDENCE")}
           headerBarEnd={<CloseBtn onClick={handleBack} />}
           actionSaveLabel={actionSaveLabel}
           actionSaveOnSubmit={actionSaveOnSubmit}
@@ -1441,6 +1469,21 @@ const EvidenceModal = ({
                       </h3>
                     </div>
                   </div>
+                  {documentSubmission[0]?.artifactList.publishedDate !== 0 && (
+                    <div className="info-row">
+                      <div className="info-key">
+                        <h3>{t("DATE_OF_EVIDENCE")}</h3>
+                      </div>
+                      <div className="info-value">
+                        <h3>
+                          {currentDiaryEntry && artifact
+                            ? t(getDate(parseInt(artifact?.publishedDate)))
+                            : t(getDate(parseInt(documentSubmission[0]?.artifactList.publishedDate)))}
+                        </h3>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="info-row">
                     <div className="info-key">
                       <h3>{t("SENDER")}</h3>
