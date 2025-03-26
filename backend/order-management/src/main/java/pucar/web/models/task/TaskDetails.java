@@ -17,11 +17,17 @@ public class TaskDetails {
     @JsonProperty("warrantDetails")
     private WarrantDetails warrantDetails = null;
 
+    @JsonProperty("noticeDetails")
+    private NoticeDetails noticeDetails;
+
     @JsonProperty("caseDetails")
     private CaseDetails caseDetails = null;
 
     @JsonProperty("respondentDetails")
     private RespondentDetails respondentDetails = null;
+
+    @JsonProperty("complainantDetails")
+    private ComplainantDetails complainantDetails;
 
     @JsonProperty("deliveryChannel")
     private DeliveryChannel deliveryChannel = null;

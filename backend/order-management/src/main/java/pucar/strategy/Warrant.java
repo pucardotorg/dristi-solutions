@@ -4,14 +4,15 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
+import jakarta.validation.Valid;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.models.individual.Individual;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import pucar.service.IndividualService;
 import pucar.util.TaskUtil;
-import pucar.web.models.CourtDetails;
-import pucar.web.models.Order;
-import pucar.web.models.OrderRequest;
-import pucar.web.models.WorkflowObject;
+import pucar.web.models.*;
 import pucar.web.models.adiary.CaseDiaryEntry;
 import pucar.web.models.courtCase.CourtCase;
 import pucar.web.models.courtCase.Party;
@@ -20,17 +21,21 @@ import pucar.web.models.task.*;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 public class Warrant implements OrderUpdateStrategy {
 
     private final TaskUtil taskUtil;
     private final ObjectMapper objectMapper;
+    private final IndividualService individualService;
 
     @Autowired
-    public Warrant(TaskUtil taskUtil, ObjectMapper objectMapper) {
+    public Warrant(TaskUtil taskUtil, ObjectMapper objectMapper, IndividualService individualService) {
         this.taskUtil = taskUtil;
         this.objectMapper = objectMapper;
+        this.individualService = individualService;
     }
 
     @Override
@@ -100,71 +105,28 @@ public class Warrant implements OrderUpdateStrategy {
     }
 
 
-    public TaskRequest createTask(String orderType, CourtCase caseDetails, Order orderData) throws JsonProcessingException {
-        Task task = new Task();
-        List<Party> litigants = caseDetails.getLitigants();
-        Optional<String> complainantIndividualId = litigants.stream()
-                .filter(item -> "complainant.primary".equals(item.getPartyType()))
-                .map(Party::getIndividualId)
-                .findFirst();
-
-
-        ///  individual service call
-        CompletableFuture<IndividualDetail> individualDetailFuture =
-                Digit.DRISTIService.searchIndividualUser(new IndividualRequest(complainantIndividualId.orElse(null)));
-
-        JsonNode orderFormData = getFormData(orderType, orderData);
-        JsonNode additionalDetails = objectMapper.convertValue(orderData.getAdditionalDetails(), JsonNode.class);
-        JsonNode respondentNameData = getOrderData(orderType, orderFormData);
-        List<String> selectedChannels = additionalDetails.has(orderType.equals("NOTICE") ? "noticeOrder" : "SummonsOrder")
-                ? additionalDetails.get(orderType.equals("NOTICE") ? "noticeOrder" : "SummonsOrder").get("selectedChannels").findValuesAsText("name")
-                : Collections.emptyList();
-        JsonNode respondentAddress = orderFormData.has("addressDetails") ? orderFormData.get("addressDetails")
-                : (respondentNameData.has("address") ? respondentNameData.get("address")
-                : objectMapper.readTree(caseDetails.getAdditionalDetails().toString()).get("respondentDetails").get("formdata").get(0).get("data").get("addressDetails"));
-
-        JsonNode orderFormValue = additionalDetails.get("formdata");
-
-
-        Respondent respondentDetails = new Respondent(getRespondentName(respondentNameData), respondentAddress.get(0));
-
-        switch (orderType) {
-//            case "SUMMONS":
-//                payload.put("summonDetails", new SummonDetails(orderData.getAuditDetails().getLastModifiedTime(), caseDetails.getFilingDate()));
-//                payload.put("respondentDetails", respondentDetails);
-//                payload.put("caseDetails", new CaseDetail(caseDetails.getCaseTitle(), caseDetails.getFilingDate()));
-//                break;
-//
-//            case "NOTICE":
-//                payload.put("noticeDetails", new NoticeDetails(orderData.getAuditDetails().getLastModifiedTime(), caseDetails.getFilingDate()));
-//                payload.put("respondentDetails", respondentDetails);
-//                payload.put("caseDetails", new CaseDetail(caseDetails.getCaseTitle(), caseDetails.getFilingDate()));
-//                break;
-//
-            case "WARRANT":
-                task.getTaskDetails().setWarrantDetails(buildWarrantDetails(orderData, caseDetails, orderFormValue));
-                task.getTaskDetails().setCaseDetails(buildCaseDetails(caseDetails, orderData, null)); //need to build courtdetails
-
-        }
-
+    public TaskRequest createTask(CourtCase caseDetails, Order orderData) throws JsonProcessingException {
+        Task task = Task.builder()
+                .createdDate(System.currentTimeMillis())
+                .orderId(orderData.getId())
+                .filingNumber(caseDetails.getFilingNumber())
+                .cnrNumber(caseDetails.getCnrNumber())
+                .taskType(orderData.getOrderType())
+                .status("IN_PROGRESS")
+                .tenantId(caseDetails.getTenantId())
+                .workflow((WorkflowObject) WorkflowObject.builder().action("CREATE").comments(orderData.getOrderType()).build())
+                .amount(Amount.builder().type("FINE").status("DONE").build())
+                .build();
         return TaskRequest.builder().task(task).build();
     }
 
-    private JsonNode getFormData(String orderType, Order order)  {
+    private String getFormData(String orderType) {
         Map<String, String> formDataKeyMap = Map.of(
                 "SUMMONS", "SummonsOrder",
                 "WARRANT", "warrantFor",
                 "NOTICE", "noticeOrder"
         );
-        String formDataKey = formDataKeyMap.get(orderType);
-        try {
-            JsonNode additionalDetails = objectMapper.readTree(order.getAdditionalDetails().toString());
-            JsonNode formdata = additionalDetails.get("formdata");
-            return formdata.get(formDataKey);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-
+        return formDataKeyMap.get(orderType);
     }
 
     private JsonNode getOrderData(String orderType, JsonNode orderFormData) {
@@ -174,14 +136,16 @@ public class Warrant implements OrderUpdateStrategy {
         return orderFormData;
     }
 
-    private WarrantDetails buildWarrantDetails(Order orderData, CourtCase courtCase, JsonNode orderFormValue) {
+    private WarrantDetails buildWarrantDetails(Order orderData, CourtCase courtCase) {
+        JsonNode additionalDetails = objectMapper.convertValue(orderData.getAdditionalDetails(), JsonNode.class);
+        JsonNode orderFormValue = additionalDetails.get("formdata");
         return WarrantDetails.builder()
                 .issueDate(orderData.getAuditDetails().getLastModifiedTime())
                 .caseFilingDate(courtCase.getFilingDate())
                 .docType(orderFormValue.get("warrantType").get("code").asText())
                 .docSubType(orderFormValue.get("bailInfo").get("isBailable").get("code").asBoolean() ? "BAILABLE" : "NON_BAILABLE")
                 .surety(orderFormValue.get("bailInfo").get("noOfSureties").get("code").asText())
-                .bailableAmount(Double.valueOf(orderFormValue.get("bailInfo").get("bailableAmount").asDouble()))
+                .bailableAmount(orderFormValue.get("bailInfo").get("bailableAmount").asDouble())
                 .build();
     }
 
@@ -198,7 +162,104 @@ public class Warrant implements OrderUpdateStrategy {
                 .courtAddress(courtDetails.getCourtAddress())
                 .courtId(courtDetails.getCourtId())
                 .phoneNumber(courtDetails.getPhoneNumber())
+                .hearingNumber(orderData.getHearingNumber())
                 .build();
+    }
+
+    private RespondentDetails buildRespondentDetails(CourtCase courtCase, Order order) {
+        JsonNode orderAdditionalDetails = objectMapper.convertValue(order.getAdditionalDetails(), JsonNode.class);
+        JsonNode caseAdditionalDetails = objectMapper.convertValue(order.getAdditionalDetails(), JsonNode.class);
+
+        return RespondentDetails.builder()
+                .name(orderAdditionalDetails.get("formdata").get(getFormData(order.getOrderType())).asText())
+                .address(objectMapper.convertValue(caseAdditionalDetails.get("respondentDetails").get("formdata").get(0).get("data").get("addressDetails").get(0).get("addressDetails"), Address.class))
+                .age(null)
+                .phone(null)
+                .build();
+    }
+
+    private DeliveryChannel buildDeliveryChannel() {
+        return DeliveryChannel.builder()
+                .channelName(ChannelName.POLICE)
+                .paymentFees("0") //need to call payment calculator (channelId="POLICE", receiverPincode: caseAdditionalDetails.get("respondentDetails").get("formdata").get(0).get("data").get("addressDetails").get(0).get("addressDetails").get("pincode"), taskType: orderType
+                .build();
+    }
+
+
+    private SummonsDetails buildSummonDetails(Order order, CourtCase caseDetails) {
+        JsonNode additionalDetails = objectMapper.convertValue(order.getAdditionalDetails(), JsonNode.class);
+        JsonNode orderFormValue = additionalDetails.get("formdata").get("SummonsOrder");
+        return SummonsDetails.builder()
+                .issueDate(order.getAuditDetails().getLastModifiedTime())
+                .caseFilingDate(caseDetails.getFilingDate())
+                .docSubType(orderFormValue.get("party").get("data").get("partyType").asText().equals("Witness") ? "WITNESS" : "ACCUSED").build();
+    }
+
+    private ComplainantDetails buildComplainantDetails(CourtCase courtCase) {
+        JsonNode additionalDetails = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
+        String individualId = courtCase.getLitigants().stream()
+                .filter(item -> item.getPartyType().equals("complainant.primary"))
+                .map(Party::getIndividualId).findFirst().orElse(null);
+        Individual individual = individualService.getIndividualsByIndividualId(RequestInfo.builder().build(), individualId).get(0);
+        org.egov.common.models.individual.Address individualAddress = individual.getAddress().get(0);
+        JsonNode data = additionalDetails.get("complainantDetails").get("formdata").get(0).get("data");
+        return ComplainantDetails.builder()
+                .name(getComplainantName(data))
+                .address(getComplainantAddress(individualAddress)).build();
+    }
+
+    @NotNull
+    private static String getComplainantName(JsonNode complainantDetails) {
+        String firstName = complainantDetails.has("firstName") && !complainantDetails.get("firstName").isNull() ? complainantDetails.get("firstName").asText().trim() : "";
+        String lastName = complainantDetails.has("lastName") && !complainantDetails.get("lastName").isNull() ? complainantDetails.get("lastName").asText().trim() : "";
+
+        String partyName = Stream.of(firstName, lastName)
+                .filter(name -> !name.isEmpty())  // Remove empty values
+                .collect(Collectors.joining(" ")); // Join with a space
+
+        if (complainantDetails.get("complainantType").get("code") != null &&
+                "INDIVIDUAL".equals(complainantDetails.get("complainantType").get("code").asText())) {
+            return partyName;
+        }
+
+        String companyName = complainantDetails.get("complainantCompanyName") != null
+                ? complainantDetails.get("complainantCompanyName").asText().trim()
+                : "";
+
+        return companyName.isEmpty() ? partyName : companyName + " (Represented By " + partyName + ")";
+
+    }
+
+    private @Valid Address getComplainantAddress(org.egov.common.models.individual.Address individualAddress) {
+        return Address.builder()
+                .pinCode(individualAddress.getPincode())
+                .district(individualAddress.getAddressLine2())
+                .city(individualAddress.getCity())
+                .state(individualAddress.getAddressLine1())
+                .coordinate(Coordinate.builder()
+                        .x(individualAddress.getLatitude().floatValue())
+                        .y(individualAddress.getLongitude().floatValue())
+                        .build())
+                .locality(Stream.of(individualAddress.getDoorNo(),
+                                individualAddress.getBuildingName(),
+                                individualAddress.getStreet())
+                        .filter(Objects::nonNull)
+                        .map(String::trim)
+                        .filter(s -> !s.isEmpty())
+                        .collect(Collectors.joining(", "))).build();
+
+    }
+
+    private NoticeDetails buildNoticeDetails(CourtCase courtCase, Order order) {
+        JsonNode additionalDetails = objectMapper.convertValue(order.getAdditionalDetails(), JsonNode.class);
+        JsonNode orderFormData = additionalDetails.get("formdata");
+        JsonNode orderFormValue = orderFormData.get("noticeOrder");
+        return NoticeDetails.builder()
+                .caseFilingDate(courtCase.getFilingDate())
+                .issueDate(order.getAuditDetails().getLastModifiedTime())
+                .partyIndex(orderFormData.get("party").get("data").get("partyIndex").asText())
+                .noticeType(orderFormData.get("noticeType").get("type").asText())
+                .docSubType(orderFormValue.get("party").get("data").get("partyType").asText().equals("Witness") ? "WITNESS" : "ACCUSED").build();
     }
 
 }

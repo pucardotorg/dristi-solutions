@@ -10,10 +10,10 @@ import org.springframework.validation.annotation.Validated;
 import pucar.web.models.Address;
 
 @Validated
-@jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2024-05-29T13:38:04.562296+05:30[Asia/Calcutta]")
 @Data
 @Builder
-public class RespondentDetails {
+public class ComplainantDetails {
+
 
     @JsonProperty("name")
     private String name;

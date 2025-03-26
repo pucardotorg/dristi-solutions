@@ -20,6 +20,9 @@ public class SummonsDetails {
     @JsonProperty("issueDate")
     private Long issueDate;
 
+    @JsonProperty("caseFilingDate")
+    private Long caseFilingDate;
+
     @JsonProperty("docType")
     private String docType;
 

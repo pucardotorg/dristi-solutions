@@ -143,4 +143,20 @@ public class Configuration {
     @Value("${spring.redis.timeout}")
     private Long redisTimeout;
 
+    //Individual Service
+    @Value("${egov.individual.host}")
+    private String individualHost;
+
+    @Value("${egov.individual.path}")
+    private String individualPath;
+
+    @Value("${egov.individual.create.path}")
+    private String individualCreateEndpoint;
+
+    @Value("${egov.individual.search.path}")
+    private String individualSearchEndpoint;
+
+    @Value("${egov.individual.update.path}")
+    private String individualUpdateEndpoint;
+
 }
