@@ -37,12 +37,13 @@ import {
   configsAdmitCase,
   configsDismissCase,
   configsApproveRejectLitigantDetailsChange,
+  replaceAdvocateConfig,
 } from "../../configs/ordersCreateConfig";
 import { CustomAddIcon, CustomDeleteIcon, WarningInfoIconYellow } from "../../../../dristi/src/icons/svgIndex";
 import OrderReviewModal from "../../pageComponents/OrderReviewModal";
 import OrderSignatureModal from "../../pageComponents/OrderSignatureModal";
 import OrderDeleteModal from "../../pageComponents/OrderDeleteModal";
-import { ordersService, schedulerService } from "../../hooks/services";
+import { ordersService, schedulerService, taskService } from "../../hooks/services";
 import { Loader } from "@egovernments/digit-ui-components";
 import OrderSucessModal from "../../pageComponents/OrderSucessModal";
 import { applicationTypes } from "../../utils/applicationTypes";
@@ -126,6 +127,7 @@ const configKeys = {
   ADMIT_CASE: configsAdmitCase,
   DISMISS_CASE: configsDismissCase,
   APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE: configsApproveRejectLitigantDetailsChange,
+  ADVOCATE_REPLACEMENT_APPROVAL: replaceAdvocateConfig,
 };
 
 function applyMultiSelectDropdownFix(setValue, formData, keys) {
@@ -3730,6 +3732,30 @@ const GenerateOrders = () => {
           }
         });
       }
+      if ("ADVOCATE_REPLACEMENT_APPROVAL" === orderType) {
+        const taskData = await DRISTIService.customApiService(Urls.orders.searchTasks, {
+          criteria: {
+            tenantId: tenantId,
+            taskNumber: currentOrder?.additionalDetails?.taskNumber,
+          },
+        });
+        const task = taskData?.list?.[0];
+
+        try {
+          const reqBody = {
+            task: {
+              ...task,
+              workflow: {
+                action: currentOrder?.additionalDetails?.formdata?.replaceAdvocateStatus?.code === "GRANT" ? "APPROVE" : "REJECT",
+              },
+            },
+          };
+          await taskService.updateTask(reqBody, { tenantId });
+        } catch (error) {
+          console.error("Error updating task data:", error);
+        }
+        return;
+      }
       if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(orderType)) {
         return newhearingId;
       }
@@ -3869,6 +3895,7 @@ const GenerateOrders = () => {
   }, [currentOrder, prevOrder?.orderType, t, isCaseAdmitted]);
 
   const handleGoBackSignatureModal = () => {
+    localStorage.removeItem("fileStoreId");
     setShowsignatureModal(false);
     setShowReviewModal(true);
   };

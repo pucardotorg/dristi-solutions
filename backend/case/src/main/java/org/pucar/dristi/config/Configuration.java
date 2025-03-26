@@ -20,6 +20,16 @@ import lombok.Setter;
 @Getter
 public class Configuration {
 
+	//Hearing
+	@Value("${egov.hearing.host}")
+	private String hearingHost;
+
+	@Value("${egov.hearing.path}")
+	private String hearingPath;
+
+	@Value("${egov.hearing.search.path}")
+	private String hearingSearchPath;
+
 	// User Config
 	@Value("${egov.user.host}")
 	private String userHost;
@@ -169,10 +179,16 @@ public class Configuration {
 	@Value("${egov.additional.join.case.kafka.topic}")
 	private String additionalJoinCaseTopic;
 
+	@Value("${egov.update.additional.join.case.kafka.topic}")
+	private String updateAdditionalJoinCaseTopic;
+
 	//Mdms
 
 	@Value("${mdms.case.module.name}")
 	private String caseModule;
+
+	@Value("${state.level.tenant.id}")
+	private String tenantId;
 
 	@Value("${egov.localization.statelevel}")
 	private Boolean isLocalizationStateLevel;
@@ -333,4 +349,16 @@ public class Configuration {
 
 	@Value("${hearing.case.reference.number.update}")
 	private String caseReferenceUpdateTopic;
+
+	@Value("${egov.analytics.host}")
+	private String analyticsServiceHost;
+
+	@Value("${egov.analytics.path}")
+	private String analyticsServicePath;
+
+	@Value("${egov.pending.advocate.request.join.case.kafka.topic}")
+	private String updatePendingAdvocateRequestKafkaTopic;
+  
+	@Value("${kafka.case.update.last.modified.time}")
+	private String caseUpdateLastModifiedTimeTopic;
 }

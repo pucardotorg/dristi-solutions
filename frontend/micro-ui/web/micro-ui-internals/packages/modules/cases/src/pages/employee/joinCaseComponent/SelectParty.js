@@ -4,6 +4,7 @@ import { CardLabel, Dropdown, FormComposerV2, LabelFieldPair, RadioButtons } fro
 import React, { useEffect, useMemo, useRef } from "react";
 import isEqual from "lodash/isEqual";
 import { useTranslation } from "react-i18next";
+import CustomTextArea from "@egovernments/digit-ui-module-dristi/src/components/CustomTextArea";
 
 const SelectParty = ({
   selectPartyData,
@@ -16,6 +17,7 @@ const SelectParty = ({
   setPartyInPerson,
   isLitigantJoined,
   isAdvocateJoined,
+  searchLitigantInRepresentives,
 }) => {
   const { t } = useTranslation();
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
@@ -32,13 +34,13 @@ const SelectParty = ({
             type: "component",
             component: "SelectCustomDragDrop",
             key: "affidavitData",
-            isMandatory: true,
+            isMandatory: selectPartyData?.userType?.value === "Litigant" ? true : false,
             withoutLabel: true,
             populators: {
               inputs: [
                 {
                   name: "document",
-                  documentHeader: selectPartyData?.userType?.value === "Litigant" ? "AFFIDAVIT" : "NOC_JUDGE_ORDER",
+                  documentHeader: selectPartyData?.userType?.value === "Litigant" ? "AFFIDAVIT" : "SUPPORING_DOCUMENT_OPTIONAL",
                   type: "DragDropComponent",
                   uploadGuidelines: "UPLOAD_DOC_50",
                   maxFileSize: 50,
@@ -57,6 +59,24 @@ const SelectParty = ({
     ],
     [selectPartyData?.userType]
   );
+
+  const advocateToReplaceList = useMemo(() => {
+    if (selectPartyData?.userType?.value === "Litigant") return [];
+    if (selectPartyData?.userType?.value === "Advocate" && (!party?.length || party?.length === 0)) return [];
+    const partyWithAdvocate = party
+      ?.flatMap((party) => {
+        const { representatives } = searchLitigantInRepresentives(caseDetails?.representatives, party?.individualId);
+        return representatives?.map((representative) => ({
+          ...party,
+          representative,
+          litigantIndividualId: party?.individualId,
+          advocateId: representative?.advocateId,
+          label: `${representative?.additionalDetails?.advocateName} (${party?.fullName})`,
+        }));
+      })
+      ?.filter((party) => party?.advocateId);
+    return partyWithAdvocate;
+  }, [selectPartyData?.userType, party, caseDetails, searchLitigantInRepresentives]);
 
   const caseInfo = useMemo(() => {
     if (caseDetails?.caseCategory) {
@@ -96,6 +116,17 @@ const SelectParty = ({
 
     return "";
   }, [t, party, selectPartyData?.userType]);
+
+  const customLabelAdvocate = useMemo(() => {
+    if (selectPartyData?.userType?.value !== "Advocate") return "";
+
+    const partyCount = selectPartyData?.advocateToReplaceList?.length || 0;
+
+    if (partyCount === 1) return selectPartyData?.advocateToReplaceList[0]?.label;
+    if (partyCount > 1) return `${selectPartyData?.advocateToReplaceList[0]?.label} + ${partyCount - 1} ${t("CS_OTHERS")}`;
+
+    return "";
+  }, [selectPartyData?.userType?.value, selectPartyData?.advocateToReplaceList, t]);
 
   const scrollToDiv = () => {
     if (targetRef.current) {
@@ -201,6 +232,9 @@ const SelectParty = ({
               freeze={true}
               topbarOptionsClassName={"top-bar-option"}
               disable={isLitigantJoined}
+              style={{
+                marginBottom: "1px",
+              }}
             />
           ) : (
             selectPartyData?.isReplaceAdvocate?.value && (
@@ -268,22 +302,94 @@ const SelectParty = ({
       )}
       {((partyInPerson?.value === "YES" && party?.uuid === userInfo?.uuid) ||
         (partyInPerson?.value === "YES" && !party?.uuid) ||
-        selectPartyData?.isReplaceAdvocate?.value === "YES") && (
-        <FormComposerV2
-          key={2}
-          config={advocateVakalatnamaConfig}
-          onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
-            if (!isEqual(formData, selectPartyData?.affidavit)) {
-              setSelectPartyData((selectPartyData) => ({
-                ...selectPartyData,
-                affidavit: formData,
-              }));
-            }
-          }}
-          defaultValues={selectPartyData?.affidavit}
-          className={`party-in-person-affidavit-upload`}
-          noBreakLine
-        />
+        (selectPartyData?.isReplaceAdvocate?.value === "YES" && party?.length > 0)) && (
+        <React.Fragment key={3}>
+          {selectPartyData?.isReplaceAdvocate?.value === "YES" && party?.length > 0 && (
+            <React.Fragment>
+              {advocateToReplaceList?.length > 0 && (
+                <LabelFieldPair className="case-label-field-pair">
+                  <CardLabel className="case-input-label">{`${t("WHICH_ADVOCATES_ARE_YOU_REPLACING")}`}</CardLabel>
+                  <MultiSelectDropdown
+                    options={advocateToReplaceList}
+                    selected={selectPartyData?.advocateToReplaceList}
+                    optionsKey={"label"}
+                    onSelect={(value) => {
+                      setSelectPartyData((selectPartyData) => ({
+                        ...selectPartyData,
+                        advocateToReplaceList: value?.map((val) => val[1]),
+                      }));
+                    }}
+                    customLabel={customLabelAdvocate}
+                    config={{
+                      isSelectAll: true,
+                    }}
+                    parentRef={targetRef}
+                  />
+                </LabelFieldPair>
+              )}
+
+              {(selectPartyData?.advocateToReplaceList?.length > 0 || advocateToReplaceList?.length === 0) && (
+                <React.Fragment>
+                  <LabelFieldPair className="case-label-field-pair">
+                    <CardLabel className="case-input-label">{`${t("SELECT_APPROVER")}`}</CardLabel>
+                    <RadioButtons
+                      selectedOption={selectPartyData?.approver}
+                      onSelect={(value) => {
+                        setSelectPartyData((selectPartyData) => ({
+                          ...selectPartyData,
+                          approver: value,
+                        }));
+                      }}
+                      optionsKey={"label"}
+                      options={[
+                        { label: t("JUDGE"), value: "JUDGE" },
+                        { label: t("EXISTING_ADVOCATES"), value: "EXISTING_ADVOCATES" },
+                      ]}
+                    />
+                  </LabelFieldPair>
+
+                  <LabelFieldPair className="case-label-field-pair reason-for-replacement-text-area">
+                    <CustomTextArea
+                      userType={selectPartyData?.userType?.value}
+                      name="reasonForReplacement"
+                      value={selectPartyData?.reasonForReplacement}
+                      onTextChange={(value) => {
+                        setSelectPartyData((selectPartyData) => ({
+                          ...selectPartyData,
+                          reasonForReplacement: value,
+                        }));
+                      }}
+                      id="reasonForReplacement"
+                      info={t("REASON_FOR_REPLACEMENT")}
+                      placeholder={t("TYPE_HERE_PLACEHOLDER")}
+                    />
+                  </LabelFieldPair>
+                </React.Fragment>
+              )}
+            </React.Fragment>
+          )}
+          {((selectPartyData?.userType?.value === "Litigant" && partyInPerson?.value === "YES") ||
+            (selectPartyData?.userType?.value === "Advocate" &&
+              selectPartyData?.isReplaceAdvocate?.value === "YES" &&
+              party?.length > 0 &&
+              (selectPartyData?.advocateToReplaceList?.length > 0 || advocateToReplaceList?.length === 0))) && (
+            <FormComposerV2
+              key={2}
+              config={advocateVakalatnamaConfig}
+              onFormValueChange={(setValue, formData) => {
+                if (!isEqual(formData, selectPartyData?.affidavit)) {
+                  setSelectPartyData((selectPartyData) => ({
+                    ...selectPartyData,
+                    affidavit: formData,
+                  }));
+                }
+              }}
+              defaultValues={selectPartyData?.affidavit}
+              className={`party-in-person-affidavit-upload`}
+              noBreakLine
+            />
+          )}
+        </React.Fragment>
       )}
 
       {selectPartyData?.userType?.value === "Litigant" &&

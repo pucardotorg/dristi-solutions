@@ -76,6 +76,10 @@ public class CaseCriteria {
     @Valid
     private List<String> status = null;
 
+    @JsonProperty("responseList")
+    @Valid
+    private List<CourtCase> responseList = null;
+
     @JsonProperty("pagination")
 
     @Valid
