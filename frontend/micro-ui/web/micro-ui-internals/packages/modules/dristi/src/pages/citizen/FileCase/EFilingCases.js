@@ -1022,21 +1022,22 @@ function EFilingCases({ path }) {
     }
     return modifiedFormData.map(({ data }, index) => {
       let disableConfigFields = [];
-      formConfig.forEach((config) => {
-        config.body.forEach((body) => {
-          if ("disableConfigFields" in body && "disableConfigKey" in body && "key" in body) {
-            if (!!data?.[body.key]?.[body.disableConfigKey]) {
-              const currentScrutinyObj = scrutinyObj?.litigentDetails?.complainantDetails?.form?.[index];
-              const isAddressDetailsMarked = currentScrutinyObj?.hasOwnProperty?.("addressDetails");
-              if (isAddressDetailsMarked) {
-                disableConfigFields = [...disableConfigFields, ...["firstName", "middleName", "lastName"]];
-              } else {
-                disableConfigFields = [...disableConfigFields, ...body.disableConfigFields];
-              }
-            }
-          }
-        });
-      });
+      // According to new feature (profile editing - #3425), we can edit fields in complainant details page so disabling the fields is no more required.
+      // formConfig.forEach((config) => {
+      //   config.body.forEach((body) => {
+      //     if ("disableConfigFields" in body && "disableConfigKey" in body && "key" in body) {
+      //       if (!!data?.[body.key]?.[body.disableConfigKey]) {
+      //         const currentScrutinyObj = scrutinyObj?.litigentDetails?.complainantDetails?.form?.[index];
+      //         const isAddressDetailsMarked = currentScrutinyObj?.hasOwnProperty?.("addressDetails");
+      //         if (isAddressDetailsMarked) {
+      //           disableConfigFields = [...disableConfigFields, ...["firstName", "middleName", "lastName"]];
+      //         } else {
+      //           disableConfigFields = [...disableConfigFields, ...body.disableConfigFields];
+      //         }
+      //       }
+      //     }
+      //   });
+      // });
       return formConfig
         .filter((config) => {
           const dependentKeys = config?.dependentKey;

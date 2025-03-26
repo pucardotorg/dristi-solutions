@@ -539,6 +539,12 @@ const editRespondentFormconfig = [
               name: "text",
               textAreaSubHeader: "CS_REASON_FOR_CHANGE",
               type: "TextAreaComponent",
+              errorStyle: {
+                fontSize: "14px",
+                fontWeight: 400,
+                paddingTop: "20px",
+                color: "#d4351c",
+              },
             },
           ],
         },
