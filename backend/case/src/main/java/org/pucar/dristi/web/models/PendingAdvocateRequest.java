@@ -26,6 +26,9 @@ public class PendingAdvocateRequest {
     @JsonProperty("taskReferenceNoList")
     private List<String> taskReferenceNoList;
 
+    @JsonProperty
+    private IndividualDetails individualDetails;
+
     public void addTaskReferenceNoList (List<String> taskReferenceNoList) {
         if(this.taskReferenceNoList == null) {
             this.taskReferenceNoList = new ArrayList<>();
