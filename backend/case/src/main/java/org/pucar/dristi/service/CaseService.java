@@ -3260,7 +3260,7 @@ public class CaseService {
         CaseCriteria caseCriteria = CaseCriteria.builder()
                 .filingNumber(filingNumber)
                 .build();
-        List<CaseCriteria> caseSearchCriteria = Collections.singletonList(caseCriteria);
+        List<CaseCriteria> caseSearchCriteria = List.of(caseCriteria);
 
         CaseCriteria caseCriteriaResponse = caseRepository.getCases(caseSearchCriteria, requestInfo).get(0);
 
@@ -3587,6 +3587,12 @@ public class CaseService {
         advocateAdditionalDetails.put("advocateName", fullName);
         advocateAdditionalDetails.put("uuid", advocateDetails.getAdvocateUuid());
 
+        List<Document> documents = new ArrayList<>();
+        documents.add(document);
+
+        List<Party> partyList = new ArrayList<>();
+        partyList.add(party);
+
 
         AdvocateMapping advocateMapping = AdvocateMapping.builder()
                 .id(UUID.randomUUID().toString())
@@ -3594,26 +3600,35 @@ public class CaseService {
                 .advocateId(advocateUuid)
                 .caseId(String.valueOf(courtCase.getId()))
                 .isActive(true)
-                .documents(Collections.singletonList(document))
-                .representing(Collections.singletonList(party))
+                .documents(documents)
+                .representing(partyList)
                 .auditDetails(auditDetails)
                 .additionalDetails(advocateAdditionalDetails)
                 .hasSigned(false)
                 .build();
-        courtCaseObj.setRepresentatives(List.of(advocateMapping));
+
+        List<AdvocateMapping> advocateMappingList = new ArrayList<>();
+        advocateMappingList.add(advocateMapping);
+
+        courtCaseObj.setRepresentatives(advocateMappingList);
         courtCase.getRepresentatives().add(advocateMapping);
         return advocateMapping;
     }
 
-    private AdvocateMapping updateExistingAdvocateMapping(CourtCase courtCase, String advocateUuid, Party party,
+    private void updateExistingAdvocateMapping(CourtCase courtCase, String advocateUuid, Party party,
                                                           List<AdvocateMapping> advocateMappings, AdvocateMapping advocateTryingToReplace,
                                                           CourtCase courtCaseObj) {
+        
+        List<Party> partyList = new ArrayList<>();
+        partyList.add(party);
 
         // Set the representing list for the existing advocate
-        advocateTryingToReplace.setRepresenting(List.of(party));
+        advocateTryingToReplace.setRepresenting(partyList);
+        List<AdvocateMapping> advocateMappingList = new ArrayList<>();
+        advocateMappingList.add(advocateTryingToReplace);
 
         // Update the representatives in the court case object
-        courtCaseObj.setRepresentatives(Collections.singletonList(advocateTryingToReplace));
+        courtCaseObj.setRepresentatives(advocateMappingList);
 
         // Find and update the matching advocate mapping
         for (AdvocateMapping advocateMapping : advocateMappings) {
@@ -3628,7 +3643,6 @@ public class CaseService {
             }
         }
 
-        return advocateTryingToReplace;
     }
 
 
@@ -3690,6 +3704,9 @@ public class CaseService {
             document.setFileStore(replacementDetails.getDocument().getFileStore());
         }
 
+        List<Document> documents = new ArrayList<>();
+        documents.add(document);
+
         ObjectNode additionalDetails = objectMapper.createObjectNode();
 
         additionalDetails.put("uuid", litigantDetails.getUserUuid());
@@ -3701,7 +3718,7 @@ public class CaseService {
                 .partyType(litigantDetails.getPartyType())
                 .tenantId(courtCase.getTenantId())
                 .isActive(true)
-                .documents(List.of(document))
+                .documents(documents)
                 .auditDetails(auditDetails)
                 .additionalDetails(additionalDetails)
                 .caseId(courtCase.getId().toString())
