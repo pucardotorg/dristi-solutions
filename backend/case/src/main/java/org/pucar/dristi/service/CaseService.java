@@ -3260,7 +3260,7 @@ public class CaseService {
         CaseCriteria caseCriteria = CaseCriteria.builder()
                 .filingNumber(filingNumber)
                 .build();
-        List<CaseCriteria> caseSearchCriteria = Collections.singletonList(caseCriteria);
+        List<CaseCriteria> caseSearchCriteria = List.of(caseCriteria);
 
         CaseCriteria caseCriteriaResponse = caseRepository.getCases(caseSearchCriteria, requestInfo).get(0);
 
@@ -3594,8 +3594,8 @@ public class CaseService {
                 .advocateId(advocateUuid)
                 .caseId(String.valueOf(courtCase.getId()))
                 .isActive(true)
-                .documents(Collections.singletonList(document))
-                .representing(Collections.singletonList(party))
+                .documents(List.of(document))
+                .representing(List.of(party))
                 .auditDetails(auditDetails)
                 .additionalDetails(advocateAdditionalDetails)
                 .hasSigned(false)
@@ -3605,7 +3605,7 @@ public class CaseService {
         return advocateMapping;
     }
 
-    private AdvocateMapping updateExistingAdvocateMapping(CourtCase courtCase, String advocateUuid, Party party,
+    private void updateExistingAdvocateMapping(CourtCase courtCase, String advocateUuid, Party party,
                                                           List<AdvocateMapping> advocateMappings, AdvocateMapping advocateTryingToReplace,
                                                           CourtCase courtCaseObj) {
 
@@ -3613,7 +3613,7 @@ public class CaseService {
         advocateTryingToReplace.setRepresenting(List.of(party));
 
         // Update the representatives in the court case object
-        courtCaseObj.setRepresentatives(Collections.singletonList(advocateTryingToReplace));
+        courtCaseObj.setRepresentatives(List.of(advocateTryingToReplace));
 
         // Find and update the matching advocate mapping
         for (AdvocateMapping advocateMapping : advocateMappings) {
@@ -3628,7 +3628,6 @@ public class CaseService {
             }
         }
 
-        return advocateTryingToReplace;
     }
 
 
