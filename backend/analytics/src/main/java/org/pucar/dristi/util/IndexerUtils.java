@@ -1,6 +1,7 @@
 package org.pucar.dristi.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
@@ -195,7 +196,6 @@ public class IndexerUtils {
         String assignedRole = new JSONArray(assignedRoleSet).toString();
         String tenantId = JsonPath.read(jsonItem, TENANT_ID_PATH);
         String action = JsonPath.read(jsonItem, ACTION_PATH);
-        String additionalDetails;
         boolean isCompleted;
         boolean isGeneric;
 
@@ -250,9 +250,25 @@ public class IndexerUtils {
                 log.error("Error occurred while sending notification: {}", e.toString());
             }
         }
-
+        Object additionalDetails;
         try {
-            additionalDetails = mapper.writeValueAsString(JsonPath.read(jsonItem, "$.additionalDetails"));
+            additionalDetails = JsonPath.read(jsonItem, "additionalDetails");
+            if(additionalDetails!=null){
+                additionalDetails = mapper.convertValue(JsonPath.read(jsonItem, "additionalDetails"),Object.class);
+            }else {
+                additionalDetails="{}";
+            }
+            JsonNode additonalDetailsJsonNode = mapper.convertValue(additionalDetails, JsonNode.class);
+            if (additonalDetailsJsonNode != null && additonalDetailsJsonNode.has("excludeRoles")) {
+                log.info("additional details contains exclude roles");
+                JsonNode excludeRoles = additonalDetailsJsonNode.path("excludeRoles");
+                if (excludeRoles.isArray()) {
+                    List<String> excludeRolesList = mapper.convertValue(excludeRoles, new TypeReference<>() {
+                    });
+                    log.info("removing roles from assignedRoleList : {} ", excludeRolesList);
+                    assignedRoleList.removeAll(excludeRolesList);
+                }
+            }
         } catch (Exception e) {
             log.error("Error while building listener payload");
             throw new CustomException(Pending_Task_Exception, "Error occurred while preparing pending task: " + e);

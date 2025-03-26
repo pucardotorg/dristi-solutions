@@ -13,7 +13,6 @@ import { TabLitigantSearchConfig } from "../../configs/LitigantHomeConfig";
 import ReviewCard from "../../components/ReviewCard";
 import { InboxIcon, DocumentIcon } from "../../../homeIcon";
 import { Link } from "react-router-dom";
-import OrderBulkReviewModal from "@egovernments/digit-ui-module-orders/src/pageComponents/OrderBulkReviewModal";
 import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersService";
 import { OrderWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/orderWorkflow";
 import OrderIssueBulkSuccesModal from "@egovernments/digit-ui-module-orders/src/pageComponents/OrderIssueBulkSuccesModal";
@@ -60,8 +59,7 @@ const HomeView = () => {
 
   const [showSubmitResponseModal, setShowSubmitResponseModal] = useState(false);
   const [responsePendingTask, setResponsePendingTask] = useState({});
-  const isBulkEsignSelected = history.location?.state?.isBulkEsignSelected;
-  const [showBulkSignAllModal, setShowBulkSignAllModal] = useState(false);
+  const bulkSignSuccess = history.location?.state?.bulkSignSuccess;
   const [issueBulkSuccessData, setIssueBulkSuccessData] = useState({
     show: false,
     bulkSignOrderListLength: null,
@@ -175,10 +173,10 @@ const HomeView = () => {
 
   useEffect(() => {
     state && state.taskType && setTaskType(state.taskType);
-    if (isBulkEsignSelected) {
-      setShowBulkSignAllModal(true);
+    if (bulkSignSuccess) {
+      setIssueBulkSuccessData(bulkSignSuccess);
     }
-  }, [state, isBulkEsignSelected]);
+  }, [state, bulkSignSuccess]);
 
   const { isLoading: isOutcomeLoading, data: outcomeTypeData } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
@@ -309,6 +307,9 @@ const HomeView = () => {
   };
 
   const onRowClick = (row) => {
+    if (userInfoType === "citizen" && row?.original?.advocateStatus === "PENDING") {
+      return;
+    }
     const searchParams = new URLSearchParams();
     if (
       onRowClickData?.urlDependentOn && onRowClickData?.urlDependentValue && Array.isArray(onRowClickData?.urlDependentValue)
@@ -466,25 +467,13 @@ const HomeView = () => {
           setJoinCaseShowSubmitResponseModal={setShowSubmitResponseModal}
           hideTaskComponent={individualId && userType && userInfoType === "citizen" && !caseDetails}
           pendingSignOrderList={ordersData?.list}
-          setShowBulkSignAllModal={setShowBulkSignAllModal}
         />
       </div>
-      {showBulkSignAllModal && (
-        <OrderBulkReviewModal
-          t={t}
-          history={history}
-          location={location}
-          isBulkEsignSelected={isBulkEsignSelected}
-          showActions={isJudge}
-          refetchOrdersData={refetchOrdersData}
-          pendingSignOrderList={ordersData?.list}
-          setShowBulkSignAllModal={setShowBulkSignAllModal}
-          setIssueBulkSuccessData={setIssueBulkSuccessData}
-        />
-      )}
       {issueBulkSuccessData.show && (
         <OrderIssueBulkSuccesModal
           t={t}
+          history={history}
+          userType={userType}
           bulkSignOrderListLength={issueBulkSuccessData.bulkSignOrderListLength}
           setIssueBulkSuccessData={setIssueBulkSuccessData}
         />
