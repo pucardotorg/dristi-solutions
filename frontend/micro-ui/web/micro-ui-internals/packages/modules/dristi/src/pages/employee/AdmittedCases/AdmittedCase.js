@@ -40,6 +40,7 @@ import VoidSubmissionBody from "./VoidSubmissionBody";
 import DocumentModal from "@egovernments/digit-ui-module-orders/src/components/DocumentModal";
 import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
 import PublishedNotificationModal from "./publishedNotificationModal";
+import ConfirmEvidenceAction from "../../../components/ConfirmEvidenceAction";
 
 const defaultSearchValues = {};
 
@@ -195,6 +196,10 @@ const AdmittedCases = () => {
   const [isOpenFromPendingTask, setIsOpenFromPendingTask] = useState(false);
   const [currentNotification, setCurrentNotification] = useState(null);
   const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [selectedItem, setSelectedItem] = useState(null);
 
   const history = useHistory();
   const isCitizen = userRoles.includes("CITIZEN");
@@ -621,33 +626,9 @@ const AdmittedCases = () => {
         },
       ];
       if ("mark_as_evidence" === item.id || "unmark_as_evidence" === item.id) {
-        const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
-        try {
-          const nextHearing = hearingDetails?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
-          await DRISTIService.addADiaryEntry(
-            {
-              diaryEntry: {
-                judgeId: judgeId,
-                businessOfDay: `${row?.artifactNumber} ${row?.isEvidence ? "unmarked" : "marked"} as evidence`,
-                tenantId: tenantId,
-                entryDate: new Date().setHours(0, 0, 0, 0),
-                caseNumber: caseDetails?.cmpNumber,
-                referenceId: row?.artifactNumber,
-                referenceType: "Documents",
-                hearingDate: (Array.isArray(nextHearing) && nextHearing.length > 0 && nextHearing[0]?.startTime) || null,
-                additionalDetails: {
-                  filingNumber: filingNumber,
-                  caseId: caseId,
-                },
-              },
-            },
-            {}
-          );
-          await handleMarkEvidence(docObj, row?.isEvidence);
-        } catch (error) {
-          console.error("error: ", error);
-          toast.error(t("SOMETHING_WENT_WRONG"));
-        }
+        setSelectedRow(row);
+        setSelectedItem(item); // Store row before showing the modal
+        setShowConfirmationModal(true);
       } else if ("mark_as_void" === item.id || "view_reason_for_voiding" === item.id) {
         setDocumentSubmission(docObj);
         setVoidReason(row?.reason);
@@ -935,6 +916,61 @@ const AdmittedCases = () => {
           };
     });
   }, [caseId, caseRelatedData, cnrNumber, filingNumber, history, isCitizen, tenantId, userInfo]);
+
+  const handleEvidenceAction = async () => {
+    const docObj = [
+      {
+        itemType: selectedItem.id,
+        status: selectedRow.workflow?.action,
+        details: {
+          applicationType: selectedRow.artifactType,
+          applicationSentOn: getDate(parseInt(selectedRow.auditdetails.createdTime)),
+          sender: selectedRow.owner,
+          additionalDetails: selectedRow.additionalDetails,
+          applicationId: selectedRow.id,
+          auditDetails: selectedRow.auditDetails,
+        },
+        applicationContent: {
+          tenantId: selectedRow.tenantId,
+          fileStoreId: selectedRow.file?.fileStore,
+          id: selectedRow.file?.id,
+          documentType: selectedRow.file?.documentType,
+          documentUid: selectedRow.file?.documentUid,
+          additionalDetails: selectedRow.file?.additionalDetails,
+        },
+        comments: selectedRow.comments,
+        artifactList: selectedRow,
+      },
+    ];
+    const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
+    try {
+      const nextHearing = hearingDetails?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
+      await DRISTIService.addADiaryEntry(
+        {
+          diaryEntry: {
+            judgeId: judgeId,
+            businessOfDay: `${selectedRow?.artifactNumber} ${selectedRow?.isEvidence ? "unmarked" : "marked"} as evidence`,
+            tenantId: tenantId,
+            entryDate: new Date().setHours(0, 0, 0, 0),
+            caseNumber: caseDetails?.cmpNumber,
+            referenceId: selectedRow?.artifactNumber,
+            referenceType: "Documents",
+            hearingDate: (Array.isArray(nextHearing) && nextHearing.length > 0 && nextHearing[0]?.startTime) || null,
+            additionalDetails: {
+              filingNumber: filingNumber,
+              caseId: caseId,
+            },
+          },
+        },
+        {}
+      );
+      await handleMarkEvidence(docObj, selectedRow?.isEvidence);
+    } catch (error) {
+      console.error("error: ", error);
+      toast.error(t("SOMETHING_WENT_WRONG"));
+    }
+    setShowConfirmationModal(false);
+  };
 
   const newTabSearchConfig = {
     ...TabSearchconfig,
@@ -2823,6 +2859,18 @@ const AdmittedCases = () => {
           handleDownload={handleDownload}
           filingNumber={filingNumber}
           handleOrdersTab={handleOrdersTab}
+        />
+      )}
+      {showConfirmationModal && (
+        <ConfirmEvidenceAction
+          t={t}
+          setShowConfirmationModal={setShowConfirmationModal}
+          type={showConfirmationModal.type}
+          setShow={setShow}
+          handleAction={handleEvidenceAction}
+          isDisabled={isSubmitDisabled}
+          isEvidence={documentSubmission?.[0]?.artifactList?.isEvidence}
+          isFromActions={true}
         />
       )}
     </div>
