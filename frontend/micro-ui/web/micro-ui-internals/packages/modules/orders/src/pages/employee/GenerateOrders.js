@@ -4499,7 +4499,7 @@ const GenerateOrders = () => {
               <FormComposerV2
                 className={"generate-orders"}
                 key={`${selectedOrder}=${index}`}
-                label={t("REVIEW_ORDER")}
+                label={t("PREVIEW_ORDER_PDF")}
                 config={config}
                 defaultValues={getDefaultValue(index)}
                 onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
