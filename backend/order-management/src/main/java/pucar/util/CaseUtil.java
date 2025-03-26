@@ -17,6 +17,7 @@ import pucar.web.models.courtCase.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static pucar.config.ServiceConstants.*;
 
@@ -108,5 +109,12 @@ public class CaseUtil {
         }
 
 
+    }
+
+    public List<Party> getRespondentOrComplainant(CourtCase caseDetails, String type) {
+        return caseDetails.getLitigants()
+                .stream()
+                .filter(item -> item.getPartyType().contains(type))
+                .collect(Collectors.toList());
     }
 }

@@ -3,8 +3,8 @@ package pucar.strategy;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import pucar.config.Configuration;
-import pucar.config.StateSlaMap;
 import pucar.util.*;
 import pucar.web.models.Order;
 import pucar.web.models.OrderRequest;
@@ -21,6 +21,7 @@ import pucar.web.models.hearing.HearingCriteria;
 import pucar.web.models.hearing.HearingRequest;
 import pucar.web.models.hearing.HearingSearchRequest;
 import pucar.web.models.pendingtask.PendingTask;
+import pucar.web.models.pendingtask.PendingTaskRequest;
 import pucar.web.models.scheduler.ReScheduleHearing;
 import pucar.web.models.scheduler.ReScheduleHearingRequest;
 
@@ -28,6 +29,7 @@ import java.util.*;
 
 import static pucar.config.ServiceConstants.*;
 
+@Component
 public class InitiatingReschedulingOfHearingDate implements OrderUpdateStrategy {
 
 
@@ -147,21 +149,29 @@ public class InitiatingReschedulingOfHearingDate implements OrderUpdateStrategy 
 
         for (String assigneeUUID : uniqueAssignees) {
 
+            String itemId = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("itemId"), String.class);
+            itemId = itemId != null ? itemId + "_" : "";
+
+            String pendingTaskReferenceId = MANUAL + itemId + assigneeUUID + "_" + order.getOrderNumber();
+
 
             // create pending task
             PendingTask pendingTask = PendingTask.builder()
                     .name(CHOOSE_DATES_FOR_RESCHEDULE_OF_HEARING_DATE)
-                    .referenceId("ref-123")
+                    .referenceId(pendingTaskReferenceId)
                     .entityType("hearing-default")
                     .status("OPTOUT")
                     .assignedTo(List.of(User.builder().uuid(assigneeUUID).build()))
                     .cnrNumber(courtCase.getCnrNumber())
                     .filingNumber(courtCase.getFilingNumber())
                     .isCompleted(false)
-                    .stateSla()
+                    .stateSla(pendingTaskUtil.getStateSla(INITIATING_RESCHEDULING_OF_HEARING_DATE))
                     .additionalDetails(pendingTaskUtil.getAdditionalDetails(courtCase, assigneeUUID))
                     .screenType("home")
                     .build();
+
+            pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo
+            ).pendingTask(pendingTask).build());
         }
 
 

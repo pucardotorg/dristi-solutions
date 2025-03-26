@@ -27,13 +27,15 @@ public class AdvocateUtil {
     private final RestTemplate restTemplate;
     private final ObjectMapper mapper;
     private final Configuration configs;
+    private final JsonUtil jsonUtil;
 
 
     @Autowired
-    public AdvocateUtil(RestTemplate restTemplate, ObjectMapper mapper, Configuration configs) {
+    public AdvocateUtil(RestTemplate restTemplate, ObjectMapper mapper, Configuration configs, JsonUtil jsonUtil) {
         this.restTemplate = restTemplate;
         this.mapper = mapper;
         this.configs = configs;
+        this.jsonUtil = jsonUtil;
     }
 
     public List<Advocate> fetchAdvocates(RequestInfo requestInfo, AdvocateSearchCriteria advocateSearchCriteria) {
@@ -163,13 +165,7 @@ public class AdvocateUtil {
     }
 
     private String getUUIDFromAdditionalDetails(Object additionalDetails) {
-        return Optional.ofNullable(additionalDetails)
-                .filter(Map.class::isInstance)
-                .map(map -> (Map<?, ?>) map)
-                .map(map -> map.get("uuid"))
-                .filter(String.class::isInstance)
-                .map(String.class::cast)
-                .orElse(null);
+        return jsonUtil.getNestedValue(additionalDetails, List.of("uuid"), String.class);
     }
 
 

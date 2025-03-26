@@ -1,8 +1,11 @@
 package pucar.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.ServiceCallException;
@@ -158,6 +161,51 @@ public class PendingTaskUtil {
 
     public Long getStateSla(String orderType) {
         return StateSlaMap.getStateSlaMap().get(INITIATING_RESCHEDULING_OF_HEARING_DATE) * ONE_DAY_TIME_IN_MILLIS + dateUtil.getCurrentTimeInMilis();
+    }
+
+
+    public ArrayNode getAssigneeDetailsForMakeMandatorySubmission(Object additionalDetailsObj) {
+
+        JsonNode additionalDetails = null;
+        try {
+            additionalDetails = objectMapper.readTree(additionalDetailsObj.toString());
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        ArrayNode assignees = objectMapper.createArrayNode();
+
+        if (additionalDetails != null) {
+            JsonNode formdata = additionalDetails.get("formdata");
+
+            if (formdata != null && formdata.isArray()) {
+                for (JsonNode formEntry : formdata) {
+                    JsonNode submissionParty = formEntry.get("submissionParty");
+
+                    if (submissionParty != null && submissionParty.isArray()) {
+                        for (JsonNode party : submissionParty) {
+                            JsonNode uuids = party.get("uuid");
+                            String individualId = party.has("individualId") ? party.get("individualId").asText() : null;
+                            String partyUuid = party.has("partyUuid") ? party.get("partyUuid").asText() : null;
+
+                            if (uuids != null && uuids.isArray()) {
+                                for (JsonNode uuidNode : uuids) {
+                                    String uuid = uuidNode.asText();
+
+                                    // Create flattened JSON object for assignee
+                                    ObjectNode assigneeNode = objectMapper.createObjectNode();
+                                    assigneeNode.put("uuid", uuid);
+                                    assigneeNode.put("individualId", individualId);
+                                    assigneeNode.put("partyUuid", partyUuid);
+
+                                    assignees.add(assigneeNode);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return assignees;
     }
 
 

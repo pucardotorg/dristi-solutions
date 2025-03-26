@@ -1,28 +1,36 @@
 package pucar.strategy;
 
 import org.egov.common.contract.request.RequestInfo;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import pucar.util.DateUtil;
+import pucar.util.JsonUtil;
 import pucar.util.PendingTaskUtil;
 import pucar.web.models.Order;
 import pucar.web.models.OrderRequest;
 import pucar.web.models.adiary.CaseDiaryEntry;
 import pucar.web.models.pendingtask.IndexSearchCriteria;
 import pucar.web.models.pendingtask.PendingTask;
+import pucar.web.models.pendingtask.PendingTaskRequest;
 import pucar.web.models.pendingtask.PendingTaskSearchRequest;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-
-import static pucar.config.ServiceConstants.MANUAL;
 
 
 @Component
 public class ExtensionOfDocumentSubmissionDate implements OrderUpdateStrategy {
 
-
+    private final JsonUtil jsonUtil;
+    private final DateUtil dateUtil;
     private final PendingTaskUtil pendingTaskUtil;
 
-    public ExtensionOfDocumentSubmissionDate(PendingTaskUtil pendingTaskUtil) {
+
+    @Autowired
+    public ExtensionOfDocumentSubmissionDate(JsonUtil jsonUtil, DateUtil dateUtil, PendingTaskUtil pendingTaskUtil) {
+        this.jsonUtil = jsonUtil;
+        this.dateUtil = dateUtil;
         this.pendingTaskUtil = pendingTaskUtil;
     }
 
@@ -51,7 +59,7 @@ public class ExtensionOfDocumentSubmissionDate implements OrderUpdateStrategy {
         HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
         moduleSearchCriteria.put("filingNumber", order.getFilingNumber());
         moduleSearchCriteria.put("isCompleted", false);
-        moduleSearchCriteria.put("referenceId",MANUAL+order.getLinkedOrderNumber());
+//        moduleSearchCriteria.put("referenceId",MANUAL+order.getLinkedOrderNumber());
 
         PendingTaskSearchRequest searchRequest = PendingTaskSearchRequest.builder()
                 .RequestInfo(requestInfo)
@@ -63,12 +71,30 @@ public class ExtensionOfDocumentSubmissionDate implements OrderUpdateStrategy {
 
                         ).build()).build();
 
+        String submissionDueDate = jsonUtil.getNestedValue(order.getAdditionalDetails(), Arrays.asList("formdata", "submissionDeadline"), String.class);
+
+        Long sla = dateUtil.getEpochFromDateString(submissionDueDate, "yyyy-MM-dd");
+
 
         List<PendingTask> pendingTaskList = pendingTaskUtil.getPendingTask(searchRequest);
 
-        if(!pendingTaskList.isEmpty()){
-            PendingTask pendingTask = pendingTaskList.get(0);
-            pendingTask.setStateSla(10L);  /// write logic here
+        if (!pendingTaskList.isEmpty()) {
+            pendingTaskList.stream()
+                    .filter(pendingTask ->
+                            pendingTask.getReferenceId() != null &&
+                                    order.getLinkedOrderNumber() != null &&
+                                    pendingTask.getReferenceId().contains(order.getLinkedOrderNumber())
+                    )
+                    .forEach(pendingTask -> {
+                        pendingTask.setStateSla(sla);
+                        pendingTaskUtil.createPendingTask(
+                                PendingTaskRequest.builder()
+                                        .pendingTask(pendingTask)
+                                        .requestInfo(requestInfo)
+                                        .build()
+                        );
+                    });
+
         }
 
 
@@ -84,12 +110,5 @@ public class ExtensionOfDocumentSubmissionDate implements OrderUpdateStrategy {
     public CaseDiaryEntry execute(OrderRequest request) {
         return null;
     }
-    // no search
-    // no application search
-
-
-    // search pending task using get field inbox     reference id = order.linked order number
-    // new submission date order additional details
-    // create pending task
 
 }

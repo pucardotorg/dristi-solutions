@@ -1,8 +1,10 @@
 package pucar.strategy;
 
+import org.springframework.stereotype.Component;
 import pucar.web.models.OrderRequest;
 import pucar.web.models.adiary.CaseDiaryEntry;
 
+@Component
 public class Notice implements OrderUpdateStrategy {
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {

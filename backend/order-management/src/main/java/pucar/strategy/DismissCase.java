@@ -2,6 +2,7 @@ package pucar.strategy;
 
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import pucar.config.Configuration;
 import pucar.util.CaseUtil;
 import pucar.util.HearingUtil;
@@ -23,6 +24,7 @@ import java.util.List;
 
 import static pucar.config.ServiceConstants.*;
 
+@Component
 public class DismissCase implements OrderUpdateStrategy {
 
     private final CaseUtil caseUtil;

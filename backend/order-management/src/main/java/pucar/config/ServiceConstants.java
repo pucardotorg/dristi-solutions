@@ -86,8 +86,10 @@ public class ServiceConstants {
     public static final String CHOOSE_DATES_FOR_RESCHEDULE_OF_HEARING_DATE ="";
     public static final String INITIATING_RESCHEDULING_OF_HEARING_DATE ="INITIATING_RESCHEDULING_OF_HEARING_DATE";
     public static final Long ONE_DAY_TIME_IN_MILLIS =86400000L;
-
-
+    public static final String SCHEDULE_HEARING ="Schedule Hearing";
+    public static final String PENDING_RESPONSE ="Pending Response";
+    public static final String MAKE_MANDATORY_SUBMISSION ="Make Mandatory Submission";
+    public static final String SUBMIT_BAIL_DOCUMENTS ="Submission Bail Document";
 
 
 }
