@@ -1503,7 +1503,7 @@ public class CaseService {
 
                     try {
                         taskResponse = createTaskAdvocate(joinCaseRequest, key, value, courtCase);
-                        if(!isAdvocateDetailsNamesExtracted.get()) {
+                        if (!isAdvocateDetailsNamesExtracted.get()) {
                             updateIndividualDetails(taskResponse, individualDetails);
                             isAdvocateDetailsNamesExtracted.set(true);
                         }
@@ -1513,29 +1513,6 @@ public class CaseService {
                     }
                     taskReferenceNoList.add(taskResponse.getTask().getTaskNumber());
                 });
-                List<PendingAdvocateRequest> pendingAdvocateRequestList = courtCase.getPendingAdvocateRequests();
-                if (pendingAdvocateRequestList == null) {
-                    pendingAdvocateRequestList = new ArrayList<>();
-                }
-                Optional<PendingAdvocateRequest> pendingAdvocateRequestOptional = pendingAdvocateRequestList.stream()
-                        .filter(pendingAdvocateRequest -> pendingAdvocateRequest.getAdvocateId().equalsIgnoreCase(advocateId))
-                        .findFirst();
-                PendingAdvocateRequest pendingAdvocateRequest = pendingAdvocateRequestOptional.orElseGet(PendingAdvocateRequest::new);
-                boolean isExisting = pendingAdvocateRequestOptional.isPresent();
-                if (!isExisting) {
-                    pendingAdvocateRequest.setAdvocateId(advocateId);
-                }
-                boolean isPartOfCase = courtCase.getRepresentatives() != null &&
-                        !courtCase.getRepresentatives().stream()
-                                .filter(adv -> adv.getAdvocateId() != null && adv.getAdvocateId().equalsIgnoreCase(advocateId))
-                                .toList()
-                                .isEmpty();
-                if (isPartOfCase) {
-                    pendingAdvocateRequest.setStatus("PARTIALLY_JOINED");
-                } else {
-                    pendingAdvocateRequest.setStatus("PENDING");
-                }
-
             }
 
             List<PendingAdvocateRequest> pendingAdvocateRequestList = courtCase.getPendingAdvocateRequests();
@@ -1547,7 +1524,7 @@ public class CaseService {
                     .findFirst();
             PendingAdvocateRequest pendingAdvocateRequest = pendingAdvocateRequestOptional.orElseGet(PendingAdvocateRequest::new);
             boolean isExisting = pendingAdvocateRequestOptional.isPresent();
-            if(!isExisting) {
+            if (!isExisting) {
                 pendingAdvocateRequest.setAdvocateId(advocateId);
                 pendingAdvocateRequest.setIndividualDetails(individualDetails);
             }
@@ -1562,14 +1539,14 @@ public class CaseService {
                 pendingAdvocateRequest.setStatus("PENDING");
             }
 
-                pendingAdvocateRequest.addTaskReferenceNoList(taskReferenceNoList);
-                if (!isExisting) {
-                    pendingAdvocateRequestList.add(pendingAdvocateRequest);
-                }
-                courtCase.setPendingAdvocateRequests(pendingAdvocateRequestList);
+            pendingAdvocateRequest.addTaskReferenceNoList(taskReferenceNoList);
+            if (!isExisting) {
+                pendingAdvocateRequestList.add(pendingAdvocateRequest);
+            }
+            courtCase.setPendingAdvocateRequests(pendingAdvocateRequestList);
 
             pendingAdvocateRequest.addTaskReferenceNoList(taskReferenceNoList);
-            if(!isExisting) {
+            if (!isExisting) {
                 pendingAdvocateRequestList.add(pendingAdvocateRequest);
             }
             courtCase.setPendingAdvocateRequests(pendingAdvocateRequestList);
