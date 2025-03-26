@@ -38,7 +38,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -1413,29 +1412,14 @@ public class CaseService {
 
     private void replaceAdvocate(JoinCaseV2Request joinCaseRequest, CourtCase courtCase, String advocateId) {
         try {
+            List<String> taskReferenceNoList = new ArrayList<>();
             if (joinCaseRequest.getJoinCaseData().getRepresentative().getIsJudgeApproving()) {
-                createTaskForJudge(joinCaseRequest, courtCase);
+               TaskResponse taskResponse = createTaskForJudge(joinCaseRequest, courtCase);
+                taskReferenceNoList.add(taskResponse.getTask().getTaskNumber());
             } else {
                 Map<String, List<RepresentingJoinCase>> replaceAdvocateRepresentingMap = new LinkedHashMap<>();
 
-                List<PendingAdvocateRequest> pendingAdvocateRequestList = courtCase.getPendingAdvocateRequests();
-                if (pendingAdvocateRequestList == null) {
-                    pendingAdvocateRequestList = new ArrayList<>();
-                }
-                PendingAdvocateRequest pendingAdvocateRequest = new PendingAdvocateRequest();
-                pendingAdvocateRequest.setAdvocateId(advocateId);
-                boolean isPartOfCase = courtCase.getRepresentatives() != null &&
-                        !courtCase.getRepresentatives().stream()
-                                .filter(adv -> adv.getAdvocateId() != null && adv.getAdvocateId().equalsIgnoreCase(advocateId))
-                                .toList()
-                                .isEmpty();
-                if (isPartOfCase) {
-                    pendingAdvocateRequest.setStatus("PARTIALLY_JOINED");
-                } else {
-                    pendingAdvocateRequest.setStatus("PENDING");
-                }
 
-                List<String> taskReferenceNoList = new ArrayList<>();
                 joinCaseRequest.getJoinCaseData().getRepresentative().getRepresenting().forEach(representingJoinCase -> {
                     if (representingJoinCase.getIsAlreadyPip()) {
                         // Handle already PIP case
@@ -1474,8 +1458,28 @@ public class CaseService {
                     }
                     taskReferenceNoList.add(taskResponse.getTask().getTaskNumber());
                 });
+                List<PendingAdvocateRequest> pendingAdvocateRequestList = courtCase.getPendingAdvocateRequests();
+                if (pendingAdvocateRequestList == null) {
+                    pendingAdvocateRequestList = new ArrayList<>();
+                }
+                Optional<PendingAdvocateRequest> pendingAdvocateRequestOptional = pendingAdvocateRequestList.stream()
+                        .filter(pendingAdvocateRequest -> pendingAdvocateRequest.getAdvocateId().equalsIgnoreCase(advocateId))
+                        .findFirst();
+                PendingAdvocateRequest pendingAdvocateRequest = pendingAdvocateRequestOptional.orElseGet(PendingAdvocateRequest::new);
+                pendingAdvocateRequest.setAdvocateId(advocateId);
+                boolean isPartOfCase = courtCase.getRepresentatives() != null &&
+                        !courtCase.getRepresentatives().stream()
+                                .filter(adv -> adv.getAdvocateId() != null && adv.getAdvocateId().equalsIgnoreCase(advocateId))
+                                .toList()
+                                .isEmpty();
+                if (isPartOfCase) {
+                    pendingAdvocateRequest.setStatus("PARTIALLY_JOINED");
+                } else {
+                    pendingAdvocateRequest.setStatus("PENDING");
+                }
 
-                pendingAdvocateRequest.setTaskReferenceNoList(taskReferenceNoList);
+
+                pendingAdvocateRequest.addTaskReferenceNoList(taskReferenceNoList);
                 pendingAdvocateRequestList.add(pendingAdvocateRequest);
                 courtCase.setPendingAdvocateRequests(pendingAdvocateRequestList);
 
@@ -1488,7 +1492,7 @@ public class CaseService {
 
     }
 
-    private void createTaskForJudge(JoinCaseV2Request joinCaseRequest, CourtCase courtCase) throws JsonProcessingException {
+    private TaskResponse createTaskForJudge(JoinCaseV2Request joinCaseRequest, CourtCase courtCase) throws JsonProcessingException {
         TaskRequest taskRequest = new TaskRequest();
         Task task = new Task();
         task.setTaskType(JOIN_CASE);
@@ -1600,8 +1604,7 @@ public class CaseService {
         Role role = Role.builder().code("TASK_CREATOR").name("TASK_CREATOR").tenantId(joinCaseAdvocate.getTenantId()).build();
         requestInfo.getUserInfo().getRoles().add(role);
         taskRequest.setRequestInfo(requestInfo);
-        taskUtil.callCreateTask(taskRequest);
-
+        return taskUtil.callCreateTask(taskRequest);
     }
 
     private TaskResponse createTaskPip(JoinCaseV2Request joinCaseRequest, RepresentingJoinCase representingJoinCase, String advocateId, CourtCase courtCase) throws JsonProcessingException {
