@@ -119,29 +119,29 @@ const editComplainantDetailsFormConfig = [
     },
   },
   {
+    dependentKey: { complainantType: ["commonFields"] },
     body: [
       {
         type: "component",
-        component: "SelectCustomDragDrop",
-        key: "complainantIDProofDocument",
-        isMandatory: true,
+        component: "VerificationComponent",
+        key: "complainantId",
         withoutLabel: true,
+        isMandatory: true,
         populators: {
+          name: "complainantId",
           inputs: [
             {
-              name: "document",
-              documentHeader: "COMPLAINANT_ID_PROOF",
-              type: "DragDropComponent",
-              uploadGuidelines: "UPLOAD_DOC_50",
-              maxFileSize: 50,
-              maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
-              fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
-              isMultipleUpload: false,
-              documentHeaderStyle: {
-                margin: "0px",
-              },
+              label: "COMPLAINANT_ID",
+              updateLabelOn: "complainantType.showCompanyDetails",
+              updateLabel: { key: "label", value: "CS_ENTITY_ID" },
+              defaultLabel: { key: "label", value: "COMPLAINANT_ID" },
+              name: "complainantId",
+              verificationOn: "complainantVerification.individualDetails",
             },
           ],
+          customStyle: {
+            marginTop: 20,
+          },
         },
       },
     ],
