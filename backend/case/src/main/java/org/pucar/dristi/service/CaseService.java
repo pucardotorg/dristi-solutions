@@ -1467,6 +1467,8 @@ public class CaseService {
                 updateIndividualDetails(taskResponse, individualDetails);
             } else {
                 Map<String, List<RepresentingJoinCase>> replaceAdvocateRepresentingMap = new LinkedHashMap<>();
+                AtomicBoolean isAdvocateDetailsNamesExtracted = new AtomicBoolean(false);
+
 
 
                 joinCaseRequest.getJoinCaseData().getRepresentative().getRepresenting().forEach(representingJoinCase -> {
@@ -1475,6 +1477,10 @@ public class CaseService {
                         TaskResponse taskResponse = null;
                         try {
                             taskResponse = createTaskPip(joinCaseRequest, representingJoinCase, advocateId, courtCase);
+                            if (!isAdvocateDetailsNamesExtracted.get()) {
+                                updateIndividualDetails(taskResponse, individualDetails);
+                                isAdvocateDetailsNamesExtracted.set(true);
+                            }
                         } catch (JsonProcessingException e) {
                             log.error("Error occurred while creating task for pip :: {}", e.toString());
                             throw new CustomException(JOIN_CASE_ERR, TASK_SERVICE_ERROR);
@@ -1495,7 +1501,6 @@ public class CaseService {
                         });
                     }
                 });
-                AtomicBoolean isAdvocateDetailsNamesExtracted = new AtomicBoolean(false);
 
                 //handle task creation for each advocate
                 replaceAdvocateRepresentingMap.forEach((key, value) -> {
@@ -1543,12 +1548,7 @@ public class CaseService {
             if (!isExisting) {
                 pendingAdvocateRequestList.add(pendingAdvocateRequest);
             }
-            courtCase.setPendingAdvocateRequests(pendingAdvocateRequestList);
 
-            pendingAdvocateRequest.addTaskReferenceNoList(taskReferenceNoList);
-            if (!isExisting) {
-                pendingAdvocateRequestList.add(pendingAdvocateRequest);
-            }
             courtCase.setPendingAdvocateRequests(pendingAdvocateRequestList);
 
             producer.push(config.getUpdatePendingAdvocateRequestKafkaTopic(), courtCase);
