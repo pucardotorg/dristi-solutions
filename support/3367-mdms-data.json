@@ -69,6 +69,7 @@
             {
               "name": "caseTitle",
               "path": "Data.orderNotification.caseTitle.keyword",
+              "operator": "WILDCARD",
               "isMandatory": false
             },
             {
@@ -90,7 +91,7 @@
           "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
           "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
           "createdTime": 1741325570977,
-          "lastModifiedTime": 1742911832932
+          "lastModifiedTime": 1742969844789
         }
       }
     ]
