@@ -3241,11 +3241,7 @@ public class CaseService {
             }
             courtCase.setPendingAdvocateRequests(pendingAdvocateRequests);
 
-            updateStatusOfAdvocate(courtCase, advocateUuid, pendingAdvocateRequest);
-
-            producer.push(config.getUpdatePendingAdvocateRequestKafkaTopic(), courtCase);
-
-            updateCourtCaseObject(courtCase, joinCaseRequest, advocateUuid, requestInfo);
+            updateCourtCaseObject(courtCase, joinCaseRequest, advocateUuid, requestInfo, pendingAdvocateRequest);
 
             log.info("operation=updateJoinCaseApproved, status=SUCCESS, taskRequest: {}", taskRequest);
         }
@@ -3268,7 +3264,7 @@ public class CaseService {
     }
 
     private void updateCourtCaseObject(CourtCase courtCase, JoinCaseTaskRequest joinCaseRequest, String advocateUuid,
-                                       RequestInfo requestInfo) {
+                                       RequestInfo requestInfo, PendingAdvocateRequest  pendingAdvocateRequest) {
 
         log.info("operation=updateJoinCaseApproved, status=IN_PROGRESS, joinCaseRequest, advocateUuid : {}, {}", joinCaseRequest, advocateUuid);
 
@@ -3332,6 +3328,11 @@ public class CaseService {
             }
 
             producer.push(config.getRepresentativeJoinCaseTopic(), courtCaseObj);
+
+
+            updateStatusOfAdvocate(courtCase, advocateUuid, pendingAdvocateRequest);
+
+            producer.push(config.getUpdatePendingAdvocateRequestKafkaTopic(), courtCase);
 
             if (partyType.contains("complainant")) {
                 Object additionalDetails = courtCase.getAdditionalDetails();
@@ -3616,33 +3617,30 @@ public class CaseService {
     }
 
     private void updateExistingAdvocateMapping(CourtCase courtCase, String advocateUuid, Party party,
-                                                          List<AdvocateMapping> advocateMappings, AdvocateMapping advocateTryingToReplace,
-                                                          CourtCase courtCaseObj) {
-        
-        List<Party> partyList = new ArrayList<>();
-        partyList.add(party);
+                                               List<AdvocateMapping> advocateMappings, AdvocateMapping advocateTryingToReplace,
+                                               CourtCase courtCaseObj) {
 
-        // Set the representing list for the existing advocate
-        advocateTryingToReplace.setRepresenting(partyList);
-        List<AdvocateMapping> advocateMappingList = new ArrayList<>();
-        advocateMappingList.add(advocateTryingToReplace);
-
-        // Update the representatives in the court case object
-        courtCaseObj.setRepresentatives(advocateMappingList);
-
-        // Find and update the matching advocate mapping
         for (AdvocateMapping advocateMapping : advocateMappings) {
             if (advocateMapping.getAdvocateId().equalsIgnoreCase(advocateUuid)) {
-                // Add the party to the representing list
+                // Add the party to the representing list of the specific advocate mapping
                 advocateMapping.getRepresenting().add(party);
 
-                // Update the representatives in the court case
+                // Update the representatives in the original court case
                 courtCase.setRepresentatives(advocateMappings);
+
+                // Create a new mutable list with only the new party
+                List<Party> newPartyList = new ArrayList<>();
+                newPartyList.add(party);
+                advocateTryingToReplace.setRepresenting(newPartyList);
+
+                // Create a mutable list with the advocate
+                List<AdvocateMapping> singleAdvocateMappingList = new ArrayList<>();
+                singleAdvocateMappingList.add(advocateTryingToReplace);
+                courtCaseObj.setRepresentatives(singleAdvocateMappingList);
 
                 break;  // Exit the loop once the mapping is updated
             }
         }
-
     }
 
 
