@@ -41,6 +41,7 @@ import org.springframework.stereotype.Service;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 import static org.pucar.dristi.enrichment.CaseRegistrationEnrichment.enrichLitigantsOnCreateAndUpdate;
@@ -1458,38 +1459,40 @@ public class CaseService {
                     }
                     taskReferenceNoList.add(taskResponse.getTask().getTaskNumber());
                 });
-                List<PendingAdvocateRequest> pendingAdvocateRequestList = courtCase.getPendingAdvocateRequests();
-                if (pendingAdvocateRequestList == null) {
-                    pendingAdvocateRequestList = new ArrayList<>();
-                }
-                Optional<PendingAdvocateRequest> pendingAdvocateRequestOptional = pendingAdvocateRequestList.stream()
-                        .filter(pendingAdvocateRequest -> pendingAdvocateRequest.getAdvocateId().equalsIgnoreCase(advocateId))
-                        .findFirst();
-                PendingAdvocateRequest pendingAdvocateRequest = pendingAdvocateRequestOptional.orElseGet(PendingAdvocateRequest::new);
-                boolean isExisting = pendingAdvocateRequestOptional.isPresent();
-                if(!isExisting) {
-                    pendingAdvocateRequest.setAdvocateId(advocateId);
-                }
-                boolean isPartOfCase = courtCase.getRepresentatives() != null &&
-                        !courtCase.getRepresentatives().stream()
-                                .filter(adv -> adv.getAdvocateId() != null && adv.getAdvocateId().equalsIgnoreCase(advocateId))
-                                .toList()
-                                .isEmpty();
-                if (isPartOfCase) {
-                    pendingAdvocateRequest.setStatus("PARTIALLY_JOINED");
-                } else {
-                    pendingAdvocateRequest.setStatus("PENDING");
-                }
 
-
-                pendingAdvocateRequest.addTaskReferenceNoList(taskReferenceNoList);
-                if(!isExisting) {
-                    pendingAdvocateRequestList.add(pendingAdvocateRequest);
-                }
-                courtCase.setPendingAdvocateRequests(pendingAdvocateRequestList);
-
-                producer.push(config.getUpdatePendingAdvocateRequestKafkaTopic(), courtCase);
             }
+
+            List<PendingAdvocateRequest> pendingAdvocateRequestList = courtCase.getPendingAdvocateRequests();
+            if (pendingAdvocateRequestList == null) {
+                pendingAdvocateRequestList = new ArrayList<>();
+            }
+            Optional<PendingAdvocateRequest> pendingAdvocateRequestOptional = pendingAdvocateRequestList.stream()
+                    .filter(pendingAdvocateRequest -> pendingAdvocateRequest.getAdvocateId().equalsIgnoreCase(advocateId))
+                    .findFirst();
+            PendingAdvocateRequest pendingAdvocateRequest = pendingAdvocateRequestOptional.orElseGet(PendingAdvocateRequest::new);
+            boolean isExisting = pendingAdvocateRequestOptional.isPresent();
+            if(!isExisting) {
+                pendingAdvocateRequest.setAdvocateId(advocateId);
+            }
+            boolean isPartOfCase = courtCase.getRepresentatives() != null &&
+                    !courtCase.getRepresentatives().stream()
+                            .filter(adv -> adv.getAdvocateId() != null && adv.getAdvocateId().equalsIgnoreCase(advocateId))
+                            .toList()
+                            .isEmpty();
+            if (isPartOfCase) {
+                pendingAdvocateRequest.setStatus("PARTIALLY_JOINED");
+            } else {
+                pendingAdvocateRequest.setStatus("PENDING");
+            }
+
+
+            pendingAdvocateRequest.addTaskReferenceNoList(taskReferenceNoList);
+            if(!isExisting) {
+                pendingAdvocateRequestList.add(pendingAdvocateRequest);
+            }
+            courtCase.setPendingAdvocateRequests(pendingAdvocateRequestList);
+
+            producer.push(config.getUpdatePendingAdvocateRequestKafkaTopic(), courtCase);
         } catch (Exception e) {
             log.error("Error occurred while creating task for join case request :: {}", e.toString());
             throw new CustomException(JOIN_CASE_ERR, TASK_SERVICE_ERROR);
@@ -3060,9 +3063,10 @@ public class CaseService {
 
             producer.push(config.getUpdatePendingAdvocateRequestKafkaTopic(), courtCase);
 
-            updateCourtCaseInRedis(courtCase.getTenantId(), courtCase);
 
             updateCourtCaseObject(courtCase, joinCaseRequest, advocateUuid, requestInfo);
+
+            updateCourtCaseInRedis(courtCase.getTenantId(), courtCase);
 
             log.info("operation=updateJoinCaseApproved, status=SUCCESS, taskRequest: {}", taskRequest);
         }
@@ -3091,6 +3095,10 @@ public class CaseService {
 
         List<AdvocateMapping> advocateMappings = courtCase.getRepresentatives();
 
+        // checking weather advocate is present in case or not
+        AdvocateMapping advocateTryingToReplace = advocateMappings.stream().filter(advocateMapping ->
+                advocateMapping.getAdvocateId().equalsIgnoreCase(advocateUuid)).findFirst().orElse(null);
+
         AuditDetails auditDetails = enrichAuditDetails(requestInfo);
 
         CourtCase courtCaseObj = CourtCase.builder()
@@ -3100,14 +3108,13 @@ public class CaseService {
                 .id(courtCase.getId())
                 .build();
 
-        // checking weather advocate is present in case or not
-        List<AdvocateMapping> advocates = advocateMappings.stream().filter(advocateMapping ->
-                advocateMapping.getAdvocateId().equalsIgnoreCase(advocateUuid)).toList();
 
         List<ReplacementDetails> replacementDetailsList = joinCaseRequest.getReplacementDetails();
         AdvocateDetails advocateDetails = joinCaseRequest.getAdvocateDetails();
 
         for (ReplacementDetails replacementDetails : replacementDetailsList) {
+
+
             Party party = enrichParty(replacementDetails, courtCase, auditDetails);
             LitigantDetails litigantDetails = replacementDetails.getLitigantDetails();
             String partyType = litigantDetails.getPartyType();
@@ -3115,13 +3122,15 @@ public class CaseService {
             String advocateUuidToBeReplaced = advocateDetailsToBeReplaced.getAdvocateUuid();
             if (replacementDetails.getIsLitigantPip()) {
                 List<Party> litigantParties = courtCase.getLitigants();
-                if (advocates.isEmpty()) {
+                if (advocateTryingToReplace == null) {
                     // adding the advocate in representatives list as he is new joining the case
-                    enrichAdvocateDetailsInRepresentativesList(courtCase, advocateUuid, replacementDetails, party, auditDetails, advocateDetails, courtCaseObj);
+                    advocateTryingToReplace = enrichAdvocateDetailsInRepresentativesList(courtCase, advocateUuid, replacementDetails, party, auditDetails, advocateDetails, courtCaseObj);
                 } else {
-                    // adding the litigant details into representing list of the advocate
-                    advocates.get(0).setRepresenting(List.of(party));
-                    courtCaseObj.setRepresentatives(advocates);
+                    // Extract the else block logic to a separate method
+                    updateExistingAdvocateMapping(
+                            courtCase, advocateUuid, party, advocateMappings,
+                            advocateTryingToReplace, courtCaseObj
+                    );
                 }
                 for (Party litigantParty : litigantParties) {
                     if (litigantParty.getIndividualId().equalsIgnoreCase(litigantDetails.getIndividualId())) {
@@ -3130,13 +3139,15 @@ public class CaseService {
                     }
                 }
             } else {
-                if (advocates.isEmpty()) {
+                if (advocateTryingToReplace == null) {
                     // adding the advocate in representatives list as he is new joining the case
-                    enrichAdvocateDetailsInRepresentativesList(courtCase, advocateUuid, replacementDetails, party, auditDetails, advocateDetails,courtCaseObj);
+                    advocateTryingToReplace = enrichAdvocateDetailsInRepresentativesList(courtCase, advocateUuid, replacementDetails, party, auditDetails, advocateDetails,courtCaseObj);
                 } else {
-                    // adding the litigant details into representing list of the advocate
-                    advocates.get(0).setRepresenting(List.of(party));
-                    courtCaseObj.setRepresentatives(advocates);
+                    // Extract the else block logic to a separate method
+                    updateExistingAdvocateMapping(
+                            courtCase, advocateUuid, party, advocateMappings,
+                            advocateTryingToReplace, courtCaseObj
+                    );
                 }
                 inactivateOldAdvocate(replacementDetails, courtCase);
             }
@@ -3271,7 +3282,11 @@ public class CaseService {
 
             // We found a matching litigant
             addVakalatnamaDocument(item, replacementDetails);
-            replaceAdvocateIfFound(item, advocateUuidToReplace, newAdvocateDetail);
+            if (!replacementDetails.getIsLitigantPip()) {
+                replaceAdvocateIfFound(item, advocateUuidToReplace, newAdvocateDetail);
+            } else {
+                addAdvocateForPip(item, newAdvocateDetail);
+            }
             log.info("operation=findAndProcessMatchingLitigant , status=SUCCESS , formData , litigantIndividualId ,  advocateUuidToReplace , newAdvocateDetail ," +
                     "replacementDetails : {}, {} , {} ,{} ,{} ", formData, litigantIndividualId, advocateUuidToReplace, newAdvocateDetail, replacementDetails);
             break; // Exit loop after processing the matching litigant
@@ -3323,6 +3338,48 @@ public class CaseService {
         }
     }
 
+    private void addAdvocateForPip(JsonNode item, JsonNode newAdvocateDetail) {
+        JsonNode multipleAdvocatesNode = item.get("data").get("multipleAdvocatesAndPip");
+
+        if (!(multipleAdvocatesNode instanceof ObjectNode objectNode)) {
+            return;
+        }
+
+        // Modify "isComplainantPip" field if it exists
+        if (objectNode.has("isComplainantPip")) {
+            objectNode.put("code", "NO");
+            objectNode.put("name", "No");
+        }
+
+        // Set pipAffidavitFileUpload to null
+        if (objectNode.has("pipAffidavitFileUpload")) {
+            objectNode.putNull("pipAffidavitFileUpload");
+        }
+
+        // Set showAffidavit to false
+        if (objectNode.has("showAffidavit")) {
+            objectNode.put("showAffidavit", false);
+        }
+
+        // Set showVakalatNamaUpload to true
+        if (objectNode.has("showVakalatNamaUpload")) {
+            objectNode.put("showVakalatNamaUpload", true);
+        }
+
+        // Ensure "multipleAdvocateNameDetails" exists and is an array
+        ArrayNode advocateNameDetailsArray;
+        if (objectNode.has("multipleAdvocateNameDetails") && objectNode.get("multipleAdvocateNameDetails").isArray()) {
+            advocateNameDetailsArray = (ArrayNode) objectNode.get("multipleAdvocateNameDetails");
+        } else {
+            advocateNameDetailsArray = objectMapper.createArrayNode();
+            objectNode.set("multipleAdvocateNameDetails", advocateNameDetailsArray);
+        }
+
+        // Add the new advocate
+        advocateNameDetailsArray.add(newAdvocateDetail);
+    }
+
+
     private boolean isMatchingAdvocate(JsonNode advocate, String advocateUuidToReplace) {
         return advocate.has("advocateBarRegNumberWithName") &&
                 advocate.get("advocateBarRegNumberWithName").has("advocateUuid") &&
@@ -3330,14 +3387,20 @@ public class CaseService {
     }
 
 
-    private void enrichAdvocateDetailsInRepresentativesList(CourtCase courtCase, String advocateUuid, ReplacementDetails replacementDetails, Party party,
+    private AdvocateMapping enrichAdvocateDetailsInRepresentativesList(CourtCase courtCase, String advocateUuid, ReplacementDetails replacementDetails, Party party,
                                                             AuditDetails auditDetails, AdvocateDetails advocateDetails, CourtCase courtCaseObj) {
 
         Document document = objectMapper.convertValue(replacementDetails.getDocument(), Document.class);
         document.setId(UUID.randomUUID().toString());
 
         IndividualDetails individualDetails = advocateDetails.getIndividualDetails();
-        String fullName = individualDetails.getFirstName() + individualDetails.getMiddleName() + individualDetails.getLastName();
+        List<String> nameParts = Stream.of(individualDetails.getFirstName(),
+                        individualDetails.getMiddleName(),
+                        individualDetails.getLastName())
+                .filter(part -> part != null && !part.isEmpty())
+                .toList();
+
+        String fullName = String.join(" ", nameParts);
 
         ObjectNode advocateAdditionalDetails = objectMapper.createObjectNode();
         advocateAdditionalDetails.put("advocateName",fullName);
@@ -3357,6 +3420,34 @@ public class CaseService {
                 .hasSigned(false)
                 .build();
         courtCaseObj.setRepresentatives(List.of(advocateMapping));
+        courtCase.getRepresentatives().add(advocateMapping);
+        return advocateMapping;
+    }
+
+    private AdvocateMapping updateExistingAdvocateMapping(CourtCase courtCase, String advocateUuid, Party party,
+                                                          List<AdvocateMapping> advocateMappings, AdvocateMapping advocateTryingToReplace,
+                                                          CourtCase courtCaseObj) {
+
+        // Set the representing list for the existing advocate
+        advocateTryingToReplace.setRepresenting(List.of(party));
+
+        // Update the representatives in the court case object
+        courtCaseObj.setRepresentatives(Collections.singletonList(advocateTryingToReplace));
+
+        // Find and update the matching advocate mapping
+        for (AdvocateMapping advocateMapping : advocateMappings) {
+            if (advocateMapping.getAdvocateId().equalsIgnoreCase(advocateUuid)) {
+                // Add the party to the representing list
+                advocateMapping.getRepresenting().add(party);
+
+                // Update the representatives in the court case
+                courtCase.setRepresentatives(advocateMappings);
+
+                break;  // Exit the loop once the mapping is updated
+            }
+        }
+
+        return advocateTryingToReplace;
     }
 
 
