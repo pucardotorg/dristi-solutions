@@ -10,8 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import pucar.web.models.Order;
 import pucar.web.models.OrderRequest;
+import pucar.web.models.adiary.CaseDiaryEntry;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -47,20 +49,21 @@ public class CompositeOrderService implements OrderProcessor {
     }
 
     @Override
-    public void processCommonItems(OrderRequest orderRequest) {
+    public List<CaseDiaryEntry> processCommonItems(OrderRequest orderRequest) {
 
         Order order = orderRequest.getOrder();
         RequestInfo requestInfo = orderRequest.getRequestInfo();
 
         List<Order> itemListFormCompositeItem = getItemListFormCompositeItem(order);
+        List<CaseDiaryEntry> diaryEntries = new ArrayList<>();
         for (Order compositeOrderItem : itemListFormCompositeItem) {
             // here call common
-            orderStrategyExecutor.beforePublish(OrderRequest.builder()
+            diaryEntries = orderStrategyExecutor.commonProcess(OrderRequest.builder()
                     .order(compositeOrderItem)
                     .requestInfo(requestInfo).build());
         }
 
-        // here put only one a diary entry
+        return new ArrayList<>(Collections.singletonList(diaryEntries.get(0)));
 
     }
 
@@ -73,7 +76,7 @@ public class CompositeOrderService implements OrderProcessor {
         List<Order> itemListFormCompositeItem = getItemListFormCompositeItem(order);
         for (Order compositeOrderItem : itemListFormCompositeItem) {
             // here call post
-            orderStrategyExecutor.beforePublish(OrderRequest.builder()
+            orderStrategyExecutor.afterPublish(OrderRequest.builder()
                     .order(compositeOrderItem)
                     .requestInfo(requestInfo).build());
         }
@@ -103,11 +106,16 @@ public class CompositeOrderService implements OrderProcessor {
             for (JsonNode item : compositeItemArray) {
                 String orderType = item.get("orderType").toString();
                 JsonNode additionalDetails = item.get("orderSchema").get("additionalDetails");
+//                if (additionalDetails.isObject()) {
+                ObjectNode additionalDetailsNode = (ObjectNode) additionalDetails;
+                additionalDetailsNode.put("itemId", item.get("id").toString());
+//                }
+
                 JsonNode orderDetails = item.get("orderSchema").get("orderDetails");
 
                 assert orderNode != null;
                 orderNode.put("orderType", orderType);
-                orderNode.set("additionalDetails", additionalDetails);
+                orderNode.set("additionalDetails", additionalDetailsNode);
                 orderNode.set("orderDetails", orderDetails);
 
                 Order orderItem = objectMapper.convertValue(orderNode, Order.class);

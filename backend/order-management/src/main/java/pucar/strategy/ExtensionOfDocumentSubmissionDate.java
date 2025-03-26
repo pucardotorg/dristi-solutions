@@ -1,5 +1,6 @@
 package pucar.strategy;
 
+import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -18,8 +19,11 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
+import static pucar.config.ServiceConstants.EXTENSION_OF_DOCUMENT_SUBMISSION_DATE;
+
 
 @Component
+@Slf4j
 public class ExtensionOfDocumentSubmissionDate implements OrderUpdateStrategy {
 
     private final JsonUtil jsonUtil;
@@ -42,7 +46,8 @@ public class ExtensionOfDocumentSubmissionDate implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
-        return false;
+        Order order = orderRequest.getOrder();
+        return order.getOrderType() != null && EXTENSION_OF_DOCUMENT_SUBMISSION_DATE.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override
@@ -59,7 +64,6 @@ public class ExtensionOfDocumentSubmissionDate implements OrderUpdateStrategy {
         HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
         moduleSearchCriteria.put("filingNumber", order.getFilingNumber());
         moduleSearchCriteria.put("isCompleted", false);
-//        moduleSearchCriteria.put("referenceId",MANUAL+order.getLinkedOrderNumber());
 
         PendingTaskSearchRequest searchRequest = PendingTaskSearchRequest.builder()
                 .RequestInfo(requestInfo)

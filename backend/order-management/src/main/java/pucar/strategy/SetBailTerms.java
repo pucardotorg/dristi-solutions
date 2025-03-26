@@ -48,7 +48,8 @@ public class SetBailTerms implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
-        return false;
+        Order order = orderRequest.getOrder();
+        return order.getOrderType() != null && SET_BAIL_TERMS.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override

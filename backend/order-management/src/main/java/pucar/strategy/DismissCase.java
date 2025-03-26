@@ -1,5 +1,6 @@
 package pucar.strategy;
 
+import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -25,6 +26,7 @@ import java.util.List;
 import static pucar.config.ServiceConstants.*;
 
 @Component
+@Slf4j
 public class DismissCase implements OrderUpdateStrategy {
 
     private final CaseUtil caseUtil;
@@ -45,7 +47,8 @@ public class DismissCase implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
-        return false;
+        Order order = orderRequest.getOrder();
+        return order.getOrderType() != null && DISMISS_CASE.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override
@@ -67,7 +70,7 @@ public class DismissCase implements OrderUpdateStrategy {
         CourtCase courtCase = cases.get(0);
 
         WorkflowObject workflow = new WorkflowObject();
-        workflow.setAction(ADMIT);
+        workflow.setAction(REJECT);
         courtCase.setWorkflow(workflow);
 
         caseUtil.updateCase(CaseRequest.builder().cases(courtCase).requestInfo(requestInfo).build());

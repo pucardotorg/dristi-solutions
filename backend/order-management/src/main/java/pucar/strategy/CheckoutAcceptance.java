@@ -1,6 +1,7 @@
 package pucar.strategy;
 
-import io.swagger.annotations.Authorization;
+
+import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -23,9 +24,11 @@ import pucar.web.models.hearing.HearingSearchRequest;
 import java.util.List;
 
 import static pucar.config.ServiceConstants.BULK_RESCHEDULE;
+import static pucar.config.ServiceConstants.CHECKOUT_ACCEPTANCE;
 
 
 @Component
+@Slf4j
 public class CheckoutAcceptance implements OrderUpdateStrategy {
 
     private final HearingUtil hearingUtil;
@@ -43,12 +46,13 @@ public class CheckoutAcceptance implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
-        return false;
+       return false;
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
-        return false;
+        Order order = orderRequest.getOrder();
+        return order.getOrderType() != null && CHECKOUT_ACCEPTANCE.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override
@@ -72,6 +76,8 @@ public class CheckoutAcceptance implements OrderUpdateStrategy {
         RequestInfo requestInfo = orderRequest.getRequestInfo();
         Order order = orderRequest.getOrder();
         String hearingNumber = order.getHearingNumber();
+
+        // hearing update
 
         if (hearingNumber == null) {
             String referenceId = orderUtil.getReferenceId(order);
@@ -100,9 +106,6 @@ public class CheckoutAcceptance implements OrderUpdateStrategy {
         hearingUtil.createOrUpdateHearing(HearingRequest.builder().hearing(hearing).requestInfo(requestInfo).build(), updateUri);
         return null;
     }
-
-
-
 
 
 }

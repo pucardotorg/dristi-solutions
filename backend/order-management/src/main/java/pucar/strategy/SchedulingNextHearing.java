@@ -1,5 +1,6 @@
 package pucar.strategy;
 
+import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -18,7 +19,11 @@ import pucar.web.models.hearing.HearingResponse;
 import java.util.Collections;
 import java.util.List;
 
+import static pucar.config.ServiceConstants.SCHEDULE_OF_HEARING_DATE;
+import static pucar.config.ServiceConstants.SCHEDULING_NEXT_HEARING;
+
 @Component
+@Slf4j
 public class SchedulingNextHearing implements OrderUpdateStrategy {
 
     private final HearingUtil hearingUtil;
@@ -34,7 +39,8 @@ public class SchedulingNextHearing implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
-        return true;
+        Order order = orderRequest.getOrder();
+        return order.getOrderType() != null && SCHEDULING_NEXT_HEARING.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override

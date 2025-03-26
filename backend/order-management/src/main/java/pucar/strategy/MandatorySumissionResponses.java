@@ -14,11 +14,11 @@ import pucar.web.models.Order;
 import pucar.web.models.OrderRequest;
 import pucar.web.models.adiary.CaseDiaryEntry;
 import pucar.web.models.pendingtask.PendingTask;
+import pucar.web.models.pendingtask.PendingTaskRequest;
 
 import java.util.*;
 
-import static pucar.config.ServiceConstants.MAKE_MANDATORY_SUBMISSION;
-import static pucar.config.ServiceConstants.MANUAL;
+import static pucar.config.ServiceConstants.*;
 
 @Component
 public class MandatorySumissionResponses implements OrderUpdateStrategy {
@@ -41,7 +41,8 @@ public class MandatorySumissionResponses implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
-        return false;
+        Order order = orderRequest.getOrder();
+        return order.getOrderType() != null && MANDATORY_SUBMISSIONS_RESPONSES.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override
@@ -90,6 +91,9 @@ public class MandatorySumissionResponses implements OrderUpdateStrategy {
                     .additionalDetails(additionalDetailsMap)
                     .screenType("home")
                     .build();
+
+            pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo
+            ).pendingTask(pendingTask).build());
         }
 
         return null;
@@ -104,13 +108,4 @@ public class MandatorySumissionResponses implements OrderUpdateStrategy {
     public CaseDiaryEntry execute(OrderRequest request) {
         return null;
     }
-
-    // before publish order
-
-    // no
-
-    // after publish order
-
-    // create submission pending task
-
 }

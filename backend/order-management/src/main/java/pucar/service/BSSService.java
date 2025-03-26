@@ -13,6 +13,8 @@ import pucar.factory.OrderFactory;
 import pucar.factory.OrderServiceFactoryProvider;
 import pucar.util.*;
 import pucar.web.models.*;
+import pucar.web.models.adiary.BulkDiaryEntryRequest;
+import pucar.web.models.adiary.CaseDiaryEntry;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -31,9 +33,10 @@ public class BSSService {
     private final OrderUtil orderUtil;
     private final Configuration configuration;
     private final OrderServiceFactoryProvider factoryProvider;
+    private final ADiaryUtil aDiaryUtil;
 
     @Autowired
-    public BSSService(XmlRequestGenerator xmlRequestGenerator, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, OrderUtil orderUtil, Configuration configuration, OrderServiceFactoryProvider factoryProvider) {
+    public BSSService(XmlRequestGenerator xmlRequestGenerator, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, OrderUtil orderUtil, Configuration configuration, OrderServiceFactoryProvider factoryProvider, ADiaryUtil aDiaryUtil) {
         this.xmlRequestGenerator = xmlRequestGenerator;
         this.eSignUtil = eSignUtil;
         this.fileStoreUtil = fileStoreUtil;
@@ -41,6 +44,7 @@ public class BSSService {
         this.orderUtil = orderUtil;
         this.configuration = configuration;
         this.factoryProvider = factoryProvider;
+        this.aDiaryUtil = aDiaryUtil;
     }
 
     public List<OrderToSign> createOrderToSignRequest(OrdersToSignRequest request) {
@@ -196,7 +200,7 @@ public class BSSService {
                     orderProcessor.preProcessOrder(orderUpdateRequest);
 
                     OrderResponse response = orderUtil.updateOrder(orderUpdateRequest);
-                    orderProcessor.processCommonItems(orderUpdateRequest);
+                    List<CaseDiaryEntry> diaryEntries = orderProcessor.processCommonItems(orderUpdateRequest);
                     orderProcessor.postProcessOrder(orderUpdateRequest);
                     updatedOrder.add(response.getOrder());
 
@@ -207,6 +211,9 @@ public class BSSService {
             }
 
         }
+
+        // here create bulk diary entry
+        aDiaryUtil.createBulkADiaryEntry(BulkDiaryEntryRequest.builder().build());
 
         return updatedOrder;
 

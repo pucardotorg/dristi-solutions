@@ -39,7 +39,8 @@ public class StateSlaMap {
                 Map.entry("SET_BAIL_TERMS", 3),
                 Map.entry("JUDGEMENT", 3),
                 Map.entry("CHECKOUT_ACCEPTANCE", 1),
-                Map.entry("CHECKOUT_REJECT", 1));
+                Map.entry("CHECKOUT_REJECT", 1),
+                Map.entry("SCHEDULE_HEARING", 3));
     }
 
     public static Map<String, Integer> getStateSlaMap() {

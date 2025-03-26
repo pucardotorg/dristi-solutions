@@ -4,7 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import pucar.strategy.OrderUpdateStrategy;
 import pucar.web.models.OrderRequest;
+import pucar.web.models.adiary.CaseDiaryEntry;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -28,10 +30,18 @@ public class OrderStrategyExecutor {
 
     }
 
-    public void commonProcess(OrderRequest orderRequest) {
+    public List<CaseDiaryEntry> commonProcess(OrderRequest orderRequest) {
+
+        List<CaseDiaryEntry> diaryEntries = new ArrayList<>();
         enrichmentStrategies.stream()
                 .filter(strategy -> strategy.supportsCommon(orderRequest))
-                .forEach(strategy -> strategy.execute(orderRequest));
+                .forEach((strategy) -> {
+                    CaseDiaryEntry diaryEntry = strategy.execute(orderRequest);
+                    diaryEntries.add(diaryEntry);
+
+                });
+
+        return diaryEntries;
 
     }
 }

@@ -1,5 +1,6 @@
 package pucar.strategy;
 
+import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -22,8 +23,10 @@ import pucar.web.models.hearing.HearingSearchRequest;
 import java.util.List;
 
 import static pucar.config.ServiceConstants.BULK_RESCHEDULE;
+import static pucar.config.ServiceConstants.RESCHEDULE_OF_HEARING_DATE;
 
 @Component
+@Slf4j
 public class RescheduleOfHearingDate implements OrderUpdateStrategy {
 
     private final HearingUtil hearingUtil;
@@ -46,7 +49,8 @@ public class RescheduleOfHearingDate implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
-        return false;
+        Order order = orderRequest.getOrder();
+        return order.getOrderType() != null && RESCHEDULE_OF_HEARING_DATE.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override

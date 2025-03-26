@@ -1,5 +1,6 @@
 package pucar.strategy;
 
+import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -21,9 +22,11 @@ import pucar.web.models.hearing.HearingSearchRequest;
 
 import java.util.List;
 
+import static pucar.config.ServiceConstants.ASSIGNING_DATE_RESCHEDULED_HEARING;
 import static pucar.config.ServiceConstants.SETDATE;
 
 @Component
+@Slf4j
 public class AssigningDateRescheduledHearing implements OrderUpdateStrategy {
 
     private final HearingUtil hearingUtil;
@@ -41,12 +44,13 @@ public class AssigningDateRescheduledHearing implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
-        return false;
+       return false;
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
-        return false;
+        Order order = orderRequest.getOrder();
+        return order.getOrderType() != null && ASSIGNING_DATE_RESCHEDULED_HEARING.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override
@@ -71,6 +75,7 @@ public class AssigningDateRescheduledHearing implements OrderUpdateStrategy {
         Order order = orderRequest.getOrder();
         String hearingNumber = order.getHearingNumber();
 
+        // hearing update and application case search if required
         if (hearingNumber == null) {
             String referenceId = orderUtil.getReferenceId(order);
 
@@ -87,6 +92,8 @@ public class AssigningDateRescheduledHearing implements OrderUpdateStrategy {
                 .criteria(HearingCriteria.builder().hearingId(hearingNumber).tenantId(order.getTenantId()).build()).build());
         Hearing hearing = hearings.get(0);
 
+        order.setHearingNumber(hearing.getHearingId());
+
         hearing.setStartTime(hearingUtil.getCreateStartAndEndTime(order.getAdditionalDetails()));
         hearing.setEndTime(hearingUtil.getCreateStartAndEndTime(order.getAdditionalDetails()));
         WorkflowObject workflow = new WorkflowObject();
@@ -94,12 +101,9 @@ public class AssigningDateRescheduledHearing implements OrderUpdateStrategy {
         workflow.setComments("Update Hearing");
 
         StringBuilder updateUri = new StringBuilder(config.getHearingHost()).append(config.getHearingUpdateEndPoint());
-
         hearingUtil.createOrUpdateHearing(HearingRequest.builder().hearing(hearing).requestInfo(requestInfo).build(), updateUri);
         return null;
     }
-
-
 
 
 }

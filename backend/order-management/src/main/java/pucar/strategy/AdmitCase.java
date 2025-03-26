@@ -1,6 +1,7 @@
 package pucar.strategy;
 
 
+import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -26,6 +27,7 @@ import java.util.List;
 import static pucar.config.ServiceConstants.*;
 
 @Component
+@Slf4j
 public class AdmitCase implements OrderUpdateStrategy {
 
     private final CaseUtil caseUtil;
@@ -48,7 +50,8 @@ public class AdmitCase implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
-        return false;
+        Order order = orderRequest.getOrder();
+        return order.getOrderType() != null && ADMIT_CASE.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override
@@ -72,6 +75,7 @@ public class AdmitCase implements OrderUpdateStrategy {
         Order order = orderRequest.getOrder();
         RequestInfo requestInfo = orderRequest.getRequestInfo();
 
+        // case search and update
         List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
                 .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(order.getFilingNumber()).build()))
                 .requestInfo(requestInfo).build());
@@ -85,6 +89,8 @@ public class AdmitCase implements OrderUpdateStrategy {
 
         caseUtil.updateCase(CaseRequest.builder().cases(courtCase).requestInfo(requestInfo).build());
 
+
+        // Hearing search and update
         List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder()
                 .criteria(HearingCriteria.builder().tenantId(order.getTenantId())
                         .filingNumber(order.getFilingNumber()).build()).requestInfo(requestInfo).build());
@@ -106,7 +112,6 @@ public class AdmitCase implements OrderUpdateStrategy {
                 });
 
         // create pending task
-
         // schedule hearing pending task
 
         PendingTask pendingTask = PendingTask.builder()

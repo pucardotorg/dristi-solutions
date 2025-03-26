@@ -21,8 +21,7 @@ import pucar.web.models.hearing.HearingResponse;
 import java.util.Collections;
 import java.util.List;
 
-import static pucar.config.ServiceConstants.CASE_ADMITTED;
-import static pucar.config.ServiceConstants.SCHEDULE_ADMISSION_HEARING;
+import static pucar.config.ServiceConstants.*;
 
 @Component
 public class ScheduleOfHearingDate implements OrderUpdateStrategy {
@@ -42,12 +41,14 @@ public class ScheduleOfHearingDate implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
-        return true;
+        Order order = orderRequest.getOrder();
+        return order.getOrderType() != null && SCHEDULE_OF_HEARING_DATE.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
-        return false;
+        Order order = orderRequest.getOrder();
+        return order.getOrderType() != null && SCHEDULE_OF_HEARING_DATE.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override
@@ -56,6 +57,7 @@ public class ScheduleOfHearingDate implements OrderUpdateStrategy {
         Order order = orderRequest.getOrder();
         RequestInfo requestInfo = orderRequest.getRequestInfo();
 
+        // Create hearing
         List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
                 .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(order.getFilingNumber()).build()))
                 .requestInfo(requestInfo).build());
@@ -63,14 +65,10 @@ public class ScheduleOfHearingDate implements OrderUpdateStrategy {
         // add validation here
         CourtCase courtCase = cases.get(0);
 
-
         HearingRequest request = hearingUtil.createHearingRequestForScheduleNextHearingAndScheduleOfHearingDate(requestInfo, order, courtCase);
-
-        StringBuilder uri = new StringBuilder(configuration.getHearingHost()).append(configuration.getHearingCreateEndPoint());
-
-        HearingResponse orUpdateHearing = hearingUtil.createOrUpdateHearing(request, uri);
-
-        order.setHearingNumber(orUpdateHearing.getHearing().getHearingId());
+        StringBuilder createHearingUri = new StringBuilder(configuration.getHearingHost()).append(configuration.getHearingCreateEndPoint());
+        HearingResponse createdHearingResponse = hearingUtil.createOrUpdateHearing(request, createHearingUri);
+        order.setHearingNumber(createdHearingResponse.getHearing().getHearingId());
         return null;
     }
 
@@ -80,31 +78,27 @@ public class ScheduleOfHearingDate implements OrderUpdateStrategy {
         Order order = orderRequest.getOrder();
         RequestInfo requestInfo = orderRequest.getRequestInfo();
 
+        // case update
         List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
                 .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(order.getFilingNumber()).build()))
                 .requestInfo(requestInfo).build());
 
         // add validation here
         CourtCase courtCase = cases.get(0);
-
         String status = courtCase.getStatus();
 
         if (!CASE_ADMITTED.equalsIgnoreCase(status)) {
 
             WorkflowObject workflow = new WorkflowObject();
             workflow.setAction(SCHEDULE_ADMISSION_HEARING);
-
             courtCase.setWorkflow(workflow);
-
             CaseRequest request = CaseRequest.builder().requestInfo(requestInfo)
                     .cases(courtCase).build();
-
             caseUtil.updateCase(request);
 
         }
 
         // close manual pending task for filing number
-
         pendingTaskUtil.closeManualPendingTask(order.getHearingNumber(), requestInfo);
 
 
