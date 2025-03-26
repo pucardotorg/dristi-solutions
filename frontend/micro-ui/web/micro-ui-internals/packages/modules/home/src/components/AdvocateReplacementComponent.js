@@ -182,7 +182,9 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
       ],
       reasonForReplacement: [
         { label: "REASON_FOR_REPLACEMENT", value: taskDetails?.reason },
-        { label: "SUPPORTING_DOCUMENT", type: "file", value: taskDetails?.reasonDocument?.fileStore },
+        ...(taskDetails?.reasonDocument?.fileStore
+          ? [{ label: "SUPPORTING_DOCUMENT", type: "file", value: taskDetails?.reasonDocument?.fileStore }]
+          : []),
       ],
       litigants: isCitizen
         ? [
