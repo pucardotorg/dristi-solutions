@@ -3,8 +3,8 @@
     "tenantId": "kl",
     "moduleName": "INBOX",
     "masterName": "InboxQueryConfiguration",
-    "mdmsPayload": {
-      "0": {
+    "mdmsPayload": [
+      {
         "id": "ab9e5531-885d-4784-8760-4c039bef4046",
         "tenantId": "kl",
         "schemaCode": "INBOX.InboxQueryConfiguration",
@@ -93,6 +93,6 @@
           "lastModifiedTime": 1742911832932
         }
       }
-    }
+    ]
   }
 ]
