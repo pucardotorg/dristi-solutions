@@ -213,11 +213,16 @@ function OrderReviewModal({
       <Modal
         headerBarMain={<Heading label={t("REVIEW_ORDERS_HEADING")} />}
         headerBarEnd={<CloseBtn onClick={handleReviewGoBack} />}
-        actionCancelLabel={showActions && t("ADD_SIGNATURE")}
-        actionSaveLabel={t("SIGN_LATER")}
+        actionCancelLabel={showActions && t("BULK_EDIT")}
+        actionCustomLabel={showActions && t("ADD_SIGNATURE")}
+        actionSaveLabel={t("SAVE_FINALISE_AND_SIGN_LATER")}
         isBackButtonDisabled={isLoading || isUpdateLoading || !businessDay}
+        isCustomButtonDisabled={isLoading || isUpdateLoading || !businessDay}
         isDisabled={isLoading || isUpdateLoading || !businessDay}
-        actionCancelOnSubmit={handleAddSignature}
+        actionCancelOnSubmit={handleReviewGoBack}
+        actionCustomLabelSubmit={handleAddSignature}
+        customActionStyle={{ border: "1px solid #007E7E", backgroundColor: "white" }}
+        customActionTextStyle={{ color: "#007E7E" }}
         actionSaveOnSubmit={handleSignLater}
         className={"review-order-modal"}
       >

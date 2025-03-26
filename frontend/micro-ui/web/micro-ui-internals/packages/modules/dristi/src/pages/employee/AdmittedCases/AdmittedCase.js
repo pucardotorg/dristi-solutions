@@ -588,7 +588,7 @@ const AdmittedCases = () => {
           if (order?.status === OrderWorkflowState.DRAFT_IN_PROGRESS) {
             history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${order?.orderNumber}`);
           } else if (order?.status === OrderWorkflowState.PENDING_BULK_E_SIGN) {
-            history.push(`/${window.contextPath}/employee/home/home-pending-task`, { isBulkEsignSelected: true });
+            history.push(`/${window.contextPath}/employee/home/bulk-esign-order?orderNumber=${order?.orderNumber}`);
           } else {
             setCurrentOrder(order);
             setShowOrderReviewModal(true);

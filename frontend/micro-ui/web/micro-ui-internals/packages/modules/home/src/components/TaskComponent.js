@@ -43,7 +43,6 @@ const TasksComponent = ({
   isApplicationCompositeOrder = false,
   compositeOrderObj,
   pendingSignOrderList,
-  setShowBulkSignAllModal,
 }) => {
   const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
   const history = useHistory();
@@ -638,7 +637,7 @@ const TasksComponent = ({
               label={`${t("BULK_SIGN")} ${pendingSignOrderList?.length} ${t("BULK_PENDING_ORDERS")}`}
               textStyles={{ margin: "0px", fontSize: "16px", fontWeight: 700, textAlign: "center" }}
               style={{ padding: "18px", width: "fit-content", boxShadow: "none" }}
-              onButtonClick={() => setShowBulkSignAllModal(true)}
+              onButtonClick={() => history.push(`/${window?.contextPath}/${userType}/home/bulk-esign-order`)}
               isDisabled={pendingSignOrderList?.length === 0}
             />
           )}
