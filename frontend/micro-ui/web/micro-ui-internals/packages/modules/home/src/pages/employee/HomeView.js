@@ -309,6 +309,9 @@ const HomeView = () => {
   };
 
   const onRowClick = (row) => {
+    if (userInfoType === "citizen" && row?.original?.advocateStatus === "PENDING") {
+      return;
+    }
     const searchParams = new URLSearchParams();
     if (
       onRowClickData?.urlDependentOn && onRowClickData?.urlDependentValue && Array.isArray(onRowClickData?.urlDependentValue)
