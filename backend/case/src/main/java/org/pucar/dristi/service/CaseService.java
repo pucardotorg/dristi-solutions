@@ -3606,7 +3606,11 @@ public class CaseService {
                 .additionalDetails(advocateAdditionalDetails)
                 .hasSigned(false)
                 .build();
-        courtCaseObj.setRepresentatives(List.of(advocateMapping));
+
+        List<AdvocateMapping> advocateMappingList = new ArrayList<>();
+        advocateMappingList.add(advocateMapping);
+
+        courtCaseObj.setRepresentatives(advocateMappingList);
         courtCase.getRepresentatives().add(advocateMapping);
         return advocateMapping;
     }
@@ -3700,7 +3704,7 @@ public class CaseService {
             document.setFileStore(replacementDetails.getDocument().getFileStore());
         }
 
-        ArrayList<Document> documents = new ArrayList<>();
+        List<Document> documents = new ArrayList<>();
         documents.add(document);
 
         ObjectNode additionalDetails = objectMapper.createObjectNode();
