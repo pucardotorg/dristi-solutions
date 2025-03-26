@@ -82,6 +82,10 @@ public class ServiceConstants {
     public static final String REJECT ="REJECT";
     public static final String SCHEDULED ="SCHEDULED";
     public static final String INTERMEDIATE ="INTERMEDIATE";
+    public static final String RESCHEDULE ="RESCHEDULE";
+    public static final String CHOOSE_DATES_FOR_RESCHEDULE_OF_HEARING_DATE ="";
+    public static final String INITIATING_RESCHEDULING_OF_HEARING_DATE ="INITIATING_RESCHEDULING_OF_HEARING_DATE";
+    public static final Long ONE_DAY_TIME_IN_MILLIS =86400000L;
 
 
 

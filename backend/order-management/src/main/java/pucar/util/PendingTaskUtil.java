@@ -3,18 +3,24 @@ package pucar.util;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import jakarta.validation.constraints.Size;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.ServiceCallException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import pucar.config.Configuration;
+import pucar.config.StateSlaMap;
 import pucar.repository.ServiceRequestRepository;
+import pucar.web.models.courtCase.AdvocateMapping;
+import pucar.web.models.courtCase.CourtCase;
+import pucar.web.models.courtCase.Party;
 import pucar.web.models.pendingtask.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static pucar.config.ServiceConstants.*;
 
@@ -25,11 +31,15 @@ public class PendingTaskUtil {
     private final ObjectMapper objectMapper;
     private final Configuration configuration;
     private final ServiceRequestRepository serviceRequestRepository;
+    private final JsonUtil jsonUtil;
+    private final DateUtil dateUtil;
 
-    public PendingTaskUtil(ObjectMapper objectMapper, Configuration configuration, ServiceRequestRepository serviceRequestRepository) {
+    public PendingTaskUtil(ObjectMapper objectMapper, Configuration configuration, ServiceRequestRepository serviceRequestRepository, JsonUtil jsonUtil, DateUtil dateUtil) {
         this.objectMapper = objectMapper;
         this.configuration = configuration;
         this.serviceRequestRepository = serviceRequestRepository;
+        this.jsonUtil = jsonUtil;
+        this.dateUtil = dateUtil;
     }
 
     // this will use inbox service get fields end point
@@ -105,9 +115,50 @@ public class PendingTaskUtil {
 
     }
 
-    public void closeManualPendingTask(String orderNumber, RequestInfo requestInfo) {
+    public void closeManualPendingTask(String referenceNo, RequestInfo requestInfo) {
         // here data will be lost , we need to search first then update the pending task , this is as per ui
         createPendingTask(PendingTaskRequest.builder()
-                .pendingTask(PendingTask.builder().referenceId(MANUAL+orderNumber).isCompleted(true).build()).requestInfo(requestInfo).build());
+                .pendingTask(PendingTask.builder().referenceId(MANUAL + referenceNo).isCompleted(true).build()).requestInfo(requestInfo).build());
     }
+
+    public List<String> getUniqueAssignees(Map<String, List<String>> allAdvocates) {
+        return allAdvocates.values().stream()
+                .flatMap(List::stream)
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+
+    public Object getAdditionalDetails(CourtCase courtCase, String advocateUUID) {
+
+        Map<String, Object> additionalDetails = new HashMap<>();
+        additionalDetails.put("litigants", getLitigantsForAdvocate(courtCase.getRepresentatives(), advocateUUID));
+        return additionalDetails;
+    }
+
+    public List<String> getLitigantsForAdvocate(List<AdvocateMapping> representatives, String advocateUUID) {
+        List<String> individualList = new ArrayList<>();
+        List<Party> partyList = new ArrayList<>();
+        for (AdvocateMapping advocateMapping : representatives) {
+            if (advocateUUID.equalsIgnoreCase(getUUID(advocateMapping.getAdditionalDetails()))) {
+                partyList = advocateMapping.getRepresenting();
+                break;
+            }
+        }
+        if (!partyList.isEmpty()) {
+            individualList = partyList.stream().map(Party::getIndividualId).toList();
+        }
+        return individualList;
+
+    }
+
+    private String getUUID(Object additionalDetails) {
+        return jsonUtil.getNestedValue(additionalDetails, List.of("uuid"), String.class);
+    }
+
+    public Long getStateSla(String orderType) {
+        return StateSlaMap.getStateSlaMap().get(INITIATING_RESCHEDULING_OF_HEARING_DATE) * ONE_DAY_TIME_IN_MILLIS + dateUtil.getCurrentTimeInMilis();
+    }
+
+
 }

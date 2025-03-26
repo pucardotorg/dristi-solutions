@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import pucar.config.Configuration;
 import pucar.util.CaseUtil;
 import pucar.util.HearingUtil;
+import pucar.util.PendingTaskUtil;
 import pucar.web.models.Order;
 import pucar.web.models.OrderRequest;
 import pucar.web.models.WorkflowObject;
@@ -29,12 +30,14 @@ public class ScheduleOfHearingDate implements OrderUpdateStrategy {
     private final HearingUtil hearingUtil;
     private final Configuration configuration;
     private final CaseUtil caseUtil;
+    private final PendingTaskUtil pendingTaskUtil;
 
     @Autowired
-    public ScheduleOfHearingDate(HearingUtil hearingUtil, Configuration configuration, CaseUtil caseUtil) {
+    public ScheduleOfHearingDate(HearingUtil hearingUtil, Configuration configuration, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil) {
         this.hearingUtil = hearingUtil;
         this.configuration = configuration;
         this.caseUtil = caseUtil;
+        this.pendingTaskUtil = pendingTaskUtil;
     }
 
     @Override
@@ -99,6 +102,10 @@ public class ScheduleOfHearingDate implements OrderUpdateStrategy {
             caseUtil.updateCase(request);
 
         }
+
+        // close manual pending task for filing number
+
+        pendingTaskUtil.closeManualPendingTask(order.getHearingNumber(), requestInfo);
 
 
         return null;
