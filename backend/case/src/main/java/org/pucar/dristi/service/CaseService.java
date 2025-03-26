@@ -40,6 +40,7 @@ import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -1458,9 +1459,12 @@ public class CaseService {
     private void replaceAdvocate(JoinCaseV2Request joinCaseRequest, CourtCase courtCase, String advocateId) {
         try {
             List<String> taskReferenceNoList = new ArrayList<>();
+            IndividualDetails individualDetails = new IndividualDetails();
+
             if (joinCaseRequest.getJoinCaseData().getRepresentative().getIsJudgeApproving()) {
                 TaskResponse taskResponse = createTaskForJudge(joinCaseRequest, courtCase);
                 taskReferenceNoList.add(taskResponse.getTask().getTaskNumber());
+                updateIndividualDetails(taskResponse, individualDetails);
             } else {
                 Map<String, List<RepresentingJoinCase>> replaceAdvocateRepresentingMap = new LinkedHashMap<>();
 
@@ -1491,12 +1495,18 @@ public class CaseService {
                         });
                     }
                 });
+                AtomicBoolean isAdvocateDetailsNamesExtracted = new AtomicBoolean(false);
 
                 //handle task creation for each advocate
                 replaceAdvocateRepresentingMap.forEach((key, value) -> {
                     TaskResponse taskResponse = null;
+
                     try {
                         taskResponse = createTaskAdvocate(joinCaseRequest, key, value, courtCase);
+                        if(!isAdvocateDetailsNamesExtracted.get()) {
+                            updateIndividualDetails(taskResponse, individualDetails);
+                            isAdvocateDetailsNamesExtracted.set(true);
+                        }
                     } catch (JsonProcessingException e) {
                         log.error("Error occurred while creating task for advocate :: {}", e.toString());
                         throw new CustomException(JOIN_CASE_ERR, TASK_SERVICE_ERROR);
@@ -1539,6 +1549,7 @@ public class CaseService {
             boolean isExisting = pendingAdvocateRequestOptional.isPresent();
             if(!isExisting) {
                 pendingAdvocateRequest.setAdvocateId(advocateId);
+                pendingAdvocateRequest.setIndividualDetails(individualDetails);
             }
             boolean isPartOfCase = courtCase.getRepresentatives() != null &&
                     !courtCase.getRepresentatives().stream()
@@ -1569,6 +1580,14 @@ public class CaseService {
             throw new CustomException(JOIN_CASE_ERR, TASK_SERVICE_ERROR);
         }
 
+    }
+
+    private void updateIndividualDetails(TaskResponse taskResponse, IndividualDetails individualDetails) {
+        JoinCaseTaskRequest taskDetails = objectMapper.convertValue(taskResponse.getTask().getTaskDetails(), JoinCaseTaskRequest.class);
+        IndividualDetails joinCaseIndividual = taskDetails.getAdvocateDetails().getIndividualDetails();
+        individualDetails.setFirstName(joinCaseIndividual.getFirstName());
+        individualDetails.setMiddleName(joinCaseIndividual.getMiddleName());
+        individualDetails.setLastName(joinCaseIndividual.getLastName());
     }
 
     private TaskResponse createTaskForJudge(JoinCaseV2Request joinCaseRequest, CourtCase courtCase) throws JsonProcessingException {
