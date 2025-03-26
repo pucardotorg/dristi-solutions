@@ -1199,7 +1199,7 @@ public class CaseService {
         Map<String, Party> individualPartyMap = new HashMap<>();
 
         if (joinCaseData.getLitigant() != null && !joinCaseData.getLitigant().isEmpty()) {
-            joinCaseData.getLitigant().forEach(joinCaseLitigant->{
+            joinCaseData.getLitigant().forEach(joinCaseLitigant -> {
                 if (!individualPartyMap.containsKey(joinCaseLitigant.getIndividualId())) {
                     Party litigant = new Party();
                     litigant.setPartyCategory(joinCaseLitigant.getPartyCategory());
@@ -1208,7 +1208,7 @@ public class CaseService {
                 }
             });
         }
-        Optional.ofNullable(courtCase.getLitigants()).orElse(Collections.emptyList()).forEach(existingLitigant->{
+        Optional.ofNullable(courtCase.getLitigants()).orElse(Collections.emptyList()).forEach(existingLitigant -> {
             if (!individualPartyMap.containsKey(existingLitigant.getIndividualId())) {
                 Party litigant = new Party();
                 litigant.setPartyCategory(existingLitigant.getPartyCategory());
@@ -1232,12 +1232,12 @@ public class CaseService {
 
                 additionalDetails.put("uuid", individual.getUserUuid());
 
-                if(representingJoinCase.getUniqueId()!=null){
+                if (representingJoinCase.getUniqueId() != null) {
                     //respondent name enrich
-                    additionalDetails.put("fullName", getRespondentNameByUniqueId(courtCase.getAdditionalDetails(),representingJoinCase.getUniqueId()));
-                }else{
+                    additionalDetails.put("fullName", getRespondentNameByUniqueId(courtCase.getAdditionalDetails(), representingJoinCase.getUniqueId(),individual));
+                } else {
                     //complainant name enrich
-                    additionalDetails.put("fullName", getComplainantNameByIndividualId(courtCase.getAdditionalDetails(),representingJoinCase.getIndividualId()));
+                    additionalDetails.put("fullName", getComplainantNameByIndividualId(courtCase.getAdditionalDetails(), representingJoinCase.getIndividualId()));
                 }
                 Object additionalDetailsObject = objectMapper.convertValue(additionalDetails, additionalDetails.getClass());
                 party.setAdditionalDetails(additionalDetailsObject);
@@ -1278,12 +1278,12 @@ public class CaseService {
 
                 additionalDetails.put("uuid", individual.getUserUuid());
 
-                if(representingJoinCase.getUniqueId()!=null){
+                if (representingJoinCase.getUniqueId() != null) {
                     //respondent name enrich
-                    additionalDetails.put("fullName", getRespondentNameByUniqueId(courtCase.getAdditionalDetails(),representingJoinCase.getUniqueId()));
-                }else{
+                    additionalDetails.put("fullName", getRespondentNameByUniqueId(courtCase.getAdditionalDetails(), representingJoinCase.getUniqueId(),individual));
+                } else {
                     //complainant name enrich
-                    additionalDetails.put("fullName", getComplainantNameByIndividualId(courtCase.getAdditionalDetails(),representingJoinCase.getIndividualId()));
+                    additionalDetails.put("fullName", getComplainantNameByIndividualId(courtCase.getAdditionalDetails(), representingJoinCase.getIndividualId()));
                 }
 
                 Object additionalDetailsObject = objectMapper.convertValue(additionalDetails, additionalDetails.getClass());
@@ -1511,7 +1511,7 @@ public class CaseService {
                         .findFirst();
                 PendingAdvocateRequest pendingAdvocateRequest = pendingAdvocateRequestOptional.orElseGet(PendingAdvocateRequest::new);
                 boolean isExisting = pendingAdvocateRequestOptional.isPresent();
-                if(!isExisting) {
+                if (!isExisting) {
                     pendingAdvocateRequest.setAdvocateId(advocateId);
                 }
                 boolean isPartOfCase = courtCase.getRepresentatives() != null &&
@@ -1527,7 +1527,7 @@ public class CaseService {
 
 
                 pendingAdvocateRequest.addTaskReferenceNoList(taskReferenceNoList);
-                if(!isExisting) {
+                if (!isExisting) {
                     pendingAdvocateRequestList.add(pendingAdvocateRequest);
                 }
                 courtCase.setPendingAdvocateRequests(pendingAdvocateRequestList);
@@ -1838,7 +1838,7 @@ public class CaseService {
 
         caseObj.setAuditdetails(auditDetails);
         JoinCaseDataV2 joinCaseData = joinCaseRequest.getJoinCaseData();
-        mapAndSetLitigants(joinCaseData, caseObj,courtCase, joinCaseRequest.getRequestInfo());
+        mapAndSetLitigants(joinCaseData, caseObj, courtCase, joinCaseRequest.getRequestInfo());
 
         log.info("enriching litigants");
         enrichLitigantsOnCreateAndUpdate(caseObj, auditDetails);
@@ -1847,7 +1847,7 @@ public class CaseService {
         producer.push(config.getLitigantJoinCaseTopic(), caseObj);
     }
 
-    private Object updateRespondentDetails(Object additionalDetails, JoinCaseLitigant joinCaseLitigant) {
+    private Object updateRespondentDetails(Object additionalDetails, RequestInfo requestInfo, JoinCaseLitigant joinCaseLitigant) {
 
         ObjectNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, ObjectNode.class);
 
@@ -1869,6 +1869,13 @@ public class CaseService {
                         ObjectNode individualDetailsNode = objectMapper.createObjectNode();
                         individualDetailsNode.put("individualId", joinCaseLitigant.getIndividualId());
                         respondentVerificationNode.set("individualDetails", individualDetailsNode);
+
+                        List<Individual> individualsList = individualService.getIndividualsByIndividualId(requestInfo, joinCaseLitigant.getIndividualId());
+                        Individual individual = individualsList.get(0);
+
+                        dataNode.put("respondentFirstName", individual.getName().getGivenName() == null ? "" : individual.getName().getGivenName());
+                        dataNode.put("respondentMiddleName", individual.getName().getOtherNames() == null ? "" : individual.getName().getOtherNames());
+                        dataNode.put("respondentLastName", individual.getName().getFamilyName() == null ? "" : individual.getName().getFamilyName());
 
                         // Insert respondentVerification into the dataNode
                         dataNode.set("respondentVerification", respondentVerificationNode);
@@ -1901,12 +1908,12 @@ public class CaseService {
 
                     additionalDetails.put("uuid", individual.getUserUuid());
 
-                    if(litigant.getUniqueId()!=null){
+                    if (litigant.getUniqueId() != null) {
                         //respondent name enrich
-                        additionalDetails.put("fullName", getRespondentNameByUniqueId(courtCase.getAdditionalDetails(),litigant.getUniqueId()));
-                    }else{
+                        additionalDetails.put("fullName", getRespondentNameByUniqueId(courtCase.getAdditionalDetails(), litigant.getUniqueId(), individual));
+                    } else {
                         //complainant name enrich
-                        additionalDetails.put("fullName", getComplainantNameByIndividualId(courtCase.getAdditionalDetails(),litigant.getIndividualId()));
+                        additionalDetails.put("fullName", getComplainantNameByIndividualId(courtCase.getAdditionalDetails(), litigant.getIndividualId()));
                     }
 
                     Object additionalDetailsObject = objectMapper.convertValue(additionalDetails, additionalDetails.getClass());
@@ -1921,7 +1928,7 @@ public class CaseService {
         caseObj.setLitigants(litigants);
     }
 
-    private String getRespondentNameByUniqueId(Object additionalDetails, String uniqueId) {
+    private String getRespondentNameByUniqueId(Object additionalDetails, String uniqueId, Individual individual) {
 
         ObjectNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, ObjectNode.class);
 
@@ -1937,17 +1944,23 @@ public class CaseService {
                     String uniqueIdRespondent = formData.get(i).get("uniqueId").asText();
 
                     if (uniqueIdRespondent.equalsIgnoreCase(uniqueId)) {
-                        // Found the matching respondent, now extract the name details
-                        String firstName = dataNode.path("respondentFirstName").asText();
-                        String middleName = dataNode.path("respondentMiddleName").asText();
-                        String lastName = dataNode.path("respondentLastName").asText();
+                        if (dataNode.has("respondentVerification")) {
+                            // Found the matching respondent, now extract the name details
+                            String firstName = dataNode.get("respondentFirstName").asText();
+                            String middleName = dataNode.get("respondentMiddleName").asText();
+                            String lastName = dataNode.get("respondentLastName").asText();
 
-                        // Concatenate with a space between names, ensuring no leading or trailing spaces
-                        String fullName = (firstName.isEmpty() ? "" : firstName) +
-                                (middleName.isEmpty() ? "" : " " + middleName) +
-                                (lastName.isEmpty() ? "" : " " + lastName);
+                            // Concatenate with a space between names, ensuring no leading or trailing spaces
+                            String fullName = (firstName.isEmpty() ? "" : firstName) +
+                                    (middleName.isEmpty() ? "" : " " + middleName) +
+                                    (lastName.isEmpty() ? "" : " " + lastName);
+                            return fullName.trim();
 
-                        return fullName.trim();
+                        } else {
+                            dataNode.put("respondentFirstName", individual.getName().getGivenName() == null ? "" : individual.getName().getGivenName());
+                            dataNode.put("respondentMiddleName", individual.getName().getOtherNames() == null ? "" : individual.getName().getOtherNames());
+                            dataNode.put("respondentLastName", individual.getName().getFamilyName() == null ? "" : individual.getName().getFamilyName());
+                        }
                     }
                 }
             }
@@ -1976,7 +1989,7 @@ public class CaseService {
 
                     // Skip if the litigant doesn't match
 
-                    if (boxComplainant.get("individualId").textValue().equalsIgnoreCase(individualId)){
+                    if (boxComplainant.get("individualId").textValue().equalsIgnoreCase(individualId)) {
                         // Extract firstName, middleName, and lastName
                         String firstName = boxComplainant.path("firstName").asText();
                         String middleName = boxComplainant.path("middleName").asText();
@@ -2446,15 +2459,16 @@ public class CaseService {
             }
         }
 
+
         joinCaseRequest.getJoinCaseData().getLitigant().forEach(joinCaseLitigant -> {
             if (joinCaseLitigant.getPartyType().contains("complainant") && joinCaseLitigant.getIsPip()) {
                 courtCase.setAdditionalDetails(modifyAdvocateDetails(courtCase.getAdditionalDetails(), joinCaseLitigant));
             } else if (joinCaseLitigant.getPartyType().contains("respondent")) {
-                courtCase.setAdditionalDetails(updateRespondentDetails(courtCase.getAdditionalDetails(), joinCaseLitigant));
+                courtCase.setAdditionalDetails(updateRespondentDetails(courtCase.getAdditionalDetails(), joinCaseRequest.getRequestInfo(), joinCaseLitigant));
             }
         });
 
-        enrichAndPushLitigantJoinCase(joinCaseRequest, caseObj, courtCase,auditDetails);
+        enrichAndPushLitigantJoinCase(joinCaseRequest, caseObj, courtCase, auditDetails);
 
         CourtCase encrptedCourtCase = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncryptNew(), CourtCase.class);
 
