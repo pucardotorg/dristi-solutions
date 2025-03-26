@@ -3126,15 +3126,11 @@ public class CaseService {
                     // adding the advocate in representatives list as he is new joining the case
                     advocateTryingToReplace = enrichAdvocateDetailsInRepresentativesList(courtCase, advocateUuid, replacementDetails, party, auditDetails, advocateDetails, courtCaseObj);
                 } else {
-                    // adding the litigant details into representing list of the advocate
-                    advocateTryingToReplace.setRepresenting(List.of(party));
-                    courtCaseObj.setRepresentatives(Collections.singletonList(advocateTryingToReplace));
-                    for (AdvocateMapping advocateMapping : advocateMappings) {
-                        if (advocateMapping.getAdvocateId().equalsIgnoreCase(advocateUuid)) {
-                            advocateMapping.getRepresenting().add(party);
-                            courtCase.setRepresentatives(advocateMappings);
-                        }
-                    }
+                    // Extract the else block logic to a separate method
+                    updateExistingAdvocateMapping(
+                            courtCase, advocateUuid, party, advocateMappings,
+                            advocateTryingToReplace, courtCaseObj
+                    );
                 }
                 for (Party litigantParty : litigantParties) {
                     if (litigantParty.getIndividualId().equalsIgnoreCase(litigantDetails.getIndividualId())) {
@@ -3147,15 +3143,11 @@ public class CaseService {
                     // adding the advocate in representatives list as he is new joining the case
                     advocateTryingToReplace = enrichAdvocateDetailsInRepresentativesList(courtCase, advocateUuid, replacementDetails, party, auditDetails, advocateDetails,courtCaseObj);
                 } else {
-                    // adding the litigant details into representing list of the advocate
-                    advocateTryingToReplace.setRepresenting(List.of(party));
-                    courtCaseObj.setRepresentatives(Collections.singletonList(advocateTryingToReplace));
-                    for (AdvocateMapping advocateMapping : advocateMappings) {
-                        if (advocateMapping.getAdvocateId().equalsIgnoreCase(advocateUuid)) {
-                            advocateMapping.getRepresenting().add(party);
-                            courtCase.setRepresentatives(advocateMappings);
-                        }
-                    }
+                    // Extract the else block logic to a separate method
+                    updateExistingAdvocateMapping(
+                            courtCase, advocateUuid, party, advocateMappings,
+                            advocateTryingToReplace, courtCaseObj
+                    );
                 }
                 inactivateOldAdvocate(replacementDetails, courtCase);
             }
@@ -3430,6 +3422,32 @@ public class CaseService {
         courtCaseObj.setRepresentatives(List.of(advocateMapping));
         courtCase.getRepresentatives().add(advocateMapping);
         return advocateMapping;
+    }
+
+    private AdvocateMapping updateExistingAdvocateMapping(CourtCase courtCase, String advocateUuid, Party party,
+                                                          List<AdvocateMapping> advocateMappings, AdvocateMapping advocateTryingToReplace,
+                                                          CourtCase courtCaseObj) {
+
+        // Set the representing list for the existing advocate
+        advocateTryingToReplace.setRepresenting(List.of(party));
+
+        // Update the representatives in the court case object
+        courtCaseObj.setRepresentatives(Collections.singletonList(advocateTryingToReplace));
+
+        // Find and update the matching advocate mapping
+        for (AdvocateMapping advocateMapping : advocateMappings) {
+            if (advocateMapping.getAdvocateId().equalsIgnoreCase(advocateUuid)) {
+                // Add the party to the representing list
+                advocateMapping.getRepresenting().add(party);
+
+                // Update the representatives in the court case
+                courtCase.setRepresentatives(advocateMappings);
+
+                break;  // Exit the loop once the mapping is updated
+            }
+        }
+
+        return advocateTryingToReplace;
     }
 
 
