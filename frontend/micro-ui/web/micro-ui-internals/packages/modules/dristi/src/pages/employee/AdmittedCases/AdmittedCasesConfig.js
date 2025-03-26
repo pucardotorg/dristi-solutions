@@ -550,6 +550,7 @@ export const TabSearchconfig = {
               {
                 label: "EVIDENCE_NUMBER",
                 jsonPath: "evidenceNumber",
+                additionalCustomization: true,
               },
               {
                 label: "TYPE",
