@@ -1459,38 +1459,40 @@ public class CaseService {
                     }
                     taskReferenceNoList.add(taskResponse.getTask().getTaskNumber());
                 });
-                List<PendingAdvocateRequest> pendingAdvocateRequestList = courtCase.getPendingAdvocateRequests();
-                if (pendingAdvocateRequestList == null) {
-                    pendingAdvocateRequestList = new ArrayList<>();
-                }
-                Optional<PendingAdvocateRequest> pendingAdvocateRequestOptional = pendingAdvocateRequestList.stream()
-                        .filter(pendingAdvocateRequest -> pendingAdvocateRequest.getAdvocateId().equalsIgnoreCase(advocateId))
-                        .findFirst();
-                PendingAdvocateRequest pendingAdvocateRequest = pendingAdvocateRequestOptional.orElseGet(PendingAdvocateRequest::new);
-                boolean isExisting = pendingAdvocateRequestOptional.isPresent();
-                if(!isExisting) {
-                    pendingAdvocateRequest.setAdvocateId(advocateId);
-                }
-                boolean isPartOfCase = courtCase.getRepresentatives() != null &&
-                        !courtCase.getRepresentatives().stream()
-                                .filter(adv -> adv.getAdvocateId() != null && adv.getAdvocateId().equalsIgnoreCase(advocateId))
-                                .toList()
-                                .isEmpty();
-                if (isPartOfCase) {
-                    pendingAdvocateRequest.setStatus("PARTIALLY_JOINED");
-                } else {
-                    pendingAdvocateRequest.setStatus("PENDING");
-                }
 
-
-                pendingAdvocateRequest.addTaskReferenceNoList(taskReferenceNoList);
-                if(!isExisting) {
-                    pendingAdvocateRequestList.add(pendingAdvocateRequest);
-                }
-                courtCase.setPendingAdvocateRequests(pendingAdvocateRequestList);
-
-                producer.push(config.getUpdatePendingAdvocateRequestKafkaTopic(), courtCase);
             }
+
+            List<PendingAdvocateRequest> pendingAdvocateRequestList = courtCase.getPendingAdvocateRequests();
+            if (pendingAdvocateRequestList == null) {
+                pendingAdvocateRequestList = new ArrayList<>();
+            }
+            Optional<PendingAdvocateRequest> pendingAdvocateRequestOptional = pendingAdvocateRequestList.stream()
+                    .filter(pendingAdvocateRequest -> pendingAdvocateRequest.getAdvocateId().equalsIgnoreCase(advocateId))
+                    .findFirst();
+            PendingAdvocateRequest pendingAdvocateRequest = pendingAdvocateRequestOptional.orElseGet(PendingAdvocateRequest::new);
+            boolean isExisting = pendingAdvocateRequestOptional.isPresent();
+            if(!isExisting) {
+                pendingAdvocateRequest.setAdvocateId(advocateId);
+            }
+            boolean isPartOfCase = courtCase.getRepresentatives() != null &&
+                    !courtCase.getRepresentatives().stream()
+                            .filter(adv -> adv.getAdvocateId() != null && adv.getAdvocateId().equalsIgnoreCase(advocateId))
+                            .toList()
+                            .isEmpty();
+            if (isPartOfCase) {
+                pendingAdvocateRequest.setStatus("PARTIALLY_JOINED");
+            } else {
+                pendingAdvocateRequest.setStatus("PENDING");
+            }
+
+
+            pendingAdvocateRequest.addTaskReferenceNoList(taskReferenceNoList);
+            if(!isExisting) {
+                pendingAdvocateRequestList.add(pendingAdvocateRequest);
+            }
+            courtCase.setPendingAdvocateRequests(pendingAdvocateRequestList);
+
+            producer.push(config.getUpdatePendingAdvocateRequestKafkaTopic(), courtCase);
         } catch (Exception e) {
             log.error("Error occurred while creating task for join case request :: {}", e.toString());
             throw new CustomException(JOIN_CASE_ERR, TASK_SERVICE_ERROR);
