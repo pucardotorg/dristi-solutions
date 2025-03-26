@@ -16,7 +16,7 @@ import DocViewerWrapper from "../docViewerWrapper";
 import SelectCustomDocUpload from "../../../components/SelectCustomDocUpload";
 import ESignSignatureModal from "../../../components/ESignSignatureModal";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
-import { cleanString, getDate, removeInvalidNameParts } from "../../../Utils";
+import { cleanString, getDate, modifiedEvidenceNumber, removeInvalidNameParts } from "../../../Utils";
 import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/useGetAllOrderApplicationRelatedDocuments";
 import { useToast } from "../../../components/Toast/useToast";
 import Button from "../../../components/Button";
@@ -1465,11 +1465,11 @@ const EvidenceModal = ({
                       <h3>
                         {currentDiaryEntry && artifact
                           ? t(getDate(parseInt(artifact?.createdDate)))
-                          : documentSubmission[0]?.details.applicationSentOn}
+                          : documentSubmission[0]?.details?.applicationSentOn}
                       </h3>
                     </div>
                   </div>
-                  {documentSubmission[0]?.artifactList.publishedDate !== 0 && (
+                  {documentSubmission[0]?.artifactList?.publishedDate !== 0 && (
                     <div className="info-row">
                       <div className="info-key">
                         <h3>{t("DATE_OF_EVIDENCE")}</h3>
@@ -1478,7 +1478,7 @@ const EvidenceModal = ({
                         <h3>
                           {currentDiaryEntry && artifact
                             ? t(getDate(parseInt(artifact?.publishedDate)))
-                            : t(getDate(parseInt(documentSubmission[0]?.artifactList.publishedDate)))}
+                            : t(getDate(parseInt(documentSubmission[0]?.artifactList?.publishedDate)))}
                         </h3>
                       </div>
                     </div>
@@ -1489,7 +1489,7 @@ const EvidenceModal = ({
                       <h3>{t("SENDER")}</h3>
                     </div>
                     <div className="info-value">
-                      <h3>{currentDiaryEntry && artifact ? artifact?.sender : removeInvalidNameParts(documentSubmission[0]?.details.sender)}</h3>
+                      <h3>{currentDiaryEntry && artifact ? artifact?.sender : removeInvalidNameParts(documentSubmission[0]?.details?.sender)}</h3>
                     </div>
                   </div>
                   <div className="info-row">

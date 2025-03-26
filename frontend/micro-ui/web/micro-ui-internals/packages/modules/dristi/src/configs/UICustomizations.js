@@ -8,7 +8,7 @@ import { RenderInstance } from "../components/RenderInstance";
 import OverlayDropdown from "../components/OverlayDropdown";
 import CustomChip from "../components/CustomChip";
 import ReactTooltip from "react-tooltip";
-import { removeInvalidNameParts } from "../Utils";
+import { modifiedEvidenceNumber, removeInvalidNameParts } from "../Utils";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
 
 const businessServiceMap = {
@@ -1149,6 +1149,8 @@ export const UICustomizations = {
           return removeInvalidNameParts(value);
         case "CS_ACTIONS":
           return <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="FilingsConfig" />;
+        case "EVIDENCE_NUMBER":
+          return modifiedEvidenceNumber(value);
         default:
           return "N/A";
       }
