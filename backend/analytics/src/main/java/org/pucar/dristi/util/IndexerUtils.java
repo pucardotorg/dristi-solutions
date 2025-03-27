@@ -263,10 +263,15 @@ public class IndexerUtils {
                 log.info("additional details contains exclude roles");
                 JsonNode excludeRoles = additonalDetailsJsonNode.path("excludeRoles");
                 if (excludeRoles.isArray()) {
-                    List<String> excludeRolesList = mapper.convertValue(excludeRoles, new TypeReference<>() {
-                    });
+                    List<String> excludeRolesList = new ArrayList<>();
+                    if (excludeRoles.isArray()) {
+                        for (JsonNode node : excludeRoles) {
+                            excludeRolesList.add(node.asText());  // Extract string values
+                        }
+                    }
                     log.info("removing roles from assignedRoleList : {} ", excludeRolesList);
-                    assignedRoleList.removeAll(excludeRolesList);
+                    excludeRolesList.forEach(assignedRoleSet::remove);
+                    assignedRole = new JSONArray(assignedRoleSet).toString();
                 }
             }
         } catch (Exception e) {
