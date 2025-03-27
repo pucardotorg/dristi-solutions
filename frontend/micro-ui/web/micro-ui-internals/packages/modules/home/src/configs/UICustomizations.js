@@ -568,7 +568,7 @@ export const UICustomizations = {
           break;
       }
     },
-    dropDownItems: (t, row, column) => {
+    dropDownItems: (row, column, t) => {
       return [
         {
           label:
