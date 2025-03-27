@@ -2,7 +2,6 @@ import { OrderWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Uti
 
 const defaultSearchValues = {
   status: [OrderWorkflowState.DRAFT_IN_PROGRESS, OrderWorkflowState.PENDING_BULK_E_SIGN],
-  date: "",
   caseTitle: "",
   startOfTheDay: "",
   endOfTheDay: "",
@@ -18,10 +17,6 @@ export const bulkESignOrderConfig = {
         processSearchCriteria: {
           businessService: ["notification"],
           moduleName: "Transformer service",
-        },
-        moduleSearchCriteria: {
-          tenantId: Digit.ULBService.getCurrentTenantId(),
-          entityType: "Order",
         },
         tenantId: Digit.ULBService.getCurrentTenantId(),
       },
