@@ -3357,8 +3357,12 @@ public class CaseService {
             Party party = enrichParty(replacementDetails, courtCase, auditDetails);
             LitigantDetails litigantDetails = replacementDetails.getLitigantDetails();
             String partyType = litigantDetails.getPartyType();
-            ReplacementAdvocateDetails advocateDetailsToBeReplaced = replacementDetails.getAdvocateDetails();
-            String advocateUuidToBeReplaced = advocateDetailsToBeReplaced.getAdvocateUuid();
+            ReplacementAdvocateDetails advocateDetailsToBeReplaced = new ReplacementAdvocateDetails();
+            String advocateUuidToBeReplaced = null;
+            if (!replacementDetails.getIsLitigantPip()) {
+                advocateDetailsToBeReplaced = replacementDetails.getAdvocateDetails();
+                advocateUuidToBeReplaced = advocateDetailsToBeReplaced.getAdvocateUuid();
+            }
             if (replacementDetails.getIsLitigantPip()) {
                 List<Party> litigantParties = courtCase.getLitigants();
                 if (advocateTryingToReplace == null) {
