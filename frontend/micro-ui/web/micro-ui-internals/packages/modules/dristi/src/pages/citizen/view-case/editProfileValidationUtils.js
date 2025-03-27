@@ -32,7 +32,7 @@ export const editComplainantValidation = ({
     } else {
       clearFormDataErrors("complainantVerification");
     }
-    if (!formData?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file) {
+    if (!(formData?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file || formData?.complainantId?.complainantId === true)) {
       setShowErrorToast(true);
       setFormErrors("complainantId", { message: "COMPLAINANT_ID_PROOF_IS_MANDATORY" });
       return true;
@@ -623,7 +623,7 @@ export const updateProfileData = async ({
           referenceId,
           status: "PROFILE_EDIT_REQUEST",
           assignedTo: [],
-          assignedRole: ["JUDGE_ROLE"],
+          assignedRole: ["JUDGE_ROLE", "BENCH_CLERK", "COURT_ROOM_MANAGER"],
           cnrNumber: caseDetails?.cnrNumber,
           filingNumber: caseDetails?.filingNumber,
           isCompleted: false,
