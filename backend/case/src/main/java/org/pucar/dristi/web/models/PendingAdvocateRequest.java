@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Validated
@@ -24,4 +25,13 @@ public class PendingAdvocateRequest {
 
     @JsonProperty("taskReferenceNoList")
     private List<String> taskReferenceNoList;
+
+    @JsonProperty("individualDetails")
+    private IndividualDetails individualDetails;
+    public void addTaskReferenceNoList (List<String> taskReferenceNoList) {
+        if(this.taskReferenceNoList == null) {
+            this.taskReferenceNoList = new ArrayList<>();
+        }
+        this.taskReferenceNoList.addAll(taskReferenceNoList);
+    }
 }

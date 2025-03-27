@@ -51,7 +51,8 @@ class HearingSlot {
 }
 
 function formatTimeTo12Hour(timeString) {
-  let [hours, minutes] = timeString.split(":").map(Number);
+  // Extract hours and minutes, ignore seconds if present
+  let [hours, minutes] = timeString?.split(":")?.slice(0, 2)?.map(Number);
 
   const suffix = hours >= 12 ? "pm" : "am";
 

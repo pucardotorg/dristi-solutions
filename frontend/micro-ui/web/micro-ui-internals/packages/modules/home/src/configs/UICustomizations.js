@@ -3,6 +3,11 @@ import { Link } from "react-router-dom";
 import { formatDate } from "../../../cases/src/utils";
 import { formatDateDifference } from "../../../orders/src/utils";
 import { formatNoticeDeliveryDate } from "../utils";
+import { OrderName } from "@egovernments/digit-ui-module-dristi/src/components/OrderName";
+import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/CustomChip";
+import OverlayDropdown from "@egovernments/digit-ui-module-dristi/src/components/OverlayDropdown";
+import { OrderWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/orderWorkflow";
+import { BulkCheckBox } from "@egovernments/digit-ui-module-dristi/src/components/BulkCheckbox";
 
 const customColumnStyle = { whiteSpace: "nowrap" };
 
@@ -505,6 +510,79 @@ export const UICustomizations = {
         default:
           return t("ES_COMMON_NA");
       }
+    },
+  },
+
+  bulkESignOrderConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const entityType = "Order";
+      const caseTitle = requestCriteria?.state?.searchForm?.caseTitle;
+      const status = requestCriteria?.state?.searchForm?.status;
+      const startOfTheDay = requestCriteria?.state?.searchForm?.startOfTheDay;
+      const moduleSearchCriteria = {
+        entityType,
+        tenantId,
+        ...(caseTitle && { caseTitle }),
+        ...(Object.keys(status || {})?.length > 0 && { status: status?.code ? [status?.code] : status }),
+        ...(startOfTheDay && {
+          startOfTheDay: new Date(startOfTheDay).getTime(),
+          endOfTheDay: new Date(new Date(startOfTheDay).setDate(new Date(startOfTheDay).getDate() + 1)).getTime(),
+        }),
+      };
+
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria?.body,
+          inbox: {
+            ...requestCriteria?.body?.inbox,
+            limit: requestCriteria?.state?.tableForm?.limit,
+            offset: requestCriteria?.state?.tableForm?.offset,
+            tenantId: tenantId,
+            moduleSearchCriteria: moduleSearchCriteria,
+          },
+        },
+      };
+    },
+    additionalCustomizations: (row, key, column, value, t, searchResult) => {
+      const firstData = searchResult?.[0];
+      const firstIndex = firstData?.businessObject?.orderNotification?.id === row?.businessObject?.orderNotification?.id;
+      switch (key) {
+        case "TITLE":
+          return <OrderName rowData={row} colData={column} value={value} />;
+        case "STATUS":
+          return <CustomChip text={t(value)} shade={value === OrderWorkflowState.PENDING_BULK_E_SIGN && "orange"} />;
+        case "DATE_ADDED":
+          const date = new Date(value);
+          const day = date.getDate().toString().padStart(2, "0");
+          const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Month is zero-based
+          const year = date.getFullYear();
+          const formattedDate = `${day}-${month}-${year}`;
+          return <span>{value && value !== "0" ? formattedDate : ""}</span>;
+        case "SELECT":
+          return <BulkCheckBox rowData={row} colData={column} firstIndex={firstIndex} searchResult={searchResult} />;
+        case "CS_ACTIONS":
+          return <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="bulkESignOrderConfig" />;
+        default:
+          break;
+      }
+    },
+    dropDownItems: (t, row, column) => {
+      return [
+        {
+          label:
+            row?.businessObject?.orderNotification?.status === OrderWorkflowState.DRAFT_IN_PROGRESS
+              ? t("DELETE_DRAFT")
+              : t("DELETE_PENDING_BULK_E_SIGN"),
+          id: "delete_order",
+          hide: false,
+          disabled: false,
+          action: (history, column, row, item) => {
+            column?.clickFunc(row);
+          },
+        },
+      ];
     },
   },
 };

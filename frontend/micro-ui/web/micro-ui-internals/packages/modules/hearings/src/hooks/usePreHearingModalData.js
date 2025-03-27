@@ -93,7 +93,7 @@ const usePreHearingModalData = ({ url, params, body, config = {}, plainAccessReq
       };
     });
 
-    return { items: combinedData, TotalCount: hearingListResponse.TotalCount };
+    return { items: combinedData, TotalCount: hearingListData.totalCount };
   };
 
   const { isLoading, data, isFetching, refetch, error } = useQuery("GET_PRE_HEARING_DATA", fetchCombinedData, {
