@@ -258,7 +258,7 @@ public class IndexerUtils {
             }else {
                 additionalDetails="{}";
             }
-            JsonNode additonalDetailsJsonNode = mapper.convertValue(additionalDetails, JsonNode.class);
+            JsonNode additonalDetailsJsonNode = mapper.readTree(additionalDetails.toString());
             if (additonalDetailsJsonNode != null && additonalDetailsJsonNode.has("excludeRoles")) {
                 log.info("additional details contains exclude roles");
                 JsonNode excludeRoles = additonalDetailsJsonNode.path("excludeRoles");
