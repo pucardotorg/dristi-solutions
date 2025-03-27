@@ -110,8 +110,8 @@ public class Warrant implements OrderUpdateStrategy {
 
 
         ///  individual service call
-        CompletableFuture<IndividualDetail> individualDetailFuture =
-                Digit.DRISTIService.searchIndividualUser(new IndividualRequest(complainantIndividualId.orElse(null)));
+//        CompletableFuture<IndividualDetail> individualDetailFuture =
+//                Digit.DRISTIService.searchIndividualUser(new IndividualRequest(complainantIndividualId.orElse(null)));
 
         JsonNode orderFormData = getFormData(orderType, orderData);
         JsonNode additionalDetails = objectMapper.convertValue(orderData.getAdditionalDetails(), JsonNode.class);
@@ -126,7 +126,7 @@ public class Warrant implements OrderUpdateStrategy {
         JsonNode orderFormValue = additionalDetails.get("formdata");
 
 
-        Respondent respondentDetails = new Respondent(getRespondentName(respondentNameData), respondentAddress.get(0));
+//        Respondent respondentDetails = new Respondent(getRespondentName(respondentNameData), respondentAddress.get(0));
 
         switch (orderType) {
 //            case "SUMMONS":
