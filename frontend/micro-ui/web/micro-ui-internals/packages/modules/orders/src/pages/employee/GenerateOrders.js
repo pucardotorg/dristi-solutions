@@ -3997,7 +3997,7 @@ const GenerateOrders = () => {
     return errrors;
   };
 
-  const handleReviewOrderClick = () => {
+  const handleReviewOrderClick = async () => {
     const items = structuredClone(currentOrder?.orderCategory === "INTERMEDIATE" ? [currentOrder] : currentOrder?.compositeItems);
     let hasError = false; // Flag to track if an error occurs
     for (let index = 0; index < items?.length; index++) {
@@ -4034,6 +4034,23 @@ const GenerateOrders = () => {
           if (isPublished) {
             setShowErrorToast({
               label: t("AN_ORDER_HAS_ALREADY_BEEN_PUBLISHED_FOR_THIS_PROFILE_EDIT_REQUEST"),
+              error: true,
+            });
+            hasError = true;
+            break;
+          }
+        }
+
+        if ("ADVOCATE_REPLACEMENT_APPROVAL" === orderType) {
+          const taskSearch = await taskService?.searchTask({
+            criteria: {
+              tenantId: tenantId,
+              taskNumber: additionalDetails?.taskNumber,
+            },
+          });
+          if (["APPROVED", "REJECTED"].includes(taskSearch?.list?.[0]?.status)) {
+            setShowErrorToast({
+              label: t("AN_ORDER_HAS_ALREADY_BEEN_PUBLISHED_FOR_THIS_ADVOCATE_REPLACEMENT_REQUEST"),
               error: true,
             });
             hasError = true;
