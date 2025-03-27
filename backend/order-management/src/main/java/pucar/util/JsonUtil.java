@@ -1,6 +1,5 @@
 package pucar.util;
 
-import org.egov.tracer.model.CustomException;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -17,8 +16,7 @@ public class JsonUtil {
                 .flatMap(map -> traversePath(map, path))
                 .filter(type::isInstance)
                 .map(type::cast)
-                .orElseThrow(() -> new CustomException("ERROR_IN_ADDITIONAL_DETAILS",
-                        "Expected type " + type.getSimpleName() + " not found at path: " + path));
+                .orElse(null);
     }
 
     private Optional<Object> traversePath(Map<?, ?> map, List<String> path) {

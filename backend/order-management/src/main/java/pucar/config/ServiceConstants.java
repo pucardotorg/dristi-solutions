@@ -87,6 +87,7 @@ public class ServiceConstants {
     public static final String MAKE_MANDATORY_SUBMISSION = "Make Mandatory Submission";
     public static final String SUBMIT_BAIL_DOCUMENTS = "Submission Bail Document";
     public static final String PROFILE_EDIT_REQUEST = "PROFILE_EDIT_REQUEST";
+    public static final String PAYMENT_PENDING_FOR_WARRANT = "PAYMENT_PENDING_FOR_WARRANT";
 
 
     // order type

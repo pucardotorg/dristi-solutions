@@ -19,13 +19,7 @@ import pucar.web.models.courtCase.AdvocateMapping;
 import pucar.web.models.courtCase.CourtCase;
 import pucar.web.models.hearing.*;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -41,12 +35,17 @@ public class HearingUtil {
     private final ServiceRequestRepository serviceRequestRepository;
     private final AdvocateUtil advocateUtil;
     private final CacheUtil cacheUtil;
-    public HearingUtil(ObjectMapper objectMapper, Configuration configuration, ServiceRequestRepository serviceRequestRepository, AdvocateUtil advocateUtil, CacheUtil cacheUtil) {
+    private final JsonUtil jsonUtil;
+    private final DateUtil dateUtil;
+
+    public HearingUtil(ObjectMapper objectMapper, Configuration configuration, ServiceRequestRepository serviceRequestRepository, AdvocateUtil advocateUtil, CacheUtil cacheUtil, JsonUtil jsonUtil, DateUtil dateUtil) {
         this.objectMapper = objectMapper;
         this.configuration = configuration;
         this.serviceRequestRepository = serviceRequestRepository;
         this.advocateUtil = advocateUtil;
         this.cacheUtil = cacheUtil;
+        this.jsonUtil = jsonUtil;
+        this.dateUtil = dateUtil;
     }
 
 
@@ -55,7 +54,7 @@ public class HearingUtil {
         StringBuilder uri = new StringBuilder(configuration.getHearingHost().concat(configuration.getHearingSearchEndPoint()));
 
         Object redisResponse = cacheUtil.findById(request.getCriteria().getTenantId() + ":" + request.getCriteria().getHearingId());
-        if(redisResponse != null) {
+        if (redisResponse != null) {
             return List.of(objectMapper.convertValue(redisResponse, Hearing.class));
         }
         Object response = serviceRequestRepository.fetchResult(uri, request);
@@ -83,7 +82,7 @@ public class HearingUtil {
         Object response = serviceRequestRepository.fetchResult(uri, request);
         try {
             JsonNode jsonNode = objectMapper.valueToTree(response);
-            HearingResponse hearingResponse =  objectMapper.readValue(jsonNode.toString(), HearingResponse.class);
+            HearingResponse hearingResponse = objectMapper.readValue(jsonNode.toString(), HearingResponse.class);
             cacheUtil.save(hearingResponse.getHearing().getTenantId() + ":" + hearingResponse.getHearing().getHearingId(), hearingResponse.getHearing());
             return hearingResponse;
         } catch (HttpClientErrorException e) {
@@ -154,20 +153,12 @@ public class HearingUtil {
                 .orElseGet(List::of);
     }
 
-    public @Valid Long getCreateStartAndEndTime(Object additionalDetails) {
-        ZoneId zoneId = ZoneId.of("Asia/Kolkata");
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");  // change this to date util from scheduler
-        return Optional.ofNullable(additionalDetails)
-                .filter(Map.class::isInstance)
-                .map(map -> (Map<?, ?>) map)
-                .map(map -> map.get("formdata"))
-                .filter(Map.class::isInstance)
-                .map(map -> (Map<?, ?>) map)
-                .map(map -> map.get("hearingDate"))
-                .filter(String.class::isInstance)
-                .map(String.class::cast)
-                .map(date -> LocalDateTime.parse(date, formatter).atZone(zoneId).toInstant().toEpochMilli())
-                .orElseThrow(() -> new CustomException("ERROR_IN_ADDITIONAL_DETAILS", "Hearing Date not found in additional details"));
+    public @Valid Long getCreateStartAndEndTime(Object additionalDetails, List<String> paths) {
+
+        String date = jsonUtil.getNestedValue(additionalDetails, paths, String.class);
+        if (date == null) return null;
+        return dateUtil.getEpochFromDateString(date, "yyyy-MM-dd");
+
     }
 
     public List<Attendee> getAdvocateAttendees(RequestInfo requestInfo, CourtCase courtCase) {
@@ -192,8 +183,7 @@ public class HearingUtil {
     }
 
 
-
-    public HearingRequest createHearingRequestForScheduleNextHearingAndScheduleOfHearingDate (RequestInfo requestInfo,Order order, CourtCase courtCase){
+    public HearingRequest createHearingRequestForScheduleNextHearingAndScheduleOfHearingDate(RequestInfo requestInfo, Order order, CourtCase courtCase) {
 
         WorkflowObject workflowObject = new WorkflowObject();
         workflowObject.setAction("CREATE");
@@ -206,14 +196,15 @@ public class HearingUtil {
                 .courtCaseNumber(courtCase.getCourtCaseNumber())
                 .cmpNumber(courtCase.getCmpNumber())
                 .hearingType(getHearingTypeFromAdditionalDetails(order.getAdditionalDetails()))
-                .status(null) // this is not confirmed ui is sending true
+                .status("true") // this is not confirmed ui is sending true
                 .attendees(Stream.concat(
                         getAttendeesFromAdditionalDetails(order).stream(),
                         getAdvocateAttendees(requestInfo, courtCase).stream()
                 ).collect(Collectors.toList()))
-                .startTime(getCreateStartAndEndTime(order.getAdditionalDetails()))
-                .endTime(getCreateStartAndEndTime(order.getAdditionalDetails()))
+                .startTime(getCreateStartAndEndTime(order.getAdditionalDetails(),Arrays.asList("formdata", "haringDate")))
+                .endTime(getCreateStartAndEndTime(order.getAdditionalDetails(),Arrays.asList("formdata", "haringDate")))
                 .workflow(workflowObject)
+                .applicationNumbers(new ArrayList<>())
                 .presidedBy(PresidedBy.builder()  // todo:this is hardcoded but needs to come from order
                         .benchID("BENCH_ID")
                         .judgeID(Collections.singletonList("JUDGE_ID"))
@@ -223,7 +214,7 @@ public class HearingUtil {
 
 
         // create hearing
-    return HearingRequest.builder()
+        return HearingRequest.builder()
                 .requestInfo(requestInfo)
                 .hearing(hearing).build();
 

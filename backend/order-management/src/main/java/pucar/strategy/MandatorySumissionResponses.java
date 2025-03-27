@@ -59,9 +59,9 @@ public class MandatorySumissionResponses implements OrderUpdateStrategy {
         String submissionDueDate = jsonUtil.getNestedValue(order.getAdditionalDetails(), Arrays.asList("formdata", "submissionDeadline"), String.class);
 
         Long sla = dateUtil.getEpochFromDateString(submissionDueDate, "yyyy-MM-dd");
-        String responseRequired = jsonUtil.getNestedValue(order.getAdditionalDetails(), Arrays.asList("formdata", "isResponseRequired", "code"), String.class);
+        Boolean responseRequired = jsonUtil.getNestedValue(order.getAdditionalDetails(), Arrays.asList("formdata","responseInfo", "isResponseRequired", "code"), Boolean.class);
         String entityType = "application-order-submission-default";
-        if (responseRequired.equalsIgnoreCase("Yes")) {
+        if (responseRequired) {
             entityType = "application-order-submission-feedback";
         }
 
@@ -72,11 +72,11 @@ public class MandatorySumissionResponses implements OrderUpdateStrategy {
             String itemId = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("itemId"), String.class);
             itemId = itemId != null ? itemId + "_" : "";
 
-            String pendingTaskReferenceId = MANUAL + itemId + assigneeNode.get("individualId") + "_" + assigneeNode.get("uuid") + "_" + order.getOrderNumber();
+            String pendingTaskReferenceId = MANUAL + itemId + assigneeNode.get("individualId").asText() + "_" + assigneeNode.get("uuid").asText() + "_" + order.getOrderNumber();
 
             Map<String, Object> additionalDetailsMap = new HashMap<>();
-            additionalDetailsMap.put("litigants", Collections.singletonList(assignee.get("individualId")));
-            additionalDetailsMap.put("litigantUuid", Collections.singletonList(assignee.get("partyUuid")));
+            additionalDetailsMap.put("litigants", Collections.singletonList(assignee.get("individualId").asText()));
+            additionalDetailsMap.put("litigantUuid", Collections.singletonList(assignee.get("partyUuid").asText()));
             // create pending task
             PendingTask pendingTask = PendingTask.builder()
                     .name(MAKE_MANDATORY_SUBMISSION)

@@ -99,7 +99,7 @@ public class ScheduleOfHearingDate implements OrderUpdateStrategy {
         }
 
         // close manual pending task for filing number
-        pendingTaskUtil.closeManualPendingTask(order.getHearingNumber(), requestInfo);
+        pendingTaskUtil.closeManualPendingTask(order.getHearingNumber(), requestInfo,courtCase.getFilingNumber(),courtCase.getCnrNumber());
 
 
         return null;

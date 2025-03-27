@@ -118,10 +118,15 @@ public class PendingTaskUtil {
 
     }
 
-    public void closeManualPendingTask(String referenceNo, RequestInfo requestInfo) {
+    public void closeManualPendingTask(String referenceNo, RequestInfo requestInfo, String filingNumber, String cnrNumber) {
         // here data will be lost , we need to search first then update the pending task , this is as per ui
         createPendingTask(PendingTaskRequest.builder()
-                .pendingTask(PendingTask.builder().referenceId(MANUAL + referenceNo).isCompleted(true).build()).requestInfo(requestInfo).build());
+                .pendingTask(PendingTask.builder().referenceId(MANUAL + referenceNo)
+                        .name("Completed")
+                        .entityType("order-default")
+                        .status("DRAFT_IN_PROGRESS")
+                        .filingNumber(filingNumber)
+                        .cnrNumber(cnrNumber).isCompleted(true).build()).requestInfo(requestInfo).build());
     }
 
     public List<String> getUniqueAssignees(Map<String, List<String>> allAdvocates) {
@@ -168,42 +173,38 @@ public class PendingTaskUtil {
 
         JsonNode additionalDetails = null;
         try {
-            additionalDetails = objectMapper.readTree(additionalDetailsObj.toString());
+            additionalDetails = objectMapper.readTree(objectMapper.writeValueAsString(additionalDetailsObj));
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
         ArrayNode assignees = objectMapper.createArrayNode();
 
         if (additionalDetails != null) {
-            JsonNode formdata = additionalDetails.get("formdata");
+            JsonNode submissionParty = additionalDetails.get("formdata").get("submissionParty");
 
-            if (formdata != null && formdata.isArray()) {
-                for (JsonNode formEntry : formdata) {
-                    JsonNode submissionParty = formEntry.get("submissionParty");
 
-                    if (submissionParty != null && submissionParty.isArray()) {
-                        for (JsonNode party : submissionParty) {
-                            JsonNode uuids = party.get("uuid");
-                            String individualId = party.has("individualId") ? party.get("individualId").asText() : null;
-                            String partyUuid = party.has("partyUuid") ? party.get("partyUuid").asText() : null;
+            if (submissionParty != null && submissionParty.isArray()) {
+                for (JsonNode party : submissionParty) {
+                    JsonNode uuids = party.get("uuid");
+                    String individualId = party.has("individualId") ? party.get("individualId").asText() : null;
+                    String partyUuid = party.has("partyUuid") ? party.get("partyUuid").asText() : null;
 
-                            if (uuids != null && uuids.isArray()) {
-                                for (JsonNode uuidNode : uuids) {
-                                    String uuid = uuidNode.asText();
+                    if (uuids != null && uuids.isArray()) {
+                        for (JsonNode uuidNode : uuids) {
+                            String uuid = uuidNode.asText();
 
-                                    // Create flattened JSON object for assignee
-                                    ObjectNode assigneeNode = objectMapper.createObjectNode();
-                                    assigneeNode.put("uuid", uuid);
-                                    assigneeNode.put("individualId", individualId);
-                                    assigneeNode.put("partyUuid", partyUuid);
+                            // Create flattened JSON object for assignee
+                            ObjectNode assigneeNode = objectMapper.createObjectNode();
+                            assigneeNode.put("uuid", uuid);
+                            assigneeNode.put("individualId", individualId);
+                            assigneeNode.put("partyUuid", partyUuid);
 
-                                    assignees.add(assigneeNode);
-                                }
-                            }
+                            assignees.add(assigneeNode);
                         }
                     }
                 }
             }
+
         }
         return assignees;
     }

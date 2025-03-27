@@ -66,7 +66,8 @@ public class InitiatingReschedulingOfHearingDate implements OrderUpdateStrategy 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
         Order order = orderRequest.getOrder();
-        return order.getOrderType() != null && INITIATING_RESCHEDULING_OF_HEARING_DATE.equalsIgnoreCase(order.getOrderType());    }
+        return order.getOrderType() != null && INITIATING_RESCHEDULING_OF_HEARING_DATE.equalsIgnoreCase(order.getOrderType());
+    }
 
     @Override
     public OrderRequest preProcess(OrderRequest orderRequest) {
@@ -104,8 +105,12 @@ public class InitiatingReschedulingOfHearingDate implements OrderUpdateStrategy 
                 .criteria(HearingCriteria.builder().hearingId(hearingNumber).tenantId(order.getTenantId()).build()).build());
         Hearing hearing = hearings.get(0);
 
-        hearing.setStartTime(hearingUtil.getCreateStartAndEndTime(order.getAdditionalDetails()));
-        hearing.setEndTime(hearingUtil.getCreateStartAndEndTime(order.getAdditionalDetails()));
+        Long time = hearingUtil.getCreateStartAndEndTime(order.getAdditionalDetails(), Arrays.asList("formdata", "newHearingDate"));
+        if (time != null) {
+            hearing.setStartTime(time);
+            hearing.setEndTime(time);
+        }
+
         WorkflowObject workflow = new WorkflowObject();
         workflow.setAction(RESCHEDULE);
         workflow.setComments("Update Hearing");

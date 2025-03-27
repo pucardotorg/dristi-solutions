@@ -20,6 +20,7 @@ import pucar.web.models.hearing.HearingCriteria;
 import pucar.web.models.hearing.HearingRequest;
 import pucar.web.models.hearing.HearingSearchRequest;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static pucar.config.ServiceConstants.ASSIGNING_DATE_RESCHEDULED_HEARING;
@@ -94,8 +95,11 @@ public class AssigningDateRescheduledHearing implements OrderUpdateStrategy {
 
         order.setHearingNumber(hearing.getHearingId());
 
-        hearing.setStartTime(hearingUtil.getCreateStartAndEndTime(order.getAdditionalDetails()));
-        hearing.setEndTime(hearingUtil.getCreateStartAndEndTime(order.getAdditionalDetails()));
+        Long time = hearingUtil.getCreateStartAndEndTime(order.getAdditionalDetails(), Arrays.asList("formdata", "newHearingDate"));
+        if (time != null) {
+            hearing.setStartTime(time);
+            hearing.setEndTime(time);
+        }
         WorkflowObject workflow = new WorkflowObject();
         workflow.setAction(SETDATE);
         workflow.setComments("Update Hearing");

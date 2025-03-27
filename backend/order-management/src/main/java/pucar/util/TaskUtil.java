@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.models.Document;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.egov.tracer.model.ServiceCallException;
@@ -20,9 +21,7 @@ import pucar.web.models.Order;
 import pucar.web.models.WorkflowObject;
 import pucar.web.models.task.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -119,6 +118,7 @@ public class TaskUtil {
         WorkflowObject workflowObject = new WorkflowObject();
         workflowObject.setAction("CREATE");
         workflowObject.setComments(order.getOrderType());
+        workflowObject.setDocuments(Collections.singletonList(Document.builder().build()));
 
         Task task = Task.builder()
                 .tenantId(order.getTenantId())
