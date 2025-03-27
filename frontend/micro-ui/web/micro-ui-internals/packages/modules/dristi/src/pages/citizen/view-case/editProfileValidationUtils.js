@@ -32,6 +32,7 @@ export const editComplainantValidation = ({
     } else {
       clearFormDataErrors("complainantVerification");
     }
+
     if (!(formData?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file || formData?.complainantId?.complainantId === true)) {
       setShowErrorToast(true);
       setFormErrors("complainantId", { message: "COMPLAINANT_ID_PROOF_IS_MANDATORY" });
