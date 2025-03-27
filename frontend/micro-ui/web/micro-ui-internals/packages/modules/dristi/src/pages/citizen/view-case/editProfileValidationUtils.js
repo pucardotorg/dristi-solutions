@@ -587,6 +587,12 @@ export const updateProfileData = async ({
     if (respVerification) {
       remainingFormData.respondentVerification = { ...respVerification };
     }
+    if (currentRespondent?.data) {
+      const { inquiryAffidavitFileUpload, ...restData } = currentRespondent?.data || {};
+      if (inquiryAffidavitFileUpload) {
+        remainingFormData.inquiryAffidavitFileUpload = { ...inquiryAffidavitFileUpload };
+      }
+    }
     profilePayload = {
       tenantId,
       caseId,
