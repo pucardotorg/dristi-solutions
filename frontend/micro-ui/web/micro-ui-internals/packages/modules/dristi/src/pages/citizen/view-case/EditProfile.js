@@ -606,7 +606,7 @@ const EditProfile = ({ path }) => {
         (item, index) => item?.data?.respondentVerification?.individualDetails?.individualId === uniqueId || item?.uniqueId === uniqueId
       );
       if (currentRespondent?.data) {
-        const updatedData = structuredClone(currentRespondent?.data);
+        const { inquiryAffidavitFileUpload, ...updatedData } = structuredClone(currentRespondent?.data);
         return updatedData;
       } else return {};
     }
