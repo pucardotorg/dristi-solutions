@@ -1,0 +1,845 @@
+{
+  "caseDetails": {
+    "id": "d9d84eca-f4b8-4a9c-9630-9f81bfc65c43",
+    "tenantId": "kl",
+    "resolutionMechanism": "COURT",
+    "caseTitle": "",
+    "caseDescription": "Case description",
+    "filingNumber": "KL-001096-2025",
+    "caseType": null,
+    "courtCaseNumber": null,
+    "cnrNumber": null,
+    "caseDetails": {},
+    "statutesAndSections": [
+      {
+        "subsections": [
+          "138",
+          "03."
+        ],
+        "tenantId": "kl",
+        "strSections": "Negotiable Instrument Act,02.",
+        "strSubsections": "138,03.",
+        "id": "de8c1242-8827-428a-be3a-a7ec2d7eb7d6",
+        "additionalDetails": null,
+        "statute": null,
+        "sections": [
+          "Negotiable Instrument Act",
+          "02."
+        ],
+        "auditdetails": {
+          "lastModifiedTime": 1742383330626,
+          "createdBy": "94119f5c-865d-4295-840e-f12e20eda473",
+          "lastModifiedBy": "94119f5c-865d-4295-840e-f12e20eda473",
+          "createdTime": 1742383326770
+        }
+      }
+    ],
+    "litigants": [],
+    "representatives": [
+      {
+        "hasSigned": false,
+        "documents": null,
+        "caseId": "d9d84eca-f4b8-4a9c-9630-9f81bfc65c43",
+        "auditDetails": {
+          "lastModifiedTime": 1742383330626,
+          "createdBy": "94119f5c-865d-4295-840e-f12e20eda473",
+          "lastModifiedBy": "94119f5c-865d-4295-840e-f12e20eda473",
+          "createdTime": 1742383326770
+        },
+        "tenantId": "kl",
+        "representing": [],
+        "id": "e4b046ee-b94e-4405-a235-f4e528780c57",
+        "advocateId": "5a6303ab-a75e-47cc-9990-80973fb44c7c",
+        "isActive": true,
+        "additionalDetails": null
+      }
+    ],
+    "documents": [],
+    "courtId": null,
+    "benchId": null,
+    "judgeId": null,
+    "stage": null,
+    "substage": null,
+    "advocateCount": 0,
+    "filingDate": null,
+    "registrationDate": null,
+    "judgementDate": null,
+    "caseCategory": "CRIMINAL",
+    "natureOfPleading": null,
+    "status": "DRAFT_IN_PROGRESS",
+    "isActive": true,
+    "remarks": null,
+    "workflow": {
+      "comments": null,
+      "documents": [
+        {
+          "documentType": null,
+          "documentUid": null,
+          "fileStore": null,
+          "id": null,
+          "additionalDetails": null
+        }
+      ],
+      "rating": null,
+      "action": "SAVE_DRAFT",
+      "assignes": [],
+      "additionalDetails": null
+    },
+    "createdBy": "94119f5c-865d-4295-840e-f12e20eda473",
+    "lastModifiedBy": "94119f5c-865d-4295-840e-f12e20eda473",
+    "createdTime": 1742383326770,
+    "lastModifiedTime": 1742383330626,
+    "additionalDetails": {
+      "advocateDetails": {
+        "formdata": [
+          {
+            "displayindex": 0,
+            "data": {},
+            "isenabled": true
+          }
+        ]
+      },
+      "payerMobileNo": "782860|59vtmdj5zG+yBnIc1d71P20hbUM8wNPM8Bc=",
+      "payerName": "782860|sI6riYenmfMMzB9HQlLWmX2tDd02uCw=",
+      "complainantDetails": {
+        "formdata": [
+          {
+            "displayindex": 0,
+            "data": {
+              "complainantVerification": {
+                "isUserVerified": false
+              },
+              "companyDetailsUpload": null
+            },
+            "isFormCompleted": true,
+            "isenabled": true
+          }
+        ],
+        "isCompleted": false
+      }
+    }
+  },
+  "history": [
+    {
+      "id": "ebc76cd0-9c1e-4370-a004-6cdca9b63783",
+      "tenantId": "kl",
+      "businessService": "case-default",
+      "businessId": "KL-001096-2025",
+      "action": "SAVE_DRAFT",
+      "moduleName": "case",
+      "state": {
+        "auditDetails": null,
+        "uuid": "bbf3a7a3-ded0-4f6b-a9c9-fcdb23e21af9",
+        "tenantId": "kl",
+        "businessServiceId": "d0450ce9-37a7-46cb-a97c-ff79b6d9225c",
+        "sla": null,
+        "state": "DRAFT_IN_PROGRESS",
+        "applicationStatus": "INWORKFLOW",
+        "docUploadRequired": false,
+        "isStartState": false,
+        "isTerminateState": false,
+        "isStateUpdatable": null,
+        "actions": [
+          {
+            "auditDetails": null,
+            "uuid": "a9fa3b93-0367-401a-b80d-70d51b026990",
+            "tenantId": "kl",
+            "currentState": "bbf3a7a3-ded0-4f6b-a9c9-fcdb23e21af9",
+            "action": "SAVE_DRAFT",
+            "nextState": "bbf3a7a3-ded0-4f6b-a9c9-fcdb23e21af9",
+            "roles": [
+              "CASE_CREATOR"
+            ],
+            "active": null
+          },
+          {
+            "auditDetails": null,
+            "uuid": "3c85a427-a703-4d66-aabe-486521ceaa52",
+            "tenantId": "kl",
+            "currentState": "bbf3a7a3-ded0-4f6b-a9c9-fcdb23e21af9",
+            "action": "DELETE_DRAFT",
+            "nextState": "b41336fd-a816-427a-8df2-70dfd94320a3",
+            "roles": [
+              "CASE_CREATOR"
+            ],
+            "active": null
+          },
+          {
+            "auditDetails": null,
+            "uuid": "1462bd6a-6956-4f24-951e-7d54350eec8a",
+            "tenantId": "kl",
+            "currentState": "bbf3a7a3-ded0-4f6b-a9c9-fcdb23e21af9",
+            "action": "SUBMIT_CASE_ADVOCATE",
+            "nextState": "29f06806-a861-4e7c-bb56-4f28d4ef1537",
+            "roles": [
+              "ADVOCATE_ROLE"
+            ],
+            "active": null
+          },
+          {
+            "auditDetails": null,
+            "uuid": "0865bb2d-4ce6-48bc-8ffc-e759227f0262",
+            "tenantId": "kl",
+            "currentState": "bbf3a7a3-ded0-4f6b-a9c9-fcdb23e21af9",
+            "action": "SUBMIT_CASE",
+            "nextState": "3946e4ce-70fb-46fb-babb-9d6187204c3b",
+            "roles": [
+              "CASE_CREATOR"
+            ],
+            "active": null
+          }
+        ]
+      },
+      "comment": null,
+      "documents": [
+        {
+          "id": "760f4f0d-1ea3-4512-9c9c-7cd0aa342c29",
+          "tenantId": "kl",
+          "documentType": null,
+          "fileStoreId": null,
+          "documentUid": null,
+          "auditDetails": {
+            "createdBy": "94119f5c-865d-4295-840e-f12e20eda473",
+            "lastModifiedBy": "94119f5c-865d-4295-840e-f12e20eda473",
+            "createdTime": 1742383326783,
+            "lastModifiedTime": 1742383330661
+          }
+        }
+      ],
+      "assigner": {
+        "id": 2297,
+        "userName": "6100000000",
+        "name": "adv one",
+        "type": "CITIZEN",
+        "mobileNumber": "6100000000",
+        "emailId": null,
+        "roles": [
+          {
+            "id": null,
+            "name": "USER_REGISTER",
+            "code": "USER_REGISTER",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "HEARING_VIEWER",
+            "code": "HEARING_VIEWER",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "CASE_VIEWER",
+            "code": "CASE_VIEWER",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "Citizen",
+            "code": "CITIZEN",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "ADVOCATE_ROLE",
+            "code": "ADVOCATE_ROLE",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "APPLICATION_CREATOR",
+            "code": "APPLICATION_CREATOR",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "EVIDENCE_CREATOR",
+            "code": "EVIDENCE_CREATOR",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "SUBMISSION_DELETE",
+            "code": "SUBMISSION_DELETE",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "EVIDENCE_EDITOR",
+            "code": "EVIDENCE_EDITOR",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "HEARING_ACCEPTOR",
+            "code": "HEARING_ACCEPTOR",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "SUBMISSION_RESPONDER",
+            "code": "SUBMISSION_RESPONDER",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "ORDER_VIEWER",
+            "code": "ORDER_VIEWER",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "EVIDENCE_VIEWER",
+            "code": "EVIDENCE_VIEWER",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "CASE_EDITOR",
+            "code": "CASE_EDITOR",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "ADVOCATE_VIEWER",
+            "code": "ADVOCATE_VIEWER",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "SUBMISSION_CREATOR",
+            "code": "SUBMISSION_CREATOR",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "APPLICATION_VIEWER",
+            "code": "APPLICATION_VIEWER",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "ADVOCATE_APPLICATION_VIEWER",
+            "code": "ADVOCATE_APPLICATION_VIEWER",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "TASK_VIEWER",
+            "code": "TASK_VIEWER",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "PENDING_TASK_CREATOR",
+            "code": "PENDING_TASK_CREATOR",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "CASE_CREATOR",
+            "code": "CASE_CREATOR",
+            "tenantId": "kl"
+          }
+        ],
+        "tenantId": "kl",
+        "uuid": "94119f5c-865d-4295-840e-f12e20eda473"
+      },
+      "assignes": null,
+      "nextActions": [],
+      "stateSla": null,
+      "businesssServiceSla": -3963,
+      "previousStatus": null,
+      "entity": null,
+      "auditDetails": {
+        "createdBy": "94119f5c-865d-4295-840e-f12e20eda473",
+        "lastModifiedBy": "94119f5c-865d-4295-840e-f12e20eda473",
+        "createdTime": 1742383326783,
+        "lastModifiedTime": 1742383330661
+      },
+      "rating": 0,
+      "escalated": false,
+      "additionalDetails": null
+    },
+    {
+      "id": "c1e8fa90-0d24-48d3-a093-95a3a620b509",
+      "tenantId": "kl",
+      "businessService": "case-default",
+      "businessId": "KL-001096-2025",
+      "action": "SAVE_DRAFT",
+      "moduleName": "case",
+      "state": {
+        "auditDetails": null,
+        "uuid": "bbf3a7a3-ded0-4f6b-a9c9-fcdb23e21af9",
+        "tenantId": "kl",
+        "businessServiceId": "d0450ce9-37a7-46cb-a97c-ff79b6d9225c",
+        "sla": null,
+        "state": "DRAFT_IN_PROGRESS",
+        "applicationStatus": "INWORKFLOW",
+        "docUploadRequired": false,
+        "isStartState": false,
+        "isTerminateState": false,
+        "isStateUpdatable": null,
+        "actions": [
+          {
+            "auditDetails": null,
+            "uuid": "3c85a427-a703-4d66-aabe-486521ceaa52",
+            "tenantId": "kl",
+            "currentState": "bbf3a7a3-ded0-4f6b-a9c9-fcdb23e21af9",
+            "action": "DELETE_DRAFT",
+            "nextState": "b41336fd-a816-427a-8df2-70dfd94320a3",
+            "roles": [
+              "CASE_CREATOR"
+            ],
+            "active": null
+          },
+          {
+            "auditDetails": null,
+            "uuid": "1462bd6a-6956-4f24-951e-7d54350eec8a",
+            "tenantId": "kl",
+            "currentState": "bbf3a7a3-ded0-4f6b-a9c9-fcdb23e21af9",
+            "action": "SUBMIT_CASE_ADVOCATE",
+            "nextState": "29f06806-a861-4e7c-bb56-4f28d4ef1537",
+            "roles": [
+              "ADVOCATE_ROLE"
+            ],
+            "active": null
+          },
+          {
+            "auditDetails": null,
+            "uuid": "0865bb2d-4ce6-48bc-8ffc-e759227f0262",
+            "tenantId": "kl",
+            "currentState": "bbf3a7a3-ded0-4f6b-a9c9-fcdb23e21af9",
+            "action": "SUBMIT_CASE",
+            "nextState": "3946e4ce-70fb-46fb-babb-9d6187204c3b",
+            "roles": [
+              "CASE_CREATOR"
+            ],
+            "active": null
+          },
+          {
+            "auditDetails": null,
+            "uuid": "a9fa3b93-0367-401a-b80d-70d51b026990",
+            "tenantId": "kl",
+            "currentState": "bbf3a7a3-ded0-4f6b-a9c9-fcdb23e21af9",
+            "action": "SAVE_DRAFT",
+            "nextState": "bbf3a7a3-ded0-4f6b-a9c9-fcdb23e21af9",
+            "roles": [
+              "CASE_CREATOR"
+            ],
+            "active": null
+          }
+        ]
+      },
+      "comment": null,
+      "documents": [
+        {
+          "id": "539df9dd-8ebc-4901-90bd-b5d58ef0a451",
+          "tenantId": "kl",
+          "documentType": null,
+          "fileStoreId": null,
+          "documentUid": null,
+          "auditDetails": {
+            "createdBy": "94119f5c-865d-4295-840e-f12e20eda473",
+            "lastModifiedBy": "94119f5c-865d-4295-840e-f12e20eda473",
+            "createdTime": 1742383326783,
+            "lastModifiedTime": 1742383326783
+          }
+        }
+      ],
+      "assigner": {
+        "id": 2297,
+        "userName": "6100000000",
+        "name": "adv one",
+        "type": "CITIZEN",
+        "mobileNumber": "6100000000",
+        "emailId": null,
+        "roles": [
+          {
+            "id": null,
+            "name": "USER_REGISTER",
+            "code": "USER_REGISTER",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "HEARING_VIEWER",
+            "code": "HEARING_VIEWER",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "CASE_VIEWER",
+            "code": "CASE_VIEWER",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "Citizen",
+            "code": "CITIZEN",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "ADVOCATE_ROLE",
+            "code": "ADVOCATE_ROLE",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "APPLICATION_CREATOR",
+            "code": "APPLICATION_CREATOR",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "EVIDENCE_CREATOR",
+            "code": "EVIDENCE_CREATOR",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "SUBMISSION_DELETE",
+            "code": "SUBMISSION_DELETE",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "EVIDENCE_EDITOR",
+            "code": "EVIDENCE_EDITOR",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "HEARING_ACCEPTOR",
+            "code": "HEARING_ACCEPTOR",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "SUBMISSION_RESPONDER",
+            "code": "SUBMISSION_RESPONDER",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "ORDER_VIEWER",
+            "code": "ORDER_VIEWER",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "EVIDENCE_VIEWER",
+            "code": "EVIDENCE_VIEWER",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "CASE_EDITOR",
+            "code": "CASE_EDITOR",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "ADVOCATE_VIEWER",
+            "code": "ADVOCATE_VIEWER",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "SUBMISSION_CREATOR",
+            "code": "SUBMISSION_CREATOR",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "APPLICATION_VIEWER",
+            "code": "APPLICATION_VIEWER",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "ADVOCATE_APPLICATION_VIEWER",
+            "code": "ADVOCATE_APPLICATION_VIEWER",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "TASK_VIEWER",
+            "code": "TASK_VIEWER",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "PENDING_TASK_CREATOR",
+            "code": "PENDING_TASK_CREATOR",
+            "tenantId": "kl"
+          },
+          {
+            "id": null,
+            "name": "CASE_CREATOR",
+            "code": "CASE_CREATOR",
+            "tenantId": "kl"
+          }
+        ],
+        "tenantId": "kl",
+        "uuid": "94119f5c-865d-4295-840e-f12e20eda473"
+      },
+      "assignes": null,
+      "nextActions": [],
+      "stateSla": null,
+      "businesssServiceSla": -3963,
+      "previousStatus": null,
+      "entity": null,
+      "auditDetails": {
+        "createdBy": "94119f5c-865d-4295-840e-f12e20eda473",
+        "lastModifiedBy": "94119f5c-865d-4295-840e-f12e20eda473",
+        "createdTime": 1742383326783,
+        "lastModifiedTime": 1742383326783
+      },
+      "rating": 0,
+      "escalated": false,
+      "additionalDetails": null
+    }
+  ],
+  "currentProcessInstance": {
+    "id": "ebc76cd0-9c1e-4370-a004-6cdca9b63783",
+    "tenantId": "kl",
+    "businessService": "case-default",
+    "businessId": "KL-001096-2025",
+    "action": "SAVE_DRAFT",
+    "moduleName": "case",
+    "state": {
+      "auditDetails": null,
+      "uuid": "bbf3a7a3-ded0-4f6b-a9c9-fcdb23e21af9",
+      "tenantId": "kl",
+      "businessServiceId": "d0450ce9-37a7-46cb-a97c-ff79b6d9225c",
+      "sla": null,
+      "state": "DRAFT_IN_PROGRESS",
+      "applicationStatus": "INWORKFLOW",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": false,
+      "isStateUpdatable": null,
+      "actions": [
+        {
+          "auditDetails": null,
+          "uuid": "a9fa3b93-0367-401a-b80d-70d51b026990",
+          "tenantId": "kl",
+          "currentState": "bbf3a7a3-ded0-4f6b-a9c9-fcdb23e21af9",
+          "action": "SAVE_DRAFT",
+          "nextState": "bbf3a7a3-ded0-4f6b-a9c9-fcdb23e21af9",
+          "roles": [
+            "CASE_CREATOR"
+          ],
+          "active": null
+        },
+        {
+          "auditDetails": null,
+          "uuid": "3c85a427-a703-4d66-aabe-486521ceaa52",
+          "tenantId": "kl",
+          "currentState": "bbf3a7a3-ded0-4f6b-a9c9-fcdb23e21af9",
+          "action": "DELETE_DRAFT",
+          "nextState": "b41336fd-a816-427a-8df2-70dfd94320a3",
+          "roles": [
+            "CASE_CREATOR"
+          ],
+          "active": null
+        },
+        {
+          "auditDetails": null,
+          "uuid": "1462bd6a-6956-4f24-951e-7d54350eec8a",
+          "tenantId": "kl",
+          "currentState": "bbf3a7a3-ded0-4f6b-a9c9-fcdb23e21af9",
+          "action": "SUBMIT_CASE_ADVOCATE",
+          "nextState": "29f06806-a861-4e7c-bb56-4f28d4ef1537",
+          "roles": [
+            "ADVOCATE_ROLE"
+          ],
+          "active": null
+        },
+        {
+          "auditDetails": null,
+          "uuid": "0865bb2d-4ce6-48bc-8ffc-e759227f0262",
+          "tenantId": "kl",
+          "currentState": "bbf3a7a3-ded0-4f6b-a9c9-fcdb23e21af9",
+          "action": "SUBMIT_CASE",
+          "nextState": "3946e4ce-70fb-46fb-babb-9d6187204c3b",
+          "roles": [
+            "CASE_CREATOR"
+          ],
+          "active": null
+        }
+      ]
+    },
+    "comment": null,
+    "documents": [
+      {
+        "id": "760f4f0d-1ea3-4512-9c9c-7cd0aa342c29",
+        "tenantId": "kl",
+        "documentType": null,
+        "fileStoreId": null,
+        "documentUid": null,
+        "auditDetails": {
+          "createdBy": "94119f5c-865d-4295-840e-f12e20eda473",
+          "lastModifiedBy": "94119f5c-865d-4295-840e-f12e20eda473",
+          "createdTime": 1742383326783,
+          "lastModifiedTime": 1742383330661
+        }
+      }
+    ],
+    "assigner": {
+      "id": 2297,
+      "userName": "6100000000",
+      "name": "adv one",
+      "type": "CITIZEN",
+      "mobileNumber": "6100000000",
+      "emailId": null,
+      "roles": [
+        {
+          "id": null,
+          "name": "USER_REGISTER",
+          "code": "USER_REGISTER",
+          "tenantId": "kl"
+        },
+        {
+          "id": null,
+          "name": "HEARING_VIEWER",
+          "code": "HEARING_VIEWER",
+          "tenantId": "kl"
+        },
+        {
+          "id": null,
+          "name": "CASE_VIEWER",
+          "code": "CASE_VIEWER",
+          "tenantId": "kl"
+        },
+        {
+          "id": null,
+          "name": "Citizen",
+          "code": "CITIZEN",
+          "tenantId": "kl"
+        },
+        {
+          "id": null,
+          "name": "ADVOCATE_ROLE",
+          "code": "ADVOCATE_ROLE",
+          "tenantId": "kl"
+        },
+        {
+          "id": null,
+          "name": "APPLICATION_CREATOR",
+          "code": "APPLICATION_CREATOR",
+          "tenantId": "kl"
+        },
+        {
+          "id": null,
+          "name": "EVIDENCE_CREATOR",
+          "code": "EVIDENCE_CREATOR",
+          "tenantId": "kl"
+        },
+        {
+          "id": null,
+          "name": "SUBMISSION_DELETE",
+          "code": "SUBMISSION_DELETE",
+          "tenantId": "kl"
+        },
+        {
+          "id": null,
+          "name": "EVIDENCE_EDITOR",
+          "code": "EVIDENCE_EDITOR",
+          "tenantId": "kl"
+        },
+        {
+          "id": null,
+          "name": "HEARING_ACCEPTOR",
+          "code": "HEARING_ACCEPTOR",
+          "tenantId": "kl"
+        },
+        {
+          "id": null,
+          "name": "SUBMISSION_RESPONDER",
+          "code": "SUBMISSION_RESPONDER",
+          "tenantId": "kl"
+        },
+        {
+          "id": null,
+          "name": "ORDER_VIEWER",
+          "code": "ORDER_VIEWER",
+          "tenantId": "kl"
+        },
+        {
+          "id": null,
+          "name": "EVIDENCE_VIEWER",
+          "code": "EVIDENCE_VIEWER",
+          "tenantId": "kl"
+        },
+        {
+          "id": null,
+          "name": "CASE_EDITOR",
+          "code": "CASE_EDITOR",
+          "tenantId": "kl"
+        },
+        {
+          "id": null,
+          "name": "ADVOCATE_VIEWER",
+          "code": "ADVOCATE_VIEWER",
+          "tenantId": "kl"
+        },
+        {
+          "id": null,
+          "name": "SUBMISSION_CREATOR",
+          "code": "SUBMISSION_CREATOR",
+          "tenantId": "kl"
+        },
+        {
+          "id": null,
+          "name": "APPLICATION_VIEWER",
+          "code": "APPLICATION_VIEWER",
+          "tenantId": "kl"
+        },
+        {
+          "id": null,
+          "name": "ADVOCATE_APPLICATION_VIEWER",
+          "code": "ADVOCATE_APPLICATION_VIEWER",
+          "tenantId": "kl"
+        },
+        {
+          "id": null,
+          "name": "TASK_VIEWER",
+          "code": "TASK_VIEWER",
+          "tenantId": "kl"
+        },
+        {
+          "id": null,
+          "name": "PENDING_TASK_CREATOR",
+          "code": "PENDING_TASK_CREATOR",
+          "tenantId": "kl"
+        },
+        {
+          "id": null,
+          "name": "CASE_CREATOR",
+          "code": "CASE_CREATOR",
+          "tenantId": "kl"
+        }
+      ],
+      "tenantId": "kl",
+      "uuid": "94119f5c-865d-4295-840e-f12e20eda473"
+    },
+    "assignes": null,
+    "nextActions": [],
+    "stateSla": null,
+    "businesssServiceSla": -3963,
+    "previousStatus": null,
+    "entity": null,
+    "auditDetails": {
+      "createdBy": "94119f5c-865d-4295-840e-f12e20eda473",
+      "lastModifiedBy": "94119f5c-865d-4295-840e-f12e20eda473",
+      "createdTime": 1742383326783,
+      "lastModifiedTime": 1742383330661
+    },
+    "rating": 0,
+    "escalated": false,
+    "additionalDetails": null
+  },
+  "status": "bbf3a7a3-ded0-4f6b-a9c9-fcdb23e21af9"
+}

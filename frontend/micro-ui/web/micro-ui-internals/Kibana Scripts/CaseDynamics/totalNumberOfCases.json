@@ -1,0 +1,150 @@
+{
+  "$schema": "https://vega.github.io/schema/vega/v5.json",
+  "title": {
+    "text": "Total Number of Cases",
+    "anchor": "start",
+    "color": "#6F767E",
+    "fontSize": "16",
+    "font": "Roboto",
+    "baseline": "top",
+    "dx": 24,
+    "fontWeight": 500
+  },
+  "config": {"title": {"anchor": "start"}},
+  "data": [
+    {
+      "name": "caseData",
+      "url": {
+        "index": "case-index",
+        "body": {
+          "size": 0,
+          "query": {
+            "bool": {
+              "must": [
+                "%dashboard_context-must_clause%",
+                {
+                  "range": {
+                    "Data.orderDetails.additionalDetails.formdata.dateForHearing": {
+                      "gte": {"%timefilter%": "min"},
+                      "lte": {"%timefilter%": "max"}
+                    }
+                  }
+                }
+              ],
+              "must_not": ["%dashboard_context-must_not_clause%"],
+              "filter": ["%dashboard_context-filter_clause%"]
+            }
+          },
+          "aggs": {
+            "unique_case_count": {
+              "cardinality": {"field": "Data.caseDetails.filingNumber.keyword"}
+            },
+            "monthlyCasesCount": {
+              "date_histogram": {
+                "field": "Data.caseDetails.caseDetails.chequeDetails.formdata.data.depositDate",
+                "calendar_interval": "1M",
+                "extended_bounds": {
+                  "min": {"%timefilter%": "min"},
+                  "max": {"%timefilter%": "max"}
+                },
+                "min_doc_count": 0
+              },
+              "aggs": {
+                "unique_cases_count": {
+                  "cardinality": {
+                    "field": "Data.caseDetails.filingNumber.keyword"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "format": {"property": "aggregations"}
+    }
+  ],
+  "signals": [
+    {"name": "gapH", "value": 14},
+    {
+      "name": "totalPendingCasesCount",
+      "update": "length(data('caseData')) >0 ? data('caseData')[0]['unique_case_count']['value']: 0"
+    },
+    {
+      "name": "monthlyData",
+      "value": 0,
+      "update": "data('caseData')[0]['monthlyCasesCount']['buckets']"
+    },
+    {"name": "monthsCount", "value": 0, "update": "length(monthlyData)"},
+    {
+      "name": "change",
+      "value": 0,
+      "update": "monthsCount > 1 ? (monthlyData[monthsCount- 2].unique_cases_count.value != 0 ? ((monthlyData[monthsCount- 1].unique_cases_count.value -monthlyData[monthsCount- 2].unique_cases_count.value) / monthlyData[monthsCount- 2].unique_cases_count.value )* 100 :(monthlyData[monthsCount- 1].unique_cases_count.value!= 0 ? '∞' : 0)): ''"
+    },
+    {
+      "name": "digitCount",
+      "value": 0,
+      "update": "isNumber(totalPendingCasesCount) ? length(replace(totalPendingCasesCount, /[^0-9]/g, '')) : 2"
+    },
+    {
+      "name": "changeDigitCount",
+      "value": 0,
+      "update": "isNumber(change) ?  length(replace(format(abs(change), '.2f') , /[^0-9.]/g , '')) : 2"
+    }
+  ],
+  "marks": [
+    {
+      "type": "text",
+      "encode": {
+        "enter": {
+          "align": {"value": "left"},
+          "baseline": {"value": "middle"},
+          "fontSize": {"value": 24},
+          "fill": {"value": "black"}
+        },
+        "update": {
+          "x": {"signal": "24"},
+          "y": {"signal": "10 + gapH"},
+          "text": {"signal": "totalPendingCasesCount"},
+          "font": {"value": "Roboto"}
+        }
+      }
+    },
+    {
+      "type": "text",
+      "encode": {
+        "enter": {
+          "align": {"value": "left"},
+          "baseline": {"value": "middle"},
+          "fontSize": {"value": 14},
+          "fill": {
+            "signal": "change!==''  ? (change < 0 ? 'green' : 'red') : 'black'"
+          }
+        },
+        "update": {
+          "x": {"signal": "40 + (13 * digitCount)"},
+          "y": {"signal": "10 + gapH"},
+          "text": {
+            "signal": "change!==''   ? (isNumber(change) ? ((change >= 0 ? ' ⬆ ' : ' ⬇') + format(abs(change), '.2f') + '%') : ' ⬆' + change) : ''"
+          },
+          "font": {"value": "Roboto"}
+        }
+      }
+    },
+    {
+      "type": "rect",
+      "encode": {
+        "enter": {
+          "x": {"signal": "32 + (13 * digitCount) - 2"},
+          "y": {"signal": "10 + gapH - 14"},
+          "width": {"signal": "30 + (11 *changeDigitCount )"},
+          "height": {"signal": "30"},
+          "cornerRadius": {"value": 15},
+          "fill": {
+            "signal": "change!==''  ? (change < 0 ? 'green' : 'red') : 'white'"
+          },
+          "fillOpacity": {"value": 0.1}
+        }
+      }
+    }
+  ]
+}
