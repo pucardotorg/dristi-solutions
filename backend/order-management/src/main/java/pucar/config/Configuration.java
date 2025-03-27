@@ -95,6 +95,12 @@ public class Configuration {
     @Value("${dristi.case.search.endpoint}")
     private String caseSearchEndPoint;
 
+    @Value("${dristi.case.update.endpoint}")
+    private String caseUpdateEndPoint;
+
+    @Value("${dristi.case.process.profile.endpoint}")
+    private String processProfileEndPoint;
+
 
     //Hearing config
     @Value("${dristi.hearing.host}")
