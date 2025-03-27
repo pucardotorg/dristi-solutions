@@ -1344,7 +1344,6 @@ export const UICustomizations = {
               ?.map((rep) => {
                 const { firstName = "", middleName = "", lastName = "" } = rep?.individualDetails || {};
                 const fullName = getFullName(" ", firstName, middleName, lastName);
-
                 return {
                   ...rep,
                   name: fullName,
