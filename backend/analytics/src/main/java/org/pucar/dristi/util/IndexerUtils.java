@@ -254,7 +254,7 @@ public class IndexerUtils {
         try {
             additionalDetails = JsonPath.read(jsonItem, "additionalDetails");
             if(additionalDetails!=null){
-                additionalDetails = mapper.convertValue(JsonPath.read(jsonItem, "additionalDetails"),Object.class);
+                additionalDetails = mapper.writeValueAsString(additionalDetails);
             }else {
                 additionalDetails="{}";
             }
