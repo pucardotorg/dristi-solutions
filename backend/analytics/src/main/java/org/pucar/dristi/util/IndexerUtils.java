@@ -267,6 +267,8 @@ public class IndexerUtils {
                     });
                     log.info("removing roles from assignedRoleList : {} ", excludeRolesList);
                     assignedRoleList.removeAll(excludeRolesList);
+                    assignedRoleSet = new HashSet<>(assignedRoleList);
+                    assignedRole = new JSONArray(assignedRoleSet).toString();
                 }
             }
         } catch (Exception e) {
