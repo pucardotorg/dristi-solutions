@@ -1467,6 +1467,8 @@ public class CaseService {
                 updateIndividualDetails(taskResponse, individualDetails);
             } else {
                 Map<String, List<RepresentingJoinCase>> replaceAdvocateRepresentingMap = new LinkedHashMap<>();
+                AtomicBoolean isAdvocateDetailsNamesExtracted = new AtomicBoolean(false);
+
 
 
                 joinCaseRequest.getJoinCaseData().getRepresentative().getRepresenting().forEach(representingJoinCase -> {
@@ -1475,6 +1477,10 @@ public class CaseService {
                         TaskResponse taskResponse = null;
                         try {
                             taskResponse = createTaskPip(joinCaseRequest, representingJoinCase, advocateId, courtCase);
+                            if (!isAdvocateDetailsNamesExtracted.get()) {
+                                updateIndividualDetails(taskResponse, individualDetails);
+                                isAdvocateDetailsNamesExtracted.set(true);
+                            }
                         } catch (JsonProcessingException e) {
                             log.error("Error occurred while creating task for pip :: {}", e.toString());
                             throw new CustomException(JOIN_CASE_ERR, TASK_SERVICE_ERROR);
@@ -1495,7 +1501,6 @@ public class CaseService {
                         });
                     }
                 });
-                AtomicBoolean isAdvocateDetailsNamesExtracted = new AtomicBoolean(false);
 
                 //handle task creation for each advocate
                 replaceAdvocateRepresentingMap.forEach((key, value) -> {
@@ -1503,7 +1508,7 @@ public class CaseService {
 
                     try {
                         taskResponse = createTaskAdvocate(joinCaseRequest, key, value, courtCase);
-                        if(!isAdvocateDetailsNamesExtracted.get()) {
+                        if (!isAdvocateDetailsNamesExtracted.get()) {
                             updateIndividualDetails(taskResponse, individualDetails);
                             isAdvocateDetailsNamesExtracted.set(true);
                         }
@@ -1513,28 +1518,6 @@ public class CaseService {
                     }
                     taskReferenceNoList.add(taskResponse.getTask().getTaskNumber());
                 });
-                List<PendingAdvocateRequest> pendingAdvocateRequestList = courtCase.getPendingAdvocateRequests();
-                if (pendingAdvocateRequestList == null) {
-                    pendingAdvocateRequestList = new ArrayList<>();
-                }
-                Optional<PendingAdvocateRequest> pendingAdvocateRequestOptional = pendingAdvocateRequestList.stream()
-                        .filter(pendingAdvocateRequest -> pendingAdvocateRequest.getAdvocateId().equalsIgnoreCase(advocateId))
-                        .findFirst();
-                PendingAdvocateRequest pendingAdvocateRequest = pendingAdvocateRequestOptional.orElseGet(PendingAdvocateRequest::new);
-                boolean isExisting = pendingAdvocateRequestOptional.isPresent();
-                if (!isExisting) {
-                    pendingAdvocateRequest.setAdvocateId(advocateId);
-                }
-                boolean isPartOfCase = courtCase.getRepresentatives() != null &&
-                        !courtCase.getRepresentatives().stream()
-                                .filter(adv -> adv.getAdvocateId() != null && adv.getAdvocateId().equalsIgnoreCase(advocateId))
-                                .toList()
-                                .isEmpty();
-                if (isPartOfCase) {
-                    pendingAdvocateRequest.setStatus(PARTIALLY_PENDING);
-                } else {
-                    pendingAdvocateRequest.setStatus(PENDING);
-                }
 
             }
 
@@ -1547,7 +1530,7 @@ public class CaseService {
                     .findFirst();
             PendingAdvocateRequest pendingAdvocateRequest = pendingAdvocateRequestOptional.orElseGet(PendingAdvocateRequest::new);
             boolean isExisting = pendingAdvocateRequestOptional.isPresent();
-            if(!isExisting) {
+            if (!isExisting) {
                 pendingAdvocateRequest.setAdvocateId(advocateId);
                 pendingAdvocateRequest.setIndividualDetails(individualDetails);
             }
@@ -1562,16 +1545,11 @@ public class CaseService {
                 pendingAdvocateRequest.setStatus(PENDING);
             }
 
-                pendingAdvocateRequest.addTaskReferenceNoList(taskReferenceNoList);
-                if (!isExisting) {
-                    pendingAdvocateRequestList.add(pendingAdvocateRequest);
-                }
-                courtCase.setPendingAdvocateRequests(pendingAdvocateRequestList);
-
             pendingAdvocateRequest.addTaskReferenceNoList(taskReferenceNoList);
-            if(!isExisting) {
+            if (!isExisting) {
                 pendingAdvocateRequestList.add(pendingAdvocateRequest);
             }
+
             courtCase.setPendingAdvocateRequests(pendingAdvocateRequestList);
 
             producer.push(config.getUpdatePendingAdvocateRequestKafkaTopic(), courtCase);
@@ -2229,7 +2207,7 @@ public class CaseService {
         task.setStatus("");
         task.setTenantId(joinCaseRequest.getRequestInfo().getUserInfo().getTenantId());
         task.setFilingNumber(joinCaseRequest.getCaseFilingNumber());
-        Workflow workflow = new Workflow();
+        WorkflowObject workflow = new WorkflowObject();
         workflow.setAction("CREATE");
         RequestInfo requestInfo = joinCaseRequest.getRequestInfo();
         Role role = new Role();
