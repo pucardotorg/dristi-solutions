@@ -1531,7 +1531,7 @@ public class CaseService {
                                 .toList()
                                 .isEmpty();
                 if (isPartOfCase) {
-                    pendingAdvocateRequest.setStatus(PARTIALLY_JOINED);
+                    pendingAdvocateRequest.setStatus(PARTIALLY_PENDING);
                 } else {
                     pendingAdvocateRequest.setStatus(PENDING);
                 }
@@ -1557,7 +1557,7 @@ public class CaseService {
                             .toList()
                             .isEmpty();
             if (isPartOfCase) {
-                pendingAdvocateRequest.setStatus(PARTIALLY_JOINED);
+                pendingAdvocateRequest.setStatus(PARTIALLY_PENDING);
             } else {
                 pendingAdvocateRequest.setStatus(PENDING);
             }
@@ -3665,7 +3665,7 @@ public class CaseService {
                 if (request.equals(pendingAdvocateRequest)) {
                     // advocate is partially joined as some approvals are pending and he is part of the case
                     log.info("advocate status is partially joined in the case , advocateUuid : {} ", advocateUuid);
-                    request.setStatus(PARTIALLY_JOINED);
+                    request.setStatus(PARTIALLY_PENDING);
                     return;
                 }
             }
