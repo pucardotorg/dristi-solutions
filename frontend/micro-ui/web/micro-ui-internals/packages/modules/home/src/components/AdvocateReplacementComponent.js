@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
 import { formatDate } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/Toast/useToast";
 
 const CloseBtn = (props) => {
   return (
@@ -28,6 +29,7 @@ const Heading = (props) => {
 const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTaskActionModals, refetch }) => {
   const { t } = useTranslation();
   const history = useHistory();
+  const toast = useToast();
 
   const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
   const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), []);
@@ -35,6 +37,7 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
   const Modal = useMemo(() => window?.Digit?.ComponentRegistryService?.getComponent("Modal"), []);
   const DocViewerWrapper = useMemo(() => window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper"), []);
   const [submitConfirmed, setSubmitConfirmed] = useState(false);
+  const [isApiCalled, setIsApiCalled] = useState(false);
 
   const [{ modalType, isOpen }, setConfirmModal] = useState({ modalType: null, isOpen: false });
 
@@ -69,6 +72,7 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
 
   const updateReplaceAdvocateTask = useCallback(
     async (action) => {
+      setIsApiCalled(true);
       try {
         const reqBody = {
           task: {
@@ -89,12 +93,27 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
             data: data,
           };
         });
+        toast.success(t("ADVOCATE_REPLACEMENT_SUCCESS"));
         refetch();
       } catch (error) {
         console.error("Error updating task data:", error);
+        setPendingTaskActionModals((pendingTaskActionModals) => {
+          const data = pendingTaskActionModals?.data;
+          delete data.filingNumber;
+          delete data.taskNumber;
+          return {
+            ...pendingTaskActionModals,
+            joinCaseConfirmModal: false,
+            data: data,
+          };
+        });
+        toast.error(t("ADVOCATE_REPLACEMENT_ERROR"));
+        refetch();
+      } finally {
+        setIsApiCalled(false);
       }
     },
-    [task, tenantId, setPendingTaskActionModals, refetch]
+    [task, tenantId, setPendingTaskActionModals, toast, t, refetch]
   );
 
   const caseDetails = useMemo(
@@ -145,6 +164,7 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
         additionalDetails: additionalDetails,
       },
     };
+    setIsApiCalled(true);
     try {
       const res = await ordersService.createOrder(reqbody, { tenantId });
       DRISTIService.customApiService(Urls.dristi.pendingTask, {
@@ -166,6 +186,8 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
       history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
     } catch (error) {
       console.error("error", error);
+    } finally {
+      setIsApiCalled(false);
     }
   };
 
@@ -247,17 +269,20 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
             }
           }}
           className="advocate-replacement-request-cancel-button"
+          isDisabled={isApiCalled}
         />
         <ButtonSelector
-          label={t("APPROVE")}
+          label={t("CS_APPROVE")}
           onSubmit={async () => {
             if (isCitizen) {
               setConfirmModal({ isOpen: true, modalType: "approve" });
+              setSubmitConfirmed(false);
             } else {
               await replaceAdvocateOrderCreate("approve");
             }
           }}
           className="advocate-replacement-request-submit-button"
+          isDisabled={isApiCalled}
         />
       </div>
       {isOpen && (
@@ -266,7 +291,7 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
           formId="modal-action"
           headerBarMainStyle={{ display: "flex" }}
           headerBarMain={<Heading label={modalType === "reject" ? t("ADVOCATE_REPLACEMENT_REJECT") : t("ADVOCATE_REPLACEMENT_APPROVE")} />}
-          actionSaveLabel={modalType === "reject" ? t("REJECT") : t("APPROVE")}
+          actionSaveLabel={modalType === "reject" ? t("REJECT") : t("CS_APPROVE")}
           actionSaveOnSubmit={async () => {
             await updateReplaceAdvocateTask(modalType === "reject" ? "REJECT" : "APPROVE");
             setConfirmModal({ isOpen: false, modalType: null });
@@ -276,7 +301,7 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
             setSubmitConfirmed(false);
             setConfirmModal({ isOpen: false, modalType: null });
           }}
-          isDisabled={modalType === "approve" && !submitConfirmed}
+          isDisabled={(modalType === "approve" && !submitConfirmed) || isApiCalled}
           className="advocate-replacement-request-modal"
           submitClassName={modalType === "approve" ? "approve-button" : "reject-button"}
         >
@@ -289,7 +314,7 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
                 value={submitConfirmed}
                 label={t("ADVOCATE_REPLACEMENT_CONFIRMATION")}
                 wrkflwStyle={{}}
-                onChange={() => setSubmitConfirmed(!submitConfirmed)}
+                onChange={() => setSubmitConfirmed((submitConfirmed) => !submitConfirmed)}
               />
             )}
           </div>
