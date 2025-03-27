@@ -17,6 +17,7 @@ const LitigantVerification = ({
   isDisabled,
   setIsDisabled,
   selectPartyData,
+  isApiCalled,
 }) => {
   const modalRef = useRef(null);
   const [index, setIndex] = useState(0);
@@ -32,7 +33,7 @@ const LitigantVerification = ({
         setLitigants(party);
       }
     }
-  }, [party, selectPartyData?.advocateToReplaceList, selectPartyData?.isReplaceAdvocate?.value]);
+  }, [party, selectPartyData?.advocateToReplaceList, selectPartyData?.isReplaceAdvocate?.value, selectPartyData?.partyInvolve?.value]);
 
   const modifiedFormConfig = useMemo(() => {
     const applyUiChanges = (config) => ({
@@ -236,7 +237,7 @@ const LitigantVerification = ({
               setParty(litigants);
               onProceed(litigants);
             }}
-            isDisabled={isDisabled}
+            isDisabled={isDisabled || isApiCalled}
           />
         </div>
       </div>
