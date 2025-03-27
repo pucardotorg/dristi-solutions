@@ -30,6 +30,7 @@ public class CaseUtil {
     private final Configuration configuration;
     private final ServiceRequestRepository serviceRequestRepository;
     private final CacheUtil cacheUtil;
+
     @Autowired
     public CaseUtil(RestTemplate restTemplate, ObjectMapper objectMapper, Configuration configuration, ServiceRequestRepository serviceRequestRepository, CacheUtil cacheUtil) {
         this.restTemplate = restTemplate;
@@ -76,7 +77,7 @@ public class CaseUtil {
 
         // add redis cache here based on filing number
         Object courtCase = cacheUtil.findById(caseSearchRequest.getCriteria().get(0).getTenantId() + ":" + caseSearchRequest.getCriteria().get(0).getFilingNumber());
-        if(courtCase != null) {
+        if (courtCase != null) {
             return List.of(objectMapper.convertValue(courtCase, CourtCase.class));
         }
         CaseListResponse caseListResponse = searchCaseDetails(caseSearchRequest);
@@ -89,13 +90,13 @@ public class CaseUtil {
     public CaseResponse updateCase(CaseRequest request) {
 
         objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-        StringBuilder uri = new StringBuilder(configuration.getHearingHost()).append(configuration.getHearingUpdateEndPoint());
+        StringBuilder uri = new StringBuilder(configuration.getCaseHost()).append(configuration.getCaseUpdateEndPoint());
         Object response = serviceRequestRepository.fetchResult(uri, request);
 
         try {
             JsonNode jsonNode = objectMapper.valueToTree(response);
             CaseResponse caseResponse = objectMapper.readValue(jsonNode.toString(), CaseResponse.class);
-            if(caseResponse != null) {
+            if (caseResponse != null) {
                 CourtCase courtCase = objectMapper.convertValue(caseResponse.getCases().get(0), CourtCase.class);
                 cacheUtil.save(courtCase.getTenantId() + ":" + courtCase.getFilingNumber(), courtCase);
             }
@@ -116,5 +117,23 @@ public class CaseUtil {
                 .stream()
                 .filter(item -> item.getPartyType().contains(type))
                 .collect(Collectors.toList());
+    }
+
+
+    public CaseResponse processProfileRequest(ProcessProfileRequest request) {
+        objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        StringBuilder uri = new StringBuilder(configuration.getCaseHost()).append(configuration.getProcessProfileEndPoint());
+        Object response = serviceRequestRepository.fetchResult(uri, request);
+
+        try {
+            JsonNode jsonNode = objectMapper.valueToTree(response);
+            return objectMapper.convertValue(jsonNode, CaseResponse.class);
+        } catch (HttpClientErrorException e) {
+            log.error(EXTERNAL_SERVICE_EXCEPTION, e);
+            throw new ServiceCallException(e.getResponseBodyAsString());
+        } catch (Exception e) {
+            log.error(SEARCHER_SERVICE_EXCEPTION, e);
+            throw new CustomException();  // write msg and code here
+        }
     }
 }
