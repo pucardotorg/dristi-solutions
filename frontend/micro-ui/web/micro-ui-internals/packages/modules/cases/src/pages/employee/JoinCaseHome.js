@@ -83,7 +83,7 @@ const JoinHomeLocalisation = {
   VIEW_CASE_FILE: "VIEW_CASE_FILE",
 };
 
-const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePendingTask }) => {
+const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
   const { t } = useTranslation();
   const todayDate = new Date().getTime();
 
@@ -510,60 +510,56 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
     return { file: fileUploadRes?.data, fileType: fileData.type, filename };
   };
 
-  const getComplainantList = async (formdata) => {
-    const complainantList = await Promise.all(
-      formdata?.map(async (data, index) => {
-        try {
-          const response = await getUserUUID(data?.individualId);
+  const getComplainantListNew = (formdata) => {
+    const complainantList = formdata?.map((data, index) => {
+      const individualId = data?.data?.complainantVerification?.individualDetails?.individualId;
 
-          const { representatives } = searchLitigantInRepresentives(caseDetails?.representatives, data?.individualId);
-          const isAdvocateRepresenting = representatives?.find((representative) => representative?.advocateId === advocateData?.id);
-          if (isAdvocateRepresenting) {
-            setIsAdvocateJoined(true);
-            setSelectPartyData((selectPartyData) => ({
-              ...selectPartyData,
-              partyInvolve: {
-                label: t("COMPLAINANTS_TEXT"),
-                value: "COMPLAINANTS",
-              },
-            }));
-          }
+      const { representatives } = searchLitigantInRepresentives(caseDetails?.representatives, individualId);
+      const isAdvocateRepresenting = representatives?.find((representative) => representative?.advocateId === advocateData?.id);
+      if (isAdvocateRepresenting) {
+        setIsAdvocateJoined(true);
+        setSelectPartyData((selectPartyData) => ({
+          ...selectPartyData,
+          partyInvolve: {
+            label: t("COMPLAINANTS_TEXT"),
+            value: "COMPLAINANTS",
+          },
+        }));
+      }
 
-          const { givenName = "", otherNames = "", familyName = "" } = response?.Individual?.[0]?.name || {};
-          const fullName = getFullName(" ", givenName, otherNames, familyName);
+      const { firstName, middleName, lastName } = data?.data;
 
-          return {
-            ...data?.data,
-            label: `${fullName} ${t(JoinHomeLocalisation.COMPLAINANT_BRACK)}`,
-            fullName,
-            partyType: index === 0 ? "complainant.primary" : "complainant.additional",
-            isComplainant: true,
-            individualId: data?.individualId,
-            uuid: response?.Individual?.[0]?.userUuid || "",
-            firstName: givenName,
-            middleName: otherNames,
-            lastName: familyName,
-            phoneNumberVerification: {
-              isUserVerified: true,
-              mobileNumber: response?.Individual?.[0]?.mobileNumber,
-              individualDetails: {
-                individualId: data?.individualId,
-                userUuid: response?.Individual?.[0]?.userUuid,
-              },
-            },
-            isAdvocateRepresenting: !!isAdvocateRepresenting,
-            advocateRepresentingLength: representatives?.length,
-          };
-        } catch (error) {
-          console.error(error);
-        }
-      })
-    );
+      const fullName = getFullName(" ", firstName, middleName, lastName);
+
+      return {
+        ...data?.data,
+        label: `${fullName} ${t(JoinHomeLocalisation.COMPLAINANT_BRACK)}`,
+        fullName,
+        partyType: index === 0 ? "complainant.primary" : "complainant.additional",
+        isComplainant: true,
+        individualId,
+        uuid: data?.data?.complainantVerification?.individualDetails?.userUuid || "",
+        firstName,
+        middleName,
+        lastName,
+        phoneNumberVerification: {
+          isUserVerified: true,
+          mobileNumber: data?.data?.complainantVerification?.mobileNumber,
+          individualDetails: {
+            individualId: individualId,
+            userUuid: data?.data?.complainantVerification?.individualDetails?.userUuid,
+          },
+        },
+        isAdvocateRepresenting: !!isAdvocateRepresenting,
+        advocateRepresentingLength: representatives?.length,
+      };
+    });
+
     setSuccessScreenData((successScreenData) => ({
       ...successScreenData,
       complainantList: complainantList?.map((complainant) => complainant?.fullName),
     }));
-    setComplainantList(complainantList);
+    setComplainantList(complainantList?.map((data) => data));
   };
 
   const getRespondentList = async (formdata) => {
@@ -571,10 +567,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
       formdata?.map(async (data, index) => {
         try {
           let response;
-          let firstName = "",
-            middleName = "",
-            lastName = "",
-            fullName = "";
+          let fullName = "";
 
           const individualId = data?.data?.respondentVerification?.individualDetails?.individualId;
 
@@ -600,13 +593,9 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
             response = await getUserUUID(individualId);
           }
 
-          if (response?.Individual?.[0]?.name) {
-            ({ givenName: firstName = "", otherNames: middleName = "", familyName: lastName = "" } = response.Individual[0].name);
-          } else {
-            ({ respondentFirstName: firstName = "", respondentMiddleName: middleName = "", respondentLastName: lastName = "" } = data?.data || {});
-          }
+          const { respondentFirstName, respondentMiddleName, respondentLastName } = data?.data;
 
-          fullName = getFullName(" ", firstName, middleName, lastName);
+          fullName = getFullName(" ", respondentFirstName, respondentMiddleName, respondentLastName);
 
           return {
             ...data?.data,
@@ -617,9 +606,9 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
             isRespondent: true,
             individualId,
             uuid: response?.Individual?.[0]?.userUuid || "",
-            firstName,
-            middleName,
-            lastName,
+            firstName: respondentFirstName,
+            middleName: respondentMiddleName,
+            lastName: respondentLastName,
             ...(individualId && {
               phoneNumberVerification: {
                 isUserVerified: true,
@@ -667,11 +656,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
           ?.filter((represent) => represent?.representing?.[0]?.partyType?.includes("respondent"))
           ?.map((represent) => represent?.additionalDetails?.advocateName),
       }));
-      getComplainantList(
-        caseDetails?.litigants
-          ?.filter((litigant) => litigant?.partyType?.includes("complainant"))
-          ?.map((litigant) => ({ individualId: litigant?.individualId }))
-      );
+      getComplainantListNew(caseDetails?.additionalDetails?.complainantDetails?.formdata);
       getRespondentList(caseDetails?.additionalDetails?.respondentDetails?.formdata);
     }
   }, [caseDetails, t, selectPartyData?.userType.value]);
