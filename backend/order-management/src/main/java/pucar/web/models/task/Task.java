@@ -62,7 +62,7 @@ public class Task {
     private String taskType = null;
 
     @JsonProperty("taskDetails")
-    private TaskDetails taskDetails = null;
+    private Object taskDetails = null;
 
     @JsonProperty("amount")
     @Valid
