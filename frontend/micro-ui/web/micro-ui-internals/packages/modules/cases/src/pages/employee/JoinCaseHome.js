@@ -552,7 +552,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
               },
             },
             isAdvocateRepresenting: !!isAdvocateRepresenting,
-            advocateReprresentingLength: representatives?.length,
+            advocateRepresentingLength: representatives?.length,
           };
         } catch (error) {
           console.error(error);
@@ -590,6 +590,11 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
               },
             }));
           }
+          const isPip = Boolean(
+            caseDetails?.litigants
+              ?.find((litigant) => litigant?.individualId === individualId)
+              ?.documents?.find((document) => document?.additionalDetails?.documentName === "UPLOAD_PIP_AFFIDAVIT")?.fileStore
+          );
 
           if (individualId) {
             response = await getUserUUID(individualId);
@@ -626,8 +631,9 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
               },
             }),
             isAdvocateRepresenting: !!isAdvocateRepresenting,
-            advocateReprresentingLength: representatives?.length,
+            advocateRepresentingLength: representatives?.length,
             uniqueId: data?.uniqueId,
+            isPip,
           };
         } catch (error) {
           console.error(error);
@@ -778,109 +784,6 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
       }
     },
     [tenantId]
-  );
-
-  const getAdvocatesDetails = useCallback(
-    (advocateDetails, updatedParty, isReplaceAdvocate) => {
-      const { givenName, otherNames, familyName } = individual?.name;
-
-      const identifierIdDetails = JSON.parse(individual?.additionalFields?.fields?.find((obj) => obj.key === "identifierIdDetails")?.value || "{}");
-      const idType = individual?.identifiers[0]?.identifierType || "";
-
-      let modifiedAdvocateDetailsFormData = structuredClone(advocateDetails?.formdata)?.map((formdataItem) => {
-        const matchedUser = updatedParty.find(
-          (res) =>
-            formdataItem?.data?.multipleAdvocatesAndPip?.boxComplainant?.individualId === res.phoneNumberVerification?.individualDetails?.individualId
-        );
-
-        return matchedUser
-          ? {
-              ...formdataItem,
-              data: {
-                ...formdataItem?.data,
-                multipleAdvocatesAndPip: {
-                  ...formdataItem?.data?.multipleAdvocatesAndPip,
-                  multipleAdvocateNameDetails: [
-                    ...(isReplaceAdvocate?.value === "NO"
-                      ? formdataItem?.data?.multipleAdvocatesAndPip?.multipleAdvocateNameDetails?.filter((obj) => Object.keys(obj).length > 0)
-                      : []),
-                    {
-                      advocateBarRegNumberWithName: {
-                        barRegistrationNumber: advocateData?.barRegistrationNumber,
-                        advocateName: getFullName(" ", givenName, otherNames, familyName),
-                        advocateId: advocateData?.id,
-                        barRegistrationNumberOriginal: advocateData?.barRegistrationNumber,
-                        advocateUuid: individual?.userUuid,
-                        individualId: individual?.individualId,
-                      },
-                      advocateNameDetails: {
-                        firstName: givenName,
-                        middleName: otherNames || "",
-                        lastName: familyName || "",
-                        advocateMobileNumber: individual?.mobileNumber,
-                        advocateIdProof: [
-                          {
-                            name: idType,
-                            fileStore: identifierIdDetails?.fileStoreId,
-                            documentName: identifierIdDetails?.filename,
-                            fileName: `${idType} Card`,
-                          },
-                        ],
-                      },
-                    },
-                  ],
-                  isComplainantPip: {
-                    code: "NO",
-                    isEnabled: true,
-                    name: "NO",
-                  },
-                  pipAffidavitFileUpload: { document: [] },
-                  ...(isReplaceAdvocate?.value === "YES"
-                    ? {
-                        vakalatnamaFileUpload: {
-                          document: [
-                            {
-                              documentType: matchedUser?.uploadedVakalatnama?.documentType,
-                              fileStore: matchedUser?.uploadedVakalatnama?.fileStore,
-                              documentName: matchedUser?.uploadedVakalatnama?.documentName,
-                              fileName: matchedUser?.uploadedVakalatnama?.fileName,
-                            },
-                          ],
-                        },
-                      }
-                    : {
-                        vakalatnamaFileUpload: {
-                          document: [
-                            ...(formdataItem?.data?.multipleAdvocatesAndPip?.vakalatnamaFileUpload?.document || []),
-                            {
-                              documentType: matchedUser?.uploadedVakalatnama?.documentType,
-                              fileStore: matchedUser?.uploadedVakalatnama?.fileStore,
-                              documentName: matchedUser?.uploadedVakalatnama?.documentName,
-                              fileName: matchedUser?.uploadedVakalatnama?.fileName,
-                            },
-                          ],
-                        },
-                      }),
-                },
-              },
-            }
-          : formdataItem;
-      });
-      return {
-        ...advocateDetails,
-        formdata: modifiedAdvocateDetailsFormData,
-      };
-    },
-    [
-      advocateData?.barRegistrationNumber,
-      advocateData?.id,
-      individual?.additionalFields?.fields,
-      individual?.identifiers,
-      individual?.individualId,
-      individual?.mobileNumber,
-      individual?.name,
-      individual?.userUuid,
-    ]
   );
 
   const getRespondentDetails = (respondentDetails, updatedParty) => {
@@ -1391,10 +1294,10 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
           }
         }
       } else if (step === 3 && !isDisabled) {
+        setIsApiCalled(true);
         const party = litigants;
         const updatedParty = await registerLitigants(party);
         if (selectPartyData?.isReplaceAdvocate?.value === "NO" || selectPartyData?.isReplaceAdvocate?.value === "YES") {
-          setIsApiCalled(true);
           try {
             const litigantData = [
               ...updatedParty
@@ -1509,7 +1412,8 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
                       individualId: item?.individualId,
                       replaceAdvocates: (litigantAdvocateGroup?.[item?.individualId] || [])
                         ?.map((advocate) => advocate?.advocateId)
-                        ?.filter((advocate) => advocate?.id !== advocateData?.id),
+                        ?.filter((advocateId) => Boolean(advocateId))
+                        ?.filter((advocateId) => advocateId !== advocateData?.id),
                       isAlreadyPip: !isFound,
                       documents: [
                         {
@@ -1637,8 +1541,8 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
           } catch (error) {
             console.error("error :>> ", error);
           }
-          setIsApiCalled(false);
         }
+        setIsApiCalled(false);
       } else if (step === 4) {
       }
     },
@@ -1780,6 +1684,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
           isDisabled={isDisabled}
           setIsDisabled={setIsDisabled}
           selectPartyData={selectPartyData}
+          isApiCalled={isApiCalled}
         />
       ),
     },
@@ -1797,6 +1702,7 @@ const JoinCaseHome = ({ refreshInbox, setShowSubmitResponseModal, setResponsePen
           closeModal={closeModal}
           refreshInbox={refreshInbox}
           successScreenData={successScreenData}
+          isCaseViewDisabled={selectPartyData?.isReplaceAdvocate?.value === "YES" && !isAdvocateJoined}
         />
       ),
     },

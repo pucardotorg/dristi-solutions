@@ -570,7 +570,7 @@ export const reviewCaseFileFormConfig = [
                 {
                   type: "image",
                   label: "CS_DOCUMENT",
-                  value: ["vakalatnamaDocument", "responseDocuments"],
+                  value: ["vakalatnamaDocument", "responseDocuments", "pipAffidavitDocument", "supportingDocument"],
                 },
               ],
               data: {},

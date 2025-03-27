@@ -164,6 +164,14 @@ export const taskService = {
       data,
       params,
     }),
+  searchTask: (data, params) =>
+    Request({
+      url: Urls.Task.search,
+      useCache: true,
+      userService: true,
+      data,
+      params,
+    }),
 };
 
 export const SBIPaymentService = {
