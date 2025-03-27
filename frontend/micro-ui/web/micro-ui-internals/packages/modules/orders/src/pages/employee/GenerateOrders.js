@@ -65,6 +65,7 @@ import OrderItemDeleteModal from "./OrderItemDeleteModal";
 import TasksComponent from "../../../../home/src/components/TaskComponent";
 import MandatoryFieldsErrorModal from "./MandatoryFieldsErrorModal";
 import OrderAddToBulkSuccessModal from "../../pageComponents/OrderAddToBulkSuccessModal";
+import { getFullName } from "../../../../cases/src/utils/joinCaseUtils";
 
 // any order type from orderTypes can not be paired with any order from unAllowedOrderTypes when creating composite order.
 export const compositeOrderAllowedTypes = [
@@ -254,7 +255,7 @@ const GenerateOrders = () => {
   const [showEditTitleNameModal, setShowEditTitleNameModal] = useState(false);
   const [modalTitleName, setModalTitleName] = useState("");
   const [showMandatoryFieldsErrorModal, setShowMandatoryFieldsErrorModal] = useState({ showModal: false, errorsData: [] });
-
+  const [profileEditorName, setProfileEditorName] = useState("");
   const currentDiaryEntry = history.location?.state?.diaryEntry;
 
   const setSelectedOrder = (orderIndex) => {
@@ -1859,6 +1860,71 @@ const GenerateOrders = () => {
     return parties.map((party) => party.partyName).join(", ");
   };
 
+  const fetchAdvocateIndividualInfo = useCallback(async (uuid) => {
+    try {
+      const individualData = await window?.Digit.DRISTIService.searchIndividualUser(
+        {
+          Individual: {
+            userUuid: [uuid],
+          },
+        },
+        { tenantId, limit: 1000, offset: 0 }
+      );
+      return individualData;
+    } catch (error) {
+      console.error("Error fetching advocate info:", error);
+      return null;
+    }
+  }, []);
+
+  useEffect(() => {
+    const fetchAdvocateName = async () => {
+      if (!currentOrder?.orderType) {
+        setProfileEditorName("");
+        return;
+      }
+
+      // if the editor is a complainant (pip), we will get its name from litigant
+      if (currentOrder?.additionalDetails?.applicantType === "COMPLAINANT") {
+        for (let i = 0; i < caseDetails?.litigants?.length; i++) {
+          const lit = caseDetails?.litigants?.[i];
+          if (lit?.additionalDetails?.uuid === currentOrder?.additionalDetails?.applicantPartyUuid) {
+            setProfileEditorName(lit?.additionalDetails?.fullName || "");
+            return;
+          }
+        }
+      }
+
+      // If the editor is an advocate, we will get its name from representatives,
+      if (currentOrder?.additionalDetails?.applicantType === "ADVOCATE") {
+        let advFound = false;
+        for (let i = 0; i < caseDetails?.representatives?.length; i++) {
+          const rep = caseDetails?.representatives?.[i];
+          if (rep?.additionalDetails?.uuid === currentOrder?.additionalDetails?.applicantPartyUuid) {
+            advFound = true;
+            setProfileEditorName(rep?.additionalDetails?.advocateName || "");
+            return;
+          }
+        }
+
+        // if the advocate is not found in representatives, we have to get its name using individual search api.
+        if (!advFound) {
+          try {
+            const individualData = await fetchAdvocateIndividualInfo(currentOrder?.additionalDetails?.applicantPartyUuid);
+            const { givenName = "", otherNames = "", familyName = "" } = individualData?.Individual?.[0]?.name || {};
+            const fullName = getFullName(" ", givenName, otherNames, familyName);
+            setProfileEditorName(fullName);
+          } catch (error) {
+            console.error("Error fetching advocate name:", error);
+            setProfileEditorName("");
+          }
+        }
+      }
+    };
+
+    fetchAdvocateName();
+  }, [caseDetails, currentOrder, fetchAdvocateIndividualInfo]);
+
   const defaultBOTD = useMemo(() => {
     if (!currentOrder?.orderType) return "";
 
@@ -1966,10 +2032,14 @@ const GenerateOrders = () => {
         return `Cognizance of the offence taken on file as ${caseDetails?.cmpNumber} under Section 138 of the Negotiable Instruments Act`;
       case "DISMISS_CASE":
         return `Case has been dismissed`;
+      case "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE":
+        return `Application by ${profileEditorName} to update litigant details is hereby ${t(
+          currentOrder?.additionalDetails?.formdata?.applicationGrantedRejected?.code
+        )}`;
       default:
         return "";
     }
-  }, [t, applicationDetails, caseDetails, currentOrder]);
+  }, [t, applicationDetails, caseDetails, currentOrder, profileEditorName]);
 
   useEffect(() => {
     setBusinessOfTheDay(defaultBOTD);
