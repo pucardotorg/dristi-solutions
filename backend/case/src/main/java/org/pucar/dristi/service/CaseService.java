@@ -3080,9 +3080,9 @@ public class CaseService {
             log.info("Updating advocateDetails for uniqueId: {}", uniqueId);
             for (JsonNode data : additionalDetails.get("advocateDetails").get("formdata")) {
                 if (data.at(BOX_COMPLAINANT_ID_PATH).asText().equals(uniqueId)) {
-                    String firstName = newDetails.get("firstName").asText();
-                    String middleName = newDetails.get("middleName").asText();
-                    String lastName = newDetails.get("lastName").asText();
+                    String firstName = newDetails.has("firstName") ? newDetails.get("firstName").asText() : "";
+                    String middleName = newDetails.has("middleName") ? newDetails.get("middleName").asText() : "";
+                    String lastName = newDetails.has("lastName") ? newDetails.get("lastName").asText() : "";
 
                     JsonNode boxComplainantNode = data.at(BOX_COMPLAINANT_PATH);
 
@@ -3118,7 +3118,6 @@ public class CaseService {
                         String fullName = getFullName(data, detailsKey);
                         ((ObjectNode) additionalDetailsNode).put("fullName", fullName);
                         litigant.setAdditionalDetails(objectMapper.convertValue(additionalDetailsNode, Object.class));
-                        break;
                     }
                 }
             }
