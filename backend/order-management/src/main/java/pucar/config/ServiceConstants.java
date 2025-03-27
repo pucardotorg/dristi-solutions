@@ -54,4 +54,74 @@ public class ServiceConstants {
     public static final String DATA = "data";
     public static final String OMIT_XML_DECLARATION = "omit-xml-declaration";
 
+    public static final String ERROR_WHILE_FETCHING_FROM_ADVOCATE = "ERROR_WHILE_FETCHING_FROM_ADVOCATE";
+    public static final String ERROR_WHILE_CREATING_DEMAND_FOR_CASE = "ERROR_WHILE_CREATING_DEMAND_FOR_CASE";
+
+    public static final String ERROR_WHILE_FETCHING_FROM_APPLICATION_SERVICE = "";
+
+    public static final String ERROR_WHILE_FETCHING_FROM_CASE = "";
+
+    //
+
+    public static final String CASE_ADMITTED = "CASE_ADMITTED";
+    public static final String SCHEDULE_ADMISSION_HEARING = "SCHEDULE_ADMISSION_HEARING";
+
+    public static final String BULK_RESCHEDULE = "BULK_RESCHEDULE";
+    public static final String SETDATE = "SETDATE";
+    public static final String ADMIT = "ADMIT";
+    public static final String ADMISSION = "ADMISSION";
+    public static final String ABANDON = "ABANDON";
+    public static final String COMPLETED = "COMPLETED";
+    public static final String ABATED = "ABATED";
+    public static final String MANUAL = "MANUAL_";
+    public static final String APPROVE = "APPROVE";
+    public static final String SEND_BACK = "SEND_BACK";
+    public static final String REJECT = "REJECT";
+    public static final String SCHEDULED = "SCHEDULED";
+    public static final String INTERMEDIATE = "INTERMEDIATE";
+    public static final String RESCHEDULE = "RESCHEDULE";
+    public static final String CHOOSE_DATES_FOR_RESCHEDULE_OF_HEARING_DATE = "";
+    public static final Long ONE_DAY_TIME_IN_MILLIS = 86400000L;
+    public static final String SCHEDULE_HEARING = "Schedule Hearing";
+    public static final String PENDING_RESPONSE = "Pending Response";
+    public static final String MAKE_MANDATORY_SUBMISSION = "Make Mandatory Submission";
+    public static final String SUBMIT_BAIL_DOCUMENTS = "Submission Bail Document";
+    public static final String PROFILE_EDIT_REQUEST = "PROFILE_EDIT_REQUEST";
+    public static final String PAYMENT_PENDING_FOR_WARRANT = "PAYMENT_PENDING_FOR_WARRANT";
+
+
+    // order type
+    public static final String ACCEPTANCE_REJECTION_DCA = "ACCEPTANCE_REJECTION_DCA";
+    public static final String ACCEPT_BAIL = "ACCEPT_BAIL";
+    public static final String ADMIT_CASE = "ADMIT_CASE";
+    public static final String ADMIT_DISMISS_CASE = "ADMIT_DISMISS_CASE";
+    public static final String ADVOCATE_REPLACEMENT_APPROVAL = "ADVOCATE_REPLACEMENT_APPROVAL";
+    public static final String APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE = "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE";
+    public static final String APPROVE_VOLUNTARY_SUBMISSIONS = "APPROVE_VOLUNTARY_SUBMISSIONS";
+    public static final String ASSIGNING_DATE_RESCHEDULED_HEARING = "ASSIGNING_DATE_RESCHEDULED_HEARING";
+    public static final String BAIL = "BAIL";
+    public static final String CASE_TRANSFER = "CASE_TRANSFER";
+    public static final String CHECKOUT_ACCEPTANCE = "CHECKOUT_ACCEPTANCE";
+    public static final String DISMISS_CASE = "DISMISS_CASE";
+    public static final String EXTENSION_OF_DOCUMENT_SUBMISSION_DATE = "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE";
+    public static final String INITIATING_RESCHEDULING_OF_HEARING_DATE = "INITIATING_RESCHEDULING_OF_HEARING_DATE";
+    public static final String JUDGEMENT = "JUDGEMENT";
+    public static final String MANDATORY_SUBMISSIONS_RESPONSES = "MANDATORY_SUBMISSIONS_RESPONSES";
+    public static final String NOTICE = "NOTICE";
+    public static final String OTHERS = "OTHERS";
+    public static final String REFERRAL_CASE_TO_ADR = "REFERRAL_CASE_TO_ADR";
+    public static final String REJECT_BAIL = "REJECT_BAIL";
+    public static final String REJECTION_RESCHEDULE_REQUEST = "REJECTION_RESCHEDULE_REQUEST";
+    public static final String REJECT_VOLUNTARY_SUBMISSIONS = "REJECT_VOLUNTARY_SUBMISSIONS";
+    public static final String RESCHEDULE_OF_HEARING_DATE = "RESCHEDULE_OF_HEARING_DATE";
+    public static final String SCHEDULE_OF_HEARING_DATE = "SCHEDULE_OF_HEARING_DATE";
+    public static final String SCHEDULING_NEXT_HEARING = "SCHEDULING_NEXT_HEARING";
+    public static final String SECTION_202_CRPC = "SECTION_202_CRPC";
+    public static final String SET_BAIL_TERMS = "SET_BAIL_TERMS";
+    public static final String SETTLEMENT = "SETTLEMENT";
+    public static final String SUMMONS = "SUMMONS";
+    public static final String WARRANT = "WARRANT";
+    public static final String WITHDRAWAL = "WITHDRAWAL";
+
+
 }

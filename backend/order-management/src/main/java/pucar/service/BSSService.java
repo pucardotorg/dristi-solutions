@@ -9,8 +9,12 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import pucar.config.Configuration;
+import pucar.factory.OrderFactory;
+import pucar.factory.OrderServiceFactoryProvider;
 import pucar.util.*;
 import pucar.web.models.*;
+import pucar.web.models.adiary.BulkDiaryEntryRequest;
+import pucar.web.models.adiary.CaseDiaryEntry;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -28,15 +32,19 @@ public class BSSService {
     private final CipherUtil cipherUtil;
     private final OrderUtil orderUtil;
     private final Configuration configuration;
+    private final OrderServiceFactoryProvider factoryProvider;
+    private final ADiaryUtil aDiaryUtil;
 
     @Autowired
-    public BSSService(XmlRequestGenerator xmlRequestGenerator, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, OrderUtil orderUtil, Configuration configuration) {
+    public BSSService(XmlRequestGenerator xmlRequestGenerator, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, OrderUtil orderUtil, Configuration configuration, OrderServiceFactoryProvider factoryProvider, ADiaryUtil aDiaryUtil) {
         this.xmlRequestGenerator = xmlRequestGenerator;
         this.eSignUtil = eSignUtil;
         this.fileStoreUtil = fileStoreUtil;
         this.cipherUtil = cipherUtil;
         this.orderUtil = orderUtil;
         this.configuration = configuration;
+        this.factoryProvider = factoryProvider;
+        this.aDiaryUtil = aDiaryUtil;
     }
 
     public List<OrderToSign> createOrderToSignRequest(OrdersToSignRequest request) {
@@ -62,7 +70,7 @@ public class BSSService {
         List<Coordinate> coordinateForSign = eSignUtil.getCoordinateForSign(coordinateRequest);
 
         if (coordinateForSign.isEmpty() || coordinateForSign.size() != request.getCriteria().size()) {
-            throw new CustomException(COORDINATES_ERROR,"error in co-ordinates");
+            throw new CustomException(COORDINATES_ERROR, "error in co-ordinates");
         }
 
 
@@ -72,7 +80,7 @@ public class BSSService {
             Resource resource = fileStoreUtil.fetchFileStoreObjectById(coordinate.getFileStoreId(), coordinate.getTenantId());
             try {
                 String base64Document = cipherUtil.encodePdfToBase64(resource);
-                String coord = (int )Math.floor(coordinate.getX()) + "," +(int) Math.floor(coordinate.getY());
+                String coord = (int) Math.floor(coordinate.getX()) + "," + (int) Math.floor(coordinate.getY());
                 String txnId = UUID.randomUUID().toString();
                 String pageNo = String.valueOf(coordinate.getPageNumber());
                 ZonedDateTime timestamp = ZonedDateTime.now(ZoneId.of(configuration.getZoneId()));
@@ -84,7 +92,7 @@ public class BSSService {
 
                 orderToSign.add(order);
             } catch (Exception e) {
-                throw new CustomException(ORDER_SIGN_ERROR,"some thing went wrong while signing");
+                throw new CustomException(ORDER_SIGN_ERROR, "some thing went wrong while signing");
             }
 
         }
@@ -138,6 +146,8 @@ public class BSSService {
     public List<Order> updateOrderWithSignDoc(@Valid UpdateSignedOrderRequest request) {
 
         List<Order> updatedOrder = new ArrayList<>();
+
+        List<CaseDiaryEntry> caseDiaryEntries = new ArrayList<>();
         for (SignedOrder signedOrder : request.getSignedOrders()) {
             String orderNumber = signedOrder.getOrderNumber();
             String signedOrderData = signedOrder.getSignedOrderData();
@@ -158,9 +168,13 @@ public class BSSService {
                     OrderListResponse orders = orderUtil.getOrders(searchRequest);
 
                     if (orders.getList().isEmpty()) {
-                        throw new CustomException(EMPTY_ORDERS_ERROR,"empty orders found for the given criteria");
+                        throw new CustomException(EMPTY_ORDERS_ERROR, "empty orders found for the given criteria");
                     }
                     Order order = orders.getList().get(0);
+
+                    OrderFactory orderFactory = factoryProvider.getFactory(order.getOrderCategory());
+
+                    OrderProcessor orderProcessor = orderFactory.createProcessor();
 
                     String pdfName = COMPOSITE.equalsIgnoreCase(order.getOrderCategory()) ? order.getOrderTitle() + ".pdf" : order.getOrderType() + ".pdf";
                     MultipartFile multipartFile = cipherUtil.decodeBase64ToPdf(signedOrderData, pdfName);
@@ -185,16 +199,26 @@ public class BSSService {
                             .requestInfo(request.getRequestInfo())
                             .order(order).build();
 
+                    orderProcessor.preProcessOrder(orderUpdateRequest);
+
                     OrderResponse response = orderUtil.updateOrder(orderUpdateRequest);
+                    List<CaseDiaryEntry> diaryEntries = orderProcessor.processCommonItems(orderUpdateRequest);
+                    caseDiaryEntries.addAll(diaryEntries);
+                    orderProcessor.postProcessOrder(orderUpdateRequest);
                     updatedOrder.add(response.getOrder());
 
                 } catch (Exception e) {
                     log.error(UPDATE_ORDER_SIGN_ERROR_MESSAGE);
-                    throw new CustomException(UPDATE_ORDER_SIGN_ERROR,UPDATE_ORDER_SIGN_ERROR_MESSAGE);
+                    throw new CustomException(UPDATE_ORDER_SIGN_ERROR, UPDATE_ORDER_SIGN_ERROR_MESSAGE);
                 }
             }
 
         }
+
+        // here create bulk diary entry
+        aDiaryUtil.createBulkADiaryEntry(BulkDiaryEntryRequest.builder()
+                .requestInfo(request.getRequestInfo())
+                .caseDiaryList(caseDiaryEntries).build());
 
         return updatedOrder;
 
