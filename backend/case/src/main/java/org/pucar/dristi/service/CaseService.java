@@ -1531,9 +1531,9 @@ public class CaseService {
                                 .toList()
                                 .isEmpty();
                 if (isPartOfCase) {
-                    pendingAdvocateRequest.setStatus("PARTIALLY_JOINED");
+                    pendingAdvocateRequest.setStatus(PARTIALLY_JOINED);
                 } else {
-                    pendingAdvocateRequest.setStatus("PENDING");
+                    pendingAdvocateRequest.setStatus(PENDING);
                 }
 
             }
@@ -1557,9 +1557,9 @@ public class CaseService {
                             .toList()
                             .isEmpty();
             if (isPartOfCase) {
-                pendingAdvocateRequest.setStatus("PARTIALLY_JOINED");
+                pendingAdvocateRequest.setStatus(PARTIALLY_JOINED);
             } else {
-                pendingAdvocateRequest.setStatus("PENDING");
+                pendingAdvocateRequest.setStatus(PENDING);
             }
 
                 pendingAdvocateRequest.addTaskReferenceNoList(taskReferenceNoList);
