@@ -35,7 +35,7 @@ public class OrderUtil {
 
     public Boolean fetchOrderDetails(OrderExistsRequest orderExistsRequest) {
         StringBuilder uri = new StringBuilder();
-        uri.append(configuration.getOrderHost()).append(configuration.getOrderExistsPath());
+        uri.append(configuration.getOrderHost()).append(configuration.getOrderExistsEndPoint());
 
         Object response = new HashMap<>();
         OrderExistsResponse orderExistsResponse;
@@ -52,7 +52,7 @@ public class OrderUtil {
 
     public OrderResponse updateOrder(OrderRequest orderRequest) {
         StringBuilder uri = new StringBuilder();
-        uri.append(configuration.getOrderHost()).append(configuration.getOrderUpdatePath());
+        uri.append(configuration.getOrderHost()).append(configuration.getOrderUpdateEndPoint());
         Object response;
         OrderResponse orderResponse;
         try {
@@ -68,7 +68,7 @@ public class OrderUtil {
 
     public OrderListResponse getOrders(OrderSearchRequest searchRequest) {
         StringBuilder uri = new StringBuilder();
-        uri.append(configuration.getOrderHost()).append(configuration.getOrderSearchPath());
+        uri.append(configuration.getOrderHost()).append(configuration.getOrderSearchEndPoint());
         Object response;
         OrderListResponse orderListResponse;
         try {

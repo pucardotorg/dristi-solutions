@@ -22,8 +22,6 @@ public class Configuration {
     @Value("${dristi.filestore.save.endpoint}")
     private String fileStoreSaveEndPoint;
 
-    @Value("${dristi.filestore.path}")
-    private String fileStorePath;
 
     @Value("${dristi.filestore.search.endpoint}")
     private String fileStoreSearchEndpoint;
@@ -35,14 +33,14 @@ public class Configuration {
     @Value("${dristi.order.host}")
     private String orderHost;
 
-    @Value("${dristi.order.exists.path}")
-    private String orderExistsPath;
+    @Value("${dristi.order.exists.endpoint}")
+    private String orderExistsEndPoint;
 
-    @Value("${dristi.order.update.path}")
-    private String orderUpdatePath;
+    @Value("${dristi.order.update.endpoint}")
+    private String orderUpdateEndPoint;
 
-    @Value("${dristi.order.search.path}")
-    private String orderSearchPath;
+    @Value("${dristi.order.search.endpoint}")
+    private String orderSearchEndPoint;
 
     // ESign Config
     @Value("${dristi.esign.host}")
@@ -52,35 +50,27 @@ public class Configuration {
     private String esignLocationEndPoint;
 
 
-    //SMSNotification
-    @Value("${dristi.sms.notification.topic}")
-    private String smsNotificationTopic;
-
-    // zone id
-    @Value("${app.zone.id}")
-    private String zoneId;
-
-
     // Advocate Config
     @Value("${dristi.advocate.host}")
     private String advocateHost;
 
-    @Value("${dristi.advocate.path}")
-    private String advocatePath;
+    @Value("${dristi.advocate.search.endpoint}")
+    private String advocateSearchEndPoint;
 
 
-    @Value("${dristi.task.service.host}")
+    // Task Config
+    @Value("${dristi.task.host}")
     private String taskServiceHost;
 
-    @Value("${dristi.task.service.create.endpoint}")
+    @Value("${dristi.task.create.endpoint}")
     private String taskServiceCreateEndpoint;
 
     // Application Config
     @Value("${dristi.application.host}")
     private String applicationHost;
 
-    @Value("${dristi.application.path}")
-    private String applicationExistsPath;
+    @Value("${dristi.application.exists.endpoint}")
+    private String applicationExistsEndPoint;
 
     @Value("${dristi.application.search.endpoint}")
     private String applicationSearchEndPoint;
@@ -93,21 +83,21 @@ public class Configuration {
     @Value("${dristi.case.host}")
     private String caseHost;
 
-    @Value("${dristi.case.path}")
-    private String caseExistsPath;
+    @Value("${dristi.case.exists.endpoint}")
+    private String caseExistsEndPoint;
 
-    @Value("${dristi.case.search.path}")
-    private String caseSearchPath;
+    @Value("${dristi.case.search.endpoint}")
+    private String caseSearchEndPoint;
 
 
     //Hearing config
     @Value("${dristi.hearing.host}")
     private String HearingHost;
 
-    @Value("${dristi.hearingupdate.endpoint}")
+    @Value("${dristi.hearing.update.endpoint}")
     private String HearingUpdateEndPoint;
 
-    @Value("${dristi.hearingupdate.endpoint}")
+    @Value("${dristi.hearing.create.endpoint}")
     private String HearingCreateEndPoint;
 
     @Value("${dristi.hearing.search.endpoint}")
@@ -121,19 +111,22 @@ public class Configuration {
     @Value("${dristi.adiary.create.bulk}")
     private String aDiaryCreateBulkEndPoint;
 
+
+    // Inbox Config
     @Value("${dristi.inbox.host}")
-    private String  inboxHost;
+    private String inboxHost;
 
     @Value("${dristi.inbox.fields.endpoint}")
     private String fieldsEndPoint;
 
+    // Analytics Config
     @Value("${dristi.analytics.host}")
     private String analyticsHost;
 
     @Value("${dristi.analytics.create.pendingtask}")
     private String createPendingTaskEndPoint;
 
-
+    // Scheduler Config
     @Value("${dristi.scheduler.host}")
     private String schedulerHost;
 
@@ -142,5 +135,13 @@ public class Configuration {
 
     @Value("${spring.redis.timeout}")
     private Long redisTimeout;
+
+    //SMSNotification
+    @Value("${dristi.sms.notification.topic}")
+    private String smsNotificationTopic;
+
+    // zone id
+    @Value("${app.zone.id}")
+    private String zoneId;
 
 }

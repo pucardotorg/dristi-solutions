@@ -146,6 +146,8 @@ public class BSSService {
     public List<Order> updateOrderWithSignDoc(@Valid UpdateSignedOrderRequest request) {
 
         List<Order> updatedOrder = new ArrayList<>();
+
+        List<CaseDiaryEntry> caseDiaryEntries = new ArrayList<>();
         for (SignedOrder signedOrder : request.getSignedOrders()) {
             String orderNumber = signedOrder.getOrderNumber();
             String signedOrderData = signedOrder.getSignedOrderData();
@@ -201,6 +203,7 @@ public class BSSService {
 
                     OrderResponse response = orderUtil.updateOrder(orderUpdateRequest);
                     List<CaseDiaryEntry> diaryEntries = orderProcessor.processCommonItems(orderUpdateRequest);
+                    caseDiaryEntries.addAll(diaryEntries);
                     orderProcessor.postProcessOrder(orderUpdateRequest);
                     updatedOrder.add(response.getOrder());
 
@@ -213,7 +216,9 @@ public class BSSService {
         }
 
         // here create bulk diary entry
-        aDiaryUtil.createBulkADiaryEntry(BulkDiaryEntryRequest.builder().build());
+        aDiaryUtil.createBulkADiaryEntry(BulkDiaryEntryRequest.builder()
+                .requestInfo(request.getRequestInfo())
+                .caseDiaryList(caseDiaryEntries).build());
 
         return updatedOrder;
 

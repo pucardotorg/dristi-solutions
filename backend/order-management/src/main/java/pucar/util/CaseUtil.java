@@ -41,7 +41,7 @@ public class CaseUtil {
 
     public CaseExistsResponse existCaseSearch(CaseExistsRequest caseExistsRequest) {
         StringBuilder uri = new StringBuilder();
-        uri.append(configuration.getCaseHost()).append(configuration.getCaseExistsPath());
+        uri.append(configuration.getCaseHost()).append(configuration.getCaseExistsEndPoint());
 
         Object response = new HashMap<>();
         CaseExistsResponse caseExistsResponse = new CaseExistsResponse();
@@ -58,7 +58,7 @@ public class CaseUtil {
 
     public CaseListResponse searchCaseDetails(CaseSearchRequest caseSearchRequest) {
         StringBuilder uri = new StringBuilder();
-        uri.append(configuration.getCaseHost()).append(configuration.getCaseSearchPath());
+        uri.append(configuration.getCaseHost()).append(configuration.getCaseSearchEndPoint());
 
         Object response;
         try {

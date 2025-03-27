@@ -40,7 +40,7 @@ public class AdvocateUtil {
 
     public List<Advocate> fetchAdvocates(RequestInfo requestInfo, AdvocateSearchCriteria advocateSearchCriteria) {
         StringBuilder uri = new StringBuilder();
-        uri.append(configs.getAdvocateHost()).append(configs.getAdvocatePath());
+        uri.append(configs.getAdvocateHost()).append(configs.getAdvocateSearchEndPoint());
 
         AdvocateSearchRequest advocateSearchRequest = new AdvocateSearchRequest();
         advocateSearchRequest.setRequestInfo(requestInfo);
@@ -91,7 +91,7 @@ public class AdvocateUtil {
 
     public Map<String, String> getAdvocate(RequestInfo requestInfo, List<String> advocateIds) {
         StringBuilder uri = new StringBuilder();
-        uri.append(configs.getAdvocateHost()).append(configs.getAdvocatePath());
+        uri.append(configs.getAdvocateHost()).append(configs.getAdvocateSearchEndPoint());
 
         AdvocateSearchRequest advocateSearchRequest = new AdvocateSearchRequest();
         advocateSearchRequest.setRequestInfo(requestInfo);
