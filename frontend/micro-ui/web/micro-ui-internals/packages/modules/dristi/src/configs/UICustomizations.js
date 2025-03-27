@@ -12,8 +12,8 @@ import { modifiedEvidenceNumber, removeInvalidNameParts } from "../Utils";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
 import { constructFullName } from "@egovernments/digit-ui-module-orders/src/utils";
 import { getAdvocates } from "../pages/citizen/FileCase/EfilingValidationUtils";
-import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
 import { OrderWorkflowState } from "../Utils/orderWorkflow";
+import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
 
 const businessServiceMap = {
   "muster roll": "MR",
@@ -1344,7 +1344,7 @@ export const UICustomizations = {
               ?.map((rep) => {
                 const { firstName = "", middleName = "", lastName = "" } = rep?.individualDetails || {};
                 const fullName = getFullName(" ", firstName, middleName, lastName);
-                console.log("chekkk1", firstName, middleName, lastName, fullName);
+
                 return {
                   ...rep,
                   name: fullName,
@@ -1405,7 +1405,7 @@ export const UICustomizations = {
           return partyType === "unJoinedAccused" ? "Accused" : partyType;
         case "ACTIONS":
           return row?.isEditable ? (
-            <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center" }}>
+            <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center" }}>
               <OverlayDropdown
                 styles={{
                   width: "40px",
