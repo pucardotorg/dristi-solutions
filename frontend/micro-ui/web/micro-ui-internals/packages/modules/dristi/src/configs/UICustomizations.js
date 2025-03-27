@@ -12,6 +12,8 @@ import { removeInvalidNameParts } from "../Utils";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
 import { constructFullName } from "@egovernments/digit-ui-module-orders/src/utils";
 import { getAdvocates } from "../pages/citizen/FileCase/EfilingValidationUtils";
+import { OrderWorkflowState } from "../Utils/orderWorkflow";
+import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
 
 const businessServiceMap = {
   "muster roll": "MR",
@@ -28,6 +30,12 @@ const partyTypes = {
   "complainant.additional": "COMPLAINANT",
   "respondent.primary": "ACCUSED",
   "respondent.additional": "ACCUSED",
+};
+
+export const advocateJoinStatus = {
+  PENDING: "PENDING",
+  PARTIALLY_PENDING: "PARTIALLY_PENDING",
+  JOINED: "JOINED",
 };
 
 export const UICustomizations = {
@@ -1232,6 +1240,8 @@ export const UICustomizations = {
             const userInfo = Digit.UserService.getUser()?.info;
             const editorUuid = userInfo?.uuid;
 
+            // Either an advocate who is representing any "complainant" or any "PIP complainant" ->> only these
+            // 2 type can edit details of any complainant/accused from actions in parties tab.
             const checkIfEditable = () => {
               for (let key in allLitigantAdvocatesMapping) {
                 if (allLitigantAdvocatesMapping?.[key]?.some((uuid) => uuid === editorUuid)) {
@@ -1244,6 +1254,7 @@ export const UICustomizations = {
               return false;
             };
 
+            // To check if editor is an advocate or PIP compplainant.
             const checkIfAdvocateIsEditor = () => {
               const representatives = data?.criteria?.[0]?.responseList?.[0]?.representatives;
               return Boolean(representatives?.some((rep) => rep?.additionalDetails?.uuid === editorUuid));
@@ -1280,17 +1291,54 @@ export const UICustomizations = {
                 ...(isEditable && { isAdvocateEditor }),
               };
             });
-            const reps = data.criteria[0].responseList[0].representatives?.length > 0 ? data.criteria[0].responseList[0].representatives : [];
-            const finalRepresentativesData = reps.map((rep) => {
+            // pendingAdvocateRequests includes list of advocates with pending and partially pending status.
+            const pendingAdvocateRequests = data?.criteria?.[0]?.responseList?.[0]?.pendingAdvocateRequests || [];
+            // representatives has list of advocates with joined and partially pending status.
+            const representatives = data?.criteria?.[0].responseList?.[0]?.representatives || [];
+
+            const getAdvocateJoinStatus = (rep) => {
+              for (let i = 0; i < pendingAdvocateRequests?.length; i++) {
+                if (pendingAdvocateRequests?.[i]?.advocateId === rep?.advocateId) {
+                  return advocateJoinStatus?.PARTIALLY_PENDING;
+                }
+              }
+              return advocateJoinStatus?.JOINED;
+            };
+
+            // List of advocates who have joined the case or partially pending status.
+            // Note: advocates whose joining status is partially pending has technically joined the case and
+            // have same rights as an advocate with joined status, thats why it is also present in case representatives list.
+            const joinedAndPartiallyJoinedAdvocates = representatives.map((rep) => {
+              const status = getAdvocateJoinStatus(rep);
               return {
                 ...rep,
                 name: rep.additionalDetails?.advocateName,
                 partyType: `ADVOCATE`,
                 representingList: rep.representing?.map((client) => removeInvalidNameParts(client?.additionalDetails?.fullName))?.join(", "),
                 isEditable: false,
+                status,
               };
             });
-            const allParties = [...finalLitigantsData, ...unjoinedAccused, ...finalRepresentativesData];
+
+            // List of advocates with joining status as pending.
+            // These advocates won't be present in case representatives list, will be in pendingAdvocateRequests list.
+            const joinStatusPendingAdvocates = pendingAdvocateRequests
+              ?.filter((adv) => adv?.status === advocateJoinStatus?.PENDING)
+              ?.map((rep) => {
+                const { firstName = "", middleName = "", lastName = "" } = rep?.individualDetails || {};
+                const fullName = getFullName(" ", firstName, middleName, lastName);
+                console.log("chekkk1", firstName, middleName, lastName, fullName);
+                return {
+                  ...rep,
+                  name: fullName,
+                  partyType: `ADVOCATE`,
+                  representingList: [],
+                  isEditable: false,
+                  status: advocateJoinStatus?.PENDING,
+                };
+              });
+
+            const allParties = [...finalLitigantsData, ...unjoinedAccused, ...joinedAndPartiallyJoinedAdvocates, ...joinStatusPendingAdvocates];
             const paginatedParties = allParties.slice(offset, offset + limit);
             return {
               ...data,
@@ -1310,19 +1358,21 @@ export const UICustomizations = {
     additionalCustomizations: (row, key, column, value, t) => {
       switch (key) {
         case "PARTY_NAME":
-          return removeInvalidNameParts(value) || "N.A.";
+          return removeInvalidNameParts(value) || "";
 
         case "ASSOCIATED_WITH":
           const associatedWith = row?.partyType === "ADVOCATE" ? row?.representingList : "";
           return associatedWith;
         case "STATUS":
           const caseJoinStatus = ["respondent.primary", "respondent.additional"].includes(row?.partyType)
-            ? "JOINED"
+            ? t("JOINED")
             : row?.partyType === "unJoinedAccused"
-            ? "NOT_JOINED"
+            ? t("NOT_JOINED")
             : ["complainant.primary", "complainant.additional"].includes(row?.partyType)
-            ? "JOINED"
-            : null;
+            ? t("JOINED")
+            : ["ADVOCATE"].includes(row?.partyType)
+            ? t(row?.status)
+            : "";
 
           return caseJoinStatus ? <span style={{ backgroundColor: "#E8E8E8", padding: "6px", borderRadius: "14px" }}>{caseJoinStatus}</span> : null;
 
@@ -1331,7 +1381,7 @@ export const UICustomizations = {
           const day = date.getDate().toString().padStart(2, "0");
           const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Month is zero-based
           const year = date.getFullYear();
-          const formattedDate = value ? `${day}-${month}-${year}` : "N.A.";
+          const formattedDate = value ? `${day}-${month}-${year}` : "";
           return <span>{formattedDate}</span>;
         case "PARTY_TYPE":
           const partyType = value === "ADVOCATE" ? `${t("ADVOCATE")}` : partyTypes[value] ? t(partyTypes[value]) : t(value);
