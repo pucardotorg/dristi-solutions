@@ -93,12 +93,12 @@ const NextHearingCard = ({ caseData, width }) => {
   };
 
   function formatTimeTo12Hour(timeString) {
-    if (!timeString) return '';
-    
+    if (!timeString) return "";
+
     // Extract hours and minutes, ignore seconds if present
     const [hours, minutes] = timeString.split(":").slice(0, 2).map(Number);
-    
-    if (isNaN(hours) || isNaN(minutes)) return '';
+
+    if (isNaN(hours) || isNaN(minutes)) return "";
 
     const suffix = hours >= 12 ? "pm" : "am";
     const displayHours = hours % 12 || 12;

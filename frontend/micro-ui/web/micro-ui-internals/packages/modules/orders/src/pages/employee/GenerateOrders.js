@@ -2000,6 +2000,48 @@ const GenerateOrders = () => {
     try {
       const localStorageID = localStorage.getItem("fileStoreId");
       const documents = Array.isArray(order?.documents) ? order.documents : [];
+      let taskDetails = null;
+      const newCompositeItems = [];
+      if (unsignedFileStoreId) {
+        if (order?.orderCategory === "COMPOSITE") {
+          const updatedOrders = order?.compositeItems?.map((item) => {
+            return {
+              order: {
+                ...order,
+                additionalDetails: item?.orderSchema?.additionalDetails,
+                orderDetails: item?.orderSchema?.orderDetails,
+                orderType: item?.orderType,
+                itemId: item?.id,
+              },
+            };
+          });
+          for (const item of updatedOrders) {
+            const matchedItem = order?.compositeItems?.find((compositeItem) => compositeItem?.id === item?.order?.itemId);
+            if (["NOTICE", "SUMMONS", "WARRANT"]?.includes(item?.order?.orderType)) {
+              const payloads = await createTaskPayload(item?.order?.orderType, item);
+              if (matchedItem) {
+                const newItem = {
+                  ...matchedItem,
+                  orderSchema: {
+                    ...matchedItem?.orderSchema,
+                    additionalDetails: {
+                      ...matchedItem?.orderSchema?.additionalDetails,
+                      taskDetails: JSON.stringify(payloads),
+                    },
+                  },
+                };
+                newCompositeItems?.push(newItem);
+              }
+            } else if (matchedItem) {
+              newCompositeItems?.push(matchedItem);
+            }
+          }
+        } else if (["NOTICE", "SUMMONS", "WARRANT"]?.includes(order?.orderType)) {
+          const payloads = await createTaskPayload(order?.orderType, { order });
+          taskDetails = JSON.stringify(payloads);
+        }
+      }
+
       const documentsFile =
         signedDoucumentUploadedID !== "" || localStorageID
           ? {
@@ -2040,6 +2082,14 @@ const GenerateOrders = () => {
           order: {
             ...order,
             ...orderSchema,
+            ...(unsignedFileStoreId && order?.orderCategory === "COMPOSITE" && { compositeItems: newCompositeItems }),
+            ...(unsignedFileStoreId &&
+              order?.orderCategory === "INTERMEDIATE" && {
+                additionalDetails: {
+                  ...order?.additionalDetails,
+                  ...(taskDetails && { taskDetails }),
+                },
+              }),
             documents: updatedDocuments,
             workflow: { ...order.workflow, action, documents: [{}] },
           },
@@ -2176,7 +2226,7 @@ const GenerateOrders = () => {
     createTask = false,
     taskStatus = "CREATE_SUBMISSION",
     taskName = "",
-    channel = "",
+    channelCode = "",
     orderType = "",
     compositeOrderItemId,
     newApplicationDetails,
@@ -2287,10 +2337,10 @@ const GenerateOrders = () => {
       entityType = "order-default";
       return ordersService.customApiService(Urls.orders.pendingTask, {
         pendingTask: {
-          name: t(`MAKE_PAYMENT_FOR_SUMMONS_${channelTypeEnum?.[channel?.type]?.code}`),
+          name: t(`MAKE_PAYMENT_FOR_SUMMONS_${channelCode}`),
           entityType,
           referenceId: `MANUAL_${refId}`,
-          status: `PAYMENT_PENDING_${channelTypeEnum?.[channel?.type]?.code}`,
+          status: `PAYMENT_PENDING_${channelCode}`,
           assignedTo: assignees,
           assignedRole,
           cnrNumber: cnrNumber,
@@ -2317,10 +2367,10 @@ const GenerateOrders = () => {
       assignees = [...assignee, ...complainantUuids]?.map((uuid) => ({ uuid }));
       entityType = "order-default";
       const pendingTask = {
-        name: t(`MAKE_PAYMENT_FOR_NOTICE_${channelTypeEnum?.[channel?.type]?.code}`),
+        name: t(`MAKE_PAYMENT_FOR_NOTICE_${channelCode}`),
         entityType,
         referenceId: `MANUAL_${refId}`,
-        status: `PAYMENT_PENDING_${channelTypeEnum?.[channel?.type]?.code}`,
+        status: `PAYMENT_PENDING_${channelCode}`,
         assignedTo: assignees,
         assignedRole,
         cnrNumber: cnrNumber,
@@ -2711,7 +2761,7 @@ const GenerateOrders = () => {
     }
   };
 
-  const createTask = async (orderType, caseDetails, orderDetails) => {
+  const createTaskPayload = async (orderType, orderDetails) => {
     let payload = {};
     const { litigants } = caseDetails;
     const complainantIndividualId = litigants?.find((item) => item?.partyType === "complainant.primary")?.individualId;
@@ -2916,72 +2966,89 @@ const GenerateOrders = () => {
       default:
         break;
     }
-    if (Object.keys(payload || {}).length > 0 && Array.isArray(selectedChannel)) {
+    if (Object.keys(payload || {}).length > 0 && !Array.isArray(selectedChannel)) return [payload];
+    else if (Object.keys(payload || {}).length > 0 && Array.isArray(selectedChannel)) {
       const channelMap = new Map();
-      selectedChannel.forEach(async (item) => {
-        let courtFees = await getCourtFee(item?.code, payload?.respondentDetails?.address?.pincode, orderType);
+      const channelPayloads = await Promise.all(
+        selectedChannel?.map(async (item) => {
+          let clonedPayload = JSON.parse(JSON.stringify(payload));
 
-        if (channelMap.get(item?.type)) {
-          channelMap.set(item?.type, channelMap.get(item?.type) + 1);
-        } else {
-          channelMap.set(item?.type, 1);
-        }
-        if ("deliveryChannels" in payload) {
-          payload.deliveryChannels = {
-            ...payload.deliveryChannels,
-            channelName: channelTypeEnum?.[item?.type]?.type,
-            fees: courtFees,
-          };
+          let courtFees = await getCourtFee(item?.code, clonedPayload?.respondentDetails?.address?.pincode, orderType);
 
-          const address = ["e-Post", "Via Police", "Registered Post"].includes(item?.type)
-            ? respondentAddress[channelMap.get(item?.type) - 1]
-            : respondentAddress[0];
-          const sms = ["SMS"].includes(item?.type) ? respondentPhoneNo[channelMap.get(item?.type) - 1] : respondentPhoneNo[0];
-          const email = ["E-mail"].includes(item?.type) ? respondentEmail[channelMap.get(item?.type) - 1] : respondentEmail[0];
+          if (channelMap.get(item?.type)) {
+            channelMap.set(item?.type, channelMap.get(item?.type) + 1);
+          } else {
+            channelMap.set(item?.type, 1);
+          }
+          if ("deliveryChannels" in clonedPayload) {
+            clonedPayload.deliveryChannels = {
+              ...clonedPayload.deliveryChannels,
+              channelName: channelTypeEnum?.[item?.type]?.type,
+              fees: courtFees,
+              channelCode: channelTypeEnum?.[item?.type]?.code,
+            };
 
-          payload.respondentDetails = {
-            ...payload.respondentDetails,
-            address: ["e-Post", "Via Police", "Registered Post"].includes(item?.type)
-              ? {
-                  ...address,
-                  locality: item?.value?.locality || address?.locality,
-                  coordinate: item?.value?.coordinates || address?.coordinates,
-                }
-              : { ...address, coordinate: address?.coordinates } || "",
-            phone: ["SMS"].includes(item?.type) ? item?.value : sms || "",
-            email: ["E-mail"].includes(item?.type) ? item?.value : email || "",
-            age: "",
-            gender: "",
-          };
-        }
-        if ("deliveryChannel" in payload) {
-          const channelDetailsEnum = {
-            SMS: "phone",
-            "E-mail": "email",
-            "e-Post": "address",
-            "Via Police": "address",
-            "Registered Post": "address",
-          };
-          payload.deliveryChannel = {
-            ...payload.deliveryChannel,
-            channelName: channelTypeEnum?.[item?.type]?.type,
-            [channelDetailsEnum?.[item?.type]]: item?.value || "",
-          };
+            const address = ["e-Post", "Via Police", "Registered Post"].includes(item?.type)
+              ? respondentAddress[channelMap.get(item?.type) - 1]
+              : respondentAddress[0];
+            const sms = ["SMS"].includes(item?.type) ? respondentPhoneNo[channelMap.get(item?.type) - 1] : respondentPhoneNo[0];
+            const email = ["E-mail"].includes(item?.type) ? respondentEmail[channelMap.get(item?.type) - 1] : respondentEmail[0];
 
-          const address = respondentAddress[channelMap.get(item?.type) - 1];
+            clonedPayload.respondentDetails = {
+              ...clonedPayload.respondentDetails,
+              address: ["e-Post", "Via Police", "Registered Post"].includes(item?.type)
+                ? {
+                    ...address,
+                    locality: item?.value?.locality || address?.locality,
+                    coordinate: item?.value?.coordinates || address?.coordinates,
+                  }
+                : { ...address, coordinate: address?.coordinates } || "",
+              phone: ["SMS"].includes(item?.type) ? item?.value : sms || "",
+              email: ["E-mail"].includes(item?.type) ? item?.value : email || "",
+              age: "",
+              gender: "",
+            };
+          }
+          if ("deliveryChannel" in clonedPayload) {
+            const channelDetailsEnum = {
+              SMS: "phone",
+              "E-mail": "email",
+              "e-Post": "address",
+              "Via Police": "address",
+              "Registered Post": "address",
+            };
+            clonedPayload.deliveryChannel = {
+              ...clonedPayload.deliveryChannel,
+              channelName: channelTypeEnum?.[item?.type]?.type,
+              [channelDetailsEnum?.[item?.type]]: item?.value || "",
+            };
 
-          const sms = respondentPhoneNo[channelMap.get(item?.type) - 1];
-          const email = respondentEmail[channelMap.get(item?.type) - 1];
+            const address = respondentAddress[channelMap.get(item?.type) - 1];
 
-          payload.respondentDetails = {
-            ...payload.respondentDetails,
-            address: ["e-Post", "Via Police", "Registered Post"].includes(item?.type) ? item?.value : address || "",
-            phone: ["SMS"].includes(item?.type) ? item?.value : sms || "",
-            email: ["E-mail"].includes(item?.type) ? item?.value : email || "",
-            age: "",
-            gender: "",
-          };
-        }
+            const sms = respondentPhoneNo[channelMap.get(item?.type) - 1];
+            const email = respondentEmail[channelMap.get(item?.type) - 1];
+
+            clonedPayload.respondentDetails = {
+              ...clonedPayload.respondentDetails,
+              address: ["e-Post", "Via Police", "Registered Post"].includes(item?.type) ? item?.value : address || "",
+              phone: ["SMS"].includes(item?.type) ? item?.value : sms || "",
+              email: ["E-mail"].includes(item?.type) ? item?.value : email || "",
+              age: "",
+              gender: "",
+            };
+          }
+          return clonedPayload;
+        })
+      );
+      return channelPayloads;
+    }
+  };
+
+  const createTask = async (orderType, orderDetails) => {
+    const orderData = orderDetails?.order;
+    const payloads = await createTaskPayload(orderType, orderDetails);
+    for (const payload of payloads) {
+      if (["SUMMONS", "NOTICE"]?.includes(orderType)) {
         await ordersService
           .customApiService(Urls.orders.taskCreate, {
             task: {
@@ -3018,50 +3085,50 @@ const GenerateOrders = () => {
           })
           .then(async (data) => {
             if (["SUMMONS", "NOTICE"].includes(orderType)) {
-              await createPendingTask({ refId: data?.task?.taskNumber, channel: item, orderType: orderType });
+              await createPendingTask({ refId: data?.task?.taskNumber, channelCode: payload?.deliveryChannels?.channelCode, orderType: orderType });
             }
           });
-      });
-    } else if (Object.keys(payload || {}).length > 0) {
-      await ordersService
-        .customApiService(Urls.orders.taskCreate, {
-          task: {
-            taskDetails: payload,
-            workflow: {
-              action: "CREATE",
-              comments: orderType,
-              documents: [
-                {
-                  documentType: null,
-                  fileStore: null,
-                  documentUid: null,
-                  additionalDetails: {},
-                },
-              ],
-              assignes: null,
-              rating: null,
+      } else if (orderType === "WARRANT") {
+        await ordersService
+          .customApiService(Urls.orders.taskCreate, {
+            task: {
+              taskDetails: payload,
+              workflow: {
+                action: "CREATE",
+                comments: orderType,
+                documents: [
+                  {
+                    documentType: null,
+                    fileStore: null,
+                    documentUid: null,
+                    additionalDetails: {},
+                  },
+                ],
+                assignes: null,
+                rating: null,
+              },
+              createdDate: new Date().getTime(),
+              orderId: orderData?.id,
+              filingNumber,
+              cnrNumber,
+              taskType: orderType,
+              status: "INPROGRESS",
+              tenantId,
+              amount: {
+                type: "FINE",
+                status: "DONE",
+                amount: summonsCourtFee,
+              },
+              ...(orderData?.itemId && { additionalDetails: { itemId: orderData?.itemId } }),
             },
-            createdDate: new Date().getTime(),
-            orderId: orderData?.id,
-            filingNumber,
-            cnrNumber,
-            taskType: orderType,
-            status: "INPROGRESS",
             tenantId,
-            amount: {
-              type: "FINE",
-              status: "DONE",
-              amount: summonsCourtFee,
-            },
-            ...(orderData?.itemId && { additionalDetails: { itemId: orderData?.itemId } }),
-          },
-          tenantId,
-        })
-        .then(async (data) => {
-          if (["WARRANT"].includes(orderType)) {
-            await createPendingTask({ refId: data?.task?.taskNumber, orderType: orderType });
-          }
-        });
+          })
+          .then(async (data) => {
+            if (["WARRANT"].includes(orderType)) {
+              await createPendingTask({ refId: data?.task?.taskNumber, orderType: orderType });
+            }
+          });
+      }
     }
   };
 
@@ -3394,12 +3461,12 @@ const GenerateOrders = () => {
         }
 
         try {
-          await Promise.all(updatedOrders?.map((item) => createTask(item?.order?.orderType, caseDetails, item)));
+          await Promise.all(updatedOrders?.map((item) => createTask(item?.order?.orderType, item)));
         } catch (error) {
           console.error("Error in creating tasks:", error);
         }
       } else {
-        createTask(currentOrder?.orderType, caseDetails, orderResponse);
+        createTask(currentOrder?.orderType, orderResponse);
       }
 
       setShowSuccessModal(true);

@@ -516,9 +516,14 @@ export const UICustomizations = {
   bulkESignOrderConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
       const tenantId = window?.Digit.ULBService.getStateId();
+      const entityType = "Order";
+      const caseTitle = requestCriteria?.state?.searchForm?.caseTitle;
       const status = requestCriteria?.state?.searchForm?.status;
       const startOfTheDay = requestCriteria?.state?.searchForm?.startOfTheDay;
-      const newModuleSearchCriteria = {
+      const moduleSearchCriteria = {
+        entityType,
+        tenantId,
+        ...(caseTitle && { caseTitle }),
         ...(Object.keys(status || {})?.length > 0 && { status: status?.code ? [status?.code] : status }),
         ...(startOfTheDay && {
           startOfTheDay: new Date(startOfTheDay).getTime(),
@@ -535,10 +540,7 @@ export const UICustomizations = {
             limit: requestCriteria?.state?.tableForm?.limit,
             offset: requestCriteria?.state?.tableForm?.offset,
             tenantId: tenantId,
-            moduleSearchCriteria: {
-              ...requestCriteria?.body?.inbox?.moduleSearchCriteria,
-              ...newModuleSearchCriteria,
-            },
+            moduleSearchCriteria: moduleSearchCriteria,
           },
         },
       };

@@ -203,7 +203,7 @@ public class ServiceConstants {
 
     public static final String ACCUSED_PARTY_TYPE="respondent";
 
-    public static final String PARTIALLY_JOINED = "PARTIALLY JOINED";
+    public static final String PARTIALLY_PENDING = "PARTIALLY_PENDING";
     public static final String PENDING = "PENDING";
     public static final String UPLOAD_VAKALATNAMA = "UPLOAD_VAKALATNAMA";
 

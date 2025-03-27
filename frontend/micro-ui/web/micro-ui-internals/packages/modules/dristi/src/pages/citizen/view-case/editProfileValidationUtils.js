@@ -32,6 +32,13 @@ export const editComplainantValidation = ({
     } else {
       clearFormDataErrors("complainantVerification");
     }
+    if (!(formData?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file || formData?.complainantId?.complainantId === true)) {
+      setShowErrorToast(true);
+      setFormErrors("complainantId", { message: "COMPLAINANT_ID_PROOF_IS_MANDATORY" });
+      return true;
+    } else {
+      clearFormDataErrors("complainantId");
+    }
     const respondentData = caseDetails?.additionalDetails?.respondentDetails;
     const complainantMobileNumber = formData?.complainantVerification?.mobileNumber;
     if (respondentData) {
@@ -358,28 +365,21 @@ export const updateProfileData = async ({
             companyDetailsUpload: null,
             supportingDocument: null,
           };
-          if (
-            data?.data?.complainantIDProofDocument?.document &&
-            Array.isArray(data?.data?.complainantIDProofDocument?.document) &&
-            data?.data?.complainantIDProofDocument?.document.length > 0
-          ) {
-            documentData.complainantIDProofDocument = {};
-            documentData.complainantIDProofDocument.document = await Promise.all(
-              data?.data?.complainantIDProofDocument?.document?.map(async (document) => {
-                if (document) {
-                  const documentType = documentsTypeMapping["complainantId"];
-                  const uploadedData = await onDocumentUpload(documentType, document, document.name, tenantId);
-                  const doc = {
-                    documentType,
-                    fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
-                    documentName: uploadedData.filename || document?.documentName,
-                    fileName: complainantIdProofFileName,
-                  };
-                  return doc;
-                }
-              })
+          if (data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file) {
+            const documentType = documentsTypeMapping["complainantId"];
+            const uploadedData = await onDocumentUpload(
+              documentType,
+              data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file,
+              data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[0],
+              tenantId
             );
-            setFormDataValue("complainantIDProofDocument", documentData?.complainantIDProofDocument);
+            const doc = {
+              documentType,
+              fileStore: uploadedData.file?.files?.[0]?.fileStoreId || uploadedData?.fileStore,
+              documentName: uploadedData.filename || uploadedData?.documentName,
+            };
+
+            documentData.complainantIDProofDocument = { document: [doc] };
           }
           if (
             data?.data?.companyDetailsUpload?.document &&
@@ -430,7 +430,8 @@ export const updateProfileData = async ({
             setFormDataValue("supportingDocument", documentData?.supportingDocument);
           }
           const updatedComplainantVerification = structuredClone(data?.data?.complainantVerification);
-          updatedComplainantVerification.individualDetails.document = documentData?.complainantIDProofDocument?.document || [];
+          updatedComplainantVerification.individualDetails.document =
+            documentData?.complainantIDProofDocument?.document || updatedComplainantVerification?.individualDetails?.document || [];
           return {
             ...data,
             isFormCompleted: true,
@@ -622,7 +623,7 @@ export const updateProfileData = async ({
           referenceId,
           status: "PROFILE_EDIT_REQUEST",
           assignedTo: [],
-          assignedRole: ["JUDGE_ROLE"],
+          assignedRole: ["JUDGE_ROLE", "BENCH_CLERK", "COURT_ROOM_MANAGER"],
           cnrNumber: caseDetails?.cnrNumber,
           filingNumber: caseDetails?.filingNumber,
           isCompleted: false,
