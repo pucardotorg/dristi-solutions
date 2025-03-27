@@ -75,10 +75,6 @@ public class EmailProperties {
     @Getter
     private String mailSslEnable;
 
-    @Value("${mail.smtp.socketFactory.class}")
-    @Getter
-    private String mailSocketFactoryClass;
-
     @Value("${mail.smtps.starttls.enable}")
     @Getter
     private String mailStartTlsEnable;
