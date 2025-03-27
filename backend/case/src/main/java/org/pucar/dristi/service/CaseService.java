@@ -3329,11 +3329,6 @@ public class CaseService {
 
             producer.push(config.getRepresentativeJoinCaseTopic(), courtCaseObj);
 
-
-            updateStatusOfAdvocate(courtCase, advocateUuid, pendingAdvocateRequest);
-
-            producer.push(config.getUpdatePendingAdvocateRequestKafkaTopic(), courtCase);
-
             if (partyType.contains("complainant")) {
                 Object additionalDetails = courtCase.getAdditionalDetails();
                 JsonNode additionalDetailsJsonNode = objectMapper.convertValue(additionalDetails, JsonNode.class);
@@ -3347,6 +3342,10 @@ public class CaseService {
 
             log.info("operation=updateJoinCaseApproved, status=SUCCESS, joinCaseRequest, advocateUuid : {}, {}", joinCaseRequest, advocateUuid);
         }
+
+        updateStatusOfAdvocate(courtCase, advocateUuid, pendingAdvocateRequest);
+
+        producer.push(config.getUpdatePendingAdvocateRequestKafkaTopic(), courtCase);
 
     }
 
