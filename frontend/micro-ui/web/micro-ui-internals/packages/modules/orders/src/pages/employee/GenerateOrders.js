@@ -3531,12 +3531,18 @@ const GenerateOrders = () => {
         }
 
         try {
-          await Promise.all(updatedOrders?.map((item) => createTask(item?.order?.orderType, item)));
+          await Promise.all(
+            updatedOrders
+              ?.filter((item) => ["SUMMONS", "WARRANT", "NOTICE"].includes(item?.order?.orderType))
+              ?.map((item) => createTask(item?.order?.orderType, item))
+          );
         } catch (error) {
           console.error("Error in creating tasks:", error);
         }
       } else {
-        createTask(currentOrder?.orderType, orderResponse);
+        if (["SUMMONS", "WARRANT", "NOTICE"].includes(currentOrder?.orderType)) {
+          createTask(currentOrder?.orderType, orderResponse);
+        }
       }
 
       setShowSuccessModal(true);
