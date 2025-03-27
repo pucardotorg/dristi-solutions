@@ -20,6 +20,7 @@ const NextHearingCard = ({ caseData, width }) => {
   const { t } = useTranslation();
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
   const isCourtRoomManager = userRoles.includes("COURT_ROOM_MANAGER");
+  const { data: slotTime } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "court", [{ name: "slots" }]);
 
   const { data: hearingRes, isLoading: isHearingsLoading } = Digit.Hooks.hearings.useGetHearings(
     {
@@ -91,6 +92,19 @@ const NextHearingCard = ({ caseData, width }) => {
     }
   };
 
+  function formatTimeTo12Hour(timeString) {
+    // Extract hours and minutes, ignore seconds if present
+    let [hours, minutes] = timeString?.split(":")?.slice(0, 2)?.map(Number);
+
+    const suffix = hours >= 12 ? "pm" : "am";
+    hours = hours % 12 || 12;
+
+    const formattedHours = String(hours).padStart(2, "0");
+    const formattedMinutes = String(minutes).padStart(2, "0");
+
+    return `${formattedHours}:${formattedMinutes} ${suffix}`;
+  }
+
   if (isHearingsLoading) {
     return <Loader />;
   }
@@ -136,7 +150,8 @@ const NextHearingCard = ({ caseData, width }) => {
                 marginTop: "5px",
               }}
             >
-              {formattedTime()}
+              {/* {formattedTime()} */}
+              {formatTimeTo12Hour(slotTime?.court?.slots[0]?.slotStartTime)} {" -"}
             </div>
             <div
               style={{

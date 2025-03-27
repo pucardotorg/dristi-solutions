@@ -8,11 +8,12 @@ import { RenderInstance } from "../components/RenderInstance";
 import OverlayDropdown from "../components/OverlayDropdown";
 import CustomChip from "../components/CustomChip";
 import ReactTooltip from "react-tooltip";
-import { removeInvalidNameParts } from "../Utils";
+import { modifiedEvidenceNumber, removeInvalidNameParts } from "../Utils";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
 import { constructFullName } from "@egovernments/digit-ui-module-orders/src/utils";
 import { getAdvocates } from "../pages/citizen/FileCase/EfilingValidationUtils";
 import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
+import { OrderWorkflowState } from "../Utils/orderWorkflow";
 
 const businessServiceMap = {
   "muster roll": "MR",
@@ -577,7 +578,20 @@ export const UICustomizations = {
             </div>
           );
         case "STATUS":
-          return <CustomChip text={t(value)} shade={value === "PUBLISHED" ? "green" : "orange"} />;
+          return (
+            <CustomChip
+              text={t(value)}
+              shade={
+                value === OrderWorkflowState.PUBLISHED
+                  ? "green"
+                  : value === OrderWorkflowState.DELETED
+                  ? "red"
+                  : value === OrderWorkflowState.DRAFT_IN_PROGRESS
+                  ? "grey"
+                  : "orange"
+              }
+            />
+          );
         case "DATE_ISSUED":
         case "DATE_ADDED":
           const date = new Date(value);
@@ -588,6 +602,8 @@ export const UICustomizations = {
           return <span>{value && value !== "0" ? formattedDate : ""}</span>;
         case "ORDER_TILTE":
           return <OrderName rowData={row} colData={column} value={value} />;
+        default:
+          break;
       }
     },
   },
@@ -1158,6 +1174,8 @@ export const UICustomizations = {
           return removeInvalidNameParts(value);
         case "CS_ACTIONS":
           return <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="FilingsConfig" />;
+        case "EVIDENCE_NUMBER":
+          return modifiedEvidenceNumber(value);
         default:
           return "N/A";
       }

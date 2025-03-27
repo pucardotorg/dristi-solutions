@@ -130,8 +130,11 @@ const MonthlyCalendar = () => {
           if (!calendarEvents[eventKey]) {
             calendarEvents[eventKey] = {
               title: `${slot.slotName} Hearing`,
-              start: `${dateString}T${slot.slotStartTime}`,
-              end: `${dateString}T${slot.slotEndTime}`,
+              // start: `${dateString}T${slot.slotStartTime}`,
+              // end: `${dateString}T${slot.slotEndTime}`,
+              // please refer to ticket #3129 for all modifications done related to changing slots to one.
+              start: `${dateString}T00:00:00`,
+              end: `${dateString}T23:59:59`,
               extendedProps: {
                 hearings: [hearing],
                 count: 1,
