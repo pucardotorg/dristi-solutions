@@ -2206,7 +2206,7 @@ public class CaseService {
         task.setStatus("");
         task.setTenantId(joinCaseRequest.getRequestInfo().getUserInfo().getTenantId());
         task.setFilingNumber(joinCaseRequest.getCaseFilingNumber());
-        Workflow workflow = new Workflow();
+        WorkflowObject workflow = new WorkflowObject();
         workflow.setAction("CREATE");
         RequestInfo requestInfo = joinCaseRequest.getRequestInfo();
         Role role = new Role();
