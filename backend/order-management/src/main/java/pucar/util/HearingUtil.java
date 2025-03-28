@@ -201,8 +201,8 @@ public class HearingUtil {
                         getAttendeesFromAdditionalDetails(order).stream(),
                         getAdvocateAttendees(requestInfo, courtCase).stream()
                 ).collect(Collectors.toList()))
-                .startTime(getCreateStartAndEndTime(order.getAdditionalDetails(),Arrays.asList("formdata", "haringDate")))
-                .endTime(getCreateStartAndEndTime(order.getAdditionalDetails(),Arrays.asList("formdata", "haringDate")))
+                .startTime(getCreateStartAndEndTime(order.getAdditionalDetails(),Arrays.asList("formdata", "hearingDate")))
+                .endTime(getCreateStartAndEndTime(order.getAdditionalDetails(),Arrays.asList("formdata", "hearingDate")))
                 .workflow(workflowObject)
                 .applicationNumbers(new ArrayList<>())
                 .presidedBy(PresidedBy.builder()  // todo:this is hardcoded but needs to come from order

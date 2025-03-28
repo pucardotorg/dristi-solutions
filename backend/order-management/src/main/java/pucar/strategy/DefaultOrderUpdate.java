@@ -37,14 +37,16 @@ public class DefaultOrderUpdate implements OrderUpdateStrategy {
     private final OrderUtil orderUtil;
     private final CaseUtil caseUtil;
     private final HearingUtil hearingUtil;
+    private final DateUtil dateUtil;
 
     @Autowired
-    public DefaultOrderUpdate(ApplicationUtil applicationUtil, PendingTaskUtil pendingTaskUtil, OrderUtil orderUtil, CaseUtil caseUtil, HearingUtil hearingUtil) {
+    public DefaultOrderUpdate(ApplicationUtil applicationUtil, PendingTaskUtil pendingTaskUtil, OrderUtil orderUtil, CaseUtil caseUtil, HearingUtil hearingUtil, DateUtil dateUtil) {
         this.applicationUtil = applicationUtil;
         this.pendingTaskUtil = pendingTaskUtil;
         this.orderUtil = orderUtil;
         this.caseUtil = caseUtil;
         this.hearingUtil = hearingUtil;
+        this.dateUtil = dateUtil;
     }
 
     @Override
@@ -109,7 +111,7 @@ public class DefaultOrderUpdate implements OrderUpdateStrategy {
 
         //close pending task
 
-        pendingTaskUtil.closeManualPendingTask(order.getOrderNumber(), requestInfo,courtCase.getFilingNumber(),courtCase.getCnrNumber());
+        pendingTaskUtil.closeManualPendingTask(order.getOrderNumber(), requestInfo, courtCase.getFilingNumber(), courtCase.getCnrNumber());
 
         List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder()
                 .criteria(HearingCriteria.builder().tenantId(order.getTenantId())
@@ -122,9 +124,9 @@ public class DefaultOrderUpdate implements OrderUpdateStrategy {
         if (scheduledHearing.isPresent()) {
             hearingDate = scheduledHearing.get().getStartTime();
         }
-        CaseDiaryEntry diaryEntry = CaseDiaryEntry.builder()
+        return CaseDiaryEntry.builder()
                 .tenantId(order.getTenantId())
-                .entryDate(System.currentTimeMillis())
+                .entryDate(dateUtil.getStartOfTheDayForEpoch(dateUtil.getCurrentTimeInMilis()))
                 .caseNumber(courtCase.getCmpNumber())
                 .caseId(courtCase.getId().toString())
                 .judgeId("JUDGE_ID")  // take confirmation
@@ -135,7 +137,6 @@ public class DefaultOrderUpdate implements OrderUpdateStrategy {
                 .additionalDetails(Map.of("filingNumber", order.getFilingNumber())) //this shit need to be removed
                 .build();
 
-        return diaryEntry;
 
     }
 }

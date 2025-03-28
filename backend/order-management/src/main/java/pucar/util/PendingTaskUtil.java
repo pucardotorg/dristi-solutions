@@ -19,6 +19,7 @@ import pucar.web.models.courtCase.CourtCase;
 import pucar.web.models.courtCase.Party;
 import pucar.web.models.pendingtask.*;
 
+import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -59,7 +60,7 @@ public class PendingTaskUtil {
 
             for (Data task : pendingTaskSearchResponse.getData()) {
                 PendingTask pendingTask = new PendingTask();
-                mapFieldsToPendingTask(pendingTask, task.getFields());
+                mapValuesToPendingTask(pendingTask, task.getFields());
                 pendingTaskList.add(pendingTask);
             }
 
@@ -95,29 +96,70 @@ public class PendingTaskUtil {
     }
 
 
-    public void mapFieldsToPendingTask(PendingTask obj, List<Field> keyValueList) {
+    public static void mapValuesToPendingTask(PendingTask obj, List<Field> keyValueList) {
+        Class<?> clazz = obj.getClass();
+
         for (Field entry : keyValueList) {
             try {
-                java.lang.reflect.Field field = PendingTask.class.getDeclaredField(entry.getKey());
+                java.lang.reflect.Field field = clazz.getDeclaredField(entry.getKey());
                 field.setAccessible(true);
-
-                // Convert value type if needed
                 Object value = entry.getValue();
-                if (field.getType() == int.class && value instanceof Number) {
-                    value = ((Number) value).intValue();
-                }
 
-                field.set(obj, value);
+                // Handle lists
+                if (List.class.isAssignableFrom(field.getType())) {
+                    ParameterizedType listType = (ParameterizedType) field.getGenericType();
+                    Class<?> listGenericType = (Class<?>) listType.getActualTypeArguments()[0];
+
+                    if (value instanceof List<?>) {
+                        List<?> listValue = (List<?>) value;
+                        List<Object> convertedList = new ArrayList<>();
+                        for (Object v : listValue) {
+                            convertedList.add(convertValue(v, listGenericType));
+                        }
+                        field.set(obj, convertedList);
+                    }
+                }
+                // Handle objects and primitives
+                else {
+                    field.set(obj, convertValue(value, field.getType()));
+                }
             } catch (NoSuchFieldException e) {
-                log.error("");
+                // log here
             } catch (IllegalAccessException e) {
-                log.error("");
+
+                // log here
+            }
+        }
+    }
+
+    private static Object convertValue(Object value, Class<?> targetType) {
+        if (value == null) return null;
+
+        // Convert basic types
+        if (targetType == int.class || targetType == Integer.class) return ((Number) value).intValue();
+        if (targetType == double.class || targetType == Double.class) return ((Number) value).doubleValue();
+        if (targetType == boolean.class || targetType == Boolean.class) return Boolean.parseBoolean(value.toString());
+        if (targetType == String.class) return value.toString();
+
+        // Convert custom objects (assuming a Map<String, Object>)
+        if (value instanceof Map<?, ?> mapValue) {
+            try {
+                Object newInstance = targetType.getDeclaredConstructor().newInstance();
+                for (var entry : mapValue.entrySet()) {
+                    if (entry.getKey() instanceof String key) {
+                        java.lang.reflect.Field field = targetType.getDeclaredField(key);
+                        field.setAccessible(true);
+                        field.set(newInstance, convertValue(entry.getValue(), field.getType()));
+                    }
+                }
+                return newInstance;
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
 
-
+        return value; // Return as is for unknown types
     }
-
     public void closeManualPendingTask(String referenceNo, RequestInfo requestInfo, String filingNumber, String cnrNumber) {
         // here data will be lost , we need to search first then update the pending task , this is as per ui
         createPendingTask(PendingTaskRequest.builder()

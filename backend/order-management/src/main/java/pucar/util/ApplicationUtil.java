@@ -26,6 +26,7 @@ public class ApplicationUtil {
     private final Configuration configuration;
     private final ServiceRequestRepository serviceRequestRepository;
     private final CacheUtil cacheUtil;
+
     @Autowired
     public ApplicationUtil(ObjectMapper objectMapper, Configuration configuration, ServiceRequestRepository serviceRequestRepository, CacheUtil cacheUtil) {
         this.objectMapper = objectMapper;
@@ -43,7 +44,7 @@ public class ApplicationUtil {
         try {
             Object redisResponse = cacheUtil.findById(request.getCriteria().getTenantId() + ":" + request.getCriteria().getApplicationNumber());
             if (redisResponse != null) {
-                Application application = objectMapper.readValue(redisResponse.toString(), Application.class);
+                Application application = objectMapper.readValue(objectMapper.writeValueAsString(redisResponse), Application.class);
                 return List.of(application);
             }
             JsonNode jsonNode = objectMapper.valueToTree(response);
@@ -68,7 +69,7 @@ public class ApplicationUtil {
         try {
             JsonNode jsonNode = objectMapper.valueToTree(response);
             ApplicationResponse applicationResponse = objectMapper.readValue(jsonNode.toString(), ApplicationResponse.class);
-            if(applicationResponse != null) {
+            if (applicationResponse != null) {
                 Application application = objectMapper.convertValue(applicationResponse.getApplication(), Application.class);
                 cacheUtil.save(application.getTenantId() + ":" + application.getApplicationNumber(), application);
             }

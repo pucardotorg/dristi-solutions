@@ -75,7 +75,7 @@ public class ExtensionOfDocumentSubmissionDate implements OrderUpdateStrategy {
 
                         ).build()).build();
 
-        String submissionDueDate = jsonUtil.getNestedValue(order.getAdditionalDetails(), Arrays.asList("formdata", "submissionDeadline"), String.class);
+        String submissionDueDate = jsonUtil.getNestedValue(order.getAdditionalDetails(), Arrays.asList("formdata", "newSubmissionDate"), String.class);
 
         Long sla = dateUtil.getEpochFromDateString(submissionDueDate, "yyyy-MM-dd");
 
