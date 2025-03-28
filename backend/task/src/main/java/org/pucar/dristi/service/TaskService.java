@@ -379,8 +379,8 @@ public class TaskService {
                     .build();
 
             Pagination pagination = Pagination.builder()
-                    .offSet(50.0)
-                    .limit(0.0)
+                    .offSet(0.0)
+                    .limit(50.0)
                     .build();
 
             List<Task> tasks = taskRepository.getTasks(taskSearchCriteria, pagination);
@@ -434,7 +434,7 @@ public class TaskService {
     }
 
     private void updateLitigantNameFromParty(Party party, LitigantDetails litigantDetails) throws JsonProcessingException {
-        JsonNode jsonNode = objectMapper.readTree(party.getAdditionalDetails().toString());
+        JsonNode jsonNode = objectMapper.convertValue(party.getAdditionalDetails(), JsonNode.class);
         String fullName = jsonNode.has("fullName")
                 ? jsonNode.get("fullName").asText()
                 : "";
