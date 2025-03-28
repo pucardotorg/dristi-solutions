@@ -41,6 +41,7 @@ import DocumentModal from "@egovernments/digit-ui-module-orders/src/components/D
 import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
 import PublishedNotificationModal from "./publishedNotificationModal";
 import ConfirmEvidenceAction from "../../../components/ConfirmEvidenceAction";
+import NoticeAccordion from "../../../components/NoticeAccordion";
 
 const defaultSearchValues = {};
 
@@ -2570,69 +2571,77 @@ const AdmittedCases = () => {
             </div>
           )}
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          {groupNoticeOrderByHearingNumber?.map((orders, index) => (
-            <React.Fragment>
-              {userType === "employee" && orders?.cases?.length > 0 && (
-                <div key={orders?.hearingNumber} className="notice-failed-notification" style={styles.container}>
-                  <div className="notice-failed-icon" style={styles.icon}>
-                    <InfoIconRed style={styles.icon} />
-                  </div>
-                  <p className="notice-failed-text" style={styles.text}>
-                    {`${t("NOTICE_GENERATED_FOR")} ${
-                      index === 0
-                        ? t("CURRENT_HEARING") + " (" + orders?.hearingNumber + ")"
-                        : t("PREVIOUS_HEARING") + " (" + orders?.hearingNumber + ")"
-                    }, `}
-                    <span onClick={() => handleAllNoticeGeneratedForHearing(orders?.hearingNumber)} className="click-here" style={styles.link}>
-                      {t("NOTICE_CLICK_HERE")}
-                    </span>
-                  </p>
-                </div>
-              )}
-            </React.Fragment>
-          ))}
+        {(groupSummonWarrantOrderByHearingNumber?.length > 0 || groupNoticeOrderByHearingNumber?.length > 0) && (
+          <NoticeAccordion title={t("PROCESS_STATUS")}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              {groupSummonWarrantOrderByHearingNumber?.map((orders, index) => (
+                <React.Fragment>
+                  {userType === "employee" && orders?.cases?.length > 0 && (
+                    <div key={orders?.hearingNumber} className="notice-failed-notification" style={styles.container}>
+                      <div className="notice-failed-icon" style={styles.icon}>
+                        <InfoIconRed style={styles.icon} />
+                      </div>
+                      <p className="notice-failed-text" style={styles.text}>
+                        {`${t("SUMMON_WARRANT_FOR")} ${
+                          currentHearingId === orders?.hearingNumber
+                            ? t("CURRENT_HEARING") + " (" + orders?.hearingNumber + ")"
+                            : t("PREVIOUS_HEARING") + " (" + orders?.hearingNumber + ")"
+                        }, `}
+                        <span
+                          onClick={() => handleAllSummonWarrantGeneratedForHearing(orders?.hearingNumber)}
+                          className="click-here"
+                          style={styles.link}
+                        >
+                          {t("NOTICE_CLICK_HERE")}
+                        </span>
+                      </p>
+                    </div>
+                  )}
+                </React.Fragment>
+              ))}
 
-          {groupSummonWarrantOrderByHearingNumber?.map((orders, index) => (
-            <React.Fragment>
-              {userType === "employee" && orders?.cases?.length > 0 && (
-                <div key={orders?.hearingNumber} className="notice-failed-notification" style={styles.container}>
-                  <div className="notice-failed-icon" style={styles.icon}>
-                    <InfoIconRed style={styles.icon} />
-                  </div>
-                  <p className="notice-failed-text" style={styles.text}>
-                    {`${t("SUMMON_WARRANT_FOR")} ${
-                      index === 0
-                        ? t("CURRENT_HEARING") + " (" + orders?.hearingNumber + ")"
-                        : t("PREVIOUS_HEARING") + " (" + orders?.hearingNumber + ")"
-                    }, `}
-                    <span onClick={() => handleAllSummonWarrantGeneratedForHearing(orders?.hearingNumber)} className="click-here" style={styles.link}>
-                      {t("NOTICE_CLICK_HERE")}
-                    </span>
-                  </p>
-                </div>
-              )}
-            </React.Fragment>
-          ))}
-          {/* {noticeFailureCount?.map(
-            ({ partyIndex, partyName, failureCount }, index) =>
-              failureCount > 0 &&
-              !isCaseAdmitted &&
-              isJudge && (
-                <div key={partyIndex} className="notice-failed-notification" style={styles.container}>
-                  <div className="notice-failed-icon" style={styles.icon}>
-                    <InfoIconRed style={styles.icon} />
-                  </div>
-                  <p className="notice-failed-text" style={styles.text}>
-                    {`${t("NOTICE_FAILED")} ${failureCount} ${t("TIMES_VIEW_STATUS")} ${partyName}. ${t("VIEW_STATUS")}, `}
-                    <span onClick={() => handleOpenSummonNoticeModal(partyIndex)} className="click-here" style={styles.link}>
-                      {t("NOTICE_CLICK_HERE")}
-                    </span>
-                  </p>
-                </div>
-              )
-          )} */}
-        </div>
+              {groupNoticeOrderByHearingNumber?.map((orders, index) => (
+                <React.Fragment>
+                  {userType === "employee" && orders?.cases?.length > 0 && (
+                    <div key={orders?.hearingNumber} className="notice-failed-notification" style={styles.container}>
+                      <div className="notice-failed-icon" style={styles.icon}>
+                        <InfoIconRed style={styles.icon} />
+                      </div>
+                      <p className="notice-failed-text" style={styles.text}>
+                        {`${t("NOTICE_GENERATED_FOR")} ${
+                          currentHearingId === orders?.hearingNumber
+                            ? t("CURRENT_HEARING") + " (" + orders?.hearingNumber + ")"
+                            : t("PREVIOUS_HEARING") + " (" + orders?.hearingNumber + ")"
+                        }, `}
+                        <span onClick={() => handleAllNoticeGeneratedForHearing(orders?.hearingNumber)} className="click-here" style={styles.link}>
+                          {t("NOTICE_CLICK_HERE")}
+                        </span>
+                      </p>
+                    </div>
+                  )}
+                </React.Fragment>
+              ))}
+              {/* {noticeFailureCount?.map(
+                ({ partyIndex, partyName, failureCount }, index) =>
+                  failureCount > 0 &&
+                  !isCaseAdmitted &&
+                  isJudge && (
+                    <div key={partyIndex} className="notice-failed-notification" style={styles.container}>
+                      <div className="notice-failed-icon" style={styles.icon}>
+                        <InfoIconRed style={styles.icon} />
+                      </div>
+                      <p className="notice-failed-text" style={styles.text}>
+                        {`${t("NOTICE_FAILED")} ${failureCount} ${t("TIMES_VIEW_STATUS")} ${partyName}. ${t("VIEW_STATUS")}, `}
+                        <span onClick={() => handleOpenSummonNoticeModal(partyIndex)} className="click-here" style={styles.link}>
+                          {t("NOTICE_CLICK_HERE")}
+                        </span>
+                      </p>
+                    </div>
+                  )
+              )} */}
+            </div>
+          </NoticeAccordion>
+        )}
 
         <CustomCaseInfoDiv t={t} data={caseBasicDetails} column={6} />
         <div className="search-tabs-container">
