@@ -9,44 +9,53 @@ const useEvidenceDetails = ({ url, params, body, config = {}, plainAccessRequest
   const { searchForm } = state;
   const { stage, type, caseNameOrId } = searchForm;
 
-  const getIndividual = async (individualIdsToSearch) => {
-    return await Promise.all(
-      individualIdsToSearch.map(
-        async (id) =>
-          await DRISTIService.searchIndividualUser(
-            {
-              Individual: {
-                individualId: id,
-              },
-            },
-            { ...params, limit: 1000, offset: 0 },
-            plainAccessRequest,
-            true
-          )
-      )
-    );
+  const getOwnerName = async (artifact) => {
+    if (artifact?.sourceType === "COURT") {
+      if (artifact.sourceID === undefined) {
+        return "NA";
+      }
+      const owner = await DRISTIService.searchEmployeeUser(
+        {
+          authToken: localStorage.getItem("token"),
+        },
+        { ...params, uuids: artifact?.sourceID, limit: 1000, offset: 0 },
+        plainAccessRequest,
+        true
+      );
+      return `${owner?.Employees?.[0]?.user?.name}`.trim();
+    } else {
+      if (artifact?.sourceID === undefined) {
+        return "NA";
+      }
+      const owner = await DRISTIService.searchIndividualUser(
+        {
+          Individual: {
+            individualId: artifact?.sourceID,
+          },
+        },
+        { ...params, limit: 1000, offset: 0 },
+        plainAccessRequest,
+        true
+      );
+      return `${owner?.Individual[0]?.name?.givenName} ${owner[0]?.Individual[0]?.name?.familyName || ""}`.trim();
+    }
   };
 
   const fetchCombinedData = async () => {
     //need to filter this hearing list response based on slot
     const res = await DRISTIService.searchEvidence(body, params, plainAccessRequest, true);
-    // .then((response) => {
-    //   console.log(response, "RESPONSE");
-    // });
-    const owenrList = res.artifacts?.map((artifact) => artifact.sourceID);
-    const individualIdsToSearch = [...new Set(owenrList)];
-    const owners = individualIdsToSearch?.length > 0 ? await getIndividual(individualIdsToSearch) : [];
-    const owner = { Individual: owners.map((owner) => owner.Individual[0]) };
     return {
       ...res,
-      artifacts: res.artifacts.map((artifact) => {
-        return {
-          ...artifact,
-          owner: `${owner.Individual.find((individual) => artifact.sourceID === individual.individualId)?.name.givenName} ${
-            owner.Individual.find((individual) => artifact.sourceID === individual.individualId)?.name.familyName || ""
-          }`.trim(),
-        };
-      }),
+      artifacts: await Promise.all(
+        res.artifacts.map(async (artifact) => {
+          const owner = await getOwnerName(artifact);
+
+          return {
+            ...artifact,
+            owner: owner,
+          };
+        })
+      ),
     };
   };
 
