@@ -32,6 +32,7 @@ import org.pucar.dristi.repository.CaseRepository;
 import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.util.*;
 import org.pucar.dristi.validators.CaseRegistrationValidator;
+import org.pucar.dristi.validators.EvidenceValidator;
 import org.pucar.dristi.web.OpenApiCaseSummary;
 import org.pucar.dristi.web.models.*;
 import org.springframework.web.client.RestTemplate;
@@ -83,6 +84,12 @@ public class CaseServiceTest {
     @Mock
     private ServiceRequestRepository repository;
 
+    @Mock
+    private EvidenceUtil evidenceUtil;
+
+    @Mock
+    private EvidenceValidator evidenceValidator;
+
 
     @InjectMocks
     private CaseService caseService;
@@ -133,7 +140,7 @@ public class CaseServiceTest {
         courtCase = new CourtCase();
         objectMapper = new ObjectMapper();
         enrichmentService = new EnrichmentService(new ArrayList<>());
-        caseService = new CaseService(validator,enrichmentUtil,caseRepository,workflowService,config,producer,taskUtil,new BillingUtil(new RestTemplate(),config),encryptionDecryptionUtil, hearingUtil,userService,objectMapper,cacheService,enrichmentService, notificationService, individualService, advocateUtil);
+        caseService = new CaseService(validator,enrichmentUtil,caseRepository,workflowService,config,producer,taskUtil,new BillingUtil(new RestTemplate(),config),encryptionDecryptionUtil, hearingUtil,userService,objectMapper,cacheService,enrichmentService, notificationService, individualService, advocateUtil, evidenceUtil, evidenceValidator);
     }
 
     CaseCriteria setupTestCaseCriteria(CourtCase courtCase) {

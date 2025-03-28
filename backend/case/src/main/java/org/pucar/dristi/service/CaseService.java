@@ -25,6 +25,7 @@ import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.CaseRepository;
 import org.pucar.dristi.util.*;
 import org.pucar.dristi.validators.CaseRegistrationValidator;
+import org.pucar.dristi.validators.EvidenceValidator;
 import org.pucar.dristi.web.OpenApiCaseSummary;
 import org.pucar.dristi.web.models.*;
 import org.pucar.dristi.web.models.analytics.CaseOutcome;
@@ -74,6 +75,8 @@ public class CaseService {
     private final TaskUtil taskUtil;
     private final HearingUtil hearingUtil;
     private final UserService userService;
+    private final EvidenceUtil evidenceUtil;
+    private final EvidenceValidator evidenceValidator;
 
 
     @Autowired
@@ -88,7 +91,7 @@ public class CaseService {
                        EncryptionDecryptionUtil encryptionDecryptionUtil,
                        HearingUtil analyticsUtil,
                        UserService userService,
-                       ObjectMapper objectMapper, CacheService cacheService, EnrichmentService enrichmentService, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil) {
+                       ObjectMapper objectMapper, CacheService cacheService, EnrichmentService enrichmentService, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, EvidenceUtil evidenceUtil, EvidenceValidator evidenceValidator) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.caseRepository = caseRepository;
@@ -106,6 +109,8 @@ public class CaseService {
         this.notificationService = notificationService;
         this.individualService = individualService;
         this.advocateUtil = advocateUtil;
+        this.evidenceUtil = evidenceUtil;
+        this.evidenceValidator = evidenceValidator;
     }
 
 
@@ -3413,6 +3418,14 @@ public class CaseService {
                 updateCourtCaseInRedis(courtCase.getTenantId(), encrptedCourtCase);
             }
 
+            boolean isEvidenceAlreadyPresent = evidenceValidator.validateEvidenceCreation(courtCase, requestInfo, replacementDetails);
+
+            if (!isEvidenceAlreadyPresent) {
+                EvidenceRequest evidenceRequest = enrichEvidenceCreateRequest(courtCase, replacementDetails, requestInfo);
+
+                evidenceUtil.createEvidence(evidenceRequest);
+            }
+
             log.info("operation=updateJoinCaseApproved, status=SUCCESS, joinCaseRequest, advocateUuid : {}, {}", joinCaseRequest, advocateUuid);
         }
 
@@ -3854,4 +3867,30 @@ public class CaseService {
                 .advocateIdProof(List.of(advocateIdProof))
                 .build();
     }
+
+    private EvidenceRequest enrichEvidenceCreateRequest(CourtCase courtCase,ReplacementDetails replacementDetails, RequestInfo requestInfo) {
+
+        Document document = objectMapper.convertValue(replacementDetails.getDocument(), Document.class);
+        org.egov.common.contract.models.Document workflowDocument = objectMapper.convertValue(document, org.egov.common.contract.models.Document.class);
+
+        LitigantDetails litigantDetails = replacementDetails.getLitigantDetails();
+        String sourceType = litigantDetails.getPartyType().contains("complainant") ? "COMPLAINANT" : "ACCUSED";
+
+        WorkflowObject workflowObject = new WorkflowObject();
+        workflowObject.setAction("TYPE DEPOSITION");
+        workflowObject.setDocuments(Collections.singletonList(workflowDocument));
+
+        return EvidenceRequest.builder().requestInfo(requestInfo)
+                .artifact(Artifact.builder()
+                        .artifactType(VAKALATNAMA_DOC)
+                        .sourceType(sourceType)
+                        .sourceID(litigantDetails.getIndividualId())
+                        .filingType("CASE_FILING")
+                        .caseId(courtCase.getId().toString())
+                        .tenantId(courtCase.getTenantId())
+                        .file(document)
+                        .workflow(workflowObject)
+                        .build()).build();
+    }
+
 }
