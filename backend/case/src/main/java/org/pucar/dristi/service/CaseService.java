@@ -1715,7 +1715,7 @@ public class CaseService {
         task.setFilingNumber(joinCaseRequest.getJoinCaseData().getFilingNumber());
         WorkflowObject workflow = new WorkflowObject();
         workflow.setAction("CREATE");
-        workflow.setAdditionalDetails("{\"excludeRoles\":[\"TASK_EDITOR\"]}");
+        workflow.setAdditionalDetails(getAdditionalDetailsForExcludingRoles());
         workflow.setAssignes(List.of(userUUID));
         task.setWorkflow(workflow);
         ObjectMapper objectMapper = new ObjectMapper();
@@ -1788,6 +1788,10 @@ public class CaseService {
         return taskUtil.callCreateTask(taskRequest);
     }
 
+    private Object getAdditionalDetailsForExcludingRoles() throws JsonProcessingException {
+        return objectMapper.readValue("{\"excludeRoles\":[\"TASK_EDITOR\"]}", Object.class);
+    }
+
     private TaskResponse createTaskAdvocate(JoinCaseV2Request joinCaseRequest, String replaceAdvocateId, List<RepresentingJoinCase> representingJoinCaseList, CourtCase courtCase) throws JsonProcessingException {
         String individualIdForAdvocate = advocateUtil.getAdvocate(joinCaseRequest.getRequestInfo(), List.of(replaceAdvocateId)).stream().findFirst().orElse(null);
         String userUUID = individualService.getIndividualsByIndividualId(joinCaseRequest.getRequestInfo(), individualIdForAdvocate).get(0).getUserUuid();
@@ -1800,7 +1804,7 @@ public class CaseService {
         task.setFilingNumber(joinCaseRequest.getJoinCaseData().getFilingNumber());
         WorkflowObject workflow = new WorkflowObject();
         workflow.setAction("CREATE");
-        workflow.setAdditionalDetails("{\"excludeRoles\":[\"TASK_EDITOR\"]}");
+        workflow.setAdditionalDetails(getAdditionalDetailsForExcludingRoles());
         workflow.setAssignes(List.of(userUUID));
         task.setWorkflow(workflow);
         ObjectMapper objectMapper = new ObjectMapper();
@@ -2134,7 +2138,7 @@ public class CaseService {
             WorkflowObject workflow = new WorkflowObject();
             workflow.setAction("CREATE");
             if (assignes != null) {
-                workflow.setAdditionalDetails("{\"excludeRoles\":[\"TASK_EDITOR\"]}");
+                workflow.setAdditionalDetails(getAdditionalDetailsForExcludingRoles());
                 workflow.setAssignes(List.of(assignes));
             }
             //  RequestInfo requestInfo = createInternalRequestInfo();

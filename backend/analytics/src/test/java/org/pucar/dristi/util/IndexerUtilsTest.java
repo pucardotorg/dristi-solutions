@@ -199,43 +199,44 @@ public class IndexerUtilsTest {
         assertEquals(expected, result);
     }
 
-//    @Test
-//    public void testBuildPayloadWithJsonString() throws Exception {
-//        String jsonItem = "{"
-//                + "\"id\": \"id\","
-//                + "\"businessService\": \"entityType\","
-//                + "\"businessId\": \"referenceId\","
-//                + "\"state\": {\"state\":\"status\", \"actions\":[{\"roles\" : [\"role\"]}]},"
-//                + "\"stateSla\": 86400,"
-//                + "\"businesssServiceSla\": 456,"
-//                + "\"assignes\": [\"user1\"],"
-//                + "\"assignedRoles\": [\"role\"],"
-//                + "\"tenantId\": \"tenantId\","
-//                + "\"action\": \"action\","
-//                + "\"additionalDetails\" : {}"
-//                + "}";
-//        JSONObject requestInfo = new JSONObject();
-//
-//
-//        when(config.getIndex()).thenReturn("index");
-//        when(caseOverallStatusUtil.checkCaseOverAllStatus(anyString(), anyString(), anyString(), anyString(), anyString(), any()))
-//                .thenReturn(new Object());
-//        when(mapper.writeValueAsString(any())).thenReturn("{\"key\":\"value\"}");
-//        when(mapper.convertValue(anyString(), eq(String.class))).thenReturn("{\"key\":\"value\"}");
-//
-//        String expected = String.format(
-//                ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-//                "index", "referenceId", "id", "name", "entityType", "referenceId", "status", "[\"user1\"]", "[\"role\"]", "null", "null", false, ONE_DAY_DURATION_MILLIS+1000000000L, 456L, null, null
-//        );
-//
-//        PendingTaskType pendingTaskType = PendingTaskType.builder().isgeneric(false).pendingTask("name").state("status").triggerAction(List.of("action")).build();
-//        Map<String,List<PendingTaskType>> map = new HashMap<>();
-//        map.put("entityType",List.of(pendingTaskType));
-//        when(mdmsDataConfig.getPendingTaskTypeMap()).thenReturn(map);
-//
-//        String result = indexerUtils.buildPayload(jsonItem, requestInfo);
-//        assertEquals(expected, result);
-//    }
+    @Test
+    public void testBuildPayloadWithJsonString() throws Exception {
+        String jsonItem = "{"
+                + "\"id\": \"id\","
+                + "\"businessService\": \"entityType\","
+                + "\"businessId\": \"referenceId\","
+                + "\"state\": {\"state\":\"status\", \"actions\":[{\"roles\" : [\"role1\", \"role2\"]}]},"
+                + "\"stateSla\": 86400,"
+                + "\"businesssServiceSla\": 456,"
+                + "\"assignes\": [\"user1\"],"
+                + "\"assignedRoles\": [\"role1\", \"role2\"],"
+                + "\"tenantId\": \"tenantId\","
+                + "\"action\": \"action\","
+                + "\"additionalDetails\" : {\"key\":\"value\", \"excludeRoles\":[\"role2\"]}"
+                + "}";
+        JSONObject requestInfo = new JSONObject();
+
+
+        when(config.getIndex()).thenReturn("index");
+        when(caseOverallStatusUtil.checkCaseOverAllStatus(anyString(), anyString(), anyString(), anyString(), anyString(), any()))
+                .thenReturn(new Object());
+        when(mapper.writeValueAsString(any())).thenReturn("{\"key\":\"value\", \"excludeRoles\":[\"role2\"]}");
+        when(mapper.convertValue(anyString(), eq(String.class))).thenReturn("{\"key\":\"value\"}");
+        when(mapper.readTree(anyString())).thenReturn(new ObjectMapper().readTree("{\"key\":\"value\", \"excludeRoles\":[\"role2\"]}"));
+
+        String expected = String.format(
+                ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
+                "index", "referenceId", "id", "name", "entityType", "referenceId", "status", "[\"user1\"]", "[\"role1\"]", "null", "null", false, ONE_DAY_DURATION_MILLIS+1000000000L, 456L, "{\"key\":\"value\", \"excludeRoles\":[\"role2\"]}", null
+        );
+
+        PendingTaskType pendingTaskType = PendingTaskType.builder().isgeneric(false).pendingTask("name").state("status").triggerAction(List.of("action")).build();
+        Map<String,List<PendingTaskType>> map = new HashMap<>();
+        map.put("entityType",List.of(pendingTaskType));
+        when(mdmsDataConfig.getPendingTaskTypeMap()).thenReturn(map);
+
+        String result = indexerUtils.buildPayload(jsonItem, requestInfo);
+        assertEquals(expected, result);
+    }
 
     @Test
     public void testEsPost_ResourceAccessException() {
