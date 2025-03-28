@@ -526,8 +526,8 @@ export const UICustomizations = {
         ...(caseTitle && { caseTitle }),
         ...(Object.keys(status || {})?.length > 0 && { status: status?.code ? [status?.code] : status }),
         ...(startOfTheDay && {
-          startOfTheDay: new Date(startOfTheDay).getTime(),
-          endOfTheDay: new Date(new Date(startOfTheDay).setDate(new Date(startOfTheDay).getDate() + 1)).getTime(),
+          startOfTheDay: new Date(startOfTheDay + "T00:00:00").getTime(),
+          endOfTheDay: new Date(startOfTheDay + "T23:59:59.999").getTime(),
         }),
       };
 
