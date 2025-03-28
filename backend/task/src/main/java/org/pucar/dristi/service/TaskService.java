@@ -436,7 +436,7 @@ public class TaskService {
     private void updateLitigantNameFromParty(Party party, LitigantDetails litigantDetails) throws JsonProcessingException {
         JsonNode jsonNode = objectMapper.convertValue(party.getAdditionalDetails(), JsonNode.class);
         String fullName = jsonNode.has("fullName")
-                ? jsonNode.get("fullName").asText()
+                ? jsonNode.get("fullName").textValue()
                 : "";
 
         litigantDetails.setName(fullName);
