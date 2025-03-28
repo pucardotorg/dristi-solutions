@@ -131,7 +131,7 @@ public class BSSService {
         Map<String, Object> pdf = new LinkedHashMap<>();
         pdf.put(PAGE, pageNumber);
         pdf.put(CO_ORDINATES, coordination);
-        pdf.put(SIZE, "200,100");   // check on this
+        pdf.put(SIZE, "150,100");   // check on this
         requestData.put(PDF, pdf);
 
         // Data section  // enrich this section
@@ -182,17 +182,20 @@ public class BSSService {
 
                     // fetch order here
 
-                    Document document = Document.builder().build();
-                    document.setFileStore(fileStoreId);
-                    document.setDocumentType(SIGNED);
-                    document.setAdditionalDetails(Map.of(NAME, pdfName));
+                    order.getDocuments().stream()
+                            .filter(document -> document.getDocumentType().equals(UNSIGNED))
+                            .findFirst()
+                            .ifPresent((document) ->
+                            {
+                                document.setFileStore(fileStoreId);
+                                document.setDocumentType(SIGNED);
+                                document.setAdditionalDetails(Map.of(NAME, pdfName));
+                            });
 
                     WorkflowObject workflowObject = new WorkflowObject();
                     workflowObject.setAction(E_SIGN);
 
                     order.setWorkflow(workflowObject);
-                    order.getDocuments().add(document);
-
 
                     // update order here
                     OrderRequest orderUpdateRequest = OrderRequest.builder()

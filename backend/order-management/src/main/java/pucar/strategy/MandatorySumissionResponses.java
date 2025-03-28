@@ -83,7 +83,7 @@ public class MandatorySumissionResponses implements OrderUpdateStrategy {
                     .referenceId(pendingTaskReferenceId)
                     .entityType(entityType)
                     .status("CREATE_SUBMISSION")
-                    .assignedTo(List.of(User.builder().uuid(assigneeNode.get("uuid").toString()).build()))
+                    .assignedTo(List.of(User.builder().uuid(assigneeNode.get("uuid").asText()).build()))
                     .cnrNumber(order.getCnrNumber())
                     .filingNumber(order.getFilingNumber())
                     .isCompleted(false)

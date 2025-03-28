@@ -88,6 +88,13 @@ public class ServiceConstants {
     public static final String SUBMIT_BAIL_DOCUMENTS = "Submission Bail Document";
     public static final String PROFILE_EDIT_REQUEST = "PROFILE_EDIT_REQUEST";
     public static final String PAYMENT_PENDING_FOR_WARRANT = "PAYMENT_PENDING_FOR_WARRANT";
+    public static final String PAYMENT_PENDING = "PAYMENT_PENDING_";
+    public static final String MAKE_PAYMENT_FOR_SUMMONS = "MAKE_PAYMENT_FOR_SUMMONS";
+    public static final String MAKE_PAYMENT_FOR_NOTICE = "MAKE_PAYMENT_FOR_NOTICE";
+    public static final String SECTION_223 = "Section 223 Notice";
+    public static final String PENDING_NOTICE = "PENDING_NOTICE";
+    public static final String ISSUE_ORDER = "ISSUE_ORDER";
+    public static final String UNSIGNED = "UNSIGNED";
 
 
     // order type

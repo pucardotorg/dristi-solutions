@@ -1,5 +1,6 @@
 package pucar.strategy;
 
+import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,7 @@ import java.util.*;
 import static pucar.config.ServiceConstants.*;
 
 @Component
+@Slf4j
 public class SetBailTerms implements OrderUpdateStrategy {
 
     private final CaseUtil caseUtil;
