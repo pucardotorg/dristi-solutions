@@ -398,6 +398,11 @@ public class TaskService {
     private void updateLitigantNames(CourtCase courtCase, List<Task> tasks) throws JsonProcessingException {
         for (Task task : tasks) {
             updateLitigantNamesForTask(courtCase, task);
+            TaskRequest taskRequest = TaskRequest.builder()
+                    .task(task)
+                    .requestInfo(RequestInfo.builder().build())
+                    .build();
+            producer.push(config.getTaskUpdateTopic(), taskRequest);
         }
     }
 
