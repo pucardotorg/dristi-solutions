@@ -477,7 +477,7 @@ export const TabSearchconfig = {
                     moduleName: "Evidence",
                     localePrefix: "EVIDENCE_TYPE",
                     select:
-                      "(data) => {return data['Evidence'].EvidenceType?.map((item) => {return { ...item, name: item.subtype && item.subtype !== '' ? `${item.type}_${item.subtype}` : item.type };});}",
+                      "(data) => {return data['Evidence'].EvidenceType?.map((item) => {return { ...item, name: item.subtype && item.subtype.trim() !== '' ? `${item.type}_${item.subtype}` : item.type };});}",
                     // localePrefix: "SUBMISSION_TYPE",
                   },
                 },
@@ -563,6 +563,7 @@ export const TabSearchconfig = {
               {
                 label: "OWNER",
                 jsonPath: "owner",
+                additionalCustomization: true,
               },
               // {
               //   label: "FILE",
