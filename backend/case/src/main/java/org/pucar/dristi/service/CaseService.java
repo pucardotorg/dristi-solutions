@@ -3144,7 +3144,6 @@ public class CaseService {
                 Party updatedLitigant = replaceLitigantDetails(uniqueId, litigant, additionalDetails.get(detailsKey), detailsKey);
                 List<Party> updatedLitigants = updateLitigant(advocate.getRepresenting(), updatedLitigant);
                 advocate.setRepresenting(updatedLitigants);
-                break;
             }
         }
         log.info("operation=updateAdvocateRepresentation, status=SUCCESS, uniqueId: {}", uniqueId);
