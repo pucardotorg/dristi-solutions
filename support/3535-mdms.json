@@ -43,5 +43,32 @@
                 }
             }
         ]
+    },
+    {
+        "moduleName": "case",
+        "masterName": "OutcomeType",
+        "tenantId": "kl",
+        "mdmsPayload": [
+            {
+                "id": "1ea5a7fe-9578-4f3e-a12f-d4a007963095",
+                "tenantId": "kl",
+                "schemaCode": "case.OutcomeType",
+                "uniqueIdentifier": "1",
+                "data": {
+                    "id": "1",
+                    "outcome": "WITHDRAWN",
+                    "orderType": "WITHDRAWAL_ACCEPT",
+                    "isJudgement": false,
+                    "judgementList": []
+                },
+                "isActive": true,
+                "auditDetails": {
+                    "createdBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+                    "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+                    "createdTime": 1724336067118,
+                    "lastModifiedTime": 1743153243849
+                }
+            }
+        ]
     }
 ]
