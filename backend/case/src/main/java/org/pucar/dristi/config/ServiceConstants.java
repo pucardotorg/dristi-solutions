@@ -206,6 +206,8 @@ public class ServiceConstants {
     public static final String PARTIALLY_PENDING = "PARTIALLY_PENDING";
     public static final String PENDING = "PENDING";
     public static final String UPLOAD_VAKALATNAMA = "UPLOAD_VAKALATNAMA";
+    public static final String EVIDENCE_CREATE_ERROR = "EVIDENCE_CREATE_ERROR";
+    public static final String VAKALATNAMA_DOC = "VAKALATNAMA_DOC";
 
     public static final String COMPLAINANT_INDIVIDUAL_ID_PATH="/data/complainantVerification/individualDetails/individualId";
     public static final String RESPONDENT_INDIVIDUAL_ID_PATH="/data/respondentVerification/individualDetails/individualId";
