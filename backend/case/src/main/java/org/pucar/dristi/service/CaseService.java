@@ -3161,7 +3161,7 @@ public class CaseService {
             List<PendingAdvocateRequest> pendingAdvocateRequests = courtCase.getPendingAdvocateRequests();
             JoinCaseTaskRequest joinCaseRequest = objectMapper.convertValue(task.getTaskDetails(), JoinCaseTaskRequest.class);
             // uuid of advocate who is trying to replace
-            String advocateUuid = joinCaseRequest.getAdvocateDetails().getAdvocateUuid();
+            String advocateUuid = joinCaseRequest.getAdvocateDetails().getAdvocateId();
             String taskNumber = task.getTaskNumber();
             PendingAdvocateRequest pendingAdvocateRequest = new PendingAdvocateRequest();
 
