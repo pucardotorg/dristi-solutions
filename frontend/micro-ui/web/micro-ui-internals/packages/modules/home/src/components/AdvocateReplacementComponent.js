@@ -93,7 +93,7 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
             data: data,
           };
         });
-        toast.success(t("ADVOCATE_REPLACEMENT_SUCCESS"));
+        toast.success(t(action === "APPROVE" ? "ADVOCATE_REPLACEMENT_SUCCESS" : "ADVOCATE_REPLACEMENT_REJECTED"));
         refetch();
       } catch (error) {
         console.error("Error updating task data:", error);
