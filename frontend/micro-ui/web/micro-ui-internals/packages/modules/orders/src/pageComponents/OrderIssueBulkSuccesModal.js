@@ -4,7 +4,7 @@ import CustomCopyTextDiv from "../../../dristi/src/components/CustomCopyTextDiv"
 import { Banner, CardLabel } from "@egovernments/digit-ui-react-components";
 import { numberToWords } from "../utils";
 
-function OrderIssueBulkSuccesModal({ t, history, userType, bulkSignOrderListLength }) {
+function OrderIssueBulkSuccesModal({ t, history, bulkSignOrderListLength }) {
   const getFormattedDate = () => {
     const currentDate = new Date();
     const year = String(currentDate.getFullYear());
@@ -28,7 +28,7 @@ function OrderIssueBulkSuccesModal({ t, history, userType, bulkSignOrderListLeng
   return (
     <Modal
       actionSaveLabel={t("BULK_SUCCESS_CLOSE")}
-      actionSaveOnSubmit={() => history.replace(`/${window?.contextPath}/${userType}/home/home-pending-task`)}
+      actionSaveOnSubmit={() => history.replace(`/${window?.contextPath}/employee/home/home-pending-task`)}
       className={"orders-issue-bulk-success-modal"}
     >
       <div>

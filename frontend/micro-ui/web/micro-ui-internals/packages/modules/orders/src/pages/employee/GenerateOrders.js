@@ -2019,9 +2019,9 @@ const GenerateOrders = () => {
       case "WARRANT":
         return `Issue ${t(currentOrder?.orderDetails?.warrantType)} to ${currentOrder?.orderDetails?.parties?.[0]?.partyName}`;
       case "WITHDRAWAL_ACCEPT":
-         return "The application to withdraw the case has been accepted. Case closed";
+        return "The application to withdraw the case has been accepted. Case closed";
       case "WITHDRAWAL_REJECT":
-          return `The application to withdraw the case raised by ${applicationDetails?.additionalDetails?.owner} has been rejected`;
+        return `The application to withdraw the case raised by ${applicationDetails?.additionalDetails?.owner} has been rejected`;
       case "OTHERS":
         return "Others";
       case "APPROVE_VOLUNTARY_SUBMISSIONS":
@@ -2324,7 +2324,7 @@ const GenerateOrders = () => {
     let additionalDetails = {};
     let entityType = orderEntityType
       ? orderEntityType
-      : formdata?.isResponseRequired?.code === "Yes"
+      : formdata?.responseInfo?.isResponseRequired?.code === true
       ? "application-order-submission-feedback"
       : "application-order-submission-default";
     let status = taskStatus;

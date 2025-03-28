@@ -473,7 +473,6 @@ const HomeView = () => {
         <OrderIssueBulkSuccesModal
           t={t}
           history={history}
-          userType={userType}
           bulkSignOrderListLength={issueBulkSuccessData.bulkSignOrderListLength}
           setIssueBulkSuccessData={setIssueBulkSuccessData}
         />
