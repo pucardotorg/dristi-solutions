@@ -3164,7 +3164,7 @@ public class CaseService {
             List<PendingAdvocateRequest> pendingAdvocateRequests = courtCase.getPendingAdvocateRequests();
             JoinCaseTaskRequest joinCaseRequest = objectMapper.convertValue(task.getTaskDetails(), JoinCaseTaskRequest.class);
             // uuid of advocate who is trying to replace
-            String advocateUuid = joinCaseRequest.getAdvocateDetails().getAdvocateUuid();
+            String advocateUuid = joinCaseRequest.getAdvocateDetails().getAdvocateId();
             String taskNumber = task.getTaskNumber();
             PendingAdvocateRequest pendingAdvocateRequest = new PendingAdvocateRequest();
 
@@ -3308,7 +3308,9 @@ public class CaseService {
                             advocateTryingToReplace, courtCaseObj
                     );
                 }
-                inactivateOldAdvocate(replacementDetails, courtCase);
+                if (!replacementDetails.getIsLitigantPip()) {
+                    inactivateOldAdvocate(replacementDetails, courtCase);
+                }
             }
 
             producer.push(config.getRepresentativeJoinCaseTopic(), courtCaseObj);
@@ -3471,10 +3473,18 @@ public class CaseService {
     }
 
     private void addVakalatnamaDocument(JsonNode item, ReplacementDetails replacementDetails) {
-        ArrayNode vakalatnamaFileUploadDocuments = (ArrayNode) item.get("data")
+        JsonNode vakalatnamaFileUploadNode = item.get("data")
                 .get("multipleAdvocatesAndPip")
                 .get("vakalatnamaFileUpload")
                 .get("document");
+
+        // Ensure it's an `ArrayNode`, even if it's missing or null
+        ArrayNode vakalatnamaFileUploadDocuments;
+        if (vakalatnamaFileUploadNode != null && vakalatnamaFileUploadNode.isArray()) {
+            vakalatnamaFileUploadDocuments = (ArrayNode) vakalatnamaFileUploadNode;
+        } else {
+            vakalatnamaFileUploadDocuments = objectMapper.createArrayNode(); // Create an empty ArrayNode
+        }
 
         ObjectNode document = objectMapper.createObjectNode();
         Document vakalatanamaDocument = objectMapper.convertValue(replacementDetails.getDocument(), Document.class);
@@ -3511,25 +3521,20 @@ public class CaseService {
         }
 
         // Modify "isComplainantPip" field if it exists
-        if (objectNode.has("isComplainantPip")) {
-            objectNode.put("code", "NO");
-            objectNode.put("name", "No");
+        if (objectNode.has("isComplainantPip") && objectNode.get("isComplainantPip").isObject()) {
+            ObjectNode isComplainantPipNode = (ObjectNode) objectNode.get("isComplainantPip");
+            isComplainantPipNode.put("code", "NO");
+            isComplainantPipNode.put("name", "No");
         }
 
-        // Set pipAffidavitFileUpload to null
-        if (objectNode.has("pipAffidavitFileUpload")) {
-            objectNode.putNull("pipAffidavitFileUpload");
-        }
+        // Set "pipAffidavitFileUpload" to null
+        objectNode.putNull("pipAffidavitFileUpload");
 
-        // Set showAffidavit to false
-        if (objectNode.has("showAffidavit")) {
-            objectNode.put("showAffidavit", false);
-        }
+        // Set "showAffidavit" to false
+        objectNode.put("showAffidavit", false);
 
-        // Set showVakalatNamaUpload to true
-        if (objectNode.has("showVakalatNamaUpload")) {
-            objectNode.put("showVakalatNamaUpload", true);
-        }
+        // Set "showVakalatNamaUpload" to true, even if it was missing
+        objectNode.put("showVakalatNamaUpload", true);
 
         // Ensure "multipleAdvocateNameDetails" exists and is an array
         ArrayNode advocateNameDetailsArray;
@@ -3540,7 +3545,7 @@ public class CaseService {
             objectNode.set("multipleAdvocateNameDetails", advocateNameDetailsArray);
         }
 
-        // Add the new advocate
+        // Add the new advocate detail
         advocateNameDetailsArray.add(newAdvocateDetail);
     }
 
