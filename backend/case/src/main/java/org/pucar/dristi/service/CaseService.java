@@ -1715,7 +1715,7 @@ public class CaseService {
         task.setFilingNumber(joinCaseRequest.getJoinCaseData().getFilingNumber());
         WorkflowObject workflow = new WorkflowObject();
         workflow.setAction("CREATE");
-        workflow.setAdditionalDetails("{\"excludeRoles\":[\"TASK_EDITOR\"]}");
+        workflow.setAdditionalDetails(getAdditionalDetailsForExcludingRoles());
         workflow.setAssignes(List.of(userUUID));
         task.setWorkflow(workflow);
         ObjectMapper objectMapper = new ObjectMapper();
@@ -1788,6 +1788,10 @@ public class CaseService {
         return taskUtil.callCreateTask(taskRequest);
     }
 
+    private Object getAdditionalDetailsForExcludingRoles() throws JsonProcessingException {
+        return objectMapper.readValue("{\"excludeRoles\":[\"TASK_EDITOR\"]}", Object.class);
+    }
+
     private TaskResponse createTaskAdvocate(JoinCaseV2Request joinCaseRequest, String replaceAdvocateId, List<RepresentingJoinCase> representingJoinCaseList, CourtCase courtCase) throws JsonProcessingException {
         String individualIdForAdvocate = advocateUtil.getAdvocate(joinCaseRequest.getRequestInfo(), List.of(replaceAdvocateId)).stream().findFirst().orElse(null);
         String userUUID = individualService.getIndividualsByIndividualId(joinCaseRequest.getRequestInfo(), individualIdForAdvocate).get(0).getUserUuid();
@@ -1800,7 +1804,7 @@ public class CaseService {
         task.setFilingNumber(joinCaseRequest.getJoinCaseData().getFilingNumber());
         WorkflowObject workflow = new WorkflowObject();
         workflow.setAction("CREATE");
-        workflow.setAdditionalDetails("{\"excludeRoles\":[\"TASK_EDITOR\"]}");
+        workflow.setAdditionalDetails(getAdditionalDetailsForExcludingRoles());
         workflow.setAssignes(List.of(userUUID));
         task.setWorkflow(workflow);
         ObjectMapper objectMapper = new ObjectMapper();
@@ -2134,7 +2138,7 @@ public class CaseService {
             WorkflowObject workflow = new WorkflowObject();
             workflow.setAction("CREATE");
             if (assignes != null) {
-                workflow.setAdditionalDetails("{\"excludeRoles\":[\"TASK_EDITOR\"]}");
+                workflow.setAdditionalDetails(getAdditionalDetailsForExcludingRoles());
                 workflow.setAssignes(List.of(assignes));
             }
             //  RequestInfo requestInfo = createInternalRequestInfo();
@@ -3248,7 +3252,7 @@ public class CaseService {
             List<PendingAdvocateRequest> pendingAdvocateRequests = courtCase.getPendingAdvocateRequests();
             JoinCaseTaskRequest joinCaseRequest = objectMapper.convertValue(task.getTaskDetails(), JoinCaseTaskRequest.class);
             // uuid of advocate who is trying to replace
-            String advocateUuid = joinCaseRequest.getAdvocateDetails().getAdvocateUuid();
+            String advocateUuid = joinCaseRequest.getAdvocateDetails().getAdvocateId();
             String taskNumber = task.getTaskNumber();
             PendingAdvocateRequest pendingAdvocateRequest = new PendingAdvocateRequest();
 
@@ -3357,8 +3361,12 @@ public class CaseService {
             Party party = enrichParty(replacementDetails, courtCase, auditDetails);
             LitigantDetails litigantDetails = replacementDetails.getLitigantDetails();
             String partyType = litigantDetails.getPartyType();
-            ReplacementAdvocateDetails advocateDetailsToBeReplaced = replacementDetails.getAdvocateDetails();
-            String advocateUuidToBeReplaced = advocateDetailsToBeReplaced.getAdvocateUuid();
+            ReplacementAdvocateDetails advocateDetailsToBeReplaced = new ReplacementAdvocateDetails();
+            String advocateUuidToBeReplaced = null;
+            if (!replacementDetails.getIsLitigantPip()) {
+                advocateDetailsToBeReplaced = replacementDetails.getAdvocateDetails();
+                advocateUuidToBeReplaced = advocateDetailsToBeReplaced.getAdvocateUuid();
+            }
             if (replacementDetails.getIsLitigantPip()) {
                 List<Party> litigantParties = courtCase.getLitigants();
                 if (advocateTryingToReplace == null) {
@@ -3388,7 +3396,9 @@ public class CaseService {
                             advocateTryingToReplace, courtCaseObj
                     );
                 }
-                inactivateOldAdvocate(replacementDetails, courtCase);
+                if (!replacementDetails.getIsLitigantPip()) {
+                    inactivateOldAdvocate(replacementDetails, courtCase);
+                }
             }
 
             producer.push(config.getRepresentativeJoinCaseTopic(), courtCaseObj);
@@ -3550,10 +3560,18 @@ public class CaseService {
     }
 
     private void addVakalatnamaDocument(JsonNode item, ReplacementDetails replacementDetails) {
-        ArrayNode vakalatnamaFileUploadDocuments = (ArrayNode) item.get("data")
+        JsonNode vakalatnamaFileUploadNode = item.get("data")
                 .get("multipleAdvocatesAndPip")
                 .get("vakalatnamaFileUpload")
                 .get("document");
+
+        // Ensure it's an `ArrayNode`, even if it's missing or null
+        ArrayNode vakalatnamaFileUploadDocuments;
+        if (vakalatnamaFileUploadNode != null && vakalatnamaFileUploadNode.isArray()) {
+            vakalatnamaFileUploadDocuments = (ArrayNode) vakalatnamaFileUploadNode;
+        } else {
+            vakalatnamaFileUploadDocuments = objectMapper.createArrayNode(); // Create an empty ArrayNode
+        }
 
         ObjectNode document = objectMapper.createObjectNode();
         Document vakalatanamaDocument = objectMapper.convertValue(replacementDetails.getDocument(), Document.class);
@@ -3590,25 +3608,20 @@ public class CaseService {
         }
 
         // Modify "isComplainantPip" field if it exists
-        if (objectNode.has("isComplainantPip")) {
-            objectNode.put("code", "NO");
-            objectNode.put("name", "No");
+        if (objectNode.has("isComplainantPip") && objectNode.get("isComplainantPip").isObject()) {
+            ObjectNode isComplainantPipNode = (ObjectNode) objectNode.get("isComplainantPip");
+            isComplainantPipNode.put("code", "NO");
+            isComplainantPipNode.put("name", "No");
         }
 
-        // Set pipAffidavitFileUpload to null
-        if (objectNode.has("pipAffidavitFileUpload")) {
-            objectNode.putNull("pipAffidavitFileUpload");
-        }
+        // Set "pipAffidavitFileUpload" to null
+        objectNode.putNull("pipAffidavitFileUpload");
 
-        // Set showAffidavit to false
-        if (objectNode.has("showAffidavit")) {
-            objectNode.put("showAffidavit", false);
-        }
+        // Set "showAffidavit" to false
+        objectNode.put("showAffidavit", false);
 
-        // Set showVakalatNamaUpload to true
-        if (objectNode.has("showVakalatNamaUpload")) {
-            objectNode.put("showVakalatNamaUpload", true);
-        }
+        // Set "showVakalatNamaUpload" to true, even if it was missing
+        objectNode.put("showVakalatNamaUpload", true);
 
         // Ensure "multipleAdvocateNameDetails" exists and is an array
         ArrayNode advocateNameDetailsArray;
@@ -3619,7 +3632,7 @@ public class CaseService {
             objectNode.set("multipleAdvocateNameDetails", advocateNameDetailsArray);
         }
 
-        // Add the new advocate
+        // Add the new advocate detail
         advocateNameDetailsArray.add(newAdvocateDetail);
     }
 
