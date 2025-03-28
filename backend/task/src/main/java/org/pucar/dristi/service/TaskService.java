@@ -375,6 +375,7 @@ public class TaskService {
             TaskCriteria taskSearchCriteria = TaskCriteria.builder()
                     .filingNumber(filingNumber)
                     .taskType(JOIN_CASE)
+                    .status(PENDING_APPROVAL)
                     .build();
 
             Pagination pagination = Pagination.builder()
