@@ -1,5 +1,6 @@
 package org.pucar.dristi.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -361,5 +362,88 @@ public class TaskService {
             return WARRANT_NOT_DELIVERED;
         }
         return null;
+    }
+
+    public void updateTaskDetailsForExistingJoinCaseTasks(HashMap<String, Object> record) {
+
+        try {
+            log.info("operation = updateTaskDetailsForJoinCase, result = IN_PROGRESS, record = {}", record);
+            CourtCase courtCase = objectMapper.convertValue(record, CourtCase.class);
+
+            String filingNumber = courtCase.getFilingNumber();
+
+            TaskCriteria taskSearchCriteria = TaskCriteria.builder()
+                    .filingNumber(filingNumber)
+                    .taskType(JOIN_CASE)
+                    .status(PENDING_APPROVAL)
+                    .build();
+
+            Pagination pagination = Pagination.builder()
+                    .offSet(0.0)
+                    .limit(50.0)
+                    .build();
+
+            List<Task> tasks = taskRepository.getTasks(taskSearchCriteria, pagination);
+
+            updateLitigantNames(courtCase, tasks);
+
+            log.info("operation = updateTaskDetailsForJoinCase, result = SUCCESS, record = {}", record);
+
+        } catch (Exception e) {
+            log.info("operation = checkAndScheduleHearingForOptOut, result = FAILURE, message = {}", e.getMessage());
+        }
+
+    }
+
+    private void updateLitigantNames(CourtCase courtCase, List<Task> tasks) throws JsonProcessingException {
+        for (Task task : tasks) {
+            updateLitigantNamesForTask(courtCase, task);
+            TaskRequest taskRequest = TaskRequest.builder()
+                    .task(task)
+                    .requestInfo(RequestInfo.builder().build())
+                    .build();
+            producer.push(config.getTaskUpdateTopic(), taskRequest);
+        }
+    }
+
+    private void updateLitigantNamesForTask(CourtCase courtCase, Task task) throws JsonProcessingException {
+        JoinCaseTaskRequest joinCaseTaskRequest = objectMapper.convertValue(task.getTaskDetails(), JoinCaseTaskRequest.class);
+
+        List<ReplacementDetails> replacementDetailsList = joinCaseTaskRequest.getReplacementDetails();
+
+        for (ReplacementDetails replacementDetails : replacementDetailsList) {
+            updateLitigantName(courtCase, replacementDetails);
+        }
+    }
+
+    private void updateLitigantName(CourtCase courtCase, ReplacementDetails replacementDetails) throws JsonProcessingException {
+        LitigantDetails litigantDetails = replacementDetails.getLitigantDetails();
+        String litigantIndividualId = litigantDetails.getIndividualId();
+
+        findMatchingParty(courtCase, litigantIndividualId)
+                .ifPresent(matchingParty -> {
+                    try {
+                        updateLitigantNameFromParty(matchingParty, litigantDetails);
+                    } catch (JsonProcessingException e) {
+                        // Log error or handle exception as appropriate
+                        throw new RuntimeException("Error processing party details", e);
+                    }
+                });
+    }
+
+    private Optional<Party> findMatchingParty(CourtCase courtCase, String litigantIndividualId) {
+        return courtCase.getRepresentatives().stream()
+                .flatMap(advocateMapping -> advocateMapping.getRepresenting().stream())
+                .filter(party -> party.getIndividualId().equalsIgnoreCase(litigantIndividualId))
+                .findFirst();
+    }
+
+    private void updateLitigantNameFromParty(Party party, LitigantDetails litigantDetails) throws JsonProcessingException {
+        JsonNode jsonNode = objectMapper.convertValue(party.getAdditionalDetails(), JsonNode.class);
+        String fullName = jsonNode.has("fullName")
+                ? jsonNode.get("fullName").textValue()
+                : "";
+
+        litigantDetails.setName(fullName);
     }
 }
