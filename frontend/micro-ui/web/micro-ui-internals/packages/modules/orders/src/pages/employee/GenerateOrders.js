@@ -2174,6 +2174,9 @@ const GenerateOrders = () => {
                   ...(taskDetails && { taskDetails }),
                 },
               }),
+            ...((newHearingNumber || hearingNumber || hearingDetails?.hearingId) && {
+              hearingNumber: newHearingNumber || hearingNumber || hearingDetails?.hearingId,
+            }),
             documents: updatedDocuments,
             workflow: { ...order.workflow, action, documents: [{}] },
           },
