@@ -413,6 +413,7 @@ public class TaskService {
 
         for (ReplacementDetails replacementDetails : replacementDetailsList) {
             updateLitigantName(courtCase, replacementDetails);
+            task.setTaskDetails(joinCaseTaskRequest);
         }
     }
 
