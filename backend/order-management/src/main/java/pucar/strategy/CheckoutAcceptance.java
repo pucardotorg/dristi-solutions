@@ -47,11 +47,13 @@ public class CheckoutAcceptance implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
-       return false;
+        log.info("does not support pre processing, orderType:{}", CHECKOUT_ACCEPTANCE);
+        return false;
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
+        log.info("support post processing, orderType:{}", CHECKOUT_ACCEPTANCE);
         Order order = orderRequest.getOrder();
         return order.getOrderType() != null && CHECKOUT_ACCEPTANCE.equalsIgnoreCase(order.getOrderType());
     }
@@ -76,6 +78,7 @@ public class CheckoutAcceptance implements OrderUpdateStrategy {
 
         RequestInfo requestInfo = orderRequest.getRequestInfo();
         Order order = orderRequest.getOrder();
+        log.info("After order publish process,result = IN_PROGRESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
         String hearingNumber = order.getHearingNumber();
 
         // hearing update
@@ -91,23 +94,26 @@ public class CheckoutAcceptance implements OrderUpdateStrategy {
 
             hearingNumber = orderUtil.getHearingNumberFormApplicationAdditionalDetails(applications.get(0).getAdditionalDetails());
         }
-
+        log.info("hearingNumber:{}", hearingNumber);
         List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
                 .criteria(HearingCriteria.builder().hearingId(hearingNumber).tenantId(order.getTenantId()).build()).build());
         Hearing hearing = hearings.get(0);
 
-        Long time = hearingUtil.getCreateStartAndEndTime(order.getAdditionalDetails(), Arrays.asList("formdata", "newHearingDate"));
-        if (time != null) {
-            hearing.setStartTime(time);
-            hearing.setEndTime(time);
+        Long newHearingDate = hearingUtil.getCreateStartAndEndTime(order.getAdditionalDetails(), Arrays.asList("formdata", "newHearingDate"));
+        log.info("newHearingDate:{}", newHearingDate);
+        if (newHearingDate != null) {
+            hearing.setStartTime(newHearingDate);
+            hearing.setEndTime(newHearingDate);
         }
         WorkflowObject workflow = new WorkflowObject();
         workflow.setAction(BULK_RESCHEDULE);
         workflow.setComments("Update Hearing");
 
         StringBuilder updateUri = new StringBuilder(config.getHearingHost()).append(config.getHearingUpdateEndPoint());
-
+        log.info("updating hearing for hearing number:{},action:{}", hearing.getHearingId(), workflow.getAction());
         hearingUtil.createOrUpdateHearing(HearingRequest.builder().hearing(hearing).requestInfo(requestInfo).build(), updateUri);
+
+        log.info("After order publish process,result = SUCCESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
         return null;
     }
 

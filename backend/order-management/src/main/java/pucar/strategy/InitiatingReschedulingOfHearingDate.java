@@ -1,5 +1,6 @@
 package pucar.strategy;
 
+import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,7 @@ import java.util.*;
 
 import static pucar.config.ServiceConstants.*;
 
+@Slf4j
 @Component
 public class InitiatingReschedulingOfHearingDate implements OrderUpdateStrategy {
 
@@ -60,11 +62,13 @@ public class InitiatingReschedulingOfHearingDate implements OrderUpdateStrategy 
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
+        log.info("does not support pre processing, orderType:{}", INITIATING_RESCHEDULING_OF_HEARING_DATE);
         return false;
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
+        log.info("support post processing, orderType:{}", INITIATING_RESCHEDULING_OF_HEARING_DATE);
         Order order = orderRequest.getOrder();
         return order.getOrderType() != null && INITIATING_RESCHEDULING_OF_HEARING_DATE.equalsIgnoreCase(order.getOrderType());
     }
@@ -79,6 +83,7 @@ public class InitiatingReschedulingOfHearingDate implements OrderUpdateStrategy 
 
         RequestInfo requestInfo = orderRequest.getRequestInfo();
         Order order = orderRequest.getOrder();
+        log.info("After order publish process,result = IN_PROGRESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
 
         String referenceId = orderUtil.getReferenceId(order);
         String hearingNumber = order.getHearingNumber();
@@ -97,26 +102,30 @@ public class InitiatingReschedulingOfHearingDate implements OrderUpdateStrategy 
             hearingNumber = jsonUtil.getNestedValue(applications.get(0).getAdditionalDetails(), List.of("hearingId"), String.class);
 
         }
+        log.info("hearingNumber:{},changedHearingDateFromApplication:{}", hearingNumber, changedHearingDate);
 
         String originalHearingDate = jsonUtil.getNestedValue(order.getAdditionalDetails(), Arrays.asList("formdata", "originalHearingDate"), String.class);
-
 
         List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
                 .criteria(HearingCriteria.builder().hearingId(hearingNumber).tenantId(order.getTenantId()).build()).build());
         Hearing hearing = hearings.get(0);
 
-        Long time = hearingUtil.getCreateStartAndEndTime(order.getAdditionalDetails(), Arrays.asList("formdata", "newHearingDate"));
-        if (time != null) {
-            hearing.setStartTime(time);
-            hearing.setEndTime(time);
-        }
+        String dateValue = Optional.ofNullable(changedHearingDate)
+                .orElse(originalHearingDate);
+        log.info("date value :{}", dateValue);
+        Long newHearingDate = dateValue == null ? dateUtil.getCurrentTimeInMilis() : dateUtil.getEpochFromDateString(dateValue, "yyyy-MM-dd");
+
+        log.info("new hearing time:{}", newHearingDate);
+        hearing.setStartTime(newHearingDate);
+        hearing.setEndTime(newHearingDate);
+
 
         WorkflowObject workflow = new WorkflowObject();
         workflow.setAction(RESCHEDULE);
         workflow.setComments("Update Hearing");
 
         StringBuilder updateUri = new StringBuilder(config.getHearingHost()).append(config.getHearingUpdateEndPoint());
-
+        log.info("hearing update with hearing id {} and action {}", hearingNumber, RESCHEDULE);
         hearingUtil.createOrUpdateHearing(HearingRequest.builder().hearing(hearing).requestInfo(requestInfo).build(), updateUri);
 
 
@@ -125,7 +134,7 @@ public class InitiatingReschedulingOfHearingDate implements OrderUpdateStrategy 
                 .orElse(originalHearingDate);
 
         Long scheduleAfter = availableAfter == null ? dateUtil.getCurrentTimeInMilis() : dateUtil.getEpochFromDateString(availableAfter, "yyyy-MM-dd");
-
+        log.info("creating reschedule entry with scheduleAfter:{}", scheduleAfter);
         schedulerUtil.createRescheduleRequest(ReScheduleHearingRequest.builder()
                 .reScheduleHearing(Collections.singletonList(ReScheduleHearing.builder()
 
@@ -140,7 +149,7 @@ public class InitiatingReschedulingOfHearingDate implements OrderUpdateStrategy 
                 .requestInfo(requestInfo).build());
 
         // call case here
-
+        log.info("case search for filingNumber:{}", order.getFilingNumber());
         List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
                 .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).defaultFields(false).build()))
                 .requestInfo(requestInfo).build());
@@ -159,8 +168,8 @@ public class InitiatingReschedulingOfHearingDate implements OrderUpdateStrategy 
 
             String pendingTaskReferenceId = MANUAL + itemId + assigneeUUID + "_" + order.getOrderNumber();
 
-
             // create pending task
+            log.info("creating pending task of opt out with referenceId:{}", pendingTaskReferenceId);
             PendingTask pendingTask = PendingTask.builder()
                     .name(CHOOSE_DATES_FOR_RESCHEDULE_OF_HEARING_DATE)
                     .referenceId(pendingTaskReferenceId)
@@ -179,7 +188,7 @@ public class InitiatingReschedulingOfHearingDate implements OrderUpdateStrategy 
             ).pendingTask(pendingTask).build());
         }
 
-
+        log.info("After order publish process,result = SUCCESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
         return null;
     }
 

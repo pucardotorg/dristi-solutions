@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.ServiceCallException;
@@ -249,6 +250,19 @@ public class PendingTaskUtil {
 
         }
         return assignees;
+    }
+
+
+    public @Valid String getPendingTaskNameForSummonAndNotice(String channelCode, String orderType) {
+        orderType = orderType.equals("SUMMONS") ? "Summons" : "Notice";
+        return switch (channelCode) {
+            case "EMAIL" -> "Make Payment for Email " + orderType;
+            case "SMS" -> "Make Payment for SMS " + orderType;
+            case "POLICE" -> "Make Payment for Police " + orderType;
+            case "RPAD" -> "Make Payment for RPAD " + orderType;
+            case "POST" -> "Make Payment for Post " + orderType;
+            default -> "Make Payment for " + orderType;
+        };
     }
 
 

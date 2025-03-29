@@ -3,6 +3,7 @@ package pucar.strategy;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,7 @@ import java.util.*;
 
 import static pucar.config.ServiceConstants.*;
 
+@Slf4j
 @Component
 public class MandatorySumissionResponses implements OrderUpdateStrategy {
 
@@ -36,11 +38,13 @@ public class MandatorySumissionResponses implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
+        log.info("does not support pre processing orderType:{}", MANDATORY_SUBMISSIONS_RESPONSES);
         return false;
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
+        log.info("support post processing, orderType:{}", MANDATORY_SUBMISSIONS_RESPONSES);
         Order order = orderRequest.getOrder();
         return order.getOrderType() != null && MANDATORY_SUBMISSIONS_RESPONSES.equalsIgnoreCase(order.getOrderType());
     }
@@ -55,11 +59,12 @@ public class MandatorySumissionResponses implements OrderUpdateStrategy {
 
         Order order = orderRequest.getOrder();
         RequestInfo requestInfo = orderRequest.getRequestInfo();
+        log.info("After order publish process,result = IN_PROGRESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
 
         String submissionDueDate = jsonUtil.getNestedValue(order.getAdditionalDetails(), Arrays.asList("formdata", "submissionDeadline"), String.class);
-
+        log.info("submissionDueDate:{}", submissionDueDate);
         Long sla = dateUtil.getEpochFromDateString(submissionDueDate, "yyyy-MM-dd");
-        Boolean responseRequired = jsonUtil.getNestedValue(order.getAdditionalDetails(), Arrays.asList("formdata","responseInfo", "isResponseRequired", "code"), Boolean.class);
+        Boolean responseRequired = jsonUtil.getNestedValue(order.getAdditionalDetails(), Arrays.asList("formdata", "responseInfo", "isResponseRequired", "code"), Boolean.class);
         String entityType = "application-order-submission-default";
         if (responseRequired) {
             entityType = "application-order-submission-feedback";
@@ -67,6 +72,7 @@ public class MandatorySumissionResponses implements OrderUpdateStrategy {
 
 
         ArrayNode assignees = pendingTaskUtil.getAssigneeDetailsForMakeMandatorySubmission(order.getAdditionalDetails());
+        log.info("no of pending task for assignees:{}", assignees.size());
         for (JsonNode assignee : assignees) {
             ObjectNode assigneeNode = (ObjectNode) assignee;
             String itemId = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("itemId"), String.class);
@@ -95,6 +101,8 @@ public class MandatorySumissionResponses implements OrderUpdateStrategy {
             pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo
             ).pendingTask(pendingTask).build());
         }
+
+        log.info("After order publish process,result = SUCCESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
 
         return null;
     }

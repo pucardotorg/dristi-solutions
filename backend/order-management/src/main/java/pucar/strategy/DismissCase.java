@@ -42,11 +42,13 @@ public class DismissCase implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
+        log.info("does not support pre processing, orderType:{}", DISMISS_CASE);
         return false;
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
+        log.info("support post processing, orderType:{}", DISMISS_CASE);
         Order order = orderRequest.getOrder();
         return order.getOrderType() != null && DISMISS_CASE.equalsIgnoreCase(order.getOrderType());
     }
@@ -61,7 +63,7 @@ public class DismissCase implements OrderUpdateStrategy {
 
         Order order = orderRequest.getOrder();
         RequestInfo requestInfo = orderRequest.getRequestInfo();
-
+        log.info("After order publish process,result = IN_PROGRESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
         List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
                 .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).defaultFields(false).build()))
                 .requestInfo(requestInfo).build());
@@ -72,7 +74,7 @@ public class DismissCase implements OrderUpdateStrategy {
         WorkflowObject workflow = new WorkflowObject();
         workflow.setAction(REJECT);
         courtCase.setWorkflow(workflow);
-
+        log.info("Dismissed the case with filing number:{},action:{}", courtCase.getFilingNumber(), workflow.getAction());
         caseUtil.updateCase(CaseRequest.builder().cases(courtCase).requestInfo(requestInfo).build());
 
         List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder()
@@ -81,7 +83,7 @@ public class DismissCase implements OrderUpdateStrategy {
 
         StringBuilder hearingUpdateUri = new StringBuilder(config.getHearingHost()).append(config.getHearingUpdateEndPoint());
 
-
+        log.info("Abandoning the hearings");
         hearings.stream()
                 .filter(list -> list.getHearingType().equalsIgnoreCase(ADMISSION) && !(list.getStatus().equalsIgnoreCase(COMPLETED) || list.getStatus().equalsIgnoreCase(ABATED)))
                 .findFirst().ifPresent(hearing -> {
@@ -89,11 +91,15 @@ public class DismissCase implements OrderUpdateStrategy {
                     workflowObject.setAction(ABANDON);
                     hearing.setWorkflow(workflowObject);
 
+                    log.info("hearingId:{}", hearing.getHearingId());
+
                     HearingRequest request = HearingRequest.builder()
                             .requestInfo(requestInfo).hearing(hearing).build();
 
                     hearingUtil.createOrUpdateHearing(request, hearingUpdateUri);
                 });
+        log.info("After order publish process,result = SUCCESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
+
         return null;
     }
 

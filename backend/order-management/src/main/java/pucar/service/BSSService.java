@@ -2,7 +2,6 @@ package pucar.service;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
-import org.egov.common.contract.models.Document;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -50,6 +49,7 @@ public class BSSService {
     public List<OrderToSign> createOrderToSignRequest(OrdersToSignRequest request) {
 
         // get location to sign here from esign
+        log.info("creating order to sign request, result= IN_PROGRESS, orderCriteria:{}", request.getCriteria().size());
 
         List<CoordinateCriteria> coordinateCriteria = new ArrayList<>();
 
@@ -96,12 +96,14 @@ public class BSSService {
             }
 
         }
+        log.info("creating order to sign request, result= SUCCESS, orderCriteria:{}", request.getCriteria().size());
         return orderToSign;
 
     }
 
 
     private String generateRequest(String base64Doc, String timeStamp, String txnId, String coordination, String pageNumber) {
+        log.info("generating request, result= IN_PROGRESS, timeStamp:{}, txnId:{}, coordination:{}, pageNumber:{}", timeStamp, txnId, coordination, pageNumber);
         Map<String, Object> requestData = new LinkedHashMap<>();
 
         requestData.put(COMMAND, PKI_NETWORK_SIGN);
@@ -139,6 +141,7 @@ public class BSSService {
 
         // Generate XML
         String xmlRequest = xmlRequestGenerator.createXML("request", requestData);
+        log.info("generating request, result= SUCCESS, timeStamp:{}, txnId:{}, coordination:{}, pageNumber:{}", timeStamp, txnId, coordination, pageNumber);
 
         return xmlRequest;
     }
@@ -148,12 +151,15 @@ public class BSSService {
         List<Order> updatedOrder = new ArrayList<>();
 
         List<CaseDiaryEntry> caseDiaryEntries = new ArrayList<>();
+        log.info("updating order with signed doc, result= IN_PROGRESS,signedOrders:{}", request.getSignedOrders().size());
+
         for (SignedOrder signedOrder : request.getSignedOrders()) {
             String orderNumber = signedOrder.getOrderNumber();
             String signedOrderData = signedOrder.getSignedOrderData();
             String errorMsg = signedOrder.getErrorMsg();
             Boolean isSigned = signedOrder.getSigned();
             String tenantId = signedOrder.getTenantId();
+            String orderType = null;
 
             if (isSigned) {
                 //update order with signed doc
@@ -171,6 +177,7 @@ public class BSSService {
                         throw new CustomException(EMPTY_ORDERS_ERROR, "empty orders found for the given criteria");
                     }
                     Order order = orders.getList().get(0);
+                    orderType = order.getOrderType();
 
                     OrderFactory orderFactory = factoryProvider.getFactory(order.getOrderCategory());
 
@@ -210,14 +217,17 @@ public class BSSService {
                     orderProcessor.postProcessOrder(orderUpdateRequest);
                     updatedOrder.add(response.getOrder());
 
+                } catch (CustomException e) {
+                    throw new CustomException(e.getCode(), e.getMessage());
                 } catch (Exception e) {
-                    log.error(UPDATE_ORDER_SIGN_ERROR_MESSAGE);
-                    throw new CustomException(UPDATE_ORDER_SIGN_ERROR, UPDATE_ORDER_SIGN_ERROR_MESSAGE);
+                    log.error("Error while updating order,orderNumber:{},orderType:{}", orderNumber, orderType);
+                    log.error("Error : ", e);
                 }
             }
 
         }
-
+        log.info("updating order with signed doc, result= SUCCESS,signedOrders:{}", request.getSignedOrders().size());
+        log.info("creating case diary entry for order, result= IN_PROGRESS,caseDiaryEntries:{}", caseDiaryEntries.size());
         // here create bulk diary entry
         aDiaryUtil.createBulkADiaryEntry(BulkDiaryEntryRequest.builder()
                 .requestInfo(request.getRequestInfo())

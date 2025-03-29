@@ -18,8 +18,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static pucar.config.ServiceConstants.APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE;
-import static pucar.config.ServiceConstants.PROFILE_EDIT_REQUEST;
+import static pucar.config.ServiceConstants.*;
 
 
 @Component
@@ -39,11 +38,14 @@ public class ApprovalRejectionLitigantDetailsChange implements OrderUpdateStrate
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
+        log.info("does not support pre processing, orderType:{}", APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE);
+
         return false;
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
+        log.info("support post processing, orderType:{}", APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE);
         Order order = orderRequest.getOrder();
         return order.getOrderType() != null && APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE.equalsIgnoreCase(order.getOrderType());
     }
@@ -56,10 +58,9 @@ public class ApprovalRejectionLitigantDetailsChange implements OrderUpdateStrate
     @Override
     public OrderRequest postProcess(OrderRequest orderRequest) {
 
-        //case search
-
         Order order = orderRequest.getOrder();
         RequestInfo requestInfo = orderRequest.getRequestInfo();
+        log.info("After order publish process,result = IN_PROGRESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
 
         List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
                 .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).defaultFields(false).build()))
@@ -92,6 +93,9 @@ public class ApprovalRejectionLitigantDetailsChange implements OrderUpdateStrate
 
         pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo)
                 .pendingTask(pendingTask).build());
+
+        log.info("After order publish process,result = SUCCESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
+
         return null;
     }
 
