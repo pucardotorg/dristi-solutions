@@ -129,7 +129,11 @@ async function orderGeneric(req, res, qrCode, order, compositeOrder) {
           caseNumber: caseNumber,
           orderName: order.orderNumber,
           date: formattedToday,
-          orderContent: order.comments,
+          orderContent:
+            order?.additionalDetails?.formdata?.comments?.text ||
+            order?.additionalDetails?.formdata?.otherDetails?.text ||
+            order?.additionalDetails?.formdata?.sentence?.text ||
+            "",
           judgeSignature: judgeDetails.judgeSignature,
           judgeName: judgeDetails.name,
           courtSeal: judgeDetails.courtSeal,
