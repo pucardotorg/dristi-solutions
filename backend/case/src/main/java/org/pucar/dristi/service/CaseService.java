@@ -3945,7 +3945,7 @@ public class CaseService {
 
             if (!isAdvocatePartOfCase) {
                 for (int i = 0; i < attendees.size(); i++) {
-                    if (attendees.get(i).getIndividualId().equals(individualIdOfAdvocate)) {
+                    if ((attendees.get(i).getIndividualId() != null) && attendees.get(i).getIndividualId().equals(individualIdOfAdvocate)) {
                         attendees.remove(i);
                         break;
                     }
