@@ -107,7 +107,7 @@ public class PendingTaskService {
     public void updatePendingTaskForAdvocate(Map<String, Object> joinCaseJson, JsonNode pendingTaskNode) {
         try {
             log.info("operation=updatePendingTaskForAdvocate, status=IN_PROGRESS");
-            JsonNode representative = objectMapper.convertValue(joinCaseJson.get("representative"), JsonNode.class).get(0);
+            JsonNode representative = objectMapper.convertValue(joinCaseJson.get("representatives"), JsonNode.class).get(0);
             JsonNode representing = representative.get("representing");
             String advocateUuid = representative.get("additionalDetails").get("uuid").textValue();
             JsonNode hitsNode = pendingTaskNode.path("hits").path("hits");
