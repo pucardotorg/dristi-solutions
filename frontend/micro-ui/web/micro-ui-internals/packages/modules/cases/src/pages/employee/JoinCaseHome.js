@@ -1650,6 +1650,7 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
           isLitigantJoined={isLitigantJoined}
           isAdvocateJoined={isAdvocateJoined}
           searchLitigantInRepresentives={searchLitigantInRepresentives}
+          advocateId={advocateData?.id}
         />
       ),
     },
