@@ -46,11 +46,13 @@ public class Notice implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
+        log.info("does not support pre processing, orderType:{}", NOTICE);
         return false;
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
+        log.info("support post processing, orderType:{}", NOTICE);
         Order order = orderRequest.getOrder();
         return order.getOrderType() != null && NOTICE.equalsIgnoreCase(order.getOrderType());
     }
@@ -66,7 +68,7 @@ public class Notice implements OrderUpdateStrategy {
 
         Order order = orderRequest.getOrder();
         RequestInfo requestInfo = orderRequest.getRequestInfo();
-
+        log.info("After order publish process,result = IN_PROGRESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
         // case search and update
         List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
                 .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).defaultFields(false).build()))
@@ -77,6 +79,7 @@ public class Notice implements OrderUpdateStrategy {
 
         // case update if matches particular condition
         String section = jsonUtil.getNestedValue(order.getAdditionalDetails(), Arrays.asList("formdata", "noticeType", "code"), String.class);
+        log.info("section:{}", section);
         if (NOTICE.equalsIgnoreCase(order.getOrderType()) && SECTION_223.equalsIgnoreCase(section) && PENDING_NOTICE.equalsIgnoreCase(courtCase.getStatus())) {
 
             // update case with issue order
@@ -84,7 +87,7 @@ public class Notice implements OrderUpdateStrategy {
             WorkflowObject workflowObject = new WorkflowObject();
             workflowObject.setAction(ISSUE_ORDER);
             courtCase.setWorkflow(workflowObject);
-
+            log.info("case updated with issue order action,filingNumber:{}", order.getFilingNumber());
             CaseResponse caseResponse = caseUtil.updateCase(CaseRequest.builder().requestInfo(requestInfo)
                     .cases(courtCase).build());
 
@@ -118,7 +121,7 @@ public class Notice implements OrderUpdateStrategy {
                     if (uuid != null) assignees.add(uuid);
                 }
             });
-
+            log.info("assignees:{}", assignees);
             if (!assignees.isEmpty()) {
                 List<User> users = new ArrayList<>();
                 assignees.forEach(assignee -> {
@@ -134,6 +137,7 @@ public class Notice implements OrderUpdateStrategy {
                 additionalDetails.put("individualId", individualId);
                 additionalDetails.put("litigants", Collections.singletonList(respondentUUID));
                 // create pending task for issue order
+                log.info("create pending task for pending response,filingNumber:{}", order.getFilingNumber());
                 PendingTask pendingTask = PendingTask.builder()
                         .name(PENDING_RESPONSE)
                         .referenceId(MANUAL + courtCase.getFilingNumber())
@@ -190,6 +194,7 @@ public class Notice implements OrderUpdateStrategy {
 
         try {
             JsonNode taskDetailsArray = objectMapper.readTree(taskDetails);
+            log.info("taskDetailsArray size:{}", taskDetailsArray.size());
             for (JsonNode taskDetail : taskDetailsArray) {
                 TaskRequest taskRequest = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, taskDetail);
                 TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);

@@ -19,7 +19,6 @@ import pucar.web.models.hearing.HearingResponse;
 import java.util.Collections;
 import java.util.List;
 
-import static pucar.config.ServiceConstants.SCHEDULE_OF_HEARING_DATE;
 import static pucar.config.ServiceConstants.SCHEDULING_NEXT_HEARING;
 
 @Component
@@ -39,12 +38,14 @@ public class SchedulingNextHearing implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
+        log.info("support pre processing, orderType:{}", SCHEDULING_NEXT_HEARING);
         Order order = orderRequest.getOrder();
         return order.getOrderType() != null && SCHEDULING_NEXT_HEARING.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
+        log.info("does not support post processing, orderType:{}", SCHEDULING_NEXT_HEARING);
         return false;
     }
 
@@ -53,6 +54,7 @@ public class SchedulingNextHearing implements OrderUpdateStrategy {
 
         Order order = orderRequest.getOrder();
         RequestInfo requestInfo = orderRequest.getRequestInfo();
+        log.info("pre processing, result=IN_PROGRESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), SCHEDULING_NEXT_HEARING);
 
         List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
                 .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).defaultFields(false).build()))
@@ -63,11 +65,14 @@ public class SchedulingNextHearing implements OrderUpdateStrategy {
 
         HearingRequest request = hearingUtil.createHearingRequestForScheduleNextHearingAndScheduleOfHearingDate(requestInfo, order, courtCase);
 
-        StringBuilder uri = new StringBuilder(configuration.getHearingHost()).append(configuration.getHearingCreateEndPoint());
+        StringBuilder createHearingURI = new StringBuilder(configuration.getHearingHost()).append(configuration.getHearingCreateEndPoint());
 
-        HearingResponse orUpdateHearing = hearingUtil.createOrUpdateHearing(request, uri);
+        HearingResponse newHearing = hearingUtil.createOrUpdateHearing(request, createHearingURI);
 
-        order.setHearingNumber(orUpdateHearing.getHearing().getHearingId());
+        order.setHearingNumber(newHearing.getHearing().getHearingId());
+        log.info("hearing number:{}", newHearing.getHearing().getHearingId());
+
+        log.info("pre processing, result=SUCCESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), SCHEDULING_NEXT_HEARING);
 
         return null;
     }

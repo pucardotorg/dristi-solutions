@@ -45,11 +45,13 @@ public class AdmitCase implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
+        log.info("does not support pre processing, orderType:{}", ADMIT_CASE);
         return false;
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
+        log.info("support post processing, orderType:{}", ADMIT_CASE);
         Order order = orderRequest.getOrder();
         return order.getOrderType() != null && ADMIT_CASE.equalsIgnoreCase(order.getOrderType());
     }
@@ -74,6 +76,7 @@ public class AdmitCase implements OrderUpdateStrategy {
 
         Order order = orderRequest.getOrder();
         RequestInfo requestInfo = orderRequest.getRequestInfo();
+        log.info("After order publish process,result = IN_PROGRESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
 
         // case search and update
         List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
@@ -87,6 +90,7 @@ public class AdmitCase implements OrderUpdateStrategy {
         workflow.setAction(ADMIT);
         courtCase.setWorkflow(workflow);
 
+        log.info("Admitting the case with filing number:{}", courtCase.getFilingNumber());
         caseUtil.updateCase(CaseRequest.builder().cases(courtCase).requestInfo(requestInfo).build());
 
 
@@ -97,14 +101,14 @@ public class AdmitCase implements OrderUpdateStrategy {
 
         StringBuilder hearingUpdateUri = new StringBuilder(config.getHearingHost()).append(config.getHearingUpdateEndPoint());
 
-
+        log.info("Abandoning Hearing");
         hearings.stream()
                 .filter(list -> list.getHearingType().equalsIgnoreCase(ADMISSION) && !(list.getStatus().equalsIgnoreCase(COMPLETED) || list.getStatus().equalsIgnoreCase(ABATED)))
                 .findFirst().ifPresent(hearing -> {
                     WorkflowObject workflowObject = new WorkflowObject();
                     workflowObject.setAction(ABANDON);
                     hearing.setWorkflow(workflowObject);
-
+                    log.info("hearingId:{}", hearing.getHearingId());
                     HearingRequest request = HearingRequest.builder()
                             .requestInfo(requestInfo).hearing(hearing).build();
 
@@ -113,7 +117,6 @@ public class AdmitCase implements OrderUpdateStrategy {
 
         // create pending task
         // schedule hearing pending task
-
         PendingTask pendingTask = PendingTask.builder()
                 .name(SCHEDULE_HEARING)
                 .referenceId(MANUAL + courtCase.getFilingNumber())
@@ -126,6 +129,7 @@ public class AdmitCase implements OrderUpdateStrategy {
                 .stateSla(pendingTaskUtil.getStateSla("SCHEDULE_HEARING"))
                 .screenType("home")
                 .build();
+        log.info("creating pending task of schedule hearing for judge of filing number :{}", courtCase.getFilingNumber());
 
         pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo
         ).pendingTask(pendingTask).build());
@@ -134,7 +138,7 @@ public class AdmitCase implements OrderUpdateStrategy {
 
         List<Party> respondent = caseUtil.getRespondentOrComplainant(courtCase, "respondent");
 
-
+        log.info("creating pending task of pending response for respondent of size:{}", respondent.size());
         for (Party party : respondent) {
 
             String referenceId = MANUAL + "PENDING_RESPONSE_" + courtCase.getFilingNumber() + "_" + party.getIndividualId();
@@ -154,6 +158,7 @@ public class AdmitCase implements OrderUpdateStrategy {
             ).pendingTask(pendingTask).build());
         }
 
+        log.info("After order publish process,result = SUCCESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
 
         return null;
     }

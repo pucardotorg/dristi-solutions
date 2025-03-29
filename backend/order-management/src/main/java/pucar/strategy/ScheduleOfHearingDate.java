@@ -1,5 +1,6 @@
 package pucar.strategy;
 
+import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -23,6 +24,7 @@ import java.util.List;
 
 import static pucar.config.ServiceConstants.*;
 
+@Slf4j
 @Component
 public class ScheduleOfHearingDate implements OrderUpdateStrategy {
 
@@ -41,12 +43,14 @@ public class ScheduleOfHearingDate implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
+        log.info("support pre processing, orderType:{}", SCHEDULE_OF_HEARING_DATE);
         Order order = orderRequest.getOrder();
         return order.getOrderType() != null && SCHEDULE_OF_HEARING_DATE.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
+        log.info("support post processing, orderType:{}", SCHEDULE_OF_HEARING_DATE);
         Order order = orderRequest.getOrder();
         return order.getOrderType() != null && SCHEDULE_OF_HEARING_DATE.equalsIgnoreCase(order.getOrderType());
     }
@@ -56,6 +60,7 @@ public class ScheduleOfHearingDate implements OrderUpdateStrategy {
 
         Order order = orderRequest.getOrder();
         RequestInfo requestInfo = orderRequest.getRequestInfo();
+        log.info("pre processing, result= IN_PROGRESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), order.getOrderType());
 
         // Create hearing
         List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
@@ -64,11 +69,15 @@ public class ScheduleOfHearingDate implements OrderUpdateStrategy {
 
         // add validation here
         CourtCase courtCase = cases.get(0);
-
+        log.info("create hearing for caseId:{}", courtCase.getId());
         HearingRequest request = hearingUtil.createHearingRequestForScheduleNextHearingAndScheduleOfHearingDate(requestInfo, order, courtCase);
         StringBuilder createHearingUri = new StringBuilder(configuration.getHearingHost()).append(configuration.getHearingCreateEndPoint());
         HearingResponse createdHearingResponse = hearingUtil.createOrUpdateHearing(request, createHearingUri);
         order.setHearingNumber(createdHearingResponse.getHearing().getHearingId());
+        log.info("created hearing for caseId:{}, hearingId:{}", courtCase.getId(), createdHearingResponse.getHearing().getHearingId());
+
+        log.info("pre processing, result= SUCCESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), order.getOrderType());
+
         return null;
     }
 
@@ -77,6 +86,7 @@ public class ScheduleOfHearingDate implements OrderUpdateStrategy {
 
         Order order = orderRequest.getOrder();
         RequestInfo requestInfo = orderRequest.getRequestInfo();
+        log.info("post processing, result= IN_PROGRESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), order.getOrderType());
 
         // case update
         List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
@@ -87,6 +97,7 @@ public class ScheduleOfHearingDate implements OrderUpdateStrategy {
         CourtCase courtCase = cases.get(0);
         String status = courtCase.getStatus();
 
+        log.info("case status:{}", status);
         if (!CASE_ADMITTED.equalsIgnoreCase(status)) {
 
             WorkflowObject workflow = new WorkflowObject();
@@ -94,13 +105,16 @@ public class ScheduleOfHearingDate implements OrderUpdateStrategy {
             courtCase.setWorkflow(workflow);
             CaseRequest request = CaseRequest.builder().requestInfo(requestInfo)
                     .cases(courtCase).build();
+            log.info("case update for caseId:{},action:{}", courtCase.getId(), SCHEDULE_ADMISSION_HEARING);
             caseUtil.updateCase(request);
 
         }
 
         // close manual pending task for filing number
-        pendingTaskUtil.closeManualPendingTask(order.getHearingNumber(), requestInfo,courtCase.getFilingNumber(),courtCase.getCnrNumber());
+        log.info("close manual pending task for hearing number:{}", order.getHearingNumber());
+        pendingTaskUtil.closeManualPendingTask(order.getHearingNumber(), requestInfo, courtCase.getFilingNumber(), courtCase.getCnrNumber());
 
+        log.info("post processing, result= SUCCESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), order.getOrderType());
 
         return null;
     }
