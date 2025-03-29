@@ -68,7 +68,7 @@ public class Configuration {
     @Value("${dristi.task.search.endpoint}")
     private String taskSearchEndpoint;
 
-    @Value("${dristi.task.search.endpoint}")
+    @Value("${dristi.task.update.endpoint}")
     private String taskUpdateEndPoint;
 
     // Application Config
@@ -128,8 +128,8 @@ public class Configuration {
     @Value("${dristi.inbox.host}")
     private String inboxHost;
 
-    @Value("${dristi.inbox.fields.endpoint}")
-    private String fieldsEndPoint;
+    @Value("${dristi.inbox.index.search.endpoint")
+    private String indexSearchEndPoint;
 
     // Analytics Config
     @Value("${dristi.analytics.host}")

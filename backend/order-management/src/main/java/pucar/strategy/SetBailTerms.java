@@ -45,13 +45,11 @@ public class SetBailTerms implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
-        log.info("does not support pre processing, orderType:{}", SET_BAIL_TERMS);
         return false;
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
-        log.info("support post processing, orderType:{}", SET_BAIL_TERMS);
         Order order = orderRequest.getOrder();
         return order.getOrderType() != null && SET_BAIL_TERMS.equalsIgnoreCase(order.getOrderType());
     }

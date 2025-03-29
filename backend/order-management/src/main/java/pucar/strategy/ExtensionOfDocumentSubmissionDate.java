@@ -10,10 +10,7 @@ import pucar.util.PendingTaskUtil;
 import pucar.web.models.Order;
 import pucar.web.models.OrderRequest;
 import pucar.web.models.adiary.CaseDiaryEntry;
-import pucar.web.models.pendingtask.IndexSearchCriteria;
-import pucar.web.models.pendingtask.PendingTask;
-import pucar.web.models.pendingtask.PendingTaskRequest;
-import pucar.web.models.pendingtask.PendingTaskSearchRequest;
+import pucar.web.models.pendingtask.*;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -41,13 +38,11 @@ public class ExtensionOfDocumentSubmissionDate implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
-        log.info("does not support pre processing, orderType:{}",EXTENSION_OF_DOCUMENT_SUBMISSION_DATE);
         return false;
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
-        log.info("support post processing, orderType:{}",EXTENSION_OF_DOCUMENT_SUBMISSION_DATE);
         Order order = orderRequest.getOrder();
         return order.getOrderType() != null && EXTENSION_OF_DOCUMENT_SUBMISSION_DATE.equalsIgnoreCase(order.getOrderType());
     }
@@ -69,15 +64,18 @@ public class ExtensionOfDocumentSubmissionDate implements OrderUpdateStrategy {
         moduleSearchCriteria.put("filingNumber", order.getFilingNumber());
         moduleSearchCriteria.put("isCompleted", false);
 
-        PendingTaskSearchRequest searchRequest = PendingTaskSearchRequest.builder()
+        InboxRequest searchRequest = InboxRequest.builder()
                 .RequestInfo(requestInfo)
-                .indexSearchCriteria(IndexSearchCriteria.builder()
+                .inbox(InboxSearchCriteria.builder()
                         .tenantId(order.getTenantId())
-                        .moduleName("Pending Tasks Service")
+                        .processSearchCriteria(ProcessInstanceSearchCriteria.builder()
+                                .moduleName("Pending Tasks Service")
+                                .businessService(List.of("hearing-default")).build())
                         .moduleSearchCriteria(
                                 moduleSearchCriteria
-
-                        ).build()).build();
+                        )
+                        .limit(10)
+                        .offset(0).build()).build();
 
         String submissionDueDate = jsonUtil.getNestedValue(order.getAdditionalDetails(), Arrays.asList("formdata", "newSubmissionDate"), String.class);
 

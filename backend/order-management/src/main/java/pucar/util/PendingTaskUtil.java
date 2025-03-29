@@ -20,6 +20,7 @@ import pucar.web.models.courtCase.CourtCase;
 import pucar.web.models.courtCase.Party;
 import pucar.web.models.pendingtask.*;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -48,20 +49,21 @@ public class PendingTaskUtil {
     }
 
     // this will use inbox service get fields end point
-    public List<PendingTask> getPendingTask(PendingTaskSearchRequest request) {
+    public List<PendingTask> getPendingTask(InboxRequest request) {
 
         objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-        StringBuilder uri = new StringBuilder(configuration.getInboxHost()).append(configuration.getFieldsEndPoint());
+        StringBuilder uri = new StringBuilder(configuration.getInboxHost()).append(configuration.getIndexSearchEndPoint());
         Object response = serviceRequestRepository.fetchResult(uri, request);
-        PendingTaskSearchResponse pendingTaskSearchResponse = null;
+        InboxResponse pendingTaskSearchResponse = null;
         List<PendingTask> pendingTaskList = new ArrayList<>();
         try {
             JsonNode jsonNode = objectMapper.valueToTree(response);
-            pendingTaskSearchResponse = objectMapper.readValue(jsonNode.toString(), PendingTaskSearchResponse.class);
+            pendingTaskSearchResponse = objectMapper.readValue(jsonNode.toString(), InboxResponse.class);
+            List<Inbox> items = pendingTaskSearchResponse.getItems();
 
-            for (Data task : pendingTaskSearchResponse.getData()) {
+            for (Inbox inbox : items) {
                 PendingTask pendingTask = new PendingTask();
-                mapValuesToPendingTask(pendingTask, task.getFields());
+                mapValuesToPendingTask(pendingTask, inbox.getBusinessObject());
                 pendingTaskList.add(pendingTask);
             }
 
@@ -97,14 +99,16 @@ public class PendingTaskUtil {
     }
 
 
-    public static void mapValuesToPendingTask(PendingTask obj, List<Field> keyValueList) {
+    public void mapValuesToPendingTask(PendingTask obj, Map<String, Object> keyValueMap) {
         Class<?> clazz = obj.getClass();
 
-        for (Field entry : keyValueList) {
+        for (Map.Entry<String, Object> entry : keyValueMap.entrySet()) {
             try {
-                java.lang.reflect.Field field = clazz.getDeclaredField(entry.getKey());
+                Field field = clazz.getDeclaredField(entry.getKey());
                 field.setAccessible(true);
                 Object value = entry.getValue();
+
+                if (value == null) continue;
 
                 // Handle lists
                 if (List.class.isAssignableFrom(field.getType())) {
@@ -120,48 +124,49 @@ public class PendingTaskUtil {
                         field.set(obj, convertedList);
                     }
                 }
-                // Handle objects and primitives
+                // Handle nested objects
+                else if (!field.getType().isPrimitive() && !field.getType().equals(String.class) &&
+                        !Number.class.isAssignableFrom(field.getType()) && !Boolean.class.isAssignableFrom(field.getType())) {
+                    Object convertedObject = objectMapper.convertValue(value, field.getType());
+                    field.set(obj, convertedObject);
+                }
+                // Handle primitives and other types
                 else {
                     field.set(obj, convertValue(value, field.getType()));
                 }
             } catch (NoSuchFieldException e) {
-                // log here
+                log.error("Field not found:{} ", entry.getKey());
             } catch (IllegalAccessException e) {
-
-                // log here
+                log.error("Error accessing field: {}", entry.getKey());
             }
         }
     }
 
-    private static Object convertValue(Object value, Class<?> targetType) {
+
+    private  Object convertValue(Object value, Class<?> targetType) {
         if (value == null) return null;
 
-        // Convert basic types
-        if (targetType == int.class || targetType == Integer.class) return ((Number) value).intValue();
-        if (targetType == double.class || targetType == Double.class) return ((Number) value).doubleValue();
-        if (targetType == boolean.class || targetType == Boolean.class) return Boolean.parseBoolean(value.toString());
-        if (targetType == String.class) return value.toString();
-
-        // Convert custom objects (assuming a Map<String, Object>)
-        if (value instanceof Map<?, ?> mapValue) {
-            try {
-                Object newInstance = targetType.getDeclaredConstructor().newInstance();
-                for (var entry : mapValue.entrySet()) {
-                    if (entry.getKey() instanceof String key) {
-                        java.lang.reflect.Field field = targetType.getDeclaredField(key);
-                        field.setAccessible(true);
-                        field.set(newInstance, convertValue(entry.getValue(), field.getType()));
-                    }
-                }
-                return newInstance;
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        if (targetType.isInstance(value)) {
+            return value;
         }
 
-        return value; // Return as is for unknown types
+        if (targetType == Integer.class || targetType == int.class) {
+            return Integer.parseInt(value.toString());
+        } else if (targetType == Long.class || targetType == long.class) {
+            return Long.parseLong(value.toString());
+        } else if (targetType == Double.class || targetType == double.class) {
+            return Double.parseDouble(value.toString());
+        } else if (targetType == Boolean.class || targetType == boolean.class) {
+            return Boolean.parseBoolean(value.toString());
+        } else if (targetType == String.class) {
+            return value.toString();
+        }
+
+        return value; // Return as is if no conversion logic is provided
     }
-    public void closeManualPendingTask(String referenceNo, RequestInfo requestInfo, String filingNumber, String cnrNumber) {
+
+    public void closeManualPendingTask(String referenceNo, RequestInfo requestInfo, String filingNumber, String
+            cnrNumber) {
         // here data will be lost , we need to search first then update the pending task , this is as per ui
         createPendingTask(PendingTaskRequest.builder()
                 .pendingTask(PendingTask.builder().referenceId(MANUAL + referenceNo)

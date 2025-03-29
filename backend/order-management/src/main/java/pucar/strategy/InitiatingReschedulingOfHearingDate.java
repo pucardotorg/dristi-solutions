@@ -62,13 +62,11 @@ public class InitiatingReschedulingOfHearingDate implements OrderUpdateStrategy 
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
-        log.info("does not support pre processing, orderType:{}", INITIATING_RESCHEDULING_OF_HEARING_DATE);
         return false;
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
-        log.info("support post processing, orderType:{}", INITIATING_RESCHEDULING_OF_HEARING_DATE);
         Order order = orderRequest.getOrder();
         return order.getOrderType() != null && INITIATING_RESCHEDULING_OF_HEARING_DATE.equalsIgnoreCase(order.getOrderType());
     }

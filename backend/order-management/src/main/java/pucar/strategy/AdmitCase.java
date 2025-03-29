@@ -45,13 +45,11 @@ public class AdmitCase implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
-        log.info("does not support pre processing, orderType:{}", ADMIT_CASE);
         return false;
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
-        log.info("support post processing, orderType:{}", ADMIT_CASE);
         Order order = orderRequest.getOrder();
         return order.getOrderType() != null && ADMIT_CASE.equalsIgnoreCase(order.getOrderType());
     }
