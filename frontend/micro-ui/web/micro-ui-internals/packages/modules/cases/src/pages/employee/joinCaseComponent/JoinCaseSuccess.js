@@ -8,7 +8,7 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { RightArrow } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import { useTranslation } from "react-i18next";
 
-const JoinCaseSuccess = ({ success, messageHeader, caseDetails, closeModal, refreshInbox, successScreenData }) => {
+const JoinCaseSuccess = ({ success, messageHeader, caseDetails, closeModal, refreshInbox, successScreenData, isCaseViewDisabled }) => {
   const { t } = useTranslation();
 
   const history = useHistory();
@@ -127,6 +127,7 @@ const JoinCaseSuccess = ({ success, messageHeader, caseDetails, closeModal, refr
                   `/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${caseDetails?.filingNumber}&tab=Overview`
                 );
               }}
+              isDisabled={isCaseViewDisabled}
             >
               <RightArrow />
             </Button>

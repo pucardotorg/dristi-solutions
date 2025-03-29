@@ -84,6 +84,14 @@ public class CaseApiController {
         return new ResponseEntity<>(joinCaseResponse, HttpStatus.OK);
     }
 
+    @PostMapping(value = "/v1/joincase/_joincase")
+    public ResponseEntity<JoinCaseV2Response> joinCaseV2(@Parameter(in = ParameterIn.DEFAULT, description = "Search criteria + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody JoinCaseV2Request body) {
+        JoinCaseV2Response joinCaseResponse = caseService.processJoinCaseRequest(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
+        joinCaseResponse.setResponseInfo(responseInfo);
+        return new ResponseEntity<>(joinCaseResponse, HttpStatus.OK);
+    }
+
     @PostMapping(value = "/v1/_update")
     public ResponseEntity<CaseResponse> caseV1UpdatePost(
             @Parameter(in = ParameterIn.DEFAULT, description = "Details for updating all editable fields in the court case + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody CaseRequest body) {
@@ -186,4 +194,34 @@ public class CaseApiController {
         return new ResponseEntity<>(caseSummaryResponse, HttpStatus.OK);
     }
 
+    @PostMapping(value = "/v2/profilerequest/process")
+    public ResponseEntity<CaseResponse> updateProfileRequest(@Parameter(in = ParameterIn.DEFAULT, description = "Details for the profile update + RequestInfo meta data", required = true, schema = @Schema()) @Valid @RequestBody ProcessProfileRequest request) {
+        CourtCase courtCase = caseService.processProfileRequest(request);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+        CaseResponse response = CaseResponse.builder()
+                .responseInfo(responseInfo)
+                .cases(Collections.singletonList(courtCase))
+                .build();
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping(value = "/v2/profilerequest/create")
+    public ResponseEntity<CaseResponse> caseV1EditProfile(
+            @Parameter(in = ParameterIn.DEFAULT, description = "Details for editing litigant profile details + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody CreateProfileRequest body) {
+
+        CourtCase cases = caseService.createEditProfileRequest(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
+        CaseResponse caseResponse = CaseResponse.builder().cases(Collections.singletonList(cases)).responseInfo(responseInfo).build();
+        return new ResponseEntity<>(caseResponse, HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/v2/joincase/_verifycode")
+    public ResponseEntity<CaseCodeResponse> verifyCodeV2JoinCase(
+            @Parameter(in = ParameterIn.DEFAULT, description = "verify that the access code provided to join a case is indeed the code the case has", required = true, schema = @Schema()) @Valid @RequestBody CaseCodeRequest body) {
+
+        CaseCodeResponse caseCodeResponse = caseService.verifyJoinCaseCodeV2Request(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
+        caseCodeResponse.setResponseInfo(responseInfo);
+        return new ResponseEntity<>(caseCodeResponse, HttpStatus.OK);
+    }
 }

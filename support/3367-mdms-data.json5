@@ -1,0 +1,72 @@
+[
+  {
+    "tenantId": "kl",
+    "moduleName": "ACCESSCONTROL-ROLEACTIONS",
+    "masterName": "roleactions",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "id": 447,
+          "actionid": 2727,
+          "rolecode": "ORDER_ESIGN",
+          "tenantid": "kl",
+          "actioncode": "2727"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "id": 446,
+          "actionid": 2726,
+          "rolecode": "ORDER_ESIGN",
+          "tenantid": "kl",
+          "actioncode": "2726"
+        },
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "ACCESSCONTROL-ACTIONS-TEST",
+    "masterName": "actions-test",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "uniqueIdentifier": null,
+        "data": {
+          "id": 2726,
+          "url": "/order-management/v1/_getOrdersToSign",
+          "code": "2726",
+          "name": "Get Order to Sign",
+          "enabled": true,
+          "displayName": "Get Order to Sign",
+          "serviceCode": "Order-Management"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "uniqueIdentifier": null,
+        "data": {
+          "id": 2727,
+          "url": "/order-management/v1/_updateSignedOrders",
+          "code": "2727",
+          "name": "update Signed Order",
+          "enabled": true,
+          "displayName": "update Signed Order",
+          "serviceCode": "Order-Management"
+        },
+        "isActive": true
+      }
+    ]
+  }
+]

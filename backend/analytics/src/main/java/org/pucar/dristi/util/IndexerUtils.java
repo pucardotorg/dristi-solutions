@@ -1,6 +1,7 @@
 package org.pucar.dristi.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
@@ -195,7 +196,6 @@ public class IndexerUtils {
         String assignedRole = new JSONArray(assignedRoleSet).toString();
         String tenantId = JsonPath.read(jsonItem, TENANT_ID_PATH);
         String action = JsonPath.read(jsonItem, ACTION_PATH);
-        String additionalDetails;
         boolean isCompleted;
         boolean isGeneric;
 
@@ -250,9 +250,30 @@ public class IndexerUtils {
                 log.error("Error occurred while sending notification: {}", e.toString());
             }
         }
-
+        Object additionalDetails;
         try {
-            additionalDetails = mapper.writeValueAsString(JsonPath.read(jsonItem, "$.additionalDetails"));
+            additionalDetails = JsonPath.read(jsonItem, "additionalDetails");
+            if(additionalDetails!=null){
+                additionalDetails = mapper.writeValueAsString(additionalDetails);
+            }else {
+                additionalDetails="{}";
+            }
+            JsonNode additonalDetailsJsonNode = mapper.readTree(additionalDetails.toString());
+            if (additonalDetailsJsonNode != null && additonalDetailsJsonNode.has("excludeRoles")) {
+                log.info("additional details contains exclude roles");
+                JsonNode excludeRoles = additonalDetailsJsonNode.path("excludeRoles");
+                if (excludeRoles.isArray()) {
+                    List<String> excludeRolesList = new ArrayList<>();
+                    if (excludeRoles.isArray()) {
+                        for (JsonNode node : excludeRoles) {
+                            excludeRolesList.add(node.asText());  // Extract string values
+                        }
+                    }
+                    log.info("removing roles from assignedRoleList : {} ", excludeRolesList);
+                    excludeRolesList.forEach(assignedRoleSet::remove);
+                    assignedRole = new JSONArray(assignedRoleSet).toString();
+                }
+            }
         } catch (Exception e) {
             log.error("Error while building listener payload");
             throw new CustomException(Pending_Task_Exception, "Error occurred while preparing pending task: " + e);

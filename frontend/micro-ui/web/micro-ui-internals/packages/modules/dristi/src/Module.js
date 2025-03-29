@@ -63,7 +63,6 @@ import MultipleAdvocateNameDetails from "./components/MultipleAdvocateNameDetail
 import BoxComplainant from "./components/BoxComplainant";
 import MultipleAdvocatesAndPip from "./components/MultipleAdvocatesAndPip";
 import MultiSelectDropdown from "./components/MultiSelectDropdown";
-import WarningModal from "./components/WarningModal";
 import CustomTextInput from "./components/CustomTextInput";
 import CustomEmailTextInput from "./pages/citizen/registration/CustomEmailTextInput";
 import OrSeparator from "./components/OrSeparator";
@@ -179,7 +178,6 @@ const componentsToRegister = {
   MultipleAdvocatesAndPip,
   BoxComplainant,
   MultiSelectDropdown,
-  WarningModal,
   CustomTextInput,
   CustomEmailTextInput,
   OrSeparator,

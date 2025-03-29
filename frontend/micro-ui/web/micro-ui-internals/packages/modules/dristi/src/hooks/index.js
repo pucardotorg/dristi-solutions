@@ -86,6 +86,8 @@ export const Urls = {
     aDiaryEntryUpdate: "/ab-diary/case/diary/entry/v1/update",
     aDiaryEntrySearch: "/ab-diary/case/diary/entries/v1/search",
     getLocationBasedJurisdiction: "/kerala-icops/v1/integrations/iCops/_getLocationBasedJurisdiction",
+    createProfileRequest: "/case/v2/profilerequest/create",
+    processProfileRequest: "/case/v2/profilerequest/process",
   },
   case: {
     addWitness: "/case/v1/add/witness",

@@ -36,12 +36,14 @@ import {
   configsAcceptRejectDelayCondonation,
   configsAdmitCase,
   configsDismissCase,
+  configsApproveRejectLitigantDetailsChange,
+  replaceAdvocateConfig,
 } from "../../configs/ordersCreateConfig";
 import { CustomAddIcon, CustomDeleteIcon, WarningInfoIconYellow } from "../../../../dristi/src/icons/svgIndex";
 import OrderReviewModal from "../../pageComponents/OrderReviewModal";
 import OrderSignatureModal from "../../pageComponents/OrderSignatureModal";
 import OrderDeleteModal from "../../pageComponents/OrderDeleteModal";
-import { ordersService, schedulerService } from "../../hooks/services";
+import { ordersService, schedulerService, taskService } from "../../hooks/services";
 import { Loader } from "@egovernments/digit-ui-components";
 import OrderSucessModal from "../../pageComponents/OrderSucessModal";
 import { applicationTypes } from "../../utils/applicationTypes";
@@ -61,6 +63,8 @@ import CompositeOrdersErrorModal from "./CompositeOrdersErrorModal";
 import OrderItemDeleteModal from "./OrderItemDeleteModal";
 import TasksComponent from "../../../../home/src/components/TaskComponent";
 import MandatoryFieldsErrorModal from "./MandatoryFieldsErrorModal";
+import OrderAddToBulkSuccessModal from "../../pageComponents/OrderAddToBulkSuccessModal";
+import { getFullName } from "../../../../cases/src/utils/joinCaseUtils";
 
 // any order type from orderTypes can not be paired with any order from unAllowedOrderTypes when creating composite order.
 export const compositeOrderAllowedTypes = [
@@ -123,6 +127,8 @@ const configKeys = {
   ACCEPTANCE_REJECTION_DCA: configsAcceptRejectDelayCondonation,
   ADMIT_CASE: configsAdmitCase,
   DISMISS_CASE: configsDismissCase,
+  APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE: configsApproveRejectLitigantDetailsChange,
+  ADVOCATE_REPLACEMENT_APPROVAL: replaceAdvocateConfig,
 };
 
 function applyMultiSelectDropdownFix(setValue, formData, keys) {
@@ -215,6 +221,8 @@ const GenerateOrders = () => {
   const [showsignatureModal, setShowsignatureModal] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [formList, setFormList] = useState([]);
+  const [showBulkModal, setShowBulkModal] = useState(false);
+
   const [prevOrder, setPrevOrder] = useState();
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
   const [showErrorToast, setShowErrorToast] = useState(null);
@@ -248,7 +256,7 @@ const GenerateOrders = () => {
   const [showEditTitleNameModal, setShowEditTitleNameModal] = useState(false);
   const [modalTitleName, setModalTitleName] = useState("");
   const [showMandatoryFieldsErrorModal, setShowMandatoryFieldsErrorModal] = useState({ showModal: false, errorsData: [] });
-
+  const [profileEditorName, setProfileEditorName] = useState("");
   const currentDiaryEntry = history.location?.state?.diaryEntry;
 
   const setSelectedOrder = (orderIndex) => {
@@ -415,6 +423,28 @@ const GenerateOrders = () => {
     filingNumber,
     Boolean(filingNumber)
   );
+
+  // Get all the published orders corresponding to approval/rejection of litigants profile change request.
+  const { data: approveRejectLitigantDetailsChangeOrderData } = useSearchOrdersService(
+    {
+      tenantId,
+      criteria: {
+        filingNumber,
+        applicationNumber: "",
+        cnrNumber,
+        orderType: "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE",
+        status: OrderWorkflowState.PUBLISHED,
+      },
+      pagination: { limit: 1000, offset: 0 },
+    },
+    { tenantId },
+    filingNumber + OrderWorkflowState.PUBLISHED,
+    Boolean(filingNumber && cnrNumber)
+  );
+
+  const publishedLitigantDetailsChangeOrders = useMemo(() => approveRejectLitigantDetailsChangeOrderData?.list || [], [
+    approveRejectLitigantDetailsChangeOrderData,
+  ]);
 
   const isDCANoticeGenerated = useMemo(
     () =>
@@ -910,6 +940,22 @@ const GenerateOrders = () => {
               };
             });
           }
+          if (orderType === "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE") {
+            orderTypeForm = orderTypeForm?.map((section) => {
+              return {
+                ...section,
+                body: section.body.map((field) => {
+                  if (field.key === "applicationGrantedRejected") {
+                    return {
+                      ...field,
+                      disable: true,
+                    };
+                  }
+                  return field;
+                }),
+              };
+            });
+          }
           if (orderType === "JUDGEMENT") {
             orderTypeForm = orderTypeForm?.map((section) => {
               return {
@@ -1142,6 +1188,23 @@ const GenerateOrders = () => {
                           : [...respondents, ...unJoinedLitigant].map((data) => data?.name || "")),
                       ],
                     },
+                  };
+                }
+                return field;
+              }),
+            };
+          });
+        }
+
+        if (orderType === "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE") {
+          orderTypeForm = orderTypeForm?.map((section) => {
+            return {
+              ...section,
+              body: section.body.map((field) => {
+                if (field.key === "applicationGrantedRejected") {
+                  return {
+                    ...field,
+                    disable: true,
                   };
                 }
                 return field;
@@ -1811,6 +1874,71 @@ const GenerateOrders = () => {
     return parties.map((party) => party.partyName).join(", ");
   };
 
+  const fetchAdvocateIndividualInfo = useCallback(async (uuid) => {
+    try {
+      const individualData = await window?.Digit.DRISTIService.searchIndividualUser(
+        {
+          Individual: {
+            userUuid: [uuid],
+          },
+        },
+        { tenantId, limit: 1000, offset: 0 }
+      );
+      return individualData;
+    } catch (error) {
+      console.error("Error fetching advocate info:", error);
+      return null;
+    }
+  }, []);
+
+  useEffect(() => {
+    const fetchAdvocateName = async () => {
+      if (!currentOrder?.orderType) {
+        setProfileEditorName("");
+        return;
+      }
+
+      // if the editor is a complainant (pip), we will get its name from litigant
+      if (currentOrder?.additionalDetails?.applicantType === "COMPLAINANT") {
+        for (let i = 0; i < caseDetails?.litigants?.length; i++) {
+          const lit = caseDetails?.litigants?.[i];
+          if (lit?.additionalDetails?.uuid === currentOrder?.additionalDetails?.applicantPartyUuid) {
+            setProfileEditorName(lit?.additionalDetails?.fullName || "");
+            return;
+          }
+        }
+      }
+
+      // If the editor is an advocate, we will get its name from representatives,
+      if (currentOrder?.additionalDetails?.applicantType === "ADVOCATE") {
+        let advFound = false;
+        for (let i = 0; i < caseDetails?.representatives?.length; i++) {
+          const rep = caseDetails?.representatives?.[i];
+          if (rep?.additionalDetails?.uuid === currentOrder?.additionalDetails?.applicantPartyUuid) {
+            advFound = true;
+            setProfileEditorName(rep?.additionalDetails?.advocateName || "");
+            return;
+          }
+        }
+
+        // if the advocate is not found in representatives, we have to get its name using individual search api.
+        if (!advFound) {
+          try {
+            const individualData = await fetchAdvocateIndividualInfo(currentOrder?.additionalDetails?.applicantPartyUuid);
+            const { givenName = "", otherNames = "", familyName = "" } = individualData?.Individual?.[0]?.name || {};
+            const fullName = getFullName(" ", givenName, otherNames, familyName);
+            setProfileEditorName(fullName);
+          } catch (error) {
+            console.error("Error fetching advocate name:", error);
+            setProfileEditorName("");
+          }
+        }
+      }
+    };
+
+    fetchAdvocateName();
+  }, [caseDetails, currentOrder, fetchAdvocateIndividualInfo]);
+
   const defaultBOTD = useMemo(() => {
     if (!currentOrder?.orderType) return "";
 
@@ -1891,9 +2019,9 @@ const GenerateOrders = () => {
       case "WARRANT":
         return `Issue ${t(currentOrder?.orderDetails?.warrantType)} to ${currentOrder?.orderDetails?.parties?.[0]?.partyName}`;
       case "WITHDRAWAL_ACCEPT":
-         return "The application to withdraw the case has been accepted. Case closed";
+        return "The application to withdraw the case has been accepted. Case closed";
       case "WITHDRAWAL_REJECT":
-          return `The application to withdraw the case raised by ${applicationDetails?.additionalDetails?.owner} has been rejected`;
+        return `The application to withdraw the case raised by ${applicationDetails?.additionalDetails?.owner} has been rejected`;
       case "OTHERS":
         return "Others";
       case "APPROVE_VOLUNTARY_SUBMISSIONS":
@@ -1918,25 +2046,86 @@ const GenerateOrders = () => {
         return `Cognizance of the offence taken on file as ${caseDetails?.cmpNumber} under Section 138 of the Negotiable Instruments Act`;
       case "DISMISS_CASE":
         return `Case has been dismissed`;
+      case "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE":
+        return `Application by ${profileEditorName} to update litigant details is hereby ${t(
+          currentOrder?.additionalDetails?.formdata?.applicationGrantedRejected?.code
+        )}`;
       default:
         return "";
     }
-  }, [t, applicationDetails, caseDetails, currentOrder]);
+  }, [t, applicationDetails, caseDetails, currentOrder, profileEditorName]);
 
   useEffect(() => {
-    const businessOfTheDay = localStorage.getItem("businessOfTheDay");
-    if(businessOfTheDay){
-      setBusinessOfTheDay(businessOfTheDay);
-    }
-    else{
-      setBusinessOfTheDay(defaultBOTD);
-    }
+    setBusinessOfTheDay(defaultBOTD);
   }, [defaultBOTD]);
 
-  const updateOrder = async (order, action) => {
+  const getUpdateDocuments = (documents, documentsFile) => {
+    if (!documentsFile) return documents;
+
+    if (documentsFile?.documentType === "UNSIGNED") {
+      const existingUnsignedDoc = documents?.find((doc) => doc?.documentType === "UNSIGNED");
+
+      if (existingUnsignedDoc) {
+        return documents?.map((doc) =>
+          doc?.documentType === "UNSIGNED"
+            ? {
+                ...doc,
+                fileStore: documentsFile?.fileStore,
+                additionalDetails: documentsFile?.additionalDetails,
+              }
+            : doc
+        );
+      }
+    }
+    return [...documents, documentsFile];
+  };
+
+  const updateOrder = async (order, action, unsignedFileStoreId) => {
     try {
       const localStorageID = localStorage.getItem("fileStoreId");
       const documents = Array.isArray(order?.documents) ? order.documents : [];
+      let taskDetails = null;
+      const newCompositeItems = [];
+      if (unsignedFileStoreId) {
+        if (order?.orderCategory === "COMPOSITE") {
+          const updatedOrders = order?.compositeItems?.map((item) => {
+            return {
+              order: {
+                ...order,
+                additionalDetails: item?.orderSchema?.additionalDetails,
+                orderDetails: item?.orderSchema?.orderDetails,
+                orderType: item?.orderType,
+                itemId: item?.id,
+              },
+            };
+          });
+          for (const item of updatedOrders) {
+            const matchedItem = order?.compositeItems?.find((compositeItem) => compositeItem?.id === item?.order?.itemId);
+            if (["NOTICE", "SUMMONS", "WARRANT"]?.includes(item?.order?.orderType)) {
+              const payloads = await createTaskPayload(item?.order?.orderType, item);
+              if (matchedItem) {
+                const newItem = {
+                  ...matchedItem,
+                  orderSchema: {
+                    ...matchedItem?.orderSchema,
+                    additionalDetails: {
+                      ...matchedItem?.orderSchema?.additionalDetails,
+                      taskDetails: JSON.stringify(payloads),
+                    },
+                  },
+                };
+                newCompositeItems?.push(newItem);
+              }
+            } else if (matchedItem) {
+              newCompositeItems?.push(matchedItem);
+            }
+          }
+        } else if (["NOTICE", "SUMMONS", "WARRANT"]?.includes(order?.orderType)) {
+          const payloads = await createTaskPayload(order?.orderType, { order });
+          taskDetails = JSON.stringify(payloads);
+        }
+      }
+
       const documentsFile =
         signedDoucumentUploadedID !== "" || localStorageID
           ? {
@@ -1945,7 +2134,16 @@ const GenerateOrders = () => {
               documentOrder: documents?.length > 0 ? documents.length + 1 : 1,
               additionalDetails: { name: `Order: ${order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(order?.orderType)}.pdf` },
             }
+          : unsignedFileStoreId
+          ? {
+              documentType: "UNSIGNED",
+              fileStore: unsignedFileStoreId,
+              documentOrder: documents?.length > 0 ? documents.length + 1 : 1,
+              additionalDetails: { name: `Order: ${order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(order?.orderType)}.pdf` },
+            }
           : null;
+
+      const updatedDocuments = getUpdateDocuments(documents, documentsFile);
       let orderSchema = {};
       try {
         let orderTypeDropDownConfig = order?.orderNumber
@@ -1968,7 +2166,18 @@ const GenerateOrders = () => {
           order: {
             ...order,
             ...orderSchema,
-            documents: documentsFile ? [...documents, documentsFile] : documents,
+            ...(unsignedFileStoreId && order?.orderCategory === "COMPOSITE" && { compositeItems: newCompositeItems }),
+            ...(unsignedFileStoreId &&
+              order?.orderCategory === "INTERMEDIATE" && {
+                additionalDetails: {
+                  ...order?.additionalDetails,
+                  ...(taskDetails && { taskDetails }),
+                },
+              }),
+            ...((newHearingNumber || hearingNumber || hearingDetails?.hearingId) && {
+              hearingNumber: newHearingNumber || hearingNumber || hearingDetails?.hearingId,
+            }),
+            documents: updatedDocuments,
             workflow: { ...order.workflow, action, documents: [{}] },
           },
         },
@@ -2104,7 +2313,7 @@ const GenerateOrders = () => {
     createTask = false,
     taskStatus = "CREATE_SUBMISSION",
     taskName = "",
-    channel = "",
+    channelCode = "",
     orderType = "",
     compositeOrderItemId,
     newApplicationDetails,
@@ -2118,7 +2327,7 @@ const GenerateOrders = () => {
     let additionalDetails = {};
     let entityType = orderEntityType
       ? orderEntityType
-      : formdata?.isResponseRequired?.code === "Yes"
+      : formdata?.responseInfo?.isResponseRequired?.code === true
       ? "application-order-submission-feedback"
       : "application-order-submission-default";
     let status = taskStatus;
@@ -2215,10 +2424,10 @@ const GenerateOrders = () => {
       entityType = "order-default";
       return ordersService.customApiService(Urls.orders.pendingTask, {
         pendingTask: {
-          name: t(`MAKE_PAYMENT_FOR_SUMMONS_${channelTypeEnum?.[channel?.type]?.code}`),
+          name: t(`MAKE_PAYMENT_FOR_SUMMONS_${channelCode}`),
           entityType,
           referenceId: `MANUAL_${refId}`,
-          status: `PAYMENT_PENDING_${channelTypeEnum?.[channel?.type]?.code}`,
+          status: `PAYMENT_PENDING_${channelCode}`,
           assignedTo: assignees,
           assignedRole,
           cnrNumber: cnrNumber,
@@ -2245,10 +2454,10 @@ const GenerateOrders = () => {
       assignees = [...assignee, ...complainantUuids]?.map((uuid) => ({ uuid }));
       entityType = "order-default";
       const pendingTask = {
-        name: t(`MAKE_PAYMENT_FOR_NOTICE_${channelTypeEnum?.[channel?.type]?.code}`),
+        name: t(`MAKE_PAYMENT_FOR_NOTICE_${channelCode}`),
         entityType,
         referenceId: `MANUAL_${refId}`,
-        status: `PAYMENT_PENDING_${channelTypeEnum?.[channel?.type]?.code}`,
+        status: `PAYMENT_PENDING_${channelCode}`,
         assignedTo: assignees,
         assignedRole,
         cnrNumber: cnrNumber,
@@ -2639,7 +2848,7 @@ const GenerateOrders = () => {
     }
   };
 
-  const createTask = async (orderType, caseDetails, orderDetails) => {
+  const createTaskPayload = async (orderType, orderDetails) => {
     let payload = {};
     const { litigants } = caseDetails;
     const complainantIndividualId = litigants?.find((item) => item?.partyType === "complainant.primary")?.individualId;
@@ -2660,6 +2869,8 @@ const GenerateOrders = () => {
     const noticeType = orderData?.additionalDetails?.formdata?.noticeType?.type;
     const respondentAddress = orderFormData?.addressDetails
       ? orderFormData?.addressDetails?.map((data) => ({ ...data?.addressDetails }))
+      : respondentNameData?.address
+      ? respondentNameData?.address
       : caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.addressDetails?.map((data) => data?.addressDetails);
     const partyIndex = orderFormData?.party?.data?.partyIndex || "";
     const respondentName = getRespondantName(respondentNameData);
@@ -2842,72 +3053,89 @@ const GenerateOrders = () => {
       default:
         break;
     }
-    if (Object.keys(payload || {}).length > 0 && Array.isArray(selectedChannel)) {
+    if (Object.keys(payload || {}).length > 0 && !Array.isArray(selectedChannel)) return [payload];
+    else if (Object.keys(payload || {}).length > 0 && Array.isArray(selectedChannel)) {
       const channelMap = new Map();
-      selectedChannel.forEach(async (item) => {
-        let courtFees = await getCourtFee(item?.code, payload?.respondentDetails?.address?.pincode, orderType);
+      const channelPayloads = await Promise.all(
+        selectedChannel?.map(async (item) => {
+          let clonedPayload = JSON.parse(JSON.stringify(payload));
 
-        if (channelMap.get(item?.type)) {
-          channelMap.set(item?.type, channelMap.get(item?.type) + 1);
-        } else {
-          channelMap.set(item?.type, 1);
-        }
-        if ("deliveryChannels" in payload) {
-          payload.deliveryChannels = {
-            ...payload.deliveryChannels,
-            channelName: channelTypeEnum?.[item?.type]?.type,
-            fees: courtFees,
-          };
+          let courtFees = await getCourtFee(item?.code, clonedPayload?.respondentDetails?.address?.pincode, orderType);
 
-          const address = ["e-Post", "Via Police", "Registered Post"].includes(item?.type)
-            ? respondentAddress[channelMap.get(item?.type) - 1]
-            : respondentAddress[0];
-          const sms = ["SMS"].includes(item?.type) ? respondentPhoneNo[channelMap.get(item?.type) - 1] : respondentPhoneNo[0];
-          const email = ["E-mail"].includes(item?.type) ? respondentEmail[channelMap.get(item?.type) - 1] : respondentEmail[0];
+          if (channelMap.get(item?.type)) {
+            channelMap.set(item?.type, channelMap.get(item?.type) + 1);
+          } else {
+            channelMap.set(item?.type, 1);
+          }
+          if ("deliveryChannels" in clonedPayload) {
+            clonedPayload.deliveryChannels = {
+              ...clonedPayload.deliveryChannels,
+              channelName: channelTypeEnum?.[item?.type]?.type,
+              fees: courtFees,
+              channelCode: channelTypeEnum?.[item?.type]?.code,
+            };
 
-          payload.respondentDetails = {
-            ...payload.respondentDetails,
-            address: ["e-Post", "Via Police", "Registered Post"].includes(item?.type)
-              ? {
-                  ...address,
-                  locality: item?.value?.locality || address?.locality,
-                  coordinate: item?.value?.coordinates || address?.coordinates,
-                }
-              : { ...address, coordinate: address?.coordinates } || "",
-            phone: ["SMS"].includes(item?.type) ? item?.value : sms || "",
-            email: ["E-mail"].includes(item?.type) ? item?.value : email || "",
-            age: "",
-            gender: "",
-          };
-        }
-        if ("deliveryChannel" in payload) {
-          const channelDetailsEnum = {
-            SMS: "phone",
-            "E-mail": "email",
-            "e-Post": "address",
-            "Via Police": "address",
-            "Registered Post": "address",
-          };
-          payload.deliveryChannel = {
-            ...payload.deliveryChannel,
-            channelName: channelTypeEnum?.[item?.type]?.type,
-            [channelDetailsEnum?.[item?.type]]: item?.value || "",
-          };
+            const address = ["e-Post", "Via Police", "Registered Post"].includes(item?.type)
+              ? respondentAddress[channelMap.get(item?.type) - 1]
+              : respondentAddress[0];
+            const sms = ["SMS"].includes(item?.type) ? respondentPhoneNo[channelMap.get(item?.type) - 1] : respondentPhoneNo[0];
+            const email = ["E-mail"].includes(item?.type) ? respondentEmail[channelMap.get(item?.type) - 1] : respondentEmail[0];
 
-          const address = respondentAddress[channelMap.get(item?.type) - 1];
+            clonedPayload.respondentDetails = {
+              ...clonedPayload.respondentDetails,
+              address: ["e-Post", "Via Police", "Registered Post"].includes(item?.type)
+                ? {
+                    ...address,
+                    locality: item?.value?.locality || address?.locality,
+                    coordinate: item?.value?.coordinates || address?.coordinates,
+                  }
+                : { ...address, coordinate: address?.coordinates } || "",
+              phone: ["SMS"].includes(item?.type) ? item?.value : sms || "",
+              email: ["E-mail"].includes(item?.type) ? item?.value : email || "",
+              age: "",
+              gender: "",
+            };
+          }
+          if ("deliveryChannel" in clonedPayload) {
+            const channelDetailsEnum = {
+              SMS: "phone",
+              "E-mail": "email",
+              "e-Post": "address",
+              "Via Police": "address",
+              "Registered Post": "address",
+            };
+            clonedPayload.deliveryChannel = {
+              ...clonedPayload.deliveryChannel,
+              channelName: channelTypeEnum?.[item?.type]?.type,
+              [channelDetailsEnum?.[item?.type]]: item?.value || "",
+            };
 
-          const sms = respondentPhoneNo[channelMap.get(item?.type) - 1];
-          const email = respondentEmail[channelMap.get(item?.type) - 1];
+            const address = respondentAddress[channelMap.get(item?.type) - 1];
 
-          payload.respondentDetails = {
-            ...payload.respondentDetails,
-            address: ["e-Post", "Via Police", "Registered Post"].includes(item?.type) ? item?.value : address || "",
-            phone: ["SMS"].includes(item?.type) ? item?.value : sms || "",
-            email: ["E-mail"].includes(item?.type) ? item?.value : email || "",
-            age: "",
-            gender: "",
-          };
-        }
+            const sms = respondentPhoneNo[channelMap.get(item?.type) - 1];
+            const email = respondentEmail[channelMap.get(item?.type) - 1];
+
+            clonedPayload.respondentDetails = {
+              ...clonedPayload.respondentDetails,
+              address: ["e-Post", "Via Police", "Registered Post"].includes(item?.type) ? item?.value : address || "",
+              phone: ["SMS"].includes(item?.type) ? item?.value : sms || "",
+              email: ["E-mail"].includes(item?.type) ? item?.value : email || "",
+              age: "",
+              gender: "",
+            };
+          }
+          return clonedPayload;
+        })
+      );
+      return channelPayloads;
+    }
+  };
+
+  const createTask = async (orderType, orderDetails) => {
+    const orderData = orderDetails?.order;
+    const payloads = await createTaskPayload(orderType, orderDetails);
+    for (const payload of payloads) {
+      if (["SUMMONS", "NOTICE"]?.includes(orderType)) {
         await ordersService
           .customApiService(Urls.orders.taskCreate, {
             task: {
@@ -2944,50 +3172,50 @@ const GenerateOrders = () => {
           })
           .then(async (data) => {
             if (["SUMMONS", "NOTICE"].includes(orderType)) {
-              await createPendingTask({ refId: data?.task?.taskNumber, channel: item, orderType: orderType });
+              await createPendingTask({ refId: data?.task?.taskNumber, channelCode: payload?.deliveryChannels?.channelCode, orderType: orderType });
             }
           });
-      });
-    } else if (Object.keys(payload || {}).length > 0) {
-      await ordersService
-        .customApiService(Urls.orders.taskCreate, {
-          task: {
-            taskDetails: payload,
-            workflow: {
-              action: "CREATE",
-              comments: orderType,
-              documents: [
-                {
-                  documentType: null,
-                  fileStore: null,
-                  documentUid: null,
-                  additionalDetails: {},
-                },
-              ],
-              assignes: null,
-              rating: null,
+      } else if (orderType === "WARRANT") {
+        await ordersService
+          .customApiService(Urls.orders.taskCreate, {
+            task: {
+              taskDetails: payload,
+              workflow: {
+                action: "CREATE",
+                comments: orderType,
+                documents: [
+                  {
+                    documentType: null,
+                    fileStore: null,
+                    documentUid: null,
+                    additionalDetails: {},
+                  },
+                ],
+                assignes: null,
+                rating: null,
+              },
+              createdDate: new Date().getTime(),
+              orderId: orderData?.id,
+              filingNumber,
+              cnrNumber,
+              taskType: orderType,
+              status: "INPROGRESS",
+              tenantId,
+              amount: {
+                type: "FINE",
+                status: "DONE",
+                amount: summonsCourtFee,
+              },
+              ...(orderData?.itemId && { additionalDetails: { itemId: orderData?.itemId } }),
             },
-            createdDate: new Date().getTime(),
-            orderId: orderData?.id,
-            filingNumber,
-            cnrNumber,
-            taskType: orderType,
-            status: "INPROGRESS",
             tenantId,
-            amount: {
-              type: "FINE",
-              status: "DONE",
-              amount: summonsCourtFee,
-            },
-            ...(orderData?.itemId && { additionalDetails: { itemId: orderData?.itemId } }),
-          },
-          tenantId,
-        })
-        .then(async (data) => {
-          if (["WARRANT"].includes(orderType)) {
-            await createPendingTask({ refId: data?.task?.taskNumber, orderType: orderType });
-          }
-        });
+          })
+          .then(async (data) => {
+            if (["WARRANT"].includes(orderType)) {
+              await createPendingTask({ refId: data?.task?.taskNumber, orderType: orderType });
+            }
+          });
+      }
     }
   };
 
@@ -3266,7 +3494,6 @@ const GenerateOrders = () => {
           },
           {}
         );
-        localStorage.removeItem("businessOfTheDay");
         const nextHearing = response?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
 
         await DRISTIService.addADiaryEntry(
@@ -3320,12 +3547,18 @@ const GenerateOrders = () => {
         }
 
         try {
-          await Promise.all(updatedOrders?.map((item) => createTask(item?.order?.orderType, caseDetails, item)));
+          await Promise.all(
+            updatedOrders
+              ?.filter((item) => ["SUMMONS", "WARRANT", "NOTICE"].includes(item?.order?.orderType))
+              ?.map((item) => createTask(item?.order?.orderType, item))
+          );
         } catch (error) {
           console.error("Error in creating tasks:", error);
         }
       } else {
-        createTask(currentOrder?.orderType, caseDetails, orderResponse);
+        if (["SUMMONS", "WARRANT", "NOTICE"].includes(currentOrder?.orderType)) {
+          createTask(currentOrder?.orderType, orderResponse);
+        }
       }
 
       setShowSuccessModal(true);
@@ -3394,6 +3627,28 @@ const GenerateOrders = () => {
           action: HearingWorkflowAction.BULK_RESCHEDULE,
           startTime: Date.parse(currentOrder?.additionalDetails?.formdata?.newHearingDate),
           endTime: Date.parse(currentOrder?.additionalDetails?.formdata?.newHearingDate),
+        });
+      }
+      if (orderType === "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE") {
+        let processInfoObj = {
+          caseId: caseDetails?.id,
+          action: currentOrder?.additionalDetails?.formdata?.applicationGrantedRejected?.code === "REJECTED" ? "REJECT" : "ACCEPT",
+          pendingTaskRefId: currentOrder?.additionalDetails?.pendingTaskRefId,
+          tenantId,
+        };
+        await DRISTIService.processProfileRequest({
+          processInfo: { ...processInfoObj },
+          tenantId: tenantId,
+        });
+
+        await ordersService.customApiService(Urls.orders.pendingTask, {
+          pendingTask: {
+            referenceId: currentOrder?.additionalDetails?.pendingTaskRefId,
+            status: "PROFILE_EDIT_REQUEST",
+            filingNumber: filingNumber,
+            isCompleted: true,
+            tenantId,
+          },
         });
       }
       if (orderType === "INITIATING_RESCHEDULING_OF_HEARING_DATE") {
@@ -3636,6 +3891,30 @@ const GenerateOrders = () => {
           }
         });
       }
+      if ("ADVOCATE_REPLACEMENT_APPROVAL" === orderType) {
+        const taskData = await DRISTIService.customApiService(Urls.orders.searchTasks, {
+          criteria: {
+            tenantId: tenantId,
+            taskNumber: currentOrder?.additionalDetails?.taskNumber,
+          },
+        });
+        const task = taskData?.list?.[0];
+
+        try {
+          const reqBody = {
+            task: {
+              ...task,
+              workflow: {
+                action: currentOrder?.additionalDetails?.formdata?.replaceAdvocateStatus?.code === "GRANT" ? "APPROVE" : "REJECT",
+              },
+            },
+          };
+          await taskService.updateTask(reqBody, { tenantId });
+        } catch (error) {
+          console.error("Error updating task data:", error);
+        }
+        return;
+      }
       if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(orderType)) {
         return newhearingId;
       }
@@ -3791,6 +4070,11 @@ const GenerateOrders = () => {
     // });
   };
 
+  const handleBulkDownloadOrder = () => {
+    const fileStoreId = prevOrder?.documents?.find((doc) => doc?.documentType === "UNSIGNED")?.fileStore;
+    downloadPdf(tenantId, fileStoreId);
+  };
+
   const handleCustomSubmit = () => {
     modifiedFormConfig.forEach((_, index) => {
       formValueChangeTriggerRefs.current[index]();
@@ -3872,22 +4156,66 @@ const GenerateOrders = () => {
     return errrors;
   };
 
-  const handleReviewOrderClick = () => {
+  const handleReviewOrderClick = async () => {
     const items = structuredClone(currentOrder?.orderCategory === "INTERMEDIATE" ? [currentOrder] : currentOrder?.compositeItems);
     let hasError = false; // Flag to track if an error occurs
-
     for (let index = 0; index < items?.length; index++) {
       const item = items[index];
 
       if (currentOrder?.orderCategory === "INTERMEDIATE" || item?.isEnabled) {
-        const formData =
+        const additionalDetails =
           currentOrder?.orderCategory === "INTERMEDIATE"
-            ? currentOrder?.additionalDetails?.formdata
-            : currentOrder?.compositeItems?.[index]?.orderSchema?.additionalDetails?.formdata;
+            ? currentOrder?.additionalDetails
+            : currentOrder?.compositeItems?.[index]?.orderSchema?.additionalDetails;
+        const formData = additionalDetails?.formdata;
         const orderType = item?.orderType;
         const newApplicationDetails = applicationData?.applicationList?.find(
           (application) => application?.applicationNumber === formData?.refApplicationId
         );
+
+        if (["APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE"].includes(orderType)) {
+          // we will check if for the current referenceid, if an order is already published for a
+          // previous profile request(check by dateofApplication) -> then  don't allow another oorder get published.
+          const isPublished = publishedLitigantDetailsChangeOrders?.some((order) => {
+            const itemAdditionalDetails =
+              order?.orderCategory === "INTERMEDIATE"
+                ? order?.additionalDetails
+                : order?.compositeItems?.find((item) => item?.orderSchema?.orderType === "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE")?.orderSchema
+                    ?.additionalDetails;
+            if (
+              itemAdditionalDetails?.dateOfApplication === additionalDetails?.dateOfApplication &&
+              itemAdditionalDetails?.pendingTaskRefId === additionalDetails?.pendingTaskRefId
+            ) {
+              return true;
+            }
+            return false;
+          });
+          if (isPublished) {
+            setShowErrorToast({
+              label: t("AN_ORDER_HAS_ALREADY_BEEN_PUBLISHED_FOR_THIS_PROFILE_EDIT_REQUEST"),
+              error: true,
+            });
+            hasError = true;
+            break;
+          }
+        }
+
+        if ("ADVOCATE_REPLACEMENT_APPROVAL" === orderType) {
+          const taskSearch = await taskService?.searchTask({
+            criteria: {
+              tenantId: tenantId,
+              taskNumber: additionalDetails?.taskNumber,
+            },
+          });
+          if (["APPROVED", "REJECTED"].includes(taskSearch?.list?.[0]?.status)) {
+            setShowErrorToast({
+              label: t("AN_ORDER_HAS_ALREADY_BEEN_PUBLISHED_FOR_THIS_ADVOCATE_REPLACEMENT_REQUEST"),
+              error: true,
+            });
+            hasError = true;
+            break;
+          }
+        }
 
         if (
           formData?.refApplicationId &&
@@ -4054,6 +4382,11 @@ const GenerateOrders = () => {
     });
   };
 
+  const handleBulkCloseSuccessModal = () => {
+    setShowBulkModal(false);
+    history.push(`/${window.contextPath}/employee/dristi/home/view-case?tab=${"Orders"}&caseId=${caseDetails?.id}&filingNumber=${filingNumber}`);
+  };
+
   if (!filingNumber) {
     history.push("/employee/home/home-pending-task");
   }
@@ -4072,7 +4405,9 @@ const GenerateOrders = () => {
             compositeItemsNew = [
               {
                 orderType: obj?.orderType,
-                ...(obj?.orderNumber && { orderSchema: { orderDetails: obj?.orderDetails } }),
+                ...(obj?.orderNumber && {
+                  orderSchema: { orderDetails: obj?.orderDetails, additionalDetails: obj?.additionalDetails, orderType: obj?.orderType },
+                }),
                 isEnabled: true,
                 displayindex: 0,
               },
@@ -4340,7 +4675,7 @@ const GenerateOrders = () => {
               <FormComposerV2
                 className={"generate-orders"}
                 key={`${selectedOrder}=${index}`}
-                label={t("REVIEW_ORDER")}
+                label={t("PREVIEW_ORDER_PDF")}
                 config={config}
                 defaultValues={getDefaultValue(index)}
                 onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
@@ -4427,6 +4762,9 @@ const GenerateOrders = () => {
           handleUpdateBusinessOfDayEntry={handleUpdateBusinessOfDayEntry}
           handleReviewGoBack={handleReviewGoBack}
           businessOfDay={businessOfTheDay}
+          updateOrder={updateOrder}
+          setShowBulkModal={setShowBulkModal}
+          setPrevOrder={setPrevOrder}
         />
       )}
       {showsignatureModal && (
@@ -4438,7 +4776,6 @@ const GenerateOrders = () => {
           setSignedDocumentUploadID={setSignedDocumentUploadID}
           orderPdfFileStoreID={orderPdfFileStoreID}
           saveOnsubmitLabel={"ISSUE_ORDER"}
-          businessOfDay={businessOfTheDay}
         />
       )}
       {showSuccessModal && (
@@ -4498,6 +4835,14 @@ const GenerateOrders = () => {
           showMandatoryFieldsErrorModal={showMandatoryFieldsErrorModal}
           setShowMandatoryFieldsErrorModal={setShowMandatoryFieldsErrorModal}
         ></MandatoryFieldsErrorModal>
+      )}
+      {showBulkModal && (
+        <OrderAddToBulkSuccessModal
+          t={t}
+          order={currentOrder}
+          handleDownloadOrders={handleBulkDownloadOrder}
+          handleCloseSuccessModal={handleBulkCloseSuccessModal}
+        ></OrderAddToBulkSuccessModal>
       )}
       {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
     </div>

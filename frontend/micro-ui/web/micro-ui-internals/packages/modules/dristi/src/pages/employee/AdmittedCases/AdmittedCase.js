@@ -589,6 +589,8 @@ const AdmittedCases = () => {
         } else {
           if (order?.status === OrderWorkflowState.DRAFT_IN_PROGRESS) {
             history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${order?.orderNumber}`);
+          } else if (order?.status === OrderWorkflowState.PENDING_BULK_E_SIGN) {
+            history.push(`/${window.contextPath}/employee/home/bulk-esign-order?orderNumber=${order?.orderNumber}`);
           } else {
             setCurrentOrder(order);
             setShowOrderReviewModal(true);
@@ -653,6 +655,23 @@ const AdmittedCases = () => {
                     filingNumber: filingNumber,
                   },
                 ],
+              },
+            },
+
+            sections: {
+              ...tabConfig.sections,
+              searchResult: {
+                ...tabConfig.sections.searchResult,
+                uiConfig: {
+                  ...tabConfig.sections.searchResult.uiConfig,
+                  columns: tabConfig.sections.searchResult.uiConfig.columns.filter((column) => {
+                    // We don't want to show actions column in parties tab for employees
+                    if (column?.label === "ACTIONS" && userType === "employee") {
+                      return false;
+                    }
+                    return true;
+                  }),
+                },
               },
             },
           }
@@ -1780,15 +1799,10 @@ const AdmittedCases = () => {
     }
   }, [hearingDetails]);
 
-  const currentHearingAdmissionHearing = useMemo(
+  const currentHearingId = useMemo(
     () =>
       hearingDetails?.HearingList?.find((list) => list?.hearingType === "ADMISSION" && !(list?.status === "COMPLETED" || list?.status === "ABATED"))
         ?.hearingId,
-    [hearingDetails?.HearingList]
-  );
-
-  const currentHearingId = useMemo(
-    () => hearingDetails?.HearingList?.find((list) => ["SCHEDULED", "IN_PROGRESS"].includes(list?.status))?.hearingId,
     [hearingDetails?.HearingList]
   );
 
@@ -2870,7 +2884,7 @@ const AdmittedCases = () => {
           handleScheduleNextHearing={handleScheduleNextHearing}
           caseAdmitLoader={caseAdmitLoader}
           caseDetails={caseDetails}
-          isAdmissionHearingAvailable={Boolean(currentHearingAdmissionHearing)}
+          isAdmissionHearingAvailable={Boolean(currentHearingId)}
           setOpenAdmitCaseModal={setOpenAdmitCaseModal}
           delayCondonationData={delayCondonationData}
           hearingDetails={hearingDetails}

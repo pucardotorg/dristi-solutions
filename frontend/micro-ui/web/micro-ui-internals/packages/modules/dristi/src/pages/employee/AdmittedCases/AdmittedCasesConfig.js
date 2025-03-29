@@ -713,8 +713,23 @@ export const TabSearchconfig = {
                 additionalCustomization: true,
               },
               {
+                label: "ASSOCIATED_WITH",
+                jsonPath: "",
+                additionalCustomization: true,
+              },
+              {
+                label: "STATUS",
+                jsonPath: "",
+                additionalCustomization: true,
+              },
+              {
                 label: "DATE_ADDED",
                 jsonPath: "auditDetails.createdTime",
+                additionalCustomization: true,
+              },
+              {
+                label: "ACTIONS",
+                jsonPath: "",
                 additionalCustomization: true,
               },
             ],

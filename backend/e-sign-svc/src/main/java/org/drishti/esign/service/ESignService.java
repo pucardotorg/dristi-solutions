@@ -1,6 +1,7 @@
 package org.drishti.esign.service;
 
 
+import com.itextpdf.text.pdf.PdfReader;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.security.PrivateKey;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import static org.drishti.esign.config.ServiceConstants.PRIVATE_KEY_FILE_NAME;
@@ -131,7 +134,7 @@ public class ESignService {
         String tenantId = eSignParameter.getTenantId();
         String response = eSignParameter.getResponse();
 
-        log.info("Method=signDocWithDigitalSignature ,Result=InProgress, filestoreId:{},tenantId:{}",fileStoreId,tenantId);
+        log.info("Method=signDocWithDigitalSignature ,Result=InProgress, filestoreId:{},tenantId:{}", fileStoreId, tenantId);
         Resource resource = fileStoreUtil.fetchFileStoreObjectById(fileStoreId, tenantId);
 
         MultipartFile multipartFile;
@@ -150,4 +153,28 @@ public class ESignService {
     }
 
 
+    public List<Coordinate> getLocation(@Valid CoordinateRequest request) {
+        log.info("Method=getLocation ,Result=InProgress");
+        List<Coordinate> response = new ArrayList<>();
+        for (CoordinateCriteria criterion : request.getCriteria()) {
+            String fileStoreId = criterion.getFileStoreId();
+            String tenantId = criterion.getTenantId();
+            Resource resource = fileStoreUtil.fetchFileStoreObjectById(fileStoreId, tenantId);
+
+            try {
+                Coordinate coordinate = pdfEmbedder.findLocationToSign(new PdfReader(resource.getInputStream()), criterion.getPlaceholder());
+                coordinate.setFileStoreId(fileStoreId);
+                coordinate.setTenantId(tenantId);
+
+                response.add(coordinate);
+            } catch (Exception e) {
+                log.error("Method=getLocation, Error:{}", e.toString());
+                throw new CustomException("LOCATION_FIND_EXCEPTION", "Error Occurred while searching for location");
+            }
+
+        }
+        log.info("Method=getLocation ,Result=Success");
+        return response;
+
+    }
 }

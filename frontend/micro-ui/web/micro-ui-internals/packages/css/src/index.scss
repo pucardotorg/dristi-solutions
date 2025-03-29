@@ -123,6 +123,7 @@
 @import "./dristi/components/customRadioSelector.scss";
 @import "./dristi/components/customErrorTooltip.scss";
 @import "./dristi/eFiling.scss";
+@import "./dristi/editProfile.scss";
 @import "./dristi/admission.scss";
 @import "./dristi/components/selectUserTypeComponent.scss";
 @import "./dristi/pages/citizen/caseType.scss";
@@ -947,9 +948,9 @@ input[type="number"] {
 }
 
 .radio-wrap .radio-btn-wrap input:disabled ~ .radio-btn-checkmark:after {
-  background-color: #E6E6E6 !important;
+  background-color: #e6e6e6 !important;
 }
 
 .radio-wrap .radio-btn-wrap input:disabled ~ .radio-btn-checkmark {
-  border-color: #E6E6E6 !important;
+  border-color: #e6e6e6 !important;
 }
