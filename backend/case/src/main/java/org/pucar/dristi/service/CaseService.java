@@ -1099,6 +1099,7 @@ public class CaseService {
 
             CourtCase caseObj = CourtCase.builder()
                     .id(courtCase.getId())
+                    .filingNumber(courtCase.getFilingNumber())
                     .build();
 
             JoinCaseDataV2 joinCaseData = joinCaseRequest.getJoinCaseData();
@@ -3935,6 +3936,9 @@ public class CaseService {
                             .sourceType(sourceType)
                             .sourceID(joinCaseLitigant.getIndividualId())
                             .filingType("CASE_FILING")
+                            .filingNumber(courtCase.getFilingNumber())
+                            .comments(new ArrayList<>())
+                            .isEvidence(true)
                             .caseId(courtCase.getId().toString())
                             .tenantId(courtCase.getTenantId())
                             .file(document)
@@ -3963,6 +3967,9 @@ public class CaseService {
                             .sourceType(sourceType)
                             .sourceID(representingJoinCase.getIndividualId())
                             .filingType("CASE_FILING")
+                            .filingNumber(courtCase.getFilingNumber())
+                            .comments(new ArrayList<>())
+                            .isEvidence(true)
                             .caseId(courtCase.getId().toString())
                             .tenantId(courtCase.getTenantId())
                             .file(document)
