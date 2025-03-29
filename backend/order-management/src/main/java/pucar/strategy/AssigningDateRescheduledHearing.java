@@ -45,13 +45,11 @@ public class AssigningDateRescheduledHearing implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
-        log.info("does not support pre processing, orderType:{}", ASSIGNING_DATE_RESCHEDULED_HEARING);
        return false;
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
-        log.info("support post processing, orderType:{}", ASSIGNING_DATE_RESCHEDULED_HEARING);
         Order order = orderRequest.getOrder();
         return order.getOrderType() != null && ASSIGNING_DATE_RESCHEDULED_HEARING.equalsIgnoreCase(order.getOrderType());
     }

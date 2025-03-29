@@ -184,8 +184,8 @@ public class BSSService {
                     OrderProcessor orderProcessor = orderFactory.createProcessor();
 
                     String pdfName = COMPOSITE.equalsIgnoreCase(order.getOrderCategory()) ? order.getOrderTitle() + ".pdf" : order.getOrderType() + ".pdf";
-                    MultipartFile multipartFile = cipherUtil.decodeBase64ToPdf(signedOrderData, pdfName);
-                    String fileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
+//                    MultipartFile multipartFile = cipherUtil.decodeBase64ToPdf(signedOrderData, pdfName);
+//                    String fileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
 
                     // fetch order here
 
@@ -194,7 +194,6 @@ public class BSSService {
                             .findFirst()
                             .ifPresent((document) ->
                             {
-                                document.setFileStore(fileStoreId);
                                 document.setDocumentType(SIGNED);
                                 document.setAdditionalDetails(Map.of(NAME, pdfName));
                             });

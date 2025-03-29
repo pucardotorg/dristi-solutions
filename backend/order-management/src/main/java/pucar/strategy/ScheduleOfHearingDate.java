@@ -43,14 +43,12 @@ public class ScheduleOfHearingDate implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
-        log.info("support pre processing, orderType:{}", SCHEDULE_OF_HEARING_DATE);
         Order order = orderRequest.getOrder();
         return order.getOrderType() != null && SCHEDULE_OF_HEARING_DATE.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
-        log.info("support post processing, orderType:{}", SCHEDULE_OF_HEARING_DATE);
         Order order = orderRequest.getOrder();
         return order.getOrderType() != null && SCHEDULE_OF_HEARING_DATE.equalsIgnoreCase(order.getOrderType());
     }
