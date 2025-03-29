@@ -42,6 +42,7 @@ package org.egov.web.notification.mail.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
@@ -58,8 +59,25 @@ public class ApplicationConfiguration {
     private EmailProperties emailProperties;
 
     @Bean
-    public JavaMailSenderImpl mailSender() {
-        final JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
+    @ConditionalOnProperty(value = "mail.protocol", havingValue = "smtps")
+    public JavaMailSenderImpl mailSenderSMTPS() {
+        final JavaMailSenderImpl mailSender = getMailSender(emailProperties);
+        final Properties mailProperties = getProperties(emailProperties, false);
+        mailSender.setJavaMailProperties(mailProperties);
+        return mailSender;
+    }
+
+    @Bean
+    @ConditionalOnProperty(value = "mail.protocol", havingValue = "smtp")
+    public JavaMailSenderImpl mailSenderSMTP() {
+        final JavaMailSenderImpl mailSender = getMailSender(emailProperties);
+        final Properties mailProperties = getProperties(emailProperties, true);
+        mailSender.setJavaMailProperties(mailProperties);
+        return mailSender;
+    }
+
+    private JavaMailSenderImpl getMailSender(EmailProperties emailProperties) {
+        JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
         mailSender.setPort(emailProperties.getMailPort());
         mailSender.setHost(emailProperties.getMailHost());
         mailSender.setProtocol(emailProperties.getMailProtocol());
@@ -73,7 +91,23 @@ public class ApplicationConfiguration {
         mailSender.setJavaMailProperties(mailProperties);
         return mailSender;
     }
-    
+
+    private Properties getProperties(EmailProperties emailProperties, boolean isSmtp) {
+        Properties mailProperties = new Properties();
+        mailProperties.setProperty("mail.smtps.auth", emailProperties.getMailSmtpsAuth());
+        mailProperties.setProperty("mail.smtps.starttls.enable", emailProperties.getMailStartTlsEnable());
+        mailProperties.setProperty("mail.smtps.ssl.enable", emailProperties.getMailSslEnable());
+        mailProperties.setProperty("mail.smtps.debug", emailProperties.getMailSmtpsDebug());
+
+        if (isSmtp) {
+            mailProperties.setProperty("mail.smtp.socketFactory.port", String.valueOf(emailProperties.getMailPort()));
+            mailProperties.setProperty("mail.smtp.socketFactory.class",  "javax.net.ssl.SSLSocketFactory");
+            mailProperties.setProperty("mail.smtp.socketFactory.fallback", "false");
+        }
+
+        return mailProperties;
+    }
+
     @Value("${egov.localization.host}")
     @Getter
     private String localizationHost;

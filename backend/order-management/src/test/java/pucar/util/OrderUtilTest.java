@@ -37,9 +37,9 @@ class OrderUtilTest {
     @BeforeEach
     void setUp() {
         when(configuration.getOrderHost()).thenReturn("http://order-service");
-        when(configuration.getOrderExistsPath()).thenReturn("/order/exists");
-        when(configuration.getOrderUpdatePath()).thenReturn("/order/update");
-        when(configuration.getOrderSearchPath()).thenReturn("/order/search");
+        when(configuration.getOrderExistsEndPoint()).thenReturn("/order/exists");
+        when(configuration.getOrderUpdateEndPoint()).thenReturn("/order/update");
+        when(configuration.getOrderSearchEndPoint()).thenReturn("/order/search");
     }
 
     @Test
