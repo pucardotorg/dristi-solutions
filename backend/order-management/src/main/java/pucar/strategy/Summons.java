@@ -124,7 +124,7 @@ public class Summons implements OrderUpdateStrategy {
 
                 String channel = jsonUtil.getNestedValue(taskDetail, Arrays.asList("deliveryChannels", "channelCode"), String.class);
 
-                String name = MAKE_PAYMENT_FOR_SUMMONS + channel;
+                String name = pendingTaskUtil.getPendingTaskNameForSummonAndNotice(channel, order.getOrderType()) + channel;
                 String status = PAYMENT_PENDING + channel;
 
                 PendingTask pendingTask = PendingTask.builder()
