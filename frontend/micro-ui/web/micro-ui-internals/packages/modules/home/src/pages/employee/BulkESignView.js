@@ -200,43 +200,45 @@ function BulkESignView() {
   }, [history, tenantId, userType]);
 
   const onFormValueChange = async (form) => {
-    const tenantId = window?.Digit.ULBService.getStateId();
-    const entityType = "Order";
-    const caseTitle = form?.searchForm?.caseTitle;
-    const status = form?.searchForm?.status;
-    const startOfTheDay = form?.searchForm?.startOfTheDay;
-    const moduleSearchCriteria = {
-      entityType,
-      tenantId,
-      ...(caseTitle && { caseTitle }),
-      ...(Object.keys(status || {})?.length > 0 && { status: status?.code ? [status?.code] : status }),
-      ...(startOfTheDay && {
-        startOfTheDay: new Date(startOfTheDay + "T00:00:00").getTime(),
-        endOfTheDay: new Date(startOfTheDay + "T23:59:59.999").getTime(),
-      }),
-    };
-    await HomeService.customApiService(bulkESignOrderConfig?.apiDetails?.serviceName, {
-      inbox: {
-        limit: form?.tableForm?.limit,
-        offset: form?.tableForm?.offset,
-        tenantId: tenantId,
-        moduleSearchCriteria: moduleSearchCriteria,
-        processSearchCriteria: {
-          businessService: ["notification"],
-          moduleName: "Transformer service",
+    if (Object.keys(form?.searchForm)?.length > 0) {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const entityType = "Order";
+      const caseTitle = form?.searchForm?.caseTitle;
+      const status = form?.searchForm?.status;
+      const startOfTheDay = form?.searchForm?.startOfTheDay;
+      const moduleSearchCriteria = {
+        entityType,
+        tenantId,
+        ...(caseTitle && { caseTitle }),
+        ...(Object.keys(status || {})?.length > 0 && { status: status?.code ? [status?.code] : status }),
+        ...(startOfTheDay && {
+          startOfTheDay: new Date(startOfTheDay + "T00:00:00").getTime(),
+          endOfTheDay: new Date(startOfTheDay + "T23:59:59.999").getTime(),
+        }),
+      };
+      await HomeService.customApiService(bulkESignOrderConfig?.apiDetails?.serviceName, {
+        inbox: {
+          limit: form?.tableForm?.limit,
+          offset: form?.tableForm?.offset,
+          tenantId: tenantId,
+          moduleSearchCriteria: moduleSearchCriteria,
+          processSearchCriteria: {
+            businessService: ["notification"],
+            moduleName: "Transformer service",
+          },
         },
-      },
-    }).then((response) => {
-      const updatedData = response?.items
-        ?.filter((data) => data?.businessObject?.orderNotification?.status === OrderWorkflowState.PENDING_BULK_E_SIGN)
-        ?.map((item) => {
-          return {
-            ...item,
-            isSelected: true,
-          };
-        });
-      setBulkSignList(updatedData);
-    });
+      }).then((response) => {
+        const updatedData = response?.items
+          ?.filter((data) => data?.businessObject?.orderNotification?.status === OrderWorkflowState.PENDING_BULK_E_SIGN)
+          ?.map((item) => {
+            return {
+              ...item,
+              isSelected: true,
+            };
+          });
+        setBulkSignList(updatedData);
+      });
+    }
   };
 
   const handleDeleteOrder = async (action) => {
