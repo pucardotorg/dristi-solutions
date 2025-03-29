@@ -1128,7 +1128,6 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
                 },
               },
             };
-            debugger;
             const [res] = await submitJoinCase(joinAdvocatePayloadNew);
 
             if (res) {
