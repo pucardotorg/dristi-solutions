@@ -45,11 +45,13 @@ public class AssigningDateRescheduledHearing implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
+        log.info("does not support pre processing, orderType:{}", ASSIGNING_DATE_RESCHEDULED_HEARING);
        return false;
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
+        log.info("support post processing, orderType:{}", ASSIGNING_DATE_RESCHEDULED_HEARING);
         Order order = orderRequest.getOrder();
         return order.getOrderType() != null && ASSIGNING_DATE_RESCHEDULED_HEARING.equalsIgnoreCase(order.getOrderType());
     }
@@ -74,6 +76,7 @@ public class AssigningDateRescheduledHearing implements OrderUpdateStrategy {
 
         RequestInfo requestInfo = orderRequest.getRequestInfo();
         Order order = orderRequest.getOrder();
+        log.info("After order publish process,result = IN_PROGRESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
         String hearingNumber = order.getHearingNumber();
 
         // hearing update and application case search if required
@@ -88,7 +91,7 @@ public class AssigningDateRescheduledHearing implements OrderUpdateStrategy {
 
             hearingNumber = orderUtil.getHearingNumberFormApplicationAdditionalDetails(applications.get(0).getAdditionalDetails());
         }
-
+        log.info("hearingNumber:{}", hearingNumber);
         List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
                 .criteria(HearingCriteria.builder().hearingId(hearingNumber).tenantId(order.getTenantId()).build()).build());
         Hearing hearing = hearings.get(0);

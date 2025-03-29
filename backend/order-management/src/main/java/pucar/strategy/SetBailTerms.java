@@ -45,11 +45,13 @@ public class SetBailTerms implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
+        log.info("does not support pre processing, orderType:{}", SET_BAIL_TERMS);
         return false;
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
+        log.info("support post processing, orderType:{}", SET_BAIL_TERMS);
         Order order = orderRequest.getOrder();
         return order.getOrderType() != null && SET_BAIL_TERMS.equalsIgnoreCase(order.getOrderType());
     }
@@ -64,6 +66,7 @@ public class SetBailTerms implements OrderUpdateStrategy {
 
         Order order = orderRequest.getOrder();
         RequestInfo requestInfo = orderRequest.getRequestInfo();
+        log.info("post processing,result=IN_PROGRESS ,orderNumber:{}, orderType:{}", order.getOrderNumber(), SET_BAIL_TERMS);
 
         // fetch case
 
@@ -77,6 +80,7 @@ public class SetBailTerms implements OrderUpdateStrategy {
         // fetch application
 
         String referenceId = jsonUtil.getNestedValue(order.getAdditionalDetails(), Arrays.asList("formdata", "refApplicationId"), String.class);
+        log.info("referenceId:{}", referenceId);
         String assigneeUUID = jsonUtil.getNestedValue(order.getAdditionalDetails(), Arrays.asList("formdata", "partyId"), String.class);
         List<Application> applications = applicationUtil.searchApplications(ApplicationSearchRequest.builder()
                 .criteria(ApplicationCriteria.builder()
@@ -85,7 +89,7 @@ public class SetBailTerms implements OrderUpdateStrategy {
                         .build()).requestInfo(requestInfo).build());
         Application application = applications.get(0);
 
-        Object additionalDetails = getAdditionalDetails(courtCase,application);
+        Object additionalDetails = getAdditionalDetails(courtCase, application);
 
         // create pending task
 
@@ -94,7 +98,7 @@ public class SetBailTerms implements OrderUpdateStrategy {
 
         String pendingTaskReferenceId = MANUAL + itemId + assigneeUUID + "_" + order.getOrderNumber();
 
-
+        log.info("create pending task of submit bail documents, pendingTaskReferenceId:{}", pendingTaskReferenceId);
         // create pending task
         PendingTask pendingTask = PendingTask.builder()
                 .name(SUBMIT_BAIL_DOCUMENTS)
@@ -122,7 +126,7 @@ public class SetBailTerms implements OrderUpdateStrategy {
 
         additionalDetails.put("litigants", Arrays.asList(
                 courtCase.getLitigants().stream()
-                        .filter(litigant -> jsonUtil.getNestedValue(litigant.getAdditionalDetails(), Arrays.asList("uuid"),String.class).equals(jsonUtil.getNestedValue(application.getAdditionalDetails(), Arrays.asList("formdata", "selectComplainant", "uuid"),String.class)))
+                        .filter(litigant -> jsonUtil.getNestedValue(litigant.getAdditionalDetails(), Arrays.asList("uuid"), String.class).equals(jsonUtil.getNestedValue(application.getAdditionalDetails(), Arrays.asList("formdata", "selectComplainant", "uuid"), String.class)))
                         .map(Party::getIndividualId)
                         .findFirst()
                         .orElse(null)

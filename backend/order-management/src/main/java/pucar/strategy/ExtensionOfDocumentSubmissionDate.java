@@ -41,11 +41,13 @@ public class ExtensionOfDocumentSubmissionDate implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
+        log.info("does not support pre processing, orderType:{}",EXTENSION_OF_DOCUMENT_SUBMISSION_DATE);
         return false;
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
+        log.info("support post processing, orderType:{}",EXTENSION_OF_DOCUMENT_SUBMISSION_DATE);
         Order order = orderRequest.getOrder();
         return order.getOrderType() != null && EXTENSION_OF_DOCUMENT_SUBMISSION_DATE.equalsIgnoreCase(order.getOrderType());
     }
@@ -60,7 +62,9 @@ public class ExtensionOfDocumentSubmissionDate implements OrderUpdateStrategy {
 
         Order order = orderRequest.getOrder();
         RequestInfo requestInfo = orderRequest.getRequestInfo();
+        log.info("After order publish process,result = IN_PROGRESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
 
+        log.info("Search Pending Task for filingNumber:{}", order.getFilingNumber());
         HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
         moduleSearchCriteria.put("filingNumber", order.getFilingNumber());
         moduleSearchCriteria.put("isCompleted", false);
@@ -79,7 +83,7 @@ public class ExtensionOfDocumentSubmissionDate implements OrderUpdateStrategy {
 
         Long sla = dateUtil.getEpochFromDateString(submissionDueDate, "yyyy-MM-dd");
 
-
+        log.info("updating sla for pending task, sla:{}", sla);
         List<PendingTask> pendingTaskList = pendingTaskUtil.getPendingTask(searchRequest);
 
         if (!pendingTaskList.isEmpty()) {
@@ -90,6 +94,7 @@ public class ExtensionOfDocumentSubmissionDate implements OrderUpdateStrategy {
                                     pendingTask.getReferenceId().contains(order.getLinkedOrderNumber())
                     )
                     .forEach(pendingTask -> {
+                        log.info("updating sla for pending task, referenceId:{}", pendingTask.getReferenceId());
                         pendingTask.setStateSla(sla);
                         pendingTaskUtil.createPendingTask(
                                 PendingTaskRequest.builder()
@@ -101,7 +106,7 @@ public class ExtensionOfDocumentSubmissionDate implements OrderUpdateStrategy {
 
         }
 
-
+        log.info("After order publish process for orderType :{},result = SUCCESS, , orderNumber:{}", order.getOrderType(), order.getOrderNumber());
         return null;
     }
 

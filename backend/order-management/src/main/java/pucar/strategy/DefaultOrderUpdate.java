@@ -71,14 +71,17 @@ public class DefaultOrderUpdate implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsCommon(OrderRequest orderRequest) {
+        log.info("supports common, orderType:{}", orderRequest.getOrder().getOrderType());
         return true;
     }
 
     @Override
     public CaseDiaryEntry execute(OrderRequest orderRequest) {
 
+
         Order order = orderRequest.getOrder();
         RequestInfo requestInfo = orderRequest.getRequestInfo();
+        log.info("Executing common, orderType:{}", order.getOrderType());
 
         List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
                 .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).defaultFields(false).build()))
@@ -89,7 +92,7 @@ public class DefaultOrderUpdate implements OrderUpdateStrategy {
         // fetch case for cmp number
         // if order have referenceId then update application
         String referenceId = orderUtil.getReferenceId(order);
-
+        log.info("referenceId:{}", referenceId);
         if (referenceId != null) {
             List<Application> applications = applicationUtil.searchApplications(ApplicationSearchRequest.builder()
                     .criteria(ApplicationCriteria.builder()
@@ -102,7 +105,7 @@ public class DefaultOrderUpdate implements OrderUpdateStrategy {
             WorkflowObject workflow = new WorkflowObject();
             workflow.setAction(orderUtil.getActionForApplication(order.getAdditionalDetails()));
             application.setWorkflow(workflow);
-
+            log.info("updating application with applicationId:{} and action :{}", application.getApplicationNumber(),workflow.getAction());
             applicationUtil.updateApplication(ApplicationRequest.builder().requestInfo(requestInfo)
                     .application(application).build());
 
@@ -110,7 +113,7 @@ public class DefaultOrderUpdate implements OrderUpdateStrategy {
         }
 
         //close pending task
-
+        log.info("closing pending task for order number:{}", order.getOrderNumber());
         pendingTaskUtil.closeManualPendingTask(order.getOrderNumber(), requestInfo, courtCase.getFilingNumber(), courtCase.getCnrNumber());
 
         List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder()
@@ -118,12 +121,15 @@ public class DefaultOrderUpdate implements OrderUpdateStrategy {
                         .filingNumber(order.getFilingNumber()).build())
                 .requestInfo(requestInfo).build());
 
+
+        log.info("finding scheduled hearing for order number:{}", order.getOrderNumber());
         Optional<Hearing> scheduledHearing = hearings.stream().filter((hearing) -> SCHEDULED.equalsIgnoreCase(hearing.getStatus())).findFirst();
 
         Long hearingDate = null;
         if (scheduledHearing.isPresent()) {
             hearingDate = scheduledHearing.get().getStartTime();
         }
+        log.info("creating case diary entry for order number:{}", order.getOrderNumber());
         return CaseDiaryEntry.builder()
                 .tenantId(order.getTenantId())
                 .entryDate(dateUtil.getStartOfTheDayForEpoch(dateUtil.getCurrentTimeInMilis()))

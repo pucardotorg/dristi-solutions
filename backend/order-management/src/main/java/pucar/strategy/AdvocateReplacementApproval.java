@@ -31,11 +31,13 @@ public class AdvocateReplacementApproval implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
+        log.info("does not support pre processing, orderType:{}", ADVOCATE_REPLACEMENT_APPROVAL);
         return false;
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
+        log.info("support post processing, orderType:{}", ADVOCATE_REPLACEMENT_APPROVAL);
         Order order = orderRequest.getOrder();
         return order.getOrderType() != null && ADVOCATE_REPLACEMENT_APPROVAL.equalsIgnoreCase(order.getOrderType());
     }
@@ -50,11 +52,12 @@ public class AdvocateReplacementApproval implements OrderUpdateStrategy {
 
         Order order = orderRequest.getOrder();
         RequestInfo requestInfo = orderRequest.getRequestInfo();
+        log.info("After order publish process,result = IN_PROGRESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
 
-        //search task
 
         String taskNumber = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("taskNumber"), String.class);
 
+        log.info("Search task for task Number:{}", taskNumber);
         TaskListResponse taskListResponse = taskUtil.searchTask(TaskSearchRequest.builder().requestInfo(requestInfo)
                 .criteria(TaskCriteria.builder().tenantId(order.getTenantId()).taskNumber(taskNumber).build()).build());
 
@@ -69,8 +72,10 @@ public class AdvocateReplacementApproval implements OrderUpdateStrategy {
         workflowObject.setAction(taskAction);
 
         taskNeedToUpdate.setWorkflow(workflowObject);
-
+        log.info("Updating task with action :{}", taskAction);
         taskUtil.updateTask(TaskRequest.builder().requestInfo(requestInfo).task(taskNeedToUpdate).build());
+        log.info("After order publish process,result = SUCCESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
+
         return null;
     }
 
