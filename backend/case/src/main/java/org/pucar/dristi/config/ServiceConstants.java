@@ -204,7 +204,6 @@ public class ServiceConstants {
     public static final String ACCUSED_PARTY_TYPE="respondent";
 
     public static final String PARTIALLY_PENDING = "PARTIALLY_PENDING";
-
     public static final String PENDING = "PENDING";
     public static final String UPLOAD_VAKALATNAMA = "UPLOAD_VAKALATNAMA";
     public static final String EVIDENCE_CREATE_ERROR = "EVIDENCE_CREATE_ERROR";
