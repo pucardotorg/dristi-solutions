@@ -3927,7 +3927,7 @@ public class CaseService {
             // add new advocate to the hearing who is joining the case
             Attendee newAttendee = new Attendee();
             newAttendee.setIndividualId(individualTryingToReplace.getIndividualId());
-            newAttendee.setName(fullName + " ( " + litigantDetails.getPartyType() + " ) ");
+            newAttendee.setName(fullName);
             newAttendee.setType("Advocate");
             Optional.ofNullable(hearing.getAttendees()).orElse(new ArrayList<>()).add(newAttendee);
             HearingRequest hearingRequest = new HearingRequest();
