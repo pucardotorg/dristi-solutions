@@ -3,6 +3,7 @@ package pucar.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
@@ -113,7 +114,7 @@ public class CompositeOrderService implements OrderProcessor {
 
         try {
             log.info("enriching order type ,order details and additional details");
-            JsonNode compositeItemArray = objectMapper.readTree(compositeItems.toString());
+            JsonNode compositeItemArray = objectMapper.readTree(objectMapper.writeValueAsString(compositeItems));
             for (JsonNode item : compositeItemArray) {
                 String orderType = item.get("orderType").toString();
                 JsonNode additionalDetails = item.get("orderSchema").get("additionalDetails");
