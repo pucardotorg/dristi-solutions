@@ -11,8 +11,8 @@ const useEvidenceDetails = ({ url, params, body, config = {}, plainAccessRequest
 
   const getOwnerName = async (artifact) => {
     if (artifact?.sourceType === "COURT") {
-      if (artifact.sourceID === undefined) {
-        return "NA";
+      if (!artifact.sourceID) {
+        return "";
       }
       const owner = await DRISTIService.searchEmployeeUser(
         {
@@ -22,10 +22,11 @@ const useEvidenceDetails = ({ url, params, body, config = {}, plainAccessRequest
         plainAccessRequest,
         true
       );
+      if(owner?.Employees?.length > 1) return ""; 
       return `${owner?.Employees?.[0]?.user?.name}`.trim();
     } else {
-      if (artifact?.sourceID === undefined) {
-        return "NA";
+      if (!artifact.sourceID) {
+        return "";
       }
       const owner = await DRISTIService.searchIndividualUser(
         {
@@ -37,6 +38,7 @@ const useEvidenceDetails = ({ url, params, body, config = {}, plainAccessRequest
         plainAccessRequest,
         true
       );
+      if(owner?.Employees?.length > 1) return ""; 
       return `${owner?.Individual[0]?.name?.givenName} ${owner[0]?.Individual[0]?.name?.familyName || ""}`.trim();
     }
   };
