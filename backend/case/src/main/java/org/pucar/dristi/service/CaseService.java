@@ -3215,7 +3215,6 @@ public class CaseService {
                         String fullName = getFullName(data, detailsKey);
                         ((ObjectNode) additionalDetailsNode).put("fullName", fullName);
                         litigant.setAdditionalDetails(objectMapper.convertValue(additionalDetailsNode, Object.class));
-                        break;
                     }
                 }
             }
