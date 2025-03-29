@@ -171,7 +171,8 @@ async function acceptReschedulingRequest(
           applicationId: order.orderDetails?.refApplicationId || "",
           reasonForRescheduling,
           originalHearingDate,
-          additionalComments: order.comments,
+          additionalComments:
+            order?.additionalDetails?.formdata?.comments?.text || "",
           judgeSignature: judgeDetails.judgeSignature,
           judgeName: judgeDetails.name,
           courtSeal: judgeDetails.courtSeal,

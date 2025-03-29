@@ -114,7 +114,8 @@ async function orderNotice(req, res, qrCode, order, compositeOrder) {
     } else {
       return renderError(res, "Invalid filingDate format", 500);
     }
-    const additionalComments = order?.comments || "";
+    const additionalComments =
+      order?.additionalDetails?.formdata?.comments?.text || "";
     const typeOfNotice = order?.orderDetails?.noticeType || "";
     const hearingDate = order?.orderDetails?.hearingDate
       ? formatDate(new Date(order?.orderDetails?.hearingDate), "DD-MM-YYYY")
