@@ -50,11 +50,13 @@ public class Warrant implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
+        log.info(" does not support pre processing,orderType:{}", WARRANT);
         return false;
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
+        log.info("support post processing,orderType:{}", WARRANT);
         Order order = orderRequest.getOrder();
         return order.getOrderType() != null && WARRANT.equalsIgnoreCase(order.getOrderType());
     }
@@ -70,6 +72,7 @@ public class Warrant implements OrderUpdateStrategy {
         // create task base on no of task details item
         Order order = orderRequest.getOrder();
         RequestInfo requestInfo = orderRequest.getRequestInfo();
+        log.info("After order publish process,result = IN_PROGRESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
 
         // case search and update
         List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
@@ -78,7 +81,7 @@ public class Warrant implements OrderUpdateStrategy {
 
         // add validation here
         CourtCase courtCase = cases.get(0);
-
+        log.info("fetching litigant advocate mapping for caseId:{}", courtCase.getId());
         Map<String, List<String>> litigantAdvocateMapping = advocateUtil.getLitigantAdvocateMapping(courtCase);
         List<Party> complainants = caseUtil.getRespondentOrComplainant(courtCase, "complainant");
         List<String> assignees = new ArrayList<>();
@@ -108,13 +111,15 @@ public class Warrant implements OrderUpdateStrategy {
         String applicationNumber = jsonUtil.getNestedValue(order.getAdditionalDetails(), Arrays.asList("formdata", "refApplicationId"), String.class);
 
         Map<String, Object> additionalDetails = new HashMap<>();
-        additionalDetails.put("applicationNumber",applicationNumber);
-        additionalDetails.put("litigants",complainantIndividualId);
+        additionalDetails.put("applicationNumber", applicationNumber);
+        additionalDetails.put("litigants", complainantIndividualId);
 
 
         String taskDetails = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("taskDetails"), String.class);
         try {
             JsonNode taskDetailsArray = objectMapper.readTree(taskDetails);
+            log.info("taskDetailsArray:{}", taskDetailsArray.size());
+
             for (JsonNode taskDetail : taskDetailsArray) {
                 TaskRequest taskRequest = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, taskDetail);
                 TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
@@ -158,38 +163,6 @@ public class Warrant implements OrderUpdateStrategy {
         return null;
     }
 
-
-    private PendingTaskRequest buildPendingTaskRequest(JsonNode taskObject, TaskResponse taskResponse, RequestInfo requestInfo) {
-        Task task = taskResponse.getTask();
-
-        return PendingTaskRequest.builder()
-                .requestInfo(requestInfo)
-                .pendingTask(PendingTask.builder()
-                        .name(task.getTaskType().equals("WARRANT") ? "Payment for warrant" : getPendingTaskName(taskObject.get("deliveryChannels").get("channelCode").asText(), task.getTaskType()))
-                        .filingNumber(task.getFilingNumber())
-                        .cnrNumber(task.getCnrNumber())
-                        .status(task.getStatus())
-                        .build())
-                .build();
-    }
-
-    private @Valid String getPendingTaskName(String channelCode, String orderType) {
-        orderType = orderType.equals("SUMMONS") ? "Summons" : "Notice";
-        switch (channelCode) {
-            case "EMAIL":
-                return "Make Payment for Email " + orderType;
-            case "SMS":
-                return "Make Payment for SMS " + orderType;
-            case "POLICE":
-                return "Make Payment for Police " + orderType;
-            case "RPAD":
-                return "Make Payment for RPAD " + orderType;
-            case "POST":
-                return "Make Payment for Post " + orderType;
-            default:
-                return "Make Payment for " + orderType;
-        }
-    }
 }
 
 

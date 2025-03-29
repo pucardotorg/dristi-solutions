@@ -3,9 +3,11 @@ package pucar.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import pucar.web.models.Order;
@@ -34,6 +36,7 @@ public class CompositeOrderService implements OrderProcessor {
 
         Order order = orderRequest.getOrder();
         RequestInfo requestInfo = orderRequest.getRequestInfo();
+        log.info("pre processing composite order, result= IN_PROGRESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), order.getOrderType());
 
         List<Order> itemListFormCompositeItem = getItemListFormCompositeItem(order);
         for (Order compositeOrderItem : itemListFormCompositeItem) {
@@ -46,10 +49,14 @@ public class CompositeOrderService implements OrderProcessor {
 
         }
 
+        log.info("pre processing composite order, result= SUCCESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), order.getOrderType());
+
+
     }
 
     @Override
     public List<CaseDiaryEntry> processCommonItems(OrderRequest orderRequest) {
+        log.info("common processing composite order, result= IN_PROGRESS,orderNumber:{}, orderType:{}", orderRequest.getOrder().getOrderNumber(), orderRequest.getOrder().getOrderType());
 
         Order order = orderRequest.getOrder();
         RequestInfo requestInfo = orderRequest.getRequestInfo();
@@ -62,13 +69,14 @@ public class CompositeOrderService implements OrderProcessor {
                     .order(compositeOrderItem)
                     .requestInfo(requestInfo).build());
         }
-
+        log.info("common processing composite order, result= SUCCESS,orderNumber:{}, orderType:{}", orderRequest.getOrder().getOrderNumber(), orderRequest.getOrder().getOrderType());
         return new ArrayList<>(Collections.singletonList(diaryEntries.get(0)));
 
     }
 
     @Override
     public void postProcessOrder(OrderRequest orderRequest) {
+        log.info("post processing composite order, result= IN_PROGRESS,orderNumber:{}, orderType:{}", orderRequest.getOrder().getOrderNumber(), orderRequest.getOrder().getOrderType());
 
         Order order = orderRequest.getOrder();
         RequestInfo requestInfo = orderRequest.getRequestInfo();
@@ -80,11 +88,13 @@ public class CompositeOrderService implements OrderProcessor {
                     .order(compositeOrderItem)
                     .requestInfo(requestInfo).build());
         }
+        log.info("post processing composite order, result= SUCCESS,orderNumber:{}, orderType:{}", orderRequest.getOrder().getOrderNumber(), orderRequest.getOrder().getOrderType());
 
     }
 
 
     public List<Order> getItemListFormCompositeItem(Order order) {
+        log.info("method=getItemListFormCompositeItem , result= IN_PROGRESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), order.getOrderType());
 
 
         Object compositeItems = order.getCompositeItems();
@@ -96,13 +106,15 @@ public class CompositeOrderService implements OrderProcessor {
                 orderNode = (ObjectNode) jsonNode;
             }
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            log.error("Error while converting order to json", e);
+            throw new CustomException("COMPOSITE_ORDER_CONVERSION_ERROR", "Error while converting order to json");
         }
 
         List<Order> compositeItemsList = new ArrayList<>();
 
         try {
-            JsonNode compositeItemArray = objectMapper.readTree(compositeItems.toString());
+            log.info("enriching order type ,order details and additional details");
+            JsonNode compositeItemArray = objectMapper.readTree(objectMapper.writeValueAsString(compositeItems));
             for (JsonNode item : compositeItemArray) {
                 String orderType = item.get("orderType").toString();
                 JsonNode additionalDetails = item.get("orderSchema").get("additionalDetails");
@@ -121,10 +133,12 @@ public class CompositeOrderService implements OrderProcessor {
                 Order orderItem = objectMapper.convertValue(orderNode, Order.class);
                 compositeItemsList.add(orderItem);
             }
+            log.info("successfully enriched order type ,order details and additional details completed");
 
 
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            log.error("Error while enriching order type ,order details and additional details", e);
+            throw new CustomException("COMPOSITE_ORDER_ENRICHMENT_ERROR", "Error while enriching order type ,order details and additional details");
         }
         return compositeItemsList;
     }

@@ -48,11 +48,13 @@ public class Summons implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
+        log.info("does not support pre processing, orderType:{}", SUMMONS);
         return false;
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
+        log.info("support post processing, orderType:{}", SUMMONS);
         Order order = orderRequest.getOrder();
         return order.getOrderType() != null && SUMMONS.equalsIgnoreCase(order.getOrderType());
     }
@@ -67,6 +69,7 @@ public class Summons implements OrderUpdateStrategy {
 
         Order order = orderRequest.getOrder();
         RequestInfo requestInfo = orderRequest.getRequestInfo();
+        log.info("post processing,result=IN_PROGRESS ,orderNumber:{}, orderType:{}", order.getOrderNumber(), order.getOrderType());
 
         // case search and update
         List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
@@ -121,7 +124,7 @@ public class Summons implements OrderUpdateStrategy {
 
                 String channel = jsonUtil.getNestedValue(taskDetail, Arrays.asList("deliveryChannels", "channelCode"), String.class);
 
-                String name = MAKE_PAYMENT_FOR_SUMMONS + channel;
+                String name = pendingTaskUtil.getPendingTaskNameForSummonAndNotice(channel, order.getOrderType()) + channel;
                 String status = PAYMENT_PENDING + channel;
 
                 PendingTask pendingTask = PendingTask.builder()
