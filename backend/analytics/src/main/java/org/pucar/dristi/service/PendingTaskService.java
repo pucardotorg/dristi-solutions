@@ -161,13 +161,23 @@ public class PendingTaskService {
         }
     }
     private List<JsonNode> removeAdvocatePendingTask(JsonNode hitsNode, JsonNode parties,  String advocateUuid) {
-        List<JsonNode> filteredTasks = new ArrayList<>();
-        for(JsonNode litigant: parties) {
-            List<JsonNode> tasks = filterPendingTaskAdvocate(hitsNode, Collections.singletonList(litigant.get("individualId").toString()));
-            removeAssignedToPendingTask(tasks, advocateUuid);
-            filteredTasks.addAll(tasks);
+        List<JsonNode> tasks = new ArrayList<>();
+        for (JsonNode hit : hitsNode) {
+            JsonNode dataNode = hit.path("_source").path("Data");
+            ArrayNode assignedToArray = (ArrayNode) dataNode.withArray("assignedTo");
+            boolean isRemoved = false;
+            for (int i = assignedToArray.size() - 1; i >= 0; i--) {
+                JsonNode node = assignedToArray.get(i);
+                if (node.has("uuid") && node.get("uuid").asText().equals(advocateUuid)) {
+                    assignedToArray.remove(i);
+                    isRemoved=true;
+                }
+            }
+            if(isRemoved) {
+                tasks.add(hit);
+            }
         }
-        return filteredTasks;
+        return tasks;
     }
 
     private void replaceAssigneeToPendingTask(List<JsonNode> filteredTasks, String uuid, RequestInfo requestInfo) {
