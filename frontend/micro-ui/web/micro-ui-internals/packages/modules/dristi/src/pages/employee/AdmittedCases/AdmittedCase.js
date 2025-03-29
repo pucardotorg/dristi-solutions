@@ -159,6 +159,7 @@ const AdmittedCases = () => {
   const roles = Digit.UserService.getUser()?.info?.roles;
   const isFSO = roles.some((role) => role.code === "FSO_ROLE");
   const isCourtRoomManager = roles.some((role) => role.code === "COURT_ROOM_MANAGER");
+  const isBenchClerk = roles.some((role) => role.code === "BENCH_CLERK");
   const activeTab = isFSO ? "Complaints" : urlParams.get("tab") || "Overview";
   const filingNumber = urlParams.get("filingNumber");
   const applicationNumber = urlParams.get("applicationNumber");
@@ -176,6 +177,7 @@ const AdmittedCases = () => {
   const [currentOrder, setCurrentOrder] = useState();
   const [currentHearing, setCurrentHearing] = useState();
   const [showMenu, setShowMenu] = useState(false);
+  const [showMenuFilings, setShowMenuFilings] = useState(false);
   const [toast, setToast] = useState(false);
   const [orderDraftModal, setOrderDraftModal] = useState(false);
   const [submissionsViewModal, setSubmissionsViewModal] = useState(false);
@@ -455,6 +457,13 @@ const AdmittedCases = () => {
   const handleTakeAction = () => {
     setShowMenu(!showMenu);
     setShowOtherMenu(false);
+    setShowMenuFilings(false);
+  };
+
+  const handleTakeFilingAction = () => {
+    setShowMenuFilings(!showMenuFilings);
+    setShowOtherMenu(false);
+    setShowMenu(false);
   };
 
   const onSuccess = async (response, data) => {
@@ -2091,6 +2100,10 @@ const AdmittedCases = () => {
     }
   };
 
+  const handleCourtAction = () => {
+    history.push(`/digit-ui/employee/submissions/submit-document?filingNumber=${filingNumber}`);
+  };
+
   const handleSelect = (option) => {
     if (option === t("MAKE_SUBMISSION")) {
       history.push(`/digit-ui/employee/submissions/submissions-create?filingNumber=${filingNumber}&applicationType=DOCUMENT`);
@@ -2339,6 +2352,16 @@ const AdmittedCases = () => {
     []
   );
 
+  const courtActionOptions = useMemo(
+    () => [
+      {
+        value: "SUBMIT_DOCUMENTS",
+        label: "Submit Documents",
+      },
+    ],
+    []
+  );
+
   const takeActionOptions = useMemo(
     () => [
       ...(userRoles?.includes("SUBMISSION_CREATOR") ? [t("MAKE_SUBMISSION")] : []),
@@ -2551,6 +2574,25 @@ const AdmittedCases = () => {
                   </div>
                 </div>
               )}
+              {isBenchClerk && (
+                <div className="evidence-header-wrapper">
+                  <div className="evidence-hearing-header" style={{ background: "transparent" }}>
+                    <div className="evidence-actions" style={{ ...(isTabDisabled ? { pointerEvents: "none" } : {}) }}>
+                      <ActionButton
+                        variation={"primary"}
+                        label={t("CS_CASE_MAKE_FILINGS")}
+                        icon={showMenuFilings ? "ExpandLess" : "ExpandMore"}
+                        isSuffix={true}
+                        onClick={handleTakeFilingAction}
+                        className={"take-action-btn-class"}
+                      ></ActionButton>
+                      {showMenuFilings && (
+                        <Menu t={t} optionKey={"label"} localeKeyPrefix={"CS_CASE"} options={courtActionOptions} onSelect={handleCourtAction}></Menu>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="evidence-header-wrapper">
                 <div className="evidence-hearing-header" style={{ background: "transparent" }}>
@@ -2560,6 +2602,7 @@ const AdmittedCases = () => {
                       onClick={() => {
                         setShowOtherMenu((prev) => !prev);
                         setShowMenu(false);
+                        setShowMenuFilings(false);
                       }}
                     >
                       <CustomThreeDots />
