@@ -3425,6 +3425,8 @@ public class CaseService {
                 evidenceUtil.createEvidence(evidenceRequest);
             }
 
+            enrichHearingDetails(courtCase, replacementDetails, joinCaseRequest, requestInfo);
+
             log.info("operation=updateJoinCaseApproved, status=SUCCESS, joinCaseRequest, advocateUuid : {}, {}", joinCaseRequest, advocateUuid);
         }
 
@@ -3893,6 +3895,67 @@ public class CaseService {
                         .file(document)
                         .workflow(workflowObject)
                         .build()).build();
+    }
+
+    private void enrichHearingDetails(CourtCase courtCase,  ReplacementDetails replacementDetails, JoinCaseTaskRequest joinCaseTaskRequest, RequestInfo requestInfo) {
+
+        AdvocateDetails advocateTryingToJoinCase = joinCaseTaskRequest.getAdvocateDetails();
+
+        IndividualDetails individualTryingToReplace = advocateTryingToJoinCase.getIndividualDetails();
+
+        ReplacementAdvocateDetails replacementAdvocateDetails = replacementDetails.getAdvocateDetails();
+
+        LitigantDetails litigantDetails = replacementDetails.getLitigantDetails();
+
+        List<String> nameParts = Stream.of(individualTryingToReplace.getFirstName(),
+                        individualTryingToReplace.getMiddleName(),
+                        individualTryingToReplace.getLastName())
+                .filter(part -> part != null && !part.isEmpty())
+                .toList();
+
+        String fullName = String.join(" ", nameParts);
+
+        HearingCriteria hearingCriteria = HearingCriteria.builder()
+                .filingNumber(courtCase.getFilingNumber())
+                .build();
+
+        List<Hearing> hearings = getHearingsForCase(hearingCriteria);
+
+        List<Hearing> scheduledHearings = hearings.stream().filter(hearing -> hearing.getStatus().equalsIgnoreCase("SCHEDULED")).toList();
+
+        for (Hearing hearing : scheduledHearings) {
+            // add new advocate to the hearing who is joining the case
+            Attendee newAttendee = new Attendee();
+            newAttendee.setIndividualId(individualTryingToReplace.getIndividualId());
+            newAttendee.setName(fullName + " ( " + litigantDetails.getPartyType() + " ) ");
+            newAttendee.setType("Advocate");
+            Optional.ofNullable(hearing.getAttendees()).orElse(new ArrayList<>()).add(newAttendee);
+            HearingRequest hearingRequest = new HearingRequest();
+            requestInfo.getUserInfo().getRoles().add(Role.builder().code("HEARING_SCHEDULER").name("HEARING_SCHEDULER").tenantId(courtCase.getTenantId()).build());
+            hearingRequest.setRequestInfo(requestInfo);
+            hearingRequest.setHearing(hearing);
+
+            // remove the old advocate from the hearing if he is no more part of the case
+            List<Attendee> attendees = hearing.getAttendees();
+
+            boolean isAdvocatePartOfCase = courtCase.getRepresentatives().stream()
+                    .filter(mapping -> mapping.getAdvocateId().equalsIgnoreCase(replacementAdvocateDetails.getAdvocateUuid()))
+                    .findFirst().isEmpty();
+
+            String individualIdOfAdvocate = advocateUtil.getAdvocate(requestInfo, List.of(replacementAdvocateDetails.getAdvocateUuid())).stream().findFirst().orElse(null);
+
+            if (!isAdvocatePartOfCase) {
+                for (int i = 0; i < attendees.size(); i++) {
+                    if (attendees.get(i).getIndividualId().equals(individualIdOfAdvocate)) {
+                        attendees.remove(i);
+                        break;
+                    }
+                }
+            }
+
+            hearingUtil.updateTranscriptAdditionalAttendees(hearingRequest);
+
+        }
     }
 
 }
