@@ -172,7 +172,8 @@ async function caseSettlementAcceptance(
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
 
     const specifyMechanism = order.orderDetails.settlementMechanism;
-    const additionalComments = order?.comments || "";
+    const additionalComments =
+      order?.additionalDetails?.formdata?.comments?.text || "";
     const settlementStatus =
       order.orderDetails.isSettlementImplemented === "ES_COMMON_YES"
         ? "Yes"
