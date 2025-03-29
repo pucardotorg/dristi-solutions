@@ -546,8 +546,6 @@ export const UICustomizations = {
       };
     },
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
-      const firstData = searchResult?.[0];
-      const firstIndex = firstData?.businessObject?.orderNotification?.id === row?.businessObject?.orderNotification?.id;
       switch (key) {
         case "TITLE":
           return <OrderName rowData={row} colData={column} value={value} />;
@@ -561,7 +559,7 @@ export const UICustomizations = {
           const formattedDate = `${day}-${month}-${year}`;
           return <span>{value && value !== "0" ? formattedDate : ""}</span>;
         case "SELECT":
-          return <BulkCheckBox rowData={row} colData={column} firstIndex={firstIndex} searchResult={searchResult} />;
+          return <BulkCheckBox rowData={row} colData={column} />;
         case "CS_ACTIONS":
           return <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="bulkESignOrderConfig" />;
         default:
