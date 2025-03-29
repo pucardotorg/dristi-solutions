@@ -3494,7 +3494,6 @@ const GenerateOrders = () => {
           },
           {}
         );
-
         const nextHearing = response?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
 
         await DRISTIService.addADiaryEntry(

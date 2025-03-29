@@ -187,7 +187,6 @@ public class CaseService {
                 caseCriteria.setResponseList(decryptedCourtCases);
             });
 
-
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
