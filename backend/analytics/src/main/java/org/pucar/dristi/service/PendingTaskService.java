@@ -129,7 +129,7 @@ public class PendingTaskService {
         log.info("Joining pending task for advocate with id :: {}", advocateUuid);
         List<JsonNode> filteredTasks = new ArrayList<>();
         for(JsonNode litigant: parties) {
-            List<JsonNode> tasks = filterPendingTaskAdvocate(hitsNode, Collections.singletonList(litigant.get("individualId").toString()));
+            List<JsonNode> tasks = filterPendingTaskAdvocate(hitsNode, Collections.singletonList(litigant.get("individualId").asText()));
             if(litigant.get("isActive").asBoolean()){
                 addAssigneeToPendingTask(tasks, advocateUuid);
             } else {
