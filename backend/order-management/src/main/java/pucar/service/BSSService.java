@@ -217,6 +217,8 @@ public class BSSService {
                     orderProcessor.postProcessOrder(orderUpdateRequest);
                     updatedOrder.add(response.getOrder());
 
+                } catch (CustomException e) {
+                    throw new CustomException(e.getCode(), e.getMessage());
                 } catch (Exception e) {
                     log.error("Error while updating order,orderNumber:{},orderType:{}", orderNumber, orderType);
                     log.error("Error : ", e);
