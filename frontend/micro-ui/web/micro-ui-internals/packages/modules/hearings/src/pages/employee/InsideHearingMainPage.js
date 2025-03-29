@@ -187,8 +187,8 @@ const InsideHearingMainPage = () => {
       // hearing data with particular id will always give array of one object
       if (hearingData) {
         setHearing(hearingData);
-        setTranscriptText(hearingData?.transcript[0] || "");
-        setFilingNumber(hearingData?.filingNumber[0]);
+        setTranscriptText(hearingData?.transcript?.[0] || "");
+        setFilingNumber(hearingData?.filingNumber?.[0]);
       }
     }
   }, [hearingsData]);
@@ -260,7 +260,7 @@ const InsideHearingMainPage = () => {
   useEffect(() => {
     if (hearingsData && transcriptText) {
       const hearingData = hearingsData?.HearingList?.[0];
-      if (hearingData && transcriptText !== hearingData?.transcript[0] && !disableTextArea) {
+      if (hearingData && transcriptText !== hearingData?.transcript?.[0] && !disableTextArea) {
         updateAPICall(transcriptText);
       }
     }

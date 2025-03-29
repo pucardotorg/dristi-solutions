@@ -259,6 +259,16 @@ module.exports = {
       process.env.HEARING_BULK_RESCHEDULE || "order-bulk-reschedule",
     hearing_bulk_reschedule_qr:
       process.env.HEARING_BULK_RESCHEDULE_QR || "order-bulk-reschedule-qr",
+    order_approval_rejection_litigant_details_change:
+      process.env.ORDER_APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE ||
+      "order-approval-rejection-litigant-details",
+    order_approval_rejection_litigant_details_change_qr:
+      process.env.ORDER_APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE_QR ||
+      "order-approval-rejection-litigant-details-qr",
+    order_change_advocate:
+      process.env.ORDER_CHANGE_ADVOCATE || "order-replace-advocate",
+    order_change_advocate_qr:
+      process.env.ORDER_CHANGE_ADVOCATE_QR || "order-replace-advocate-qr",
   },
 
   app: {
@@ -268,6 +278,7 @@ module.exports = {
   },
 
   host: {
+    task: process.env.DRISTI_TASK_HOST || "http://localhost:8096",
     mdms: process.env.EGOV_MDMS_HOST || "http://localhost:8081",
     pdf: process.env.EGOV_PDF_HOST || "http://localhost:8070",
     case: process.env.DRISTI_CASE_HOST || "http://localhost:8091",
@@ -302,6 +313,7 @@ module.exports = {
     filestore_search: "/filestore/v1/files/url",
     filestore_search_id: "/filestore/v1/files/id",
     hearing_bulk_reschedule: "/hearing/v1/bulk/_reschedule",
+    task_search: "task/v1/search",
   },
 
   constraints: {

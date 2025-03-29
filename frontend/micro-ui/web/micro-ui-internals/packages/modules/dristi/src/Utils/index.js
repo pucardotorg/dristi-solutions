@@ -170,6 +170,7 @@ export const documentsTypeMapping = {
   pipAffidavitFileUpload: "COMPLAINANT_PIP_AFFIDAVIT",
   pipAffidavitFileUploadRespondent: "RESPONDENT_PIP_AFFIDAVIT",
   nocJudgeOrder: "NOC_JUDGE_ORDER",
+  supportingDocument: "SUPPORTING_DOCUMENT",
 };
 
 export const documentLabels = {

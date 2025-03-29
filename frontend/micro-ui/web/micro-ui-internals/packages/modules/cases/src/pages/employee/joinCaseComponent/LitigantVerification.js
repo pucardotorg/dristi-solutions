@@ -16,10 +16,24 @@ const LitigantVerification = ({
   setAlreadyJoinedMobileNumber,
   isDisabled,
   setIsDisabled,
+  selectPartyData,
+  isApiCalled,
 }) => {
   const modalRef = useRef(null);
   const [index, setIndex] = useState(0);
-  const [litigants, setLitigants] = useState(party);
+  const [litigants, setLitigants] = useState([]);
+
+  useEffect(() => {
+    if (party?.length > 0) {
+      if (selectPartyData?.advocateToReplaceList?.length > 0 && selectPartyData?.isReplaceAdvocate?.value === "YES") {
+        const uniqueIndividuals = new Set(selectPartyData?.advocateToReplaceList?.map((item) => item.litigantIndividualId));
+        const filteredParty = party.filter((p) => uniqueIndividuals.has(p.individualId));
+        setLitigants(filteredParty);
+      } else {
+        setLitigants(party);
+      }
+    }
+  }, [party, selectPartyData?.advocateToReplaceList, selectPartyData?.isReplaceAdvocate?.value, selectPartyData?.partyInvolve?.value]);
 
   const modifiedFormConfig = useMemo(() => {
     const applyUiChanges = (config) => ({
@@ -71,7 +85,7 @@ const LitigantVerification = ({
   const shouldUpdateState = (selectedParty, formData) => {
     const commonFields = ["firstName", "middleName", "lastName"];
 
-    const hasBasicInfoChanged = commonFields.some((field) => selectedParty[field] !== formData[field]);
+    const hasBasicInfoChanged = commonFields?.some((field) => selectedParty[field] !== formData[field]);
 
     const hasPhoneNumberChanged =
       selectedParty?.phoneNumberVerification?.mobileNumber !== formData?.phoneNumberVerification?.mobileNumber ||
@@ -178,18 +192,20 @@ const LitigantVerification = ({
   return (
     <React.Fragment>
       <div ref={modalRef} className="litigant-verification">
-        <FormComposerV2
-          key={index}
-          config={modifiedFormConfig}
-          onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors) =>
-            onFormValueChange(setValue, formData, formState, reset, setError, clearErrors)
-          }
-          defaultValues={{
-            ...litigants?.[index],
-          }}
-          fieldStyle={fieldStyle}
-          className={"multi-litigant-composer"}
-        />
+        {litigants?.length > 0 && (
+          <FormComposerV2
+            key={index}
+            config={modifiedFormConfig}
+            onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors) =>
+              onFormValueChange(setValue, formData, formState, reset, setError, clearErrors)
+            }
+            defaultValues={{
+              ...litigants?.[index],
+            }}
+            fieldStyle={fieldStyle}
+            className={"multi-litigant-composer"}
+          />
+        )}
       </div>
       <div className={"multi-litigant-composer-footer"}>
         <div className={"multi-litigant-composer-footer-left"}>
@@ -221,7 +237,7 @@ const LitigantVerification = ({
               setParty(litigants);
               onProceed(litigants);
             }}
-            isDisabled={isDisabled}
+            isDisabled={isDisabled || isApiCalled}
           />
         </div>
       </div>

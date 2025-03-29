@@ -1,9 +1,7 @@
 import { useTranslation } from "react-i18next";
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useHistory } from "react-router-dom";
-import { Button, InboxSearchComposer, CardLabel, CardLabelError, LabelFieldPair, TextInput } from "@egovernments/digit-ui-react-components";
-import { InfoCard } from "@egovernments/digit-ui-components";
-
+import { Button, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
 import { rolesToConfigMapping, userTypeOptions } from "../../configs/HomeConfig";
 import UpcomingHearings from "../../components/UpComingHearing";
 import { Loader } from "@egovernments/digit-ui-react-components";
@@ -15,15 +13,9 @@ import { TabLitigantSearchConfig } from "../../configs/LitigantHomeConfig";
 import ReviewCard from "../../components/ReviewCard";
 import { InboxIcon, DocumentIcon } from "../../../homeIcon";
 import { Link } from "react-router-dom";
-import isEqual from "lodash/isEqual";
-import CustomStepperSuccess from "@egovernments/digit-ui-module-orders/src/components/CustomStepperSuccess";
-import { uploadResponseDocumentConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/Config/resgisterRespondentConfig";
-import UploadIdType from "@egovernments/digit-ui-module-dristi/src/pages/citizen/registration/UploadIdType";
-import DocumentModal from "@egovernments/digit-ui-module-orders/src/components/DocumentModal";
-import { submitJoinCase, updateCaseDetails } from "../../../../cases/src/utils/joinCaseUtils";
-import CustomErrorTooltip from "@egovernments/digit-ui-module-dristi/src/components/CustomErrorTooltip";
-import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
-import { Urls as PendingsUrls } from "@egovernments/digit-ui-module-dristi/src/hooks";
+import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersService";
+import { OrderWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/orderWorkflow";
+import OrderIssueBulkSuccesModal from "@egovernments/digit-ui-module-orders/src/pageComponents/OrderIssueBulkSuccesModal";
 
 const defaultSearchValues = {
   caseSearchText: "",
@@ -67,7 +59,11 @@ const HomeView = () => {
 
   const [showSubmitResponseModal, setShowSubmitResponseModal] = useState(false);
   const [responsePendingTask, setResponsePendingTask] = useState({});
-
+  const bulkSignSuccess = history.location?.state?.bulkSignSuccess;
+  const [issueBulkSuccessData, setIssueBulkSuccessData] = useState({
+    show: false,
+    bulkSignOrderListLength: null,
+  });
   const roles = useMemo(() => Digit.UserService.getUser()?.info?.roles, [Digit.UserService]);
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
   const isCourtRoomRole = useMemo(() => roles?.some((role) => role?.code === "COURT_ADMIN"), [roles]);
@@ -115,6 +111,16 @@ const HomeView = () => {
     individualId,
     Boolean(isUserLoggedIn && individualId && userType !== "LITIGANT"),
     userType === "ADVOCATE" ? "/advocate/v1/_search" : "/advocate/clerk/v1/_search"
+  );
+
+  const { data: ordersData, refetch: refetchOrdersData, isLoading: isOrdersLoading } = useSearchOrdersService(
+    {
+      tenantId,
+      criteria: { status: OrderWorkflowState.PENDING_BULK_E_SIGN },
+    },
+    { tenantId },
+    OrderWorkflowState.PENDING_BULK_E_SIGN,
+    true
   );
 
   const refreshInbox = () => {
@@ -167,7 +173,10 @@ const HomeView = () => {
 
   useEffect(() => {
     state && state.taskType && setTaskType(state.taskType);
-  }, [state]);
+    if (bulkSignSuccess) {
+      setIssueBulkSuccessData(bulkSignSuccess);
+    }
+  }, [state, bulkSignSuccess]);
 
   const { isLoading: isOutcomeLoading, data: outcomeTypeData } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
@@ -298,6 +307,9 @@ const HomeView = () => {
   };
 
   const onRowClick = (row) => {
+    if (userInfoType === "citizen" && row?.original?.advocateStatus === "PENDING") {
+      return;
+    }
     const searchParams = new URLSearchParams();
     if (
       onRowClickData?.urlDependentOn && onRowClickData?.urlDependentValue && Array.isArray(onRowClickData?.urlDependentValue)
@@ -338,7 +350,7 @@ const HomeView = () => {
     }
   };
 
-  if (isLoading || isFetching || isSearchLoading || isFetchCaseLoading) {
+  if (isLoading || isFetching || isSearchLoading || isFetchCaseLoading || isOrdersLoading) {
     return <Loader />;
   }
 
@@ -454,8 +466,17 @@ const HomeView = () => {
           joinCaseShowSubmitResponseModal={showSubmitResponseModal}
           setJoinCaseShowSubmitResponseModal={setShowSubmitResponseModal}
           hideTaskComponent={individualId && userType && userInfoType === "citizen" && !caseDetails}
+          pendingSignOrderList={ordersData?.list}
         />
       </div>
+      {issueBulkSuccessData.show && (
+        <OrderIssueBulkSuccesModal
+          t={t}
+          history={history}
+          bulkSignOrderListLength={issueBulkSuccessData.bulkSignOrderListLength}
+          setIssueBulkSuccessData={setIssueBulkSuccessData}
+        />
+      )}
     </div>
   );
 };

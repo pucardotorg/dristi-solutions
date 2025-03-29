@@ -268,7 +268,7 @@ public class CauseListService {
         log.info("operation = generateCauseListFromHearings, result = SUCCESS, judgeId = {}", causeList.get(0).getJudgeId());
         try {
             List<MdmsSlot> mdmsSlotList = getSlottingDataFromMdms();
-            int currentSlotIndex = 0; // Track the current slot index
+            Collections.reverse(mdmsSlotList);int currentSlotIndex = 0; // Track the current slot index
             int accumulatedTime = 0; // Track accumulated hearing time within the slot
 
             for(CauseList causeList1 : causeList){

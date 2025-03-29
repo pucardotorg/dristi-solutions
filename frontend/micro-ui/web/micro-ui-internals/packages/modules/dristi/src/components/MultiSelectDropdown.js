@@ -168,13 +168,13 @@ const MultiSelectDropdown = ({
   const MenuItem = ({ option, index }) => (
     <div
       key={index}
-      className={`${option.isDisabled ? "disabled" : ""}`}
+      className={`${option?.isDisabled ? "disabled" : ""}`}
       style={
         isOBPSMultiple
           ? index % 2 !== 0
-            ? { background: "#EEEEEE", ...(option.isDisabled && { background: "#D2D2D2" }) }
-            : { ...(option.isDisabled && { background: "#D2D2D2" }) }
-          : { ...(option.isDisabled && { background: "#D2D2D2" }) }
+            ? { background: "#EEEEEE", ...(option?.isDisabled && { background: "#D2D2D2" }) }
+            : { ...(option?.isDisabled && { background: "#D2D2D2" }) }
+          : { ...(option?.isDisabled && { background: "#D2D2D2" }) }
       }
     >
       <input
@@ -189,12 +189,12 @@ const MultiSelectDropdown = ({
             : onSelectToAddToQueue(e, option)
         }
         style={{ minWidth: "24px", width: "100%" }}
-        disabled={option.isDisabled || false}
+        disabled={option?.isDisabled || false}
       />
       <div className="custom-checkbox">
         <CheckSvg
           style={{ innerWidth: "24px", width: "100%", ...(option?.isDisabled && { opacity: 1 }) }}
-          fill={option.isDisabled ? "#505050" : COLOR_FILL}
+          fill={option?.isDisabled ? "#505050" : COLOR_FILL}
           checkBoxFill={option?.isDisabled ? "#D2D2D2" : undefined}
           tickStyle={option?.isDisabled ? { opacity: 0 } : {}}
         />

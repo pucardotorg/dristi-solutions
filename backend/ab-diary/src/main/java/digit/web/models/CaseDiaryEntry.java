@@ -44,6 +44,9 @@ public class CaseDiaryEntry {
 
     private String caseNumber = null;
 
+    @JsonProperty("caseId")
+    private String caseId = null;
+
     @JsonProperty("judgeId")
     @NotNull
 

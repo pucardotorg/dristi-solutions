@@ -249,10 +249,14 @@ export const updateCaseDetails = async (caseDetails, tenantId, action) => {
   );
 };
 
-export const submitJoinCase = async (data) => {
+export const submitJoinCase = async (data, action) => {
   let res;
   try {
-    res = await CASEService.joinCaseService(data, {});
+    if (action === "VERIFY") {
+      res = await CASEService.verifyAccessCode(data, {});
+    } else {
+      res = await CASEService.joinCaseService(data, {});
+    }
     return [res, undefined];
   } catch (err) {
     return [res, err];

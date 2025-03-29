@@ -10,6 +10,10 @@ import CustomChip from "../components/CustomChip";
 import ReactTooltip from "react-tooltip";
 import { modifiedEvidenceNumber, removeInvalidNameParts } from "../Utils";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
+import { constructFullName } from "@egovernments/digit-ui-module-orders/src/utils";
+import { getAdvocates } from "../pages/citizen/FileCase/EfilingValidationUtils";
+import { OrderWorkflowState } from "../Utils/orderWorkflow";
+import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
 
 const businessServiceMap = {
   "muster roll": "MR",
@@ -26,6 +30,12 @@ const partyTypes = {
   "complainant.additional": "COMPLAINANT",
   "respondent.primary": "ACCUSED",
   "respondent.additional": "ACCUSED",
+};
+
+export const advocateJoinStatus = {
+  PENDING: "PENDING",
+  PARTIALLY_PENDING: "PARTIALLY_PENDING",
+  JOINED: "JOINED",
 };
 
 export const UICustomizations = {
@@ -568,7 +578,20 @@ export const UICustomizations = {
             </div>
           );
         case "STATUS":
-          return <CustomChip text={t(value)} shade={value === "PUBLISHED" ? "green" : "orange"} />;
+          return (
+            <CustomChip
+              text={t(value)}
+              shade={
+                value === OrderWorkflowState.PUBLISHED
+                  ? "green"
+                  : value === OrderWorkflowState.DELETED
+                  ? "red"
+                  : value === OrderWorkflowState.DRAFT_IN_PROGRESS
+                  ? "grey"
+                  : "orange"
+              }
+            />
+          );
         case "DATE_ISSUED":
         case "DATE_ADDED":
           const date = new Date(value);
@@ -579,6 +602,8 @@ export const UICustomizations = {
           return <span>{value && value !== "0" ? formattedDate : ""}</span>;
         case "ORDER_TILTE":
           return <OrderName rowData={row} colData={column} value={value} />;
+        default:
+          break;
       }
     },
   },
@@ -1228,23 +1253,108 @@ export const UICustomizations = {
         config: {
           ...requestCriteria.config,
           select: (data) => {
+            const allLitigantAdvocatesMapping = getAdvocates(data.criteria[0].responseList[0]);
+            const userInfo = Digit.UserService.getUser()?.info;
+            const editorUuid = userInfo?.uuid;
+
+            // Either an advocate who is representing any "complainant" or any "PIP complainant" ->> only these
+            // 2 type can edit details of any complainant/accused from actions in parties tab.
+            const checkIfEditable = () => {
+              for (let key in allLitigantAdvocatesMapping) {
+                if (allLitigantAdvocatesMapping?.[key]?.some((uuid) => uuid === editorUuid)) {
+                  const litigantObj = data.criteria[0].responseList[0]?.litigants?.find((lit) => lit?.additionalDetails?.uuid === key);
+                  if (litigantObj && ["complainant.primary", "complainant.additional"].includes(litigantObj.partyType)) {
+                    return true;
+                  }
+                }
+              }
+              return false;
+            };
+
+            // To check if editor is an advocate or PIP compplainant.
+            const checkIfAdvocateIsEditor = () => {
+              const representatives = data?.criteria?.[0]?.responseList?.[0]?.representatives;
+              return Boolean(representatives?.some((rep) => rep?.additionalDetails?.uuid === editorUuid));
+            };
+
+            const isEditable = checkIfEditable();
+            const isAdvocateEditor = checkIfAdvocateIsEditor();
+            const unjoinedAccused =
+              data.criteria[0].responseList[0]?.additionalDetails?.respondentDetails?.formdata
+                ?.filter((data) => !data?.data?.respondentVerification?.individualDetails?.individualId)
+                ?.map((itemData) => {
+                  const fullName = constructFullName(
+                    itemData?.data?.respondentFirstName,
+                    itemData?.data?.respondentMiddleName,
+                    itemData?.data?.respondentLastName
+                  );
+                  return {
+                    code: fullName,
+                    name: fullName,
+                    uniqueId: itemData?.uniqueId,
+                    isJoined: false,
+                    partyType: "unJoinedAccused",
+                    caseId: data?.criteria[0]?.responseList[0]?.id,
+                    isEditable,
+                    ...(isEditable && { isAdvocateEditor }),
+                  };
+                }) || [];
             const litigants = data.criteria[0].responseList[0].litigants?.length > 0 ? data.criteria[0].responseList[0].litigants : [];
             const finalLitigantsData = litigants.map((litigant) => {
               return {
                 ...litigant,
                 name: removeInvalidNameParts(litigant.additionalDetails?.fullName),
+                isEditable,
+                ...(isEditable && { isAdvocateEditor }),
               };
             });
-            const reps = data.criteria[0].responseList[0].representatives?.length > 0 ? data.criteria[0].responseList[0].representatives : [];
-            const finalRepresentativesData = reps.map((rep) => {
+            // pendingAdvocateRequests includes list of advocates with pending and partially pending status.
+            const pendingAdvocateRequests = data?.criteria?.[0]?.responseList?.[0]?.pendingAdvocateRequests || [];
+            // representatives has list of advocates with joined and partially pending status.
+            const representatives = data?.criteria?.[0].responseList?.[0]?.representatives || [];
+
+            const getAdvocateJoinStatus = (rep) => {
+              for (let i = 0; i < pendingAdvocateRequests?.length; i++) {
+                if (pendingAdvocateRequests?.[i]?.advocateId === rep?.advocateId) {
+                  return advocateJoinStatus?.PARTIALLY_PENDING;
+                }
+              }
+              return advocateJoinStatus?.JOINED;
+            };
+
+            // List of advocates who have joined the case or partially pending status.
+            // Note: advocates whose joining status is partially pending has technically joined the case and
+            // have same rights as an advocate with joined status, thats why it is also present in case representatives list.
+            const joinedAndPartiallyJoinedAdvocates = representatives.map((rep) => {
+              const status = getAdvocateJoinStatus(rep);
               return {
                 ...rep,
                 name: rep.additionalDetails?.advocateName,
                 partyType: `ADVOCATE`,
                 representingList: rep.representing?.map((client) => removeInvalidNameParts(client?.additionalDetails?.fullName))?.join(", "),
+                isEditable: false,
+                status,
               };
             });
-            const allParties = [...finalLitigantsData, ...finalRepresentativesData];
+
+            // List of advocates with joining status as pending.
+            // These advocates won't be present in case representatives list, will be in pendingAdvocateRequests list.
+            const joinStatusPendingAdvocates = pendingAdvocateRequests
+              ?.filter((adv) => adv?.status === advocateJoinStatus?.PENDING)
+              ?.map((rep) => {
+                const { firstName = "", middleName = "", lastName = "" } = rep?.individualDetails || {};
+                const fullName = getFullName(" ", firstName, middleName, lastName);
+                return {
+                  ...rep,
+                  name: fullName,
+                  partyType: `ADVOCATE`,
+                  representingList: [],
+                  isEditable: false,
+                  status: advocateJoinStatus?.PENDING,
+                };
+              });
+
+            const allParties = [...finalLitigantsData, ...unjoinedAccused, ...joinedAndPartiallyJoinedAdvocates, ...joinStatusPendingAdvocates];
             const paginatedParties = allParties.slice(offset, offset + limit);
             return {
               ...data,
@@ -1264,23 +1374,89 @@ export const UICustomizations = {
     additionalCustomizations: (row, key, column, value, t) => {
       switch (key) {
         case "PARTY_NAME":
-          return removeInvalidNameParts(value) || "N.A.";
+          return removeInvalidNameParts(value) || "";
+
+        case "ASSOCIATED_WITH":
+          const associatedWith = row?.partyType === "ADVOCATE" ? row?.representingList : "";
+          return associatedWith;
+        case "STATUS":
+          const caseJoinStatus = ["respondent.primary", "respondent.additional"].includes(row?.partyType)
+            ? t("JOINED")
+            : row?.partyType === "unJoinedAccused"
+            ? t("NOT_JOINED")
+            : ["complainant.primary", "complainant.additional"].includes(row?.partyType)
+            ? t("JOINED")
+            : ["ADVOCATE"].includes(row?.partyType)
+            ? t(row?.status)
+            : "";
+
+          return caseJoinStatus ? <span style={{ backgroundColor: "#E8E8E8", padding: "6px", borderRadius: "14px" }}>{caseJoinStatus}</span> : null;
+
         case "DATE_ADDED":
           const date = new Date(value);
           const day = date.getDate().toString().padStart(2, "0");
           const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Month is zero-based
           const year = date.getFullYear();
-          const formattedDate = `${day}-${month}-${year}`;
-          return <span>{formattedDate || "N.A."}</span>;
+          const formattedDate = value ? `${day}-${month}-${year}` : "";
+          return <span>{formattedDate}</span>;
         case "PARTY_TYPE":
-          return value === "ADVOCATE"
-            ? `${t("ADVOCATE")} (${t("CS_FOR")} ${row?.representingList})`
-            : partyTypes[value]
-            ? t(partyTypes[value])
-            : t(value);
+          const partyType = value === "ADVOCATE" ? `${t("ADVOCATE")}` : partyTypes[value] ? t(partyTypes[value]) : t(value);
+          return partyType === "unJoinedAccused" ? "Accused" : partyType;
+        case "ACTIONS":
+          return row?.isEditable ? (
+            <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center" }}>
+              <OverlayDropdown
+                styles={{
+                  width: "40px",
+                  height: "40px",
+                  rotate: "90deg",
+                  border: "1px solid #0A5757",
+                }}
+                textStyle={{
+                  color: "#0A5757",
+                }}
+                column={column}
+                row={row}
+                master="commonUiConfig"
+                module="PartiesConfig"
+              />
+            </div>
+          ) : null;
         default:
           break;
       }
+    },
+    dropDownItems: (row) => {
+      const userInfo = Digit.UserService.getUser()?.info;
+      const userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
+      const searchParams = new URLSearchParams();
+      const type = ["complainant.primary", "complainant.additional"].includes(row?.partyType) ? "complainantDetails" : "respondentDetails";
+      const uniqueId = ["complainant.primary", "complainant.additional"].includes(row?.partyType)
+        ? row?.individualId
+        : row?.partyType === "unJoinedAccused"
+        ? row?.uniqueId
+        : row?.individualId;
+      const caseId = row?.caseId;
+      const isAdvocate = row?.isAdvocateEditor;
+      const editorUuid = userInfo?.uuid;
+
+      return [
+        {
+          label: "EDIT_DETAILS",
+          id: "edit_details",
+          action: (history) => {
+            sessionStorage.setItem("viewCaseParams", window.location.search);
+            sessionStorage.setItem("editProfileAccess", "true");
+            searchParams.set("type", type);
+            searchParams.set("uniqueId", uniqueId);
+            searchParams.set("caseId", caseId);
+            searchParams.set("editorUuid", editorUuid);
+            searchParams.set("isAdvocate", isAdvocate);
+            sessionStorage.setItem("caseId", caseId);
+            history.push(`/${window.contextPath}/${userType}/dristi/home/view-case/edit-profile?${searchParams.toString()}`);
+          },
+        },
+      ];
     },
   },
   patternValidation: (key) => {
