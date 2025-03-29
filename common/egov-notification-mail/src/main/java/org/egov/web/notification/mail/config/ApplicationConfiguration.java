@@ -83,12 +83,6 @@ public class ApplicationConfiguration {
         mailSender.setProtocol(emailProperties.getMailProtocol());
         mailSender.setUsername(emailProperties.getMailSenderUsername());
         mailSender.setPassword(emailProperties.getMailSenderPassword());
-        final Properties mailProperties = new Properties();
-        mailProperties.setProperty("mail.smtp.auth", emailProperties.getMailSmtpsAuth());
-        mailProperties.setProperty("mail.smtp.ssl.enable", emailProperties.getMailSslEnable());
-        mailProperties.setProperty("mail.smtp.starttls.enable", emailProperties.getMailStartTlsEnable());
-        mailProperties.setProperty("mail.smtp.debug", emailProperties.getMailSmtpsDebug());
-        mailSender.setJavaMailProperties(mailProperties);
         return mailSender;
     }
 
@@ -111,28 +105,28 @@ public class ApplicationConfiguration {
     @Value("${egov.localization.host}")
     @Getter
     private String localizationHost;
-    
+
     @Value("${egov.localization.context.path}")
     @Getter
     private String localizationContextPath;
-    
+
     @Value("${egov.localization.search.endpoint}")
     @Getter
     private String localizationSearchEndpoint;
-    
+
 
     @Value("${egov.user.host}")
     @Getter
     private String userHost;
-    
+
     @Value("${egov.user.context.path}")
     @Getter
     private String userContextPath;
-    
+
     @Value("${egov.user.search.endpoint}")
     @Getter
     private String userSearchEndpoint;
-    
+
     @Value("${egov.user.state.tenant.id}")
     @Getter
     private String stateTenantId;
