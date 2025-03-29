@@ -210,8 +210,8 @@ const CaseOverview = ({
                     lineHeight: "24px",
                   }}
                 >
-                  {previousHearing?.[0]?.transcript.length
-                    ? previousHearing?.[0]?.transcript.map((transcript) => <div>{transcript}</div>)
+                  {previousHearing?.[0]?.transcript?.length
+                    ? previousHearing?.[0]?.transcript?.map((transcript) => <div>{transcript}</div>)
                     : "No Transcript available for this hearing"}
                 </div>
               </Card>

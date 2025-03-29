@@ -321,8 +321,6 @@ function BulkESignView() {
     }
   };
 
-  console.log("bulkSignList", bulkSignList);
-
   return (
     <React.Fragment>
       {isLoading ? (
@@ -336,7 +334,12 @@ function BulkESignView() {
           </div>
           <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
             <div style={{ width: "fit-content", display: "flex", gap: 20 }}>
-              <SubmitBar label={t("SIGN_SELECTED_ORDERS")} submit="submit" disabled={""} onSubmit={() => setShowBulkSignConfirmModal(true)} />
+              <SubmitBar
+                label={t("SIGN_SELECTED_ORDERS")}
+                submit="submit"
+                disabled={bulkSignList?.length === 0}
+                onSubmit={() => setShowBulkSignConfirmModal(true)}
+              />
             </div>
           </ActionBar>
         </React.Fragment>

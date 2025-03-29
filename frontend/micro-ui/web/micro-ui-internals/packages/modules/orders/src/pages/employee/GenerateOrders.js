@@ -12,7 +12,8 @@ import {
   configsBail,
   configsCaseSettlement,
   configsCaseTransfer,
-  configsCaseWithdrawal,
+  configsCaseWithdrawalAccept,
+  configsCaseWithdrawalReject,
   configsCreateOrderWarrant,
   configsInitiateRescheduleHearingDate,
   configsIssueNotice,
@@ -33,7 +34,6 @@ import {
   configsIssueBailReject,
   configsSetTermBail,
   configsAcceptRejectDelayCondonation,
-  configsAdmitDismissCase,
   configsAdmitCase,
   configsDismissCase,
   configsApproveRejectLitigantDetailsChange,
@@ -59,7 +59,6 @@ import useSearchOrdersService from "../../hooks/orders/useSearchOrdersService";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { getRespondantName, getComplainantName, constructFullName, removeInvalidNameParts, getFormattedName } from "../../utils";
 import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/Toast/useToast";
-import ErrorDataModal from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/ErrorDataModal";
 import CompositeOrdersErrorModal from "./CompositeOrdersErrorModal";
 import OrderItemDeleteModal from "./OrderItemDeleteModal";
 import TasksComponent from "../../../../home/src/components/TaskComponent";
@@ -71,8 +70,8 @@ import { getFullName } from "../../../../cases/src/utils/joinCaseUtils";
 export const compositeOrderAllowedTypes = [
   {
     key: "finalStageOrders",
-    orderTypes: ["REFERRAL_CASE_TO_ADR", "JUDGEMENT", "WITHDRAWAL", "SETTLEMENT", "CASE_TRANSFER", "DISMISS_CASE"],
-    unAllowedOrderTypes: ["REFERRAL_CASE_TO_ADR", "JUDGEMENT", "WITHDRAWAL", "SETTLEMENT", "CASE_TRANSFER", ""],
+    orderTypes: ["REFERRAL_CASE_TO_ADR", "JUDGEMENT", "WITHDRAWAL_ACCEPT", "SETTLEMENT", "CASE_TRANSFER", "DISMISS_CASE"],
+    unAllowedOrderTypes: ["REFERRAL_CASE_TO_ADR", "JUDGEMENT", "WITHDRAWAL_ACCEPT", "SETTLEMENT", "CASE_TRANSFER", ""],
   },
   {
     key: "schedule_Reschedule",
@@ -116,7 +115,8 @@ const configKeys = {
   NOTICE: configsIssueNotice,
   BAIL: configsBail,
   WARRANT: configsCreateOrderWarrant,
-  WITHDRAWAL: configsCaseWithdrawal,
+  WITHDRAWAL_ACCEPT: configsCaseWithdrawalAccept,
+  WITHDRAWAL_REJECT: configsCaseWithdrawalReject,
   OTHERS: configsOthers,
   APPROVE_VOLUNTARY_SUBMISSIONS: configsVoluntarySubmissionStatus,
   REJECT_VOLUNTARY_SUBMISSIONS: configRejectSubmission,
@@ -188,7 +188,8 @@ const stateSlaMap = {
   NOTICE: 3,
   BAIL: 3,
   WARRANT: 3,
-  WITHDRAWAL: 3,
+  WITHDRAWAL_ACCEPT: 3,
+  WITHDRAWAL_REJECT: 3,
   OTHERS: 3,
   APPROVE_VOLUNTARY_SUBMISSIONS: 3,
   REJECT_VOLUNTARY_SUBMISSIONS: 3,
@@ -1438,7 +1439,20 @@ const GenerateOrders = () => {
 
       // }
 
-      if (orderType === "WITHDRAWAL") {
+      if (orderType === "WITHDRAWAL_ACCEPT") {
+        if (newApplicationDetails?.applicationType === applicationTypes.WITHDRAWAL) {
+          updatedFormdata.applicationOnBehalfOf = newApplicationDetails?.additionalDetails?.onBehalOfName;
+          setValueRef?.current?.[index]?.("applicationOnBehalfOf", updatedFormdata.applicationOnBehalfOf);
+
+          updatedFormdata.partyType = t(newApplicationDetails?.additionalDetails?.partyType);
+          setValueRef?.current?.[index]?.("partyType", updatedFormdata.partyType);
+
+          updatedFormdata.reasonForWithdrawal = t(newApplicationDetails?.additionalDetails?.formdata?.reasonForWithdrawal?.code);
+          setValueRef?.current?.[index]?.("reasonForWithdrawal", updatedFormdata.reasonForWithdrawal);
+        }
+      }
+
+      if (orderType === "WITHDRAWAL_REJECT") {
         if (newApplicationDetails?.applicationType === applicationTypes.WITHDRAWAL) {
           updatedFormdata.applicationOnBehalfOf = newApplicationDetails?.additionalDetails?.onBehalOfName;
           setValueRef?.current?.[index]?.("applicationOnBehalfOf", updatedFormdata.applicationOnBehalfOf);
@@ -2004,10 +2018,10 @@ const GenerateOrders = () => {
         return "Bail";
       case "WARRANT":
         return `Issue ${t(currentOrder?.orderDetails?.warrantType)} to ${currentOrder?.orderDetails?.parties?.[0]?.partyName}`;
-      case "WITHDRAWAL":
-        return currentOrder?.orderDetails?.applicationStatus === "APPROVED"
-          ? "The application to withdraw the case has been accepted. Case closed"
-          : `The application to withdraw the case raised by ${applicationDetails?.additionalDetails?.owner} has been rejected`;
+      case "WITHDRAWAL_ACCEPT":
+        return "The application to withdraw the case has been accepted. Case closed";
+      case "WITHDRAWAL_REJECT":
+        return `The application to withdraw the case raised by ${applicationDetails?.additionalDetails?.owner} has been rejected`;
       case "OTHERS":
         return "Others";
       case "APPROVE_VOLUNTARY_SUBMISSIONS":
@@ -2160,6 +2174,9 @@ const GenerateOrders = () => {
                   ...(taskDetails && { taskDetails }),
                 },
               }),
+            ...((newHearingNumber || hearingNumber || hearingDetails?.hearingId) && {
+              hearingNumber: newHearingNumber || hearingNumber || hearingDetails?.hearingId,
+            }),
             documents: updatedDocuments,
             workflow: { ...order.workflow, action, documents: [{}] },
           },
@@ -2310,7 +2327,7 @@ const GenerateOrders = () => {
     let additionalDetails = {};
     let entityType = orderEntityType
       ? orderEntityType
-      : formdata?.isResponseRequired?.code === "Yes"
+      : formdata?.responseInfo?.isResponseRequired?.code === true
       ? "application-order-submission-feedback"
       : "application-order-submission-default";
     let status = taskStatus;
