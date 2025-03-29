@@ -3976,6 +3976,8 @@ public class CaseService {
             }
 
             hearingUtil.updateTranscriptAdditionalAttendees(hearingRequest);
+        }
+    }
 
     private void enrichAndCallEvidenceCreate(CourtCase courtCase, JoinCaseLitigant joinCaseLitigant, RequestInfo requestInfo) {
         if (joinCaseLitigant.getDocuments() != null && !joinCaseLitigant.getDocuments().isEmpty()) {
