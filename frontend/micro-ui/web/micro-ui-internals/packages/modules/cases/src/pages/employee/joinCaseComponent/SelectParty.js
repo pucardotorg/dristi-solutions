@@ -18,6 +18,7 @@ const SelectParty = ({
   isLitigantJoined,
   isAdvocateJoined,
   searchLitigantInRepresentives,
+  advocateId,
 }) => {
   const { t } = useTranslation();
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
@@ -342,7 +343,10 @@ const SelectParty = ({
                 <LabelFieldPair className="case-label-field-pair">
                   <CardLabel className="case-input-label">{`${t("WHICH_ADVOCATES_ARE_YOU_REPLACING")}`}</CardLabel>
                   <MultiSelectDropdown
-                    options={advocateToReplaceList}
+                    options={advocateToReplaceList?.map((advocate) => ({
+                      ...advocate,
+                      isDisabled: advocate?.advocateId === advocateId,
+                    }))}
                     selected={selectPartyData?.advocateToReplaceList}
                     optionsKey={"label"}
                     onSelect={(value) => {

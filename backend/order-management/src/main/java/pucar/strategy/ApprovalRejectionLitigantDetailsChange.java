@@ -38,14 +38,12 @@ public class ApprovalRejectionLitigantDetailsChange implements OrderUpdateStrate
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
-        log.info("does not support pre processing, orderType:{}", APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE);
 
         return false;
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
-        log.info("support post processing, orderType:{}", APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE);
         Order order = orderRequest.getOrder();
         return order.getOrderType() != null && APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE.equalsIgnoreCase(order.getOrderType());
     }

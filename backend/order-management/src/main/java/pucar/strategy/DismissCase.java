@@ -42,13 +42,11 @@ public class DismissCase implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
-        log.info("does not support pre processing, orderType:{}", DISMISS_CASE);
         return false;
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
-        log.info("support post processing, orderType:{}", DISMISS_CASE);
         Order order = orderRequest.getOrder();
         return order.getOrderType() != null && DISMISS_CASE.equalsIgnoreCase(order.getOrderType());
     }

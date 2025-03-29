@@ -1,6 +1,7 @@
 package pucar.strategy;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -46,13 +47,11 @@ public class Notice implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
-        log.info("does not support pre processing, orderType:{}", NOTICE);
         return false;
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
-        log.info("support post processing, orderType:{}", NOTICE);
         Order order = orderRequest.getOrder();
         return order.getOrderType() != null && NOTICE.equalsIgnoreCase(order.getOrderType());
     }
@@ -200,10 +199,13 @@ public class Notice implements OrderUpdateStrategy {
                 TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
 
                 // create pending task
+                String taskDetailString = objectMapper.writeValueAsString(taskDetail);
 
-                String channel = jsonUtil.getNestedValue(taskDetail, Arrays.asList("deliveryChannels", "channelCode"), String.class);
+                Map<String, Object> jsonMap = objectMapper.readValue(taskDetailString, new TypeReference<Map<String, Object>>() {
+                });
+                String channel = jsonUtil.getNestedValue(jsonMap, Arrays.asList("deliveryChannels", "channelCode"), String.class);
 
-                String name = pendingTaskUtil.getPendingTaskNameForSummonAndNotice(channel, order.getOrderType()) + channel;
+                String name = pendingTaskUtil.getPendingTaskNameForSummonAndNotice(channel, order.getOrderType());
                 String status = PAYMENT_PENDING + channel;
 
                 PendingTask pendingTask = PendingTask.builder()

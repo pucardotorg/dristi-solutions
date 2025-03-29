@@ -10,6 +10,7 @@ import OrderBulkReviewModal from "@egovernments/digit-ui-module-orders/src/pageC
 import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersService";
 import axios from "axios";
 import qs from "qs";
+import { HomeService } from "../../hooks/services";
 
 const parseXml = (xmlString, tagName) => {
   const parser = new DOMParser();
@@ -129,18 +130,6 @@ function BulkESignView() {
   }, [showErrorToast]);
 
   const config = useMemo(() => {
-    const ordersSetFunc = async (orderList, checked) => {
-      const updatedData = orderList
-        ?.filter((data) => data?.businessObject?.orderNotification?.status === OrderWorkflowState.PENDING_BULK_E_SIGN)
-        ?.map((item) => {
-          return {
-            ...item,
-            isSelected: checked,
-          };
-        });
-      setBulkSignList(updatedData);
-    };
-
     const updateOrderFunc = async (orderData, checked) => {
       setBulkSignList((prev) => {
         return prev?.map((item, i) => {
@@ -190,7 +179,6 @@ function BulkESignView() {
               return column.label === "SELECT"
                 ? {
                     ...column,
-                    ordersSetFunc: ordersSetFunc,
                     updateOrderFunc: updateOrderFunc,
                   }
                 : column.label === "TITLE"
@@ -210,6 +198,48 @@ function BulkESignView() {
       },
     };
   }, [history, tenantId, userType]);
+
+  const onFormValueChange = async (form) => {
+    if (Object.keys(form?.searchForm)?.length > 0) {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const entityType = "Order";
+      const caseTitle = form?.searchForm?.caseTitle;
+      const status = form?.searchForm?.status;
+      const startOfTheDay = form?.searchForm?.startOfTheDay;
+      const moduleSearchCriteria = {
+        entityType,
+        tenantId,
+        ...(caseTitle && { caseTitle }),
+        ...(Object.keys(status || {})?.length > 0 && { status: status?.code ? [status?.code] : status }),
+        ...(startOfTheDay && {
+          startOfTheDay: new Date(startOfTheDay + "T00:00:00").getTime(),
+          endOfTheDay: new Date(startOfTheDay + "T23:59:59.999").getTime(),
+        }),
+      };
+      await HomeService.customApiService(bulkESignOrderConfig?.apiDetails?.serviceName, {
+        inbox: {
+          limit: form?.tableForm?.limit,
+          offset: form?.tableForm?.offset,
+          tenantId: tenantId,
+          moduleSearchCriteria: moduleSearchCriteria,
+          processSearchCriteria: {
+            businessService: ["notification"],
+            moduleName: "Transformer service",
+          },
+        },
+      }).then((response) => {
+        const updatedData = response?.items
+          ?.filter((data) => data?.businessObject?.orderNotification?.status === OrderWorkflowState.PENDING_BULK_E_SIGN)
+          ?.map((item) => {
+            return {
+              ...item,
+              isSelected: true,
+            };
+          });
+        setBulkSignList(updatedData);
+      });
+    }
+  };
 
   const handleDeleteOrder = async (action) => {
     setIsDeleteOrderLoading(true);
@@ -330,14 +360,14 @@ function BulkESignView() {
           <ProjectBreadCrumb location={window.location} />
           <div className={"bulk-esign-order-view"}>
             <div className="header">{t("BULK_SIGN_ORDERS")}</div>
-            <InboxSearchComposer customStyle={sectionsParentStyle} configs={config} showTab={true}></InboxSearchComposer>{" "}
+            <InboxSearchComposer customStyle={sectionsParentStyle} configs={config} onFormValueChange={onFormValueChange}></InboxSearchComposer>{" "}
           </div>
           <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
             <div style={{ width: "fit-content", display: "flex", gap: 20 }}>
               <SubmitBar
                 label={t("SIGN_SELECTED_ORDERS")}
                 submit="submit"
-                disabled={bulkSignList?.length === 0}
+                disabled={!bulkSignList || bulkSignList?.length === 0 || bulkSignList?.every((item) => !item?.isSelected)}
                 onSubmit={() => setShowBulkSignConfirmModal(true)}
               />
             </div>

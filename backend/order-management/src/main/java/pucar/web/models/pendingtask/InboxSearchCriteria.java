@@ -6,25 +6,28 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.NotNull;
 import java.util.HashMap;
 
 @Data
-@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class IndexSearchCriteria {
+@Builder
+public class InboxSearchCriteria {
+
+
     @NotNull
     @JsonProperty("tenantId")
     private String tenantId;
 
-    @NotNull
-    @JsonProperty("moduleName")
-    private String moduleName;
+    @Valid
+    @JsonProperty("processSearchCriteria")
+    private ProcessInstanceSearchCriteria processSearchCriteria;
 
     @JsonProperty("moduleSearchCriteria")
-    private HashMap<String, Object> moduleSearchCriteria;
+    private HashMap<String,Object> moduleSearchCriteria;
 
     @JsonProperty("offset")
     private Integer offset;
