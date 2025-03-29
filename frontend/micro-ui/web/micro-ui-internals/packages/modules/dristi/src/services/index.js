@@ -43,6 +43,14 @@ export const DRISTIService = {
       data,
       params,
     }),
+  searchEmployeeUser: (data, params) =>
+    Request({
+      url: Urls.dristi.searchEmployee,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
 
   advocateClerkService: (url, data, tenantId, userService = false, additionInfo) =>
     Request({

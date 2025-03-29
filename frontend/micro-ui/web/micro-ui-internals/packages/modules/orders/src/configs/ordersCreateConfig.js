@@ -2939,6 +2939,106 @@ export const configsCaseWithdrawal = [
   },
 ];
 
+export const configsCaseWithdrawalAccept = [
+  {
+    body: [
+      {
+        label: "REF_APPLICATION_ID",
+        isMandatory: false,
+        key: "refApplicationId",
+        disable: true,
+        type: "text",
+        populators: { name: "refApplicationId" },
+      },
+      {
+        label: "APPLICATION_STATUS",
+        isMandatory: false,
+        key: "applicationStatus",
+        schemaKeyPath: "orderDetails.applicationStatus",
+        disable: true,
+        type: "text",
+        populators: { name: "applicationStatus" },
+      },
+      {
+        label: "APPLICATION_ON_BEHALF_OF",
+        isMandatory: false,
+        key: "applicationOnBehalfOf",
+        schemaKeyPath: "orderDetails.appFilledOnBehalfOf",
+        disable: true,
+        type: "text",
+        populators: { name: "applicationOnBehalfOf" },
+      },
+      {
+        label: "PARTY_TYPE",
+        isMandatory: false,
+        key: "partyType",
+        schemaKeyPath: "orderDetails.partyType",
+        disable: true,
+        type: "text",
+        populators: { name: "partyType" },
+      },
+      {
+        label: "REASON_FOR_WITHDRAWAL",
+        isMandatory: false,
+        key: "reasonForWithdrawal",
+        disable: true,
+        type: "text",
+        populators: { name: "reasonForWithdrawal" },
+      },
+    ],
+  },
+];
+
+export const configsCaseWithdrawalReject = [
+  {
+    body: [
+      {
+        label: "REF_APPLICATION_ID",
+        isMandatory: false,
+        key: "refApplicationId",
+        disable: true,
+        type: "text",
+        populators: { name: "refApplicationId" },
+      },
+      {
+        label: "APPLICATION_STATUS",
+        isMandatory: false,
+        key: "applicationStatus",
+        schemaKeyPath: "orderDetails.applicationStatus",
+        disable: true,
+        type: "text",
+        populators: { name: "applicationStatus" },
+      },
+      {
+        label: "APPLICATION_ON_BEHALF_OF",
+        isMandatory: false,
+        key: "applicationOnBehalfOf",
+        schemaKeyPath: "orderDetails.appFilledOnBehalfOf",
+        disable: true,
+        type: "text",
+        populators: { name: "applicationOnBehalfOf" },
+      },
+      {
+        label: "PARTY_TYPE",
+        isMandatory: false,
+        key: "partyType",
+        schemaKeyPath: "orderDetails.partyType",
+        disable: true,
+        type: "text",
+        populators: { name: "partyType" },
+      },
+      {
+        label: "REASON_FOR_WITHDRAWAL",
+        isMandatory: false,
+        key: "reasonForWithdrawal",
+        disable: true,
+        type: "text",
+        populators: { name: "reasonForWithdrawal" },
+      },
+    ],
+  },
+];
+
 export const configsOthers = [
   {
     body: [
