@@ -3251,7 +3251,6 @@ public class CaseService {
             log.error("no case found for the given criteria");
         } else {
             CourtCase courtCase = courtCaseList.get(0);
-            courtCase = encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, taskRequest.getRequestInfo());
             // get the pending requests of advocates in the case
             List<PendingAdvocateRequest> pendingAdvocateRequests = courtCase.getPendingAdvocateRequests();
             JoinCaseTaskRequest joinCaseRequest = objectMapper.convertValue(task.getTaskDetails(), JoinCaseTaskRequest.class);
