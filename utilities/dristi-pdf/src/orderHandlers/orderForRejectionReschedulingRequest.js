@@ -139,7 +139,8 @@ const orderForRejectionReschedulingRequest = async (
           reasonForRescheduling,
           originalHearingDate,
           date: formattedToday,
-          additionalComments: order.comments,
+          additionalComments:
+            order?.additionalDetails?.formdata?.comments?.text || "",
           judgeSignature: judgeDetails.judgeSignature,
           designation: judgeDetails.designation,
           courtSeal: judgeDetails.courtSeal,

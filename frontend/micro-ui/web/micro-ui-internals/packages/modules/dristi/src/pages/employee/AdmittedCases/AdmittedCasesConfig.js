@@ -477,7 +477,7 @@ export const TabSearchconfig = {
                     moduleName: "Evidence",
                     localePrefix: "EVIDENCE_TYPE",
                     select:
-                      "(data) => {return data['Evidence'].EvidenceType?.map((item) => {return { ...item, name: item.subtype && item.subtype !== '' ? `${item.type}_${item.subtype}` : item.type };});}",
+                      "(data) => {return data['Evidence'].EvidenceType?.map((item) => {return { ...item, name: item.subtype && item.subtype.trim() !== '' ? `${item.type}_${item.subtype}` : item.type };});}",
                     // localePrefix: "SUBMISSION_TYPE",
                   },
                 },
@@ -548,6 +548,11 @@ export const TabSearchconfig = {
                 jsonPath: "artifactNumber",
               },
               {
+                label: "EVIDENCE_NUMBER",
+                jsonPath: "evidenceNumber",
+                additionalCustomization: true,
+              },
+              {
                 label: "TYPE",
                 additionalCustomization: true,
               },
@@ -558,12 +563,13 @@ export const TabSearchconfig = {
               {
                 label: "OWNER",
                 jsonPath: "owner",
-              },
-              {
-                label: "FILE",
-                jsonPath: "file",
                 additionalCustomization: true,
               },
+              // {
+              //   label: "FILE",
+              //   jsonPath: "file",
+              //   additionalCustomization: true,
+              // },
               {
                 label: "CS_ACTIONS",
                 additionalCustomization: true,
@@ -707,8 +713,23 @@ export const TabSearchconfig = {
                 additionalCustomization: true,
               },
               {
+                label: "ASSOCIATED_WITH",
+                jsonPath: "",
+                additionalCustomization: true,
+              },
+              {
+                label: "STATUS",
+                jsonPath: "",
+                additionalCustomization: true,
+              },
+              {
                 label: "DATE_ADDED",
                 jsonPath: "auditDetails.createdTime",
+                additionalCustomization: true,
+              },
+              {
+                label: "ACTIONS",
+                jsonPath: "",
                 additionalCustomization: true,
               },
             ],

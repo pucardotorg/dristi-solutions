@@ -3,6 +3,8 @@ import Axios from "axios";
 import React, { useMemo, useState } from "react";
 import LocationSearch from "./LocationSearch";
 import { generateUUID, formatAddress } from "../Utils";
+import SelectCustomNote from "./SelectCustomNote";
+import { Controller } from "react-hook-form";
 
 const getLocation = (places, code) => {
   let location = null;
@@ -171,6 +173,19 @@ const SelectComponents = ({ t, config, onSelect, formData = {}, errors, formStat
     } else {
       onSelect(`${configKey}.${input}`, value, { shouldValidate: true });
       onSelect(config.key, { ...formData?.[config.key], [input]: value }, { shouldValidate: true });
+      onSelect("complainantVerification", {
+        ...formData?.["complainantVerification"],
+        individualDetails: {
+          ...formData?.["complainantVerification"]?.individualDetails,
+          "addressDetails-select": { ...formData?.["addressDetails-select"], [input]: value },
+          addressDetails: {
+            ...formData?.["addressDetails"],
+            [input]: value,
+            coordinates: formData?.["addressDetails"]?.coordinates ? formData["addressDetails"].coordinates : { longitude: "", latitude: "" },
+          },
+        },
+        isUserVerified: true,
+      });
     }
   }
 
@@ -180,6 +195,8 @@ const SelectComponents = ({ t, config, onSelect, formData = {}, errors, formStat
   };
   return (
     <div>
+      {config?.notes && <SelectCustomNote t={t} config={config?.notes} onClick={() => {}} />}
+      <br></br>
       {inputs?.map((input, index) => {
         let currentValue = (formData && formData[configKey] && formData[configKey][input.name]) || "";
         let isFirstRender = true;
@@ -258,21 +275,28 @@ const SelectComponents = ({ t, config, onSelect, formData = {}, errors, formStat
                   />
                 ) : (
                   <React.Fragment>
-                    <TextInput
-                      className="field desktop-w-full"
+                    <Controller
+                      control={control}
                       name={`${configKey}.${input.name}`}
-                      inputRef={register({
+                      rules={{
                         required: input.isMandatory,
                         ...input.validation,
-                      })}
-                      onChange={(e) => {
-                        let value = e.target.value;
-                        if (input?.isFormatRequired) {
-                          value = formatAddress(value);
-                        }
-                        setValue(value, input.name, input?.autoFill);
                       }}
-                      disable={input.isDisabled || config?.disable}
+                      render={({ field }) => (
+                        <TextInput
+                          className="field desktop-w-full"
+                          {...field}
+                          value={watch(`${configKey}.${input.name}`)}
+                          onChange={(e) => {
+                            let value = e.target.value;
+                            if (input?.isFormatRequired) {
+                              value = formatAddress(value);
+                            }
+                            setValue(value, input.name, input?.autoFill);
+                          }}
+                          disable={input.isDisabled || config?.disable}
+                        />
+                      )}
                     />
                   </React.Fragment>
                 )}

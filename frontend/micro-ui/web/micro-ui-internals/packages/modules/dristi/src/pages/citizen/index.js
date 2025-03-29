@@ -11,6 +11,7 @@ import LandingPage from "./Home/LandingPage";
 import { newConfig, userTypeOptions } from "./registration/config";
 import Breadcrumb from "../../components/BreadCrumb";
 import SelectEmail from "./registration/SelectEmail";
+import ViewCase from "./view-case";
 
 const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   const [hideBack, setHideBack] = useState(false);
@@ -104,9 +105,16 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
       isLast: false,
     },
     {
-      path: `${path}/view-case`,
+      path: `${path}/home/view-case`,
       content: t("VIEW_CASE"),
       show: location.pathname.includes("/view-case"),
+      isLast: !location.pathname.includes("/edit-profile"),
+      query: location?.search || "",
+    },
+    {
+      path: `${path}/home/view-case/edit-profile`,
+      content: t("EDIT_LITIGANT_DETAILS"),
+      show: location.pathname.includes("/edit-profile"),
       isLast: true,
     },
   ];
@@ -149,7 +157,6 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     localStorage.setItem("isSignSuccess", result);
   }
   if (fileStoreId) {
-    console.log(fileStoreId, "fileStoreId");
     localStorage.setItem("fileStoreId", fileStoreId);
   }
   if (isUserLoggedIn && retrievedObject) {
@@ -200,7 +207,9 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
             </PrivateRoute>
           </div>
 
-          <PrivateRoute exact path={`${path}/home/view-case`} component={(props) => <AdmittedCases isJudge={false} />} />
+          <PrivateRoute path={`${path}/home/view-case`}>
+            <ViewCase />
+          </PrivateRoute>
           <div
             className={
               location.pathname.includes("/response") ||

@@ -16,11 +16,12 @@ import DocViewerWrapper from "../docViewerWrapper";
 import SelectCustomDocUpload from "../../../components/SelectCustomDocUpload";
 import ESignSignatureModal from "../../../components/ESignSignatureModal";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
-import { cleanString, getDate, removeInvalidNameParts } from "../../../Utils";
+import { cleanString, getDate, modifiedEvidenceNumber, removeInvalidNameParts } from "../../../Utils";
 import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/useGetAllOrderApplicationRelatedDocuments";
 import { useToast } from "../../../components/Toast/useToast";
 import Button from "../../../components/Button";
 import { compositeOrderAllowedTypes } from "@egovernments/digit-ui-module-orders/src/pages/employee/GenerateOrders";
+import useSearchEvidenceService from "../../../../../submissions/src/hooks/submissions/useSearchEvidenceService";
 
 const stateSla = {
   DRAFT_IN_PROGRESS: 2,
@@ -524,6 +525,23 @@ const EvidenceModal = ({
     counterUpdate();
   };
 
+  const artifactNumber = documentSubmission?.[0]?.artifactList?.artifactNumber;
+  const { data: evidenceData, isloading: isEvidenceLoading, refetch: evidenceRefetch } = useSearchEvidenceService(
+    {
+      criteria: {
+        filingNumber,
+        artifactNumber,
+        tenantId,
+      },
+      tenantId,
+    },
+    {},
+    artifactNumber,
+    Boolean(artifactNumber)
+  );
+
+  const evidenceDetails = useMemo(() => evidenceData?.artifacts?.[0], [evidenceData]);
+
   const handleEvidenceAction = async () => {
     if (businessOfTheDay) {
       setIsSubmitDisabled(true);
@@ -538,6 +556,15 @@ const EvidenceModal = ({
       );
       const nextHearing = response?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
       const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
+      let evidenceReqBody = {};
+      let evidence = {};
+      evidenceReqBody = {
+        artifact: {
+          ...evidenceDetails,
+          publishedDate: new Date().getTime(),
+        },
+      };
+      await DRISTIService.updateEvidence(evidenceReqBody);
       await DRISTIService.addADiaryEntry(
         {
           diaryEntry: {
@@ -570,7 +597,7 @@ const EvidenceModal = ({
       case "RE_SCHEDULE":
         return type === "reject" ? "REJECTION_RESCHEDULE_REQUEST" : "INITIATING_RESCHEDULING_OF_HEARING_DATE";
       case "WITHDRAWAL":
-        return "WITHDRAWAL";
+        return type === "reject" ? "WITHDRAWAL_REJECT" : "WITHDRAWAL_ACCEPT";
       case "TRANSFER":
         return "CASE_TRANSFER";
       case "SETTLEMENT":
@@ -598,7 +625,7 @@ const EvidenceModal = ({
       case "RE_SCHEDULE":
         return type === "reject" ? "REJECTION_ORDER_RESCHEDULE_REQUEST" : "ORDER_FOR_INITIATING_RESCHEDULING_OF_HEARING_DATE";
       case "WITHDRAWAL":
-        return "ORDER_FOR_WITHDRAWAL";
+        return type === "reject" ? "ORDER_FOR_ACCEPT_WITHDRAWAL" : "ORDER_FOR_REJECT_WITHDRAWAL";
       case "TRANSFER":
         return "ORDER_FOR_CASE_TRANSFER";
       case "SETTLEMENT":
@@ -1357,6 +1384,7 @@ const EvidenceModal = ({
       </style>
       {!showConfirmationModal && !showSuccessModal && (
         <Modal
+          hideModalActionbar={actionSaveLabel === t("UNMARK_AS_EVIDENCE")}
           headerBarEnd={<CloseBtn onClick={handleBack} />}
           actionSaveLabel={actionSaveLabel}
           actionSaveOnSubmit={actionSaveOnSubmit}
@@ -1437,16 +1465,33 @@ const EvidenceModal = ({
                       <h3>
                         {currentDiaryEntry && artifact
                           ? t(getDate(parseInt(artifact?.createdDate)))
-                          : documentSubmission[0]?.details.applicationSentOn}
+                          : documentSubmission[0]?.details?.applicationSentOn}
                       </h3>
                     </div>
                   </div>
+                  {!(
+                    documentSubmission[0]?.artifactList?.publishedDate === 0 || documentSubmission[0]?.artifactList?.publishedDate === undefined
+                  ) && (
+                    <div className="info-row">
+                      <div className="info-key">
+                        <h3>{t("DATE_OF_EVIDENCE")}</h3>
+                      </div>
+                      <div className="info-value">
+                        <h3>
+                          {currentDiaryEntry && artifact
+                            ? t(getDate(parseInt(artifact?.publishedDate)))
+                            : t(getDate(parseInt(documentSubmission[0]?.artifactList?.publishedDate)))}
+                        </h3>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="info-row">
                     <div className="info-key">
                       <h3>{t("SENDER")}</h3>
                     </div>
                     <div className="info-value">
-                      <h3>{currentDiaryEntry && artifact ? artifact?.sender : removeInvalidNameParts(documentSubmission[0]?.details.sender)}</h3>
+                      <h3>{currentDiaryEntry && artifact ? artifact?.sender : removeInvalidNameParts(documentSubmission[0]?.details?.sender)}</h3>
                     </div>
                   </div>
                   <div className="info-row">

@@ -7,9 +7,11 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.producer.Producer;
 import org.egov.transformer.config.TransformerProperties;
 import org.egov.transformer.event.EventListener;
+import org.egov.transformer.models.CourtCase;
 import org.egov.transformer.models.Order;
 import org.egov.transformer.models.OrderAndNotification;
 import org.egov.transformer.models.OrderNotificationRequest;
+import org.egov.transformer.service.CaseService;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,21 +28,25 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
     private final Producer producer;
     private final TransformerProperties properties;
     private final ObjectMapper objectMapper;
+    private final CaseService caseService;
 
     @Autowired
-    public OrderImpl(Producer producer, TransformerProperties properties, ObjectMapper objectMapper) {
+    public OrderImpl(Producer producer, TransformerProperties properties, ObjectMapper objectMapper, CaseService caseService) {
         this.producer = producer;
         this.properties = properties;
         this.objectMapper = objectMapper;
+        this.caseService = caseService;
     }
 
     @Override
     public void process(Order event, RequestInfo requestInfo) {
 
+        CourtCase courtCase = caseService.getCase(event.getFilingNumber(), event.getTenantId(), requestInfo);
+
         OrderAndNotification orderAndNotification = OrderAndNotification.builder()
                 .type(COMPOSITE.equalsIgnoreCase(event.getOrderCategory()) ? event.getOrderCategory() : event.getOrderType())  // if its composite then order type is order category
                 .id(event.getOrderNumber())
-                .courtId(null)  // no court id
+                .courtId(courtCase.getCourtId())  // no court id
                 .parties(getParties(event))
                 .status(event.getStatus())
                 .date((event.getCreatedDate() == null) ? null : Long.valueOf(event.getCreatedDate()))
@@ -49,7 +55,10 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
                 .tenantId(event.getTenantId())
                 .filingNumbers(event.getFilingNumber() != null ? Collections.singletonList(event.getFilingNumber()) : new ArrayList<>())
                 .caseNumbers(event.getFilingNumber() != null ? Collections.singletonList(event.getFilingNumber()) : new ArrayList<>())
-                .judgeIds(new ArrayList<>())  /// there is judge id in issued by but its UUID
+                .judgeIds(new ArrayList<>())/// there is judge id in issued by but its UUID
+                .documents(event.getDocuments())
+                .createdTime(event.getAuditDetails().getCreatedTime())
+                .caseTitle(enrichCaseTitle(courtCase))
                 .build();
 
         OrderNotificationRequest request = OrderNotificationRequest.builder()
@@ -116,5 +125,11 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
         } catch (JSONException e) {
             return false;
         }
+    }
+
+    private String enrichCaseTitle(CourtCase courtCase) {
+        return (courtCase.getCourtCaseNumber() != null && !courtCase.getCourtCaseNumber().isEmpty())
+                ? courtCase.getCaseTitle() + " , " + courtCase.getCourtCaseNumber()
+                : courtCase.getCaseTitle() + " , " + courtCase.getCmpNumber();
     }
 }

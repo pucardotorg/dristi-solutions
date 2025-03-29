@@ -69,6 +69,7 @@ class CaseRowMapperTest {
 
         when(rs.getObject("additionalDetails")).thenReturn(null);
         when(rs.getObject("casedetails")).thenReturn(null);
+        when(rs.getString("pendingadvocaterequests")).thenReturn("[]");
 
         List<CourtCase> cases = rowMapper.extractData(rs);
 

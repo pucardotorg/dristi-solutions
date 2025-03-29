@@ -164,9 +164,11 @@ async function orderRejectCheckout(req, res, qrCode, order, compositeOrder) {
           reasonForRescheduling,
           originalHearingDate,
           applicationId: application?.applicationNumber,
-          content: order?.comments || "",
-          additionalDetails: order?.comments || "",
-          additionalComments: order?.comments || "",
+          content: order?.additionalDetails?.formdata?.comments?.text || "",
+          additionalDetails:
+            order?.additionalDetails?.formdata?.comments?.text || "",
+          additionalComments:
+            order?.additionalDetails?.formdata?.comments?.text || "",
           judgeSignature: judgeDetails.judgeSignature,
           judgeName: judgeDetails.name,
           courtSeal: judgeDetails.courtSeal,

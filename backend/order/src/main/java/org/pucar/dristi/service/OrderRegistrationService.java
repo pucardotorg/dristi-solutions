@@ -317,6 +317,13 @@ public class OrderRegistrationService {
                     .submissionDate(formData.has("submissionDeadline") ? formData.get("submissionDeadline").asText() : "")
                     .tenantId(orderRequest.getOrder().getTenantId()).build();
 
+            if (receiver.equalsIgnoreCase(RESPONDENT)) {
+                JsonNode respondentDetails = caseDetails.get("additionalDetails").get("respondentDetails").get("formdata");
+                for (int i = 0 ; i < respondentDetails.size() ; i++) {
+                    phonenumbers.add(respondentDetails.get(i).get("data").get("phonenumbers").get("mobileNumber").get(0).textValue());
+                }
+            }
+
             for (String number : phonenumbers) {
                 notificationService.sendNotification(orderRequest.getRequestInfo(), smsTemplateData, messageCode, number);
             }

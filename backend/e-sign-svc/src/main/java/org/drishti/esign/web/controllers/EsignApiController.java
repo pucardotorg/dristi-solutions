@@ -9,13 +9,12 @@ import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.drishti.esign.service.ESignService;
 import org.drishti.esign.util.ResponseInfoFactory;
-import org.drishti.esign.web.models.ESignRequest;
-import org.drishti.esign.web.models.ESignResponse;
-import org.drishti.esign.web.models.ESignXmlForm;
-import org.drishti.esign.web.models.SignDocRequest;
+import org.drishti.esign.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 
 @jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2024-06-19T13:37:37.165763478+05:30[Asia/Kolkata]")
@@ -48,6 +47,16 @@ public class EsignApiController {
         String fileStoreId = eSignService.signDocWithDigitalSignature(request);
         log.info("api=/v1/_signed, result = SUCCESS");
         return ResponseEntity.accepted().body(fileStoreId);
+    }
+
+
+    @PostMapping("/v1/_getLocation")
+    public ResponseEntity<CoordinateResponse> getLocation(@Parameter(in = ParameterIn.DEFAULT, description = "ESign Doc Details and Request Info", required = true, schema = @Schema()) @Valid @RequestBody CoordinateRequest request) {
+        log.info("api=/v1/_getLocation, result = IN_PROGRESS");
+        List<Coordinate> coordinates = eSignService.getLocation(request);
+        CoordinateResponse response = CoordinateResponse.builder().responseInfo(ResponseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true)).coordinates(coordinates).build();
+        log.info("api=/v1/_getLocation, result = SUCCESS");
+        return ResponseEntity.accepted().body(response);
     }
 
 

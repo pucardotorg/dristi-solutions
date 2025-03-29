@@ -155,14 +155,14 @@ import static org.mockito.Mockito.*;
         listAdvocates.add(advocate3);
 
         // Mock queryBuilder methods
-        when(queryBuilder.getAdvocateSearchQueryByStatus(anyString(), anyList(), anyList(),anyString(), anyInt(), anyInt())).thenReturn("testAdvocateQuery");
+        when(queryBuilder.getAdvocateSearchQueryByStatus(any(),anyString(), anyList(), anyList(),anyString(), anyInt(), anyInt())).thenReturn("testAdvocateQuery");
         when(queryBuilder.getDocumentSearchQuery(anyList(), anyList(),anyList())).thenReturn("testDocumentQuery");
 
         when(jdbcTemplate.query(anyString(), any(Object[].class), any(),any(AdvocateRowMapper.class))).thenReturn(listAdvocates);
         when(jdbcTemplate.query(anyString(), any(Object[].class),any(), any(AdvocateDocumentRowMapper.class))).thenReturn(Collections.emptyMap());
 
         // Act
-        List<Advocate> result = advocateRepository.getListApplicationsByStatus(status, tenantId, limit, offset);
+        List<Advocate> result = advocateRepository.getListApplicationsByStatus(null, status, tenantId, limit, offset);
 
         // Assert
         assertNotNull(result);
@@ -194,14 +194,14 @@ import static org.mockito.Mockito.*;
         advocate3.setId(UUID.fromString("681230cd-702d-4add-b5e4-f97e71d9b622"));
 
         // Mock queryBuilder methods
-        when(queryBuilder.getAdvocateSearchQueryByStatus(anyString(), anyList(),anyList(), anyString(), anyInt(), anyInt())).thenReturn("testAdvocateQuery");
+        when(queryBuilder.getAdvocateSearchQueryByStatus(any(), anyString(), anyList(),anyList(), anyString(), anyInt(), anyInt())).thenReturn("testAdvocateQuery");
         when(queryBuilder.getDocumentSearchQuery(anyList(), anyList(),any())).thenReturn("testDocumentQuery");
 
         when(jdbcTemplate.query(anyString(), any(Object[].class), any(),any(AdvocateRowMapper.class))).thenReturn(listAdvocates);
         when(jdbcTemplate.query(anyString(), any(Object[].class),any(), any(AdvocateDocumentRowMapper.class))).thenReturn(Collections.emptyMap());
 
         // Act
-        List<Advocate> result = advocateRepository.getListApplicationsByStatus(status, tenantId, limit, offset);
+        List<Advocate> result = advocateRepository.getListApplicationsByStatus(null, status, tenantId, limit, offset);
 
         // Assert
         assertNotNull(result);
@@ -321,9 +321,9 @@ import static org.mockito.Mockito.*;
         listAdvocates.add(advocate3);
 
         // Mock queryBuilder methods
-        when(queryBuilder.getAdvocateSearchQueryByStatus(anyString(), anyList(), any(),anyString(), anyInt(), anyInt())).thenThrow(new RuntimeException());
+        when(queryBuilder.getAdvocateSearchQueryByStatus(anyString(), anyString(), anyList(), any(),anyString(), anyInt(), anyInt())).thenThrow(new RuntimeException());
 
-        assertThrows(Exception.class, () -> advocateRepository.getListApplicationsByStatus(status, tenantId, limit, offset));
+        assertThrows(Exception.class, () -> advocateRepository.getListApplicationsByStatus(null, status, tenantId, limit, offset));
     }
 
     @Test
@@ -354,9 +354,9 @@ import static org.mockito.Mockito.*;
         listAdvocates.add(advocate3);
 
         // Mock queryBuilder methods
-        when(queryBuilder.getAdvocateSearchQueryByStatus(anyString(), anyList(),any(), anyString(), anyInt(), anyInt())).thenThrow(new CustomException());
+        when(queryBuilder.getAdvocateSearchQueryByStatus(anyString(), anyString(), anyList(),any(), anyString(), anyInt(), anyInt())).thenThrow(new CustomException());
 
-        assertThrows(CustomException.class, () -> advocateRepository.getListApplicationsByStatus(status, tenantId, limit, offset));
+        assertThrows(CustomException.class, () -> advocateRepository.getListApplicationsByStatus(null, status, tenantId, limit, offset));
     }
 
     @Test

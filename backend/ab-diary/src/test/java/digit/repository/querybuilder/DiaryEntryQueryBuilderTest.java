@@ -26,7 +26,7 @@ class DiaryEntryQueryBuilderTest {
     private List<Object> preparedStatementValues;
     private List<Integer> preparedStatementTypeValues;
     private static final String BASE_QUERY = "SELECT dde.id as id,dde.tenant_id as tenantId,dde.case_number as caseNumber,dde.judge_id as judgeId, " +
-            "dde.entry_date as entryDate,dde.businessOfDay as businessOfDay,dde.reference_id as referenceId,dde.reference_type as referenceType," +
+            "dde.entry_date as entryDate,dde.businessOfDay as businessOfDay,dde.reference_id as referenceId,dde.reference_type as referenceType,dde.case_id as caseId, " +
             "dde.hearingDate as hearingDate,dde.additional_details as additionalDetails,dde.created_by as createdBy,dde.last_modified_by as lastModifiedBy," +
             "dde.created_time as createdTime,dde.last_modified_time as lastModifiedTime FROM dristi_diaryentries dde";
 

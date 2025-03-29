@@ -9,6 +9,7 @@ const {
 } = require("../api");
 const { renderError } = require("../utils/renderError");
 const { handleApiCall } = require("../utils/handleApiCall");
+const { formatDate } = require("./formatDate");
 
 async function summonsIssue(req, res, qrCode, order, compositeOrder) {
   const cnrNumber = req.query.cnrNumber;
@@ -84,14 +85,10 @@ async function summonsIssue(req, res, qrCode, order, compositeOrder) {
     //     renderError(res, "Court establishment MDMS master not found", 404);
     // }
 
-    // Search for hearing details
-    const resHearing = await handleApiCall(
-      res,
-      () => search_hearing(tenantId, cnrNumber, requestInfo),
-      "Failed to query hearing service"
-    );
-    const hearing = resHearing?.data?.HearingList[0];
-    if (!hearing) {
+    const hearingDate = order?.orderDetails?.hearingDate
+      ? formatDate(new Date(order?.orderDetails?.hearingDate))
+      : "";
+    if (!hearingDate) {
       renderError(res, "Hearing not found", 404);
     }
 
@@ -144,8 +141,9 @@ async function summonsIssue(req, res, qrCode, order, compositeOrder) {
           caseName: courtCase.caseTitle,
           respondentName: order.orderDetails.respondentName,
           date: Date.now(),
-          hearingDate: hearing.startTime,
-          additionalComments: order.comments,
+          hearingDate: hearingDate,
+          additionalComments:
+            order?.additionalDetails?.formdata?.comments?.text || "",
           judgeName: judgeDetails.name,
           judgeSignature: judgeDetails.judgeSignature,
           courtSeal: judgeDetails.courtSeal,

@@ -24,8 +24,13 @@ export const Urls = {
   Task: {
     uploadDoc: "/task/v1/uploadDocument",
     updateTask: "/task/v1/update",
+    search: "/task/v1/search",
   },
   SBIPayment: {
     payment: "/sbi-backend/payment/v1/_processTransaction",
+  },
+  orderManagement: {
+    getOrdersToSign: "/order-management/v1/_getOrdersToSign",
+    updateSignedOrders: "/order-management/v1/_updateSignedOrders",
   },
 };

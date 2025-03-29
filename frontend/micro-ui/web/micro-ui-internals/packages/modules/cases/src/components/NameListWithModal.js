@@ -40,8 +40,8 @@ const NameListWithModal = ({ t, data, type }) => {
     <React.Fragment>
       {data?.length > 0 ? (
         <React.Fragment>
-          {data?.slice(0, 2)?.map((fullName) => (
-            <div className="case-info-value">
+          {data?.slice(0, 2)?.map((fullName, index) => (
+            <div key={index} className="case-info-value">
               <span>{fullName}</span>
             </div>
           ))}
@@ -82,8 +82,10 @@ const NameListWithModal = ({ t, data, type }) => {
           headerBarMain={<Heading label={t(type)} />}
         >
           <ul style={{ listStyle: "unset" }}>
-            {data?.map((fullName) => (
-              <li style={styles}>{fullName}</li>
+            {data?.map((fullName, index) => (
+              <li key={index} style={styles}>
+                {fullName}
+              </li>
             ))}
           </ul>
         </Modal>

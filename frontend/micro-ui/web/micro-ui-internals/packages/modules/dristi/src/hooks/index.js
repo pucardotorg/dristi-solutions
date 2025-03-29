@@ -39,6 +39,7 @@ export const Urls = {
     individual: "/individual/v1/_create",
     updateIndividual: "/individual/v1/_update",
     searchIndividual: "/individual/v1/_search",
+    searchEmployee: "/egov-hrms/employees/_search",
     searchIndividualAdvocate: "/advocate/v1/_search",
     searchIndividualClerk: "/advocate/clerk/v1/_search",
     updateAdvocateDetails: "/advocate/v1/_update",
@@ -85,6 +86,8 @@ export const Urls = {
     aDiaryEntryUpdate: "/ab-diary/case/diary/entry/v1/update",
     aDiaryEntrySearch: "/ab-diary/case/diary/entries/v1/search",
     getLocationBasedJurisdiction: "/kerala-icops/v1/integrations/iCops/_getLocationBasedJurisdiction",
+    createProfileRequest: "/case/v2/profilerequest/create",
+    processProfileRequest: "/case/v2/profilerequest/process",
   },
   case: {
     addWitness: "/case/v1/add/witness",

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { CardText } from "@egovernments/digit-ui-react-components";
 import { CopyIcon } from "../icons/svgIndex";
 
-const CustomCopyTextDiv = ({ data, t, keyStyle, valueStyle, textWrapperStyle }) => {
+const CustomCopyTextDiv = ({ data, t, keyStyle, valueStyle, textWrapperStyle, cardStyle, subCardStyle }) => {
   const [copiedIndex, setCopiedIndex] = useState(null); // Track the index of the copied item
 
   const handleCopy = (text) => {
@@ -17,9 +17,9 @@ const CustomCopyTextDiv = ({ data, t, keyStyle, valueStyle, textWrapperStyle }) 
   };
 
   return (
-    <div style={{ borderRadius: "10px", backgroundColor: "#F7F5F3", padding: "10px", width: "100%" }}>
+    <div style={{ borderRadius: "10px", backgroundColor: "#F7F5F3", padding: "10px", width: "100%", ...cardStyle }}>
       {data.map(({ key, value, copyData = true, isLocalization = true }, index) => (
-        <div key={index} style={{ display: "flex", marginBottom: "10px" }}>
+        <div key={index} style={{ display: "flex", marginBottom: "10px", ...subCardStyle }}>
           <div style={{ flex: 1, ...textWrapperStyle }}>
             <CardText className={"copy-key-text"} style={keyStyle}>
               {isLocalization ? t(key) : key}

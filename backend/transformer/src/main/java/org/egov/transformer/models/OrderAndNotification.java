@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.egov.common.contract.models.Document;
 
 import java.util.List;
 import java.util.Map;
@@ -50,5 +51,14 @@ public class OrderAndNotification {
 
     @JsonProperty("judgeIds")
     private List<String> judgeIds;
+
+    @JsonProperty("documents")
+    private List<Document> documents;
+
+    @JsonProperty("createdTime")
+    private Long createdTime = null;
+
+    @JsonProperty("caseTitle")
+    private String caseTitle = null;
 
 }

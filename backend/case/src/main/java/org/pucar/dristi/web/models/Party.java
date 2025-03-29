@@ -61,6 +61,9 @@ public class Party {
 
     private Boolean isResponseRequired = false;
 
+    @JsonProperty("isPartyInPerson")
+    private boolean isPartyInPerson;
+
     @JsonProperty("documents")
     @Valid
     private List<Document> documents = null;

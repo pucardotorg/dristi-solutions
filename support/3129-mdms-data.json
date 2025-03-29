@@ -1,0 +1,72 @@
+[
+  {
+    "moduleName": "court",
+    "masterName": "slots",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "id": "b45f8ba2-a927-429e-9069-86830742fe9b",
+        "tenantId": "kl",
+        "schemaCode": "court.slots",
+        "uniqueIdentifier": "3",
+        "data": {
+          "id": 3,
+          "slotName": "Morning Slot",
+          "slotEndTime": "17:00:00",
+          "slotDuration": "360",
+          "slotStartTime": "11:00:00",
+          "unitOfMeasurement": "Minutes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "createdTime": 1742800707615,
+          "lastModifiedTime": 1742800707615
+        }
+      },
+      {
+        "id": "0e6ee559-2609-42f6-ba16-bb8e0cf166ff",
+        "tenantId": "kl",
+        "schemaCode": "court.slots",
+        "uniqueIdentifier": "2",
+        "data": {
+          "id": 2,
+          "slotName": "Evening Slot",
+          "slotEndTime": "17:00:00",
+          "slotDuration": "180",
+          "slotStartTime": "14:00:00",
+          "unitOfMeasurement": "Minutes"
+        },
+        "isActive": false,
+        "auditDetails": {
+          "createdBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+          "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "createdTime": 1721811121698,
+          "lastModifiedTime": 1742800721288
+        }
+      },
+      {
+        "id": "6f182a05-ef18-4642-b9b1-a46704ff7626",
+        "tenantId": "kl",
+        "schemaCode": "court.slots",
+        "uniqueIdentifier": "1",
+        "data": {
+          "id": 1,
+          "slotName": "Morning Slot",
+          "slotEndTime": "13:00:00",
+          "slotDuration": "180",
+          "slotStartTime": "10:00:00",
+          "unitOfMeasurement": "Minutes"
+        },
+        "isActive": false,
+        "auditDetails": {
+          "createdBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+          "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "createdTime": 1721811121671,
+          "lastModifiedTime": 1742800726306
+        }
+      }
+    ]
+  }
+]

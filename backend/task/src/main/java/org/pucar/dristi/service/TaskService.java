@@ -1,13 +1,14 @@
 package org.pucar.dristi.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.TaskRegistrationEnrichment;
+import org.pucar.dristi.enrichment.TopicBasedOnStatus;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.TaskRepository;
 import org.pucar.dristi.util.CaseUtil;
@@ -36,6 +37,7 @@ public class TaskService {
     private final ObjectMapper objectMapper;
     private final SmsNotificationService notificationService;
     private final IndividualService individualService;
+    private final TopicBasedOnStatus topicBasedOnStatus;
 
     @Autowired
     public TaskService(TaskRegistrationValidator validator,
@@ -43,7 +45,7 @@ public class TaskService {
                        TaskRepository taskRepository,
                        WorkflowUtil workflowUtil,
                        Configuration config,
-                       Producer producer, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService) {
+                       Producer producer, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService, TopicBasedOnStatus topicBasedOnStatus) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.taskRepository = taskRepository;
@@ -54,6 +56,7 @@ public class TaskService {
         this.objectMapper = objectMapper;
         this.notificationService = notificationService;
         this.individualService = individualService;
+        this.topicBasedOnStatus = topicBasedOnStatus;
     }
 
     @Autowired
@@ -108,6 +111,7 @@ public class TaskService {
     public Task updateTask(TaskRequest body) {
 
         try {
+            log.info("operation=updateTask, status=IN_PROGRESS, BODY: {}", body);
             // Validate whether the application that is being requested for update indeed exists
             if (!validator.validateApplicationExistence(body.getTask(), body.getRequestInfo()))
                 throw new CustomException(VALIDATION_ERR, "Task Application does not exist");
@@ -115,14 +119,35 @@ public class TaskService {
             // Enrich application upon update
             enrichmentUtil.enrichCaseApplicationUponUpdate(body);
 
+            boolean isValidTask = true;
+
+            if (body.getTask().getTaskType().equalsIgnoreCase(JOIN_CASE)) {
+                isValidTask = validator.isValidJoinCasePendingTask(body);
+                if (!isValidTask) {
+                    body.getTask().getWorkflow().setAction(REJECT);
+                    log.info("pending task is no more valid rejecting by system");
+                }
+            }
+
             workflowUpdate(body);
 
             String status = body.getTask().getStatus();
             String taskType = body.getTask().getTaskType();
+            log.info("status , taskType : {} , {} ", status, taskType);
             if (SUMMON_SENT.equalsIgnoreCase(status) || NOTICE_SENT.equalsIgnoreCase(status) || WARRANT_SENT.equalsIgnoreCase(status))
                 producer.push(config.getTaskIssueSummonTopic(), body);
 
+            // push to join case topic based on status
+            if (taskType.equalsIgnoreCase(JOIN_CASE)) {
+                topicBasedOnStatus.pushToTopicBasedOnStatus(status, body);
+            }
+
             producer.push(config.getTaskUpdateTopic(), body);
+
+            if (!isValidTask) {
+                // join case pending task is not valid
+                throw new CustomException(INVALID_PENDING_TASK,"the pending task is not valid");
+            }
 
             String messageCode = status != null ? getMessageCode(taskType, status) : null;
             log.info("Message Code :: {}", messageCode);
@@ -130,6 +155,7 @@ public class TaskService {
                 callNotificationService(body, messageCode);
             }
 
+            log.info("operation=updateTask, status=SUCCESS, BODY: {}", body);
             return body.getTask();
 
         } catch (CustomException e) {
@@ -172,6 +198,8 @@ public class TaskService {
                     config.getTaskWarrantBusinessServiceName(), workflow, config.getTaskWarrantBusinessName());
             case NOTICE -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskNoticeBusinessServiceName(), workflow, config.getTaskNoticeBusinessName());
+            case JOIN_CASE -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
+                    config.getTaskJoinCaseBusinessServiceName(), workflow, config.getTaskjoinCaseBusinessName());
             default -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskBusinessServiceName(), workflow, config.getTaskBusinessName());
         };
@@ -334,5 +362,89 @@ public class TaskService {
             return WARRANT_NOT_DELIVERED;
         }
         return null;
+    }
+
+    public void updateTaskDetailsForExistingJoinCaseTasks(HashMap<String, Object> record) {
+
+        try {
+            log.info("operation = updateTaskDetailsForJoinCase, result = IN_PROGRESS, record = {}", record);
+            CourtCase courtCase = objectMapper.convertValue(record, CourtCase.class);
+
+            String filingNumber = courtCase.getFilingNumber();
+
+            TaskCriteria taskSearchCriteria = TaskCriteria.builder()
+                    .filingNumber(filingNumber)
+                    .taskType(JOIN_CASE)
+                    .status(PENDING_APPROVAL)
+                    .build();
+
+            Pagination pagination = Pagination.builder()
+                    .offSet(0.0)
+                    .limit(50.0)
+                    .build();
+
+            List<Task> tasks = taskRepository.getTasks(taskSearchCriteria, pagination);
+
+            updateLitigantNames(courtCase, tasks);
+
+            log.info("operation = updateTaskDetailsForJoinCase, result = SUCCESS, record = {}", record);
+
+        } catch (Exception e) {
+            log.info("operation = checkAndScheduleHearingForOptOut, result = FAILURE, message = {}", e.getMessage());
+        }
+
+    }
+
+    private void updateLitigantNames(CourtCase courtCase, List<Task> tasks) throws JsonProcessingException {
+        for (Task task : tasks) {
+            updateLitigantNamesForTask(courtCase, task);
+            TaskRequest taskRequest = TaskRequest.builder()
+                    .task(task)
+                    .requestInfo(RequestInfo.builder().build())
+                    .build();
+            producer.push(config.getTaskUpdateTopic(), taskRequest);
+        }
+    }
+
+    private void updateLitigantNamesForTask(CourtCase courtCase, Task task) throws JsonProcessingException {
+        JoinCaseTaskRequest joinCaseTaskRequest = objectMapper.convertValue(task.getTaskDetails(), JoinCaseTaskRequest.class);
+
+        List<ReplacementDetails> replacementDetailsList = joinCaseTaskRequest.getReplacementDetails();
+
+        for (ReplacementDetails replacementDetails : replacementDetailsList) {
+            updateLitigantName(courtCase, replacementDetails);
+            task.setTaskDetails(joinCaseTaskRequest);
+        }
+    }
+
+    private void updateLitigantName(CourtCase courtCase, ReplacementDetails replacementDetails) throws JsonProcessingException {
+        LitigantDetails litigantDetails = replacementDetails.getLitigantDetails();
+        String litigantIndividualId = litigantDetails.getIndividualId();
+
+        findMatchingParty(courtCase, litigantIndividualId)
+                .ifPresent(matchingParty -> {
+                    try {
+                        updateLitigantNameFromParty(matchingParty, litigantDetails);
+                    } catch (JsonProcessingException e) {
+                        // Log error or handle exception as appropriate
+                        throw new RuntimeException("Error processing party details", e);
+                    }
+                });
+    }
+
+    private Optional<Party> findMatchingParty(CourtCase courtCase, String litigantIndividualId) {
+        return courtCase.getRepresentatives().stream()
+                .flatMap(advocateMapping -> advocateMapping.getRepresenting().stream())
+                .filter(party -> party.getIndividualId().equalsIgnoreCase(litigantIndividualId))
+                .findFirst();
+    }
+
+    private void updateLitigantNameFromParty(Party party, LitigantDetails litigantDetails) throws JsonProcessingException {
+        JsonNode jsonNode = objectMapper.convertValue(party.getAdditionalDetails(), JsonNode.class);
+        String fullName = jsonNode.has("fullName")
+                ? jsonNode.get("fullName").textValue()
+                : "";
+
+        litigantDetails.setName(fullName);
     }
 }

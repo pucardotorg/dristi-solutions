@@ -273,7 +273,7 @@ const SelectComponentsMulti = ({ t, config, onSelect, formData, errors, setError
               setError={setError}
               clearErrors={clearErrors}
               mapIndex={data.id}
-              disable={(index < config?.addressLength) ? true : config?.disable}
+              disable={index < config?.addressLength ? true : config?.disable}
               isAutoFilledDisabled={true}
             ></LocationComponent>
 
@@ -289,7 +289,7 @@ const SelectComponentsMulti = ({ t, config, onSelect, formData, errors, setError
                 setError={setError}
                 clearErrors={clearErrors}
                 mapIndex={data.id}
-                disable={(index < config?.addressLength) ? true : config?.disable}
+                disable={index < config?.addressLength ? true : config?.disable}
                 isAutoFilledDisabled={true}
               ></GeoLocationComponent>
             )}

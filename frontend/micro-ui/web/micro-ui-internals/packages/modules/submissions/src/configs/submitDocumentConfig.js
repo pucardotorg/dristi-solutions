@@ -90,5 +90,6 @@ export const submissionDocumentDetailsConfig = {
   formConfig: submissionDocumentConfig,
   header: "SUBMIT_DOCUMENTS",
   subText1: "SUBMIT_DOC_SUB_TEXT",
+  subText11: "SUBMIT_DOC_SUB_TEXT_CLERK",
   subText2: "SUBMIT_DOC_SUB_TEXT_HELP",
 };

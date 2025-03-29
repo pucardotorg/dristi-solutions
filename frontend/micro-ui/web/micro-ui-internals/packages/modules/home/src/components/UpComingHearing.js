@@ -51,13 +51,17 @@ class HearingSlot {
 }
 
 function formatTimeTo12Hour(timeString) {
-  let [hours, minutes] = timeString.split(":").map(Number);
+  if (!timeString) return "";
+
+  // Extract hours and minutes, ignore seconds if present
+  const [hours, minutes] = timeString.split(":").slice(0, 2).map(Number);
+
+  if (isNaN(hours) || isNaN(minutes)) return "";
 
   const suffix = hours >= 12 ? "pm" : "am";
+  const displayHours = hours % 12 || 12;
 
-  hours = hours % 12 || 12;
-
-  const formattedHours = String(hours).padStart(2, "0");
+  const formattedHours = String(displayHours).padStart(2, "0");
   const formattedMinutes = String(minutes).padStart(2, "0");
 
   return `${formattedHours}:${formattedMinutes} ${suffix}`;
@@ -83,6 +87,7 @@ const UpcomingHearings = ({ t, userInfoType, ...props }) => {
   const [isAdvocateLoading, setIsAdvocateLoading] = useState(false);
   const [isCaseLoading, setIsCaseLoading] = useState(false);
   const [isAdvocate, setIsAdvocate] = useState(false);
+  const { data: slotTime } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "court", [{ name: "slots" }]);
 
   // Get the current date
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -348,7 +353,7 @@ const UpcomingHearings = ({ t, userInfoType, ...props }) => {
                 {hearingCount > 0 && (
                   <div className="time-hearing-type">
                     <div className="timeText">
-                      {formatTimeTo12Hour(earliestHearingSlot.slotStartString)} - {formatTimeTo12Hour(earliestHearingSlot.slotEndString)}
+                      {formatTimeTo12Hour(slotTime?.court?.slots[0]?.slotStartTime)} {" -"}
                     </div>
                     <div style={{ display: "flex", gap: "8px" }}>
                       <Link

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Modal from "./Modal";
 import { CheckBox, CloseSvg, TextArea } from "@egovernments/digit-ui-react-components";
 
-function ConfirmEvidenceAction({ t, setShowConfirmationModal, handleAction, isEvidence ,isDisabled =false }) {
+function ConfirmEvidenceAction({ t, setShowConfirmationModal, handleAction, isEvidence, isDisabled = false, isFromActions = false }) {
   const CloseBtn = (props) => {
     return (
       <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
@@ -18,7 +18,7 @@ function ConfirmEvidenceAction({ t, setShowConfirmationModal, handleAction, isEv
     );
   };
 
-  const actionSaveLabel = isEvidence ? t("UNMARK_EVIDENCE_TEXT") : t("MARK_EVIDENCE_TEXT");
+  const actionSaveLabel = isFromActions ? t("ACTIONS_MARK_EVIDENCE_TEXT") : t("MARK_EVIDENCE_TEXT");
 
   return (
     <Modal
@@ -29,10 +29,10 @@ function ConfirmEvidenceAction({ t, setShowConfirmationModal, handleAction, isEv
           }}
         />
       }
-      headerBarMain={<Heading label={isEvidence ? t("UNMARK_SUBMISSION_HEADER") : t("MARK_SUBMISSION_HEADER")} />}
+      headerBarMain={<Heading label={isFromActions ? t("ACTIONS_MARK_SUBMISSION_HEADER") : t("MARK_SUBMISSION_HEADER")} />}
       actionCancelLabel={t("CS_COMMON_BACK")}
       actionSaveLabel={actionSaveLabel}
-      isDisabled = {isDisabled}
+      isDisabled={isDisabled}
       actionCancelOnSubmit={() => {
         setShowConfirmationModal(null);
       }}
@@ -40,7 +40,7 @@ function ConfirmEvidenceAction({ t, setShowConfirmationModal, handleAction, isEv
         handleAction(false);
       }}
     >
-      <div style={{ marginTop: 10, marginBottom: 10 }}>{isEvidence ? t("UNMARK_SUBMISSION_TEXT") : t("MARK_SUBMISSION_TEXT")}</div>
+      <div style={{ marginTop: 10, marginBottom: 10 }}>{isFromActions ? t("ACTIONS_MARK_SUBMISSION_TEXT") : t("MARK_SUBMISSION_TEXT")}</div>
     </Modal>
   );
 }

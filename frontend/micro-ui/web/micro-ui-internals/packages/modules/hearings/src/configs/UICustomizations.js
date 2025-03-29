@@ -18,20 +18,25 @@ export const UICustomizations = {
   PreHearingsConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
       const updatedCriteria = {
-        pagination: {
-          ...requestCriteria.state.tableForm,
-          ...requestCriteria?.state?.searchForm?.sortCaseListByStartDate,
+        processSearchCriteria: {
+          businessService: ["hearing-default"],
+          moduleName: "Hearing Service",
+          tenantId: requestCriteria?.params?.tenantId,
         },
-        fromDate: requestCriteria?.params.fromDate,
-        toDate: requestCriteria?.params.toDate,
-        attendeeIndividualId: additionalDetails?.attendeeIndividualId ? additionalDetails?.attendeeIndividualId : "",
+        moduleSearchCriteria: {
+          fromDate: requestCriteria?.params.fromDate,
+          toDate: requestCriteria?.params.toDate,
+          tenantId: requestCriteria?.params?.tenantId,
+        },
+        tenantId: requestCriteria?.params?.tenantId,
+        limit: requestCriteria?.state?.tableForm?.limit || 10,
+        offset: requestCriteria?.state?.tableForm?.offset || 0,
       };
 
       return {
         ...requestCriteria,
         body: {
-          ...requestCriteria?.body,
-          criteria: updatedCriteria,
+          inbox: updatedCriteria,
         },
       };
     },
@@ -52,9 +57,21 @@ export const UICustomizations = {
                   variation={"secondary"}
                   label={t(`START_HEARING`)}
                   onButtonClick={() => {
-                    hearingService.startHearing({ hearing: row.hearing }).then(() => {
-                      window.location.href = `/${window.contextPath}/${userType}/hearings/inside-hearing?${searchParams.toString()}`;
-                    });
+                    hearingService
+                      .searchHearings(
+                        {
+                          criteria: {
+                            hearingId: row?.hearingId,
+                            tenantId: row?.tenantId,
+                          },
+                        },
+                        { tenantId: row?.tenantId }
+                      )
+                      .then((response) => {
+                        hearingService.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
+                          window.location.href = `/${window.contextPath}/${userType}/hearings/inside-hearing?${searchParams.toString()}`;
+                        });
+                      });
                   }}
                   style={{ marginRight: "1rem" }}
                   textStyles={{
@@ -266,10 +283,12 @@ export const UICustomizations = {
               locality = "",
               address = "",
             }) => {
-              if (address) {
+              if (address && typeof address === "string") {
                 return address;
-              }
-              return `${locality} ${district} ${city} ${state} ${pincode ? ` - ${pincode}` : ""}`.trim();
+              } else if (address && typeof address === "object") {
+                const { pincode = "", district = "", city = "", state = "", locality } = address;
+                return `${locality} ${district} ${city} ${state} ${pincode ? ` - ${pincode}` : ""}`.trim();
+              } else return `${locality} ${district} ${city} ${state} ${pincode ? ` - ${pincode}` : ""}`.trim();
             };
             const taskData = data?.list
               ?.filter(

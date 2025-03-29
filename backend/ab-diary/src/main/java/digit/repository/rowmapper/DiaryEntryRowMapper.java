@@ -43,6 +43,7 @@ public class DiaryEntryRowMapper implements ResultSetExtractor<List<CaseDiaryEnt
                         .referenceId(rs.getString("referenceId"))
                         .referenceType(rs.getString("referenceType"))
                         .hearingDate(parseDateToLong(rs.getString("hearingDate")))
+                        .caseId(rs.getString("caseId"))
                         .auditDetails(AuditDetails.builder()
                                 .createdTime(rs.getLong("createdTime"))
                                 .createdBy(rs.getString("createdBy"))

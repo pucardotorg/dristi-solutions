@@ -96,4 +96,24 @@ public class CaseService {
             throw new CustomException("Error fetching case: ", ServiceConstants.ERROR_CASE_SEARCH);
         }
     }
+
+    public CourtCase getCaseByCaseSearchText(String caseSearchText, String tenantId, RequestInfo requestInfo) {
+        StringBuilder uri = new StringBuilder();
+        uri.append(properties.getCaseSearchUrlHost()).append(properties.getCaseSearchUrlEndPoint());
+        CaseSearchRequest request = CaseSearchRequest.builder()
+                .requestInfo(requestInfo)
+                .criteria(Collections.singletonList(CaseCriteria.builder()
+                        .caseSearchText(caseSearchText)
+                        .defaultFields(false)
+                        .build()))
+                .tenantId(tenantId)
+                .build();
+        try {
+            Object response = repository.fetchResult(uri, request);
+            return objectMapper.convertValue(JsonPath.read(response, COURT_CASE_JSON_PATH), CourtCase.class);
+        } catch (Exception e) {
+            log.error("Error executing case search query", e);
+            throw new CustomException("Error fetching case: ", ServiceConstants.ERROR_CASE_SEARCH);
+        }
+    }
 }

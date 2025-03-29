@@ -270,7 +270,7 @@ public class HearingService {
             log.info("Message code: {}", messageCode);
 
             String hearingDate = hearingRequest.getHearing().getStartTime() != null ? hearingRequest.getHearing().getStartTime().toString() : "";
-            LocalDateTime dateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(Long.parseLong(hearingDate)), ZoneId.systemDefault());
+            LocalDateTime dateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(Long.parseLong(hearingDate)), ZoneId.of(config.getZoneId()));
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DOB_FORMAT_D_M_Y);
             String date = dateTime.format(formatter);
 

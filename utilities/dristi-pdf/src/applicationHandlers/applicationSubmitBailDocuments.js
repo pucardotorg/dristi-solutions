@@ -9,7 +9,6 @@ const {
   search_message,
 } = require("../api");
 const { renderError } = require("../utils/renderError");
-const { getAdvocates } = require("./getAdvocates");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
 
@@ -99,6 +98,7 @@ const applicationSubmitBailDocuments = async (req, res, qrCode) => {
       "APPLICATION TO SUBMIT ADDITIONAL DOCUMENTS FURTHER TO CONDITIONS OF BAIL";
 
     let barRegistrationNumber = "";
+    let advocateName = "";
     const advocateIndividualId =
       application?.applicationDetails?.advocateIndividualId;
     if (advocateIndividualId) {
@@ -111,15 +111,10 @@ const applicationSubmitBailDocuments = async (req, res, qrCode) => {
         (item) => item.isActive === true
       );
       barRegistrationNumber = advocateDetails?.barRegistrationNumber || "";
+      advocateName =
+        cleanName(advocateDetails?.additionalDetails?.username) || "";
     }
 
-    const onBehalfOfuuid = application?.onBehalfOf?.[0];
-    const allAdvocates = getAdvocates(courtCase);
-    const advocate = allAdvocates[onBehalfOfuuid]?.[0]?.additionalDetails
-      ?.advocateName
-      ? allAdvocates[onBehalfOfuuid]?.[0]
-      : {};
-    const advocateName = cleanName(advocate?.additionalDetails?.advocateName || "");
     const partyName = application?.additionalDetails?.onBehalOfName || "";
     const complainantName =
       courtCase?.litigants?.find(

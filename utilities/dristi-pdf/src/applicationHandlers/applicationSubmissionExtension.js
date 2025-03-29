@@ -9,10 +9,9 @@ const {
   search_advocate,
 } = require("../api");
 const { renderError } = require("../utils/renderError");
-const { getAdvocates } = require("./getAdvocates");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
-const { extractOrderNumber } = require("../utils/orderUtils");
+const { extractOrderNumber } = require("../utils/extractOrderNumber");
 
 function getOrdinalSuffix(day) {
   if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
@@ -158,6 +157,7 @@ async function applicationSubmissionExtension(req, res, qrCode) {
     const documentId = order?.orderDetails?.documentType?.value | "";
 
     let barRegistrationNumber = "";
+    let advocateName = "";
     const advocateIndividualId =
       application?.applicationDetails?.advocateIndividualId;
     if (advocateIndividualId) {
@@ -170,17 +170,10 @@ async function applicationSubmissionExtension(req, res, qrCode) {
         (item) => item.isActive === true
       );
       barRegistrationNumber = advocateDetails?.barRegistrationNumber || "";
+      advocateName =
+        cleanName(advocateDetails?.additionalDetails?.username) || "";
     }
 
-    const onBehalfOfuuid = application?.onBehalfOf?.[0];
-    const allAdvocates = getAdvocates(courtCase);
-    const advocate = allAdvocates[onBehalfOfuuid]?.[0]?.additionalDetails
-      ?.advocateName
-      ? allAdvocates[onBehalfOfuuid]?.[0]
-      : {};
-    const advocateName = cleanName(
-      advocate?.additionalDetails?.advocateName || ""
-    );
     const partyName = application?.additionalDetails?.onBehalOfName || "";
     const additionalComments =
       application?.applicationDetails?.additionalComments || "";

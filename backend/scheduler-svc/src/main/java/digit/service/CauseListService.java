@@ -402,6 +402,7 @@ public class CauseListService {
     public List<SlotList> buildSlotList(List<CauseList> causeLists) {
         List<SlotList> slots = new ArrayList<>();
         List<MdmsHearing> mdmsHearings = getHearingDataFromMdms();
+        List<MdmsSlot> mdmsSlots = getSlottingDataFromMdms();
         for (CauseList causeList : causeLists) {
             String slotName = causeList.getSlot();
             if(slotName == null)continue;
@@ -418,8 +419,11 @@ public class CauseListService {
                 mutableCauseLists.add(causeList);
                 existingSlot.setCauseLists(mutableCauseLists);
             } else {
-                String slotStartTime = Objects.equals(slotName, "Morning Slot") ? "10:00:00" : "14:00:00";
-                String slotEndTime = Objects.equals(slotName, "Morning Slot") ? "13:00:00" : "17:00:00";
+                Optional<MdmsSlot> slot = mdmsSlots.stream()
+                        .filter(s -> slotName.equalsIgnoreCase(s.getSlotName()))
+                        .findFirst();
+                String slotStartTime = slot.map(MdmsSlot::getSlotStartTime).orElse("17:00:00");
+                String slotEndTime = slot.map(MdmsSlot::getSlotEndTime).orElse("17:00:00");
                 SlotList newSlot = SlotList.builder()
                         .slotName(slotName)
                         .slotStartTime(slotStartTime)

@@ -112,6 +112,10 @@ export const removeInvalidNameParts = (name) => {
     .join(" ");
 };
 
+export const modifiedEvidenceNumber = (value) => {
+  return value && typeof value === "string" ? value.split("-").pop() : value;
+};
+
 export const getFilteredPaymentData = (paymentType, paymentData, bill) => {
   const processedPaymentType = paymentType?.toLowerCase()?.includes("application");
   return processedPaymentType ? [{ key: "Total Amount", value: bill?.totalAmount }] : paymentData;
@@ -166,6 +170,7 @@ export const documentsTypeMapping = {
   pipAffidavitFileUpload: "COMPLAINANT_PIP_AFFIDAVIT",
   pipAffidavitFileUploadRespondent: "RESPONDENT_PIP_AFFIDAVIT",
   nocJudgeOrder: "NOC_JUDGE_ORDER",
+  supportingDocument: "SUPPORTING_DOCUMENT",
 };
 
 export const documentLabels = {

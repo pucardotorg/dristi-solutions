@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.models.Document;
 import org.egov.common.contract.models.Workflow;
+import org.pucar.dristi.web.models.WorkflowObject;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.ArrayList;
@@ -97,7 +98,7 @@ public class Task {
 
     @JsonProperty("workflow")
     @Valid
-    private Workflow workflow = null;
+    private WorkflowObject workflow = null;
 
 
     public Task addDocumentsItem(Document documentsItem) {

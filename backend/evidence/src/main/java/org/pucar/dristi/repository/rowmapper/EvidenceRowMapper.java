@@ -74,6 +74,7 @@ public class EvidenceRowMapper implements ResultSetExtractor<List<Artifact>> {
                             .status(rs.getString("status"))
                             .description(rs.getString("description"))
                             .auditdetails(auditDetails)
+                            .publishedDate(rs.getLong("publishedDate"))
                             .build();
                 }
 

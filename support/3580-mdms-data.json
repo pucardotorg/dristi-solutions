@@ -1,0 +1,26 @@
+{
+    "tenantId": "kl",
+    "masterName": "Evidence",
+    "moduleName": "EvidenceType",
+    "mdmsPayload": [
+        {
+            "id": "6e26be36-f503-4e0e-9601-d945dad6fd72",
+            "tenantId": "kl",
+            "schemaCode": "Evidence.EvidenceType",
+            "uniqueIdentifier": "19",
+            "data": {
+                "id": 19,
+                "type": "WITNESS_DEPOSITION",
+                "subtype": " ",
+                "isactive": true
+            },
+            "isActive": true,
+            "auditDetails": {
+                "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+                "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+                "createdTime": 1743140874743,
+                "lastModifiedTime": 1743141701831
+            }
+        }
+    ]
+}

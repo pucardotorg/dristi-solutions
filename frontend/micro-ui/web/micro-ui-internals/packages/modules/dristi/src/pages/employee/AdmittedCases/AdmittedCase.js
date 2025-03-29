@@ -40,6 +40,8 @@ import VoidSubmissionBody from "./VoidSubmissionBody";
 import DocumentModal from "@egovernments/digit-ui-module-orders/src/components/DocumentModal";
 import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
 import PublishedNotificationModal from "./publishedNotificationModal";
+import ConfirmEvidenceAction from "../../../components/ConfirmEvidenceAction";
+import NoticeAccordion from "../../../components/NoticeAccordion";
 
 const defaultSearchValues = {};
 
@@ -157,6 +159,7 @@ const AdmittedCases = () => {
   const roles = Digit.UserService.getUser()?.info?.roles;
   const isFSO = roles.some((role) => role.code === "FSO_ROLE");
   const isCourtRoomManager = roles.some((role) => role.code === "COURT_ROOM_MANAGER");
+  const isBenchClerk = roles.some((role) => role.code === "BENCH_CLERK");
   const activeTab = isFSO ? "Complaints" : urlParams.get("tab") || "Overview";
   const filingNumber = urlParams.get("filingNumber");
   const applicationNumber = urlParams.get("applicationNumber");
@@ -168,11 +171,13 @@ const AdmittedCases = () => {
   const [openAdmitCaseModal, setOpenAdmitCaseModal] = useState(true);
   const [documentSubmission, setDocumentSubmission] = useState();
   const [artifact, setArtifact] = useState();
+  const [artifacts, setArtifacts] = useState();
   const [showOrderReviewModal, setShowOrderReviewModal] = useState(false);
   const [showHearingTranscriptModal, setShowHearingTranscriptModal] = useState(false);
   const [currentOrder, setCurrentOrder] = useState();
   const [currentHearing, setCurrentHearing] = useState();
   const [showMenu, setShowMenu] = useState(false);
+  const [showMenuFilings, setShowMenuFilings] = useState(false);
   const [toast, setToast] = useState(false);
   const [orderDraftModal, setOrderDraftModal] = useState(false);
   const [submissionsViewModal, setSubmissionsViewModal] = useState(false);
@@ -195,6 +200,10 @@ const AdmittedCases = () => {
   const [isOpenFromPendingTask, setIsOpenFromPendingTask] = useState(false);
   const [currentNotification, setCurrentNotification] = useState(null);
   const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [selectedItem, setSelectedItem] = useState(null);
 
   const history = useHistory();
   const isCitizen = userRoles.includes("CITIZEN");
@@ -448,6 +457,13 @@ const AdmittedCases = () => {
   const handleTakeAction = () => {
     setShowMenu(!showMenu);
     setShowOtherMenu(false);
+    setShowMenuFilings(false);
+  };
+
+  const handleTakeFilingAction = () => {
+    setShowMenuFilings(!showMenuFilings);
+    setShowOtherMenu(false);
+    setShowMenu(false);
   };
 
   const onSuccess = async (response, data) => {
@@ -582,6 +598,8 @@ const AdmittedCases = () => {
         } else {
           if (order?.status === OrderWorkflowState.DRAFT_IN_PROGRESS) {
             history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${order?.orderNumber}`);
+          } else if (order?.status === OrderWorkflowState.PENDING_BULK_E_SIGN) {
+            history.push(`/${window.contextPath}/employee/home/bulk-esign-order?orderNumber=${order?.orderNumber}`);
           } else {
             setCurrentOrder(order);
             setShowOrderReviewModal(true);
@@ -621,33 +639,9 @@ const AdmittedCases = () => {
         },
       ];
       if ("mark_as_evidence" === item.id || "unmark_as_evidence" === item.id) {
-        const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
-        try {
-          const nextHearing = hearingDetails?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
-          await DRISTIService.addADiaryEntry(
-            {
-              diaryEntry: {
-                judgeId: judgeId,
-                businessOfDay: `${row?.artifactNumber} ${row?.isEvidence ? "unmarked" : "marked"} as evidence`,
-                tenantId: tenantId,
-                entryDate: new Date().setHours(0, 0, 0, 0),
-                caseNumber: caseDetails?.cmpNumber,
-                referenceId: row?.artifactNumber,
-                referenceType: "Documents",
-                hearingDate: (Array.isArray(nextHearing) && nextHearing.length > 0 && nextHearing[0]?.startTime) || null,
-                additionalDetails: {
-                  filingNumber: filingNumber,
-                  caseId: caseId,
-                },
-              },
-            },
-            {}
-          );
-          await handleMarkEvidence(docObj, row?.isEvidence);
-        } catch (error) {
-          console.error("error: ", error);
-          toast.error(t("SOMETHING_WENT_WRONG"));
-        }
+        setSelectedRow(row);
+        setSelectedItem(item); // Store row before showing the modal
+        setShowConfirmationModal(true);
       } else if ("mark_as_void" === item.id || "view_reason_for_voiding" === item.id) {
         setDocumentSubmission(docObj);
         setVoidReason(row?.reason);
@@ -670,6 +664,23 @@ const AdmittedCases = () => {
                     filingNumber: filingNumber,
                   },
                 ],
+              },
+            },
+
+            sections: {
+              ...tabConfig.sections,
+              searchResult: {
+                ...tabConfig.sections.searchResult,
+                uiConfig: {
+                  ...tabConfig.sections.searchResult.uiConfig,
+                  columns: tabConfig.sections.searchResult.uiConfig.columns.filter((column) => {
+                    // We don't want to show actions column in parties tab for employees
+                    if (column?.label === "ACTIONS" && userType === "employee") {
+                      return false;
+                    }
+                    return true;
+                  }),
+                },
               },
             },
           }
@@ -822,9 +833,18 @@ const AdmittedCases = () => {
                       populators: {
                         name: "owner",
                         optionsKey: "name",
-                        options: caseRelatedData.parties.map((party) => {
-                          return { code: removeInvalidNameParts(party.name), name: removeInvalidNameParts(party.name), value: party.individualId };
-                        }),
+                        options: Array.from(
+                          new Map(
+                            artifacts?.map((artifact) => [
+                              removeInvalidNameParts(artifact.owner), // Key for uniqueness
+                              {
+                                code: removeInvalidNameParts(artifact.owner),
+                                name: removeInvalidNameParts(artifact.owner),
+                                value: artifact.sourceID,
+                              },
+                            ])
+                          ).values()
+                        ),
                       },
                     },
                     ...tabConfig.sections.search.uiConfig.fields,
@@ -935,6 +955,61 @@ const AdmittedCases = () => {
           };
     });
   }, [caseId, caseRelatedData, cnrNumber, filingNumber, history, isCitizen, tenantId, userInfo]);
+
+  const handleEvidenceAction = async () => {
+    const docObj = [
+      {
+        itemType: selectedItem.id,
+        status: selectedRow.workflow?.action,
+        details: {
+          applicationType: selectedRow.artifactType,
+          applicationSentOn: getDate(parseInt(selectedRow.auditdetails.createdTime)),
+          sender: selectedRow.owner,
+          additionalDetails: selectedRow.additionalDetails,
+          applicationId: selectedRow.id,
+          auditDetails: selectedRow.auditDetails,
+        },
+        applicationContent: {
+          tenantId: selectedRow.tenantId,
+          fileStoreId: selectedRow.file?.fileStore,
+          id: selectedRow.file?.id,
+          documentType: selectedRow.file?.documentType,
+          documentUid: selectedRow.file?.documentUid,
+          additionalDetails: selectedRow.file?.additionalDetails,
+        },
+        comments: selectedRow.comments,
+        artifactList: selectedRow,
+      },
+    ];
+    const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
+    try {
+      const nextHearing = hearingDetails?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
+      await DRISTIService.addADiaryEntry(
+        {
+          diaryEntry: {
+            judgeId: judgeId,
+            businessOfDay: `${selectedRow?.artifactNumber} ${selectedRow?.isEvidence ? "unmarked" : "marked"} as evidence`,
+            tenantId: tenantId,
+            entryDate: new Date().setHours(0, 0, 0, 0),
+            caseNumber: caseDetails?.cmpNumber,
+            referenceId: selectedRow?.artifactNumber,
+            referenceType: "Documents",
+            hearingDate: (Array.isArray(nextHearing) && nextHearing.length > 0 && nextHearing[0]?.startTime) || null,
+            additionalDetails: {
+              filingNumber: filingNumber,
+              caseId: caseId,
+            },
+          },
+        },
+        {}
+      );
+      await handleMarkEvidence(docObj, selectedRow?.isEvidence);
+    } catch (error) {
+      console.error("error: ", error);
+      toast.error(t("SOMETHING_WENT_WRONG"));
+    }
+    setShowConfirmationModal(false);
+  };
 
   const newTabSearchConfig = {
     ...TabSearchconfig,
@@ -1152,6 +1227,63 @@ const AdmittedCases = () => {
       history.goBack();
     }
   };
+
+  useEffect(() => {
+    const getOwnerName = async (artifact) => {
+      if (artifact?.sourceType === "COURT") {
+        if (artifact.sourceID === undefined) {
+          return "NA";
+        }
+        const owner = await DRISTIService.searchEmployeeUser(
+          {
+            authToken: localStorage.getItem("token"),
+          },
+          { tenantId, uuids: artifact?.sourceID, limit: 1000, offset: 0 }
+        );
+        return `${owner?.Employees?.[0]?.user?.name}`.trim();
+      } else {
+        if (artifact?.sourceID === undefined) {
+          return "NA";
+        }
+        const owner = await DRISTIService.searchIndividualUser(
+          {
+            Individual: {
+              individualId: artifact?.sourceID,
+            },
+          },
+          { tenantId, limit: 1000, offset: 0 }
+        );
+        return `${owner?.Individual[0]?.name?.givenName} ${owner[0]?.Individual[0]?.name?.familyName || ""}`.trim();
+      }
+    };
+    const fetchEvidence = async () => {
+      try {
+        const response = await DRISTIService.searchEvidence(
+          {
+            criteria: {
+              filingNumber: filingNumber,
+              artifactNumber: artifactNumber,
+              tenantId: tenantId,
+            },
+            tenantId,
+          },
+          {}
+        );
+
+        const evidence = await Promise.all(
+          response?.artifacts.map(async (artifact) => {
+            const ownerName = await getOwnerName(artifact);
+            return { ...artifact, owner: ownerName };
+          })
+        );
+        setArtifacts(evidence);
+      } catch (error) {
+        console.error("Error fetching evidence:", error);
+      }
+    };
+
+    fetchEvidence();
+  }, [filingNumber, artifactNumber, tenantId]);
 
   useEffect(() => {
     if (
@@ -1691,7 +1823,7 @@ const AdmittedCases = () => {
   );
 
   const { data: ordersData } = useSearchOrdersService(
-    { criteria: { tenantId: tenantId, filingNumber, orderType: "NOTICE", status: "PUBLISHED" } },
+    { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED" } },
     { tenantId },
     filingNumber + currentHearingId,
     Boolean(filingNumber),
@@ -1721,6 +1853,15 @@ const AdmittedCases = () => {
     if (!ordersData?.list) return [];
 
     const noticeOrder = ordersData?.list?.filter((item) => item?.orderType === "NOTICE" && item?.hearingNumber);
+
+    const groupedByhearingNumber = groupByHearingNumberDescending(noticeOrder);
+    return groupedByhearingNumber;
+  }, [ordersData?.list]);
+
+  const groupSummonWarrantOrderByHearingNumber = useMemo(() => {
+    if (!ordersData?.list) return [];
+
+    const noticeOrder = ordersData?.list?.filter((item) => ["SUMMONS", "WARRANT"].includes(item?.orderType) && item?.hearingNumber);
 
     const groupedByhearingNumber = groupByHearingNumberDescending(noticeOrder);
     return groupedByhearingNumber;
@@ -1957,6 +2098,10 @@ const AdmittedCases = () => {
     } else if (option.value === "SUBMIT_DOCUMENTS") {
       history.push(`/digit-ui/citizen/submissions/submit-document?filingNumber=${filingNumber}`);
     }
+  };
+
+  const handleCourtAction = () => {
+    history.push(`/digit-ui/employee/submissions/submit-document?filingNumber=${filingNumber}`);
   };
 
   const handleSelect = (option) => {
@@ -2207,6 +2352,16 @@ const AdmittedCases = () => {
     []
   );
 
+  const courtActionOptions = useMemo(
+    () => [
+      {
+        value: "SUBMIT_DOCUMENTS",
+        label: "Submit Documents",
+      },
+    ],
+    []
+  );
+
   const takeActionOptions = useMemo(
     () => [
       ...(userRoles?.includes("SUBMISSION_CREATOR") ? [t("MAKE_SUBMISSION")] : []),
@@ -2245,6 +2400,12 @@ const AdmittedCases = () => {
   const handleAllNoticeGeneratedForHearing = async (hearingNumber) => {
     if (hearingNumber) {
       history.push(`${path}?filingNumber=${filingNumber}&caseId=${caseId}&taskOrderType=NOTICE&hearingId=${hearingNumber}&tab=${config?.label}`);
+    }
+  };
+
+  const handleAllSummonWarrantGeneratedForHearing = async (hearingNumber) => {
+    if (hearingNumber) {
+      history.push(`${path}?filingNumber=${filingNumber}&caseId=${caseId}&taskOrderType=SUMMONS&hearingId=${hearingNumber}&tab=${config?.label}`);
     }
   };
 
@@ -2413,6 +2574,25 @@ const AdmittedCases = () => {
                   </div>
                 </div>
               )}
+              {isBenchClerk && (
+                <div className="evidence-header-wrapper">
+                  <div className="evidence-hearing-header" style={{ background: "transparent" }}>
+                    <div className="evidence-actions" style={{ ...(isTabDisabled ? { pointerEvents: "none" } : {}) }}>
+                      <ActionButton
+                        variation={"primary"}
+                        label={t("CS_CASE_MAKE_FILINGS")}
+                        icon={showMenuFilings ? "ExpandLess" : "ExpandMore"}
+                        isSuffix={true}
+                        onClick={handleTakeFilingAction}
+                        className={"take-action-btn-class"}
+                      ></ActionButton>
+                      {showMenuFilings && (
+                        <Menu t={t} optionKey={"label"} localeKeyPrefix={"CS_CASE"} options={courtActionOptions} onSelect={handleCourtAction}></Menu>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="evidence-header-wrapper">
                 <div className="evidence-hearing-header" style={{ background: "transparent" }}>
@@ -2422,6 +2602,7 @@ const AdmittedCases = () => {
                       onClick={() => {
                         setShowOtherMenu((prev) => !prev);
                         setShowMenu(false);
+                        setShowMenuFilings(false);
                       }}
                     >
                       <CustomThreeDots />
@@ -2433,47 +2614,77 @@ const AdmittedCases = () => {
             </div>
           )}
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          {groupNoticeOrderByHearingNumber?.map((orders, index) => (
-            <React.Fragment>
-              {userType === "employee" && orders?.cases?.length > 0 && (
-                <div key={orders?.hearingNumber} className="notice-failed-notification" style={styles.container}>
-                  <div className="notice-failed-icon" style={styles.icon}>
-                    <InfoIconRed style={styles.icon} />
-                  </div>
-                  <p className="notice-failed-text" style={styles.text}>
-                    {`${t("NOTICE_GENERATED_FOR")} ${
-                      index === 0
-                        ? t("CURRENT_HEARING") + " (" + orders?.hearingNumber + ")"
-                        : t("PREVIOUS_HEARING") + " (" + orders?.hearingNumber + ")"
-                    }, `}
-                    <span onClick={() => handleAllNoticeGeneratedForHearing(orders?.hearingNumber)} className="click-here" style={styles.link}>
-                      {t("NOTICE_CLICK_HERE")}
-                    </span>
-                  </p>
-                </div>
-              )}
-            </React.Fragment>
-          ))}
-          {/* {noticeFailureCount?.map(
-            ({ partyIndex, partyName, failureCount }, index) =>
-              failureCount > 0 &&
-              !isCaseAdmitted &&
-              isJudge && (
-                <div key={partyIndex} className="notice-failed-notification" style={styles.container}>
-                  <div className="notice-failed-icon" style={styles.icon}>
-                    <InfoIconRed style={styles.icon} />
-                  </div>
-                  <p className="notice-failed-text" style={styles.text}>
-                    {`${t("NOTICE_FAILED")} ${failureCount} ${t("TIMES_VIEW_STATUS")} ${partyName}. ${t("VIEW_STATUS")}, `}
-                    <span onClick={() => handleOpenSummonNoticeModal(partyIndex)} className="click-here" style={styles.link}>
-                      {t("NOTICE_CLICK_HERE")}
-                    </span>
-                  </p>
-                </div>
-              )
-          )} */}
-        </div>
+        {(groupSummonWarrantOrderByHearingNumber?.length > 0 || groupNoticeOrderByHearingNumber?.length > 0) && (
+          <NoticeAccordion title={t("PROCESS_STATUS")}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              {groupSummonWarrantOrderByHearingNumber?.map((orders, index) => (
+                <React.Fragment>
+                  {userType === "employee" && orders?.cases?.length > 0 && (
+                    <div key={orders?.hearingNumber} className="notice-failed-notification" style={styles.container}>
+                      <div className="notice-failed-icon" style={styles.icon}>
+                        <InfoIconRed style={styles.icon} />
+                      </div>
+                      <p className="notice-failed-text" style={styles.text}>
+                        {`${t("SUMMON_WARRANT_FOR")} ${
+                          currentHearingId === orders?.hearingNumber
+                            ? t("CURRENT_HEARING") + " (" + orders?.hearingNumber + ")"
+                            : t("PREVIOUS_HEARING") + " (" + orders?.hearingNumber + ")"
+                        }, `}
+                        <span
+                          onClick={() => handleAllSummonWarrantGeneratedForHearing(orders?.hearingNumber)}
+                          className="click-here"
+                          style={styles.link}
+                        >
+                          {t("NOTICE_CLICK_HERE")}
+                        </span>
+                      </p>
+                    </div>
+                  )}
+                </React.Fragment>
+              ))}
+
+              {groupNoticeOrderByHearingNumber?.map((orders, index) => (
+                <React.Fragment>
+                  {userType === "employee" && orders?.cases?.length > 0 && (
+                    <div key={orders?.hearingNumber} className="notice-failed-notification" style={styles.container}>
+                      <div className="notice-failed-icon" style={styles.icon}>
+                        <InfoIconRed style={styles.icon} />
+                      </div>
+                      <p className="notice-failed-text" style={styles.text}>
+                        {`${t("NOTICE_GENERATED_FOR")} ${
+                          currentHearingId === orders?.hearingNumber
+                            ? t("CURRENT_HEARING") + " (" + orders?.hearingNumber + ")"
+                            : t("PREVIOUS_HEARING") + " (" + orders?.hearingNumber + ")"
+                        }, `}
+                        <span onClick={() => handleAllNoticeGeneratedForHearing(orders?.hearingNumber)} className="click-here" style={styles.link}>
+                          {t("NOTICE_CLICK_HERE")}
+                        </span>
+                      </p>
+                    </div>
+                  )}
+                </React.Fragment>
+              ))}
+              {/* {noticeFailureCount?.map(
+                ({ partyIndex, partyName, failureCount }, index) =>
+                  failureCount > 0 &&
+                  !isCaseAdmitted &&
+                  isJudge && (
+                    <div key={partyIndex} className="notice-failed-notification" style={styles.container}>
+                      <div className="notice-failed-icon" style={styles.icon}>
+                        <InfoIconRed style={styles.icon} />
+                      </div>
+                      <p className="notice-failed-text" style={styles.text}>
+                        {`${t("NOTICE_FAILED")} ${failureCount} ${t("TIMES_VIEW_STATUS")} ${partyName}. ${t("VIEW_STATUS")}, `}
+                        <span onClick={() => handleOpenSummonNoticeModal(partyIndex)} className="click-here" style={styles.link}>
+                          {t("NOTICE_CLICK_HERE")}
+                        </span>
+                      </p>
+                    </div>
+                  )
+              )} */}
+            </div>
+          </NoticeAccordion>
+        )}
 
         <CustomCaseInfoDiv t={t} data={caseBasicDetails} column={6} />
         <div className="search-tabs-container">
@@ -2781,6 +2992,18 @@ const AdmittedCases = () => {
           handleDownload={handleDownload}
           filingNumber={filingNumber}
           handleOrdersTab={handleOrdersTab}
+        />
+      )}
+      {showConfirmationModal && (
+        <ConfirmEvidenceAction
+          t={t}
+          setShowConfirmationModal={setShowConfirmationModal}
+          type={showConfirmationModal.type}
+          setShow={setShow}
+          handleAction={handleEvidenceAction}
+          isDisabled={isSubmitDisabled}
+          isEvidence={documentSubmission?.[0]?.artifactList?.isEvidence}
+          isFromActions={true}
         />
       )}
     </div>

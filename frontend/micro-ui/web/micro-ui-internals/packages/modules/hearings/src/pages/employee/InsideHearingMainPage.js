@@ -20,6 +20,7 @@ import TranscriptComponent from "./Transcription";
 import TasksComponent from "../../../../home/src/components/TaskComponent";
 import { SubmissionWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/submissionWorkflow";
 import { getFormattedName } from "../../utils";
+import { getFilingType } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const SECOND = 1000;
 
@@ -56,13 +57,23 @@ const InsideHearingMainPage = () => {
   };
 
   const userType = Digit?.UserService?.getType?.();
+  const userInfo = Digit?.UserService?.getUser?.()?.info;
+
+  const caseDetails = useMemo(() => {
+    return caseData?.criteria?.[0]?.responseList?.[0];
+  }, [caseData]);
+
+  const { data: filingTypeData, isLoading: isFilingTypeLoading } = Digit.Hooks.dristi.useGetStatuteSection("common-masters", [
+    { name: "FilingType" },
+  ]);
+
+  const filingType = useMemo(() => getFilingType(filingTypeData?.FilingType, "CaseFiling"), [filingTypeData?.FilingType]);
 
   if (!hearingId) {
     const contextPath = window?.contextPath || "";
     history.push(`/${contextPath}/${userType}/home/pending-task`);
   }
 
-  const userInfo = Digit?.UserService?.getUser?.()?.info;
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const userRoles = Digit?.UserService?.getUser?.()?.info?.roles || [];
 
@@ -176,8 +187,8 @@ const InsideHearingMainPage = () => {
       // hearing data with particular id will always give array of one object
       if (hearingData) {
         setHearing(hearingData);
-        setTranscriptText(hearingData?.transcript[0] || "");
-        setFilingNumber(hearingData?.filingNumber[0]);
+        setTranscriptText(hearingData?.transcript?.[0] || "");
+        setFilingNumber(hearingData?.filingNumber?.[0]);
       }
     }
   }, [hearingsData]);
@@ -249,7 +260,7 @@ const InsideHearingMainPage = () => {
   useEffect(() => {
     if (hearingsData && transcriptText) {
       const hearingData = hearingsData?.HearingList?.[0];
-      if (hearingData && transcriptText !== hearingData?.transcript[0] && !disableTextArea) {
+      if (hearingData && transcriptText !== hearingData?.transcript?.[0] && !disableTextArea) {
         updateAPICall(transcriptText);
       }
     }
@@ -354,6 +365,31 @@ const InsideHearingMainPage = () => {
           documents: documentsFile ? [...documents, documentsFile] : documents,
         },
       };
+      const docs = {
+        // documentType: "image/png",
+        fileStore: signedDocumentUploadID,
+        additionalDetails: {
+          name: "Witness Deposition",
+        },
+      };
+
+      const evidenceReqBody = {
+        artifact: {
+          artifactType: "WITNESS_DEPOSITION",
+          caseId: caseDetails?.id,
+          filingNumber,
+          tenantId,
+          comments: [],
+          file: docs,
+          sourceType: "COURT",
+          sourceID: userInfo?.uuid,
+          filingType: filingType,
+          additionalDetails: {
+            uuid: userInfo?.uuid,
+          },
+        },
+      };
+      await Digit?.DRISTIService.createEvidence(evidenceReqBody);
 
       const updateWitness = await hearingService.customApiService(
         Urls.hearing.uploadWitnesspdf,

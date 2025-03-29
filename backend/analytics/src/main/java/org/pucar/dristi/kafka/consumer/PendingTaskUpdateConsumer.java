@@ -29,7 +29,7 @@ public class PendingTaskUpdateConsumer {
             Map<String, Object> jsonMap = consumerRecord.value();
             pendingTaskService.updatePendingTask(consumerRecord.topic(), jsonMap);
         } catch (Exception e){
-            log.error("Error in updating PendingTask for join case.");
+            log.error("Error in updating PendingTask for join case.", e);
         }
     }
 
