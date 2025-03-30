@@ -43,4 +43,27 @@ public class EvidenceValidator {
 
     }
 
+    public boolean validateReasonDocumentCreation(CourtCase courtCase, RequestInfo requestInfo, ReasonDocument reasonDocument) {
+
+        EvidenceSearchCriteria evidenceSearchCriteria = EvidenceSearchCriteria.builder()
+                .caseId(courtCase.getId().toString())
+                .filingNumber(courtCase.getFilingNumber())
+                .tenantId(courtCase.getTenantId())
+                .fileStoreId(reasonDocument.getFileStore())
+                .build();
+
+        EvidenceSearchRequest evidenceSearchRequest = EvidenceSearchRequest.builder()
+                .requestInfo(requestInfo)
+                .criteria(evidenceSearchCriteria)
+                .pagination(Pagination.builder()
+                        .limit(100)
+                        .offSet(0)
+                        .build())
+                .build();
+
+        EvidenceSearchResponse evidenceSearchResponse = evidenceUtil.searchEvidence(evidenceSearchRequest);
+        return !evidenceSearchResponse.getArtifacts().isEmpty();
+    }
+
+
 }
