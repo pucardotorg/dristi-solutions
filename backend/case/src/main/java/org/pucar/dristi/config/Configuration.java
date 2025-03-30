@@ -264,6 +264,12 @@ public class Configuration {
 	@Value("${notification.sms.enabled}")
 	private Boolean isSMSEnabled;
 
+	@Value("${egov.sms.notification.accept.profile.request.template.id}")
+	private String smsNotificationAcceptProfileRequestTemplateId;
+
+	@Value("${egov.sms.notification.reject.profile.request.template.id}")
+	private String smsNotificationRejectProfileRequestTemplateId;
+
 	//Localization
 	@Value("${egov.localization.host}")
 	private String localizationHost;
