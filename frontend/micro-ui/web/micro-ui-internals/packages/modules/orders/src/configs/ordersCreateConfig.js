@@ -3386,10 +3386,12 @@ export const configsCreateOrderWarrant = [
         type: "dropdown",
         label: "WARRANT_FOR_PARTY",
         schemaKeyPath: "orderDetails.respondentName",
-        disable: true,
         populators: {
           name: "warrantFor",
+          optionsKey: "name",
           error: "CORE_REQUIRED_FIELD_ERROR",
+          required: true,
+          isMandatory: true,
           styles: { maxWidth: "100%" },
         },
       },
