@@ -241,6 +241,9 @@ const InsideHearingMainPage = () => {
         };
         updatedHearing.additionalDetails.witnesses.push(newWitness);
       } else {
+        if (!Array.isArray(updatedHearing.transcript)) {
+          updatedHearing.transcript = [];
+        }
         updatedHearing.transcript[0] = newText;
       }
       if (userHasRole("EMPLOYEE")) {
@@ -251,6 +254,9 @@ const InsideHearingMainPage = () => {
 
   const updateAPICall = (newText) => {
     const newHearingUpdated = structuredClone(hearing);
+    if (!Array.isArray(newHearingUpdated.transcript)) {
+      newHearingUpdated.transcript = [];
+    }
     newHearingUpdated.transcript[0] = newText;
     if (userHasRole("EMPLOYEE") && !disableTextArea) {
       updateTranscriptRequest({ body: { hearing: newHearingUpdated } });
