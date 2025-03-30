@@ -9,7 +9,6 @@ import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.models.AuditDetails;
-import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
@@ -667,11 +666,11 @@ public class CaseService {
                 .cnrNumber(cases.getCnrNumber())
                 .cmpNumber(cases.getCmpNumber())
                 .efilingNumber(cases.getFilingNumber())
-                .advocateName(profileEditorId != null ? extractAdvocateName(profileEditorId, cases) : null)
+                .advocateName(profileEditorId != null ? extractProfileEditorName(profileEditorId, cases) : null)
                 .tenantId(cases.getTenantId()).build();
     }
 
-    private String extractAdvocateName(String profileEditorId, CourtCase cases) {
+    private String extractProfileEditorName(String profileEditorId, CourtCase cases) {
         List<AdvocateMapping> advocateMappings = cases.getRepresentatives();
         for (AdvocateMapping advocateMapping : advocateMappings) {
             if (advocateMapping.getAdvocateId().equals(profileEditorId)) {
