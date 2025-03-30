@@ -3074,6 +3074,7 @@ public class CaseService {
                 JsonNode profileRequests = additionalDetails.get("profileRequests");
                 for (JsonNode profile : profileRequests) {
                     if (profile.get("pendingTaskRefId").asText().equals(request.getProcessInfo().getPendingTaskRefId())) {
+                        editorUuid = profile.get("editorDetails").get("uuid").asText();
                         removeProfileRequest(profile.get("uuid").asText(), profileRequests);
                         ((ObjectNode) additionalDetails).set("profileRequests", objectMapper.convertValue(profileRequests, JsonNode.class));
                         courtCase.setAdditionalDetails(additionalDetails);
