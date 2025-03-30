@@ -2046,6 +2046,9 @@ public class CaseService {
     private String getRespondentNameByUniqueId(Object additionalDetails, String uniqueId, Individual individual) {
 
         ObjectNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, ObjectNode.class);
+        String firstName = "";
+        String middleName = "";
+        String lastName = "";
 
         if (additionalDetailsNode.has("respondentDetails")) {
             ObjectNode respondentDetails = (ObjectNode) additionalDetailsNode.get("respondentDetails");
@@ -2061,9 +2064,6 @@ public class CaseService {
                     if (uniqueIdRespondent.equalsIgnoreCase(uniqueId)) {
                         if (dataNode.has("respondentVerification")) {
                             // Found the matching respondent, now extract the name details
-                            String firstName="";
-                            String middleName="";
-                            String lastName="";
                             if (dataNode.has("respondentFirstName"))
                                  firstName = dataNode.get("respondentFirstName").asText();
 
@@ -2080,15 +2080,22 @@ public class CaseService {
                             return fullName.trim();
 
                         } else {
-                            dataNode.put("respondentFirstName", individual.getName().getGivenName() == null ? "" : individual.getName().getGivenName());
-                            dataNode.put("respondentMiddleName", individual.getName().getOtherNames() == null ? "" : individual.getName().getOtherNames());
-                            dataNode.put("respondentLastName", individual.getName().getFamilyName() == null ? "" : individual.getName().getFamilyName());
+                            firstName = individual.getName().getGivenName() == null ? "" : individual.getName().getGivenName();
+                            middleName = individual.getName().getOtherNames() == null ? "" : individual.getName().getOtherNames();
+                            lastName = individual.getName().getFamilyName() == null ? "" : individual.getName().getFamilyName();
+                            dataNode.put("respondentFirstName", firstName);
+                            dataNode.put("respondentMiddleName", middleName);
+                            dataNode.put("respondentLastName", lastName);
                         }
                     }
                 }
             }
         }
-        return "";
+        // Concatenate with a space between names, ensuring no leading or trailing spaces
+        String fullName = (firstName.isEmpty() ? "" : firstName) +
+                (middleName.isEmpty() ? "" : " " + middleName) +
+                (lastName.isEmpty() ? "" : " " + lastName);
+        return fullName.trim();
     }
 
     private String getComplainantNameByIndividualId(Object additionalDetails, String individualId) {
