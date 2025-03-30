@@ -71,7 +71,6 @@ public class DefaultOrderUpdate implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsCommon(OrderRequest orderRequest) {
-        log.info("supports common, orderType:{}", orderRequest.getOrder().getOrderType());
         return true;
     }
 
@@ -81,7 +80,7 @@ public class DefaultOrderUpdate implements OrderUpdateStrategy {
 
         Order order = orderRequest.getOrder();
         RequestInfo requestInfo = orderRequest.getRequestInfo();
-        log.info("Executing common, orderType:{}", order.getOrderType());
+        log.info("Executing common,orderNumber:{}, orderType:{}", order.getOrderNumber(), order.getOrderType());
 
         List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
                 .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).defaultFields(false).build()))
@@ -105,7 +104,7 @@ public class DefaultOrderUpdate implements OrderUpdateStrategy {
             WorkflowObject workflow = new WorkflowObject();
             workflow.setAction(orderUtil.getActionForApplication(order.getAdditionalDetails()));
             application.setWorkflow(workflow);
-            log.info("updating application with applicationId:{} and action :{}", application.getApplicationNumber(),workflow.getAction());
+            log.info("updating application with applicationId:{} and action :{}", application.getApplicationNumber(), workflow.getAction());
             applicationUtil.updateApplication(ApplicationRequest.builder().requestInfo(requestInfo)
                     .application(application).build());
 
