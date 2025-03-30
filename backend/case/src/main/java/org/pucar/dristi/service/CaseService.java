@@ -673,15 +673,15 @@ public class CaseService {
     private String extractProfileEditorName(String profileEditorId, CourtCase cases) {
         List<AdvocateMapping> advocateMappings = cases.getRepresentatives();
         for (AdvocateMapping advocateMapping : advocateMappings) {
-            if (advocateMapping.getAdvocateId().equals(profileEditorId)) {
-                JsonNode additionalDetails = objectMapper.convertValue(advocateMapping.getAdditionalDetails(), JsonNode.class);
+            JsonNode additionalDetails = objectMapper.convertValue(advocateMapping.getAdditionalDetails(), JsonNode.class);
+            if (additionalDetails.get("uuid").asText().equals(profileEditorId)) {
                 return additionalDetails.get("advocateName").asText();
             }
         }
         List<Party> litigants = cases.getLitigants();
         for (Party litigant : litigants) {
-            if (litigant.getIndividualId().equals(profileEditorId)) {
-                JsonNode additionalDetails = objectMapper.convertValue(litigant.getAdditionalDetails(), JsonNode.class);
+            JsonNode additionalDetails = objectMapper.convertValue(litigant.getAdditionalDetails(), JsonNode.class);
+            if (additionalDetails.get("uuid").asText().equals(profileEditorId)) {
                 return additionalDetails.get("fullName").asText();
             }
         }
