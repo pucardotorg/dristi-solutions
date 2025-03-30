@@ -123,11 +123,11 @@ public class CompositeOrderService implements OrderProcessor {
             log.info("enriching order type ,order details and additional details");
             JsonNode compositeItemArray = objectMapper.readTree(objectMapper.writeValueAsString(compositeItems));
             for (JsonNode item : compositeItemArray) {
-                String orderType = item.get("orderType").toString();
+                String orderType = item.get("orderType").asText();
                 JsonNode additionalDetails = item.get("orderSchema").get("additionalDetails");
 //                if (additionalDetails.isObject()) {
                 ObjectNode additionalDetailsNode = (ObjectNode) additionalDetails;
-                additionalDetailsNode.put("itemId", item.get("id").toString());
+                additionalDetailsNode.put("itemId", item.get("id").asText());
 //                }
 
                 JsonNode orderDetails = item.get("orderSchema").get("orderDetails");
