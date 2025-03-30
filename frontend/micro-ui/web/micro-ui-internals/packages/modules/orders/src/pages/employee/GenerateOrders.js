@@ -362,6 +362,9 @@ const GenerateOrders = () => {
         ?.filter((item) => item?.partyType?.includes("respondent"))
         .map((item) => {
           const fullName = removeInvalidNameParts(item?.additionalDetails?.fullName);
+          const uniqueId = caseDetails?.additionalDetails?.respondentDetails?.formdata?.find(
+            (obj) => obj?.data?.respondentVerification?.individualDetails?.individualId === item?.individualId
+          )?.uniqueId;
           return {
             code: fullName,
             name: `${fullName} (Accused)`,
@@ -370,6 +373,7 @@ const GenerateOrders = () => {
             individualId: item?.individualId,
             isJoined: true,
             partyType: "respondent",
+            uniqueId,
           };
         }) || []
     );
@@ -381,7 +385,14 @@ const GenerateOrders = () => {
         ?.filter((data) => !data?.data?.respondentVerification?.individualDetails?.individualId)
         ?.map((data) => {
           const fullName = constructFullName(data?.data?.respondentFirstName, data?.data?.respondentMiddleName, data?.data?.respondentLastName);
-          return { code: fullName, name: `${fullName} (Accused)`, uuid: data?.data?.uuid, isJoined: false, partyType: "respondent" };
+          return {
+            code: fullName,
+            name: `${fullName} (Accused)`,
+            uuid: data?.data?.uuid,
+            isJoined: false,
+            partyType: "respondent",
+            uniqueId: data?.uniqueId,
+          };
         }) || []
     );
   }, [caseDetails]);
@@ -930,7 +941,9 @@ const GenerateOrders = () => {
                         options: [
                           ...(currentOrder?.additionalDetails?.warrantFor
                             ? [currentOrder?.additionalDetails?.warrantFor]
-                            : [...respondents, ...unJoinedLitigant].map((data) => data?.name || "")),
+                            : [...respondents, ...unJoinedLitigant].map((data) => {
+                                return { name: data?.name || "", uniqueId: data?.uniqueId };
+                              })),
                         ],
                       },
                     };
@@ -1185,7 +1198,9 @@ const GenerateOrders = () => {
                       options: [
                         ...(currentOrder?.additionalDetails?.warrantFor
                           ? [currentOrder?.additionalDetails?.warrantFor]
-                          : [...respondents, ...unJoinedLitigant].map((data) => data?.name || "")),
+                          : [...respondents, ...unJoinedLitigant].map((data) => {
+                              return { name: data?.name || "", uniqueId: data?.uniqueId };
+                            })),
                       ],
                     },
                   };
@@ -1838,7 +1853,11 @@ const GenerateOrders = () => {
     } else if (type === "MANDATORY_SUBMISSIONS_RESPONSES") {
       parties = [...orderSchema?.orderDetails?.partyDetails?.partiesToRespond, ...orderSchema?.orderDetails?.partyDetails?.partyToMakeSubmission];
     } else if (["WARRANT", "SUMMONS", "NOTICE"].includes(type)) {
-      parties = orderSchema?.orderDetails?.respondentName ? [orderSchema?.orderDetails?.respondentName] : [];
+      parties = orderSchema?.orderDetails?.respondentName?.name
+        ? [orderSchema?.orderDetails?.respondentName?.name]
+        : orderSchema?.orderDetails?.respondentName
+        ? [orderSchema?.orderDetails?.respondentName]
+        : [];
     } else if (type === "SECTION_202_CRPC") {
       parties = [orderSchema?.orderDetails?.applicationFilledBy, orderSchema?.orderDetails.soughtOfDetails];
     } else if (
