@@ -50,13 +50,11 @@ public class Warrant implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
-        log.info(" does not support pre processing,orderType:{}", WARRANT);
         return false;
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
-        log.info("support post processing,orderType:{}", WARRANT);
         Order order = orderRequest.getOrder();
         return order.getOrderType() != null && WARRANT.equalsIgnoreCase(order.getOrderType());
     }

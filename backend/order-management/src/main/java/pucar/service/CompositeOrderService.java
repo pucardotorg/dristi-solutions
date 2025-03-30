@@ -3,13 +3,13 @@ package pucar.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import pucar.util.OrderUtil;
 import pucar.web.models.Order;
 import pucar.web.models.OrderRequest;
 import pucar.web.models.adiary.CaseDiaryEntry;
@@ -24,11 +24,13 @@ public class CompositeOrderService implements OrderProcessor {
 
     private final ObjectMapper objectMapper;
     private final OrderStrategyExecutor orderStrategyExecutor;
+    private final OrderUtil orderUtil;
 
     @Autowired
-    public CompositeOrderService(ObjectMapper objectMapper, OrderStrategyExecutor orderStrategyExecutor) {
+    public CompositeOrderService(ObjectMapper objectMapper, OrderStrategyExecutor orderStrategyExecutor, OrderUtil orderUtil) {
         this.objectMapper = objectMapper;
         this.orderStrategyExecutor = orderStrategyExecutor;
+        this.orderUtil = orderUtil;
     }
 
     @Override
@@ -69,9 +71,14 @@ public class CompositeOrderService implements OrderProcessor {
                     .order(compositeOrderItem)
                     .requestInfo(requestInfo).build());
         }
+        CaseDiaryEntry diaryEntry = null;
+        if (!diaryEntries.isEmpty()) {
+            diaryEntry = diaryEntries.get(0);
+            diaryEntry.setBusinessOfDay(orderUtil.getBusinessOfTheDay(order.getAdditionalDetails()));
+        }
         log.info("common processing composite order, result= SUCCESS,orderNumber:{}, orderType:{}", orderRequest.getOrder().getOrderNumber(), orderRequest.getOrder().getOrderType());
-        return new ArrayList<>(Collections.singletonList(diaryEntries.get(0)));
 
+        return diaryEntry == null ? new ArrayList<>() : new ArrayList<>(Collections.singletonList(diaryEntry));
     }
 
     @Override

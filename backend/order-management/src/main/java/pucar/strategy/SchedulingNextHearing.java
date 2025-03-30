@@ -38,14 +38,12 @@ public class SchedulingNextHearing implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
-        log.info("support pre processing, orderType:{}", SCHEDULING_NEXT_HEARING);
         Order order = orderRequest.getOrder();
         return order.getOrderType() != null && SCHEDULING_NEXT_HEARING.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
-        log.info("does not support post processing, orderType:{}", SCHEDULING_NEXT_HEARING);
         return false;
     }
 

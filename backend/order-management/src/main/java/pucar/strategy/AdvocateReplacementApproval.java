@@ -31,13 +31,11 @@ public class AdvocateReplacementApproval implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
-        log.info("does not support pre processing, orderType:{}", ADVOCATE_REPLACEMENT_APPROVAL);
         return false;
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
-        log.info("support post processing, orderType:{}", ADVOCATE_REPLACEMENT_APPROVAL);
         Order order = orderRequest.getOrder();
         return order.getOrderType() != null && ADVOCATE_REPLACEMENT_APPROVAL.equalsIgnoreCase(order.getOrderType());
     }

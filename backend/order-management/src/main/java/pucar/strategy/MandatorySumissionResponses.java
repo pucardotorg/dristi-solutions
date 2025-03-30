@@ -38,13 +38,11 @@ public class MandatorySumissionResponses implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
-        log.info("does not support pre processing orderType:{}", MANDATORY_SUBMISSIONS_RESPONSES);
         return false;
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
-        log.info("support post processing, orderType:{}", MANDATORY_SUBMISSIONS_RESPONSES);
         Order order = orderRequest.getOrder();
         return order.getOrderType() != null && MANDATORY_SUBMISSIONS_RESPONSES.equalsIgnoreCase(order.getOrderType());
     }

@@ -47,13 +47,11 @@ public class CheckoutAcceptance implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
-        log.info("does not support pre processing, orderType:{}", CHECKOUT_ACCEPTANCE);
         return false;
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
-        log.info("support post processing, orderType:{}", CHECKOUT_ACCEPTANCE);
         Order order = orderRequest.getOrder();
         return order.getOrderType() != null && CHECKOUT_ACCEPTANCE.equalsIgnoreCase(order.getOrderType());
     }
