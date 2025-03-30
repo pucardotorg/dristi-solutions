@@ -290,7 +290,7 @@ public class CaseService {
             if (messageCode != null) {
                 String[] messageCodes = messageCode.split(",");
                 for (String msgCode : messageCodes) {
-                    callNotificationService(caseRequest, msgCode);
+                    callNotificationService(caseRequest, msgCode, null);
                 }
             }
 
@@ -575,13 +575,13 @@ public class CaseService {
     }
 
 
-    public void callNotificationService(CaseRequest caseRequest, String messageCode) {
+    public void callNotificationService(CaseRequest caseRequest, String messageCode, String profileEditorId) {
         try {
             CourtCase courtCase = caseRequest.getCases();
             Set<String> IndividualIds = getLitigantIndividualId(courtCase);
             getAdvocateIndividualId(caseRequest, IndividualIds);
             Set<String> phonenumbers = callIndividualService(caseRequest.getRequestInfo(), IndividualIds);
-            SmsTemplateData smsTemplateData = enrichSmsTemplateData(caseRequest.getCases());
+            SmsTemplateData smsTemplateData = enrichSmsTemplateData(caseRequest.getCases(), profileEditorId);
             for (String number : phonenumbers) {
                 notificationService.sendNotification(caseRequest.getRequestInfo(), smsTemplateData, messageCode, number);
             }
@@ -661,13 +661,32 @@ public class CaseService {
 //        }
 //    }
 
-    private SmsTemplateData enrichSmsTemplateData(CourtCase cases) {
+    private SmsTemplateData enrichSmsTemplateData(CourtCase cases, String profileEditorId) {
         return SmsTemplateData.builder()
                 .courtCaseNumber(cases.getCourtCaseNumber())
                 .cnrNumber(cases.getCnrNumber())
                 .cmpNumber(cases.getCmpNumber())
                 .efilingNumber(cases.getFilingNumber())
+                .advocateName(profileEditorId != null ? extractAdvocateName(profileEditorId, cases) : null)
                 .tenantId(cases.getTenantId()).build();
+    }
+
+    private String extractAdvocateName(String profileEditorId, CourtCase cases) {
+        List<AdvocateMapping> advocateMappings = cases.getRepresentatives();
+        for (AdvocateMapping advocateMapping : advocateMappings) {
+            if (advocateMapping.getAdvocateId().equals(profileEditorId)) {
+                JsonNode additionalDetails = objectMapper.convertValue(advocateMapping.getAdditionalDetails(), JsonNode.class);
+                return additionalDetails.get("advocateName").asText();
+            }
+        }
+        List<Party> litigants = cases.getLitigants();
+        for (Party litigant : litigants) {
+            if (litigant.getIndividualId().equals(profileEditorId)) {
+                JsonNode additionalDetails = objectMapper.convertValue(litigant.getAdditionalDetails(), JsonNode.class);
+                return additionalDetails.get("fullName").asText();
+            }
+        }
+        return null;
     }
 
     private List<String> callIndividualService(RequestInfo requestInfo, List<String> individualIds) {
@@ -3010,11 +3029,13 @@ public class CaseService {
             }
             courtCase = encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, request.getRequestInfo());
             JsonNode additionalDetails = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
+            String editorUuid = null;
             if (request.getProcessInfo().getAction().equals(ActionType.ACCEPT)) {
                 JsonNode profileRequests = additionalDetails.get("profileRequests");
                 String idToRemove = null;
                 for (JsonNode profile : profileRequests) {
                     if (profile.get("pendingTaskRefId").asText().equals(request.getProcessInfo().getPendingTaskRefId())) {
+                        editorUuid = profile.get("editorDetails").get("uuid").asText();
                         String partyType = profile.get("litigantDetails").get("partyType").asText();
                         String uniqueId = profile.get("litigantDetails").get("uniqueId").asText();
                         String detailsKey = partyType.equals("complainant") ? "complainantDetails" : "respondentDetails";
@@ -3061,7 +3082,7 @@ public class CaseService {
                     }
                 }
             }
-            sendProfileProcessNotification(request, courtCase);
+            sendProfileProcessNotification(request, courtCase, editorUuid);
 
             log.info("Encrypting case object with caseId: {}", courtCase.getId());
             courtCase = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncrypt(), CourtCase.class);
@@ -3137,17 +3158,15 @@ public class CaseService {
         return null;
     }
 
-    private void sendProfileProcessNotification(ProcessProfileRequest request, CourtCase courtCase) {
+    private void sendProfileProcessNotification(ProcessProfileRequest request, CourtCase courtCase, String editorUuid) {
         CaseRequest caseRequest = CaseRequest.builder()
                 .requestInfo(request.getRequestInfo())
                 .cases(courtCase)
                 .build();
-
-        //Todo: need to configure message code and template id for messages
         if (request.getProcessInfo().getAction().equals(ActionType.ACCEPT))
-            callNotificationService(caseRequest, ACCEPT_PROFILE_REQUEST);
+            callNotificationService(caseRequest, ACCEPT_PROFILE_REQUEST, editorUuid);
         else if (request.getProcessInfo().getAction().equals(ActionType.REJECT))
-            callNotificationService(caseRequest, REJECT_PROFILE_REQUEST);
+            callNotificationService(caseRequest, REJECT_PROFILE_REQUEST, editorUuid);
     }
 
     private void updateAdvocateRepresentation(CourtCase courtCase, String uniqueId, JsonNode additionalDetails, String detailsKey) {
