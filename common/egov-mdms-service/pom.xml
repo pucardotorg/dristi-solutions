@@ -7,7 +7,7 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.2.2</version>
-        <relativePath></relativePath>
+        <relativePath/>
     </parent>
     <groupId>org.egov.mdms</groupId>
     <artifactId>egov-mdms-service-test</artifactId>
@@ -26,7 +26,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.22</version>
+            <version>1.18.36</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
