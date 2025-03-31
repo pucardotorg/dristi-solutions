@@ -1268,6 +1268,16 @@ public class CaseService {
                 party.setCaseId(String.valueOf(courtCase.getId()));
 
                 existingRepresentative.getRepresenting().add(party);
+
+                courtCase.getRepresentatives().stream()
+                        .filter(representative -> representative.getAdvocateId().equalsIgnoreCase(existingRepresentative.getAdvocateId()))
+                        .findFirst()
+                        .ifPresent(representative -> {
+                            if (representative.getRepresenting() == null) {
+                                representative.setRepresenting(new ArrayList<>()); // Ensure the list is initialized
+                            }
+                            representative.getRepresenting().add(party);
+                        });
             });
             caseObj.setRepresentatives(List.of(existingRepresentative));
 
@@ -1348,6 +1358,11 @@ public class CaseService {
             });
 
             caseObj.setRepresentatives(List.of(representative));
+
+            if(courtCase.getRepresentatives()==null){
+                courtCase.setRepresentatives(new ArrayList<>());
+            }
+            courtCase.getRepresentatives().add(representative);
         }
 
         log.info("enriching representatives");
@@ -1984,6 +1999,8 @@ public class CaseService {
         List<Attendee> newAttendees = new ArrayList<>();
 
         List<Party> litigants = joinCaseData.getLitigant().stream()
+                .filter(litigant -> courtCase.getLitigants() == null || courtCase.getLitigants().stream()
+                                .noneMatch(existingLitigant -> existingLitigant.getIndividualId().equalsIgnoreCase(litigant.getIndividualId())))
                 .map(litigant -> {
                     Party party = new Party();
                     party.setTenantId(litigant.getTenantId());
@@ -2029,6 +2046,10 @@ public class CaseService {
                     newAttendee.setType(type);
                     newAttendees.add(newAttendee);
 
+                    if (courtCase.getLitigants() == null) {
+                        courtCase.setLitigants(new ArrayList<>());
+                    }
+                    courtCase.getLitigants().add(party);
                     return party;
                 })
                 .collect(Collectors.toList());
@@ -2083,13 +2104,13 @@ public class CaseService {
                         if (dataNode.has("respondentVerification")) {
                             // Found the matching respondent, now extract the name details
                             if (dataNode.has("respondentFirstName"))
-                                 firstName = dataNode.get("respondentFirstName").asText();
+                                firstName = dataNode.get("respondentFirstName").asText();
 
                             if (dataNode.has("respondentMiddleName"))
-                                 middleName = dataNode.get("respondentMiddleName").asText();
+                                middleName = dataNode.get("respondentMiddleName").asText();
 
                             if (dataNode.has("respondentLastName"))
-                                 lastName = dataNode.get("respondentLastName").asText();
+                                lastName = dataNode.get("respondentLastName").asText();
 
                             // Concatenate with a space between names, ensuring no leading or trailing spaces
                             String fullName = (firstName.isEmpty() ? "" : firstName) +
@@ -3933,7 +3954,7 @@ public class CaseService {
                 .build();
     }
 
-    private EvidenceRequest enrichEvidenceCreateRequest(CourtCase courtCase,ReplacementDetails replacementDetails, RequestInfo requestInfo) {
+    private EvidenceRequest enrichEvidenceCreateRequest(CourtCase courtCase, ReplacementDetails replacementDetails, RequestInfo requestInfo) {
 
         Document document = objectMapper.convertValue(replacementDetails.getDocument(), Document.class);
         org.egov.common.contract.models.Document workflowDocument = objectMapper.convertValue(document, org.egov.common.contract.models.Document.class);
@@ -3987,7 +4008,7 @@ public class CaseService {
                         .build()).build();
     }
 
-    private void enrichHearingDetails(CourtCase courtCase,  ReplacementDetails replacementDetails, JoinCaseTaskRequest joinCaseTaskRequest, RequestInfo requestInfo) {
+    private void enrichHearingDetails(CourtCase courtCase, ReplacementDetails replacementDetails, JoinCaseTaskRequest joinCaseTaskRequest, RequestInfo requestInfo) {
 
         AdvocateDetails advocateTryingToJoinCase = joinCaseTaskRequest.getAdvocateDetails();
 
@@ -4050,7 +4071,7 @@ public class CaseService {
             }
 
 
-                    hearingUtil.updateTranscriptAdditionalAttendees(hearingRequest);
+            hearingUtil.updateTranscriptAdditionalAttendees(hearingRequest);
 
         }
     }
