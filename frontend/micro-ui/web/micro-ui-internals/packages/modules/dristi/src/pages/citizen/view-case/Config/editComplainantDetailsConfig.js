@@ -641,5 +641,5 @@ export const editComplainantDetailsConfig = {
   isOptional: false,
   // addFormText: "ADD_COMPLAINANT",
   // formItemName: "CS_COMPLAINANT",
-  className: "complainant",
+  className: "complainant-edit",
 };

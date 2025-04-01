@@ -572,5 +572,5 @@ export const editRespondentConfig = {
   isOptional: false,
   addFormText: "ADD_RESPONDENT",
   formItemName: "CS_RESPONDENT",
-  className: "respondent",
+  className: "respondent-edit",
 };
