@@ -97,6 +97,7 @@ public class ApplicationConfiguration {
             mailProperties.setProperty("mail.smtp.socketFactory.port", String.valueOf(emailProperties.getMailPort()));
             mailProperties.setProperty("mail.smtp.socketFactory.class",  "javax.net.ssl.SSLSocketFactory");
             mailProperties.setProperty("mail.smtp.socketFactory.fallback", "false");
+            mailProperties.setProperty("mail.smtp.ssl.protocols", "TLSv1.2");
         }
 
         return mailProperties;
