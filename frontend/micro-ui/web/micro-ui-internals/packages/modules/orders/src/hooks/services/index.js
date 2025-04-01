@@ -51,6 +51,14 @@ export const ordersService = {
       data,
       params,
     }),
+  searchOrderNotifications: (data, params) =>
+    Request({
+      url: Urls.orders.orderNotificationSearch,
+      useCache: true,
+      userService: true,
+      data,
+      params,
+    }),
   customApiService: (url, data, params, useCache = false, userService = true) =>
     Request({
       url: url,

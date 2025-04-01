@@ -11,6 +11,7 @@ import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hoo
 import axios from "axios";
 import qs from "qs";
 import { HomeService } from "../../hooks/services";
+import useSearchOrdersNotificationService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersNotificationService";
 
 const parseXml = (xmlString, tagName) => {
   const parser = new DOMParser();
@@ -95,10 +96,22 @@ function BulkESignView() {
     Boolean(orderNumber)
   );
 
-  const { data: bulkOrdersData } = useSearchOrdersService(
+  const { data: bulkOrdersData } = useSearchOrdersNotificationService(
     {
-      tenantId,
-      criteria: { status: OrderWorkflowState.PENDING_BULK_E_SIGN },
+      inbox: {
+        processSearchCriteria: {
+          businessService: ["notification"],
+          moduleName: "Transformer service",
+        },
+        limit: 1,
+        offset: 0,
+        tenantId: tenantId,
+        moduleSearchCriteria: {
+          entityType: "Order",
+          tenantId: tenantId,
+          status: OrderWorkflowState.PENDING_BULK_E_SIGN,
+        },
+      },
     },
     { tenantId },
     `${orderNumber}-${OrderWorkflowState.PENDING_BULK_E_SIGN}`,
@@ -115,7 +128,7 @@ function BulkESignView() {
         setShowBulkSignAllModal(true);
       }
     }
-    if (bulkOrdersData?.list?.length === 0) {
+    if (bulkOrdersData?.totalCount === 0) {
       history.replace(`/${window?.contextPath}/${userType}/home/home-pending-task`);
     }
   }, [history, userType, deleteOrder, orderDetails, bulkOrdersData]);
@@ -210,7 +223,7 @@ function BulkESignView() {
         entityType,
         tenantId,
         ...(caseTitle && { caseTitle }),
-        ...(Object.keys(status || {})?.length > 0 && { status: status?.code ? [status?.code] : status }),
+        status: status?.type,
         ...(startOfTheDay && {
           startOfTheDay: new Date(startOfTheDay + "T00:00:00").getTime(),
           endOfTheDay: new Date(startOfTheDay + "T23:59:59.999").getTime(),
