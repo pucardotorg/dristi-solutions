@@ -2488,8 +2488,8 @@ const AdmittedCases = () => {
         style={{ position: "sticky", top: "72px", width: "100%", height: "100%", zIndex: 150, background: "white" }}
       >
         <div className="admitted-case-details" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px" }}>
-          <div className="case-details-title" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <Header>{caseDetails?.caseTitle || ""}</Header>
+          <div className="case-details-title" style={{ display: "flex", alignItems: "center", gap: "12px", width: "70%" }}>
+            {caseDetails?.caseTitle && <Header styles={{ width: "40%" }}>{caseDetails?.caseTitle}</Header>}
             {statue && (
               <React.Fragment>
                 <hr className="vertical-line" />
