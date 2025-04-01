@@ -1157,6 +1157,9 @@ public class CaseService {
                     }
                 }
             }
+
+            joinCaseNotificationsForDirectJoin(joinCaseRequest, courtCase);
+
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
@@ -3454,6 +3457,9 @@ public class CaseService {
                 updateCourtCaseObject(courtCase, joinCaseRequest, advocateUuid, requestInfo, pendingAdvocateRequest);
 
                 log.info("operation=updateJoinCaseApproved, status=SUCCESS, taskRequest: {}", taskRequest);
+
+                joinCaseNotificationsAfterApproval(joinCaseRequest, courtCase, requestInfo);
+
             }
         } catch (CustomException e) {
             log.error("CustomException occurred: {}", e.getMessage(), e);
@@ -3461,6 +3467,58 @@ public class CaseService {
         } catch (Exception e) {
             log.error("Unexpected error in updateJoinCaseRejected: {}", e.getMessage(), e);
             throw new CustomException("APPROVAL_REQUEST_ERROR", "An unexpected error occurred");
+        }
+
+    }
+
+    private void joinCaseNotificationsAfterApproval(JoinCaseTaskRequest joinCaseTaskRequest, CourtCase courtCase, RequestInfo requestInfo) {
+
+        AdvocateDetails individualTryingToReplace = joinCaseTaskRequest.getAdvocateDetails();
+
+        IndividualDetails individualDetails = individualTryingToReplace.getIndividualDetails();
+
+        // send notification to the parties and advocates
+
+        Set<String> individualIdSet = new HashSet<>();
+        individualIdSet.add(individualDetails.getIndividualId());
+        individualIdSet.addAll(joinCaseTaskRequest.getReplacementDetails().stream().map(ReplacementDetails::getLitigantDetails).map(LitigantDetails::getIndividualId).collect(Collectors.toSet()));
+        Set<String> phoneNumbers = callIndividualService(requestInfo, individualIdSet);
+
+        List<String> nameParts = Stream.of(individualDetails.getFirstName(),
+                        individualDetails.getMiddleName(),
+                        individualDetails.getLastName())
+                .filter(part -> part != null && !part.isEmpty())
+                .toList();
+
+        String fullName = String.join(" ", nameParts);
+
+        SmsTemplateData smsTemplateData = SmsTemplateData.builder()
+                .cmpNumber(courtCase.getCmpNumber())
+                .efilingNumber(courtCase.getFilingNumber())
+                .advocateName(fullName)
+                .tenantId(courtCase.getTenantId()).build();
+        for (String number : phoneNumbers) {
+            notificationService.sendNotification(requestInfo, smsTemplateData, ADVOCATE_CASE_JOIN, number);
+        }
+    }
+
+    private void joinCaseNotificationsForDirectJoin(JoinCaseV2Request joinCaseRequest, CourtCase courtCase) {
+
+        JoinCaseDataV2 joinCaseData = joinCaseRequest.getJoinCaseData();
+
+        Set<String> individualIdSet = new HashSet<>();
+
+        Set<String> phonenumbers = callIndividualService(joinCaseRequest.getRequestInfo(), individualIdSet);
+        LinkedHashMap advocate = ((LinkedHashMap) advocateMapping.getAdditionalDetails());
+        String advocateName = advocate != null ? advocate.get(ADVOCATE_NAME).toString() : "";
+
+        SmsTemplateData smsTemplateData = SmsTemplateData.builder()
+                .cmpNumber(courtCase.getCmpNumber())
+                .efilingNumber(courtCase.getFilingNumber())
+                .advocateName(advocateName)
+                .tenantId(courtCase.getTenantId()).build();
+        for (String number : phonenumbers) {
+            notificationService.sendNotification(joinCaseRequest.getRequestInfo(), smsTemplateData, ADVOCATE_CASE_JOIN, number);
         }
 
     }
