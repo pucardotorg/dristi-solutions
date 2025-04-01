@@ -1808,10 +1808,15 @@ const AdmittedCases = () => {
     }
   }, [hearingDetails]);
 
-  const currentHearingId = useMemo(
+  const currentHearingAdmissionHearing = useMemo(
     () =>
       hearingDetails?.HearingList?.find((list) => list?.hearingType === "ADMISSION" && !(list?.status === "COMPLETED" || list?.status === "ABATED"))
         ?.hearingId,
+    [hearingDetails?.HearingList]
+  );
+
+  const currentHearingId = useMemo(
+    () => hearingDetails?.HearingList?.find((list) => ["SCHEDULED", "IN_PROGRESS"].includes(list?.status))?.hearingId,
     [hearingDetails?.HearingList]
   );
 
@@ -2927,7 +2932,7 @@ const AdmittedCases = () => {
           handleScheduleNextHearing={handleScheduleNextHearing}
           caseAdmitLoader={caseAdmitLoader}
           caseDetails={caseDetails}
-          isAdmissionHearingAvailable={Boolean(currentHearingId)}
+          isAdmissionHearingAvailable={Boolean(currentHearingAdmissionHearing)}
           setOpenAdmitCaseModal={setOpenAdmitCaseModal}
           delayCondonationData={delayCondonationData}
           hearingDetails={hearingDetails}
