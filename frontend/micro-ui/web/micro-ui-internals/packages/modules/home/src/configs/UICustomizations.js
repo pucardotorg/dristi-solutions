@@ -492,8 +492,10 @@ export const UICustomizations = {
       };
     },
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
-      const caseDetails = handleTaskDetails(row?.taskDetails);
-      const delieveryDate = formatNoticeDeliveryDate(caseDetails?.deliveryChannels?.statusChangeDate || row?.createdDate);
+      const taskDetails = handleTaskDetails(row?.taskDetails);
+      const delieveryDate = formatNoticeDeliveryDate(taskDetails?.deliveryChannels?.statusChangeDate || row?.createdDate);
+      const hearingDate = formatNoticeDeliveryDate(taskDetails?.caseDetails?.hearingDate);
+
       switch (key) {
         case "CASE_NAME_ID":
           return `${row?.caseName}, ${value}`;
@@ -504,9 +506,11 @@ export const UICustomizations = {
         case "ORDER_TYPE":
           return t(value);
         case "DELIEVERY_CHANNEL":
-          return caseDetails?.deliveryChannels?.channelName || "N/A";
+          return taskDetails?.deliveryChannels?.channelName || "N/A";
         case "DELIEVRY_DATE":
           return delieveryDate || "-";
+        case "HEARING_DATE":
+          return hearingDate || "-";
         default:
           return t("ES_COMMON_NA");
       }

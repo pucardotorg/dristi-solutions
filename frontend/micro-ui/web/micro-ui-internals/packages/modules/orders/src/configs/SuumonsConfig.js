@@ -139,12 +139,17 @@ export const SummonsTabsConfig = {
               },
               {
                 label: "DELIEVERY_CHANNEL",
-                jsonPath: "taskDetails",
+                jsonPath: "delieveryChannel",
                 additionalCustomization: true,
               },
               {
                 label: "ISSUED",
                 jsonPath: "createdDate",
+                additionalCustomization: true,
+              },
+              {
+                label: "HEARING_DATE",
+                jsonPath: "hearingDate",
                 additionalCustomization: true,
               },
             ],
@@ -285,7 +290,7 @@ export const SummonsTabsConfig = {
               },
               {
                 label: "DELIEVERY_CHANNEL",
-                jsonPath: "taskDetails",
+                jsonPath: "delieveryChannel",
                 additionalCustomization: true,
               },
               {
@@ -296,6 +301,11 @@ export const SummonsTabsConfig = {
               {
                 label: "ISSUED",
                 jsonPath: "createdDate",
+                additionalCustomization: true,
+              },
+              {
+                label: "HEARING_DATE",
+                jsonPath: "hearingDate",
                 additionalCustomization: true,
               },
             ],
