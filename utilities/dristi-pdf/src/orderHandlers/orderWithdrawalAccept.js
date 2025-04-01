@@ -181,7 +181,8 @@ async function orderWithdrawalAccept(req, res, qrCode, order, compositeOrder) {
     const currentDate = new Date();
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
 
-    const additionalComments = order?.comments || "";
+    const additionalComments =
+      order?.additionalDetails?.formdata?.comments?.text || "";
     const localreasonForWithdrawal =
       application?.applicationDetails?.reasonForWithdrawal || "";
     const summaryReasonForWithdrawal =
