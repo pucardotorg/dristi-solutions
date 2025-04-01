@@ -1259,6 +1259,17 @@ public class CaseService {
                     enrichAndCallEvidenceCreate(courtCase, representingJoinCase, joinCaseRequest.getRequestInfo(),individualPartyMap.get(representingJoinCase.getIndividualId()).getPartyType());
                 }
 
+
+                courtCase.getRepresentatives().stream()
+                        .filter(representative -> representative.getAdvocateId().equalsIgnoreCase(existingRepresentative.getAdvocateId()))
+                        .findFirst()
+                        .ifPresent(representative -> {
+                            if (representative.getRepresenting() == null) {
+                                representative.setRepresenting(new ArrayList<>()); // Ensure the list is initialized
+                            }
+                            representative.getRepresenting().add(party);
+                        });
+
             });
             caseObj.setRepresentatives(List.of(existingRepresentative));
 
@@ -1346,6 +1357,12 @@ public class CaseService {
             });
 
             caseObj.setRepresentatives(List.of(representative));
+
+
+            if(courtCase.getRepresentatives()==null){
+                courtCase.setRepresentatives(new ArrayList<>());
+            }
+            courtCase.getRepresentatives().add(representative);
         }
 
         log.info("enriching representatives");
@@ -1982,6 +1999,8 @@ public class CaseService {
         List<Attendee> newAttendees = new ArrayList<>();
 
         List<Party> litigants = joinCaseData.getLitigant().stream()
+                .filter(litigant -> courtCase.getLitigants() == null || courtCase.getLitigants().stream()
+                        .noneMatch(existingLitigant -> existingLitigant.getIndividualId().equalsIgnoreCase(litigant.getIndividualId())))
                 .map(litigant -> {
                     Party party = new Party();
                     party.setTenantId(litigant.getTenantId());
@@ -2026,6 +2045,11 @@ public class CaseService {
                     newAttendee.setName(fullName);
                     newAttendee.setType(type);
                     newAttendees.add(newAttendee);
+
+                    if (courtCase.getLitigants() == null) {
+                        courtCase.setLitigants(new ArrayList<>());
+                    }
+                    courtCase.getLitigants().add(party);
 
                     return party;
                 })
