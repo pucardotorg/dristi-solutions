@@ -497,6 +497,19 @@ const editRespondentFormconfig = [
   {
     body: [
       {
+        key: "reasonDetailsSeparator",
+        type: "component",
+        sublabel: "REQUEST_DETAILS",
+        component: "OrSeparator",
+        populators: {
+          inputs: [],
+        },
+      },
+    ],
+  },
+  {
+    body: [
+      {
         type: "component",
         component: "SelectCustomTextArea",
         key: "reasonForChange",

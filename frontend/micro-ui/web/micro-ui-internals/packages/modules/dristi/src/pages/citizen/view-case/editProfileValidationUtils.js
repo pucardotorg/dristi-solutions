@@ -445,7 +445,8 @@ export const updateProfileData = async ({
         })
     );
 
-    const { complainantIDProofDocument, reasonForChange, supportingDocument, ...remainingFormData } = newFormData?.[0]?.data || {};
+    const { complainantIDProofDocument, reasonDetailsSeparator, reasonForChange, supportingDocument, ...remainingFormData } =
+      newFormData?.[0]?.data || {};
     profilePayload = {
       tenantId,
       caseId,
@@ -579,7 +580,7 @@ export const updateProfileData = async ({
         obj.data.emails.textfieldValue = "";
       }
     }
-    const { reasonForChange, supportingDocument, ...remainingFormData } = newFormDataCopy?.[0]?.data || {};
+    const { reasonDetailsSeparator, reasonForChange, supportingDocument, ...remainingFormData } = newFormDataCopy?.[0]?.data || {};
     const currentRespondent = caseDetails?.additionalDetails?.[selected]?.formdata?.find(
       (item, index) => item?.data?.respondentVerification?.individualDetails?.individualId === uniqueId || item?.uniqueId === uniqueId
     );
