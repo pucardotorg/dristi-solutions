@@ -1269,6 +1269,12 @@ public class CaseService {
 
                 existingRepresentative.getRepresenting().add(party);
 
+                boolean isEvidenceAlreadyPresent = evidenceValidator.validateEvidenceCreate(courtCase, joinCaseRequest.getRequestInfo(), representingJoinCase.getDocuments());
+
+                if (!isEvidenceAlreadyPresent) {
+                    enrichAndCallEvidenceCreate(courtCase, representingJoinCase, joinCaseRequest.getRequestInfo(),individualPartyMap.get(representingJoinCase.getIndividualId()).getPartyType());
+                }
+
                 courtCase.getRepresentatives().stream()
                         .filter(representative -> representative.getAdvocateId().equalsIgnoreCase(existingRepresentative.getAdvocateId()))
                         .findFirst()
@@ -1323,6 +1329,12 @@ public class CaseService {
                 Object additionalDetailsObject = objectMapper.convertValue(additionalDetails, additionalDetails.getClass());
                 party.setAdditionalDetails(additionalDetailsObject);
                 representingList.add(party);
+
+                boolean isEvidenceAlreadyPresent = evidenceValidator.validateEvidenceCreate(courtCase, joinCaseRequest.getRequestInfo(), representingJoinCase.getDocuments());
+
+                if (!isEvidenceAlreadyPresent) {
+                    enrichAndCallEvidenceCreate(courtCase, representingJoinCase, joinCaseRequest.getRequestInfo(),individualPartyMap.get(representingJoinCase.getIndividualId()).getPartyType());
+                }
             });
             List<Advocate> advocatesList = advocateUtil.fetchAdvocatesById(joinCaseRequest.getRequestInfo(), joinCaseData.getRepresentative().getAdvocateId());
             Advocate joinCaseAdvocate = advocatesList.get(0);
@@ -1385,6 +1397,70 @@ public class CaseService {
         updateCourtCaseInRedis(joinCaseData.getTenantId(), encrptedCourtCase);
 
         publishToJoinCaseIndexer(joinCaseRequest.getRequestInfo(), encrptedCourtCase);
+    }
+
+    private void enrichAndCallEvidenceCreate(CourtCase courtCase, JoinCaseLitigant joinCaseLitigant, RequestInfo requestInfo) {
+        if (joinCaseLitigant.getDocuments() != null && !joinCaseLitigant.getDocuments().isEmpty()) {
+
+            Document document = objectMapper.convertValue(joinCaseLitigant.getDocuments().get(0), Document.class);
+            org.egov.common.contract.models.Document workflowDocument = objectMapper.convertValue(document, org.egov.common.contract.models.Document.class);
+
+            String sourceType = joinCaseLitigant.getPartyType().contains("complainant") ? "COMPLAINANT" : "ACCUSED";
+            String artifactType = joinCaseLitigant.getPartyType().contains("complainant") ? "COMPLAINANT_PIP_AFFIDAVIT" : "RESPONDENT_PIP_AFFIDAVIT";
+
+            WorkflowObject workflowObject = new WorkflowObject();
+            workflowObject.setAction("TYPE DEPOSITION");
+            workflowObject.setDocuments(Collections.singletonList(workflowDocument));
+
+            EvidenceRequest evidenceRequest = EvidenceRequest.builder().requestInfo(requestInfo)
+                    .artifact(Artifact.builder()
+                            .artifactType(artifactType)
+                            .sourceType(sourceType)
+                            .sourceID(joinCaseLitigant.getIndividualId())
+                            .filingType("CASE_FILING")
+                            .filingNumber(courtCase.getFilingNumber())
+                            .comments(new ArrayList<>())
+                            .isEvidence(false)
+                            .caseId(courtCase.getId().toString())
+                            .tenantId(courtCase.getTenantId())
+                            .file(document)
+                            .workflow(workflowObject)
+                            .build()).build();
+
+            evidenceUtil.createEvidence(evidenceRequest);
+        }
+    }
+
+    private void enrichAndCallEvidenceCreate(CourtCase courtCase, RepresentingJoinCase representingJoinCase, RequestInfo requestInfo,String partyType) {
+        if (representingJoinCase.getDocuments() != null && !representingJoinCase.getDocuments().isEmpty()) {
+
+            Document document = objectMapper.convertValue(representingJoinCase.getDocuments().get(0), Document.class);
+            org.egov.common.contract.models.Document workflowDocument = objectMapper.convertValue(document, org.egov.common.contract.models.Document.class);
+
+            String sourceType = partyType.contains("complainant") ? "COMPLAINANT" : "ACCUSED";
+
+            WorkflowObject workflowObject = new WorkflowObject();
+            workflowObject.setAction("TYPE DEPOSITION");
+            workflowObject.setDocuments(Collections.singletonList(workflowDocument));
+
+            EvidenceRequest evidenceRequest = EvidenceRequest.builder().requestInfo(requestInfo)
+                    .artifact(Artifact.builder()
+                            .artifactType(VAKALATNAMA_DOC)
+                            .sourceType(sourceType)
+                            .sourceID(representingJoinCase.getIndividualId())
+                            .filingType("CASE_FILING")
+                            .filingNumber(courtCase.getFilingNumber())
+                            .comments(new ArrayList<>())
+                            .isEvidence(false)
+                            .caseId(courtCase.getId().toString())
+                            .tenantId(courtCase.getTenantId())
+                            .file(document)
+                            .workflow(workflowObject)
+                            .build()).build();
+
+            evidenceUtil.createEvidence(evidenceRequest);
+
+        }
     }
 
     private Object modifyAdditionalDetails(RequestInfo requestInfo, Object additionalDetails, RepresentingJoinCase representingJoinCase, JoinCaseRepresentative joinCaseRepresentative) {
@@ -2630,6 +2706,12 @@ public class CaseService {
 
 
         joinCaseRequest.getJoinCaseData().getLitigant().forEach(joinCaseLitigant -> {
+            boolean isEvidenceAlreadyPresent = evidenceValidator.validateEvidenceCreate(courtCase, joinCaseRequest.getRequestInfo(), joinCaseLitigant.getDocuments());
+
+            if (!isEvidenceAlreadyPresent) {
+                enrichAndCallEvidenceCreate(courtCase, joinCaseLitigant, joinCaseRequest.getRequestInfo());
+            }
+
             if (joinCaseLitigant.getPartyType().contains("complainant") && joinCaseLitigant.getIsPip()) {
                 courtCase.setAdditionalDetails(modifyAdvocateDetails(courtCase.getAdditionalDetails(), joinCaseLitigant));
             } else if (joinCaseLitigant.getPartyType().contains("respondent")) {
