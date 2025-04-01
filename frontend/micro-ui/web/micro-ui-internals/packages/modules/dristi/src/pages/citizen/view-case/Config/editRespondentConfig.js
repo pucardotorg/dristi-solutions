@@ -497,6 +497,19 @@ const editRespondentFormconfig = [
   {
     body: [
       {
+        key: "reasonDetailsSeparator",
+        type: "component",
+        sublabel: "REQUEST_DETAILS",
+        component: "OrSeparator",
+        populators: {
+          inputs: [],
+        },
+      },
+    ],
+  },
+  {
+    body: [
+      {
         type: "component",
         component: "SelectCustomTextArea",
         key: "reasonForChange",
@@ -559,5 +572,5 @@ export const editRespondentConfig = {
   isOptional: false,
   addFormText: "ADD_RESPONDENT",
   formItemName: "CS_RESPONDENT",
-  className: "respondent",
+  className: "respondent-edit",
 };
