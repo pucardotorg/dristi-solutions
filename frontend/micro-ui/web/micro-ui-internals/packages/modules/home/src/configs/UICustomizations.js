@@ -524,7 +524,7 @@ export const UICustomizations = {
         entityType,
         tenantId,
         ...(caseTitle && { caseTitle }),
-        ...(Object.keys(status || {})?.length > 0 && { status: status?.code ? [status?.code] : status }),
+        status: status?.type,
         ...(startOfTheDay && {
           startOfTheDay: new Date(startOfTheDay + "T00:00:00").getTime(),
           endOfTheDay: new Date(startOfTheDay + "T23:59:59.999").getTime(),
@@ -569,10 +569,7 @@ export const UICustomizations = {
     dropDownItems: (row, column, t) => {
       return [
         {
-          label:
-            row?.businessObject?.orderNotification?.status === OrderWorkflowState.DRAFT_IN_PROGRESS
-              ? t("DELETE_DRAFT")
-              : t("DELETE_PENDING_BULK_E_SIGN"),
+          label: t("DELETE_BULK_ORDER"),
           id: "delete_order",
           hide: false,
           disabled: false,

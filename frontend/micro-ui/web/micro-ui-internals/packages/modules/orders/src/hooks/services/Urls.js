@@ -13,6 +13,7 @@ export const Urls = {
     getPendingTaskFields: "/inbox/v2/_getFields",
     orderPreviewPdf: "/egov-pdf/order",
     searchTasks: "/task/v1/search",
+    orderNotificationSearch: "/inbox/v2/index/_search",
   },
   FileFetchById: "/filestore/v1/files/id",
   Epost: {

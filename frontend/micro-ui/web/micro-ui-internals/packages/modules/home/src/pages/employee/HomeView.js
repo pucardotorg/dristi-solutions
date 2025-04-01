@@ -13,7 +13,7 @@ import { TabLitigantSearchConfig } from "../../configs/LitigantHomeConfig";
 import ReviewCard from "../../components/ReviewCard";
 import { InboxIcon, DocumentIcon } from "../../../homeIcon";
 import { Link } from "react-router-dom";
-import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersService";
+import useSearchOrdersNotificationService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersNotificationService";
 import { OrderWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/orderWorkflow";
 import OrderIssueBulkSuccesModal from "@egovernments/digit-ui-module-orders/src/pageComponents/OrderIssueBulkSuccesModal";
 
@@ -113,10 +113,22 @@ const HomeView = () => {
     userType === "ADVOCATE" ? "/advocate/v1/_search" : "/advocate/clerk/v1/_search"
   );
 
-  const { data: ordersData, refetch: refetchOrdersData, isLoading: isOrdersLoading } = useSearchOrdersService(
+  const { data: ordersNotificationData, isLoading: isOrdersLoading } = useSearchOrdersNotificationService(
     {
-      tenantId,
-      criteria: { status: OrderWorkflowState.PENDING_BULK_E_SIGN },
+      inbox: {
+        processSearchCriteria: {
+          businessService: ["notification"],
+          moduleName: "Transformer service",
+        },
+        limit: 1,
+        offset: 0,
+        tenantId: tenantId,
+        moduleSearchCriteria: {
+          entityType: "Order",
+          tenantId: tenantId,
+          status: OrderWorkflowState.PENDING_BULK_E_SIGN,
+        },
+      },
     },
     { tenantId },
     OrderWorkflowState.PENDING_BULK_E_SIGN,
@@ -466,7 +478,7 @@ const HomeView = () => {
           joinCaseShowSubmitResponseModal={showSubmitResponseModal}
           setJoinCaseShowSubmitResponseModal={setShowSubmitResponseModal}
           hideTaskComponent={individualId && userType && userInfoType === "citizen" && !caseDetails}
-          pendingSignOrderList={ordersData?.list}
+          pendingSignOrderList={ordersNotificationData}
         />
       </div>
       {issueBulkSuccessData.show && (
