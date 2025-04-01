@@ -46,7 +46,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
-
+import javax.mail.Authenticator;
+import javax.mail.PasswordAuthentication;
+import javax.mail.Session;
 import lombok.Getter;
 
 import java.util.Properties;
@@ -58,6 +60,18 @@ public class ApplicationConfiguration {
     @Autowired
     private EmailProperties emailProperties;
 
+    @Bean
+    public Session mailSession() {
+        Properties properties = getMailProperties(mailProtocol.equals("smtp"));
+        
+        return Session.getInstance(properties, new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(mailUsername, mailPassword);
+            }
+        });
+    }
+    
     @Bean
     @ConditionalOnProperty(value = "mail.protocol", havingValue = "smtps")
     public JavaMailSenderImpl mailSenderSMTPS() {
