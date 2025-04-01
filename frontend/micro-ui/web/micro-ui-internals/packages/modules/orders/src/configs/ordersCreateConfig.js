@@ -2985,6 +2985,23 @@ export const configsCaseWithdrawalAccept = [
         type: "text",
         populators: { name: "reasonForWithdrawal" },
       },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "comments",
+        isMandatory: false,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "COMMENTS",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              isOptional: true,
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
     ],
   },
 ];
@@ -3034,6 +3051,23 @@ export const configsCaseWithdrawalReject = [
         disable: true,
         type: "text",
         populators: { name: "reasonForWithdrawal" },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "comments",
+        isMandatory: false,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "COMMENTS",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              isOptional: true,
+              type: "TextAreaComponent",
+            },
+          ],
+        },
       },
     ],
   },
