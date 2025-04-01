@@ -1156,10 +1156,9 @@ public class CaseService {
                         addLitigantToCase(joinCaseRequest, courtCase, caseObj, auditDetails);
                     }
                 }
-
-                joinCaseNotificationsForDirectJoinOfAdvocate(joinCaseRequest, courtCase);
             }
 
+            joinCaseNotificationsForDirectJoinOfAdvocate(joinCaseRequest, courtCase);
 
         } catch (CustomException e) {
             throw e;
