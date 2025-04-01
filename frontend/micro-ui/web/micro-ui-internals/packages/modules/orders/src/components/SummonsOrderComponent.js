@@ -176,7 +176,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
                   respondentMiddleName: individualData?.name?.otherNames,
                   respondentLastName: individualData?.name?.familyName,
                 }),
-                address: individualData ? mapAddressDetails(individualData?.address, true) : mapAddressDetails(item?.data?.addressDetails),
+                address: mapAddressDetails(item?.data?.addressDetails),
                 partyType: "Respondent",
                 phone_numbers: (individualData ? [individualData?.mobileNumber] : [])
                   .concat(item?.data?.phonenumbers?.mobileNumber || [])
