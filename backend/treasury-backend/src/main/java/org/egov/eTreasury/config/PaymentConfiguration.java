@@ -24,6 +24,14 @@ public class PaymentConfiguration {
     @Value("${egov-state-level-tenant-id}")
     private String egovStateTenantId;
 
+    //Mdms
+
+    @Value("${egov.mdms.host}")
+    private String mdmsHost;
+
+    @Value("${egov.mdms.search.endpoint}")
+    private String mdmsSearchEndpoint;
+
     //ETreasury
     @Value("${treasury-public-key}")
     private String publicKey;

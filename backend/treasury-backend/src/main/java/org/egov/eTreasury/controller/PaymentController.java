@@ -1,5 +1,6 @@
 package org.egov.eTreasury.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.egov.common.contract.models.Document;
 import org.egov.eTreasury.model.*;
 import org.egov.eTreasury.service.PaymentService;
@@ -32,6 +33,12 @@ public class PaymentController {
         ConnectionStatus connectionStatus = paymentService.verifyConnection();
         log.info("Verified Server Connection for request: {}", request);
         return ConnectionResponse.builder().responseInfo(responseInfo).connectionStatus(connectionStatus).build();
+    }
+
+    //todo add demand creation logic
+    @PostMapping("/v1/_createDemand")
+    public void createDemand(@RequestBody DemandCreateRequest request) throws JsonProcessingException {
+        paymentService.createDemand(request);
     }
 
     @PostMapping("/v1/_processChallan")
