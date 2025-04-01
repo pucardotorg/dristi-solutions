@@ -2492,12 +2492,11 @@ const AdmittedCases = () => {
         className="admitted-case-header"
         style={{ position: "sticky", top: "72px", width: "100%", height: "100%", zIndex: 150, background: "white" }}
       >
+        {caseDetails?.caseTitle && <Header styles={{ maxWidth: "50%", marginBottom: "-30px" }}>{caseDetails?.caseTitle}</Header>}
         <div className="admitted-case-details" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px" }}>
-          <div className="case-details-title" style={{ display: "flex", alignItems: "center", gap: "12px", width: "70%" }}>
-            {caseDetails?.caseTitle && <Header styles={{ width: "40%" }}>{caseDetails?.caseTitle}</Header>}
+          <div className="case-details-title" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             {statue && (
               <React.Fragment>
-                <hr className="vertical-line" />
                 <div className="sub-details-text">{statue}</div>
               </React.Fragment>
             )}
