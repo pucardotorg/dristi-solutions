@@ -2075,7 +2075,13 @@ const GenerateOrders = () => {
   }, [t, applicationDetails, caseDetails, currentOrder, profileEditorName]);
 
   useEffect(() => {
-    setBusinessOfTheDay(defaultBOTD);
+    const businessOfTheDay = localStorage.getItem("businessOfTheDay");
+    if(businessOfTheDay){
+      setBusinessOfTheDay(businessOfTheDay);
+    }
+    else{
+      setBusinessOfTheDay(defaultBOTD);
+    }
   }, [defaultBOTD]);
 
   const getUpdateDocuments = (documents, documentsFile) => {
@@ -3514,8 +3520,10 @@ const GenerateOrders = () => {
           {}
         );
 
-        const nextHearing = response?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
+        localStorage.removeItem("businessOfTheDay");
 
+        const nextHearing = response?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
+        
         await DRISTIService.addADiaryEntry(
           {
             diaryEntry: {
@@ -4075,6 +4083,7 @@ const GenerateOrders = () => {
 
   const handleGoBackSignatureModal = () => {
     localStorage.removeItem("fileStoreId");
+    localStorage.removeItem("businessOfTheDay");
     setShowsignatureModal(false);
     setShowReviewModal(true);
   };
@@ -4796,6 +4805,7 @@ const GenerateOrders = () => {
           setSignedDocumentUploadID={setSignedDocumentUploadID}
           orderPdfFileStoreID={orderPdfFileStoreID}
           saveOnsubmitLabel={"ISSUE_ORDER"}
+          businessOfDay={businessOfTheDay}
         />
       )}
       {showSuccessModal && (
