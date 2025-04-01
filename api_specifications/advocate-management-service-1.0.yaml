@@ -293,7 +293,7 @@ components:
           type: string
           description: Clerk's unique identifier
         accessType:
-          $ref: '#/components/schemas/AccessType'
+          type: string
         includeInactive:
           type: boolean
           description: Whether to include inactive (deleted) associations
