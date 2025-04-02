@@ -2492,7 +2492,7 @@ const AdmittedCases = () => {
         className="admitted-case-header"
         style={{ position: "sticky", top: "72px", width: "100%", height: "100%", zIndex: 150, background: "white" }}
       >
-        {caseDetails?.caseTitle && <Header styles={{ maxWidth: "50%", marginBottom: "-30px" }}>{caseDetails?.caseTitle}</Header>}
+        {caseDetails?.caseTitle && <Header styles={{ marginBottom: "-30px" }}>{caseDetails?.caseTitle}</Header>}
         <div className="admitted-case-details" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px" }}>
           <div className="case-details-title" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             {statue && (
