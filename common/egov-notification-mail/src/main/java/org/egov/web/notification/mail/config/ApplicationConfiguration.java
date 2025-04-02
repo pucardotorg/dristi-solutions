@@ -90,15 +90,14 @@ public class ApplicationConfiguration {
         Properties mailProperties = new Properties();
         mailProperties.setProperty("mail.smtps.auth", emailProperties.getMailSmtpsAuth());
         mailProperties.setProperty("mail.smtps.starttls.enable", emailProperties.getMailStartTlsEnable());
-        mailProperties.setProperty("mail.smtps.ssl.enable", emailProperties.getMailSslEnable());
+        // mailProperties.setProperty("mail.smtps.ssl.enable", emailProperties.getMailSslEnable());
         mailProperties.setProperty("mail.smtps.debug", emailProperties.getMailSmtpsDebug());
+        mailProperties.setProperty("mail.smtp.ssl.protocols", "TLSv1.2");
+            // mailProperties.setProperty("mail.smtp.socketFactory.port", String.valueOf(emailProperties.getMailPort()));
+            // mailProperties.setProperty("mail.smtp.socketFactory.class",  "javax.net.ssl.SSLSocketFactory");
+            // mailProperties.setProperty("mail.smtp.socketFactory.fallback", "false");
 
-        if (isSmtp) {
-            mailProperties.setProperty("mail.smtp.socketFactory.port", String.valueOf(emailProperties.getMailPort()));
-            mailProperties.setProperty("mail.smtp.socketFactory.class",  "javax.net.ssl.SSLSocketFactory");
-            mailProperties.setProperty("mail.smtp.socketFactory.fallback", "false");
-            mailProperties.setProperty("mail.smtp.ssl.protocols", "TLSv1.2");
-        }
+
 
         return mailProperties;
     }
