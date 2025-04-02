@@ -3374,7 +3374,6 @@ public class CaseService {
 
     public void updateJoinCaseRejected(TaskRequest taskRequest) {
         try {
-
             //this method is used rejecting the request
             log.info("operation=updateJoinCaseRejected, status=IN_PROGRESS, pendingTaskId: {}", taskRequest);
 
