@@ -87,7 +87,7 @@ public class EmailProperties {
     @Getter
     private Boolean mailSenderTest;
 
-    @Value("${mail.smtp.ssl.protocol")
+    @Value("${mail.smtp.ssl.protocol}")
     @Getter
     private String mailSmtpSslProtocol;
 
