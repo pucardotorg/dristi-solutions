@@ -48,7 +48,7 @@ public class TreasuryEnrichment {
 
         for (String head : config.getHeadsList()) {
             headDetailsList.add(HeadDetails.builder()
-                    .amount(String.valueOf(Integer.parseInt(challanAmount) / headSize))
+                    .amount(String.valueOf(Double.parseDouble(challanAmount) / headSize))
                     .headId(head)
                     .build());
         }
