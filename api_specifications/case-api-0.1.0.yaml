@@ -1709,6 +1709,12 @@ components:
         reason:
           type: string
           description: Reason for joining the case
+        IsVakalathnamaAlreadyPresent:
+          type: boolean
+          description: Indicates whether the advocate is joining the case with a Vakalathnama
+        noOfAdvocates:
+          type: integer
+          description: Number of advocates joining the case if Vakalathnama is not present and added as a new
         reasonDocument:
             $ref: >-
                 https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Document
@@ -1746,3 +1752,6 @@ components:
         isVerified:
           type: boolean
           description: indicates if join a case is successful or not
+        paymentTaskNumber:
+          type: string
+          description: task number for payment, it will be null if payment is not required
