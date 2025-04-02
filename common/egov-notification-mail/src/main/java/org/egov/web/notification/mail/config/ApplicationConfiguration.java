@@ -88,10 +88,10 @@ public class ApplicationConfiguration {
 
     private Properties getProperties(EmailProperties emailProperties, boolean isSmtp) {
         Properties mailProperties = new Properties();
-        mailProperties.setProperty("mail.smtps.starttls.enable", emailProperties.getMailStartTlsEnable());
-        mailProperties.setProperty("mail.smtps.auth", emailProperties.getMailSmtpsAuth());
+        mailProperties.setProperty("mail.smtp.starttls.enable", emailProperties.getMailStartTlsEnable());
+        mailProperties.setProperty("mail.smtp.auth", emailProperties.getMailSmtpsAuth());
         // mailProperties.setProperty("mail.smtps.ssl.enable", emailProperties.getMailSslEnable());
-        mailProperties.setProperty("mail.smtps.debug", emailProperties.getMailSmtpsDebug());
+        mailProperties.setProperty("mail.smtp.debug", emailProperties.getMailSmtpsDebug());
         mailProperties.setProperty("mail.smtp.ssl.protocols", "TLSv1.2");
             // mailProperties.setProperty("mail.smtp.socketFactory.port", String.valueOf(emailProperties.getMailPort()));
             // mailProperties.setProperty("mail.smtp.socketFactory.class",  "javax.net.ssl.SSLSocketFactory");
