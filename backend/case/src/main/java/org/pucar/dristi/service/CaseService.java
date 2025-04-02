@@ -1157,6 +1157,9 @@ public class CaseService {
                     }
                 }
             }
+
+            joinCaseNotificationsForDirectJoinOfAdvocate(joinCaseRequest, courtCase);
+
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
@@ -3454,6 +3457,9 @@ public class CaseService {
                 updateCourtCaseObject(courtCase, joinCaseRequest, advocateUuid, requestInfo, pendingAdvocateRequest);
 
                 log.info("operation=updateJoinCaseApproved, status=SUCCESS, taskRequest: {}", taskRequest);
+
+                joinCaseNotificationsAfterApproval(joinCaseRequest, courtCase, requestInfo);
+
             }
         } catch (CustomException e) {
             log.error("CustomException occurred: {}", e.getMessage(), e);
@@ -3461,6 +3467,134 @@ public class CaseService {
         } catch (Exception e) {
             log.error("Unexpected error in updateJoinCaseRejected: {}", e.getMessage(), e);
             throw new CustomException("APPROVAL_REQUEST_ERROR", "An unexpected error occurred");
+        }
+
+    }
+
+    private void joinCaseNotificationsAfterApproval(JoinCaseTaskRequest joinCaseTaskRequest, CourtCase courtCase, RequestInfo requestInfo) {
+
+        try {
+
+            AdvocateDetails individualTryingToReplace = joinCaseTaskRequest.getAdvocateDetails();
+
+            IndividualDetails individualDetails = individualTryingToReplace.getIndividualDetails();
+
+            // send notification to the parties and advocates
+
+            Set<String> individualIdSet = joinCaseTaskRequest.getReplacementDetails().stream().map(ReplacementDetails::getLitigantDetails).map(LitigantDetails::getIndividualId).collect(Collectors.toSet());
+            Set<String> phoneNumbers = callIndividualService(requestInfo, individualIdSet);
+
+            List<String> nameParts = Stream.of(individualDetails.getFirstName(),
+                            individualDetails.getMiddleName(),
+                            individualDetails.getLastName())
+                    .filter(part -> part != null && !part.isEmpty())
+                    .toList();
+
+            String fullName = String.join(" ", nameParts);
+
+            SmsTemplateData smsTemplateData = SmsTemplateData.builder()
+                    .cmpNumber(courtCase.getCmpNumber())
+                    .efilingNumber(courtCase.getFilingNumber())
+                    .advocateName(fullName)
+                    .tenantId(courtCase.getTenantId()).build();
+            for (String number : phoneNumbers) {
+                notificationService.sendNotification(requestInfo, smsTemplateData, ADVOCATE_CASE_JOIN, number);
+            }
+
+            log.info("sending new advocate join sms to {} users", phoneNumbers.size());
+
+            // send sms to remaining users that a new user is joined
+
+            Set<String> individualIdSetOfRemainingUsers = getLitigantIndividualId(courtCase);
+
+            CaseRequest caseRequest = CaseRequest.builder().requestInfo(requestInfo).cases(courtCase).build();
+
+            getAdvocateIndividualId(caseRequest, individualIdSetOfRemainingUsers);
+
+            individualIdSetOfRemainingUsers.addAll(
+                    courtCase.getRepresentatives().stream()
+                            .flatMap(advocateMapping -> advocateMapping.getRepresenting().stream())
+                            .map(Party::getIndividualId)
+                            .collect(Collectors.toSet())
+            );
+
+            individualIdSetOfRemainingUsers.removeAll(individualIdSet);
+
+            Set<String> phoneNumbersOfRemainingUsers = callIndividualService(requestInfo, individualIdSetOfRemainingUsers);
+
+            log.info("sending new user join sms to {} users", phoneNumbersOfRemainingUsers.size());
+
+            for (String phoneNumber : phoneNumbersOfRemainingUsers) {
+                notificationService.sendNotification(requestInfo, smsTemplateData, NEW_USER_JOIN, phoneNumber);
+            }
+        } catch (Exception e) {
+            log.error("Error occurred while sending notification: {}", e.toString());
+        }
+
+
+    }
+
+    private void joinCaseNotificationsForDirectJoinOfAdvocate(JoinCaseV2Request joinCaseRequest, CourtCase courtCase) {
+
+        JoinCaseDataV2 joinCaseData = joinCaseRequest.getJoinCaseData();
+
+        Set<String> individualIdSet = null;
+
+
+        SmsTemplateData smsTemplateData = SmsTemplateData.builder()
+                .cmpNumber(courtCase.getCmpNumber())
+                .efilingNumber(courtCase.getFilingNumber())
+                .tenantId(courtCase.getTenantId()).build();
+
+        if (joinCaseData.getRepresentative() != null) {
+
+            // send advocate joined sms to respective advocate parties
+            individualIdSet = joinCaseData.getRepresentative().getRepresenting().stream().map(RepresentingJoinCase::getIndividualId).collect(Collectors.toSet());
+
+            Set<String> phoneNumbers = callIndividualService(joinCaseRequest.getRequestInfo(), individualIdSet);
+            String advocateId = joinCaseRequest.getJoinCaseData().getRepresentative().getAdvocateId();
+
+            Optional<AdvocateMapping> advocateMapping = courtCase.getRepresentatives().stream().filter(advocateMapping1 ->
+                    advocateMapping1.getAdvocateId().equalsIgnoreCase(advocateId)).findFirst();
+
+            LinkedHashMap advocate = null;
+
+            if (advocateMapping.isPresent()) {
+                advocate = ((LinkedHashMap) advocateMapping.get().getAdditionalDetails());
+            }
+
+            String advocateName = advocate != null ? advocate.get(ADVOCATE_NAME).toString() : "";
+
+            smsTemplateData.setAdvocateName(advocateName);
+
+            for (String number : phoneNumbers) {
+                notificationService.sendNotification(joinCaseRequest.getRequestInfo(), smsTemplateData, ADVOCATE_CASE_JOIN, number);
+            }
+        }
+
+        // send sms to remaining users that a new user is joined
+
+        Set<String> individualIdSetOfRemainingUsers = getLitigantIndividualId(courtCase);
+
+        CaseRequest caseRequest = CaseRequest.builder().requestInfo(joinCaseRequest.getRequestInfo()).cases(courtCase).build();
+
+        getAdvocateIndividualId(caseRequest, individualIdSetOfRemainingUsers);
+
+        individualIdSetOfRemainingUsers.addAll(
+                courtCase.getRepresentatives().stream()
+                        .flatMap(advocateMapping -> advocateMapping.getRepresenting().stream())
+                        .map(Party::getIndividualId)
+                        .collect(Collectors.toSet())
+        );
+
+        if (individualIdSet != null) {
+            individualIdSetOfRemainingUsers.removeAll(individualIdSet);
+        }
+
+        Set<String> phoneNumbersOfRemainingUsers = callIndividualService(joinCaseRequest.getRequestInfo(), individualIdSetOfRemainingUsers);
+
+        for (String phoneNumber : phoneNumbersOfRemainingUsers) {
+            notificationService.sendNotification(joinCaseRequest.getRequestInfo(), smsTemplateData, NEW_USER_JOIN, phoneNumber);
         }
 
     }
