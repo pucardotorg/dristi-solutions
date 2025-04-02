@@ -122,11 +122,7 @@ export const SummonsTabsConfig = {
                 label: "E_PROCESS_ID",
                 jsonPath: "taskNumber",
               },
-              {
-                label: "STATUS",
-                jsonPath: "documentStatus",
-                additionalCustomization: true,
-              },
+
               {
                 label: "CASE_NAME_ID",
                 jsonPath: "filingNumber",
@@ -140,6 +136,11 @@ export const SummonsTabsConfig = {
               {
                 label: "DELIEVERY_CHANNEL",
                 jsonPath: "delieveryChannel",
+                additionalCustomization: true,
+              },
+              {
+                label: "STATUS",
+                jsonPath: "documentStatus",
                 additionalCustomization: true,
               },
               {
@@ -273,11 +274,7 @@ export const SummonsTabsConfig = {
                 label: "E_PROCESS_ID",
                 jsonPath: "taskNumber",
               },
-              {
-                label: "STATUS",
-                jsonPath: "status",
-                additionalCustomization: true,
-              },
+
               {
                 label: "CASE_NAME_ID",
                 jsonPath: "filingNumber",
@@ -291,6 +288,11 @@ export const SummonsTabsConfig = {
               {
                 label: "DELIEVERY_CHANNEL",
                 jsonPath: "delieveryChannel",
+                additionalCustomization: true,
+              },
+              {
+                label: "STATUS",
+                jsonPath: "status",
                 additionalCustomization: true,
               },
               {
