@@ -94,6 +94,7 @@ public class TaskQueryBuilder {
             String state = criteria.getState();
             String filingNumber = criteria.getFilingNumber();
             String taskType = criteria.getTaskType();
+            String advocateUuid = criteria.getAdvocateUuid();
 
             StringBuilder query = new StringBuilder(BASE_CASE_QUERY);
             query.append(FROM_TASK_TABLE);
