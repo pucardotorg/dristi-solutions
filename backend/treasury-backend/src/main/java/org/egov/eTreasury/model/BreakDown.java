@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class BreakUp {
+public class BreakDown {
 
     private String type;
     private Double amount;

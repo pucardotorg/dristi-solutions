@@ -35,10 +35,13 @@ public class PaymentController {
         return ConnectionResponse.builder().responseInfo(responseInfo).connectionStatus(connectionStatus).build();
     }
 
-    //todo add demand creation logic
     @PostMapping("/v1/_createDemand")
-    public void createDemand(@RequestBody DemandCreateRequest request) throws JsonProcessingException {
-        paymentService.createDemand(request);
+    public ResponseEntity<?> createDemand(@RequestBody DemandCreateRequest request) {
+        log.info("Creating demand for request: {}", request);
+        TreasuryMapping treasuryMapping = paymentService.createDemand(request);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+        log.info("Demand created successfully for request: {}", request);
+        return ResponseEntity.ok(treasuryMapping);
     }
 
     @PostMapping("/v1/_processChallan")

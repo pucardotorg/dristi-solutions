@@ -18,6 +18,9 @@ public class ChallanData {
     @JsonProperty("serviceNumber")
     private String serviceNumber;
 
+    @JsonProperty("consumerCode")
+    private String consumerCode;
+
     @JsonProperty("totalDue")
     private double totalDue;
 

@@ -10,7 +10,7 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TreasuryDemand {
+public class TreasuryMapping {
 
     @JsonProperty("consumerCode")
     private String consumerCode;
@@ -19,5 +19,8 @@ public class TreasuryDemand {
     private String tenantId;
 
     @JsonProperty("headAmountMapping")
-    private Map<String, Object> headAmountMapping;
+    private Object headAmountMapping;
+
+    @JsonProperty("createdTime")
+    private Long createdTime;
 }

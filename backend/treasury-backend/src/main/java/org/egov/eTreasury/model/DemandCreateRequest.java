@@ -15,17 +15,17 @@ import java.util.List;
 @AllArgsConstructor
 public class DemandCreateRequest {
 
-    @JsonProperty("requestInfo")
+    @JsonProperty("RequestInfo")
     private RequestInfo requestInfo = null;
 
     @JsonProperty("consumerCode")
     private String consumerCode = null;
 
-    @JsonProperty("breakDown")
-    private List<BreakUp> breakDown = null;
+    @JsonProperty("calculation")
+    private List<Calculation> calculation = null;
 
-    @JsonProperty("caseId")
-    private String caseId = null;
+    @JsonProperty("filingNumber")
+    private String filingNumber = null;
 
     @JsonProperty("entityType")
     private String entityType = null;

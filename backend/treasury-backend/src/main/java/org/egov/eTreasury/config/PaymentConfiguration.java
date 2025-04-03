@@ -155,6 +155,20 @@ public class PaymentConfiguration {
     private String accountType;
     private List<String> accountTypeList;
 
+    // Case Config
+    @Value("${dristi.case.host}")
+    private String caseHost;
+
+    @Value("${dristi.case.search.endpoint}")
+    private String caseSearchEndPoint;
+
+    //Billing service
+    @Value("${egov.demand.host}")
+    private String demandHost;
+
+    @Value("${egov.demand.create.endpoint}")
+    private String demandCreateEndPoint;
+
     @PostConstruct
     public void init() {
         headsList = Arrays.asList(heads.split(","));
