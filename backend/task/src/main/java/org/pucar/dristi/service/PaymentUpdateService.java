@@ -201,6 +201,23 @@ public class PaymentUpdateService {
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                     producer.push(config.getTaskJoinCaseUpdateTopic(), taskRequest);
                 }
+                case JOIN_CASE_PAYMENT -> {
+                    WorkflowObject  workflow = new WorkflowObject();
+                    workflow.setAction(MAKE_PAYMENT);
+                    task.setWorkflow(workflow);
+
+                    String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, task.getTaskNumber(),
+                            config.getTaskPaymentBusinessServiceName(), workflow, config.getTaskBusinessName());
+                    task.setStatus(status);
+
+                    TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
+                    producer.push(config.getTaskUpdateTopic(), taskRequest);
+
+                    // update remaining pending task of payment's of the advocate
+
+                    updatePaymentStatusOfRemainingPendingPaymentTasks(requestInfo, tenantId);
+
+                }
             }
         }
     }
@@ -250,6 +267,43 @@ public class PaymentUpdateService {
                 )
                 .toList();
 
+
+    }
+
+    private void updatePaymentStatusOfRemainingPendingPaymentTasks(RequestInfo requestInfo, String tenantId) {
+
+        String advocateUuid = requestInfo.getUserInfo().getUuid();
+
+        TaskCriteria criteria = TaskCriteria.builder()
+                .advocateUuid(advocateUuid)
+                .build();
+
+        List<Task> tasks = repository.getTasks(criteria, null);
+
+        if (CollectionUtils.isEmpty(tasks)) {
+            log.info("No other pending payment task's found for advocate :: {}", advocateUuid);
+            return;
+        }
+
+        tasks.forEach(task -> {
+            if (task.getStatus().equals(PENDING_PAYMENT)) {
+
+                requestInfo.getUserInfo().getRoles().clear();
+                Role role = Role.builder().code(config.getSystemAdmin()).tenantId(tenantId).build();
+                requestInfo.getUserInfo().getRoles().add(role);
+
+                WorkflowObject workflow = new WorkflowObject();
+                workflow.setAction(REJECT);
+                task.setWorkflow(workflow);
+                String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, task.getTaskNumber(),
+                        config.getTaskPaymentBusinessServiceName(), workflow, config.getTaskBusinessName());
+                log.info("Rejecting remaining pending payment task for advocate by system :: {}", advocateUuid);
+                task.setStatus(status);
+
+                TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
+                producer.push(config.getTaskUpdateTopic(), taskRequest);
+            }
+        });
 
     }
 }
