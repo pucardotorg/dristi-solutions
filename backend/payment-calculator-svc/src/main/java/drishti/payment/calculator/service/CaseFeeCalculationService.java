@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import drishti.payment.calculator.util.CaseUtil;
 import drishti.payment.calculator.util.EFillingUtil;
 import drishti.payment.calculator.web.models.*;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,9 +38,10 @@ public class CaseFeeCalculationService {
         EFilingParam eFillingDefaultData = eFillingUtil.getEFillingDefaultData(requestInfo, calculationCriteria.get(0).getTenantId());
 
         Double applicationFee = eFillingDefaultData.getApplicationFee();
-        Double vakalathnamaFee = eFillingDefaultData.getVakalathnamaFee();
         Double advocateClerkWelfareFund = eFillingDefaultData.getAdvocateClerkWelfareFund();
         Double delayCondonationFee = eFillingDefaultData.getDelayCondonationFee();
+        Double courtFee = eFillingDefaultData.getCourtFee();
+        Double legalBasicFund = eFillingDefaultData.getLegalBasicFund();
 
         LinkedHashMap<String, HashMap<String, Integer>> noOfAdvocateFees = eFillingDefaultData.getNoOfAdvocateFees();
         Map<String, Range> petitionFeeRange = eFillingDefaultData.getPetitionFee();
@@ -58,11 +60,24 @@ public class CaseFeeCalculationService {
             for (Map.Entry<String, List<JsonNode>> entry : litigantAdvocateMap.entrySet()) {
                 int advocateCount = entry.getValue().size();
                 advocateFee += getAdvocateFee(noOfAdvocateFees, advocateCount);
+                courtFee += courtFee;
+                legalBasicFund += legalBasicFund;
+                advocateClerkWelfareFund += advocateClerkWelfareFund;
 
             }
 
-            List<BreakDown> feeBreakdown = getFeeBreakdown(vakalathnamaFee, advocateClerkWelfareFund, totalApplicationFee, petitionFee, delayFee, advocateFee);
-            Double totalCourtFee = Math.ceil(vakalathnamaFee + advocateClerkWelfareFund + totalApplicationFee + petitionFee + delayFee + advocateFee);
+            log.info("petitionFee={}, courtFee={}, legalBasicFund={}, advocateClerkWelfareFund={}, totalApplicationFee={}, petitionFee={}", petitionFee, courtFee, legalBasicFund, advocateClerkWelfareFund, totalApplicationFee, petitionFee);
+            courtFee = Math.ceil(courtFee);
+            legalBasicFund = Math.ceil(legalBasicFund);
+            advocateClerkWelfareFund = Math.ceil(advocateClerkWelfareFund);
+            totalApplicationFee = Math.ceil(totalApplicationFee);
+            petitionFee = Math.ceil(petitionFee);
+            delayFee = Math.ceil(delayFee);
+            advocateFee = Math.ceil(advocateFee);
+
+            List<BreakDown> feeBreakdown = getFeeBreakdown(courtFee, legalBasicFund, advocateClerkWelfareFund, totalApplicationFee, petitionFee, delayFee, advocateFee);
+            Double totalCourtFee = courtFee + legalBasicFund + advocateClerkWelfareFund + totalApplicationFee + petitionFee + delayFee + advocateFee;
+
             Calculation calculation = Calculation.builder()
                     .applicationId(criteria.getCaseId())
                     .totalAmount(totalCourtFee)
@@ -78,10 +93,11 @@ public class CaseFeeCalculationService {
     }
 
 
-    public List<BreakDown> getFeeBreakdown(double vakalathnamaFee, double advocateClerkWelfareFund, double totalApplicationFee, double petitionFee, double condonationFee, double advocateFee) {
+    public List<BreakDown> getFeeBreakdown(double courtFee, double legalBasicFund, double advocateClerkWelfareFund, double totalApplicationFee, double petitionFee, double condonationFee, double advocateFee) {
         List<BreakDown> feeBreakdowns = new ArrayList<>();
 
-        feeBreakdowns.add(new BreakDown(VAKALATHNAMA_FEE, vakalathnamaFee, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown(COURT_FEE, courtFee, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown(LEGAL_BASIC_FUND, legalBasicFund, new HashMap<>()));
         feeBreakdowns.add(new BreakDown(ADVOCATE_CLERK_WELFARE_FUND, advocateClerkWelfareFund, new HashMap<>()));
         feeBreakdowns.add(new BreakDown(TOTAL_APPLICATION_FEE, totalApplicationFee, new HashMap<>()));
         feeBreakdowns.add(new BreakDown(PETITION_FEE, petitionFee, new HashMap<>()));
@@ -126,5 +142,60 @@ public class CaseFeeCalculationService {
             }
         }
         return advocateFee;
+    }
+
+    public List<Calculation> calculateJoinCaseFees(@Valid JoinCasePaymentRequest request) {
+
+        EFilingParam eFillingDefaultData = eFillingUtil.getEFillingDefaultData(request.getRequestInfo(), request.getJoinCaseCriteria().get(0).getTenantId());
+
+        Double courtFee = eFillingDefaultData.getCourtFee();
+        Double legalBasicFund = eFillingDefaultData.getLegalBasicFund();
+        Double advocateClerkWelfareFund = eFillingDefaultData.getAdvocateClerkWelfareFund();
+
+        Double calculatedCourtFee = 0.0;
+        Double calculatedLegalBasicFund = 0.0;
+        Double calculatedAdvocateClerkWelfareFund = 0.0;
+        Double calculatedAdvocateFee = 0.0;
+        List<Calculation> result = new ArrayList<>();
+        for (JoinCaseCriteria joinCaseCriteria : request.getJoinCaseCriteria()) {
+
+            for (LitigantAdvocateMap litigantAdvocateMap : joinCaseCriteria.getLitigantAdvocateMap()) {
+                if (litigantAdvocateMap.getAdvocateCount() > 0) {
+                    Double advocateFee = getAdvocateFee(eFillingDefaultData.getNoOfAdvocateFees(), litigantAdvocateMap.getAdvocateCount());
+                    calculatedCourtFee += courtFee;
+                    calculatedLegalBasicFund += legalBasicFund;
+                    calculatedAdvocateClerkWelfareFund += advocateClerkWelfareFund;
+                    calculatedAdvocateFee += advocateFee;
+                }
+            }
+            calculatedAdvocateFee = Math.ceil(calculatedAdvocateFee);
+            calculatedCourtFee = Math.ceil(calculatedCourtFee);
+            calculatedLegalBasicFund = Math.ceil(calculatedLegalBasicFund);
+            calculatedAdvocateClerkWelfareFund = Math.ceil(calculatedAdvocateClerkWelfareFund);
+            List<BreakDown> feeBreakdown = getFeeBreakdownForJoinCase(calculatedCourtFee, calculatedLegalBasicFund, calculatedAdvocateClerkWelfareFund, calculatedAdvocateFee);
+            Double totalAmount = calculatedCourtFee + calculatedLegalBasicFund + calculatedAdvocateClerkWelfareFund + calculatedAdvocateFee;
+            Calculation calculation = Calculation.builder()
+                    .applicationId(joinCaseCriteria.getCaseId())
+                    .totalAmount(totalAmount)
+                    .tenantId(joinCaseCriteria.getTenantId())
+                    .breakDown(feeBreakdown).build();
+
+            result.add(calculation);
+        }
+
+        return result;
+
+
+    }
+
+    public List<BreakDown> getFeeBreakdownForJoinCase(double courtFee, double legalBasicFund, double advocateClerkWelfareFund, double advocateFee) {
+
+        List<BreakDown> feeBreakdowns = new ArrayList<>();
+
+        feeBreakdowns.add(new BreakDown(COURT_FEE, courtFee, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown(LEGAL_BASIC_FUND, legalBasicFund, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown(ADVOCATE_CLERK_WELFARE_FUND, advocateClerkWelfareFund, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown(ADVOCATE_FEE, advocateFee, new HashMap<>()));
+        return feeBreakdowns;
     }
 }
