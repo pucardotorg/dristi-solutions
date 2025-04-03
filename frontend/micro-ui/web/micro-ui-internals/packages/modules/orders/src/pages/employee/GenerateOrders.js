@@ -577,9 +577,12 @@ const GenerateOrders = () => {
     }
     const isSignSuccess = localStorage.getItem("esignProcess");
     const savedOrderPdf = localStorage.getItem("orderPDF");
+    const currentSelectedOrderIndex = localStorage.getItem("currentSelectedOrder");
     if (isSignSuccess) {
       setShowsignatureModal(true);
       setOrderPdfFileStoreID(savedOrderPdf);
+      setSelectedOrder(currentSelectedOrderIndex);
+      localStorage.removeItem("currentSelectedOrder");
       localStorage.removeItem("esignProcess");
       localStorage.removeItem("orderPDF");
     }
@@ -1507,7 +1510,7 @@ const GenerateOrders = () => {
         if (scheduleHearingOrderItem) {
           updatedFormdata.dateForHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
-          updatedFormdata.dateForHearing = newCurrentOrder?.additionalDetails?.formdata?.newHearingDate || "";
+          updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
         } else {
           updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
         }
@@ -1549,7 +1552,7 @@ const GenerateOrders = () => {
         if (scheduleHearingOrderItem) {
           updatedFormdata.dateForHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
-          updatedFormdata.dateForHearing = newCurrentOrder?.additionalDetails?.formdata?.newHearingDate || "";
+          updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
         } else {
           updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
         }
@@ -1595,7 +1598,7 @@ const GenerateOrders = () => {
         if (scheduleHearingOrderItem) {
           updatedFormdata.dateOfHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
-          updatedFormdata.dateOfHearing = newCurrentOrder?.additionalDetails?.formdata?.newHearingDate || "";
+          updatedFormdata.dateOfHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
         } else {
           updatedFormdata.dateOfHearing = formatDate(new Date(hearingDetails?.startTime));
         }
@@ -4806,6 +4809,7 @@ const GenerateOrders = () => {
           orderPdfFileStoreID={orderPdfFileStoreID}
           saveOnsubmitLabel={"ISSUE_ORDER"}
           businessOfDay={businessOfTheDay}
+          selectedOrder={selectedOrder}
         />
       )}
       {showSuccessModal && (
