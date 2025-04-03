@@ -276,6 +276,8 @@ public class PaymentUpdateService {
 
         TaskCriteria criteria = TaskCriteria.builder()
                 .advocateUuid(advocateUuid)
+                .status(PENDING_PAYMENT)
+                .taskType(JOIN_CASE_PAYMENT)
                 .build();
 
         List<Task> tasks = repository.getTasks(criteria, null);
@@ -286,8 +288,6 @@ public class PaymentUpdateService {
         }
 
         tasks.forEach(task -> {
-            if (task.getStatus().equals(PENDING_PAYMENT)) {
-
                 requestInfo.getUserInfo().getRoles().clear();
                 Role role = Role.builder().code(config.getSystemAdmin()).tenantId(tenantId).build();
                 requestInfo.getUserInfo().getRoles().add(role);
@@ -302,7 +302,6 @@ public class PaymentUpdateService {
 
                 TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                 producer.push(config.getTaskUpdateTopic(), taskRequest);
-            }
         });
 
     }
