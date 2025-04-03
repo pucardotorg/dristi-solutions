@@ -72,5 +72,7 @@ public class ServiceConstants {
     public static final String FILE_STORE_ID_KEY = "fileStoreId";
     public static final String FILES_KEY = "files";
     public static final String DOCUMENT_TYPE_PDF = "application/pdf";
+    public static final String PAYMENT_DISTRIBUTION_EXISTS = "PAYMENT_DISTRIBUTION_EXISTS";
+    public static final String DEMAND_CREATION_ERROR = "DEMAND_CREATION_ERROR";
 
 }

@@ -1,8 +1,9 @@
 package org.egov.eTreasury.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.egov.common.contract.models.Document;
 import org.egov.eTreasury.model.*;
+import org.egov.eTreasury.model.demand.DemandCreateRequest;
+import org.egov.eTreasury.model.demand.DemandResponse;
 import org.egov.eTreasury.service.PaymentService;
 import org.egov.eTreasury.util.ResponseInfoFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -38,10 +39,9 @@ public class PaymentController {
     @PostMapping("/v1/_createDemand")
     public ResponseEntity<?> createDemand(@RequestBody DemandCreateRequest request) {
         log.info("Creating demand for request: {}", request);
-        TreasuryMapping treasuryMapping = paymentService.createDemand(request);
-        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+        DemandResponse demandResponse = paymentService.createDemand(request);
         log.info("Demand created successfully for request: {}", request);
-        return ResponseEntity.ok(treasuryMapping);
+        return ResponseEntity.ok(demandResponse);
     }
 
     @PostMapping("/v1/_processChallan")

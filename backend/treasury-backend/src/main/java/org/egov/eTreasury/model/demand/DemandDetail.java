@@ -1,4 +1,4 @@
-package org.egov.eTreasury.model;
+package org.egov.eTreasury.model.demand;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotNull;

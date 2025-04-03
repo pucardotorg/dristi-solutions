@@ -10,6 +10,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.eTreasury.config.PaymentConfiguration;
 import org.egov.eTreasury.enrichment.TreasuryEnrichment;
 import org.egov.eTreasury.kafka.Producer;
+import org.egov.eTreasury.model.demand.*;
 import org.egov.eTreasury.repository.TreasuryMappingRepository;
 import org.egov.eTreasury.repository.TreasuryPaymentRepository;
 import org.egov.eTreasury.util.*;
@@ -368,25 +369,28 @@ public class PaymentService {
         collectionsUtil.callService(paymentRequest, config.getCollectionServiceHost(), config.getCollectionsPaymentCreatePath());
     }
 
-    public TreasuryMapping createDemand(DemandCreateRequest demandRequest) {
+    public DemandResponse createDemand(DemandCreateRequest demandRequest) {
         try {
+            log.info("operation=createDemand, status=IN_PROGRESS, consumerCode={}", demandRequest.getConsumerCode());
             TreasuryMapping treasuryMapping = treasuryMappingRepository.getTreasuryMapping(demandRequest.getConsumerCode());
             if (treasuryMapping != null) {
                 log.error("Payment distribution does not exits: {}", demandRequest.getConsumerCode());
-                throw new CustomException("PAYMENT_DISTRIBUTION_EXISTS", "Payment distribution does not exits.");
+                throw new CustomException(PAYMENT_DISTRIBUTION_EXISTS, "Payment distribution does not exits.");
             }
 
             CourtCase courtCase = fetchCourtCase(demandRequest);
             Demand demand = createDemandObject(demandRequest, courtCase);
-            demandUtil.createDemand(DemandRequest.builder()
+            DemandResponse demandResponse = demandUtil.createDemand(DemandRequest.builder()
                     .requestInfo(demandRequest.getRequestInfo())
                     .demands(List.of(demand))
                     .build());
 
-            return generateTreasuryMapping(demandRequest, demand);
+            generateTreasuryMapping(demandRequest, demand);
+            log.info("operation=createDemand, status=SUCCESS, consumerCode={}", demandRequest.getConsumerCode());
+            return demandResponse;
         } catch (JsonProcessingException e) {
             log.error("Error occurred during demand creation: ", e);
-            throw new CustomException("DEMAND_CREATION_ERROR", "Error occurred during demand creation");
+            throw new CustomException(DEMAND_CREATION_ERROR, "Error occurred during demand creation");
         }
     }
 
@@ -429,11 +433,13 @@ public class PaymentService {
 
         if (paymentTypeCode == null) {
             log.error("No payment type found for consumer code : {}", demandRequest.getConsumerCode());
+            throw new CustomException("PAYMENT_TYPE_NOT_FOUND", "No payment type found for consumer code." );
         }
 
         JsonNode paymentTypeToBreakUp = extractPaymentBreakUpToType(objectMapper.readTree(mdmsMasterData.get("paymentTypeToBreakupMapping").toJSONString()), paymentTypeCode);
         if (paymentTypeToBreakUp == null) {
             log.error("No payment breakup found for payment type : {}", paymentType);
+            throw new CustomException("PAYMENT_BREAKUP_NOT_FOUND", "No payment breakup found for payment type." );
         }
 
         List<JsonNode> breakUpList = new ArrayList<>();
