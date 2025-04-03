@@ -47,5 +47,8 @@ public class TaskCriteria {
     @JsonProperty("taskType")
     private String taskType;
 
+    @JsonProperty("advocateUuid")
+    private String advocateUuid;
+
 
 }

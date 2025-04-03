@@ -108,6 +108,7 @@ public class TaskQueryBuilder {
             firstCriteria = addTaskCriteria(state, query, firstCriteria, "task.state = ?", preparedStmtList,preparedStmtArgList);
             firstCriteria = addTaskCriteria(taskType, query, firstCriteria, "task.tasktype = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(filingNumber, query, firstCriteria, "task.filingnumber = ?", preparedStmtList, preparedStmtArgList);
+            firstCriteria = addTaskCriteria(advocateUuid, query, firstCriteria, "task.taskdetails->>'advocateUuid' = ?", preparedStmtList, preparedStmtArgList);
             addTaskCriteria(taskNumber, query, firstCriteria, "task.tasknumber = ?", preparedStmtList, preparedStmtArgList);
 
             return query.toString();
