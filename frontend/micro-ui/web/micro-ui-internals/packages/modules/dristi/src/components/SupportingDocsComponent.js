@@ -15,6 +15,8 @@ const CloseBtn = () => {
 const SupportingDocsComponent = ({ t, config, onSelect, formData = {}, errors, setError, clearErrors }) => {
   const [formInstances, setFormInstances] = useState(formData?.[config?.key] || [{}]);
   const disable = config?.disable;
+  const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
+  const isBenchClerk = userRoles.includes("BENCH_CLERK");
 
   const inputs = useMemo(
     () =>
@@ -43,6 +45,24 @@ const SupportingDocsComponent = ({ t, config, onSelect, formData = {}, errors, s
     [config?.populators?.inputs]
   );
 
+  const modifiedInputs = useMemo(
+    () =>
+      inputs.map(input => {
+        const temp = {
+          ...input,
+          populators: {
+            ...input?.populators,
+            mdmsConfig: {
+              ...input?.populators?.mdmsConfig,
+              select: `(data) => {return data['Submission'].SubmissionDocumentType?.filter((item) => {return !(item.code === "MISCELLANEOUS" && ${!isBenchClerk});});}`,
+            }
+          }
+        }
+        return temp
+      }) ,
+    [inputs, isBenchClerk]
+  );
+
   const addAnotherForm = () => {
     const newFormInstances = [...formInstances, {}];
     setFormInstances(newFormInstances);
@@ -55,7 +75,6 @@ const SupportingDocsComponent = ({ t, config, onSelect, formData = {}, errors, s
       updatedFormInstances.map((instance) => instance[config.key] || {})
     );
   };
-
 
   const deleteForm = (index) => {
     const updatedFormInstances = [...formInstances];
@@ -109,14 +128,16 @@ const SupportingDocsComponent = ({ t, config, onSelect, formData = {}, errors, s
             )}
           </div>
 
-          {inputs?.map((input, inputIndex) => {
+          {modifiedInputs?.map((input, inputIndex) => {
             const obj = formInstances?.[formIndex]?.[config?.key] ? formInstances[formIndex]?.[config?.key] : formInstances[formIndex];
 
             return (
               <React.Fragment key={inputIndex}>
                 {input?.type === "text" && (
                   <div className="text-Input">
-                    <div style={{ marginBottom: "8px" }}>{t(input.label)} {input?.isOptional && <span style={{ color: "#77787B" }}>&nbsp;{t("CS_IS_OPTIONAL")}</span>}</div>
+                    <div style={{ marginBottom: "8px" }}>
+                      {t(input.label)} {input?.isOptional && <span style={{ color: "#77787B" }}>&nbsp;{t("CS_IS_OPTIONAL")}</span>}
+                    </div>
                     <TextInput
                       t={t}
                       className="field desktop-w-full"
@@ -161,7 +182,9 @@ const SupportingDocsComponent = ({ t, config, onSelect, formData = {}, errors, s
                 )}
                 {errors[`${input?.key}_${formIndex}`] && (
                   <CardLabelError style={{ width: "70%", marginLeft: "30%", fontSize: "12px" }}>
-                    {errors[`${input?.key}_${formIndex}`]?.message ? errors[`${input?.key}_${formIndex}`]?.message : t(errors[`${input?.key}_${formIndex}`]) || t(input.error)}
+                    {errors[`${input?.key}_${formIndex}`]?.message
+                      ? errors[`${input?.key}_${formIndex}`]?.message
+                      : t(errors[`${input?.key}_${formIndex}`]) || t(input.error)}
                   </CardLabelError>
                 )}
               </React.Fragment>

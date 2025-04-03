@@ -11,7 +11,9 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
   const [formData, setFormData] = useState({}); // storing the file upload data
   const [openUploadSignatureModal, setOpenUploadSignatureModal] = useState(false);
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
-  const [pageModule, setPageModule] = useState("ci");
+  const [pageModule, setPageModule] = useState(() =>
+    Digit.UserService.getUser()?.info?.roles?.some((role) => role.code === "BENCH_CLERK") ? "en" : "ci"
+  );
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${combinedFileStoreId}`;
   const { uploadDocuments } = useDocumentUpload();
