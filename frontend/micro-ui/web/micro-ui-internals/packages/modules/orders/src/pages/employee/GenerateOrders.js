@@ -572,21 +572,23 @@ const GenerateOrders = () => {
   }, [showErrorToast]);
 
   useEffect(() => {
-    if (defaultIndex && defaultIndex !== -1 && orderNumber && defaultIndex !== selectedOrder) {
+    const currentSelectedOrderIndex = localStorage.getItem("currentSelectedOrder");
+
+    if (currentSelectedOrderIndex) {
+      setSelectedOrder(currentSelectedOrderIndex);
+      localStorage.removeItem("currentSelectedOrder");
+    } else if (defaultIndex && defaultIndex !== -1 && orderNumber && defaultIndex !== selectedOrder) {
       setSelectedOrder(defaultIndex);
     }
     const isSignSuccess = localStorage.getItem("esignProcess");
     const savedOrderPdf = localStorage.getItem("orderPDF");
-    const currentSelectedOrderIndex = localStorage.getItem("currentSelectedOrder");
     if (isSignSuccess) {
       setShowsignatureModal(true);
       setOrderPdfFileStoreID(savedOrderPdf);
-      setSelectedOrder(currentSelectedOrderIndex);
-      localStorage.removeItem("currentSelectedOrder");
       localStorage.removeItem("esignProcess");
       localStorage.removeItem("orderPDF");
     }
-  }, [defaultIndex]);
+  }, [defaultIndex, orderNumber, selectedOrder]);
 
   useEffect(() => {
     const getOrder = async () => {
@@ -2079,10 +2081,9 @@ const GenerateOrders = () => {
 
   useEffect(() => {
     const businessOfTheDay = localStorage.getItem("businessOfTheDay");
-    if(businessOfTheDay){
+    if (businessOfTheDay) {
       setBusinessOfTheDay(businessOfTheDay);
-    }
-    else{
+    } else {
       setBusinessOfTheDay(defaultBOTD);
     }
   }, [defaultBOTD]);
