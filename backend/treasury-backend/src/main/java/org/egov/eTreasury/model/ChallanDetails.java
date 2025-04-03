@@ -73,4 +73,3 @@ public class ChallanDetails {
     private List<TsbData> tsbData;
 }
 
-
