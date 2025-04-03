@@ -341,11 +341,23 @@ public class Configuration {
 	@Value("${pucar.lock.search.endpoint}")
 	private String lockEndPoint;
 
+	@Value("${egov.payment.calculator.host}")
+	private String paymentCalculatorHost;
+
+	@Value("${egov.payment.calculator.endpoint}")
+	private String paymentCalculatorEndpoint;
+
 	@Value("${egov.task.service.host}")
 	private String taskServiceHost;
 
 	@Value("${egov.task.service.create.endpoint}")
 	private String taskServiceCreateEndpoint;
+
+	@Value("${egov.task.service.search.endpoint}")
+	private String taskServiceSearchEndpoint;
+
+	@Value("${egov.task.service.update.endpoint}")
+	private String taskServiceUpdateEndpoint;
 
 	@Value("${hearing.case.reference.number.update}")
 	private String caseReferenceUpdateTopic;

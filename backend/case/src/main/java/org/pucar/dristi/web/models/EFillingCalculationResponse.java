@@ -1,29 +1,32 @@
 package org.pucar.dristi.web.models;
 
-import org.egov.common.contract.response.ResponseInfo;
-import org.springframework.validation.annotation.Validated;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.egov.common.contract.response.ResponseInfo;
 
-@Validated
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class JoinCaseV2Response {
+public class EFillingCalculationResponse {
+
     @JsonProperty("ResponseInfo")
+
     @Valid
     private ResponseInfo responseInfo = null;
 
-    @JsonProperty("isVerified")
-    private Boolean isVerified = false;
+    private String caseId;
 
-    @JsonProperty("paymentTaskNumber")
-    private String paymentTaskNumber = null;
+    @JsonProperty("Calculation")
+    @Valid
+    private List<Calculation> calculation = null;
+
+
+    private List<BreakDown> breakDowns;
 }

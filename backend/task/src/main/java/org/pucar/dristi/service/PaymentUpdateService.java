@@ -70,8 +70,8 @@ public class PaymentUpdateService {
             String tenantId = paymentRequest.getPayment().getTenantId();
 
             for (PaymentDetail paymentDetail : paymentDetails) {
-                if (paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskSummonBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskNoticeBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskWarrantBusinessServiceName())) {
-                    updateWorkflowForCasePayment(requestInfo, tenantId, paymentDetail);
+                if (paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskPaymentBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskSummonBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskNoticeBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskWarrantBusinessServiceName())) {
+                    updateWorkflowForTaskPayment(requestInfo, tenantId, paymentDetail);
                 }
             }
         } catch (Exception e) {
@@ -80,7 +80,7 @@ public class PaymentUpdateService {
 
     }
 
-    private void updateWorkflowForCasePayment(RequestInfo requestInfo, String tenantId, PaymentDetail paymentDetail) {
+    private void updateWorkflowForTaskPayment(RequestInfo requestInfo, String tenantId, PaymentDetail paymentDetail) {
 
         try {
 
@@ -189,13 +189,13 @@ public class PaymentUpdateService {
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
                 }
-                case JOIN_CASE_TASK -> {
+                case JOIN_CASE_PAYMENT -> {
                     WorkflowObject workflow = new WorkflowObject();
-                    workflow.setAction("CLOSE");
+                    workflow.setAction(MAKE_PAYMENT);
                     task.setWorkflow(workflow);
 
                     String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, task.getTaskNumber(),
-                            config.getTaskBusinessServiceName(), workflow, config.getTaskBusinessName());
+                            config.getTaskPaymentBusinessServiceName(), workflow, config.getTaskPaymentBusinessName());
                     task.setStatus(status);
 
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();

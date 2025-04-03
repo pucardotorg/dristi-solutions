@@ -6,11 +6,13 @@ import static org.pucar.dristi.config.ServiceConstants.TAX_HEADMASTER_CODE;
 import static org.pucar.dristi.config.ServiceConstants.TAX_PERIOD_FROM;
 import static org.pucar.dristi.config.ServiceConstants.TAX_PERIOD_TO;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.egov.common.contract.models.AuditDetails;
 import org.egov.tracer.model.CustomException;
 import org.jetbrains.annotations.NotNull;
 import org.pucar.dristi.config.Configuration;
@@ -72,13 +74,13 @@ public class BillingUtil {
 		}
 	}
 
-	public void createDemand(JoinCaseRequest joinCaseRequest, String consumerCode) {
+	public void createDemand(JoinCaseV2Request joinCaseRequest, String consumerCode,BreakDown breakDown) {
 		StringBuilder uri = new StringBuilder();
 		uri.append(configs.getBillingHost()).append(configs.getDemandCreateEndPoint());
 
 		DemandRequest demandRequest = new DemandRequest();
 		demandRequest.setRequestInfo(joinCaseRequest.getRequestInfo());
-		Demand demand = getDemand(joinCaseRequest, consumerCode);
+		Demand demand = getDemand(joinCaseRequest ,consumerCode,breakDown);
 
 		List<Demand> demands = new ArrayList<>();
 		demands.add(demand);
@@ -94,20 +96,25 @@ public class BillingUtil {
 		}
 	}
 
-	private static Demand getDemand(JoinCaseRequest joinCaseRequest, String consumerCode) {
+	private static Demand getDemand(JoinCaseV2Request joinCaseRequest, String consumerCode, BreakDown breakDown) {
 		Demand demand = new Demand();
 		demand.setTenantId(joinCaseRequest.getRequestInfo().getUserInfo().getTenantId());
 		demand.setConsumerCode(consumerCode);
 		demand.setPayer(joinCaseRequest.getRequestInfo().getUserInfo());
-		demand.setTaxPeriodFrom(TAX_PERIOD_FROM);
-		demand.setTaxPeriodTo(TAX_PERIOD_TO);
-		demand.setBusinessService("task-default");
-		demand.setConsumerType("task-default");
-		demand.setAuditDetails(joinCaseRequest.getAuditDetails());
+		demand.setTaxPeriodFrom(1680287400000l);
+		demand.setTaxPeriodTo(1901145600000l);
+		demand.setBusinessService("task-payment");
+		demand.setConsumerType("task-payment");
+		org.egov.common.contract.models.AuditDetails auditDetails = AuditDetails.builder()
+				.createdBy(joinCaseRequest.getRequestInfo().getUserInfo().getUuid())
+				.createdTime(System.currentTimeMillis())
+				.lastModifiedBy(joinCaseRequest.getRequestInfo().getUserInfo().getUuid())
+				.lastModifiedTime(System.currentTimeMillis()).build();
+		demand.setAuditDetails(auditDetails);
 
 		DemandDetail demandDetail = new DemandDetail();
-		demandDetail.setTaxAmount(TAX_AMOUNT);
-		demandDetail.setTaxHeadMasterCode("JOIN_CASE_ADVOCATE_FEES");
+		demandDetail.setTaxAmount(BigDecimal.valueOf(breakDown.getAmount()));
+		demandDetail.setTaxHeadMasterCode("TASK_PAYMENT_JOIN_CASE_ADVANCE_CARRYFORWARD");
 		demand.addDemandDetailsItem(demandDetail);
 		return demand;
 	}
