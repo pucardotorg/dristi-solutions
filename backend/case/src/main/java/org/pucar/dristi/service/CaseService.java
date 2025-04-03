@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.models.AuditDetails;
@@ -16,7 +17,6 @@ import org.egov.common.models.individual.AdditionalFields;
 import org.egov.common.models.individual.Field;
 import org.egov.common.models.individual.Identifier;
 import org.egov.tracer.model.CustomException;
-import org.jetbrains.annotations.NotNull;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.CaseRegistrationEnrichment;
 import org.pucar.dristi.enrichment.EnrichmentService;
@@ -1116,6 +1116,7 @@ public class CaseService {
 
             CourtCase caseObj = CourtCase.builder()
                     .id(courtCase.getId())
+                    .filingNumber(courtCase.getFilingNumber())
                     .build();
 
             JoinCaseDataV2 joinCaseData = joinCaseRequest.getJoinCaseData();
@@ -1358,7 +1359,7 @@ public class CaseService {
             HearingCriteria hearingCriteria = HearingCriteria.builder()
                     .filingNumber(courtCase.getFilingNumber())
                     .build();
-            List<Hearing> hearingList = getHearingsForCase(hearingCriteria).stream().filter(Hearing::getIsActive).toList();
+            List<Hearing> hearingList = getHearingsForCase(hearingCriteria);
             Attendee newAttendee = new Attendee();
             newAttendee.setIndividualId(joinCaseAdvocate.getIndividualId());
             newAttendee.setName(getName(individual));
@@ -2072,7 +2073,7 @@ public class CaseService {
         HearingCriteria hearingCriteria = HearingCriteria.builder()
                 .filingNumber(courtCase.getFilingNumber())
                 .build();
-        List<Hearing> hearingList = getHearingsForCase(hearingCriteria).stream().filter(Hearing::getIsActive).toList();
+        List<Hearing> hearingList = getHearingsForCase(hearingCriteria);
         log.info("hearing list :: {}", hearingList);
 
         List<Attendee> newAttendees = new ArrayList<>();
@@ -4285,9 +4286,7 @@ public class CaseService {
                 }
             }
 
-
             hearingUtil.updateTranscriptAdditionalAttendees(hearingRequest);
-
         }
     }
 

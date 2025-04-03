@@ -78,6 +78,7 @@ public class PaymentConfiguration {
 
     @Value("${egov.collectionservice.host}")
     private String collectionServiceHost;
+
     @Value("${egov.collectionservice.payment.create}")
     private String collectionsPaymentCreatePath;
 
