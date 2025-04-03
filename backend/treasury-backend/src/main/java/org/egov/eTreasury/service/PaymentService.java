@@ -423,7 +423,7 @@ public class PaymentService {
                 .build();
     }
 
-    private TreasuryMapping generateTreasuryMapping(DemandCreateRequest demandRequest, Demand demand) throws JsonProcessingException {
+    private void generateTreasuryMapping(DemandCreateRequest demandRequest, Demand demand) throws JsonProcessingException {
         Map<String, Map<String, JSONArray>> mdmsData = mdmsUtil.fetchMdmsData(demandRequest.getRequestInfo(), demandRequest.getTenantId(), "payment", List.of("paymentTypeToBreakupMapping", "breakUpToHeadMapping", "paymentType"));
         Map<String, JSONArray> mdmsMasterData = mdmsData.get("payment");
 
@@ -448,7 +448,9 @@ public class PaymentService {
         for (JsonNode jsonObject : breakupList) {
             String breakupCode = jsonObject.get("breakUpCode").asText();
             JsonNode headCodeList = extractBreakupToHead(objectMapper.readTree(mdmsMasterData.get("breakUpToHeadMapping").toJSONString()), breakupCode);
-            assert headCodeList != null;
+            if(headCodeList == null) {
+                continue;
+            }
             JsonNode breakUpHead = getPaymentBreakupHead(headCodeList, Objects.requireNonNull(getBreakDown(demandRequest.getCalculation().get(0).getBreakDown(), jsonObject.get("breakUpName").asText())));
             totalAmount += breakUpHead.get("amount").asDouble();
             breakUpList.add(breakUpHead);
@@ -466,7 +468,6 @@ public class PaymentService {
                 .build();
 
         producer.push("create-treasury-mapping", treasuryMapping);
-        return treasuryMapping;
     }
 
     private BreakDown getBreakDown(List<BreakDown> breakDown,  String breakUpName) {
