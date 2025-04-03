@@ -1,10 +1,17 @@
 package org.egov.eTreasury.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import net.minidev.json.JSONArray;
+import net.minidev.json.JSONObject;
 import org.egov.common.contract.models.Document;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.eTreasury.config.PaymentConfiguration;
 import org.egov.eTreasury.enrichment.TreasuryEnrichment;
 import org.egov.eTreasury.kafka.Producer;
+import org.egov.eTreasury.model.demand.*;
+import org.egov.eTreasury.repository.TreasuryMappingRepository;
 import org.egov.eTreasury.repository.TreasuryPaymentRepository;
 import org.egov.eTreasury.util.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,7 +23,6 @@ import org.egov.eTreasury.repository.AuthSekRepository;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +36,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.egov.eTreasury.config.ServiceConstants.*;
 
@@ -59,11 +67,19 @@ public class PaymentService {
 
     private final TreasuryEnrichment treasuryEnrichment;
 
+    private final MdmsUtil mdmsUtil;
+
+    private final CaseUtil caseUtil;
+
+    private final DemandUtil demandUtil;
+
+    private final TreasuryMappingRepository treasuryMappingRepository;
+
     @Autowired
     public PaymentService(PaymentConfiguration config, ETreasuryUtil treasuryUtil,
                           ObjectMapper objectMapper, EncryptionUtil encryptionUtil,
                           Producer producer, AuthSekRepository repository, CollectionsUtil collectionsUtil,
-                          FileStorageUtil fileStorageUtil, TreasuryPaymentRepository treasuryPaymentRepository, PdfServiceUtil pdfServiceUtil, TreasuryEnrichment treasuryEnrichment) {
+                          FileStorageUtil fileStorageUtil, TreasuryPaymentRepository treasuryPaymentRepository, PdfServiceUtil pdfServiceUtil, TreasuryEnrichment treasuryEnrichment, MdmsUtil mdmsUtil, CaseUtil caseUtil, DemandUtil demandUtil, TreasuryMappingRepository treasuryMappingRepository) {
         this.config = config;
         this.treasuryUtil = treasuryUtil;
         this.objectMapper = objectMapper;
@@ -75,6 +91,10 @@ public class PaymentService {
         this.treasuryPaymentRepository = treasuryPaymentRepository;
         this.pdfServiceUtil = pdfServiceUtil;
         this.treasuryEnrichment = treasuryEnrichment;
+        this.mdmsUtil = mdmsUtil;
+        this.caseUtil = caseUtil;
+        this.demandUtil = demandUtil;
+        this.treasuryMappingRepository = treasuryMappingRepository;
     }
 
     public ConnectionStatus verifyConnection() {
@@ -349,6 +369,242 @@ public class PaymentService {
         collectionsUtil.callService(paymentRequest, config.getCollectionServiceHost(), config.getCollectionsPaymentCreatePath());
     }
 
+    public DemandResponse createDemand(DemandCreateRequest demandRequest) {
+        try {
+            log.info("operation=createDemand, status=IN_PROGRESS, consumerCode={}", demandRequest.getConsumerCode());
+            TreasuryMapping treasuryMapping = treasuryMappingRepository.getTreasuryMapping(demandRequest.getConsumerCode());
+            if (treasuryMapping != null) {
+                log.error("Payment distribution does not exits: {}", demandRequest.getConsumerCode());
+                throw new CustomException(PAYMENT_DISTRIBUTION_EXISTS, "Payment distribution does not exits.");
+            }
+
+            CourtCase courtCase = fetchCourtCase(demandRequest);
+            Demand demand = createDemandObject(demandRequest, courtCase);
+            DemandResponse demandResponse = demandUtil.createDemand(DemandRequest.builder()
+                    .requestInfo(demandRequest.getRequestInfo())
+                    .demands(List.of(demand))
+                    .build());
+
+            generateTreasuryMapping(demandRequest, demand);
+            log.info("operation=createDemand, status=SUCCESS, consumerCode={}", demandRequest.getConsumerCode());
+            return demandResponse;
+        } catch (JsonProcessingException e) {
+            log.error("Error occurred during demand creation: ", e);
+            throw new CustomException(DEMAND_CREATION_ERROR, "Error occurred during demand creation");
+        }
+    }
+
+    private CourtCase fetchCourtCase(DemandCreateRequest demandRequest) {
+        return caseUtil.searchCaseDetails(CaseSearchRequest.builder()
+                .requestInfo(demandRequest.getRequestInfo())
+                .criteria(List.of(CaseCriteria.builder()
+                        .filingNumber(demandRequest.getFilingNumber())
+                        .defaultFields(false)
+                        .tenantId(demandRequest.getTenantId())
+                        .build()))
+                .build());
+    }
+
+    private Demand createDemandObject(DemandCreateRequest demandRequest, CourtCase courtCase) throws JsonProcessingException {
+        Map<String, Map<String, JSONArray>> billingMasterData = mdmsUtil.fetchMdmsData(demandRequest.getRequestInfo(), demandRequest.getTenantId(), "BillingService", List.of("TaxPeriod", "TaxHeadMaster"));
+        JsonNode taxHeadMaster = objectMapper.readTree(billingMasterData.get("BillingService").get("TaxHeadMaster").toJSONString());
+        JsonNode taxPeriod = objectMapper.readTree(billingMasterData.get("BillingService").get("TaxPeriod").toJSONString());
+        JsonNode taxPeriodData = getTaxPeriod(taxPeriod, demandRequest.getEntityType());
+
+        return Demand.builder()
+                .tenantId(demandRequest.getTenantId())
+                .consumerCode(demandRequest.getConsumerCode())
+                .consumerType(demandRequest.getEntityType())
+                .businessService(demandRequest.getEntityType())
+                .taxPeriodFrom(taxPeriodData.get("fromDate").asLong())
+                .taxPeriodTo(taxPeriodData.get("toDate").asLong())
+                .demandDetails(List.of(getDemandDetails(demandRequest.getCalculation().get(0).getTotalAmount(), demandRequest.getEntityType(), taxHeadMaster)))
+                .additionalDetails(getAdditionalDetails(courtCase, demandRequest.getEntityType()))
+                .build();
+    }
+
+    private TreasuryMapping generateTreasuryMapping(DemandCreateRequest demandRequest, Demand demand) throws JsonProcessingException {
+        Map<String, Map<String, JSONArray>> mdmsData = mdmsUtil.fetchMdmsData(demandRequest.getRequestInfo(), demandRequest.getTenantId(), "payment", List.of("paymentTypeToBreakupMapping", "breakUpToHeadMapping", "paymentType"));
+        Map<String, JSONArray> mdmsMasterData = mdmsData.get("payment");
+
+        JsonNode paymentTypeMap = objectMapper.readTree(mdmsMasterData.get("paymentType").toJSONString());
+        String paymentType = getPaymentType(demandRequest.getConsumerCode());
+        String paymentTypeCode = extractPaymentTypeCode(paymentTypeMap, paymentType);
+
+        if (paymentTypeCode == null) {
+            log.error("No payment type found for consumer code : {}", demandRequest.getConsumerCode());
+            throw new CustomException("PAYMENT_TYPE_NOT_FOUND", "No payment type found for consumer code." );
+        }
+
+        JsonNode paymentTypeToBreakUp = extractPaymentBreakUpToType(objectMapper.readTree(mdmsMasterData.get("paymentTypeToBreakupMapping").toJSONString()), paymentTypeCode);
+        if (paymentTypeToBreakUp == null) {
+            log.error("No payment breakup found for payment type : {}", paymentType);
+            throw new CustomException("PAYMENT_BREAKUP_NOT_FOUND", "No payment breakup found for payment type." );
+        }
+
+        List<JsonNode> breakUpList = new ArrayList<>();
+        double totalAmount = 0.0;
+        JsonNode breakupList = paymentTypeToBreakUp.get("breakUpList");
+        for (JsonNode jsonObject : breakupList) {
+            String breakupCode = jsonObject.get("breakUpCode").asText();
+            JsonNode headCodeList = extractBreakupToHead(objectMapper.readTree(mdmsMasterData.get("breakUpToHeadMapping").toJSONString()), breakupCode);
+            assert headCodeList != null;
+            JsonNode breakUpHead = getPaymentBreakupHead(headCodeList, Objects.requireNonNull(getBreakDown(demandRequest.getCalculation().get(0).getBreakDown(), jsonObject.get("breakUpName").asText())));
+            totalAmount += breakUpHead.get("amount").asDouble();
+            breakUpList.add(breakUpHead);
+        }
+
+        Map<String, Object> headAmountMapping = new HashMap<>();
+        headAmountMapping.put("totalAmount", totalAmount);
+        headAmountMapping.put("breakUpList", breakUpList);
+
+        TreasuryMapping treasuryMapping = TreasuryMapping.builder()
+                .consumerCode(demandRequest.getConsumerCode())
+                .tenantId(demandRequest.getTenantId())
+                .headAmountMapping(objectMapper.convertValue(headAmountMapping, Object.class))
+                .createdTime(System.currentTimeMillis())
+                .build();
+
+        producer.push("create-treasury-mapping", treasuryMapping);
+        return treasuryMapping;
+    }
+
+    private BreakDown getBreakDown(List<BreakDown> breakDown,  String breakUpName) {
+        for (BreakDown breakUp : breakDown) {  //breakup code can be used here
+            if (breakUp.getType().equalsIgnoreCase(breakUpName)) {
+                return breakUp;
+            }
+        }
+        return null;
+    }
+
+
+    public Object getAdditionalDetails(CourtCase courtCase, String entityType) {
+        ObjectNode objectNode = objectMapper.createObjectNode();
+        objectNode.put("filingNumber", courtCase.getFilingNumber());
+        objectNode.put("cnrNumber", courtCase.getCnrNumber());
+        objectNode.put("payer", objectMapper.convertValue(courtCase.getLitigants().get(0).getAdditionalDetails(), JsonNode.class).get("fullName"));
+        objectNode.put("payerMobileNo", objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class).get("payerMobileNo"));
+        if(entityType.equalsIgnoreCase("case-default")){
+            objectNode.put("isDelayCondonation",  getIsDelayCondonation(courtCase));
+            objectNode.put("chequeDetails", addChequeDetails(courtCase));
+        }
+        return objectNode;
+    }
+
+    private JsonNode addChequeDetails(CourtCase courtCase) {
+        JsonNode caseDetails = objectMapper.convertValue(courtCase.getCaseDetails(), JsonNode.class);
+        JsonNode debtLiability = caseDetails.get("debtLiabilityDetails").get("formdata").get(0).get("data");
+        ObjectNode chequeDetails = objectMapper.createObjectNode();
+        if(debtLiability.get("liabilityType").get("code").asText().equalsIgnoreCase("PARTIAL_LIABILITY")) {
+            chequeDetails.put("totalAmount", debtLiability.get("totalAmount").asDouble());
+        } else {
+            JsonNode chequeData = caseDetails.get("chequeDetails").get("formdata");
+            Double totalAmount = 0.0;
+            for(JsonNode data: chequeData) {
+                double amount = data.get("data").get("chequeAmount").asDouble();
+                totalAmount+=amount;
+            }
+            chequeDetails.put("totalAmount", totalAmount);
+        }
+        return  chequeDetails;
+    }
+    private Boolean getIsDelayCondonation(CourtCase courtCase) {
+        JsonNode caseDetails = objectMapper.convertValue(courtCase.getCaseDetails(), JsonNode.class);
+        JsonNode dcaData = caseDetails.get("delayApplications").get("formdata").get(0).get("data");
+        if(dcaData.get("delayCondonationType").get("code").asText().equalsIgnoreCase("YES") ||
+                (dcaData.get("delayCondonationType").get("code").asText().equalsIgnoreCase("NO") ||
+                        dcaData.get("isDcaSkippedInEFiling").get("code").asText().equalsIgnoreCase("YES"))){
+            return false;
+        }
+        return true;
+    }
+
+
+    public DemandDetail getDemandDetails(Double totalAmount, String entityType, JsonNode taxHeadMaster) {
+        return DemandDetail.builder()
+                .taxHeadMasterCode(Objects.equals(entityType, "case-default") ? "CASE_ADVANCED_CARRYFORWARD" : getTaxHeadMasterCode(taxHeadMaster, entityType))
+                .taxAmount(BigDecimal.valueOf(totalAmount))
+                .collectionAmount(BigDecimal.valueOf(0))
+                .build();
+    }
+    private String getTaxHeadMasterCode(JsonNode taxHeadMaster, String entityType) {
+        if(taxHeadMaster.isArray()) {
+            for(JsonNode jsonNode: taxHeadMaster) {
+                if(jsonNode.get("service").asText().equalsIgnoreCase(entityType)) {
+                    return jsonNode.get("code").asText();
+                }
+            }
+        }
+        return null;
+    }
+
+    private JsonNode getTaxPeriod(JsonNode taxPeriod, String entityType) {
+        if(taxPeriod.isArray()) {
+            for(JsonNode jsonNode: taxPeriod) {
+                if(jsonNode.get("service").asText().equalsIgnoreCase(entityType)) {
+                    return jsonNode;
+                }
+            }
+        }
+        return null;
+    }
+    private JsonNode getPaymentBreakupHead(JsonNode headCodeList, BreakDown breakUp) {
+        Double amount = breakUp.getAmount();
+        List<JSONObject> headIdList = new ArrayList<>();
+        for(int i=0; i<headCodeList.size(); i++) {
+            JsonNode jsonObject = headCodeList.get(i);
+            Double percentage = jsonObject.get("percentage").asDouble();
+            Double headAmount = amount * percentage / 100;
+            JSONObject headAmountObject = new JSONObject();
+            headAmountObject.put("id", jsonObject.get("headId"));
+            headAmountObject.put("amount", headAmount);
+            headIdList.add(headAmountObject);
+        }
+
+        JSONObject headAmountObject = new JSONObject();
+        headAmountObject.put("name", breakUp.getType());
+        headAmountObject.put("amount", amount);
+        headAmountObject.put("headIdList", headIdList);
+        return objectMapper.convertValue(headAmountObject, JsonNode.class);
+    }
+    private String extractPaymentTypeCode(JsonNode paymentTypeMap, String paymentType) {
+        for(int i = 0; i< paymentTypeMap.size(); i++) {
+            JsonNode jsonObject = paymentTypeMap.get(i);
+            if (jsonObject.get("suffix").textValue().equals(paymentType)) {
+                return jsonObject.get("id").asText();
+            }
+        }
+        return null;
+    }
+
+    private JsonNode extractPaymentBreakUpToType(JsonNode paymentTypeToBreakupMapping, String paymentTypeCode) {
+        for(int i = 0; i< paymentTypeToBreakupMapping.size(); i++) {
+            JsonNode jsonObject = paymentTypeToBreakupMapping.get(i);
+            if (jsonObject.get("paymentType").asText().equals(paymentTypeCode)) {
+                return jsonObject;
+            }
+        }
+        return null;
+    }
+
+    private JsonNode extractBreakupToHead(JsonNode breakUpToHeadMapping, String breakupCode) {
+        for(int i = 0; i< breakUpToHeadMapping.size(); i++) {
+            JsonNode jsonObject = breakUpToHeadMapping.get(i);
+            if (jsonObject.get("breakUpCode").asText().equals(breakupCode)) {
+                return jsonObject.get("headCodes");
+            }
+        }
+        return null;
+    }
+    private String getPaymentType(String consumerCode) {
+        Pattern pattern = Pattern.compile("_([\\w]+)$");
+        Matcher matcher = pattern.matcher(consumerCode);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return null;
+    }
 //    public Payload doubleVerifyPayment(VerificationData verificationData, RequestInfo requestInfo) {
 //        try {
 //            VerificationDetails verificationDetails = verificationData.getVerificationDetails();
