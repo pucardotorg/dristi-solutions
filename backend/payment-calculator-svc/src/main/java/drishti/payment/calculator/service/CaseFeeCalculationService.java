@@ -102,7 +102,7 @@ public class CaseFeeCalculationService {
         List<BreakDown> feeBreakdowns = new ArrayList<>();
 
         feeBreakdowns.add(new BreakDown(COURT_FEE, "COURT_FEE", courtFee, new HashMap<>()));
-        feeBreakdowns.add(new BreakDown(LEGAL_BASIC_FUND, "LEGAL_BASIC_FUND", legalBasicFund, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown(LEGAL_BENEFIT_FEE, "LEGAL_BENEFIT_FEE", legalBasicFund, new HashMap<>()));
         feeBreakdowns.add(new BreakDown(ADVOCATE_CLERK_WELFARE_FUND, "ADVOCATE_CLERK_WELFARE_FUND", advocateClerkWelfareFund, new HashMap<>()));
         feeBreakdowns.add(new BreakDown(TOTAL_APPLICATION_FEE, "TOTAL_APPLICATION_FEE", totalApplicationFee, new HashMap<>()));
         feeBreakdowns.add(new BreakDown(PETITION_FEE, "PETITION_FEE", petitionFee, new HashMap<>()));
@@ -199,7 +199,7 @@ public class CaseFeeCalculationService {
         List<BreakDown> feeBreakdowns = new ArrayList<>();
 
         feeBreakdowns.add(new BreakDown(COURT_FEE, "COURT_FEE", courtFee, new HashMap<>()));
-        feeBreakdowns.add(new BreakDown(LEGAL_BASIC_FUND,"LEGAL_BASIC_FUND" , legalBasicFund, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown(LEGAL_BENEFIT_FEE,"LEGAL_BENEFIT_FEE" , legalBasicFund, new HashMap<>()));
         feeBreakdowns.add(new BreakDown(ADVOCATE_CLERK_WELFARE_FUND, "ADVOCATE_CLERK_WELFARE_FUND", advocateClerkWelfareFund, new HashMap<>()));
         feeBreakdowns.add(new BreakDown(ADVOCATE_FEE, "ADVOCATE_WELFARE_FUND", advocateFee, new HashMap<>()));
         return feeBreakdowns;
