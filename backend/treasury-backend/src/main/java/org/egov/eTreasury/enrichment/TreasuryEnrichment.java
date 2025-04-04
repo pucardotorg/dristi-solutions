@@ -57,6 +57,7 @@ public class TreasuryEnrichment {
         Map<String, Map<String, JSONArray>> mdmsData = mdmsUtil.fetchMdmsData(requestInfo, config.getEgovStateTenantId(), "payment", List.of("tsbAccountToHead"));
         Map<String, JSONArray> tsbMasterData = mdmsData.get("payment");
         JsonNode tsbAccountToHead = objectMapper.convertValue(tsbMasterData.get("tsbAccountToHead"), JsonNode.class);
+        //for consumer code can use billId to billing service
         TreasuryMapping treasuryMapping = repository.getTreasuryMapping(challanData.getConsumerCode());
         JsonNode headAmountMapping = objectMapper.convertValue(treasuryMapping.getHeadAmountMapping(), JsonNode.class);
         List<HeadDetails> headDetailsList = new ArrayList<>();

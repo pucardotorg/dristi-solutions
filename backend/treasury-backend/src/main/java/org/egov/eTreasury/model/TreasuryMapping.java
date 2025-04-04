@@ -21,6 +21,9 @@ public class TreasuryMapping {
     @JsonProperty("headAmountMapping")
     private Object headAmountMapping;
 
+    @JsonProperty("calculation")
+    private Calculation calculation;
+
     @JsonProperty("createdTime")
     private Long createdTime;
 }

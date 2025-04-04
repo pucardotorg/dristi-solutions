@@ -372,11 +372,7 @@ public class PaymentService {
     public DemandResponse createDemand(DemandCreateRequest demandRequest) {
         try {
             log.info("operation=createDemand, status=IN_PROGRESS, consumerCode={}", demandRequest.getConsumerCode());
-            TreasuryMapping treasuryMapping = treasuryMappingRepository.getTreasuryMapping(demandRequest.getConsumerCode());
-            if (treasuryMapping != null) {
-                log.error("Payment distribution does not exits: {}", demandRequest.getConsumerCode());
-                throw new CustomException(PAYMENT_DISTRIBUTION_EXISTS, "Payment distribution does not exits.");
-            }
+            TreasuryMapping treasuryMapping = generateTreasuryMapping(demandRequest);
 
             CourtCase courtCase = fetchCourtCase(demandRequest);
             Demand demand = createDemandObject(demandRequest, courtCase);
@@ -384,8 +380,7 @@ public class PaymentService {
                     .requestInfo(demandRequest.getRequestInfo())
                     .demands(List.of(demand))
                     .build());
-
-            generateTreasuryMapping(demandRequest, demand);
+            producer.push("create-treasury-mapping", treasuryMapping);
             log.info("operation=createDemand, status=SUCCESS, consumerCode={}", demandRequest.getConsumerCode());
             return demandResponse;
         } catch (JsonProcessingException e) {
@@ -423,56 +418,48 @@ public class PaymentService {
                 .build();
     }
 
-    private void generateTreasuryMapping(DemandCreateRequest demandRequest, Demand demand) throws JsonProcessingException {
-        Map<String, Map<String, JSONArray>> mdmsData = mdmsUtil.fetchMdmsData(demandRequest.getRequestInfo(), demandRequest.getTenantId(), "payment", List.of("paymentTypeToBreakupMapping", "breakUpToHeadMapping", "paymentType"));
-        Map<String, JSONArray> mdmsMasterData = mdmsData.get("payment");
-
-        JsonNode paymentTypeMap = objectMapper.readTree(mdmsMasterData.get("paymentType").toJSONString());
-        String paymentType = getPaymentType(demandRequest.getConsumerCode());
-        String paymentTypeCode = extractPaymentTypeCode(paymentTypeMap, paymentType);
-
-        if (paymentTypeCode == null) {
-            log.error("No payment type found for consumer code : {}", demandRequest.getConsumerCode());
-            throw new CustomException("PAYMENT_TYPE_NOT_FOUND", "No payment type found for consumer code." );
-        }
-
-        JsonNode paymentTypeToBreakUp = extractPaymentBreakUpToType(objectMapper.readTree(mdmsMasterData.get("paymentTypeToBreakupMapping").toJSONString()), paymentTypeCode);
-        if (paymentTypeToBreakUp == null) {
-            log.error("No payment breakup found for payment type : {}", paymentType);
-            throw new CustomException("PAYMENT_BREAKUP_NOT_FOUND", "No payment breakup found for payment type." );
-        }
-
-        List<JsonNode> breakUpList = new ArrayList<>();
-        double totalAmount = 0.0;
-        JsonNode breakupList = paymentTypeToBreakUp.get("breakUpList");
-        for (JsonNode jsonObject : breakupList) {
-            String breakupCode = jsonObject.get("breakUpCode").asText();
-            JsonNode headCodeList = extractBreakupToHead(objectMapper.readTree(mdmsMasterData.get("breakUpToHeadMapping").toJSONString()), breakupCode);
-            if(headCodeList == null) {
-                continue;
+    private TreasuryMapping generateTreasuryMapping(DemandCreateRequest demandRequest){
+        try {
+            Map<String, Map<String, JSONArray>> mdmsData = mdmsUtil.fetchMdmsData(demandRequest.getRequestInfo(), demandRequest.getTenantId(), "payment", List.of(PAYMENT_TO_BREAKUP_MASTER, BREAKUP_TO_HEAD_MASTER, PAYMENT_TYPE_MASTER));
+            Map<String, JSONArray> mdmsMasterData = mdmsData.get("payment");
+            JsonNode paymentTypeMap = objectMapper.readTree(mdmsMasterData.get(PAYMENT_TYPE_MASTER).toJSONString());
+            String paymentType = getPaymentType(demandRequest.getConsumerCode());
+            String paymentTypeCode = extractPaymentTypeCode(paymentTypeMap, paymentType);
+            JsonNode paymentTypeToBreakUp = extractPaymentBreakUpToType(objectMapper.readTree(mdmsMasterData.get(PAYMENT_TO_BREAKUP_MASTER).toJSONString()), paymentTypeCode);
+            List<JsonNode> breakUpList = new ArrayList<>();
+            double totalAmount = 0.0;
+            JsonNode breakupList = paymentTypeToBreakUp.get("breakUpList");
+            for (JsonNode jsonObject : breakupList) {
+                String breakupCode = jsonObject.get("breakUpCode").asText();
+                JsonNode headCodeList = extractBreakupToHead(objectMapper.readTree(mdmsMasterData.get(BREAKUP_TO_HEAD_MASTER).toJSONString()), breakupCode);
+                BreakDown breakDown = getBreakDown(demandRequest.getCalculation().get(0).getBreakDown(), jsonObject.get("breakUpCode").asText());
+                if(breakDown != null){
+                    JsonNode breakUpHead = getPaymentBreakupHead(headCodeList, breakDown);
+                    totalAmount += breakUpHead.get("amount").asDouble();
+                    breakUpList.add(breakUpHead);
+                }
             }
-            JsonNode breakUpHead = getPaymentBreakupHead(headCodeList, Objects.requireNonNull(getBreakDown(demandRequest.getCalculation().get(0).getBreakDown(), jsonObject.get("breakUpName").asText())));
-            totalAmount += breakUpHead.get("amount").asDouble();
-            breakUpList.add(breakUpHead);
+
+            Map<String, Object> headAmountMapping = new HashMap<>();
+            headAmountMapping.put("totalAmount", totalAmount);
+            headAmountMapping.put("breakUpList", breakUpList);
+
+            return TreasuryMapping.builder()
+                    .consumerCode(demandRequest.getConsumerCode())
+                    .tenantId(demandRequest.getTenantId())
+                    .headAmountMapping(objectMapper.convertValue(headAmountMapping, Object.class))
+                    .calculation(demandRequest.getCalculation().get(0))
+                    .createdTime(System.currentTimeMillis())
+                    .build();
+        } catch (JsonProcessingException | IllegalArgumentException | CustomException e) {
+            log.error("Error occurred during treasury mapping generation: ", e);
+            throw new CustomException("TREASURY_MAPPING_ERROR", "Error occurred during treasury mapping generation");
         }
-
-        Map<String, Object> headAmountMapping = new HashMap<>();
-        headAmountMapping.put("totalAmount", totalAmount);
-        headAmountMapping.put("breakUpList", breakUpList);
-
-        TreasuryMapping treasuryMapping = TreasuryMapping.builder()
-                .consumerCode(demandRequest.getConsumerCode())
-                .tenantId(demandRequest.getTenantId())
-                .headAmountMapping(objectMapper.convertValue(headAmountMapping, Object.class))
-                .createdTime(System.currentTimeMillis())
-                .build();
-
-        producer.push("create-treasury-mapping", treasuryMapping);
     }
 
-    private BreakDown getBreakDown(List<BreakDown> breakDown,  String breakUpName) {
-        for (BreakDown breakUp : breakDown) {  //breakup code can be used here
-            if (breakUp.getType().equalsIgnoreCase(breakUpName)) {
+    private BreakDown getBreakDown(List<BreakDown> breakDown,  String breakUpCode) {
+        for (BreakDown breakUp : breakDown) {
+            if (breakUp.getType().equalsIgnoreCase(breakUpCode)) {
                 return breakUp;
             }
         }
@@ -497,7 +484,7 @@ public class PaymentService {
         JsonNode caseDetails = objectMapper.convertValue(courtCase.getCaseDetails(), JsonNode.class);
         JsonNode debtLiability = caseDetails.get("debtLiabilityDetails").get("formdata").get(0).get("data");
         ObjectNode chequeDetails = objectMapper.createObjectNode();
-        if(debtLiability.get("liabilityType").get("code").asText().equalsIgnoreCase("PARTIAL_LIABILITY")) {
+        if(debtLiability.get("liabilityType").get("code").asText().equalsIgnoreCase(PARTIAL_LIABILITY)) {
             chequeDetails.put("totalAmount", debtLiability.get("totalAmount").asDouble());
         } else {
             JsonNode chequeData = caseDetails.get("chequeDetails").get("formdata");
@@ -524,7 +511,7 @@ public class PaymentService {
 
     public DemandDetail getDemandDetails(Double totalAmount, String entityType, JsonNode taxHeadMaster) {
         return DemandDetail.builder()
-                .taxHeadMasterCode(Objects.equals(entityType, "case-default") ? "CASE_ADVANCED_CARRYFORWARD" : getTaxHeadMasterCode(taxHeadMaster, entityType))
+                .taxHeadMasterCode(getTaxHeadMasterCode(taxHeadMaster, entityType))
                 .taxAmount(BigDecimal.valueOf(totalAmount))
                 .collectionAmount(BigDecimal.valueOf(0))
                 .build();
@@ -556,7 +543,7 @@ public class PaymentService {
         for(int i=0; i<headCodeList.size(); i++) {
             JsonNode jsonObject = headCodeList.get(i);
             Double percentage = jsonObject.get("percentage").asDouble();
-            Double headAmount = amount * percentage / 100;
+            Double headAmount = (amount * percentage )/ 100;
             JSONObject headAmountObject = new JSONObject();
             headAmountObject.put("id", jsonObject.get("headId"));
             headAmountObject.put("amount", headAmount);
@@ -570,34 +557,34 @@ public class PaymentService {
         return objectMapper.convertValue(headAmountObject, JsonNode.class);
     }
     private String extractPaymentTypeCode(JsonNode paymentTypeMap, String paymentType) {
-        for(int i = 0; i< paymentTypeMap.size(); i++) {
-            JsonNode jsonObject = paymentTypeMap.get(i);
-            if (jsonObject.get("suffix").textValue().equals(paymentType)) {
+        for (JsonNode jsonObject : paymentTypeMap) {
+            if (jsonObject.get("suffix").asText().equals(paymentType)) {
                 return jsonObject.get("id").asText();
             }
         }
-        return null;
+        throw new CustomException(PAYMENT_TYPE_NOT_FOUND, "No matching payment type code found for: " + paymentType);
     }
 
+
     private JsonNode extractPaymentBreakUpToType(JsonNode paymentTypeToBreakupMapping, String paymentTypeCode) {
-        for(int i = 0; i< paymentTypeToBreakupMapping.size(); i++) {
-            JsonNode jsonObject = paymentTypeToBreakupMapping.get(i);
-            if (jsonObject.get("paymentType").asText().equals(paymentTypeCode)) {
+        for (JsonNode jsonObject : paymentTypeToBreakupMapping) {
+            if (jsonObject.get(PAYMENT_TYPE_MASTER).asText().equals(paymentTypeCode)) {
                 return jsonObject;
             }
         }
-        return null;
+        throw new CustomException(PAYMENT_BREAKUP_NOT_FOUND, "No breakup mapping found for payment type code: " + paymentTypeCode);
     }
 
+
     private JsonNode extractBreakupToHead(JsonNode breakUpToHeadMapping, String breakupCode) {
-        for(int i = 0; i< breakUpToHeadMapping.size(); i++) {
-            JsonNode jsonObject = breakUpToHeadMapping.get(i);
+        for (JsonNode jsonObject : breakUpToHeadMapping) {
             if (jsonObject.get("breakUpCode").asText().equals(breakupCode)) {
                 return jsonObject.get("headCodes");
             }
         }
-        return null;
+        throw new CustomException(BREAKUP_TO_HEAD_NOT_FOUND, "No head code mapping found for breakup code: " + breakupCode);
     }
+
     private String getPaymentType(String consumerCode) {
         Pattern pattern = Pattern.compile("_([\\w]+)$");
         Matcher matcher = pattern.matcher(consumerCode);
