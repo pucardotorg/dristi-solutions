@@ -94,7 +94,7 @@ public class TaskQueryBuilder {
             String state = criteria.getState();
             String filingNumber = criteria.getFilingNumber();
             String taskType = criteria.getTaskType();
-            String uuid = criteria.getAdvocateUuid();
+            String uuid = criteria.getUserUuid();
             String condition = """
                         EXISTS (
                           SELECT 1

@@ -276,7 +276,7 @@ public class PaymentUpdateService {
         String advocateUuid = requestInfo.getUserInfo().getUuid();
 
         TaskCriteria criteria = TaskCriteria.builder()
-                .advocateUuid(advocateUuid)
+                .userUuid(advocateUuid)
                 .status(PENDING_PAYMENT)
                 .taskType(JOIN_CASE_PAYMENT)
                 .build();
