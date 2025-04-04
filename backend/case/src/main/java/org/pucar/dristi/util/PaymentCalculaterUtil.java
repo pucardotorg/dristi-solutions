@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.web.models.CalculationRes;
-import org.pucar.dristi.web.models.EFillingCalculationRequest;
+import org.pucar.dristi.web.models.JoinCasePaymentRequest;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -25,14 +25,14 @@ public class PaymentCalculaterUtil {
         this.config = config;
     }
 
-    public CalculationRes callPaymentCalculator(EFillingCalculationRequest request) {
+    public CalculationRes callPaymentCalculator(JoinCasePaymentRequest request) {
          try {
             StringBuilder uri = new StringBuilder();
             uri.append(config.getPaymentCalculatorHost()).append(config.getPaymentCalculatorEndpoint());
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<EFillingCalculationRequest> requestEntity = new HttpEntity<>(request, headers);
+            HttpEntity<JoinCasePaymentRequest> requestEntity = new HttpEntity<>(request, headers);
 
             ResponseEntity<CalculationRes> responseEntity = restTemplate.postForEntity(uri.toString(),
                     requestEntity, CalculationRes.class);

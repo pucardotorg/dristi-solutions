@@ -166,6 +166,13 @@ public class Configuration {
 	@Value("${egov.demand.create.endpoint}")
 	private String demandCreateEndPoint;
 
+	//Billing
+	@Value("${egov.etreasury.host}")
+	private String etreasuryHost;
+
+	@Value("${egov.etreasury.demand.create.endpoint}")
+	private String etreasuryDemandCreateEndPoint;
+
 	//Join a Case
 	@Value("${egov.litigant.join.case.kafka.topic}")
 	private String litigantJoinCaseTopic;

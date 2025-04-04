@@ -1,6 +1,5 @@
 package org.pucar.dristi.service;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,7 +15,6 @@ import org.egov.common.contract.request.User;
 import org.egov.common.models.individual.AdditionalFields;
 import org.egov.common.models.individual.Field;
 import org.egov.common.models.individual.Identifier;
-import org.egov.common.models.stock.UserInfo;
 import org.egov.tracer.model.CustomException;
 import org.jetbrains.annotations.NotNull;
 import org.pucar.dristi.config.Configuration;
@@ -61,7 +59,7 @@ public class CaseService {
     private final WorkflowService workflowService;
     private final Configuration config;
     private final Producer producer;
-    private final BillingUtil billingUtil;
+    private final EtreasuryUtil etreasuryUtil;
     private final EncryptionDecryptionUtil encryptionDecryptionUtil;
     private final ObjectMapper objectMapper;
     private final CacheService cacheService;
@@ -89,7 +87,7 @@ public class CaseService {
                        Configuration config,
                        Producer producer,
                        TaskUtil taskUtil,
-                       BillingUtil billingUtil,
+                       EtreasuryUtil etreasuryUtil,
                        EncryptionDecryptionUtil encryptionDecryptionUtil,
                        HearingUtil analyticsUtil,
                        UserService userService,
@@ -102,7 +100,7 @@ public class CaseService {
         this.config = config;
         this.producer = producer;
         this.taskUtil = taskUtil;
-        this.billingUtil = billingUtil;
+        this.etreasuryUtil = etreasuryUtil;
         this.encryptionDecryptionUtil = encryptionDecryptionUtil;
         this.hearingUtil = analyticsUtil;
         this.userService = userService;
@@ -1129,26 +1127,30 @@ public class CaseService {
                 //To check if advocate is already representing the individual and return existingRepresentative if advocate is part of  the case
                 AdvocateMapping existingRepresentative = validateAdvocateAlreadyRepresenting(courtCase, joinCaseData);
 
-                joinCaseData.getRepresentative().getRepresenting().stream().forEach(representing->{
-                    if(!representing.getIsVakalathnamaAlreadyPresent()){
+                List<LitigantAdvocateMap> litigantAdvocateMapList = new ArrayList<>();
 
-                    }
+                joinCaseData.getRepresentative().getRepresenting().forEach(representing->{
+                    LitigantAdvocateMap litigantAdvocateMap = LitigantAdvocateMap.builder().build();
+                    litigantAdvocateMap.setAdvocateCount(representing.getNoOfAdvocates());
+                    litigantAdvocateMap.setLitigantId(representing.getIndividualId());
+                    litigantAdvocateMap.setAdvocateId(Collections.singletonList(joinCaseData.getRepresentative().getAdvocateId()));
                 });
-                EFillingCalculationRequest eFillingCalculationRequest = EFillingCalculationRequest.builder().build();
-                eFillingCalculationRequest.setRequestInfo(joinCaseRequest.getRequestInfo());
+                JoinCasePaymentRequest joinCasePaymentRequest = JoinCasePaymentRequest.builder().build();
+                joinCasePaymentRequest.setRequestInfo(joinCaseRequest.getRequestInfo());
 
-                EFillingCalculationCriteria criteria = EFillingCalculationCriteria.builder()
+                JoinCaseCriteria criteria = JoinCaseCriteria.builder()
                         .caseId(String.valueOf(courtCase.getId()))
                         .filingNumber(joinCaseData.getFilingNumber())
                         .tenantId(joinCaseData.getTenantId())
+                        .litigantAdvocateMap(litigantAdvocateMapList)
                         .build();
-                eFillingCalculationRequest.setCalculationCriteria(Collections.singletonList(criteria));
+                joinCasePaymentRequest.setJoinCaseCriteria(Collections.singletonList(criteria));
 
-                CalculationRes calculationRes = paymentCalculaterUtil.callPaymentCalculator(eFillingCalculationRequest);
+                CalculationRes calculationRes = paymentCalculaterUtil.callPaymentCalculator(joinCasePaymentRequest);
                 List<Calculation> calculationList = calculationRes.getCalculation();
 
                 if (calculationList!=null && !calculationList.isEmpty() && calculationList.get(0).getTotalAmount()>0) {
-                    String taskNumber = createTaskAndDemand(joinCaseRequest, BreakDown.builder().amount(2000.00).build());
+                    String taskNumber = createTaskAndDemand(joinCaseRequest, calculationList);
                     return JoinCaseV2Response.builder().paymentTaskNumber(taskNumber).build();
                 }else{
                     joinCaseAdvocate(joinCaseRequest, courtCase, caseObj, auditDetails, existingRepresentative);
@@ -2363,7 +2365,7 @@ public class CaseService {
         }
     }
 
-    private String createTaskAndDemand(JoinCaseV2Request joinCaseRequest, BreakDown breakDown) {
+    private String createTaskAndDemand(JoinCaseV2Request joinCaseRequest, List<Calculation> calculationList) {
         TaskRequest taskRequest = new TaskRequest();
         Task task = new Task();
         task.setTaskType(JOIN_CASE_PAYMENT);
@@ -2386,7 +2388,7 @@ public class CaseService {
         ObjectNode taskDetailsNode = objectMapper.convertValue(joinCaseRequest, ObjectNode.class);
         taskDetailsNode.put("advocateUuid",advocateUUID);
 
-        ObjectNode breakdownObjectNode = objectMapper.convertValue(breakDown, ObjectNode.class);
+        ObjectNode breakdownObjectNode = objectMapper.convertValue(calculationList.get(0).getBreakDown(), ObjectNode.class);
 
         taskDetailsNode.set("paymentBreakdown", breakdownObjectNode);
 
@@ -2398,7 +2400,7 @@ public class CaseService {
         TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
         String consumerCode = taskResponse.getTask().getTaskNumber() + "_JOIN_CASE";
 
-        billingUtil.createDemand(joinCaseRequest, consumerCode,breakDown);
+        etreasuryUtil.createDemand(joinCaseRequest, consumerCode,calculationList);
         return taskResponse.getTask().getTaskNumber();
 
     }
