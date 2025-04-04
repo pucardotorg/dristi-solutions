@@ -70,7 +70,8 @@ public class PaymentUpdateService {
             String tenantId = paymentRequest.getPayment().getTenantId();
 
             for (PaymentDetail paymentDetail : paymentDetails) {
-                if (paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskSummonBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskNoticeBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskWarrantBusinessServiceName())) {
+                if (paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskSummonBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskNoticeBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskWarrantBusinessServiceName())
+                || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskPaymentBusinessServiceName())) {
                     updateWorkflowForCasePayment(requestInfo, tenantId, paymentDetail);
                 }
             }
@@ -207,7 +208,7 @@ public class PaymentUpdateService {
                     task.setWorkflow(workflow);
 
                     String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, task.getTaskNumber(),
-                            config.getTaskPaymentBusinessServiceName(), workflow, config.getTaskBusinessName());
+                            config.getTaskPaymentBusinessServiceName(), workflow, config.getTaskPaymentBusinessName());
                     task.setStatus(status);
 
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
@@ -288,15 +289,12 @@ public class PaymentUpdateService {
         }
 
         tasks.forEach(task -> {
-                requestInfo.getUserInfo().getRoles().clear();
-                Role role = Role.builder().code(config.getSystemAdmin()).tenantId(tenantId).build();
-                requestInfo.getUserInfo().getRoles().add(role);
 
                 WorkflowObject workflow = new WorkflowObject();
                 workflow.setAction(REJECT);
                 task.setWorkflow(workflow);
                 String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, task.getTaskNumber(),
-                        config.getTaskPaymentBusinessServiceName(), workflow, config.getTaskBusinessName());
+                        config.getTaskPaymentBusinessServiceName(), workflow, config.getTaskPaymentBusinessName());
                 log.info("Rejecting remaining pending payment task for advocate by system :: {}", advocateUuid);
                 task.setStatus(status);
 

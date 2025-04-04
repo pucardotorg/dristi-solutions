@@ -113,6 +113,9 @@ public class Configuration {
     @Value("${egov.workflow.task.payment.business.service.name}")
     private String taskPaymentBusinessServiceName;
 
+    @Value("${egov.workflow.task.payment.business.name}")
+    private String taskPaymentBusinessName;
+
     @Value("${egov.workflow.task.bail.business.name}")
     private String taskBailBusinessName;
 
