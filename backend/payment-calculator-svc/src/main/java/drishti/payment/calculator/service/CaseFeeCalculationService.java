@@ -57,26 +57,31 @@ public class CaseFeeCalculationService {
 
             Map<String, List<JsonNode>> litigantAdvocateMap = caseUtil.getAdvocateForLitigant(request.getRequestInfo(), criteria.getFilingNumber(), criteria.getTenantId());
             Double advocateFee = 0.0;
+
+            Double calculatedCourtFee = 0.0;
+            Double calculatedLegalBasicFund = 0.0;
+            Double calculatedAdvocateClerkWelfareFund = 0.0;
+
             for (Map.Entry<String, List<JsonNode>> entry : litigantAdvocateMap.entrySet()) {
                 int advocateCount = entry.getValue().size();
                 advocateFee += getAdvocateFee(noOfAdvocateFees, advocateCount);
-                courtFee += courtFee;
-                legalBasicFund += legalBasicFund;
-                advocateClerkWelfareFund += advocateClerkWelfareFund;
+                calculatedCourtFee += courtFee;
+                calculatedLegalBasicFund += legalBasicFund;
+                calculatedAdvocateClerkWelfareFund += advocateClerkWelfareFund;
 
             }
 
-            log.info("petitionFee={}, courtFee={}, legalBasicFund={}, advocateClerkWelfareFund={}, totalApplicationFee={}, petitionFee={}", petitionFee, courtFee, legalBasicFund, advocateClerkWelfareFund, totalApplicationFee, petitionFee);
-            courtFee = Math.ceil(courtFee);
-            legalBasicFund = Math.ceil(legalBasicFund);
-            advocateClerkWelfareFund = Math.ceil(advocateClerkWelfareFund);
+            log.info("petitionFee={}, courtFee={}, legalBasicFund={}, advocateClerkWelfareFund={}, totalApplicationFee={}, petitionFee={}", petitionFee, calculatedCourtFee, calculatedLegalBasicFund, calculatedAdvocateClerkWelfareFund, totalApplicationFee, petitionFee);
+            calculatedCourtFee = Math.ceil(calculatedCourtFee);
+            calculatedLegalBasicFund = Math.ceil(calculatedLegalBasicFund);
+            calculatedAdvocateClerkWelfareFund = Math.ceil(calculatedAdvocateClerkWelfareFund);
             totalApplicationFee = Math.ceil(totalApplicationFee);
             petitionFee = Math.ceil(petitionFee);
             delayFee = Math.ceil(delayFee);
             advocateFee = Math.ceil(advocateFee);
 
-            List<BreakDown> feeBreakdown = getFeeBreakdown(courtFee, legalBasicFund, advocateClerkWelfareFund, totalApplicationFee, petitionFee, delayFee, advocateFee);
-            Double totalCourtFee = courtFee + legalBasicFund + advocateClerkWelfareFund + totalApplicationFee + petitionFee + delayFee + advocateFee;
+            List<BreakDown> feeBreakdown = getFeeBreakdown(calculatedCourtFee, calculatedLegalBasicFund, calculatedAdvocateClerkWelfareFund, totalApplicationFee, petitionFee, delayFee, advocateFee);
+            Double totalCourtFee = calculatedCourtFee + calculatedLegalBasicFund + calculatedAdvocateClerkWelfareFund + totalApplicationFee + petitionFee + delayFee + advocateFee;
 
             Calculation calculation = Calculation.builder()
                     .applicationId(criteria.getCaseId())
