@@ -157,12 +157,13 @@ public class CaseFeeCalculationService {
         Double legalBasicFund = eFillingDefaultData.getLegalBasicFund();
         Double advocateClerkWelfareFund = eFillingDefaultData.getAdvocateClerkWelfareFund();
 
-        Double calculatedCourtFee = 0.0;
-        Double calculatedLegalBasicFund = 0.0;
-        Double calculatedAdvocateClerkWelfareFund = 0.0;
-        Double calculatedAdvocateFee = 0.0;
         List<Calculation> result = new ArrayList<>();
         for (JoinCaseCriteria joinCaseCriteria : request.getJoinCaseCriteria()) {
+
+            Double calculatedCourtFee = 0.0;
+            Double calculatedLegalBasicFund = 0.0;
+            Double calculatedAdvocateClerkWelfareFund = 0.0;
+            Double calculatedAdvocateFee = 0.0;
 
             for (LitigantAdvocateMap litigantAdvocateMap : joinCaseCriteria.getLitigantAdvocateMap()) {
                 if (litigantAdvocateMap.getAdvocateCount() > 0) {
