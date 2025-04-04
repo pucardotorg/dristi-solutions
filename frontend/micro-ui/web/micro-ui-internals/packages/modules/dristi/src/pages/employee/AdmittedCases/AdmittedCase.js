@@ -2373,7 +2373,7 @@ const AdmittedCases = () => {
 
   const takeActionOptions = useMemo(
     () => [
-      ...(userRoles?.includes("SUBMISSION_CREATOR") ? [t("MAKE_SUBMISSION")] : []),
+      ...(userRoles?.includes("SUBMISSION_CREATOR") && !userRoles?.includes("BENCH_CLERK") ? [t("MAKE_SUBMISSION")] : []),
       t("GENERATE_ORDER_HOME"),
       t("SCHEDULE_HEARING"),
       t("REFER_TO_ADR"),
