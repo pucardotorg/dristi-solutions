@@ -426,7 +426,11 @@ const SubmissionDocuments = ({ path }) => {
             font-weight: 400;
             font-size : 16px;
             margin-bottom: 8px !important;
-          }          
+          }   
+            
+          .formComposer .employeeCard .label-field-pair {
+            flex-direction: column;
+          } 
         `}
       </style>
 
