@@ -1144,27 +1144,7 @@ public class CaseService {
                 //To check if advocate is already representing the individual and return existingRepresentative if advocate is part of  the case
                 AdvocateMapping existingRepresentative = validateAdvocateAlreadyRepresenting(courtCase, joinCaseData);
 
-                List<LitigantAdvocateMap> litigantAdvocateMapList = new ArrayList<>();
-
-                joinCaseData.getRepresentative().getRepresenting().forEach(representing->{
-                    LitigantAdvocateMap litigantAdvocateMap = LitigantAdvocateMap.builder().build();
-                    litigantAdvocateMap.setAdvocateCount(representing.getNoOfAdvocates());
-                    litigantAdvocateMap.setLitigantId(representing.getIndividualId());
-                    litigantAdvocateMap.setAdvocateId(Collections.singletonList(joinCaseData.getRepresentative().getAdvocateId()));
-                });
-                JoinCasePaymentRequest joinCasePaymentRequest = JoinCasePaymentRequest.builder().build();
-                joinCasePaymentRequest.setRequestInfo(joinCaseRequest.getRequestInfo());
-
-                JoinCaseCriteria criteria = JoinCaseCriteria.builder()
-                        .caseId(String.valueOf(courtCase.getId()))
-                        .filingNumber(joinCaseData.getFilingNumber())
-                        .tenantId(joinCaseData.getTenantId())
-                        .litigantAdvocateMap(litigantAdvocateMapList)
-                        .build();
-                joinCasePaymentRequest.setJoinCaseCriteria(Collections.singletonList(criteria));
-
-                CalculationRes calculationRes = paymentCalculaterUtil.callPaymentCalculator(joinCasePaymentRequest);
-                List<Calculation> calculationList = calculationRes.getCalculation();
+                List<Calculation> calculationList = getPaymentCalculations(joinCaseRequest, joinCaseData, courtCase);
 
                 if (calculationList!=null && !calculationList.isEmpty() && calculationList.get(0).getTotalAmount()>0) {
                     String taskNumber = createTaskAndDemand(joinCaseRequest, calculationList);
@@ -1184,6 +1164,30 @@ public class CaseService {
         }
         joinCaseV2Response.setIsVerified(true);
         return joinCaseV2Response;
+    }
+
+    private List<Calculation> getPaymentCalculations(JoinCaseV2Request joinCaseRequest, JoinCaseDataV2 joinCaseData, CourtCase courtCase) {
+        List<LitigantAdvocateMap> litigantAdvocateMapList = new ArrayList<>();
+
+        joinCaseData.getRepresentative().getRepresenting().forEach(representing->{
+            LitigantAdvocateMap litigantAdvocateMap = LitigantAdvocateMap.builder().build();
+            litigantAdvocateMap.setAdvocateCount(representing.getNoOfAdvocates());
+            litigantAdvocateMap.setLitigantId(representing.getIndividualId());
+            litigantAdvocateMap.setAdvocateId(Collections.singletonList(joinCaseData.getRepresentative().getAdvocateId()));
+        });
+        JoinCasePaymentRequest joinCasePaymentRequest = JoinCasePaymentRequest.builder().build();
+        joinCasePaymentRequest.setRequestInfo(joinCaseRequest.getRequestInfo());
+
+        JoinCaseCriteria criteria = JoinCaseCriteria.builder()
+                .caseId(String.valueOf(courtCase.getId()))
+                .filingNumber(joinCaseData.getFilingNumber())
+                .tenantId(joinCaseData.getTenantId())
+                .litigantAdvocateMap(litigantAdvocateMapList)
+                .build();
+        joinCasePaymentRequest.setJoinCaseCriteria(Collections.singletonList(criteria));
+
+        CalculationRes calculationRes = paymentCalculaterUtil.callPaymentCalculator(joinCasePaymentRequest);
+        return calculationRes.getCalculation();
     }
 
     public void joinCaseAdvocate(JoinCaseV2Request joinCaseRequest, CourtCase courtCase, CourtCase caseObj, AuditDetails auditDetails, AdvocateMapping existingRepresentative) {
