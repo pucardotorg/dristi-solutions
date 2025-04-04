@@ -1304,7 +1304,7 @@ const SubmissionsCreate = ({ path }) => {
             demandDetails: [
               {
                 taxHeadMasterCode: taxHeadMasterCode,
-                taxAmount: 2,
+                taxAmount: 20,
                 collectionAmount: 0,
               },
             ],
