@@ -1,0 +1,39 @@
+[
+    {
+    "mastername": "roles",
+    "moduleName": "ACCESSCONTROL-ROLES",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLES.roles",
+        "uniqueIdentifier": null,
+        "data": {
+          "code": "PDF_CREATOR",
+          "name": "PDF_CREATOR",
+          "description": "Role for Bench Clerk to add documents"
+        },
+        "isActive": true
+      }
+    ]
+    },
+  
+    {
+      "mastername": "roleactions",
+      "moduleName": "ACCESSCONTROL-ROLEACTIONS",
+      "mdmsPayload": [
+        {
+          "tenantId": "kl",
+          "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+          "uniqueIdentifier": null,
+          "data": {
+            "rolecode": "PDF_CREATOR",
+            "actionid": 2694,
+            "actioncode": "2694",
+            "tenantId": "kl"
+          },
+          "isActive": true
+        }
+      ]
+    }
+  ]
+  

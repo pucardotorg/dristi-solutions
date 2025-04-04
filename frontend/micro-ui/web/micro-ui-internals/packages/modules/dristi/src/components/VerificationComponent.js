@@ -135,10 +135,15 @@ function VerificationComponent({ t, config, onSelect, formData = {}, errors, set
     <div className="verification-component">
       {inputs?.map((input, index) => {
         let currentValue = (formData && formData[config.key] && formData[config.key][input.name]) || "";
+        const isComplainantId =
+          formData?.[config?.key]?.[input?.name] === true || formData?.complainantId?.complainantId?.complainantId?.["ID_Proof"]?.[0]?.[1]?.["file"];
+        if (isComplainantId) {
+          currentValue = formData?.complainantVerification?.individualDetails?.document;
+        }
         let fileErrors =
           currentValue?.["ID_Proof"]?.[0]?.[1]?.["file"] &&
-          [currentValue?.["ID_Proof"]?.[0]?.[1]?.["file"]].map((file) =>
-            fileValidator(file, idProofVerificationConfig?.[0].body[0]?.populators?.inputs?.[1])
+          [currentValue?.["ID_Proof"]?.[0]?.[1]?.["file"]]?.map((file) =>
+            fileValidator(file, idProofVerificationConfig?.[0]?.body[0]?.populators?.inputs?.[1])
           );
         const isUserVerified = isAadharVerified || (!config?.isScrutiny && formData?.[config.key]?.[config.key]);
         return (
@@ -171,19 +176,21 @@ function VerificationComponent({ t, config, onSelect, formData = {}, errors, set
                           );
                         }}
                       /> */}
-                      <Button
-                        className={"secondary-button-selector"}
-                        variation={"secondary"}
-                        label={t("VERIFY_ID_PROOF")}
-                        labelClassName={"secondary-label-selector"}
-                        onButtonClick={() => {
-                          setState((prev) => ({
-                            ...prev,
-                            showModal: true,
-                            verificationType: "uploadIdProof",
-                          }));
-                        }}
-                      />
+                      {!config?.isScrutiny && (
+                        <Button
+                          className={"secondary-button-selector"}
+                          variation={"secondary"}
+                          label={t("VERIFY_ID_PROOF")}
+                          labelClassName={"secondary-label-selector"}
+                          onButtonClick={() => {
+                            setState((prev) => ({
+                              ...prev,
+                              showModal: true,
+                              verificationType: "uploadIdProof",
+                            }));
+                          }}
+                        />
+                      )}
                     </div>
                     {errors?.[config.key] && <span className="alert-error">{t(errors?.[config.key].msg || "CORE_REQUIRED_FIELD_ERROR")}</span>}
                   </React.Fragment>
@@ -206,6 +213,20 @@ function VerificationComponent({ t, config, onSelect, formData = {}, errors, set
                     className={`adhaar-verification-info-card ${isUserVerified && "user-verified"}`}
                   />
                 )}
+                {isComplainantId &&
+                  currentValue?.map((file, index) => (
+                    <RenderFileCard
+                      key={`${input?.name}${index}`}
+                      index={index}
+                      fileData={file}
+                      handleChange={handleChange}
+                      handleDeleteFile={handleDeleteFile}
+                      t={t}
+                      uploadErrorInfo={fileErrors?.[index]}
+                      input={input}
+                      isDisabled={true}
+                    />
+                  ))}
               </React.Fragment>
             ) : (
               [currentValue?.["ID_Proof"]?.[0]?.[1]?.["file"]].map((file, index) => (

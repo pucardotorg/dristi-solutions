@@ -53,5 +53,6 @@ module.exports = function (app) {
     "/ab-diary",
     "/notification",
     "/kerala-icops",
+    "/order-management",
   ].forEach((location) => app.use(location, createProxy));
 };

@@ -100,6 +100,10 @@ public class SmsNotificationService {
         }
         else if(messageCode.equalsIgnoreCase(NEW_USER_JOIN)){
             pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationNewUserJoinTemplateId());
+        } else if(messageCode.equalsIgnoreCase(ACCEPT_PROFILE_REQUEST)) {
+            pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationAcceptProfileRequestTemplateId());
+        } else if(messageCode.equalsIgnoreCase(REJECT_PROFILE_REQUEST)) {
+            pushNotification(smsTemplateData, message, mobileNumber, config.getSmsNotificationRejectProfileRequestTemplateId());
         }
     }
 

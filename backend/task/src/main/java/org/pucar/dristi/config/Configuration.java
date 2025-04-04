@@ -89,11 +89,20 @@ public class Configuration {
     @Value("${task.kafka.join.case.update.topic}")
     private String taskJoinCaseUpdateTopic;
 
+    @Value("${case.kafka.update.topic}")
+    private String caseUpdateTopic;
+
     @Value("${task.kafka.create.topic}")
     private String taskCreateTopic;
 
     @Value("${task.kafka.summon.topic}")
     private String taskIssueSummonTopic;
+
+    @Value("${egov.workflow.task.join.case.business.name}")
+    private String taskjoinCaseBusinessName;
+
+    @Value("${egov.workflow.task.join.case.business.service.name}")
+    private String taskJoinCaseBusinessServiceName;
 
     @Value("${egov.workflow.task.business.name}")
     private String taskBusinessName;
@@ -124,6 +133,12 @@ public class Configuration {
 
     @Value("${egov.workflow.task.warrant.business.service.name}")
     private String taskWarrantBusinessServiceName;
+
+    @Value("${task.join.case.approved.topic}")
+    private String taskJoinCaseApprovedTopic;
+
+    @Value("${task.join.case.rejected.topic}")
+    private String taskJoinCaseRejectedTopic;
 
     @Value("${egov.idgen.taskNumber}")
     private String taskNumber;

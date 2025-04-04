@@ -148,7 +148,8 @@ async function newHearingDateAfterReschedule(
           originalHearingDate,
           date: formattedToday,
           newHearingDate,
-          additionalComments: order.comments,
+          additionalComments:
+            order?.additionalDetails?.formdata?.comments?.text || "",
           judgeSignature: judgeDetails.name,
           judgeName: judgeDetails.name,
           courtSeal: judgeDetails.courtSeal,

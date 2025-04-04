@@ -1205,15 +1205,35 @@ const SubmissionsCreate = ({ path }) => {
       }
       const response = await updateSubmission(SubmissionWorkflowAction.ESIGN);
       if (response && response?.application?.additionalDetails?.isResponseRequired) {
+        const assignedTo = response?.application?.additionalDetails?.respondingParty
+          ?.flatMap((item) => item?.uuid?.map((u) => ({ uuid: u })))
+          ?.filter((item) => item?.uuid !== userInfo?.uuid);
+        const uniqueAssignedTo = new Set(assignedTo?.map((item) => item?.uuid));
+        const litigants = [];
+        uniqueAssignedTo.forEach((uuid) => {
+          const representative = caseDetails?.representatives?.find((item) => item?.additionalDetails?.uuid === uuid);
+          if (representative) {
+            litigants.push(...representative?.representing?.map((item) => item?.individualId));
+          }
+        });
+        uniqueAssignedTo.forEach((uuid) => {
+          const litigant = caseDetails?.litigants?.find((item) => item?.additionalDetails?.uuid === uuid);
+          if (litigant) {
+            litigants.push(litigant?.individualId);
+          }
+        });
+        const uniqueLitigants = new Set(litigants);
+        const litigantsArray = Array.from(uniqueLitigants);
         await submissionService.customApiService(Urls.application.taskCreate, {
           task: {
             workflow: {
               action: "CREATE",
+              additionalDetails: {
+                litigants: litigantsArray,
+              },
             },
             filingNumber: response?.application?.filingNumber,
-            assignedTo: response?.application?.additionalDetails?.respondingParty
-              ?.flatMap((item) => item?.uuid?.map((u) => ({ uuid: u })))
-              ?.filter((item) => item?.uuid !== userInfo?.uuid),
+            assignedTo,
             state: "PENDINGRESPONSE",
             referenceId: response?.application?.applicationNumber,
             taskType: "PENDING_TASK",
@@ -1284,7 +1304,7 @@ const SubmissionsCreate = ({ path }) => {
             demandDetails: [
               {
                 taxHeadMasterCode: taxHeadMasterCode,
-                taxAmount: 2,
+                taxAmount: 20,
                 collectionAmount: 0,
               },
             ],

@@ -148,7 +148,8 @@ async function orderSection202crpc(req, res, qrCode, order, compositeOrder) {
     const day = currentDate.getDate();
     const month = months[currentDate.getMonth()];
     const year = currentDate.getFullYear();
-    const additionalComments = order?.comments || "";
+    const additionalComments =
+      order?.additionalDetails?.formdata?.comments?.text || "";
     // Prepare data for PDF generation
     const complainantName =
       order?.additionalDetails?.formdata?.applicationFilledBy?.name || "";

@@ -1,0 +1,25 @@
+{
+    "tenantId": "kl",
+    "masterName": "Order",
+    "moduleName": "OrderStatus",
+    "mdmsPayload": {
+        "id": "53871a2a-b64b-4700-b3f5-2cac3ad98aa3",
+        "tenantId": "kl",
+        "schemaCode": "Order.OrderStatus",
+        "uniqueIdentifier": "1",
+        "data": {
+            "id": 1,
+            "code": "PENDING_BULK_E-SIGN",
+            "type": "PENDING_BULK_E-SIGN",
+            "isactive": true
+        },
+        "isActive": true,
+        "auditDetails": {
+            "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+            "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+            "createdTime": 1742555686136,
+            "lastModifiedTime": 1742555686136
+        }
+    }
+  }
+  

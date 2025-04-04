@@ -2939,6 +2939,140 @@ export const configsCaseWithdrawal = [
   },
 ];
 
+export const configsCaseWithdrawalAccept = [
+  {
+    body: [
+      {
+        label: "REF_APPLICATION_ID",
+        isMandatory: false,
+        key: "refApplicationId",
+        disable: true,
+        type: "text",
+        populators: { name: "refApplicationId" },
+      },
+      {
+        label: "APPLICATION_STATUS",
+        isMandatory: false,
+        key: "applicationStatus",
+        schemaKeyPath: "orderDetails.applicationStatus",
+        disable: true,
+        type: "text",
+        populators: { name: "applicationStatus" },
+      },
+      {
+        label: "APPLICATION_ON_BEHALF_OF",
+        isMandatory: false,
+        key: "applicationOnBehalfOf",
+        schemaKeyPath: "orderDetails.appFilledOnBehalfOf",
+        disable: true,
+        type: "text",
+        populators: { name: "applicationOnBehalfOf" },
+      },
+      {
+        label: "PARTY_TYPE",
+        isMandatory: false,
+        key: "partyType",
+        schemaKeyPath: "orderDetails.partyType",
+        disable: true,
+        type: "text",
+        populators: { name: "partyType" },
+      },
+      {
+        label: "REASON_FOR_WITHDRAWAL",
+        isMandatory: false,
+        key: "reasonForWithdrawal",
+        disable: true,
+        type: "text",
+        populators: { name: "reasonForWithdrawal" },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "comments",
+        isMandatory: false,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "COMMENTS",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              isOptional: true,
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
+
+export const configsCaseWithdrawalReject = [
+  {
+    body: [
+      {
+        label: "REF_APPLICATION_ID",
+        isMandatory: false,
+        key: "refApplicationId",
+        disable: true,
+        type: "text",
+        populators: { name: "refApplicationId" },
+      },
+      {
+        label: "APPLICATION_STATUS",
+        isMandatory: false,
+        key: "applicationStatus",
+        schemaKeyPath: "orderDetails.applicationStatus",
+        disable: true,
+        type: "text",
+        populators: { name: "applicationStatus" },
+      },
+      {
+        label: "APPLICATION_ON_BEHALF_OF",
+        isMandatory: false,
+        key: "applicationOnBehalfOf",
+        schemaKeyPath: "orderDetails.appFilledOnBehalfOf",
+        disable: true,
+        type: "text",
+        populators: { name: "applicationOnBehalfOf" },
+      },
+      {
+        label: "PARTY_TYPE",
+        isMandatory: false,
+        key: "partyType",
+        schemaKeyPath: "orderDetails.partyType",
+        disable: true,
+        type: "text",
+        populators: { name: "partyType" },
+      },
+      {
+        label: "REASON_FOR_WITHDRAWAL",
+        isMandatory: false,
+        key: "reasonForWithdrawal",
+        disable: true,
+        type: "text",
+        populators: { name: "reasonForWithdrawal" },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "comments",
+        isMandatory: false,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "COMMENTS",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              isOptional: true,
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
+
 export const configsOthers = [
   {
     body: [
@@ -3286,10 +3420,12 @@ export const configsCreateOrderWarrant = [
         type: "dropdown",
         label: "WARRANT_FOR_PARTY",
         schemaKeyPath: "orderDetails.respondentName",
-        disable: true,
         populators: {
           name: "warrantFor",
+          optionsKey: "name",
           error: "CORE_REQUIRED_FIELD_ERROR",
+          required: true,
+          isMandatory: true,
           styles: { maxWidth: "100%" },
         },
       },
@@ -4374,6 +4510,76 @@ export const configsAdmitDismissCase = [
   },
 ];
 
+export const replaceAdvocateConfig = [
+  {
+    body: [
+      {
+        label: "ADVOCATE_REPLACEMENT_GRANTED_OR_REJECTED",
+        isMandatory: true,
+        key: "replaceAdvocateStatus",
+        schemaKeyPath: "orderDetails.replaceAdvocateStatus",
+        transformer: "customDropdown",
+        type: "radio",
+        disable: true,
+        populators: {
+          name: "replaceAdvocateStatus",
+          optionsKey: "name",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          required: true,
+          isMandatory: true,
+          options: [
+            {
+              code: "GRANT",
+              name: "GRANT",
+            },
+            {
+              code: "REJECT",
+              name: "REJECT",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "reasonForWithdrawal",
+        schemaKeyPath: "orderDetails.reasonForWithdrawal",
+        transformer: "customTextArea",
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "BRIEF_SUMMARY_OF_REASONS_FOR_WITHDRAWAL",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "additionalComments",
+        schemaKeyPath: "orderDetails.additionalComments",
+        transformer: "customTextArea",
+        isMandatory: false,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "ADMIT_DISMISS_ADDITIONAL_COMMENTS",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+              isOptional: true,
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
+
 export const configsAdmitCase = [
   {
     body: [
@@ -4501,6 +4707,75 @@ export const configsDismissCase = [
             {
               name: "text",
               textAreaSubHeader: "ADMIT_DISMISS_ADDITIONAL_COMMENTS",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+              isOptional: true,
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
+
+export const configsApproveRejectLitigantDetailsChange = [
+  {
+    body: [
+      {
+        label: "GRANTED_REJECTED",
+        isMandatory: true,
+        key: "applicationGrantedRejected",
+        schemaKeyPath: "orderDetails.applicationGrantedRejected",
+        transformer: "customDropdown",
+        type: "radio",
+        populators: {
+          name: "applicationGrantedRejected",
+          optionsKey: "name",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          required: true,
+          isMandatory: true,
+          options: [
+            {
+              code: "GRANTED",
+              name: "GRANTED",
+            },
+            {
+              code: "REJECTED",
+              name: "REJECTED",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "reasonForLitigantDetailsChange",
+        schemaKeyPath: "orderDetails.reasonForLitigantDetailsChange",
+        transformer: "customTextArea",
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "REASON_FOR_LITIGANT_DETAIL_CHANGE",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "additionalCommentsLitigantsDetailChange",
+        schemaKeyPath: "orderDetails.additionalCommentsLitigantsDetailChange",
+        transformer: "customTextArea",
+        isMandatory: false,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "LITIGANT_DETAIL_CHANGE_ADDITIONAL_COMMENTS",
               placeholder: "TYPE_HERE_PLACEHOLDER",
               type: "TextAreaComponent",
               isOptional: true,

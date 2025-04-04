@@ -144,7 +144,7 @@ public class PaymentUpdateService {
             caseRequest.setRequestInfo(requestInfo);
             caseRequest.setCases(decryptedCourtCase);
             if(UNDER_SCRUTINY.equalsIgnoreCase(courtCase.getStatus())) {
-                caseService.callNotificationService(caseRequest, CASE_PAYMENT_COMPLETED);
+                caseService.callNotificationService(caseRequest, CASE_PAYMENT_COMPLETED, null);
             }
             enrichmentUtil.enrichAccessCode(caseRequest);
             log.info("In Payment Update, Encrypting: {}", caseRequest.getCases().getId());

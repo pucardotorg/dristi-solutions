@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { CardLabel, Dropdown } from "@egovernments/digit-ui-components";
-import { LabelFieldPair } from "@egovernments/digit-ui-react-components";
+import { Button, LabelFieldPair } from "@egovernments/digit-ui-react-components";
 import { Loader } from "@egovernments/digit-ui-react-components";
 import { useGetPendingTask } from "../hooks/useGetPendingTask";
 import { useTranslation } from "react-i18next";
@@ -15,6 +15,7 @@ import { uploadResponseDocumentConfig } from "@egovernments/digit-ui-module-dris
 import isEqual from "lodash/isEqual";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { updateCaseDetails } from "../../../cases/src/utils/joinCaseUtils";
+import AdvocateReplacementComponent from "./AdvocateReplacementComponent";
 
 export const CaseWorkflowAction = {
   SAVE_DRAFT: "SAVE_DRAFT",
@@ -41,6 +42,7 @@ const TasksComponent = ({
   taskIncludes,
   isApplicationCompositeOrder = false,
   compositeOrderObj,
+  pendingSignOrderList,
 }) => {
   const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
   const history = useHistory();
@@ -53,11 +55,15 @@ const TasksComponent = ({
   const todayDate = useMemo(() => new Date().getTime(), []);
   const [totalPendingTask, setTotalPendingTask] = useState(0);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
-
+  const isJudgeOrBenchClerk = userInfo?.roles?.some((role) => role.code === "JUDGE_ROLE" || role.code === "BENCH_CLERK");
   const [showSubmitResponseModal, setShowSubmitResponseModal] = useState(false);
   const [responsePendingTask, setResponsePendingTask] = useState({});
   const [responseDoc, setResponseDoc] = useState({});
   const [isResponseApiCalled, setIsResponseApiCalled] = useState(false);
+  const [{ joinCaseConfirmModal, data }, setPendingTaskActionModals] = useState({
+    joinCaseConfirmModal: false,
+    data: {},
+  });
 
   const { data: options, isLoading: isOptionsLoading } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
@@ -333,6 +339,8 @@ const TasksComponent = ({
       const litigant = data?.fields?.find((field) => field.key === "additionalDetails.litigantUuid[0]")?.value;
       const litigantIndId = data?.fields?.find((field) => field.key === "additionalDetails.litigants[0]")?.value;
       const screenType = data?.fields?.find((field) => field.key === "screenType")?.value;
+      const dateOfApplication = data?.fields?.find((field) => field.key === "additionalDetails.dateOfApplication")?.value;
+      const uniqueId = data?.fields?.find((field) => field.key === "additionalDetails.uniqueId")?.value;
 
       const updateReferenceId = referenceId.split("_").pop();
       const defaultObj = { referenceId: updateReferenceId, ...caseDetail };
@@ -376,6 +384,8 @@ const TasksComponent = ({
           referenceId: updateReferenceId,
           litigant,
           litigantIndId,
+          dateOfApplication,
+          uniqueId,
         },
         isCustomFunction,
         referenceId,
@@ -578,9 +588,38 @@ const TasksComponent = ({
     taskIncludes,
   ]);
 
-  if (isLoading || isOptionsLoading || isCaseDataLoading) {
-    return <Loader />;
-  }
+  const joinCaseConfirmConfig = useMemo(() => {
+    if (!data?.filingNumber || !data?.taskNumber) return null;
+    return {
+      handleClose: () => {
+        setPendingTaskActionModals((pendingTaskActionModals) => {
+          const data = pendingTaskActionModals?.data;
+          delete data.filingNumber;
+          delete data.taskNumber;
+          return {
+            ...pendingTaskActionModals,
+            joinCaseConfirmModal: false,
+            data: data,
+          };
+        });
+      },
+      heading: {
+        label: t("ADVOCATE_REPLACEMENT_REQUEST"),
+      },
+      isStepperModal: false,
+      modalBody: (
+        <AdvocateReplacementComponent
+          filingNumber={data?.filingNumber}
+          taskNumber={data?.taskNumber}
+          setPendingTaskActionModals={setPendingTaskActionModals}
+          refetch={refetch}
+        />
+      ),
+      type: "document",
+      hideModalActionbar: true,
+    };
+  }, [t, data, refetch, setPendingTaskActionModals]);
+
   const customStyles = `
   .digit-dropdown-select-wrap .digit-dropdown-options-card span {
     height:unset !important;
@@ -590,7 +629,18 @@ const TasksComponent = ({
       {!hideTaskComponent && (
         <React.Fragment>
           <h2>{!isLitigant ? t("YOUR_TASK") : t("ALL_PENDING_TASK_TEXT")}</h2>
-          {totalPendingTask !== undefined && totalPendingTask > 0 ? (
+          {isJudgeOrBenchClerk && pendingSignOrderList && (
+            <Button
+              label={`${t("BULK_SIGN")} ${pendingSignOrderList?.totalCount} ${t("BULK_PENDING_ORDERS")}`}
+              textStyles={{ margin: "0px", fontSize: "16px", fontWeight: 700, textAlign: "center" }}
+              style={{ padding: "18px", width: "fit-content", boxShadow: "none" }}
+              onButtonClick={() => history.push(`/${window?.contextPath}/${userType}/home/bulk-esign-order`)}
+              isDisabled={pendingSignOrderList?.totalCount === 0}
+            />
+          )}
+          {isLoading || isOptionsLoading || isCaseDataLoading ? (
+            <Loader />
+          ) : totalPendingTask !== undefined && totalPendingTask > 0 ? (
             <React.Fragment>
               {!hideFilters && (
                 <div className="task-filters">
@@ -643,6 +693,7 @@ const TasksComponent = ({
                           isOpenInNewTab={true}
                           setShowSubmitResponseModal={setShowSubmitResponseModal}
                           setResponsePendingTask={setResponsePendingTask}
+                          setPendingTaskActionModals={setPendingTaskActionModals}
                         />
                       </div>
                     ) : (
@@ -658,6 +709,7 @@ const TasksComponent = ({
                             isAccordionOpen={true}
                             setShowSubmitResponseModal={setShowSubmitResponseModal}
                             setResponsePendingTask={setResponsePendingTask}
+                            setPendingTaskActionModals={setPendingTaskActionModals}
                           />
                         </div>
                         <div className="task-section">
@@ -669,6 +721,7 @@ const TasksComponent = ({
                             totalCount={allOtherPendingTask?.length}
                             setShowSubmitResponseModal={setShowSubmitResponseModal}
                             setResponsePendingTask={setResponsePendingTask}
+                            setPendingTaskActionModals={setPendingTaskActionModals}
                           />
                         </div>
                       </React.Fragment>
@@ -696,6 +749,7 @@ const TasksComponent = ({
       )}
 
       {(showSubmitResponseModal || joinCaseShowSubmitResponseModal) && <DocumentModal config={sumbitResponseConfig} />}
+      {joinCaseConfirmModal && <DocumentModal config={joinCaseConfirmConfig} />}
     </div>
   );
 };

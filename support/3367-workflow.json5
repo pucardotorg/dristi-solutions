@@ -1,0 +1,315 @@
+{
+  "BusinessServices": [
+    {
+      "tenantId": "kl",
+      "uuid": "1422ba46-c674-425d-a7ff-f84697ed664e",
+      "businessService": "order-default",
+      "business": "order",
+      "businessServiceSla": 30,
+      "states": [
+        {
+          "auditDetails": {
+            "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "createdTime": 1732019882683,
+            "lastModifiedTime": 1741856044693
+          },
+          "uuid": "8bc05c4d-ffe4-47c2-a51e-c4500d0ecb40",
+          "tenantId": "kl",
+          "businessServiceId": "1422ba46-c674-425d-a7ff-f84697ed664e",
+          "sla": null,
+          "state": null,
+          "applicationStatus": null,
+          "docUploadRequired": true,
+          "isStartState": true,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "auditDetails": {
+                "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+                "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+                "createdTime": 1732019882683,
+                "lastModifiedTime": 1741856044693
+              },
+              "uuid": "db12d7ba-e2a2-4db8-afad-4ed747daba4b",
+              "tenantId": "kl",
+              "currentState": "8bc05c4d-ffe4-47c2-a51e-c4500d0ecb40",
+              "action": "SAVE_DRAFT",
+              "nextState": "1e1c6eab-4c1f-4d33-9d03-21167a5fb471",
+              "roles": [
+                "ORDER_CREATOR"
+              ],
+              "active": true
+            }
+          ]
+        },
+        {
+          "auditDetails": {
+            "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "createdTime": 1732019882683,
+            "lastModifiedTime": 1741856044693
+          },
+          "uuid": "1e1c6eab-4c1f-4d33-9d03-21167a5fb471",
+          "tenantId": "kl",
+          "businessServiceId": "1422ba46-c674-425d-a7ff-f84697ed664e",
+          "sla": null,
+          "state": "DRAFT_IN_PROGRESS",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": true,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "auditDetails": {
+                "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+                "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+                "createdTime": 1732019882683,
+                "lastModifiedTime": 1741856044693
+              },
+              "uuid": "6fe81900-ddb3-471d-af7a-f395e5b49afc",
+              "tenantId": "kl",
+              "currentState": "1e1c6eab-4c1f-4d33-9d03-21167a5fb471",
+              "action": "SAVE_DRAFT",
+              "nextState": "1e1c6eab-4c1f-4d33-9d03-21167a5fb471",
+              "roles": [
+                "ORDER_CREATOR"
+              ],
+              "active": true
+            },
+            {
+              "auditDetails": {
+                "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+                "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+                "createdTime": 1732019882683,
+                "lastModifiedTime": 1741856044693
+              },
+              "uuid": "0619bc07-a1cd-4955-934c-a1ae3587188d",
+              "tenantId": "kl",
+              "currentState": "1e1c6eab-4c1f-4d33-9d03-21167a5fb471",
+              "action": "E-SIGN",
+              "nextState": "0f9baa63-5f61-4cc1-b0fb-34d019bc1c11",
+              "roles": [
+                "ORDER_APPROVER"
+              ],
+              "active": true
+            },
+            {
+              "auditDetails": {
+                "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+                "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+                "createdTime": 1732019882683,
+                "lastModifiedTime": 1741856044693
+              },
+              "uuid": "f5d18aaa-031d-433c-9d6f-8e3b862063d8",
+              "tenantId": "kl",
+              "currentState": "1e1c6eab-4c1f-4d33-9d03-21167a5fb471",
+              "action": "DELETE",
+              "nextState": "37d2c86d-075c-4f9d-bb4d-775aad124570",
+              "roles": [
+                "ORDER_DELETE"
+              ],
+              "active": true
+            },
+            {
+              "auditDetails": {
+                "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+                "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+                "createdTime": 1732019882683,
+                "lastModifiedTime": 1741856044693
+              },
+              "uuid": "97a5cee7-aef5-4744-b761-da822ebb3928",
+              "tenantId": "kl",
+              "currentState": "1e1c6eab-4c1f-4d33-9d03-21167a5fb471",
+              "action": "ABANDON",
+              "nextState": "842a0b6d-5a48-45c7-86c0-355db7029c6e",
+              "roles": [
+                "WORKFLOW_ABANDON"
+              ],
+              "active": true
+            },
+            // add this action using update end point
+            {
+              "auditDetails": {
+                "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+                "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+                "createdTime": 1741855898567,
+                "lastModifiedTime": 1741856044693
+              },
+              "uuid": "cbaa7e9c-46a2-45e1-91d2-358e514538af",
+              "tenantId": "kl",
+              "currentState": "1e1c6eab-4c1f-4d33-9d03-21167a5fb471",
+              "action": "SUBMIT_BULK_E-SIGN",
+              "nextState": "bffb4554-37d5-4631-a41e-af934e83c4a6",
+              "roles": [
+                "ORDER_APPROVER",
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ],
+              "active": true
+            }
+          ]
+        },
+        {
+          "auditDetails": {
+            "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "createdTime": 1732019882683,
+            "lastModifiedTime": 1741856044693
+          },
+          "uuid": "0f9baa63-5f61-4cc1-b0fb-34d019bc1c11",
+          "tenantId": "kl",
+          "businessServiceId": "1422ba46-c674-425d-a7ff-f84697ed664e",
+          "sla": 5,
+          "state": "PUBLISHED",
+          "applicationStatus": "ACTIVE",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true,
+          "isStateUpdatable": false,
+          "actions": null
+        },
+        {
+          "auditDetails": {
+            "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "createdTime": 1732019882683,
+            "lastModifiedTime": 1741856044693
+          },
+          "uuid": "37d2c86d-075c-4f9d-bb4d-775aad124570",
+          "tenantId": "kl",
+          "businessServiceId": "1422ba46-c674-425d-a7ff-f84697ed664e",
+          "sla": 5,
+          "state": "DELETED",
+          "applicationStatus": "INACTIVE",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true,
+          "isStateUpdatable": false,
+          "actions": null
+        },
+        {
+          "auditDetails": {
+            "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "createdTime": 1732019882683,
+            "lastModifiedTime": 1741856044693
+          },
+          "uuid": "842a0b6d-5a48-45c7-86c0-355db7029c6e",
+          "tenantId": "kl",
+          "businessServiceId": "1422ba46-c674-425d-a7ff-f84697ed664e",
+          "sla": 5,
+          "state": "ABATED",
+          "applicationStatus": "INACTIVE",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": true,
+          "isStateUpdatable": false,
+          "actions": null
+        },
+
+        // add this state using update end point
+        {
+          "auditDetails": {
+            "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+            "createdTime": 1741855898567,
+            "lastModifiedTime": 1741856044693
+          },
+          "uuid": "bffb4554-37d5-4631-a41e-af934e83c4a6",
+          "tenantId": "kl",
+          "businessServiceId": "1422ba46-c674-425d-a7ff-f84697ed664e",
+          "sla": null,
+          "state": "PENDING_BULK_E-SIGN",
+          "applicationStatus": "INWORKFLOW",
+          "docUploadRequired": false,
+          "isStartState": false,
+          "isTerminateState": false,
+          "isStateUpdatable": true,
+          "actions": [
+            {
+              "auditDetails": {
+                "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+                "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+                "createdTime": 1741855898567,
+                "lastModifiedTime": 1741856044693
+              },
+              "uuid": "c93f0771-c0fb-4184-8681-fdc6d70cc3f8",
+              "tenantId": "kl",
+              "currentState": "bffb4554-37d5-4631-a41e-af934e83c4a6",
+              "action": "ABANDON",
+              "nextState": "842a0b6d-5a48-45c7-86c0-355db7029c6e",
+              "roles": [
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ],
+              "active": true
+            },
+            {
+              "auditDetails": {
+                "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+                "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+                "createdTime": 1741855898567,
+                "lastModifiedTime": 1741856044693
+              },
+              "uuid": "429abe1e-e4b6-468b-87c9-a2ea8502ec03",
+              "tenantId": "kl",
+              "currentState": "bffb4554-37d5-4631-a41e-af934e83c4a6",
+              "action": "DELETE",
+              "nextState": "37d2c86d-075c-4f9d-bb4d-775aad124570",
+              "roles": [
+                "ORDER_CREATOR",
+                "ORDER_APPROVER"
+              ],
+              "active": true
+            },
+            {
+              "auditDetails": {
+                "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+                "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+                "createdTime": 1741855898567,
+                "lastModifiedTime": 1741856044693
+              },
+              "uuid": "c65ee69a-6724-474f-99df-e9c4bb9f1675",
+              "tenantId": "kl",
+              "currentState": "bffb4554-37d5-4631-a41e-af934e83c4a6",
+              "action": "E-SIGN",
+              "nextState": "0f9baa63-5f61-4cc1-b0fb-34d019bc1c11",
+              "roles": [
+                "ORDER_APPROVER",
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ],
+              "active": true
+            },
+            {
+              "auditDetails": {
+                "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+                "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+                "createdTime": 1741855898567,
+                "lastModifiedTime": 1741856044693
+              },
+              "uuid": "4189a221-f70f-4f16-98ba-4f96798d31df",
+              "tenantId": "kl",
+              "currentState": "bffb4554-37d5-4631-a41e-af934e83c4a6",
+              "action": "SAVE_DRAFT",
+              "nextState": "1e1c6eab-4c1f-4d33-9d03-21167a5fb471",
+              "roles": [
+                "ORDER_CREATOR"
+              ],
+              "active": true
+            }
+          ]
+        }
+      ],
+      "auditDetails": {
+        "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+        "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
+        "createdTime": 1732019882683,
+        "lastModifiedTime": 1741856044693
+      }
+    }
+  ]
+}

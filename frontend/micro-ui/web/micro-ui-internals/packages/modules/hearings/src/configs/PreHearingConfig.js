@@ -4,7 +4,7 @@ const defaultSearchValues = {
     type: "NIA S138",
   },
   caseNameOrId: "",
-  caseId:"",
+  caseId: "",
   sortCaseListByStartDate: "",
 };
 
@@ -17,8 +17,7 @@ export const preHearingConfig = {
     requestParam: {
       tenantId: Digit.ULBService.getCurrentTenantId(),
     },
-    requestBody: {
-    },
+    requestBody: {},
     minParametersForSearchForm: 0,
     masterName: "commonUiConfig",
     moduleName: "PreHearingsConfig",

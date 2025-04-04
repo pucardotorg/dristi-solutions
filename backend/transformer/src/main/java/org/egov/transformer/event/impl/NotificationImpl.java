@@ -5,9 +5,11 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.producer.Producer;
 import org.egov.transformer.config.TransformerProperties;
 import org.egov.transformer.event.EventListener;
+import org.egov.transformer.models.CourtCase;
 import org.egov.transformer.models.Notification;
 import org.egov.transformer.models.OrderAndNotification;
 import org.egov.transformer.models.OrderNotificationRequest;
+import org.egov.transformer.service.CaseService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -19,20 +21,25 @@ public class NotificationImpl implements EventListener<Notification, RequestInfo
 
     private final Producer producer;
     private final TransformerProperties properties;
+    private final CaseService caseService;
 
     @Autowired
-    public NotificationImpl(Producer producer, TransformerProperties properties) {
+    public NotificationImpl(Producer producer, TransformerProperties properties, CaseService caseService) {
         this.producer = producer;
         this.properties = properties;
+        this.caseService = caseService;
     }
 
     @Override
     public void process(Notification event, RequestInfo requestInfo) {
 
+        CourtCase courtCase =  null;
+        courtCase = caseService.getCaseByCaseSearchText(event.getCaseNumber().get(0), event.getTenantId(), requestInfo);
+
         OrderAndNotification orderAndNotification = OrderAndNotification.builder()
                 .type(event.getNotificationType())
                 .id(event.getNotificationNumber())
-                .courtId(null)  // no court id
+                .courtId(courtCase.getCourtId())  // no court id
                 .parties(new ArrayList<>())  // no parties
                 .status(event.getStatus())
                 .date(event.getCreatedDate())
@@ -42,6 +49,9 @@ public class NotificationImpl implements EventListener<Notification, RequestInfo
                 .filingNumbers( new ArrayList<>())
                 .caseNumbers(event.getCaseNumber() != null ? event.getCaseNumber() : new ArrayList<>())
                 .judgeIds( new ArrayList<>())
+                .documents(event.getDocuments())
+                .createdTime(event.getAuditDetails().getCreatedTime())
+                .caseTitle(null)
                 .build();
 
         OrderNotificationRequest request = OrderNotificationRequest.builder()

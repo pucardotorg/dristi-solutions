@@ -697,6 +697,11 @@
     margin: 0px !important;
     max-width: 100%;
   }
+  .date-of-accrual {
+    color: #bbbbbd !important;
+    border: solid 1px #bbbbbd !important;
+    pointer-events: none !important;
+  }
 }
 
 .delay-application {

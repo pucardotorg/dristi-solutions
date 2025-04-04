@@ -49,13 +49,13 @@ public class HearingConsumer {
 
     @KafkaListener(topics = {"${transformer.consumer.update.start.end.time.topic}"})
     public void updateStartEndTime(ConsumerRecord<String, Object> payload,
-                                   @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+                              @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         publishHearing(payload, transformerProperties.getUpdateHearingTopic());
     }
 
     @KafkaListener(topics = {"${transformer.consumer.bulk.reschedule.hearing}"})
     public void bulkRescheduleHearing(ConsumerRecord<String, Object> payload,
-                                      @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+                              @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         publishBulkHearing(payload, transformerProperties.getUpdateHearingTopic());
     }
 
@@ -74,7 +74,7 @@ public class HearingConsumer {
     }
 
     private void publishBulkHearing(ConsumerRecord<String, Object> payload,
-                                    @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+                                @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         try {
             HearingBulkRequest bulkRequest = objectMapper.readValue(payload.value().toString(), HearingBulkRequest.class);
             List<Hearing> hearings = bulkRequest.getHearings();

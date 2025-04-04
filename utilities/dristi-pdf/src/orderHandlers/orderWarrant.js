@@ -91,7 +91,10 @@ async function orderWarrant(req, res, qrCode, order, compositeOrder) {
     // }
 
     const reasonForWarrant = order.orderDetails.warrantType;
-    const personName = order?.orderDetails?.respondentName;
+    const personName =
+      order?.orderDetails?.respondentName?.name ||
+      order?.orderDetails?.respondentName ||
+      "";
     const additionalComments = order.comments || "";
 
     // Handle QR code if enabled

@@ -218,40 +218,40 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
     }
 
 
-    private void addModuleSearchCriteriaToBaseQuery(Map<String, Object> params, Map<String, String> nameToPathMap,
-                                                    Map<String, SearchParam.Operator> nameToOperator, List<Object> mustClauseList) {
-        params.keySet().forEach(key -> {
-            if (!(key.equals(SORT_ORDER_CONSTANT) || key.equals(SORT_BY_CONSTANT))) {
+	private void addModuleSearchCriteriaToBaseQuery(Map<String, Object> params, Map<String, String> nameToPathMap,
+			Map<String, SearchParam.Operator> nameToOperator, List<Object> mustClauseList) {
+		params.keySet().forEach(key -> {
+			if (!(key.equals(SORT_ORDER_CONSTANT) || key.equals(SORT_BY_CONSTANT))) {
 
-                SearchParam.Operator operator = nameToOperator.get(key);
-                if (operator != null && operator.equals(SearchParam.Operator.WILDCARD)) {
-                    List<Map<String, Object>> mustClauseChild = null;
+				SearchParam.Operator operator = nameToOperator.get(key);
+				if (operator != null && operator.equals(SearchParam.Operator.WILDCARD)) {
+					List<Map<String, Object>> mustClauseChild = null;
 
-                    mustClauseChild = (List<Map<String, Object>>) prepareMustClauseWildCardChild(params, key,
-                            nameToPathMap, nameToOperator);
+					mustClauseChild = (List<Map<String, Object>>) prepareMustClauseWildCardChild(params, key,
+							nameToPathMap, nameToOperator);
 
-                    if (CollectionUtils.isEmpty(mustClauseChild)) {
-                        log.info("Error occurred while preparing filter for must clause. Filter for key " + key
-                                + " will not be added.");
-                    } else {
-                        mustClauseList.addAll(mustClauseChild);
-                    }
-                } else {
+					if (CollectionUtils.isEmpty(mustClauseChild)) {
+						log.info("Error occurred while preparing filter for must clause. Filter for key " + key
+								+ " will not be added.");
+					} else {
+						mustClauseList.addAll(mustClauseChild);
+					}
+				} else {
 
-                    Map<String, Object> mustClauseChild = null;
-                    mustClauseChild = (Map<String, Object>) prepareMustClauseChild(params, key, nameToPathMap,
-                            nameToOperator);
-                    if (CollectionUtils.isEmpty(mustClauseChild)) {
-                        log.info("Error occurred while preparing filter for must clause. Filter for key " + key
-                                + " will not be added.");
-                    } else {
-                        mustClauseList.add(mustClauseChild);
-                    }
+					Map<String, Object> mustClauseChild = null;
+					mustClauseChild = (Map<String, Object>) prepareMustClauseChild(params, key, nameToPathMap,
+							nameToOperator);
+					if (CollectionUtils.isEmpty(mustClauseChild)) {
+						log.info("Error occurred while preparing filter for must clause. Filter for key " + key
+								+ " will not be added.");
+					} else {
+						mustClauseList.add(mustClauseChild);
+					}
 
-                }
-            }
-        });
-    }
+				}
+			}
+		});
+	}
 
     @Override
     public Map<String, Object> getStatusCountQuery(InboxRequest inboxRequest) {
@@ -333,70 +333,70 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
         return baseEsQuery;
     }
 
-    private Object prepareMustClauseChild(Map<String, Object> params, String key, Map<String, String> nameToPathMap,
-                                          Map<String, SearchParam.Operator> nameToOperatorMap) {
+	private Object prepareMustClauseChild(Map<String, Object> params, String key, Map<String, String> nameToPathMap,
+			Map<String, SearchParam.Operator> nameToOperatorMap) {
 
-        SearchParam.Operator operator = nameToOperatorMap.get(key);
-        if (operator == null || operator.equals(SearchParam.Operator.EQUAL)) {
-            // Add terms clause in case the search criteria has a list of values
-            if (params.get(key) instanceof List) {
-                Map<String, Object> termsClause = new HashMap<>();
-                termsClause.put("terms", new HashMap<>());
-                Map<String, Object> innerTermsClause = (Map<String, Object>) termsClause.get("terms");
-                innerTermsClause.put(addDataPathToSearchParamKey(key, nameToPathMap), params.get(key));
-                return termsClause;
-            }
-            // Add term clause in case the search criteria has a single value
-            else {
-                Map<String, Object> termClause = new HashMap<>();
-                termClause.put("term", new HashMap<>());
-                Map<String, Object> innerTermClause = (Map<String, Object>) termClause.get("term");
-                innerTermClause.put(addDataPathToSearchParamKey(key, nameToPathMap), params.get(key));
-                return termClause;
-            }
-        } else if (operator.equals(SearchParam.Operator.LTE) || operator.equals(SearchParam.Operator.GTE)) {
-            Map<String, Object> rangeClause = new HashMap<>();
-            rangeClause.put("range", new HashMap<>());
-            Map<String, Object> innerTermClause = (Map<String, Object>) rangeClause.get("range");
-            Map<String, Object> comparatorMap = new HashMap<>();
+		SearchParam.Operator operator = nameToOperatorMap.get(key);
+		if (operator == null || operator.equals(SearchParam.Operator.EQUAL)) {
+			// Add terms clause in case the search criteria has a list of values
+			if (params.get(key) instanceof List) {
+				Map<String, Object> termsClause = new HashMap<>();
+				termsClause.put("terms", new HashMap<>());
+				Map<String, Object> innerTermsClause = (Map<String, Object>) termsClause.get("terms");
+				innerTermsClause.put(addDataPathToSearchParamKey(key, nameToPathMap), params.get(key));
+				return termsClause;
+			}
+			// Add term clause in case the search criteria has a single value
+			else {
+				Map<String, Object> termClause = new HashMap<>();
+				termClause.put("term", new HashMap<>());
+				Map<String, Object> innerTermClause = (Map<String, Object>) termClause.get("term");
+				innerTermClause.put(addDataPathToSearchParamKey(key, nameToPathMap), params.get(key));
+				return termClause;
+			}
+		} else if (operator.equals(SearchParam.Operator.LTE) || operator.equals(SearchParam.Operator.GTE)) {
+			Map<String, Object> rangeClause = new HashMap<>();
+			rangeClause.put("range", new HashMap<>());
+			Map<String, Object> innerTermClause = (Map<String, Object>) rangeClause.get("range");
+			Map<String, Object> comparatorMap = new HashMap<>();
 
-            if (operator.equals(SearchParam.Operator.LTE)) {
-                comparatorMap.put("lte", params.get(key));
-            } else if (operator.equals(SearchParam.Operator.GTE)) {
-                comparatorMap.put("gte", params.get(key));
-            }
-            innerTermClause.put(addDataPathToSearchParamKey(key, nameToPathMap), comparatorMap);
-            return rangeClause;
-        } else
-            throw new CustomException(ErrorConstants.INVALID_OPERATOR_DATA, " Unsupported Operator : " + operator);
+			if (operator.equals(SearchParam.Operator.LTE)) {
+				comparatorMap.put("lte", params.get(key));
+			} else if (operator.equals(SearchParam.Operator.GTE)) {
+				comparatorMap.put("gte", params.get(key));
+			}
+			innerTermClause.put(addDataPathToSearchParamKey(key, nameToPathMap), comparatorMap);
+			return rangeClause;
+		} else
+			throw new CustomException(ErrorConstants.INVALID_OPERATOR_DATA, " Unsupported Operator : " + operator);
 
-    }
+	}
+	
+	private List<Map<String, Object>> prepareMustClauseWildCardChild(Map<String, Object> params, String key,
+			Map<String, String> nameToPathMap, Map<String, SearchParam.Operator> nameToOperatorMap) {
+		// Add wildcard clause in case the search criteria has a list of values
+		Object value = params.get(key);
+		List<Map<String, Object>> wildcardClauses = new ArrayList<>();
+		if (value instanceof List) {
+			List<Object> values = (List<Object>) value;
+			for (Object item : values) {
+				Map<String, Object> wildcardClause = new HashMap<>();
+				wildcardClause.put("wildcard", new HashMap<>());
+				Map<String, Object> innerWildcardClause = (Map<String, Object>) wildcardClause.get("wildcard");
+				innerWildcardClause.put(addDataPathToSearchParamKey(key, nameToPathMap), "*" + item + "*");
+				wildcardClauses.add(wildcardClause);
+			}
 
-    private List<Map<String, Object>> prepareMustClauseWildCardChild(Map<String, Object> params, String key,
-                                                                     Map<String, String> nameToPathMap, Map<String, SearchParam.Operator> nameToOperatorMap) {
-        // Add wildcard clause in case the search criteria has a list of values
-        Object value = params.get(key);
-        List<Map<String, Object>> wildcardClauses = new ArrayList<>();
-        if (value instanceof List) {
-            List<Object> values = (List<Object>) value;
-            for (Object item : values) {
-                Map<String, Object> wildcardClause = new HashMap<>();
-                wildcardClause.put("wildcard", new HashMap<>());
-                Map<String, Object> innerWildcardClause = (Map<String, Object>) wildcardClause.get("wildcard");
-                innerWildcardClause.put(addDataPathToSearchParamKey(key, nameToPathMap), "*" + item + "*");
-                wildcardClauses.add(wildcardClause);
-            }
-
-            return wildcardClauses;
-        } else {
-            Map<String, Object> wildcardClause = new HashMap<>();
-            wildcardClause.put("wildcard", new HashMap<>());
-            Map<String, Object> innerWildcardClause = (Map<String, Object>) wildcardClause.get("wildcard");
-            innerWildcardClause.put(addDataPathToSearchParamKey(key, nameToPathMap), "*" + value + "*");
-            wildcardClauses.add(wildcardClause);
-            return wildcardClauses;
-        }
-    }
+			return wildcardClauses;
+		} else {
+			Map<String, Object> wildcardClause = new HashMap<>();
+			wildcardClause.put("wildcard", new HashMap<>());
+			Map<String, Object> innerWildcardClause = (Map<String, Object>) wildcardClause.get("wildcard");
+			innerWildcardClause.put(addDataPathToSearchParamKey(key, nameToPathMap), "*" + value + "*");
+			wildcardClauses.add(wildcardClause);
+			return wildcardClauses;
+		}
+	}
 
     private String addDataPathToSearchParamKey(String key, Map<String, String> nameToPathMap){
 

@@ -149,7 +149,8 @@ async function orderAcceptVoluntary(req, res, qrCode, order, compositeOrder) {
     } else {
       return renderError(res, "Invalid filingDate format", 500);
     }
-    const additionalComments = order.comments || "";
+    const additionalComments =
+      order?.additionalDetails?.formdata?.comments?.text || "";
     const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
     const data = {
       Data: [
@@ -168,9 +169,10 @@ async function orderAcceptVoluntary(req, res, qrCode, order, compositeOrder) {
           caseYear,
           partyName: partyName,
           additionalComments: additionalComments,
-          content: order?.comments || "",
+          content: order?.additionalDetails?.formdata?.comments?.text || "",
           applicationNumber: application?.applicationNumber,
-          additionalDetails: order?.comments || "",
+          additionalDetails:
+            order?.additionalDetails?.formdata?.comments?.text || "",
           judgeSignature: judgeDetails.judgeSignature,
           judgeName: judgeDetails.name,
           courtSeal: judgeDetails.courtSeal,

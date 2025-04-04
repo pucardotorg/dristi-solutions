@@ -8,6 +8,7 @@ import { formatDate } from "../../utils";
 import { hearingService } from "../../hooks/services";
 import { Urls } from "../../hooks/services/Urls";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
+import { constructFullName } from "@egovernments/digit-ui-module-orders/src/utils";
 
 const modalPopup = {
   height: "70%",

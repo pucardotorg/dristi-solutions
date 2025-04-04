@@ -10,7 +10,7 @@ const OverlayDropdown = ({ column, row, master, module }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const history = useHistory();
 
-  const dropdownItems = Digit.Customizations[master]?.[module]?.dropDownItems?.(row, column) || [];
+  const dropdownItems = Digit.Customizations[master]?.[module]?.dropDownItems?.(row, column, t) || [];
 
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);

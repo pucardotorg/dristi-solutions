@@ -300,3 +300,81 @@
   background-color: #007e7e !important;
   box-shadow: none;
 }
+
+.bulk-esign-order-view {
+  min-height: calc(100vh - 90px);
+  width: 100%;
+  padding: 30px;
+  margin-bottom: 56px;
+
+  .header {
+    font-family: Roboto;
+    font-weight: 700;
+    font-size: 40px;
+    line-height: 100%;
+    letter-spacing: 0%;
+    padding: 0rem 1rem;
+  }
+
+  .inbox-search-component-wrapper {
+    .search-tabs-container {
+      div {
+        border: none;
+      }
+    }
+    .search-field-wrapper.search.custom-both-clear-search {
+      display: flex;
+      .label-field-pair {
+        width: 200px;
+        .select-wrap {
+          .options-card {
+            top: 40px;
+            max-height: 160px;
+            overflow-y: auto;
+          }
+        }
+      }
+      .search-button-wrapper {
+        margin-left: auto;
+        .submit-bar {
+          width: 200px !important;
+          box-shadow: none;
+        }
+      }
+    }
+  }
+}
+
+/* Hide the default checkbox */
+.custom-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #007E7E; /* Border color */
+  border-radius: 4px;
+  background-color: white;
+  cursor: pointer;
+  position: relative;
+  outline: none;
+  display: inline-block;
+}
+
+/* Add custom tick mark */
+.custom-checkbox:checked {
+  background-color: white;
+  border: 2px solid #007E7E;
+}
+
+/* Custom Tick Mark */
+.custom-checkbox:checked::after {
+  content: "✔"; /* Unicode checkmark */
+  font-size: 16px;
+  color: #007E7E;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-weight: bold;
+}

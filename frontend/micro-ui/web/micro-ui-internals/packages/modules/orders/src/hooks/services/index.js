@@ -51,6 +51,14 @@ export const ordersService = {
       data,
       params,
     }),
+  searchOrderNotifications: (data, params) =>
+    Request({
+      url: Urls.orders.orderNotificationSearch,
+      useCache: true,
+      userService: true,
+      data,
+      params,
+    }),
   customApiService: (url, data, params, useCache = false, userService = true) =>
     Request({
       url: url,
@@ -164,12 +172,39 @@ export const taskService = {
       data,
       params,
     }),
+  searchTask: (data, params) =>
+    Request({
+      url: Urls.Task.search,
+      useCache: true,
+      userService: true,
+      data,
+      params,
+    }),
 };
 
 export const SBIPaymentService = {
   SBIPayment: (data, params) =>
     Request({
       url: Urls.SBIPayment.payment,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+};
+
+export const orderManagementService = {
+  getOrdersToSign: (data, params) =>
+    Request({
+      url: Urls.orderManagement.getOrdersToSign,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  updateSignedOrders: (data, params) =>
+    Request({
+      url: Urls.orderManagement.updateSignedOrders,
       useCache: false,
       userService: true,
       data,
