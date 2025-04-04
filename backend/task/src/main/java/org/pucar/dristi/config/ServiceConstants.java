@@ -92,6 +92,8 @@ public class ServiceConstants {
     public static final String PENDING_TASK = "PENDING_TASK";
     public static final String JOIN_CASE_TASK = "JOIN_CASE_TASK";
 
+    public static final String JOIN_CASE_PAYMENT = "JOIN_CASE_PAYMENT";
+
     public static final String JOIN_CASE = "JOIN_CASE";
     public static final String APPROVED = "APPROVED";
     public static final String REJECTED = "REJECTED";
