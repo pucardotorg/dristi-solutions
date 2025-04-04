@@ -32,6 +32,7 @@ public class ServiceConstants {
     public static final String ADVOCATE_FEE = "Advocate Welfare Fund";
 
     public static final String COURT_FEE = "Court Fee";
+    public static final String LEGAL_BENEFIT_FEE = "Legal Benefit Fee";
     public static final String POSTAL_HUB_NOT_FOUND = "POSTAL_HUB_NOT_FOUND";
     public static final String POSTAL_HUB_NOT_FOUND_MSG = "Pincode not found for speed post fee calculation";
 

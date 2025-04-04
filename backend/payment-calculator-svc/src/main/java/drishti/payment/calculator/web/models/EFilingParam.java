@@ -34,6 +34,12 @@ public class EFilingParam {
     @JsonProperty("delayCondonationFee")
     private Double delayCondonationFee;
 
+    @JsonProperty("courtFee")
+    private Double courtFee;
+
+    @JsonProperty("legalBasicFund")
+    private Double legalBasicFund;
+
     @JsonProperty("petitionFee")
     private Map<String, Range> petitionFee;
 

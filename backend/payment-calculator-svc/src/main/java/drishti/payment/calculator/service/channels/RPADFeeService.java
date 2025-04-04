@@ -56,7 +56,7 @@ public class RPADFeeService implements Payment {
                     .applicationId(criteria.getId())
                     .tenantId(criteria.getTenantId())
                     .totalAmount(courtFees)
-                    .breakDown(Collections.singletonList(new BreakDown(COURT_FEE, courtFees, new HashMap<>()))).build();
+                    .breakDown(Collections.singletonList(new BreakDown(COURT_FEE,"COURT_FEE", courtFees, new HashMap<>()))).build();
         } catch (Exception e) {
             log.error("Error calculating payment for task type: {} in tenant: {}", criteria.getTaskType(), criteria.getTenantId(), e);
             throw new CustomException(CALCULATE_PAYMENT_EXCEPTION, e.getMessage());

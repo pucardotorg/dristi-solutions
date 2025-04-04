@@ -86,17 +86,17 @@ public class TaskUtil {
     public List<BreakDown> getFeeBreakdown(double courtFee, double gst, double postFee) {
         List<BreakDown> feeBreakdowns = new ArrayList<>();
 
-        feeBreakdowns.add(new BreakDown(COURT_FEE, courtFee, new HashMap<>()));
-        feeBreakdowns.add(new BreakDown(GST, gst, new HashMap<>()));
-        feeBreakdowns.add(new BreakDown(E_POST, postFee, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown(COURT_FEE,"COURT_FEE", courtFee, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown(GST,"GST", gst, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown(E_POST,"E_POST", postFee, new HashMap<>()));
 
         return feeBreakdowns;
     }
 
     public List<BreakDown> getFeeBreakdown(double courtFee, double postFee) {
         List<BreakDown> feeBreakdowns = new ArrayList<>();
-        feeBreakdowns.add(new BreakDown(COURT_FEE, courtFee, new HashMap<>()));
-        feeBreakdowns.add(new BreakDown(E_POST, postFee, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown(COURT_FEE,"COURT_FEE", courtFee, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown(E_POST,"E_POST", postFee, new HashMap<>()));
         return feeBreakdowns;
     }
 

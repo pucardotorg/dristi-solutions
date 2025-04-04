@@ -34,7 +34,7 @@ public class PoliceFeeService implements Payment {
                 .applicationId(criteria.getSummonId())
                 .tenantId(criteria.getTenantId())
                 .totalAmount(courtFee)
-                .breakDown(Collections.singletonList(new BreakDown(COURT_FEE, courtFee, new HashMap<>()))).build();
+                .breakDown(Collections.singletonList(new BreakDown(COURT_FEE,"COURT_FEE", courtFee, new HashMap<>()))).build();
     }
 
     @Override
@@ -52,6 +52,6 @@ public class PoliceFeeService implements Payment {
                 .applicationId(criteria.getId())
                 .tenantId(criteria.getTenantId())
                 .totalAmount(courtFees)
-                .breakDown(Collections.singletonList(new BreakDown(COURT_FEE, courtFees, new HashMap<>()))).build();
+                .breakDown(Collections.singletonList(new BreakDown(COURT_FEE,"COURT_FEE", courtFees, new HashMap<>()))).build();
     }
 }
