@@ -2464,9 +2464,14 @@ public class CaseService {
         task.setStatus("");
         task.setTenantId(joinCaseRequest.getJoinCaseData().getTenantId());
         task.setFilingNumber(joinCaseRequest.getJoinCaseData().getFilingNumber());
+        String advocateUUID = joinCaseRequest.getRequestInfo().getUserInfo().getUuid();
+
+        AssignedTo assignedTo = new AssignedTo();
+        assignedTo.setUuid(UUID.fromString(advocateUUID));
+        task.setAssignedTo(List.of(assignedTo));
+
         WorkflowObject workflow = new WorkflowObject();
         workflow.setAction("CREATE");
-        String advocateUUID = joinCaseRequest.getRequestInfo().getUserInfo().getUuid();
         workflow.setAssignes(List.of(advocateUUID));
         RequestInfo requestInfo = new RequestInfo();
         User userInfo = new User();
