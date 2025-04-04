@@ -23,4 +23,7 @@ public class JoinCaseV2Response {
 
     @JsonProperty("isVerified")
     private Boolean isVerified = false;
+
+    @JsonProperty("paymentTaskNumber")
+    private String paymentTaskNumber = null;
 }

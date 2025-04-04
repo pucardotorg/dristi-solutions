@@ -61,6 +61,9 @@ public class TaskRegistrationValidator {
             }
 
         } else {
+            if(JOIN_CASE_PAYMENT.equalsIgnoreCase(task.getTaskType())){
+                return;
+            }
             if(JOIN_CASE.equalsIgnoreCase(task.getTaskType())){
                 return;
             }
