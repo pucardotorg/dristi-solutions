@@ -101,14 +101,14 @@ public class CaseFeeCalculationService {
     public List<BreakDown> getFeeBreakdown(double courtFee, double legalBasicFund, double advocateClerkWelfareFund, double totalApplicationFee, double petitionFee, double condonationFee, double advocateFee) {
         List<BreakDown> feeBreakdowns = new ArrayList<>();
 
-        feeBreakdowns.add(new BreakDown(COURT_FEE, courtFee, new HashMap<>()));
-        feeBreakdowns.add(new BreakDown(LEGAL_BASIC_FUND, legalBasicFund, new HashMap<>()));
-        feeBreakdowns.add(new BreakDown(ADVOCATE_CLERK_WELFARE_FUND, advocateClerkWelfareFund, new HashMap<>()));
-        feeBreakdowns.add(new BreakDown(TOTAL_APPLICATION_FEE, totalApplicationFee, new HashMap<>()));
-        feeBreakdowns.add(new BreakDown(PETITION_FEE, petitionFee, new HashMap<>()));
-        feeBreakdowns.add(new BreakDown(ADVOCATE_FEE, advocateFee, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown(COURT_FEE, "COURT_FEE", courtFee, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown(LEGAL_BASIC_FUND, "LEGAL_BASIC_FUND", legalBasicFund, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown(ADVOCATE_CLERK_WELFARE_FUND, "ADVOCATE_CLERK_WELFARE_FUND", advocateClerkWelfareFund, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown(TOTAL_APPLICATION_FEE, "TOTAL_APPLICATION_FEE", totalApplicationFee, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown(PETITION_FEE, "PETITION_FEE", petitionFee, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown(ADVOCATE_FEE, "ADVOCATE_WELFARE_FUND", advocateFee, new HashMap<>()));
         if (condonationFee > 0)
-            feeBreakdowns.add(new BreakDown(DELAY_CONDONATION_FEE, condonationFee, new HashMap<>()));
+            feeBreakdowns.add(new BreakDown(DELAY_CONDONATION_FEE, "DELAY_CONDONATION_FEE", condonationFee, new HashMap<>()));
 
         return feeBreakdowns;
     }
@@ -198,10 +198,10 @@ public class CaseFeeCalculationService {
 
         List<BreakDown> feeBreakdowns = new ArrayList<>();
 
-        feeBreakdowns.add(new BreakDown(COURT_FEE, courtFee, new HashMap<>()));
-        feeBreakdowns.add(new BreakDown(LEGAL_BASIC_FUND, legalBasicFund, new HashMap<>()));
-        feeBreakdowns.add(new BreakDown(ADVOCATE_CLERK_WELFARE_FUND, advocateClerkWelfareFund, new HashMap<>()));
-        feeBreakdowns.add(new BreakDown(ADVOCATE_FEE, advocateFee, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown(COURT_FEE, "COURT_FEE", courtFee, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown(LEGAL_BASIC_FUND,"LEGAL_BASIC_FUND" , legalBasicFund, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown(ADVOCATE_CLERK_WELFARE_FUND, "ADVOCATE_CLERK_WELFARE_FUND", advocateClerkWelfareFund, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown(ADVOCATE_FEE, "ADVOCATE_WELFARE_FUND", advocateFee, new HashMap<>()));
         return feeBreakdowns;
     }
 }
