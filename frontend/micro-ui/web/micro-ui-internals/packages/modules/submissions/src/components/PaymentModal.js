@@ -20,7 +20,7 @@ function PaymentModal({ t, handleClosePaymentModal, handleSkipPayment, handleMak
   const Heading = (props) => {
     return <h1 className="heading-m">{props.label}</h1>;
   };
-  const totalAmount = 2;
+  const totalAmount = 20;
 
   const CloseBtn = (props) => {
     return (
