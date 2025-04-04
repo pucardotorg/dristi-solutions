@@ -10,7 +10,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.models.AuditDetails;
-import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
@@ -18,7 +17,6 @@ import org.egov.common.models.individual.AdditionalFields;
 import org.egov.common.models.individual.Field;
 import org.egov.common.models.individual.Identifier;
 import org.egov.tracer.model.CustomException;
-import org.jetbrains.annotations.NotNull;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.CaseRegistrationEnrichment;
 import org.pucar.dristi.enrichment.EnrichmentService;
@@ -579,13 +577,13 @@ public class CaseService {
     }
 
 
-    public void callNotificationService(CaseRequest caseRequest, String messageCode) {
+    public void callNotificationService(CaseRequest caseRequest, String messageCode, String profileEditorId) {
         try {
             CourtCase courtCase = caseRequest.getCases();
             Set<String> IndividualIds = getLitigantIndividualId(courtCase);
             getAdvocateIndividualId(caseRequest, IndividualIds);
             Set<String> phonenumbers = callIndividualService(caseRequest.getRequestInfo(), IndividualIds);
-            SmsTemplateData smsTemplateData = enrichSmsTemplateData(caseRequest.getCases());
+            SmsTemplateData smsTemplateData = enrichSmsTemplateData(caseRequest.getCases(), profileEditorId);
             for (String number : phonenumbers) {
                 notificationService.sendNotification(caseRequest.getRequestInfo(), smsTemplateData, messageCode, number);
             }
@@ -3174,11 +3172,13 @@ public class CaseService {
             }
             courtCase = encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, request.getRequestInfo());
             JsonNode additionalDetails = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
+            String editorUuid = null;
             if (request.getProcessInfo().getAction().equals(ActionType.ACCEPT)) {
                 JsonNode profileRequests = additionalDetails.get("profileRequests");
                 String idToRemove = null;
                 for (JsonNode profile : profileRequests) {
                     if (profile.get("pendingTaskRefId").asText().equals(request.getProcessInfo().getPendingTaskRefId())) {
+                        editorUuid = profile.get("editorDetails").get("uuid").asText();
                         String partyType = profile.get("litigantDetails").get("partyType").asText();
                         String uniqueId = profile.get("litigantDetails").get("uniqueId").asText();
                         String detailsKey = partyType.equals("complainant") ? "complainantDetails" : "respondentDetails";
