@@ -380,7 +380,7 @@ public class PaymentService {
                     .requestInfo(demandRequest.getRequestInfo())
                     .demands(List.of(demand))
                     .build());
-            producer.push("create-treasury-mapping", treasuryMapping);
+            producer.push(config.getTreasuryMappingSaveTopic(), treasuryMapping);
             log.info("operation=createDemand, status=SUCCESS, consumerCode={}", demandRequest.getConsumerCode());
             return demandResponse;
         } catch (JsonProcessingException e) {
@@ -488,10 +488,10 @@ public class PaymentService {
             chequeDetails.put("totalAmount", debtLiability.get("totalAmount").asDouble());
         } else {
             JsonNode chequeData = caseDetails.get("chequeDetails").get("formdata");
-            Double totalAmount = 0.0;
-            for(JsonNode data: chequeData) {
-                double amount = data.get("data").get("chequeAmount").asDouble();
-                totalAmount+=amount;
+            BigDecimal totalAmount = BigDecimal.ZERO;
+            for (JsonNode data : chequeData) {
+                BigDecimal amount = new BigDecimal(data.get("data").get("chequeAmount").asText());
+                totalAmount = totalAmount.add(amount);
             }
             chequeDetails.put("totalAmount", totalAmount);
         }

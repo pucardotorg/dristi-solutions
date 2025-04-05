@@ -8,6 +8,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.eTreasury.config.PaymentConfiguration;
 import org.egov.eTreasury.model.*;
 import org.egov.eTreasury.repository.TreasuryMappingRepository;
+import org.egov.eTreasury.util.DemandUtil;
 import org.egov.eTreasury.util.IdgenUtil;
 import org.egov.eTreasury.util.MdmsUtil;
 import org.egov.tracer.model.CustomException;
@@ -33,12 +34,14 @@ public class TreasuryEnrichment {
 
     private final MdmsUtil mdmsUtil;
 
-    public TreasuryEnrichment(PaymentConfiguration config, IdgenUtil idgenUtil, TreasuryMappingRepository repository, ObjectMapper objectMapper, MdmsUtil mdmsUtil) {
+    private final DemandUtil demandUtil;
+    public TreasuryEnrichment(PaymentConfiguration config, IdgenUtil idgenUtil, TreasuryMappingRepository repository, ObjectMapper objectMapper, MdmsUtil mdmsUtil, DemandUtil demandUtil) {
         this.config = config;
         this.idgenUtil = idgenUtil;
         this.repository = repository;
         this.objectMapper = objectMapper;
         this.mdmsUtil = mdmsUtil;
+        this.demandUtil = demandUtil;
     }
 
     public ChallanDetails generateChallanDetails(ChallanData challanData, RequestInfo requestInfo) {
@@ -57,8 +60,9 @@ public class TreasuryEnrichment {
         Map<String, Map<String, JSONArray>> mdmsData = mdmsUtil.fetchMdmsData(requestInfo, config.getEgovStateTenantId(), "payment", List.of("tsbAccountToHead"));
         Map<String, JSONArray> tsbMasterData = mdmsData.get("payment");
         JsonNode tsbAccountToHead = objectMapper.convertValue(tsbMasterData.get("tsbAccountToHead"), JsonNode.class);
-        //for consumer code can use billId to billing service
-        TreasuryMapping treasuryMapping = repository.getTreasuryMapping(challanData.getConsumerCode());
+
+        String consumerCode = demandUtil.searchBill(challanData.getBillId(), requestInfo);
+        TreasuryMapping treasuryMapping = repository.getTreasuryMapping(consumerCode);
         JsonNode headAmountMapping = objectMapper.convertValue(treasuryMapping.getHeadAmountMapping(), JsonNode.class);
         List<HeadDetails> headDetailsList = new ArrayList<>();
 
@@ -82,14 +86,6 @@ public class TreasuryEnrichment {
                             .build());
                 }
             }
-        }
-
-        List<String> accountTypeList = config.getAccountTypeList();
-
-        List<String> accountNumberList = config.getAccountNumberList();
-
-        if (!(accountTypeList.size() == accountNumberList.size())) {
-            throw new CustomException("CHECK_SIZE_NIGGA", "Check size of account type and account number");
         }
 
         List<TsbData> tsbData = new ArrayList<>();

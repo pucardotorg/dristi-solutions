@@ -169,6 +169,12 @@ public class PaymentConfiguration {
     @Value("${egov.demand.create.endpoint}")
     private String demandCreateEndPoint;
 
+    @Value("${egov.billing.search.endpoint}")
+    private String billingSearchEndPoint;
+
+    @Value("${treasury.mapping.save.topic}")
+    private String treasuryMappingSaveTopic;
+
     @PostConstruct
     public void init() {
         headsList = Arrays.asList(heads.split(","));
