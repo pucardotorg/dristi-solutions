@@ -620,9 +620,6 @@ const TasksComponent = ({
     };
   }, [t, data, refetch, setPendingTaskActionModals]);
 
-  if (isLoading || isOptionsLoading || isCaseDataLoading) {
-    return <Loader />;
-  }
   const customStyles = `
   .digit-dropdown-select-wrap .digit-dropdown-options-card span {
     height:unset !important;
@@ -634,14 +631,16 @@ const TasksComponent = ({
           <h2>{!isLitigant ? t("YOUR_TASK") : t("ALL_PENDING_TASK_TEXT")}</h2>
           {isJudgeOrBenchClerk && pendingSignOrderList && (
             <Button
-              label={`${t("BULK_SIGN")} ${pendingSignOrderList?.length} ${t("BULK_PENDING_ORDERS")}`}
+              label={`${t("BULK_SIGN")} ${pendingSignOrderList?.totalCount} ${t("BULK_PENDING_ORDERS")}`}
               textStyles={{ margin: "0px", fontSize: "16px", fontWeight: 700, textAlign: "center" }}
               style={{ padding: "18px", width: "fit-content", boxShadow: "none" }}
               onButtonClick={() => history.push(`/${window?.contextPath}/${userType}/home/bulk-esign-order`)}
-              isDisabled={pendingSignOrderList?.length === 0}
+              isDisabled={pendingSignOrderList?.totalCount === 0}
             />
           )}
-          {totalPendingTask !== undefined && totalPendingTask > 0 ? (
+          {isLoading || isOptionsLoading || isCaseDataLoading ? (
+            <Loader />
+          ) : totalPendingTask !== undefined && totalPendingTask > 0 ? (
             <React.Fragment>
               {!hideFilters && (
                 <div className="task-filters">

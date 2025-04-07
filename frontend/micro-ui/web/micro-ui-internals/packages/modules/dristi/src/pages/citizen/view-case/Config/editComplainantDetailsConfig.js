@@ -572,6 +572,19 @@ const editComplainantDetailsFormConfig = [
   {
     body: [
       {
+        key: "reasonDetailsSeparator",
+        type: "component",
+        sublabel: "REQUEST_DETAILS",
+        component: "OrSeparator",
+        populators: {
+          inputs: [],
+        },
+      },
+    ],
+  },
+  {
+    body: [
+      {
         type: "component",
         component: "SelectCustomTextArea",
         key: "reasonForChange",
@@ -628,5 +641,5 @@ export const editComplainantDetailsConfig = {
   isOptional: false,
   // addFormText: "ADD_COMPLAINANT",
   // formItemName: "CS_COMPLAINANT",
-  className: "complainant",
+  className: "complainant-edit",
 };

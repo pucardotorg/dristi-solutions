@@ -29,6 +29,8 @@ public class EFilingParamTestBuilder {
 
         this.builder.applicationFee(2.0)
                 .vakalathnamaFee(6.0)
+                .legalBasicFund(2.5)
+                .courtFee(2.5)
                 .advocateWelfareFund(25.0)
                 .advocateClerkWelfareFund(12.0)
                 .delayCondonationPeriod(2629800000L)  // Assuming it's in milliseconds (around 1 month)

@@ -475,7 +475,11 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       orderDetails?.orderCategory === "COMPOSITE" ? compositeItem?.additionalDetails?.formdata : orderDetails?.additionalDetails?.formdata;
     const orderKey = orderType === "SUMMONS" ? "SummonsOrder" : "noticeOrder";
     const partyData = formdata?.[orderKey]?.party?.data;
-    const name = [partyData?.firstName, partyData?.lastName]?.filter(Boolean)?.join(" ") || (orderType === "WARRANT" && formdata?.warrantFor);
+    const name =
+      [partyData?.firstName, partyData?.lastName]?.filter(Boolean)?.join(" ") ||
+      (orderType === "WARRANT" && formdata?.warrantFor?.name) ||
+      formdata?.warrantFor ||
+      "";
 
     const task = filteredTasks?.[0];
     const taskDetails = task?.taskDetails;

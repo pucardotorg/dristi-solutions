@@ -1,13 +1,16 @@
 package org.egov.eTreasury.enrichment;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import net.minidev.json.JSONArray;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.eTreasury.config.PaymentConfiguration;
-import org.egov.eTreasury.model.ChallanData;
-import org.egov.eTreasury.model.ChallanDetails;
-import org.egov.eTreasury.model.HeadDetails;
-import org.egov.eTreasury.model.TsbData;
+import org.egov.eTreasury.model.*;
+import org.egov.eTreasury.repository.TreasuryMappingRepository;
+import org.egov.eTreasury.util.DemandUtil;
 import org.egov.eTreasury.util.IdgenUtil;
+import org.egov.eTreasury.util.MdmsUtil;
 import org.egov.tracer.model.CustomException;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +18,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Component
 @Slf4j
@@ -24,9 +28,20 @@ public class TreasuryEnrichment {
 
     private final IdgenUtil idgenUtil;
 
-    public TreasuryEnrichment(PaymentConfiguration config, IdgenUtil idgenUtil) {
+    private final TreasuryMappingRepository repository;
+
+    private final ObjectMapper objectMapper;
+
+    private final MdmsUtil mdmsUtil;
+
+    private final DemandUtil demandUtil;
+    public TreasuryEnrichment(PaymentConfiguration config, IdgenUtil idgenUtil, TreasuryMappingRepository repository, ObjectMapper objectMapper, MdmsUtil mdmsUtil, DemandUtil demandUtil) {
         this.config = config;
         this.idgenUtil = idgenUtil;
+        this.repository = repository;
+        this.objectMapper = objectMapper;
+        this.mdmsUtil = mdmsUtil;
+        this.demandUtil = demandUtil;
     }
 
     public ChallanDetails generateChallanDetails(ChallanData challanData, RequestInfo requestInfo) {
@@ -42,31 +57,50 @@ public class TreasuryEnrichment {
         log.info("Challan Amount: {}", challanAmount);
         log.info("eTreasury in test mode: {}", config.isTest());
 
-        int headSize = config.getHeadsList().size();
-        String noOfHeads = String.valueOf(headSize);
+
+        Map<String, Map<String, JSONArray>> mdmsData = mdmsUtil.fetchMdmsData(requestInfo, config.getEgovStateTenantId(), "payment", List.of("tsbAccountToHead"));
+        Map<String, JSONArray> tsbMasterData = mdmsData.get("payment");
+        JsonNode tsbAccountToHead = objectMapper.convertValue(tsbMasterData.get("tsbAccountToHead"), JsonNode.class);
+
+        String consumerCode = demandUtil.searchBill(challanData.getBillId(), requestInfo);
+        TreasuryMapping treasuryMapping = repository.getTreasuryMapping(consumerCode);
+        JsonNode headAmountMapping = objectMapper.convertValue(treasuryMapping.getHeadAmountMapping(), JsonNode.class);
         List<HeadDetails> headDetailsList = new ArrayList<>();
 
-        for (String head : config.getHeadsList()) {
-            headDetailsList.add(HeadDetails.builder()
-                    .amount(String.valueOf(Integer.parseInt(challanAmount) / headSize))
-                    .headId(head)
-                    .build());
-        }
-
-        List<String> accountTypeList = config.getAccountTypeList();
-
-        List<String> accountNumberList = config.getAccountNumberList();
-
-        if (!(accountTypeList.size() == accountNumberList.size())) {
-            throw new CustomException("CHECK_SIZE_NIGGA", "Check size of account type and account number");
+        for(JsonNode headAmount : headAmountMapping.get("breakUpList")) {
+            for(JsonNode head : headAmount.get("headIdList")) {
+                String amount = String.valueOf(head.get("amount").asDouble());
+                String headId = head.get("id").asText();
+                boolean found = false;
+                for (HeadDetails headDetails : headDetailsList) {
+                    if (headDetails.getHeadId().equalsIgnoreCase(headId)) {
+                        double updatedAmount = Double.parseDouble(String.valueOf(Double.parseDouble(headDetails.getAmount()) + Double.parseDouble(amount)));
+                        headDetails.setAmount(String.valueOf(updatedAmount));
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    headDetailsList.add(HeadDetails.builder()
+                            .amount(String.valueOf(Double.parseDouble(amount)))
+                            .headId(headId)
+                            .build());
+                }
+            }
         }
 
         List<TsbData> tsbData = new ArrayList<>();
-        for (int i = 0; i < accountNumberList.size(); i++){
-            tsbData.add(TsbData.builder().tsbAccNo(accountNumberList.get(i))
-                    .tsbAccType(accountTypeList.get(i))
-                    .tsbAmount(1.0)
-                    .tsbPurpose("Fee").build());
+        String tsbReceipt = config.getTsbReceipt();
+        for(JsonNode tsbAccount : tsbAccountToHead) {
+            if(tsbAccount.get("isTsbAccount").asBoolean()) {
+                tsbReceipt = "Y";
+            }
+            tsbData.add(TsbData.builder()
+                    .tsbAccNo(tsbAccount.get("tsbAccountNumber").asText())
+                    .tsbAccType(tsbAccount.get("tsbAccountType").asText())
+                    .tsbAmount(getTsbAmount(headDetailsList, tsbAccount.get("headId").asText()))
+                    .tsbPurpose("Fee")
+                    .build());
         }
 
 
@@ -80,14 +114,23 @@ public class TreasuryEnrichment {
                 .toDate(formattedDate)
                 .paymentMode("E")
                 .challanAmount(challanAmount)
-                .noOfHeads(noOfHeads)
+                .noOfHeads(String.valueOf(headDetailsList.size()))
                 .headsDet(headDetailsList)
                 .departmentId(departmentId)
                 .serviceDeptCode(config.getServiceDeptCode())
                 .officeCode(config.getOfficeCode())
                 .partyName(challanData.getPaidBy())
-                .tsbReceipts(config.getTsbReceipt())
+                .tsbReceipts(tsbReceipt)
                 .tsbData(tsbData)
                 .build();
+    }
+
+    private Double getTsbAmount(List<HeadDetails> headDetailsList, String headId) {
+        for (HeadDetails headDetails : headDetailsList) {
+            if (headDetails.getHeadId().equalsIgnoreCase(headId)) {
+                return Double.parseDouble(headDetails.getAmount());
+            }
+        }
+        return 1.0;
     }
 }

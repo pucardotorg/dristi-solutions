@@ -2,15 +2,18 @@ package pucar.service;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
-import org.egov.common.contract.models.Document;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import pucar.config.Configuration;
+import pucar.factory.OrderFactory;
+import pucar.factory.OrderServiceFactoryProvider;
 import pucar.util.*;
 import pucar.web.models.*;
+import pucar.web.models.adiary.BulkDiaryEntryRequest;
+import pucar.web.models.adiary.CaseDiaryEntry;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -28,20 +31,25 @@ public class BSSService {
     private final CipherUtil cipherUtil;
     private final OrderUtil orderUtil;
     private final Configuration configuration;
+    private final OrderServiceFactoryProvider factoryProvider;
+    private final ADiaryUtil aDiaryUtil;
 
     @Autowired
-    public BSSService(XmlRequestGenerator xmlRequestGenerator, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, OrderUtil orderUtil, Configuration configuration) {
+    public BSSService(XmlRequestGenerator xmlRequestGenerator, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, OrderUtil orderUtil, Configuration configuration, OrderServiceFactoryProvider factoryProvider, ADiaryUtil aDiaryUtil) {
         this.xmlRequestGenerator = xmlRequestGenerator;
         this.eSignUtil = eSignUtil;
         this.fileStoreUtil = fileStoreUtil;
         this.cipherUtil = cipherUtil;
         this.orderUtil = orderUtil;
         this.configuration = configuration;
+        this.factoryProvider = factoryProvider;
+        this.aDiaryUtil = aDiaryUtil;
     }
 
     public List<OrderToSign> createOrderToSignRequest(OrdersToSignRequest request) {
 
         // get location to sign here from esign
+        log.info("creating order to sign request, result= IN_PROGRESS, orderCriteria:{}", request.getCriteria().size());
 
         List<CoordinateCriteria> coordinateCriteria = new ArrayList<>();
 
@@ -62,7 +70,7 @@ public class BSSService {
         List<Coordinate> coordinateForSign = eSignUtil.getCoordinateForSign(coordinateRequest);
 
         if (coordinateForSign.isEmpty() || coordinateForSign.size() != request.getCriteria().size()) {
-            throw new CustomException(COORDINATES_ERROR,"error in co-ordinates");
+            throw new CustomException(COORDINATES_ERROR, "error in co-ordinates");
         }
 
 
@@ -72,7 +80,7 @@ public class BSSService {
             Resource resource = fileStoreUtil.fetchFileStoreObjectById(coordinate.getFileStoreId(), coordinate.getTenantId());
             try {
                 String base64Document = cipherUtil.encodePdfToBase64(resource);
-                String coord = (int )Math.floor(coordinate.getX()) + "," +(int) Math.floor(coordinate.getY());
+                String coord = (int) Math.floor(coordinate.getX()) + "," + (int) Math.floor(coordinate.getY());
                 String txnId = UUID.randomUUID().toString();
                 String pageNo = String.valueOf(coordinate.getPageNumber());
                 ZonedDateTime timestamp = ZonedDateTime.now(ZoneId.of(configuration.getZoneId()));
@@ -84,16 +92,18 @@ public class BSSService {
 
                 orderToSign.add(order);
             } catch (Exception e) {
-                throw new CustomException(ORDER_SIGN_ERROR,"some thing went wrong while signing");
+                throw new CustomException(ORDER_SIGN_ERROR, "some thing went wrong while signing");
             }
 
         }
+        log.info("creating order to sign request, result= SUCCESS, orderCriteria:{}", request.getCriteria().size());
         return orderToSign;
 
     }
 
 
     private String generateRequest(String base64Doc, String timeStamp, String txnId, String coordination, String pageNumber) {
+        log.info("generating request, result= IN_PROGRESS, timeStamp:{}, txnId:{}, coordination:{}, pageNumber:{}", timeStamp, txnId, coordination, pageNumber);
         Map<String, Object> requestData = new LinkedHashMap<>();
 
         requestData.put(COMMAND, PKI_NETWORK_SIGN);
@@ -123,7 +133,7 @@ public class BSSService {
         Map<String, Object> pdf = new LinkedHashMap<>();
         pdf.put(PAGE, pageNumber);
         pdf.put(CO_ORDINATES, coordination);
-        pdf.put(SIZE, "200,100");   // check on this
+        pdf.put(SIZE, "150,100");   // check on this
         requestData.put(PDF, pdf);
 
         // Data section  // enrich this section
@@ -131,6 +141,7 @@ public class BSSService {
 
         // Generate XML
         String xmlRequest = xmlRequestGenerator.createXML("request", requestData);
+        log.info("generating request, result= SUCCESS, timeStamp:{}, txnId:{}, coordination:{}, pageNumber:{}", timeStamp, txnId, coordination, pageNumber);
 
         return xmlRequest;
     }
@@ -138,12 +149,17 @@ public class BSSService {
     public List<Order> updateOrderWithSignDoc(@Valid UpdateSignedOrderRequest request) {
 
         List<Order> updatedOrder = new ArrayList<>();
+
+        List<CaseDiaryEntry> caseDiaryEntries = new ArrayList<>();
+        log.info("updating order with signed doc, result= IN_PROGRESS,signedOrders:{}", request.getSignedOrders().size());
+
         for (SignedOrder signedOrder : request.getSignedOrders()) {
             String orderNumber = signedOrder.getOrderNumber();
             String signedOrderData = signedOrder.getSignedOrderData();
             String errorMsg = signedOrder.getErrorMsg();
             Boolean isSigned = signedOrder.getSigned();
             String tenantId = signedOrder.getTenantId();
+            String orderType = null;
 
             if (isSigned) {
                 //update order with signed doc
@@ -158,9 +174,14 @@ public class BSSService {
                     OrderListResponse orders = orderUtil.getOrders(searchRequest);
 
                     if (orders.getList().isEmpty()) {
-                        throw new CustomException(EMPTY_ORDERS_ERROR,"empty orders found for the given criteria");
+                        throw new CustomException(EMPTY_ORDERS_ERROR, "empty orders found for the given criteria");
                     }
                     Order order = orders.getList().get(0);
+                    orderType = order.getOrderType();
+
+                    OrderFactory orderFactory = factoryProvider.getFactory(order.getOrderCategory());
+
+                    OrderProcessor orderProcessor = orderFactory.createProcessor();
 
                     String pdfName = COMPOSITE.equalsIgnoreCase(order.getOrderCategory()) ? order.getOrderTitle() + ".pdf" : order.getOrderType() + ".pdf";
                     MultipartFile multipartFile = cipherUtil.decodeBase64ToPdf(signedOrderData, pdfName);
@@ -168,33 +189,49 @@ public class BSSService {
 
                     // fetch order here
 
-                    Document document = Document.builder().build();
-                    document.setFileStore(fileStoreId);
-                    document.setDocumentType(SIGNED);
-                    document.setAdditionalDetails(Map.of(NAME, pdfName));
+                    order.getDocuments().stream()
+                            .filter(document -> document.getDocumentType().equals(UNSIGNED))
+                            .findFirst()
+                            .ifPresent((document) ->
+                            {
+                                document.setFileStore(fileStoreId);
+                                document.setDocumentType(SIGNED);
+                                document.setAdditionalDetails(Map.of(NAME, pdfName));
+                            });
 
                     WorkflowObject workflowObject = new WorkflowObject();
                     workflowObject.setAction(E_SIGN);
 
                     order.setWorkflow(workflowObject);
-                    order.getDocuments().add(document);
-
 
                     // update order here
                     OrderRequest orderUpdateRequest = OrderRequest.builder()
                             .requestInfo(request.getRequestInfo())
                             .order(order).build();
 
+                    orderProcessor.preProcessOrder(orderUpdateRequest);
+
                     OrderResponse response = orderUtil.updateOrder(orderUpdateRequest);
+                    List<CaseDiaryEntry> diaryEntries = orderProcessor.processCommonItems(orderUpdateRequest);
+                    caseDiaryEntries.addAll(diaryEntries);
+                    orderProcessor.postProcessOrder(orderUpdateRequest);
                     updatedOrder.add(response.getOrder());
 
+                } catch (CustomException e) {
+                    throw new CustomException(e.getCode(), e.getMessage());
                 } catch (Exception e) {
-                    log.error(UPDATE_ORDER_SIGN_ERROR_MESSAGE);
-                    throw new CustomException(UPDATE_ORDER_SIGN_ERROR,UPDATE_ORDER_SIGN_ERROR_MESSAGE);
+                    log.error("Error while updating order,orderNumber:{},orderType:{}", orderNumber, orderType);
+                    log.error("Error : ", e);
                 }
             }
 
         }
+        log.info("updating order with signed doc, result= SUCCESS,signedOrders:{}", request.getSignedOrders().size());
+        log.info("creating case diary entry for order, result= IN_PROGRESS,caseDiaryEntries:{}", caseDiaryEntries.size());
+        // here create bulk diary entry
+        aDiaryUtil.createBulkADiaryEntry(BulkDiaryEntryRequest.builder()
+                .requestInfo(request.getRequestInfo())
+                .caseDiaryList(caseDiaryEntries).build());
 
         return updatedOrder;
 

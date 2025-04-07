@@ -2939,6 +2939,140 @@ export const configsCaseWithdrawal = [
   },
 ];
 
+export const configsCaseWithdrawalAccept = [
+  {
+    body: [
+      {
+        label: "REF_APPLICATION_ID",
+        isMandatory: false,
+        key: "refApplicationId",
+        disable: true,
+        type: "text",
+        populators: { name: "refApplicationId" },
+      },
+      {
+        label: "APPLICATION_STATUS",
+        isMandatory: false,
+        key: "applicationStatus",
+        schemaKeyPath: "orderDetails.applicationStatus",
+        disable: true,
+        type: "text",
+        populators: { name: "applicationStatus" },
+      },
+      {
+        label: "APPLICATION_ON_BEHALF_OF",
+        isMandatory: false,
+        key: "applicationOnBehalfOf",
+        schemaKeyPath: "orderDetails.appFilledOnBehalfOf",
+        disable: true,
+        type: "text",
+        populators: { name: "applicationOnBehalfOf" },
+      },
+      {
+        label: "PARTY_TYPE",
+        isMandatory: false,
+        key: "partyType",
+        schemaKeyPath: "orderDetails.partyType",
+        disable: true,
+        type: "text",
+        populators: { name: "partyType" },
+      },
+      {
+        label: "REASON_FOR_WITHDRAWAL",
+        isMandatory: false,
+        key: "reasonForWithdrawal",
+        disable: true,
+        type: "text",
+        populators: { name: "reasonForWithdrawal" },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "comments",
+        isMandatory: false,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "COMMENTS",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              isOptional: true,
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
+
+export const configsCaseWithdrawalReject = [
+  {
+    body: [
+      {
+        label: "REF_APPLICATION_ID",
+        isMandatory: false,
+        key: "refApplicationId",
+        disable: true,
+        type: "text",
+        populators: { name: "refApplicationId" },
+      },
+      {
+        label: "APPLICATION_STATUS",
+        isMandatory: false,
+        key: "applicationStatus",
+        schemaKeyPath: "orderDetails.applicationStatus",
+        disable: true,
+        type: "text",
+        populators: { name: "applicationStatus" },
+      },
+      {
+        label: "APPLICATION_ON_BEHALF_OF",
+        isMandatory: false,
+        key: "applicationOnBehalfOf",
+        schemaKeyPath: "orderDetails.appFilledOnBehalfOf",
+        disable: true,
+        type: "text",
+        populators: { name: "applicationOnBehalfOf" },
+      },
+      {
+        label: "PARTY_TYPE",
+        isMandatory: false,
+        key: "partyType",
+        schemaKeyPath: "orderDetails.partyType",
+        disable: true,
+        type: "text",
+        populators: { name: "partyType" },
+      },
+      {
+        label: "REASON_FOR_WITHDRAWAL",
+        isMandatory: false,
+        key: "reasonForWithdrawal",
+        disable: true,
+        type: "text",
+        populators: { name: "reasonForWithdrawal" },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "comments",
+        isMandatory: false,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "COMMENTS",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              isOptional: true,
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
+
 export const configsOthers = [
   {
     body: [
@@ -3286,10 +3420,12 @@ export const configsCreateOrderWarrant = [
         type: "dropdown",
         label: "WARRANT_FOR_PARTY",
         schemaKeyPath: "orderDetails.respondentName",
-        disable: true,
         populators: {
           name: "warrantFor",
+          optionsKey: "name",
           error: "CORE_REQUIRED_FIELD_ERROR",
+          required: true,
+          isMandatory: true,
           styles: { maxWidth: "100%" },
         },
       },

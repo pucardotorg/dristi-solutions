@@ -231,6 +231,7 @@ const ReviewLitigantDetails = ({ path }) => {
             dateOfApplication: location?.state?.dateOfApplication,
             uniqueId: location?.state?.uniqueId,
             applicantPartyUuid: profileRequest?.editorDetails?.uuid,
+            applicantType: profileRequest?.editorDetails?.isAdvocate ? "ADVOCATE" : "COMPLAINANT",
             pendingTaskRefId: referenceId,
           },
         },
