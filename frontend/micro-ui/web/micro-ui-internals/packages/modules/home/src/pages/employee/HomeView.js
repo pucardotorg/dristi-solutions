@@ -397,7 +397,6 @@ const HomeView = () => {
                     {t("OPEN_REPORTS")}
                   </Link>
                   <Link to={`/${window.contextPath}/employee/home/dashboard/adiary`} style={linkStyle}>
-                  <Link to={`/${window.contextPath}/employee/home/dashboard/adiary`} style={linkStyle}>
                     {t("OPEN_A_DIARY")}
                   </Link>
                 </div>

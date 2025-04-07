@@ -1,13 +1,9 @@
-import { CloseSvg, Loader, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Toast } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { useTranslation } from "react-i18next";
 import TasksComponent from "../../components/TaskComponent";
-import { BreadCrumb } from "@egovernments/digit-ui-react-components";
-import { MailBoxIcon, CaseDynamicsIcon, ThreeUserIcon, DownloadIcon, ExpandIcon, CollapseIcon, FilterIcon, DocumentIcon } from "../../../homeIcon";
-import CustomDateRangePicker from "../../components/CustomDateRangePicker";
 import { BreadCrumb } from "@egovernments/digit-ui-react-components";
 import { MailBoxIcon, CaseDynamicsIcon, ThreeUserIcon, DownloadIcon, ExpandIcon, CollapseIcon, FilterIcon, DocumentIcon } from "../../../homeIcon";
 import CustomDateRangePicker from "../../components/CustomDateRangePicker";
@@ -25,27 +21,13 @@ const DashboardPage = () => {
   const history = useHistory();
   const [stepper, setStepper] = useState(Number(select));
   const [selectedRange, setSelectedRange] = useState({ startDate: getCurrentDate(), endDate: getCurrentDate() });
-  const history = useHistory();
-  const [stepper, setStepper] = useState(Number(select));
-  const [selectedRange, setSelectedRange] = useState({ startDate: getCurrentDate(), endDate: getCurrentDate() });
   const [downloadingIndices, setDownloadingIndices] = useState([]);
   const [downloadTimers, setDownloadTimers] = useState({});
   const [navbarCollapsed, setNavbarCollapsed] = useState(false);
-  const [error, setError] = useState(null);
   const userInfo = Digit?.UserService?.getUser()?.info;
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const userRoles = Digit?.UserService?.getUser?.()?.info?.roles || [];
   const [taskType, setTaskType] = useState({});
-  const [jobId, setJobID] = useState("");
-  const [headingTxt, setHeadingTxt] = useState("");
-  const [showPicker, setShowPicker] = useState(false);
-  const [dateRange, setDateRange] = useState([
-    {
-      startDate: new Date(),
-      endDate: new Date(),
-      key: "selection",
-    },
-  ]);
   const [jobId, setJobID] = useState("");
   const [headingTxt, setHeadingTxt] = useState("");
   const [showPicker, setShowPicker] = useState(false);
@@ -65,7 +47,7 @@ const DashboardPage = () => {
   };
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const autoLogin = useCallback(() => {
-    if (stepper !== 1) return;
+    if (isLoggedIn || stepper !== 1) return;
 
     const usernameField = document.getElementsByClassName("euiFieldText")[0];
     const passwordField = document.getElementsByClassName("euiFieldPassword")[0];
@@ -94,7 +76,6 @@ const DashboardPage = () => {
   }, [select]);
 
   const handleSubmit = () => {
-    setError(null);
     setSelectedRange({
       startDate: new Date(dateRange[0].startDate).toISOString().split("T")[0],
       endDate: new Date(dateRange[0].endDate).toISOString().split("T")[0],
@@ -105,7 +86,7 @@ const DashboardPage = () => {
     setNavbarCollapsed(!navbarCollapsed);
   };
 
-  const baseUrl = "https://dristi-kerala-dev.pucar.org" || window.location.origin;
+  const baseUrl = window.location.origin;
   const reportOptions = [
     // {
     //   name: "A Diary Register",
@@ -219,12 +200,11 @@ const DashboardPage = () => {
         a.click();
         window.URL.revokeObjectURL(url);
       } else {
-        showToast("error", t("Report path not found in the response"), 50000);
+        showToast("error", t("ERR_REPORT_PATH"), 50000);
         console.error("Report path not found in the response");
-        setError();
       }
     } catch (error) {
-      showToast("error", t("Error generating or downloading report"), 50000);
+      showToast("error", t("ERR_REPORT_DOWNLOAD"), 50000);
       console.error("Error generating or downloading report:", error);
     } finally {
       clearInterval(timer);
@@ -267,7 +247,7 @@ const DashboardPage = () => {
       case "HEARINGS_DS":
         return <ThreeUserIcon className="icon" stroke={stroke} />;
       default:
-        return null;
+        return <MailBoxIcon className="icon" stroke={stroke} />;
     }
   };
 
