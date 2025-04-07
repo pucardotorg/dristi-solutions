@@ -241,4 +241,11 @@ public class Configuration {
 
     @Value("${egov.individual.search.path}")
     private String individualSearchEndpoint;
+
+    //Summon Service
+    @Value("${dristi.summon.host}")
+    private String summonHost;
+
+    @Value("${dristi.summon.send.summon.path}")
+    private String summonSendSummonPath;
 }
