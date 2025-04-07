@@ -3560,7 +3560,7 @@ public class CaseService {
             LinkedHashMap advocate = null;
 
             if (advocateMapping.isPresent()) {
-                advocate = ((LinkedHashMap) advocateMapping.get().getAdditionalDetails());
+                advocate = objectMapper.convertValue(advocateMapping.get().getAdditionalDetails(), LinkedHashMap.class);
             }
 
             String advocateName = advocate != null ? advocate.get(ADVOCATE_NAME).toString() : "";
