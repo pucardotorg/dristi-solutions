@@ -1,0 +1,98 @@
+[
+  // this can be done through work bench ui
+  {
+    "tenantId": "kl",
+    "moduleName": "ACCESSCONTROL-ACTIONS-TEST",
+    "masterName": "actions-test",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        uniqueIdentifier: 2731,
+        "data": {
+          "id": 2731,
+          "url": "/case/v1/joincase/_joincase",
+          "code": "2731",
+          "name": "join case",
+          "displayName": "join case",
+          "serviceCode": "case"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        uniqueIdentifier: 2730,
+        "data": {
+          "id": 2730,
+          "url": "/case/v2/joincase/_verifycode",
+          "code": "2730",
+          "name": "join case verify code v2",
+          "displayName": "join case verify code v2",
+          "serviceCode": "case"
+        },
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "ACCESSCONTROL-ROLEACTIONS",
+    "masterName": "roleactions",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "rolecode": "CASE_CREATOR",
+          "actionid": 2731,
+          "actioncode": "2731",
+          "tenantId": "kl"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "rolecode": "CASE_CREATOR",
+          "actionid": 2730,
+          "actioncode": "2730",
+          "tenantId": "kl"
+        },
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "ACCESSCONTROL-ROLEACTIONS",
+    "masterName": "roleactions",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "common-masters.PendingTaskType",
+        "uniqueIdentifier": "22",
+        "data": {
+          "id": "22",
+          "actor": "Judge/Advocate/Litigant",
+          "state": "PENDING_APPROVAL",
+          "isgeneric": false,
+          "screenType": "home",
+          "pendingTask": "Review Advocate Replace Request",
+          "closerAction": [
+            "APPROVE",
+            "REJECT"
+          ],
+          "triggerAction": [
+            "CREATE"
+          ],
+          "workflowModule": "task-join-case"
+        },
+        "isActive": true
+      }
+    ]
+  }
+]

@@ -70,8 +70,8 @@ public class PaymentUpdateService {
             String tenantId = paymentRequest.getPayment().getTenantId();
 
             for (PaymentDetail paymentDetail : paymentDetails) {
-                if (paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskSummonBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskNoticeBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskWarrantBusinessServiceName())) {
-                    updateWorkflowForCasePayment(requestInfo, tenantId, paymentDetail);
+                if (paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskPaymentBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskSummonBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskNoticeBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskWarrantBusinessServiceName())) {
+                    updateWorkflowForTaskPayment(requestInfo, tenantId, paymentDetail);
                 }
             }
         } catch (Exception e) {
@@ -80,7 +80,7 @@ public class PaymentUpdateService {
 
     }
 
-    private void updateWorkflowForCasePayment(RequestInfo requestInfo, String tenantId, PaymentDetail paymentDetail) {
+    private void updateWorkflowForTaskPayment(RequestInfo requestInfo, String tenantId, PaymentDetail paymentDetail) {
 
         try {
 
@@ -189,17 +189,22 @@ public class PaymentUpdateService {
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
                 }
-                case JOIN_CASE_TASK -> {
-                    WorkflowObject workflow = new WorkflowObject();
-                    workflow.setAction("CLOSE");
+                case JOIN_CASE_PAYMENT -> {
+                    WorkflowObject  workflow = new WorkflowObject();
+                    workflow.setAction(MAKE_PAYMENT);
                     task.setWorkflow(workflow);
 
                     String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, task.getTaskNumber(),
-                            config.getTaskBusinessServiceName(), workflow, config.getTaskBusinessName());
+                            config.getTaskPaymentBusinessServiceName(), workflow, config.getTaskPaymentBusinessName());
                     task.setStatus(status);
 
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
-                    producer.push(config.getTaskJoinCaseUpdateTopic(), taskRequest);
+                    producer.push(config.getTaskUpdateTopic(), taskRequest);
+
+                    // update remaining pending task of payment's of the advocate
+
+                    updatePaymentStatusOfRemainingPendingPaymentTasks(requestInfo, tenantId);
+
                 }
             }
         }
@@ -250,6 +255,39 @@ public class PaymentUpdateService {
                 )
                 .toList();
 
+
+    }
+
+    private void updatePaymentStatusOfRemainingPendingPaymentTasks(RequestInfo requestInfo, String tenantId) {
+
+        String advocateUuid = requestInfo.getUserInfo().getUuid();
+
+        TaskCriteria criteria = TaskCriteria.builder()
+                .userUuid(advocateUuid)
+                .status(PENDING_PAYMENT)
+                .taskType(JOIN_CASE_PAYMENT)
+                .build();
+
+        List<Task> tasks = repository.getTasks(criteria, null);
+
+        if (CollectionUtils.isEmpty(tasks)) {
+            log.info("No other pending payment task's found for advocate :: {}", advocateUuid);
+            return;
+        }
+
+        tasks.forEach(task -> {
+
+                WorkflowObject workflow = new WorkflowObject();
+                workflow.setAction(REJECT);
+                task.setWorkflow(workflow);
+                String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, task.getTaskNumber(),
+                        config.getTaskPaymentBusinessServiceName(), workflow, config.getTaskPaymentBusinessName());
+                log.info("Rejecting remaining pending payment task for advocate by system :: {}", advocateUuid);
+                task.setStatus(status);
+
+                TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
+                producer.push(config.getTaskUpdateTopic(), taskRequest);
+        });
 
     }
 }

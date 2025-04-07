@@ -492,8 +492,10 @@ export const UICustomizations = {
       };
     },
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
-      const caseDetails = handleTaskDetails(row?.taskDetails);
-      const delieveryDate = formatNoticeDeliveryDate(caseDetails?.deliveryChannels?.statusChangeDate || row?.createdDate);
+      const taskDetails = handleTaskDetails(row?.taskDetails);
+      const delieveryDate = formatNoticeDeliveryDate(taskDetails?.deliveryChannels?.statusChangeDate || row?.createdDate);
+      const hearingDate = formatNoticeDeliveryDate(taskDetails?.caseDetails?.hearingDate);
+
       switch (key) {
         case "CASE_NAME_ID":
           return `${row?.caseName}, ${value}`;
@@ -504,9 +506,11 @@ export const UICustomizations = {
         case "ORDER_TYPE":
           return t(value);
         case "DELIEVERY_CHANNEL":
-          return caseDetails?.deliveryChannels?.channelName || "N/A";
+          return taskDetails?.deliveryChannels?.channelName || "N/A";
         case "DELIEVRY_DATE":
           return delieveryDate || "-";
+        case "HEARING_DATE":
+          return hearingDate || "-";
         default:
           return t("ES_COMMON_NA");
       }
@@ -524,10 +528,10 @@ export const UICustomizations = {
         entityType,
         tenantId,
         ...(caseTitle && { caseTitle }),
-        ...(Object.keys(status || {})?.length > 0 && { status: status?.code ? [status?.code] : status }),
+        status: status?.type,
         ...(startOfTheDay && {
-          startOfTheDay: new Date(startOfTheDay).getTime(),
-          endOfTheDay: new Date(new Date(startOfTheDay).setDate(new Date(startOfTheDay).getDate() + 1)).getTime(),
+          startOfTheDay: new Date(startOfTheDay + "T00:00:00").getTime(),
+          endOfTheDay: new Date(startOfTheDay + "T23:59:59.999").getTime(),
         }),
       };
 
@@ -546,8 +550,6 @@ export const UICustomizations = {
       };
     },
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
-      const firstData = searchResult?.[0];
-      const firstIndex = firstData?.businessObject?.orderNotification?.id === row?.businessObject?.orderNotification?.id;
       switch (key) {
         case "TITLE":
           return <OrderName rowData={row} colData={column} value={value} />;
@@ -561,20 +563,17 @@ export const UICustomizations = {
           const formattedDate = `${day}-${month}-${year}`;
           return <span>{value && value !== "0" ? formattedDate : ""}</span>;
         case "SELECT":
-          return <BulkCheckBox rowData={row} colData={column} firstIndex={firstIndex} searchResult={searchResult} />;
+          return <BulkCheckBox rowData={row} colData={column} />;
         case "CS_ACTIONS":
           return <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="bulkESignOrderConfig" />;
         default:
           break;
       }
     },
-    dropDownItems: (t, row, column) => {
+    dropDownItems: (row, column, t) => {
       return [
         {
-          label:
-            row?.businessObject?.orderNotification?.status === OrderWorkflowState.DRAFT_IN_PROGRESS
-              ? t("DELETE_DRAFT")
-              : t("DELETE_PENDING_BULK_E_SIGN"),
+          label: t("DELETE_BULK_ORDER"),
           id: "delete_order",
           hide: false,
           disabled: false,

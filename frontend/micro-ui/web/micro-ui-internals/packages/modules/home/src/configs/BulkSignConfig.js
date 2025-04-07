@@ -1,7 +1,7 @@
 import { OrderWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/orderWorkflow";
 
 const defaultSearchValues = {
-  status: [OrderWorkflowState.DRAFT_IN_PROGRESS, OrderWorkflowState.PENDING_BULK_E_SIGN],
+  status: { type: OrderWorkflowState.PENDING_BULK_E_SIGN },
   caseTitle: "",
   startOfTheDay: "",
   endOfTheDay: "",

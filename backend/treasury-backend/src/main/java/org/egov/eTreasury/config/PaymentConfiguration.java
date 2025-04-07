@@ -24,6 +24,14 @@ public class PaymentConfiguration {
     @Value("${egov-state-level-tenant-id}")
     private String egovStateTenantId;
 
+    //Mdms
+
+    @Value("${egov.mdms.host}")
+    private String mdmsHost;
+
+    @Value("${egov.mdms.search.endpoint}")
+    private String mdmsSearchEndpoint;
+
     //ETreasury
     @Value("${treasury-public-key}")
     private String publicKey;
@@ -146,6 +154,26 @@ public class PaymentConfiguration {
     @Value("${treasury.account.type}")
     private String accountType;
     private List<String> accountTypeList;
+
+    // Case Config
+    @Value("${dristi.case.host}")
+    private String caseHost;
+
+    @Value("${dristi.case.search.endpoint}")
+    private String caseSearchEndPoint;
+
+    //Billing service
+    @Value("${egov.demand.host}")
+    private String demandHost;
+
+    @Value("${egov.demand.create.endpoint}")
+    private String demandCreateEndPoint;
+
+    @Value("${egov.billing.search.endpoint}")
+    private String billingSearchEndPoint;
+
+    @Value("${treasury.mapping.save.topic}")
+    private String treasuryMappingSaveTopic;
 
     @PostConstruct
     public void init() {

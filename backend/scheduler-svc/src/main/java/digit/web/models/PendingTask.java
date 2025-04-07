@@ -53,4 +53,7 @@ public class PendingTask {
 
     @JsonProperty("tenantId")
     private String tenantId = null;
+
+    @JsonProperty("screenType")
+    private String screenType = null;
 }

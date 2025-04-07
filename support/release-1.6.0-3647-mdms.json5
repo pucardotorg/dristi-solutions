@@ -1,0 +1,162 @@
+[
+  {
+    "tenantId": "kl",
+    "masterName": "case",
+    "moduleName": "e-filling",
+    "mdmsPayload": [
+      {
+        "id": "0c7c115d-a0bf-48eb-abcf-028bf567ca3c",
+        "tenantId": "kl",
+        "code": "case.e-filling",
+        "description": null,
+        "definition": {
+          "type": "object",
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "required": [
+            "id",
+            "applicationFee",
+            // need to add this field in the schema
+            "legalBasicFund",
+            "courtFee",
+            "vakalathnamaFee",
+            "advocateClerkWelfareFund",
+            "noOfAdvocateFees"
+          ],
+          "x-unique": [
+            "id"
+          ],
+          "properties": {
+            "id": {
+              "type": "integer"
+            },
+            "courtFee": {
+              "type": "number"
+            },
+            "petitionFee": {
+              "type": "object"
+            },
+            "applicationFee": {
+              "type": "integer"
+            },
+            "legalBasicFund": {
+              "type": "number"
+            },
+            "vakalathnamaFee": {
+              "type": "integer"
+            },
+            "noOfAdvocateFees": {
+              "type": "object"
+            },
+            "defaultPetitionFee": {
+              "type": "integer"
+            },
+            "advocateWelfareFund": {
+              "type": "integer"
+            },
+            "delayCondonationFee": {
+              "type": "integer"
+            },
+            "delayCondonationPeriod": {
+              "type": "integer"
+            },
+            "advocateClerkWelfareFund": {
+              "type": "integer"
+            }
+          },
+          "additionalProperties": false
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "1009acaa-6a6e-46f1-a8f4-70d3c70eb188",
+          "lastModifiedBy": "1009acaa-6a6e-46f1-a8f4-70d3c70eb188",
+          "createdTime": 1743688193645,
+          "lastModifiedTime": 1743688193645
+        }
+      }
+    ]
+  },
+  {
+    "tenantId": "kl",
+    "masterName": "case",
+    "moduleName": "e-filling",
+    "mdmsPayload": [
+      {
+        "id": "0a26c451-fe29-4bb8-af62-f4fd8de7cacb",
+        "tenantId": "kl",
+        "schemaCode": "case.e-filling",
+        "uniqueIdentifier": "1",
+        "data": {
+          "id": 1,
+          "courtFee": 2.5,
+          "petitionFee": {
+            "0-50000": {
+              "fee": 250,
+              "max": 50000,
+              "min": 0
+            },
+            "50000-200000": {
+              "fee": 500,
+              "max": 200000,
+              "min": 50000
+            },
+            "200000-500000": {
+              "fee": 750,
+              "max": 500000,
+              "min": 200000
+            },
+            "500000-1000000": {
+              "fee": 1000,
+              "max": 1000000,
+              "min": 500000
+            },
+            "1000000-2000000": {
+              "fee": 2000,
+              "max": 2000000,
+              "min": 1000000
+            },
+            "2000000-5000000": {
+              "fee": 5000,
+              "max": 5000000,
+              "min": 2000000
+            },
+            "5000000-50000000000": {
+              "fee": 10000,
+              "max": 50000000000,
+              "min": 5000000
+            }
+          },
+          "applicationFee": 2,
+          "legalBasicFund": 2.5,
+          "vakalathnamaFee": 6,
+          "noOfAdvocateFees": {
+            "1": {
+              "max": 1,
+              "min": 1,
+              "advocateFee": 25
+            },
+            "2": {
+              "max": 2,
+              "min": 2,
+              "advocateFee": 50
+            },
+            "3-5000000000000": {
+              "max": 500000000,
+              "min": 3,
+              "advocateFee": 75
+            }
+          },
+          "delayCondonationFee": 2,
+          "delayCondonationPeriod": 2629800000,
+          "advocateClerkWelfareFund": 12
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "createdTime": 1726562380558,
+          "lastModifiedTime": 1743688200537
+        }
+      }
+    ]
+  }
+]

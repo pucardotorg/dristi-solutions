@@ -183,7 +183,8 @@ async function mandatoryAsyncSubmissionsResponses(
           evidenceSubmissionDeadline,
           ifResponse,
           responseSubmissionDeadline,
-          additionalComments: order?.comments || "",
+          additionalComments:
+            order?.additionalDetails?.formdata?.additionalComments?.text || "",
           Date: formattedToday,
           day: day,
           Month: month,

@@ -90,11 +90,12 @@ public class ServiceConstants {
     public static final String UPLOAD_TASK_DOCUMENT_ERROR = "UPLOAD_TASK_DOCUMENT_ERROR";
     public static final String PENDING_TASK_CREATOR = "PENDING_TASK_CREATOR";
     public static final String PENDING_TASK = "PENDING_TASK";
-    public static final String JOIN_CASE_TASK = "JOIN_CASE_TASK";
 
     public static final String JOIN_CASE = "JOIN_CASE";
+    public static final String JOIN_CASE_PAYMENT = "JOIN_CASE_PAYMENT";
     public static final String APPROVED = "APPROVED";
     public static final String REJECTED = "REJECTED";
+    public static final String PENDING_APPROVAL = "PENDING_APPROVAL";
 
     public static final String REJECT = "REJECT";
 

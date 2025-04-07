@@ -12,12 +12,13 @@ import useESign from "./orders/useESign";
 import { useGetPendingTask } from "./orders/useGetPendingTask";
 import useUpdateEpost from "./Epost/UpdateEpost";
 import useDocumentUpload from "./orders/useDocumentUpload";
+import useSearchOrdersNotificationService from "./orders/useSearchOrdersNotificationService";
 
 const orders = {
   useIndividualView,
   useSearchOrdersService,
   useESign,
-
+  useSearchOrdersNotificationService,
   useGetPendingTask,
   useDocumentUpload,
 };

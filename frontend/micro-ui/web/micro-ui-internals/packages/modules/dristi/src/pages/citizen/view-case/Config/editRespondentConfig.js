@@ -497,32 +497,15 @@ const editRespondentFormconfig = [
   {
     body: [
       {
-        key: "inquiryAffidavitFileUpload",
+        key: "reasonDetailsSeparator",
         type: "component",
-        label: "AFFIDAVIT_UNDER_SECTION_225_BNSS",
-        component: "SelectCustomDragDrop",
+        sublabel: "REQUEST_DETAILS",
+        component: "OrSeparator",
         populators: {
-          inputs: [
-            {
-              name: "document",
-              type: "DragDropComponent",
-              fileTypes: ["JPG", "JPEG", "PDF", "PNG"],
-              isOptional: "",
-              maxFileSize: 50,
-              documentHeader: "AFFIDAVIT_UNDER_SECTION_225_BNSS",
-              isMultipleUpload: true,
-              uploadGuidelines: "UPLOAD_DOC_50",
-              infoTooltipMessage: "AFFIDAVIT_UNDER_SECTION_225_BNSS_TOOLTIP_MSG",
-              maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
-            },
-          ],
+          inputs: [],
         },
-        withoutLabel: true,
       },
     ],
-    dependentKey: {
-      respondentType: ["commonFields"],
-    },
   },
   {
     body: [
@@ -589,5 +572,5 @@ export const editRespondentConfig = {
   isOptional: false,
   addFormText: "ADD_RESPONDENT",
   formItemName: "CS_RESPONDENT",
-  className: "respondent",
+  className: "respondent-edit",
 };

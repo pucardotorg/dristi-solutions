@@ -13,6 +13,7 @@ export const Urls = {
     getPendingTaskFields: "/inbox/v2/_getFields",
     orderPreviewPdf: "/egov-pdf/order",
     searchTasks: "/task/v1/search",
+    orderNotificationSearch: "/inbox/v2/index/_search",
   },
   FileFetchById: "/filestore/v1/files/id",
   Epost: {
@@ -24,6 +25,7 @@ export const Urls = {
   Task: {
     uploadDoc: "/task/v1/uploadDocument",
     updateTask: "/task/v1/update",
+    search: "/task/v1/search",
   },
   SBIPayment: {
     payment: "/sbi-backend/payment/v1/_processTransaction",

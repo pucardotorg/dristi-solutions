@@ -18,6 +18,7 @@ const SelectParty = ({
   isLitigantJoined,
   isAdvocateJoined,
   searchLitigantInRepresentives,
+  advocateId,
 }) => {
   const { t } = useTranslation();
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
@@ -63,9 +64,9 @@ const SelectParty = ({
   const advocateToReplaceList = useMemo(() => {
     if (selectPartyData?.userType?.value === "Litigant") return [];
     if (selectPartyData?.userType?.value === "Advocate" && (!party?.length || party?.length === 0)) return [];
-    const partyWithAdvocate = party
-      ?.flatMap((party) => {
-        const { representatives } = searchLitigantInRepresentives(caseDetails?.representatives, party?.individualId);
+    const partyWithAdvocate = party?.flatMap((party) => {
+      const { representatives } = searchLitigantInRepresentives(caseDetails?.representatives, party?.individualId);
+      if (representatives?.length > 0) {
         return representatives?.map((representative) => ({
           ...party,
           representative,
@@ -73,10 +74,22 @@ const SelectParty = ({
           advocateId: representative?.advocateId,
           label: `${representative?.additionalDetails?.advocateName} (${party?.fullName})`,
         }));
-      })
-      ?.filter((party) => party?.advocateId);
-    return partyWithAdvocate;
-  }, [selectPartyData?.userType, party, caseDetails, searchLitigantInRepresentives]);
+      } else {
+        return [
+          {
+            ...party,
+            representative: null,
+            litigantIndividualId: party?.individualId,
+            advocateId: null,
+            label: `${party?.fullName} (${t("PARTY_IN_PERSON_TEXT")})`,
+          },
+        ];
+      }
+    });
+    return partyWithAdvocate?.filter((party) =>
+      selectPartyData?.partyInvolve?.value === "RESPONDENTS" ? (party?.isPip && !party?.advocateId) || party?.advocateId : true
+    );
+  }, [selectPartyData?.userType, party, caseDetails, searchLitigantInRepresentives, t, selectPartyData?.partyInvolve?.value]);
 
   const caseInfo = useMemo(() => {
     if (caseDetails?.caseCategory) {
@@ -176,6 +189,9 @@ const SelectParty = ({
               partyInvolve: value,
               isReplaceAdvocate: {},
               affidavit: {},
+              advocateToReplaceList: [],
+              approver: { label: "", value: "" },
+              reasonForReplacement: "",
             }));
             setPartyInPerson({});
             setParty(selectPartyData?.userType?.value === "Litigant" ? {} : []);
@@ -199,6 +215,9 @@ const SelectParty = ({
                 ...selectPartyData,
                 isReplaceAdvocate: value,
                 affidavit: {},
+                advocateToReplaceList: [],
+                approver: { label: "", value: "" },
+                reasonForReplacement: "",
               }));
               setParty([]);
             }}
@@ -228,6 +247,13 @@ const SelectParty = ({
               select={(e) => {
                 setParty(e);
                 setPartyInPerson({});
+                setSelectPartyData((selectPartyData) => ({
+                  ...selectPartyData,
+                  advocateToReplaceList: [],
+                  approver: { label: "", value: "" },
+                  reasonForReplacement: "",
+                  affidavit: {},
+                }));
               }}
               freeze={true}
               topbarOptionsClassName={"top-bar-option"}
@@ -249,13 +275,20 @@ const SelectParty = ({
                     ...party,
                     isDisabled:
                       selectPartyData?.isReplaceAdvocate?.value === "YES"
-                        ? party?.isAdvocateRepresenting && party?.advocateReprresentingLength === 1
+                        ? party?.isAdvocateRepresenting && party?.advocateRepresentingLength === 1
                         : party?.isAdvocateRepresenting,
                   }))}
                 selected={party}
                 optionsKey={"fullName"}
                 onSelect={(value) => {
                   setParty(value?.map((val) => val[1]));
+                  setSelectPartyData((selectPartyData) => ({
+                    ...selectPartyData,
+                    advocateToReplaceList: [],
+                    approver: { label: "", value: "" },
+                    reasonForReplacement: "",
+                    affidavit: {},
+                  }));
                 }}
                 customLabel={customLabel}
                 config={{
@@ -310,13 +343,19 @@ const SelectParty = ({
                 <LabelFieldPair className="case-label-field-pair">
                   <CardLabel className="case-input-label">{`${t("WHICH_ADVOCATES_ARE_YOU_REPLACING")}`}</CardLabel>
                   <MultiSelectDropdown
-                    options={advocateToReplaceList}
+                    options={advocateToReplaceList?.map((advocate) => ({
+                      ...advocate,
+                      isDisabled: advocate?.advocateId === advocateId,
+                    }))}
                     selected={selectPartyData?.advocateToReplaceList}
                     optionsKey={"label"}
                     onSelect={(value) => {
                       setSelectPartyData((selectPartyData) => ({
                         ...selectPartyData,
                         advocateToReplaceList: value?.map((val) => val[1]),
+                        reasonForReplacement: "",
+                        approver: { label: "", value: "" },
+                        affidavit: {},
                       }));
                     }}
                     customLabel={customLabelAdvocate}

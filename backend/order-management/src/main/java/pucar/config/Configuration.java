@@ -16,47 +16,144 @@ import org.springframework.stereotype.Component;
 public class Configuration {
 
     // Filestore Config
-    @Value("${pucar.filestore.host}")
+    @Value("${dristi.filestore.host}")
     private String fileStoreHost;
 
-    @Value("${pucar.file.store.save.endpoint}")
+    @Value("${dristi.filestore.save.endpoint}")
     private String fileStoreSaveEndPoint;
 
-    @Value("${pucar.filestore.path}")
-    private String fileStorePath;
 
-    @Value("${pucar.filestore.search.endpoint}")
+    @Value("${dristi.filestore.search.endpoint}")
     private String fileStoreSearchEndpoint;
 
-    @Value("${pucar.filestore.delete.endpoint}")
+    @Value("${dristi.filestore.delete.endpoint}")
     private String fileStoreDeleteEndPoint;
 
     // Order Config
-    @Value("${pucar.order.host}")
+    @Value("${dristi.order.host}")
     private String orderHost;
 
-    @Value("${pucar.order.exists.path}")
-    private String orderExistsPath;
+    @Value("${dristi.order.exists.endpoint}")
+    private String orderExistsEndPoint;
 
-    @Value("${pucar.order.update.path}")
-    private String orderUpdatePath;
+    @Value("${dristi.order.update.endpoint}")
+    private String orderUpdateEndPoint;
 
-    @Value("${pucar.order.search.path}")
-    private String orderSearchPath;
+    @Value("${dristi.order.search.endpoint}")
+    private String orderSearchEndPoint;
 
     // ESign Config
-    @Value("${pucar.esign.host}")
+    @Value("${dristi.esign.host}")
     private String esignHost;
 
-    @Value("${pucar.esign.location.endpoint}")
+    @Value("${dristi.esign.location.endpoint}")
     private String esignLocationEndPoint;
 
 
+    // Advocate Config
+    @Value("${dristi.advocate.host}")
+    private String advocateHost;
+
+    @Value("${dristi.advocate.search.endpoint}")
+    private String advocateSearchEndPoint;
+
+
+    // Task Config
+    @Value("${dristi.task.host}")
+    private String taskServiceHost;
+
+    @Value("${dristi.task.create.endpoint}")
+    private String taskServiceCreateEndpoint;
+
+    @Value("${dristi.task.search.endpoint}")
+    private String taskSearchEndpoint;
+
+    @Value("${dristi.task.update.endpoint}")
+    private String taskUpdateEndPoint;
+
+    // Application Config
+    @Value("${dristi.application.host}")
+    private String applicationHost;
+
+    @Value("${dristi.application.exists.endpoint}")
+    private String applicationExistsEndPoint;
+
+    @Value("${dristi.application.search.endpoint}")
+    private String applicationSearchEndPoint;
+
+    @Value("${dristi.application.update.endpoint}")
+    private String applicationUpdateEndPoint;
+
+
+    // Case Config
+    @Value("${dristi.case.host}")
+    private String caseHost;
+
+    @Value("${dristi.case.exists.endpoint}")
+    private String caseExistsEndPoint;
+
+    @Value("${dristi.case.search.endpoint}")
+    private String caseSearchEndPoint;
+
+    @Value("${dristi.case.update.endpoint}")
+    private String caseUpdateEndPoint;
+
+    @Value("${dristi.case.process.profile.endpoint}")
+    private String processProfileEndPoint;
+
+
+    //Hearing config
+    @Value("${dristi.hearing.host}")
+    private String HearingHost;
+
+    @Value("${dristi.hearing.update.endpoint}")
+    private String HearingUpdateEndPoint;
+
+    @Value("${dristi.hearing.create.endpoint}")
+    private String HearingCreateEndPoint;
+
+    @Value("${dristi.hearing.search.endpoint}")
+    private String hearingSearchEndPoint;
+
+    // ADiary config
+
+    @Value("${dristi.adiary.host}")
+    private String aDiaryHost;
+
+    @Value("${dristi.adiary.create.bulk}")
+    private String aDiaryCreateBulkEndPoint;
+
+
+    // Inbox Config
+    @Value("${dristi.inbox.host}")
+    private String inboxHost;
+
+    @Value("${dristi.inbox.index.search.endpoint")
+    private String indexSearchEndPoint;
+
+    // Analytics Config
+    @Value("${dristi.analytics.host}")
+    private String analyticsHost;
+
+    @Value("${dristi.analytics.create.pendingtask}")
+    private String createPendingTaskEndPoint;
+
+    // Scheduler Config
+    @Value("${dristi.scheduler.host}")
+    private String schedulerHost;
+
+    @Value("${dristi.scheduler.reschedule.endpoint}")
+    private String rescheduleEndPoint;
+
+    @Value("${spring.redis.timeout}")
+    private Long redisTimeout;
+
     //SMSNotification
-    @Value("${pucar.sms.notification.topic}")
+    @Value("${dristi.sms.notification.topic}")
     private String smsNotificationTopic;
 
     // zone id
     @Value("${app.zone.id}")
     private String zoneId;
+
 }

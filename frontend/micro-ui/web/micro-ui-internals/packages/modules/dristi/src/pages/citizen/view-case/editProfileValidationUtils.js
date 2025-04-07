@@ -32,7 +32,7 @@ export const editComplainantValidation = ({
     } else {
       clearFormDataErrors("complainantVerification");
     }
-    if (!formData?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file) {
+    if (!(formData?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file || formData?.complainantId?.complainantId === true)) {
       setShowErrorToast(true);
       setFormErrors("complainantId", { message: "COMPLAINANT_ID_PROOF_IS_MANDATORY" });
       return true;
@@ -445,7 +445,8 @@ export const updateProfileData = async ({
         })
     );
 
-    const { complainantIDProofDocument, reasonForChange, supportingDocument, ...remainingFormData } = newFormData?.[0]?.data || {};
+    const { complainantIDProofDocument, reasonDetailsSeparator, reasonForChange, supportingDocument, ...remainingFormData } =
+      newFormData?.[0]?.data || {};
     profilePayload = {
       tenantId,
       caseId,
@@ -579,13 +580,19 @@ export const updateProfileData = async ({
         obj.data.emails.textfieldValue = "";
       }
     }
-    const { reasonForChange, supportingDocument, ...remainingFormData } = newFormDataCopy?.[0]?.data || {};
+    const { reasonDetailsSeparator, reasonForChange, supportingDocument, ...remainingFormData } = newFormDataCopy?.[0]?.data || {};
     const currentRespondent = caseDetails?.additionalDetails?.[selected]?.formdata?.find(
       (item, index) => item?.data?.respondentVerification?.individualDetails?.individualId === uniqueId || item?.uniqueId === uniqueId
     );
     const respVerification = currentRespondent?.data?.respondentVerification;
     if (respVerification) {
       remainingFormData.respondentVerification = { ...respVerification };
+    }
+    if (currentRespondent?.data) {
+      const { inquiryAffidavitFileUpload, ...restData } = currentRespondent?.data || {};
+      if (inquiryAffidavitFileUpload) {
+        remainingFormData.inquiryAffidavitFileUpload = { ...inquiryAffidavitFileUpload };
+      }
     }
     profilePayload = {
       tenantId,
@@ -623,7 +630,7 @@ export const updateProfileData = async ({
           referenceId,
           status: "PROFILE_EDIT_REQUEST",
           assignedTo: [],
-          assignedRole: ["JUDGE_ROLE"],
+          assignedRole: ["JUDGE_ROLE", "BENCH_CLERK", "COURT_ROOM_MANAGER"],
           cnrNumber: caseDetails?.cnrNumber,
           filingNumber: caseDetails?.filingNumber,
           isCompleted: false,
