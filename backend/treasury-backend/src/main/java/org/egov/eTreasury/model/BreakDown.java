@@ -12,6 +12,7 @@ import lombok.Setter;
 public class BreakDown {
 
     private String type;
+    private String code;
     private Double amount;
     private Object additionalParams;
 }

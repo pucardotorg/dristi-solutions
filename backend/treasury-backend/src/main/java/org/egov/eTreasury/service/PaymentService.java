@@ -459,7 +459,7 @@ public class PaymentService {
 
     private BreakDown getBreakDown(List<BreakDown> breakDown,  String breakUpCode) {
         for (BreakDown breakUp : breakDown) {
-            if (breakUp.getType().equalsIgnoreCase(breakUpCode)) {
+            if (breakUp.getCode().equalsIgnoreCase(breakUpCode)) {
                 return breakUp;
             }
         }
