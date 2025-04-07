@@ -50,6 +50,7 @@ public class HearingService {
         Hearing hearing = hearingRequest.getHearing();
         RequestInfo requestInfo = hearingRequest.getRequestInfo();
         CourtCase courtCase = caseService.getCase(hearing.getFilingNumber().get(0), hearing.getTenantId(), requestInfo);
+        log.info("Enriching Hearing for caseReferenceNumber: {}", hearing.getCaseReferenceNumber());
         OpenHearing openHearing = getOpenHearing(hearing, courtCase);
         producer.push(properties.getOpenHearingTopic(), openHearing);
     }
