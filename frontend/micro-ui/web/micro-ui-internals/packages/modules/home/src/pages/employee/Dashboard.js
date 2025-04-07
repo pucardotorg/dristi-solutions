@@ -19,7 +19,7 @@ const DashboardPage = () => {
     return `${year}-${month}-${day}`;
   };
   const history = useHistory();
-  const [stepper, setStepper] = useState(Number(select));
+  const [stepper, setStepper] = useState(Number(select) || 0);
   const [selectedRange, setSelectedRange] = useState({ startDate: getCurrentDate(), endDate: getCurrentDate() });
   const [downloadingIndices, setDownloadingIndices] = useState([]);
   const [downloadTimers, setDownloadTimers] = useState({});
@@ -159,6 +159,7 @@ const DashboardPage = () => {
       },
     }
   );
+  const sortedDashboardJobIDs = Array.isArray(dashboardJobIDs) ? [...dashboardJobIDs].sort((a, b) => a.id - b.id) : [];
 
   const handleDownload = async (downloadLink, index) => {
     showToast("error", t("ISSUE_IN_BULK_HEARING"), 5000);
@@ -261,8 +262,8 @@ const DashboardPage = () => {
         <div className={`dashboardSidebar ${navbarCollapsed ? "collapsed" : ""}`}>
           <div className="sidebar-nav">
             <React.Fragment>
-              {Array.isArray(dashboardJobIDs) &&
-                dashboardJobIDs.map((data) => {
+              {Array.isArray(sortedDashboardJobIDs) &&
+                sortedDashboardJobIDs.map((data) => {
                   const isActive = stepper === 1 && jobId === data.jobId;
                   return (
                     <button
@@ -300,12 +301,14 @@ const DashboardPage = () => {
         </div>
 
         <div className={`main-content ${navbarCollapsed ? "collapsed" : ""}`}>
-          <div className="dashboardTopbar">
-            <h2 style={{ fontWeight: "bold", margin: "10px" }}>{t(headingTxt)} </h2>
-          </div>
+          {stepper && stepper !== 0 && (
+            <div className="dashboardTopbar">
+              <h2 style={{ fontWeight: "bold", margin: "10px" }}>{t(headingTxt)} </h2>
+            </div>
+          )}
 
           <div className="dashboard-content">
-            {stepper !== 2 && stepper !== 3 && (
+            {stepper === 1 && (
               <div className="date-filter">
                 <CustomDateRangePicker setDateRange={setDateRange} dateRange={dateRange} showPicker={showPicker} setShowPicker={setShowPicker} />
                 <button onClick={handleSubmit} className="filter-button">
@@ -345,7 +348,7 @@ const DashboardPage = () => {
                       </div>
                     ))}
                   </div>
-                  <div style={{ flex: 2 }}>
+                  {/* <div style={{ flex: 2 }}>
                     <TasksComponent
                       taskType={taskType}
                       setTaskType={setTaskType}
@@ -355,7 +358,7 @@ const DashboardPage = () => {
                       hideFilters={true}
                       isDiary={true}
                     />
-                  </div>
+                  </div> */}
                 </div>
               )}
             </div>
