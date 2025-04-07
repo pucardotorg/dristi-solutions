@@ -94,6 +94,19 @@ public class TaskQueryBuilder {
             String state = criteria.getState();
             String filingNumber = criteria.getFilingNumber();
             String taskType = criteria.getTaskType();
+            String uuid = criteria.getUserUuid();
+            String condition = """
+                        EXISTS (
+                          SELECT 1
+                          FROM jsonb_array_elements(
+                              CASE\s
+                                WHEN jsonb_typeof(task.assignedto) = 'array' THEN task.assignedto\s
+                                ELSE '[]'::jsonb\s
+                              END
+                          ) elem
+                          WHERE elem->>'uuid' = ?
+                        )
+                   \s""";
 
             StringBuilder query = new StringBuilder(BASE_CASE_QUERY);
             query.append(FROM_TASK_TABLE);
@@ -108,6 +121,7 @@ public class TaskQueryBuilder {
             firstCriteria = addTaskCriteria(state, query, firstCriteria, "task.state = ?", preparedStmtList,preparedStmtArgList);
             firstCriteria = addTaskCriteria(taskType, query, firstCriteria, "task.tasktype = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(filingNumber, query, firstCriteria, "task.filingnumber = ?", preparedStmtList, preparedStmtArgList);
+            firstCriteria = addTaskCriteria(uuid, query, firstCriteria, condition, preparedStmtList, preparedStmtArgList);
             addTaskCriteria(taskNumber, query, firstCriteria, "task.tasknumber = ?", preparedStmtList, preparedStmtArgList);
 
             return query.toString();

@@ -2,6 +2,8 @@ package org.egov.eTreasury.controller;
 
 import org.egov.common.contract.models.Document;
 import org.egov.eTreasury.model.*;
+import org.egov.eTreasury.model.demand.DemandCreateRequest;
+import org.egov.eTreasury.model.demand.DemandResponse;
 import org.egov.eTreasury.service.PaymentService;
 import org.egov.eTreasury.util.ResponseInfoFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +34,14 @@ public class PaymentController {
         ConnectionStatus connectionStatus = paymentService.verifyConnection();
         log.info("Verified Server Connection for request: {}", request);
         return ConnectionResponse.builder().responseInfo(responseInfo).connectionStatus(connectionStatus).build();
+    }
+
+    @PostMapping("/v1/_createDemand")
+    public ResponseEntity<?> createDemand(@RequestBody DemandCreateRequest request) {
+        log.info("Creating demand for request: {}", request);
+        DemandResponse demandResponse = paymentService.createDemand(request);
+        log.info("Demand created successfully for request: {}", request);
+        return ResponseEntity.ok(demandResponse);
     }
 
     @PostMapping("/v1/_processChallan")
