@@ -190,18 +190,6 @@ public class PaymentUpdateService {
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
                 }
                 case JOIN_CASE_PAYMENT -> {
-                    WorkflowObject workflow = new WorkflowObject();
-                    workflow.setAction(MAKE_PAYMENT);
-                    task.setWorkflow(workflow);
-
-                    String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, task.getTaskNumber(),
-                            config.getTaskPaymentBusinessServiceName(), workflow, config.getTaskPaymentBusinessName());
-                    task.setStatus(status);
-
-                    TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
-                    producer.push(config.getTaskJoinCaseUpdateTopic(), taskRequest);
-                }
-                case JOIN_CASE_PAYMENT -> {
                     WorkflowObject  workflow = new WorkflowObject();
                     workflow.setAction(MAKE_PAYMENT);
                     task.setWorkflow(workflow);
