@@ -87,7 +87,8 @@ public class ApplicationService {
             if (application.getWorkflow() != null)
                 workflowService.updateWorkflowStatus(applicationRequest);
 
-            if (application.getWorkflow() != null && PENDINGAPPROVAL.equalsIgnoreCase(application.getStatus())) {
+            if (application.getWorkflow() != null && (PENDINGAPPROVAL.equalsIgnoreCase(application.getStatus())
+                    || PENDINGREVIEW.equalsIgnoreCase(application.getStatus()))) {
                 enrichmentUtil.enrichApplicationNumberByCMPNumber(applicationRequest);
             }
 
