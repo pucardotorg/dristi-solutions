@@ -40,6 +40,7 @@ public class EtreasuryUtil {
 		demandRequest.setTenantId(joinCaseRequest.getJoinCaseData().getTenantId());
 		demandRequest.setEntityType("task-payment");
 
+		log.info("demand request :: {}",demandRequest);
 		Object response;
 		try {
 			response = restTemplate.postForObject(uri.toString(), demandRequest, Map.class);

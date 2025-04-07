@@ -1174,6 +1174,7 @@ public class CaseService {
             litigantAdvocateMap.setAdvocateCount(representing.getNoOfAdvocates());
             litigantAdvocateMap.setLitigantId(representing.getIndividualId());
             litigantAdvocateMap.setAdvocateId(Collections.singletonList(joinCaseData.getRepresentative().getAdvocateId()));
+            litigantAdvocateMapList.add(litigantAdvocateMap);
         });
         JoinCasePaymentRequest joinCasePaymentRequest = JoinCasePaymentRequest.builder().build();
         joinCasePaymentRequest.setRequestInfo(joinCaseRequest.getRequestInfo());
@@ -2485,7 +2486,7 @@ public class CaseService {
         ObjectNode taskDetailsNode = objectMapper.convertValue(joinCaseRequest, ObjectNode.class);
         taskDetailsNode.put("advocateUuid",advocateUUID);
 
-        ObjectNode breakdownObjectNode = objectMapper.convertValue(calculationList.get(0).getBreakDown(), ObjectNode.class);
+        ArrayNode breakdownObjectNode = objectMapper.convertValue(calculationList.get(0).getBreakDown(), ArrayNode.class);
 
         taskDetailsNode.set("paymentBreakdown", breakdownObjectNode);
 
