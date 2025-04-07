@@ -12,6 +12,7 @@ import org.pucar.dristi.enrichment.TopicBasedOnStatus;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.TaskRepository;
 import org.pucar.dristi.util.CaseUtil;
+import org.pucar.dristi.util.SummonUtil;
 import org.pucar.dristi.util.WorkflowUtil;
 import org.pucar.dristi.validators.TaskRegistrationValidator;
 import org.pucar.dristi.web.models.*;
@@ -38,6 +39,7 @@ public class TaskService {
     private final SmsNotificationService notificationService;
     private final IndividualService individualService;
     private final TopicBasedOnStatus topicBasedOnStatus;
+    private final SummonUtil summonUtil;
 
     @Autowired
     public TaskService(TaskRegistrationValidator validator,
@@ -45,7 +47,7 @@ public class TaskService {
                        TaskRepository taskRepository,
                        WorkflowUtil workflowUtil,
                        Configuration config,
-                       Producer producer, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService, TopicBasedOnStatus topicBasedOnStatus) {
+                       Producer producer, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService, TopicBasedOnStatus topicBasedOnStatus, SummonUtil summonUtil) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.taskRepository = taskRepository;
@@ -57,6 +59,7 @@ public class TaskService {
         this.notificationService = notificationService;
         this.individualService = individualService;
         this.topicBasedOnStatus = topicBasedOnStatus;
+        this.summonUtil = summonUtil;
     }
 
     @Autowired
@@ -134,8 +137,9 @@ public class TaskService {
             String status = body.getTask().getStatus();
             String taskType = body.getTask().getTaskType();
             log.info("status , taskType : {} , {} ", status, taskType);
-            if (SUMMON_SENT.equalsIgnoreCase(status) || NOTICE_SENT.equalsIgnoreCase(status) || WARRANT_SENT.equalsIgnoreCase(status))
-                producer.push(config.getTaskIssueSummonTopic(), body);
+            if (SUMMON_SENT.equalsIgnoreCase(status) || NOTICE_SENT.equalsIgnoreCase(status) || WARRANT_SENT.equalsIgnoreCase(status)){
+                summonUtil.sendSummons(body);
+            }
 
             // push to join case topic based on status
             if (taskType.equalsIgnoreCase(JOIN_CASE)) {
