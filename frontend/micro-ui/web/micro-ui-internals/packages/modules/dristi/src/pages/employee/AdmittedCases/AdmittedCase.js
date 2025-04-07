@@ -640,10 +640,6 @@ const AdmittedCases = () => {
       }
     };
 
-    const temp = () => {
-      console.log("in function");
-    };
-
     return TabSearchconfig?.TabSearchconfig.map((tabConfig) => {
       return tabConfig.label === "Parties"
         ? {
@@ -849,14 +845,9 @@ const AdmittedCases = () => {
                         };
                       }
                       case "CS_ACTIONS": {
-                        {
-                          console.log("iiii", handleFilingAction);
-                        }
                         return {
                           ...column,
-                          clickFunc: (history, column, row, item) => {
-                            handleFilingAction(history, column, row, item);
-                          },
+                          clickFunc: handleFilingAction,
                         };
                       }
                       default: {
