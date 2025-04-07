@@ -8,6 +8,7 @@ import org.egov.eTreasury.model.CaseListResponse;
 import org.egov.eTreasury.model.CaseSearchRequest;
 import org.egov.eTreasury.model.CourtCase;
 import org.egov.tracer.model.CustomException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -20,6 +21,8 @@ public class CaseUtil {
     private final PaymentConfiguration configuration;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
+
+    @Autowired
     public CaseUtil(PaymentConfiguration configuration, RestTemplate restTemplate, ObjectMapper objectMapper) {
         this.configuration = configuration;
         this.restTemplate = restTemplate;

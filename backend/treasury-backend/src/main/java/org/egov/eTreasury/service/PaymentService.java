@@ -411,8 +411,8 @@ public class PaymentService {
                 .consumerCode(demandRequest.getConsumerCode())
                 .consumerType(demandRequest.getEntityType())
                 .businessService(demandRequest.getEntityType())
-                .taxPeriodFrom(taxPeriodData.get("fromDate").asLong())
-                .taxPeriodTo(taxPeriodData.get("toDate").asLong())
+                .taxPeriodFrom((taxPeriodData != null) ? taxPeriodData.get("fromDate").asLong() : System.currentTimeMillis())
+                .taxPeriodTo((taxPeriodData != null) ? taxPeriodData.get("toDate").asLong() : System.currentTimeMillis())
                 .demandDetails(List.of(getDemandDetails(demandRequest.getCalculation().get(0).getTotalAmount(), demandRequest.getEntityType(), taxHeadMaster)))
                 .additionalDetails(getAdditionalDetails(courtCase, demandRequest.getEntityType()))
                 .build();
