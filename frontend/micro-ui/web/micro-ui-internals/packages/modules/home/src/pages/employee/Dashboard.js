@@ -1,9 +1,13 @@
 import { CloseSvg, Loader, Toast } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { useTranslation } from "react-i18next";
 import TasksComponent from "../../components/TaskComponent";
+import { BreadCrumb } from "@egovernments/digit-ui-react-components";
+import { MailBoxIcon, CaseDynamicsIcon, ThreeUserIcon, DownloadIcon, ExpandIcon, CollapseIcon, FilterIcon, DocumentIcon } from "../../../homeIcon";
+import CustomDateRangePicker from "../../components/CustomDateRangePicker";
 import { BreadCrumb } from "@egovernments/digit-ui-react-components";
 import { MailBoxIcon, CaseDynamicsIcon, ThreeUserIcon, DownloadIcon, ExpandIcon, CollapseIcon, FilterIcon, DocumentIcon } from "../../../homeIcon";
 import CustomDateRangePicker from "../../components/CustomDateRangePicker";
@@ -21,6 +25,9 @@ const DashboardPage = () => {
   const history = useHistory();
   const [stepper, setStepper] = useState(Number(select));
   const [selectedRange, setSelectedRange] = useState({ startDate: getCurrentDate(), endDate: getCurrentDate() });
+  const history = useHistory();
+  const [stepper, setStepper] = useState(Number(select));
+  const [selectedRange, setSelectedRange] = useState({ startDate: getCurrentDate(), endDate: getCurrentDate() });
   const [downloadingIndices, setDownloadingIndices] = useState([]);
   const [downloadTimers, setDownloadTimers] = useState({});
   const [navbarCollapsed, setNavbarCollapsed] = useState(false);
@@ -29,6 +36,16 @@ const DashboardPage = () => {
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const userRoles = Digit?.UserService?.getUser?.()?.info?.roles || [];
   const [taskType, setTaskType] = useState({});
+  const [jobId, setJobID] = useState("");
+  const [headingTxt, setHeadingTxt] = useState("");
+  const [showPicker, setShowPicker] = useState(false);
+  const [dateRange, setDateRange] = useState([
+    {
+      startDate: new Date(),
+      endDate: new Date(),
+      key: "selection",
+    },
+  ]);
   const [jobId, setJobID] = useState("");
   const [headingTxt, setHeadingTxt] = useState("");
   const [showPicker, setShowPicker] = useState(false);
@@ -163,6 +180,7 @@ const DashboardPage = () => {
   );
 
   const handleDownload = async (downloadLink, index) => {
+    showToast("error", t("ISSUE_IN_BULK_HEARING"), 5000);
     setDownloadingIndices((prev) => [...prev, index]);
     setDownloadTimers((prev) => ({ ...prev, [index]: 0 }));
 
