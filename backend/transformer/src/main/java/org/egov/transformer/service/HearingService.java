@@ -50,13 +50,9 @@ public class HearingService {
         Hearing hearing = hearingRequest.getHearing();
         RequestInfo requestInfo = hearingRequest.getRequestInfo();
         CourtCase courtCase = caseService.getCase(hearing.getFilingNumber().get(0), hearing.getTenantId(), requestInfo);
-        if(!Objects.equals(hearing.getStatus(), HEARD) &&
-                !Objects.equals(hearing.getStatus(), ADJOURNED) &&
-                !Objects.equals(hearing.getStatus(), ABATED) &&
-                !Objects.equals(hearing.getStatus(), CLOSED)) {
-            OpenHearing openHearing = getOpenHearing(hearing, courtCase);
-            producer.push(properties.getOpenHearingTopic(), openHearing);
-        }
+        log.info("Enriching Hearing for caseReferenceNumber: {}", hearing.getCaseReferenceNumber());
+        OpenHearing openHearing = getOpenHearing(hearing, courtCase);
+        producer.push(properties.getOpenHearingTopic(), openHearing);
     }
 
     @NotNull
