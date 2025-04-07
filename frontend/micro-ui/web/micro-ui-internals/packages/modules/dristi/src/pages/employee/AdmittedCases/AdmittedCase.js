@@ -540,9 +540,13 @@ const AdmittedCases = () => {
       const documentCreatedByUuid = docObj?.[0]?.artifactList?.auditdetails?.createdBy;
       const artifactNumber = docObj?.[0]?.artifactList?.artifactNumber;
       const documentStatus = docObj?.[0]?.artifactList?.status;
-      if (isCitizen) {
+      if (isCitizen || isBenchClerk) {
         if (documentStatus === "PENDING_E-SIGN" && documentCreatedByUuid === userInfo?.uuid) {
-          history.push(`/digit-ui/citizen/submissions/submit-document?filingNumber=${filingNumber}&artifactNumber=${artifactNumber}`);
+          history.push(
+            `/digit-ui/${
+              isCitizen ? "citizen" : "employee"
+            }/submissions/submit-document?filingNumber=${filingNumber}&artifactNumber=${artifactNumber}`
+          );
         }
         if (
           [SubmissionWorkflowState.PENDINGPAYMENT, SubmissionWorkflowState.PENDINGESIGN, SubmissionWorkflowState.PENDINGSUBMISSION].includes(status)
@@ -2369,7 +2373,7 @@ const AdmittedCases = () => {
 
   const takeActionOptions = useMemo(
     () => [
-      ...(userRoles?.includes("SUBMISSION_CREATOR") ? [t("MAKE_SUBMISSION")] : []),
+      ...(userRoles?.includes("SUBMISSION_CREATOR") && !userRoles?.includes("BENCH_CLERK") ? [t("MAKE_SUBMISSION")] : []),
       t("GENERATE_ORDER_HOME"),
       t("SCHEDULE_HEARING"),
       t("REFER_TO_ADR"),
@@ -2492,12 +2496,11 @@ const AdmittedCases = () => {
         className="admitted-case-header"
         style={{ position: "sticky", top: "72px", width: "100%", height: "100%", zIndex: 150, background: "white" }}
       >
+        {caseDetails?.caseTitle && <Header styles={{ marginBottom: "-30px" }}>{caseDetails?.caseTitle}</Header>}
         <div className="admitted-case-details" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px" }}>
-          <div className="case-details-title" style={{ display: "flex", alignItems: "center", gap: "12px", width: "70%" }}>
-            {caseDetails?.caseTitle && <Header styles={{ width: "40%" }}>{caseDetails?.caseTitle}</Header>}
+          <div className="case-details-title" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             {statue && (
               <React.Fragment>
-                <hr className="vertical-line" />
                 <div className="sub-details-text">{statue}</div>
               </React.Fragment>
             )}
