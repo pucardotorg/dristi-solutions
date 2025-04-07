@@ -10,7 +10,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.models.AuditDetails;
-import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
@@ -60,7 +59,7 @@ public class CaseService {
     private final WorkflowService workflowService;
     private final Configuration config;
     private final Producer producer;
-    private final BillingUtil billingUtil;
+    private final EtreasuryUtil etreasuryUtil;
     private final EncryptionDecryptionUtil encryptionDecryptionUtil;
     private final ObjectMapper objectMapper;
     private final CacheService cacheService;
@@ -77,6 +76,7 @@ public class CaseService {
     private final UserService userService;
     private final EvidenceUtil evidenceUtil;
     private final EvidenceValidator evidenceValidator;
+    private final PaymentCalculaterUtil paymentCalculaterUtil;
 
 
     @Autowired
@@ -87,10 +87,11 @@ public class CaseService {
                        Configuration config,
                        Producer producer,
                        TaskUtil taskUtil,
-                       BillingUtil billingUtil,
+                       EtreasuryUtil etreasuryUtil,
                        EncryptionDecryptionUtil encryptionDecryptionUtil,
                        HearingUtil analyticsUtil,
                        UserService userService,
+                       PaymentCalculaterUtil paymentCalculaterUtil,
                        ObjectMapper objectMapper, CacheService cacheService, EnrichmentService enrichmentService, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, EvidenceUtil evidenceUtil, EvidenceValidator evidenceValidator) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
@@ -99,10 +100,11 @@ public class CaseService {
         this.config = config;
         this.producer = producer;
         this.taskUtil = taskUtil;
-        this.billingUtil = billingUtil;
+        this.etreasuryUtil = etreasuryUtil;
         this.encryptionDecryptionUtil = encryptionDecryptionUtil;
         this.hearingUtil = analyticsUtil;
         this.userService = userService;
+        this.paymentCalculaterUtil = paymentCalculaterUtil;
         this.objectMapper = objectMapper;
         this.cacheService = cacheService;
         this.enrichmentService = enrichmentService;
@@ -1069,15 +1071,10 @@ public class CaseService {
 
                 }
 
-                if (!isPaymentCompleted) {
-                    //create task
-                    createTaskAndDemand(joinCaseRequest);
-                } else {
+                verifyRepresentativesAndJoinCase(joinCaseRequest, courtCase, caseObj, auditDetails, advocateIds, existingRepresentative);
 
-                    verifyRepresentativesAndJoinCase(joinCaseRequest, courtCase, caseObj, auditDetails, advocateIds, existingRepresentative);
-
-                    if (joinCaseRequest.getLitigant() != null && !joinCaseRequest.getLitigant().isEmpty())
-                        verifyLitigantsAndJoinCase(joinCaseRequest, courtCase, caseObj, auditDetails);
+                if (joinCaseRequest.getLitigant() != null && !joinCaseRequest.getLitigant().isEmpty())
+                    verifyLitigantsAndJoinCase(joinCaseRequest, courtCase, caseObj, auditDetails);
 
                     AdvocateMapping advocateMapping = mapRepresentativeToAdvocateMapping(joinCaseRequest.getRepresentative());
                     Set<String> individualIdSet = getIndividualId(advocateMapping);
@@ -1094,7 +1091,6 @@ public class CaseService {
                         notificationService.sendNotification(joinCaseRequest.getRequestInfo(), smsTemplateData, ADVOCATE_CASE_JOIN, number);
                     }
                 }
-            }
 
             return JoinCaseResponse.builder().joinCaseRequest(joinCaseRequest).build();
 
@@ -1148,15 +1144,13 @@ public class CaseService {
                 //To check if advocate is already representing the individual and return existingRepresentative if advocate is part of  the case
                 AdvocateMapping existingRepresentative = validateAdvocateAlreadyRepresenting(courtCase, joinCaseData);
 
-                if (joinCaseData.getRepresentative().getIsReplacing()) {
-                    replaceAdvocate(joinCaseRequest, courtCase, joinCaseData.getRepresentative().getAdvocateId());
-                } else {
-                    addAdvocateToCase(joinCaseRequest, caseObj, courtCase, auditDetails, existingRepresentative);
+                List<Calculation> calculationList = getPaymentCalculations(joinCaseRequest, joinCaseData, courtCase);
 
-                    if (joinCaseData.getLitigant() != null && !joinCaseData.getLitigant().isEmpty()) {
-                        //For adding respondent by advocate
-                        addLitigantToCase(joinCaseRequest, courtCase, caseObj, auditDetails);
-                    }
+                if (calculationList!=null && !calculationList.isEmpty() && calculationList.get(0).getTotalAmount()>0) {
+                    String taskNumber = createTaskAndDemand(joinCaseRequest, calculationList);
+                    return JoinCaseV2Response.builder().paymentTaskNumber(taskNumber).build();
+                }else{
+                    joinCaseAdvocate(joinCaseRequest, courtCase, caseObj, auditDetails, existingRepresentative);
                 }
             }
 
@@ -1170,6 +1164,44 @@ public class CaseService {
         }
         joinCaseV2Response.setIsVerified(true);
         return joinCaseV2Response;
+    }
+
+    private List<Calculation> getPaymentCalculations(JoinCaseV2Request joinCaseRequest, JoinCaseDataV2 joinCaseData, CourtCase courtCase) {
+        List<LitigantAdvocateMap> litigantAdvocateMapList = new ArrayList<>();
+
+        joinCaseData.getRepresentative().getRepresenting().forEach(representing->{
+            LitigantAdvocateMap litigantAdvocateMap = LitigantAdvocateMap.builder().build();
+            litigantAdvocateMap.setAdvocateCount(representing.getNoOfAdvocates());
+            litigantAdvocateMap.setLitigantId(representing.getIndividualId());
+            litigantAdvocateMap.setAdvocateId(Collections.singletonList(joinCaseData.getRepresentative().getAdvocateId()));
+            litigantAdvocateMapList.add(litigantAdvocateMap);
+        });
+        JoinCasePaymentRequest joinCasePaymentRequest = JoinCasePaymentRequest.builder().build();
+        joinCasePaymentRequest.setRequestInfo(joinCaseRequest.getRequestInfo());
+
+        JoinCaseCriteria criteria = JoinCaseCriteria.builder()
+                .caseId(String.valueOf(courtCase.getId()))
+                .filingNumber(joinCaseData.getFilingNumber())
+                .tenantId(joinCaseData.getTenantId())
+                .litigantAdvocateMap(litigantAdvocateMapList)
+                .build();
+        joinCasePaymentRequest.setJoinCaseCriteria(Collections.singletonList(criteria));
+
+        CalculationRes calculationRes = paymentCalculaterUtil.callPaymentCalculator(joinCasePaymentRequest);
+        return calculationRes.getCalculation();
+    }
+
+    public void joinCaseAdvocate(JoinCaseV2Request joinCaseRequest, CourtCase courtCase, CourtCase caseObj, AuditDetails auditDetails, AdvocateMapping existingRepresentative) {
+        if (joinCaseRequest.getJoinCaseData().getRepresentative().getIsReplacing()) {
+            replaceAdvocate(joinCaseRequest, courtCase, joinCaseRequest.getJoinCaseData().getRepresentative().getAdvocateId());
+        } else {
+            addAdvocateToCase(joinCaseRequest, caseObj, courtCase, auditDetails, existingRepresentative);
+
+            if (joinCaseRequest.getJoinCaseData().getLitigant() != null && !joinCaseRequest.getJoinCaseData().getLitigant().isEmpty()) {
+                //For adding respondent by advocate
+                addLitigantToCase(joinCaseRequest, courtCase, caseObj, auditDetails);
+            }
+        }
     }
 
     private static void validateLitigantAlreadyPartOfCase(CourtCase courtCase, JoinCaseDataV2 joinCaseData) {
@@ -1187,7 +1219,7 @@ public class CaseService {
         }
     }
 
-    private static AdvocateMapping validateAdvocateAlreadyRepresenting(CourtCase courtCase, JoinCaseDataV2 joinCaseData) {
+    public AdvocateMapping validateAdvocateAlreadyRepresenting(CourtCase courtCase, JoinCaseDataV2 joinCaseData) {
         // Stream over the representatives to create a list of advocateIds
         List<String> advocateIds = Optional.ofNullable(courtCase.getRepresentatives())
                 .orElse(Collections.emptyList())
@@ -1340,6 +1372,7 @@ public class CaseService {
                 if (!isEvidenceAlreadyPresent) {
                     enrichAndCallEvidenceCreate(courtCase, representingJoinCase, joinCaseRequest.getRequestInfo(),individualPartyMap.get(representingJoinCase.getIndividualId()).getPartyType());
                 }
+
             });
             List<Advocate> advocatesList = advocateUtil.fetchAdvocatesById(joinCaseRequest.getRequestInfo(), joinCaseData.getRepresentative().getAdvocateId());
             Advocate joinCaseAdvocate = advocatesList.get(0);
@@ -1375,6 +1408,7 @@ public class CaseService {
             });
 
             caseObj.setRepresentatives(List.of(representative));
+
 
             if(courtCase.getRepresentatives()==null){
                 courtCase.setRepresentatives(new ArrayList<>());
@@ -2081,7 +2115,7 @@ public class CaseService {
 
         List<Party> litigants = joinCaseData.getLitigant().stream()
                 .filter(litigant -> courtCase.getLitigants() == null || courtCase.getLitigants().stream()
-                                .noneMatch(existingLitigant -> existingLitigant.getIndividualId().equalsIgnoreCase(litigant.getIndividualId())))
+                        .noneMatch(existingLitigant -> existingLitigant.getIndividualId().equalsIgnoreCase(litigant.getIndividualId())))
                 .map(litigant -> {
                     Party party = new Party();
                     party.setTenantId(litigant.getTenantId());
@@ -2131,6 +2165,7 @@ public class CaseService {
                         courtCase.setLitigants(new ArrayList<>());
                     }
                     courtCase.getLitigants().add(party);
+
                     return party;
                 })
                 .collect(Collectors.toList());
@@ -2423,38 +2458,49 @@ public class CaseService {
         }
     }
 
-    private void createTaskAndDemand(JoinCaseRequest joinCaseRequest) {
+    private String createTaskAndDemand(JoinCaseV2Request joinCaseRequest, List<Calculation> calculationList) {
         TaskRequest taskRequest = new TaskRequest();
         Task task = new Task();
-        task.setTaskType(JOIN_CASE);
+        task.setTaskType(JOIN_CASE_PAYMENT);
         task.setStatus("");
-        task.setTenantId(joinCaseRequest.getRequestInfo().getUserInfo().getTenantId());
-        task.setFilingNumber(joinCaseRequest.getCaseFilingNumber());
+        task.setTenantId(joinCaseRequest.getJoinCaseData().getTenantId());
+        task.setFilingNumber(joinCaseRequest.getJoinCaseData().getFilingNumber());
+        String advocateUUID = joinCaseRequest.getRequestInfo().getUserInfo().getUuid();
+
+        AssignedTo assignedTo = new AssignedTo();
+        assignedTo.setUuid(UUID.fromString(advocateUUID));
+        task.setAssignedTo(List.of(assignedTo));
+
         WorkflowObject workflow = new WorkflowObject();
         workflow.setAction("CREATE");
-        RequestInfo requestInfo = joinCaseRequest.getRequestInfo();
-        Role role = new Role();
-        role.setName("TASK_CREATOR");
-        role.setCode("TASK_CREATOR");
-        List<Role> roles = requestInfo.getUserInfo().getRoles();
-        roles.add(role);
-        requestInfo.getUserInfo().setRoles(roles);
+        workflow.setAssignes(List.of(advocateUUID));
+        RequestInfo requestInfo = new RequestInfo();
+        User userInfo = new User();
+        requestInfo.setUserInfo(userInfo);
+        requestInfo.getUserInfo().setRoles(userService.internalMicroserviceRoles);
+        requestInfo.getUserInfo().setType("SYSTEM");
+        requestInfo.getUserInfo().setUuid(userService.internalMicroserviceRoleUuid);
         task.setWorkflow(workflow);
         ObjectMapper objectMapper = new ObjectMapper();
 
-        Object additionalDetails = objectMapper.convertValue(joinCaseRequest, Object.class);
-        task.setAdditionalDetails(additionalDetails);
+        ObjectNode taskDetailsNode = objectMapper.convertValue(joinCaseRequest, ObjectNode.class);
+        taskDetailsNode.put("advocateUuid",advocateUUID);
+
+        ArrayNode breakdownObjectNode = objectMapper.convertValue(calculationList.get(0).getBreakDown(), ArrayNode.class);
+
+        taskDetailsNode.set("paymentBreakdown", breakdownObjectNode);
+
+        task.setTaskDetails(objectMapper.convertValue(taskDetailsNode, Object.class));
 
         taskRequest.setTask(task);
-        taskRequest.setRequestInfo(joinCaseRequest.getRequestInfo());
+        taskRequest.setRequestInfo(requestInfo);
 
         TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
         String consumerCode = taskResponse.getTask().getTaskNumber() + "_JOIN_CASE";
 
-        //create demand
-        billingUtil.createDemand(joinCaseRequest, consumerCode);
+        etreasuryUtil.createDemand(joinCaseRequest, consumerCode,calculationList);
+        return taskResponse.getTask().getTaskNumber();
 
-        joinCaseRequest.setConsumerCode(consumerCode);
     }
 
     private Set<String> getIndividualId(AdvocateMapping advocateMapping) {
@@ -2841,7 +2887,7 @@ public class CaseService {
         return courtCase;
     }
 
-    private @NotNull CourtCase validateAccessCodeAndReturnCourtCase(JoinCaseV2Request joinCaseRequest, List<CaseCriteria> existingApplications) {
+    public @NotNull CourtCase validateAccessCodeAndReturnCourtCase(JoinCaseV2Request joinCaseRequest, List<CaseCriteria> existingApplications) {
         if (existingApplications.isEmpty()) {
             throw new CustomException(CASE_EXIST_ERR, "Case does not exist");
         }
@@ -3376,7 +3422,6 @@ public class CaseService {
 
     public void updateJoinCaseRejected(TaskRequest taskRequest) {
         try {
-
             //this method is used rejecting the request
             log.info("operation=updateJoinCaseRejected, status=IN_PROGRESS, pendingTaskId: {}", taskRequest);
 
@@ -4226,7 +4271,9 @@ public class CaseService {
                         .build()).build();
     }
 
-    private void enrichHearingDetails(CourtCase courtCase, ReplacementDetails replacementDetails, JoinCaseTaskRequest joinCaseTaskRequest, RequestInfo requestInfo) {
+
+
+    private void enrichHearingDetails(CourtCase courtCase,  ReplacementDetails replacementDetails, JoinCaseTaskRequest joinCaseTaskRequest, RequestInfo requestInfo) {
 
         AdvocateDetails advocateTryingToJoinCase = joinCaseTaskRequest.getAdvocateDetails();
 

@@ -27,6 +27,12 @@ public class RepresentingJoinCase {
     @JsonProperty("isAlreadyPip")
     private Boolean isAlreadyPip = false;
 
+    @JsonProperty("isVakalathnamaAlreadyPresent")
+    private Boolean isVakalathnamaAlreadyPresent = false;
+
+    @JsonProperty("noOfAdvocates")
+    private Integer noOfAdvocates = 0;
+
     @JsonProperty("documents")
     @Valid
     private List<Document> documents = null;
