@@ -8,22 +8,16 @@ const useEvidenceDetails = ({ url, params, body, config = {}, plainAccessRequest
 
   const { searchForm } = state;
   const { stage, type, caseNameOrId } = searchForm;
+  const tenant = Digit.ULBService.getCurrentTenantId();
 
   const getOwnerName = async (artifact) => {
     if (artifact?.sourceType === "COURT") {
       if (!artifact.sourceID) {
         return "";
       }
-      const owner = await DRISTIService.searchEmployeeUser(
-        {
-          authToken: localStorage.getItem("token"),
-        },
-        { ...params, uuids: artifact?.sourceID, limit: 1000, offset: 0 },
-        plainAccessRequest,
-        true
-      );
-      if(owner?.Employees?.length > 1) return ""; 
-      return `${owner?.Employees?.[0]?.user?.name}`.trim();
+      const owner = await Digit.UserService.userSearch(tenant, { uuid: [artifact?.sourceID] }, {});
+      if (owner?.user?.length > 1) return "";
+      return `${owner?.user?.[0]?.name}`.trim();
     } else {
       if (!artifact.sourceID) {
         return "";

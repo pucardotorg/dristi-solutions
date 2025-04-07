@@ -540,9 +540,13 @@ const AdmittedCases = () => {
       const documentCreatedByUuid = docObj?.[0]?.artifactList?.auditdetails?.createdBy;
       const artifactNumber = docObj?.[0]?.artifactList?.artifactNumber;
       const documentStatus = docObj?.[0]?.artifactList?.status;
-      if (isCitizen) {
+      if (isCitizen || isBenchClerk) {
         if (documentStatus === "PENDING_E-SIGN" && documentCreatedByUuid === userInfo?.uuid) {
-          history.push(`/digit-ui/citizen/submissions/submit-document?filingNumber=${filingNumber}&artifactNumber=${artifactNumber}`);
+          history.push(
+            `/digit-ui/${
+              isCitizen ? "citizen" : "employee"
+            }/submissions/submit-document?filingNumber=${filingNumber}&artifactNumber=${artifactNumber}`
+          );
         }
         if (
           [SubmissionWorkflowState.PENDINGPAYMENT, SubmissionWorkflowState.PENDINGESIGN, SubmissionWorkflowState.PENDINGSUBMISSION].includes(status)
@@ -2369,7 +2373,7 @@ const AdmittedCases = () => {
 
   const takeActionOptions = useMemo(
     () => [
-      ...(userRoles?.includes("SUBMISSION_CREATOR") ? [t("MAKE_SUBMISSION")] : []),
+      ...(userRoles?.includes("SUBMISSION_CREATOR") && !userRoles?.includes("BENCH_CLERK") ? [t("MAKE_SUBMISSION")] : []),
       t("GENERATE_ORDER_HOME"),
       t("SCHEDULE_HEARING"),
       t("REFER_TO_ADR"),

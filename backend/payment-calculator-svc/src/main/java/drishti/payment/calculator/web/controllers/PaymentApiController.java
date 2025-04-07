@@ -64,4 +64,13 @@ public class PaymentApiController {
         log.info("api = /v1/case/fees/_calculate, result=SUCCESS");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
+    @PostMapping(value = "/v1/join-case/fees/_calculate")
+    public ResponseEntity<CalculationRes> joinCaseFeesCalculation(@Parameter(in = ParameterIn.DEFAULT, description = "", required = true, schema = @Schema()) @Valid @RequestBody JoinCasePaymentRequest body) {
+        log.info("api = /v1/join-case/fees/_calculate, result=IN_PROGRESS ");
+        List<Calculation> calculations = caseFeesService.calculateJoinCaseFees(body);
+        CalculationRes response = CalculationRes.builder().responseInfo(ResponseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true)).calculation(calculations).build();
+        log.info("api = /v1/join-case/fees/_calculate, result=SUCCESS");
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 }

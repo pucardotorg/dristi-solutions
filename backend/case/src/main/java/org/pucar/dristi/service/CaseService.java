@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.models.AuditDetails;
@@ -17,7 +18,6 @@ import org.egov.common.models.individual.AdditionalFields;
 import org.egov.common.models.individual.Field;
 import org.egov.common.models.individual.Identifier;
 import org.egov.tracer.model.CustomException;
-import org.jetbrains.annotations.NotNull;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.CaseRegistrationEnrichment;
 import org.pucar.dristi.enrichment.EnrichmentService;
@@ -187,7 +187,6 @@ public class CaseService {
                 caseCriteria.setResponseList(decryptedCourtCases);
             });
 
-
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
@@ -291,7 +290,7 @@ public class CaseService {
             if (messageCode != null) {
                 String[] messageCodes = messageCode.split(",");
                 for (String msgCode : messageCodes) {
-                    callNotificationService(caseRequest, msgCode);
+                    callNotificationService(caseRequest, msgCode, null);
                 }
             }
 
@@ -576,13 +575,13 @@ public class CaseService {
     }
 
 
-    public void callNotificationService(CaseRequest caseRequest, String messageCode) {
+    public void callNotificationService(CaseRequest caseRequest, String messageCode, String profileEditorId) {
         try {
             CourtCase courtCase = caseRequest.getCases();
             Set<String> IndividualIds = getLitigantIndividualId(courtCase);
             getAdvocateIndividualId(caseRequest, IndividualIds);
             Set<String> phonenumbers = callIndividualService(caseRequest.getRequestInfo(), IndividualIds);
-            SmsTemplateData smsTemplateData = enrichSmsTemplateData(caseRequest.getCases());
+            SmsTemplateData smsTemplateData = enrichSmsTemplateData(caseRequest.getCases(), profileEditorId);
             for (String number : phonenumbers) {
                 notificationService.sendNotification(caseRequest.getRequestInfo(), smsTemplateData, messageCode, number);
             }
@@ -662,13 +661,32 @@ public class CaseService {
 //        }
 //    }
 
-    private SmsTemplateData enrichSmsTemplateData(CourtCase cases) {
+    private SmsTemplateData enrichSmsTemplateData(CourtCase cases, String profileEditorId) {
         return SmsTemplateData.builder()
                 .courtCaseNumber(cases.getCourtCaseNumber())
                 .cnrNumber(cases.getCnrNumber())
                 .cmpNumber(cases.getCmpNumber())
                 .efilingNumber(cases.getFilingNumber())
+                .advocateName(profileEditorId != null ? extractProfileEditorName(profileEditorId, cases) : null)
                 .tenantId(cases.getTenantId()).build();
+    }
+
+    private String extractProfileEditorName(String profileEditorId, CourtCase cases) {
+        List<AdvocateMapping> advocateMappings = cases.getRepresentatives();
+        for (AdvocateMapping advocateMapping : advocateMappings) {
+            JsonNode additionalDetails = objectMapper.convertValue(advocateMapping.getAdditionalDetails(), JsonNode.class);
+            if (additionalDetails.get("uuid").asText().equals(profileEditorId)) {
+                return additionalDetails.get("advocateName").asText();
+            }
+        }
+        List<Party> litigants = cases.getLitigants();
+        for (Party litigant : litigants) {
+            JsonNode additionalDetails = objectMapper.convertValue(litigant.getAdditionalDetails(), JsonNode.class);
+            if (additionalDetails.get("uuid").asText().equals(profileEditorId)) {
+                return additionalDetails.get("fullName").asText();
+            }
+        }
+        return null;
     }
 
     private List<String> callIndividualService(RequestInfo requestInfo, List<String> individualIds) {
@@ -1141,6 +1159,9 @@ public class CaseService {
                     }
                 }
             }
+
+            joinCaseNotificationsForDirectJoinOfAdvocate(joinCaseRequest, courtCase);
+
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
@@ -1259,7 +1280,6 @@ public class CaseService {
                     enrichAndCallEvidenceCreate(courtCase, representingJoinCase, joinCaseRequest.getRequestInfo(),individualPartyMap.get(representingJoinCase.getIndividualId()).getPartyType());
                 }
 
-
                 courtCase.getRepresentatives().stream()
                         .filter(representative -> representative.getAdvocateId().equalsIgnoreCase(existingRepresentative.getAdvocateId()))
                         .findFirst()
@@ -1269,7 +1289,6 @@ public class CaseService {
                             }
                             representative.getRepresenting().add(party);
                         });
-
             });
             caseObj.setRepresentatives(List.of(existingRepresentative));
 
@@ -1321,7 +1340,6 @@ public class CaseService {
                 if (!isEvidenceAlreadyPresent) {
                     enrichAndCallEvidenceCreate(courtCase, representingJoinCase, joinCaseRequest.getRequestInfo(),individualPartyMap.get(representingJoinCase.getIndividualId()).getPartyType());
                 }
-
             });
             List<Advocate> advocatesList = advocateUtil.fetchAdvocatesById(joinCaseRequest.getRequestInfo(), joinCaseData.getRepresentative().getAdvocateId());
             Advocate joinCaseAdvocate = advocatesList.get(0);
@@ -1358,7 +1376,6 @@ public class CaseService {
 
             caseObj.setRepresentatives(List.of(representative));
 
-
             if(courtCase.getRepresentatives()==null){
                 courtCase.setRepresentatives(new ArrayList<>());
             }
@@ -1385,6 +1402,70 @@ public class CaseService {
         updateCourtCaseInRedis(joinCaseData.getTenantId(), encrptedCourtCase);
 
         publishToJoinCaseIndexer(joinCaseRequest.getRequestInfo(), encrptedCourtCase);
+    }
+
+    private void enrichAndCallEvidenceCreate(CourtCase courtCase, JoinCaseLitigant joinCaseLitigant, RequestInfo requestInfo) {
+        if (joinCaseLitigant.getDocuments() != null && !joinCaseLitigant.getDocuments().isEmpty()) {
+
+            Document document = objectMapper.convertValue(joinCaseLitigant.getDocuments().get(0), Document.class);
+            org.egov.common.contract.models.Document workflowDocument = objectMapper.convertValue(document, org.egov.common.contract.models.Document.class);
+
+            String sourceType = joinCaseLitigant.getPartyType().contains("complainant") ? "COMPLAINANT" : "ACCUSED";
+            String artifactType = joinCaseLitigant.getPartyType().contains("complainant") ? "COMPLAINANT_PIP_AFFIDAVIT" : "RESPONDENT_PIP_AFFIDAVIT";
+
+            WorkflowObject workflowObject = new WorkflowObject();
+            workflowObject.setAction("TYPE DEPOSITION");
+            workflowObject.setDocuments(Collections.singletonList(workflowDocument));
+
+            EvidenceRequest evidenceRequest = EvidenceRequest.builder().requestInfo(requestInfo)
+                    .artifact(Artifact.builder()
+                            .artifactType(artifactType)
+                            .sourceType(sourceType)
+                            .sourceID(joinCaseLitigant.getIndividualId())
+                            .filingType("CASE_FILING")
+                            .filingNumber(courtCase.getFilingNumber())
+                            .comments(new ArrayList<>())
+                            .isEvidence(false)
+                            .caseId(courtCase.getId().toString())
+                            .tenantId(courtCase.getTenantId())
+                            .file(document)
+                            .workflow(workflowObject)
+                            .build()).build();
+
+            evidenceUtil.createEvidence(evidenceRequest);
+        }
+    }
+
+    private void enrichAndCallEvidenceCreate(CourtCase courtCase, RepresentingJoinCase representingJoinCase, RequestInfo requestInfo,String partyType) {
+        if (representingJoinCase.getDocuments() != null && !representingJoinCase.getDocuments().isEmpty()) {
+
+            Document document = objectMapper.convertValue(representingJoinCase.getDocuments().get(0), Document.class);
+            org.egov.common.contract.models.Document workflowDocument = objectMapper.convertValue(document, org.egov.common.contract.models.Document.class);
+
+            String sourceType = partyType.contains("complainant") ? "COMPLAINANT" : "ACCUSED";
+
+            WorkflowObject workflowObject = new WorkflowObject();
+            workflowObject.setAction("TYPE DEPOSITION");
+            workflowObject.setDocuments(Collections.singletonList(workflowDocument));
+
+            EvidenceRequest evidenceRequest = EvidenceRequest.builder().requestInfo(requestInfo)
+                    .artifact(Artifact.builder()
+                            .artifactType(VAKALATNAMA_DOC)
+                            .sourceType(sourceType)
+                            .sourceID(representingJoinCase.getIndividualId())
+                            .filingType("CASE_FILING")
+                            .filingNumber(courtCase.getFilingNumber())
+                            .comments(new ArrayList<>())
+                            .isEvidence(false)
+                            .caseId(courtCase.getId().toString())
+                            .tenantId(courtCase.getTenantId())
+                            .file(document)
+                            .workflow(workflowObject)
+                            .build()).build();
+
+            evidenceUtil.createEvidence(evidenceRequest);
+
+        }
     }
 
     private Object modifyAdditionalDetails(RequestInfo requestInfo, Object additionalDetails, RepresentingJoinCase representingJoinCase, JoinCaseRepresentative joinCaseRepresentative) {
@@ -2000,7 +2081,7 @@ public class CaseService {
 
         List<Party> litigants = joinCaseData.getLitigant().stream()
                 .filter(litigant -> courtCase.getLitigants() == null || courtCase.getLitigants().stream()
-                        .noneMatch(existingLitigant -> existingLitigant.getIndividualId().equalsIgnoreCase(litigant.getIndividualId())))
+                                .noneMatch(existingLitigant -> existingLitigant.getIndividualId().equalsIgnoreCase(litigant.getIndividualId())))
                 .map(litigant -> {
                     Party party = new Party();
                     party.setTenantId(litigant.getTenantId());
@@ -2050,7 +2131,6 @@ public class CaseService {
                         courtCase.setLitigants(new ArrayList<>());
                     }
                     courtCase.getLitigants().add(party);
-
                     return party;
                 })
                 .collect(Collectors.toList());
@@ -2112,6 +2192,12 @@ public class CaseService {
 
                             if (dataNode.has("respondentLastName"))
                                 lastName = dataNode.get("respondentLastName").asText();
+
+                            // Concatenate with a space between names, ensuring no leading or trailing spaces
+                            String fullName = (firstName.isEmpty() ? "" : firstName) +
+                                    (middleName.isEmpty() ? "" : " " + middleName) +
+                                    (lastName.isEmpty() ? "" : " " + lastName);
+                            return fullName.trim();
 
                         } else {
                             firstName = individual.getName().getGivenName() == null ? "" : individual.getName().getGivenName();
@@ -3050,11 +3136,13 @@ public class CaseService {
             }
             courtCase = encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, request.getRequestInfo());
             JsonNode additionalDetails = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
+            String editorUuid = null;
             if (request.getProcessInfo().getAction().equals(ActionType.ACCEPT)) {
                 JsonNode profileRequests = additionalDetails.get("profileRequests");
                 String idToRemove = null;
                 for (JsonNode profile : profileRequests) {
                     if (profile.get("pendingTaskRefId").asText().equals(request.getProcessInfo().getPendingTaskRefId())) {
+                        editorUuid = profile.get("editorDetails").get("uuid").asText();
                         String partyType = profile.get("litigantDetails").get("partyType").asText();
                         String uniqueId = profile.get("litigantDetails").get("uniqueId").asText();
                         String detailsKey = partyType.equals("complainant") ? "complainantDetails" : "respondentDetails";
@@ -3094,6 +3182,7 @@ public class CaseService {
                 JsonNode profileRequests = additionalDetails.get("profileRequests");
                 for (JsonNode profile : profileRequests) {
                     if (profile.get("pendingTaskRefId").asText().equals(request.getProcessInfo().getPendingTaskRefId())) {
+                        editorUuid = profile.get("editorDetails").get("uuid").asText();
                         removeProfileRequest(profile.get("uuid").asText(), profileRequests);
                         ((ObjectNode) additionalDetails).set("profileRequests", objectMapper.convertValue(profileRequests, JsonNode.class));
                         courtCase.setAdditionalDetails(additionalDetails);
@@ -3101,7 +3190,7 @@ public class CaseService {
                     }
                 }
             }
-            sendProfileProcessNotification(request, courtCase);
+            sendProfileProcessNotification(request, courtCase, editorUuid);
 
             log.info("Encrypting case object with caseId: {}", courtCase.getId());
             courtCase = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncrypt(), CourtCase.class);
@@ -3177,17 +3266,15 @@ public class CaseService {
         return null;
     }
 
-    private void sendProfileProcessNotification(ProcessProfileRequest request, CourtCase courtCase) {
+    private void sendProfileProcessNotification(ProcessProfileRequest request, CourtCase courtCase, String editorUuid) {
         CaseRequest caseRequest = CaseRequest.builder()
                 .requestInfo(request.getRequestInfo())
                 .cases(courtCase)
                 .build();
-
-        //Todo: need to configure message code and template id for messages
         if (request.getProcessInfo().getAction().equals(ActionType.ACCEPT))
-            callNotificationService(caseRequest, ACCEPT_PROFILE_REQUEST);
+            callNotificationService(caseRequest, ACCEPT_PROFILE_REQUEST, editorUuid);
         else if (request.getProcessInfo().getAction().equals(ActionType.REJECT))
-            callNotificationService(caseRequest, REJECT_PROFILE_REQUEST);
+            callNotificationService(caseRequest, REJECT_PROFILE_REQUEST, editorUuid);
     }
 
     private void updateAdvocateRepresentation(CourtCase courtCase, String uniqueId, JsonNode additionalDetails, String detailsKey) {
@@ -3289,6 +3376,7 @@ public class CaseService {
 
     public void updateJoinCaseRejected(TaskRequest taskRequest) {
         try {
+
             //this method is used rejecting the request
             log.info("operation=updateJoinCaseRejected, status=IN_PROGRESS, pendingTaskId: {}", taskRequest);
 
@@ -3323,7 +3411,6 @@ public class CaseService {
                 updateCourtCaseInRedis(courtCase.getTenantId(), courtCase);
 
                 log.info("operation=updateJoinCaseRejected, status=SUCCESS, taskRequest: {}", taskRequest);
-
             }
         } catch (CustomException e) {
             log.error("CustomException occurred: {}", e.getMessage(), e);
@@ -3372,6 +3459,9 @@ public class CaseService {
                 updateCourtCaseObject(courtCase, joinCaseRequest, advocateUuid, requestInfo, pendingAdvocateRequest);
 
                 log.info("operation=updateJoinCaseApproved, status=SUCCESS, taskRequest: {}", taskRequest);
+
+                joinCaseNotificationsAfterApproval(joinCaseRequest, courtCase, requestInfo);
+
             }
         } catch (CustomException e) {
             log.error("CustomException occurred: {}", e.getMessage(), e);
@@ -3379,6 +3469,134 @@ public class CaseService {
         } catch (Exception e) {
             log.error("Unexpected error in updateJoinCaseRejected: {}", e.getMessage(), e);
             throw new CustomException("APPROVAL_REQUEST_ERROR", "An unexpected error occurred");
+        }
+
+    }
+
+    private void joinCaseNotificationsAfterApproval(JoinCaseTaskRequest joinCaseTaskRequest, CourtCase courtCase, RequestInfo requestInfo) {
+
+        try {
+
+            AdvocateDetails individualTryingToReplace = joinCaseTaskRequest.getAdvocateDetails();
+
+            IndividualDetails individualDetails = individualTryingToReplace.getIndividualDetails();
+
+            // send notification to the parties and advocates
+
+            Set<String> individualIdSet = joinCaseTaskRequest.getReplacementDetails().stream().map(ReplacementDetails::getLitigantDetails).map(LitigantDetails::getIndividualId).collect(Collectors.toSet());
+            Set<String> phoneNumbers = callIndividualService(requestInfo, individualIdSet);
+
+            List<String> nameParts = Stream.of(individualDetails.getFirstName(),
+                            individualDetails.getMiddleName(),
+                            individualDetails.getLastName())
+                    .filter(part -> part != null && !part.isEmpty())
+                    .toList();
+
+            String fullName = String.join(" ", nameParts);
+
+            SmsTemplateData smsTemplateData = SmsTemplateData.builder()
+                    .cmpNumber(courtCase.getCmpNumber())
+                    .efilingNumber(courtCase.getFilingNumber())
+                    .advocateName(fullName)
+                    .tenantId(courtCase.getTenantId()).build();
+            for (String number : phoneNumbers) {
+                notificationService.sendNotification(requestInfo, smsTemplateData, ADVOCATE_CASE_JOIN, number);
+            }
+
+            log.info("sending new advocate join sms to {} users", phoneNumbers.size());
+
+            // send sms to remaining users that a new user is joined
+
+            Set<String> individualIdSetOfRemainingUsers = getLitigantIndividualId(courtCase);
+
+            CaseRequest caseRequest = CaseRequest.builder().requestInfo(requestInfo).cases(courtCase).build();
+
+            getAdvocateIndividualId(caseRequest, individualIdSetOfRemainingUsers);
+
+            individualIdSetOfRemainingUsers.addAll(
+                    courtCase.getRepresentatives().stream()
+                            .flatMap(advocateMapping -> advocateMapping.getRepresenting().stream())
+                            .map(Party::getIndividualId)
+                            .collect(Collectors.toSet())
+            );
+
+            individualIdSetOfRemainingUsers.removeAll(individualIdSet);
+
+            Set<String> phoneNumbersOfRemainingUsers = callIndividualService(requestInfo, individualIdSetOfRemainingUsers);
+
+            log.info("sending new user join sms to {} users", phoneNumbersOfRemainingUsers.size());
+
+            for (String phoneNumber : phoneNumbersOfRemainingUsers) {
+                notificationService.sendNotification(requestInfo, smsTemplateData, NEW_USER_JOIN, phoneNumber);
+            }
+        } catch (Exception e) {
+            log.error("Error occurred while sending notification: {}", e.toString());
+        }
+
+
+    }
+
+    private void joinCaseNotificationsForDirectJoinOfAdvocate(JoinCaseV2Request joinCaseRequest, CourtCase courtCase) {
+
+        JoinCaseDataV2 joinCaseData = joinCaseRequest.getJoinCaseData();
+
+        Set<String> individualIdSet = null;
+
+
+        SmsTemplateData smsTemplateData = SmsTemplateData.builder()
+                .cmpNumber(courtCase.getCmpNumber())
+                .efilingNumber(courtCase.getFilingNumber())
+                .tenantId(courtCase.getTenantId()).build();
+
+        if (joinCaseData.getRepresentative() != null) {
+
+            // send advocate joined sms to respective advocate parties
+            individualIdSet = joinCaseData.getRepresentative().getRepresenting().stream().map(RepresentingJoinCase::getIndividualId).collect(Collectors.toSet());
+
+            Set<String> phoneNumbers = callIndividualService(joinCaseRequest.getRequestInfo(), individualIdSet);
+            String advocateId = joinCaseRequest.getJoinCaseData().getRepresentative().getAdvocateId();
+
+            Optional<AdvocateMapping> advocateMapping = courtCase.getRepresentatives().stream().filter(advocateMapping1 ->
+                    advocateMapping1.getAdvocateId().equalsIgnoreCase(advocateId)).findFirst();
+
+            LinkedHashMap advocate = null;
+
+            if (advocateMapping.isPresent()) {
+                advocate = ((LinkedHashMap) advocateMapping.get().getAdditionalDetails());
+            }
+
+            String advocateName = advocate != null ? advocate.get(ADVOCATE_NAME).toString() : "";
+
+            smsTemplateData.setAdvocateName(advocateName);
+
+            for (String number : phoneNumbers) {
+                notificationService.sendNotification(joinCaseRequest.getRequestInfo(), smsTemplateData, ADVOCATE_CASE_JOIN, number);
+            }
+        }
+
+        // send sms to remaining users that a new user is joined
+
+        Set<String> individualIdSetOfRemainingUsers = getLitigantIndividualId(courtCase);
+
+        CaseRequest caseRequest = CaseRequest.builder().requestInfo(joinCaseRequest.getRequestInfo()).cases(courtCase).build();
+
+        getAdvocateIndividualId(caseRequest, individualIdSetOfRemainingUsers);
+
+        individualIdSetOfRemainingUsers.addAll(
+                courtCase.getRepresentatives().stream()
+                        .flatMap(advocateMapping -> advocateMapping.getRepresenting().stream())
+                        .map(Party::getIndividualId)
+                        .collect(Collectors.toSet())
+        );
+
+        if (individualIdSet != null) {
+            individualIdSetOfRemainingUsers.removeAll(individualIdSet);
+        }
+
+        Set<String> phoneNumbersOfRemainingUsers = callIndividualService(joinCaseRequest.getRequestInfo(), individualIdSetOfRemainingUsers);
+
+        for (String phoneNumber : phoneNumbersOfRemainingUsers) {
+            notificationService.sendNotification(joinCaseRequest.getRequestInfo(), smsTemplateData, NEW_USER_JOIN, phoneNumber);
         }
 
     }
@@ -4008,9 +4226,7 @@ public class CaseService {
                         .build()).build();
     }
 
-
-
-    private void enrichHearingDetails(CourtCase courtCase,  ReplacementDetails replacementDetails, JoinCaseTaskRequest joinCaseTaskRequest, RequestInfo requestInfo) {
+    private void enrichHearingDetails(CourtCase courtCase, ReplacementDetails replacementDetails, JoinCaseTaskRequest joinCaseTaskRequest, RequestInfo requestInfo) {
 
         AdvocateDetails advocateTryingToJoinCase = joinCaseTaskRequest.getAdvocateDetails();
 
@@ -4073,69 +4289,6 @@ public class CaseService {
             }
 
             hearingUtil.updateTranscriptAdditionalAttendees(hearingRequest);
-        }
-    }
-
-    private void enrichAndCallEvidenceCreate(CourtCase courtCase, JoinCaseLitigant joinCaseLitigant, RequestInfo requestInfo) {
-        if (joinCaseLitigant.getDocuments() != null && !joinCaseLitigant.getDocuments().isEmpty()) {
-
-            Document document = objectMapper.convertValue(joinCaseLitigant.getDocuments().get(0), Document.class);
-            org.egov.common.contract.models.Document workflowDocument = objectMapper.convertValue(document, org.egov.common.contract.models.Document.class);
-
-            String sourceType = joinCaseLitigant.getPartyType().contains("complainant") ? "COMPLAINANT" : "ACCUSED";
-            String artifactType = joinCaseLitigant.getPartyType().contains("complainant") ? "COMPLAINANT_PIP_AFFIDAVIT" : "RESPONDENT_PIP_AFFIDAVIT";
-
-            WorkflowObject workflowObject = new WorkflowObject();
-            workflowObject.setAction("TYPE DEPOSITION");
-            workflowObject.setDocuments(Collections.singletonList(workflowDocument));
-
-            EvidenceRequest evidenceRequest = EvidenceRequest.builder().requestInfo(requestInfo)
-                    .artifact(Artifact.builder()
-                            .artifactType(artifactType)
-                            .sourceType(sourceType)
-                            .sourceID(joinCaseLitigant.getIndividualId())
-                            .filingType("CASE_FILING")
-                            .filingNumber(courtCase.getFilingNumber())
-                            .comments(new ArrayList<>())
-                            .isEvidence(false)
-                            .caseId(courtCase.getId().toString())
-                            .tenantId(courtCase.getTenantId())
-                            .file(document)
-                            .workflow(workflowObject)
-                            .build()).build();
-
-            evidenceUtil.createEvidence(evidenceRequest);
-        }
-    }
-
-    private void enrichAndCallEvidenceCreate(CourtCase courtCase, RepresentingJoinCase representingJoinCase, RequestInfo requestInfo,String partyType) {
-        if (representingJoinCase.getDocuments() != null && !representingJoinCase.getDocuments().isEmpty()) {
-
-            Document document = objectMapper.convertValue(representingJoinCase.getDocuments().get(0), Document.class);
-            org.egov.common.contract.models.Document workflowDocument = objectMapper.convertValue(document, org.egov.common.contract.models.Document.class);
-
-            String sourceType = partyType.contains("complainant") ? "COMPLAINANT" : "ACCUSED";
-
-            WorkflowObject workflowObject = new WorkflowObject();
-            workflowObject.setAction("TYPE DEPOSITION");
-            workflowObject.setDocuments(Collections.singletonList(workflowDocument));
-
-            EvidenceRequest evidenceRequest = EvidenceRequest.builder().requestInfo(requestInfo)
-                    .artifact(Artifact.builder()
-                            .artifactType(VAKALATNAMA_DOC)
-                            .sourceType(sourceType)
-                            .sourceID(representingJoinCase.getIndividualId())
-                            .filingType("CASE_FILING")
-                            .filingNumber(courtCase.getFilingNumber())
-                            .comments(new ArrayList<>())
-                            .isEvidence(false)
-                            .caseId(courtCase.getId().toString())
-                            .tenantId(courtCase.getTenantId())
-                            .file(document)
-                            .workflow(workflowObject)
-                            .build()).build();
-
-            evidenceUtil.createEvidence(evidenceRequest);
 
         }
     }
