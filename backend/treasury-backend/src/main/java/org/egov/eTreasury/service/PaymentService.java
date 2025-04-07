@@ -392,6 +392,7 @@ public class PaymentService {
     private CourtCase fetchCourtCase(DemandCreateRequest demandRequest) {
         return caseUtil.searchCaseDetails(CaseSearchRequest.builder()
                 .requestInfo(demandRequest.getRequestInfo())
+                .flow("flow_jac")
                 .criteria(List.of(CaseCriteria.builder()
                         .filingNumber(demandRequest.getFilingNumber())
                         .defaultFields(false)

@@ -21,6 +21,9 @@ public class CaseSearchRequest {
     @Valid
     private RequestInfo requestInfo = null;
 
+    @JsonProperty("flow")
+    private String flow = null;
+
     @JsonProperty("criteria")
     @Valid
     private List<CaseCriteria> criteria = new ArrayList<>();
