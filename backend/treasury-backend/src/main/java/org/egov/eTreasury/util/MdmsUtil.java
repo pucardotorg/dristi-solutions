@@ -6,6 +6,7 @@ import net.minidev.json.JSONArray;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.eTreasury.config.PaymentConfiguration;
 import org.egov.mdms.model.*;
+import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -40,13 +41,16 @@ public class MdmsUtil {
         StringBuilder uri = new StringBuilder();
         uri.append(configs.getMdmsHost()).append(configs.getMdmsSearchEndpoint());
         MdmsCriteriaReq mdmsCriteriaReq = getMdmsRequest(requestInfo, tenantId, moduleName, masterNameList);
+        log.info("Fetching mdms data for tenantId: {} and moduleName: {}", tenantId, moduleName);
         Object response = new HashMap<>();
         MdmsResponse mdmsResponse = new MdmsResponse();
         try {
             response = restTemplate.postForObject(uri.toString(), mdmsCriteriaReq, Map.class);
             mdmsResponse = mapper.convertValue(response, MdmsResponse.class);
+            log.info("Fetched mdms data for tenantId: {},  module: {}", tenantId, moduleName);
         } catch (Exception e) {
             log.error(ERROR_WHILE_FETCHING_FROM_MDMS, e);
+            throw new CustomException(ERROR_WHILE_FETCHING_FROM_MDMS, e.getMessage());
         }
 
         return mdmsResponse.getMdmsRes();
