@@ -130,7 +130,7 @@ public class PaymentUpdateService {
                 applicationRequest.setApplication(application);
                 applicationRequest.setRequestInfo(requestInfo);
 
-                if (PENDINGAPPROVAL.equalsIgnoreCase(application.getStatus())){
+                if (PENDINGAPPROVAL.equalsIgnoreCase(application.getStatus()) || PENDINGREVIEW.equalsIgnoreCase(application.getStatus())){
                     enrichment.enrichApplicationNumberByCMPNumber(applicationRequest);
                 }
 
