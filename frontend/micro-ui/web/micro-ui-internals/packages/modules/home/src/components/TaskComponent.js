@@ -44,6 +44,7 @@ const TasksComponent = ({
   compositeOrderObj,
   pendingSignOrderList,
 }) => {
+  const JoinCasePayment = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCasePayment"), []);
   const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
   const history = useHistory();
   const { t } = useTranslation();
@@ -60,8 +61,9 @@ const TasksComponent = ({
   const [responsePendingTask, setResponsePendingTask] = useState({});
   const [responseDoc, setResponseDoc] = useState({});
   const [isResponseApiCalled, setIsResponseApiCalled] = useState(false);
-  const [{ joinCaseConfirmModal, data }, setPendingTaskActionModals] = useState({
+  const [{ joinCaseConfirmModal, joinCasePaymentModal, data }, setPendingTaskActionModals] = useState({
     joinCaseConfirmModal: false,
+    joinCasePaymentModal: false,
     data: {},
   });
 
@@ -620,6 +622,37 @@ const TasksComponent = ({
     };
   }, [t, data, refetch, setPendingTaskActionModals]);
 
+  const joinCasePaymentConfig = useMemo(() => {
+    if (!data?.filingNumber || !data?.taskNumber) return null;
+    return {
+      handleClose: () => {
+        setPendingTaskActionModals((pendingTaskActionModals) => {
+          const data = pendingTaskActionModals?.data;
+          delete data.filingNumber;
+          delete data.taskNumber;
+          return {
+            ...pendingTaskActionModals,
+            joinCasePaymentModal: false,
+            data: data,
+          };
+        });
+      },
+      heading: {
+        label: t("PAY_TO_JOIN_CASE"),
+      },
+      isStepperModal: false,
+      modalBody: (
+        <JoinCasePayment
+          filingNumber={data?.filingNumber}
+          taskNumber={data?.taskNumber}
+          setPendingTaskActionModals={setPendingTaskActionModals}
+          refetch={refetch}
+        />
+      ),
+      hideModalActionbar: true,
+    };
+  }, [t, data, refetch, setPendingTaskActionModals]);
+
   const customStyles = `
   .digit-dropdown-select-wrap .digit-dropdown-options-card span {
     height:unset !important;
@@ -750,6 +783,7 @@ const TasksComponent = ({
 
       {(showSubmitResponseModal || joinCaseShowSubmitResponseModal) && <DocumentModal config={sumbitResponseConfig} />}
       {joinCaseConfirmModal && <DocumentModal config={joinCaseConfirmConfig} />}
+      {joinCasePaymentModal && <DocumentModal config={joinCasePaymentConfig} />}
     </div>
   );
 };
