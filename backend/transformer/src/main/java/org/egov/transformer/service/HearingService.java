@@ -56,7 +56,7 @@ public class HearingService {
     }
 
     @NotNull
-    private static OpenHearing getOpenHearing(Hearing hearing, CourtCase courtCase) {
+    private OpenHearing getOpenHearing(Hearing hearing, CourtCase courtCase) {
         OpenHearing openHearing = new OpenHearing();
         openHearing.setHearingUuid(hearing.getId().toString());
         openHearing.setHearingNumber(hearing.getHearingId());
@@ -74,7 +74,7 @@ public class HearingService {
         return openHearing;
     }
 
-    private static String enrichCaseNumber(Hearing hearing, CourtCase courtCase) {
+    private String enrichCaseNumber(Hearing hearing, CourtCase courtCase) {
         String caseRefNumber = hearing.getCaseReferenceNumber();
 
         if (caseRefNumber != null && !caseRefNumber.isEmpty()) {
