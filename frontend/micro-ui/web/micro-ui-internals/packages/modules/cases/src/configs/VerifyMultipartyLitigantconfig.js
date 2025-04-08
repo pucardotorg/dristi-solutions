@@ -59,6 +59,46 @@ export const VerifyMultipartyLitigantConfig = [
         populators: {},
       },
       {
+        key: "isVakalatnamaNew",
+        type: "radio",
+        label: "IS_VAKALATNAMA_NEW",
+        populators: {
+          name: "isVakalatnamaNew",
+          type: "radioButton",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          label: "IS_VAKALATNAMA_NEW",
+          options: [
+            {
+              code: "YES",
+              name: "YES",
+            },
+            {
+              code: "NO",
+              name: "NO",
+            },
+          ],
+          required: true,
+          optionsKey: "name",
+          isDependent: true,
+          isMandatory: true,
+        },
+        isMandatory: true,
+      },
+      {
+        type: "text",
+        label: "NUMBER_OF_ADVOCATES_FOR_THIS_VAKALATNAMA",
+        key: "noOfAdvocates",
+        populators: {
+          name: "noOfAdvocates",
+          error: "NUMBER_OF_ADVOCATES_FOR_THIS_VAKALATNAMA_ERROR",
+          validation: {
+            maxLength: 3,
+            patternType: "Number",
+          },
+        },
+        isMandatory: true,
+      },
+      {
         type: "component",
         component: "SelectCustomDragDrop",
         key: "vakalatnama",
