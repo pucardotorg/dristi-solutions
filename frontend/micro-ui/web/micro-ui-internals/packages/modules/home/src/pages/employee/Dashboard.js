@@ -48,22 +48,24 @@ const DashboardPage = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const autoLogin = useCallback(() => {
     if (isLoggedIn || stepper !== 1) return;
+    const iframe = document.querySelector("iframe");
+    if (iframe && iframe.contentDocument) {
+      const usernameField = iframe.contentDocument.querySelector(".euiFieldText");
+      const passwordField = iframe.contentDocument.querySelector(".euiFieldPassword");
+      const submitButton = iframe.contentDocument.querySelector(".euiButton");
 
-    const usernameField = document.getElementsByClassName("euiFieldText")[0];
-    const passwordField = document.getElementsByClassName("euiFieldPassword")[0];
-    const submitButton = document.getElementsByClassName("euiButton")[0];
+      if (usernameField && passwordField && submitButton) {
+        usernameField.value = "anonymous";
+        passwordField.value = "Beehyv@123";
+        submitButton.click();
 
-    if (usernameField && passwordField && submitButton) {
-      usernameField.value = "anonymous";
-      passwordField.value = "Beehyv@123";
-      submitButton.click();
-
-      setTimeout(() => {
-        const success = document.querySelector(".your-login-success-indicator");
-        setIsLoggedIn(Boolean(success));
-      }, 1000);
-    } else {
-      setIsLoggedIn(true);
+        setTimeout(() => {
+          const success = document.querySelector(".your-login-success-indicator");
+          setIsLoggedIn(Boolean(success));
+        }, 1000);
+      } else {
+        setIsLoggedIn(true);
+      }
     }
   }, [isLoggedIn, stepper]);
 
@@ -301,9 +303,9 @@ const DashboardPage = () => {
         </div>
 
         <div className={`main-content ${navbarCollapsed ? "collapsed" : ""}`}>
-          {stepper && stepper !== 0 && (
+          {!isNaN(stepper) && headingTxt?.trim() && (
             <div className="dashboardTopbar">
-              <h2 style={{ fontWeight: "bold", margin: "10px" }}>{t(headingTxt)} </h2>
+              <h2 style={{ fontWeight: "bold", margin: "10px" }}>{t(headingTxt)}</h2>
             </div>
           )}
 
