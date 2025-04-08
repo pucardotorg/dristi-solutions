@@ -62,7 +62,7 @@ public class HearingService {
         openHearing.setHearingNumber(hearing.getHearingId());
         openHearing.setFilingNumber(hearing.getFilingNumber().get(0));
         openHearing.setCaseTitle(courtCase.getCaseTitle());
-        openHearing.setCaseNumber(hearing.getCaseReferenceNumber());
+        openHearing.setCaseNumber(enrichCaseNumber(hearing, courtCase));
         openHearing.setStage(courtCase.getStage());
         openHearing.setSubStage(courtCase.getSubstage());
         openHearing.setCaseUuid(courtCase.getId().toString());
@@ -72,5 +72,18 @@ public class HearingService {
         openHearing.setToDate(hearing.getEndTime());
         openHearing.setCourtId(courtCase.getCourtId());
         return openHearing;
+    }
+
+    private static String enrichCaseNumber(Hearing hearing, CourtCase courtCase) {
+        String caseRefNumber = hearing.getCaseReferenceNumber();
+
+        if (caseRefNumber != null && !caseRefNumber.isEmpty()) {
+            return caseRefNumber;
+        }
+
+        String courtCaseNumber = courtCase.getCourtCaseNumber();
+        return (courtCaseNumber != null && !courtCaseNumber.isEmpty())
+                ? courtCaseNumber
+                : courtCase.getCmpNumber();
     }
 }
