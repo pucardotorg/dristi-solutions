@@ -48,10 +48,10 @@ const DashboardPage = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const autoLogin = useCallback(() => {
     if (isLoggedIn || stepper !== 1) return;
-
-    const usernameField = document.getElementsByClassName("euiFieldText")[0];
-    const passwordField = document.getElementsByClassName("euiFieldPassword")[0];
-    const submitButton = document.getElementsByClassName("euiButton")[0];
+    const iframe = document.querySelector("iframe");
+    const usernameField = iframe.contentDocument.querySelector(".euiFieldText");
+    const passwordField = iframe.contentDocument.querySelector(".euiFieldPassword");
+    const submitButton = iframe.contentDocument.querySelector(".euiButton");
 
     if (usernameField && passwordField && submitButton) {
       usernameField.value = "anonymous";
@@ -301,9 +301,9 @@ const DashboardPage = () => {
         </div>
 
         <div className={`main-content ${navbarCollapsed ? "collapsed" : ""}`}>
-          {stepper && stepper !== 0 && (
+          {!isNaN(stepper) && headingTxt?.trim() && (
             <div className="dashboardTopbar">
-              <h2 style={{ fontWeight: "bold", margin: "10px" }}>{t(headingTxt)} </h2>
+              <h2 style={{ fontWeight: "bold", margin: "10px" }}>{t(headingTxt)}</h2>
             </div>
           )}
 
