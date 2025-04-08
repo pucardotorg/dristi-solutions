@@ -49,21 +49,23 @@ const DashboardPage = () => {
   const autoLogin = useCallback(() => {
     if (isLoggedIn || stepper !== 1) return;
     const iframe = document.querySelector("iframe");
-    const usernameField = iframe.contentDocument.querySelector(".euiFieldText");
-    const passwordField = iframe.contentDocument.querySelector(".euiFieldPassword");
-    const submitButton = iframe.contentDocument.querySelector(".euiButton");
+    if (iframe && iframe.contentDocument) {
+      const usernameField = iframe.contentDocument.querySelector(".euiFieldText");
+      const passwordField = iframe.contentDocument.querySelector(".euiFieldPassword");
+      const submitButton = iframe.contentDocument.querySelector(".euiButton");
 
-    if (usernameField && passwordField && submitButton) {
-      usernameField.value = "anonymous";
-      passwordField.value = "Beehyv@123";
-      submitButton.click();
+      if (usernameField && passwordField && submitButton) {
+        usernameField.value = "anonymous";
+        passwordField.value = "Beehyv@123";
+        submitButton.click();
 
-      setTimeout(() => {
-        const success = document.querySelector(".your-login-success-indicator");
-        setIsLoggedIn(Boolean(success));
-      }, 1000);
-    } else {
-      setIsLoggedIn(true);
+        setTimeout(() => {
+          const success = document.querySelector(".your-login-success-indicator");
+          setIsLoggedIn(Boolean(success));
+        }, 1000);
+      } else {
+        setIsLoggedIn(true);
+      }
     }
   }, [isLoggedIn, stepper]);
 
