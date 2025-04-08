@@ -1119,7 +1119,7 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
                     ...successScreenData,
                     complainantAdvocateList: [
                       ...(successScreenData?.complainantAdvocateList || []),
-                      getFullName(" ", givenName, otherNames, familyName),
+                      ...(isAdvocateJoined ? [] : [getFullName(" ", givenName, otherNames, familyName)]),
                     ],
                   }));
                 } else {
@@ -1174,7 +1174,11 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
                   }
                 }
               }
-              setStep(step + 1);
+              if (res?.paymentTaskNumber) {
+                setStep(step + 1);
+              } else {
+                setStep(step + 2);
+              }
               setSuccess(true);
             } else {
               setErrors({
@@ -1190,6 +1194,12 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
         }
         setIsApiCalled(false);
       } else if (step === 4) {
+        const bill = await fetchBill(taskNumber + "_JOIN_CASE", tenantId, "task-payment");
+        const paymentStatus = await openPaymentPortal(bill, bill?.Bill?.[0]?.totalAmount);
+        if (!paymentStatus) {
+          setStep(step + 1);
+          setSuccess(true);
+        }
       }
     },
     [
@@ -1230,6 +1240,10 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
       parties,
       registerLitigants,
       advocateData?.id,
+      isAdvocateJoined,
+      fetchBill,
+      taskNumber,
+      openPaymentPortal,
     ]
   );
 

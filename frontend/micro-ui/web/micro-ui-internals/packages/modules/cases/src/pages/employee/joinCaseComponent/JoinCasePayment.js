@@ -42,52 +42,6 @@ const JoinCasePayment = ({ filingNumber, taskNumber, setPendingTaskActionModals,
 
   const task = useMemo(() => tasksData?.list?.[0], [tasksData]);
 
-  const updateReplaceAdvocateTask = useCallback(
-    async (action) => {
-      setIsApiCalled(true);
-      try {
-        const reqBody = {
-          task: {
-            ...task,
-            workflow: {
-              action: action,
-            },
-          },
-        };
-        await taskService.updateTask(reqBody, { tenantId });
-        setPendingTaskActionModals((pendingTaskActionModals) => {
-          const data = pendingTaskActionModals?.data;
-          delete data.filingNumber;
-          delete data.taskNumber;
-          return {
-            ...pendingTaskActionModals,
-            joinCaseConfirmModal: false,
-            data: data,
-          };
-        });
-        toast.success(t(action === "APPROVE" ? "ADVOCATE_REPLACEMENT_SUCCESS" : "ADVOCATE_REPLACEMENT_REJECTED"));
-        refetch();
-      } catch (error) {
-        console.error("Error updating task data:", error);
-        setPendingTaskActionModals((pendingTaskActionModals) => {
-          const data = pendingTaskActionModals?.data;
-          delete data.filingNumber;
-          delete data.taskNumber;
-          return {
-            ...pendingTaskActionModals,
-            joinCaseConfirmModal: false,
-            data: data,
-          };
-        });
-        toast.error(t("ADVOCATE_REPLACEMENT_ERROR"));
-        refetch();
-      } finally {
-        setIsApiCalled(false);
-      }
-    },
-    [task, tenantId, setPendingTaskActionModals, toast, t, refetch]
-  );
-
   const caseDetails = useMemo(
     () => ({
       ...caseData?.criteria?.[0]?.responseList?.[0],
@@ -212,9 +166,20 @@ const JoinCasePayment = ({ filingNumber, taskNumber, setPendingTaskActionModals,
             label={t("CS_PAY_ONLINE")}
             onSubmit={async () => {
               const bill = await fetchBill(taskNumber + "_JOIN_CASE", tenantId, "task-payment");
-              debugger;
               const paymentStatus = await openPaymentPortal(bill, bill?.Bill?.[0]?.totalAmount);
-              debugger;
+              if (paymentStatus) {
+                setPendingTaskActionModals((pendingTaskActionModals) => {
+                  const data = pendingTaskActionModals?.data;
+                  delete data.filingNumber;
+                  delete data.taskNumber;
+                  return {
+                    ...pendingTaskActionModals,
+                    joinCasePaymentModal: false,
+                    data: data,
+                  };
+                });
+              }
+              refetch();
             }}
             className="advocate-replacement-request-submit-button"
             isDisabled={isApiCalled}
