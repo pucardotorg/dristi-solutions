@@ -47,6 +47,9 @@ const DashboardPage = () => {
   };
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const autoLogin = useCallback(() => {
+    debugger;
+    console.log(stepper, "checking ", isLoggedIn);
+
     if (isLoggedIn || stepper !== 1) return;
     const iframe = document.querySelector("iframe");
     if (iframe && iframe.contentDocument) {
@@ -64,8 +67,12 @@ const DashboardPage = () => {
           setIsLoggedIn(Boolean(success));
         }, 1000);
       } else {
+        console.log("already logged in", usernameField, passwordField, submitButton);
+
         setIsLoggedIn(true);
       }
+    } else {
+      console.log(iframe, "iframe is null");
     }
   }, [isLoggedIn, stepper]);
 
