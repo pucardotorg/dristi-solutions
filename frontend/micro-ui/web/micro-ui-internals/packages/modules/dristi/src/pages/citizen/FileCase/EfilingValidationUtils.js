@@ -173,9 +173,15 @@ export const showToastForComplainant = ({ formData, setValue, selected, setSucce
     const formDataCopy = structuredClone(formData);
     const addressDet = formDataCopy?.complainantVerification?.individualDetails?.addressDetails;
     const addressDetSelect = formDataCopy?.complainantVerification?.individualDetails?.["addressDetails-select"];
+    const poaAddressDet = formDataCopy?.poaVerification?.individualDetails?.addressDetails;
+    const poaAddressDetSelect = formDataCopy?.poaVerification?.individualDetails?.["addressDetails-select"];
     if (!!addressDet && !!addressDetSelect) {
       setValue("addressDetails", { ...addressDet, typeOfAddress: formDataCopy?.addressDetails?.typeOfAddress });
       setValue("addressDetails-select", addressDetSelect);
+    }
+    if (!!poaAddressDet && !!poaAddressDetSelect) {
+      setValue("poaAddressDetails", { ...poaAddressDet, typeOfAddress: formDataCopy?.addressDetails?.typeOfAddress });
+      setValue("poaAddressDetails-select", poaAddressDetSelect);
     }
   }
 };
@@ -1060,12 +1066,15 @@ export const prayerAndSwornValidation = ({ t, formData, selected, setShowErrorTo
   }
 };
 
-export const createIndividualUser = async ({ data, documentData, tenantId }) => {
+export const createIndividualUser = async ({ data, documentData, tenantId, isComplainant = true }) => {
+  const complainantVerification = isComplainant ? data?.complainantVerification : data?.poaVerification;
   const identifierId = documentData
     ? documentData?.fileStore
       ? documentData?.fileStore
       : documentData?.file?.files?.[0]?.fileStoreId
-    : data?.complainantId?.complainantId;
+    : isComplainant
+    ? data?.complainantId?.complainantId
+    : data?.poaComplainantId?.poaComplainantId;
   const identifierIdDetails = documentData
     ? {
         fileStoreId: identifierId,
@@ -1073,18 +1082,22 @@ export const createIndividualUser = async ({ data, documentData, tenantId }) => 
         documentType: documentData?.fileType,
       }
     : {};
-  const identifierType = documentData ? data?.complainantId?.complainantId?.selectIdTypeType?.type : "AADHAR";
+  const identifierType = documentData
+    ? data?.complainantId?.complainantId
+      ? data?.complainantId?.complainantId?.selectIdTypeType?.type
+      : data?.poaComplainantId?.poaComplainantId?.selectIdTypeType?.type
+    : "AADHAR";
   let Individual = {
     Individual: {
       tenantId: tenantId,
       name: {
-        givenName: data?.firstName,
-        familyName: data?.lastName,
-        otherNames: data?.middleName,
+        givenName: isComplainant ? data?.firstName : data?.poaFirstName,
+        familyName: isComplainant ? data?.lastName : data?.poaLastName,
+        otherNames: isComplainant ? data?.middleName : data?.poaMiddleName,
       },
       // dateOfBirth: new Date(data?.dateOfBirth).getTime(),
       userDetails: {
-        username: data?.complainantVerification?.userDetails?.userName,
+        username: complainantVerification?.userDetails?.userName,
         roles: [
           {
             code: "CITIZEN",
@@ -1117,11 +1130,11 @@ export const createIndividualUser = async ({ data, documentData, tenantId }) => 
           })),
         ],
 
-        type: data?.complainantVerification?.userDetails?.type,
+        type: complainantVerification?.userDetails?.type,
       },
-      userUuid: data?.complainantVerification?.userDetails?.uuid,
-      userId: data?.complainantVerification?.userDetails?.id,
-      mobileNumber: data?.complainantVerification?.userDetails?.mobileNumber,
+      userUuid: complainantVerification?.userDetails?.uuid,
+      userId: complainantVerification?.userDetails?.id,
+      mobileNumber: complainantVerification?.userDetails?.mobileNumber,
       address: [
         {
           tenantId: tenantId,
@@ -1156,10 +1169,10 @@ export const createIndividualUser = async ({ data, documentData, tenantId }) => 
     },
   };
   const response = await window?.Digit.DRISTIService.postIndividualService(Individual, tenantId);
-  const refreshToken = window.localStorage.getItem(`temp-refresh-token-${data?.complainantVerification?.userDetails?.mobileNumber}`);
-  window.localStorage.removeItem(`temp-refresh-token-${data?.complainantVerification?.userDetails?.mobileNumber}`);
+  const refreshToken = window.localStorage.getItem(`temp-refresh-token-${complainantVerification?.userDetails?.mobileNumber}`);
+  window.localStorage.removeItem(`temp-refresh-token-${complainantVerification?.userDetails?.mobileNumber}`);
   if (refreshToken) {
-    await getUserDetails(refreshToken, data?.complainantVerification?.userDetails?.mobileNumber);
+    await getUserDetails(refreshToken, complainantVerification?.userDetails?.mobileNumber);
   }
   return response;
 };
@@ -1486,7 +1499,9 @@ export const updateCaseDetails = async ({
 
   if (selected === "complainantDetails") {
     let litigants = [];
+    let poaHolders = [];
     const complainantVerification = {};
+    const poaVerification = {};
     // check -in new flow, mltiple complainant forms are possible, so iscompleted logic has to be updated
     // and logic to update litigants also has to be changed.
     if (isCompleted === true) {
@@ -1704,6 +1719,189 @@ export const updateCaseDetails = async ({
             }
           })
       );
+
+      poaHolders = await Promise.all(
+        updatedFormData
+          .filter((item) => item.isenabled)
+          .map(async (data, index) => {
+            if (data?.data?.poaVerification?.individualDetails?.document) {
+              const Individual = await DRISTIService.searchIndividualUser(
+                {
+                  Individual: {
+                    individualId: data?.data?.poaVerification?.individualDetails?.individualId,
+                  },
+                },
+                { tenantId, limit: 1, offset: 0 }
+              );
+              const userUuid = Individual?.Individual?.[0]?.userUuid || "";
+
+              if (
+                scrutinyObj?.litigentDetails?.complainantDetails?.form?.some((item) =>
+                  item.hasOwnProperty("poaVerification.individualDetails.document")
+                )
+              ) {
+                // get filestore and update individual user. (but only for newly updated id proofs. if not updated, keep as it is)
+                if (data?.data?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[1]?.file) {
+                  const documentData = await onDocumentUpload(
+                    documentsTypeMapping["poaComplainantId"],
+                    data?.data?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[1]?.file,
+                    data?.data?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[0],
+                    tenantId
+                  );
+                  !!setFormDataValue &&
+                    setFormDataValue("poaVerification", {
+                      ...data?.data?.poaVerification,
+                      individualDetails: {
+                        ...data?.data?.poaVerification?.individualDetails,
+                        document: [
+                          {
+                            ...data?.data?.poaVerification?.individualDetails?.document?.[0],
+                            documentType: documentData.fileType || documentData?.documentType,
+                            fileStore: documentData.file?.files?.[0]?.fileStoreId || documentData?.fileStore,
+                            documentName: documentData.filename || documentData?.documentName,
+                            fileName: "ID Proof",
+                          },
+                        ],
+                      },
+                    });
+                  poaVerification[index] = {
+                    individualDetails: {
+                      ...data?.data?.poaVerification?.individualDetails,
+                      document: [
+                        {
+                          ...data?.data?.poaVerification?.individualDetails?.document?.[0],
+                          documentType: documentData.fileType || documentData?.documentType,
+                          fileStore: documentData.file?.files?.[0]?.fileStoreId || documentData?.fileStore,
+                          documentName: documentData.filename || documentData?.documentName,
+                          fileName: "ID Proof",
+                        },
+                      ],
+                    },
+                  };
+                  await updateIndividualUser({ data: data?.data, documentData, tenantId, individualData: Individual?.Individual?.[0] });
+                }
+              }
+              return {
+                tenantId,
+                caseId: caseDetails?.id,
+                individualId: data?.data?.poaVerification?.individualDetails?.individualId,
+                name: getFullName(" ", data?.data?.poaFirstName, data?.data?.poaMiddleName, data?.data?.poaLastName),
+                representing: [
+                  {
+                    individualId: data?.data?.complainantVerification?.individualDetails?.individualId,
+                    document: [
+                      // {
+                      //   documentType: documentData.fileType || documentData?.documentType,
+                      //   fileStore: documentData.file?.files?.[0]?.fileStoreId || documentData?.fileStore,
+                      //   documentName: documentData.filename || documentData?.documentName,
+                      //   fileName: "ID Proof",
+                      // },
+                    ],
+                  },
+                ],
+                additionalDetails: {
+                  uuid: userUuid ? userUuid : null,
+                },
+              };
+            } else {
+              if (data?.data?.poaComplainantId?.poaComplainantId && data?.data?.poaVerification?.isUserVerified) {
+                if (data?.data?.poaComplainantId?.verificationType !== "AADHAR") {
+                  const documentData = await onDocumentUpload(
+                    documentsTypeMapping["poaComplainantId"],
+                    data?.data?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[1]?.file,
+                    data?.data?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[0],
+                    tenantId
+                  );
+                  !!setFormDataValue &&
+                    setFormDataValue("poaVerification", {
+                      individualDetails: {
+                        document: [
+                          {
+                            documentType: documentData.fileType || documentData?.documentType,
+                            fileStore: documentData.file?.files?.[0]?.fileStoreId || documentData?.fileStore,
+                            documentName: documentData.filename || documentData?.documentName,
+                            fileName: "ID Proof",
+                          },
+                        ],
+                      },
+                    });
+                  const Individual = await createIndividualUser({ data: data?.data, documentData, tenantId, isComplainant: false });
+                  const addressLine1 = Individual?.Individual?.address[0]?.addressLine1 || "Telangana";
+                  const addressLine2 = Individual?.Individual?.address[0]?.addressLine2 || "Rangareddy";
+                  const buildingName = Individual?.Individual?.address[0]?.buildingName || "";
+                  const street = Individual?.Individual?.address[0]?.street || "";
+                  const city = Individual?.Individual?.address[0]?.city || "";
+                  const pincode = Individual?.Individual?.address[0]?.pincode || "";
+                  const latitude = Individual?.Individual?.address[0]?.latitude || "";
+                  const longitude = Individual?.Individual?.address[0]?.longitude || "";
+                  const doorNo = Individual?.Individual?.address[0]?.doorNo || "";
+                  const firstName = Individual?.Individual?.name?.givenName;
+                  const lastName = Individual?.Individual?.name?.familyName;
+                  const middleName = Individual?.Individual?.name?.otherNames;
+                  const userUuid = Individual?.Individual?.userUuid;
+
+                  const address = `${doorNo ? doorNo + "," : ""} ${buildingName ? buildingName + "," : ""} ${street}`.trim();
+
+                  poaVerification[index] = {
+                    individualDetails: {
+                      document: [
+                        {
+                          documentType: documentData.fileType || documentData?.documentType,
+                          fileStore: documentData.file?.files?.[0]?.fileStoreId || documentData?.fileStore,
+                          documentName: documentData.filename || documentData?.documentName,
+                          fileName: "ID Proof",
+                        },
+                      ],
+                      individualId: Individual?.Individual?.individualId,
+                      "addressDetails-select": {
+                        pincode: pincode,
+                        district: addressLine2,
+                        city: city,
+                        state: addressLine1,
+                        locality: address,
+                      },
+                      addressDetails: {
+                        pincode: pincode,
+                        district: addressLine2,
+                        city: city,
+                        state: addressLine1,
+                        coordinates: {
+                          longitude: longitude,
+                          latitude: latitude,
+                        },
+                        locality: address,
+                      },
+                    },
+                    userDetails: null,
+                  };
+                  return {
+                    tenantId,
+                    caseId: caseDetails?.id,
+                    individualId: Individual?.Individual?.individualId,
+                    name: getFullName(" ", firstName, middleName, lastName),
+                    representing: [
+                      {
+                        individualId: data?.data?.complainantVerification?.individualDetails?.individualId,
+                        document: [
+                          // {
+                          //   documentType: documentData.fileType || documentData?.documentType,
+                          //   fileStore: documentData.file?.files?.[0]?.fileStoreId || documentData?.fileStore,
+                          //   documentName: documentData.filename || documentData?.documentName,
+                          //   fileName: "ID Proof",
+                          // },
+                        ],
+                      },
+                    ],
+                    additionalDetails: {
+                      uuid: userUuid ? userUuid : null,
+                    },
+                  };
+                }
+              }
+              return {};
+            }
+          })
+      );
     }
 
     let docList = [];
@@ -1712,11 +1910,16 @@ export const updateCaseDetails = async ({
         .filter((item) => item.isenabled)
         .map(async (data, index) => {
           let updatedComplainantVerification = structuredClone(complainantVerification[index] || {});
+          let updatedPoaVerification = structuredClone(poaVerification[index] || {});
+
           let documentData = {
             companyDetailsUpload: null,
           };
           const idProof = {
             complainantId: { complainantId: { complainantId: {} } },
+          };
+          const poaIdProof = {
+            poaComplainantId: { poaComplainantId: { poaComplainantId: {} } },
           };
           const individualDetails = {};
           if (data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file) {
@@ -1796,7 +1999,13 @@ export const updateCaseDetails = async ({
                 ...updatedComplainantVerification,
                 isUserVerified: Boolean(data?.data?.complainantVerification?.mobileNumber && data?.data?.complainantVerification?.otpNumber),
               },
+              poaVerification: {
+                ...data?.data?.poaVerification,
+                ...updatedPoaVerification,
+                isUserVerified: Boolean(data?.data?.poaVerification?.mobileNumber && data?.data?.poaVerification?.otpNumber),
+              },
               ...(data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file && idProof),
+              ...(data?.data?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[1]?.file && poaIdProof),
             },
           };
         })

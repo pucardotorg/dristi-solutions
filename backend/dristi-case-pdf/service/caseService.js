@@ -906,6 +906,83 @@ async function searchCase(caseId, tenantId, requestinfo) {
   }
 }
 
+async function getComplainantPlaceholderList(caseDetails) {
+  const litigants = caseDetails?.litigants
+    ?.filter((litigant) => litigant.partyType.includes("complainant"))
+    ?.map((litigant) => ({
+      ...litigant,
+      poaHolder: caseDetails?.poaHolders?.find((poaHolder) =>
+        poaHolder?.representing?.some(
+          (complainant) => complainant?.individualId === litigant?.individualId
+        )
+      ),
+    }));
+
+  const poaHolders = caseDetails?.poaHolders?.map((poaHolder) => {
+    const representingWithLitigant = poaHolder?.representing.map((rep) => {
+      return {
+        ...litigants?.find((lit) => rep?.individualId === lit?.individualId),
+        ...rep,
+      };
+    });
+    return {
+      ...poaHolder,
+      representing: representingWithLitigant,
+    };
+  });
+
+  const placeholderArray = [];
+  const processedLitigantIds = new Set();
+
+  litigants?.forEach((litigant) => {
+    if (processedLitigantIds.has(litigant?.individualId)) {
+      placeholderArray.push({
+        index: litigant?.additionalDetails?.currentPosition,
+        placeholder: "",
+      });
+      return;
+    }
+
+    if (litigant?.poaHolder) {
+      const representedNames = litigant?.poaHolder?.representing
+        ?.map((rep) => rep?.additionalDetails?.fullName)
+        ?.filter(Boolean)
+        ?.join(", ");
+      placeholderArray.push({
+        index: litigant?.additionalDetails?.currentPosition,
+        placeholder: `${litigant?.poaHolder?.additionalDetails?.fullName} - PoA holder for ${representedNames}`,
+      });
+      litigant?.poaHolder?.representing?.forEach((rep) => {
+        processedLitigantIds.add(rep?.individualId);
+      });
+    } else {
+      const complainantPoaHolder = poaHolders?.find(
+        (poa) => poa?.individualId === litigant?.individualId
+      );
+      if (complainantPoaHolder) {
+        const representedNames = complainantPoaHolder?.representing
+          ?.map((rep) => rep?.additionalDetails?.fullName)
+          ?.filter(Boolean)
+          ?.join(", ");
+        placeholderArray.push({
+          index: litigant?.additionalDetails?.currentPosition,
+          placeholder: `${litigant?.additionalDetails?.fullName} - Complainant ${litigant?.additionalDetails?.currentPosition}, PoA holder for ${representedNames}`,
+        });
+        complainantPoaHolder?.representing?.forEach((rep) => {
+          processedLitigantIds.add(rep?.individualId);
+        });
+      } else {
+        placeholderArray.push({
+          index: litigant?.additionalDetails?.currentPosition,
+          placeholder: `${litigant?.additionalDetails?.fullName} - Complainant ${litigant?.additionalDetails?.currentPosition}`,
+        });
+        processedLitigantIds.add(litigant?.individualId);
+      }
+    }
+  });
+  return placeholderArray.sort((a, b) => a.index - b.index);
+}
+
 module.exports = {
   getCaseSectionNumber,
   formatDate,
@@ -932,4 +1009,5 @@ module.exports = {
   generateOptionalDocDescriptions,
   getWitnessDetailsForComplaint,
   searchCase,
+  getComplainantPlaceholderList,
 };

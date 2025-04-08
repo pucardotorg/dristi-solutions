@@ -25,7 +25,9 @@ exports.generateCasePdf = async (req, res, next) => {
       caseService.getComplainantsDetailsForComplaint(caseData);
     const accuseds = caseService.getRespondentsDetailsForComplaint(caseData);
     const advocates = caseService.getAdvocateDetailsForComplainant(caseData);
-    const prayer = await caseService.getPrayerSwornStatementDetails(caseData)?.[0]?.prayer;
+    const prayer = await caseService.getPrayerSwornStatementDetails(
+      caseData
+    )?.[0]?.prayer;
     const complaint =
       caseService.getPrayerSwornStatementDetails(caseData)?.[0]
         ?.memorandumOfComplaintText;
@@ -44,6 +46,7 @@ exports.generateCasePdf = async (req, res, next) => {
 
     const prayerSwornStatementDetails =
       caseService.getPrayerSwornStatementDetails(caseData);
+    const placeholderList = caseService.getComplainantPlaceholderList(caseData);
 
     const pdfRequest = {
       RequestInfo: requestInfo,
@@ -54,11 +57,12 @@ exports.generateCasePdf = async (req, res, next) => {
           filingNumber: filingNumber,
           complainantList: complainants,
           accusedList: accuseds,
-          prayer:prayer,
+          prayer: prayer,
           complaint: complaint,
           dateOfFiling: dateOfFiling,
           documentList: documentList,
           witnessScheduleList: witnessScheduleList,
+          placeholderList: placeholderList,
         },
       ],
     };
@@ -128,7 +132,9 @@ exports.caseComplaintPdf = async (req, res, next) => {
     const complainants =
       caseService.getComplainantsDetailsForComplaint(caseData);
     const accuseds = caseService.getRespondentsDetailsForComplaint(caseData);
-    const prayer = await caseService.getPrayerSwornStatementDetails(caseData)?.[0]?.prayer;
+    const prayer = await caseService.getPrayerSwornStatementDetails(
+      caseData
+    )?.[0]?.prayer;
     const complaint =
       caseService.getPrayerSwornStatementDetails(caseData)?.[0]
         ?.memorandumOfComplaintText;
@@ -138,6 +144,7 @@ exports.caseComplaintPdf = async (req, res, next) => {
     const documentList = caseService.getDocumentList(caseData);
     const witnessScheduleList =
       caseService.getWitnessDetailsForComplaint(caseData);
+    const placeholderList = caseService.getComplainantPlaceholderList(caseData);
 
     const pdfRequest = {
       RequestInfo: requestInfo,
@@ -153,6 +160,7 @@ exports.caseComplaintPdf = async (req, res, next) => {
           dateOfFiling: dateOfFiling,
           documentList: documentList,
           witnessScheduleList: witnessScheduleList,
+          placeholderList: placeholderList,
         },
       ],
     };

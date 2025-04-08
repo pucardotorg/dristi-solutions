@@ -252,16 +252,26 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
             firstName: givenName,
             lastName: familyName,
             middleName: otherNames,
-            complainantId: { complainantId: true },
+            complainantId: config?.key === "complainantVerification" ? { complainantId: true } : { poaComplainantId: true },
           };
 
-          ["addressDetails-select", "complainantId", "firstName", "lastName", "middleName"].forEach((key) => {
-            onSelect(
-              `${key}`,
-              typeof formData?.[key] === "object" && typeof key?.[key] === "object" ? { ...formData?.[key], ...data[key] } : data[key],
-              { shouldValidate: true }
-            );
-          });
+          if (config?.key === "complainantVerification") {
+            ["addressDetails-select", "complainantId", "firstName", "lastName", "middleName"].forEach((key) => {
+              onSelect(
+                `${key}`,
+                typeof formData?.[key] === "object" && typeof key?.[key] === "object" ? { ...formData?.[key], ...data[key] } : data[key],
+                { shouldValidate: true }
+              );
+            });
+          } else if (config?.key === "poaVerification") {
+            ["addressDetails-select", "complainantId", "firstName", "lastName", "middleName"].forEach((key) => {
+              onSelect(
+                `poa${key?.charAt(0)?.toUpperCase()}${key?.slice(1)}`,
+                typeof formData?.[key] === "object" && typeof key?.[key] === "object" ? { ...formData?.[key], ...data[key] } : data[key],
+                { shouldValidate: true }
+              );
+            });
+          }
           onSelect(
             config?.key,
             {

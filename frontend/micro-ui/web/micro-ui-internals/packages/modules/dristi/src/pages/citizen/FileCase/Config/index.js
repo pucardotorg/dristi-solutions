@@ -1,3 +1,5 @@
+import { newComplainantConfig } from "./newComplainantConfig";
+
 export const sideMenuConfig = [
   {
     isOpen: false,
@@ -11,16 +13,7 @@ export const sideMenuConfig = [
         checked: false,
         isCompleted: false,
         isDisabled: false,
-        pageConfig: [
-          {
-            moduleName: "commonUiConfig",
-            masterDetails: [
-              {
-                name: "complainantDetailsConfig",
-              },
-            ],
-          },
-        ],
+        pageConfig: newComplainantConfig,
         mandatoryFields: [
           "complainantType",
           "complainantId.complainantId",
