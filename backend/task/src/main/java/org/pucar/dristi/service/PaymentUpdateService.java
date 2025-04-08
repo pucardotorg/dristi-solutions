@@ -203,7 +203,7 @@ public class PaymentUpdateService {
 
                     // update remaining pending task of payment's of the advocate
 
-                    updatePaymentStatusOfRemainingPendingPaymentTasks(requestInfo, tenantId);
+                    updatePaymentStatusOfRemainingPendingPaymentTasks(requestInfo, tenantId, task.getFilingNumber());
 
                 }
             }
@@ -258,13 +258,14 @@ public class PaymentUpdateService {
 
     }
 
-    private void updatePaymentStatusOfRemainingPendingPaymentTasks(RequestInfo requestInfo, String tenantId) {
+    private void updatePaymentStatusOfRemainingPendingPaymentTasks(RequestInfo requestInfo, String tenantId, String filingNumber) {
 
         String advocateUuid = requestInfo.getUserInfo().getUuid();
 
         TaskCriteria criteria = TaskCriteria.builder()
                 .userUuid(advocateUuid)
                 .status(PENDING_PAYMENT)
+                .filingNumber(filingNumber)
                 .taskType(JOIN_CASE_PAYMENT)
                 .build();
 
