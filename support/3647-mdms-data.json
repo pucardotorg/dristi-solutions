@@ -92,5 +92,37 @@
         }
       }
     ]
+      },
+      {
+        "tenantId": "kl",
+        "masterName": "payment",
+        "moduleName": "paymentType",
+        "mdmsPayload": [
+          {
+            "id": "06449289-d95d-49fc-b3e2-798bbae5f982",
+            "tenantId": "kl",
+            "schemaCode": "payment.paymentType",
+            "uniqueIdentifier": "15",
+            "data": {
+              "id": 15,
+              "suffix": "JOIN_CASE",
+              "paymentType": "Join Case Advocate Fee",
+              "businessService": [
+                {
+                  "id": 1,
+                  "businessCode": "task-payment"
+                }
+              ],
+              "deliveryChannel": "Online"
+            },
+            "isActive": true,
+            "auditDetails": {
+              "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+              "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+              "createdTime": 1737981070085,
+              "lastModifiedTime": 1744103147166
+            }
+          }
+    ]
   }
 ]
