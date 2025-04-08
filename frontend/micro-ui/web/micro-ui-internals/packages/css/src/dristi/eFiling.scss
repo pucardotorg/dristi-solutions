@@ -1298,6 +1298,19 @@
   }
 }
 
+.join-case-modal-payment {
+  min-width: unset !important;
+  height: unset !important;
+  padding: unset !important;
+}
+
+.custom-modal-stepper-non-doc {
+  height: unset !important;
+  padding: unset !important;
+}
+
+.join-case-modal-payment,
+.custom-modal-stepper-non-doc,
 .e-filing-payment {
   min-width: 55%;
   width: 800px;

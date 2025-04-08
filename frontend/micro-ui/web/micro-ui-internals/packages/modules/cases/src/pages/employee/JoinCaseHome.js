@@ -121,15 +121,7 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
     return () => clearTimeout(timer);
   }, [showErrorToast]);
 
-  const { fetchBill, openPaymentPortal, paymentLoader, showPaymentModal, setShowPaymentModal } = usePaymentProcess({
-    tenantId,
-    consumerCode: taskNumber + `_JOIN_CASE`,
-    service: "task-payment",
-    path: "",
-    caseDetails,
-    totalAmount: 5,
-    scenario: "join-case",
-  });
+  const { fetchBill, openPaymentPortal } = usePaymentProcess({ tenantId });
 
   const searchCase = useCallback(
     async (caseNumber) => {
@@ -1194,12 +1186,18 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
         }
         setIsApiCalled(false);
       } else if (step === 4) {
-        const bill = await fetchBill(taskNumber + "_JOIN_CASE", tenantId, "task-payment");
-        const paymentStatus = await openPaymentPortal(bill, bill?.Bill?.[0]?.totalAmount);
-        if (paymentStatus) {
-          setStep(step + 1);
-          setSuccess(true);
+        setIsApiCalled(true);
+        try {
+          const bill = await fetchBill(taskNumber + "_JOIN_CASE", tenantId, "task-payment");
+          const paymentStatus = await openPaymentPortal(bill, bill?.Bill?.[0]?.totalAmount);
+          if (paymentStatus) {
+            setStep(step + 1);
+            setSuccess(true);
+          }
+        } catch (error) {
+          console.log("error", error);
         }
+        setIsApiCalled(false);
       }
     },
     [
@@ -1453,7 +1451,7 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
           actionSaveOnSubmit={onProceed}
           formId="modal-action"
           headerBarMain={<Heading label={step === 3 ? t("VERIFY_LITIGANT_DETAILS") : step === 4 ? t("PAY_TO_JOIN_CASE") : t("SEARCH_NEW_CASE")} />}
-          className={`join-a-case-modal ${success && "case-join-success"}`}
+          className={`join-a-case-modal${success ? " case-join-success" : ""}${step === 4 ? " join-case-modal-payment" : ""}`}
           isDisabled={isDisabled || isApiCalled}
           isBackButtonDisabled={step === 1 && !isVerified}
           popupStyles={{ width: "fit-content", userSelect: "none" }}
