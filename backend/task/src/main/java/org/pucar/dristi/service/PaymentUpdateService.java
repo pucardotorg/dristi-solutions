@@ -199,7 +199,7 @@ public class PaymentUpdateService {
                     task.setStatus(status);
 
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
-                    producer.push(config.getTaskUpdateTopic(), taskRequest);
+                    producer.push(config.getTaskJoinCaseUpdateTopic(), taskRequest);
 
                     // update remaining pending task of payment's of the advocate
 
