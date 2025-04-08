@@ -86,11 +86,11 @@ export const VerifyMultipartyLitigantConfig = [
       },
       {
         type: "text",
-        label: "HOW_MANY_VAKALATNAMA",
-        key: "numberOfVakalatnama",
+        label: "NUMBER_OF_ADVOCATES_FOR_THIS_VAKALATNAMA",
+        key: "noOfAdvocates",
         populators: {
-          name: "numberOfVakalatnama",
-          error: "NUMBER_OF_VAKALATNAMA_ERROR",
+          name: "noOfAdvocates",
+          error: "NUMBER_OF_ADVOCATES_FOR_THIS_VAKALATNAMA_ERROR",
           validation: {
             maxLength: 3,
             patternType: "Number",

@@ -40,7 +40,7 @@ const LitigantVerification = ({
       ...config,
       head: litigants?.some((litigant) => litigant?.isComplainant) ? t("COMPLAINANT_BASIC_DETAILS") : t("ACCUSED_BASIC_DETAILS"),
       body: config?.body
-        ?.filter((body) => (litigants?.[index]?.isVakalatnamaNew?.code === "NO" ? !["numberOfVakalatnama", "vakalatnama"].includes(body?.key) : true))
+        ?.filter((body) => (litigants?.[index]?.isVakalatnamaNew?.code === "NO" ? !["noOfAdvocates", "vakalatnama"].includes(body?.key) : true))
         ?.map((body) => {
           let tempBody = {
             ...body,
@@ -101,7 +101,16 @@ const LitigantVerification = ({
 
     const hasIsVakalatnamaNewChanged = selectedParty?.isVakalatnamaNew?.code !== formData?.isVakalatnamaNew?.code;
 
-    return hasBasicInfoChanged || hasPhoneNumberChanged || hasDocumentChanged || isDocumentNull || hasIsVakalatnamaNewChanged;
+    const hasNumberOfVakalatnamaChanged = selectedParty?.isVakalatnamaNew?.code === "YES" && selectedParty?.noOfAdvocates !== formData?.noOfAdvocates;
+
+    return (
+      hasBasicInfoChanged ||
+      hasPhoneNumberChanged ||
+      hasDocumentChanged ||
+      isDocumentNull ||
+      hasIsVakalatnamaNewChanged ||
+      hasNumberOfVakalatnamaChanged
+    );
   };
 
   useEffect(
@@ -110,7 +119,8 @@ const LitigantVerification = ({
         !litigants.every(
           (litigant) =>
             litigant?.phoneNumberVerification?.isUserVerified === true &&
-            (litigant?.isVakalatnamaNew?.code === "YES" ? litigant?.numberOfVakalatnama > 0 && litigant?.vakalatnama?.document?.length > 0 : true)
+            ((litigant?.isVakalatnamaNew?.code === "YES" && litigant?.noOfAdvocates > 0 && litigant?.vakalatnama?.document?.length > 0) ||
+              litigant?.isVakalatnamaNew?.code === "NO")
         )
       ),
     [litigants, setIsDisabled]
@@ -148,7 +158,7 @@ const LitigantVerification = ({
               }, 0);
             }
           }
-        } else if (key === "numberOfVakalatnama") {
+        } else if (key === "noOfAdvocates") {
           const value = formDataCopy[key];
           if (typeof value === "string") {
             const numValue = value.replace(/\D/g, "");
@@ -172,7 +182,7 @@ const LitigantVerification = ({
             ? {
                 ...item,
                 ...formData,
-                ...(formData?.isVakalatnamaNew?.code === "NO" && { numberOfVakalatnama: "", vakalatnama: null }),
+                ...(formData?.isVakalatnamaNew?.code === "NO" && { noOfAdvocates: "", vakalatnama: null }),
               }
             : item;
         })

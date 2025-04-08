@@ -5,6 +5,7 @@ import { default as EmployeeApp } from "./pages/employee";
 import CasesCard from "./components/CasesCard";
 import { overrideHooks, updateCustomConfigs } from "./utils";
 import JoinCaseHome from "./pages/employee/JoinCaseHome";
+import JoinCasePayment from "./pages/employee/joinCaseComponent/JoinCasePayment";
 
 export const CasesModule = ({ stateCode, userType, tenants }) => {
   const { path, url } = useRouteMatch();
@@ -28,6 +29,7 @@ const componentsToRegister = {
   CasesModule,
   CasesCard,
   JoinCaseHome,
+  JoinCasePayment,
 };
 
 export const initCasesComponents = () => {

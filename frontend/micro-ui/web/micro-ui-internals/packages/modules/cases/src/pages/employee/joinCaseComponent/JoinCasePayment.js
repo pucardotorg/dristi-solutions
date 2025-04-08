@@ -1,11 +1,135 @@
 import { InfoCard } from "@egovernments/digit-ui-components";
-import React from "react";
+import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
+import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/Toast/useToast";
+import { taskService } from "@egovernments/digit-ui-module-orders/src/hooks/services";
+import React, { useCallback, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import usePaymentProcess from "../../../../../home/src/hooks/usePaymentProcess";
 
-const JoinCasePayment = ({ t, paymentCalculation, totalAmount = "46546" }) => {
+const JoinCasePayment = ({ filingNumber, taskNumber, setPendingTaskActionModals, refetch, type }) => {
+  const { t } = useTranslation();
+
+  const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
+  const toast = useToast();
+  const [isApiCalled, setIsApiCalled] = useState(false);
+
+  const { data: caseData } = Digit.Hooks.dristi.useSearchCaseService(
+    {
+      criteria: [
+        {
+          filingNumber: filingNumber,
+        },
+      ],
+      tenantId,
+    },
+    {},
+    `case-details-${filingNumber}`,
+    filingNumber,
+    Boolean(filingNumber)
+  );
+
+  const { data: tasksData } = Digit.Hooks.hearings.useGetTaskList(
+    {
+      criteria: {
+        tenantId: tenantId,
+        taskNumber: taskNumber,
+      },
+    },
+    {},
+    taskNumber,
+    Boolean(taskNumber)
+  );
+
+  const task = useMemo(() => tasksData?.list?.[0], [tasksData]);
+
+  const updateReplaceAdvocateTask = useCallback(
+    async (action) => {
+      setIsApiCalled(true);
+      try {
+        const reqBody = {
+          task: {
+            ...task,
+            workflow: {
+              action: action,
+            },
+          },
+        };
+        await taskService.updateTask(reqBody, { tenantId });
+        setPendingTaskActionModals((pendingTaskActionModals) => {
+          const data = pendingTaskActionModals?.data;
+          delete data.filingNumber;
+          delete data.taskNumber;
+          return {
+            ...pendingTaskActionModals,
+            joinCaseConfirmModal: false,
+            data: data,
+          };
+        });
+        toast.success(t(action === "APPROVE" ? "ADVOCATE_REPLACEMENT_SUCCESS" : "ADVOCATE_REPLACEMENT_REJECTED"));
+        refetch();
+      } catch (error) {
+        console.error("Error updating task data:", error);
+        setPendingTaskActionModals((pendingTaskActionModals) => {
+          const data = pendingTaskActionModals?.data;
+          delete data.filingNumber;
+          delete data.taskNumber;
+          return {
+            ...pendingTaskActionModals,
+            joinCaseConfirmModal: false,
+            data: data,
+          };
+        });
+        toast.error(t("ADVOCATE_REPLACEMENT_ERROR"));
+        refetch();
+      } finally {
+        setIsApiCalled(false);
+      }
+    },
+    [task, tenantId, setPendingTaskActionModals, toast, t, refetch]
+  );
+
+  const caseDetails = useMemo(
+    () => ({
+      ...caseData?.criteria?.[0]?.responseList?.[0],
+    }),
+    [caseData]
+  );
+
+  const { paymentCalculation, totalAmount } = useMemo(() => {
+    if (!task) return { paymentCalculation: [], totalAmount: "0" };
+    const breakdown = task?.taskDetails?.paymentBreakdown || [];
+    const updatedCalculation = breakdown.map((item) => ({
+      key: item?.type,
+      value: item?.amount,
+      currency: "Rs",
+    }));
+
+    const totalAmount = updatedCalculation.reduce((sum, item) => sum + (item.value || 0), 0);
+
+    updatedCalculation.push({
+      key: "Total amount",
+      value: totalAmount,
+      currency: "Rs",
+      isTotalFee: true,
+    });
+
+    return { paymentCalculation: updatedCalculation, totalAmount };
+  }, [task]);
+
+  const { fetchBill, openPaymentPortal, paymentLoader, showPaymentModal, setShowPaymentModal } = usePaymentProcess({
+    tenantId,
+    consumerCode: taskNumber + `_JOIN_CASE`,
+    service: "task-payment",
+    path: "",
+    caseDetails,
+    totalAmount: totalAmount,
+    scenario: "join-case",
+  });
+
   return (
     <div
-      className="e-filing-payment payment-due-wrapper"
-      style={{ maxHeight: "550px", display: "flex", flexDirection: "column", margin: "13px 0px" }}
+      className="join-case-payment payment-due-wrapper"
+      style={{ maxHeight: "550px", display: "flex", flexDirection: "column", margin: "13px 0px", paddingLeft: "24px" }}
     >
       <InfoCard
         variant={"default"}
@@ -82,6 +206,21 @@ const JoinCasePayment = ({ t, paymentCalculation, totalAmount = "46546" }) => {
           className={"adhaar-verification-info-card"}
         />
       </div>
+      {type !== "join-case-flow" && (
+        <div className="advocate-replacement-request-footer" style={{ justifyContent: "flex-end", marginBottom: "0px" }}>
+          <ButtonSelector
+            label={t("CS_PAY_ONLINE")}
+            onSubmit={async () => {
+              const bill = await fetchBill(taskNumber + "_JOIN_CASE", tenantId, "task-payment");
+              debugger;
+              const paymentStatus = await openPaymentPortal(bill, bill?.Bill?.[0]?.totalAmount);
+              debugger;
+            }}
+            className="advocate-replacement-request-submit-button"
+            isDisabled={isApiCalled}
+          />
+        </div>
+      )}
     </div>
   );
 };

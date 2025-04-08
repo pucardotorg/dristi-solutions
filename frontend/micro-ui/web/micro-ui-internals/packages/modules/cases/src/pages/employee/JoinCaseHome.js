@@ -11,6 +11,7 @@ import SelectParty from "./joinCaseComponent/SelectParty";
 import JoinCasePayment from "./joinCaseComponent/JoinCasePayment";
 import JoinCaseSuccess from "./joinCaseComponent/JoinCaseSuccess";
 import LitigantVerification from "./joinCaseComponent/LitigantVerification";
+import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
 
 const CloseBtn = (props) => {
   return (
@@ -99,6 +100,7 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
   const [isLitigantJoined, setIsLitigantJoined] = useState(false);
   const [isAdvocateJoined, setIsAdvocateJoined] = useState(false);
   const [alreadyJoinedMobileNumber, setAlreadyJoinedMobileNumber] = useState([]);
+  const [taskNumber, setTaskNumber] = useState("");
 
   const [isVerified, setIsVerified] = useState(false);
 
@@ -118,6 +120,16 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
     }
     return () => clearTimeout(timer);
   }, [showErrorToast]);
+
+  const { fetchBill, openPaymentPortal, paymentLoader, showPaymentModal, setShowPaymentModal } = usePaymentProcess({
+    tenantId,
+    consumerCode: taskNumber + `_JOIN_CASE`,
+    service: "task-payment",
+    path: "",
+    caseDetails,
+    totalAmount: 5,
+    scenario: "join-case",
+  });
 
   const searchCase = useCallback(
     async (caseNumber) => {
@@ -1013,16 +1025,19 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
             ];
 
             const { givenName, otherNames, familyName } = individual?.name;
-            const documentToUploadApiCall = updatedParty?.map((user) =>
-              onDocumentUpload(user?.vakalatnama?.document?.[0], user?.vakalatnama?.document?.name, tenantId).then((uploadedData) => ({
-                ...user,
-                uploadedVakalatnama: {
-                  documentType: uploadedData.fileType || document?.documentType,
-                  fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
-                  fileName: "VAKALATNAMA",
-                },
-              }))
-            );
+            const documentToUploadApiCall = updatedParty?.map((user) => {
+              if (user?.isVakalatnamaNew?.code === "YES") {
+                return onDocumentUpload(user?.vakalatnama?.document?.[0], user?.vakalatnama?.document?.name, tenantId).then((uploadedData) => ({
+                  ...user,
+                  uploadedVakalatnama: {
+                    documentType: uploadedData.fileType || document?.documentType,
+                    fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
+                    fileName: "VAKALATNAMA",
+                  },
+                }));
+              }
+              return user;
+            });
 
             const documentUploadResult = await Promise.all(documentToUploadApiCall);
 
@@ -1078,13 +1093,17 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
                         ?.filter((advocateId) => Boolean(advocateId))
                         ?.filter((advocateId) => advocateId !== advocateData?.id),
                       isAlreadyPip: !isFound,
-                      documents: [
-                        {
-                          documentType: item?.uploadedVakalatnama?.documentType,
-                          fileStore: item?.uploadedVakalatnama?.fileStore,
-                          additionalDetails: { documentName: "VAKALATNAMA" },
-                        },
-                      ],
+                      isVakalathnamaAlreadyPresent: item?.isVakalatnamaNew?.code === "YES",
+                      ...(item?.isVakalatnamaNew?.code === "YES" && {
+                        noOfAdvocates: item?.noOfAdvocates,
+                        documents: [
+                          {
+                            documentType: item?.uploadedVakalatnama?.documentType,
+                            fileStore: item?.uploadedVakalatnama?.fileStore,
+                            additionalDetails: { documentName: "VAKALATNAMA" },
+                          },
+                        ],
+                      }),
                     };
                   }),
                 },
@@ -1093,6 +1112,7 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
             const [res] = await submitJoinCase(joinAdvocatePayloadNew);
 
             if (res) {
+              setTaskNumber(res?.paymentTaskNumber);
               if (selectPartyData?.isReplaceAdvocate?.value === "NO") {
                 if (documentUploadResult?.[0]?.isComplainant) {
                   setSuccessScreenData((successScreenData) => ({
@@ -1154,7 +1174,7 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
                   }
                 }
               }
-              setStep(step + 2);
+              setStep(step + 1);
               setSuccess(true);
             } else {
               setErrors({
@@ -1307,7 +1327,7 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
     },
     // 4
     {
-      modalMain: <JoinCasePayment t={t} paymentCalculation={paymentCalculation} totalAmount="9876465" />,
+      modalMain: <JoinCasePayment type="join-case-flow" filingNumber={caseDetails?.filingNumber} taskNumber={taskNumber} />,
     },
     // 5
     {
