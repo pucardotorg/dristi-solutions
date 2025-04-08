@@ -1278,7 +1278,7 @@ const SubmissionsCreate = ({ path }) => {
     service: entityType,
     path,
     caseDetails,
-    totalAmount: "2",
+    totalAmount: "20",
     scenario,
   });
 
@@ -1324,7 +1324,7 @@ const SubmissionsCreate = ({ path }) => {
     try {
       const bill = await fetchBill(applicationDetails?.applicationNumber + `_${suffix}`, tenantId, entityType);
       if (bill?.Bill?.length) {
-        const billPaymentStatus = await openPaymentPortal(bill);
+        const billPaymentStatus = await openPaymentPortal(bill, bill?.Bill?.totalAmount);
         setPaymentStatus(billPaymentStatus);
         await applicationRefetch();
         if (billPaymentStatus === true) {
