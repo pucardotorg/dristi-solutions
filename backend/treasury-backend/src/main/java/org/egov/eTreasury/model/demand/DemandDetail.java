@@ -1,15 +1,15 @@
-package org.pucar.dristi.web.models;
-
-import java.math.BigDecimal;
+package org.egov.eTreasury.model.demand;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Builder.Default;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.egov.common.contract.models.AuditDetails;
+
+import java.math.BigDecimal;
 
 /**
  * A object holds a demand and collection values for a tax head and period.
@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class DemandDetail   {
+public class DemandDetail {
 
         @JsonProperty("id")
         private String id;

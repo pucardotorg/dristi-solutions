@@ -4,6 +4,7 @@ import { useRouteMatch } from "react-router-dom";
 import { default as EmployeeApp } from "./pages/employee";
 import { overrideHooks, updateCustomConfigs } from "./utils";
 import HomeCard from "./components/HomeCard";
+import CustomDateRangePicker from "./components/CustomDateRangePicker";
 
 export const HomeModule = ({ stateCode, userType, tenants }) => {
   const { path, url } = useRouteMatch();
@@ -25,6 +26,7 @@ export const HomeModule = ({ stateCode, userType, tenants }) => {
 const componentsToRegister = {
   HomeModule,
   HomeCard,
+  CustomDateRangePicker,
 };
 
 export const initHomeComponents = () => {

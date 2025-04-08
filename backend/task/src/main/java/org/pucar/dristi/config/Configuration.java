@@ -110,11 +110,11 @@ public class Configuration {
     @Value("${egov.workflow.task.business.service.name}")
     private String taskBusinessServiceName;
 
-    @Value("${egov.workflow.task.payment.business.service.name}")
-    private String taskPaymentBusinessServiceName;
-
     @Value("${egov.workflow.task.payment.business.name}")
     private String taskPaymentBusinessName;
+
+    @Value("${egov.workflow.task.payment.business.service.name}")
+    private String taskPaymentBusinessServiceName;
 
     @Value("${egov.workflow.task.bail.business.name}")
     private String taskBailBusinessName;
@@ -241,4 +241,11 @@ public class Configuration {
 
     @Value("${egov.individual.search.path}")
     private String individualSearchEndpoint;
+
+    //Summon Service
+    @Value("${dristi.summon.host}")
+    private String summonHost;
+
+    @Value("${dristi.summon.send.summon.path}")
+    private String summonSendSummonPath;
 }

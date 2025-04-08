@@ -37,36 +37,35 @@
  *
  *   In case of any queries, you can reach eGovernments Foundation at contact@egovernments.org.
  */
-package org.pucar.dristi.web.models;
+package org.egov.eTreasury.model.demand;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.egov.common.contract.response.ResponseInfo;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.egov.common.contract.request.RequestInfo;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Builder.Default;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class DemandRequest {
+public class DemandResponse {
 
-	@NotNull
-	@JsonProperty("RequestInfo")
-	private RequestInfo requestInfo;
-	
-	@Valid
-	@NotNull
-	@Default
+	@JsonProperty("ResponseInfo")
+	private ResponseInfo responseInfo;
+
 	@JsonProperty("Demands")
 	private List<Demand> demands = new ArrayList<>();
+
+	@JsonProperty("CollectedReceipt")
+	private List<CollectedReceipt> collectedReceipts;
+	
+	public DemandResponse(ResponseInfo responseInfo, List<Demand> demands){
+		this.responseInfo=responseInfo;
+		this.demands=demands;
+	}
 }

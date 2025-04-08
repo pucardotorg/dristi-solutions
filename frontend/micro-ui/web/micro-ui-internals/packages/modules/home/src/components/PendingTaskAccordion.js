@@ -140,7 +140,7 @@ function PendingTaskAccordion({
                   return;
                 }
                 if (item?.status === "PENDING_SIGN" && item?.screenType === "Adiary") {
-                  history.push(`/${window.contextPath}/employee/home/adiary?date=${item?.params?.referenceId}`);
+                  history.push(`/${window.contextPath}/employee/home/dashboard/adiary?date=${item?.params?.referenceId}`);
                 } else if (item?.status === "PROFILE_EDIT_REQUEST") {
                   const caseId = item?.params?.caseId;
                   const referenceId = item?.referenceId;
