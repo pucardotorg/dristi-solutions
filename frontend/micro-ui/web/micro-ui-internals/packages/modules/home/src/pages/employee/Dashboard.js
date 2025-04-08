@@ -1,4 +1,4 @@
-import { Toast } from "@egovernments/digit-ui-react-components";
+import { Loader, Toast } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
@@ -22,7 +22,6 @@ const DashboardPage = () => {
   const [stepper, setStepper] = useState(Number(select) || 0);
   const [selectedRange, setSelectedRange] = useState({ startDate: getCurrentDate(), endDate: getCurrentDate() });
   const [downloadingIndices, setDownloadingIndices] = useState([]);
-  const [downloadTimers, setDownloadTimers] = useState({});
   const [navbarCollapsed, setNavbarCollapsed] = useState(false);
   const userInfo = Digit?.UserService?.getUser()?.info;
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
@@ -55,8 +54,8 @@ const DashboardPage = () => {
       const submitButton = iframeDoc?.querySelector(".euiButton");
 
       if (usernameField && passwordField && submitButton) {
-        usernameField.value = "anonymous";
-        passwordField.value = "Beehyv@123";
+        usernameField.value = process.env.KIBANA_USERNAME;
+        passwordField.value = process.env.KIBANA_PASSWORD;
         submitButton.click();
       } else {
         console.log("Already logged in or fields missing", iframeDoc, usernameField);
@@ -125,13 +124,21 @@ const DashboardPage = () => {
       },
     }
   );
-  const sortedDashboardJobIDs = Array.isArray(kibanaData?.dashboards) ? [...kibanaData?.dashboards].sort((a, b) => a.id - b.id) : [];
+  const sortedDashboards = useMemo(() => (Array.isArray(kibanaData?.dashboards) ? [...kibanaData?.dashboards].sort((a, b) => a.id - b.id) : []), [
+    kibanaData?.dashboards,
+  ]);
   const sortedReports = Array.isArray(kibanaData?.reports) ? [...kibanaData?.reports].sort((a, b) => a.id - b.id) : [];
+  useEffect(() => {
+    if (isNaN(stepper) && Array.isArray(sortedDashboards) && sortedDashboards.length > 0) {
+      const data = sortedDashboards[0];
+      setStepper(1);
+      setHeadingTxt(data.code + "_HEADING");
+      setJobID(data.jobId);
+    }
+  }, [sortedDashboards, stepper]);
   const handleDownload = async (downloadLink, index) => {
     setDownloadingIndices((prev) => [...prev, index]);
-    setDownloadTimers((prev) => ({ ...prev, [index]: 0 }));
-
-    const credentials = btoa(`${"anonymous"}:${"Beehyv@123"}`);
+    const credentials = btoa(`${process.env.KIBANA_USERNAME}:${process.env.KIBANA_PASSWORD}`);
     const config = {
       headers: {
         "kbn-xsrf": "",
@@ -150,35 +157,19 @@ const DashboardPage = () => {
 
     try {
       const response = await axios.post(downloadLink, null, config);
-
       if (!response.data?.path) {
         showToast("error", t("ERR_REPORT_PATH"), 50000);
         console.error("Report path not found in the response");
         setDownloadingIndices((prev) => prev.filter((i) => i !== index));
-        setDownloadTimers((prev) => {
-          const newTimers = { ...prev };
-          delete newTimers[index];
-          return newTimers;
-        });
         return;
       }
-
       const reportUrl = `${baseUrl}${response.data.path}`;
-
-      timer = setInterval(() => {
-        setDownloadTimers((prev) => {
-          const newTime = (prev[index] || 0) + 1;
-          return { ...prev, [index]: newTime };
-        });
-      }, 1000);
-
       const tryDownload = async () => {
         try {
           const csvResponse = await axios.get(reportUrl, {
             ...config,
             responseType: "blob",
           });
-
           if (csvResponse.status === 200 && csvResponse.data.size > 0) {
             clearInterval(pollTimer);
             clearInterval(timer);
@@ -194,11 +185,6 @@ const DashboardPage = () => {
             window.URL.revokeObjectURL(url);
 
             setDownloadingIndices((prev) => prev.filter((i) => i !== index));
-            setDownloadTimers((prev) => {
-              const newTimers = { ...prev };
-              delete newTimers[index];
-              return newTimers;
-            });
           }
         } catch (err) {
           attemptCount++;
@@ -210,11 +196,6 @@ const DashboardPage = () => {
             console.error("Report not ready after max attempts");
 
             setDownloadingIndices((prev) => prev.filter((i) => i !== index));
-            setDownloadTimers((prev) => {
-              const newTimers = { ...prev };
-              delete newTimers[index];
-              return newTimers;
-            });
           } else {
             console.log(`Attempt ${attemptCount}: Report not ready yet.`);
           }
@@ -226,11 +207,6 @@ const DashboardPage = () => {
       showToast("error", t("ERR_REPORT_DOWNLOAD"), 50000);
       console.error("Error generating or downloading report:", error);
       setDownloadingIndices((prev) => prev.filter((i) => i !== index));
-      setDownloadTimers((prev) => {
-        const newTimers = { ...prev };
-        delete newTimers[index];
-        return newTimers;
-      });
     }
   };
 
@@ -278,8 +254,8 @@ const DashboardPage = () => {
         <div className={`dashboardSidebar ${navbarCollapsed ? "collapsed" : ""}`}>
           <div className="sidebar-nav">
             <React.Fragment>
-              {Array.isArray(sortedDashboardJobIDs) &&
-                sortedDashboardJobIDs.map((data) => {
+              {Array.isArray(sortedDashboards) &&
+                sortedDashboards.map((data) => {
                   const isActive = stepper === 1 && jobId === data.jobId;
                   return (
                     <button
@@ -348,20 +324,16 @@ const DashboardPage = () => {
                       <span>{t("A_DIARY_REGISTER")}</span>
                     </div>
                     {sortedReports.map((option, index) => (
-                      <div key={index} className="download-report">
+                      <div
+                        key={index}
+                        className="download-report"
+                        onClick={() => {
+                          !downloadingIndices.includes(index) && handleDownload(option?.url, index);
+                        }}
+                      >
                         <span>{option.code}</span>
-                        <button
-                          onClick={() => handleDownload(option?.url, index)}
-                          disabled={downloadingIndices.includes(index)}
-                          style={{ display: "flex", alignItems: "center", gap: "5px" }}
-                        >
-                          {downloadingIndices.includes(index) ? (
-                            <div style={{ display: "flex" }}>
-                              {t("REPORT_DOWNLOAD_TXT")} {downloadTimers[index]}s
-                            </div>
-                          ) : (
-                            <DownloadIcon />
-                          )}
+                        <button disabled={downloadingIndices.includes(index)} style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                          {downloadingIndices.includes(index) ? <Loader /> : <DownloadIcon />}
                         </button>
                       </div>
                     ))}
