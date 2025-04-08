@@ -1,5 +1,6 @@
 package org.egov.eTreasury.enrichment;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -44,7 +45,7 @@ public class TreasuryEnrichment {
         this.demandUtil = demandUtil;
     }
 
-    public ChallanDetails generateChallanDetails(ChallanData challanData, RequestInfo requestInfo) {
+    public ChallanDetails generateChallanDetails(ChallanData challanData, RequestInfo requestInfo) throws JsonProcessingException {
 
 
         String departmentId = config.getTreasuryIdPrefix() + idgenUtil.getIdList(requestInfo,config.getEgovStateTenantId(),config.getIdName(),null,1).get(0);
@@ -63,8 +64,8 @@ public class TreasuryEnrichment {
         JsonNode tsbAccountToHead = objectMapper.convertValue(tsbMasterData.get("tsbAccountToHead"), JsonNode.class);
 
         String consumerCode = demandUtil.searchBill(challanData.getBillId(), requestInfo);
-        TreasuryMapping treasuryMapping = repository.getTreasuryMapping(consumerCode);
-        JsonNode headAmountMapping = objectMapper.convertValue(treasuryMapping.getHeadAmountMapping(), JsonNode.class);
+        TreasuryMapping treasuryMapping = repository.getTreasuryMapping("KL-001218-2025-TK2_JOIN_CASE");
+        JsonNode headAmountMapping = objectMapper.readTree(treasuryMapping.getHeadAmountMapping().toString());
         List<HeadDetails> headDetailsList = new ArrayList<>();
 
         for(JsonNode headAmount : headAmountMapping.get("breakUpList")) {
