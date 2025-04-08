@@ -533,28 +533,23 @@ const SubmissionsCreate = ({ path }) => {
   );
   const latestExtensionOrder = useMemo(() => extensionOrders?.[0], [extensionOrders]);
 
-  const { entityType, taxHeadMasterCode } = useMemo(() => {
+  const { entityType } = useMemo(() => {
     const isResponseRequired = isComposite
       ? compositeMandatorySubmissionItem?.orderSchema?.orderDetails?.isResponseRequired?.code === true
       : orderDetails?.orderDetails?.isResponseRequired?.code === true;
     if ((orderNumber || orderRefNumber) && referenceId) {
       return {
         entityType: isResponseRequired ? "application-order-submission-feedback" : "application-order-submission-default",
-        taxHeadMasterCode: isResponseRequired
-          ? "APPLICATION_ORDER_SUBMISSION_FEEDBACK_ADVANCE_CARRYFORWARD"
-          : "APPLICATION_ORDER_SUBMISSION_DEFAULT_ADVANCE_CARRY_FORWARD",
       };
     }
     // need Specific for request for bail
     if (applicationType === "REQUEST_FOR_BAIL") {
       return {
         entityType: "voluntary-application-submission-bail",
-        taxHeadMasterCode: "APPLICATION_VOLUNTARY_BAIL_SUBMISSION_ADVANCE_CARRY_FORWARD",
       };
     }
     return {
       entityType: "application-voluntary-submission",
-      taxHeadMasterCode: "APPLICATION_VOLUNTARY_SUBMISSION_ADVANCE_CARRY_FORWARD",
     };
   }, [applicationType, orderDetails, orderNumber, orderRefNumber, referenceId, isComposite, compositeMandatorySubmissionItem]);
 
@@ -1305,29 +1300,42 @@ const SubmissionsCreate = ({ path }) => {
 
   const createDemand = async () => {
     if (billResponse?.Bill?.length === 0) {
-      const taxPeriod = getTaxPeriodByBusinessService(taxPeriodData, entityType);
-      await DRISTIService.createDemand({
-        Demands: [
+      // const taxPeriod = getTaxPeriodByBusinessService(taxPeriodData, entityType);
+      // await DRISTIService.createDemand({
+      //   Demands: [
+      //     {
+      //       tenantId,
+      //       consumerCode: applicationDetails?.applicationNumber + `_${suffix}`,
+      //       consumerType: entityType,
+      //       businessService: entityType,
+      //       taxPeriodFrom: taxPeriod?.fromDate,
+      //       taxPeriodTo: taxPeriod?.toDate,
+      //       demandDetails: [
+      //         {
+      //           taxHeadMasterCode: taxHeadMasterCode,
+      //           taxAmount: 20,
+      //           collectionAmount: 0,
+      //         },
+      //       ],
+      //       additionalDetails: {
+      //         filingNumber: caseDetails?.filingNumber,
+      //         cnrNumber: caseDetails?.cnrNumber,
+      //         payer: caseDetails?.litigants?.[0]?.additionalDetails?.fullName,
+      //         payerMobileNo: caseDetails?.additionalDetails?.payerMobileNo,
+      //       },
+      //     },
+      //   ],
+      // });
+      await DRISTIService.etreasuryCreateDemand({
+        tenantId,
+        entityType,
+        filingNumber: caseDetails?.filingNumber,
+        consumerCode: applicationDetails?.applicationNumber + `_${suffix}`,
+        calculation: [
           {
-            tenantId,
-            consumerCode: applicationDetails?.applicationNumber + `_${suffix}`,
-            consumerType: entityType,
-            businessService: entityType,
-            taxPeriodFrom: taxPeriod?.fromDate,
-            taxPeriodTo: taxPeriod?.toDate,
-            demandDetails: [
-              {
-                taxHeadMasterCode: taxHeadMasterCode,
-                taxAmount: 20,
-                collectionAmount: 0,
-              },
-            ],
-            additionalDetails: {
-              filingNumber: caseDetails?.filingNumber,
-              cnrNumber: caseDetails?.cnrNumber,
-              payer: caseDetails?.litigants?.[0]?.additionalDetails?.fullName,
-              payerMobileNo: caseDetails?.additionalDetails?.payerMobileNo,
-            },
+            tenantId: tenantId,
+            totalAmount: 20,
+            breakDown: [],
           },
         ],
       });

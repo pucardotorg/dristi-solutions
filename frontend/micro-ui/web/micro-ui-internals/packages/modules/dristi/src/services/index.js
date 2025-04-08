@@ -431,4 +431,12 @@ export const DRISTIService = {
       data,
       params,
     }),
+  etreasuryCreateDemand: (data, params) =>
+    Request({
+      url: Urls.dristi.etreasuryCreateDemand,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
 };
