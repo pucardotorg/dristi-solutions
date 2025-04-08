@@ -11,6 +11,7 @@ import static org.pucar.dristi.config.ServiceConstants.*;
 import java.util.*;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
@@ -1075,6 +1076,24 @@ public class CaseServiceTest {
         assertEquals(JOIN_CASE_ERR, exception.getCode());
         assertEquals(JOIN_CASE_CODE_INVALID_REQUEST, exception.getMessage());
         verify(caseRepository, times(1)).getCases(any(), any());
+    }
+
+    @Test
+    void testExtractPowerOfAttorneyIds_IndividualId() {
+
+        POAHolders poaHolders = new POAHolders();
+        poaHolders.setIndividualId("IND-123");
+        CourtCase courtCase = new CourtCase();
+
+        courtCase.setPoaHolders(Collections.singletonList(poaHolders));
+
+        Set<String> individualIds = new HashSet<>();
+        individualIds.add("IND-123");
+        Set<String> result = caseService.getPocHolderIndividualIdsOfLitigants(courtCase, individualIds);
+
+        assertFalse(result.isEmpty());
+        assertEquals(1, result.size());
+        assertTrue(result.contains("IND-123"));
     }
 
 }

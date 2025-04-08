@@ -582,6 +582,7 @@ public class CaseService {
             CourtCase courtCase = caseRequest.getCases();
             Set<String> IndividualIds = getLitigantIndividualId(courtCase);
             getAdvocateIndividualId(caseRequest, IndividualIds);
+            getPocHolderIndividualIds(caseRequest, IndividualIds);
             Set<String> phonenumbers = callIndividualService(caseRequest.getRequestInfo(), IndividualIds);
             SmsTemplateData smsTemplateData = enrichSmsTemplateData(caseRequest.getCases(), profileEditorId);
             for (String number : phonenumbers) {
@@ -591,6 +592,36 @@ public class CaseService {
             // Log the exception and continue the execution without throwing
             log.error("Error occurred while sending notification: {}", e.toString());
         }
+    }
+
+    private void getPocHolderIndividualIds(CaseRequest caseRequest, Set<String> individualIds) {
+        Set<String> pocHolderId = new HashSet<>();
+        CourtCase courtCase = caseRequest.getCases();
+        if (courtCase.getPoaHolders() != null) {
+            pocHolderId.addAll(
+                    courtCase.getPoaHolders().stream()
+                            .filter(POAHolders::getIsActive)
+                            .map(POAHolders::getIndividualId)
+                            .collect(Collectors.toSet())
+            );
+        }
+        individualIds.addAll(pocHolderId);
+    }
+
+    public Set<String> getPocHolderIndividualIdsOfLitigants(CourtCase courtCase, Set<String> individualIds) {
+        // get poa holders of litigants
+        if (courtCase.getPoaHolders() != null) {
+            Set<String> matchingPocHolderIds = courtCase.getPoaHolders().stream()
+                    .filter(poa -> Boolean.TRUE.equals(poa.getIsActive()))
+                    .filter(poa -> poa.getRepresentingLitigants() != null &&
+                            poa.getRepresentingLitigants().stream()
+                                    .map(Party::getIndividualId)
+                                    .anyMatch(individualIds::contains))
+                    .map(POAHolders::getIndividualId)
+                    .collect(Collectors.toSet());
+            individualIds.addAll(matchingPocHolderIds);
+        }
+        return individualIds;
     }
 
     private void getAdvocateIndividualId(CaseRequest caseRequest, Set<String> individualIds) {
@@ -3160,6 +3191,7 @@ public class CaseService {
                 .cases(courtCase)
                 .build();
         getAdvocateIndividualId(caseRequest, litigantAndAdvocateIndividualId);
+        getPocHolderIndividualIds(caseRequest, litigantAndAdvocateIndividualId);
         Set<String> phoneNumbers = callIndividualService(requestInfo, litigantAndAdvocateIndividualId);
         for (String number : phoneNumbers) {
             notificationService.sendNotification(caseRequest.getRequestInfo(), smsTemplateData, NEW_WITNESS_ADDED_SMS_FOR_OTHERS, number);
@@ -3529,6 +3561,8 @@ public class CaseService {
             // send notification to the parties and advocates
 
             Set<String> individualIdSet = joinCaseTaskRequest.getReplacementDetails().stream().map(ReplacementDetails::getLitigantDetails).map(LitigantDetails::getIndividualId).collect(Collectors.toSet());
+            Set<String> individualIdSetOfPoaHoldersOfLitigants = getPocHolderIndividualIdsOfLitigants(courtCase, individualIdSet);
+            individualIdSet.addAll(individualIdSetOfPoaHoldersOfLitigants);
             Set<String> phoneNumbers = callIndividualService(requestInfo, individualIdSet);
 
             List<String> nameParts = Stream.of(individualDetails.getFirstName(),
@@ -3597,6 +3631,9 @@ public class CaseService {
 
             // send advocate joined sms to respective advocate parties
             individualIdSet = joinCaseData.getRepresentative().getRepresenting().stream().map(RepresentingJoinCase::getIndividualId).collect(Collectors.toSet());
+
+            Set<String> individualIdSetOfPoaHoldersOfLitigants = getPocHolderIndividualIdsOfLitigants(courtCase, individualIdSet);
+            individualIdSet.addAll(individualIdSetOfPoaHoldersOfLitigants);
 
             Set<String> phoneNumbers = callIndividualService(joinCaseRequest.getRequestInfo(), individualIdSet);
             String advocateId = joinCaseRequest.getJoinCaseData().getRepresentative().getAdvocateId();

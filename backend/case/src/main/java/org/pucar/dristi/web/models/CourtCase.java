@@ -145,6 +145,10 @@ public class CourtCase {
 	//@Size(min = 2) //FIX
 	private List<Party> litigants = new ArrayList<>();
 
+	@JsonProperty("poaHolders")
+	@Valid
+	private List<POAHolders> poaHolders = null;
+
 	@JsonProperty("representatives")
 	@Valid
 	private List<AdvocateMapping> representatives = new ArrayList<>();
