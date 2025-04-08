@@ -1196,7 +1196,7 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
       } else if (step === 4) {
         const bill = await fetchBill(taskNumber + "_JOIN_CASE", tenantId, "task-payment");
         const paymentStatus = await openPaymentPortal(bill, bill?.Bill?.[0]?.totalAmount);
-        if (!paymentStatus) {
+        if (paymentStatus) {
           setStep(step + 1);
           setSuccess(true);
         }
