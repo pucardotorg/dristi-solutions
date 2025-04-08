@@ -45,40 +45,54 @@ const DashboardPage = () => {
       setToastMsg(null);
     }, duration);
   };
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const autoLogin = useCallback(() => {
-    debugger;
-    console.log(stepper, "checking ", isLoggedIn);
-
-    if (isLoggedIn || stepper !== 1) return;
     const iframe = document.querySelector("iframe");
-    if (iframe && iframe.contentDocument) {
-      const usernameField = iframe.contentDocument.querySelector(".euiFieldText");
-      const passwordField = iframe.contentDocument.querySelector(".euiFieldPassword");
-      const submitButton = iframe.contentDocument.querySelector(".euiButton");
+
+    try {
+      const iframeDoc = iframe?.contentDocument || iframe?.contentWindow?.document;
+      const usernameField = iframeDoc?.querySelector(".euiFieldText");
+      const passwordField = iframeDoc?.querySelector(".euiFieldPassword");
+      const submitButton = iframeDoc?.querySelector(".euiButton");
 
       if (usernameField && passwordField && submitButton) {
         usernameField.value = "anonymous";
         passwordField.value = "Beehyv@123";
         submitButton.click();
-
-        setTimeout(() => {
-          const success = document.querySelector(".your-login-success-indicator");
-          setIsLoggedIn(Boolean(success));
-        }, 1000);
       } else {
-        console.log("already logged in", usernameField, passwordField, submitButton);
-
-        setIsLoggedIn(true);
+        console.log("Already logged in or fields missing", iframeDoc, usernameField);
       }
-    } else {
-      console.log(iframe, "iframe is null");
+    } catch (err) {
+      console.error("Login failed due to cross-origin access issue", err);
     }
-  }, [isLoggedIn, stepper]);
+  }, []);
 
   useEffect(() => {
-    autoLogin();
-  }, [autoLogin]);
+    let retryCount = 0;
+    const maxRetries = 30;
+
+    const interval = setInterval(() => {
+      retryCount++;
+      const iframe = document.querySelector("iframe");
+
+      try {
+        const iframeDoc = iframe?.contentDocument || iframe?.contentWindow?.document;
+        const passwordField = iframeDoc?.querySelector(".euiFieldPassword");
+
+        if (stepper === 1 && passwordField) {
+          autoLogin();
+          clearInterval(interval);
+        } else if (retryCount >= maxRetries) {
+          clearInterval(interval);
+          console.warn("Iframe not ready within 30 seconds");
+        }
+      } catch (err) {
+        console.warn("Cross-origin issue or iframe still not loaded");
+        clearInterval(interval);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [stepper, autoLogin]);
 
   useEffect(() => {
     setStepper(Number(select));
