@@ -64,7 +64,7 @@ public class TreasuryEnrichment {
         JsonNode tsbAccountToHead = objectMapper.convertValue(tsbMasterData.get("tsbAccountToHead"), JsonNode.class);
 
         String consumerCode = demandUtil.searchBill(challanData.getBillId(), requestInfo);
-        TreasuryMapping treasuryMapping = repository.getTreasuryMapping("KL-001218-2025-TK2_JOIN_CASE");
+        TreasuryMapping treasuryMapping = repository.getTreasuryMapping(consumerCode);
         JsonNode headAmountMapping = objectMapper.readTree(treasuryMapping.getHeadAmountMapping().toString());
         List<HeadDetails> headDetailsList = new ArrayList<>();
 
