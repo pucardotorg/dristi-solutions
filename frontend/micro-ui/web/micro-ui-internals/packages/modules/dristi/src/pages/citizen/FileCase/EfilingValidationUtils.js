@@ -1786,6 +1786,7 @@ export const updateCaseDetails = async ({
                 caseId: caseDetails?.id,
                 individualId: data?.data?.poaVerification?.individualDetails?.individualId,
                 name: getFullName(" ", data?.data?.poaFirstName, data?.data?.poaMiddleName, data?.data?.poaLastName),
+                poaType: "poa.regular",
                 representing: [
                   {
                     individualId: data?.data?.complainantVerification?.individualDetails?.individualId,
@@ -1879,6 +1880,7 @@ export const updateCaseDetails = async ({
                     caseId: caseDetails?.id,
                     individualId: Individual?.Individual?.individualId,
                     name: getFullName(" ", firstName, middleName, lastName),
+                    poaType: "poa.regular",
                     representing: [
                       {
                         individualId: data?.data?.complainantVerification?.individualDetails?.individualId,
@@ -1914,6 +1916,7 @@ export const updateCaseDetails = async ({
 
           let documentData = {
             companyDetailsUpload: null,
+            poaAuthorizationDocument: null,
           };
           const idProof = {
             complainantId: { complainantId: { complainantId: {} } },
@@ -1986,6 +1989,26 @@ export const updateCaseDetails = async ({
             );
             setFormDataValue("companyDetailsUpload", documentData?.companyDetailsUpload);
           }
+          if (data?.data?.poaAuthorizationDocument?.poaDocument) {
+            documentData.poaAuthorizationDocument = {};
+            documentData.poaAuthorizationDocument.poaDocument = await Promise.all(
+              data?.data?.poaAuthorizationDocument?.poaDocument?.map(async (document) => {
+                if (document) {
+                  const documentType = documentsTypeMapping["complainantCompanyDetailsUpload"];
+                  const uploadedData = await onDocumentUpload(documentType, document, document.name, tenantId);
+                  const doc = {
+                    documentType,
+                    fileStore: uploadedData.file?.files?.[0]?.fileStoreId || document?.fileStore,
+                    documentName: uploadedData.filename || document?.documentName,
+                    fileName: "Company documents",
+                  };
+                  docList.push(doc);
+                  return doc;
+                }
+              })
+            );
+            setFormDataValue("poaAuthorizationDocument", documentData?.poaAuthorizationDocument);
+          }
           const complainantDocTypes = [documentsTypeMapping["complainantId"], documentsTypeMapping["complainantCompanyDetailsUpload"]];
           updateTempDocListMultiForm(docList, complainantDocTypes);
           return {
@@ -2039,6 +2062,7 @@ export const updateCaseDetails = async ({
       }
     });
     data.litigants = [...updatedLitigants];
+    data.poaHolders = [];
 
     data.additionalDetails = {
       ...caseDetails.additionalDetails,

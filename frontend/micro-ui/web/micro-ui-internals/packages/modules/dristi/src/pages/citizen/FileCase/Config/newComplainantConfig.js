@@ -857,6 +857,32 @@ const complainantDetailsFormConfig = [
         },
         withoutLabel: true,
       },
+      {
+        key: "poaAuthorizationDocument",
+        type: "component",
+        label: "POA_AUTHORIZATION_DOCUMENT",
+        component: "SelectCustomDragDrop",
+        populators: {
+          inputs: [
+            {
+              name: "poaDocument",
+              type: "DragDropComponent",
+              fileTypes: ["JPG", "PDF", "PNG"],
+              isMandatory: true,
+              maxFileSize: 50,
+              documentHeader: "POA_AUTHORIZATION_DOCUMENT",
+              isMultipleUpload: true,
+              uploadGuidelines: "UPLOAD_DOC_50",
+              documentHeaderStyle: {
+                textAlign: "start",
+              },
+              maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+            },
+          ],
+        },
+        isMandatory: true,
+        withoutLabel: true,
+      },
     ],
     head: "POA_HOLDER_LOCATION",
     sectionHeadStyle: { marginBottom: 0 },
