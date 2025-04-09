@@ -26,10 +26,7 @@ import org.springframework.util.CollectionUtils;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -264,9 +261,9 @@ public class PaymentUpdateService {
 
         RequestInfo requestInfo = taskRequestResponse.getRequestInfo();
 
-        JoinCaseTaskRequest joinCaseTaskRequest = objectMapper.convertValue(taskResponse.getTaskDetails() , JoinCaseTaskRequest.class);
+        LinkedHashMap taskDetailsMap = ((LinkedHashMap) taskResponse.getTaskDetails());
 
-        String advocateUuid = joinCaseTaskRequest.getAdvocateDetails().getAdvocateUuid();
+        String advocateUuid = taskDetailsMap.get("advocateUuid").toString();
 
         TaskCriteria criteria = TaskCriteria.builder()
                 .userUuid(advocateUuid)

@@ -141,18 +141,15 @@ class PaymentUpdateServiceTest {
         // Mock filterServiceCode method
         List<Map<String, Object>> filteredServices = Collections.singletonList(paymentType);
         when(objectMapper.readValue(anyString(), any(TypeReference.class))).thenReturn(paymentTypeArray);
-        JoinCaseTaskRequest joinCaseTaskRequest = new JoinCaseTaskRequest();
-        AdvocateDetails advocateDetails = AdvocateDetails.builder()
-                .advocateUuid("0068a9a1-20e8-4f20-912f-eb543c2ce6ac")
-                .build();
-        joinCaseTaskRequest.setAdvocateDetails(advocateDetails);
-        when(objectMapper.convertValue(any(), eq(JoinCaseTaskRequest.class))).thenReturn(joinCaseTaskRequest);
+        String advocateUuid = "0068a9a1-20e8-4f20-912f-eb543c2ce6ac";
+        LinkedHashMap <String, Object> taskDetails = new LinkedHashMap<>();
+        taskDetails.put("advocateUuid", advocateUuid);
 
         // Mock TaskRepository
         Task task = Task.builder()
                 .taskNumber(taskNumber)
                 .taskType(JOIN_CASE_PAYMENT)
-                .taskDetails(new HashMap<>())
+                .taskDetails(taskDetails)
                 .build();
 
         List<Task> tasks = Collections.singletonList(task);
