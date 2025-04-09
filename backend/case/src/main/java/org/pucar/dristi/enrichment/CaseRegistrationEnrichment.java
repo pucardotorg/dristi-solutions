@@ -75,19 +75,18 @@ public class CaseRegistrationEnrichment {
         });
     }
 
-    private static void enrichRepresentingOnCreateAndUpdate(AuditDetails auditDetails, POAHolder poaHolder, String courtCaseId) {
-        List<Party> representingListToCreate = poaHolder.getRepresentingLitigants().stream().filter(party -> party.getId() == null).toList();
+    private static void enrichPoaPartiesOnCreateAndUpdate(POAHolder poaHolder, String courtCaseId) {
+        List<PoaParty> representingListToCreate = poaHolder.getRepresentingLitigants().stream().filter(party -> party.getId() == null).toList();
         representingListToCreate.forEach(party -> {
-            party.setId((UUID.randomUUID()));
+            party.setId((UUID.randomUUID().toString()));
             party.setCaseId(courtCaseId);
-            party.setAuditDetails(auditDetails);
+
             if (party.getDocuments() != null) {
                 party.getDocuments().forEach(CaseRegistrationEnrichment::enrichDocumentsOnCreate);
             }
         });
-        List<Party> representingListToUpdate = poaHolder.getRepresentingLitigants().stream().filter(party -> party.getId() != null).toList();
+        List<PoaParty> representingListToUpdate = poaHolder.getRepresentingLitigants().stream().filter(party -> party.getId() != null).toList();
         representingListToUpdate.forEach(party -> {
-            party.setAuditDetails(auditDetails);
             if (party.getDocuments() != null) {
                 party.getDocuments().forEach(CaseRegistrationEnrichment::enrichDocumentsOnCreate);
             }
@@ -214,7 +213,7 @@ public class CaseRegistrationEnrichment {
                     poaHolder.getDocuments().forEach(CaseRegistrationEnrichment::enrichDocumentsOnCreate);
                 }
                 if (poaHolder.getRepresentingLitigants() != null) {
-                    enrichRepresentingOnCreateAndUpdate(auditDetails, poaHolder, courtCase.getId().toString());
+                    enrichPoaPartiesOnCreateAndUpdate(poaHolder, courtCase.getId().toString());
                 }
             });
             List<POAHolder> poaHolderListToUpdate = courtCase.getPoaHolders().stream().filter(poaHolder -> poaHolder.getId() != null).toList();
@@ -224,7 +223,7 @@ public class CaseRegistrationEnrichment {
                     poaHolder.getDocuments().forEach(CaseRegistrationEnrichment::enrichDocumentsOnCreate);
                 }
                 if (poaHolder.getRepresentingLitigants() != null) {
-                    enrichRepresentingOnCreateAndUpdate(auditDetails, poaHolder, courtCase.getId().toString());
+                    enrichPoaPartiesOnCreateAndUpdate(poaHolder, courtCase.getId().toString());
                 }
             });
         }
