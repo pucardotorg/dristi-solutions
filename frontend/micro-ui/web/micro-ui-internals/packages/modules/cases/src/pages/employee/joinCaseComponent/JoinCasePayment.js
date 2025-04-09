@@ -70,20 +70,14 @@ const JoinCasePayment = ({ filingNumber, taskNumber, setPendingTaskActionModals,
     return { paymentCalculation: updatedCalculation, totalAmount };
   }, [task]);
 
-  const { fetchBill, openPaymentPortal, paymentLoader, showPaymentModal, setShowPaymentModal } = usePaymentProcess({
+  const { fetchBill, openPaymentPortal } = usePaymentProcess({
     tenantId,
-    consumerCode: taskNumber + `_JOIN_CASE`,
-    service: "task-payment",
-    path: "",
-    caseDetails,
-    totalAmount: totalAmount,
-    scenario: "join-case",
   });
 
   return (
     <div
       className="join-case-payment payment-due-wrapper"
-      style={{ maxHeight: "550px", display: "flex", flexDirection: "column", margin: "13px 0px", paddingLeft: "24px" }}
+      style={{ maxHeight: "550px", display: "flex", flexDirection: "column", margin: "13px 0px 0px", padding: "16px 24px" }}
     >
       <InfoCard
         variant={"default"}
@@ -101,13 +95,14 @@ const JoinCasePayment = ({ filingNumber, taskNumber, setPendingTaskActionModals,
       <div className="payment-due-text" style={{ fontSize: "18px" }}>
         {`${t("CS_DUE_PAYMENT")} `}
         <span style={{ fontWeight: 700 }}>Rs {totalAmount}/-.</span>
-        {` ${t("CS_MANDATORY_STEP_TO_FILE_CASE")}`}
+        {` ${t("CS_MANDATORY_STEP_TO_JOIN_CASE")}`}
       </div>
       <div className="payment-calculator-wrapper" style={{ display: "flex", flexDirection: "column", maxHeight: "150px", overflowY: "auto" }}>
         {paymentCalculation
           .filter((item) => !item.isTotalFee)
-          .map((item) => (
+          .map((item, index) => (
             <div
+              key={index}
               style={{
                 display: "flex",
                 justifyContent: "space-between",
@@ -125,8 +120,9 @@ const JoinCasePayment = ({ filingNumber, taskNumber, setPendingTaskActionModals,
       <div className="payment-calculator-wrapper" style={{ display: "flex", flexDirection: "column" }}>
         {paymentCalculation
           .filter((item) => item.isTotalFee)
-          .map((item) => (
+          .map((item, index) => (
             <div
+              key={paymentCalculation?.length}
               style={{
                 display: "flex",
                 justifyContent: "space-between",
@@ -165,21 +161,27 @@ const JoinCasePayment = ({ filingNumber, taskNumber, setPendingTaskActionModals,
           <ButtonSelector
             label={t("CS_PAY_ONLINE")}
             onSubmit={async () => {
-              const bill = await fetchBill(taskNumber + "_JOIN_CASE", tenantId, "task-payment");
-              const paymentStatus = await openPaymentPortal(bill, bill?.Bill?.[0]?.totalAmount);
-              if (paymentStatus) {
-                setPendingTaskActionModals((pendingTaskActionModals) => {
-                  const data = pendingTaskActionModals?.data;
-                  delete data.filingNumber;
-                  delete data.taskNumber;
-                  return {
-                    ...pendingTaskActionModals,
-                    joinCasePaymentModal: false,
-                    data: data,
-                  };
-                });
+              setIsApiCalled(true);
+              try {
+                const bill = await fetchBill(taskNumber + "_JOIN_CASE", tenantId, "task-payment");
+                const paymentStatus = await openPaymentPortal(bill, bill?.Bill?.[0]?.totalAmount);
+                if (paymentStatus) {
+                  setPendingTaskActionModals((pendingTaskActionModals) => {
+                    const data = pendingTaskActionModals?.data;
+                    delete data.filingNumber;
+                    delete data.taskNumber;
+                    return {
+                      ...pendingTaskActionModals,
+                      joinCasePaymentModal: false,
+                      data: data,
+                    };
+                  });
+                }
+                refetch();
+              } catch (error) {
+                console.log("error", error);
               }
-              refetch();
+              setIsApiCalled(false);
             }}
             className="advocate-replacement-request-submit-button"
             isDisabled={isApiCalled}
