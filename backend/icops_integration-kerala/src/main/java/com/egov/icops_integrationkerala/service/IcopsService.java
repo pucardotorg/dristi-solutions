@@ -55,30 +55,46 @@ public class IcopsService {
 
         ProcessRequest processRequest = icopsEnrichment.getProcessRequest(taskRequest);
 
-        Coordinate coordinate = taskRequest.getTask().getTaskDetails().getRespondentDetails().getAddress().getCoordinate();
+        PoliceStationDetails policeStationDetails = taskRequest.getTask().getTaskDetails()
+                .getRespondentDetails().getAddress().getGeoLocationDetails() != null ? taskRequest.getTask().getTaskDetails()
+                .getRespondentDetails().getAddress().getGeoLocationDetails().getPoliceStationDetails() : null;
 
-        if (coordinate == null) {
-            return createFailureResponse(taskRequest, processRequest, "coordinate object is missing in address field of respondentDetails");
+        if (policeStationDetails != null) {
+            processRequest.setProcessPoliceStationCode(policeStationDetails.getCode());
+            processRequest.setProcessPoliceStationName(policeStationDetails.getName());
+        } else {
+            Coordinate coordinate = taskRequest.getTask().getTaskDetails()
+                    .getRespondentDetails().getAddress().getCoordinate();
+
+            if (coordinate == null) {
+                return createFailureResponse(taskRequest, processRequest,
+                        "coordinate object is missing in address field of respondentDetails");
+            }
+
+            String latitude = coordinate.getLatitude();
+            String longitude = coordinate.getLongitude();
+
+            if (latitude == null || latitude.trim().isEmpty() ||
+                    longitude == null || longitude.trim().isEmpty()) {
+                return createFailureResponse(taskRequest, processRequest,
+                        "latitude or longitude data is missing or empty in coordinate field inside Address of respondentDetails");
+            }
+
+            Location location = Location.builder()
+                    .latitude(latitude)
+                    .longitude(longitude)
+                    .build();
+
+            LocationRequest locationRequest = LocationRequest.builder()
+                    .requestInfo(taskRequest.getRequestInfo())
+                    .location(location)
+                    .build();
+
+            LocationBasedJurisdiction locationBasedJurisdiction = getLocationBasedJurisdiction(locationRequest);
+
+            processRequest.setProcessPoliceStationCode(locationBasedJurisdiction.getIncludedJurisdiction().getCode());
+            processRequest.setProcessPoliceStationName(locationBasedJurisdiction.getIncludedJurisdiction().getStation());
         }
-
-        String latitude = coordinate.getLatitude();
-        String longitude = coordinate.getLongitude();
-
-        if (latitude == null || latitude.trim().isEmpty() || longitude == null || longitude.trim().isEmpty()) {
-            return createFailureResponse(taskRequest, processRequest, "latitude or longitude data is missing or empty in coordinate field inside Address of respondentDetails");
-        }
-
-        Location location = Location.builder()
-                .latitude(taskRequest.getTask().getTaskDetails().getRespondentDetails().getAddress().getCoordinate().getLatitude())
-                .longitude(taskRequest.getTask().getTaskDetails().getRespondentDetails().getAddress().getCoordinate().getLongitude()).build();
-
-        LocationRequest locationRequest = LocationRequest.builder()
-                .requestInfo(taskRequest.getRequestInfo())
-                .location(location).build();
-        LocationBasedJurisdiction locationBasedJurisdiction = getLocationBasedJurisdiction(locationRequest);
-
-        processRequest.setProcessPoliceStationCode(locationBasedJurisdiction.getIncludedJurisdiction().getCode());
-        processRequest.setProcessPoliceStationName(locationBasedJurisdiction.getIncludedJurisdiction().getStation());
 
         AuthResponse authResponse = authUtil.authenticateAndGetToken();
 
