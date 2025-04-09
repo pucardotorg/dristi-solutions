@@ -439,7 +439,7 @@ const SubmissionsCreate = ({ path }) => {
             (application) => !["REJECTED", "COMPLETED"].includes(application?.status) && "DELAY_CONDONATION" === application?.applicationType
           )
         : undefined,
-    [applicationData?.applicationList, formdata?.applicationType?.type]
+    [applicationData?.applicationList, delayCondonationData?.applicationList, formdata?.applicationType?.type]
   );
 
   useEffect(() => {
