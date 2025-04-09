@@ -142,9 +142,11 @@ const DashboardPage = () => {
   const handleDownload = async (downloadLink, index) => {
     setDownloadingIndices((prev) => [...prev, index]);
     console.log(process.env.KIBANA_USERNAME, process.env.KIBANA_USERNAME, "need to remove");
-    const username = process.env.KIBANA_USERNAME;
-    const password = process.env.KIBANA_PASSWORD;
+    const username = process.env.KIBANA_USERNAME || "anonymous";
+    const password = process.env.KIBANA_PASSWORD || "Beehyv@123";
     const credentials = btoa(`${username}:${password}`);
+    console.log(credentials, "credentials");
+
     const config = {
       headers: {
         "kbn-xsrf": "",
