@@ -113,7 +113,6 @@ class PaymentUpdateServiceTest {
         when(config.getTaskPaymentBusinessServiceName()).thenReturn(businessService);
         when(config.getSystemAdmin()).thenReturn("SYSTEM_ADMIN");
         when(config.getTaskPaymentBusinessName()).thenReturn("TaskPayment");
-       // when(config.getTaskJoinCaseUpdateTopic()).thenReturn("join-case-task-application");
 
         // Mock MdmsUtil
         Map<String, Map<String, JSONArray>> mdmsResponse = new HashMap<>();
@@ -139,18 +138,18 @@ class PaymentUpdateServiceTest {
         when(mdmsUtil.fetchMdmsData(any(), eq(tenantId), eq(PAYMENT_MODULE_NAME), anyList()))
                 .thenReturn(mdmsResponse);
 
-        // Mock JsonPath.read calls
-//        when(JsonPath.read(any(JSONArray.class), anyString())).thenReturn(paymentTypeArray);
-//        when(JsonPath.read(any(JSONArray.class), eq("$..deliveryChannel"))).thenReturn(Collections.singletonList("COUNTER"));
-
         // Mock filterServiceCode method
         List<Map<String, Object>> filteredServices = Collections.singletonList(paymentType);
         when(objectMapper.readValue(anyString(), any(TypeReference.class))).thenReturn(paymentTypeArray);
+        String advocateUuid = "0068a9a1-20e8-4f20-912f-eb543c2ce6ac";
+        LinkedHashMap <String, Object> taskDetails = new LinkedHashMap<>();
+        taskDetails.put("advocateUuid", advocateUuid);
 
         // Mock TaskRepository
         Task task = Task.builder()
                 .taskNumber(taskNumber)
                 .taskType(JOIN_CASE_PAYMENT)
+                .taskDetails(taskDetails)
                 .build();
 
         List<Task> tasks = Collections.singletonList(task);
