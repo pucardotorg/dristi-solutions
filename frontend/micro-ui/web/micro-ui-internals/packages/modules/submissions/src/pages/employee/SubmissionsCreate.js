@@ -448,13 +448,13 @@ const SubmissionsCreate = ({ path }) => {
   const applicationDetails = useMemo(
     () =>
       applicationNumber
-        ? delayCondonationData?.applicationList?.[0]
+        ? applicationData?.applicationList?.[0]
         : "DELAY_CONDONATION" === formdata?.applicationType?.type
         ? delayCondonationData?.applicationList?.find(
             (application) => !["REJECTED", "COMPLETED"].includes(application?.status) && "DELAY_CONDONATION" === application?.applicationType
           )
         : undefined,
-    [delayCondonationData?.applicationList, formdata?.applicationType?.type]
+    [applicationData?.applicationList, delayCondonationData?.applicationList, formdata?.applicationType?.type]
   );
 
   useEffect(() => {
