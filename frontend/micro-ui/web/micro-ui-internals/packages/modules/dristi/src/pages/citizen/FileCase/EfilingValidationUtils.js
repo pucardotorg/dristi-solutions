@@ -173,8 +173,8 @@ export const showToastForComplainant = ({ formData, setValue, selected, setSucce
     const formDataCopy = structuredClone(formData);
     const addressDet = formDataCopy?.complainantVerification?.individualDetails?.addressDetails;
     const addressDetSelect = formDataCopy?.complainantVerification?.individualDetails?.["addressDetails-select"];
-    const poaAddressDet = formDataCopy?.poaVerification?.individualDetails?.addressDetails;
-    const poaAddressDetSelect = formDataCopy?.poaVerification?.individualDetails?.["addressDetails-select"];
+    const poaAddressDet = formDataCopy?.poaVerification?.individualDetails?.poaAddressDetails;
+    const poaAddressDetSelect = formDataCopy?.poaVerification?.individualDetails?.["poaAddressDetails-select"];
     if (!!addressDet && !!addressDetSelect) {
       setValue("addressDetails", { ...addressDet, typeOfAddress: formDataCopy?.addressDetails?.typeOfAddress });
       setValue("addressDetails-select", addressDetSelect);
@@ -1854,14 +1854,14 @@ export const updateCaseDetails = async ({
                         },
                       ],
                       individualId: Individual?.Individual?.individualId,
-                      "addressDetails-select": {
+                      "poaAddressDetails-select": {
                         pincode: pincode,
                         district: addressLine2,
                         city: city,
                         state: addressLine1,
                         locality: address,
                       },
-                      addressDetails: {
+                      poaAddressDetails: {
                         pincode: pincode,
                         district: addressLine2,
                         city: city,
@@ -1925,6 +1925,7 @@ export const updateCaseDetails = async ({
             poaComplainantId: { poaComplainantId: { poaComplainantId: {} } },
           };
           const individualDetails = {};
+          const poaIndividualDetails = {};
           if (data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file) {
             const documentType = documentsTypeMapping["complainantId"];
             const uploadedData = await onDocumentUpload(
@@ -2011,6 +2012,53 @@ export const updateCaseDetails = async ({
           }
           const complainantDocTypes = [documentsTypeMapping["complainantId"], documentsTypeMapping["complainantCompanyDetailsUpload"]];
           updateTempDocListMultiForm(docList, complainantDocTypes);
+
+          //// updating information for POA
+          if (data?.data?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[1]?.file) {
+            const documentType = documentsTypeMapping["poaComplainantId"];
+            const uploadedData = await onDocumentUpload(
+              documentType,
+              data?.data?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[1]?.file,
+              data?.data?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[0],
+              tenantId
+            );
+            const doc = {
+              documentType,
+              fileStore: uploadedData.file?.files?.[0]?.fileStoreId || uploadedData?.fileStore,
+              documentName: uploadedData.filename || uploadedData?.documentName,
+            };
+            poaIdProof.poaComplainantId.poaComplainantId.poaComplainantId = {
+              ID_Proof: [
+                [
+                  data?.data?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[0],
+                  {
+                    file: doc,
+                    fileStoreId: uploadedData?.file?.files?.[0]?.fileStoreId || uploadedData?.fileStore,
+                  },
+                ],
+              ],
+            };
+            docList.push(doc);
+            poaIndividualDetails.document = [uploadedData];
+            updatedPoaVerification.individualDetails = updatedPoaVerification?.individualDetails
+              ? { ...updatedPoaVerification?.individualDetails, document: [doc] }
+              : { ...data?.data?.poaVerification?.individualDetails, document: [doc] };
+          }
+          if (
+            !data?.data?.poaVerification?.isUserVerified &&
+            data?.data?.poaComplainantId?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[1]?.file?.fileStore
+          ) {
+            const doc = { ...data?.data?.poaComplainantId?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[1]?.file };
+            docList.push(doc);
+          }
+          if (data?.data?.poaVerification?.individualDetails?.document?.[0]?.fileStore) {
+            const doc = {
+              ...data?.data?.poaVerification?.individualDetails?.document?.[0],
+              documentType: documentsTypeMapping["poaComplainantId"],
+            };
+            !poaIndividualDetails?.document && docList.push(doc);
+          }
+
           return {
             ...data,
             isFormCompleted: true,

@@ -282,8 +282,16 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
                 document: identifierIdDetails?.fileStoreId
                   ? [{ fileName: idType, fileStore: identifierIdDetails?.fileStoreId, documentName: identifierIdDetails?.filename }]
                   : null,
-                "addressDetails-select": data["addressDetails-select"],
-                addressDetails: data["addressDetails-select"],
+                ...(config?.key === "poaVerification"
+                  ? {
+                      "poaAddressDetails-select": data["addressDetails-select"],
+                      poaAddressDetails: data["addressDetails-select"],
+                    }
+                  : {
+                      "addressDetails-select": data["addressDetails-select"],
+                      addressDetails: data["addressDetails-select"],
+                    }
+                ),
               },
               isUserVerified: true,
             },
