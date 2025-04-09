@@ -267,6 +267,19 @@ const SubmissionsCreate = ({ path }) => {
     applicationNumber + filingNumber,
     Boolean(applicationNumber + filingNumber)
   );
+  const { data: delayCondonationData } = Digit.Hooks.submissions.useSearchSubmissionService(
+    {
+      criteria: {
+        filingNumber,
+        applicationType: "DELAY_CONDONATION",
+        tenantId,
+      },
+      tenantId,
+    },
+    {},
+    applicationNumber + filingNumber,
+    Boolean(applicationNumber && filingNumber)
+  );
 
   const fullName = useMemo(() => {
     return (
@@ -289,9 +302,9 @@ const SubmissionsCreate = ({ path }) => {
     const submissionConfigKeys = {
       APPLICATION: applicationTypeConfig,
     };
-    if (applicationData && caseDetails && Array.isArray(submissionConfigKeys[submissionType])) {
+    if (delayCondonationData && caseDetails && Array.isArray(submissionConfigKeys[submissionType])) {
       const isDelayApplicationPending = Boolean(
-        applicationData?.applicationList?.some(
+        delayCondonationData?.applicationList?.some(
           (item) =>
             item?.applicationType === "DELAY_CONDONATION" &&
             [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(item?.status)
@@ -330,9 +343,11 @@ const SubmissionsCreate = ({ path }) => {
           };
         });
       }
+    } else if (Array.isArray(submissionConfigKeys[submissionType])) {
+      return submissionConfigKeys[submissionType];
     }
     return [];
-  }, [applicationData, caseDetails, submissionType, orderNumber, hearingId, applicationTypeUrl, isCitizen]);
+  }, [applicationData, caseDetails, submissionType, orderNumber, hearingId, applicationTypeUrl, isCitizen, delayCondonationData]);
 
   const applicationType = useMemo(() => {
     return formdata?.applicationType?.type || applicationTypeUrl;
