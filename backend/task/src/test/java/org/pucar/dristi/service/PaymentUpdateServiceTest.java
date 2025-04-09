@@ -208,7 +208,7 @@ class PaymentUpdateServiceTest {
                 eq("TaskPayment"));
 
         // Verify producer pushed task update
-        verify(producer).push(eq(config.getTaskUpdateTopic()), argThat(request ->
+        verify(producer).push(eq(config.getTaskJoinCaseUpdateTopic()), argThat(request ->
                 request instanceof TaskRequest &&
                         ((TaskRequest) request).getTask().getTaskNumber().equals(taskNumber)));
 
@@ -222,7 +222,7 @@ class PaymentUpdateServiceTest {
                 eq("TaskPayment"));
 
         // Verify producer pushed update for remaining pending tasks
-        verify(producer).push(eq(config.getTaskUpdateTopic()), argThat(request ->
+        verify(producer).push(eq(config.getTaskJoinCaseUpdateTopic()), argThat(request ->
                 request instanceof TaskRequest &&
                         ((TaskRequest) request).getTask().getTaskNumber().equals("TSK-002")));
     }

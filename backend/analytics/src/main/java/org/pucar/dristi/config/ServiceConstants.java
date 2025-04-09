@@ -232,4 +232,7 @@ public class ServiceConstants {
 
     public static final String ADVOCATE = "advocate";
     public static final String LITIGANT = "litigant";
+
+    public static final String FLOW_JAC = "flow_jac";
+
 }

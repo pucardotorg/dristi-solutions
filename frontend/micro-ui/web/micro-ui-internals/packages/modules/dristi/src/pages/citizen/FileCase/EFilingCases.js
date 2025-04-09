@@ -2261,35 +2261,42 @@ function EFilingCases({ path }) {
       Boolean(chequeDetails?.totalAmount && chequeDetails.totalAmount !== "0")
     );
 
-    await DRISTIService.createDemand({
-      Demands: [
-        {
-          tenantId,
-          consumerCode: caseDetails?.filingNumber + `_${suffix}`,
-          consumerType: "case-default",
-          businessService: "case-default",
-          taxPeriodFrom: taxPeriod?.fromDate,
-          taxPeriodTo: taxPeriod?.toDate,
-          demandDetails: [
-            {
-              taxHeadMasterCode: "CASE_ADVANCE_CARRYFORWARD",
-              taxAmount: 4, // amount to be replaced with calculationResponse
-              collectionAmount: 0,
-              isDelayCondonation: isDelayCondonation,
-            },
-          ],
-          additionalDetails: {
-            filingNumber: caseDetails?.filingNumber,
-            chequeDetails: chequeDetails,
-            cnrNumber: caseDetails?.cnrNumber,
-            payer: caseDetails?.litigants?.[0]?.additionalDetails?.fullName,
-            payerMobileNo: caseDetails?.additionalDetails?.payerMobileNo,
-            isDelayCondonation: isDelayCondonation,
-          },
-        },
-      ],
-    });
+    // await DRISTIService.createDemand({
+    //   Demands: [
+    //     {
+    //       tenantId,
+    //       consumerCode: caseDetails?.filingNumber + `_${suffix}`,
+    //       consumerType: "case-default",
+    //       businessService: "case-default",
+    //       taxPeriodFrom: taxPeriod?.fromDate,
+    //       taxPeriodTo: taxPeriod?.toDate,
+    //       demandDetails: [
+    //         {
+    //           taxHeadMasterCode: "CASE_ADVANCE_CARRYFORWARD",
+    //           taxAmount: 4, // amount to be replaced with calculationResponse
+    //           collectionAmount: 0,
+    //           isDelayCondonation: isDelayCondonation,
+    //         },
+    //       ],
+    //       additionalDetails: {
+    //         filingNumber: caseDetails?.filingNumber,
+    //         chequeDetails: chequeDetails,
+    //         cnrNumber: caseDetails?.cnrNumber,
+    //         payer: caseDetails?.litigants?.[0]?.additionalDetails?.fullName,
+    //         payerMobileNo: caseDetails?.additionalDetails?.payerMobileNo,
+    //         isDelayCondonation: isDelayCondonation,
+    //       },
+    //     },
+    //   ],
+    // });
 
+    await DRISTIService.etreasuryCreateDemand({
+      tenantId,
+      entityType: "case-default",
+      filingNumber: caseDetails?.filingNumber,
+      consumerCode: caseDetails?.filingNumber + `_${suffix}`,
+      calculation: calculationResponse?.Calculation,
+    });
     return calculationResponse;
   };
   const onSubmitCase = async (data) => {

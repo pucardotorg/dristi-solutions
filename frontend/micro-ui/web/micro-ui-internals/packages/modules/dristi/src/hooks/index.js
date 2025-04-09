@@ -32,6 +32,7 @@ import useRepondentPincodeDetails from "./dristi/useRepondentPincodeDetails.js";
 import downloadPdfFromFile from "../Utils/downloadPdfFromFile.js";
 import useGetAllAdvocates from "./dristi/useGetAllAdvocates.js";
 import useSearchADiaryService from "./dristi/useSearchADiaryService.js";
+import useEtreasuryCreateDemand from "./dristi/useEtreasuryCreateDemand.js";
 
 export const Urls = {
   Authenticate: "/user/oauth/token",
@@ -88,6 +89,7 @@ export const Urls = {
     getLocationBasedJurisdiction: "/kerala-icops/v1/integrations/iCops/_getLocationBasedJurisdiction",
     createProfileRequest: "/case/v2/profilerequest/create",
     processProfileRequest: "/case/v2/profilerequest/process",
+    etreasuryCreateDemand: "/etreasury/payment/v1/_createDemand",
   },
   case: {
     addWitness: "/case/v1/add/witness",
@@ -126,6 +128,7 @@ const dristi = {
   downloadPdfFromFile,
   useGetAllAdvocates,
   useSearchADiaryService,
+  useEtreasuryCreateDemand,
 };
 
 const Hooks = {
