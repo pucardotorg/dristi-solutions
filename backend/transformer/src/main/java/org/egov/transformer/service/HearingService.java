@@ -50,23 +50,19 @@ public class HearingService {
         Hearing hearing = hearingRequest.getHearing();
         RequestInfo requestInfo = hearingRequest.getRequestInfo();
         CourtCase courtCase = caseService.getCase(hearing.getFilingNumber().get(0), hearing.getTenantId(), requestInfo);
-        if(!Objects.equals(hearing.getStatus(), HEARD) &&
-                !Objects.equals(hearing.getStatus(), ADJOURNED) &&
-                !Objects.equals(hearing.getStatus(), ABATED) &&
-                !Objects.equals(hearing.getStatus(), CLOSED)) {
-            OpenHearing openHearing = getOpenHearing(hearing, courtCase);
-            producer.push(properties.getOpenHearingTopic(), openHearing);
-        }
+        log.info("Enriching Hearing for caseReferenceNumber: {}", hearing.getCaseReferenceNumber());
+        OpenHearing openHearing = getOpenHearing(hearing, courtCase);
+        producer.push(properties.getOpenHearingTopic(), openHearing);
     }
 
     @NotNull
-    private static OpenHearing getOpenHearing(Hearing hearing, CourtCase courtCase) {
+    private OpenHearing getOpenHearing(Hearing hearing, CourtCase courtCase) {
         OpenHearing openHearing = new OpenHearing();
         openHearing.setHearingUuid(hearing.getId().toString());
         openHearing.setHearingNumber(hearing.getHearingId());
         openHearing.setFilingNumber(hearing.getFilingNumber().get(0));
         openHearing.setCaseTitle(courtCase.getCaseTitle());
-        openHearing.setCaseNumber(hearing.getCaseReferenceNumber());
+        openHearing.setCaseNumber(enrichCaseNumber(hearing, courtCase));
         openHearing.setStage(courtCase.getStage());
         openHearing.setSubStage(courtCase.getSubstage());
         openHearing.setCaseUuid(courtCase.getId().toString());
@@ -76,5 +72,18 @@ public class HearingService {
         openHearing.setToDate(hearing.getEndTime());
         openHearing.setCourtId(courtCase.getCourtId());
         return openHearing;
+    }
+
+    private String enrichCaseNumber(Hearing hearing, CourtCase courtCase) {
+        String caseRefNumber = hearing.getCaseReferenceNumber();
+
+        if (caseRefNumber != null && !caseRefNumber.isEmpty()) {
+            return caseRefNumber;
+        }
+
+        String courtCaseNumber = courtCase.getCourtCaseNumber();
+        return (courtCaseNumber != null && !courtCaseNumber.isEmpty())
+                ? courtCaseNumber
+                : courtCase.getCmpNumber();
     }
 }
