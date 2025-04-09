@@ -277,8 +277,8 @@ const SubmissionsCreate = ({ path }) => {
       tenantId,
     },
     {},
-    applicationNumber + filingNumber,
-    Boolean(applicationNumber && filingNumber)
+    filingNumber,
+    Boolean(filingNumber)
   );
 
   const fullName = useMemo(() => {
@@ -347,7 +347,7 @@ const SubmissionsCreate = ({ path }) => {
       return submissionConfigKeys[submissionType];
     }
     return [];
-  }, [applicationData, caseDetails, submissionType, orderNumber, hearingId, applicationTypeUrl, isCitizen, delayCondonationData]);
+  }, [caseDetails, submissionType, orderNumber, hearingId, applicationTypeUrl, isCitizen, delayCondonationData]);
 
   const applicationType = useMemo(() => {
     return formdata?.applicationType?.type || applicationTypeUrl;
@@ -448,13 +448,13 @@ const SubmissionsCreate = ({ path }) => {
   const applicationDetails = useMemo(
     () =>
       applicationNumber
-        ? applicationData?.applicationList?.[0]
+        ? delayCondonationData?.applicationList?.[0]
         : "DELAY_CONDONATION" === formdata?.applicationType?.type
-        ? applicationData?.applicationList?.find(
+        ? delayCondonationData?.applicationList?.find(
             (application) => !["REJECTED", "COMPLETED"].includes(application?.status) && "DELAY_CONDONATION" === application?.applicationType
           )
         : undefined,
-    [applicationData?.applicationList, formdata?.applicationType?.type]
+    [delayCondonationData?.applicationList, formdata?.applicationType?.type]
   );
 
   useEffect(() => {
