@@ -199,11 +199,11 @@ public class PaymentUpdateService {
                     task.setStatus(status);
 
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
-                    producer.push(config.getTaskUpdateTopic(), taskRequest);
+                    producer.push(config.getTaskJoinCaseUpdateTopic(), taskRequest);
 
                     // update remaining pending task of payment's of the advocate
 
-                    updatePaymentStatusOfRemainingPendingPaymentTasks(requestInfo, tenantId, task.getFilingNumber());
+                    updatePaymentStatusOfRemainingPendingPaymentTasks(taskRequest, tenantId, task.getFilingNumber());
 
                 }
             }
@@ -258,9 +258,15 @@ public class PaymentUpdateService {
 
     }
 
-    private void updatePaymentStatusOfRemainingPendingPaymentTasks(RequestInfo requestInfo, String tenantId, String filingNumber) {
+    private void updatePaymentStatusOfRemainingPendingPaymentTasks(TaskRequest taskRequestResponse, String tenantId, String filingNumber) {
 
-        String advocateUuid = requestInfo.getUserInfo().getUuid();
+        Task taskResponse = taskRequestResponse.getTask();
+
+        RequestInfo requestInfo = taskRequestResponse.getRequestInfo();
+
+        JoinCaseTaskRequest joinCaseTaskRequest = objectMapper.convertValue(taskResponse.getTaskDetails() , JoinCaseTaskRequest.class);
+
+        String advocateUuid = joinCaseTaskRequest.getAdvocateDetails().getAdvocateUuid();
 
         TaskCriteria criteria = TaskCriteria.builder()
                 .userUuid(advocateUuid)
@@ -287,7 +293,7 @@ public class PaymentUpdateService {
                 task.setStatus(status);
 
                 TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
-                producer.push(config.getTaskUpdateTopic(), taskRequest);
+                producer.push(config.getTaskJoinCaseUpdateTopic(), taskRequest);
         });
 
     }

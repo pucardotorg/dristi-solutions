@@ -113,7 +113,6 @@ class PaymentUpdateServiceTest {
         when(config.getTaskPaymentBusinessServiceName()).thenReturn(businessService);
         when(config.getSystemAdmin()).thenReturn("SYSTEM_ADMIN");
         when(config.getTaskPaymentBusinessName()).thenReturn("TaskPayment");
-        when(config.getTaskUpdateTopic()).thenReturn("task-update-topic");
 
         // Mock MdmsUtil
         Map<String, Map<String, JSONArray>> mdmsResponse = new HashMap<>();
@@ -139,18 +138,21 @@ class PaymentUpdateServiceTest {
         when(mdmsUtil.fetchMdmsData(any(), eq(tenantId), eq(PAYMENT_MODULE_NAME), anyList()))
                 .thenReturn(mdmsResponse);
 
-        // Mock JsonPath.read calls
-//        when(JsonPath.read(any(JSONArray.class), anyString())).thenReturn(paymentTypeArray);
-//        when(JsonPath.read(any(JSONArray.class), eq("$..deliveryChannel"))).thenReturn(Collections.singletonList("COUNTER"));
-
         // Mock filterServiceCode method
         List<Map<String, Object>> filteredServices = Collections.singletonList(paymentType);
         when(objectMapper.readValue(anyString(), any(TypeReference.class))).thenReturn(paymentTypeArray);
+        JoinCaseTaskRequest joinCaseTaskRequest = new JoinCaseTaskRequest();
+        AdvocateDetails advocateDetails = AdvocateDetails.builder()
+                .advocateUuid("0068a9a1-20e8-4f20-912f-eb543c2ce6ac")
+                .build();
+        joinCaseTaskRequest.setAdvocateDetails(advocateDetails);
+        when(objectMapper.convertValue(any(), eq(JoinCaseTaskRequest.class))).thenReturn(joinCaseTaskRequest);
 
         // Mock TaskRepository
         Task task = Task.builder()
                 .taskNumber(taskNumber)
                 .taskType(JOIN_CASE_PAYMENT)
+                .taskDetails(new HashMap<>())
                 .build();
 
         List<Task> tasks = Collections.singletonList(task);
@@ -206,7 +208,7 @@ class PaymentUpdateServiceTest {
                 eq("TaskPayment"));
 
         // Verify producer pushed task update
-        verify(producer).push(eq(config.getTaskUpdateTopic()), argThat(request ->
+        verify(producer).push(eq(config.getTaskJoinCaseUpdateTopic()), argThat(request ->
                 request instanceof TaskRequest &&
                         ((TaskRequest) request).getTask().getTaskNumber().equals(taskNumber)));
 
@@ -220,7 +222,7 @@ class PaymentUpdateServiceTest {
                 eq("TaskPayment"));
 
         // Verify producer pushed update for remaining pending tasks
-        verify(producer).push(eq(config.getTaskUpdateTopic()), argThat(request ->
+        verify(producer).push(eq(config.getTaskJoinCaseUpdateTopic()), argThat(request ->
                 request instanceof TaskRequest &&
                         ((TaskRequest) request).getTask().getTaskNumber().equals("TSK-002")));
     }
