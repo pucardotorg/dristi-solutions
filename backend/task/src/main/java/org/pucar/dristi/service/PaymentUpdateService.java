@@ -293,7 +293,7 @@ public class PaymentUpdateService {
                 task.setStatus(status);
 
                 TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
-                producer.push(config.getTaskJoinCaseUpdateTopic(), taskRequest);
+                producer.push(config.getTaskUpdateTopic(), taskRequest);
         });
 
     }
