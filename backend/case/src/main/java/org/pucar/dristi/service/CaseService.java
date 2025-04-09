@@ -325,11 +325,46 @@ public class CaseService {
             log.info("Method=checkItsLastSign, Result= IN_ProgressChecking if its last e-sign for case {}", caseRequest.getCases().getId());
 
             CourtCase cases = caseRequest.getCases();
-            // Check if all litigants have signed
-            boolean allLitigantsHaveSigned = cases.getLitigants().stream().filter(Party::getIsActive).allMatch(Party::getHasSigned);
+            // Check if all litigants have signed or any poa of litigant has signed
+            // get all litigant and their poa
 
-            // If any litigant hasn't signed, return false immediately
-            if (!allLitigantsHaveSigned) {
+            Map<String, List<POAHolder>> litigantPoaMap = Optional.ofNullable(cases.getPoaHolders())
+                    .orElse(Collections.emptyList())
+                    .stream()
+                    .filter(POAHolder::getIsActive)
+                    .flatMap(poa -> {
+                        // Create pairs of (litigantId, poa) for each litigant this POA represents
+                        return poa.getRepresentingLitigants().stream()
+                                .filter(party -> party.getIndividualId() != null)
+                                .map(party -> new AbstractMap.SimpleEntry<>(party.getIndividualId(), poa));
+                    })
+                    .collect(Collectors.groupingBy(
+                            Map.Entry::getKey,  // Group by litigant ID
+                            Collectors.mapping(Map.Entry::getValue, Collectors.toList())
+                    ));
+
+            //check if all litigant signed or any poa (if exists) of litigant has signed
+            boolean allLitigantsSigned = cases.getLitigants().stream()
+                    .filter( Party::getIsActive)
+                    .allMatch(litigant -> {
+                        // Check if the litigant has signed directly
+                        if (Boolean.TRUE.equals(litigant.getHasSigned())) {
+                            return true;
+                        }
+
+                        // Check if any POA holder for this litigant has signed
+                        String litigantId = litigant.getIndividualId();
+                        if (litigantId != null && litigantPoaMap.containsKey(litigantId)) {
+                            return litigantPoaMap.get(litigantId).stream()
+                                    .anyMatch(poa -> Boolean.TRUE.equals(poa.getHasSigned()));
+                        }
+
+                        // No POA or litigant hasn't signed
+                        return false;
+                    });
+
+            // If any litigant or any POA hasn't signed, return false immediately
+            if (!allLitigantsSigned) {
                 log.info("Not all litigants have signed for case {}", cases.getId());
                 return false;
             }
