@@ -117,6 +117,17 @@ function PendingTaskAccordion({
               key={item?.filingNumber}
               style={{ cursor: "pointer" }}
               onClick={() => {
+                if (item?.actionName === "Pay Vakalatnama Fees") {
+                  setPendingTaskActionModals((pendingTaskActionModals) => ({
+                    ...pendingTaskActionModals,
+                    joinCasePaymentModal: true,
+                    data: {
+                      filingNumber: item?.filingNumber,
+                      taskNumber: item?.referenceId,
+                    },
+                  }));
+                  return;
+                }
                 if (item?.actionName === "Review Advocate Replace Request") {
                   setPendingTaskActionModals((pendingTaskActionModals) => ({
                     ...pendingTaskActionModals,

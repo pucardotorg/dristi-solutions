@@ -39,24 +39,26 @@ const LitigantVerification = ({
     const applyUiChanges = (config) => ({
       ...config,
       head: litigants?.some((litigant) => litigant?.isComplainant) ? t("COMPLAINANT_BASIC_DETAILS") : t("ACCUSED_BASIC_DETAILS"),
-      body: config?.body?.map((body) => {
-        let tempBody = {
-          ...body,
-        };
-        if (body?.labelChildren === "optional") {
-          tempBody = {
-            ...tempBody,
-            labelChildren: <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>,
+      body: config?.body
+        ?.filter((body) => (litigants?.[index]?.isVakalatnamaNew?.code === "NO" ? !["noOfAdvocates", "vakalatnama"].includes(body?.key) : true))
+        ?.map((body) => {
+          let tempBody = {
+            ...body,
           };
-        }
-        if (litigants?.[index]?.phoneNumberVerification?.isUserVerified && config?.body?.[3]?.disableConfigFields?.includes(body?.key)) {
-          tempBody = {
-            ...tempBody,
-            disable: true,
-          };
-        }
-        return tempBody;
-      }),
+          if (body?.labelChildren === "optional") {
+            tempBody = {
+              ...tempBody,
+              labelChildren: <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>,
+            };
+          }
+          if (litigants?.[index]?.phoneNumberVerification?.isUserVerified && config?.body?.[3]?.disableConfigFields?.includes(body?.key)) {
+            tempBody = {
+              ...tempBody,
+              disable: true,
+            };
+          }
+          return tempBody;
+        }),
     });
 
     return VerifyMultipartyLitigantConfig?.map((config) => applyUiChanges(config));
@@ -97,13 +99,29 @@ const LitigantVerification = ({
       !areFilesEqual(selectedParty?.vakalatnama?.document?.[0], formData?.vakalatnama?.document?.[0]);
     const isDocumentNull = formData?.vakalatnama === null && selectedParty?.vakalatnama !== null;
 
-    return hasBasicInfoChanged || hasPhoneNumberChanged || hasDocumentChanged || isDocumentNull;
+    const hasIsVakalatnamaNewChanged = selectedParty?.isVakalatnamaNew?.code !== formData?.isVakalatnamaNew?.code;
+
+    const hasNumberOfVakalatnamaChanged = selectedParty?.isVakalatnamaNew?.code === "YES" && selectedParty?.noOfAdvocates !== formData?.noOfAdvocates;
+
+    return (
+      hasBasicInfoChanged ||
+      hasPhoneNumberChanged ||
+      hasDocumentChanged ||
+      isDocumentNull ||
+      hasIsVakalatnamaNewChanged ||
+      hasNumberOfVakalatnamaChanged
+    );
   };
 
   useEffect(
     () =>
       setIsDisabled(
-        !litigants.every((litigant) => litigant?.phoneNumberVerification?.isUserVerified === true && litigant?.vakalatnama?.document?.length > 0)
+        !litigants.every(
+          (litigant) =>
+            litigant?.phoneNumberVerification?.isUserVerified === true &&
+            ((litigant?.isVakalatnamaNew?.code === "YES" && litigant?.noOfAdvocates > 0 && litigant?.vakalatnama?.document?.length > 0) ||
+              litigant?.isVakalatnamaNew?.code === "NO")
+        )
       ),
     [litigants, setIsDisabled]
   );
@@ -140,6 +158,20 @@ const LitigantVerification = ({
               }, 0);
             }
           }
+        } else if (key === "noOfAdvocates") {
+          const value = formDataCopy[key];
+          if (typeof value === "string") {
+            const numValue = value.replace(/\D/g, "");
+            if (numValue !== value) {
+              const element = document.querySelector(`[name="${key}"]`);
+              const start = element?.selectionStart;
+              const end = element?.selectionEnd;
+              setValue(key, !isNaN(numValue) && numValue > 0 ? numValue.toString() : "");
+              setTimeout(() => {
+                element?.setSelectionRange(start, end);
+              }, 0);
+            }
+          }
         }
       }
     }
@@ -150,6 +182,7 @@ const LitigantVerification = ({
             ? {
                 ...item,
                 ...formData,
+                ...(formData?.isVakalatnamaNew?.code === "NO" && { noOfAdvocates: "", vakalatnama: null }),
               }
             : item;
         })
@@ -201,6 +234,10 @@ const LitigantVerification = ({
             }
             defaultValues={{
               ...litigants?.[index],
+              isVakalatnamaNew: {
+                code: litigants?.[index]?.isVakalatnamaNew?.code || "YES",
+                name: litigants?.[index]?.isVakalatnamaNew?.name || "YES",
+              },
             }}
             fieldStyle={fieldStyle}
             className={"multi-litigant-composer"}

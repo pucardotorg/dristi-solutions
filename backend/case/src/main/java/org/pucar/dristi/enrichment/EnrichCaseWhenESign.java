@@ -76,6 +76,18 @@ public class EnrichCaseWhenESign implements EnrichmentStrategy {
                         .orElse(false);
                 log.info("Method=EnrichCaseWhenESign,Result=IN_PROGRESS, AdvocateSigned={}", isAdvocateSigned);
             }
+
+            // check if poa signed
+            boolean isPoaSigned = Optional.ofNullable(caseRequest.getCases().getPoaHolders())
+                    .orElse(Collections.emptyList()).stream()
+                    .filter(poa -> individualId.equals(poa.getIndividualId()))
+                    .findFirst()
+                    .map(poa -> {
+                        poa.setHasSigned(true);
+                        return true;
+                    })
+                    .orElse(false);
+            log.info("Method=EnrichCaseWhenESign,Result=IN_PROGRESS, PoaSigned={}", isPoaSigned);
         }
         log.info("Method=EnrichCaseWhenESign,Result=SUCCESS, CaseId={}", caseRequest.getCases().getId());
     }

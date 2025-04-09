@@ -3,13 +3,11 @@ package org.pucar.dristi.enrichment;
 
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
-import org.pucar.dristi.web.models.Document;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
-import org.pucar.dristi.config.ServiceConstants;
 import org.pucar.dristi.service.IndividualService;
 import org.pucar.dristi.util.AdvocateUtil;
 import org.pucar.dristi.util.CaseUtil;
@@ -19,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -76,6 +73,25 @@ public class CaseRegistrationEnrichment {
                 enrichRepresentingOnCreateAndUpdate(auditDetails, advocateMapping, courtCaseId);
             }
         });
+    }
+
+    private static void enrichPoaPartiesOnCreateAndUpdate(POAHolder poaHolder, String courtCaseId) {
+        List<PoaParty> representingListToCreate = poaHolder.getRepresentingLitigants().stream().filter(party -> party.getId() == null).toList();
+        representingListToCreate.forEach(party -> {
+            party.setId((UUID.randomUUID().toString()));
+            party.setCaseId(courtCaseId);
+
+            if (party.getDocuments() != null) {
+                party.getDocuments().forEach(CaseRegistrationEnrichment::enrichDocumentsOnCreate);
+            }
+        });
+        List<PoaParty> representingListToUpdate = poaHolder.getRepresentingLitigants().stream().filter(party -> party.getId() != null).toList();
+        representingListToUpdate.forEach(party -> {
+            if (party.getDocuments() != null) {
+                party.getDocuments().forEach(CaseRegistrationEnrichment::enrichDocumentsOnCreate);
+            }
+        });
+
     }
 
     private static void enrichRepresentingOnCreateAndUpdate(AuditDetails auditDetails, AdvocateMapping advocateMapping, String courtCaseId) {
@@ -175,6 +191,8 @@ public class CaseRegistrationEnrichment {
 
         enrichRepresentativesOnCreateAndUpdate(courtCase, auditDetails);
 
+        enrichPoaHoldersOnCreateAndUpdate(courtCase, auditDetails);
+
 //        enrichCaseRegistrationFillingDate(courtCase);
 
         if (courtCase.getDocuments() != null) {
@@ -183,8 +201,36 @@ public class CaseRegistrationEnrichment {
         }
     }
 
+    private void enrichPoaHoldersOnCreateAndUpdate(CourtCase courtCase, AuditDetails auditDetails) {
+
+        if (courtCase.getPoaHolders() != null) {
+            List<POAHolder> poaHolderListToCreate = courtCase.getPoaHolders().stream().filter(poaHolder -> poaHolder.getId() == null).toList();
+            poaHolderListToCreate.forEach(poaHolder -> {
+                poaHolder.setId(UUID.randomUUID().toString());
+                poaHolder.setCaseId(courtCase.getId().toString());
+                poaHolder.setAuditDetails(auditDetails);
+                if (poaHolder.getDocuments() != null) {
+                    poaHolder.getDocuments().forEach(CaseRegistrationEnrichment::enrichDocumentsOnCreate);
+                }
+                if (poaHolder.getRepresentingLitigants() != null) {
+                    enrichPoaPartiesOnCreateAndUpdate(poaHolder, courtCase.getId().toString());
+                }
+            });
+            List<POAHolder> poaHolderListToUpdate = courtCase.getPoaHolders().stream().filter(poaHolder -> poaHolder.getId() != null).toList();
+            poaHolderListToUpdate.forEach(poaHolder -> {
+                poaHolder.setAuditDetails(auditDetails);
+                if (poaHolder.getDocuments() != null) {
+                    poaHolder.getDocuments().forEach(CaseRegistrationEnrichment::enrichDocumentsOnCreate);
+                }
+                if (poaHolder.getRepresentingLitigants() != null) {
+                    enrichPoaPartiesOnCreateAndUpdate(poaHolder, courtCase.getId().toString());
+                }
+            });
+        }
+    }
+
     public void enrichCaseRegistrationFillingDate(CourtCase courtCase) {
-            courtCase.setFilingDate(caseUtil.getCurrentTimeMil());
+        courtCase.setFilingDate(caseUtil.getCurrentTimeMil());
     }
 
     private void enrichStatuteAndSectionsOnCreateAndUpdate(CourtCase courtCase, AuditDetails auditDetails) {
@@ -250,11 +296,11 @@ public class CaseRegistrationEnrichment {
         // Iterate through existing documents and compare IDs
         if (existingCourtCaseList.get(0).getDocuments() != null) {
             existingCourtCaseList.get(0).getDocuments().forEach(existingDocument -> {
-                log.info("Checking for existing document Id :: {}",existingDocument.getId());
+                log.info("Checking for existing document Id :: {}", existingDocument.getId());
 
                 // If documentIds is empty or the ID is not in the list, deactivate the document
                 if (documentIds.isEmpty() || !documentIds.contains(existingDocument.getId())) {
-                    log.info("Setting isActive false for document Id :: {}",existingDocument.getId());
+                    log.info("Setting isActive false for document Id :: {}", existingDocument.getId());
                     existingDocument.setIsActive(false);
 
                     if (caseRequest.getCases().getDocuments() == null) {

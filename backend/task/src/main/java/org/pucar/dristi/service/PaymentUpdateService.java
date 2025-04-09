@@ -26,10 +26,7 @@ import org.springframework.util.CollectionUtils;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -203,7 +200,7 @@ public class PaymentUpdateService {
 
                     // update remaining pending task of payment's of the advocate
 
-                    updatePaymentStatusOfRemainingPendingPaymentTasks(requestInfo, tenantId);
+                    updatePaymentStatusOfRemainingPendingPaymentTasks(taskRequest, tenantId, task.getFilingNumber());
 
                 }
             }
@@ -258,13 +255,20 @@ public class PaymentUpdateService {
 
     }
 
-    private void updatePaymentStatusOfRemainingPendingPaymentTasks(RequestInfo requestInfo, String tenantId) {
+    private void updatePaymentStatusOfRemainingPendingPaymentTasks(TaskRequest taskRequestResponse, String tenantId, String filingNumber) {
 
-        String advocateUuid = requestInfo.getUserInfo().getUuid();
+        Task taskResponse = taskRequestResponse.getTask();
+
+        RequestInfo requestInfo = taskRequestResponse.getRequestInfo();
+
+        LinkedHashMap taskDetailsMap = ((LinkedHashMap) taskResponse.getTaskDetails());
+
+        String advocateUuid = taskDetailsMap.get("advocateUuid").toString();
 
         TaskCriteria criteria = TaskCriteria.builder()
                 .userUuid(advocateUuid)
                 .status(PENDING_PAYMENT)
+                .filingNumber(filingNumber)
                 .taskType(JOIN_CASE_PAYMENT)
                 .build();
 
