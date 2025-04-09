@@ -1861,7 +1861,9 @@ const AdmittedCases = () => {
   const groupNoticeOrderByHearingNumber = useMemo(() => {
     if (!ordersData?.list) return [];
 
-    const noticeOrder = ordersData?.list?.filter((item) => item?.orderType === "NOTICE" && item?.hearingNumber);
+    const noticeOrder = ordersData?.list?.filter(
+      (item) => (item?.orderType === "NOTICE" || item?.orderCategory === "COMPOSITE") && item?.hearingNumber
+    );
 
     const groupedByhearingNumber = groupByHearingNumberDescending(noticeOrder);
     return groupedByhearingNumber;
@@ -1870,7 +1872,9 @@ const AdmittedCases = () => {
   const groupSummonWarrantOrderByHearingNumber = useMemo(() => {
     if (!ordersData?.list) return [];
 
-    const noticeOrder = ordersData?.list?.filter((item) => ["SUMMONS", "WARRANT"].includes(item?.orderType) && item?.hearingNumber);
+    const noticeOrder = ordersData?.list?.filter(
+      (item) => (["SUMMONS", "WARRANT"].includes(item?.orderType) || item?.orderCategory === "COMPOSITE") && item?.hearingNumber
+    );
 
     const groupedByhearingNumber = groupByHearingNumberDescending(noticeOrder);
     return groupedByhearingNumber;
