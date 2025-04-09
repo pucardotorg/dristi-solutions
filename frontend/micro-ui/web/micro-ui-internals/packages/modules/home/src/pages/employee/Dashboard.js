@@ -95,6 +95,9 @@ const DashboardPage = () => {
 
   useEffect(() => {
     setStepper(Number(select));
+    if (Number(select) === 2) {
+      setHeadingTxt("AVAILABLE_REPORTS");
+    }
   }, [select]);
 
   const handleSubmit = () => {
@@ -138,7 +141,10 @@ const DashboardPage = () => {
   }, [sortedDashboards, stepper]);
   const handleDownload = async (downloadLink, index) => {
     setDownloadingIndices((prev) => [...prev, index]);
-    const credentials = btoa(`${process.env.KIBANA_USERNAME}:${process.env.KIBANA_PASSWORD}`);
+    console.log(process.env.KIBANA_USERNAME, process.env.KIBANA_USERNAME, "need to remove");
+    const username = process.env.KIBANA_USERNAME;
+    const password = process.env.KIBANA_PASSWORD;
+    const credentials = btoa(`${username}:${password}`);
     const config = {
       headers: {
         "kbn-xsrf": "",
@@ -223,7 +229,7 @@ const DashboardPage = () => {
       },
       {
         path: `/${window?.contextPath}/${userType}`,
-        content: t(location.pathname.split("/").pop()),
+        content: t("ES_DASHBOARD"),
         show: true,
         isLast: true,
       },
