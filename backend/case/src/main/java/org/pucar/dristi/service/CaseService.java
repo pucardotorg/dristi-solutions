@@ -635,8 +635,8 @@ public class CaseService {
         if (courtCase.getPoaHolders() != null) {
             pocHolderId.addAll(
                     courtCase.getPoaHolders().stream()
-                            .filter(POAHolders::getIsActive)
-                            .map(POAHolders::getIndividualId)
+                            .filter(POAHolder::getIsActive)
+                            .map(POAHolder::getIndividualId)
                             .collect(Collectors.toSet())
             );
         }
@@ -650,9 +650,9 @@ public class CaseService {
                     .filter(poa -> Boolean.TRUE.equals(poa.getIsActive()))
                     .filter(poa -> poa.getRepresentingLitigants() != null &&
                             poa.getRepresentingLitigants().stream()
-                                    .map(Party::getIndividualId)
+                                    .map(PoaParty::getIndividualId)
                                     .anyMatch(individualIds::contains))
-                    .map(POAHolders::getIndividualId)
+                    .map(POAHolder::getIndividualId)
                     .collect(Collectors.toSet());
             individualIds.addAll(matchingPocHolderIds);
         }

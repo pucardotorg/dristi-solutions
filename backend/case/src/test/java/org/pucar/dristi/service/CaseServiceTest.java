@@ -1081,7 +1081,7 @@ public class CaseServiceTest {
     @Test
     void testExtractPowerOfAttorneyIds_IndividualId() {
 
-        POAHolders poaHolders = new POAHolders();
+        POAHolder poaHolders = new POAHolder();
         poaHolders.setIndividualId("IND-123");
         CourtCase courtCase = new CourtCase();
 
