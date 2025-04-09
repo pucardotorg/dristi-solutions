@@ -84,6 +84,10 @@ public class CaseCriteria {
     @Valid
     private List<String> status = null;
 
+    @JsonProperty("poaHolderIndividualIds")
+    @Valid
+    private List<String> poaHolderIndividualIds = null;
+
     @JsonProperty("responseList")
     @Valid
     private List<CourtCase> responseList = null;
