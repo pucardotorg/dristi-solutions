@@ -36,7 +36,6 @@ public class CaseFeeCalculationService {
         List<EFillingCalculationCriteria> calculationCriteria = request.getCalculationCriteria();
         EFilingParam eFillingDefaultData = eFillingUtil.getEFillingDefaultData(requestInfo, calculationCriteria.get(0).getTenantId());
 
-        Double applicationFee = eFillingDefaultData.getApplicationFee();
         Double vakalathnamaFee = eFillingDefaultData.getVakalathnamaFee();
         Double advocateClerkWelfareFund = eFillingDefaultData.getAdvocateClerkWelfareFund();
         Double delayCondonationFee = eFillingDefaultData.getDelayCondonationFee();
@@ -49,7 +48,6 @@ public class CaseFeeCalculationService {
 
         for (EFillingCalculationCriteria criteria : calculationCriteria) {
 
-            Double totalApplicationFee = criteria.getNumberOfApplication() * applicationFee;
             Double petitionFee = getPetitionFee(criteria.getCheckAmount(), petitionFeeRange);
             Double delayFee = criteria.getIsDelayCondonation() ? delayCondonationFee : 0.0;
 
@@ -61,8 +59,8 @@ public class CaseFeeCalculationService {
 
             }
 
-            List<BreakDown> feeBreakdown = getFeeBreakdown(vakalathnamaFee, advocateClerkWelfareFund, totalApplicationFee, petitionFee, delayFee, advocateFee);
-            Double totalCourtFee = Math.ceil(vakalathnamaFee + advocateClerkWelfareFund + totalApplicationFee + petitionFee + delayFee + advocateFee);
+            List<BreakDown> feeBreakdown = getFeeBreakdown(vakalathnamaFee, advocateClerkWelfareFund, petitionFee, delayFee, advocateFee);
+            Double totalCourtFee = Math.ceil(vakalathnamaFee + advocateClerkWelfareFund + petitionFee + delayFee + advocateFee);
             Calculation calculation = Calculation.builder()
                     .applicationId(criteria.getCaseId())
                     .totalAmount(totalCourtFee)
@@ -78,12 +76,11 @@ public class CaseFeeCalculationService {
     }
 
 
-    public List<BreakDown> getFeeBreakdown(double vakalathnamaFee, double advocateClerkWelfareFund, double totalApplicationFee, double petitionFee, double condonationFee, double advocateFee) {
+    public List<BreakDown> getFeeBreakdown(double vakalathnamaFee, double advocateClerkWelfareFund, double petitionFee, double condonationFee, double advocateFee) {
         List<BreakDown> feeBreakdowns = new ArrayList<>();
 
         feeBreakdowns.add(new BreakDown(VAKALATHNAMA_FEE, vakalathnamaFee, new HashMap<>()));
         feeBreakdowns.add(new BreakDown(ADVOCATE_CLERK_WELFARE_FUND, advocateClerkWelfareFund, new HashMap<>()));
-        feeBreakdowns.add(new BreakDown(TOTAL_APPLICATION_FEE, totalApplicationFee, new HashMap<>()));
         feeBreakdowns.add(new BreakDown(PETITION_FEE, petitionFee, new HashMap<>()));
         feeBreakdowns.add(new BreakDown(ADVOCATE_FEE, advocateFee, new HashMap<>()));
         if (condonationFee > 0)
