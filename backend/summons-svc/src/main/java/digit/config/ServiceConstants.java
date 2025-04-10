@@ -76,5 +76,6 @@ public class ServiceConstants {
 
     public static final String LOCATION_NOT_FOUND = "LOCATION_NOT_FOUND";
     public static final String FILE_CATEGORY = "FILE_CATEGORY";
+    public static final String PAYMENTMODE = "paymentMode";
 
 }
