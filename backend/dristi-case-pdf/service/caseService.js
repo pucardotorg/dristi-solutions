@@ -912,22 +912,24 @@ async function getComplainantPlaceholderList(caseDetails) {
     ?.map((litigant) => ({
       ...litigant,
       poaHolder: caseDetails?.poaHolders?.find((poaHolder) =>
-        poaHolder?.representing?.some(
+        poaHolder?.representingLitigants?.some(
           (complainant) => complainant?.individualId === litigant?.individualId
         )
       ),
     }));
 
   const poaHolders = caseDetails?.poaHolders?.map((poaHolder) => {
-    const representingWithLitigant = poaHolder?.representing.map((rep) => {
-      return {
-        ...litigants?.find((lit) => rep?.individualId === lit?.individualId),
-        ...rep,
-      };
-    });
+    const representingWithLitigant = poaHolder?.representingLitigants.map(
+      (rep) => {
+        return {
+          ...litigants?.find((lit) => rep?.individualId === lit?.individualId),
+          ...rep,
+        };
+      }
+    );
     return {
       ...poaHolder,
-      representing: representingWithLitigant,
+      representingLitigants: representingWithLitigant,
     };
   });
 
@@ -944,7 +946,7 @@ async function getComplainantPlaceholderList(caseDetails) {
     }
 
     if (litigant?.poaHolder) {
-      const representedNames = litigant?.poaHolder?.representing
+      const representedNames = litigant?.poaHolder?.representingLitigants
         ?.map((rep) => rep?.additionalDetails?.fullName)
         ?.filter(Boolean)
         ?.join(", ");
@@ -952,7 +954,7 @@ async function getComplainantPlaceholderList(caseDetails) {
         index: litigant?.additionalDetails?.currentPosition,
         placeholder: `${litigant?.poaHolder?.additionalDetails?.fullName} - PoA holder for ${representedNames}`,
       });
-      litigant?.poaHolder?.representing?.forEach((rep) => {
+      litigant?.poaHolder?.representingLitigants?.forEach((rep) => {
         processedLitigantIds.add(rep?.individualId);
       });
     } else {
@@ -960,7 +962,7 @@ async function getComplainantPlaceholderList(caseDetails) {
         (poa) => poa?.individualId === litigant?.individualId
       );
       if (complainantPoaHolder) {
-        const representedNames = complainantPoaHolder?.representing
+        const representedNames = complainantPoaHolder?.representingLitigants
           ?.map((rep) => rep?.additionalDetails?.fullName)
           ?.filter(Boolean)
           ?.join(", ");
@@ -968,7 +970,7 @@ async function getComplainantPlaceholderList(caseDetails) {
           index: litigant?.additionalDetails?.currentPosition,
           placeholder: `${litigant?.additionalDetails?.fullName} - Complainant ${litigant?.additionalDetails?.currentPosition}, PoA holder for ${representedNames}`,
         });
-        complainantPoaHolder?.representing?.forEach((rep) => {
+        complainantPoaHolder?.representingLitigants?.forEach((rep) => {
           processedLitigantIds.add(rep?.individualId);
         });
       } else {

@@ -1787,17 +1787,10 @@ export const updateCaseDetails = async ({
                 individualId: data?.data?.poaVerification?.individualDetails?.individualId,
                 name: getFullName(" ", data?.data?.poaFirstName, data?.data?.poaMiddleName, data?.data?.poaLastName),
                 poaType: "poa.regular",
-                representing: [
+                documents: data?.data?.poaVerification?.individualDetails?.document,
+                representingLitigants: [
                   {
                     individualId: data?.data?.complainantVerification?.individualDetails?.individualId,
-                    document: [
-                      // {
-                      //   documentType: documentData.fileType || documentData?.documentType,
-                      //   fileStore: documentData.file?.files?.[0]?.fileStoreId || documentData?.fileStore,
-                      //   documentName: documentData.filename || documentData?.documentName,
-                      //   fileName: "ID Proof",
-                      // },
-                    ],
                   },
                 ],
                 additionalDetails: {
@@ -1881,17 +1874,10 @@ export const updateCaseDetails = async ({
                     individualId: Individual?.Individual?.individualId,
                     name: getFullName(" ", firstName, middleName, lastName),
                     poaType: "poa.regular",
-                    representing: [
+                    documents: data?.data?.poaVerification?.individualDetails?.document,
+                    representingLitigants: [
                       {
                         individualId: data?.data?.complainantVerification?.individualDetails?.individualId,
-                        document: [
-                          // {
-                          //   documentType: documentData.fileType || documentData?.documentType,
-                          //   fileStore: documentData.file?.files?.[0]?.fileStoreId || documentData?.fileStore,
-                          //   documentName: documentData.filename || documentData?.documentName,
-                          //   fileName: "ID Proof",
-                          // },
-                        ],
                       },
                     ],
                     additionalDetails: {
@@ -1995,7 +1981,7 @@ export const updateCaseDetails = async ({
             documentData.poaAuthorizationDocument.poaDocument = await Promise.all(
               data?.data?.poaAuthorizationDocument?.poaDocument?.map(async (document) => {
                 if (document) {
-                  const documentType = documentsTypeMapping["complainantCompanyDetailsUpload"];
+                  const documentType = documentsTypeMapping["poaAuthorizationDocument"];
                   const uploadedData = await onDocumentUpload(documentType, document, document.name, tenantId);
                   const doc = {
                     documentType,
@@ -2110,7 +2096,59 @@ export const updateCaseDetails = async ({
       }
     });
     data.litigants = [...updatedLitigants];
-    data.poaHolders = [];
+
+    const mergedPoaHoldersMap = new Map();
+
+    // Step 1: Merge PoA holders by individualId and combine their representing litigants
+    for (const poa of poaHolders) {
+      if (!poa?.individualId) continue;
+
+      const existing = mergedPoaHoldersMap?.get(poa?.individualId);
+
+      if (existing) {
+        const newRepresenting =
+          poa?.representingLitigants?.filter(
+            (newRep) => !existing?.representingLitigants?.some((rep) => rep?.individualId === newRep?.individualId)
+          ) || [];
+        existing?.representingLitigants?.push(...newRepresenting);
+      } else {
+        mergedPoaHoldersMap?.set(poa?.individualId, { ...poa });
+      }
+    }
+
+    // Step 2: Map document data to each representing litigant
+    const finalPoaHolders = Array?.from(mergedPoaHoldersMap?.values())?.map((poaHolder) => ({
+      ...poaHolder,
+      representingLitigants:
+        poaHolder?.representingLitigants?.map((litigant) => {
+          const currFormData = newFormData?.find(
+            (form) => form?.data?.complainantVerification?.individualDetails?.individualId === litigant?.individualId
+          );
+          return {
+            ...litigant,
+            documents: currFormData?.data?.poaAuthorizationDocument?.poaDocument,
+          };
+        }) || [],
+    }));
+
+    // Step 3: Inject existing backend PoA details (id, audit info, etc.)
+    const updatedPoaHolders = finalPoaHolders?.map((poaHolder) => {
+      const existingLit = caseDetails?.poaHolders?.find((poa) => poa?.individualId === poaHolder?.individualId);
+      return existingLit
+        ? {
+            ...poaHolder,
+            id: existingLit?.id,
+            auditDetails: existingLit?.auditDetails,
+            hasSigned: existingLit?.hasSigned || false,
+          }
+        : poaHolder;
+    });
+
+    // Step 4: Add previous PoAs not included in new data as inactive
+    const oldPoAsToAdd =
+      caseDetails?.poaHolders?.filter((poa) => !updatedPoaHolders?.some((newPoa) => newPoa?.individualId === poa?.individualId)) || [];
+
+    data.poaHolders = [...updatedPoaHolders, ...oldPoAsToAdd?.map((poa) => ({ ...poa, isActive: false }))];
 
     data.additionalDetails = {
       ...caseDetails.additionalDetails,

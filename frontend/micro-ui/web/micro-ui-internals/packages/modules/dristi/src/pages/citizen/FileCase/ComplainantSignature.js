@@ -308,14 +308,14 @@ const ComplainantSignature = ({ path }) => {
             rep?.representing?.some((complainant) => complainant?.individualId === litigant?.individualId)
           ) || [],
         poaHolder: caseDetails?.poaHolders?.find((poaHolder) =>
-          poaHolder?.representing?.some((complainant) => complainant?.individualId === litigant?.individualId)
+          poaHolder?.representingLitigants?.some((complainant) => complainant?.individualId === litigant?.individualId)
         ),
       }));
   }, [caseDetails]);
 
   const poaHolders = useMemo(() => {
     return caseDetails?.poaHolders?.map((poaHolder) => {
-      const representingWithLitigant = poaHolder?.representing.map((rep) => {
+      const representingWithLitigant = poaHolder?.representingLitigants?.map((rep) => {
         return {
           ...litigants?.find((lit) => rep?.individualId === lit?.individualId),
           ...rep,
@@ -323,7 +323,7 @@ const ComplainantSignature = ({ path }) => {
       });
       return {
         ...poaHolder,
-        representing: representingWithLitigant,
+        representingLitigants: representingWithLitigant,
       };
     });
   }, [caseDetails, litigants]);
@@ -524,7 +524,7 @@ const ComplainantSignature = ({ path }) => {
     if (isCurrentPersonPoaComplainant) {
       const litigant = litigants?.find((litigant) => litigant?.additionalDetails?.uuid === userInfo?.uuid);
       const poaHolder = poaHolders?.find((poa) => poa?.individualId === litigant?.individualId);
-      const representedNames = poaHolder?.representing
+      const representedNames = poaHolder?.representingLitigants
         ?.map((rep) => rep?.additionalDetails?.fullName)
         ?.filter(Boolean)
         ?.join(", ");
@@ -532,7 +532,7 @@ const ComplainantSignature = ({ path }) => {
     } else if (isCurrentPersonPoa) {
       const advocate = caseDetails?.representatives?.find((adv) => adv?.additionalDetails?.uuid === userInfo?.uuid);
       const poaHolder = poaHolders?.find((poa) => poa?.individualId === advocate?.individualId);
-      const representedNames = poaHolder?.representing
+      const representedNames = poaHolder?.representingLitigants
         ?.map((rep) => rep?.additionalDetails?.fullName)
         ?.filter(Boolean)
         ?.join(", ");
