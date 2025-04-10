@@ -127,8 +127,6 @@ public class CaseQueryBuilder {
 
                 firstCriteria = addLitigantCriteria(criteria,preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
 
-                firstCriteria = addPoaHolderCriteria(criteria,preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
-
                 firstCriteria = addAdvocateCriteria(criteria,preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
 
                 firstCriteria = addListCriteria(criteria.getStatus(), query, firstCriteria, "cases.status", preparedStmtList,preparedStmtArgList, Types.VARCHAR);
@@ -197,10 +195,19 @@ public class CaseQueryBuilder {
     private boolean addAdvocateCriteria(CaseCriteria criteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList, RequestInfo requestInfo, StringBuilder query, boolean firstCriteria) {
         if (criteria.getAdvocateId() != null && !criteria.getAdvocateId().isEmpty()) {
             addClauseIfRequired(query, firstCriteria);
-            query.append("((cases.id IN ( SELECT advocate.case_id from dristi_case_representatives advocate WHERE advocate.advocateId = ? AND advocate.isactive = true))" +
+            query.append("((cases.id IN (" +
+                    "        SELECT advocate.case_id" +
+                    "        FROM dristi_case_representatives advocate" +
+                    "        WHERE advocate.advocateId = ? AND advocate.isactive = true" +
+                    "        UNION" +
+                    "        SELECT poaholders.case_id" +
+                    "        FROM dristi_case_poaholders poaholders" +
+                    "        WHERE poaholders.individual_id = ? AND poaholders.is_active = true))" +
                     " OR cases.status='DRAFT_IN_PROGRESS' AND cases.createdby = ?" +
                     " OR EXISTS (SELECT 1 FROM jsonb_array_elements(pendingAdvocateRequests) elem WHERE elem->>'advocateId' = ?) ) AND (cases.status NOT IN ('DELETED_DRAFT'))");
             preparedStmtList.add(criteria.getAdvocateId());
+            preparedStmtArgList.add(Types.VARCHAR);
+            preparedStmtList.add(criteria.getPoaHolderIndividualId());
             preparedStmtArgList.add(Types.VARCHAR);
             preparedStmtList.add(requestInfo.getUserInfo().getUuid());
             preparedStmtArgList.add(Types.VARCHAR);
@@ -214,25 +221,21 @@ public class CaseQueryBuilder {
     private boolean addLitigantCriteria(CaseCriteria criteria, List<Object> preparedStmtList,List<Integer> preparedStmtArgList, RequestInfo requestInfo, StringBuilder query, boolean firstCriteria) {
         if (criteria.getLitigantId() != null && !criteria.getLitigantId().isEmpty()) {
             addClauseIfRequired(query, firstCriteria);
-            query.append("((cases.id IN ( SELECT litigant.case_id from dristi_case_litigants litigant WHERE litigant.individualId = ? AND litigant.isactive = true)) OR cases.status ='DRAFT_IN_PROGRESS' AND cases.createdby = ?) AND (cases.status NOT IN ('DELETED_DRAFT'))");
+            query.append(" ((cases.id IN (" +
+                    " SELECT litigant.case_id" +
+                    " FROM dristi_case_litigants litigant" +
+                    " WHERE litigant.individualId = ? AND litigant.isactive = true" +
+                    " UNION" +
+                    " SELECT poaholders.case_id" +
+                    " FROM dristi_case_poaholders poaholders" +
+                    " WHERE poaholders.individual_id = ? AND poaholders.is_active = true))" +
+                    " OR cases.status ='DRAFT_IN_PROGRESS' AND cases.createdby = ?) AND (cases.status NOT IN ('DELETED_DRAFT'))");
             preparedStmtList.add(criteria.getLitigantId());
+            preparedStmtArgList.add(Types.VARCHAR);
+            preparedStmtList.add(criteria.getPoaHolderIndividualId());
             preparedStmtArgList.add(Types.VARCHAR);
             preparedStmtList.add(requestInfo.getUserInfo().getUuid());
             preparedStmtArgList.add(Types.VARCHAR);
-            firstCriteria = false;
-        }
-        return firstCriteria;
-    }
-
-    private boolean addPoaHolderCriteria(CaseCriteria criteria, List<Object> preparedStmtList,List<Integer> preparedStmtArgList, RequestInfo requestInfo, StringBuilder query, boolean firstCriteria) {
-        if (criteria.getPoaHolderIndividualIds() != null && !criteria.getPoaHolderIndividualIds().isEmpty()) {
-            addClauseIfRequired(query, firstCriteria);
-            query.append("(cases.id IN ( SELECT poaholders.case_id from dristi_case_poaholders poaholders WHERE poaholders.is_active = true AND poaholders.individual_id")
-                    .append(" IN (")
-                    .append(criteria.getPoaHolderIndividualIds().stream().map(id -> "?").collect(Collectors.joining(",")))
-                    .append(")))");
-            preparedStmtList.addAll(criteria.getPoaHolderIndividualIds());
-            criteria.getPoaHolderIndividualIds().forEach(i->preparedStmtArgList.add(Types.VARCHAR));
             firstCriteria = false;
         }
         return firstCriteria;

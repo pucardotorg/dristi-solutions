@@ -428,6 +428,11 @@ public class CaseRegistrationEnrichment {
                 element.setLitigantId(individualId);
             }
         }
+
+        for (CaseCriteria element : searchRequest.getCriteria()) {
+            element.setPoaHolderIndividualId(individualId);
+        }
+
     }
 
 }
