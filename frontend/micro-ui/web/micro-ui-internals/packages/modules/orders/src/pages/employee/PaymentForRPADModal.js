@@ -310,6 +310,15 @@ const PaymentForRPADModal = ({ path }) => {
     [isCaseAdmitted]
   );
 
+  const getPartyIndex = (orderType, orderDetails, compositeItem) => {
+    if (orderType !== "NOTICE") return "";
+    
+    return orderDetails?.orderCategory === "COMPOSITE"
+      ? compositeItem?.orderSchema?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex || ""
+      : orderDetails?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex || "";
+  };
+  
+
   const feeOptions = useMemo(() => {
     const taskAmount = filteredTasks?.[0]?.amount?.amount || 0;
 
@@ -394,11 +403,7 @@ const PaymentForRPADModal = ({ path }) => {
                 stateSla: 3 * dayInMillisecond + todayDate,
                 additionalDetails: {
                   hearingId: hearingsData?.list?.[0]?.hearingId,
-                  partyIndex:
-                    orderType === "NOTICE" &&
-                    (orderDetails?.orderCategory === "COMPOSITE"
-                      ? compositeItem?.orderSchema?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex
-                      : orderDetails?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex),
+                  partyIndex: getPartyIndex(orderType, orderDetails, compositeItem),
                 },
                 tenantId,
               },

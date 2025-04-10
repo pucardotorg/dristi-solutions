@@ -84,12 +84,25 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
         setPaymentLoader(true);
         popup.document.body.removeChild(form);
       }
+      let retryCount = 0;
+      const maxRetries = 3;
       const checkPopupClosed = setInterval(async () => {
         if (popup.closed) {
           setPaymentLoader(false);
-          const billAfterPayment = await DRISTIService.callSearchBill({}, { tenantId, consumerCode, service });
-          clearInterval(checkPopupClosed);
-          resolve(billAfterPayment?.Bill?.[0]?.status === "PAID");
+          if (retryCount < maxRetries) {
+            retryCount++;
+            const billAfterPayment = await DRISTIService.callSearchBill({}, { tenantId, consumerCode, service });
+            if (billAfterPayment?.Bill?.[0]?.status === "PAID") {
+              clearInterval(checkPopupClosed);
+              resolve(true);
+            } else if (retryCount === maxRetries) {
+              clearInterval(checkPopupClosed);
+              resolve(false);
+            }
+          } else {
+            clearInterval(checkPopupClosed);
+            resolve(false);
+          }
         }
       }, 1000);
       if (scenario !== "applicationSubmission") {
