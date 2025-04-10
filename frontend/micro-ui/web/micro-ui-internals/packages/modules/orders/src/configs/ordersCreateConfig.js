@@ -3416,17 +3416,23 @@ export const configsCreateOrderWarrant = [
       },
       {
         isMandatory: true,
+        type: "component",
+        component: "WarrantOrderComponent",
         key: "warrantFor",
-        type: "dropdown",
-        label: "WARRANT_FOR_PARTY",
         schemaKeyPath: "orderDetails.respondentName",
+        transformer: "summonsOrderPartyName",
+        label: "WARRANT_FOR_PARTY",
         populators: {
-          name: "warrantFor",
-          optionsKey: "name",
-          error: "CORE_REQUIRED_FIELD_ERROR",
-          required: true,
-          isMandatory: true,
-          styles: { maxWidth: "100%" },
+          inputs: [
+            {
+              name: "select party",
+              type: "dropdown",
+            },
+            {
+              name: "select deleivery channels",
+              type: "checkbox",
+            },
+          ],
         },
       },
       {

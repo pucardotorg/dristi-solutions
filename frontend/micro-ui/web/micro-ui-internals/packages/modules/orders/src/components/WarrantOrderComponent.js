@@ -5,7 +5,7 @@ import _ from "lodash";
 import AddParty from "../../../hearings/src/pages/employee/AddParty";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { useTranslation } from "react-i18next";
-import { getFormattedName } from "../utils";
+import { constructFullName, getFormattedName } from "../utils";
 import GetPoliceStationModal from "./GetPoliceStationModal";
 
 // Helper function to compare addresses without police station data
@@ -13,21 +13,17 @@ const compareAddressValues = (value1, value2) => {
   // Create copies without geoLocationDetails.policeStation
   const compareValue1 = {
     ...value1,
-    geoLocationDetails: value1?.geoLocationDetails
-      ? {
-          ...value1.geoLocationDetails,
-          policeStation: undefined,
-        }
-      : undefined,
+    geoLocationDetails: value1?.geoLocationDetails ? { 
+      ...value1.geoLocationDetails,
+      policeStation: undefined 
+    } : undefined
   };
   const compareValue2 = {
     ...value2,
-    geoLocationDetails: value2?.geoLocationDetails
-      ? {
-          ...value2.geoLocationDetails,
-          policeStation: undefined,
-        }
-      : undefined,
+    geoLocationDetails: value2?.geoLocationDetails ? {
+      ...value2.geoLocationDetails,
+      policeStation: undefined
+    } : undefined
   };
   return JSON.stringify(compareValue1) === JSON.stringify(compareValue2);
 };
@@ -59,7 +55,7 @@ const RenderDeliveryChannels = ({ partyDetails, deliveryChannels, handleCheckbox
   const { data: policeStationData } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "case", [{ name: "PoliceStation" }]);
 
   const handlePoliceStationSelect = (station, address) => {
-    const updatedPartyDetails = partyDetails.map((detail) => {
+    const updatedPartyDetails = partyDetails.map(detail => {
       if (detail.type === "Via Police" && compareAddressValues(detail.value, address)) {
         return {
           ...detail,
@@ -67,9 +63,9 @@ const RenderDeliveryChannels = ({ partyDetails, deliveryChannels, handleCheckbox
             ...detail.value,
             geoLocationDetails: {
               ...detail.value.geoLocationDetails,
-              policeStation: station,
-            },
-          },
+              policeStation: station
+            }
+          }
         };
       }
       return detail;
@@ -122,11 +118,9 @@ const RenderDeliveryChannels = ({ partyDetails, deliveryChannels, handleCheckbox
                                 <Dropdown
                                   option={policeStationData?.case?.PoliceStation || []}
                                   optionKey="name"
-                                  selected={
-                                    value?.geoLocationDetails?.policeStation ||
-                                    partyDetails?.find((detail) => detail.type === "Via Police" && compareAddressValues(detail.value, value))?.value
-                                      ?.geoLocationDetails?.policeStation
-                                  }
+                                  selected={value?.geoLocationDetails?.policeStation || 
+                                    partyDetails?.find(detail => 
+                                      detail.type === "Via Police" && compareAddressValues(detail.value, value))?.value?.geoLocationDetails?.policeStation}
                                   select={(station) => handlePoliceStationSelect(station, value)}
                                   t={t}
                                   placeholder={t("SELECT_POLICE_STATION")}
@@ -134,7 +128,9 @@ const RenderDeliveryChannels = ({ partyDetails, deliveryChannels, handleCheckbox
                                 />
                               </div>
                               <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                                <div style={{ color: "#505A5F", fontSize: "14px" }}>{t("TO_IDENTIFY_POLICE_STATION_FROM_LAT_LONG")}</div>
+                                <div style={{ color: "#505A5F", fontSize: "14px" }}>
+                                  {t("TO_IDENTIFY_POLICE_STATION_FROM_LAT_LONG")}
+                                </div>
                                 <button
                                   type="button"
                                   onClick={(e) => {
@@ -149,7 +145,7 @@ const RenderDeliveryChannels = ({ partyDetails, deliveryChannels, handleCheckbox
                                     padding: 0,
                                     cursor: "pointer",
                                     fontSize: "14px",
-                                    textDecoration: "underline",
+                                    textDecoration: "underline"
                                   }}
                                 >
                                   {t("CLICK_HERE")}
@@ -174,18 +170,14 @@ const RenderDeliveryChannels = ({ partyDetails, deliveryChannels, handleCheckbox
             handlePoliceStationSelect(station, selectedAddress);
             setIsPoliceStationModalOpen(false);
           }}
-          address={
-            typeof selectedAddress === "string"
-              ? selectedAddress
-              : `${selectedAddress?.locality}, ${selectedAddress?.city}, ${selectedAddress?.district}, ${selectedAddress?.pincode}`
-          }
+          address={typeof selectedAddress === "string" ? selectedAddress : `${selectedAddress?.locality}, ${selectedAddress?.city}, ${selectedAddress?.district}, ${selectedAddress?.pincode}`}
         />
       )}
     </div>
   );
 };
 
-const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) => {
+const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) => {
   const urlParams = new URLSearchParams(window.location.search);
   const filingNumber = urlParams.get("filingNumber");
   const tenantId = Digit.ULBService.getCurrentTenantId();
@@ -194,8 +186,6 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
   const orderType = useMemo(() => formData?.orderType?.code, [formData?.orderType?.code]);
   const [userList, setUserList] = useState([]);
   const [deliveryChannels, setDeliveryChannels] = useState([
-    { label: "SMS", type: "SMS", code: "SMS", values: [] },
-    { label: "EMAIL", type: "E-mail", code: "EMAIL", values: [] },
     {
       label: "EPOST",
       type: "e-Post",
@@ -245,8 +235,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
       pincode: address?.addressDetails?.pincode || address?.pincode || "",
       address: isIndividualData ? undefined : address?.addressDetails,
       id: address?.id,
-      ...(address?.geoLocationDetails && { geoLocationDetails: address.geoLocationDetails }),
-    }));
+      ...(address?.geoLocationDetails && { geoLocationDetails: address.geoLocationDetails })}));
   };
 
   useEffect(() => {
@@ -254,7 +243,6 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
       let users = [];
       if (caseDetails?.additionalDetails) {
         const respondentData = caseDetails?.additionalDetails?.respondentDetails?.formdata || [];
-        const witnessData = caseDetails?.additionalDetails?.witnessDetails?.formdata || [];
         const updatedRespondentData1 = await Promise.all(
           respondentData.map(async (item, index) => {
             const individualId = item?.data?.respondentVerification?.individualDetails?.individualId;
@@ -318,22 +306,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
             uniqueId: item?.uniqueId,
           },
         }));
-        const updatedWitnessData = witnessData.map((item, index) => ({
-          ...item,
-          data: {
-            ...item?.data,
-            firstName: item?.data?.firstName,
-            lastName: item?.data?.lastName,
-            witnessDesignation: item?.data?.witnessDesignation,
-            address: mapAddressDetails(item?.data?.addressDetails),
-            partyType: "Witness",
-            phone_numbers: item?.data?.phonenumbers?.mobileNumber || [],
-            email: item?.data?.emails?.emailId || [],
-            uuid: item?.data?.uuid,
-            partyIndex: `Witness_${index}`,
-          },
-        }));
-        users = [...updatedRespondentData, ...updatedWitnessData];
+        users = [...updatedRespondentData];
       }
       setUserList(users);
     };
@@ -346,15 +319,15 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
     const isEqual = _.isEqual(selectedOption.value.data, formData?.[config.key]?.party?.data);
     if (!isEqual) {
       setSelectedChannels([]);
-      onSelect(config.key, { ...formData[config.key], party: selectedOption.value, selectedChannels: [] });
+      const fullName = constructFullName(selectedOption.value?.data?.firstName, selectedOption.value?.data?.middleName, selectedOption.value?.data?.lastName);
+      onSelect(config.key, { ...formData[config.key], party: selectedOption.value, name: fullName, uniqueId: selectedOption.value?.uniqueId,selectedChannels: [] });
     }
   };
 
   const handleCheckboxChange = (channelType, code, value) => {
     const partyDetails = selectedChannels.length === 0 ? formData[config.key]?.selectedChannels : selectedChannels;
     const isPresent =
-      Array.isArray(partyDetails) &&
-      partyDetails.some((data) => {
+      Array.isArray(partyDetails) && partyDetails.some((data) => {
         // Use compareAddressValues for Via Police type, otherwise use direct comparison
         if (channelType === "Via Police") {
           return data.type === channelType && compareAddressValues(value, data.value);
@@ -376,7 +349,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
       updatedSelectedChannels = Array.isArray(partyDetails)
         ? [...partyDetails, { type: channelType, code: code, value: value }]
         : [{ type: channelType, code: code, value: value }];
-
+      
       // Auto-select police station if geoLocationDetails.policeStation is present
       if (channelType === "Via Police" && value?.geoLocationDetails?.policeStation) {
         const policeStation = value?.geoLocationDetails?.policeStation;
@@ -414,7 +387,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
       : null;
   }, [config.key, formData]);
 
-  const [isPartyModalOpen, setIsPartyModalOpen] = useState(false);
+  // const [isPartyModalOpen, setIsPartyModalOpen] = useState(false);
   const party = useMemo(() => formData[config.key]?.party, [config.key, formData]);
   const partyDetails = selectedChannels.length === 0 ? formData[config.key]?.selectedChannels : selectedChannels;
   const { address, phone_numbers, email } = useMemo(() => party?.data || {}, [party?.data]);
@@ -456,8 +429,6 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
       const ePostAddresses = addressList?.filter((item) => Boolean(item));
       setDeliveryChannels(
         [
-          { label: "SMS", type: "SMS", code: "SMS", values: [...new Set(phone_numbers || [])] },
-          { label: "EMAIL", type: "E-mail", code: "EMAIL", values: [...new Set(email || [])] },
           {
             label: "EPOST",
             type: "e-Post",
@@ -470,7 +441,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
             code: "RPAD",
             values: address || [],
           },
-          orderType === "SUMMONS" && { label: "VIA_POLICE", type: "Via Police", code: "POLICE", values: address || [] },
+          orderType === "WARRANT" && { label: "VIA_POLICE", type: "Via Police", code: "POLICE", values: address || [] },
         ]
           .filter((item) => Boolean(item))
           .map((item) => item)
@@ -478,6 +449,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
     },
     [email, getRespondentPincodeDetails, orderType, phone_numbers]
   );
+
 
   // const summonsPincode = useMemo(() => filteredTasks?.[0]?.taskDetails?.respondentDetails?.address?.pincode, [filteredTasks]);
 
@@ -500,11 +472,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
     }
   }, [address, email, getEPostAddress, orderType, phone_numbers]);
 
-  const handleAddParty = (e) => {
-    e?.stopPropagation();
-    e?.preventDefault();
-    setIsPartyModalOpen(!isPartyModalOpen);
-  };
+
 
   return (
     <div className="summons-order-component">
@@ -521,57 +489,20 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
                 style={{ maxWidth: "100%", marginBottom: 8 }}
                 className="party-dropdown"
               />
-              {
-                <Button
-                  onButtonClick={handleAddParty}
-                  className="add-party-btn"
-                  style={{
-                    backgroundColor: "transparent",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: 0,
-                    WebkitBoxShadow: "none",
-                    boxShadow: "none",
-                    height: "auto",
-                  }}
-                  textStyles={{
-                    marginTop: 0,
-                    fontFamily: "Roboto",
-                    fontSize: "16px",
-                    fontWeight: 700,
-                    lineHeight: "18.75px",
-                    textAlign: "center",
-                    color: "#007E7E",
-                  }}
-                  label={t("+ Add new witness")}
-                />
-              }
             </div>
           )}
           {input.type !== "dropdown" && selectedParty && (
-            <RenderDeliveryChannels
-              deliveryChannels={deliveryChannels}
-              handleCheckboxChange={handleCheckboxChange}
+            <RenderDeliveryChannels 
+              deliveryChannels={deliveryChannels} 
+              handleCheckboxChange={handleCheckboxChange} 
               partyDetails={partyDetails}
               handlePoliceStationChange={handlePoliceStationChange}
             />
           )}
         </div>
       ))}
-      {isPartyModalOpen && (
-        <AddParty
-          onCancel={handleAddParty}
-          onDismiss={handleAddParty}
-          tenantId={tenantId}
-          caseData={caseData}
-          onAddSuccess={() => {
-            handleAddParty();
-            refetch();
-          }}
-        ></AddParty>
-      )}
     </div>
   );
 };
 
-export default SummonsOrderComponent;
+export default WarrantOrderComponent;
