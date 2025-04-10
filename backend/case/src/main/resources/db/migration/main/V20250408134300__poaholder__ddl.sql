@@ -1,4 +1,4 @@
-ALTER TABLE dristi_case_documents ADD COLUMN poaholder_id VARCHAR(128);
+ALTER TABLE dristi_case_document ADD COLUMN poaholder_id VARCHAR(128);
 
 
 CREATE TABLE dristi_case_poaholders (
