@@ -302,7 +302,7 @@ const SubmissionsCreate = ({ path }) => {
     const submissionConfigKeys = {
       APPLICATION: applicationTypeConfig,
     };
-    if (delayCondonationData && caseDetails && Array.isArray(submissionConfigKeys[submissionType])) {
+    if (caseDetails && Array.isArray(submissionConfigKeys[submissionType])) {
       const isDelayApplicationPending = Boolean(
         delayCondonationData?.applicationList?.some(
           (item) =>
@@ -343,8 +343,6 @@ const SubmissionsCreate = ({ path }) => {
           };
         });
       }
-    } else if (Array.isArray(submissionConfigKeys[submissionType])) {
-      return submissionConfigKeys[submissionType];
     }
     return [];
   }, [caseDetails, submissionType, orderNumber, hearingId, applicationTypeUrl, isCitizen, delayCondonationData]);
