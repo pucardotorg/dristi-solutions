@@ -468,7 +468,7 @@ public class TaskService {
 
             return nameNode.asText();
         } catch (Exception e) {
-            throw new CustomException(CREATE_TASK_ERR, e.getMessage());
+            throw new CustomException(EXTRACT_ACCUSED_ERR, e.getMessage());
         }
     }
 
