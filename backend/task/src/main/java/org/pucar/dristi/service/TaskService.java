@@ -250,7 +250,9 @@ public class TaskService {
             Object taskDetailsObject = taskRequest.getTask().getTaskDetails();
             JsonNode taskDetails = objectMapper.readTree(objectMapper.writeValueAsString(taskDetailsObject));
 
-            String accusedName = taskDetails.has("respondentDetails") ? taskDetails.path("respondentDetails").path("name").asText() : "";
+            String accusedName = taskDetails.has("respondentDetails")
+                    ? taskDetails.path("respondentDetails").path("name").path("name").asText("")
+                    : "";
 
             Set<String> individualIds = extractComplainantIndividualIds(caseDetails);
             if (Objects.equals(messageCode, WARRANT_ISSUED)) {
