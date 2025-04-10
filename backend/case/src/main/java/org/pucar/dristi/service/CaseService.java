@@ -3795,12 +3795,14 @@ public class CaseService {
 
                 // create evidence for vakalatnama document submitted
 
-                boolean isEvidenceAlreadyPresent = evidenceValidator.validateEvidenceCreation(courtCase, requestInfo, replacementDetails);
+                if (replacementDetails.getDocument() != null) {
+                    boolean isEvidenceAlreadyPresent = evidenceValidator.validateEvidenceCreation(courtCase, requestInfo, replacementDetails);
 
-                if (!isEvidenceAlreadyPresent) {
-                    EvidenceRequest evidenceRequest = enrichEvidenceCreateRequest(courtCase, replacementDetails, requestInfo);
+                    if (!isEvidenceAlreadyPresent) {
+                        EvidenceRequest evidenceRequest = enrichEvidenceCreateRequest(courtCase, replacementDetails, requestInfo);
 
-                    evidenceUtil.createEvidence(evidenceRequest);
+                        evidenceUtil.createEvidence(evidenceRequest);
+                    }
                 }
 
                 enrichHearingDetails(courtCase, replacementDetails, joinCaseRequest, requestInfo);
@@ -3984,11 +3986,13 @@ public class CaseService {
         }
 
         ObjectNode document = objectMapper.createObjectNode();
-        Document vakalatanamaDocument = objectMapper.convertValue(replacementDetails.getDocument(), Document.class);
-        document.put("fileName", UPLOAD_VAKALATNAMA);
-        document.put("fileStore", vakalatanamaDocument.getFileStore());
-        document.put("documentType", vakalatanamaDocument.getDocumentType());
-        vakalatnamaFileUploadDocuments.add(document);
+        if (replacementDetails.getDocument() != null) {
+            Document vakalatanamaDocument = objectMapper.convertValue(replacementDetails.getDocument(), Document.class);
+            document.put("fileName", UPLOAD_VAKALATNAMA);
+            document.put("fileStore", vakalatanamaDocument.getFileStore());
+            document.put("documentType", vakalatanamaDocument.getDocumentType());
+            vakalatnamaFileUploadDocuments.add(document);
+        }
     }
 
     private void replaceAdvocateIfFound(JsonNode item, String advocateUuidToReplace, JsonNode newAdvocateDetail) {
@@ -4057,8 +4061,12 @@ public class CaseService {
     private AdvocateMapping enrichAdvocateDetailsInRepresentativesList(CourtCase courtCase, String advocateUuid, ReplacementDetails replacementDetails, Party party,
                                                                        AuditDetails auditDetails, AdvocateDetails advocateDetails, CourtCase courtCaseObj) {
 
-        Document document = objectMapper.convertValue(replacementDetails.getDocument(), Document.class);
-        document.setId(UUID.randomUUID().toString());
+        Document document = null;
+
+        if (replacementDetails.getDocument() != null) {
+            document = objectMapper.convertValue(replacementDetails.getDocument(), Document.class);
+            document.setId(UUID.randomUUID().toString());
+        }
 
         IndividualDetails individualDetails = advocateDetails.getIndividualDetails();
         List<String> nameParts = Stream.of(individualDetails.getFirstName(),
@@ -4074,7 +4082,9 @@ public class CaseService {
         advocateAdditionalDetails.put("uuid", advocateDetails.getAdvocateUuid());
 
         List<Document> documents = new ArrayList<>();
-        documents.add(document);
+        if (document != null) {
+            documents.add(document);
+        }
 
         List<Party> partyList = new ArrayList<>();
         partyList.add(party);
@@ -4180,15 +4190,14 @@ public class CaseService {
 
         LitigantDetails litigantDetails = replacementDetails.getLitigantDetails();
         Document document = new Document();
+        List<Document> documents = new ArrayList<>();
         if (replacementDetails.getDocument() != null) {
             document.setId(UUID.randomUUID().toString());
             document.setAdditionalDetails(replacementDetails.getDocument().getAdditionalDetails());
             document.setDocumentType(replacementDetails.getDocument().getDocumentType());
             document.setFileStore(replacementDetails.getDocument().getFileStore());
+            documents.add(document);
         }
-
-        List<Document> documents = new ArrayList<>();
-        documents.add(document);
 
         ObjectNode additionalDetails = objectMapper.createObjectNode();
 
