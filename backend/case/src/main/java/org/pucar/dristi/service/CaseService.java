@@ -4177,15 +4177,14 @@ public class CaseService {
 
         LitigantDetails litigantDetails = replacementDetails.getLitigantDetails();
         Document document = new Document();
+        List<Document> documents = new ArrayList<>();
         if (replacementDetails.getDocument() != null) {
             document.setId(UUID.randomUUID().toString());
             document.setAdditionalDetails(replacementDetails.getDocument().getAdditionalDetails());
             document.setDocumentType(replacementDetails.getDocument().getDocumentType());
             document.setFileStore(replacementDetails.getDocument().getFileStore());
+            documents.add(document);
         }
-
-        List<Document> documents = new ArrayList<>();
-        documents.add(document);
 
         ObjectNode additionalDetails = objectMapper.createObjectNode();
 
