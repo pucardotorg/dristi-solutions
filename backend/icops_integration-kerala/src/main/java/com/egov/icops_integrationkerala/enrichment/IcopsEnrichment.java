@@ -61,7 +61,6 @@ public class IcopsEnrichment {
         String processUniqueId = idgenUtil.getIdList(taskRequest.getRequestInfo(), config.getEgovStateTenantId(),
                 config.getIdName(),null,1).get(0);
         ProcessRequest processRequest;
-        String address = objectMapper.writeValueAsString(taskDetails.getRespondentDetails().getAddress());
         if(!task.getTaskType().isEmpty() && task.getTaskType().equalsIgnoreCase("WARRANT")){
             String docSubType = Optional.ofNullable(taskDetails.getWarrantDetails().getDocSubType())
                     .orElse("Warrant of arrest");
@@ -91,7 +90,7 @@ public class IcopsEnrichment {
                     .processJudge(taskDetails.getCaseDetails().getJudgeName())
                     .processIssueDate(converter.convertLongToDate(taskDetails.getWarrantDetails().getIssueDate()))
                     .processNextHearingDate(converter.convertLongToDate(taskDetails.getCaseDetails().getHearingDate()))
-                    .processPartyType(taskDetails.getSummonDetails().getPartyType())
+                    .processPartyType(taskDetails.getWarrantDetails().getPartyType())
                     .processDocType(docTypeInfo != null ? docTypeInfo.get("name") : null)
                     .processDocTypeCode(docTypeInfo != null ? docTypeInfo.get(DOC_TYPE_CODE) : null)
                     .processDocSubType(docTypeInfo != null ? docTypeInfo.get(SUB_TYPE) : null)
@@ -107,12 +106,14 @@ public class IcopsEnrichment {
         else{
             String docSubType = Optional.ofNullable(taskDetails.getSummonDetails().getDocSubType())
                     .orElse("Summons to an accused person");
-            Integer age = taskDetails.getRespondentDetails().getAge();
+
+            ProcessPersonDetails personDetails = extractPersonDetails(taskDetails);
+
+            Integer age = personDetails.getAge();
             String ageString = (age != null) ? String.valueOf(age) : "";
 
-
             Map<String, String> docTypeInfo = getDocTypeCode(mdmsData, docSubType);
-             processRequest = ProcessRequest.builder()
+            processRequest = ProcessRequest.builder()
                     .processCaseno(task.getFilingNumber())
                     .processDoc(docFileString)
                     .processUniqueId(processUniqueId)
@@ -120,15 +121,15 @@ public class IcopsEnrichment {
                     .processJudge(taskDetails.getCaseDetails().getJudgeName())
                     .processIssueDate(converter.convertLongToDate(taskDetails.getSummonDetails().getIssueDate()))
                     .processNextHearingDate(converter.convertLongToDate(taskDetails.getCaseDetails().getHearingDate()))
-                    .processRespondentName(taskDetails.getRespondentDetails().getName())
-                    .processRespondentGender(taskDetails.getRespondentDetails().getGender())
+                    .processRespondentName(personDetails.getName())
+                    .processRespondentGender(personDetails.getGender())
                     .processRespondentAge(ageString)
-                    .processRespondentRelativeName(taskDetails.getRespondentDetails().getRelativeName())
-                    .processRespondentRelation(taskDetails.getRespondentDetails().getRelationWithRelative())
-                    .processReceiverAddress(taskDetails.getRespondentDetails().getAddress().toString())
-                    .processReceiverState(taskDetails.getRespondentDetails().getState())
-                    .processReceiverDistrict(taskDetails.getRespondentDetails().getDistrict())
-                    .processReceiverPincode(taskDetails.getRespondentDetails().getPinCode())
+                    .processRespondentRelativeName(personDetails.getRelativeName())
+                    .processRespondentRelation(personDetails.getRelationWithRelative())
+                    .processReceiverAddress(personDetails.getAddress().toString())
+                    .processReceiverState(personDetails.getState())
+                    .processReceiverDistrict(personDetails.getDistrict())
+                    .processReceiverPincode(personDetails.getPinCode())
                     .processPartyType(taskDetails.getSummonDetails().getPartyType())
                     .processDocType(docTypeInfo != null ? docTypeInfo.get("name") : null)
                     .processDocTypeCode(docTypeInfo != null ? docTypeInfo.get(DOC_TYPE_CODE) : null)
@@ -139,13 +140,44 @@ public class IcopsEnrichment {
                     .orderSignedDate(converter.convertLongToDate(task.getCreatedDate()))
                     .processOrigin(config.getProcessOrigin())
                     .processInvAgency(config.getProcessInvAgency())
-                    .processRespondantType("A") // currently supported only for accused, so hardcoded it.
+                    .processRespondantType(taskDetails.getWitnessDetails() != null ? "W" : "A")
                     .processCourtCode(taskDetails.getCaseDetails().getCourtId())
                     .build();
         }
 
         return processRequest;
     }
+
+    private ProcessPersonDetails extractPersonDetails(TaskDetails taskDetails) {
+        if (taskDetails.getWitnessDetails() != null) {
+            WitnessDetails witness = taskDetails.getWitnessDetails();
+            return ProcessPersonDetails.builder()
+                    .name(witness.getName())
+                    .gender(witness.getGender())
+                    .age(witness.getAge())
+                    .relativeName(witness.getRelativeName())
+                    .relationWithRelative(witness.getRelationWithRelative())
+                    .address(witness.getAddress())
+                    .state(witness.getState())
+                    .district(witness.getDistrict())
+                    .pinCode(witness.getPinCode())
+                    .build();
+        } else {
+            RespondentDetails respondent = taskDetails.getRespondentDetails();
+            return ProcessPersonDetails.builder()
+                    .name(respondent.getName())
+                    .gender(respondent.getGender())
+                    .age(respondent.getAge())
+                    .relativeName(respondent.getRelativeName())
+                    .relationWithRelative(respondent.getRelationWithRelative())
+                    .address(respondent.getAddress())
+                    .state(respondent.getState())
+                    .district(respondent.getDistrict())
+                    .pinCode(respondent.getPinCode())
+                    .build();
+        }
+    }
+
 
     public IcopsTracker createIcopsTrackerBody(TaskRequest request, ProcessRequest processRequest, ChannelMessage channelMessage, DeliveryStatus status) {
         String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));

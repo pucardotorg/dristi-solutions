@@ -16,4 +16,13 @@ public class PoliceStationDetails {
     @JsonProperty("police_station_code")
     private String code;
 
+    @JsonProperty("name")
+    private String name;
+
+    @JsonProperty("district")
+    private String district;
+
+    @JsonProperty("active")
+    private Boolean active;
+
 }
