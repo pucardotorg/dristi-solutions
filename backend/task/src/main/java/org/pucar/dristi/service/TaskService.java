@@ -251,11 +251,7 @@ public class TaskService {
             JsonNode taskDetails = objectMapper.readTree(objectMapper.writeValueAsString(taskDetailsObject));
 
             String accusedName;
-            try {
-                accusedName = getAccusedName(taskDetails);
-            } catch (Exception e) {
-                throw new Exception("Failed to extract accused name: " + e.getMessage(), e);
-            }
+            accusedName = getAccusedName(taskDetails);
 
             Set<String> individualIds = extractComplainantIndividualIds(caseDetails);
             if (Objects.equals(messageCode, WARRANT_ISSUED)) {
@@ -459,17 +455,22 @@ public class TaskService {
         litigantDetails.setName(fullName);
     }
 
-    private String getAccusedName(JsonNode taskDetails) throws Exception {
-        if (taskDetails == null) {
-            throw new Exception("taskDetails is null");
-        }
+    private String getAccusedName(JsonNode taskDetails) {
+        try {
+            if (taskDetails == null) {
+                throw new Exception("taskDetails is null");
+            }
 
-        JsonNode nameNode = taskDetails.path("respondentDetails").path("name").path("name");
-        if (nameNode.isMissingNode() || nameNode.isNull()) {
-            throw new Exception("Accused name not found in taskDetails");
-        }
+            JsonNode nameNode = taskDetails.path("respondentDetails").path("name").path("name");
+            if (nameNode.isMissingNode() || nameNode.isNull()) {
+                throw new Exception("Accused name not found in taskDetails");
+            }
 
-        return nameNode.asText();
+            return nameNode.asText();
+        } catch (Exception e) {
+            throw new CustomException(CREATE_TASK_ERR, e.getMessage());
+        }
     }
+
 
 }
