@@ -28,4 +28,7 @@ public class PoaParty {
 
     @JsonProperty("documents")
     private List<Document> documents = new ArrayList<>();
+
+    @JsonProperty("isActive")
+    private Boolean isActive = true;
 }

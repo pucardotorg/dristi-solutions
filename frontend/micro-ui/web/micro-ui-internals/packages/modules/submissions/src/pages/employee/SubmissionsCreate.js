@@ -1334,7 +1334,14 @@ const SubmissionsCreate = ({ path }) => {
           {
             tenantId: tenantId,
             totalAmount: 20,
-            breakDown: [],
+            breakDown: [
+              {
+                type: "Application Fee",
+                code: "APPLICATION_FEE",
+                amount: 20.0,
+                additionalParams: {},
+              },
+            ],
           },
         ],
       });

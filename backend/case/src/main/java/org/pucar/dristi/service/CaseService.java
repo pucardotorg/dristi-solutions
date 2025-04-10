@@ -277,6 +277,19 @@ public class CaseService {
                 }
             });
             List<Party> activeParty = Optional.ofNullable(caseRequest.getCases().getLitigants()).orElse(Collections.emptyList()).stream().filter(Party::getIsActive).toList();
+            List<POAHolder> activePOAHolder = Optional.ofNullable(caseRequest.getCases().getPoaHolders()).orElse(Collections.emptyList()).stream().filter(POAHolder::getIsActive).toList();
+            activePOAHolder.forEach(poaHolder -> {
+                List<PoaParty> activeLitigants = Optional.ofNullable(poaHolder.getRepresentingLitigants())
+                        .orElse(Collections.emptyList())
+                        .stream()
+                        .filter(party -> Boolean.TRUE.equals(party.getIsActive()))
+                        .collect(Collectors.toList());
+
+                // Set the filtered active litigants back to the POAHolder
+                poaHolder.setRepresentingLitigants(activeLitigants);
+            });
+
+            caseRequest.getCases().setPoaHolders(activePOAHolder);
             caseRequest.getCases().setDocuments(isActiveTrueDocuments);
             caseRequest.getCases().setRepresentatives(activeAdvocateMapping);
             caseRequest.getCases().setLitigants(activeParty);
