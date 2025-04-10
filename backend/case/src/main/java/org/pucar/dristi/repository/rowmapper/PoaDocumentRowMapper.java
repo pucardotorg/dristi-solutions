@@ -20,8 +20,7 @@ public class PoaDocumentRowMapper implements ResultSetExtractor<Map<UUID,List<Do
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             while (rs.next()) {
-                String poaholderId = rs.getString("poaholder_id");
-                UUID uuid = UUID.fromString(poaholderId!=null ? poaholderId : "00000000-0000-0000-0000-000000000000");
+                UUID uuid = UUID.fromString(rs.getString("poaholder_id"));
                 Document document = Document.builder()
                         .id(rs.getString("id"))
                         .documentType(rs.getString("documenttype"))

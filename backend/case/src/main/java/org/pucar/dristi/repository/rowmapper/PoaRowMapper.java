@@ -24,10 +24,8 @@ public class PoaRowMapper implements ResultSetExtractor<Map<UUID, List<POAHolder
         Map<UUID, List<POAHolder>> poaHolderMap = new LinkedHashMap<>();
 
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
             while (rs.next()) {
-                String id = rs.getString("case_id");
-                UUID uuid = UUID.fromString(id != null ? id : "00000000-0000-0000-0000-000000000000");
+                UUID uuid = UUID.fromString(rs.getString("case_id"));
 
                 Long lastModifiedTime = rs.getLong("last_modified_time");
 

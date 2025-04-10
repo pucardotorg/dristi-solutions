@@ -67,7 +67,7 @@ public class CaseQueryBuilder {
     private static final String FROM_REPRESENTING_TABLE = " FROM dristi_case_representing rpst";
 
     private static final String BASE_POA_HOLDER_QUERY = " SELECT poaholder.id as id, poaholder.tenant_id as tenant_id, poaholder.individual_id as individual_id, poaholder.name as name, poaholder.case_id as case_id, " +
-            " poaholder.is_active as is_active, poaholder.additional_details as additional_details, poaholder.created_by as created_by, poaholder.representing_litigants as representing_litigants" +
+            " poaholder.is_active as is_active, poaholder.additional_details as additional_details, poaholder.created_by as created_by, poaholder.representing_litigants as representing_litigants, " +
             " poaholder.last_modified_by as last_modified_by, poaholder.created_time as created_time, poaholder.last_modified_time as last_modified_time , poaholder.hasSigned as hasSigned ";
     private static final String FROM_POA_HOLDER_TABLE = " FROM dristi_case_poaholders poaholder";
 
@@ -227,7 +227,7 @@ public class CaseQueryBuilder {
     private boolean addPoaHolderCriteria(CaseCriteria criteria, List<Object> preparedStmtList,List<Integer> preparedStmtArgList, RequestInfo requestInfo, StringBuilder query, boolean firstCriteria) {
         if (criteria.getPoaHolderIndividualIds() != null && !criteria.getPoaHolderIndividualIds().isEmpty()) {
             addClauseIfRequired(query, firstCriteria);
-            query.append("(cases.id IN ( SELECT poaholders.case_id from dristi_case_poaholders poaholders WHERE AND poaholders.is_active = true AND poaholders.individual_id")
+            query.append("(cases.id IN ( SELECT poaholders.case_id from dristi_case_poaholders poaholders WHERE poaholders.is_active = true AND poaholders.individual_id")
                     .append(" IN (")
                     .append(criteria.getPoaHolderIndividualIds().stream().map(id -> "?").collect(Collectors.joining(",")))
                     .append("))");

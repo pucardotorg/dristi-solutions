@@ -193,10 +193,6 @@ public class CaseRepository {
 
         extractRepresentativeIds(caseCriteria, idsRepresentative);
 
-        setRepresentatives(caseCriteria, ids);
-
-        extractRepresentativeIds(caseCriteria, idsRepresentative);
-
         if (!idsRepresentative.isEmpty())
             setRepresenting(caseCriteria, idsRepresentative, preparedStmtListDoc);
 
