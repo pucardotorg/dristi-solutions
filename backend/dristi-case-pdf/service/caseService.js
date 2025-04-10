@@ -906,23 +906,14 @@ async function searchCase(caseId, tenantId, requestinfo) {
   }
 }
 
-async function getComplainantPlaceholderList(caseDetails) {
-  const litigants = caseDetails?.litigants
-    ?.filter((litigant) => litigant.partyType.includes("complainant"))
-    ?.map((litigant) => ({
-      ...litigant,
-      poaHolder: caseDetails?.poaHolders?.find((poaHolder) =>
-        poaHolder?.representingLitigants?.some(
-          (complainant) => complainant?.individualId === litigant?.individualId
-        )
-      ),
-    }));
-
+function getComplainantPlaceholderList(caseDetails) {
   const poaHolders = caseDetails?.poaHolders?.map((poaHolder) => {
     const representingWithLitigant = poaHolder?.representingLitigants.map(
       (rep) => {
         return {
-          ...litigants?.find((lit) => rep?.individualId === lit?.individualId),
+          ...caseDetails?.litigants?.find(
+            (lit) => rep?.individualId === lit?.individualId
+          ),
           ...rep,
         };
       }
@@ -932,6 +923,17 @@ async function getComplainantPlaceholderList(caseDetails) {
       representingLitigants: representingWithLitigant,
     };
   });
+
+  const litigants = caseDetails?.litigants
+    ?.filter((litigant) => litigant.partyType.includes("complainant"))
+    ?.map((litigant) => ({
+      ...litigant,
+      poaHolder: poaHolders?.find((poaHolder) =>
+        poaHolder?.representingLitigants?.some(
+          (complainant) => complainant?.individualId === litigant?.individualId
+        )
+      ),
+    }));
 
   const placeholderArray = [];
   const processedLitigantIds = new Set();
@@ -952,7 +954,7 @@ async function getComplainantPlaceholderList(caseDetails) {
         ?.join(", ");
       placeholderArray.push({
         index: litigant?.additionalDetails?.currentPosition,
-        placeholder: `${litigant?.poaHolder?.additionalDetails?.fullName} - PoA holder for ${representedNames}`,
+        placeholder: `${litigant?.poaHolder?.name} - PoA holder for ${representedNames}`,
       });
       litigant?.poaHolder?.representingLitigants?.forEach((rep) => {
         processedLitigantIds.add(rep?.individualId);
