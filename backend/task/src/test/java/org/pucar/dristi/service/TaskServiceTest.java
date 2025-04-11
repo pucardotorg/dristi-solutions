@@ -1,5 +1,11 @@
 package org.pucar.dristi.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.junit.jupiter.api.BeforeEach;
@@ -7,17 +13,21 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.TaskRegistrationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.TaskRepository;
+import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.WorkflowUtil;
 import org.pucar.dristi.validators.TaskRegistrationValidator;
 import org.pucar.dristi.web.models.*;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -45,6 +55,13 @@ public class TaskServiceTest {
     @Mock
     private Producer producer;
 
+    @Mock
+    private CaseUtil caseUtil;
+
+    @Mock
+    private ObjectMapper objectMapper;
+
+    @Spy
     @InjectMocks
     private TaskService taskService;
 
@@ -232,7 +249,7 @@ public class TaskServiceTest {
 
     @Test
     void testWorkflowUpdate_SummonTask() {
-        task.setTaskType("summons"); // Task type in lowercase
+        task.setTaskType("summons");
         task.setTenantId("tenant2");
         task.setTaskNumber("T456");
 
@@ -241,10 +258,13 @@ public class TaskServiceTest {
         when(config.getTaskSummonBusinessServiceName()).thenReturn("task-summon-service");
         when(config.getTaskSummonBusinessName()).thenReturn("task-summon");
 
+        doNothing().when(taskService).updateCase(any(TaskRequest.class));
         taskService.createTask(taskRequest);
 
-        verify(workflowUtil).updateWorkflowStatus(any(), eq("tenant2"), eq("T456"), eq("task-summon-service"), any(), eq("task-summon"));
+        verify(workflowUtil).updateWorkflowStatus(any(), eq("tenant2"), eq("T456"),
+                eq("task-summon-service"), any(), eq("task-summon"));
     }
+
 
     @Test
     void testWorkflowUpdate_WarrantTask() {
@@ -256,6 +276,7 @@ public class TaskServiceTest {
 
         when(config.getTaskWarrantBusinessServiceName()).thenReturn("warrant_service");
         when(config.getTaskWarrantBusinessName()).thenReturn("warrant_business");
+        doNothing().when(taskService).updateCase(any(TaskRequest.class));
 
         taskService.createTask(taskRequest);
 
@@ -276,5 +297,58 @@ public class TaskServiceTest {
         taskService.createTask(taskRequest);
 
         verify(workflowUtil).updateWorkflowStatus(any(), eq("tenant4"), eq("T999"), eq("default_service"), any(), eq("default_business"));
+    }
+
+    @Test
+    void testUpdateCase_Success() {
+        CourtCase courtCase = new CourtCase();
+        courtCase.setAdditionalDetails(Map.of());
+
+        ObjectNode mockedTaskDetails = new ObjectNode(JsonNodeFactory.instance);
+        ObjectNode respondentDetails = mockedTaskDetails.put("respondentDetails", 1);
+        ObjectNode address = respondentDetails.putObject("address");
+        address.put("id", "addr1");
+        address.set("geoLocation", new TextNode("mockGeo"));
+
+        JsonNode mockedAdditionalDetails = createMockedAdditionalDetails();
+
+        when(caseUtil.getCaseDetails(taskRequest)).thenReturn(List.of(courtCase));
+        when(objectMapper.convertValue(any(), eq(JsonNode.class))).thenReturn(mockedAdditionalDetails);
+
+        taskService.updateCase(taskRequest);
+
+        verify(caseUtil).editCase(eq(requestInfo), any(CourtCase.class));
+    }
+
+    @Test
+    void testUpdateCase_NoCasesFound_ShouldThrowException() {
+        when(caseUtil.getCaseDetails(taskRequest)).thenReturn(Collections.emptyList());
+
+        CustomException exception = assertThrows(CustomException.class, () ->
+                taskService.updateCase(taskRequest)
+        );
+
+        assertEquals("ERROR_WHILE_FETCHING_FROM_CASE_SERVICE", exception.getCode());
+    }
+    private JsonNode createMockedAdditionalDetails() {
+        ObjectNode root = JsonNodeFactory.instance.objectNode();
+        ArrayNode formDataArray = JsonNodeFactory.instance.arrayNode();
+
+        ObjectNode formData = JsonNodeFactory.instance.objectNode();
+        ObjectNode data = JsonNodeFactory.instance.objectNode();
+        ArrayNode addressDetails = JsonNodeFactory.instance.arrayNode();
+
+        ObjectNode address = JsonNodeFactory.instance.objectNode();
+        address.put("id", "addr1");
+        address.put("geoLocation", "oldGeo");
+
+        addressDetails.add(address);
+        data.set("addressDetails", addressDetails);
+        formData.set("data", data);
+        formDataArray.add(formData);
+
+        root.set("respondentDetails", JsonNodeFactory.instance.objectNode().set("formdata", formDataArray));
+
+        return root;
     }
 }
