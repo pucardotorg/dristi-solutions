@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { Modal, CloseSvg, TextInput, CardLabel, Dropdown } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/Toast/useToast";
@@ -11,40 +11,88 @@ const GetPoliceStationModal = ({ isOpen = false, onClose, onPoliceStationSelect,
   const [coordinates, setCoordinates] = useState({ latitude: "", longitude: "" });
   const [policeStation, setPoliceStation] = useState(null);
   const [policeStationOptions, setPoliceStationOptions] = useState([]);
+  const [errors, setErrors] = useState({ latitude: "", longitude: "" });
+  const [policeStationError, setPoliceStationError] = useState("");
 
-  const validateCoordinate = (value, type) => {
-    const numericValue = parseFloat(value);
-    if (type === "latitude" && (numericValue < -90 || numericValue > 90)) {
-      return false;
+  // Clear error after timeout
+  useEffect(() => {
+    let timeoutId;
+    if (policeStationError) {
+      timeoutId = setTimeout(() => {
+        setPoliceStationError("");
+      }, 3000);
     }
-    if (type === "longitude" && (numericValue < -180 || numericValue > 180)) {
-      return false;
-    }
-    return true;
-  };
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [policeStationError]);
+
+  const validateCoordinate = useCallback(
+    (value, type) => {
+      if (!value || value === "") {
+        return { isValid: false, error: t("PLEASE_ENTER_VALUE") };
+      }
+
+      const numericValue = parseFloat(value);
+      if (isNaN(numericValue)) {
+        return { isValid: false, error: t("PLEASE_ENTER_VALID_NUMBER") };
+      }
+
+      if (type === "latitude") {
+        if (numericValue < -90 || numericValue > 90) {
+          return { isValid: false, error: t("LATITUDE_RANGE_ERROR") };
+        }
+      }
+
+      if (type === "longitude") {
+        if (numericValue < -180 || numericValue > 180) {
+          return { isValid: false, error: t("LONGITUDE_RANGE_ERROR") };
+        }
+      }
+
+      return { isValid: true, error: "" };
+    },
+    [t]
+  );
+
+  // Check if there are any validation errors
+  const hasValidationErrors = useMemo(() => {
+    const latValidation = validateCoordinate(coordinates.latitude, "latitude");
+    const longValidation = validateCoordinate(coordinates.longitude, "longitude");
+    return !latValidation.isValid || !longValidation.isValid;
+  }, [coordinates.latitude, coordinates.longitude, validateCoordinate]);
 
   const handleInputChange = (e, type) => {
     const value = e.target.value;
-    let temp = value?.split(".");
-    if (temp[1] && temp[1].length > 6) {
-      temp[1] = temp[1].slice(0, 6);
-      e.target.value = temp.join(".");
+
+    // Allow empty value or numbers with up to 6 decimal places
+    if (value === "" || /^-?\d*\.?\d{0,6}$/.test(value)) {
+      setCoordinates((prev) => ({ ...prev, [type]: value }));
+
+      // Validate and set error
+      const validation = validateCoordinate(value, type);
+      setErrors((prev) => ({ ...prev, [type]: validation.error }));
     }
-    setCoordinates((prev) => ({ ...prev, [type]: e.target.value }));
   };
 
   const getPoliceStationByLocation = async () => {
-    if (!coordinates.latitude || !coordinates.longitude) {
-      toast.error(t("PLEASE_ENTER_BOTH_COORDINATES"));
-      return;
-    }
+    // Validate both coordinates
+    const latValidation = validateCoordinate(coordinates.latitude, "latitude");
+    const longValidation = validateCoordinate(coordinates.longitude, "longitude");
 
-    if (!validateCoordinate(coordinates.latitude, "latitude") || !validateCoordinate(coordinates.longitude, "longitude")) {
-      toast.error(t("INVALID_COORDINATES"));
+    setErrors({
+      latitude: latValidation.error,
+      longitude: longValidation.error,
+    });
+
+    if (!latValidation.isValid || !longValidation.isValid) {
       return;
     }
 
     setIsLoading(true);
+    setPoliceStationError("");
     try {
       const response = await window?.Digit.DRISTIService.getLocationBasedJurisdiction(
         {
@@ -58,7 +106,8 @@ const GetPoliceStationModal = ({ isOpen = false, onClose, onPoliceStationSelect,
       const nearestPoliceStation = response?.locationBasedJurisdiction?.nearest_police_station;
 
       if (!nearestPoliceStation) {
-        toast.error(t("NO_POLICE_STATION_FOUND"));
+        console.log("No police station found");
+        setPoliceStationError(t("NO_POLICE_STATION_FOUND_FOR_THESE_COORDINATES"));
         setPoliceStation(null);
         setPoliceStationOptions([]);
         return;
@@ -74,7 +123,7 @@ const GetPoliceStationModal = ({ isOpen = false, onClose, onPoliceStationSelect,
       toast.success(t("POLICE_STATION_FOUND"));
     } catch (error) {
       console.error("Error fetching police station:", error);
-      toast.error(t("ERROR_FETCHING_POLICE_STATION"));
+      setPoliceStationError(t("ERROR_FETCHING_POLICE_STATION"));
       setPoliceStation(null);
       setPoliceStationOptions([]);
     } finally {
@@ -84,7 +133,7 @@ const GetPoliceStationModal = ({ isOpen = false, onClose, onPoliceStationSelect,
 
   const handleSave = () => {
     if (!policeStation) {
-      toast.error(t("PLEASE_GET_POLICE_STATION_FIRST"));
+      setPoliceStationError(t("PLEASE_GET_POLICE_STATION_FIRST"));
       return;
     }
     onPoliceStationSelect(policeStation);
@@ -99,25 +148,27 @@ const GetPoliceStationModal = ({ isOpen = false, onClose, onPoliceStationSelect,
       actionCancelOnSubmit={onClose}
       actionSaveLabel={t("SAVE")}
       actionSaveOnSubmit={handleSave}
-      isDisabled={isLoading}
+      isDisabled={isLoading || hasValidationErrors || !policeStation}
       formId="modal-action"
-      popupStyles={{ width: "480px" }}
+      popupStyles={{}}
       isOpen={isOpen}
       popmoduleClassName={"get-police-station-modal"}
     >
       <div style={{ padding: "24px" }}>
         <div style={{ marginBottom: "24px" }}>
-          <CardLabel>{t("ADDRESS")}</CardLabel>
           <div
             style={{
               padding: "16px",
-              background: "#FAFAFA",
+              background: "#F7F5F3",
               borderRadius: "4px",
               fontSize: "16px",
               color: "#0B0C0C",
+              display: "flex",
+              justifyContent: "space-between",
             }}
           >
-            {address}
+            <span>{t("ADDRESS")}</span>
+            <span> {address}</span>
           </div>
         </div>
 
@@ -146,45 +197,53 @@ const GetPoliceStationModal = ({ isOpen = false, onClose, onPoliceStationSelect,
           <div style={{ color: "#505A5F", fontSize: "14px" }}>{t("POLICE_STATION_LOCATION_INFO")}</div>
         </div>
 
-        <div style={{ display: "flex", gap: "24px", marginBottom: "24px" }}>
+        <div style={{ display: "flex", gap: "24px", marginBottom: "24px", alignItems: "center" }}>
           <div style={{ flex: 1 }}>
             <CardLabel>{t("LATITUDE")}</CardLabel>
             <TextInput
-              type="number"
+              type="text"
               value={coordinates.latitude}
               onChange={(e) => handleInputChange(e, "latitude")}
               style={{ width: "100%" }}
-              disabled={isLoading}
+              disable={isLoading}
+              error={errors.latitude}
             />
+            {errors.latitude && <div style={{ color: "#d4351c", fontSize: "14px", marginTop: "4px" }}>{errors.latitude}</div>}
           </div>
           <div style={{ flex: 1 }}>
             <CardLabel>{t("LONGITUDE")}</CardLabel>
             <TextInput
-              type="number"
+              type="text"
               value={coordinates.longitude}
               onChange={(e) => handleInputChange(e, "longitude")}
               style={{ width: "100%" }}
-              disabled={isLoading}
+              disable={isLoading}
+              error={errors.longitude}
             />
+            {errors.longitude && <div style={{ color: "#d4351c", fontSize: "14px", marginTop: "4px" }}>{errors.longitude}</div>}
+          </div>
+          <div style={{ flex: 1 }}>
+            <button
+              onClick={getPoliceStationByLocation}
+              disabled={isLoading || hasValidationErrors}
+              style={{
+                background: "white",
+                border: "1px solid #1DB4AE",
+                color: "#1DB4AE",
+                padding: "8px 24px",
+                borderRadius: "4px",
+                cursor: hasValidationErrors || isLoading ? "not-allowed" : "pointer",
+                fontSize: "14px",
+                marginTop: "20px",
+                opacity: hasValidationErrors || isLoading ? 0.5 : 1,
+              }}
+            >
+              {t("GET_POLICE_STATION")}
+            </button>
           </div>
         </div>
 
-        <button
-          onClick={getPoliceStationByLocation}
-          disabled={isLoading}
-          style={{
-            background: "white",
-            border: "1px solid #1DB4AE",
-            color: "#1DB4AE",
-            padding: "8px 24px",
-            borderRadius: "4px",
-            cursor: "pointer",
-            fontSize: "14px",
-            marginBottom: "24px",
-          }}
-        >
-          {t("GET_POLICE_STATION")}
-        </button>
+        {policeStationError && <div style={{ color: "#d4351c", fontSize: "14px", marginBottom: "24px" }}>{policeStationError}</div>}
 
         <div>
           <CardLabel>{t("POLICE_STATION")}</CardLabel>
