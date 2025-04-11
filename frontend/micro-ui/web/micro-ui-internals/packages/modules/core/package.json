@@ -11,7 +11,10 @@
   "scripts": {
     "start": "microbundle-crl watch --no-compress --format modern,cjs",
     "build": "microbundle-crl --compress --no-sourcemap --format cjs",
-    "prepublish": "yarn build"
+    "prepublish": "yarn build",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
     "@egovernments/digit-ui-react-components": "1.8.2-beta.11",
@@ -33,5 +36,11 @@
     "dpg",
     "digit-ui",
     "core"
-  ]
+  ],
+  "devDependencies": {
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^12.1.5",
+    "@testing-library/user-event": "^13.5.0",
+    "jest": "^27.5.1"
+  }
 }
