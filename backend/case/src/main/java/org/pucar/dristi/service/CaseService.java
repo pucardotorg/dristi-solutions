@@ -3778,15 +3778,6 @@ public class CaseService {
 
             for (ReplacementDetails replacementDetails : replacementDetailsList) {
 
-
-                if (advocateTryingToReplace != null) {
-                    boolean isAdvocateAlreadyRepresenting = validateAdvocateAlreadyRepresenting(advocateTryingToReplace, replacementDetails.getLitigantDetails());
-                    if (isAdvocateAlreadyRepresenting) {
-                        continue;
-                    }
-                }
-
-
                 Party party = enrichParty(replacementDetails, courtCase, auditDetails);
                 LitigantDetails litigantDetails = replacementDetails.getLitigantDetails();
                 String partyType = litigantDetails.getPartyType();
@@ -3883,9 +3874,9 @@ public class CaseService {
 
     }
 
-    private boolean validateAdvocateAlreadyRepresenting(AdvocateMapping advocateMapping, LitigantDetails litigantDetails) {
+    private boolean validateAdvocateAlreadyRepresenting(AdvocateMapping advocateMapping, String litigantIndividualId) {
         Party party = advocateMapping.getRepresenting().stream()
-                .filter(representing -> representing.getIndividualId().equalsIgnoreCase(litigantDetails.getIndividualId())).findFirst().orElse(null);
+                .filter(representing -> representing.getIndividualId().equalsIgnoreCase(litigantIndividualId)).findFirst().orElse(null);
         return party != null && party.getIsActive();
     }
 
@@ -4172,23 +4163,29 @@ public class CaseService {
 
         for (AdvocateMapping advocateMapping : advocateMappings) {
             if (advocateMapping.getAdvocateId().equalsIgnoreCase(advocateUuid)) {
-                // Add the party to the representing list of the specific advocate mapping
-                advocateMapping.getRepresenting().add(party);
 
-                // Update the representatives in the original court case
-                courtCase.setRepresentatives(advocateMappings);
+                boolean isAdvocateAlreadyRepresenting = validateAdvocateAlreadyRepresenting(advocateTryingToReplace, party.getIndividualId());
 
-                // Create a new mutable list with only the new party
-                List<Party> newPartyList = new ArrayList<>();
-                newPartyList.add(party);
-                advocateTryingToReplace.setRepresenting(newPartyList);
+                if (!isAdvocateAlreadyRepresenting) {
 
-                // Create a mutable list with the advocate
-                List<AdvocateMapping> singleAdvocateMappingList = new ArrayList<>();
-                singleAdvocateMappingList.add(advocateTryingToReplace);
-                courtCaseObj.setRepresentatives(singleAdvocateMappingList);
+                    // Add the party to the representing list of the specific advocate mapping
+                    advocateMapping.getRepresenting().add(party);
 
-                break;  // Exit the loop once the mapping is updated
+                    // Update the representatives in the original court case
+                    courtCase.setRepresentatives(advocateMappings);
+
+                    // Create a new mutable list with only the new party
+                    List<Party> newPartyList = new ArrayList<>();
+                    newPartyList.add(party);
+                    advocateTryingToReplace.setRepresenting(newPartyList);
+
+                    // Create a mutable list with the advocate
+                    List<AdvocateMapping> singleAdvocateMappingList = new ArrayList<>();
+                    singleAdvocateMappingList.add(advocateTryingToReplace);
+                    courtCaseObj.setRepresentatives(singleAdvocateMappingList);
+
+                    break;  // Exit the loop once the mapping is updated
+                }
             }
         }
     }
