@@ -253,6 +253,8 @@ public class TaskService {
             String accusedName = taskDetails.has("respondentDetails") ? taskDetails.path("respondentDetails").path("name").asText() : "";
 
             Set<String> individualIds = extractComplainantIndividualIds(caseDetails);
+            extractPowerOfAttorneyIds(caseDetails, individualIds);
+
             if (Objects.equals(messageCode, WARRANT_ISSUED)) {
                  accusedName = accusedName.split(" \\(")[0];
                 individualIds = extractIndividualIds(caseDetails,accusedName);
@@ -326,6 +328,18 @@ public class TaskService {
         }
 
         return uuids;
+    }
+
+    public void extractPowerOfAttorneyIds(JsonNode caseDetails, Set<String> individualIds) {
+        JsonNode poaHolders = caseDetails.get("poaHolders");
+        if (poaHolders != null && poaHolders.isArray()) {
+            for (JsonNode poaHolder : poaHolders) {
+                String individualId = poaHolder.path("individualId").textValue();
+                if (individualId != null && !individualId.isEmpty()) {
+                    individualIds.add(individualId);
+                }
+            }
+        }
     }
 
     private Set<String> callIndividualService(RequestInfo requestInfo, Set<String> ids) {
