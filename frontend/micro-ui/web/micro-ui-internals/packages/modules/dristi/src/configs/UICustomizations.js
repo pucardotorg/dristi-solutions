@@ -30,6 +30,7 @@ const partyTypes = {
   "complainant.additional": "COMPLAINANT",
   "respondent.primary": "ACCUSED",
   "respondent.additional": "ACCUSED",
+  "poa.regular": "POA_HOLDER",
 };
 
 export const advocateJoinStatus = {
@@ -1308,6 +1309,25 @@ export const UICustomizations = {
                 ...(isEditable && { isAdvocateEditor }),
               };
             });
+
+            const poaHolders = data.criteria[0].responseList[0].poaHolders?.length > 0 ? data.criteria[0].responseList[0].poaHolders : [];
+            const finalPoaHoldersData = poaHolders?.map((poaHolder) => {
+              const representing = poaHolder?.representing?.map((rep) => {
+                return {
+                  ...litigants?.find((litigant) => litigant?.individualId === rep?.individualId),
+                  ...rep,
+                };
+              });
+              return {
+                ...poaHolder,
+                representing: representing,
+                representingList: representing?.map((rep) => rep?.additionalDetails?.fullName)?.join(", "),
+                partyType: poaHolder?.poaType,
+                status: "JOINED",
+                isEditable: false,
+              };
+            });
+
             // pendingAdvocateRequests includes list of advocates with pending and partially pending status.
             const pendingAdvocateRequests = data?.criteria?.[0]?.responseList?.[0]?.pendingAdvocateRequests || [];
             // representatives has list of advocates with joined and partially pending status.
@@ -1354,7 +1374,13 @@ export const UICustomizations = {
                 };
               });
 
-            const allParties = [...finalLitigantsData, ...unjoinedAccused, ...joinedAndPartiallyJoinedAdvocates, ...joinStatusPendingAdvocates];
+            const allParties = [
+              ...finalLitigantsData,
+              ...unjoinedAccused,
+              ...joinedAndPartiallyJoinedAdvocates,
+              ...joinStatusPendingAdvocates,
+              ...finalPoaHoldersData,
+            ];
             const paginatedParties = allParties.slice(offset, offset + limit);
             return {
               ...data,

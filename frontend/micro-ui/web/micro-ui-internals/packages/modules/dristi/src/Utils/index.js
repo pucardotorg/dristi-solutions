@@ -151,6 +151,8 @@ export const getFilingType = (filingTypes, displayName) => {
 
 export const documentsTypeMapping = {
   complainantId: "COMPLAINANT_ID_PROOF",
+  poaComplainantId: "POA_COMPLAINANT_ID_PROOF",
+  poaAuthorizationDocument: "POA_AUTHORIZATION_DOCUMENT",
   complainantCompanyDetailsUpload: "case.authorizationproof.complainant",
   inquiryAffidavitFileUpload: "case.affidavit.225bnss",
   AccusedCompanyDetailsUpload: "case.authorizationproof.accused",
