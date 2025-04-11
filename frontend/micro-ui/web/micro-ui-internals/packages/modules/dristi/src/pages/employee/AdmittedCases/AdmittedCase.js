@@ -1878,13 +1878,11 @@ const AdmittedCases = () => {
     if (!ordersData?.list) return [];
 
     const noticeOrder = ordersData?.list?.filter((item) => {
-      {
-        if (item?.orderCategory === "COMPOSITE") {
-          const compositeItems = item?.compositeItems?.filter((item) => ["SUMMONS", "WARRANT"].includes(item?.orderType));
-          return compositeItems.length > 0 && item?.hearingNumber;
-        } else {
-          return ["SUMMONS", "WARRANT"].includes(item?.orderType) && item?.hearingNumber;
-        }
+      if (item?.orderCategory === "COMPOSITE") {
+        const compositeItems = item?.compositeItems?.filter((item) => ["SUMMONS", "WARRANT"].includes(item?.orderType));
+        return compositeItems.length > 0 && item?.hearingNumber;
+      } else {
+        return ["SUMMONS", "WARRANT"].includes(item?.orderType) && item?.hearingNumber;
       }
     });
 
