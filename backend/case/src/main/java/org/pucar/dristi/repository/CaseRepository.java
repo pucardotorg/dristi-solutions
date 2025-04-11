@@ -44,10 +44,12 @@ public class CaseRepository {
     private final StatuteSectionRowMapper statuteSectionRowMapper;
     private final RepresentativeRowMapper representativeRowMapper;
     private final RepresentingRowMapper representingRowMapper;
+    private final PoaDocumentRowMapper poaDocumentRowMapper;
+    private final PoaRowMapper poaRowMapper;
 
 
     @Autowired
-    public CaseRepository(CaseQueryBuilder queryBuilder, JdbcTemplate jdbcTemplate, CaseRowMapper rowMapper, DocumentRowMapper caseDocumentRowMapper, LinkedCaseDocumentRowMapper linkedCaseDocumentRowMapper, LitigantDocumentRowMapper litigantDocumentRowMapper, RepresentiveDocumentRowMapper representativeDocumentRowMapper, RepresentingDocumentRowMapper representingDocumentRowMapper, LinkedCaseRowMapper linkedCaseRowMapper, LitigantRowMapper litigantRowMapper, StatuteSectionRowMapper statuteSectionRowMapper, RepresentativeRowMapper representativeRowMapper, RepresentingRowMapper representingRowMapper, CaseSummaryQueryBuilder caseSummaryQueryBuilder, CaseSummaryRowMapper caseSummaryRowMapper, OpenApiCaseSummaryQueryBuilder openApiCaseSummaryQueryBuilder, OpenApiCaseSummaryRowMapper openApiCaseSummaryRowMapper, OpenApiCaseListRowMapper openApiCaseListRowMapper) {
+    public CaseRepository(CaseQueryBuilder queryBuilder, JdbcTemplate jdbcTemplate, CaseRowMapper rowMapper, DocumentRowMapper caseDocumentRowMapper, LinkedCaseDocumentRowMapper linkedCaseDocumentRowMapper, LitigantDocumentRowMapper litigantDocumentRowMapper, RepresentiveDocumentRowMapper representativeDocumentRowMapper, RepresentingDocumentRowMapper representingDocumentRowMapper, LinkedCaseRowMapper linkedCaseRowMapper, LitigantRowMapper litigantRowMapper, StatuteSectionRowMapper statuteSectionRowMapper, RepresentativeRowMapper representativeRowMapper, RepresentingRowMapper representingRowMapper, CaseSummaryQueryBuilder caseSummaryQueryBuilder, CaseSummaryRowMapper caseSummaryRowMapper, OpenApiCaseSummaryQueryBuilder openApiCaseSummaryQueryBuilder, OpenApiCaseSummaryRowMapper openApiCaseSummaryRowMapper, OpenApiCaseListRowMapper openApiCaseListRowMapper, PoaDocumentRowMapper poaDocumentRowMapper, PoaRowMapper poaRowMapper) {
         this.queryBuilder = queryBuilder;
         this.jdbcTemplate = jdbcTemplate;
         this.rowMapper = rowMapper;
@@ -66,6 +68,8 @@ public class CaseRepository {
         this.openApiCaseSummaryQueryBuilder = openApiCaseSummaryQueryBuilder;
         this.openApiCaseSummaryRowMapper = openApiCaseSummaryRowMapper;
         this.openApiCaseListRowMapper = openApiCaseListRowMapper;
+        this.poaDocumentRowMapper = poaDocumentRowMapper;
+        this.poaRowMapper = poaRowMapper;
     }
 
     private static void extractRepresentingIds(CaseCriteria caseCriteria, List<String> idsRepresenting) {
@@ -92,6 +96,14 @@ public class CaseRepository {
         for (CourtCase courtCase : caseCriteria.getResponseList()) {
             if (courtCase.getLitigants() != null) {
                 courtCase.getLitigants().forEach(litigant -> idsLitigant.add(litigant.getId().toString()));
+            }
+        }
+    }
+
+    private static void extractPoaIndividualIds(CaseCriteria caseCriteria, List<String> individualIdsPoaHolders) {
+        for (CourtCase courtCase : caseCriteria.getResponseList()) {
+            if (courtCase.getPoaHolders() != null) {
+                courtCase.getPoaHolders().forEach(poaHolder -> individualIdsPoaHolders.add(poaHolder.getId()));
             }
         }
     }
@@ -162,11 +174,16 @@ public class CaseRepository {
         List<String> idsLinkedCases = new ArrayList<>();
         List<String> idsLitigant = new ArrayList<>();
         List<String> idsRepresentative = new ArrayList<>();
+        List<String> individualIdsPoaHolder = new ArrayList<>();
         List<String> idsRepresenting = new ArrayList<>();
 
         setLinkedCases(caseCriteria, ids);
 
         extractLinkedCasesIds(caseCriteria, idsLinkedCases);
+
+        setPoaHolders(caseCriteria, ids);
+
+        extractPoaIndividualIds(caseCriteria, individualIdsPoaHolder);
 
         setLitigants(caseCriteria, ids);
 
@@ -188,6 +205,9 @@ public class CaseRepository {
         if (!idsLitigant.isEmpty())
             setLitigantDocuments(caseCriteria, idsLitigant);
 
+        if (!individualIdsPoaHolder.isEmpty())
+            setPoaDocuments(caseCriteria, individualIdsPoaHolder);
+
         if (!idsLinkedCases.isEmpty())
             setLinkedCaseDocuments(caseCriteria, idsLinkedCases);
 
@@ -196,6 +216,28 @@ public class CaseRepository {
 
         if (!idsRepresenting.isEmpty())
             setRepresentingDocuments(caseCriteria, idsRepresenting);
+    }
+
+    private void setPoaDocuments(CaseCriteria caseCriteria, List<String> individualIdsPoaHolder) {
+        String poaDocumentQuery;
+        List<Object> preparedStmtListDoc;
+        List<Integer> preparedStmtArgList = new ArrayList<>();
+
+        preparedStmtListDoc = new ArrayList<>();
+        poaDocumentQuery = queryBuilder.getPoaDocumentSearchQuery(individualIdsPoaHolder, preparedStmtListDoc, preparedStmtArgList);
+        log.info("Final POA document query :: {}", poaDocumentQuery);
+        Map<UUID, List<Document>> poaDocumentMap = jdbcTemplate.query(poaDocumentQuery, preparedStmtListDoc.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), poaDocumentRowMapper);
+        if (poaDocumentMap != null) {
+            caseCriteria.getResponseList().forEach(courtCase -> {
+                if (courtCase.getPoaHolders() != null) {
+                    courtCase.getPoaHolders().forEach(poaHolder -> {
+                        if (poaHolder != null) {
+                            poaHolder.setDocuments(poaDocumentMap.get(UUID.fromString(poaHolder.getId())));
+                        }
+                    });
+                }
+            });
+        }
     }
 
     private void setRepresentingDocuments(CaseCriteria caseCriteria, List<String> idsRepresenting) {
@@ -343,6 +385,20 @@ public class CaseRepository {
         Map<UUID, List<AdvocateMapping>> representativeMap = jdbcTemplate.query(representativeQuery, preparedStmtListDoc.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), representativeRowMapper);
         if (representativeMap != null) {
             caseCriteria.getResponseList().forEach(courtCase -> courtCase.setRepresentatives(representativeMap.get(courtCase.getId())));
+        }
+    }
+
+    private void setPoaHolders(CaseCriteria caseCriteria, List<String> ids) {
+        List<Object> preparedStmtList;
+        String poaHolderQuery = "";
+        preparedStmtList = new ArrayList<>();
+        List<Integer> preparedStmtArgList = new ArrayList<>();
+
+        poaHolderQuery = queryBuilder.getPoaHoldersSearchQuery(ids, preparedStmtList, preparedStmtArgList);
+        log.info("Final POA holder query :: {}", poaHolderQuery);
+        Map<UUID, List<POAHolder>> poaMap = jdbcTemplate.query(poaHolderQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), poaRowMapper);
+        if (poaMap != null) {
+            caseCriteria.getResponseList().forEach(courtCase -> courtCase.setPoaHolders(poaMap.get(courtCase.getId())));
         }
     }
 

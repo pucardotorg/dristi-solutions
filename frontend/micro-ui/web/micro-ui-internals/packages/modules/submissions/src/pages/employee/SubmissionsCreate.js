@@ -265,8 +265,9 @@ const SubmissionsCreate = ({ path }) => {
     },
     {},
     applicationNumber + filingNumber,
-    Boolean(applicationNumber + filingNumber)
+    Boolean(applicationNumber && filingNumber)
   );
+
   const { data: delayCondonationData } = Digit.Hooks.submissions.useSearchSubmissionService(
     {
       criteria: {
@@ -302,7 +303,7 @@ const SubmissionsCreate = ({ path }) => {
     const submissionConfigKeys = {
       APPLICATION: applicationTypeConfig,
     };
-    if (delayCondonationData && caseDetails && Array.isArray(submissionConfigKeys[submissionType])) {
+    if (caseDetails && Array.isArray(submissionConfigKeys[submissionType])) {
       const isDelayApplicationPending = Boolean(
         delayCondonationData?.applicationList?.some(
           (item) =>
@@ -343,8 +344,6 @@ const SubmissionsCreate = ({ path }) => {
           };
         });
       }
-    } else if (Array.isArray(submissionConfigKeys[submissionType])) {
-      return submissionConfigKeys[submissionType];
     }
     return [];
   }, [caseDetails, submissionType, orderNumber, hearingId, applicationTypeUrl, isCitizen, delayCondonationData]);
@@ -448,13 +447,13 @@ const SubmissionsCreate = ({ path }) => {
   const applicationDetails = useMemo(
     () =>
       applicationNumber
-        ? delayCondonationData?.applicationList?.[0]
+        ? applicationData?.applicationList?.[0]
         : "DELAY_CONDONATION" === formdata?.applicationType?.type
         ? delayCondonationData?.applicationList?.find(
             (application) => !["REJECTED", "COMPLETED"].includes(application?.status) && "DELAY_CONDONATION" === application?.applicationType
           )
         : undefined,
-    [delayCondonationData?.applicationList, formdata?.applicationType?.type]
+    [applicationData?.applicationList, delayCondonationData?.applicationList, formdata?.applicationType?.type]
   );
 
   useEffect(() => {
@@ -1336,7 +1335,14 @@ const SubmissionsCreate = ({ path }) => {
           {
             tenantId: tenantId,
             totalAmount: 20,
-            breakDown: [],
+            breakDown: [
+              {
+                type: "Application Fee",
+                code: "APPLICATION_FEE",
+                amount: 20.0,
+                additionalParams: {},
+              },
+            ],
           },
         ],
       });

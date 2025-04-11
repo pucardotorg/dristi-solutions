@@ -61,6 +61,8 @@ class IcopsServiceTest {
 
     private Address address;
 
+    private GeoLocationDetails geoLocationDetails;
+
     private Coordinate coordinate;
 
     private LocationRequest locationRequest;
@@ -80,6 +82,7 @@ class IcopsServiceTest {
         coordinate = mock(Coordinate.class);
         locationRequest = new LocationRequest();
         locationRequest.setLocation(location);
+        geoLocationDetails = mock(GeoLocationDetails.class);
     }
 
     @Test
@@ -98,6 +101,7 @@ class IcopsServiceTest {
         when(locationBasedJurisdiction.getIncludedJurisdiction()).thenReturn(mock(PoliceStationDetails.class));
         when(locationBasedJurisdiction.getIncludedJurisdiction().getCode()).thenReturn("code");
         when(locationBasedJurisdiction.getIncludedJurisdiction().getStation()).thenReturn("station");
+        when(taskRequest.getTask().getTaskDetails().getRespondentDetails().getAddress().getGeoLocationDetails()).thenReturn(geoLocationDetails);
         channelMessage.setAcknowledgementStatus("SUCCESS");
 
         ChannelMessage result = icopsService.sendRequestToIcops(taskRequest);
@@ -122,6 +126,7 @@ class IcopsServiceTest {
         when(locationBasedJurisdiction.getIncludedJurisdiction()).thenReturn(mock(PoliceStationDetails.class));
         when(locationBasedJurisdiction.getIncludedJurisdiction().getCode()).thenReturn("code");
         when(locationBasedJurisdiction.getIncludedJurisdiction().getStation()).thenReturn("station");
+        when(taskRequest.getTask().getTaskDetails().getRespondentDetails().getAddress().getGeoLocationDetails()).thenReturn(geoLocationDetails);
         channelMessage.setAcknowledgementStatus("FAILURE");
         channelMessage.setFailureMsg("Failure message");
 

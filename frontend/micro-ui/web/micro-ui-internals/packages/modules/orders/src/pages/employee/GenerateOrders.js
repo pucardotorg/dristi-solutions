@@ -1513,7 +1513,7 @@ const GenerateOrders = () => {
           updatedFormdata.dateForHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
           updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
-        } else {
+        } else if (isHearingScheduled) {
           updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
         }
         setValueRef?.current?.[index]?.("dateForHearing", updatedFormdata.dateForHearing);
@@ -1555,7 +1555,7 @@ const GenerateOrders = () => {
           updatedFormdata.dateForHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
           updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
-        } else {
+        } else if (isHearingScheduled) {
           updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
         }
         setValueRef?.current?.[index]?.("dateForHearing", updatedFormdata.dateForHearing);
@@ -1601,7 +1601,7 @@ const GenerateOrders = () => {
           updatedFormdata.dateOfHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
           updatedFormdata.dateOfHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
-        } else {
+        } else if (isHearingScheduled) {
           updatedFormdata.dateOfHearing = formatDate(new Date(hearingDetails?.startTime));
         }
         setValueRef?.current?.[index]?.("dateOfHearing", updatedFormdata.dateOfHearing);
@@ -3527,7 +3527,7 @@ const GenerateOrders = () => {
         localStorage.removeItem("businessOfTheDay");
 
         const nextHearing = response?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
-        
+
         await DRISTIService.addADiaryEntry(
           {
             diaryEntry: {

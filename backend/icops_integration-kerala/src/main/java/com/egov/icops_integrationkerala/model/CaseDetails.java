@@ -41,5 +41,5 @@ public class CaseDetails {
     private String courtCode;
 
     @JsonProperty("courtAddress")
-    private Address courtAddress;
+    private String courtAddress;
 }
