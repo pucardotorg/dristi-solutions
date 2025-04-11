@@ -54,8 +54,8 @@ const DashboardPage = () => {
       const submitButton = iframeDoc?.querySelector(".euiButton");
 
       if (usernameField && passwordField && submitButton) {
-        usernameField.value = process.env.KIBANA_USERNAME;
-        passwordField.value = process.env.KIBANA_PASSWORD;
+        usernameField.value = process.env.REACT_APP_KIBANA_USERNAME;
+        passwordField.value = process.env.REACT_APP_KIBANA_PASSWORD;
         submitButton.click();
       } else {
         console.log("Already logged in or fields missing", iframeDoc, usernameField);
@@ -141,12 +141,10 @@ const DashboardPage = () => {
   }, [sortedDashboards, stepper]);
   const handleDownload = async (downloadLink, index) => {
     setDownloadingIndices((prev) => [...prev, index]);
-    console.log(process.env.KIBANA_USERNAME, process.env.KIBANA_USERNAME, "need to remove");
-    const username = process.env.KIBANA_USERNAME || "anonymous";
-    const password = process.env.KIBANA_PASSWORD || "Beehyv@123";
+    console.log("need to remove", process.env.REACT_APP_KIBANA_USERNAME, process.env.REACT_APP_KIBANA_PASSWORD);
+    const username = process.env.REACT_APP_KIBANA_USERNAME;
+    const password = process.env.REACT_APP_KIBANA_PASSWORD;
     const credentials = btoa(`${username}:${password}`);
-    console.log(credentials, "credentials");
-
     const config = {
       headers: {
         "kbn-xsrf": "",
