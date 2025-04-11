@@ -78,6 +78,8 @@ public class CaseService {
     private final EvidenceValidator evidenceValidator;
     private final PaymentCalculaterUtil paymentCalculaterUtil;
 
+    private final CaseUtil caseUtil;
+
 
     @Autowired
     public CaseService(@Lazy CaseRegistrationValidator validator,
@@ -92,7 +94,7 @@ public class CaseService {
                        HearingUtil analyticsUtil,
                        UserService userService,
                        PaymentCalculaterUtil paymentCalculaterUtil,
-                       ObjectMapper objectMapper, CacheService cacheService, EnrichmentService enrichmentService, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, EvidenceUtil evidenceUtil, EvidenceValidator evidenceValidator) {
+                       ObjectMapper objectMapper, CacheService cacheService, EnrichmentService enrichmentService, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, EvidenceUtil evidenceUtil, EvidenceValidator evidenceValidator,CaseUtil caseUtil) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.caseRepository = caseRepository;
@@ -113,8 +115,178 @@ public class CaseService {
         this.advocateUtil = advocateUtil;
         this.evidenceUtil = evidenceUtil;
         this.evidenceValidator = evidenceValidator;
+        this.caseUtil = caseUtil;
     }
 
+    public static List<String> extractIndividualIds(JsonNode rootNode) {
+        List<String> individualIds = new ArrayList<>();
+
+
+        JsonNode complainantDetailsNode = rootNode.path("complainantDetails")
+                .path("formdata");
+        if (complainantDetailsNode.isArray()) {
+            for (JsonNode complainantNode : complainantDetailsNode) {
+                JsonNode complainantVerificationNode = complainantNode.path("data")
+                        .path("complainantVerification")
+                        .path("individualDetails");
+                if (!complainantVerificationNode.isMissingNode()) {
+                    String individualId = complainantVerificationNode.path("individualId").asText();
+                    if (!individualId.isEmpty()) {
+                        individualIds.add(individualId);
+                    }
+                }
+            }
+        }
+
+        JsonNode respondentDetailsNode = rootNode.path("respondentDetails")
+                .path("formdata");
+        if (respondentDetailsNode.isArray()) {
+            for (JsonNode respondentNode : respondentDetailsNode) {
+                JsonNode respondentVerificationNode = respondentNode.path("data")
+                        .path("respondentVerification")
+                        .path("individualDetails");
+                if (!respondentVerificationNode.isMissingNode()) {
+                    String individualId = respondentVerificationNode.path("individualId").asText();
+                    if (!individualId.isEmpty()) {
+                        individualIds.add(individualId);
+                    }
+                }
+            }
+        }
+
+        JsonNode advocateDetailsNode = rootNode.path("advocateDetails")
+                .path("formdata");
+        if (advocateDetailsNode.isArray()) {
+            for (JsonNode advocateNode : advocateDetailsNode) {
+                // Check if the advocate is representing
+                JsonNode isAdvocateRepresentingNode = advocateNode.path("data")
+                        .path("isAdvocateRepresenting")
+                        .path("code");
+
+                // Proceed if the value is "YES"
+                if ("YES".equals(isAdvocateRepresentingNode.asText())) {
+                    JsonNode advocateListNode = advocateNode.path("data")
+                            .path("advocateBarRegNumberWithName");
+
+                    if (advocateListNode.isArray()) {
+                        for (JsonNode advocateInfoNode : advocateListNode) {
+                            String individualId = advocateInfoNode.path("individualId").asText();
+                            if (!individualId.isEmpty()) {
+                                individualIds.add(individualId);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return individualIds;
+    }
+
+    private static void validateLitigantAlreadyPartOfCase(CourtCase courtCase, JoinCaseDataV2 joinCaseData) {
+        // Stream over the litigants to create a list of individualIds
+        List<String> individualIds = Optional.ofNullable(courtCase.getLitigants())
+                .orElse(Collections.emptyList())
+                .stream()
+                .map(Party::getIndividualId)
+                .toList();
+
+        for (JoinCaseLitigant litigant : joinCaseData.getLitigant()) {
+            if (litigant.getIndividualId() != null && individualIds.contains(litigant.getIndividualId()) && !litigant.getIsPip()) {
+                throw new CustomException(VALIDATION_ERR, "Litigant is already a part of the given case");
+            }
+        }
+    }
+
+    private static @NotNull String getName(Individual individualForLitigant) {
+        String givenName = individualForLitigant.getName().getGivenName();
+        String otherNames = individualForLitigant.getName().getOtherNames();
+        String familyName = individualForLitigant.getName().getFamilyName();
+
+        // Concatenate the name with spaces, ensuring null values are handled
+        String name = (givenName != null ? givenName : "") +
+                (otherNames != null ? " " + otherNames : "") +
+                (familyName != null ? " " + familyName : "");
+        return name;
+    }
+
+    public static AdvocateMapping mapRepresentativeToAdvocateMapping(Representative representative) {
+        AdvocateMapping advocateMapping = new AdvocateMapping();
+        advocateMapping.setId(representative.getId());
+        advocateMapping.setAdvocateId(representative.getAdvocateId());
+        if (representative.getRepresenting() != null && !representative.getRepresenting().isEmpty())
+            advocateMapping.setRepresenting(mapRepresentingToParty(representative.getRepresenting()));
+        advocateMapping.setIsActive(representative.getIsActive());
+        advocateMapping.setDocuments(representative.getDocuments());
+        advocateMapping.setAdditionalDetails(representative.getAdditionalDetails());
+        advocateMapping.setCaseId(representative.getCaseId());
+        advocateMapping.setTenantId(representative.getTenantId());
+        advocateMapping.setAuditDetails(representative.getAuditDetails());
+        advocateMapping.setHasSigned(representative.getHasSigned());
+        return advocateMapping;
+    }
+
+    public static List<Party> mapRepresentingToParty(List<Representing> representingList) {
+        List<Party> partyList = new ArrayList<>();
+        for (Representing representing : representingList) {
+            Party party = new Party();
+            party.setId(representing.getId());
+            party.setIndividualId(representing.getIndividualId());
+            party.setIsActive(representing.getIsActive());
+            party.setDocuments(representing.getDocuments());
+            party.setAdditionalDetails(representing.getAdditionalDetails());
+            party.setCaseId(representing.getCaseId());
+            party.setTenantId(representing.getTenantId());
+            party.setAuditDetails(representing.getAuditDetails());
+            party.setHasSigned(representing.getHasSigned());
+            party.setPartyType(representing.getPartyType());
+            party.setOrganisationID(representing.getOrganisationID());
+            party.setPartyCategory(representing.getPartyCategory());
+            partyList.add(party);
+        }
+
+        return partyList;
+    }
+
+    public static Representative mapAdvocateMappingToRepresentative(AdvocateMapping advocateMapping) {
+        Representative representative = new Representative();
+        representative.setId(advocateMapping.getId());
+        representative.setAdvocateId(advocateMapping.getAdvocateId());
+        if (advocateMapping.getRepresenting() != null && !advocateMapping.getRepresenting().isEmpty())
+            representative.setRepresenting(mapPartyListToRepresentingList(advocateMapping.getRepresenting()));
+        representative.setIsActive(advocateMapping.getIsActive());
+        representative.setDocuments(advocateMapping.getDocuments());
+        representative.setAdditionalDetails(advocateMapping.getAdditionalDetails());
+        representative.setCaseId(advocateMapping.getCaseId());
+        representative.setTenantId(advocateMapping.getTenantId());
+        representative.setAuditDetails(advocateMapping.getAuditDetails());
+        representative.setHasSigned(advocateMapping.getHasSigned());
+        return representative;
+    }
+
+    public static List<Representing> mapPartyListToRepresentingList(List<Party> partyList) {
+        List<Representing> representingList = new ArrayList<>();
+
+        for (Party party : partyList) {
+            Representing representing = new Representing();
+            representing.setId(party.getId());
+            representing.setIndividualId(party.getIndividualId());
+            representing.setIsActive(party.getIsActive());
+            representing.setDocuments(party.getDocuments());
+            representing.setAdditionalDetails(party.getAdditionalDetails());
+            representing.setCaseId(party.getCaseId());
+            representing.setTenantId(party.getTenantId());
+            representing.setAuditDetails(party.getAuditDetails());
+            representing.setHasSigned(party.getHasSigned());
+            representing.setPartyType(party.getPartyType());
+            representing.setOrganisationID(party.getOrganisationID());
+            representing.setPartyCategory(party.getPartyCategory());
+
+            representingList.add(representing);
+        }
+
+        return representingList;
+    }
 
     public CourtCase createCase(CaseRequest body) {
         try {
@@ -341,24 +513,11 @@ public class CaseService {
             // Check if all litigants have signed or any poa of litigant has signed
             // get all litigant and their poa
 
-            Map<String, List<POAHolder>> litigantPoaMap = Optional.ofNullable(cases.getPoaHolders())
-                    .orElse(Collections.emptyList())
-                    .stream()
-                    .filter(POAHolder::getIsActive)
-                    .flatMap(poa -> {
-                        // Create pairs of (litigantId, poa) for each litigant this POA represents
-                        return poa.getRepresentingLitigants().stream()
-                                .filter(party -> party.getIndividualId() != null)
-                                .map(party -> new AbstractMap.SimpleEntry<>(party.getIndividualId(), poa));
-                    })
-                    .collect(Collectors.groupingBy(
-                            Map.Entry::getKey,  // Group by litigant ID
-                            Collectors.mapping(Map.Entry::getValue, Collectors.toList())
-                    ));
+            Map<String, List<POAHolder>> litigantPoaMap = caseUtil.getLitigantPoaMapping(cases);
 
             //check if all litigant signed or any poa (if exists) of litigant has signed
             boolean allLitigantsSigned = cases.getLitigants().stream()
-                    .filter( Party::getIsActive)
+                    .filter(Party::getIsActive)
                     .allMatch(litigant -> {
                         // Check if the litigant has signed directly
                         if (Boolean.TRUE.equals(litigant.getHasSigned())) {
@@ -599,6 +758,26 @@ public class CaseService {
 
     }
 
+//    public void callNotificationService(CaseRequest caseRequest, String messageCode) {
+//        try {
+//            CourtCase courtCase = caseRequest.getCases();
+//            Object additionalDetailsObject = courtCase.getAdditionalDetails();
+//            String jsonData = objectMapper.writeValueAsString(additionalDetailsObject);
+//            JsonNode rootNode = objectMapper.readTree(jsonData);
+//
+//            List<String> individualIds = extractIndividualIds(rootNode);
+//
+//            List<String> phonenumbers = callIndividualService(caseRequest.getRequestInfo(), individualIds);
+//            SmsTemplateData smsTemplateData = enrichSmsTemplateData(caseRequest.getCases());
+//            for (String number : phonenumbers) {
+//                notificationService.sendNotification(caseRequest.getRequestInfo(), smsTemplateData, messageCode, number);
+//            }
+//        } catch (Exception e) {
+//            // Log the exception and continue the execution without throwing
+//            log.error("Error occurred while sending notification: {}", e.toString());
+//        }
+//    }
+
     private void updateAdditionalDetails(CourtCase decryptedCourtCase, Profile profile) {
         if (decryptedCourtCase == null || profile == null) {
             throw new IllegalArgumentException("CourtCase and Profile cannot be null");
@@ -623,7 +802,6 @@ public class CaseService {
         ((ObjectNode) additionalDetailsNode).set("profileRequests", profileRequestsArray);
         decryptedCourtCase.setAdditionalDetails(objectMapper.convertValue(additionalDetailsNode, Map.class));
     }
-
 
     public void callNotificationService(CaseRequest caseRequest, String messageCode, String profileEditorId) {
         try {
@@ -722,26 +900,6 @@ public class CaseService {
         return mobileNumber;
     }
 
-//    public void callNotificationService(CaseRequest caseRequest, String messageCode) {
-//        try {
-//            CourtCase courtCase = caseRequest.getCases();
-//            Object additionalDetailsObject = courtCase.getAdditionalDetails();
-//            String jsonData = objectMapper.writeValueAsString(additionalDetailsObject);
-//            JsonNode rootNode = objectMapper.readTree(jsonData);
-//
-//            List<String> individualIds = extractIndividualIds(rootNode);
-//
-//            List<String> phonenumbers = callIndividualService(caseRequest.getRequestInfo(), individualIds);
-//            SmsTemplateData smsTemplateData = enrichSmsTemplateData(caseRequest.getCases());
-//            for (String number : phonenumbers) {
-//                notificationService.sendNotification(caseRequest.getRequestInfo(), smsTemplateData, messageCode, number);
-//            }
-//        } catch (Exception e) {
-//            // Log the exception and continue the execution without throwing
-//            log.error("Error occurred while sending notification: {}", e.toString());
-//        }
-//    }
-
     private SmsTemplateData enrichSmsTemplateData(CourtCase cases, String profileEditorId) {
         return SmsTemplateData.builder()
                 .courtCaseNumber(cases.getCourtCaseNumber())
@@ -786,71 +944,6 @@ public class CaseService {
         }
 
         return mobileNumber;
-    }
-
-    public static List<String> extractIndividualIds(JsonNode rootNode) {
-        List<String> individualIds = new ArrayList<>();
-
-
-        JsonNode complainantDetailsNode = rootNode.path("complainantDetails")
-                .path("formdata");
-        if (complainantDetailsNode.isArray()) {
-            for (JsonNode complainantNode : complainantDetailsNode) {
-                JsonNode complainantVerificationNode = complainantNode.path("data")
-                        .path("complainantVerification")
-                        .path("individualDetails");
-                if (!complainantVerificationNode.isMissingNode()) {
-                    String individualId = complainantVerificationNode.path("individualId").asText();
-                    if (!individualId.isEmpty()) {
-                        individualIds.add(individualId);
-                    }
-                }
-            }
-        }
-
-        JsonNode respondentDetailsNode = rootNode.path("respondentDetails")
-                .path("formdata");
-        if (respondentDetailsNode.isArray()) {
-            for (JsonNode respondentNode : respondentDetailsNode) {
-                JsonNode respondentVerificationNode = respondentNode.path("data")
-                        .path("respondentVerification")
-                        .path("individualDetails");
-                if (!respondentVerificationNode.isMissingNode()) {
-                    String individualId = respondentVerificationNode.path("individualId").asText();
-                    if (!individualId.isEmpty()) {
-                        individualIds.add(individualId);
-                    }
-                }
-            }
-        }
-
-        JsonNode advocateDetailsNode = rootNode.path("advocateDetails")
-                .path("formdata");
-        if (advocateDetailsNode.isArray()) {
-            for (JsonNode advocateNode : advocateDetailsNode) {
-                // Check if the advocate is representing
-                JsonNode isAdvocateRepresentingNode = advocateNode.path("data")
-                        .path("isAdvocateRepresenting")
-                        .path("code");
-
-                // Proceed if the value is "YES"
-                if ("YES".equals(isAdvocateRepresentingNode.asText())) {
-                    JsonNode advocateListNode = advocateNode.path("data")
-                            .path("advocateBarRegNumberWithName");
-
-                    if (advocateListNode.isArray()) {
-                        for (JsonNode advocateInfoNode : advocateListNode) {
-                            String individualId = advocateInfoNode.path("individualId").asText();
-                            if (!individualId.isEmpty()) {
-                                individualIds.add(individualId);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        return individualIds;
     }
 
     private String getNotificationStatus(String previousStatus, String updatedStatus) {
@@ -960,7 +1053,6 @@ public class CaseService {
         }
 
     }
-
 
     private void verifyAndEnrichLitigant(JoinCaseRequest joinCaseRequest, CourtCase courtCase, CourtCase caseObj, AuditDetails auditDetails) {
         log.info("enriching litigants");
@@ -1155,21 +1247,21 @@ public class CaseService {
                 if (joinCaseRequest.getLitigant() != null && !joinCaseRequest.getLitigant().isEmpty())
                     verifyLitigantsAndJoinCase(joinCaseRequest, courtCase, caseObj, auditDetails);
 
-                    AdvocateMapping advocateMapping = mapRepresentativeToAdvocateMapping(joinCaseRequest.getRepresentative());
-                    Set<String> individualIdSet = getIndividualId(advocateMapping);
-                    Set<String> phonenumbers = callIndividualService(joinCaseRequest.getRequestInfo(), individualIdSet);
-                    LinkedHashMap advocate = ((LinkedHashMap) advocateMapping.getAdditionalDetails());
-                    String advocateName = advocate != null ? advocate.get(ADVOCATE_NAME).toString() : "";
+                AdvocateMapping advocateMapping = mapRepresentativeToAdvocateMapping(joinCaseRequest.getRepresentative());
+                Set<String> individualIdSet = getIndividualId(advocateMapping);
+                Set<String> phonenumbers = callIndividualService(joinCaseRequest.getRequestInfo(), individualIdSet);
+                LinkedHashMap advocate = ((LinkedHashMap) advocateMapping.getAdditionalDetails());
+                String advocateName = advocate != null ? advocate.get(ADVOCATE_NAME).toString() : "";
 
-                    SmsTemplateData smsTemplateData = SmsTemplateData.builder()
-                            .cmpNumber(courtCase.getCmpNumber())
-                            .efilingNumber(courtCase.getFilingNumber())
-                            .advocateName(advocateName)
-                            .tenantId(courtCase.getTenantId()).build();
-                    for (String number : phonenumbers) {
-                        notificationService.sendNotification(joinCaseRequest.getRequestInfo(), smsTemplateData, ADVOCATE_CASE_JOIN, number);
-                    }
+                SmsTemplateData smsTemplateData = SmsTemplateData.builder()
+                        .cmpNumber(courtCase.getCmpNumber())
+                        .efilingNumber(courtCase.getFilingNumber())
+                        .advocateName(advocateName)
+                        .tenantId(courtCase.getTenantId()).build();
+                for (String number : phonenumbers) {
+                    notificationService.sendNotification(joinCaseRequest.getRequestInfo(), smsTemplateData, ADVOCATE_CASE_JOIN, number);
                 }
+            }
 
             return JoinCaseResponse.builder().joinCaseRequest(joinCaseRequest).build();
 
@@ -1225,10 +1317,10 @@ public class CaseService {
 
                 List<Calculation> calculationList = getPaymentCalculations(joinCaseRequest, joinCaseData, courtCase);
 
-                if (calculationList!=null && !calculationList.isEmpty() && calculationList.get(0).getTotalAmount()>0) {
+                if (calculationList != null && !calculationList.isEmpty() && calculationList.get(0).getTotalAmount() > 0) {
                     String taskNumber = createTaskAndDemand(joinCaseRequest, calculationList);
                     return JoinCaseV2Response.builder().paymentTaskNumber(taskNumber).build();
-                }else{
+                } else {
                     joinCaseAdvocate(joinCaseRequest, courtCase, caseObj, auditDetails, existingRepresentative);
                 }
             }
@@ -1248,7 +1340,7 @@ public class CaseService {
     private List<Calculation> getPaymentCalculations(JoinCaseV2Request joinCaseRequest, JoinCaseDataV2 joinCaseData, CourtCase courtCase) {
         List<LitigantAdvocateMap> litigantAdvocateMapList = new ArrayList<>();
 
-        joinCaseData.getRepresentative().getRepresenting().forEach(representing->{
+        joinCaseData.getRepresentative().getRepresenting().forEach(representing -> {
             LitigantAdvocateMap litigantAdvocateMap = LitigantAdvocateMap.builder().build();
             litigantAdvocateMap.setAdvocateCount(representing.getNoOfAdvocates());
             litigantAdvocateMap.setLitigantId(representing.getIndividualId());
@@ -1275,21 +1367,6 @@ public class CaseService {
             replaceAdvocate(joinCaseRequest, courtCase, joinCaseRequest.getJoinCaseData().getRepresentative().getAdvocateId());
         } else {
             addAdvocateToCase(joinCaseRequest, caseObj, courtCase, auditDetails, existingRepresentative);
-        }
-    }
-
-    private static void validateLitigantAlreadyPartOfCase(CourtCase courtCase, JoinCaseDataV2 joinCaseData) {
-        // Stream over the litigants to create a list of individualIds
-        List<String> individualIds = Optional.ofNullable(courtCase.getLitigants())
-                .orElse(Collections.emptyList())
-                .stream()
-                .map(Party::getIndividualId)
-                .toList();
-
-        for (JoinCaseLitigant litigant : joinCaseData.getLitigant()) {
-            if (litigant.getIndividualId() != null && individualIds.contains(litigant.getIndividualId()) && !litigant.getIsPip()) {
-                throw new CustomException(VALIDATION_ERR, "Litigant is already a part of the given case");
-            }
         }
     }
 
@@ -1383,7 +1460,7 @@ public class CaseService {
                 boolean isEvidenceAlreadyPresent = evidenceValidator.validateEvidenceCreate(courtCase, joinCaseRequest.getRequestInfo(), representingJoinCase.getDocuments());
 
                 if (!isEvidenceAlreadyPresent) {
-                    enrichAndCallEvidenceCreate(courtCase, representingJoinCase, joinCaseRequest.getRequestInfo(),individualPartyMap.get(representingJoinCase.getIndividualId()).getPartyType());
+                    enrichAndCallEvidenceCreate(courtCase, representingJoinCase, joinCaseRequest.getRequestInfo(), individualPartyMap.get(representingJoinCase.getIndividualId()).getPartyType());
                 }
 
                 courtCase.getRepresentatives().stream()
@@ -1444,7 +1521,7 @@ public class CaseService {
                 boolean isEvidenceAlreadyPresent = evidenceValidator.validateEvidenceCreate(courtCase, joinCaseRequest.getRequestInfo(), representingJoinCase.getDocuments());
 
                 if (!isEvidenceAlreadyPresent) {
-                    enrichAndCallEvidenceCreate(courtCase, representingJoinCase, joinCaseRequest.getRequestInfo(),individualPartyMap.get(representingJoinCase.getIndividualId()).getPartyType());
+                    enrichAndCallEvidenceCreate(courtCase, representingJoinCase, joinCaseRequest.getRequestInfo(), individualPartyMap.get(representingJoinCase.getIndividualId()).getPartyType());
                 }
 
             });
@@ -1484,7 +1561,7 @@ public class CaseService {
             caseObj.setRepresentatives(List.of(representative));
 
 
-            if(courtCase.getRepresentatives()==null){
+            if (courtCase.getRepresentatives() == null) {
                 courtCase.setRepresentatives(new ArrayList<>());
             }
             courtCase.getRepresentatives().add(representative);
@@ -1544,7 +1621,7 @@ public class CaseService {
         }
     }
 
-    private void enrichAndCallEvidenceCreate(CourtCase courtCase, RepresentingJoinCase representingJoinCase, RequestInfo requestInfo,String partyType) {
+    private void enrichAndCallEvidenceCreate(CourtCase courtCase, RepresentingJoinCase representingJoinCase, RequestInfo requestInfo, String partyType) {
         if (representingJoinCase.getDocuments() != null && !representingJoinCase.getDocuments().isEmpty()) {
 
             Document document = objectMapper.convertValue(representingJoinCase.getDocuments().get(0), Document.class);
@@ -1702,7 +1779,6 @@ public class CaseService {
         }
         return objectMapper.convertValue(additionalDetailsNode, additionalDetails.getClass());
     }
-
 
     private void replaceAdvocate(JoinCaseV2Request joinCaseRequest, CourtCase courtCase, String advocateId) {
         try {
@@ -2497,18 +2573,6 @@ public class CaseService {
         }
     }
 
-    private static @NotNull String getName(Individual individualForLitigant) {
-        String givenName = individualForLitigant.getName().getGivenName();
-        String otherNames = individualForLitigant.getName().getOtherNames();
-        String familyName = individualForLitigant.getName().getFamilyName();
-
-        // Concatenate the name with spaces, ensuring null values are handled
-        String name = (givenName != null ? givenName : "") +
-                (otherNames != null ? " " + otherNames : "") +
-                (familyName != null ? " " + familyName : "");
-        return name;
-    }
-
     private RequestInfo createInternalRequestInfo() {
         User userInfo = new User();
         userInfo.setType(SYSTEM);
@@ -2562,7 +2626,7 @@ public class CaseService {
         ObjectMapper objectMapper = new ObjectMapper();
 
         ObjectNode taskDetailsNode = objectMapper.convertValue(joinCaseRequest, ObjectNode.class);
-        taskDetailsNode.put("advocateUuid",advocateUUID);
+        taskDetailsNode.put("advocateUuid", advocateUUID);
 
         ArrayNode breakdownObjectNode = objectMapper.convertValue(calculationList.get(0).getBreakDown(), ArrayNode.class);
 
@@ -2576,7 +2640,7 @@ public class CaseService {
         TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
         String consumerCode = taskResponse.getTask().getTaskNumber() + "_JOIN_CASE";
 
-        etreasuryUtil.createDemand(joinCaseRequest, consumerCode,calculationList);
+        etreasuryUtil.createDemand(joinCaseRequest, consumerCode, calculationList);
         return taskResponse.getTask().getTaskNumber();
 
     }
@@ -2616,44 +2680,6 @@ public class CaseService {
         caseObj.setRepresentatives(Collections.singletonList(advocateMapping));
         joinCaseRequest.getRepresentative().setAuditDetails(auditDetails);
         verifyAndEnrichRepresentative(joinCaseRequest, courtCase, caseObj, auditDetails);
-    }
-
-    public static AdvocateMapping mapRepresentativeToAdvocateMapping(Representative representative) {
-        AdvocateMapping advocateMapping = new AdvocateMapping();
-        advocateMapping.setId(representative.getId());
-        advocateMapping.setAdvocateId(representative.getAdvocateId());
-        if (representative.getRepresenting() != null && !representative.getRepresenting().isEmpty())
-            advocateMapping.setRepresenting(mapRepresentingToParty(representative.getRepresenting()));
-        advocateMapping.setIsActive(representative.getIsActive());
-        advocateMapping.setDocuments(representative.getDocuments());
-        advocateMapping.setAdditionalDetails(representative.getAdditionalDetails());
-        advocateMapping.setCaseId(representative.getCaseId());
-        advocateMapping.setTenantId(representative.getTenantId());
-        advocateMapping.setAuditDetails(representative.getAuditDetails());
-        advocateMapping.setHasSigned(representative.getHasSigned());
-        return advocateMapping;
-    }
-
-    public static List<Party> mapRepresentingToParty(List<Representing> representingList) {
-        List<Party> partyList = new ArrayList<>();
-        for (Representing representing : representingList) {
-            Party party = new Party();
-            party.setId(representing.getId());
-            party.setIndividualId(representing.getIndividualId());
-            party.setIsActive(representing.getIsActive());
-            party.setDocuments(representing.getDocuments());
-            party.setAdditionalDetails(representing.getAdditionalDetails());
-            party.setCaseId(representing.getCaseId());
-            party.setTenantId(representing.getTenantId());
-            party.setAuditDetails(representing.getAuditDetails());
-            party.setHasSigned(representing.getHasSigned());
-            party.setPartyType(representing.getPartyType());
-            party.setOrganisationID(representing.getOrganisationID());
-            party.setPartyCategory(representing.getPartyCategory());
-            partyList.add(party);
-        }
-
-        return partyList;
     }
 
     private void disableExistingRepresenting(RequestInfo requestInfo, CourtCase courtCase, String
@@ -2752,46 +2778,6 @@ public class CaseService {
             );
 
         }
-    }
-
-    public static Representative mapAdvocateMappingToRepresentative(AdvocateMapping advocateMapping) {
-        Representative representative = new Representative();
-        representative.setId(advocateMapping.getId());
-        representative.setAdvocateId(advocateMapping.getAdvocateId());
-        if (advocateMapping.getRepresenting() != null && !advocateMapping.getRepresenting().isEmpty())
-            representative.setRepresenting(mapPartyListToRepresentingList(advocateMapping.getRepresenting()));
-        representative.setIsActive(advocateMapping.getIsActive());
-        representative.setDocuments(advocateMapping.getDocuments());
-        representative.setAdditionalDetails(advocateMapping.getAdditionalDetails());
-        representative.setCaseId(advocateMapping.getCaseId());
-        representative.setTenantId(advocateMapping.getTenantId());
-        representative.setAuditDetails(advocateMapping.getAuditDetails());
-        representative.setHasSigned(advocateMapping.getHasSigned());
-        return representative;
-    }
-
-    public static List<Representing> mapPartyListToRepresentingList(List<Party> partyList) {
-        List<Representing> representingList = new ArrayList<>();
-
-        for (Party party : partyList) {
-            Representing representing = new Representing();
-            representing.setId(party.getId());
-            representing.setIndividualId(party.getIndividualId());
-            representing.setIsActive(party.getIsActive());
-            representing.setDocuments(party.getDocuments());
-            representing.setAdditionalDetails(party.getAdditionalDetails());
-            representing.setCaseId(party.getCaseId());
-            representing.setTenantId(party.getTenantId());
-            representing.setAuditDetails(party.getAuditDetails());
-            representing.setHasSigned(party.getHasSigned());
-            representing.setPartyType(party.getPartyType());
-            representing.setOrganisationID(party.getOrganisationID());
-            representing.setPartyCategory(party.getPartyCategory());
-
-            representingList.add(representing);
-        }
-
-        return representingList;
     }
 
     private void verifyLitigantsAndJoinCase(JoinCaseRequest joinCaseRequest, CourtCase courtCase, CourtCase caseObj, AuditDetails auditDetails) {
@@ -3773,15 +3759,6 @@ public class CaseService {
 
             for (ReplacementDetails replacementDetails : replacementDetailsList) {
 
-
-                if (advocateTryingToReplace != null) {
-                    boolean isAdvocateAlreadyRepresenting = validateAdvocateAlreadyRepresenting(advocateTryingToReplace, replacementDetails.getLitigantDetails());
-                    if (isAdvocateAlreadyRepresenting) {
-                        continue;
-                    }
-                }
-
-
                 Party party = enrichParty(replacementDetails, courtCase, auditDetails);
                 LitigantDetails litigantDetails = replacementDetails.getLitigantDetails();
                 String partyType = litigantDetails.getPartyType();
@@ -3878,9 +3855,9 @@ public class CaseService {
 
     }
 
-    private boolean validateAdvocateAlreadyRepresenting(AdvocateMapping advocateMapping, LitigantDetails litigantDetails) {
+    private boolean validateAdvocateAlreadyRepresenting(AdvocateMapping advocateMapping, String litigantIndividualId) {
         Party party = advocateMapping.getRepresenting().stream()
-                .filter(representing -> representing.getIndividualId().equalsIgnoreCase(litigantDetails.getIndividualId())).findFirst().orElse(null);
+                .filter(representing -> representing.getIndividualId().equalsIgnoreCase(litigantIndividualId)).findFirst().orElse(null);
         return party != null && party.getIsActive();
     }
 
@@ -4167,23 +4144,29 @@ public class CaseService {
 
         for (AdvocateMapping advocateMapping : advocateMappings) {
             if (advocateMapping.getAdvocateId().equalsIgnoreCase(advocateUuid)) {
-                // Add the party to the representing list of the specific advocate mapping
-                advocateMapping.getRepresenting().add(party);
 
-                // Update the representatives in the original court case
-                courtCase.setRepresentatives(advocateMappings);
+                boolean isAdvocateAlreadyRepresenting = validateAdvocateAlreadyRepresenting(advocateTryingToReplace, party.getIndividualId());
 
-                // Create a new mutable list with only the new party
-                List<Party> newPartyList = new ArrayList<>();
-                newPartyList.add(party);
-                advocateTryingToReplace.setRepresenting(newPartyList);
+                if (!isAdvocateAlreadyRepresenting) {
 
-                // Create a mutable list with the advocate
-                List<AdvocateMapping> singleAdvocateMappingList = new ArrayList<>();
-                singleAdvocateMappingList.add(advocateTryingToReplace);
-                courtCaseObj.setRepresentatives(singleAdvocateMappingList);
+                    // Add the party to the representing list of the specific advocate mapping
+                    advocateMapping.getRepresenting().add(party);
 
-                break;  // Exit the loop once the mapping is updated
+                    // Update the representatives in the original court case
+                    courtCase.setRepresentatives(advocateMappings);
+
+                    // Create a new mutable list with only the new party
+                    List<Party> newPartyList = new ArrayList<>();
+                    newPartyList.add(party);
+                    advocateTryingToReplace.setRepresenting(newPartyList);
+
+                    // Create a mutable list with the advocate
+                    List<AdvocateMapping> singleAdvocateMappingList = new ArrayList<>();
+                    singleAdvocateMappingList.add(advocateTryingToReplace);
+                    courtCaseObj.setRepresentatives(singleAdvocateMappingList);
+
+                    break;  // Exit the loop once the mapping is updated
+                }
             }
         }
     }
@@ -4379,8 +4362,7 @@ public class CaseService {
     }
 
 
-
-    private void enrichHearingDetails(CourtCase courtCase,  ReplacementDetails replacementDetails, JoinCaseTaskRequest joinCaseTaskRequest, RequestInfo requestInfo) {
+    private void enrichHearingDetails(CourtCase courtCase, ReplacementDetails replacementDetails, JoinCaseTaskRequest joinCaseTaskRequest, RequestInfo requestInfo) {
 
         AdvocateDetails advocateTryingToJoinCase = joinCaseTaskRequest.getAdvocateDetails();
 

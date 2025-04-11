@@ -10,11 +10,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.pucar.dristi.service.IndividualService;
 import org.pucar.dristi.util.AdvocateUtil;
+import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.web.models.*;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
@@ -29,6 +28,9 @@ class EnrichCaseWhenESignTest {
 
     @Mock
     private AdvocateUtil advocateUtil;
+
+    @Mock
+    private CaseUtil caseUtil;
 
     @InjectMocks
     private EnrichCaseWhenESign enrichCaseWhenESign;
@@ -63,6 +65,8 @@ class EnrichCaseWhenESignTest {
         String individualId = "12345";
         when(individualService.getIndividualId(requestInfo)).thenReturn(individualId);
 
+        when(caseUtil.getLitigantPoaMapping(courtCase)).thenReturn(Map.of("12345", new ArrayList<>()));
+
         Party litigant = Party.builder().id(UUID.randomUUID())
                 .individualId(individualId)
                 .isActive(true)
@@ -82,6 +86,8 @@ class EnrichCaseWhenESignTest {
     void testEnrich_AdvocateSigns() {
         String individualId = "67890";
         when(individualService.getIndividualId(requestInfo)).thenReturn(individualId);
+        when(caseUtil.getLitigantPoaMapping(courtCase)).thenReturn(Map.of("12345", new ArrayList<>()));
+
 
         Party litigant = Party.builder().id(UUID.randomUUID())
                 .individualId("individualId")

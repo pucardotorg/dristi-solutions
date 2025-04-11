@@ -415,7 +415,7 @@ public class PaymentService {
                 .taxPeriodFrom((taxPeriodData != null) ? taxPeriodData.get("fromDate").asLong() : System.currentTimeMillis())
                 .taxPeriodTo((taxPeriodData != null) ? taxPeriodData.get("toDate").asLong() : System.currentTimeMillis())
                 .demandDetails(List.of(getDemandDetails(demandRequest.getCalculation().get(0).getTotalAmount(), demandRequest.getEntityType(), taxHeadMaster)))
-                .additionalDetails(getAdditionalDetails(courtCase, demandRequest.getEntityType()))
+                .additionalDetails(getAdditionalDetails(courtCase, demandRequest.getEntityType(), demandRequest.getCalculation().get(0)))
                 .build();
     }
 
@@ -468,14 +468,14 @@ public class PaymentService {
     }
 
 
-    public Object getAdditionalDetails(CourtCase courtCase, String entityType) {
+    public Object getAdditionalDetails(CourtCase courtCase, String entityType, Calculation calculation) {
         ObjectNode objectNode = objectMapper.createObjectNode();
         objectNode.put("filingNumber", courtCase.getFilingNumber());
         objectNode.put("cnrNumber", courtCase.getCnrNumber());
         objectNode.put("payer", objectMapper.convertValue(courtCase.getLitigants().get(0).getAdditionalDetails(), JsonNode.class).get("fullName"));
         objectNode.put("payerMobileNo", objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class).get("payerMobileNo"));
         if(entityType.equalsIgnoreCase("case-default")){
-            objectNode.put("isDelayCondonation",  getIsDelayCondonation(courtCase));
+            objectNode.put("isDelayCondonation",  getIsDelayCondonation(calculation));
             objectNode.put("chequeDetails", addChequeDetails(courtCase));
         }
         return objectNode;
@@ -498,15 +498,13 @@ public class PaymentService {
         }
         return  chequeDetails;
     }
-    private Boolean getIsDelayCondonation(CourtCase courtCase) {
-        JsonNode caseDetails = objectMapper.convertValue(courtCase.getCaseDetails(), JsonNode.class);
-        JsonNode dcaData = caseDetails.get("delayApplications").get("formdata").get(0).get("data");
-        if(dcaData.get("delayCondonationType").get("code").asText().equalsIgnoreCase("YES") ||
-                (dcaData.get("delayCondonationType").get("code").asText().equalsIgnoreCase("NO") ||
-                        dcaData.get("isDcaSkippedInEFiling").get("code").asText().equalsIgnoreCase("YES"))){
-            return false;
+    private Boolean getIsDelayCondonation(Calculation calculation) {
+        for(BreakDown breakDown : calculation.getBreakDown()) {
+            if(breakDown.getCode().equals(DELAY_CONDONATION_FEE)) {
+                return true;
+            }
         }
-        return true;
+        return false;
     }
 
 
