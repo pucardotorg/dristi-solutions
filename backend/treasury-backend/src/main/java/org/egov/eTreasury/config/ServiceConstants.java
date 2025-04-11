@@ -82,5 +82,6 @@ public class ServiceConstants {
     public static final String PAYMENT_BREAKUP_NOT_FOUND = "PAYMENT_BREAKUP_NOT_FOUND";
     public static final String BREAKUP_TO_HEAD_NOT_FOUND = "BREAKUP_TO_HEAD_NOT_FOUND";
     public static final String PARTIAL_LIABILITY = "PARTIAL_LIABILITY";
+    public static final String DELAY_CONDONATION_FEE = "DELAY_CONDONATION_FEE";
 
 }
