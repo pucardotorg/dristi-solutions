@@ -98,6 +98,9 @@ public class CaseServiceTest {
     @InjectMocks
     private CaseService caseService;
 
+    @Mock
+    private CaseUtil caseUtil;
+
     private CaseRequest caseRequest;
     private RequestInfo requestInfo;
     private User userInfo;
@@ -144,7 +147,7 @@ public class CaseServiceTest {
         courtCase = new CourtCase();
         objectMapper = new ObjectMapper();
         enrichmentService = new EnrichmentService(new ArrayList<>());
-        caseService = new CaseService(validator,enrichmentUtil,caseRepository,workflowService,config,producer,taskUtil,new EtreasuryUtil(new RestTemplate(),config),encryptionDecryptionUtil, hearingUtil,userService,paymentCalculaterUtil,objectMapper,cacheService,enrichmentService, notificationService, individualService, advocateUtil, evidenceUtil, evidenceValidator);
+        caseService = new CaseService(validator,enrichmentUtil,caseRepository,workflowService,config,producer,taskUtil,new EtreasuryUtil(new RestTemplate(),config),encryptionDecryptionUtil, hearingUtil,userService,paymentCalculaterUtil,objectMapper,cacheService,enrichmentService, notificationService, individualService, advocateUtil, evidenceUtil, evidenceValidator,caseUtil);
     }
 
     CaseCriteria setupTestCaseCriteria(CourtCase courtCase) {
