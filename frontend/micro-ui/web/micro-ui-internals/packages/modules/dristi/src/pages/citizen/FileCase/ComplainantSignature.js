@@ -8,9 +8,8 @@ import { useTranslation } from "react-i18next";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import { DRISTIService } from "../../../services";
-import { getSuffixByBusinessCode, getTaxPeriodByBusinessService } from "../../../Utils";
+import { getSuffixByBusinessCode, getUniqueAcronym } from "../../../Utils";
 import UploadSignatureModal from "../../../components/UploadSignatureModal";
-import { getAllAssignees } from "./EfilingValidationUtils";
 import { Urls } from "../../../hooks";
 import { useToast } from "../../../components/Toast/useToast";
 import Modal from "../../../components/Modal";
@@ -207,8 +206,6 @@ const ComplainantSignature = ({ path }) => {
   const { handleEsign } = Digit.Hooks.orders.useESign();
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const name = "Signature";
-  const complainantPlaceholder = "Complainant Signature";
-  const advocatePlaceholder = "Advocate Signature";
   const [calculationResponse, setCalculationResponse] = useState({});
 
   const uploadModalConfig = useMemo(() => {
@@ -521,6 +518,8 @@ const ComplainantSignature = ({ path }) => {
   };
 
   const getPlaceholder = () => {
+    let placeholder = "";
+
     if (isCurrentPersonPoaComplainant) {
       const litigant = litigants?.find((litigant) => litigant?.additionalDetails?.uuid === userInfo?.uuid);
       const poaHolder = poaHolders?.find((poa) => poa?.individualId === litigant?.individualId);
@@ -528,23 +527,25 @@ const ComplainantSignature = ({ path }) => {
         ?.map((rep) => rep?.additionalDetails?.fullName)
         ?.filter(Boolean)
         ?.join(", ");
-      return `${litigant?.additionalDetails?.fullName} - Complainant ${litigant?.additionalDetails?.currentPosition}, PoA holder for ${representedNames}`;
+      placeholder = `${litigant?.additionalDetails?.fullName} - Complainant ${litigant?.additionalDetails?.currentPosition}, PoA holder for ${representedNames}`;
     } else if (isCurrentPersonPoa) {
       const poaHolder = poaHolders?.find((poa) => poa?.additionalDetails?.uuid === userInfo?.uuid);
       const representedNames = poaHolder?.representingLitigants
         ?.map((rep) => rep?.additionalDetails?.fullName)
         ?.filter(Boolean)
         ?.join(", ");
-      return `${poaHolder?.name} - PoA holder for ${representedNames}`;
+      placeholder = `${poaHolder?.name} - PoA holder for ${representedNames}`;
     } else {
       if (isAdvocateFilingCase) {
         const advocate = caseDetails?.representatives?.find((advocate) => advocate?.additionalDetails?.uuid === userInfo?.uuid);
-        return `Advocate ${advocate?.representing?.[0]?.additionalDetails?.currentPosition} Signature`;
+        placeholder = `Advocate ${advocate?.representing?.[0]?.additionalDetails?.currentPosition} Signature`;
       } else {
         const litigant = litigants?.find((litigant) => litigant?.additionalDetails?.uuid === userInfo?.uuid);
-        return `${litigant?.additionalDetails?.fullName} - Complainant ${litigant?.additionalDetails?.currentPosition}`;
+        placeholder = `${litigant?.additionalDetails?.fullName} - Complainant ${litigant?.additionalDetails?.currentPosition}`;
       }
     }
+
+    return getUniqueAcronym(placeholder);
   };
 
   const handleEsignAction = async () => {
@@ -617,20 +618,8 @@ const ComplainantSignature = ({ path }) => {
     }
   );
 
-  const { data: taxPeriodData, isLoading: taxPeriodLoading } = Digit.Hooks.useCustomMDMS(
-    Digit.ULBService.getStateId(),
-    "BillingService",
-    [{ name: "TaxPeriod" }],
-    {
-      select: (data) => {
-        return data?.BillingService?.TaxPeriod || [];
-      },
-    }
-  );
-
   const callCreateDemandAndCalculation = async (caseDetails, tenantId, caseId) => {
     const suffix = getSuffixByBusinessCode(paymentTypeData, "case-default");
-    const taxPeriod = getTaxPeriodByBusinessService(taxPeriodData, "case-default");
     const calculationResponse = await DRISTIService.getPaymentBreakup(
       {
         EFillingCalculationCriteria: [
