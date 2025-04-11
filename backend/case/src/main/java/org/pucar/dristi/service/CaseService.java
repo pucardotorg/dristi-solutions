@@ -1204,7 +1204,7 @@ public class CaseService {
                     .lastModifiedTime(System.currentTimeMillis()).build();
 
             //For litigant join case
-            if (joinCaseData.getLitigant() != null && !joinCaseData.getLitigant().isEmpty() && joinCaseData.getRepresentative() == null) {
+            if (joinCaseData.getLitigant() != null && !joinCaseData.getLitigant().isEmpty()) {
 
                 if (!validator.validateLitigantJoinCase(joinCaseRequest))
                     throw new CustomException(VALIDATION_ERR, JOIN_CASE_INVALID_REQUEST);
@@ -1275,11 +1275,6 @@ public class CaseService {
             replaceAdvocate(joinCaseRequest, courtCase, joinCaseRequest.getJoinCaseData().getRepresentative().getAdvocateId());
         } else {
             addAdvocateToCase(joinCaseRequest, caseObj, courtCase, auditDetails, existingRepresentative);
-
-            if (joinCaseRequest.getJoinCaseData().getLitigant() != null && !joinCaseRequest.getJoinCaseData().getLitigant().isEmpty()) {
-                //For adding respondent by advocate
-                addLitigantToCase(joinCaseRequest, courtCase, caseObj, auditDetails);
-            }
         }
     }
 
