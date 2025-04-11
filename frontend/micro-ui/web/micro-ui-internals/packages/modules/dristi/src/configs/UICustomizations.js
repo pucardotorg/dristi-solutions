@@ -1312,7 +1312,7 @@ export const UICustomizations = {
 
             const poaHolders = data.criteria[0].responseList[0].poaHolders?.length > 0 ? data.criteria[0].responseList[0].poaHolders : [];
             const finalPoaHoldersData = poaHolders?.map((poaHolder) => {
-              const representing = poaHolder?.representing?.map((rep) => {
+              const representing = poaHolder?.representingLitigants?.map((rep) => {
                 return {
                   ...litigants?.find((litigant) => litigant?.individualId === rep?.individualId),
                   ...rep,
@@ -1320,7 +1320,7 @@ export const UICustomizations = {
               });
               return {
                 ...poaHolder,
-                representing: representing,
+                representingLitigants: representing,
                 representingList: representing?.map((rep) => rep?.additionalDetails?.fullName)?.join(", "),
                 partyType: poaHolder?.poaType,
                 status: "JOINED",
@@ -1403,7 +1403,7 @@ export const UICustomizations = {
           return removeInvalidNameParts(value) || "";
 
         case "ASSOCIATED_WITH":
-          const associatedWith = row?.partyType === "ADVOCATE" ? row?.representingList : "";
+          const associatedWith = row?.partyType === "ADVOCATE" || ["poa.regular"]?.includes(row?.partyType) ? row?.representingList : "";
           return associatedWith;
         case "STATUS":
           const caseJoinStatus = ["respondent.primary", "respondent.additional"].includes(row?.partyType)
@@ -1414,6 +1414,8 @@ export const UICustomizations = {
             ? t("JOINED")
             : ["ADVOCATE"].includes(row?.partyType)
             ? t(row?.status)
+            : ["poa.regular"].includes(row?.partyType)
+            ? t("JOINED")
             : "";
 
           return caseJoinStatus ? <span style={{ backgroundColor: "#E8E8E8", padding: "6px", borderRadius: "14px" }}>{caseJoinStatus}</span> : null;
