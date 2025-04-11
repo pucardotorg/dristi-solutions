@@ -2574,9 +2574,12 @@ public class CaseService {
         taskRequest.setRequestInfo(requestInfo);
 
         TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
-        String consumerCode = taskResponse.getTask().getTaskNumber() + "_JOIN_CASE";
+
+        ObjectNode taskDetailsNodeFromResponse = objectMapper.convertValue(taskResponse.getTask().getTaskDetails(), ObjectNode.class);
+        String consumerCode = taskDetailsNodeFromResponse.get("consumerCode").asText();
 
         etreasuryUtil.createDemand(joinCaseRequest, consumerCode,calculationList);
+
         return taskResponse.getTask().getTaskNumber();
 
     }
