@@ -235,8 +235,8 @@ const LitigantVerification = ({
             defaultValues={{
               ...litigants?.[index],
               isVakalatnamaNew: {
-                code: litigants?.[index]?.isVakalatnamaNew?.code || "YES",
-                name: litigants?.[index]?.isVakalatnamaNew?.name || "YES",
+                code: litigants?.[index]?.isVakalatnamaNew?.code || "NO",
+                name: litigants?.[index]?.isVakalatnamaNew?.name || "NO",
               },
             }}
             fieldStyle={fieldStyle}
