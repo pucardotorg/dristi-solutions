@@ -1616,19 +1616,26 @@ public class CaseService {
                         isComplainantPipNode.put("isEnabled", true);
                         multipleAdvocatesAndPip.set("isComplainantPip", isComplainantPipNode);
 
-                        ObjectNode vakalatnamaFileUpload = objectMapper.createObjectNode();
+                        if (representingJoinCase.getDocuments() != null && !representingJoinCase.getDocuments().isEmpty()) {
 
-                        // Initialize the 'document' array
-                        ArrayNode document = objectMapper.createArrayNode();
+                            ObjectNode vakalatnamaFileUpload = objectMapper.createObjectNode();
 
-                        ObjectNode documentNode = objectMapper.createObjectNode();
-                        documentNode.put("fileStore", representingJoinCase.getDocuments().get(0).getFileStore());
-                        documentNode.put("documentType", representingJoinCase.getDocuments().get(0).getDocumentType());
+                            // Initialize the 'document' array
+                            ArrayNode document = objectMapper.createArrayNode();
 
-                        document.add(documentNode);
+                            ObjectNode documentNode = objectMapper.createObjectNode();
+                            documentNode.put("fileStore", representingJoinCase.getDocuments().get(0).getFileStore());
+                            documentNode.put("documentType", representingJoinCase.getDocuments().get(0).getDocumentType());
 
-                        vakalatnamaFileUpload.set("document", document);
-                        multipleAdvocatesAndPip.set("vakalatnamaFileUpload", vakalatnamaFileUpload);
+                            document.add(documentNode);
+
+                            vakalatnamaFileUpload.set("document", document);
+                            multipleAdvocatesAndPip.set("vakalatnamaFileUpload", vakalatnamaFileUpload);
+
+                            // Ensure vakalatnamaFileUpload is properly set after modification
+                            multipleAdvocatesAndPip.set("vakalatnamaFileUpload", vakalatnamaFileUpload);
+
+                        }
 
                         // Ensure multipleAdvocateNameDetails is initialized and clear it
                         ArrayNode multipleAdvocateNameDetails = ensureArrayNodeInitialized(multipleAdvocatesAndPip.get("multipleAdvocateNameDetails"));
@@ -1689,9 +1696,6 @@ public class CaseService {
 
                         // Set updated multipleAdvocateNameDetails back to pipNode
                         // pipNode.set("multipleAdvocateNameDetails", multipleAdvocateNameDetails);
-
-                        // Ensure vakalatnamaFileUpload is properly set after modification
-                        multipleAdvocatesAndPip.set("vakalatnamaFileUpload", vakalatnamaFileUpload);
 
                         // No need to explicitly set pipNode again to dataNode as it's already updated within
                         break;
