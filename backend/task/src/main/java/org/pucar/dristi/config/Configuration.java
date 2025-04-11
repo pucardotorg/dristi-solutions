@@ -201,6 +201,9 @@ public class Configuration {
     @Value("${egov.case.search.endpoint}")
     private String caseSearchPath;
 
+    @Value("${egov.case.edit.path}")
+    private String caseEditPath;
+
     //Localization
     @Value("${egov.localization.host}")
     private String localizationHost;

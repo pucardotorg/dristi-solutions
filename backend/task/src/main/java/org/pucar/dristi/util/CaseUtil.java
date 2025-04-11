@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -118,4 +119,17 @@ public class CaseUtil {
         return null;
     }
 
+    public void editCase(RequestInfo requestInfo, CourtCase courtCase) {
+        StringBuilder uri = new StringBuilder();
+        uri.append(config.getCaseHost()).append(config.getCaseEditPath());
+        Map<String, Object> requestMap = new HashMap<>();
+        requestMap.put("RequestInfo", requestInfo);
+        requestMap.put("cases", courtCase);
+        try {
+            repository.fetchResult(uri, requestMap);
+        } catch (Exception e) {
+            log.error("Error while editing case", e);
+            throw new CustomException(ERROR_FROM_CASE, e.getMessage());
+        }
+    }
 }

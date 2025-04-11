@@ -3,6 +3,7 @@ package org.pucar.dristi.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
@@ -76,6 +77,10 @@ public class TaskService {
 
             workflowUpdate(body);
 
+            if(body.getTask().getTaskType().equalsIgnoreCase("SUMMONS")
+             || body.getTask().getTaskType().equalsIgnoreCase("WARRANT")) {
+                updateCase(body);
+            }
             producer.push(config.getTaskCreateTopic(), body);
 
             String status = body.getTask().getStatus();
@@ -467,4 +472,69 @@ public class TaskService {
 
         litigantDetails.setName(fullName);
     }
+
+    public void updateCase(TaskRequest taskRequest) {
+        String filingNumber = taskRequest.getTask().getFilingNumber();
+        log.info("Updating geolocation details for case: {}", filingNumber);
+
+        try {
+            CourtCase courtCase = getCourtCase(taskRequest);
+            JsonNode taskDetails = getTaskDetails(taskRequest);
+            JsonNode respondentAddress = taskDetails.path("respondentDetails").path("address");
+            String respondentAddressId = respondentAddress.path("id").asText();
+            JsonNode geoLocationFromRespondent = respondentAddress.path(GEOLOCATION);
+
+            JsonNode updatedAdditionalDetails = updateGeoLocationInAddress(
+                    courtCase.getAdditionalDetails(), respondentAddressId, geoLocationFromRespondent
+            );
+
+            courtCase.setAdditionalDetails(updatedAdditionalDetails);
+            caseUtil.editCase(taskRequest.getRequestInfo(), courtCase);
+
+            log.info("Successfully updated geolocation details for case: {}", filingNumber);
+
+        } catch (IllegalArgumentException e) {
+            log.info("Error updating geolocation details for case: {}", e.getMessage());
+            throw new CustomException(ERROR_FROM_CASE, e.getMessage());
+        }
+    }
+
+    private CourtCase getCourtCase(TaskRequest taskRequest) {
+        List<CourtCase> caseDetails = caseUtil.getCaseDetails(taskRequest);
+        if (caseDetails.isEmpty()) {
+            throw new IllegalArgumentException("No case found for the given task.");
+        }
+        return caseDetails.get(0);
+    }
+
+    private JsonNode getTaskDetails(TaskRequest taskRequest) {
+        return objectMapper.convertValue(taskRequest.getTask().getTaskDetails(), JsonNode.class);
+    }
+    private JsonNode updateGeoLocationInAddress(Object additionalDetailsObj, String respondentAddressId, JsonNode geoLocationFromRespondent) {
+        JsonNode additionalDetails = objectMapper.convertValue(additionalDetailsObj, JsonNode.class);
+        JsonNode formDataList = additionalDetails.at("/respondentDetails/formdata");
+
+        if (geoLocationFromRespondent.isObject()) {
+            ((ObjectNode) geoLocationFromRespondent).putNull("latitude");
+            ((ObjectNode) geoLocationFromRespondent).putNull("longitude");
+        }
+        for (JsonNode data : formDataList) {
+            JsonNode addressDetails = data.path("data").path("addressDetails");
+            for (JsonNode address : addressDetails) {
+                String addressId = address.path("id").asText();
+                if (respondentAddressId.equals(addressId)) {
+                    ObjectNode addressNode = (ObjectNode) address;
+
+                    if (address.has(GEOLOCATION)) {
+                        addressNode.replace(GEOLOCATION, geoLocationFromRespondent);
+                    } else {
+                        addressNode.set(GEOLOCATION, geoLocationFromRespondent);
+                    }
+                }
+            }
+        }
+
+        return additionalDetails;
+    }
+
 }
