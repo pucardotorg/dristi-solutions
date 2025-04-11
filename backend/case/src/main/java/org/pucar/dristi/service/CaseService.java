@@ -3779,6 +3779,14 @@ public class CaseService {
             for (ReplacementDetails replacementDetails : replacementDetailsList) {
 
 
+                if (advocateTryingToReplace != null) {
+                    boolean isAdvocateAlreadyRepresenting = validateAdvocateAlreadyRepresenting(advocateTryingToReplace, replacementDetails.getLitigantDetails());
+                    if (isAdvocateAlreadyRepresenting) {
+                        continue;
+                    }
+                }
+
+
                 Party party = enrichParty(replacementDetails, courtCase, auditDetails);
                 LitigantDetails litigantDetails = replacementDetails.getLitigantDetails();
                 String partyType = litigantDetails.getPartyType();
@@ -3873,6 +3881,12 @@ public class CaseService {
             throw new CustomException("updateCourtCaseObject", "An unexpected error occurred");
         }
 
+    }
+
+    private boolean validateAdvocateAlreadyRepresenting(AdvocateMapping advocateMapping, LitigantDetails litigantDetails) {
+        Party party = advocateMapping.getRepresenting().stream()
+                .filter(representing -> representing.getIndividualId().equalsIgnoreCase(litigantDetails.getIndividualId())).findFirst().orElse(null);
+        return party != null && party.getIsActive();
     }
 
     private void inactivateOldAdvocate(ReplacementDetails replacementDetails, CourtCase courtCase) {
