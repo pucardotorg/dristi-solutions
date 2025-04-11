@@ -514,7 +514,7 @@ public class TaskService {
         JsonNode additionalDetails = objectMapper.convertValue(additionalDetailsObj, JsonNode.class);
         JsonNode formDataList = additionalDetails.at("/respondentDetails/formdata");
 
-        if (geoLocationFromRespondent.isObject()) {
+        if (geoLocationFromRespondent != null && geoLocationFromRespondent.isObject()) {
             ((ObjectNode) geoLocationFromRespondent).putNull("latitude");
             ((ObjectNode) geoLocationFromRespondent).putNull("longitude");
         }
