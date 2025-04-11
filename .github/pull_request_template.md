@@ -9,8 +9,8 @@
 - [ ] New and existing unit tests pass locally with my changes
 - [ ] I have added proper logs and comments for the developed code
 - [ ] If this PR includes MDMS or workflow data changes:
-  - [ ] I have added MDMS data changes to `support/<issue-number>-mdms.json`
-  - [ ] I have added workflow data changes to `support/<issue-number>-workflow.json`
+  - [ ] I have added MDMS data changes to `support/release-<release-number>-<issue-number>-mdms.json`
+  - [ ] I have added workflow data changes to `support/-<release-number>-<issue-number>-workflow.json`
 
 
 
@@ -26,7 +26,7 @@
 ## Data Changes
 <!-- 
 For MDMS or workflow changes, list the following:
-- [ ] Files modified: `support/<issue-number>-mdms.json`
+- [ ] Files modified: `support/-<release-number>-<issue-number>-mdms.json`
 - [ ] Migration steps (if any):
 -->
 
