@@ -305,6 +305,10 @@ public class OrderRegistrationService {
 
             Set<String> individualIds = extractIndividualIds(caseDetails, receiver);
 
+            if (receiver == null || receiver.equalsIgnoreCase(COMPLAINANT)) {
+                extractPowerOfAttorneyIds(caseDetails, individualIds);
+            }
+
             Set<String> phonenumbers = callIndividualService(orderRequest.getRequestInfo(), individualIds);
             String hearingDate = formData.has("hearingDate") ? formData.get("hearingDate").asText()
                     : formData.has("newHearingDate") ? formData.get("newHearingDate").asText()
@@ -317,7 +321,7 @@ public class OrderRegistrationService {
                     .submissionDate(formData.has("submissionDeadline") ? formData.get("submissionDeadline").asText() : "")
                     .tenantId(orderRequest.getOrder().getTenantId()).build();
 
-            if (receiver.equalsIgnoreCase(RESPONDENT)) {
+            if (receiver != null && receiver.equalsIgnoreCase(RESPONDENT)) {
                 JsonNode respondentDetails = caseDetails.get("additionalDetails").get("respondentDetails").get("formdata");
                 for (int i = 0 ; i < respondentDetails.size() ; i++) {
                     phonenumbers.add(respondentDetails.get(i).get("data").get("phonenumbers").get("mobileNumber").get(0).textValue());
@@ -414,6 +418,18 @@ public class OrderRegistrationService {
             }
         }
         return uuids;
+    }
+
+    public void extractPowerOfAttorneyIds(JsonNode caseDetails, Set<String> individualIds) {
+        JsonNode poaHolders = caseDetails.get("poaHolders");
+        if (poaHolders != null && poaHolders.isArray()) {
+            for (JsonNode poaHolder : poaHolders) {
+                String individualId = poaHolder.path("individualId").textValue();
+                if (individualId != null && !individualId.isEmpty()) {
+                    individualIds.add(individualId);
+                }
+            }
+        }
     }
 
 }

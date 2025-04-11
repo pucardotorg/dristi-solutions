@@ -159,6 +159,10 @@ public class PaymentUpdateService {
 
         Set<String> individualIds = extractIndividualIds(caseDetails, party);
 
+        if (party != null && party.contains("complainant")) {
+            extractPoaHoldersIndividualIds(caseDetails, individualIds);
+        }
+
         Set<String> phoneNumbers = callIndividualService(applicationRequest.getRequestInfo(), individualIds);
 
         SmsTemplateData smsTemplateData = SmsTemplateData.builder()

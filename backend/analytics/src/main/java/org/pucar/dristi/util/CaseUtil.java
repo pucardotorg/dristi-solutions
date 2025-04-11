@@ -152,6 +152,18 @@ public class CaseUtil {
 		return response;
 	}
 
+	public Set<String> extractPowerOfAttorneyIds(JsonNode caseDetails, Set<String> individualIds) {
+		JsonNode poaHolders = caseDetails.get("poaHolders");
+		if (poaHolders != null && poaHolders.isArray()) {
+			for (JsonNode poaHolder : poaHolders) {
+				String individualId = poaHolder.path("individualId").textValue();
+				if (individualId != null && !individualId.isEmpty()) {
+					individualIds.add(individualId);
+				}
+			}
+		}
+		return individualIds;
+	}
 
 	private StringBuilder getSearchURLWithParams() {
 		return new StringBuilder(config.getCaseHost())

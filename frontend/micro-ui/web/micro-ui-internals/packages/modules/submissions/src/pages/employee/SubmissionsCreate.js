@@ -265,8 +265,9 @@ const SubmissionsCreate = ({ path }) => {
     },
     {},
     applicationNumber + filingNumber,
-    Boolean(applicationNumber + filingNumber)
+    Boolean(applicationNumber && filingNumber)
   );
+
   const { data: delayCondonationData } = Digit.Hooks.submissions.useSearchSubmissionService(
     {
       criteria: {
@@ -1334,7 +1335,14 @@ const SubmissionsCreate = ({ path }) => {
           {
             tenantId: tenantId,
             totalAmount: 20,
-            breakDown: [],
+            breakDown: [
+              {
+                type: "Application Fee",
+                code: "APPLICATION_FEE",
+                amount: 20.0,
+                additionalParams: {},
+              },
+            ],
           },
         ],
       });
