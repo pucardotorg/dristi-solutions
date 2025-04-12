@@ -17,9 +17,9 @@ import org.springframework.web.client.RestTemplate;
 @Slf4j
 public class DemandUtil {
 
-    private RestTemplate restTemplate;
+    private final RestTemplate restTemplate;
 
-    private Configuration configs;
+    private final Configuration configs;
 
     @Autowired
     public DemandUtil(RestTemplate restTemplate, Configuration configs) {
@@ -42,9 +42,7 @@ public class DemandUtil {
         return demandResponse;
     }
     public DemandResponse updateDemand(DemandRequest demandRequest) {
-        StringBuilder url = new StringBuilder(configs.getBillingServiceHost());
-        url.append(configs.getUpdateDemandEndpoint());
-        DemandResponse demandResponse = restTemplate.postForObject(url.toString(), demandRequest, DemandResponse.class);
+        DemandResponse demandResponse = restTemplate.postForObject(configs.getBillingServiceHost() + configs.getUpdateDemandEndpoint(), demandRequest, DemandResponse.class);
         if (demandResponse == null || demandResponse.getDemands() == null || demandResponse.getDemands().isEmpty()) {
             throw new CustomException();
         }
