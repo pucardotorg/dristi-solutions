@@ -2,6 +2,7 @@ package org.pucar.dristi.util;
 
 import org.pucar.dristi.web.models.CourtCase;
 import org.pucar.dristi.web.models.POAHolder;
+import org.pucar.dristi.web.models.Party;
 import org.springframework.stereotype.Component;
 
 import java.security.SecureRandom;
@@ -41,7 +42,8 @@ public class CaseUtil {
 
 
     public Map<String, List<POAHolder>> getLitigantPoaMapping(CourtCase cases) {
-        return Optional.ofNullable(cases.getPoaHolders())
+        List<String> litigantIds = Optional.ofNullable(cases.getLitigants()).orElse(Collections.emptyList()).stream().filter(Party::getIsActive).map(Party::getIndividualId).toList();
+        Map<String, List<POAHolder>> litigantPoaMapping = Optional.ofNullable(cases.getPoaHolders())
                 .orElse(Collections.emptyList())
                 .stream()
                 .filter(POAHolder::getIsActive)
@@ -55,5 +57,10 @@ public class CaseUtil {
                         Map.Entry::getKey,  // Group by litigant ID
                         Collectors.mapping(Map.Entry::getValue, Collectors.toList())
                 ));
+
+        for (String id : litigantIds) {
+            litigantPoaMapping.putIfAbsent(id, new ArrayList<>()); // fill in missing ones with empty list
+        }
+        return litigantPoaMapping;
     }
 }
