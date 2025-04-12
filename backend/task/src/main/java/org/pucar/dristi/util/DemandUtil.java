@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 
 @Component
@@ -32,7 +34,8 @@ public class DemandUtil {
         url.append(configs.getSearchDemandEndpoint());
         url.append("?").append("tenantId=").append(demandCriteria.getTenantId());
         if(demandCriteria.getConsumerCode() != null) {
-            url.append("&").append("consumerCode=").append(demandCriteria.getConsumerCode());
+            String joinedCodes = String.join(",", demandCriteria.getConsumerCode());
+            url.append("&consumerCode=").append(URLEncoder.encode(joinedCodes, StandardCharsets.UTF_8));
         }
 
         DemandResponse demandResponse = restTemplate.postForObject(url.toString(), requestInfoWrapper, DemandResponse.class);
