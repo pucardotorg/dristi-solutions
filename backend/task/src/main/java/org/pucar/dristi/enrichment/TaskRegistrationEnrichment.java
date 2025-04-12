@@ -1,6 +1,9 @@
 package org.pucar.dristi.enrichment;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.tracer.model.CustomException;
@@ -15,6 +18,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.pucar.dristi.config.ServiceConstants.ENRICHMENT_EXCEPTION;
+import static org.pucar.dristi.config.ServiceConstants.JOIN_CASE_PAYMENT;
 
 @Component
 @Slf4j
@@ -22,11 +26,13 @@ public class TaskRegistrationEnrichment {
 
     private final IdgenUtil idgenUtil;
     private final Configuration config;
+    private final ObjectMapper objectMapper;
 
     @Autowired
-    public TaskRegistrationEnrichment(IdgenUtil idgenUtil, Configuration config) {
+    public TaskRegistrationEnrichment(IdgenUtil idgenUtil, Configuration config, ObjectMapper objectMapper) {
         this.idgenUtil = idgenUtil;
         this.config = config;
+        this.objectMapper = objectMapper;
     }
 
     public void enrichTaskRegistration(TaskRequest taskRequest) {
@@ -76,10 +82,23 @@ public class TaskRegistrationEnrichment {
             task.setCreatedDate(System.currentTimeMillis());
             task.setTaskNumber(taskRequest.getTask().getFilingNumber() + "-" + taskRegistrationIdList.get(0));
 
+
+            if(JOIN_CASE_PAYMENT.equalsIgnoreCase(task.getTaskType())){
+                enrichConsumerCodeInTaskDetails(task);
+            }
+
         } catch (Exception e) {
             log.error("Error enriching task application :: {}", e.toString());
             throw new CustomException(ENRICHMENT_EXCEPTION, e.getMessage());
         }
+    }
+
+    private void enrichConsumerCodeInTaskDetails(Task task) {
+        ObjectNode taskDetailsNode = objectMapper.convertValue(task.getTaskDetails(), ObjectNode.class);
+        String consumerCode = task.getTaskNumber() + "_JOIN_CASE";
+
+        taskDetailsNode.put("consumerCode",consumerCode);
+        task.setTaskDetails(objectMapper.convertValue(taskDetailsNode, Object.class));
     }
 
     public void enrichCaseApplicationUponUpdate(TaskRequest taskRequest) {
