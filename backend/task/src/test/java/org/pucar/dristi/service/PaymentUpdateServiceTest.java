@@ -22,6 +22,7 @@ import org.pucar.dristi.web.models.*;
 
 import java.util.*;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.pucar.dristi.config.ServiceConstants.*;
@@ -234,5 +235,31 @@ class PaymentUpdateServiceTest {
 
         // Verify no further interactions occurred
         verifyNoMoreInteractions(repository, workflowUtil, producer);
+    }
+    @Test
+    void extractConsumerCode_ReturnsConsumerCode_WhenTaskDetailsContainConsumerCode() {
+        Map<String, Object> taskDetails = new HashMap<>();
+        taskDetails.put("consumerCode", "CONSUMER_001");
+        Task task = Task.builder().taskDetails(taskDetails).build();
+
+        when(objectMapper.convertValue(any(), any(TypeReference.class)))
+                .thenReturn(taskDetails);
+
+        String result = paymentUpdateService.extractConsumerCode(task);
+
+        assertNotNull(result);
+        assertEquals("CONSUMER_001", result);
+    }
+
+    @Test
+    void extractConsumerCode_ReturnsNull_WhenTaskDetailsDoNotContainConsumerCode() {
+        Map<String, Object> taskDetails = new HashMap<>();
+        Task task = Task.builder().taskDetails(taskDetails).build();
+        when(objectMapper.convertValue(any(), any(TypeReference.class)))
+                .thenReturn(taskDetails);
+
+        String result = paymentUpdateService.extractConsumerCode(task);
+
+        assertNull(result);
     }
 }

@@ -291,12 +291,12 @@ public class DemandService {
 			
 			updateBillCriteria.setStatusToBeUpdated(BillStatus.EXPIRED);
 			billRepoV2.updateBillStatus(updateBillCriteria);
+			producer.push(demands.get(0).getTenantId(),demandTopic,demandRequest);
 		} else {
 			
 			updateBillCriteria.setStatusToBeUpdated(BillStatus.PAID);
 			billRepoV2.updateBillStatus(updateBillCriteria);
 		}
-		producer.push(demands.get(0).getTenantId(),demandTopic,demandRequest);
 
 		// producer.push(applicationProperties.getDemandIndexTopic(), demandRequest);
 		return new DemandResponse(responseInfoFactory.getResponseInfo(requestInfo, HttpStatus.CREATED), demands);
