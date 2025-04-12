@@ -281,6 +281,8 @@ public class PaymentUpdateService {
             log.info("No other pending payment task's found for advocate :: {}", advocateUuid);
             return;
         }
+        String paidTaskNumber = taskResponse.getTaskNumber();
+        tasks = tasks.stream().filter(task -> !task.getTaskNumber().equalsIgnoreCase(paidTaskNumber)).collect(Collectors.toList());
 
         tasks.forEach(task -> {
 
