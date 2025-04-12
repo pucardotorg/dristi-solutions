@@ -8,7 +8,6 @@ import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.models.RequestInfoWrapper;
-import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.tracer.model.CustomException;
@@ -16,6 +15,7 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.repository.TaskRepository;
+import org.pucar.dristi.util.DemandUtil;
 import org.pucar.dristi.util.MdmsUtil;
 import org.pucar.dristi.util.WorkflowUtil;
 import org.pucar.dristi.web.models.*;
@@ -27,6 +27,7 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -41,11 +42,12 @@ public class PaymentUpdateService {
     private final Configuration config;
     private final MdmsUtil mdmsUtil;
     private final ObjectMapper objectMapper;
+    private final DemandUtil demandUtil;
 
     private ServiceRequestRepository serviceRequestRepository;
 
     @Autowired
-    public PaymentUpdateService(WorkflowUtil workflowUtil, ObjectMapper mapper, TaskRepository repository, Producer producer, Configuration config, MdmsUtil mdmsUtil, ObjectMapper objectMapper, ServiceRequestRepository serviceRequestRepository) {
+    public PaymentUpdateService(WorkflowUtil workflowUtil, ObjectMapper mapper, TaskRepository repository, Producer producer, Configuration config, MdmsUtil mdmsUtil, ObjectMapper objectMapper, ServiceRequestRepository serviceRequestRepository, DemandUtil demandUtil) {
         this.workflowUtil = workflowUtil;
         this.mapper = mapper;
         this.repository = repository;
@@ -54,6 +56,7 @@ public class PaymentUpdateService {
         this.mdmsUtil = mdmsUtil;
         this.objectMapper = objectMapper;
         this.serviceRequestRepository = serviceRequestRepository;
+        this.demandUtil = demandUtil;
     }
 
     public void process(Map<String, Object> record) {
@@ -292,6 +295,34 @@ public class PaymentUpdateService {
                 TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                 producer.push(config.getTaskUpdateTopic(), taskRequest);
         });
+        searchAndCancelTaskRelatedDemands(tenantId, tasks, requestInfo);
+    }
 
+    private void searchAndCancelTaskRelatedDemands(String tenantId, List<Task> tasks, RequestInfo requestInfo) {
+        Set<String> consumerCodes = tasks.stream().map(this::extractConsumerCode).collect(Collectors.toSet());
+        DemandCriteria demandCriteria = new DemandCriteria();
+        demandCriteria.setConsumerCode(consumerCodes);
+        demandCriteria.setTenantId(tenantId);
+        RequestInfoWrapper requestInfoWrapper = new RequestInfoWrapper();
+        requestInfoWrapper.setRequestInfo(requestInfo);
+        DemandResponse demandResponse = demandUtil.searchDemand(demandCriteria, requestInfoWrapper);
+        if (demandResponse != null && !CollectionUtils.isEmpty(demandResponse.getDemands())) {
+            for (Demand demand : demandResponse.getDemands()) {
+                demand.setStatus(Demand.StatusEnum.CANCELLED);
+                }
+            DemandRequest demandRequest = new DemandRequest();
+            demandRequest.setRequestInfo(requestInfo);
+            demandRequest.setDemands(demandResponse.getDemands());
+            DemandResponse updatedDemandResponse = demandUtil.updateDemand(demandRequest);
+            log.info("Updating demand status to cancelled for consumer codes :: {}", consumerCodes);
+            }
+    }
+
+
+    public String extractConsumerCode(Task task) {
+        Object taskDetails = task.getTaskDetails();
+        Map<String, Object> taskDetailsMap = mapper.convertValue(taskDetails, new TypeReference<>() {
+        });
+        return (String) taskDetailsMap.get("consumerCode");
     }
 }
