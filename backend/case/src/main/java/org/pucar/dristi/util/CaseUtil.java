@@ -42,7 +42,7 @@ public class CaseUtil {
 
 
     public Map<String, List<POAHolder>> getLitigantPoaMapping(CourtCase cases) {
-        List<String> litigantIds = Optional.ofNullable(cases.getLitigants()).orElse(Collections.emptyList()).stream().filter(Party::getIsActive).map(Party::getIndividualId).toList();
+        List<String> litigantIds = Optional.ofNullable(cases.getLitigants()).orElse(Collections.emptyList()).stream().filter(Party::getIsActive).map(Party::getIndividualId).filter(Objects::nonNull).toList();
         Map<String, List<POAHolder>> litigantPoaMapping = Optional.ofNullable(cases.getPoaHolders())
                 .orElse(Collections.emptyList())
                 .stream()
