@@ -45,10 +45,18 @@ public class DemandUtil {
         return demandResponse;
     }
     public DemandResponse updateDemand(DemandRequest demandRequest) {
-        DemandResponse demandResponse = restTemplate.postForObject(configs.getBillingServiceHost() + configs.getUpdateDemandEndpoint(), demandRequest, DemandResponse.class);
-        if (demandResponse == null || demandResponse.getDemands() == null || demandResponse.getDemands().isEmpty()) {
-            throw new CustomException();
+        try {
+            String url = configs.getBillingServiceHost() + configs.getUpdateDemandEndpoint();
+            log.info("Updating demand with URL: {}", url);
+            DemandResponse demandResponse = restTemplate.postForObject(url, demandRequest, DemandResponse.class);
+            if (demandResponse == null || demandResponse.getDemands() == null || demandResponse.getDemands().isEmpty()) {
+                log.error("No demands returned after update for request: {}", demandRequest);
+                throw new CustomException("DEMAND_UPDATE_FAILED", "Failed to update demands or no demands returned");
+            }
+            return demandResponse;
+        } catch (Exception e) {
+            log.error("Error while updating demand: {}", e.getMessage());
+            throw new CustomException("DEMAND_UPDATE_ERROR", "Error occurred while updating demands: " + e.getMessage());
         }
-        return demandResponse;
     }
 }
