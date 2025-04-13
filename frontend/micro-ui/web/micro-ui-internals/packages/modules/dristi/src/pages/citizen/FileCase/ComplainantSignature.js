@@ -768,6 +768,14 @@ const ComplainantSignature = ({ path }) => {
                     uuid: advocate?.additionalDetails?.uuid,
                   }))
                 : []),
+              // ...(Array.isArray(caseDetails?.poaHolders)
+              //   ? caseDetails?.poaHolders?.map((poaHolder) => ({
+              //       uuid: poaHolder?.additionalDetails?.uuid,
+              //     }))
+              //   : []),
+              ...(caseDetails?.additionalDetails?.complainantDetails?.formdata || [])
+                ?.filter((holder) => holder?.data?.poaVerification?.individualDetails?.individualId)
+                ?.map((holder) => ({ uuid: holder?.data?.poaVerification?.individualDetails?.userUuid })),
             ];
             await DRISTIService.customApiService(Urls.dristi.pendingTask, {
               pendingTask: {

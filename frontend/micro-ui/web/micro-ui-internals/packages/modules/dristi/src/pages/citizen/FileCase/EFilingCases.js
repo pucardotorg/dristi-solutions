@@ -2304,6 +2304,14 @@ function EFilingCases({ path }) {
     setIsDisabled(true);
     let calculationResponse = {};
     const assignees = getAllAssignees(caseDetails);
+    // const poaHolders = (caseDetails?.poaHolders || [])?.map((poaHolder) => ({
+    //   uuid: poaHolder?.additionalDetails?.uuid,
+    // }));
+
+    const poaHolders = (caseDetails?.additionalDetails?.complainantDetails?.formdata || [])
+      ?.filter((holder) => holder?.data?.poaVerification?.individualDetails?.individualId)
+      ?.map((holder) => ({ uuid: holder?.data?.poaVerification?.individualDetails?.userUuid }));
+
     const fileStoreId = localStorage.getItem("fileStoreId");
     await DRISTIService.caseUpdateService(
       {
@@ -2339,7 +2347,7 @@ function EFilingCases({ path }) {
             entityType: "case-default",
             referenceId: `MANUAL_${caseDetails?.filingNumber}`,
             status: "PENDING_PAYMENT",
-            assignedTo: [...assignees?.map((uuid) => ({ uuid }))],
+            assignedTo: [...assignees?.map((uuid) => ({ uuid })), ...poaHolders],
             assignedRole: ["CASE_CREATOR"],
             cnrNumber: null,
             filingNumber: caseDetails?.filingNumber,

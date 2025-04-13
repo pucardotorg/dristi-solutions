@@ -1278,6 +1278,14 @@ export const getAdvocates = (caseDetails) => {
   let list = [];
 
   caseDetails?.litigants?.forEach((litigant) => {
+    // const poaHolder = (caseDetails?.poaHolders || [])
+    //   ?.filter((holder) => holder?.representingLitigants?.some((lit) => lit?.individualId === litigant?.individualId))
+    //   ?.map((holder) => holder?.additionalDetails?.uuid);
+
+    const poaHolder = (caseDetails?.additionalDetails?.complainantDetails?.formdata || [])
+      ?.filter((holder) => holder?.data?.complainantVerification?.individualDetails?.individualId === litigant?.individualId)
+      ?.map((holder) => holder?.data?.poaVerification?.individualDetails?.userUuid);
+
     list = caseDetails?.representatives
       ?.filter((item) => {
         return item?.representing?.some((lit) => lit?.individualId === litigant?.individualId) && item?.additionalDetails?.uuid;
@@ -1286,7 +1294,7 @@ export const getAdvocates = (caseDetails) => {
     if (list?.length > 0) {
       litigants[litigant?.additionalDetails?.uuid] = list;
     } else {
-      litigants[litigant?.additionalDetails?.uuid] = [litigant?.additionalDetails?.uuid];
+      litigants[litigant?.additionalDetails?.uuid] = [litigant?.additionalDetails?.uuid, ...poaHolder];
     }
   });
   return litigants;

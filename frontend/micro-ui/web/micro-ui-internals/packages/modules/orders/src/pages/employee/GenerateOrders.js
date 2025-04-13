@@ -2449,7 +2449,14 @@ const GenerateOrders = () => {
       const complainantUuids = caseDetails?.litigants
         ?.filter((com) => com?.partyType?.startsWith("complainant"))
         .map((com) => com?.additionalDetails?.uuid);
-      assignees = [...assignee, ...complainantUuids]?.map((uuid) => ({ uuid }));
+
+      // const poaHolders = (caseDetails?.poaHolders || [])?.map((poaHolder) => poaHolder?.additionalDetails?.uuid);
+
+      const poaHolders = (caseDetails?.additionalDetails?.complainantDetails?.formdata || [])
+        ?.filter((holder) => holder?.data?.poaVerification?.individualDetails?.individualId)
+        ?.map((holder) => holder?.data?.poaVerification?.individualDetails?.userUuid);
+
+      assignees = [...assignee, ...complainantUuids, ...poaHolders]?.map((uuid) => ({ uuid }));
       entityType = "order-default";
       return ordersService.customApiService(Urls.orders.pendingTask, {
         pendingTask: {
@@ -2480,7 +2487,14 @@ const GenerateOrders = () => {
       const complainantUuids = caseDetails?.litigants
         ?.filter((com) => com?.partyType?.startsWith("complainant"))
         .map((com) => com?.additionalDetails?.uuid);
-      assignees = [...assignee, ...complainantUuids]?.map((uuid) => ({ uuid }));
+
+      // const poaHolders = (caseDetails?.poaHolders || [])?.map((poaHolder) => poaHolder?.additionalDetails?.uuid);
+
+      const poaHolders = (caseDetails?.additionalDetails?.complainantDetails?.formdata || [])
+        ?.filter((holder) => holder?.data?.poaVerification?.individualDetails?.individualId)
+        ?.map((holder) => holder?.data?.poaVerification?.individualDetails?.userUuid);
+
+      assignees = [...assignee, ...complainantUuids, ...poaHolders]?.map((uuid) => ({ uuid }));
       entityType = "order-default";
       const pendingTask = {
         name: t(`MAKE_PAYMENT_FOR_NOTICE_${channelCode}`),
@@ -2513,7 +2527,14 @@ const GenerateOrders = () => {
       const complainantUuids = caseDetails?.litigants
         ?.filter((com) => com?.partyType?.startsWith("complainant"))
         .map((com) => com?.additionalDetails?.uuid);
-      assignees = [...assignee, ...complainantUuids]?.map((uuid) => ({ uuid }));
+
+      // const poaHolders = (caseDetails?.poaHolders || [])?.map((poaHolder) => poaHolder?.additionalDetails?.uuid);
+
+      const poaHolders = (caseDetails?.additionalDetails?.complainantDetails?.formdata || [])
+        ?.filter((holder) => holder?.data?.poaVerification?.individualDetails?.individualId)
+        ?.map((holder) => holder?.data?.poaVerification?.individualDetails?.userUuid);
+
+      assignees = [...assignee, ...complainantUuids, ...poaHolders]?.map((uuid) => ({ uuid }));
       entityType = "order-default";
       return ordersService.customApiService(Urls.orders.pendingTask, {
         pendingTask: {
@@ -2544,13 +2565,26 @@ const GenerateOrders = () => {
       name = t("SUBMIT_BAIL_DOCUMENTS");
       entityType = "voluntary-application-submission-bail-documents";
       const assigneeUuid = order?.additionalDetails?.formdata?.partyId;
+      const litigant = caseDetails?.litigants?.find((litigant) => litigant?.additionalDetails?.uuid === assigneeUuid);
+      let poaHolderUuid;
+
+      if (litigant) {
+        // poaHolderUuid = (caseDetails?.poaHolders || [])
+        //   ?.filter((poaHolder) => poaHolder?.representingLitigants?.some((represent) => represent?.individualId === litigant?.individualId))
+        //   ?.map((poaHolder) => ({ uuid: poaHolder?.additionalDetails?.uuid }));
+
+        poaHolderUuid = (caseDetails?.additionalDetails?.complainantDetails?.formdata || [])
+          ?.filter((holder) => holder?.data?.complainantVerification?.individualDetails?.individualId === litigant?.individualId)
+          ?.map((holder) => ({ uuid: holder?.data?.poaVerification?.individualDetails?.userUuid }));
+      }
+
       return ordersService.customApiService(Urls.orders.pendingTask, {
         pendingTask: {
           name,
           entityType,
           referenceId: `MANUAL_${compositeOrderItemId ? `${compositeOrderItemId}_` : ""}${assigneeUuid}_${order?.orderNumber}`,
           status,
-          assignedTo: [{ uuid: assigneeUuid }],
+          assignedTo: [{ uuid: assigneeUuid }, ...poaHolderUuid],
           assignedRole,
           cnrNumber: cnrNumber,
           filingNumber: filingNumber,
@@ -3766,13 +3800,25 @@ const GenerateOrders = () => {
             await updateCaseDetails("ISSUE_ORDER");
             const caseDetails = await refetchCaseData();
             const caseData = caseDetails?.data?.criteria?.[0]?.responseList?.[0];
-            const respondent = caseData?.litigants?.find((litigant) => litigant?.partyType?.includes("respondent"));
+            const respondent = caseData?.litigants?.filter((litigant) => litigant?.partyType?.includes("respondent"));
             const advocate = caseData?.representatives?.find((representative) =>
               representative?.representing?.some((represent) => respondent && represent?.individualId === respondent?.individualId)
             );
 
             const assignees = [];
-            if (respondent) assignees.push({ uuid: respondent?.additionalDetails?.uuid });
+            if (respondent?.length > 0) {
+              assignees.concat(
+                respondent?.map((res) => ({
+                  uuid: res?.additionalDetails?.uuid,
+                }))
+              );
+              const poaHolders = (caseDetails?.poaHolders || [])
+                ?.filter((poaHolder) =>
+                  poaHolder?.representingLitigants?.some((represent) => respondent?.some((res) => res?.individualId === represent?.individualId))
+                )
+                ?.map((poaHolder) => poaHolder?.additionalDetails?.uuid);
+              assignees.concat(poaHolders?.map((uuid) => ({ uuid })));
+            }
             if (advocate) assignees.push({ uuid: advocate?.additionalDetails?.uuid });
 
             if (respondent && assignees?.length > 0) {
@@ -3821,12 +3867,24 @@ const GenerateOrders = () => {
               await updateCaseDetails("ISSUE_ORDER");
               const caseDetails = await refetchCaseData();
               const caseData = caseDetails?.data?.criteria?.[0]?.responseList?.[0];
-              const respondent = caseData?.litigants?.find((litigant) => litigant?.partyType?.includes("respondent"));
+              const respondent = caseData?.litigants?.filter((litigant) => litigant?.partyType?.includes("respondent"));
               const advocate = caseData?.representatives?.find((representative) =>
                 representative?.representing?.some((represent) => respondent && represent?.individualId === respondent?.individualId)
               );
               const assignees = [];
-              if (respondent) assignees.push({ uuid: respondent?.additionalDetails?.uuid });
+              if (respondent?.length > 0) {
+                assignees.concat(
+                  respondent?.map((res) => ({
+                    uuid: res?.additionalDetails?.uuid,
+                  }))
+                );
+                const poaHolders = (caseDetails?.poaHolders || [])
+                  ?.filter((poaHolder) =>
+                    poaHolder?.representingLitigants?.some((represent) => respondent?.some((res) => res?.individualId === represent?.individualId))
+                  )
+                  ?.map((poaHolder) => poaHolder?.additionalDetails?.uuid);
+                assignees.concat(poaHolders?.map((uuid) => ({ uuid })));
+              }
               if (advocate) assignees.push({ uuid: advocate?.additionalDetails?.uuid });
 
               if (respondent && assignees?.length > 0) {
