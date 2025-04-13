@@ -3804,7 +3804,7 @@ const GenerateOrders = () => {
             const assignees = [];
             if (respondent?.length > 0) {
               assignees.push(
-                respondent?.map((res) => ({
+                ...respondent?.map((res) => ({
                   uuid: res?.additionalDetails?.uuid,
                 }))
               );
@@ -3813,7 +3813,7 @@ const GenerateOrders = () => {
                   poaHolder?.representingLitigants?.some((represent) => respondent?.some((res) => res?.individualId === represent?.individualId))
                 )
                 ?.map((poaHolder) => poaHolder?.additionalDetails?.uuid);
-              assignees.push(poaHolders?.map((uuid) => ({ uuid })));
+              assignees.push(...poaHolders?.map((uuid) => ({ uuid })));
             }
             if (advocate) assignees.push({ uuid: advocate?.additionalDetails?.uuid });
 
@@ -3870,7 +3870,7 @@ const GenerateOrders = () => {
               const assignees = [];
               if (respondent?.length > 0) {
                 assignees.push(
-                  respondent?.map((res) => ({
+                  ...respondent?.map((res) => ({
                     uuid: res?.additionalDetails?.uuid,
                   }))
                 );
@@ -3879,7 +3879,7 @@ const GenerateOrders = () => {
                     poaHolder?.representingLitigants?.some((represent) => respondent?.some((res) => res?.individualId === represent?.individualId))
                   )
                   ?.map((poaHolder) => poaHolder?.additionalDetails?.uuid);
-                assignees.push(poaHolders?.map((uuid) => ({ uuid })));
+                assignees.push(...poaHolders?.map((uuid) => ({ uuid })));
               }
               if (advocate) assignees.push({ uuid: advocate?.additionalDetails?.uuid });
 
