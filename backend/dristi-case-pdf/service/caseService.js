@@ -1,7 +1,6 @@
 const config = require("../config/config");
 const axios = require("axios");
 var url = require("url");
-const { getUniqueAcronym } = require("../util/formatUtil");
 
 /**
  * Extracts case section from the case object.
@@ -944,19 +943,19 @@ function getComplainantPlaceholderList(caseDetails) {
       placeholderArray.push({
         index: litigant?.additionalDetails?.currentPosition,
         placeholder: "",
-        acronym: "",
       });
       return;
     }
-
-    let placeholder = "";
 
     if (litigant?.poaHolder) {
       const representedNames = litigant?.poaHolder?.representingLitigants
         ?.map((rep) => rep?.additionalDetails?.fullName)
         ?.filter(Boolean)
         ?.join(", ");
-      placeholder = `${litigant?.poaHolder?.name} - PoA holder for ${representedNames}`;
+      placeholderArray.push({
+        index: litigant?.additionalDetails?.currentPosition,
+        placeholder: `${litigant?.poaHolder?.name} - PoA holder for ${representedNames}`,
+      });
       litigant?.poaHolder?.representingLitigants?.forEach((rep) => {
         processedLitigantIds.add(rep?.individualId);
       });
@@ -969,21 +968,21 @@ function getComplainantPlaceholderList(caseDetails) {
           ?.map((rep) => rep?.additionalDetails?.fullName)
           ?.filter(Boolean)
           ?.join(", ");
-        placeholder = `${litigant?.additionalDetails?.fullName} - Complainant ${litigant?.additionalDetails?.currentPosition}, PoA holder for ${representedNames}`;
+        placeholderArray.push({
+          index: litigant?.additionalDetails?.currentPosition,
+          placeholder: `${litigant?.additionalDetails?.fullName} - Complainant ${litigant?.additionalDetails?.currentPosition}, PoA holder for ${representedNames}`,
+        });
         complainantPoaHolder?.representingLitigants?.forEach((rep) => {
           processedLitigantIds.add(rep?.individualId);
         });
       } else {
-        placeholder = `${litigant?.additionalDetails?.fullName} - Complainant ${litigant?.additionalDetails?.currentPosition}`;
+        placeholderArray.push({
+          index: litigant?.additionalDetails?.currentPosition,
+          placeholder: `${litigant?.additionalDetails?.fullName} - Complainant ${litigant?.additionalDetails?.currentPosition}`,
+        });
         processedLitigantIds.add(litigant?.individualId);
       }
     }
-
-    placeholderArray.push({
-      index: litigant?.additionalDetails?.currentPosition,
-      acronym: getUniqueAcronym(placeholder),
-      placeholder: placeholder,
-    });
   });
   return placeholderArray.sort((a, b) => a.index - b.index);
 }
