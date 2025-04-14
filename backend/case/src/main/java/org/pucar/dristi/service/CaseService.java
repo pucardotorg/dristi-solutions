@@ -3225,6 +3225,7 @@ public class CaseService {
         Set<String> litigantAndAdvocateIndividualId = getLitigantIndividualId(courtCase);
         CaseRequest caseRequest = CaseRequest.builder()
                 .cases(courtCase)
+                .requestInfo(addWitnessRequest.getRequestInfo())
                 .build();
         getAdvocateIndividualId(caseRequest, litigantAndAdvocateIndividualId);
         getPocHolderIndividualIds(caseRequest, litigantAndAdvocateIndividualId);
