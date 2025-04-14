@@ -302,13 +302,9 @@ export const maskEmail = (email) => {
 };
 
 export const getUniqueAcronym = (str) => {
-  if (!str) return "";
-
   // Remove special characters and split the string into words
-  const words = str
-    ?.replace(/[^a-zA-Z0-9 ]/g, "")
-    ?.split(" ")
-    ?.filter(Boolean);
+  const words = str?.replace(/[^a-zA-Z0-9 ]/g, "")?.split(" ");
+
   // Get the first letter of each word and join them
   let acronym = words?.map((word) => word?.[0]?.toUpperCase())?.join("");
 
